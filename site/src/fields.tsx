@@ -1,6 +1,6 @@
 /** Form fields shared by the tool pages. A field keeps what is being typed to itself and hands it on only when it is left. */
 import type { ComponentChildren } from 'preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 
 export const INPUT = 'block w-full rounded-md border bg-white px-3 py-2 text-base text-slate-900 placeholder:text-slate-500 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/30 focus:outline-none dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-400';
 const BORDER = 'border-slate-300 dark:border-slate-600', BAD = 'border-red-600 dark:border-red-400';
@@ -15,7 +15,8 @@ export const BUTTON = 'rounded-md border border-teal-700 bg-white px-3 py-1.5 te
 export function useDraft(value: string, onCommit: (text: string) => void, tidy?: (text: string) => string) {
   const [draft, setDraft] = useState(value);
   const ref = useRef<HTMLInputElement>(null);
-  useEffect(() => { if (document.activeElement !== ref.current) setDraft(value); }, [value]);
+  // Before the browser paints, so a value set from outside (a Use button) never shows the old text, even for a frame.
+  useLayoutEffect(() => { if (document.activeElement !== ref.current) setDraft(value); }, [value]);
   const commit = () => {
     // Read the field itself: a change event can arrive before the draft has been re-rendered.
     const typed = ref.current?.value ?? draft, t = tidy ? tidy(typed) : typed;

@@ -142,6 +142,12 @@ async function expectText(page, v, what, want, step) {
   for (let i = 0; got !== want && i < 30; i++) { await page.waitForTimeout(100); got = await read(); }
   if (got !== want) v(`${step}: ${name} says "${got}", want "${want}"`);
 }
+/** The same for what a field holds. */
+async function expectValue(page, v, sel, want, step) {
+  let got = await page.inputValue(sel);
+  for (let i = 0; got !== want && i < 30; i++) { await page.waitForTimeout(100); got = await page.inputValue(sel); }
+  if (got !== want) v(`${step}: ${sel} holds "${got}", want "${want}"`);
+}
 const leave = async (page, sel, value) => { await page.fill(sel, value); await page.press(sel, 'Tab'); };
 
 /** Case A from the loan terms, typed the way a user would, with a None or one figure for every year where that is the answer. */
@@ -191,13 +197,16 @@ async function layout(page, v, step) {
   await field.fill('9,99,99,99,99,99,999');
   await layout(page, v, 'a long amount');
 
-  // An EMI is monthly, so how often is not asked.
+  // How often is asked for equal instalments of principal, not for an EMI (which is monthly).
+  const often = page.locator('#fld-frequency-quarterly');
+  await page.check('#fld-style-equal-principal');
+  await often.waitFor({ state: 'attached', timeout: 3000 }).catch(() => v('how often is not asked for equal instalments'));
   await page.check('#fld-style-emi');
-  if (await page.locator('#fld-frequency-quarterly').count()) v('how often is asked for an EMI');
+  await often.waitFor({ state: 'detached', timeout: 3000 }).catch(() => v('how often is asked for an EMI'));
 
   await enterCaseA(page);
   await expectText(page, v, 'loan-read', 'First instalment at the end of December 2026, the last at the end of September 2029. The loan runs over 2026-27 to 2029-30.', 'case A');
-  if ((await page.inputValue('#fld-depreciation-2027-28')) !== '1,30,000') v('1.3 L is not read back as 1,30,000 once the field is left');
+  await expectValue(page, v, '#fld-depreciation-2027-28', '1,30,000', '1.3 L read back once the field is left');
   // No target yet: the figures show, and the preview stays provisional and says what is still needed.
   await expectText(page, v, 'dscr-status', 'Provisional: 1 still needed', 'case A without a target');
   const needs = await page.getByTestId('dscr-needs').locator('li').allTextContents();
@@ -227,16 +236,22 @@ async function layout(page, v, step) {
   await layout(page, v, 'case A filled, 1024 px');
   await page.setViewportSize({ width: 390, height: 844 });
 
-  // Taking the offer enters the amount once, and the preview meets the target.
-  await page.getByTestId('use-amount').click();
-  if ((await field.inputValue()) !== '11,59,646') v(`"Use Rs. 11,59,646" put "${await field.inputValue()}" in the loan amount`);
+  // Taking the offer enters the amount once, before the next paint (no frame still showing 12 L), and the preview
+  // meets the target. Read one task after the click: after the page has re-rendered, before any frame.
+  const filled = await page.evaluate(() => new Promise((ok) => {
+    const use = document.querySelector('[data-testid="use-amount"]');
+    if (!use) return ok('(no Use button)');
+    use.click();
+    setTimeout(() => ok(document.querySelector('#fld-loanAmount').value));
+  }));
+  if (filled !== '11,59,646') v(`"Use Rs. 11,59,646" shows "${filled}" in the loan amount until the next paint`);
   await expectText(page, v, 'amount-read', 'Rs. 11,59,646 (Rupees Eleven Lakh Fifty Nine Thousand Six Hundred and Forty Six Only)', 'after taking the largest loan');
   await expectText(page, v, 'dscr-verdict', 'Meets the target: the lowest year, 2027-28, is 1.20 against 1.20; the average is 1.50 against 1.50.', 'after taking the largest loan');
   if (await page.getByTestId('use-amount').count()) v('the largest loan is still offered after it was taken');
 
   // A figure that is not understood is flagged and listed as still needed, never taken as zero.
   await leave(page, '#fld-pbdit-2028-29', 'lots');
-  if ((await page.getAttribute('#fld-pbdit-2028-29', 'aria-invalid')) !== 'true') v('"lots" in a figure is not flagged');
+  await page.waitForSelector('#fld-pbdit-2028-29[aria-invalid="true"]', { timeout: 3000 }).catch(() => v('"lots" in a figure is not flagged'));
   await expectText(page, v, 'dscr-status', 'Provisional: 1 still needed', 'a figure not understood');
   const missing = await page.getByTestId('dscr-needs').locator('li').allTextContents();
   if (missing.join('|') !== 'Profit before interest, depreciation and tax for 2028-29') v(`a figure not understood: still needed ${JSON.stringify(missing)}`);
@@ -262,6 +277,7 @@ async function layout(page, v, step) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
   await page.check('#fld-source-own');
   await page.check('#fld-method-preset');
+  await page.waitForSelector('#fld-firstYear', { timeout: 3000 }).catch(() => v('own figures: the years are not asked'));
   if (await page.locator('#fld-loanAmount').count()) v('own figures: the loan amount is asked though it does not change the answer');
   await leave(page, '#fld-firstYear', '2026-27');
   await leave(page, '#fld-yearCount', '3');
@@ -269,7 +285,7 @@ async function layout(page, v, step) {
   const fys = ['2026-27', '2027-28', '2028-29'];
   const own = { pat: ['60000', '80000', '100000'], depreciation: ['40000', '40000', '40000'], interestTL: ['50000', '40000', '20000'], principalTL: ['0', '100000', '100000'] };
   for (const [k, xs] of Object.entries(own)) for (const [i, fy] of fys.entries()) await leave(page, `#fld-${k}-${fy}`, xs[i]);
-  if ((await page.inputValue('#fld-principalTL-2026-27')) !== '0') v('a typed 0 did not stay');
+  await expectValue(page, v, '#fld-principalTL-2026-27', '0', 'a typed 0 stays');
   await expectText(page, v, 'dscr-status', 'Provisional: 2 still needed', 'own figures before None');
   await page.check('#fld-nonCash-none');
   await leave(page, '#fld-targetAverage', '1.5');
