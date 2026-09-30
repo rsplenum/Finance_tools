@@ -5,7 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import DATA from '../engine/data/dscr.json';
 import {
-  dscrStatement, maxLoanAmount, planStatement, shortestRepayment,
+  dscrStatement, fyRange, loanTimeline, maxLoanAmount, planStatement, shortestRepayment,
   type Definition, type Plan, type ProjectionYear, type Statement, type YearFigures,
 } from '../engine/dscr';
 import type { LoanTerms } from '../engine/loan';
@@ -114,5 +114,21 @@ describe('the second computation guards every figure', () => {
     const y: YearFigures[] = [{ fy: '2026-27', pat: 100, depreciation: 10, nonCash: 0, interestTL: 20, principalTL: 50 }];
     expect(dscrStatement(y, COMMON, broken)).toEqual({ blocked: 'The two computations disagree on 2026-27, so no figures are shown. Please report this.' });
     expect('rows' in dscrStatement(y, COMMON)).toBe(true);
+  });
+});
+
+describe('when the loan runs', () => {
+  it('case A: instalments from the end of December 2026 to the end of September 2029', () => {
+    // Drawn April 2026; months 1-6 are the moratorium; instalment 1 ends the next quarter (Oct-Dec); 12 quarters end in September 2029.
+    expect(loanTimeline(LOAN)).toEqual({ years: ['2026-27', '2027-28', '2028-29', '2029-30'], firstInstalment: '2026-12', lastInstalment: '2029-09' });
+  });
+  it('one monthly instalment falls in the month drawn; the amount, rate and type do not matter', () => {
+    expect(loanTimeline({ disbursed: '2027-03', moratoriumMonths: 0, instalments: 1, frequency: 'monthly' }))
+      .toEqual({ years: ['2026-27'], firstInstalment: '2027-03', lastInstalment: '2027-03' });
+    expect(loanTimeline({ ...LOAN, moratoriumMonths: undefined })).toEqual({ needs: ['Moratorium in months (0 if none)'] });
+  });
+  it('years run on across a century', () => {
+    expect(fyRange('2098-99', 3)).toEqual(['2098-99', '2099-00', '2100-01']);
+    expect(fyRange('2026', 2)).toEqual([]);
   });
 });

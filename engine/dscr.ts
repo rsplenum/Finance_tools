@@ -5,7 +5,7 @@
  * the result lists what is needed instead of figures.
  */
 import DATA from './data/dscr.json';
-import { fyOf, monthAfter, schedule, termMonths, type LoanTerms, type YearDebt } from './loan';
+import { PERIOD_MONTHS, fyOf, monthAfter, schedule, termMonths, type LoanTerms, type YearDebt } from './loan';
 import { planCheck, scheduleCheck, statementCheck, type CheckResult } from './dscr-check';
 
 type Data = typeof DATA;
@@ -48,6 +48,9 @@ export interface NoAnswer { none: string }
 
 export const PRESETS = DATA.presets;
 export const BENCHMARKS = DATA.benchmarks;
+/** The four choices and the names of the figures, in plain words, for screens. */
+export const OPTIONS = DATA.options;
+export const COMPONENTS = DATA.components;
 
 export const PROJECTION_LABELS: Record<Exclude<keyof ProjectionYear, 'fy'>, string> = {
   pbdit: 'Profit before interest, depreciation and tax',
@@ -75,6 +78,10 @@ export const isFy = (s: string) => {
   const m = /^(\d{4})-(\d{2})$/.exec(s);
   return !!m && (Number(m[1]) + 1) % 100 === Number(m[2]);
 };
+
+/** `count` financial years from `first`: 2026-27, 2027-28, … Empty unless `first` is written like 2026-27. */
+export const fyRange = (first: string, count: number): string[] =>
+  isFy(first) ? Array.from({ length: Math.max(0, count) }, (_, i) => fyOf(Number(first.slice(0, 4)) + i, 4)) : [];
 
 /** Components a definition adds up: the base ones plus whatever the chosen options add, read from the data file. */
 export function componentsOf(def: Definition, data: Data = DATA): { available: Component[]; service: Component[] } {
@@ -143,7 +150,7 @@ function loanNeeds(l: LoanInput): string[] {
   return needs;
 }
 
-function targetNeeds(t: Target): string[] {
+export function targetNeeds(t: Target): string[] {
   if (t.average === undefined && t.minimum === undefined) return ['A target DSCR for the average, the lowest year, or both'];
   const needs: string[] = [];
   for (const [k, name] of [['average', 'Target for the average'], ['minimum', 'Target for the lowest year']] as const) {
@@ -242,6 +249,23 @@ function plan(proj: ProjectionYear[], loan: LoanTerms, def: Definition): Plan | 
 export function planStatement(proj: ProjectionYear[], loan: LoanInput, def: Definition): Plan | Needs | Blocked {
   const needs = [...definitionNeeds(def), ...loanNeeds(loan), ...projectionNeeds(proj, def)];
   return needs.length ? { needs } : plan(proj, loan as LoanTerms, def);
+}
+
+/** The financial years a loan runs over, and the months ('YYYY-MM') of its first and last instalments. */
+export interface LoanTimeline { years: string[]; firstInstalment: string; lastInstalment: string }
+
+/** When the loan runs: needs only the month drawn, the moratorium, the number of instalments and how often. */
+export function loanTimeline(loan: LoanInput): LoanTimeline | Needs {
+  const needs = loanNeeds({ ...loan, amount: 1, ratePct: 0, style: 'equal-principal' });
+  if (needs.length) return { needs };
+  const t = loan as LoanTerms, at = (k: number) => monthAfter(t.disbursed, k), last = termMonths(t) - 1;
+  const ym = (k: number) => `${at(k).year}-${String(at(k).month).padStart(2, '0')}`;
+  const start = fyOf(at(0).year, at(0).month), end = fyOf(at(last).year, at(last).month);
+  return {
+    years: fyRange(start, Number(end.slice(0, 4)) - Number(start.slice(0, 4)) + 1),
+    firstInstalment: ym(t.moratoriumMonths + PERIOD_MONTHS[t.frequency] - 1),
+    lastInstalment: ym(last),
+  };
 }
 
 // ---- Solvers ----

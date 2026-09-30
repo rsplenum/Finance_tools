@@ -20,4 +20,4 @@ Inputs only, so your working is not anchored to ours. Work it your usual way and
 
 No other non-cash charges, other term loans or lease rentals.
 
-Status: model-worked in `tests/dscr.test.ts`; not yet confirmed.
+Status: model-worked in `tests/dscr.test.ts`, and entered through the page in `tests/dscr-page.test.ts` and `npm run check:site`; not yet confirmed.

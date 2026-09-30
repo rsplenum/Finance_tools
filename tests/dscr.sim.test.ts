@@ -4,10 +4,10 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  LOAN_LABELS, PROJECTION_LABELS, maxLoanAmount, planStatement, shortestRepayment,
+  LOAN_LABELS, PROJECTION_LABELS, loanTimeline, maxLoanAmount, planStatement, shortestRepayment,
   type Definition, type Plan, type ProjectionYear, type Statement, type Target,
 } from '../engine/dscr';
-import type { LoanTerms } from '../engine/loan';
+import { fyOf, type LoanTerms } from '../engine/loan';
 
 const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8];
 const CASES = 250;
@@ -91,6 +91,17 @@ function runSeed(seed: number): { cases: number; violations: string[]; seen: Rec
     if (Math.abs(paid - loan.amount) > Math.max(0.01, loan.amount * 1e-9)) bad(`repaid ${paid} of ${loan.amount}`);
     if (p.schedule.some((y) => y.interest < -1e-9 || y.principal < -1e-9)) bad('negative interest or principal');
     if (Math.abs(p.schedule[p.schedule.length - 1].closing) > 0.01) bad('balance left at the end');
+
+    // When the loan runs (the page's years and read-back): the schedule's years, the first instalment in the first year
+    // that repays principal, the last in the last year.
+    const when = loanTimeline(loan), fyOfMonth = (ym: string) => fyOf(Number(ym.slice(0, 4)), Number(ym.slice(5)));
+    if ('needs' in when) bad(`no timeline for complete terms: ${when.needs.join('; ')}`);
+    else {
+      const fys = p.schedule.map((y) => y.fy);
+      if (when.years.join() !== fys.join()) bad(`timeline years ${when.years.join()} against the schedule's ${fys.join()}`);
+      if (fyOfMonth(when.firstInstalment) !== p.schedule.find((y) => y.principal > 0)?.fy) bad(`first instalment ${when.firstInstalment} not in the first year that repays`);
+      if (fyOfMonth(when.lastInstalment) !== fys[fys.length - 1]) bad(`last instalment ${when.lastInstalment} not in the last year`);
+    }
 
     // Statement: the lowest year is the lowest counted DSCR, and the average lies between the lowest and the highest.
     const counted = p.statement.rows.filter((x) => x.counted).map((x) => x.dscr as number);

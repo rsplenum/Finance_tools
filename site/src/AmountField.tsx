@@ -1,14 +1,15 @@
 /** Loan amount typed the Indian way (70 L, 1.2 Cr, 70,00,000), read back in figures and words as you type. */
-import { useState } from 'preact/hooks';
 import { readBack } from './amount';
+import { INPUT, LABEL, useDraft } from './fields';
 
-export function AmountField() {
-  const [text, setText] = useState('');
+export function AmountField({ value = '', onCommit = () => {} }: { value?: string; onCommit?: (text: string) => void }) {
+  const d = useDraft(value, onCommit);
+  const said = readBack(d.value);
   return <div>
-    <label for="fld-loanAmount" class="block font-medium text-slate-900 dark:text-slate-100">Loan amount</label>
+    <label for="fld-loanAmount" class={LABEL}>Loan amount</label>
     <input id="fld-loanAmount" type="text" autocomplete="off" spellcheck={false} enterkeyhint="done" placeholder="70 L, 1.2 Cr or 70,00,000"
-      value={text} onInput={(e) => setText(e.currentTarget.value)}
-      class="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 placeholder:text-slate-400 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/30 focus:outline-none dark:border-slate-600 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500" />
-    <p data-testid="amount-read" aria-live="polite" class="mt-2 min-h-6 text-sm break-words text-slate-700 dark:text-slate-300">{readBack(text)}</p>
+      aria-invalid={said.startsWith('Not understood') || said.startsWith('Enter') || undefined} {...d}
+      class={`mt-1 ${INPUT} border-slate-300 dark:border-slate-600`} />
+    <p data-testid="amount-read" aria-live="polite" class="mt-2 min-h-6 text-sm break-words text-slate-700 dark:text-slate-300">{said}</p>
   </div>;
 }

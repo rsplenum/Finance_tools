@@ -3,7 +3,10 @@
  * Chromium at phone width (390 px), in light and in dark mode. Violations: horizontal scroll; an input under 16 px;
  * text below WCAG AA contrast (catches an element missing its dark: classes); a missing title, description or single
  * h1; a script error, console error or missing file; a light flash for a dark-mode visitor; the theme toggle not
- * cycling Auto → Light → Dark and remembering the choice; the DSCR amount field not reading back what was typed.
+ * cycling Auto → Light → Dark and remembering the choice. The DSCR calculator is driven through its fields (fld-… ids)
+ * and its answers read as text (data-testid): fictional case A from the loan terms, own yearly figures, the amount
+ * field's read-back, and the same layout checks once the table and the preview are filled, in light and dark, with the
+ * table as cards at 390 px and as a table at 1024 px.
  * Run after `npm run build`. CHROMIUM_PATH overrides the browser Playwright would use.
  */
 import { createServer } from 'node:http';
@@ -128,18 +131,154 @@ for (const [scheme, stored, want] of [['dark', undefined, true], ['light', 'dark
   await ctx.close();
 }
 
-// DSCR page: the engine reads the amount back in the browser; long words must wrap, not widen the page.
+// DSCR calculator. Expected figures: fictional case A (docs/GOLDEN-CASES.md), worked by hand in tests/dscr.test.ts.
+const YEARS_A = ['2026-27', '2027-28', '2028-29', '2029-30'];
+
+/** Reads a test id's (or a locator's) text once it settles on `want` (or after 3 s); a violation when it differs. */
+async function expectText(page, v, what, want, step) {
+  const at = typeof what === 'string' ? page.getByTestId(what).first() : what, name = typeof what === 'string' ? what : String(what);
+  const read = () => at.textContent({ timeout: 3000 }).then((t) => (t ?? '').replace(/\s+/g, ' ').trim(), () => '(missing)');
+  let got = await read();
+  for (let i = 0; got !== want && i < 30; i++) { await page.waitForTimeout(100); got = await read(); }
+  if (got !== want) v(`${step}: ${name} says "${got}", want "${want}"`);
+}
+const leave = async (page, sel, value) => { await page.fill(sel, value); await page.press(sel, 'Tab'); };
+
+/** Case A from the loan terms, typed the way a user would, with a None or one figure for every year where that is the answer. */
+async function enterCaseA(page) {
+  await page.check('#fld-source-plan');
+  await page.check('#fld-method-preset');
+  await leave(page, '#fld-loanAmount', '12 L');
+  await leave(page, '#fld-ratePct', '12');
+  await leave(page, '#fld-disbursed', '2026-04');
+  await leave(page, '#fld-moratoriumMonths', '6');
+  await page.check('#fld-style-equal-principal');
+  await page.check('#fld-frequency-quarterly');
+  await leave(page, '#fld-instalments', '12');
+  const pbdit = ['5,00,000', '7,50,000', '8,00,000', '8,00,000'], depreciation = ['150000', '1.3 L', '1,10,000', '1 L'];
+  for (const [i, fy] of YEARS_A.entries()) {
+    await leave(page, `#fld-pbdit-${fy}`, pbdit[i]);
+    await leave(page, `#fld-depreciation-${fy}`, depreciation[i]);
+  }
+  await page.check('#fld-nonCash-none');
+  await page.check('#fld-interestOther-same');
+  await leave(page, '#fld-interestOther-2026-27', '50000');
+  await page.check('#fld-otherLoansInterest-none');
+  await page.check('#fld-taxPct-same');
+  await leave(page, '#fld-taxPct-2026-27', '25%');
+}
+
+async function layout(page, v, step) {
+  const f = await page.evaluate(audit);
+  if (f.wide) v(`${step}: horizontal scroll: ${f.wide}`);
+  for (const id of f.smallInputs) v(`${step}: input under 16 px: ${id}`);
+  for (const t of f.lowContrast) v(`${step}: low contrast: ${t}`);
+}
+
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
-  const field = page.locator('#fld-loanAmount'), said = page.getByTestId('amount-read');
-  for (const [typed, want] of [['70 L', 'Rs. 70,00,000 (Rupees Seventy Lakh Only)'], ['1.2 Cr', 'Rs. 1,20,00,000 (Rupees One Crore Twenty Lakh Only)'], ['seventy', 'Not understood']]) {
+  // The start questions come first: nothing else is asked until they narrow it.
+  if (await page.locator('#fld-loanAmount, #fld-firstYear, [data-testid="answer-bar"]').count()) v('figures are asked before the two start questions');
+  await page.check('#fld-source-plan');
+  await page.check('#fld-method-preset');
+
+  // The loan amount field, kept from P0: read back in figures and words while typing; long words wrap.
+  const field = page.locator('#fld-loanAmount');
+  for (const [typed, want] of [['70 L', 'Rs. 70,00,000 (Rupees Seventy Lakh Only)'], ['1.2 Cr', 'Rs. 1,20,00,000 (Rupees One Crore Twenty Lakh Only)'], ['seventy', 'Not understood. Try 70 L, 1.2 Cr or 70,00,000.']]) {
     await field.fill(typed);
-    const got = (await said.textContent())?.trim() ?? '';
-    if (!got.startsWith(want)) v(`typed "${typed}", read back "${got}", want "${want}"`);
+    await expectText(page, v, 'amount-read', want, `typed "${typed}"`);
   }
   await field.fill('9,99,99,99,99,99,999');
-  const f = await page.evaluate(audit);
-  if (f.wide) v(`horizontal scroll after a long amount: ${f.wide}`);
+  await layout(page, v, 'a long amount');
+
+  // An EMI is monthly, so how often is not asked.
+  await page.check('#fld-style-emi');
+  if (await page.locator('#fld-frequency-quarterly').count()) v('how often is asked for an EMI');
+
+  await enterCaseA(page);
+  await expectText(page, v, 'loan-read', 'First instalment at the end of December 2026, the last at the end of September 2029. The loan runs over 2026-27 to 2029-30.', 'case A');
+  if ((await page.inputValue('#fld-depreciation-2027-28')) !== '1,30,000') v('1.3 L is not read back as 1,30,000 once the field is left');
+  // No target yet: the figures show, and the preview stays provisional and says what is still needed.
+  await expectText(page, v, 'dscr-status', 'Provisional: 1 still needed', 'case A without a target');
+  const needs = await page.getByTestId('dscr-needs').locator('li').allTextContents();
+  if (needs.join('|') !== 'A target DSCR for the average, the lowest year, or both') v(`case A without a target: still needed ${JSON.stringify(needs)}`);
+  await expectText(page, v, 'dscr-average', '1.45', 'case A');
+  await expectText(page, v, 'dscr-lowest', '1.16', 'case A');
+  await expectText(page, v, 'dscr-lowest-year', 'in 2027-28', 'case A');
+  for (const [fy, dscr] of [['2026-27', '1.20'], ['2027-28', '1.16'], ['2028-29', '1.33'], ['2029-30', '2.82']])
+    await expectText(page, v, page.getByTestId(`dscr-row-${fy}`).getByTestId('dscr'), dscr, `case A, DSCR for ${fy}`);
+  const first = (await page.getByTestId('dscr-row-2026-27').textContent()) ?? '';
+  for (const figure of ['1,19,250', '1,41,000', '2,00,000', '4,10,250', '3,41,000']) if (!first.includes(figure)) v(`case A 2026-27: ${figure} not shown`);
+
+  // The common examples as the target: what limits the result, and the loan that meets it.
+  await page.getByTestId('use-examples').click();
+  await expectText(page, v, 'dscr-status', 'Complete', 'case A with the examples');
+  await expectText(page, v, 'dscr-verdict', 'Below the target: the lowest year, 2027-28, is 1.16 against 1.20; the average is 1.45 against 1.50.', 'case A with the examples');
+  await expectText(page, v, 'dscr-largest', 'The largest loan on these terms is Rs. 11,59,646, limited by the lowest year, 2027-28.', 'case A with the examples');
+  await expectText(page, v, 'use-amount', 'Use Rs. 11,59,646', 'case A with the examples');
+  await expectText(page, v, 'dscr-fewest', 'Even 14 instalments, the most the projections cover (to 2029-30), miss the target: the average is below the target. Add later years to try a longer repayment.', 'case A with the examples');
+  await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · below the target · complete ↓', 'case A with the examples');
+
+  // Tables become cards on phones and stay tables on wider screens, without a sideways scroll either way.
+  await layout(page, v, 'case A filled, 390 px');
+  if (await page.locator('#figures thead').isVisible() || await page.locator('#preview thead').isVisible()) v('390 px: a table is shown as a table, not as cards');
+  await page.setViewportSize({ width: 1024, height: 900 });
+  if (!(await page.locator('#figures thead').isVisible()) || !(await page.locator('#preview thead').isVisible())) v('1024 px: a table is shown as cards');
+  await layout(page, v, 'case A filled, 1024 px');
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  // Taking the offer enters the amount once, and the preview meets the target.
+  await page.getByTestId('use-amount').click();
+  if ((await field.inputValue()) !== '11,59,646') v(`"Use Rs. 11,59,646" put "${await field.inputValue()}" in the loan amount`);
+  await expectText(page, v, 'amount-read', 'Rs. 11,59,646 (Rupees Eleven Lakh Fifty Nine Thousand Six Hundred and Forty Six Only)', 'after taking the largest loan');
+  await expectText(page, v, 'dscr-verdict', 'Meets the target: the lowest year, 2027-28, is 1.20 against 1.20; the average is 1.50 against 1.50.', 'after taking the largest loan');
+  if (await page.getByTestId('use-amount').count()) v('the largest loan is still offered after it was taken');
+
+  // A figure that is not understood is flagged and listed as still needed, never taken as zero.
+  await leave(page, '#fld-pbdit-2028-29', 'lots');
+  if ((await page.getAttribute('#fld-pbdit-2028-29', 'aria-invalid')) !== 'true') v('"lots" in a figure is not flagged');
+  await expectText(page, v, 'dscr-status', 'Provisional: 1 still needed', 'a figure not understood');
+  const missing = await page.getByTestId('dscr-needs').locator('li').allTextContents();
+  if (missing.join('|') !== 'Profit before interest, depreciation and tax for 2028-29') v(`a figure not understood: still needed ${JSON.stringify(missing)}`);
+  if (await page.getByTestId('dscr-average').count()) v('figures shown while a figure is not understood');
+  await ctx.close();
+}
+
+// The same filled page in dark mode.
+{
+  const { ctx, page, v } = await open('/dscr/', { scheme: 'dark' });
+  await enterCaseA(page);
+  await page.getByTestId('use-examples').click();
+  await expectText(page, v, 'dscr-average', '1.45', 'case A, dark');
+  await layout(page, v, 'case A filled, dark, 390 px');
+  await page.setViewportSize({ width: 1024, height: 900 });
+  await layout(page, v, 'case A filled, dark, 1024 px');
+  await ctx.close();
+}
+
+// Own yearly figures (tests/dscr.test.ts, "which years count"): the loan amount is not asked, and the year with no
+// instalment is not counted.
+{
+  const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await page.check('#fld-source-own');
+  await page.check('#fld-method-preset');
+  if (await page.locator('#fld-loanAmount').count()) v('own figures: the loan amount is asked though it does not change the answer');
+  await leave(page, '#fld-firstYear', '2026-27');
+  await leave(page, '#fld-yearCount', '3');
+  await expectText(page, v, 'years-read', '2026-27 to 2028-29', 'own figures');
+  const fys = ['2026-27', '2027-28', '2028-29'];
+  const own = { pat: ['60000', '80000', '100000'], depreciation: ['40000', '40000', '40000'], interestTL: ['50000', '40000', '20000'], principalTL: ['0', '100000', '100000'] };
+  for (const [k, xs] of Object.entries(own)) for (const [i, fy] of fys.entries()) await leave(page, `#fld-${k}-${fy}`, xs[i]);
+  if ((await page.inputValue('#fld-principalTL-2026-27')) !== '0') v('a typed 0 did not stay');
+  await expectText(page, v, 'dscr-status', 'Provisional: 2 still needed', 'own figures before None');
+  await page.check('#fld-nonCash-none');
+  await leave(page, '#fld-targetAverage', '1.5');
+  await expectText(page, v, 'dscr-status', 'Complete', 'own figures');
+  await expectText(page, v, 'dscr-average', '1.23', 'own figures');
+  await expectText(page, v, 'dscr-lowest', '1.14', 'own figures');
+  await expectText(page, v, 'dscr-not-counted', 'Not counted: 2026-27 (no term-loan instalment).', 'own figures');
+  await expectText(page, v, 'dscr-verdict', 'Below the target: the average is 1.23 against 1.50.', 'own figures');
+  await layout(page, v, 'own figures filled');
   await ctx.close();
 }
 
