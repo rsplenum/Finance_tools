@@ -1,11 +1,10 @@
 # Handoff — start here in a new session
-State at 30-09-2026: P0 (site + Worker skeleton) is on `main`, which Cloudflare Pages builds. **P1a (the DSCR engine) and P1b (the DSCR calculator at `/dscr/`) are done on draft PR #2.**
-- **The page** asks two start questions, then the loan (or the years), the year-wise figures and the lender's target.
+State at 30-09-2026: P0 (site + Worker skeleton) is on `main`, which Cloudflare Pages builds. **P1a (the DSCR engine) and P1b (the DSCR calculator at `/dscr/`) are done on draft PR #2** (branch `ccr-ba2b6ab9-casbge`, CI green), waiting for the owner to try the preview and say "merge the PR".
+- **The page opens with its assumptions answered**, at the owner's request: it asks only the loan and this year's four figures, works out the later years from sales growth, and lists each assumption until it is changed (D-UX-08). Every assumption can be changed, including a switch to the borrower's own year-wise figures.
 - **It shows** a free preview that stays provisional and lists what is still needed: the DSCR statement in the layout CAs use, and the repayment schedule month by month.
 - **The owner's research request** (how CAs, consultants and CFAs make DSCR; what Ind AS says) is answered in `docs/DSCR-RESEARCH.md`.
-- **It opens with its assumptions answered**, at the owner's request: only the loan and this year's four figures are asked, and the preview lists each assumption until it is changed (D-UX-08).
 
-The test figures are model-worked until the owner confirms fictional case A (`docs/GOLDEN-CASES.md`); nothing from the owner's office, ever (D-BIZ-02). Next is **P1c, the DSCR statement download**. Keep this file short and current.
+The test figures are model-worked until the owner confirms fictional cases A and A′ (`docs/GOLDEN-CASES.md`); nothing from the owner's office, ever (D-BIZ-02). Next: fixes from the owner's try of the preview, if any, then **P1c, the DSCR statement download**. Keep this file short and current.
 
 ## Where things are
 - Live site: https://finance-tools-9if.pages.dev (Pages project `finance-tools`, built from `main`); each branch previews at `https://<branch>.finance-tools-9if.pages.dev`, linked on its pull request. Worker: not deployed (placeholder IDs). Repo: rsplenum/Finance_tools. Study report (private): https://claude.ai/code/artifact/4bad29bb-5d80-4b27-9386-be3f2581c068
@@ -49,7 +48,8 @@ The test figures are model-worked until the owner confirms fictional case A (`do
 ## Next — one fresh session per item
 | # | Session | Starter prompt (paste as the first message) |
 |---|---|---|
-| P1c | DSCR statement download | "Read CLAUDE.md, docs/HANDOFF.md, docs/RULES.md, docs/DSCR-RESEARCH.md §2 and §7, and docs/LESSONS-CARRIED.md §1, §4 and §8. P1c: the DSCR statement as a document to download from the `/dscr/` preview. Formats first (a PDF for the lender; an Excel copy with the working for the accountant if it stays small), built in the browser from the engine's result only, reusing the statement and schedule views in `site/src/dscr/model.ts`; no figure computed in the document code. Ask first what the document needs that the page does not ask yet (like the borrower's name and the lender) and take each fact once. The statement states the method in plain words, the facts entered, every assumption still in use (`assumedIn`), the year-wise table, the average and the lowest year, the target and what limits the result; while anything is missing it is marked provisional and lists what is still needed. Test the document's text, not screenshots, and that the download works at 390 px. No payment yet. Finish per HANDOFF." |
+| P1b fixes | Only if the preview needs changes before merging | "Read CLAUDE.md and docs/HANDOFF.md. PR #2 (branch `ccr-ba2b6ab9-casbge`) is still a draft: work on that branch and push to it (you have my permission). On the `/dscr/` preview, this reads wrong or asks too much: <your notes>. Fix only that, keep cases A and A′ passing, finish per HANDOFF." |
+| P1c | DSCR statement download (after PR #2 is merged: say "merge the PR" at the start of this prompt, or merge it on GitHub first) | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md, docs/RULES.md, docs/DSCR-RESEARCH.md §2 and §7, and docs/LESSONS-CARRIED.md §1, §4 and §8. P1c: the DSCR statement as a document to download from the `/dscr/` preview. Formats first (a PDF for the lender; an Excel copy with the working for the accountant if it stays small), built in the browser from the engine's result only, reusing the statement and schedule views in `site/src/dscr/model.ts`; no figure computed in the document code. Ask first what the document needs that the page does not ask yet (like the borrower's name and the lender) and take each fact once. The statement states the method in plain words, the facts entered, every assumption still in use (`assumedIn`), the year-wise table, the average and the lowest year, the target and what limits the result; while anything is missing it is marked provisional and lists what is still needed. Test the document's text, not screenshots, and that the download works at 390 px. No payment yet. Finish per HANDOFF." |
 | P1d | Payment for the download | Starter prompt to be written at the end of P1c (Razorpay through the Worker, after the owner's Phase 0 items). |
 
 ## End of every session
@@ -57,17 +57,17 @@ The test figures are model-worked until the owner confirms fictional case A (`do
 2. Update this file (state + next), commit, draft PR. The branch preview builds itself (link on the PR); open it and say so.
 
 ## Waiting on the owner
-- **Check the page's assumptions** (`docs/RULES.md`, "What the page assumes until you change it"), above all the tax rate of 31.2% and profit growing with sales; and work fictional case A′ (`docs/GOLDEN-CASES.md`) if you can.
-- **Read `docs/DSCR-RESEARCH.md`.** From general knowledge (never an employer's norms), say:
-  - whether the three presets (common, RBI 2020, Schedule III) are right and in the right order;
-  - whether any lender you serve uses the simple average;
+- **Try the `/dscr/` preview** (https://ccr-ba2b6ab9-casbge.finance-tools-9if.pages.dev/dscr/), on a phone too, and say what reads wrong or asks too much; then "merge the PR" for PR #2.
+- **Check the page's assumptions** (`docs/RULES.md`, "What the page assumes until you change it"), above all the tax rate of 31.2% and profit growing with sales.
+- **Work fictional cases A and A′** (`docs/GOLDEN-CASES.md`) in your own Excel at home, or send public worked examples with their source. Never office files (D-BIZ-02).
+- **Read `docs/RULES.md` and `docs/DSCR-RESEARCH.md`.** From general knowledge and published material only (never an employer's norms), say:
+  - whether the four choices and the three presets (common, RBI 2020, Schedule III) are right and in the right order;
+  - whether you know published lender norms that use the simple average, and which lenders' published norms matter first;
   - whether the tax rates by borrower hold for FY 2026-27.
-- **To let a session read the primary texts itself,** allow `rbi.org.in`, `rbidocs.rbi.org.in`, `icai.org` and `bcasonline.org` in the environment's network settings. They are blocked now; the research used secondary sources.
-- Try `/dscr/` on the branch preview (link on PR #2) with fictional case A, on a phone too, and say what reads wrong or asks too much.
-- Work fictional case A (`docs/GOLDEN-CASES.md`) in your own Excel at home, or send public worked examples with their source. Never office files (D-BIZ-02).
-- Read `docs/RULES.md` and say, from general knowledge (not an employer's norms), whether the four choices and the "common" preset are right, and which lenders' published norms matter first. The page shows both as "not yet checked" until then.
+
+  The page shows the method as "not yet checked" until then.
+- **Network settings:** allow `rbi.org.in`, `rbidocs.rbi.org.in`, `icai.org` and `bcasonline.org` so a session can read the primary texts (the research used secondary sources), and `developers.cloudflare.com` and `pages.dev` so it can check `docs/CLOUDFLARE.md` and open previews itself. All are blocked now.
 - The Worker (`docs/CLOUDFLARE.md` §2: create D1 + KV, send the IDs) can wait until the payment session.
-- Allow `developers.cloudflare.com` and `pages.dev` in the environment's network settings (both blocked now), so a session can check `docs/CLOUDFLARE.md` against the docs and open previews itself.
 - Business entity, GST registration and Razorpay account (Phase 0).
 - Before payments: keep the separate Worker (D-TECH-01) or move the API beside the site as Pages Functions (same address, separate preview data per branch)? Branch previews of a separate Worker share the live D1 and KV. Decide with the Cloudflare docs open.
 - A product name and domain (the site says "Loan document tools" for now); at launch remove the `noindex` in `site/public/_headers`.
