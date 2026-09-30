@@ -169,3 +169,26 @@ describe('profit after tax, worked out (fictional case A)', () => {
     expect([loss.pbt, loss.tax, loss.pat].map(Math.round)).toEqual([-141000, 0, -141000]);
   });
 });
+
+describe('figures that start after the loan is drawn (operations start later)', () => {
+  // Case A drawn in October 2026: October to March is the moratorium, so 2026-27 has interest only,
+  // 6 months × 1% of 12,00,000 = 72,000; instalments run from June 2027 to March 2030.
+  const LATE: LoanTerms = { ...LOAN, disbursed: '2026-10' };
+  const PROJ = CASE_A.slice(1).map((y, i) => ({ ...y, fy: ['2027-28', '2028-29', '2029-30'][i] }));
+  it('asks for the first year unless told the figures start later', () => {
+    expect(planStatement(PROJ, LATE, COMMON)).toEqual({ needs: ['Projections for 2026-27: the loan is still running then'] });
+  });
+  it('leaves out a year with no instalment, its interest taken as paid from the project cost', () => {
+    const p = planStatement(PROJ, LATE, COMMON, '2027-28') as Plan;
+    expect(p.beforeStart.map((b) => [b.fy, Math.round(b.interest)])).toEqual([['2026-27', 72000]]);
+    expect(p.statement.rows.map((r) => r.fy)).toEqual(['2027-28', '2028-29', '2029-30']);
+  });
+  it('never leaves out a year with an instalment', () => {
+    expect(planStatement(PROJ.slice(1), LATE, COMMON, '2028-29')).toEqual({ needs: ['Figures for 2027-28: an instalment falls due then'] });
+    expect(planStatement(PROJ, LATE, COMMON, '2027')).toEqual({ needs: ['The first year of figures written like 2026-27, in place of "2027"'] });
+  });
+  it('the solvers work from the same start', () => {
+    const r = maxLoanAmount(PROJ, { ...LATE, amount: undefined }, COMMON, { minimum: 1.2 }, '2027-28');
+    expect('amount' in r && r.plan.beforeStart[0].fy).toBe('2026-27');
+  });
+});

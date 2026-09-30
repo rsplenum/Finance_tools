@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  START, TAX_CHOICES, barText, groupNeeds, loanRead, parseFy, preview, ratioText, rowsOf, tidyAmount, withTaxRate, yearsOf,
+  START, TAX_CHOICES, barText, groupNeeds, loanRead, parseFy, preview, ratioText, rowsOf, tidyAmount, withPlanStart, withTaxRate, yearsOf,
   type Preview, type State,
 } from '../site/src/dscr/model';
 
@@ -186,6 +186,36 @@ describe('one answer for several questions', () => {
     const s = withTaxRate({ ...CASE_A, modes: { ...CASE_A.modes, taxPct: 'years' }, cells: { ...CASE_A.cells, taxPct: ['', '30'] } }, company.pct);
     expect([s.modes.taxPct, s.cells.taxPct[0]]).toEqual(['same', '25.168']);
     expect(preview(s).needs).toEqual(['A target DSCR for the average, the lowest year, or both']);
+  });
+});
+
+describe('a first year with interest only (the owner\'s report: "1 year is not available")', () => {
+  // Drawn in October 2026 with 6 months' moratorium: 2026-27 has only interest, 50,00,000 × 10% ÷ 12 × 6 = 2,50,000.
+  // The projections start in 2027-28, so the first column is left empty.
+  const LATE: State = {
+    ...START, source: 'plan', method: 'common',
+    loan: { amount: '50 L', ratePct: '10', disbursed: '2026-10', moratoriumMonths: '6', instalments: '60', repayment: 'emi' },
+    cells: { pbdit: ['', '18 L', '20 L', '22 L', '24 L', '26 L'], depreciation: ['', '4 L', '3.5 L', '3 L', '2.6 L', '2.2 L'], interestOther: ['1 L'], taxPct: ['25.168'] },
+    modes: { nonCash: 'none', otherLoans: 'none', interestOther: 'same', taxPct: 'same' },
+    target: { average: '1.50', minimum: '1.20' },
+  };
+  it('asks for the year, and offers to start the figures at the first instalment', () => {
+    const p = preview(LATE);
+    expect(p.needs).toEqual(['Profit before interest, depreciation and tax for 2026-27', 'Depreciation for 2026-27']);
+    expect(p.startOffer).toEqual({ interest: [{ fy: '2026-27', amount: 'Rs. 2,50,000' }], starts: ['2027-28'] });
+  });
+  it('taking the offer keeps each figure under its year, completes the preview and says what was left out', () => {
+    const s = withPlanStart(LATE, '2027-28');
+    expect(yearsOf(s).years).toEqual(['2027-28', '2028-29', '2029-30', '2030-31', '2031-32']);
+    expect([s.cells.pbdit[0], s.cells.depreciation[4], s.cells.taxPct[0]]).toEqual(['18 L', '2.2 L', '25.168']);
+    const p = preview(s);
+    expect([p.needs, p.startOffer, p.statement?.years[0]]).toEqual([[], undefined, '2027-28']);
+    expect(p.beforeStart).toBe('Left out: 2026-27, before your figures start. Its interest (Rs. 2,50,000) is taken as paid from the project cost (capitalised), not from profits.');
+    expect(loanRead(yearsOf(s))).toMatch(/The loan runs over 2026-27 to 2031-32\.$/);
+  });
+  it('putting the year back restores the columns as they were', () => {
+    const back = withPlanStart(withPlanStart(LATE, '2027-28'), undefined);
+    expect([back.cells.pbdit, yearsOf(back).years[0]]).toEqual([LATE.cells.pbdit, '2026-27']);
   });
 });
 

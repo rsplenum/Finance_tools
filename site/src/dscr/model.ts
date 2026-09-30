@@ -9,6 +9,7 @@ import {
   type Amortization, type Component, type Definition, type Limit, type LoanInput, type ProfitYear, type ProjectionYear, type Statement,
   type Target, type YearFigures,
 } from '../../../engine/dscr';
+import { fyOf } from '../../../engine/loan';
 import { parseAmount, parseMonth } from '../../../engine/parse';
 import { TAX_RATES } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
@@ -38,6 +39,8 @@ export interface State {
   /** From the loan terms: the loan, and how many years to show when more than the loan runs over. */
   loan: LoanText;
   planYears?: number;
+  /** The first year of the projections, when operations start after the loan's first year (only a year with no instalment is left out). */
+  planStart?: string;
   /** What was typed for each row, by year number (not by year name, so moving the first year keeps the figures). */
   cells: Record<string, string[]>;
   modes: Record<string, RowMode>;
@@ -180,7 +183,22 @@ export function targetOf(s: State): Target {
   return t;
 }
 
-export interface Years { years: string[]; needs: string[]; loanYears?: number; firstInstalment?: string; lastInstalment?: string }
+export interface Years {
+  /** The years asked for, and anything still needed to know them. */
+  years: string[];
+  needs: string[];
+  /** From the loan terms: the years it runs over; how many of those are asked for; its first and last instalments. */
+  loanSpan?: string[];
+  loanYears?: number;
+  firstInstalment?: string;
+  lastInstalment?: string;
+  /** Loan years before the first instalment's year, which the figures may leave out; those left out; the year the figures start. */
+  leading: string[];
+  skipped: string[];
+  start?: string;
+}
+
+const fyOfMonth = (ym: string) => fyOf(Number(ym.slice(0, 4)), Number(ym.slice(5, 7)));
 
 /** The years of the figures: typed for own figures; for projections, the years the loan runs over, and any added. */
 export function yearsOf(s: State): Years {
@@ -188,14 +206,30 @@ export function yearsOf(s: State): Years {
     const first = parseFy(s.firstYear), count = numberOf(s.yearCount), needs: string[] = [];
     if (!first) needs.push('The first year, like 2026-27');
     if (count === undefined || !Number.isInteger(count) || count < 1 || count > MAX_YEARS) needs.push(`The number of years, 1 to ${MAX_YEARS}`);
-    return { years: needs.length ? [] : fyRange(first as string, count as number), needs };
+    return { years: needs.length ? [] : fyRange(first as string, count as number), needs, leading: [], skipped: [] };
   }
   const t = loanTimeline(loanInput(s));
-  if ('needs' in t) return { years: [], needs: [] }; // the loan's own needs list what is missing
+  if ('needs' in t) return { years: [], needs: [], leading: [], skipped: [] }; // the loan's own needs list what is missing
+  const all = fyRange(t.years[0], Math.min(MAX_YEARS, Math.max(t.years.length, s.planYears ?? 0)));
+  const due = fyOfMonth(t.firstInstalment), leading = t.years.filter((fy) => fy < due);
+  const skip = s.planStart && s.planStart > t.years[0] && t.years.includes(s.planStart) ? all.indexOf(s.planStart) : 0;
   return {
-    years: fyRange(t.years[0], Math.min(MAX_YEARS, Math.max(t.years.length, s.planYears ?? 0))),
-    needs: [], loanYears: t.years.length, firstInstalment: t.firstInstalment, lastInstalment: t.lastInstalment,
+    years: all.slice(skip), needs: [], loanSpan: t.years, loanYears: t.years.length - skip,
+    firstInstalment: t.firstInstalment, lastInstalment: t.lastInstalment,
+    leading, skipped: all.slice(0, skip), ...(skip ? { start: s.planStart } : {}),
   };
+}
+
+/**
+ * Start the figures in a later year (or back at the loan's first year when `start` is undefined). What was typed moves
+ * with its year, so each figure stays under the year it was typed for; one figure for every year stays as it is.
+ */
+export function withPlanStart(s: State, start?: string): State {
+  const next: State = { ...s, planStart: start }, shift = yearsOf(next).skipped.length - yearsOf(s).skipped.length;
+  if (!shift) return next;
+  const cells = Object.fromEntries(Object.entries(s.cells).map(([k, v]) =>
+    [k, s.modes[k] === 'same' ? v : shift > 0 ? v.slice(shift) : [...Array<string>(-shift).fill(''), ...v]]));
+  return { ...next, cells };
 }
 
 // ---- The preview ----
@@ -225,6 +259,10 @@ export interface Preview {
   /** Largest loan on these terms; `amount` when it differs from the one entered, to offer it. */
   largest?: { text: string; amount?: number };
   fewest?: { text: string; instalments?: number };
+  /** Loan years with no instalment and no figures yet: offer to start the figures later (their interest from the schedule). */
+  startOffer?: { interest: { fy: string; amount: string }[]; starts: string[] };
+  /** The years left out because the figures start later, in words. */
+  beforeStart?: string;
 }
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -235,8 +273,9 @@ const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
 /** When the loan's instalments fall, read back in words so the moratorium can be checked. */
 export function loanRead(y: Years): string {
-  if (!y.firstInstalment || !y.lastInstalment || !y.loanYears) return '';
-  const span = y.loanYears > 1 ? `${y.years[0]} to ${y.years[y.loanYears - 1]}` : y.years[0];
+  const l = y.loanSpan;
+  if (!y.firstInstalment || !y.lastInstalment || !l?.length) return '';
+  const span = l.length > 1 ? `${l[0]} to ${l[l.length - 1]}` : l[0];
   return y.firstInstalment === y.lastInstalment
     ? `One instalment, at the end of ${monthText(y.firstInstalment)}. The loan runs over ${span}.`
     : `First instalment at the end of ${monthText(y.firstInstalment)}, the last at the end of ${monthText(y.lastInstalment)}. The loan runs over ${span}.`;
@@ -379,19 +418,31 @@ export function preview(s: State): Preview {
   if ('months' in am) p.schedule = scheduleView(am, s.loan.repayment);
   else if ('blocked' in am) p.blocked = am.blocked;
   const proj = y.years.map((fy, i) => ({ fy, ...figures(i) }) as ProjectionYear);
-  const r = planStatement(proj, loan, def);
+  const r = planStatement(proj, loan, def, y.start);
+  // A loan drawn late in a year often has a first year with interest only, before the projections start. When its
+  // figures are missing, offer to start them later; never assume it.
+  if ('needs' in r && !y.start && 'months' in am) {
+    const missing = y.leading.filter((fy) => r.needs.some((n) => n.includes(` for ${fy}`)));
+    if (missing.length) p.startOffer = {
+      interest: am.years.filter((d) => y.leading.includes(d.fy)).map((d) => ({ fy: d.fy, amount: rs(d.interest) })),
+      starts: [...y.leading.slice(1), fyOfMonth(y.firstInstalment as string)],
+    };
+  }
   // Until the loan's dates are in there are no years to ask for; the loan's own needs say what is missing.
   if ('needs' in r) p.needs.push(...oneRepaymentNeed(groupNeeds(r.needs.filter((n) => y.years.length || n !== 'At least one year of figures'), y.years, rows.map((x) => x.label))));
   else if ('blocked' in r) p.blocked ??= r.blocked;
   else {
     fillStatement(p, r.statement, target, def, r.years, r.profit);
     if (!tNeeds.length) p.verdict = verdictOf(r.statement, target);
+    const b = r.beforeStart;
+    if (b.length) p.beforeStart = `Left out: ${andList(b.map((x) => x.fy))}, before your figures start. ${b.length > 1 ? 'Their' : 'Its'} interest `
+      + `(${andList(b.map((x) => rs(x.interest)))}) is taken as paid from the project cost (capitalised), not from profits.`;
   }
   p.needs.push(...tNeeds);
   if (tNeeds.length || !y.years.length || p.blocked) return p;
 
   const { amount, ...terms } = loan;
-  const most = maxLoanAmount(proj, terms, def, target);
+  const most = maxLoanAmount(proj, terms, def, target, y.start);
   if ('amount' in most) p.largest = {
     text: `The largest loan on these terms is ${rs(most.amount)}, limited by ${limitedBy(most.limitedBy)}.`,
     ...(most.amount !== amount ? { amount: most.amount } : {}),
@@ -400,7 +451,7 @@ export function preview(s: State): Preview {
   else if ('blocked' in most) p.blocked = most.blocked;
 
   if (amount !== undefined) {
-    const few = shortestRepayment(proj, { ...loan, instalments: undefined }, def, target);
+    const few = shortestRepayment(proj, { ...loan, instalments: undefined }, def, target, y.start);
     if ('instalments' in few) p.fewest = {
       text: `The fewest instalments for ${rs(amount)} are ${few.instalments} ${loan.frequency === 'quarterly' ? 'quarterly' : 'monthly'}.`,
       ...(few.instalments !== loan.instalments ? { instalments: few.instalments } : {}),

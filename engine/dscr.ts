@@ -35,7 +35,9 @@ export interface Row { fy: string; available: number; service: number; counted: 
 export interface Statement { rows: Row[]; average?: number; minimum?: { dscr: number; fy: string }; notes: string[] }
 /** How profit after tax is reached in a projected year (planning mode). */
 export interface ProfitYear { fy: string; pbdit: number; depreciation: number; nonCash: number; interestTL: number; interestOther: number; pbt: number; tax: number; pat: number }
-export interface Plan { schedule: YearDebt[]; years: YearFigures[]; profit: ProfitYear[]; statement: Statement }
+/** A year before the figures start (operations start later): no instalment falls in it, and its interest is paid from the project cost. */
+export interface BeforeStart { fy: string; interest: number }
+export interface Plan { schedule: YearDebt[]; years: YearFigures[]; profit: ProfitYear[]; statement: Statement; beforeStart: BeforeStart[] }
 /** The repayment schedule month by month, its totals by financial year, and the level instalment (EMI or principal). */
 export interface Amortization { months: MonthRow[]; years: YearDebt[]; level: number }
 /** What stops a larger loan or a shorter repayment: the average, the lowest year, or a year with no cash to pay from. */
@@ -233,9 +235,20 @@ function scheduleDisagrees(debt: YearDebt[], check: YearDebt[]): string {
   return '';
 }
 
-function plan(proj: ProjectionYear[], loan: LoanTerms, def: Definition): Plan | Needs | Blocked {
-  const debt = schedule(loan);
-  const needs = coverageNeeds(debt, proj);
+/** The first year of figures, when given, must be a financial year. */
+const startNeeds = (start?: string) =>
+  start === undefined || isFy(start) ? [] : [`The first year of figures written like 2026-27, in place of "${start}"`];
+
+/**
+ * `start`: the first year with figures, when operations start after the loan is drawn. The years before it must have no
+ * instalment; their interest is taken as paid from the project cost (capitalised), and they are left out of the statement.
+ */
+function plan(all: ProjectionYear[], loan: LoanTerms, def: Definition, start?: string): Plan | Needs | Blocked {
+  const debt = schedule(loan), proj = start ? all.filter((y) => y.fy >= start) : all;
+  const early = start ? debt.filter((d) => d.fy < start) : [];
+  const due = early.filter((d) => d.principal > 0).map((d) => `Figures for ${d.fy}: an instalment falls due then`);
+  if (due.length) return { needs: due };
+  const needs = coverageNeeds(debt.filter((d) => !start || d.fy >= start), proj);
   if (needs.length) return { needs };
   const off = scheduleDisagrees(debt, scheduleCheck(loan));
   if (off) return blocked(off);
@@ -255,13 +268,13 @@ function plan(proj: ProjectionYear[], loan: LoanTerms, def: Definition): Plan | 
   const statement = computeStatement(years, def, DATA), check = planCheck(proj, loan, def);
   const where = disagreement(statement, check)
     || profit.map((x, i) => (money(x.pbt, check.rows[i]?.pbt ?? NaN) && money(x.tax, check.rows[i]?.tax ?? NaN) ? '' : `the tax in ${x.fy}`)).find(Boolean);
-  return where ? blocked(where) : { schedule: debt, years, profit, statement };
+  return where ? blocked(where) : { schedule: debt, years, profit, statement, beforeStart: early.map((d) => ({ fy: d.fy, interest: d.interest })) };
 }
 
 /** DSCR from projections and loan terms: the engine works out the loan's interest, the profit after tax and the DSCR. */
-export function planStatement(proj: ProjectionYear[], loan: LoanInput, def: Definition): Plan | Needs | Blocked {
-  const needs = [...definitionNeeds(def), ...loanNeeds(loan), ...projectionNeeds(proj, def)];
-  return needs.length ? { needs } : plan(proj, loan as LoanTerms, def);
+export function planStatement(proj: ProjectionYear[], loan: LoanInput, def: Definition, start?: string): Plan | Needs | Blocked {
+  const needs = [...definitionNeeds(def), ...loanNeeds(loan), ...projectionNeeds(proj, def), ...startNeeds(start)];
+  return needs.length ? { needs } : plan(proj, loan as LoanTerms, def, start);
 }
 
 /** The repayment schedule, every month and by year, shown only when the closed-form check agrees with it. */
@@ -323,10 +336,10 @@ function solve<T>(f: () => T): T | Needs | Blocked {
 }
 
 /** Largest loan, to the rupee, whose DSCR meets the target on the given terms. */
-export function maxLoanAmount(proj: ProjectionYear[], loan: LoanInput, def: Definition, target: Target): AmountAnswer | NoAnswer | Needs | Blocked {
-  const needs = [...definitionNeeds(def), ...loanNeeds({ ...loan, amount: 1 }), ...projectionNeeds(proj, def), ...targetNeeds(target)];
+export function maxLoanAmount(proj: ProjectionYear[], loan: LoanInput, def: Definition, target: Target, start?: string): AmountAnswer | NoAnswer | Needs | Blocked {
+  const needs = [...definitionNeeds(def), ...loanNeeds({ ...loan, amount: 1 }), ...projectionNeeds(proj, def), ...targetNeeds(target), ...startNeeds(start)];
   if (needs.length) return { needs };
-  const at = (amount: number) => must(plan(proj, { ...(loan as LoanTerms), amount }, def));
+  const at = (amount: number) => must(plan(proj, { ...(loan as LoanTerms), amount }, def, start));
   return solve((): AmountAnswer | NoAnswer => {
     const first = shortfall(at(1).statement, target);
     if (first) return { none: `No loan amount meets the target: even at Rs. 1, ${limitText(first)}.` };
@@ -351,8 +364,8 @@ export function maxLoanAmount(proj: ProjectionYear[], loan: LoanInput, def: Defi
 }
 
 /** Fewest instalments whose DSCR meets the target, within the years the projections cover. */
-export function shortestRepayment(proj: ProjectionYear[], loan: LoanInput, def: Definition, target: Target): TenureAnswer | NoAnswer | Needs | Blocked {
-  const needs = [...definitionNeeds(def), ...loanNeeds({ ...loan, instalments: 1 }), ...projectionNeeds(proj, def), ...targetNeeds(target)];
+export function shortestRepayment(proj: ProjectionYear[], loan: LoanInput, def: Definition, target: Target, start?: string): TenureAnswer | NoAnswer | Needs | Blocked {
+  const needs = [...definitionNeeds(def), ...loanNeeds({ ...loan, instalments: 1 }), ...projectionNeeds(proj, def), ...targetNeeds(target), ...startNeeds(start)];
   if (needs.length) return { needs };
   const last = proj.map((p) => p.fy).sort().at(-1) as string;
   return solve((): TenureAnswer | NoAnswer => {
@@ -361,7 +374,7 @@ export function shortestRepayment(proj: ProjectionYear[], loan: LoanInput, def: 
       const terms = { ...(loan as LoanTerms), instalments: n };
       const end = monthAfter(terms.disbursed, termMonths(terms) - 1);
       if (fyOf(end.year, end.month) > last) break;
-      const p = must(plan(proj, terms, def));
+      const p = must(plan(proj, terms, def, start));
       limit = shortfall(p.statement, target);
       if (!limit) return { instalments: n, plan: p };
       tried = n;

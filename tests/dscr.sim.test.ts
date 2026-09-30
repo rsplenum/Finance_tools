@@ -70,7 +70,7 @@ function meets(s: Statement, t: Target): boolean {
 function runSeed(seed: number): { cases: number; violations: string[]; seen: Record<string, number> } {
   const rnd = random(seed), violations: string[] = [];
   let cases = 0;
-  const seen: Record<string, number> = { amount: 0, noAmount: 0, instalments: 0, noInstalments: 0 };
+  const seen: Record<string, number> = { amount: 0, noAmount: 0, instalments: 0, noInstalments: 0, lateStart: 0 };
   while (cases < CASES) {
     const c = makeCase(rnd);
     if (!c) continue;
@@ -115,6 +115,21 @@ function runSeed(seed: number): { cases: number; violations: string[]; seen: Rec
         if (Math.abs(interest - y.interest) > Math.max(0.01, y.interest * 1e-9)) bad(`${y.fy}: months add to interest ${interest}, the year says ${y.interest}`);
       });
       if (am.months.filter((m) => m.instalment).length !== loan.instalments) bad('instalment count differs from the terms');
+    }
+
+    // Figures that start after an interest-only first year: that year is left out, with its interest, and every other
+    // year's figures stay exactly as they were.
+    if (p.schedule.length > 1 && p.schedule[0].principal === 0 && proj[0].fy === p.schedule[0].fy) {
+      seen.lateStart++;
+      const later = planStatement(proj.slice(1), loan, def, p.schedule[1].fy);
+      if (!('statement' in later)) bad(`starting in ${p.schedule[1].fy} gave ${JSON.stringify(later).slice(0, 120)}`);
+      else {
+        if (later.beforeStart.length !== 1 || later.beforeStart[0].fy !== p.schedule[0].fy || Math.abs(later.beforeStart[0].interest - p.schedule[0].interest) > 0.01) bad('left-out year or its interest differs from the schedule');
+        later.statement.rows.forEach((x, i) => {
+          const same = p.statement.rows[i + 1];
+          if (x.fy !== same.fy || Math.abs(x.available - same.available) > 0.01 || Math.abs(x.service - same.service) > 0.01) bad(`${x.fy} changed when ${p.schedule[0].fy} was left out`);
+        });
+      }
     }
 
     // Statement: the lowest year is the lowest counted DSCR, and the average lies between the lowest and the highest.
@@ -183,7 +198,7 @@ describe('simulation', () => {
   for (const seed of SEEDS) {
     it(`seed ${seed}`, () => {
       const { cases, violations, seen } = runSeed(seed);
-      console.log(`simulation seed ${seed}: ${cases} cases, ${violations.length} violations (largest loan found ${seen.amount}, none ${seen.noAmount}; shortest repayment found ${seen.instalments}, none ${seen.noInstalments})`);
+      console.log(`simulation seed ${seed}: ${cases} cases, ${violations.length} violations (largest loan found ${seen.amount}, none ${seen.noAmount}; shortest repayment found ${seen.instalments}, none ${seen.noInstalments}; interest-only first year left out ${seen.lateStart})`);
       expect(violations.slice(0, 10)).toEqual([]);
     }, 60000);
   }

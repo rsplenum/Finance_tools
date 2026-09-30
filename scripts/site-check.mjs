@@ -293,6 +293,43 @@ async function layout(page, v, step) {
   await ctx.close();
 }
 
+// A loan drawn in October: 2026-27 has interest only. Projections that start in 2027-28 may leave it out, by choice.
+{
+  const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await page.check('#fld-source-plan');
+  await page.check('#fld-method-common');
+  await leave(page, '#fld-loanAmount', '12 L');
+  await leave(page, '#fld-ratePct', '12');
+  await leave(page, '#fld-disbursed', '2026-10');
+  await page.check('#fld-repayment-quarterly');
+  await leave(page, '#fld-moratoriumMonths', '6');
+  await leave(page, '#fld-instalments', '12');
+  const later = ['2027-28', '2028-29', '2029-30'], pbdit = ['7,50,000', '8,00,000', '8,00,000'], dep = ['1,30,000', '1,10,000', '1,00,000'];
+  for (const [i, fy] of later.entries()) {
+    await leave(page, `#fld-pbdit-${fy}`, pbdit[i]);
+    await leave(page, `#fld-depreciation-${fy}`, dep[i]);
+  }
+  await page.check('#fld-nonCash-none');
+  await page.check('#fld-interestOther-same');
+  await leave(page, '#fld-interestOther-2026-27', '50000');
+  await page.check('#fld-otherLoansInterest-none');
+  await page.check('#fld-taxPct-same');
+  await leave(page, '#fld-taxPct-2026-27', '25%');
+  await page.getByTestId('use-examples').click();
+  // 6 months of interest at 1% of 12,00,000 = 72,000 in 2026-27.
+  await expectText(page, v, 'dscr-status', 'Provisional: 2 still needed', 'a first year with interest only');
+  await expectText(page, v, page.getByTestId('start-offer').first().locator('p'), 'No instalment falls in 2026-27, only interest of Rs. 72,000. If your projections start later, leave it out: the interest is then taken as paid from the project cost, not from profits.', 'the offer to start later');
+  await page.getByTestId('start-2027-28').first().click();
+  await expectText(page, v, 'dscr-status', 'Complete', 'figures starting in 2027-28');
+  await expectText(page, v, 'dscr-before-start', 'Left out: 2026-27, before your figures start. Its interest (Rs. 72,000) is taken as paid from the project cost (capitalised), not from profits.', 'figures starting in 2027-28');
+  await expectValue(page, v, '#fld-pbdit-2027-28', '7,50,000', 'each figure stays under its year');
+  if (await page.locator('#fld-pbdit-2026-27').count()) v('2026-27 is still asked after it was left out');
+  await layout(page, v, 'figures starting in 2027-28');
+  await page.getByTestId('start-undo').click();
+  await expectText(page, v, 'dscr-status', 'Provisional: 2 still needed', 'after putting 2026-27 back');
+  await ctx.close();
+}
+
 // Own yearly figures (tests/dscr.test.ts, "which years count"): the loan amount is not asked, and the year with no
 // instalment is not counted.
 {

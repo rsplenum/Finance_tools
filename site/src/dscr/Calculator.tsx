@@ -13,7 +13,7 @@ import { inr, rs } from '../../../engine/util';
 import { BUTTON, CellInput, Choice, HINT, Section, SourceNote, TextField } from '../fields';
 import {
   EXAMPLE_TARGETS, OPTION_KEYS, START, TAX_CHOICES, amountOf, barText, choicesOf, loanRead, modeOf, numberOf, parseFy, presetText,
-  preview, rowsOf, targetText, tidyAmount, withTaxRate, yearsOf,
+  preview, rowsOf, targetText, tidyAmount, withPlanStart, withTaxRate, yearsOf,
   type LoanText, type Preview, type RowDef, type RowMode, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 
@@ -34,7 +34,7 @@ export function DscrCalculator() {
     <Start s={s} update={update} />
     {p.started && <>
       {s.source === 'plan' ? <Loan s={s} update={update} y={y} p={p} /> : <YearsSection s={s} update={update} y={y} />}
-      <Figures s={s} update={update} rows={rows} y={y} />
+      <Figures s={s} update={update} rows={rows} y={y} p={p} />
       <TargetSection s={s} update={update} />
       <PreviewSection p={p} update={update} />
       <div class="sticky bottom-0 z-10 -mx-4 mt-10 border-t border-slate-200 bg-white px-4 py-2.5 dark:border-slate-800 dark:bg-slate-950">
@@ -127,9 +127,26 @@ function YearsSection({ s, update, y }: { s: State; update: Update; y: Years }) 
   </Section>;
 }
 
-function Figures({ s, update, rows, y }: { s: State; update: Update; rows: RowDef[]; y: Years }) {
+/** A first year with interest only and no figures: offer to start the figures later, never assume it. */
+function StartOffer({ p, update, short }: { p: Preview; update: Update; short?: boolean }) {
+  const o = p.startOffer;
+  if (!o) return null;
+  const years = o.interest.map((i) => i.fy);
+  return <div data-testid="start-offer" class="mt-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
+    {short ? <p>No figures for {years.join(' or ')}?</p>
+      : <p>No instalment falls in {years.join(' or ')}, only interest{o.interest.length > 1
+        ? ` (${o.interest.map((i) => `${i.amount} in ${i.fy}`).join(', ')})` : ` of ${o.interest[0].amount}`}.
+        {' '}If your projections start later, leave {years.length > 1 ? 'those years' : 'it'} out: the interest is then taken as paid from the project cost, not from profits.</p>}
+    <div class="mt-2 flex flex-wrap gap-2">
+      {o.starts.map((fy) => <button key={fy} type="button" data-testid={`start-${fy}`} class={BUTTON}
+        onClick={() => update((x) => withPlanStart(x, fy))}>My figures start in {fy}</button>)}
+    </div>
+  </div>;
+}
+
+function Figures({ s, update, rows, y, p }: { s: State; update: Update; rows: RowDef[]; y: Years; p: Preview }) {
   const years = y.years, last = years[years.length - 1];
-  const setYears = (n: number) => update((x) => ({ ...x, planYears: n }));
+  const setYears = (n: number) => update((x) => ({ ...x, planYears: y.skipped.length + n }));
   return <Section id="figures" title="Yearly figures">
     {!years.length
       ? <p class={`mt-2 ${HINT}`}>{s.source === 'plan'
@@ -140,6 +157,11 @@ function Figures({ s, update, rows, y }: { s: State; update: Update; rows: RowDe
           In rupees, like 1,50,000 or 1.5 L{rows.some((r) => r.negative) ? '; a loss with a minus, like -50,000' : ''}.
           {' '}Tick None where there is none in any year.
         </p>
+        <StartOffer p={p} update={update} />
+        {y.skipped.length > 0 && <div data-testid="start-set" class="mt-4 flex flex-wrap items-center gap-2 text-sm text-slate-800 dark:text-slate-200">
+          <span>Your figures start in {years[0]}; {y.skipped.join(' and ')} {y.skipped.length > 1 ? 'are' : 'is'} left out.</span>
+          <button type="button" data-testid="start-undo" class={BUTTON} onClick={() => update((x) => withPlanStart(x, undefined))}>Put {y.skipped[0]} back</button>
+        </div>}
         {s.source === 'plan' && <div class="mt-4">
           <p class="text-sm font-medium text-slate-900 dark:text-slate-100">Tax rate for every year, by borrower</p>
           <div class="mt-1 flex flex-wrap gap-2">
@@ -266,7 +288,9 @@ function PreviewSection({ p, update }: { p: Preview; update: Update }) {
       <p class="font-medium">Still needed</p>
       <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>
     </div>}
+    <StartOffer p={p} update={update} short />
     {p.statement && <StatementTable st={p.statement} />}
+    {p.beforeStart && <p data-testid="dscr-before-start" class={`mt-2 ${HINT}`}>{p.beforeStart}</p>}
     {p.notCounted && <p data-testid="dscr-not-counted" class={`mt-2 ${HINT}`}>{p.notCounted}</p>}
     {p.notes.length > 0 && <ul data-testid="dscr-notes" class="mt-2 space-y-0.5 text-sm text-amber-900 dark:text-amber-200">{p.notes.map((n) => <li key={n}>{n}</li>)}</ul>}
     {p.schedule && <Schedule sch={p.schedule} />}

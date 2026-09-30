@@ -18,6 +18,7 @@ The test figures are model-worked until the owner confirms fictional case A (`do
     - `dscrStatement` from the borrower's own figures;
     - `planStatement` from projections and loan terms, with the profit build-up and tax;
     - `amortization`, `maxLoanAmount`, `shortestRepayment` and `loanTimeline`;
+    - an optional first year of figures (`start`) that leaves out an interest-only first year by the user's choice (D-POL-04);
     - a list of facts needed instead of figures.
   - `engine/dscr-check.ts`: the second computation, closed-form month by month. Figures are withheld if it disagrees.
   - Data: the method and three presets in `engine/data/dscr.json`; tax rates by borrower in `engine/data/tax.json`.
@@ -34,7 +35,7 @@ The test figures are model-worked until the owner confirms fictional case A (`do
     - buttons: `tax-<borrower>`, `clear-all`.
 - `site/`: home, `/dscr/`, 404; dark mode without a flash. `worker/`: `GET /health`.
 - Checks, all in CI:
-  - `npm test` (65, including the simulation);
+  - `npm test` (72, including the simulation);
   - `npm run typecheck`;
   - `npm run rules-doc -- --check`;
   - `npm run build`;

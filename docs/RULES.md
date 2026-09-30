@@ -60,6 +60,7 @@ Shown as examples only, never used unless chosen. Each lender sets its own.
 - Tax = tax rate × profit before tax, and nil in a year with a loss. Losses carried forward are not set off, so tax may be overstated in the year after a loss (the DSCR errs low).
 - Profit before interest, depreciation and tax is taken after lease rentals.
 - Years are Indian financial years, April to March.
+- When the figures start after the loan's first year (operations start later), no instalment may fall before they start; the interest before then is taken as paid from the project cost (capitalised, as Ind AS 23 does for an asset under construction), and those years are left out of the statement.
 
 ## Tax rates the page can fill in
 
