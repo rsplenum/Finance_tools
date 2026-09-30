@@ -27,6 +27,7 @@ State at 30-09-2026: P0 done on a draft PR (branch `ccr-ba2b6ab9-casbge`). `site
 - Worked DSCR figures from 3–5 real (anonymised) files for golden tests.
 - Which lenders' DSCR definitions and benchmarks come first.
 - Business entity, GST registration and Razorpay account (Phase 0).
+- Before payments: keep the separate Worker (D-TECH-01) or move the API beside the site as Pages Functions (same address, separate preview data per branch)? Branch previews of a separate Worker share the live D1 and KV. Decide with the Cloudflare docs open.
 - A product name and domain (the site says "Loan document tools" for now); at launch remove the `noindex` in `site/public/_headers`.
 - First region and cities for construction rates (Phase 2).
 - Main customer first: DSAs (plans) or borrowers (one-off).
