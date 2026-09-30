@@ -14,7 +14,7 @@ const CASE_A: State = {
   ...START, source: 'plan', method: 'common',
   loan: { amount: '12 L', ratePct: '12', disbursed: '2026-04', moratoriumMonths: '6', instalments: '12', repayment: 'quarterly' },
   cells: { pbdit: ['5,00,000', '7,50,000', '8,00,000', '8,00,000'], depreciation: ['1,50,000', '1,30,000', '1,10,000', '1,00,000'], interestOther: ['50,000'], taxPct: ['25'] },
-  modes: { nonCash: 'none', otherLoans: 'none', interestOther: 'same', taxPct: 'same' },
+  modes: { pbdit: 'years', depreciation: 'years', nonCash: 'none', otherLoans: 'none', interestOther: 'same', taxPct: 'same' },
 };
 const TARGETS = { average: '1.50', minimum: '1.20' };
 /** A line of the DSCR statement, by its id or its label. */
@@ -191,31 +191,65 @@ describe('one answer for several questions', () => {
 
 describe('a first year with interest only (the owner\'s report: "1 year is not available")', () => {
   // Drawn in October 2026 with 6 months' moratorium: 2026-27 has only interest, 50,00,000 × 10% ÷ 12 × 6 = 2,50,000.
-  // The projections start in 2027-28, so the first column is left empty.
+  // The projections, typed year by year, start in 2027-28, so the first column is left empty.
   const LATE: State = {
     ...START, source: 'plan', method: 'common',
     loan: { amount: '50 L', ratePct: '10', disbursed: '2026-10', moratoriumMonths: '6', instalments: '60', repayment: 'emi' },
     cells: { pbdit: ['', '18 L', '20 L', '22 L', '24 L', '26 L'], depreciation: ['', '4 L', '3.5 L', '3 L', '2.6 L', '2.2 L'], interestOther: ['1 L'], taxPct: ['25.168'] },
-    modes: { nonCash: 'none', otherLoans: 'none', interestOther: 'same', taxPct: 'same' },
+    modes: { pbdit: 'years', depreciation: 'years', nonCash: 'none', otherLoans: 'none', interestOther: 'same', taxPct: 'same' },
     target: { average: '1.50', minimum: '1.20' },
   };
-  it('asks for the year, and offers to start the figures at the first instalment', () => {
+  it('asks which year the figures start in, and shows no statement until answered', () => {
     const p = preview(LATE);
-    expect(p.needs).toEqual(['Profit before interest, depreciation and tax for 2026-27', 'Depreciation for 2026-27']);
-    expect(p.startOffer).toEqual({ interest: [{ fy: '2026-27', amount: 'Rs. 2,50,000' }], starts: ['2027-28'] });
+    expect(p.needs).toEqual([
+      'The first year of your figures: 2026-27 or 2027-28',
+      'Profit before interest, depreciation and tax for 2026-27', 'Depreciation for 2026-27',
+    ]);
+    expect([p.leadingInterest, p.statement]).toEqual([[{ fy: '2026-27', amount: 'Rs. 2,50,000' }], undefined]);
   });
-  it('taking the offer keeps each figure under its year, completes the preview and says what was left out', () => {
+  it('starting in 2027-28 keeps each figure under its year, completes the preview and says what was left out', () => {
     const s = withPlanStart(LATE, '2027-28');
     expect(yearsOf(s).years).toEqual(['2027-28', '2028-29', '2029-30', '2030-31', '2031-32']);
-    expect([s.cells.pbdit[0], s.cells.depreciation[4], s.cells.taxPct[0]]).toEqual(['18 L', '2.2 L', '25.168']);
+    expect([s.cells.pbdit[0], s.cells.depreciation[4], s.cells.taxPct[0], s.cells.interestOther[0]]).toEqual(['18 L', '2.2 L', '25.168', '1 L']);
     const p = preview(s);
-    expect([p.needs, p.startOffer, p.statement?.years[0]]).toEqual([[], undefined, '2027-28']);
+    expect([p.needs, p.statement?.years[0]]).toEqual([[], '2027-28']);
     expect(p.beforeStart).toBe('Left out: 2026-27, before your figures start. Its interest (Rs. 2,50,000) is taken as paid from the project cost (capitalised), not from profits.');
     expect(loanRead(yearsOf(s))).toMatch(/The loan runs over 2026-27 to 2031-32\.$/);
   });
-  it('putting the year back restores the columns as they were', () => {
-    const back = withPlanStart(withPlanStart(LATE, '2027-28'), undefined);
+  it('starting in 2026-27 asks for its figures; going back restores the columns', () => {
+    expect(preview(withPlanStart(LATE, '2026-27')).needs).toEqual(['Profit before interest, depreciation and tax for 2026-27', 'Depreciation for 2026-27']);
+    const back = withPlanStart(withPlanStart(LATE, '2027-28'), '2026-27');
     expect([back.cells.pbdit, yearsOf(back).years[0]]).toEqual([LATE.cells.pbdit, '2026-27']);
+  });
+});
+
+describe('a few answers instead of every year (the owner: "that is the job it is supposed to do")', () => {
+  // 50 L at 10%, EMI over 60 months from April 2027 (drawn April 2027, no moratorium): 5 years, 2027-28 to 2031-32.
+  const SHORT: State = {
+    ...START, source: 'plan', method: 'common',
+    loan: { amount: '50 L', ratePct: '10', disbursed: '2027-04', moratoriumMonths: '0', instalments: '60', repayment: 'emi' },
+    cells: { pbdit: ['18 L'], depreciation: ['4 L'], interestOther: ['1 L'] }, rates: { pbdit: '10' },
+    modes: { nonCash: 'none', otherLoans: 'none', interestOther: 'same' }, target: { average: '1.50', minimum: '1.20' },
+  };
+  it('profit grows from one figure and one rate; depreciation and interest are one figure each', () => {
+    const s = withTaxRate(SHORT, '25.168'), p = preview(s);
+    expect(p.needs).toEqual([]);
+    // 18,00,000 growing 10% a year: 19,80,000, 21,78,000, 23,95,800, 26,35,380.
+    expect(line(p, 'pbdit')).toEqual(['18,00,000', '19,80,000', '21,78,000', '23,95,800', '26,35,380']);
+    expect(line(p, 'Less: depreciation')).toEqual(['4,00,000', '4,00,000', '4,00,000', '4,00,000', '4,00,000']);
+  });
+  it('names each missing answer once, never a line per year', () => {
+    const p = preview({ ...SHORT, rates: {}, modes: { otherLoans: 'none', interestOther: 'same' } });
+    expect(p.needs).toEqual([
+      'Profit before interest, depreciation and tax: growth a year (%)',
+      'Other non-cash charges: none, or how much',
+      'Tax rate (%), one figure for every year',
+      'A target DSCR for the average, the lowest year, or both',
+    ].filter((n) => !n.startsWith('A target')));
+  });
+  it('depreciation on the written-down value falls by its rate: 9,00,000 at 15% gives 7,65,000 then 6,50,250', () => {
+    const s = withTaxRate({ ...SHORT, cells: { ...SHORT.cells, depreciation: ['9 L'] }, rates: { pbdit: '10', depreciation: '15' }, modes: { ...SHORT.modes, depreciation: 'fall' } }, '25.168');
+    expect(line(preview(s), 'Less: depreciation')?.slice(0, 3)).toEqual(['9,00,000', '7,65,000', '6,50,250']);
   });
 });
 

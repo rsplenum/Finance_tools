@@ -113,3 +113,9 @@ export function planCheck(proj: ProjectionYear[], loan: LoanTerms, def: Definiti
     return { ...row(y.fy, available, principal + interest + lease, principal, def), pbt: profitBeforeTax, tax };
   }), def);
 }
+
+/** A yearly series in closed form: first × (1 ± rate)^k, the rate read the other way round from project.ts. */
+export function seriesCheck(kind: 'same' | 'grow' | 'fall', first: number, pct: number, count: number): number[] {
+  const factor = kind === 'same' ? 1 : kind === 'grow' ? (100 + pct) / 100 : (100 - pct) / 100;
+  return Array.from({ length: count }, (_, k) => first * factor ** k);
+}

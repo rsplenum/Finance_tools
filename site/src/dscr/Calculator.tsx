@@ -13,7 +13,7 @@ import { inr, rs } from '../../../engine/util';
 import { BUTTON, CellInput, Choice, HINT, Section, SourceNote, TextField } from '../fields';
 import {
   EXAMPLE_TARGETS, OPTION_KEYS, START, TAX_CHOICES, amountOf, barText, choicesOf, loanRead, modeOf, numberOf, parseFy, presetText,
-  preview, rowsOf, targetText, tidyAmount, withPlanStart, withTaxRate, yearsOf,
+  preview, rowValues, rowsOf, targetText, tidyAmount, withPlanStart, withTaxRate, yearsOf,
   type LoanText, type Preview, type RowDef, type RowMode, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 
@@ -127,63 +127,42 @@ function YearsSection({ s, update, y }: { s: State; update: Update; y: Years }) 
   </Section>;
 }
 
-/** A first year with interest only and no figures: offer to start the figures later, never assume it. */
-function StartOffer({ p, update, short }: { p: Preview; update: Update; short?: boolean }) {
-  const o = p.startOffer;
-  if (!o) return null;
-  const years = o.interest.map((i) => i.fy);
-  return <div data-testid="start-offer" class="mt-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
-    {short ? <p>No figures for {years.join(' or ')}?</p>
-      : <p>No instalment falls in {years.join(' or ')}, only interest{o.interest.length > 1
-        ? ` (${o.interest.map((i) => `${i.amount} in ${i.fy}`).join(', ')})` : ` of ${o.interest[0].amount}`}.
-        {' '}If your projections start later, leave {years.length > 1 ? 'those years' : 'it'} out: the interest is then taken as paid from the project cost, not from profits.</p>}
-    <div class="mt-2 flex flex-wrap gap-2">
-      {o.starts.map((fy) => <button key={fy} type="button" data-testid={`start-${fy}`} class={BUTTON}
-        onClick={() => update((x) => withPlanStart(x, fy))}>My figures start in {fy}</button>)}
-    </div>
+const HOW: Record<RowMode, string> = {
+  grow: 'Grows each year', same: 'Same every year', fall: 'Falls each year (written-down value)', years: 'Each year', none: 'None',
+};
+
+/** When the loan's first year has interest only: which year the figures start in (asked, never assumed). */
+function StartQuestion({ s, y, p, update }: { s: State; y: Years; p: Preview; update: Update }) {
+  if (!y.startChoices.length) return null;
+  const chosen = s.planStart && y.startChoices.includes(s.planStart) ? s.planStart : undefined;
+  const last = y.startChoices[y.startChoices.length - 1];
+  return <div data-testid="start-question" class="mt-2">
+    <p class={HINT}>No instalment falls in {y.leading.join(' or ')}, only interest{p.leadingInterest?.length === 1
+      ? ` of ${p.leadingInterest[0].amount}` : p.leadingInterest ? ` (${p.leadingInterest.map((i) => `${i.amount} in ${i.fy}`).join(', ')})` : ''}.
+      {' '}If operations start later, start your figures there: the interest before then is taken as paid from the project cost, not from profits.</p>
+    <Choice name="fld-start" legend="Which year do your figures start in?" value={chosen} columns onChange={(fy) => update((x) => withPlanStart(x, fy))}
+      options={y.startChoices.map((fy, i) => ({ value: fy, label: fy, hint: i === 0 ? 'The year the loan is drawn' : fy === last ? 'The year of the first instalment' : undefined }))} />
   </div>;
 }
 
 function Figures({ s, update, rows, y, p }: { s: State; update: Update; rows: RowDef[]; y: Years; p: Preview }) {
   const years = y.years, last = years[years.length - 1];
   const setYears = (n: number) => update((x) => ({ ...x, planYears: y.skipped.length + n }));
-  return <Section id="figures" title="Yearly figures">
+  const plan = s.source === 'plan';
+  return <Section id="figures" title={plan ? 'The business' : 'Yearly figures'}>
     {!years.length
-      ? <p class={`mt-2 ${HINT}`}>{s.source === 'plan'
-        ? 'The years appear once the month first drawn, how it is repaid, the moratorium and the number of instalments are in.'
+      ? <p class={`mt-2 ${HINT}`}>{plan
+        ? 'Asked once the month first drawn, how it is repaid, the moratorium and the number of instalments are in.'
         : 'The years appear once the first year and the number of years are in.'}</p>
       : <>
-        <p class={`mt-2 ${HINT}`}>
-          In rupees, like 1,50,000 or 1.5 L{rows.some((r) => r.negative) ? '; a loss with a minus, like -50,000' : ''}.
-          {' '}Tick None where there is none in any year.
-        </p>
-        <StartOffer p={p} update={update} />
-        {y.skipped.length > 0 && <div data-testid="start-set" class="mt-4 flex flex-wrap items-center gap-2 text-sm text-slate-800 dark:text-slate-200">
-          <span>Your figures start in {years[0]}; {y.skipped.join(' and ')} {y.skipped.length > 1 ? 'are' : 'is'} left out.</span>
-          <button type="button" data-testid="start-undo" class={BUTTON} onClick={() => update((x) => withPlanStart(x, undefined))}>Put {y.skipped[0]} back</button>
-        </div>}
-        {s.source === 'plan' && <div class="mt-4">
-          <p class="text-sm font-medium text-slate-900 dark:text-slate-100">Tax rate for every year, by borrower</p>
-          <div class="mt-1 flex flex-wrap gap-2">
-            {TAX_CHOICES.map((t) => <button key={t.id} type="button" data-testid={`tax-${t.id}`} class={BUTTON}
-              onClick={() => update((x) => withTaxRate(x, t.pct))}>{t.label}: {t.pct}%</button>)}
-          </div>
-          <SourceNote what="About these rates">{TAX_STATUS}</SourceNote>
-        </div>}
-        <div class="mt-4 sm:overflow-x-auto">
-          <table class="w-full border-collapse text-sm max-sm:block">
-            <thead class="max-sm:hidden">
-              <tr class="border-b border-slate-300 dark:border-slate-700">
-                <th scope="col" class="py-2 pr-3 text-left font-medium text-slate-600 dark:text-slate-300"><span class="sr-only">Figure</span></th>
-                {years.map((fy) => <th key={fy} scope="col" class="px-1 py-2 text-right font-medium text-slate-700 dark:text-slate-200">{fy}</th>)}
-              </tr>
-            </thead>
-            <tbody class="max-sm:block max-sm:space-y-3">
-              {rows.map((r) => <FigureRow key={r.key} s={s} r={r} years={years} update={update} />)}
-            </tbody>
-          </table>
+        {plan && <StartQuestion s={s} y={y} p={p} update={update} />}
+        <p class={`mt-3 ${HINT}`}>{plan
+          ? `One or two answers a line; the page works out every year from ${years[0]} to ${last}. In rupees, like 18,00,000 or 18 L.`
+          : `In rupees, like 1,50,000 or 1.5 L, for ${years[0]} to ${last}.`}</p>
+        <div class="mt-4 space-y-3">
+          {groupsOf(rows).map((g) => <FigureRow key={g[0].modeKey} s={s} group={g} years={years} update={update} />)}
         </div>
-        {s.source === 'plan' && <div class="mt-4 flex flex-wrap items-center gap-2">
+        {plan && <div class="mt-4 flex flex-wrap items-center gap-2">
           <button type="button" data-testid="add-year" class={BUTTON} onClick={() => setYears(years.length + 1)}>Add a year after {last}</button>
           {years.length > (y.loanYears ?? 0) && <button type="button" data-testid="remove-year" class={BUTTON} onClick={() => setYears(years.length - 1)}>Remove {last}</button>}
           <span class="text-sm text-slate-600 dark:text-slate-300">A later year lets the page try a longer repayment.</span>
@@ -192,39 +171,78 @@ function Figures({ s, update, rows, y, p }: { s: State; update: Update; rows: Ro
   </Section>;
 }
 
-function FigureRow({ s, r, years, update }: { s: State; r: RowDef; years: string[]; update: Update }) {
-  const mode = modeOf(s, r), text = (i: number) => s.cells[r.key]?.[i] ?? '';
-  const read = r.percent ? numberOf : amountOf;
-  const setMode = (m: RowMode) => update((x) => ({ ...x, modes: { ...x.modes, [r.modeKey]: x.modes[r.modeKey] === m ? 'years' : m } }));
+/** Rows answered together (the interest and instalments of other term loans) share one block. */
+const GROUP_TITLES: Record<string, string> = { otherLoans: 'Other term loans already running' };
+const groupsOf = (rows: RowDef[]) => rows.reduce<RowDef[][]>((gs, r) => {
+  const g = gs.find((x) => x[0].modeKey === r.modeKey);
+  if (g) g.push(r); else gs.push([r]);
+  return gs;
+}, []);
+
+/** One block of figures: how they are given (one choice), then only the one or two fields that answer needs. */
+function FigureRow({ s, group, years, update }: { s: State; group: RowDef[]; years: string[]; update: Update }) {
+  const r0 = group[0], mode = modeOf(s, r0), title = group.length > 1 ? GROUP_TITLES[r0.modeKey] ?? r0.label : r0.label;
+  const setMode = (m: RowMode) => update((x) => ({ ...x, modes: { ...x.modes, [r0.modeKey]: m } }));
+  return <div data-testid={`row-${r0.modeKey}`} class="rounded-lg border border-slate-300 p-3 dark:border-slate-700">
+    <p class="font-medium text-slate-900 dark:text-slate-100">{title}</p>
+    {r0.hint && <p class={`text-xs ${MUTED}`}>{r0.hint}</p>}
+    <div role="radiogroup" aria-label={`${title}: how it is given`} class="mt-2 flex flex-wrap gap-2">
+      {r0.modes.map((m) => <label key={m} for={`fld-${r0.key}-${m}`}
+        class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1 text-sm text-slate-800 has-checked:border-teal-700 has-checked:bg-teal-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:has-checked:border-teal-500 dark:has-checked:bg-teal-950">
+        <input type="radio" id={`fld-${r0.key}-${m}`} name={`fld-${r0.key}-how`} checked={mode === m} onChange={() => setMode(m)} class="size-4 accent-teal-700 dark:accent-teal-500" />
+        {HOW[m]}
+      </label>)}
+    </div>
+    {r0.key === 'taxPct' && s.source === 'plan' && <div class="mt-2">
+      <p class={`text-xs ${MUTED}`}>Fill in by borrower:</p>
+      <div class="mt-1 flex flex-wrap gap-2">
+        {TAX_CHOICES.map((t) => <button key={t.id} type="button" data-testid={`tax-${t.id}`} class={BUTTON}
+          onClick={() => update((x) => withTaxRate(x, t.pct))}>{t.label}: {t.pct}%</button>)}
+      </div>
+      <SourceNote what="About these rates">{TAX_STATUS}</SourceNote>
+    </div>}
+    {mode === 'none'
+      ? <p class={`mt-2 text-sm ${MUTED}`}>None in any year.</p>
+      : mode && group.map((r) => <RowFields key={r.key} s={s} r={r} mode={mode} years={years} update={update} titled={group.length > 1} />)}
+  </div>;
+}
+
+/** The fields one row needs for how it is given, and what the page worked out from them. */
+function RowFields({ s, r, mode, years, update, titled }: { s: State; r: RowDef; mode: RowMode; years: string[]; update: Update; titled: boolean }) {
+  const text = (i: number) => s.cells[r.key]?.[i] ?? '', rate = s.rates[r.key] ?? '';
+  const read = r.percent ? numberOf : amountOf, tidy = r.percent ? undefined : tidyAmount;
   const setCell = (i: number, t: string) => update((x) => {
     const cells = [...(x.cells[r.key] ?? [])];
     cells[i] = t;
     return { ...x, cells: { ...x.cells, [r.key]: cells } };
   });
-  return <tr class="border-b border-slate-200 dark:border-slate-800 max-sm:grid max-sm:grid-cols-2 max-sm:gap-x-3 max-sm:gap-y-2 max-sm:rounded-lg max-sm:border max-sm:border-slate-300 max-sm:p-3 dark:max-sm:border-slate-700">
-    <th scope="row" class="py-2 pr-3 text-left align-top font-normal max-sm:col-span-2 max-sm:p-0 sm:min-w-44">
-      <span class="block font-medium text-slate-900 dark:text-slate-100">{r.label}</span>
-      {r.hint && <span class={`mt-0.5 block text-xs ${MUTED}`}>{r.hint}</span>}
-      {r.modes.length > 0 && <span class="mt-1 flex flex-wrap gap-x-4 gap-y-1">
-        {r.modes.map((m) => <label key={m} class="inline-flex items-center gap-1.5 text-slate-700 dark:text-slate-300">
-          <input type="checkbox" id={`fld-${r.key}-${m}`} checked={mode === m} onChange={() => setMode(m)} class="size-4 accent-teal-700 dark:accent-teal-500" />
-          {m === 'none' ? 'None' : 'Same every year'}
-        </label>)}
-      </span>}
-    </th>
-    {years.map((fy, i) => {
-      const id = `fld-${r.key}-${fy}`, asked = mode === 'years' || (mode === 'same' && i === 0), t = text(asked ? i : 0);
-      return <td key={fy} class={`py-2 pl-1 align-top max-sm:p-0 ${asked ? '' : 'max-sm:hidden'}`}>
-        {asked
-          ? <>
-            <label for={id} class="mb-0.5 block text-xs text-slate-600 sm:sr-only dark:text-slate-300">{mode === 'same' ? 'Every year' : fy}</label>
-            <CellInput id={id} name={`${r.label}, ${mode === 'same' ? 'every year' : fy}`} value={t} onCommit={(v) => setCell(i, v)}
-              tidy={r.percent ? undefined : tidyAmount} invalid={!!t.trim() && read(t) === undefined} decimal={!r.negative} />
-          </>
-          : <span class="block py-[11px] pr-[9px] text-right tabular-nums text-slate-600 dark:text-slate-300">{mode === 'none' ? '0' : t || '—'}</span>}
-      </td>;
-    })}
-  </tr>;
+  const cell = (i: number, label: string) => {
+    const id = `fld-${r.key}-${years[i]}`, t = text(i);
+    return <div key={id}>
+      <label for={id} class={`block text-xs ${MUTED}`}>{label}</label>
+      <CellInput id={id} name={`${r.label}, ${label.toLowerCase()}`} value={t} onCommit={(v) => setCell(i, v)} tidy={tidy}
+        invalid={!!t.trim() && read(t) === undefined} decimal={!r.negative} />
+    </div>;
+  };
+  const rateField = (label: string) => <div>
+    <label for={`fld-${r.key}-rate`} class={`block text-xs ${MUTED}`}>{label}</label>
+    <CellInput id={`fld-${r.key}-rate`} name={`${r.label}, ${label.toLowerCase()}`} value={rate} decimal
+      onCommit={(v) => update((x) => ({ ...x, rates: { ...x.rates, [r.key]: v } }))} invalid={!!rate.trim() && numberOf(rate) === undefined} />
+  </div>;
+  const worked = mode === 'grow' || mode === 'fall' ? rowValues(s, r, years).values : [];
+  const lastValue = worked[worked.length - 1];
+  return <div class="mt-2">
+    {titled && <p class="text-sm text-slate-800 dark:text-slate-200">{r.label}</p>}
+    {mode === 'same' && <div class="mt-2 grid gap-3 sm:grid-cols-2">{cell(0, 'Every year')}</div>}
+    {(mode === 'grow' || mode === 'fall') && <div class="mt-2 grid gap-3 sm:grid-cols-2">
+      {cell(0, `In ${years[0]}`)}
+      {rateField(mode === 'grow' ? 'Then grows by, % a year' : 'Then falls by, % a year')}
+    </div>}
+    {mode === 'years' && <div class="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">{years.map((fy, i) => cell(i, fy))}</div>}
+    {worked[0] !== undefined && lastValue !== undefined && years.length > 1 && <p data-testid={`readback-${r.key}`} class="mt-2 text-sm text-slate-700 dark:text-slate-300">
+      Worked out: {rs(worked[0])} in {years[0]} to {rs(lastValue)} in {years[years.length - 1]}.
+    </p>}
+  </div>;
 }
 
 function TargetSection({ s, update }: { s: State; update: Update }) {
@@ -288,7 +306,6 @@ function PreviewSection({ p, update }: { p: Preview; update: Update }) {
       <p class="font-medium">Still needed</p>
       <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>
     </div>}
-    <StartOffer p={p} update={update} short />
     {p.statement && <StatementTable st={p.statement} />}
     {p.beforeStart && <p data-testid="dscr-before-start" class={`mt-2 ${HINT}`}>{p.beforeStart}</p>}
     {p.notCounted && <p data-testid="dscr-not-counted" class={`mt-2 ${HINT}`}>{p.notCounted}</p>}
