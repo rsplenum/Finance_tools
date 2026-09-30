@@ -7,6 +7,8 @@
  * and its answers read as text (data-testid): fictional case A from the loan terms, own yearly figures, the amount
  * field's read-back, the DSCR statement and the repayment schedule, the tax rate by borrower, Clear all, and the same
  * layout checks once the tables are filled, in light and dark, with the tables as cards at 390 px and as tables at 1024 px.
+ * The statement downloads at 390 px, as a PDF and as an Excel copy, each read back (scripts/read-doc.mjs): provisional
+ * until the borrower's name and the lender are in, then complete.
  * Run after `npm run build`. CHROMIUM_PATH overrides the browser Playwright would use.
  */
 import { createServer } from 'node:http';
@@ -14,6 +16,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
+import { pdfPages, workbook } from './read-doc.mjs';
 
 const DIST = fileURLToPath(new URL('../site/dist/', import.meta.url));
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
@@ -404,6 +407,44 @@ async function layout(page, v, step) {
   const inputs = await page.locator('#figures input[type="text"]').count();
   if (inputs !== 5) v(`${inputs} fields in the figures on the quick path; want 5 (4 typed and the assumed tax rate)`);
   await layout(page, v, 'the quick path, 390 px');
+
+  // The statement to download, at 390 px. Without the borrower's name and the lender it is provisional, and says so.
+  await expectText(page, v, 'doc-status', 'Provisional: 2 still needed', 'the download before its facts');
+  const own = await page.getByTestId('doc-needs').locator('li').allTextContents();
+  if (own.join('|') !== "The borrower's name|The lender") v(`the download asks for ${JSON.stringify(own)}`);
+  const save = async (id) => {
+    const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.getByTestId(id).click()]);
+    const path = await file.path();
+    return { name: file.suggestedFilename(), bytes: path ? await readFile(path) : Buffer.alloc(0) };
+  };
+  let pdf = await save('download-pdf');
+  if (pdf.name !== 'DSCR statement (provisional).pdf') v(`the provisional PDF is named "${pdf.name}"`);
+  let pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
+  if (!pages.every((t) => t.startsWith('DSCR statement Provisional\n'))) v('the provisional PDF is not marked provisional on every page');
+  if (!pages[0].includes("• The borrower's name\n• The lender")) v('the provisional PDF does not list what is still needed');
+  // A name the PDF cannot print is flagged, and asked for in English letters.
+  await leave(page, '#fld-borrower', 'श्री गणेश');
+  await expectText(page, v, 'fld-borrower-said', 'The document is in English: type this in English letters.', 'a name in Devanagari');
+  await expectText(page, v, page.getByTestId('doc-needs').locator('li').first(), "The borrower's name, in English letters", 'a name in Devanagari');
+  await leave(page, '#fld-borrower', 'Asha Traders');
+  await leave(page, '#fld-lender', 'Example Bank, Pune branch');
+  await expectText(page, v, 'doc-status', 'Complete, on 8 assumptions', 'the download with its facts');
+  if (await page.getByTestId('doc-needs').count()) v('the download still lists needs once its facts are in');
+  pdf = await save('download-pdf');
+  if (pdf.name !== 'DSCR statement - Asha Traders.pdf') v(`the PDF is named "${pdf.name}"`);
+  pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
+  const first = pages[0].split('\n');
+  for (const want of ['Borrower Asha Traders', 'Lender Example Bank, Pune branch', 'Status Complete, on 8 assumptions', 'Average DSCR 1.16', 'Lowest year 0.84 in 2027-28',
+    'Cash available (A) 4,00,392 4,22,624 4,45,488 4,73,072', 'DSCR (A ÷ B) 1.17 0.84 0.98 2.26'])
+    if (!first.includes(want)) v(`the PDF's first page has no line "${want}"`);
+  if (pages.length < 3 || pages.join('\n').includes('Provisional')) v(`the PDF has ${pages.length} pages, or still says provisional`);
+  const xlsx = await save('download-xlsx');
+  if (xlsx.name !== 'DSCR statement - Asha Traders.xlsx') v(`the Excel copy is named "${xlsx.name}"`);
+  const book = await workbook(xlsx.bytes).catch((e) => v(`the Excel copy is not read: ${e.message}`)) ?? [];
+  const cash = book[0]?.data.find((r) => r[0] === 'Cash available (A)')?.filter((c) => c !== null);
+  if (book.map((x) => x.sheet).join('|') !== 'Statement|Repayment schedule' || JSON.stringify(cash) !== JSON.stringify(['Cash available (A)', 400392, 422624, 445488, 473072]))
+    v(`the Excel copy holds sheets ${JSON.stringify(book.map((x) => x.sheet))} and cash available ${JSON.stringify(cash)}`);
+  await layout(page, v, 'the download, 390 px');
   await ctx.close();
 }
 

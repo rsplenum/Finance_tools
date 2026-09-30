@@ -163,6 +163,8 @@ describe('the repayment schedule (fictional case A)', () => {
     ]);
     expect(sch.years[0].months.find((m) => m.ym === '2026-12')).toEqual({
       ym: '2026-12', month: 'Dec 2026', opening: '12,00,000', interest: '12,000', principal: '1,00,000', paid: '1,12,000', closing: '11,00,000', instalment: 1,
+      // The exact figures beside the words, for the Excel copy (1% of 12,00,000 is 12,000).
+      n: { opening: 1200000, interest: 12000, principal: 100000, paid: 112000, closing: 1100000 },
     });
   });
   it('is shown as soon as the loan terms are in, before any projections', () => {

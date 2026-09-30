@@ -52,13 +52,18 @@ export interface State {
   target: { average: string; minimum: string };
   /** Started from the assumptions (ASSUMED): switching back to working the figures out puts them back. */
   assume?: boolean;
+  /** What only the document needs: asked beside the download, taken once for the PDF and the Excel copy. */
+  doc: DocFacts;
 }
+
+/** The document's own facts. The borrower's name and the lender are needed; who prepared it is given only if wanted. */
+export interface DocFacts { borrower: string; lender: string; preparedBy: string }
 
 /** Nothing answered: what the tests start from. */
 export const START: State = {
   choice: {}, firstYear: '', yearCount: '',
   loan: { amount: '', ratePct: '', disbursed: '', moratoriumMonths: '', instalments: '' },
-  cells: {}, modes: {}, rates: {}, target: { average: '', minimum: '' },
+  cells: {}, modes: {}, rates: {}, target: { average: '', minimum: '' }, doc: { borrower: '', lender: '', preparedBy: '' },
 };
 
 /** `planStart` when the figures start in the year the loan is first drawn, whichever year that turns out to be. */
@@ -334,12 +339,14 @@ export function assumedIn(s: State, y: Years = yearsOf(s)): AssumedLine[] {
 
 // ---- The preview ----
 
-/** One line of the DSCR statement: a figure for each year. */
-export interface Line { label: string; values: string[]; kind?: 'head' | 'total' | 'ratio'; id?: 'pbdit' | 'pbt' | 'tax' | 'available' | 'service' | 'dscr' }
+/** One line of the DSCR statement: a figure for each year, in words (`values`) and as the engine gave it (`n`, for the Excel copy). */
+export interface Line { label: string; values: string[]; n?: (number | undefined)[]; kind?: 'head' | 'total' | 'ratio'; id?: 'pbdit' | 'pbt' | 'tax' | 'available' | 'service' | 'dscr' }
 /** The statement as chartered accountants lay it out: the years across, the working down. */
 export interface StatementView { years: string[]; counted: boolean[]; lines: Line[] }
-export interface MonthView { ym: string; month: string; opening: string; interest: string; principal: string; paid: string; closing: string; instalment?: number }
-export interface ScheduleYear { fy: string; interest: string; principal: string; closing: string; months: MonthView[] }
+type Money<K extends string> = Record<K, string> & { n: Record<K, number> };
+/** A month and a year of the schedule: rounded rupees in words, and the engine's exact figures in `n`. */
+export type MonthView = Money<'opening' | 'interest' | 'principal' | 'paid' | 'closing'> & { ym: string; month: string; instalment?: number };
+export type ScheduleYear = Money<'interest' | 'principal' | 'closing'> & { fy: string; months: MonthView[] };
 /** The repayment schedule: the instalment in words, then each year with its months. */
 export interface ScheduleView { level: string; years: ScheduleYear[] }
 
@@ -434,30 +441,30 @@ const lower = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
 
 /** The statement's lines, from the engine's figures: the profit build-up when the page works it out, then A, B, DSCR. */
 function statementView(st: Statement, t: Target, def: Definition, parts: YearFigures[], profit?: ProfitYear[]): StatementView {
-  const money = (xs: (number | undefined)[]) => xs.map((n) => inr(n));
+  const amounts = (n: (number | undefined)[]) => ({ values: n.map((x) => inr(x)), n });
   const { available, service } = componentsOf(def), lines: Line[] = [];
   if (profit) {
-    const pc = (k: Exclude<keyof ProfitYear, 'fy'>) => money(profit.map((y) => y[k]));
+    const pc = (k: Exclude<keyof ProfitYear, 'fy'>) => amounts(profit.map((y) => y[k]));
     lines.push(
       { label: 'Profit', values: [], kind: 'head' },
-      { label: PROJECTION_LABELS.pbdit, values: pc('pbdit'), id: 'pbdit' },
-      { label: 'Less: depreciation', values: pc('depreciation') },
-      { label: 'Less: other non-cash charges', values: pc('nonCash') },
-      { label: 'Less: interest on term loans', values: pc('interestTL') },
-      { label: 'Less: interest on working capital', values: pc('interestOther') },
-      { label: 'Profit before tax', values: pc('pbt'), kind: 'total', id: 'pbt' },
-      { label: 'Less: tax', values: pc('tax'), id: 'tax' },
-      { label: 'Profit after tax', values: pc('pat'), kind: 'total' },
+      { label: PROJECTION_LABELS.pbdit, ...pc('pbdit'), id: 'pbdit' },
+      { label: 'Less: depreciation', ...pc('depreciation') },
+      { label: 'Less: other non-cash charges', ...pc('nonCash') },
+      { label: 'Less: interest on term loans', ...pc('interestTL') },
+      { label: 'Less: interest on working capital', ...pc('interestOther') },
+      { label: 'Profit before tax', ...pc('pbt'), kind: 'total', id: 'pbt' },
+      { label: 'Less: tax', ...pc('tax'), id: 'tax' },
+      { label: 'Profit after tax', ...pc('pat'), kind: 'total' },
     );
   }
   lines.push({ label: 'Cash available for debt service', values: [], kind: 'head' });
-  available.forEach((c, i) => lines.push({ label: i ? `Add: ${lower(COMPONENTS[c])}` : COMPONENTS[c], values: money(parts.map((y) => y[c])) }));
+  available.forEach((c, i) => lines.push({ label: i ? `Add: ${lower(COMPONENTS[c])}` : COMPONENTS[c], ...amounts(parts.map((y) => y[c])) }));
   lines.push(
-    { label: 'Cash available (A)', values: money(st.rows.map((r) => r.available)), kind: 'total', id: 'available' },
+    { label: 'Cash available (A)', ...amounts(st.rows.map((r) => r.available)), kind: 'total', id: 'available' },
     { label: 'Debt service', values: [], kind: 'head' },
-    ...service.map((c) => ({ label: COMPONENTS[c], values: money(parts.map((y) => y[c])) })),
-    { label: 'Debt service (B)', values: money(st.rows.map((r) => r.service)), kind: 'total', id: 'service' },
-    { label: 'DSCR (A ÷ B)', values: st.rows.map((r) => (r.dscr === undefined ? '—' : ratioText(r.dscr, r.counted ? t.minimum : undefined))), kind: 'ratio', id: 'dscr' },
+    ...service.map((c) => ({ label: COMPONENTS[c], ...amounts(parts.map((y) => y[c])) })),
+    { label: 'Debt service (B)', ...amounts(st.rows.map((r) => r.service)), kind: 'total', id: 'service' },
+    { label: 'DSCR (A ÷ B)', values: st.rows.map((r) => (r.dscr === undefined ? '—' : ratioText(r.dscr, r.counted ? t.minimum : undefined))), n: st.rows.map((r) => r.dscr), kind: 'ratio', id: 'dscr' },
   );
   return { years: st.rows.map((r) => r.fy), counted: st.rows.map((r) => r.counted), lines };
 }
@@ -477,6 +484,12 @@ function fillStatement(p: Preview, st: Statement, t: Target, def: Definition, pa
 
 const rupees = (n: number) => rs(n, Math.abs(n - Math.round(n)) < 0.005 ? 0 : 2);
 
+/** Rounded rupees for the screen, with the exact figures beside them. */
+function money<K extends string>(from: Record<K, number>, keys: readonly K[]): Money<K> {
+  const words = Object.fromEntries(keys.map((k) => [k, inr(from[k])])) as Record<K, string>;
+  return { ...words, n: Object.fromEntries(keys.map((k) => [k, from[k]])) as Record<K, number> };
+}
+
 /** The repayment schedule in words and rupees: every month, grouped by financial year with the year's totals. */
 function scheduleView(a: Amortization, repayment?: Repayment): ScheduleView {
   return {
@@ -484,10 +497,10 @@ function scheduleView(a: Amortization, repayment?: Repayment): ScheduleView {
       ? `EMI ${rs(a.level, 2)} a month, interest included; banks round it up to the next rupee.`
       : `Principal ${rupees(a.level)} a ${repayment === 'quarterly' ? 'quarter' : 'month'}, and interest on the balance every month.`,
     years: a.years.map((y) => ({
-      fy: y.fy, interest: inr(y.interest), principal: inr(y.principal), closing: inr(y.closing),
+      fy: y.fy, ...money(y, ['interest', 'principal', 'closing'] as const),
       months: a.months.filter((m) => m.fy === y.fy).map((m) => ({
-        ym: m.month, month: monthShort(m.month), opening: inr(m.opening), interest: inr(m.interest), principal: inr(m.principal), paid: inr(m.paid),
-        closing: inr(m.closing), ...(m.instalment ? { instalment: m.instalment } : {}),
+        ym: m.month, month: monthShort(m.month), ...money(m, ['opening', 'interest', 'principal', 'paid', 'closing'] as const),
+        ...(m.instalment ? { instalment: m.instalment } : {}),
       })),
     })),
   };
