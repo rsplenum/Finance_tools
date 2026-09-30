@@ -61,10 +61,10 @@ The test figures are model-worked until the owner confirms fictional cases A and
 
 ## Waiting on the owner
 - **Six choices for the front door** (Claude's recommendation first; the tradeoffs are in the session of 30-09-2026):
-  1. Years: April to March with the loan assumed drawn this month; or from next April; or loan years (Year 1 = the first 12 months).
-  2. Tax for a proprietor: the flat rate for now, with individual slab rates added as a borrower type in a later session; or slab rates in P1e.
+  1. Years: April to March with the loan assumed to start next April, so every year is a full one; or this month; or loan years (Year 1 = the first 12 months). A mid-year start counts a full year's profit against part-years of instalments at both ends: Rs. 50 L at 10% over 5 years on a flat Rs. 18 L profit averages 1.32 drawn in September, 1.11 drawn in April.
+  2. Tax for a proprietor: individual slab rates as a borrower type, in their own session right after P1e (a flat 31.2% overstates a proprietor's tax badly: no tax up to Rs. 12 L under the new regime); or the flat rate only.
   3. Profit: one figure, plus depreciation as an optional eighth line on the front; or strictly seven fields.
-  4. Existing EMIs: counted in full and running through the new loan, with "ends in" under More options.
+  4. Existing EMIs: which loans count (the business's only, or a proprietor's personal EMIs too) is the owner's call as a lender; counted in full, running through the new loan, with "ends in" under More options.
   5. Print: opens the same PDF for printing; or a print layout of the page.
   6. First customer: borrowers, with a visible link for a CA's year-wise projection; or DSAs and CAs first.
 - **Try the download on the live site** (https://finance-tools-9if.pages.dev/dscr/), on a phone too: open the PDF, and the Excel copy in Excel itself (it was read by pdf.js, read-excel-file and openpyxl, but not opened in Excel). Say what reads wrong. In particular:
