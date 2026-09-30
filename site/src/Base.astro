@@ -1,0 +1,35 @@
+---
+/** Page shell: head (no-flash theme), header with the theme toggle, footer. Logic stays in .ts files (D-TECH-05). */
+import './global.css';
+import { ThemeToggle } from './ThemeToggle';
+import { THEME_BOOT } from './theme';
+import { SITE_NAME, pageTitle } from './site';
+
+interface Props { name?: string; description: string }
+const { name, description } = Astro.props;
+---
+<!doctype html>
+<html lang="en-IN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>{pageTitle(name)}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <script is:inline set:html={THEME_BOOT}></script>
+  </head>
+  <body class="min-h-dvh bg-white text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100">
+    <a href="#main" class="sr-only rounded-md bg-teal-700 px-3 py-2 text-white focus:not-sr-only focus:absolute focus:top-2 focus:left-2">Skip to content</a>
+    <header class="border-b border-slate-200 dark:border-slate-800">
+      <div class="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
+        <a href="/" class="min-w-0 truncate font-semibold text-slate-900 dark:text-slate-100">{SITE_NAME}</a>
+        <ThemeToggle client:load />
+      </div>
+    </header>
+    <main id="main" class="mx-auto max-w-3xl px-4 py-8"><slot /></main>
+    <footer class="mx-auto max-w-3xl border-t border-slate-200 px-4 py-6 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-400">
+      Figures you type are worked out in your browser and are not sent to us.
+    </footer>
+  </body>
+</html>

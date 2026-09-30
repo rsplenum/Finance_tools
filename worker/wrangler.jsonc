@@ -1,0 +1,19 @@
+// API Worker (D-TECH-01): a health route only for now. Razorpay orders, webhook checks and download tokens come later.
+// The two IDs are placeholders. Create the D1 database and the KV namespace in the Cloudflare dashboard and put their
+// IDs here (IDs are not secrets). Secrets never go in this file: use `wrangler secret put` or the dashboard.
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "finance-tools-api",
+  "main": "src/index.ts",
+  // Not later than the runtime bundled with the pinned wrangler (workerd 1.20260926).
+  "compatibility_date": "2026-09-26",
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": { "enabled": true },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "finance-tools", "database_id": "00000000-0000-0000-0000-000000000000" }
+  ],
+  "kv_namespaces": [
+    { "binding": "KV", "id": "00000000000000000000000000000000" }
+  ]
+}

@@ -1,0 +1,10 @@
+---
+import Base from '../Base.astro';
+import { AmountField } from '../AmountField';
+---
+<Base name="DSCR statement" description="Year-wise DSCR, the average and the lowest year, and the loan or tenure that meets a lender’s target.">
+  <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">DSCR statement</h1>
+  <p class="mt-3 text-slate-600 dark:text-slate-300">Year-wise DSCR, the average and the lowest year, and the loan or tenure that meets the lender’s target.</p>
+  <p class="mt-4 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">Being built. Only the first field works for now.</p>
+  <div class="mt-6"><AmountField client:load /></div>
+</Base>

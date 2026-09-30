@@ -6,8 +6,9 @@ const ICON: Record<ThemePref, string> = { system: '◐', light: '☀', dark: '�
 const LABEL: Record<ThemePref, string> = { system: 'Theme: as system', light: 'Theme: light', dark: 'Theme: dark' };
 
 export function ThemeToggle() {
-  const [p, setP] = useState<ThemePref>(themePref());
-  useEffect(() => initTheme(), []);
+  // The first render matches the pre-built HTML ('system'); the stored choice is read after hydration.
+  const [p, setP] = useState<ThemePref>('system');
+  useEffect(() => { initTheme(); setP(themePref()); }, []);
   const next = NEXT_THEME[p];
   return <button type="button" data-testid="theme-toggle" aria-label={`${LABEL[p]} — switch to ${next}`} title={`${LABEL[p]}. Click for ${next}.`}
     onClick={() => { setThemePref(next); setP(next); }}

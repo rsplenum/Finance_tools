@@ -39,3 +39,9 @@ export function setThemePref(p: ThemePref) {
 }
 
 export const NEXT_THEME: Record<ThemePref, ThemePref> = { system: 'light', light: 'dark', dark: 'system' };
+
+/** Inline <head> script with the same rule as applyTheme(), run before first paint so a dark page never flashes white. */
+export const THEME_BOOT = `(function(){var p;try{p=localStorage.getItem(${JSON.stringify(KEY)})}catch(e){}` +
+  `var r=document.documentElement,h=r.getAttribute('data-theme'),` +
+  `d=p==='dark'||(p!=='light'&&(h?h==='dark':matchMedia('(prefers-color-scheme: dark)').matches));` +
+  `r.classList.toggle('dark',d);r.style.colorScheme=d?'dark':'light'})()`;

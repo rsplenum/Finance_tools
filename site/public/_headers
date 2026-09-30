@@ -1,0 +1,10 @@
+# Cloudflare Pages response headers.
+# noindex until launch on the real domain (docs/HANDOFF.md); pages.dev copies must never be indexed.
+/*
+  X-Robots-Tag: noindex
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# Build files carry a content hash in their names, so they never change.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable

@@ -1,0 +1,9 @@
+@import "tailwindcss" source(".");
+
+/* Tailwind's dark: variant keys on the `dark` class of <html>, set by theme.ts (and before first paint by THEME_BOOT). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  /* 16 px inputs, so phones do not zoom in on focus (scripts/site-check.mjs flags anything smaller). */
+  input, select, textarea { font-size: max(16px, 1rem); }
+}
