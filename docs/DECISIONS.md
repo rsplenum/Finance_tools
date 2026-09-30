@@ -7,6 +7,8 @@ POL (calculation rules and benchmarks) · UX · TECH · DOC (documents produced)
 ## POL
 | ID | Date | Decision | Why | By |
 |---|---|---|---|---|
+| D-POL-01 | 30-09-2026 | **DSCR method as data** (`engine/data/dscr.json`, in plain words in `docs/RULES.md`): cash available = profit after tax + depreciation + other non-cash charges; debt service = term-loan instalments; then four choices the user must make, never defaulted: which interest is added to both sides (term loans, all borrowings, none), lease rentals, which years count (with an instalment, or with any debt service), and the average (totals ÷ totals, or the simple average of yearly DSCRs). The "common" preset and the benchmarks (1.50 average, 1.20 lowest year) are unverified | The choices move the answer a lot (case A: average 1.45 by totals, 1.63 by simple average); the owner confirms them from general knowledge | C |
+| D-POL-02 | 30-09-2026 | **Planning conventions** (`engine/loan.ts`, `engine/dscr.ts`): interest monthly on the opening balance and paid; no principal in the moratorium; instalment j at the end of month moratorium + j × period; exact EMI (as Excel's PMT), monthly only; tax = rate × profit before tax, nil on a loss, losses not carried forward (errs low); PBDIT after lease rentals. Largest loan by bisection to the rupee, checked at smaller amounts too; shortest repayment by trying every instalment count the projections cover. Targets below 1.00 are not solved | Bank practice as understood; lesson §3 (keep solvers monotone: every constraint falls as the loan grows once the target is 1.00 or more) | C |
 
 ## UX
 | ID | Date | Decision | Why | By |
@@ -24,6 +26,7 @@ POL (calculation rules and benchmarks) · UX · TECH · DOC (documents produced)
 | D-TECH-05 | 30-09-2026 | **Typecheck is two programs** (`npm run typecheck`): engine, tests and site `.ts/.tsx` with DOM types; the Worker with runtime types from `wrangler types`, generated at typecheck and gitignored (616 KB would flood every grep). TypeScript 7 kept, so `.astro` files are not type-checked (`astro check` needs TypeScript 6 or lower): logic stays out of `.astro` files. Revisit when `@astrojs/check` supports 7 | Checks everything the tools can check; low token use | C |
 | D-TECH-06 | 30-09-2026 | **Worker `finance-tools-api`:** `GET /health` only, 200 or 503 naming a missing binding; D1 `DB` and KV `KV` with placeholder IDs until the owner creates them (IDs are not secrets; secrets only through `wrangler secret put` or the dashboard); compatibility date = runtime of the pinned wrangler; `workers.dev` and preview URLs on | P0 scope; a missing binding is shown, never assumed | C |
 | D-TECH-07 | 30-09-2026 | **Pages headers and 404:** `site/public/_headers` sets `noindex` on every page until launch on the real domain, plus nosniff, a referrer policy and a year's cache for hashed `/_astro/` files; `404.astro` exists because without a `404.html` Pages answers every unknown path with the home page | Placeholder and `pages.dev` copies must not be indexed; no soft 404s once pSEO pages exist | C |
+| D-TECH-08 | 30-09-2026 | **Every DSCR figure computed twice** (`engine/dscr-check.ts`: closed-form balances, years from Date arithmetic, cash available from PBDIT, the options as explicit formulas) and withheld on any disagreement. Simulation `tests/dscr.sim.test.ts` (`npm run sim`; also in `npm test`): 8 seeds × 250 cases, invariants plus one dropped fact per case, 0 violations. Two planted bugs were caught | CLAUDE.md (independent second computation); lesson §3 (simulation, every seed) | C |
 
 ## DOC
 | ID | Date | Decision | Why | By |
@@ -32,6 +35,7 @@ POL (calculation rules and benchmarks) · UX · TECH · DOC (documents produced)
 ## DATA
 | ID | Date | Decision | Why | By |
 |---|---|---|---|---|
+| D-DATA-01 | 30-09-2026 | `docs/RULES.md` is generated from `engine/data/` (`npm run rules-doc`), and CI fails when it drifts | Lesson §5: the rules the owner reads are the rules the engine uses | C |
 
 ## AI
 | ID | Date | Decision | Why | By |
@@ -41,3 +45,4 @@ POL (calculation rules and benchmarks) · UX · TECH · DOC (documents produced)
 | ID | Date | Decision | Why | By |
 |---|---|---|---|---|
 | D-BIZ-01 | 30-09-2026 | **Permitted with one condition:** the owner may build this and market it on the internet across India, but must not sell these services directly to the customers of the bank that employs them. So: no selling at or through that bank's branches, no outreach to its borrowers, no pages or campaigns aimed at that bank's customers, and no use of that bank's internal material or formats. Bank staff are not customers. | Owner's legal question settled, 30-09-2026 | U |
+| D-BIZ-02 | 30-09-2026 | **Nothing from the owner's office or employer, ever**: no files, figures, cases, formats or norms, not even anonymised. Golden figures come from the owner's own fictional cases worked at home, or public worked examples with their source; until then tests say "model-worked" (`docs/GOLDEN-CASES.md`) | Owner: using DSCR from the office "would be unethical"; extends D-BIZ-01 | U |

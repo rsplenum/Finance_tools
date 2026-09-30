@@ -5,9 +5,9 @@
 - Numbers come only from the deterministic engine (`engine/`, pure TypeScript, no DOM). Never let an AI compute amounts, ratios, eligibility or prices shown to users. AI may draft narrative text from the user's own inputs, marked as a draft.
 - Rules, benchmarks and rates live only in dated data files under `engine/data/`, each value with its source and date; lender-specific values are marked unverified until confirmed.
 - Never default a missing fact: show what is needed and keep the result provisional.
-- Test against real worked figures (anonymised), not figures the model produced; every quoted figure has an independent second computation.
+- Test against worked figures from outside the model: the owner's own fictional cases worked at home, or public worked examples with their source. Never anything from the owner's office or employer, not even anonymised (D-BIZ-02). Every quoted figure has an independent second computation.
 - Screens use plain words; lists the owner gives are examples, not the full set; where rules are silent, flag, do not restrict.
-- Every change: `npm test`, `npm run typecheck`, `npm run build`, `npm run check:site` (0 violations), the simulation (0 violations), regenerate docs, one line in `docs/DECISIONS.md`, commit. Draft PRs; the owner says "merge".
+- Every change: `npm test`, `npm run typecheck`, `npm run build`, `npm run check:site` (0 violations), the simulation (`npm run sim`, 0 violations), regenerate docs (`npm run rules-doc`), one line in `docs/DECISIONS.md`, commit. Draft PRs; the owner says "merge".
 - No bank-internal material, circulars or customer data in this repo. Sample data anonymised; secrets only in environment settings.
 - Legal condition (D-BIZ-01): market across India on the internet, but never sell directly to the customers of the owner's employer bank. No pages, campaigns or outreach aimed at them, and none of that bank's material.
 - Build for Cloudflare Pages + Workers from day one (D-TECH-02); every branch gets a preview deploy.

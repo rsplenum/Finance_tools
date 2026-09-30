@@ -20,6 +20,6 @@ Phase 0 clearances (permission settled 30-09-2026, D-BIZ-01; entity, GST, Razorp
 
 ## Open questions
 - Which lenders' formats and benchmarks come first.
-- 5–10 anonymised sanctioned reports and estimates for golden tests.
+- Golden figures: the owner's own fictional cases and public worked examples, never office files (D-BIZ-02).
 - First region and cities for construction rates.
 - Main customer first: DSAs (plans) or borrowers (one-off).

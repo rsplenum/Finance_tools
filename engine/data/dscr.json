@@ -1,0 +1,88 @@
+{
+  "title": "DSCR: how it is worked out",
+  "date": "2026-09-30",
+  "status": "Written from general practice by Claude. Not yet checked against a public worked example or confirmed by the owner; no figures, formats or norms from any employer (D-BIZ-02).",
+  "formula": "DSCR for a year = cash available for debt service ÷ debt service in that year.",
+  "components": {
+    "pat": "Profit after tax",
+    "depreciation": "Depreciation",
+    "nonCash": "Other non-cash charges (amortisation, amounts written off)",
+    "interestTL": "Interest on term loans",
+    "principalTL": "Term-loan instalments (principal)",
+    "interestOther": "Interest on other borrowings (working capital)",
+    "leaseRentals": "Lease rentals"
+  },
+  "base": {
+    "available": ["pat", "depreciation", "nonCash"],
+    "service": ["principalTL"]
+  },
+  "options": {
+    "interest": {
+      "question": "Which interest is added back to cash available and counted as debt service?",
+      "choices": {
+        "term-loans": { "label": "Interest on term loans", "adds": ["interestTL"] },
+        "all-borrowings": { "label": "Interest on all borrowings, working capital too", "adds": ["interestTL", "interestOther"] },
+        "none": { "label": "None: cash accruals against instalments only", "adds": [] }
+      }
+    },
+    "leases": {
+      "question": "Are lease rentals added back and counted as debt service?",
+      "choices": {
+        "no": { "label": "Lease rentals left out", "adds": [] },
+        "yes": { "label": "Lease rentals counted", "adds": ["leaseRentals"] }
+      }
+    },
+    "years": {
+      "question": "Which years count towards the average and the lowest year?",
+      "choices": {
+        "repayment": { "label": "Years with a term-loan instalment", "adds": [] },
+        "debt-service": { "label": "Every year with interest or instalments due", "adds": [] }
+      }
+    },
+    "average": {
+      "question": "How is the average worked out?",
+      "choices": {
+        "totals": { "label": "Total cash available ÷ total debt service", "adds": [] },
+        "mean": { "label": "Simple average of the yearly DSCRs", "adds": [] }
+      }
+    }
+  },
+  "presets": [
+    {
+      "id": "common",
+      "label": "Common term-loan DSCR",
+      "choice": { "interest": "term-loans", "leases": "no", "years": "repayment", "average": "totals" },
+      "source": "General practice in Indian project reports, as Claude understands it; not checked against a published source",
+      "date": "2026-09-30",
+      "verified": false
+    }
+  ],
+  "benchmarks": [
+    {
+      "what": "Average DSCR",
+      "value": 1.5,
+      "source": "Commonly quoted in Indian lending; not checked against a published source. Each lender sets its own",
+      "date": "2026-09-30",
+      "verified": false
+    },
+    {
+      "what": "Lowest year",
+      "value": 1.2,
+      "source": "Commonly quoted in Indian lending; not checked against a published source. Each lender sets its own",
+      "date": "2026-09-30",
+      "verified": false
+    }
+  ],
+  "planning": {
+    "label": "When the engine builds the figures from the loan terms",
+    "rules": [
+      "Interest is charged every month on the balance at the start of the month, and paid that month.",
+      "No principal is repaid during the moratorium; interest is still paid.",
+      "Instalment 1 falls at the end of the first month or quarter after the moratorium, and so on.",
+      "Equal instalments of principal: loan ÷ number of instalments. Equated monthly instalments (EMI): the exact EMI, not rounded (as Excel's PMT); banks round it up to the rupee, a difference under Rs. 1 a month. EMI is worked monthly only.",
+      "Tax = tax rate × profit before tax, and nil in a year with a loss. Losses carried forward are not set off, so tax may be overstated in the year after a loss (the DSCR errs low).",
+      "Profit before interest, depreciation and tax is taken after lease rentals.",
+      "Years are Indian financial years, April to March."
+    ]
+  }
+}
