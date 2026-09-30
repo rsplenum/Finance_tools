@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  START, TAX_CHOICES, barText, groupNeeds, loanRead, parseFy, preview, ratioText, rowsOf, tidyAmount, withPlanStart, withTaxRate, yearsOf,
+  ASSUMED, START, TAX_CHOICES, barText, groupNeeds, loanRead, parseFy, preview, ratioText, rowsOf, statusText, tidyAmount, withPlanStart, withSource, withTaxRate, yearsOf,
   type Preview, type State,
 } from '../site/src/dscr/model';
 
@@ -263,5 +263,56 @@ describe('reading and showing', () => {
   });
   it('a DSCR just below its target never shows as the target', () => {
     expect([ratioText(1.4996, 1.5), ratioText(1.5, 1.5), ratioText(1.4951), ratioText(1.2031, 1.2)]).toEqual(['1.4996', '1.50', '1.50', '1.20']);
+  });
+});
+
+describe('this year\'s figures and sales growth; the rest assumed (the owner: "assume the rest")', () => {
+  // Fictional case A′: case A's loan, and only this year's figures (engine/data/defaults.json assumes the rest).
+  // Profit before interest, depreciation and tax 5,00,000 growing 10% with sales: 5,50,000, 6,05,000, 6,65,500.
+  // Depreciation 1,50,000 and working-capital interest 50,000 every year; tax 31.2% (assumed).
+  // 2026-27: before tax 5,00,000 − 1,50,000 − 1,41,000 − 50,000 = 1,59,000; tax 49,608; cash 5,00,000 − 50,000 − 49,608 = 4,00,392
+  //   against 3,41,000 = 1.17. 2027-28: before tax 2,48,000, tax 77,376, cash 4,22,624 / 5,02,000 = 0.84.
+  //   2028-29: 3,51,000, 1,09,512, 4,45,488 / 4,54,000 = 0.98. 2029-30: 4,56,500, 1,42,428, 4,73,072 / 2,09,000 = 2.26.
+  //   Average 17,41,576 / 15,06,000 = 1.16; lowest 0.84 in 2027-28.
+  const A2: State = {
+    ...ASSUMED,
+    loan: { amount: '12 L', ratePct: '12', disbursed: '2026-04', moratoriumMonths: '6', instalments: '12', repayment: 'quarterly' },
+    cells: { ...ASSUMED.cells, pbdit: ['5,00,000'], depreciation: ['1,50,000'], interestOther: ['50,000'] },
+    rates: { pbdit: '10' },
+  };
+  it('opens with the method and the target answered, asking only the loan', () => {
+    const p = preview(ASSUMED);
+    expect(p.started).toBe(true);
+    expect(p.needs.some((n) => /target|DSCR is worked out|Where the yearly figures/.test(n))).toBe(false);
+    expect(p.needs[0]).toBe('Loan amount');
+  });
+  it('works everything out from this year\'s figures and lists what it assumed', () => {
+    const p = preview(A2);
+    expect(p.needs).toEqual([]);
+    expect(line(p, 'pbdit')).toEqual(['5,00,000', '5,50,000', '6,05,000', '6,65,500']);
+    expect(line(p, 'tax')).toEqual(['49,608', '77,376', '1,09,512', '1,42,428']);
+    expect(line(p, 'dscr')).toEqual(['1.17', '0.84', '0.98', '2.26']);
+    expect([p.average, p.lowest, p.lowestYear, p.verdict?.meets]).toEqual(['1.16', '0.84', '2027-28', false]);
+    expect(p.assumed.map((a) => a.id)).toEqual(['method', 'target', 'tax', 'margin', 'depreciation', 'interest', 'otherLoans', 'nonCash']);
+    expect(statusText(p)).toBe('Complete, on 8 assumptions');
+  });
+  it('an assumption that is changed leaves the list', () => {
+    const s = withTaxRate({ ...A2, target: { average: '1.25', minimum: '1.20' } }, '25.168');
+    expect(preview(s).assumed.map((a) => a.id)).toEqual(['method', 'margin', 'depreciation', 'interest', 'otherLoans', 'nonCash']);
+  });
+  it('own yearly figures take none of the assumptions about the figures; coming back restores them', () => {
+    const own = withSource(A2, 'own');
+    expect(own.modes).toEqual({});
+    expect(preview(own).assumed.map((a) => a.id)).toEqual(['method', 'target']);
+    expect(withSource(own, 'plan').modes).toEqual(A2.modes);
+    expect(withSource(START, 'plan').modes).toEqual({});
+  });
+  it('a loan drawn in October: the figures start in its first year until that is changed', () => {
+    const oct: State = { ...A2, loan: { ...A2.loan, disbursed: '2026-10' } };
+    const p = preview(oct);
+    expect([yearsOf(oct).chosenStart, yearsOf(oct).startNeeded]).toEqual(['2026-27', false]);
+    expect(p.needs).toEqual([]);
+    expect(p.assumed.map((a) => a.id)).toContain('start');
+    expect(preview(withPlanStart(oct, '2027-28')).assumed.map((a) => a.id)).not.toContain('start');
   });
 });

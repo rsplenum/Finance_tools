@@ -5,6 +5,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import dscr from '../engine/data/dscr.json' with { type: 'json' };
 import tax from '../engine/data/tax.json' with { type: 'json' };
+import defaults from '../engine/data/defaults.json' with { type: 'json' };
 
 const date = (iso) => iso.split('-').reverse().join('-');
 const list = (ids) => {
@@ -49,6 +50,9 @@ out.push(`## ${tax.title}`, '', `Dated ${date(tax.date)}. ${tax.status}`, '',
   '| Borrower | Rate | Working | Law | Source | Date | Checked |', '|---|---|---|---|---|---|---|');
 for (const t of tax.rates)
   out.push(`| ${t.label} | ${t.pct}% | ${t.base}%${t.surcharge ? ` + ${t.surcharge}% surcharge` : ''} + ${t.cess}% cess | ${t.law} | ${t.source} | ${date(t.date)} | ${t.verified ? 'yes' : 'no'} |`);
+out.push('');
+out.push(`## ${defaults.title}`, '', `Dated ${date(defaults.date)}. ${defaults.status}`, '', '| What | Assumed | Why |', '|---|---|---|');
+for (const a of defaults.assumptions) out.push(`| ${a.what} | ${a.shown} | ${a.why} |`);
 out.push('');
 
 const text = out.join('\n');

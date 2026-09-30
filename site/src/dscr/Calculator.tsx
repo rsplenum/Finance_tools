@@ -1,8 +1,9 @@
 /**
- * The DSCR calculator. Two start questions narrow the rest: where the yearly figures come from and how DSCR is worked
- * out. Then the loan (or the years), the yearly figures as a table that becomes cards on phones, the lender's target,
- * and a free preview that stays provisional while anything is missing: the DSCR statement in the layout chartered
- * accountants use, and the repayment schedule. Figures: engine/dscr.ts only, via model.ts.
+ * The DSCR calculator. It opens with the assumptions in engine/data/defaults.json answered (D-UX-08), so only the loan
+ * and this year's figures are asked; each assumption is listed in the preview until changed. The two start questions
+ * (where the yearly figures come from, how DSCR is worked out) stay on top to change. Then the loan (or the years), the
+ * yearly figures, the lender's target, and a free preview that stays provisional while anything is missing: the DSCR
+ * statement in the layout chartered accountants use, and the repayment schedule. Figures: engine/dscr.ts only, via model.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
 import { AmountField } from '../AmountField';
@@ -12,8 +13,8 @@ import { TAX_STATUS } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import { BUTTON, CellInput, Choice, HINT, Section, SourceNote, TextField } from '../fields';
 import {
-  EXAMPLE_TARGETS, OPTION_KEYS, START, TAX_CHOICES, amountOf, barText, choicesOf, loanRead, modeOf, numberOf, parseFy, presetText,
-  preview, rowValues, rowsOf, targetText, tidyAmount, withPlanStart, withTaxRate, yearsOf,
+  ASSUMED, EXAMPLE_TARGETS, OPTION_KEYS, TAX_CHOICES, amountOf, barText, choicesOf, loanRead, modeOf, numberOf, parseFy, presetText,
+  preview, rowValues, rowsOf, statusText, targetText, tidyAmount, withPlanStart, withSource, withTaxRate, yearsOf,
   type LoanText, type Preview, type RowDef, type RowMode, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 
@@ -24,13 +25,13 @@ const notUnderstood = (text: string, read: (t: string) => unknown, example: stri
 const MUTED = 'text-slate-600 dark:text-slate-300';
 
 export function DscrCalculator() {
-  const [s, setS] = useState<State>(START);
+  const [s, setS] = useState<State>(ASSUMED);
   const update: Update = (f) => setS(f);
   const p = useMemo(() => preview(s), [s]);
   const rows = useMemo(() => rowsOf(s), [s]);
   const y = useMemo(() => yearsOf(s), [s]);
   return <div>
-    <ClearAll shown={JSON.stringify(s) !== JSON.stringify(START)} onClear={() => setS(START)} />
+    <ClearAll shown={JSON.stringify(s) !== JSON.stringify(ASSUMED)} onClear={() => setS(ASSUMED)} />
     <Start s={s} update={update} />
     {p.started && <>
       {s.source === 'plan' ? <Loan s={s} update={update} y={y} p={p} /> : <YearsSection s={s} update={update} y={y} />}
@@ -63,16 +64,18 @@ function ClearAll({ shown, onClear }: { shown: boolean; onClear: () => void }) {
 
 function Start({ s, update }: { s: State; update: Update }) {
   return <div>
-    <Choice name="fld-source" legend="Where do the yearly figures come from?" value={s.source} onChange={(v) => update((x) => ({ ...x, source: v }))}
+    <Choice name="fld-source" legend="Where do the yearly figures come from?" value={s.source} onChange={(v) => update((x) => withSource(x, v))}
       options={[
         { value: 'own', label: 'My own yearly figures', hint: 'Profit after tax, depreciation, interest and instalments for each year.' },
         { value: 'plan', label: 'Work them out from the loan terms', hint: 'You give profit before interest, depreciation and tax; the page works out the loan’s interest and instalments, the tax, and the repayment schedule.' },
       ]} />
-    <Choice name="fld-method" legend="How is DSCR worked out?" value={s.method} onChange={(v) => update((x) => ({ ...x, method: v }))}
-      options={[
-        ...PRESETS.map((m) => ({ value: m.id, label: m.label, hint: <>{presetText(m.id)}.{!m.verified && <> Not yet checked.</>}</> })),
-        { value: 'choose', label: 'Choose each of the four', hint: 'For a lender who works it out differently.' },
-      ]} />
+    <div id="method" class="scroll-mt-4">
+      <Choice name="fld-method" legend="How is DSCR worked out?" value={s.method} onChange={(v) => update((x) => ({ ...x, method: v }))}
+        options={[
+          ...PRESETS.map((m) => ({ value: m.id, label: m.label, hint: <>{presetText(m.id)}.{!m.verified && <> Not yet checked.</>}</> })),
+          { value: 'choose', label: 'Choose each of the four', hint: 'For a lender who works it out differently.' },
+        ]} />
+    </div>
     <SourceNote what="Where these methods come from">
       {PRESETS.map((m) => <span key={m.id} class="mt-1 block"><b>{m.label}:</b> {m.source}. Dated {showDate(m.date)}.</span>)}
     </SourceNote>
@@ -131,12 +134,12 @@ const HOW: Record<RowMode, string> = {
   grow: 'Grows each year', same: 'Same every year', fall: 'Falls each year (written-down value)', years: 'Each year', none: 'None',
 };
 
-/** When the loan's first year has interest only: which year the figures start in (asked, never assumed). */
+/** When the loan's first year has interest only: which year the figures start in (the loan's first year while that assumption holds). */
 function StartQuestion({ s, y, p, update }: { s: State; y: Years; p: Preview; update: Update }) {
   if (!y.startChoices.length) return null;
-  const chosen = s.planStart && y.startChoices.includes(s.planStart) ? s.planStart : undefined;
+  const chosen = y.chosenStart;
   const last = y.startChoices[y.startChoices.length - 1];
-  return <div data-testid="start-question" class="mt-2">
+  return <div id="start-question" data-testid="start-question" class="mt-2 scroll-mt-4">
     <p class={HINT}>No instalment falls in {y.leading.join(' or ')}, only interest{p.leadingInterest?.length === 1
       ? ` of ${p.leadingInterest[0].amount}` : p.leadingInterest ? ` (${p.leadingInterest.map((i) => `${i.amount} in ${i.fy}`).join(', ')})` : ''}.
       {' '}If operations start later, start your figures there: the interest before then is taken as paid from the project cost, not from profits.</p>
@@ -183,7 +186,7 @@ const groupsOf = (rows: RowDef[]) => rows.reduce<RowDef[][]>((gs, r) => {
 function FigureRow({ s, group, years, update }: { s: State; group: RowDef[]; years: string[]; update: Update }) {
   const r0 = group[0], mode = modeOf(s, r0), title = group.length > 1 ? GROUP_TITLES[r0.modeKey] ?? r0.label : r0.label;
   const setMode = (m: RowMode) => update((x) => ({ ...x, modes: { ...x.modes, [r0.modeKey]: m } }));
-  return <div data-testid={`row-${r0.modeKey}`} class="rounded-lg border border-slate-300 p-3 dark:border-slate-700">
+  return <div id={`row-${r0.modeKey}`} data-testid={`row-${r0.modeKey}`} class="scroll-mt-4 rounded-lg border border-slate-300 p-3 dark:border-slate-700">
     <p class="font-medium text-slate-900 dark:text-slate-100">{title}</p>
     {r0.hint && <p class={`text-xs ${MUTED}`}>{r0.hint}</p>}
     <div role="radiogroup" aria-label={`${title}: how it is given`} class="mt-2 flex flex-wrap gap-2">
@@ -236,7 +239,7 @@ function RowFields({ s, r, mode, years, update, titled }: { s: State; r: RowDef;
     {mode === 'same' && <div class="mt-2 grid gap-3 sm:grid-cols-2">{cell(0, 'Every year')}</div>}
     {(mode === 'grow' || mode === 'fall') && <div class="mt-2 grid gap-3 sm:grid-cols-2">
       {cell(0, `In ${years[0]}`)}
-      {rateField(mode === 'grow' ? 'Then grows by, % a year' : 'Then falls by, % a year')}
+      {rateField(mode === 'grow' ? (r.key === 'pbdit' ? 'Sales growth, % a year' : 'Then grows by, % a year') : 'Then falls by, % a year')}
     </div>}
     {mode === 'years' && <div class="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">{years.map((fy, i) => cell(i, fy))}</div>}
     {worked[0] !== undefined && lastValue !== undefined && years.length > 1 && <p data-testid={`readback-${r.key}`} class="mt-2 text-sm text-slate-700 dark:text-slate-300">
@@ -273,7 +276,7 @@ function PreviewSection({ p, update }: { p: Preview; update: Update }) {
     <p data-testid="dscr-status" class={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.blocked
       ? 'bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200' : p.needs.length
         ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200'}`}>
-      {p.blocked ? 'No figures' : p.needs.length ? `Provisional: ${p.needs.length} still needed` : 'Complete'}
+      {statusText(p)}
     </p>
     {p.blocked && <p data-testid="dscr-blocked" role="alert" class={`${box} border-red-300 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-200`}>{p.blocked}</p>}
     {p.average !== undefined && <dl class="mt-4 grid grid-cols-2 gap-3">
@@ -305,6 +308,15 @@ function PreviewSection({ p, update }: { p: Preview; update: Update }) {
     {p.needs.length > 0 && <div data-testid="dscr-needs" class="mt-4 text-slate-900 dark:text-slate-100">
       <p class="font-medium">Still needed</p>
       <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>
+    </div>}
+    {p.assumed.length > 0 && <div data-testid="dscr-assumed" class="mt-4 text-slate-900 dark:text-slate-100">
+      <p class="font-medium">Assumed until you change them</p>
+      <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">
+        {p.assumed.map((a) => <li key={a.id} data-testid={`assumed-${a.id}`}>
+          <a href={`#${a.where}`} class="text-teal-700 underline underline-offset-2 dark:text-teal-400">{a.what}</a>: {a.shown}
+        </li>)}
+      </ul>
+      <SourceNote what="Why these">{p.assumed.map((a) => <span key={a.id} class="mt-1 block"><b>{a.what}:</b> {a.why}.</span>)}</SourceNote>
     </div>}
     {p.statement && <StatementTable st={p.statement} />}
     {p.beforeStart && <p data-testid="dscr-before-start" class={`mt-2 ${HINT}`}>{p.beforeStart}</p>}

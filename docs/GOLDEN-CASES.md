@@ -21,3 +21,12 @@ Inputs only, so your working is not anchored to ours. Work it your usual way and
 No other non-cash charges, other term loans or lease rentals.
 
 Status: model-worked in `tests/dscr.test.ts`, and entered through the page in `tests/dscr-page.test.ts` and `npm run check:site`; not yet confirmed.
+
+## Case A′ (fictional): the quick path
+Case A's loan, and only this year's figures; the page assumes the rest (`docs/RULES.md`, "What the page assumes").
+
+**This year (2026-27):** profit before interest, depreciation and tax Rs. 5,00,000, growing 10% a year with sales; depreciation Rs. 1,50,000 and interest on working capital Rs. 50,000, both the same every year. Tax 31.2%.
+
+Send back, your usual way: the DSCR for each year, the average and the lowest year.
+
+Status: model-worked in `tests/dscr-page.test.ts` and `npm run check:site`; not yet confirmed.

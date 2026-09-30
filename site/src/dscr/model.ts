@@ -1,8 +1,10 @@
 /**
  * The DSCR page: what it asks, and the preview it shows. Pure — no DOM. Every figure comes from engine/dscr.ts; this
- * file only turns typed text into the engine's inputs and the engine's answers into plain words. Nothing missing is
- * filled in: a "None" or "Same every year" is the user's own answer, and anything else missing is listed as needed.
+ * file only turns typed text into the engine's inputs and the engine's answers into plain words. The page starts from
+ * the assumptions in engine/data/defaults.json (the owner's request, D-UX-08), each listed with its reason until it is
+ * changed (`assumedIn`); nothing else missing is filled in, and anything else missing is listed as needed.
  */
+import DEFAULTS from '../../../engine/data/defaults.json';
 import {
   BENCHMARKS, COMPONENTS, LOAN_LABELS, OPTIONS, PRESETS, PROJECTION_LABELS, amortization, componentsOf, dscrStatement, fyRange,
   isFy, limitText, loanTimeline, maxLoanAmount, planStatement, shortestRepayment, shortfall, targetNeeds,
@@ -48,13 +50,57 @@ export interface State {
   /** The % a year for rows that grow or fall. */
   rates: Record<string, string>;
   target: { average: string; minimum: string };
+  /** Started from the assumptions (ASSUMED): switching back to working the figures out puts them back. */
+  assume?: boolean;
 }
 
+/** Nothing answered: what the tests start from. */
 export const START: State = {
   choice: {}, firstYear: '', yearCount: '',
   loan: { amount: '', ratePct: '', disbursed: '', moratoriumMonths: '', instalments: '' },
   cells: {}, modes: {}, rates: {}, target: { average: '', minimum: '' },
 };
+
+/** `planStart` when the figures start in the year the loan is first drawn, whichever year that turns out to be. */
+export const LOAN_YEAR = 'loan';
+
+type Assumption = (typeof DEFAULTS.assumptions)[number];
+const ASSUMPTION = Object.fromEntries(DEFAULTS.assumptions.map((a) => [a.id, a])) as Record<string, Assumption>;
+const assumedValue = <T,>(id: string) => ASSUMPTION[id].value as T;
+
+/** How each line is given while its assumption holds: profit grows with sales; depreciation and other interest as this year. */
+const ASSUMED_MODES: Record<string, RowMode> = {
+  pbdit: 'grow', depreciation: 'same', interestOther: 'same', otherLoans: 'none', nonCash: 'none', leaseRentals: 'none', taxPct: 'same',
+};
+
+/**
+ * Where the page starts (the owner, 30-09-2026: "work everything out from this year's figures and sales growth, and
+ * assume the rest"): every assumption in engine/data/defaults.json already answered, so only the loan and this year's
+ * figures are asked. Each shows on the page with its reason until it is changed.
+ */
+export const ASSUMED: State = {
+  ...START,
+  assume: true,
+  source: 'plan',
+  method: assumedValue<string>('method'),
+  modes: { ...ASSUMED_MODES },
+  cells: { taxPct: [String(assumedValue<number>('tax'))] },
+  target: {
+    average: assumedValue<{ average: number }>('target').average.toFixed(2),
+    minimum: assumedValue<{ minimum: number }>('target').minimum.toFixed(2),
+  },
+  planStart: LOAN_YEAR,
+};
+
+/** The assumptions about the figures belong to working them out: own yearly figures leave them, and coming back restores them. */
+export function withSource(s: State, source: Source): State {
+  const modes = { ...s.modes };
+  for (const [k, m] of Object.entries(ASSUMED_MODES)) {
+    if (source === 'own' && modes[k] === m) delete modes[k];
+    if (source === 'plan' && s.assume && modes[k] === undefined) modes[k] = m;
+  }
+  return { ...s, source, modes };
+}
 
 export const COMMON = PRESETS[0];
 export const presetOf = (id?: string) => PRESETS.find((p) => p.id === id);
@@ -105,7 +151,7 @@ export interface RowDef {
   label: string;
   /** Rows sharing a mode key switch together (the interest and instalments of other term loans). */
   modeKey: string;
-  /** The answers offered, first shown first. With `ask`, nothing is taken until one is picked (None is never assumed). */
+  /** The answers offered, first shown first. With `ask`, nothing is taken until one is picked (None is taken only as answered, or as assumed in engine/data/defaults.json). */
   modes: RowMode[];
   ask?: boolean;
   /** A loss may be typed with a minus. */
@@ -211,8 +257,9 @@ export interface Years {
   leading: string[];
   skipped: string[];
   start?: string;
-  /** When the loan's first year has no instalment: the years the figures may start in, and whether that is still to answer. */
+  /** When the loan's first year has no instalment: the years the figures may start in, the one chosen, and whether that is still to answer. */
   startChoices: string[];
+  chosenStart?: string;
   startNeeded: boolean;
 }
 
@@ -232,13 +279,14 @@ export function yearsOf(s: State): Years {
   const due = fyOfMonth(t.firstInstalment), leading = t.years.filter((fy) => fy < due);
   // A first year with interest only (a loan drawn late in the year) may come before the operations the figures describe.
   const startChoices = leading.length ? [t.years[0], ...leading.slice(1), due] : [];
-  const chosen = s.planStart !== undefined && startChoices.includes(s.planStart) ? s.planStart : undefined;
+  const chosen = s.planStart === LOAN_YEAR && startChoices.length ? startChoices[0]
+    : s.planStart !== undefined && startChoices.includes(s.planStart) ? s.planStart : undefined;
   const skip = chosen && chosen > t.years[0] ? all.indexOf(chosen) : 0;
   return {
     years: all.slice(skip), needs: [], loanSpan: t.years, loanYears: t.years.length - skip,
     firstInstalment: t.firstInstalment, lastInstalment: t.lastInstalment,
     leading, skipped: all.slice(0, skip), ...(skip ? { start: chosen } : {}),
-    startChoices, startNeeded: startChoices.length > 0 && !chosen,
+    startChoices, ...(chosen ? { chosenStart: chosen } : {}), startNeeded: startChoices.length > 0 && !chosen,
   };
 }
 
@@ -256,6 +304,34 @@ export function withPlanStart(s: State, start?: string): State {
   return { ...next, cells };
 }
 
+/** An assumption the answer still rests on: what, as assumed, why, and where on the page to change it. */
+export interface AssumedLine { id: string; what: string; shown: string; why: string; where: string }
+
+const WHERE: Record<string, string> = {
+  method: 'method', target: 'target', tax: 'row-taxPct', margin: 'row-pbdit', depreciation: 'row-depreciation',
+  interest: 'row-interestOther', otherLoans: 'row-otherLoans', nonCash: 'row-nonCash', start: 'start-question',
+};
+
+/** The assumptions (engine/data/defaults.json) still as assumed; one that makes no difference to these figures is not listed. */
+export function assumedIn(s: State, y: Years = yearsOf(s)): AssumedLine[] {
+  // Only a page that started from the assumptions has any; answers given from a blank start are the user's own.
+  if (!s.assume) return [];
+  const plan = s.source === 'plan', at = (key: string) => s.modes[key] === ASSUMED_MODES[key];
+  const target = assumedValue<Target>('target');
+  const holds: Record<string, boolean> = {
+    method: s.method === assumedValue<string>('method'),
+    target: numberOf(s.target.average) === target.average && numberOf(s.target.minimum) === target.minimum,
+    tax: plan && at('taxPct') && numberOf(s.cells.taxPct?.[0]) === assumedValue<number>('tax'),
+    margin: plan && at('pbdit'),
+    depreciation: plan && at('depreciation'),
+    interest: plan && at('interestOther'),
+    otherLoans: plan && at('otherLoans'),
+    nonCash: plan && at('nonCash') && (definitionOf(s)?.leases !== 'yes' || at('leaseRentals')),
+    start: plan && s.planStart === LOAN_YEAR && y.startChoices.length > 0,
+  };
+  return DEFAULTS.assumptions.filter((a) => holds[a.id]).map((a) => ({ id: a.id, what: a.what, shown: a.shown, why: a.why, where: WHERE[a.id] }));
+}
+
 // ---- The preview ----
 
 /** One line of the DSCR statement: a figure for each year. */
@@ -271,6 +347,8 @@ export interface Preview {
   /** The start questions are answered, so the figures can be asked. */
   started: boolean;
   needs: string[];
+  /** The assumptions the answer still rests on. */
+  assumed: AssumedLine[];
   blocked?: string;
   statement?: StatementView;
   schedule?: ScheduleView;
@@ -416,11 +494,12 @@ function scheduleView(a: Amortization, repayment?: Repayment): ScheduleView {
 }
 
 export function preview(s: State): Preview {
-  const p: Preview = { started: false, needs: startNeeds(s), notes: [] };
+  const p: Preview = { started: false, needs: startNeeds(s), assumed: [], notes: [] };
   const def = definitionOf(s);
   if (p.needs.length || !complete(def)) return p;
   p.started = true;
   const rows = rowsOf(s), y = yearsOf(s), target = targetOf(s), tNeeds = targetNeeds(target), labels = rows.map((x) => x.label);
+  p.assumed = assumedIn(s, y);
   // Rows are asked only once there are years to ask them for.
   const vals = rows.map((r) => (y.years.length ? rowValues(s, r, y.years) : { values: [], needs: [] } as RowValues));
   const figures = (i: number) => Object.fromEntries(rows.map((r, k) => [r.key, vals[k].values[i]]));
@@ -456,7 +535,7 @@ export function preview(s: State): Preview {
   const proj = y.years.map((fy, i) => ({ fy, ...figures(i) }) as ProjectionYear);
   const r = planStatement(proj, loan, def, y.start);
   // A first year with interest only may come before the operations the figures describe: which year the figures start in
-  // decides what the first year's figure means, so it is asked, never assumed.
+  // decides what the first year's figure means: it is asked, unless the loan's first year is assumed (D-UX-08).
   if (y.startNeeded) p.needs.push(`The first year of your figures: ${y.startChoices.join(' or ')}`);
   // Until the loan's dates are in there are no years to ask for; the loan's own needs say what is missing.
   if ('needs' in r) p.needs.push(...oneRepaymentNeed(merged(r.needs.filter((n) => y.years.length || n !== 'At least one year of figures'))));
@@ -498,9 +577,14 @@ export function barText(p: Preview): string {
   const parts: string[] = [];
   if (p.average) parts.push(`Average ${p.average}`, `lowest ${p.lowest} in ${p.lowestYear}`);
   if (p.verdict) parts.push(p.verdict.meets ? 'meets the target' : 'below the target');
-  parts.push(p.needs.length ? `provisional: ${p.needs.length} still needed` : 'complete');
+  parts.push(p.needs.length ? `provisional: ${p.needs.length} still needed` : statusText(p).toLowerCase());
   return cap(parts.join(' · '));
 }
+
+/** "Complete", or "Complete, on 7 assumptions" while any still holds. */
+export const statusText = (p: Preview) =>
+  p.blocked ? 'No figures' : p.needs.length ? `Provisional: ${p.needs.length} still needed`
+    : p.assumed.length ? `Complete, on ${p.assumed.length} assumption${p.assumed.length > 1 ? 's' : ''}` : 'Complete';
 
 /** The commonly quoted targets from the data file, offered as examples and used only when chosen. */
 export const EXAMPLE_TARGETS = {

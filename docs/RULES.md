@@ -72,3 +72,19 @@ Dated 30-09-2026. Rates on income of FY 2025-26 (AY 2026-27), as found by Claude
 | Company on the concessional rate | 25.168% | 22% + 10% surcharge + 4% cess | Section 115BAA of the Income-tax Act, 1961; section 200 of the Income-tax Act, 2025 | taxmann.com and caalley.com rate charts for AY 2026-27; taxtmi.com on section 200 | 30-09-2026 | no |
 | Firm or LLP, income up to Rs. 1 crore | 31.2% | 30% + 4% cess | Rates in force for firms and LLPs | taxmann.com and caalley.com rate charts for AY 2026-27 | 30-09-2026 | no |
 | Firm or LLP, income above Rs. 1 crore | 34.944% | 30% + 12% surcharge + 4% cess | Rates in force for firms and LLPs; surcharge above Rs. 1 crore of income | taxmann.com and caalley.com rate charts for AY 2026-27 | 30-09-2026 | no |
+
+## What the page assumes until you change it
+
+Dated 30-09-2026. Set by Claude at the owner's request (30-09-2026: work everything out from this year's figures and sales growth, and assume the rest). Chosen to be reasonable and on the careful side for a lender; not checked against a published source. Every one is shown on the page and can be changed.
+
+| What | Assumed | Why |
+|---|---|---|
+| How DSCR is worked out | Common term-loan DSCR | How chartered accountants and banks usually work it for term loans (docs/DSCR-RESEARCH.md) |
+| The lender's target | Average 1.50, lowest year 1.20 | The commonly quoted examples (benchmarks in dscr.json); each lender sets its own |
+| Tax rate | 31.2% | The rate for a firm or LLP, and the top rate for an individual with cess: on the careful side, since more tax gives a lower DSCR. A company on the concessional rate pays 25.168% |
+| Profit margin | As this year: profit before interest, depreciation and tax grows with sales | The only growth asked for is in sales |
+| Depreciation | As this year, every year | Depreciation on the asset the loan buys is left out; it lowers tax, so leaving it out errs low |
+| Interest on other borrowings | As this year, every year, on top of this loan's interest | Working-capital limits are taken as unchanged |
+| Instalments of other term loans | None | Change it if other term loans are being repaid; their interest is already in this year's interest |
+| Other non-cash charges and lease rentals | None | Few small businesses have them |
+| The first year of the figures | The year the loan is first drawn | The business is running: it has this year's figures |

@@ -185,10 +185,12 @@ async function layout(page, v, step) {
 
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
-  // The start questions come first: nothing else is asked until they narrow it.
-  if (await page.locator('#fld-loanAmount, #fld-firstYear, [data-testid="answer-bar"]').count()) v('figures are asked before the two start questions');
-  await page.check('#fld-source-plan');
-  await page.check('#fld-method-common');
+  // The page opens with the assumptions answered (D-UX-08): the start questions chosen, the loan asked at once, the target
+  // filled in, and the preview listing what it assumes.
+  if (!(await page.isChecked('#fld-source-plan')) || !(await page.isChecked('#fld-method-common'))) v('the start questions are not answered from the assumptions');
+  await page.locator('#fld-loanAmount').waitFor({ timeout: 3000 }).catch(() => v('the loan is not asked at once'));
+  await expectValue(page, v, '#fld-targetAverage', '1.50', 'the assumed target');
+  await expectText(page, v, 'assumed-target', "The lender's target: Average 1.50, lowest year 1.20", 'the assumptions listed');
 
   // The loan amount field, kept from P0: read back in figures and words while typing; long words wrap.
   const field = page.locator('#fld-loanAmount');
@@ -210,7 +212,9 @@ async function layout(page, v, step) {
   await expectText(page, v, 'loan-dates', 'First instalment at the end of December 2026, the last at the end of September 2029. The loan runs over 2026-27 to 2029-30.', 'case A');
   await expectText(page, v, 'loan-level', 'Principal Rs. 1,00,000 a quarter, and interest on the balance every month.', 'case A');
   await expectValue(page, v, '#fld-depreciation-2027-28', '1,30,000', '1.3 L read back once the field is left');
-  // No target yet: the figures show, and the preview stays provisional and says what is still needed.
+  // With the assumed target removed: the figures show, and the preview stays provisional and says what is still needed.
+  await leave(page, '#fld-targetAverage', '');
+  await leave(page, '#fld-targetMinimum', '');
   await expectText(page, v, 'dscr-status', 'Provisional: 1 still needed', 'case A without a target');
   const needs = await page.getByTestId('dscr-needs').locator('li').allTextContents();
   if (needs.join('|') !== 'A target DSCR for the average, the lowest year, or both') v(`case A without a target: still needed ${JSON.stringify(needs)}`);
@@ -235,12 +239,14 @@ async function layout(page, v, step) {
 
   // The common examples as the target: what limits the result, and the loan that meets it.
   await page.getByTestId('use-examples').click();
-  await expectText(page, v, 'dscr-status', 'Complete', 'case A with the examples');
+  // Five assumptions still hold: the method, the target, and working-capital interest, other term loans and other
+  // non-cash charges as answered by the assumptions (tax, profit and depreciation were typed).
+  await expectText(page, v, 'dscr-status', 'Complete, on 5 assumptions', 'case A with the examples');
   await expectText(page, v, 'dscr-verdict', 'Below the target: the lowest year, 2027-28, is 1.16 against 1.20; the average is 1.45 against 1.50.', 'case A with the examples');
   await expectText(page, v, 'dscr-largest', 'The largest loan on these terms is Rs. 11,59,646, limited by the lowest year, 2027-28.', 'case A with the examples');
   await expectText(page, v, 'use-amount', 'Use Rs. 11,59,646', 'case A with the examples');
   await expectText(page, v, 'dscr-fewest', 'Even 14 instalments, the most the projections cover (to 2029-30), miss the target: the average is below the target. Add later years to try a longer repayment.', 'case A with the examples');
-  await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · below the target · complete ↓', 'case A with the examples');
+  await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · below the target · complete, on 5 assumptions ↓', 'case A with the examples');
 
   // Tables become cards on phones and stay tables on wider screens, without a sideways scroll either way.
   await layout(page, v, 'case A filled, a schedule year open, 390 px');
@@ -276,11 +282,12 @@ async function layout(page, v, step) {
   // The borrower sets the tax rate for every year in one tap.
   await page.getByTestId('tax-company').click();
   await expectValue(page, v, '#fld-taxPct-2026-27', '25.168', 'the company tax rate');
-  // Clear all asks first, then takes the page back to the two start questions.
+  // Clear all asks first, then takes the page back to where it opened: the assumptions, and nothing typed.
   await page.getByTestId('clear-all').click();
   await page.getByTestId('clear-yes').click();
-  await page.locator('#fld-loanAmount').waitFor({ state: 'detached', timeout: 3000 }).catch(() => v('Clear all left the loan on the page'));
-  if (await page.isChecked('#fld-source-plan')) v('Clear all left the first answer chosen');
+  await expectValue(page, v, '#fld-loanAmount', '', 'Clear all empties the loan');
+  if (!(await page.isChecked('#fld-source-plan'))) v('Clear all did not go back to the assumptions');
+  await expectValue(page, v, '#fld-targetAverage', '1.50', 'Clear all restores the assumed target');
   await ctx.close();
 }
 
@@ -296,7 +303,8 @@ async function layout(page, v, step) {
   await ctx.close();
 }
 
-// A loan drawn in October: 2026-27 has interest only, so the page asks which year the figures start in (never assumed).
+// A loan drawn in October: 2026-27 has interest only. The figures start in the loan's first year, as assumed and listed,
+// and the question offers the later year.
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
   await page.check('#fld-source-plan');
@@ -320,13 +328,15 @@ async function layout(page, v, step) {
   await page.check('#fld-otherLoansInterest-none');
   await leave(page, '#fld-taxPct-2026-27', '25%');
   await page.getByTestId('use-examples').click();
-  // 6 months of interest at 1% of 12,00,000 = 72,000 in 2026-27.
-  await expectText(page, v, 'dscr-status', 'Provisional: 3 still needed', 'a first year with interest only');
-  const asked = await page.getByTestId('dscr-needs').locator('li').first().textContent();
-  if (asked !== 'The first year of your figures: 2026-27 or 2027-28') v(`the first year of figures is not asked first: ${asked}`);
+  // 6 months of interest at 1% of 12,00,000 = 72,000 in 2026-27. The figures start there as assumed, so its profit and
+  // depreciation are asked (only the later years were typed).
+  await expectText(page, v, 'dscr-status', 'Provisional: 2 still needed', 'a first year with interest only');
+  if (!(await page.isChecked('#fld-start-2026-27'))) v("the figures do not start in the loan's first year as assumed");
+  await expectText(page, v, 'assumed-start', 'The first year of the figures: The year the loan is first drawn', 'the start assumption listed');
   await expectText(page, v, page.getByTestId('start-question').locator('p').first(), 'No instalment falls in 2026-27, only interest of Rs. 72,000. If operations start later, start your figures there: the interest before then is taken as paid from the project cost, not from profits.', 'the question about the first year');
   await page.check('#fld-start-2027-28');
-  await expectText(page, v, 'dscr-status', 'Complete', 'figures starting in 2027-28');
+  await expectText(page, v, 'dscr-status', 'Complete, on 5 assumptions', 'figures starting in 2027-28');
+  if (await page.getByTestId('assumed-start').count()) v('the start assumption is still listed after choosing 2027-28');
   await expectText(page, v, 'dscr-before-start', 'Left out: 2026-27, before your figures start. Its interest (Rs. 72,000) is taken as paid from the project cost (capitalised), not from profits.', 'figures starting in 2027-28');
   await expectValue(page, v, '#fld-pbdit-2027-28', '7,50,000', 'each figure stays under its year');
   if (await page.locator('#fld-pbdit-2026-27').count()) v('2026-27 is still asked after the figures start in 2027-28');
@@ -359,7 +369,9 @@ async function layout(page, v, step) {
   await page.check('#fld-otherLoansInterest-none');
   await page.getByTestId('tax-company').click();
   await page.getByTestId('use-examples').click();
-  await expectText(page, v, 'dscr-status', 'Complete', 'a few answers');
+  // Seven assumptions hold: all but the tax rate (the company rate was chosen); this year's depreciation typed once is
+  // "as this year, every year".
+  await expectText(page, v, 'dscr-status', 'Complete, on 7 assumptions', 'a few answers');
   // Five fields for a five-year loan (profit and its rate, depreciation, working-capital interest, tax), not five a line.
   const inputs = await page.locator('#figures input[type="text"]').count();
   if (inputs > 5) v(`${inputs} fields asked for a 5-year loan; want 5`);
@@ -367,6 +379,31 @@ async function layout(page, v, step) {
   for (const [fy, want] of [['2027-28', '18,00,000'], ['2028-29', '19,80,000'], ['2031-32', '26,35,380']])
     await expectText(page, v, `pbdit-${fy}`, want, `profit worked out for ${fy}`);
   await layout(page, v, 'a few answers, 390 px');
+  await ctx.close();
+}
+
+// The owner's quick path: the loan and this year's figures, everything else as assumed and listed (fictional case A′,
+// worked by hand in tests/dscr-page.test.ts).
+{
+  const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await leave(page, '#fld-loanAmount', '12 L');
+  await leave(page, '#fld-ratePct', '12');
+  await leave(page, '#fld-disbursed', '2026-04');
+  await leave(page, '#fld-moratoriumMonths', '6');
+  await page.check('#fld-repayment-quarterly');
+  await leave(page, '#fld-instalments', '12');
+  await leave(page, '#fld-pbdit-2026-27', '5 L');
+  await leave(page, '#fld-pbdit-rate', '10');
+  await leave(page, '#fld-depreciation-2026-27', '1.5 L');
+  await leave(page, '#fld-interestOther-2026-27', '50,000');
+  await expectText(page, v, 'dscr-status', 'Complete, on 8 assumptions', 'the quick path');
+  await expectText(page, v, 'dscr-average', '1.16', 'the quick path');
+  await expectText(page, v, 'dscr-lowest', '0.84', 'the quick path');
+  await expectText(page, v, 'assumed-tax', 'Tax rate: 31.2%', 'the quick path');
+  // Four figures typed for the business, whatever the number of years, beside the assumed tax rate.
+  const inputs = await page.locator('#figures input[type="text"]').count();
+  if (inputs !== 5) v(`${inputs} fields in the figures on the quick path; want 5 (4 typed and the assumed tax rate)`);
+  await layout(page, v, 'the quick path, 390 px');
   await ctx.close();
 }
 
@@ -385,14 +422,15 @@ async function layout(page, v, step) {
   const own = { pat: ['60000', '80000', '100000'], depreciation: ['40000', '40000', '40000'], interestTL: ['50000', '40000', '20000'], principalTL: ['0', '100000', '100000'] };
   for (const [k, xs] of Object.entries(own)) for (const [i, fy] of fys.entries()) await leave(page, `#fld-${k}-${fy}`, xs[i]);
   await expectValue(page, v, '#fld-principalTL-2026-27', '0', 'a typed 0 stays');
-  await expectText(page, v, 'dscr-status', 'Provisional: 2 still needed', 'own figures before None');
+  // Own figures take none of the assumptions about the figures; the method and the target still hold.
+  await expectText(page, v, 'dscr-status', 'Provisional: 1 still needed', 'own figures before None');
   await page.check('#fld-nonCash-none');
   await leave(page, '#fld-targetAverage', '1.5');
-  await expectText(page, v, 'dscr-status', 'Complete', 'own figures');
+  await expectText(page, v, 'dscr-status', 'Complete, on 2 assumptions', 'own figures');
   await expectText(page, v, 'dscr-average', '1.23', 'own figures');
   await expectText(page, v, 'dscr-lowest', '1.14', 'own figures');
   await expectText(page, v, 'dscr-not-counted', 'Not counted: 2026-27 (no term-loan instalment).', 'own figures');
-  await expectText(page, v, 'dscr-verdict', 'Below the target: the average is 1.23 against 1.50.', 'own figures');
+  await expectText(page, v, 'dscr-verdict', 'Below the target: the lowest year, 2027-28, is 1.14 against 1.20; the average is 1.23 against 1.50.', 'own figures');
   await layout(page, v, 'own figures filled');
   await ctx.close();
 }

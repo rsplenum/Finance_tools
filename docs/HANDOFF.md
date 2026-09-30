@@ -3,6 +3,7 @@ State at 30-09-2026: P0 (site + Worker skeleton) is on `main`, which Cloudflare 
 - **The page** asks two start questions, then the loan (or the years), the year-wise figures and the lender's target.
 - **It shows** a free preview that stays provisional and lists what is still needed: the DSCR statement in the layout CAs use, and the repayment schedule month by month.
 - **The owner's research request** (how CAs, consultants and CFAs make DSCR; what Ind AS says) is answered in `docs/DSCR-RESEARCH.md`.
+- **It opens with its assumptions answered**, at the owner's request: only the loan and this year's four figures are asked, and the preview lists each assumption until it is changed (D-UX-08).
 
 The test figures are model-worked until the owner confirms fictional case A (`docs/GOLDEN-CASES.md`); nothing from the owner's office, ever (D-BIZ-02). Next is **P1c, the DSCR statement download**. Keep this file short and current.
 
@@ -28,7 +29,9 @@ The test figures are model-worked until the owner confirms fictional case A (`do
     - `site/src/dscr/model.ts`: pure; typed text to engine to words, with the statement and schedule views; unit-tested.
     - `Calculator.tsx`: the island.
     - `site/src/fields.tsx`: fields that keep a draft until left.
+    - In `model.ts`: `ASSUMED` (the starting state, from `engine/data/defaults.json`), `assumedIn` and `withSource`.
   - Fields are `fld-…`; answers have `data-testid`:
+    - assumptions: `dscr-assumed`, `assumed-<id>`;
     - summary: `dscr-status`, `dscr-needs`, `dscr-average`, `dscr-lowest`, `dscr-verdict`, `dscr-largest`, `dscr-fewest`, `answer-bar`;
     - statement: `dscr-<year>`, `available-<year>`, `service-<year>`, `pbt-<year>`, `tax-<year>`, `card-<year>`;
     - schedule: `schedule-<year>`, `month-<YYYY-MM>`;
@@ -36,17 +39,17 @@ The test figures are model-worked until the owner confirms fictional case A (`do
     - buttons: `tax-<borrower>`, `clear-all`.
 - `site/`: home, `/dscr/`, 404; dark mode without a flash. `worker/`: `GET /health`.
 - Checks, all in CI:
-  - `npm test` (79, including the simulation);
+  - `npm test` (84, including the simulation);
   - `npm run typecheck`;
   - `npm run rules-doc -- --check`;
   - `npm run build`;
   - `npm run worker:build`;
-  - `npm run check:site`: 0 violations. It drives the calculator with case A and with own figures, and takes about 15 s.
+  - `npm run check:site`: 0 violations. It drives the calculator with case A, the quick path and own figures, and takes about 15 s.
 
 ## Next — one fresh session per item
 | # | Session | Starter prompt (paste as the first message) |
 |---|---|---|
-| P1c | DSCR statement download | "Read CLAUDE.md, docs/HANDOFF.md, docs/RULES.md, docs/DSCR-RESEARCH.md §2 and §7, and docs/LESSONS-CARRIED.md §1, §4 and §8. P1c: the DSCR statement as a document to download from the `/dscr/` preview. Formats first (a PDF for the lender; an Excel copy with the working for the accountant if it stays small), built in the browser from the engine's result only, reusing the statement and schedule views in `site/src/dscr/model.ts`; no figure computed in the document code. Ask first what the document needs that the page does not ask yet (like the borrower's name and the lender) and take each fact once. The statement states the method in plain words, the facts entered, the year-wise table, the average and the lowest year, the target and what limits the result; while anything is missing it is marked provisional and lists what is still needed. Test the document's text, not screenshots, and that the download works at 390 px. No payment yet. Finish per HANDOFF." |
+| P1c | DSCR statement download | "Read CLAUDE.md, docs/HANDOFF.md, docs/RULES.md, docs/DSCR-RESEARCH.md §2 and §7, and docs/LESSONS-CARRIED.md §1, §4 and §8. P1c: the DSCR statement as a document to download from the `/dscr/` preview. Formats first (a PDF for the lender; an Excel copy with the working for the accountant if it stays small), built in the browser from the engine's result only, reusing the statement and schedule views in `site/src/dscr/model.ts`; no figure computed in the document code. Ask first what the document needs that the page does not ask yet (like the borrower's name and the lender) and take each fact once. The statement states the method in plain words, the facts entered, every assumption still in use (`assumedIn`), the year-wise table, the average and the lowest year, the target and what limits the result; while anything is missing it is marked provisional and lists what is still needed. Test the document's text, not screenshots, and that the download works at 390 px. No payment yet. Finish per HANDOFF." |
 | P1d | Payment for the download | Starter prompt to be written at the end of P1c (Razorpay through the Worker, after the owner's Phase 0 items). |
 
 ## End of every session
@@ -54,6 +57,7 @@ The test figures are model-worked until the owner confirms fictional case A (`do
 2. Update this file (state + next), commit, draft PR. The branch preview builds itself (link on the PR); open it and say so.
 
 ## Waiting on the owner
+- **Check the page's assumptions** (`docs/RULES.md`, "What the page assumes until you change it"), above all the tax rate of 31.2% and profit growing with sales; and work fictional case A′ (`docs/GOLDEN-CASES.md`) if you can.
 - **Read `docs/DSCR-RESEARCH.md`.** From general knowledge (never an employer's norms), say:
   - whether the three presets (common, RBI 2020, Schedule III) are right and in the right order;
   - whether any lender you serve uses the simple average;
