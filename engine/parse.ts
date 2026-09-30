@@ -26,3 +26,16 @@ export function parseDate(s: string): string | undefined {
 
 /** ISO yyyy-mm-dd → dd-mm-yyyy for display. */
 export const showDate = (iso?: string) => iso ? iso.split('-').reverse().join('-') : '';
+
+const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+
+/** Parse a month: 2026-04 (as a month field gives it), 04-2026, 4/2026, Apr 2026 or April 2026 → '2026-04'; undefined when not understood. */
+export function parseMonth(s: string): string | undefined {
+  const t = s.trim().toLowerCase();
+  let x: RegExpExecArray | null, y: number, m: number;
+  if ((x = /^(\d{4})[-/.](\d{1,2})$/.exec(t))) [y, m] = [+x[1], +x[2]];
+  else if ((x = /^(\d{1,2})[-/. ](\d{4})$/.exec(t))) [y, m] = [+x[2], +x[1]];
+  else if ((x = /^([a-z]{3,9})\.?[-/ ,]*(\d{4})$/.exec(t))) [y, m] = [+x[2], MONTHS.findIndex((n) => n.startsWith(x![1])) + 1];
+  else return undefined;
+  return m >= 1 && m <= 12 && y >= 1900 && y <= 2200 ? `${y}-${String(m).padStart(2, '0')}` : undefined;
+}

@@ -9,6 +9,8 @@
     "test": "vitest run",
     "typecheck": "npm run -s worker:types > /dev/null && tsc --noEmit -p tsconfig.json && tsc --noEmit -p worker/tsconfig.json",
     "check:site": "node scripts/site-check.mjs",
+    "sim": "vitest run tests/dscr.sim.test.ts --silent=false",
+    "rules-doc": "node scripts/rules-doc.mjs",
     "worker:dev": "wrangler dev -c worker/wrangler.jsonc",
     "worker:types": "wrangler types -c worker/wrangler.jsonc worker/worker-configuration.d.ts",
     "worker:build": "wrangler deploy --dry-run --outdir worker/dist -c worker/wrangler.jsonc"
