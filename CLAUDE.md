@@ -2,6 +2,8 @@
 
 - Start with `docs/HANDOFF.md` (current state, next work, gotchas), then only the parts of `docs/DECISIONS.md` you need (indexed). `docs/PROJECT.md` has the what/why. `docs/LESSONS-CARRIED.md` holds the lessons from the owner's earlier project: read §1 and §8 once per session.
 - Keep token use low (owner's request): grep before reading, text assertions over screenshots, one feature per session; update `docs/HANDOFF.md` at the end of each session and give the owner a starter prompt for the next one.
+- Whenever the owner asks for something, give the tradeoffs they may not have considered: the three to five that could change the decision, each with a recommendation (owner, 30-09-2026).
+- Skills in `.claude/skills/` load when relevant: `brief-first` (anything the owner asks to build or change), `money-maths-checks` (any figure), `lender-documents` (downloads and printouts). The rules here stay here because they always apply.
 - Numbers come only from the deterministic engine (`engine/`, pure TypeScript, no DOM). Never let an AI compute amounts, ratios, eligibility or prices shown to users. AI may draft narrative text from the user's own inputs, marked as a draft.
 - Rules, benchmarks and rates live only in dated data files under `engine/data/`, each value with its source and date; lender-specific values are marked unverified until confirmed.
 - Never default a missing fact: show what is needed and keep the result provisional. The only exceptions are the assumptions in `engine/data/defaults.json` (owner's request, D-UX-08), each listed on the page with its reason until changed.
