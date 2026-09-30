@@ -1,31 +1,42 @@
 # Handoff — start here in a new session
-State at 30-09-2026: repo set up from the appraisal project's starter kit. It has the lessons, CLAUDE.md, DECISIONS (hosting D-TECH-02, legal condition D-BIZ-01), the project brief, generic loan maths and parsing with tests (3 passing), and CI (tests + typecheck on every push). No site, Worker or tool yet; next is **P0-setup + P1 DSCR**. Keep this file short and current.
+State at 30-09-2026: P0 is on `main` (PR #1): `site/` (Astro static: home, a placeholder `/dscr/` page with one working field, 404) and `worker/` (health route, D1 + KV with placeholder IDs) pass every check. Cloudflare Pages builds `main` and every branch; the Worker is not deployed yet. Next is **P1a, the DSCR engine**. Keep this file short and current.
 
 ## Where things are
-- Live site: not yet (Cloudflare Pages). Worker: not yet. Repo: rsplenum/Finance_tools. Study report (private): https://claude.ai/code/artifact/4bad29bb-5d80-4b27-9386-be3f2581c068
-- Read order: `CLAUDE.md` → this file → the `docs/DECISIONS.md` sections you need → `docs/PROJECT.md` only for the why.
+- Live site: https://finance-tools-9if.pages.dev (Pages project `finance-tools`, built from `main`); each branch previews at `https://<branch>.finance-tools-9if.pages.dev`, linked on its pull request. Worker: not deployed (placeholder IDs). Repo: rsplenum/Finance_tools. Study report (private): https://claude.ai/code/artifact/4bad29bb-5d80-4b27-9386-be3f2581c068
+- Read order: `CLAUDE.md` → this file → the `docs/DECISIONS.md` sections you need → `docs/PROJECT.md` only for the why. Cloudflare settings: `docs/CLOUDFLARE.md`.
 
 ## What works now
-- `engine/util.ts` (EMI, formats, words) and `engine/parse.ts` (amounts, dates), tested in `tests/util.test.ts` against textbook figures.
-- `site/src/theme.ts`, `ThemeToggle.tsx`: waiting for the Astro site.
+- `engine/util.ts` (EMI, formats, words) and `engine/parse.ts` (amounts, dates), tested against textbook figures.
+- `site/`: Astro 7 + Preact 10 + Tailwind 4; dark mode with no flash (`theme.ts`, `ThemeToggle.tsx`); `/dscr/` reads a loan amount back in figures and words from the engine.
+- `worker/`: `GET /health` → 200, or 503 naming a missing binding.
+- Checks (all in CI): `npm test` (8), `npm run typecheck` (engine, site, Worker), `npm run build`, `npm run worker:build` (bundle, dry run), `npm run check:site` (every page at 390 px, light and dark: 0 violations).
 
 ## Next — one fresh session per item
 | # | Session | Starter prompt (paste as the first message) |
 |---|---|---|
-| P0 | Site + Worker skeleton | "Read CLAUDE.md, docs/HANDOFF.md, docs/PROJECT.md and docs/LESSONS-CARRIED.md §1 and §8. Set up `site/` (Astro + Preact + Tailwind, static, dark mode with site/src/theme.ts, mobile-first: no horizontal scroll at 390 px, 16 px inputs) and `worker/` (Cloudflare Worker with wrangler config, D1 + KV bindings, no secrets in the repo; a health route only). Add both to tsconfig and CI. Tell me exactly what to set up on Cloudflare (Pages project connected to this repo, preview deploys per branch). Finish per HANDOFF." |
-| P1 | DSCR statement | "Read CLAUDE.md, docs/HANDOFF.md and LESSONS-CARRIED §1 and §8. Build the DSCR engine first: year-wise DSCR, average and minimum, and the loan amount or tenure that meets a target. Keep the definitions and benchmarks in dated data files and list the common variants lenders use. Write golden tests against my worked figures (ask me for them; until then use a hand-worked example and say so) plus a second independent computation. Then the calculator page with a free preview, plain words, and what limits the result. No payment yet. Finish per HANDOFF." |
+| P1a | DSCR engine | "Read CLAUDE.md, docs/HANDOFF.md and docs/LESSONS-CARRIED.md §1, §3 and §8. P1a: the DSCR engine only; the page is P1b. In `engine/`: year-wise DSCR, the average and the minimum, and the loan amount or tenure that meets a target DSCR. Definitions and benchmarks go in dated data files under `engine/data/` (each value with source and date; lender-specific values marked unverified); list the common variants lenders use and say which ones you added beyond mine. Golden tests against my worked figures (ask me for them; until then use a hand-worked example and say so), a second independent computation of every figure, property tests, and the first simulation harness (`npm run sim`, every seed, 0 violations). A missing fact is never defaulted: the result says what is needed. No UI, no payment. Finish per HANDOFF." |
+| P1b | DSCR calculator page | "Read CLAUDE.md, docs/HANDOFF.md and docs/LESSONS-CARRIED.md §1, §4 and §8. P1b: the DSCR calculator at `/dscr/`, replacing the placeholder and keeping its loan amount field. Ask first what narrows later questions and take each fact once; year-wise inputs as a table that becomes cards on phones; a free preview that stays provisional until complete; plain words; say what limits the result. Numbers only from the P1a engine. `npm run check:site` at 0 violations plus text assertions on the page's results. No payment yet. Finish per HANDOFF." |
 
 ## End of every session
-1. Tests, typecheck, simulation (0 violations), regenerate docs; one line in `docs/DECISIONS.md`.
-2. Update this file (state + next), commit, draft PR, deploy the preview.
+1. `npm test`, `npm run typecheck`, `npm run build`, `npm run check:site` (0 violations); from P1a also the simulation (0 violations) and any generated docs. One line in `docs/DECISIONS.md` per decision.
+2. Update this file (state + next), commit, draft PR. The branch preview builds itself (link on the PR); open it and say so.
 
 ## Waiting on the owner
+- The Worker (`docs/CLOUDFLARE.md` §2: create D1 + KV, send the IDs) can wait until the payment session.
+- Allow `developers.cloudflare.com` and `pages.dev` in the environment's network settings (both blocked now), so a session can check `docs/CLOUDFLARE.md` against the docs and open previews itself.
 - Worked DSCR figures from 3–5 real (anonymised) files for golden tests.
 - Which lenders' DSCR definitions and benchmarks come first.
 - Business entity, GST registration and Razorpay account (Phase 0).
+- Before payments: keep the separate Worker (D-TECH-01) or move the API beside the site as Pages Functions (same address, separate preview data per branch)? Branch previews of a separate Worker share the live D1 and KV. Decide with the Cloudflare docs open.
+- A product name and domain (the site says "Loan document tools" for now); at launch remove the `noindex` in `site/public/_headers`.
 - First region and cities for construction rates (Phase 2).
 - Main customer first: DSAs (plans) or borrowers (one-off).
 
 ## Gotchas
 - One session at a time per checkout; check `git log origin/<branch>` and `git status` before any reset.
 - The session's git proxy caps concurrent git operations: one clone or fetch at a time.
+- Astro runs from inside `site/` (the npm scripts do this): `astro dev --root site` finds no pages in Astro 7.3. The dev server logs to `site/.astro/dev.log`.
+- `.astro` files are not type-checked (TypeScript 7): keep logic in `.ts`/`.tsx`.
+- Worker runtime types are generated by `npm run typecheck` (or `npm run worker:types`) and gitignored.
+- `npm run check:site` needs `npm run build` first. Playwright is pinned to the container's Chromium (1.56.1); if a container ships another version, set `CHROMIUM_PATH=/opt/pw-browsers/chromium`.
+- Stop background servers by PID: `pkill -f 'wrangler dev'` also matches the calling shell.
