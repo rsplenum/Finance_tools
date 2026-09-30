@@ -1,8 +1,8 @@
 # Handoff — start here in a new session
-State at 30-09-2026: P0 done on a draft PR (branch `ccr-ba2b6ab9-casbge`). `site/` (Astro static: home, a placeholder `/dscr/` page with one working field, 404) and `worker/` (health route, D1 + KV with placeholder IDs) build and pass every check. Not yet on Cloudflare: the owner connects Pages (`docs/CLOUDFLARE.md`). Next is **P1a, the DSCR engine**. Keep this file short and current.
+State at 30-09-2026: P0 done on a draft PR (branch `ccr-ba2b6ab9-casbge`). `site/` (Astro static: home, a placeholder `/dscr/` page with one working field, 404) and `worker/` (health route, D1 + KV with placeholder IDs) build and pass every check. Cloudflare Pages connected to the repo by the owner (30-09-2026); `main` has no site to build until this PR merges. Next is **P1a, the DSCR engine**. Keep this file short and current.
 
 ## Where things are
-- Live site: none yet; after the owner connects Pages, `finance-tools.pages.dev` and one preview per branch. Worker: not deployed (placeholder IDs). Repo: rsplenum/Finance_tools. Study report (private): https://claude.ai/code/artifact/4bad29bb-5d80-4b27-9386-be3f2581c068
+- Live site: Pages is connected; production stays empty until P0 merges, and each branch gets a preview link on its pull request. Worker: not deployed (placeholder IDs). Repo: rsplenum/Finance_tools. Study report (private): https://claude.ai/code/artifact/4bad29bb-5d80-4b27-9386-be3f2581c068
 - Read order: `CLAUDE.md` → this file → the `docs/DECISIONS.md` sections you need → `docs/PROJECT.md` only for the why. Cloudflare settings: `docs/CLOUDFLARE.md`.
 
 ## What works now
@@ -22,7 +22,7 @@ State at 30-09-2026: P0 done on a draft PR (branch `ccr-ba2b6ab9-casbge`). `site
 2. Update this file (state + next), commit, draft PR. Once Pages is connected, the branch preview builds itself: open it and say so.
 
 ## Waiting on the owner
-- Connect Cloudflare Pages (`docs/CLOUDFLARE.md` §1). The Worker (§2: create D1 + KV, send the IDs) can wait until the payment session.
+- The Worker (`docs/CLOUDFLARE.md` §2: create D1 + KV, send the IDs) can wait until the payment session.
 - Allow `developers.cloudflare.com` in the environment's network settings, so a session can check `docs/CLOUDFLARE.md` against the docs.
 - Worked DSCR figures from 3–5 real (anonymised) files for golden tests.
 - Which lenders' DSCR definitions and benchmarks come first.
