@@ -1,8 +1,8 @@
 # Handoff — start here in a new session
-State at 30-09-2026: P0 done on a draft PR (branch `ccr-ba2b6ab9-casbge`). `site/` (Astro static: home, a placeholder `/dscr/` page with one working field, 404) and `worker/` (health route, D1 + KV with placeholder IDs) build and pass every check. Cloudflare Pages connected to the repo by the owner (30-09-2026); `main` has no site to build until this PR merges. Next is **P1a, the DSCR engine**. Keep this file short and current.
+State at 30-09-2026: P0 is on `main` (PR #1): `site/` (Astro static: home, a placeholder `/dscr/` page with one working field, 404) and `worker/` (health route, D1 + KV with placeholder IDs) pass every check. Cloudflare Pages builds `main` and every branch; the Worker is not deployed yet. Next is **P1a, the DSCR engine**. Keep this file short and current.
 
 ## Where things are
-- Live site: Pages project `finance-tools` at https://finance-tools-9if.pages.dev (empty until P0 merges); each branch previews at `https://<branch>.finance-tools-9if.pages.dev`, linked on its pull request. Worker: not deployed (placeholder IDs). Repo: rsplenum/Finance_tools. Study report (private): https://claude.ai/code/artifact/4bad29bb-5d80-4b27-9386-be3f2581c068
+- Live site: https://finance-tools-9if.pages.dev (Pages project `finance-tools`, built from `main`); each branch previews at `https://<branch>.finance-tools-9if.pages.dev`, linked on its pull request. Worker: not deployed (placeholder IDs). Repo: rsplenum/Finance_tools. Study report (private): https://claude.ai/code/artifact/4bad29bb-5d80-4b27-9386-be3f2581c068
 - Read order: `CLAUDE.md` → this file → the `docs/DECISIONS.md` sections you need → `docs/PROJECT.md` only for the why. Cloudflare settings: `docs/CLOUDFLARE.md`.
 
 ## What works now
