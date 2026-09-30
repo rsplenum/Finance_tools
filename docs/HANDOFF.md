@@ -1,10 +1,9 @@
 # Handoff — start here in a new session
-State at 30-09-2026: P0 (site + Worker skeleton) is on `main`, which Cloudflare Pages builds. **P1a (the DSCR engine) and P1b (the DSCR calculator at `/dscr/`) are done on draft PR #2** (branch `ccr-ba2b6ab9-casbge`, CI green), waiting for the owner to try the preview and say "merge the PR".
-- **The page opens with its assumptions answered**, at the owner's request: it asks only the loan and this year's four figures, works out the later years from sales growth, and lists each assumption until it is changed (D-UX-08). Every assumption can be changed, including a switch to the borrower's own year-wise figures.
-- **It shows** a free preview that stays provisional and lists what is still needed: the DSCR statement in the layout CAs use, and the repayment schedule month by month.
-- **The owner's research request** (how CAs, consultants and CFAs make DSCR; what Ind AS says) is answered in `docs/DSCR-RESEARCH.md`.
+State at 30-09-2026: P0 to P1c are on `main` (PRs #2 and #3 merged), which Cloudflare Pages builds: the DSCR engine, the calculator at `/dscr/`, and the statement to download as a PDF and an Excel copy (D-DOC-01, D-DOC-02, D-TECH-13), free for now.
+- **The owner is not satisfied with the page.** An outside review (Gemini, reading `main` before PR #2 was merged) and the owner's own words: it should ask seven inputs, not ten plus method choices. The engine's maths stands; the review's own formula taxes profit before interest. **Next is the front door (P1e)**: the owner's seven inputs by default, everything else under one closed "More options". Six choices for it wait on the owner (below).
+- **Skills** in `.claude/skills/` (D-TECH-14): `brief-first`, `money-maths-checks`, `lender-documents`. The owner's rule, now in CLAUDE.md: give the tradeoffs of every request.
 
-The test figures are model-worked until the owner confirms fictional cases A and A′ (`docs/GOLDEN-CASES.md`); nothing from the owner's office, ever (D-BIZ-02). Next: fixes from the owner's try of the preview, if any, then **P1c, the DSCR statement download**. Keep this file short and current.
+The test figures are model-worked until the owner confirms fictional cases A and A′ (`docs/GOLDEN-CASES.md`); nothing from the owner's office, ever (D-BIZ-02). Keep this file short and current.
 
 ## Where things are
 - Live site: https://finance-tools-9if.pages.dev (Pages project `finance-tools`, built from `main`); each branch previews at `https://<branch>.finance-tools-9if.pages.dev`, linked on its pull request. Worker: not deployed (placeholder IDs). Repo: rsplenum/Finance_tools. Study report (private): https://claude.ai/code/artifact/4bad29bb-5d80-4b27-9386-be3f2581c068
@@ -28,36 +27,50 @@ The test figures are model-worked until the owner confirms fictional cases A and
     - `site/src/dscr/model.ts`: pure; typed text to engine to words, with the statement and schedule views; unit-tested.
     - `Calculator.tsx`: the island.
     - `site/src/fields.tsx`: fields that keep a draft until left.
-    - In `model.ts`: `ASSUMED` (the starting state, from `engine/data/defaults.json`), `assumedIn` and `withSource`.
+    - In `model.ts`: `ASSUMED` (the starting state, from `engine/data/defaults.json`), `assumedIn` and `withSource`. The statement and schedule views carry the engine's exact figures (`n`) beside the words, for the Excel copy.
   - Fields are `fld-…`; answers have `data-testid`:
     - assumptions: `dscr-assumed`, `assumed-<id>`;
     - summary: `dscr-status`, `dscr-needs`, `dscr-average`, `dscr-lowest`, `dscr-verdict`, `dscr-largest`, `dscr-fewest`, `answer-bar`;
     - statement: `dscr-<year>`, `available-<year>`, `service-<year>`, `pbt-<year>`, `tax-<year>`, `card-<year>`;
     - schedule: `schedule-<year>`, `month-<YYYY-MM>`;
     - loan read-back: `loan-level`, `loan-dates`, `amount-read`;
-    - buttons: `tax-<borrower>`, `clear-all`.
+    - buttons: `tax-<borrower>`, `clear-all`;
+    - download: fields `fld-borrower`, `fld-lender`, `fld-preparedBy`; `doc-status`, `doc-needs`, `doc-wait`, `download-pdf`, `download-xlsx`.
+- The document (P1c):
+  - `site/src/dscr/document.ts`: `statementDoc` builds it from the state and the preview; `docNeeds`, `docStatus`, `fileName`.
+  - `site/src/doc/`: `doc.ts` (blocks, `docText` for tests), `pdf.ts` (PDF writer, `printable`), `xlsx.ts` (Excel writer and zip). Pure, no DOM.
+  - `scripts/read-doc.mjs`: reads the files back with pdf.js and read-excel-file, for the tests and the site check.
 - `site/`: home, `/dscr/`, 404; dark mode without a flash. `worker/`: `GET /health`.
 - Checks, all in CI:
-  - `npm test` (84, including the simulation);
+  - `npm test` (103, including the simulation and the document read back by pdf.js and read-excel-file);
   - `npm run typecheck`;
   - `npm run rules-doc -- --check`;
   - `npm run build`;
   - `npm run worker:build`;
-  - `npm run check:site`: 0 violations. It drives the calculator with case A, the quick path and own figures, and takes about 15 s.
+  - `npm run check:site`: 0 violations. It drives the calculator with case A, the quick path and own figures, downloads the PDF and the Excel copy at 390 px (provisional, then complete) and reads them back; about 16 s.
 
 ## Next — one fresh session per item
 | # | Session | Starter prompt (paste as the first message) |
 |---|---|---|
-| P1b fixes | Only if the preview needs changes before merging | "Read CLAUDE.md and docs/HANDOFF.md. PR #2 (branch `ccr-ba2b6ab9-casbge`) is still a draft: work on that branch and push to it (you have my permission). On the `/dscr/` preview, this reads wrong or asks too much: <your notes>. Fix only that, keep cases A and A′ passing, finish per HANDOFF." |
-| P1c | DSCR statement download (after PR #2 is merged: say "merge the PR" at the start of this prompt, or merge it on GitHub first) | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md, docs/RULES.md, docs/DSCR-RESEARCH.md §2 and §7, and docs/LESSONS-CARRIED.md §1, §4 and §8. P1c: the DSCR statement as a document to download from the `/dscr/` preview. Formats first (a PDF for the lender; an Excel copy with the working for the accountant if it stays small), built in the browser from the engine's result only, reusing the statement and schedule views in `site/src/dscr/model.ts`; no figure computed in the document code. Ask first what the document needs that the page does not ask yet (like the borrower's name and the lender) and take each fact once. The statement states the method in plain words, the facts entered, every assumption still in use (`assumedIn`), the year-wise table, the average and the lowest year, the target and what limits the result; while anything is missing it is marked provisional and lists what is still needed. Test the document's text, not screenshots, and that the download works at 390 px. No payment yet. Finish per HANDOFF." |
-| P1d | Payment for the download | Starter prompt to be written at the end of P1c (Razorpay through the Worker, after the owner's Phase 0 items). |
+| P1e | The front door for `/dscr/` | "Work from `main`. Read CLAUDE.md and docs/HANDOFF.md (the six front-door choices under 'Waiting on the owner'). P1e: the front door. My answers to the six choices: <your answers, or 'as recommended'>. By default the page asks only: this year's profit (before tax, depreciation and loan interest), growth % a year, existing loans' EMIs a month, tax (borrower buttons), loan amount, interest rate, term in years. Map them onto the existing engine; any new arithmetic (EMIs a month to a year, years to instalments) goes in the engine, worked out twice. The rest are assumptions in engine/data/defaults.json, listed on the page in one line with a way to change each. Everything else goes under one closed 'More options'. Results first: the EMI, total interest, the average and lowest DSCR, each year marked against the target in words and colour; then the year-wise table and the schedule; buttons PDF, Excel, Print. The site check counts the default fields. Keep cases A and A′ passing through More options, and the document in step. Finish per HANDOFF." |
+| P1d | Payment for the download (after P1e, and after the owner's Phase 0 items: business entity, GST, Razorpay account) | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md, docs/DECISIONS.md (D-TECH-01, D-TECH-06, D-DOC-01) and docs/CLOUDFLARE.md. P1d: payment for the DSCR statement download, through Razorpay and the Worker. Ask me first, in one message: the price; whether the Worker stays separate or moves beside the site as Pages Functions; and, since the document is made in the browser, whether payment only unlocks the two buttons (anyone reading the page's code could still make the file) or the file must come from the server. Then build it: the order made in the Worker, the payment verified by its signature, and the buttons unlocked for that statement only. Test with Razorpay's test keys, set only in the environment settings, never in the repo. The preview stays free. Finish per HANDOFF." |
 
 ## End of every session
 1. `npm test` (includes the simulation; `npm run sim` prints it: 0 violations), `npm run typecheck`, `npm run rules-doc`, `npm run build`, `npm run check:site` (0 violations). One line in `docs/DECISIONS.md` per decision.
 2. Update this file (state + next), commit, draft PR. The branch preview builds itself (link on the PR); open it and say so.
 
 ## Waiting on the owner
-- **Try the `/dscr/` preview** (https://ccr-ba2b6ab9-casbge.finance-tools-9if.pages.dev/dscr/), on a phone too, and say what reads wrong or asks too much; then "merge the PR" for PR #2.
+- **Six choices for the front door** (Claude's recommendation first; the tradeoffs are in the session of 30-09-2026):
+  1. Years: April to March with the loan assumed drawn this month; or from next April; or loan years (Year 1 = the first 12 months).
+  2. Tax for a proprietor: the flat rate for now, with individual slab rates added as a borrower type in a later session; or slab rates in P1e.
+  3. Profit: one figure, plus depreciation as an optional eighth line on the front; or strictly seven fields.
+  4. Existing EMIs: counted in full and running through the new loan, with "ends in" under More options.
+  5. Print: opens the same PDF for printing; or a print layout of the page.
+  6. First customer: borrowers, with a visible link for a CA's year-wise projection; or DSAs and CAs first.
+- **Try the download on the live site** (https://finance-tools-9if.pages.dev/dscr/), on a phone too: open the PDF, and the Excel copy in Excel itself (it was read by pdf.js, read-excel-file and openpyxl, but not opened in Excel). Say what reads wrong. In particular:
+  - is anything missing that a lender expects on it (the loan's purpose, the borrower's address, a GSTIN)?
+  - do the signature block and "Not a CA's certificate" suit?
+  - should the Excel copy carry formulas that redo the working (D-DOC-02)?
 - **Check the page's assumptions** (`docs/RULES.md`, "What the page assumes until you change it"), above all the tax rate of 31.2% and profit growing with sales.
 - **Work fictional cases A and A′** (`docs/GOLDEN-CASES.md`) in your own Excel at home, or send public worked examples with their source. Never office files (D-BIZ-02).
 - **Read `docs/RULES.md` and `docs/DSCR-RESEARCH.md`.** From general knowledge and published material only (never an employer's norms), say:
@@ -83,6 +96,9 @@ The test figures are model-worked until the owner confirms fictional cases A and
 - `npm run check:site` needs `npm run build` first. Playwright is pinned to the container's Chromium (1.56.1); if a container ships another version, set `CHROMIUM_PATH=/opt/pw-browsers/chromium`.
 - Vitest 5 hides console output from passing tests; `npm run sim` shows the simulation's per-seed summary (about 10 s).
 - Stop background servers by PID: `pkill -f 'wrangler dev'` also matches the calling shell.
+- LibreOffice is installed in the container but loads no file ("source file could not be loaded", even a CSV). To look at a PDF's layout, render its pages with pdf.js in Chromium (a scratch script serving `node_modules/pdfjs-dist`); to check a workbook, `pip install openpyxl` in a scratch venv.
+- `new Blob([bytes])` needs `Uint8Array<ArrayBuffer>` in TypeScript 7: the writers return that type.
+- pdf.js in Node: `getDocument(...)` returns a task; call `task.destroy()`, not the document's.
 - A field's `change` event (a month picker, or Playwright's `fill`) can arrive before Preact re-renders the draft: commit from the input's own value, as `useDraft` in `site/src/fields.tsx` does. Preact runs `useEffect` only after the next frame (or 35 ms): use `useLayoutEffect` where a field must show a change at once, and make checks wait for what they read (`expectText`, `expectValue`).
 - Scratch scripts outside the repo cannot import `playwright` by name; import `node_modules/playwright/index.mjs` by path.
 - WebFetch goes through the same network policy: rbi.org.in, bcasonline.org and srbatliboi.in were refused, while WebSearch works. Mark anything read only through search results as secondary.

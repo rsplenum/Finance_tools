@@ -3,7 +3,9 @@
  * and this year's figures are asked; each assumption is listed in the preview until changed. The two start questions
  * (where the yearly figures come from, how DSCR is worked out) stay on top to change. Then the loan (or the years), the
  * yearly figures, the lender's target, and a free preview that stays provisional while anything is missing: the DSCR
- * statement in the layout chartered accountants use, and the repayment schedule. Figures: engine/dscr.ts only, via model.ts.
+ * statement in the layout chartered accountants use, and the repayment schedule. Last, the statement to download: the
+ * document's own facts asked once, then a PDF and an Excel copy made in the browser (document.ts). Figures: engine/dscr.ts
+ * only, via model.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
 import { AmountField } from '../AmountField';
@@ -12,10 +14,13 @@ import { parseMonth } from '../../../engine/parse';
 import { TAX_STATUS } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import { BUTTON, CellInput, Choice, HINT, Section, SourceNote, TextField } from '../fields';
+import { pdfOf, printable } from '../doc/pdf';
+import { xlsxOf } from '../doc/xlsx';
+import { allNeeds, docNeeds, docStatus, fileName, statementDoc } from './document';
 import {
   ASSUMED, EXAMPLE_TARGETS, OPTION_KEYS, TAX_CHOICES, amountOf, barText, choicesOf, loanRead, modeOf, numberOf, parseFy, presetText,
   preview, rowValues, rowsOf, statusText, targetText, tidyAmount, withPlanStart, withSource, withTaxRate, yearsOf,
-  type LoanText, type Preview, type RowDef, type RowMode, type ScheduleView, type State, type StatementView, type Years,
+  type DocFacts, type LoanText, type Preview, type RowDef, type RowMode, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 
 type Update = (f: (s: State) => State) => void;
@@ -38,6 +43,7 @@ export function DscrCalculator() {
       <Figures s={s} update={update} rows={rows} y={y} p={p} />
       <TargetSection s={s} update={update} />
       <PreviewSection p={p} update={update} />
+      <DownloadSection s={s} p={p} update={update} />
       <div class="sticky bottom-0 z-10 -mx-4 mt-10 border-t border-slate-200 bg-white px-4 py-2.5 dark:border-slate-800 dark:bg-slate-950">
         <a href="#preview" data-testid="answer-bar" aria-live="polite" class="block text-sm font-medium text-slate-900 dark:text-slate-100">
           {barText(p)} <span aria-hidden="true">↓</span>
@@ -324,6 +330,55 @@ function PreviewSection({ p, update }: { p: Preview; update: Update }) {
     {p.notes.length > 0 && <ul data-testid="dscr-notes" class="mt-2 space-y-0.5 text-sm text-amber-900 dark:text-amber-200">{p.notes.map((n) => <li key={n}>{n}</li>)}</ul>}
     {p.schedule && <Schedule sch={p.schedule} />}
     <p class={`mt-6 ${HINT}`}>A free preview, worked out twice in your browser; figures are shown only when both agree.</p>
+  </Section>;
+}
+
+const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const isoDate = (d: Date) => [d.getFullYear(), d.getMonth() + 1, d.getDate()].map((n) => String(n).padStart(2, '0')).join('-');
+
+/** Hands the file to the browser to save. */
+function download(bytes: Uint8Array<ArrayBuffer>, name: string, type: string) {
+  const url = URL.createObjectURL(new Blob([bytes], { type }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: name });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
+/** The statement to download: first what only the document needs, asked once; then the PDF and the Excel copy. */
+function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Update }) {
+  const f = s.doc, set = (patch: Partial<DocFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
+  const english = (t: string) => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
+  const own = docNeeds(f), provisional = allNeeds(s, p).length > 0, ready = !!p.statement && !p.blocked;
+  const save = (kind: 'pdf' | 'xlsx') => {
+    const now = new Date(), doc = statementDoc(s, p, isoDate(now));
+    if (doc) download(kind === 'pdf' ? pdfOf(doc, now) : xlsxOf(doc, now), fileName(s, p, kind), kind === 'pdf' ? 'application/pdf' : XLSX_TYPE);
+  };
+  const field = (id: keyof DocFacts, label: string, hint?: string, placeholder?: string) =>
+    <TextField id={`fld-${id}`} label={label} hint={hint} placeholder={placeholder} value={f[id]} onCommit={(t) => set({ [id]: t })}
+      said={english(f[id])} invalid={!!english(f[id])} />;
+  return <Section id="download" title="Download the statement">
+    <p class={`mt-2 ${HINT}`}>A PDF for the lender, and an Excel copy with the working for the accountant, made in your browser from the figures above.</p>
+    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      {field('borrower', 'Borrower’s name', undefined, 'like Asha Traders')}
+      {field('lender', 'Lender', 'The bank or finance company, and the branch.')}
+      {field('preparedBy', 'Prepared by, if not the borrower', 'Your name or your firm’s; leave empty if the borrower prepares it.')}
+    </div>
+    {ready
+      ? <div class="mt-5">
+        <p data-testid="doc-status" class={`inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${provisional
+          ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200'}`}>
+          {docStatus(s, p)}
+        </p>
+        {provisional && <p class={HINT}>The document says so on every page and lists what is still needed{own.length ? ':' : '.'}</p>}
+        {own.length > 0 && <ul data-testid="doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button type="button" data-testid="download-pdf" class={BUTTON} onClick={() => save('pdf')}>Download PDF</button>
+          <button type="button" data-testid="download-xlsx" class={BUTTON} onClick={() => save('xlsx')}>Download Excel</button>
+        </div>
+      </div>
+      : <p data-testid="doc-wait" class={`mt-4 ${HINT}`}>{p.blocked ? 'No document while the two computations disagree.' : 'The document can be made once the statement shows figures.'}</p>}
   </Section>;
 }
 
