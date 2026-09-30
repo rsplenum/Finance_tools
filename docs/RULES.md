@@ -38,7 +38,9 @@ The lowest year is the lowest DSCR among the years that count.
 
 ### Presets
 
-- **Common term-loan DSCR**: interest on term loans; lease rentals left out; years with a term-loan instalment; total cash available ÷ total debt service. Source: General practice in Indian project reports, as Claude understands it; not checked against a published source (30-09-2026, not yet checked).
+- **Common term-loan DSCR**: interest on term loans; lease rentals left out; years with a term-loan instalment; total cash available ÷ total debt service. Source: How chartered accountants and banks work DSCR for term loans, as described in public articles (bankingfinance.in, finpab.com; docs/DSCR-RESEARCH.md); not a regulation, and not checked against a primary source (30-09-2026, not yet checked).
+- **RBI resolution framework (2020)**: interest on all borrowings, working capital too; lease rentals left out; every year with interest or instalments due; total cash available ÷ total debt service. Source: RBI circular DOR.No.BP.BC/13/21.04.048/2020-21 of 7 September 2020: DSCR = (net cash accruals + interest and finance charges) ÷ (current portion of long-term debt + interest and finance charges), and the average over the period of the loan. Read through summaries; the circular itself could not be opened (30-09-2026, not yet checked).
+- **As in the annual accounts (Schedule III)**: interest on all borrowings, working capital too; lease rentals counted; every year with interest or instalments due; total cash available ÷ total debt service. Source: ICAI Guidance Note on Schedule III: (profit after tax + non-cash operating expenses + interest) ÷ (interest and lease payments + principal repayments). It defines the yearly ratio only; the years counted and the average are this tool's. Read through summaries; the Guidance Note itself could not be opened (30-09-2026, not yet checked).
 
 ### Benchmarks
 
@@ -58,3 +60,13 @@ Shown as examples only, never used unless chosen. Each lender sets its own.
 - Tax = tax rate × profit before tax, and nil in a year with a loss. Losses carried forward are not set off, so tax may be overstated in the year after a loss (the DSCR errs low).
 - Profit before interest, depreciation and tax is taken after lease rentals.
 - Years are Indian financial years, April to March.
+
+## Tax rates the page can fill in
+
+Dated 30-09-2026. Rates on income of FY 2025-26 (AY 2026-27), as found by Claude in public summaries; not yet checked for FY 2026-27 onwards, when the Income-tax Act, 2025 applies. Later years are taken at the same rate. The borrower's CA confirms the rate; any other rate can be typed.
+
+| Borrower | Rate | Working | Law | Source | Date | Checked |
+|---|---|---|---|---|---|---|
+| Company on the concessional rate | 25.168% | 22% + 10% surcharge + 4% cess | Section 115BAA of the Income-tax Act, 1961; section 200 of the Income-tax Act, 2025 | taxmann.com and caalley.com rate charts for AY 2026-27; taxtmi.com on section 200 | 30-09-2026 | no |
+| Firm or LLP, income up to Rs. 1 crore | 31.2% | 30% + 4% cess | Rates in force for firms and LLPs | taxmann.com and caalley.com rate charts for AY 2026-27 | 30-09-2026 | no |
+| Firm or LLP, income above Rs. 1 crore | 34.944% | 30% + 12% surcharge + 4% cess | Rates in force for firms and LLPs; surcharge above Rs. 1 crore of income | taxmann.com and caalley.com rate charts for AY 2026-27 | 30-09-2026 | no |

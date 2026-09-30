@@ -4,6 +4,7 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import dscr from '../engine/data/dscr.json' with { type: 'json' };
+import tax from '../engine/data/tax.json' with { type: 'json' };
 
 const date = (iso) => iso.split('-').reverse().join('-');
 const list = (ids) => {
@@ -44,6 +45,11 @@ out.push('', '### Benchmarks', '', 'Shown as examples only, never used unless ch
   '| What | Value | Source | Date | Checked |', '|---|---|---|---|---|');
 for (const b of dscr.benchmarks) out.push(`| ${b.what} | ${b.value.toFixed(2)} | ${b.source} | ${date(b.date)} | ${b.verified ? 'yes' : 'no'} |`);
 out.push('', `### ${dscr.planning.label}`, '', ...dscr.planning.rules.map((r) => `- ${r}`), '');
+out.push(`## ${tax.title}`, '', `Dated ${date(tax.date)}. ${tax.status}`, '',
+  '| Borrower | Rate | Working | Law | Source | Date | Checked |', '|---|---|---|---|---|---|---|');
+for (const t of tax.rates)
+  out.push(`| ${t.label} | ${t.pct}% | ${t.base}%${t.surcharge ? ` + ${t.surcharge}% surcharge` : ''} + ${t.cess}% cess | ${t.law} | ${t.source} | ${date(t.date)} | ${t.verified ? 'yes' : 'no'} |`);
+out.push('');
 
 const text = out.join('\n');
 const path = new URL('../docs/RULES.md', import.meta.url);

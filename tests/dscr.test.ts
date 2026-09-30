@@ -5,8 +5,8 @@
 import { describe, it, expect } from 'vitest';
 import DATA from '../engine/data/dscr.json';
 import {
-  dscrStatement, fyRange, loanTimeline, maxLoanAmount, planStatement, shortestRepayment,
-  type Definition, type Plan, type ProjectionYear, type Statement, type YearFigures,
+  amortization, dscrStatement, fyRange, loanTimeline, maxLoanAmount, planStatement, shortestRepayment,
+  type Amortization, type Definition, type Plan, type ProjectionYear, type Statement, type YearFigures,
 } from '../engine/dscr';
 import type { LoanTerms } from '../engine/loan';
 
@@ -130,5 +130,42 @@ describe('when the loan runs', () => {
   it('years run on across a century', () => {
     expect(fyRange('2098-99', 3)).toEqual(['2098-99', '2099-00', '2100-01']);
     expect(fyRange('2026', 2)).toEqual([]);
+  });
+});
+
+describe('the repayment schedule, month by month', () => {
+  const r2 = (x: number) => Math.round(x * 100) / 100;
+  it('case A: interest every month on the balance, instalments of 1,00,000 from December 2026', () => {
+    const a = amortization(LOAN) as Amortization, at = (m: string) => a.months.find((x) => x.month === m)!;
+    expect(a.months).toHaveLength(42); // 6 months' moratorium + 12 quarters
+    // April 2026: 1% of 12,00,000 and no principal; December 2026: instalment 1; September 2029: instalment 12 clears it.
+    expect([r2(at('2026-04').opening), r2(at('2026-04').interest), at('2026-04').principal]).toEqual([1200000, 12000, 0]);
+    expect([at('2026-12').instalment, r2(at('2026-12').principal), r2(at('2026-12').closing)]).toEqual([1, 100000, 1100000]);
+    expect([at('2027-01').instalment, r2(at('2027-01').interest)]).toEqual([undefined, 11000]);
+    expect([at('2029-09').instalment, r2(at('2029-09').closing)]).toEqual([12, 0]);
+    expect(a.level).toBe(100000);
+    // Totals by year, as in tests/loan.test.ts.
+    expect(a.years.map((y) => [y.fy, r2(y.interest), r2(y.principal)])).toEqual([
+      ['2026-27', 141000, 200000], ['2027-28', 102000, 400000], ['2028-29', 54000, 400000], ['2029-30', 9000, 200000],
+    ]);
+  });
+  it('a textbook EMI: Rs. 10,00,000 at 12% for 12 months is Rs. 88,848.79; month 1 is 10,000 interest and 78,848.79 principal', () => {
+    const a = amortization({ amount: 1000000, ratePct: 12, disbursed: '2026-04', moratoriumMonths: 0, instalments: 12, frequency: 'monthly', style: 'emi' }) as Amortization;
+    expect(a.level.toFixed(2)).toBe('88848.79');
+    expect([a.months[0].interest.toFixed(2), a.months[0].principal.toFixed(2), a.months[0].instalment]).toEqual(['10000.00', '78848.79', 1]);
+    expect(a.months[11].closing).toBeCloseTo(0, 6);
+  });
+  it('names what is missing', () => {
+    expect(amortization({ ...LOAN, ratePct: undefined })).toEqual({ needs: ['Interest rate (% a year)'] });
+  });
+});
+
+describe('profit after tax, worked out (fictional case A)', () => {
+  it('2026-27: profit before tax 1,59,000, tax 39,750, profit after tax 1,19,250; a loss pays no tax', () => {
+    const p = (planStatement(CASE_A, LOAN, COMMON) as Plan).profit[0];
+    expect([p.pbdit, p.depreciation, p.interestTL, p.interestOther, p.pbt, p.tax, p.pat].map(Math.round))
+      .toEqual([500000, 150000, 141000, 50000, 159000, 39750, 119250]);
+    const loss = (planStatement([{ ...CASE_A[0], pbdit: 200000 }, ...CASE_A.slice(1)], LOAN, COMMON) as Plan).profit[0];
+    expect([loss.pbt, loss.tax, loss.pat].map(Math.round)).toEqual([-141000, 0, -141000]);
   });
 });

@@ -52,7 +52,23 @@
       "id": "common",
       "label": "Common term-loan DSCR",
       "choice": { "interest": "term-loans", "leases": "no", "years": "repayment", "average": "totals" },
-      "source": "General practice in Indian project reports, as Claude understands it; not checked against a published source",
+      "source": "How chartered accountants and banks work DSCR for term loans, as described in public articles (bankingfinance.in, finpab.com; docs/DSCR-RESEARCH.md); not a regulation, and not checked against a primary source",
+      "date": "2026-09-30",
+      "verified": false
+    },
+    {
+      "id": "rbi-2020",
+      "label": "RBI resolution framework (2020)",
+      "choice": { "interest": "all-borrowings", "leases": "no", "years": "debt-service", "average": "totals" },
+      "source": "RBI circular DOR.No.BP.BC/13/21.04.048/2020-21 of 7 September 2020: DSCR = (net cash accruals + interest and finance charges) ÷ (current portion of long-term debt + interest and finance charges), and the average over the period of the loan. Read through summaries; the circular itself could not be opened",
+      "date": "2026-09-30",
+      "verified": false
+    },
+    {
+      "id": "schedule-iii",
+      "label": "As in the annual accounts (Schedule III)",
+      "choice": { "interest": "all-borrowings", "leases": "yes", "years": "debt-service", "average": "totals" },
+      "source": "ICAI Guidance Note on Schedule III: (profit after tax + non-cash operating expenses + interest) ÷ (interest and lease payments + principal repayments). It defines the yearly ratio only; the years counted and the average are this tool's. Read through summaries; the Guidance Note itself could not be opened",
       "date": "2026-09-30",
       "verified": false
     }

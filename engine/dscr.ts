@@ -5,8 +5,8 @@
  * the result lists what is needed instead of figures.
  */
 import DATA from './data/dscr.json';
-import { PERIOD_MONTHS, fyOf, monthAfter, schedule, termMonths, type LoanTerms, type YearDebt } from './loan';
-import { planCheck, scheduleCheck, statementCheck, type CheckResult } from './dscr-check';
+import { PERIOD_MONTHS, fyOf, levelInstalment, monthAfter, months, schedule, termMonths, type LoanTerms, type MonthRow, type YearDebt } from './loan';
+import { levelCheck, monthsCheck, planCheck, scheduleCheck, statementCheck, type CheckResult } from './dscr-check';
 
 type Data = typeof DATA;
 type Options = Data['options'];
@@ -33,7 +33,11 @@ export interface Target { average?: number; minimum?: number }
 
 export interface Row { fy: string; available: number; service: number; counted: boolean; dscr?: number }
 export interface Statement { rows: Row[]; average?: number; minimum?: { dscr: number; fy: string }; notes: string[] }
-export interface Plan { schedule: YearDebt[]; years: YearFigures[]; statement: Statement }
+/** How profit after tax is reached in a projected year (planning mode). */
+export interface ProfitYear { fy: string; pbdit: number; depreciation: number; nonCash: number; interestTL: number; interestOther: number; pbt: number; tax: number; pat: number }
+export interface Plan { schedule: YearDebt[]; years: YearFigures[]; profit: ProfitYear[]; statement: Statement }
+/** The repayment schedule month by month, its totals by financial year, and the level instalment (EMI or principal). */
+export interface Amortization { months: MonthRow[]; years: YearDebt[]; level: number }
 /** What stops a larger loan or a shorter repayment: the average, the lowest year, or a year with no cash to pay from. */
 export type Limit = { kind: 'average' } | { kind: 'minimum'; fy: string } | { kind: 'cash'; fy: string };
 export interface AmountAnswer { amount: number; limitedBy: Limit; plan: Plan }
@@ -219,36 +223,61 @@ export function dscrStatement(years: YearFigures[], def: Definition, data: Data 
 
 // ---- Planning: the engine works out the loan's interest and the tax ----
 
+/** Where the yearly schedule and its closed-form check part, or '' when they agree. */
+function scheduleDisagrees(debt: YearDebt[], check: YearDebt[]): string {
+  for (let i = 0; i < Math.max(debt.length, check.length); i++) {
+    const a = debt[i], b = check[i];
+    if (!a || !b || a.fy !== b.fy || !money(a.interest, b.interest) || !money(a.principal, b.principal) || !money(a.closing, b.closing))
+      return `the loan schedule${a ? ` in ${a.fy}` : ''}`;
+  }
+  return '';
+}
+
 function plan(proj: ProjectionYear[], loan: LoanTerms, def: Definition): Plan | Needs | Blocked {
   const debt = schedule(loan);
   const needs = coverageNeeds(debt, proj);
   if (needs.length) return { needs };
-  const check = scheduleCheck(loan);
-  for (let i = 0; i < Math.max(debt.length, check.length); i++) {
-    const a = debt[i], b = check[i];
-    if (!a || !b || a.fy !== b.fy || !money(a.interest, b.interest) || !money(a.principal, b.principal) || !money(a.closing, b.closing))
-      return blocked(`the loan schedule${a ? ` in ${a.fy}` : ''}`);
-  }
+  const off = scheduleDisagrees(debt, scheduleCheck(loan));
+  if (off) return blocked(off);
   const byFy = new Map(debt.map((d) => [d.fy, d]));
+  const profit: ProfitYear[] = [];
   const years: YearFigures[] = proj.map((y) => {
     const p = y as Required<ProjectionYear>, d = byFy.get(y.fy);
     const interestTL = (d?.interest ?? 0) + p.otherLoansInterest, principalTL = (d?.principal ?? 0) + p.otherLoansPrincipal;
-    const profitBeforeTax = p.pbdit - p.depreciation - p.nonCash - interestTL - p.interestOther;
-    const pat = profitBeforeTax > 0 ? profitBeforeTax * (1 - p.taxPct / 100) : profitBeforeTax;
+    const pbt = p.pbdit - p.depreciation - p.nonCash - interestTL - p.interestOther;
+    const tax = pbt > 0 ? pbt * p.taxPct / 100 : 0, pat = pbt - tax;
+    profit.push({ fy: y.fy, pbdit: p.pbdit, depreciation: p.depreciation, nonCash: p.nonCash, interestTL, interestOther: p.interestOther, pbt, tax, pat });
     return {
       fy: y.fy, pat, depreciation: p.depreciation, nonCash: p.nonCash, interestTL, principalTL, interestOther: p.interestOther,
       ...(isNum(y.leaseRentals) ? { leaseRentals: y.leaseRentals } : {}),
     };
   });
-  const statement = computeStatement(years, def, DATA);
-  const where = disagreement(statement, planCheck(proj, loan, def));
-  return where ? blocked(where) : { schedule: debt, years, statement };
+  const statement = computeStatement(years, def, DATA), check = planCheck(proj, loan, def);
+  const where = disagreement(statement, check)
+    || profit.map((x, i) => (money(x.pbt, check.rows[i]?.pbt ?? NaN) && money(x.tax, check.rows[i]?.tax ?? NaN) ? '' : `the tax in ${x.fy}`)).find(Boolean);
+  return where ? blocked(where) : { schedule: debt, years, profit, statement };
 }
 
 /** DSCR from projections and loan terms: the engine works out the loan's interest, the profit after tax and the DSCR. */
 export function planStatement(proj: ProjectionYear[], loan: LoanInput, def: Definition): Plan | Needs | Blocked {
   const needs = [...definitionNeeds(def), ...loanNeeds(loan), ...projectionNeeds(proj, def)];
   return needs.length ? { needs } : plan(proj, loan as LoanTerms, def);
+}
+
+/** The repayment schedule, every month and by year, shown only when the closed-form check agrees with it. */
+export function amortization(loan: LoanInput): Amortization | Needs | Blocked {
+  const needs = loanNeeds(loan);
+  if (needs.length) return { needs };
+  const t = loan as LoanTerms, rows = months(t), check = monthsCheck(t);
+  for (let i = 0; i < Math.max(rows.length, check.length); i++) {
+    const a = rows[i], b = check[i];
+    if (!a || !b || a.month !== b.month || (['opening', 'interest', 'principal', 'paid', 'closing'] as const).some((k) => !money(a[k], b[k])))
+      return blocked(`the repayment schedule${a ? ` in ${a.month}` : ''}`);
+  }
+  const years = schedule(t), off = scheduleDisagrees(years, scheduleCheck(t));
+  if (off) return blocked(off);
+  const level = levelInstalment(t);
+  return money(level, levelCheck(t)) ? { months: rows, years, level } : blocked('the instalment');
 }
 
 /** The financial years a loan runs over, and the months ('YYYY-MM') of its first and last instalments. */

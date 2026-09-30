@@ -5,8 +5,8 @@
  * h1; a script error, console error or missing file; a light flash for a dark-mode visitor; the theme toggle not
  * cycling Auto → Light → Dark and remembering the choice. The DSCR calculator is driven through its fields (fld-… ids)
  * and its answers read as text (data-testid): fictional case A from the loan terms, own yearly figures, the amount
- * field's read-back, and the same layout checks once the table and the preview are filled, in light and dark, with the
- * table as cards at 390 px and as a table at 1024 px.
+ * field's read-back, the DSCR statement and the repayment schedule, the tax rate by borrower, Clear all, and the same
+ * layout checks once the tables are filled, in light and dark, with the tables as cards at 390 px and as tables at 1024 px.
  * Run after `npm run build`. CHROMIUM_PATH overrides the browser Playwright would use.
  */
 import { createServer } from 'node:http';
@@ -153,13 +153,12 @@ const leave = async (page, sel, value) => { await page.fill(sel, value); await p
 /** Case A from the loan terms, typed the way a user would, with a None or one figure for every year where that is the answer. */
 async function enterCaseA(page) {
   await page.check('#fld-source-plan');
-  await page.check('#fld-method-preset');
+  await page.check('#fld-method-common');
   await leave(page, '#fld-loanAmount', '12 L');
   await leave(page, '#fld-ratePct', '12');
   await leave(page, '#fld-disbursed', '2026-04');
   await leave(page, '#fld-moratoriumMonths', '6');
-  await page.check('#fld-style-equal-principal');
-  await page.check('#fld-frequency-quarterly');
+  await page.check('#fld-repayment-quarterly');
   await leave(page, '#fld-instalments', '12');
   const pbdit = ['5,00,000', '7,50,000', '8,00,000', '8,00,000'], depreciation = ['150000', '1.3 L', '1,10,000', '1 L'];
   for (const [i, fy] of YEARS_A.entries()) {
@@ -186,7 +185,7 @@ async function layout(page, v, step) {
   // The start questions come first: nothing else is asked until they narrow it.
   if (await page.locator('#fld-loanAmount, #fld-firstYear, [data-testid="answer-bar"]').count()) v('figures are asked before the two start questions');
   await page.check('#fld-source-plan');
-  await page.check('#fld-method-preset');
+  await page.check('#fld-method-common');
 
   // The loan amount field, kept from P0: read back in figures and words while typing; long words wrap.
   const field = page.locator('#fld-loanAmount');
@@ -197,15 +196,16 @@ async function layout(page, v, step) {
   await field.fill('9,99,99,99,99,99,999');
   await layout(page, v, 'a long amount');
 
-  // How often is asked for equal instalments of principal, not for an EMI (which is monthly).
-  const often = page.locator('#fld-frequency-quarterly');
-  await page.check('#fld-style-equal-principal');
-  await often.waitFor({ state: 'attached', timeout: 3000 }).catch(() => v('how often is not asked for equal instalments'));
-  await page.check('#fld-style-emi');
-  await often.waitFor({ state: 'detached', timeout: 3000 }).catch(() => v('how often is asked for an EMI'));
+  // One answer for how the loan is repaid (an EMI is monthly), listed once while it is missing.
+  await page.locator('#fld-repayment-emi').waitFor({ timeout: 3000 }).catch(() => v('how the loan is repaid is not asked'));
+  if (await page.locator('#fld-frequency-quarterly, #fld-style-emi').count()) v('how the loan is repaid is asked as two questions');
+  const repaid = await page.getByTestId('dscr-needs').locator('li').allTextContents();
+  if (repaid.filter((n) => /repaid|How often|Instalment type/.test(n)).join('|') !== 'How the loan is repaid (EMI, or equal principal every month or quarter)')
+    v(`how the loan is repaid is not listed once as needed: ${JSON.stringify(repaid)}`);
 
   await enterCaseA(page);
-  await expectText(page, v, 'loan-read', 'First instalment at the end of December 2026, the last at the end of September 2029. The loan runs over 2026-27 to 2029-30.', 'case A');
+  await expectText(page, v, 'loan-dates', 'First instalment at the end of December 2026, the last at the end of September 2029. The loan runs over 2026-27 to 2029-30.', 'case A');
+  await expectText(page, v, 'loan-level', 'Principal Rs. 1,00,000 a quarter, and interest on the balance every month.', 'case A');
   await expectValue(page, v, '#fld-depreciation-2027-28', '1,30,000', '1.3 L read back once the field is left');
   // No target yet: the figures show, and the preview stays provisional and says what is still needed.
   await expectText(page, v, 'dscr-status', 'Provisional: 1 still needed', 'case A without a target');
@@ -214,10 +214,21 @@ async function layout(page, v, step) {
   await expectText(page, v, 'dscr-average', '1.45', 'case A');
   await expectText(page, v, 'dscr-lowest', '1.16', 'case A');
   await expectText(page, v, 'dscr-lowest-year', 'in 2027-28', 'case A');
-  for (const [fy, dscr] of [['2026-27', '1.20'], ['2027-28', '1.16'], ['2028-29', '1.33'], ['2029-30', '2.82']])
-    await expectText(page, v, page.getByTestId(`dscr-row-${fy}`).getByTestId('dscr'), dscr, `case A, DSCR for ${fy}`);
-  const first = (await page.getByTestId('dscr-row-2026-27').textContent()) ?? '';
-  for (const figure of ['1,19,250', '1,41,000', '2,00,000', '4,10,250', '3,41,000']) if (!first.includes(figure)) v(`case A 2026-27: ${figure} not shown`);
+  // The DSCR statement, as a CA lays it out: profit before tax and tax, cash available (A), debt service (B), DSCR.
+  for (const [fy, dscr, cash, service] of [['2026-27', '1.20', '4,10,250', '3,41,000'], ['2027-28', '1.16', '5,83,000', '5,02,000'],
+    ['2028-29', '1.33', '6,03,500', '4,54,000'], ['2029-30', '2.82', '5,89,750', '2,09,000']]) {
+    await expectText(page, v, `dscr-${fy}`, dscr, `case A, DSCR for ${fy}`);
+    await expectText(page, v, `available-${fy}`, cash, `case A, cash available in ${fy}`);
+    await expectText(page, v, `service-${fy}`, service, `case A, debt service in ${fy}`);
+  }
+  await expectText(page, v, 'pbt-2026-27', '1,59,000', 'case A, profit before tax in 2026-27');
+  await expectText(page, v, 'tax-2026-27', '39,750', 'case A, tax in 2026-27');
+  // The repayment schedule: the year's totals, and each month once the year is opened.
+  const year1 = await page.getByTestId('schedule-2026-27').locator('summary span.text-right').allTextContents();
+  if (year1.join('|') !== '1,41,000|2,00,000|10,00,000') v(`schedule 2026-27 shows ${JSON.stringify(year1)}, want interest 1,41,000, principal 2,00,000, balance 10,00,000`);
+  await page.getByTestId('schedule-2026-27').locator('summary').click();
+  const dec = await page.getByTestId('month-2026-12').locator('td').allTextContents();
+  if (dec.join('|') !== '12,00,000|12,000|1,00,000|1,12,000|11,00,000') v(`schedule December 2026 shows ${JSON.stringify(dec)}`);
 
   // The common examples as the target: what limits the result, and the loan that meets it.
   await page.getByTestId('use-examples').click();
@@ -229,10 +240,12 @@ async function layout(page, v, step) {
   await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · below the target · complete ↓', 'case A with the examples');
 
   // Tables become cards on phones and stay tables on wider screens, without a sideways scroll either way.
-  await layout(page, v, 'case A filled, 390 px');
-  if (await page.locator('#figures thead').isVisible() || await page.locator('#preview thead').isVisible()) v('390 px: a table is shown as a table, not as cards');
+  await layout(page, v, 'case A filled, a schedule year open, 390 px');
+  const statement = page.getByTestId('dscr-statement'), card = page.getByTestId('card-2027-28');
+  if (await page.locator('#figures thead').isVisible() || await statement.isVisible() || !(await card.isVisible())) v('390 px: a table is shown as a table, not as cards');
+  await expectText(page, v, card.locator('[data-line="dscr"]'), '1.16', 'the 2027-28 card on a phone');
   await page.setViewportSize({ width: 1024, height: 900 });
-  if (!(await page.locator('#figures thead').isVisible()) || !(await page.locator('#preview thead').isVisible())) v('1024 px: a table is shown as cards');
+  if (!(await page.locator('#figures thead').isVisible()) || !(await statement.isVisible()) || await card.isVisible()) v('1024 px: a table is shown as cards');
   await layout(page, v, 'case A filled, 1024 px');
   await page.setViewportSize({ width: 390, height: 844 });
 
@@ -256,6 +269,15 @@ async function layout(page, v, step) {
   const missing = await page.getByTestId('dscr-needs').locator('li').allTextContents();
   if (missing.join('|') !== 'Profit before interest, depreciation and tax for 2028-29') v(`a figure not understood: still needed ${JSON.stringify(missing)}`);
   if (await page.getByTestId('dscr-average').count()) v('figures shown while a figure is not understood');
+
+  // The borrower sets the tax rate for every year in one tap.
+  await page.getByTestId('tax-company').click();
+  await expectValue(page, v, '#fld-taxPct-2026-27', '25.168', 'the company tax rate');
+  // Clear all asks first, then takes the page back to the two start questions.
+  await page.getByTestId('clear-all').click();
+  await page.getByTestId('clear-yes').click();
+  await page.locator('#fld-loanAmount').waitFor({ state: 'detached', timeout: 3000 }).catch(() => v('Clear all left the loan on the page'));
+  if (await page.isChecked('#fld-source-plan')) v('Clear all left the first answer chosen');
   await ctx.close();
 }
 
@@ -276,7 +298,7 @@ async function layout(page, v, step) {
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
   await page.check('#fld-source-own');
-  await page.check('#fld-method-preset');
+  await page.check('#fld-method-common');
   await page.waitForSelector('#fld-firstYear', { timeout: 3000 }).catch(() => v('own figures: the years are not asked'));
   if (await page.locator('#fld-loanAmount').count()) v('own figures: the loan amount is asked though it does not change the answer');
   await leave(page, '#fld-firstYear', '2026-27');

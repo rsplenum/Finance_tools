@@ -7,7 +7,7 @@
 import type { LoanTerms, YearDebt } from './loan';
 import type { Definition, ProjectionYear, YearFigures } from './dscr';
 
-export interface CheckRow { fy: string; available: number; service: number; counted: boolean; dscr?: number }
+export interface CheckRow { fy: string; available: number; service: number; counted: boolean; dscr?: number; pbt?: number; tax?: number }
 export interface CheckResult { rows: CheckRow[]; average?: number; minimum?: { dscr: number; fy: string } }
 
 function fyLabel(ym: string, k: number): string {
@@ -17,12 +17,11 @@ function fyLabel(ym: string, k: number): string {
   return `${start}-${String(start + 1).slice(-2)}`;
 }
 
-export function scheduleCheck(t: LoanTerms): YearDebt[] {
+/** The loan in closed form: the EMI, instalments paid before month k starts, and the balance after j instalments. */
+function closedForm(t: LoanTerms) {
   const r = t.ratePct / 1200, p = t.frequency === 'quarterly' ? 3 : 1, n = t.instalments, m = t.moratoriumMonths;
   const emi = t.style !== 'emi' ? 0 : r === 0 ? t.amount / n : (t.amount * r) / (1 - Math.pow(1 + r, -n));
-  /** Instalments paid before month k starts. */
   const paidBefore = (k: number) => Math.min(n, Math.max(0, Math.floor((k - m) / p)));
-  /** Balance after j instalments. */
   const balance = (j: number): number => {
     if (j >= n) return 0;
     if (t.style === 'equal-principal') return (t.amount * (n - j)) / n;
@@ -30,9 +29,29 @@ export function scheduleCheck(t: LoanTerms): YearDebt[] {
     const g = Math.pow(1 + r, j);
     return t.amount * g - (emi * (g - 1)) / r;
   };
+  return { r, n, months: m + n * p, emi, paidBefore, balance };
+}
+
+/** The level instalment in closed form: the EMI, or the loan ÷ the number of instalments. */
+export const levelCheck = (t: LoanTerms) => (t.style === 'emi' ? closedForm(t).emi : t.amount / t.instalments);
+
+export interface MonthCheck { month: string; opening: number; interest: number; principal: number; paid: number; closing: number }
+
+/** Every month from the closed-form balances, the month named by Date arithmetic. */
+export function monthsCheck(t: LoanTerms): MonthCheck[] {
+  const { r, months, paidBefore, balance } = closedForm(t), [y, m] = t.disbursed.split('-').map(Number);
+  return Array.from({ length: months }, (_, k) => {
+    const opening = balance(paidBefore(k)), closing = balance(paidBefore(k + 1));
+    // Paid in the month: the fall in the balance plus the month's interest.
+    return { month: new Date(Date.UTC(y, m - 1 + k, 1)).toISOString().slice(0, 7), opening, interest: r * opening, principal: opening - closing, paid: opening - closing + r * opening, closing };
+  });
+}
+
+export function scheduleCheck(t: LoanTerms): YearDebt[] {
+  const { r, months, paidBefore, balance } = closedForm(t);
   const out: YearDebt[] = [];
   let opening = t.amount;
-  for (let k = 0; k < m + n * p; k++) {
+  for (let k = 0; k < months; k++) {
     const fy = fyLabel(t.disbursed, k);
     let row = out[out.length - 1];
     if (!row || row.fy !== fy) {
@@ -91,6 +110,6 @@ export function planCheck(proj: ProjectionYear[], loan: LoanTerms, def: Definiti
       - (def.interest === 'none' ? tl : 0)
       + lease;
     const interest = def.interest === 'none' ? 0 : def.interest === 'term-loans' ? tl : tl + p.interestOther;
-    return row(y.fy, available, principal + interest + lease, principal, def);
+    return { ...row(y.fy, available, principal + interest + lease, principal, def), pbt: profitBeforeTax, tax };
   }), def);
 }

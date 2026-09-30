@@ -1,0 +1,43 @@
+{
+  "title": "Tax rates the page can fill in",
+  "date": "2026-09-30",
+  "status": "Rates on income of FY 2025-26 (AY 2026-27), as found by Claude in public summaries; not yet checked for FY 2026-27 onwards, when the Income-tax Act, 2025 applies. Later years are taken at the same rate. The borrower's CA confirms the rate; any other rate can be typed.",
+  "rates": [
+    {
+      "id": "company",
+      "label": "Company on the concessional rate",
+      "base": 22,
+      "surcharge": 10,
+      "cess": 4,
+      "pct": 25.168,
+      "law": "Section 115BAA of the Income-tax Act, 1961; section 200 of the Income-tax Act, 2025",
+      "source": "taxmann.com and caalley.com rate charts for AY 2026-27; taxtmi.com on section 200",
+      "date": "2026-09-30",
+      "verified": false
+    },
+    {
+      "id": "firm",
+      "label": "Firm or LLP, income up to Rs. 1 crore",
+      "base": 30,
+      "surcharge": 0,
+      "cess": 4,
+      "pct": 31.2,
+      "law": "Rates in force for firms and LLPs",
+      "source": "taxmann.com and caalley.com rate charts for AY 2026-27",
+      "date": "2026-09-30",
+      "verified": false
+    },
+    {
+      "id": "firm-over-1-crore",
+      "label": "Firm or LLP, income above Rs. 1 crore",
+      "base": 30,
+      "surcharge": 12,
+      "cess": 4,
+      "pct": 34.944,
+      "law": "Rates in force for firms and LLPs; surcharge above Rs. 1 crore of income",
+      "source": "taxmann.com and caalley.com rate charts for AY 2026-27",
+      "date": "2026-09-30",
+      "verified": false
+    }
+  ]
+}

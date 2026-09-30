@@ -4,18 +4,21 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  START, barText, groupNeeds, loanRead, parseFy, preview, ratioText, rowsOf, tidyAmount, yearsOf, type State,
+  START, TAX_CHOICES, barText, groupNeeds, loanRead, parseFy, preview, ratioText, rowsOf, tidyAmount, withTaxRate, yearsOf,
+  type Preview, type State,
 } from '../site/src/dscr/model';
 
 // Case A entered the way a user would: a "None" for other non-cash charges and other term loans, and one figure for
 // working-capital interest and the tax rate, each answered once for every year.
 const CASE_A: State = {
-  ...START, source: 'plan', method: 'preset',
-  loan: { amount: '12 L', ratePct: '12', disbursed: '2026-04', moratoriumMonths: '6', instalments: '12', style: 'equal-principal', frequency: 'quarterly' },
+  ...START, source: 'plan', method: 'common',
+  loan: { amount: '12 L', ratePct: '12', disbursed: '2026-04', moratoriumMonths: '6', instalments: '12', repayment: 'quarterly' },
   cells: { pbdit: ['5,00,000', '7,50,000', '8,00,000', '8,00,000'], depreciation: ['1,50,000', '1,30,000', '1,10,000', '1,00,000'], interestOther: ['50,000'], taxPct: ['25'] },
   modes: { nonCash: 'none', otherLoans: 'none', interestOther: 'same', taxPct: 'same' },
 };
 const TARGETS = { average: '1.50', minimum: '1.20' };
+/** A line of the DSCR statement, by its id or its label. */
+const line = (p: Preview, key: string) => p.statement?.lines.find((l) => l.id === key || l.label === key)?.values;
 
 describe('the start questions come first', () => {
   it('asks nothing else until where the figures come from and the method are answered', () => {
@@ -28,7 +31,7 @@ describe('the start questions come first', () => {
     ]);
   });
   it('asks only for the figures the method uses', () => {
-    const keys = (s: Partial<State>) => rowsOf({ ...START, method: 'preset', ...s }).map((r) => r.key);
+    const keys = (s: Partial<State>) => rowsOf({ ...START, method: 'common', ...s }).map((r) => r.key);
     expect(keys({ source: 'own' })).toEqual(['pat', 'depreciation', 'nonCash', 'interestTL', 'principalTL']);
     expect(keys({ source: 'own', method: 'choose', choice: { interest: 'all-borrowings', leases: 'yes', years: 'repayment', average: 'mean' } }))
       .toEqual(['pat', 'depreciation', 'nonCash', 'interestTL', 'principalTL', 'interestOther', 'leaseRentals']);
@@ -48,12 +51,17 @@ describe('fictional case A from the loan terms', () => {
     const p = preview(CASE_A);
     expect(p.needs).toEqual(['A target DSCR for the average, the lowest year, or both']);
     expect([p.average, p.lowest, p.lowestYear]).toEqual(['1.45', '1.16', '2027-28']);
-    expect(p.rows.map((r) => [r.fy, ...r.values, r.dscr])).toEqual([
-      ['2026-27', '1,19,250', '1,41,000', '2,00,000', '4,10,250', '3,41,000', '1.20'],
-      ['2027-28', '3,51,000', '1,02,000', '4,00,000', '5,83,000', '5,02,000', '1.16'],
-      ['2028-29', '4,39,500', '54,000', '4,00,000', '6,03,500', '4,54,000', '1.33'],
-      ['2029-30', '4,80,750', '9,000', '2,00,000', '5,89,750', '2,09,000', '2.82'],
-    ]);
+    // The statement in the CA layout: profit build-up, then cash available (A), debt service (B) and DSCR.
+    expect(p.statement?.years).toEqual(['2026-27', '2027-28', '2028-29', '2029-30']);
+    expect(line(p, 'pbt')).toEqual(['1,59,000', '4,68,000', '5,86,000', '6,41,000']);
+    expect(line(p, 'tax')).toEqual(['39,750', '1,17,000', '1,46,500', '1,60,250']);
+    expect(line(p, 'Profit after tax')).toEqual(['1,19,250', '3,51,000', '4,39,500', '4,80,750']);
+    expect(line(p, 'Add: interest on term loans')).toEqual(['1,41,000', '1,02,000', '54,000', '9,000']);
+    expect(line(p, 'Term-loan instalments (principal)')).toEqual(['2,00,000', '4,00,000', '4,00,000', '2,00,000']);
+    expect(line(p, 'available')).toEqual(['4,10,250', '5,83,000', '6,03,500', '5,89,750']);
+    expect(line(p, 'service')).toEqual(['3,41,000', '5,02,000', '4,54,000', '2,09,000']);
+    expect(line(p, 'dscr')).toEqual(['1.20', '1.16', '1.33', '2.82']);
+    expect(p.statement?.lines.filter((l) => l.kind === 'head').map((l) => l.label)).toEqual(['Profit', 'Cash available for debt service', 'Debt service']);
     expect([p.verdict, p.largest, p.fewest]).toEqual([undefined, undefined, undefined]);
     expect(barText(p)).toBe('Average 1.45 · lowest 1.16 in 2027-28 · provisional: 1 still needed');
   });
@@ -94,10 +102,10 @@ describe('fictional case A from the loan terms', () => {
 
 describe('what is still needed', () => {
   it('lists the loan terms first, and no years until the loan says which', () => {
-    const p = preview({ ...START, source: 'plan', method: 'preset' });
+    const p = preview({ ...START, source: 'plan', method: 'common' });
     expect(p.needs).toEqual([
       'Loan amount', 'Interest rate (% a year)', 'Month the loan is drawn (like 2026-04)', 'Moratorium in months (0 if none)',
-      'Number of instalments', 'How often instalments fall due (monthly or quarterly)', 'Instalment type (equal instalments of principal, or EMI)',
+      'Number of instalments', 'How the loan is repaid (EMI, or equal principal every month or quarter)',
       'A target DSCR for the average, the lowest year, or both',
     ]);
   });
@@ -110,8 +118,8 @@ describe('what is still needed', () => {
     expect(groupNeeds(['Projections for 2029-30: the loan is still running then', 'Tax rate (%) for 2026-27, as 100 or less'], ['2026-27']))
       .toEqual(['Projections for 2029-30: the loan is still running then', 'Tax rate (%) for 2026-27, as 100 or less']);
   });
-  it('takes an EMI as monthly without asking how often', () => {
-    const s: State = { ...CASE_A, loan: { ...CASE_A.loan, style: 'emi', frequency: undefined, instalments: '36' } };
+  it('takes one answer for how the loan is repaid: an EMI is monthly', () => {
+    const s: State = { ...CASE_A, loan: { ...CASE_A.loan, repayment: 'emi', instalments: '36' } };
     expect(yearsOf(s).years).toEqual(['2026-27', '2027-28', '2028-29', '2029-30']);
     expect(preview(s).needs).toEqual(['A target DSCR for the average, the lowest year, or both']);
   });
@@ -126,20 +134,58 @@ describe('what is still needed', () => {
 describe('own yearly figures', () => {
   // tests/dscr.test.ts, "which years count": 2026-27 has interest but no instalment.
   const OWN: State = {
-    ...START, source: 'own', method: 'preset', firstYear: '2026-27', yearCount: '3',
+    ...START, source: 'own', method: 'common', firstYear: '2026-27', yearCount: '3',
     cells: { pat: ['60,000', '80,000', '1,00,000'], depreciation: ['40,000', '40,000', '40,000'], interestTL: ['50,000', '40,000', '20,000'], principalTL: ['0', '1,00,000', '1,00,000'] },
     modes: { nonCash: 'none' }, target: { average: '1.5', minimum: '' },
   };
   it('counts only the years with an instalment, and says so in one line', () => {
     const p = preview(OWN);
     expect([p.average, p.lowest, p.lowestYear]).toEqual(['1.23', '1.14', '2027-28']);
-    expect(p.rows.map((r) => [r.fy, r.dscr, r.counted])).toEqual([['2026-27', '3.00', false], ['2027-28', '1.14', true], ['2028-29', '1.33', true]]);
+    expect([line(p, 'dscr'), p.statement?.counted]).toEqual([['3.00', '1.14', '1.33'], [false, true, true]]);
+    expect(p.statement?.lines.some((l) => l.label === 'Profit')).toBe(false); // own figures start from profit after tax
+    expect(line(p, 'available')).toEqual(['1,50,000', '1,60,000', '1,60,000']);
     expect(p.notCounted).toBe('Not counted: 2026-27 (no term-loan instalment).');
     expect(p.verdict).toEqual({ meets: false, text: 'Below the target: the average is 1.23 against 1.50.' });
     expect(p.largest).toBeUndefined();
   });
   it('asks for the years before the figures', () => {
     expect(preview({ ...OWN, firstYear: '2026', yearCount: '0' }).needs).toEqual(['The first year, like 2026-27', 'The number of years, 1 to 30']);
+  });
+});
+
+describe('the repayment schedule (fictional case A)', () => {
+  it('reads the instalment back, and shows every month by year', () => {
+    const sch = preview(CASE_A).schedule!;
+    expect(sch.level).toBe('Principal Rs. 1,00,000 a quarter, and interest on the balance every month.');
+    expect(sch.years.map((y) => [y.fy, y.interest, y.principal, y.closing])).toEqual([
+      ['2026-27', '1,41,000', '2,00,000', '10,00,000'], ['2027-28', '1,02,000', '4,00,000', '6,00,000'],
+      ['2028-29', '54,000', '4,00,000', '2,00,000'], ['2029-30', '9,000', '2,00,000', '0'],
+    ]);
+    expect(sch.years[0].months.find((m) => m.ym === '2026-12')).toEqual({
+      ym: '2026-12', month: 'Dec 2026', opening: '12,00,000', interest: '12,000', principal: '1,00,000', paid: '1,12,000', closing: '11,00,000', instalment: 1,
+    });
+  });
+  it('is shown as soon as the loan terms are in, before any projections', () => {
+    const p = preview({ ...CASE_A, cells: {}, modes: {} });
+    expect([p.schedule?.years.length, p.statement]).toEqual([4, undefined]);
+  });
+  it('an EMI is read back to the paisa', () => {
+    const emi: State = { ...CASE_A, loan: { ...CASE_A.loan, amount: '10 L', moratoriumMonths: '0', instalments: '12', repayment: 'emi' } };
+    expect(preview(emi).schedule?.level).toBe('EMI Rs. 88,848.79 a month, interest included; banks round it up to the next rupee.');
+  });
+});
+
+describe('one answer for several questions', () => {
+  it('each preset answers the four choices, and they change the rows asked', () => {
+    const keys = (method: string) => rowsOf({ ...START, source: 'own', method }).map((r) => r.key);
+    expect(keys('rbi-2020')).toEqual(['pat', 'depreciation', 'nonCash', 'interestTL', 'principalTL', 'interestOther']);
+    expect(keys('schedule-iii')).toEqual(['pat', 'depreciation', 'nonCash', 'interestTL', 'principalTL', 'interestOther', 'leaseRentals']);
+  });
+  it('the borrower sets the tax rate for every year', () => {
+    const company = TAX_CHOICES.find((t) => t.id === 'company')!;
+    const s = withTaxRate({ ...CASE_A, modes: { ...CASE_A.modes, taxPct: 'years' }, cells: { ...CASE_A.cells, taxPct: ['', '30'] } }, company.pct);
+    expect([s.modes.taxPct, s.cells.taxPct[0]]).toEqual(['same', '25.168']);
+    expect(preview(s).needs).toEqual(['A target DSCR for the average, the lowest year, or both']);
   });
 });
 

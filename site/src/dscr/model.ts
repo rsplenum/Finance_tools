@@ -4,23 +4,27 @@
  * filled in: a "None" or "Same every year" is the user's own answer, and anything else missing is listed as needed.
  */
 import {
-  BENCHMARKS, COMPONENTS, OPTIONS, PRESETS, PROJECTION_LABELS, componentsOf, dscrStatement, fyRange, isFy, limitText,
-  loanTimeline, maxLoanAmount, planStatement, shortestRepayment, shortfall, targetNeeds,
-  type Component, type Definition, type Limit, type LoanInput, type ProjectionYear, type Statement, type Target, type YearFigures,
+  BENCHMARKS, COMPONENTS, LOAN_LABELS, OPTIONS, PRESETS, PROJECTION_LABELS, amortization, componentsOf, dscrStatement, fyRange,
+  isFy, limitText, loanTimeline, maxLoanAmount, planStatement, shortestRepayment, shortfall, targetNeeds,
+  type Amortization, type Component, type Definition, type Limit, type LoanInput, type ProfitYear, type ProjectionYear, type Statement,
+  type Target, type YearFigures,
 } from '../../../engine/dscr';
-import type { Frequency, RepaymentStyle } from '../../../engine/loan';
 import { parseAmount, parseMonth } from '../../../engine/parse';
+import { TAX_RATES } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 
 export type Source = 'own' | 'plan';
-export type Method = 'preset' | 'choose';
+/** A preset's id from the data file, or 'choose' to answer the four choices one by one. */
+export type Method = string;
+/** One answer for two facts: an EMI is monthly; equal principal is monthly or quarterly. */
+export type Repayment = 'emi' | 'monthly' | 'quarterly';
 /** How a row is filled: a figure for each year, one figure for every year, or none in any year. */
 export type RowMode = 'years' | 'same' | 'none';
 export type OptionKey = keyof Definition;
 
 export interface LoanText {
   amount: string; ratePct: string; disbursed: string; moratoriumMonths: string; instalments: string;
-  style?: RepaymentStyle; frequency?: Frequency;
+  repayment?: Repayment;
 }
 
 export interface State {
@@ -47,6 +51,7 @@ export const START: State = {
 };
 
 export const COMMON = PRESETS[0];
+export const presetOf = (id?: string) => PRESETS.find((p) => p.id === id);
 export const OPTION_KEYS = Object.keys(OPTIONS) as OptionKey[];
 export const MAX_YEARS = 30;
 
@@ -74,7 +79,7 @@ export function tidyAmount(t: string): string {
 // ---- What the page asks ----
 
 export function definitionOf(s: State): Partial<Definition> | undefined {
-  return s.method === 'preset' ? (COMMON.choice as Definition) : s.method === 'choose' ? s.choice : undefined;
+  return s.method === 'choose' ? s.choice : (presetOf(s.method)?.choice as Definition | undefined);
 }
 
 const complete = (d?: Partial<Definition>): d is Definition => !!d && OPTION_KEYS.every((k) => d[k] !== undefined);
@@ -99,6 +104,8 @@ export interface RowDef {
   /** A loss may be typed with a minus. */
   negative?: boolean;
   percent?: boolean;
+  /** One line under the name, where the name alone may not be clear. */
+  hint?: string;
 }
 
 const row = (key: string, label: string, extra: Partial<RowDef> = {}): RowDef => ({ key, label, modeKey: key, modes: [], ...extra });
@@ -110,21 +117,30 @@ export function rowsOf(s: State): RowDef[] {
   if (!s.source || !complete(def)) return [];
   if (s.source === 'own') {
     const { available, service } = componentsOf(def), used = new Set<string>([...available, ...service]);
-    return (Object.keys(COMPONENTS) as Component[]).filter((c) => used.has(c)).map((c) =>
-      row(c, COMPONENTS[c], c === 'pat' ? { negative: true } : ['nonCash', 'interestOther', 'leaseRentals'].includes(c) ? { modes: OPTIONAL } : {}));
+    const extra: Partial<Record<Component, Partial<RowDef>>> = {
+      pat: { negative: true, hint: 'After interest, depreciation and tax. A loss with a minus.' },
+      nonCash: { modes: OPTIONAL, hint: HINTS.nonCash }, interestOther: { modes: OPTIONAL }, leaseRentals: { modes: OPTIONAL, hint: HINTS.leaseRentals },
+      interestTL: { hint: 'On every term loan, this one included.' }, principalTL: { hint: 'Principal repaid in the year, every term loan.' },
+    };
+    return (Object.keys(COMPONENTS) as Component[]).filter((c) => used.has(c)).map((c) => row(c, COMPONENTS[c], extra[c]));
   }
   const L = PROJECTION_LABELS;
   return [
-    row('pbdit', L.pbdit, { negative: true }),
+    row('pbdit', L.pbdit, { negative: true, hint: 'Sales less every cost except interest, depreciation and tax. A loss with a minus.' }),
     row('depreciation', L.depreciation),
-    row('nonCash', L.nonCash, { modes: OPTIONAL }),
-    row('interestOther', L.interestOther, { modes: OPTIONAL }),
-    ...(def.leases === 'yes' ? [row('leaseRentals', L.leaseRentals, { modes: OPTIONAL })] : []),
-    row('otherLoansInterest', L.otherLoansInterest, { modeKey: 'otherLoans', modes: ['none'] }),
+    row('nonCash', L.nonCash, { modes: OPTIONAL, hint: HINTS.nonCash }),
+    row('interestOther', L.interestOther, { modes: OPTIONAL, hint: 'Cash credit or overdraft interest.' }),
+    ...(def.leases === 'yes' ? [row('leaseRentals', L.leaseRentals, { modes: OPTIONAL, hint: HINTS.leaseRentals })] : []),
+    row('otherLoansInterest', L.otherLoansInterest, { modeKey: 'otherLoans', modes: ['none'], hint: 'Term loans already running, besides this one.' }),
     row('otherLoansPrincipal', L.otherLoansPrincipal, { modeKey: 'otherLoans', modes: ['none'] }),
-    row('taxPct', L.taxPct, { modes: ['same'], percent: true }),
+    row('taxPct', L.taxPct, { modes: ['same'], percent: true, hint: 'On profit before tax; nil in a year with a loss.' }),
   ];
 }
+
+const HINTS = {
+  nonCash: 'Amortisation, amounts written off, deferred tax.',
+  leaseRentals: 'Lease payments in the year. Under Ind AS 116, leave right-of-use depreciation and lease interest out of the rows above.',
+};
 
 export const modeOf = (s: State, r: RowDef): RowMode => {
   const m = s.modes[r.modeKey];
@@ -139,14 +155,22 @@ function cellValue(s: State, r: RowDef, i: number): number | undefined {
 }
 
 export function loanInput(s: State): LoanInput {
-  const l = s.loan;
+  const l = s.loan, r = l.repayment;
   return {
     amount: amountOf(l.amount), ratePct: numberOf(l.ratePct), disbursed: parseMonth(l.disbursed),
     moratoriumMonths: numberOf(l.moratoriumMonths), instalments: numberOf(l.instalments),
-    // An EMI is worked monthly only (docs/RULES.md), so choosing it answers how often.
-    frequency: l.style === 'emi' ? 'monthly' : l.frequency, style: l.style,
+    // An EMI is worked monthly only (docs/RULES.md), so one answer gives both the type and how often.
+    ...(r ? { style: r === 'emi' ? 'emi' : 'equal-principal', frequency: r === 'quarterly' ? 'quarterly' : 'monthly' } as const : {}),
   };
 }
+
+/** The one question for how the loan is repaid replaces the engine's two lines for it. */
+const REPAYMENT_NEED = 'How the loan is repaid (EMI, or equal principal every month or quarter)';
+const oneRepaymentNeed = (needs: string[]) => {
+  const two = [LOAN_LABELS.frequency, LOAN_LABELS.style];
+  const at = needs.findIndex((n) => two.includes(n));
+  return at < 0 ? needs : [...needs.slice(0, at).filter((n) => !two.includes(n)), REPAYMENT_NEED, ...needs.slice(at).filter((n) => !two.includes(n))];
+};
 
 /** Empty means not set; typed but not understood is passed on as not a number, so the engine asks for it. */
 export function targetOf(s: State): Target {
@@ -176,14 +200,22 @@ export function yearsOf(s: State): Years {
 
 // ---- The preview ----
 
-export interface PreviewRow { fy: string; values: string[]; dscr: string; counted: boolean }
+/** One line of the DSCR statement: a figure for each year. */
+export interface Line { label: string; values: string[]; kind?: 'head' | 'total' | 'ratio'; id?: 'pbt' | 'tax' | 'available' | 'service' | 'dscr' }
+/** The statement as chartered accountants lay it out: the years across, the working down. */
+export interface StatementView { years: string[]; counted: boolean[]; lines: Line[] }
+export interface MonthView { ym: string; month: string; opening: string; interest: string; principal: string; paid: string; closing: string; instalment?: number }
+export interface ScheduleYear { fy: string; interest: string; principal: string; closing: string; months: MonthView[] }
+/** The repayment schedule: the instalment in words, then each year with its months. */
+export interface ScheduleView { level: string; years: ScheduleYear[] }
+
 export interface Preview {
   /** The start questions are answered, so the figures can be asked. */
   started: boolean;
   needs: string[];
   blocked?: string;
-  columns: string[];
-  rows: PreviewRow[];
+  statement?: StatementView;
+  schedule?: ScheduleView;
   average?: string;
   lowest?: string;
   lowestYear?: string;
@@ -197,6 +229,7 @@ export interface Preview {
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 export const monthText = (ym: string) => `${MONTH_NAMES[Number(ym.slice(5, 7)) - 1]} ${ym.slice(0, 4)}`;
+export const monthShort = (ym: string) => `${MONTH_NAMES[Number(ym.slice(5, 7)) - 1].slice(0, 3)} ${ym.slice(0, 4)}`;
 const andList = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}` : xs[0] ?? '');
 const cap = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
@@ -256,15 +289,40 @@ function verdictOf(st: Statement, t: Target): Preview['verdict'] {
     : { meets: true, text: `Meets the target: ${parts.map((p) => p.text).join('; ')}.` };
 }
 
-function fillStatement(p: Preview, st: Statement, t: Target, years: YearFigures[] | undefined, def: Definition) {
-  p.columns = years ? ['Profit after tax', 'Interest on term loans', 'Term-loan instalments', 'Cash available', 'Debt service'] : ['Cash available', 'Debt service'];
-  p.rows = st.rows.map((r, i) => {
-    const y = years?.[i];
-    return {
-      fy: r.fy, counted: r.counted, dscr: r.dscr === undefined ? '—' : ratioText(r.dscr, r.counted ? t.minimum : undefined),
-      values: [...(y ? [y.pat, y.interestTL, y.principalTL] : []), r.available, r.service].map((n) => inr(n)),
-    };
-  });
+const lower = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
+
+/** The statement's lines, from the engine's figures: the profit build-up when the page works it out, then A, B, DSCR. */
+function statementView(st: Statement, t: Target, def: Definition, parts: YearFigures[], profit?: ProfitYear[]): StatementView {
+  const money = (xs: (number | undefined)[]) => xs.map((n) => inr(n));
+  const { available, service } = componentsOf(def), lines: Line[] = [];
+  if (profit) {
+    const pc = (k: Exclude<keyof ProfitYear, 'fy'>) => money(profit.map((y) => y[k]));
+    lines.push(
+      { label: 'Profit', values: [], kind: 'head' },
+      { label: PROJECTION_LABELS.pbdit, values: pc('pbdit') },
+      { label: 'Less: depreciation', values: pc('depreciation') },
+      { label: 'Less: other non-cash charges', values: pc('nonCash') },
+      { label: 'Less: interest on term loans', values: pc('interestTL') },
+      { label: 'Less: interest on working capital', values: pc('interestOther') },
+      { label: 'Profit before tax', values: pc('pbt'), kind: 'total', id: 'pbt' },
+      { label: 'Less: tax', values: pc('tax'), id: 'tax' },
+      { label: 'Profit after tax', values: pc('pat'), kind: 'total' },
+    );
+  }
+  lines.push({ label: 'Cash available for debt service', values: [], kind: 'head' });
+  available.forEach((c, i) => lines.push({ label: i ? `Add: ${lower(COMPONENTS[c])}` : COMPONENTS[c], values: money(parts.map((y) => y[c])) }));
+  lines.push(
+    { label: 'Cash available (A)', values: money(st.rows.map((r) => r.available)), kind: 'total', id: 'available' },
+    { label: 'Debt service', values: [], kind: 'head' },
+    ...service.map((c) => ({ label: COMPONENTS[c], values: money(parts.map((y) => y[c])) })),
+    { label: 'Debt service (B)', values: money(st.rows.map((r) => r.service)), kind: 'total', id: 'service' },
+    { label: 'DSCR (A ÷ B)', values: st.rows.map((r) => (r.dscr === undefined ? '—' : ratioText(r.dscr, r.counted ? t.minimum : undefined))), kind: 'ratio', id: 'dscr' },
+  );
+  return { years: st.rows.map((r) => r.fy), counted: st.rows.map((r) => r.counted), lines };
+}
+
+function fillStatement(p: Preview, st: Statement, t: Target, def: Definition, parts: YearFigures[], profit?: ProfitYear[]) {
+  p.statement = statementView(st, t, def, parts, profit);
   const skipped = st.rows.filter((r) => !r.counted).map((r) => r.fy);
   if (skipped.length && st.rows.length > skipped.length)
     p.notCounted = `Not counted: ${andList(skipped)} (${def.years === 'repayment' ? 'no term-loan instalment' : 'no interest or instalments due'}).`;
@@ -276,8 +334,26 @@ function fillStatement(p: Preview, st: Statement, t: Target, years: YearFigures[
   p.notes = st.notes;
 }
 
+const rupees = (n: number) => rs(n, Math.abs(n - Math.round(n)) < 0.005 ? 0 : 2);
+
+/** The repayment schedule in words and rupees: every month, grouped by financial year with the year's totals. */
+function scheduleView(a: Amortization, repayment?: Repayment): ScheduleView {
+  return {
+    level: repayment === 'emi'
+      ? `EMI ${rs(a.level, 2)} a month, interest included; banks round it up to the next rupee.`
+      : `Principal ${rupees(a.level)} a ${repayment === 'quarterly' ? 'quarter' : 'month'}, and interest on the balance every month.`,
+    years: a.years.map((y) => ({
+      fy: y.fy, interest: inr(y.interest), principal: inr(y.principal), closing: inr(y.closing),
+      months: a.months.filter((m) => m.fy === y.fy).map((m) => ({
+        ym: m.month, month: monthShort(m.month), opening: inr(m.opening), interest: inr(m.interest), principal: inr(m.principal), paid: inr(m.paid),
+        closing: inr(m.closing), ...(m.instalment ? { instalment: m.instalment } : {}),
+      })),
+    })),
+  };
+}
+
 export function preview(s: State): Preview {
-  const p: Preview = { started: false, needs: startNeeds(s), columns: [], rows: [], notes: [] };
+  const p: Preview = { started: false, needs: startNeeds(s), notes: [] };
   const def = definitionOf(s);
   if (p.needs.length || !complete(def)) return p;
   p.started = true;
@@ -286,11 +362,11 @@ export function preview(s: State): Preview {
 
   if (s.source === 'own') {
     if (y.needs.length) { p.needs.push(...y.needs, ...tNeeds); return p; }
-    const r = dscrStatement(y.years.map((fy, i) => ({ fy, ...figures(i) }) as YearFigures), def);
+    const own = y.years.map((fy, i) => ({ fy, ...figures(i) }) as YearFigures), r = dscrStatement(own, def);
     if ('needs' in r) p.needs.push(...groupNeeds(r.needs, y.years, rows.map((x) => x.label)));
     else if ('blocked' in r) p.blocked = r.blocked;
     else {
-      fillStatement(p, r, target, undefined, def);
+      fillStatement(p, r, target, def, own);
       if (!tNeeds.length) p.verdict = verdictOf(r, target);
     }
     p.needs.push(...tNeeds);
@@ -298,13 +374,17 @@ export function preview(s: State): Preview {
   }
 
   const loan = loanInput(s);
+  // The repayment schedule needs only the loan terms, so it is shown before the projections are in.
+  const am = amortization(loan);
+  if ('months' in am) p.schedule = scheduleView(am, s.loan.repayment);
+  else if ('blocked' in am) p.blocked = am.blocked;
   const proj = y.years.map((fy, i) => ({ fy, ...figures(i) }) as ProjectionYear);
   const r = planStatement(proj, loan, def);
   // Until the loan's dates are in there are no years to ask for; the loan's own needs say what is missing.
-  if ('needs' in r) p.needs.push(...groupNeeds(r.needs.filter((n) => y.years.length || n !== 'At least one year of figures'), y.years, rows.map((x) => x.label)));
-  else if ('blocked' in r) p.blocked = r.blocked;
+  if ('needs' in r) p.needs.push(...oneRepaymentNeed(groupNeeds(r.needs.filter((n) => y.years.length || n !== 'At least one year of figures'), y.years, rows.map((x) => x.label))));
+  else if ('blocked' in r) p.blocked ??= r.blocked;
   else {
-    fillStatement(p, r.statement, target, r.years, def);
+    fillStatement(p, r.statement, target, def, r.years, r.profit);
     if (!tNeeds.length) p.verdict = verdictOf(r.statement, target);
   }
   p.needs.push(...tNeeds);
@@ -351,7 +431,12 @@ export const EXAMPLE_TARGETS = {
 export const choicesOf = (k: OptionKey) =>
   Object.entries(OPTIONS[k].choices as Record<string, { label: string }>).map(([value, c]) => ({ value, label: c.label }));
 
-/** The common method in one line: "Interest on term loans; lease rentals left out; …". */
-export const PRESET_TEXT = cap(OPTION_KEYS
-  .map((k) => choicesOf(k).find((c) => c.value === (COMMON.choice as Record<string, string>)[k])?.label.toLowerCase())
+/** A preset in one line: "Interest on term loans; lease rentals left out; …". */
+export const presetText = (id: string) => cap(OPTION_KEYS
+  .map((k) => choicesOf(k).find((c) => c.value === (presetOf(id)?.choice as Record<string, string> | undefined)?.[k])?.label.toLowerCase())
   .join('; '));
+
+/** The tax rates the page can fill in for every year, by kind of borrower (engine/data/tax.json). */
+export const TAX_CHOICES = TAX_RATES.map((t) => ({ id: t.id, label: t.label, pct: String(t.pct), verified: t.verified }));
+export const withTaxRate = (s: State, pct: string): State =>
+  ({ ...s, modes: { ...s.modes, taxPct: 'same' }, cells: { ...s.cells, taxPct: [pct, ...(s.cells.taxPct ?? []).slice(1)] } });

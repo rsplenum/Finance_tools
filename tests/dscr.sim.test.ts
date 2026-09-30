@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  LOAN_LABELS, PROJECTION_LABELS, loanTimeline, maxLoanAmount, planStatement, shortestRepayment,
+  LOAN_LABELS, PROJECTION_LABELS, amortization, loanTimeline, maxLoanAmount, planStatement, shortestRepayment,
   type Definition, type Plan, type ProjectionYear, type Statement, type Target,
 } from '../engine/dscr';
 import { fyOf, type LoanTerms } from '../engine/loan';
@@ -101,6 +101,20 @@ function runSeed(seed: number): { cases: number; violations: string[]; seen: Rec
       if (when.years.join() !== fys.join()) bad(`timeline years ${when.years.join()} against the schedule's ${fys.join()}`);
       if (fyOfMonth(when.firstInstalment) !== p.schedule.find((y) => y.principal > 0)?.fy) bad(`first instalment ${when.firstInstalment} not in the first year that repays`);
       if (fyOfMonth(when.lastInstalment) !== fys[fys.length - 1]) bad(`last instalment ${when.lastInstalment} not in the last year`);
+    }
+
+    // Month by month: shown for complete terms (so both computations agree), repays exactly the loan, and adds up to the
+    // yearly schedule.
+    const am = amortization(loan);
+    if (!('months' in am)) bad(`no repayment schedule for complete terms: ${JSON.stringify(am)}`);
+    else {
+      const repaid = am.months.reduce((t, m) => t + m.principal, 0);
+      if (Math.abs(repaid - loan.amount) > Math.max(0.01, loan.amount * 1e-9)) bad(`schedule repays ${repaid} of ${loan.amount}`);
+      p.schedule.forEach((y) => {
+        const inYear = am.months.filter((m) => m.fy === y.fy), interest = inYear.reduce((t, m) => t + m.interest, 0);
+        if (Math.abs(interest - y.interest) > Math.max(0.01, y.interest * 1e-9)) bad(`${y.fy}: months add to interest ${interest}, the year says ${y.interest}`);
+      });
+      if (am.months.filter((m) => m.instalment).length !== loan.instalments) bad('instalment count differs from the terms');
     }
 
     // Statement: the lowest year is the lowest counted DSCR, and the average lies between the lowest and the highest.
