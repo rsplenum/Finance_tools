@@ -29,7 +29,7 @@ Check each one when writing or reviewing a formula:
 - **Depreciation** is a non-cash cost: it lowers tax and is added back to cash.
 - **The average DSCR** is usually total cash available ÷ total debt service; the mean of the yearly ratios is a different method. Never average rounded ratios.
 - **A year with no debt service** is "not counted", never 0.00 or "deficit".
-- **Years run April to March.** A loan drawn mid-year has a part first year: a few months' instalments against a full year's profit.
+- **DSCR is worked out once per financial year (April to March), over the whole year** (D-POL-05). In the year a loan starts or ends, count the year's full income and existing EMIs against only the new loan's instalments that fall in that year. Never share the income by months: the business earns all year. Those part-years show a high DSCR and lift the average, so always show the lowest year beside it.
 - **Moratorium**: interest is paid and no principal; the first instalment comes after it.
 - **EMI** is exact (as Excel's PMT); banks round it up to the rupee, so say which. An equal-principal loan has no single EMI.
 - **Existing loans end.** Say whether they are assumed to run through the new loan.
