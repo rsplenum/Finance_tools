@@ -64,6 +64,8 @@ export interface State {
   asset: { yearly: string; from: string };
   /** Started from the assumptions (ASSUMED): switching back to working the figures out puts them back. */
   assume?: boolean;
+  /** Started from the front door (frontDoor): the month the loan is taken as drawn in, until changed. */
+  door?: { month: string };
   /** What only the document needs: asked beside the download, taken once for the PDF, the Excel copy and the Word copy. */
   doc: DocFacts;
 }
@@ -109,6 +111,17 @@ export const ASSUMED: State = {
   },
   planStart: LOAN_YEAR,
 };
+
+/**
+ * The front door (D-UX-10): the assumptions as above, the loan drawn in `month` (this month, as 2026-10) and repaid by EMI
+ * every month with no moratorium, and no interest on working capital or depreciation until given (the profit asked is
+ * before all interest; depreciation is an optional field). Each shows on the page until changed.
+ */
+export const frontDoor = (month: string): State => ({
+  ...ASSUMED, door: { month },
+  modes: { ...ASSUMED.modes, depreciation: 'none', interestOther: 'none' },
+  loan: { ...ASSUMED.loan, disbursed: month, moratoriumMonths: '0', repayment: 'emi' },
+});
 
 /** The assumptions about the figures belong to working them out: own yearly figures leave them, and coming back restores them. */
 export function withSource(s: State, source: Source): State {
@@ -210,7 +223,7 @@ export function rowsOf(s: State): RowDef[] {
   return [
     row('pbdit', L.pbdit, ['grow', 'same', 'years'], { negative: true, hint: 'Sales less every cost except interest, depreciation and tax.' }),
     row('assetIncome', L.assetIncome, ['none', 'from'], { hint: 'What the asset adds to profit before interest, depreciation and tax, after its own running costs.' }),
-    row('depreciation', L.depreciation, ['same', 'fall', 'years'], { hint: 'The same every year (straight line), or falling by its rate (written-down value).' }),
+    row('depreciation', L.depreciation, ['same', 'fall', 'years', 'none'], { hint: 'The same every year (straight line), or falling by its rate (written-down value).' }),
     row('nonCash', L.nonCash, OPTIONAL, { ask: true, hint: HINTS.nonCash }),
     row('interestOther', L.interestOther, ['none', 'same', 'grow', 'years'], { ask: true, hint: 'Cash credit or overdraft interest.' }),
     ...(def.leases === 'yes' ? [row('leaseRentals', L.leaseRentals, OPTIONAL, { ask: true, hint: HINTS.leaseRentals })] : []),
@@ -355,7 +368,8 @@ export interface AssumedLine { id: string; what: string; shown: string; why: str
 
 const WHERE: Record<string, string> = {
   method: 'method', target: 'target', tax: 'row-taxPct', proprietorTax: 'row-taxPct', margin: 'row-pbdit', asset: 'row-assetIncome',
-  depreciation: 'row-depreciation', interest: 'row-interestOther', otherLoans: 'row-otherLoans', nonCash: 'row-nonCash', start: 'start-question',
+  depreciation: 'row-depreciation', interest: 'row-interestOther', interestNone: 'row-interestOther', otherLoans: 'row-otherLoans', nonCash: 'row-nonCash',
+  start: 'start-question', loanStart: 'loan',
 };
 
 /** The assumptions (engine/data/defaults.json) still as assumed; one that makes no difference to these figures is not listed. */
@@ -373,6 +387,8 @@ export function assumedIn(s: State, y: Years = yearsOf(s)): AssumedLine[] {
     asset: plan && at('assetIncome'),
     depreciation: plan && at('depreciation'),
     interest: plan && at('interestOther'),
+    interestNone: plan && !!s.door && s.modes.interestOther === 'none',
+    loanStart: plan && !!s.door && s.loan.disbursed === s.door.month && s.loan.moratoriumMonths === '0' && s.loan.repayment === 'emi',
     otherLoans: plan && at('otherLoans'),
     nonCash: plan && at('nonCash') && (definitionOf(s)?.leases !== 'yes' || at('leaseRentals')),
     start: plan && s.planStart === LOAN_YEAR && y.startChoices.length > 0,
@@ -423,6 +439,12 @@ export interface Preview {
   leadingInterest?: { fy: string; amount: string }[];
   /** The years left out because the figures start later, in words. */
   beforeStart?: string;
+  /** The instalment (the EMI, or the first instalment) and the interest over the whole loan, in words. */
+  loanLine?: { instalment: string; totalInterest: string };
+  /** A year that pays fewer instalments than a full year: "7 of 12 instalments". */
+  partYears?: Record<string, string>;
+  /** Each year's DSCR against the target for the lowest year, while one is set. */
+  marks?: { fy: string; dscr: string; meets: boolean; counted: boolean }[];
 }
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -537,6 +559,8 @@ function statementView(st: Statement, t: Target, def: Definition, parts: YearFig
 
 function fillStatement(p: Preview, st: Statement, t: Target, def: Definition, parts: YearFigures[], profit?: ProfitYear[], profitTotal?: ProfitTotals) {
   p.statement = statementView(st, t, def, parts, profit, profitTotal);
+  if (t.minimum !== undefined) p.marks = st.rows.filter((r) => r.dscr !== undefined)
+    .map((r) => ({ fy: r.fy, dscr: ratioText(r.dscr as number, t.minimum), meets: (r.dscr as number) >= (t.minimum as number), counted: r.counted }));
   const skipped = st.rows.filter((r) => !r.counted).map((r) => r.fy);
   if (skipped.length && st.rows.length > skipped.length)
     p.notCounted = `Not counted: ${andList(skipped)} (${def.years === 'repayment' ? 'no term-loan instalment' : 'no interest or instalments due'}).`;
@@ -608,7 +632,17 @@ export function preview(s: State): Preview {
   const loan = loanInput(s);
   // The repayment schedule needs only the loan terms, so it is shown before the projections are in.
   const am = amortization(loan);
-  if ('months' in am) p.schedule = scheduleView(am, s.loan.repayment);
+  if ('months' in am) {
+    p.schedule = scheduleView(am, s.loan.repayment);
+    const first = am.months.find((m) => m.instalment), perYear = loan.frequency === 'quarterly' ? 4 : 12;
+    p.loanLine = {
+      instalment: loan.style === 'emi' ? `EMI ${rs(am.level, 2)} a month` : `First instalment ${rs(first?.paid ?? 0)}, then less as the balance falls`,
+      totalInterest: rs(am.totalInterest),
+    };
+    const count = new Map<string, number>();
+    for (const m of am.months) if (m.instalment) count.set(m.fy, (count.get(m.fy) ?? 0) + 1);
+    p.partYears = Object.fromEntries([...count].filter(([, n]) => n < perYear).map(([fy, n]) => [fy, `${n} of ${perYear} instalments`]));
+  }
   else if ('blocked' in am) p.blocked = am.blocked;
   if ('months' in am && y.leading.length)
     p.leadingInterest = am.years.filter((d) => y.leading.includes(d.fy)).map((d) => ({ fy: d.fy, amount: rs(d.interest) }));

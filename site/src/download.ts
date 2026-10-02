@@ -28,6 +28,14 @@ export function download(bytes: Uint8Array<ArrayBuffer>, name: string, type: str
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
+/** Print: the same PDF, opened in a new tab to print from (one layout, not a second one for the web page). */
+export function openPdf(doc: Doc | undefined, now: Date) {
+  if (!doc) return;
+  const url = URL.createObjectURL(new Blob([pdfOf(doc, now)], { type: 'application/pdf' }));
+  window.open(url, '_blank', 'noopener');
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}
+
 /** Writes the document as one of the three files and saves it; nothing while there is no document. */
 export function save(doc: Doc | undefined, kind: FileKind, name: string, now: Date) {
   if (doc) download(FILES[kind].write(doc, now), name, FILES[kind].type);

@@ -1,18 +1,101 @@
 {
   "title": "What the page assumes until you change it",
-  "date": "2026-10-01",
+  "date": "2026-10-02",
   "status": "Set by Claude at the owner's request (30-09-2026: work everything out from this year's figures and sales growth, and assume the rest). Chosen to be reasonable and on the careful side for a lender; not checked against a published source. Every one is shown on the page and can be changed.",
   "assumptions": [
-    { "id": "method", "what": "How DSCR is worked out", "value": "common", "shown": "Common term-loan DSCR", "why": "How chartered accountants and banks usually work it for term loans (docs/DSCR-RESEARCH.md)" },
-    { "id": "target", "what": "The lender's target", "value": { "average": 1.5, "minimum": 1.2 }, "shown": "Average 1.50, lowest year 1.20", "why": "The commonly quoted examples (benchmarks in dscr.json); each lender sets its own" },
-    { "id": "tax", "what": "Tax rate", "value": 31.2, "shown": "31.2%", "why": "The rate for a firm or LLP, and the top rate for an individual with cess: on the careful side, since more tax gives a lower DSCR. Say who the borrower is to work out the tax for that borrower" },
-    { "id": "proprietorTax", "what": "A proprietor's tax", "value": "new-regime", "shown": "The new regime's slab rates, on the business's profit as the only income", "why": "Other income would put the profit in higher slabs, and the old regime (with deductions) is not offered: type a rate if either applies" },
-    { "id": "margin", "what": "Profit margin", "value": "this-year", "shown": "As this year: profit before interest, depreciation and tax grows with sales", "why": "The only growth asked for is in sales" },
-    { "id": "asset", "what": "Extra income from the new asset", "value": 0, "shown": "None beyond the growth", "why": "Leaving it out errs low. Add it if the asset adds to profit, from the month it starts running" },
-    { "id": "depreciation", "what": "Depreciation", "value": "this-year", "shown": "As this year, every year", "why": "Depreciation on the asset the loan buys is left out; it lowers tax, so leaving it out errs low" },
-    { "id": "interest", "what": "Interest on other borrowings", "value": "this-year", "shown": "As this year, every year, on top of this loan's interest", "why": "Working-capital limits are taken as unchanged" },
-    { "id": "otherLoans", "what": "Loans already running", "value": 0, "shown": "None", "why": "Change it if EMIs are paid on other loans: all of a proprietor's, business and personal; a firm's, LLP's or company's own loans only" },
-    { "id": "nonCash", "what": "Other non-cash charges and lease rentals", "value": 0, "shown": "None", "why": "Few small businesses have them" },
-    { "id": "start", "what": "The first year of the figures", "value": "loan", "shown": "The year the loan is first drawn", "why": "The business is running: it has this year's figures" }
+    {
+      "id": "method",
+      "what": "How DSCR is worked out",
+      "value": "common",
+      "shown": "Common term-loan DSCR",
+      "why": "How chartered accountants and banks usually work it for term loans (docs/DSCR-RESEARCH.md)"
+    },
+    {
+      "id": "target",
+      "what": "The lender's target",
+      "value": {
+        "average": 1.5,
+        "minimum": 1.2
+      },
+      "shown": "Average 1.50, lowest year 1.20",
+      "why": "The commonly quoted examples (benchmarks in dscr.json); each lender sets its own"
+    },
+    {
+      "id": "tax",
+      "what": "Tax rate",
+      "value": 31.2,
+      "shown": "31.2%",
+      "why": "The rate for a firm or LLP, and the top rate for an individual with cess: on the careful side, since more tax gives a lower DSCR. Say who the borrower is to work out the tax for that borrower"
+    },
+    {
+      "id": "proprietorTax",
+      "what": "A proprietor's tax",
+      "value": "new-regime",
+      "shown": "The new regime's slab rates, on the business's profit as the only income",
+      "why": "Other income would put the profit in higher slabs, and the old regime (with deductions) is not offered: type a rate if either applies"
+    },
+    {
+      "id": "margin",
+      "what": "Profit margin",
+      "value": "this-year",
+      "shown": "As this year: profit before interest, depreciation and tax grows with sales",
+      "why": "The only growth asked for is in sales"
+    },
+    {
+      "id": "asset",
+      "what": "Extra income from the new asset",
+      "value": 0,
+      "shown": "None beyond the growth",
+      "why": "Leaving it out errs low. Add it if the asset adds to profit, from the month it starts running"
+    },
+    {
+      "id": "depreciation",
+      "what": "Depreciation",
+      "value": "this-year",
+      "shown": "As this year, every year",
+      "why": "Depreciation on the asset the loan buys is left out; it lowers tax, so leaving it out errs low"
+    },
+    {
+      "id": "interest",
+      "what": "Interest on other borrowings",
+      "value": "this-year",
+      "shown": "As this year, every year, on top of this loan's interest",
+      "why": "Working-capital limits are taken as unchanged"
+    },
+    {
+      "id": "interestNone",
+      "what": "Interest on working capital",
+      "value": 0,
+      "shown": "None: the profit asked on the first screen is before all interest",
+      "why": "Give the interest on a cash credit or overdraft under More options, if the business pays it"
+    },
+    {
+      "id": "otherLoans",
+      "what": "Loans already running",
+      "value": 0,
+      "shown": "None",
+      "why": "Change it if EMIs are paid on other loans: all of a proprietor's, business and personal; a firm's, LLP's or company's own loans only"
+    },
+    {
+      "id": "nonCash",
+      "what": "Other non-cash charges and lease rentals",
+      "value": 0,
+      "shown": "None",
+      "why": "Few small businesses have them"
+    },
+    {
+      "id": "start",
+      "what": "The first year of the figures",
+      "value": "loan",
+      "shown": "The year the loan is first drawn",
+      "why": "The business is running: it has this year's figures"
+    },
+    {
+      "id": "loanStart",
+      "what": "The loan",
+      "value": "this-month",
+      "shown": "Drawn this month, repaid by EMI every month, with no moratorium",
+      "why": "Change any of it under More options"
+    }
   ]
 }

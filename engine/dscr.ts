@@ -50,8 +50,8 @@ export type ProfitTotals = Omit<ProfitYear, 'fy'>;
 export interface BeforeStart { fy: string; interest: number }
 /** `profitTotal`: each line of the profit added up over the years counted, beside the statement's `total`. */
 export interface Plan { schedule: YearDebt[]; years: YearFigures[]; profit: ProfitYear[]; statement: Statement; beforeStart: BeforeStart[]; profitTotal?: ProfitTotals }
-/** The repayment schedule month by month, its totals by financial year, and the level instalment (EMI or principal). */
-export interface Amortization { months: MonthRow[]; years: YearDebt[]; level: number }
+/** The repayment schedule month by month, its totals by financial year, the level instalment (EMI or principal), and the interest over the whole loan. */
+export interface Amortization { months: MonthRow[]; years: YearDebt[]; level: number; totalInterest: number }
 /** What stops a larger loan or a shorter repayment: the average, the lowest year, or a year with no cash to pay from. */
 export type Limit = { kind: 'average' } | { kind: 'minimum'; fy: string } | { kind: 'cash'; fy: string };
 export interface AmountAnswer { amount: number; limitedBy: Limit; plan: Plan }
@@ -353,7 +353,10 @@ export function amortization(loan: LoanInput): Amortization | Needs | Blocked {
   const years = schedule(t), off = scheduleDisagrees(years, scheduleCheck(t));
   if (off) return blocked(off);
   const level = levelInstalment(t);
-  return money(level, levelCheck(t)) ? { months: rows, years, level } : blocked('the instalment');
+  if (!money(level, levelCheck(t))) return blocked('the instalment');
+  // The interest over the whole loan: the months added up, against the closed form's months added up.
+  const totalInterest = rows.reduce((a, m) => a + m.interest, 0);
+  return money(totalInterest, check.reduce((a, m) => a + m.interest, 0)) ? { months: rows, years, level, totalInterest } : blocked('the total interest');
 }
 
 /** The financial years a loan runs over, and the months ('YYYY-MM') of its first and last instalments. */

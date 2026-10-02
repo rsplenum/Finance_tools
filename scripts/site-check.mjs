@@ -52,6 +52,8 @@ async function open(path, { scheme = 'light', stored, blockScripts = false } = {
   if (stored) await ctx.addInitScript((v) => { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('app-theme', v); sessionStorage.setItem('seeded', '1'); } }, stored);
   if (blockScripts) await ctx.route('**/*.js', (r) => r.abort());
   const page = await ctx.newPage();
+  // A fixed day, so the front door's "this month" (October 2026) and the documents' dates never depend on when this runs.
+  await page.clock.setFixedTime(new Date('2026-10-02T10:00:00+05:30'));
   const v = (m) => violations.push(`${path} (${scheme}${stored ? `, saved ${stored}` : ''}${blockScripts ? ', no scripts' : ''}): ${m}`);
   page.on('pageerror', (e) => v(`script error: ${e.message}`));
   if (!blockScripts) {
@@ -153,6 +155,11 @@ async function expectValue(page, v, sel, want, step) {
   if (got !== want) v(`${step}: ${sel} holds "${got}", want "${want}"`);
 }
 const leave = async (page, sel, value) => { await page.fill(sel, value); await page.press(sel, 'Tab'); };
+/** The detailed form sits under the closed "More options" (P1f): the flows below open it first. */
+const openMore = async (page) => {
+  const more = page.locator('#more-options');
+  if (!(await more.evaluate((d) => d.open))) await more.locator(':scope > summary').click();
+};
 
 /** Case A from the loan terms, typed the way a user would, with a None or one figure for every year where that is the answer. */
 async function enterCaseA(page) {
@@ -189,12 +196,14 @@ async function layout(page, v, step) {
 
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await openMore(page);
   // The page opens with the assumptions answered (D-UX-08): the start questions chosen, the loan asked at once, the target
   // filled in, and the preview listing what it assumes.
   if (!(await page.isChecked('#fld-source-plan')) || !(await page.isChecked('#fld-method-common'))) v('the start questions are not answered from the assumptions');
   await page.locator('#fld-loanAmount').waitFor({ timeout: 3000 }).catch(() => v('the loan is not asked at once'));
   await expectValue(page, v, '#fld-targetAverage', '1.50', 'the assumed target');
-  await expectText(page, v, 'assumed-target', "The lender's target: Average 1.50, lowest year 1.20", 'the assumptions listed');
+  // The method and the target read as one line (P1f).
+  await expectText(page, v, 'assumed-method', 'How DSCR is worked out, and the target: Common term-loan DSCR; average 1.50, lowest year 1.20', 'the assumptions listed');
 
   // The loan amount field, kept from P0: read back in figures and words while typing; long words wrap.
   const field = page.locator('#fld-loanAmount');
@@ -208,9 +217,10 @@ async function layout(page, v, step) {
   // One answer for how the loan is repaid (an EMI is monthly), listed once while it is missing.
   await page.locator('#fld-repayment-emi').waitFor({ timeout: 3000 }).catch(() => v('how the loan is repaid is not asked'));
   if (await page.locator('#fld-frequency-quarterly, #fld-style-emi').count()) v('how the loan is repaid is asked as two questions');
+  // The front door takes the loan as repaid by EMI (P1f): cleared, it is listed once as needed.
+  if (!(await page.isChecked('#fld-repayment-emi'))) v('the front door does not take the loan as repaid by EMI');
   const repaid = await page.getByTestId('dscr-needs').locator('li').allTextContents();
-  if (repaid.filter((n) => /repaid|How often|Instalment type/.test(n)).join('|') !== 'How the loan is repaid (EMI, or equal principal every month or quarter)')
-    v(`how the loan is repaid is not listed once as needed: ${JSON.stringify(repaid)}`);
+  if (repaid.some((n) => /repaid|How often|Instalment type/.test(n))) v(`how the loan is repaid is asked though the front door answers it: ${JSON.stringify(repaid)}`);
 
   await enterCaseA(page);
   await expectText(page, v, 'loan-dates', 'First instalment at the end of December 2026, the last at the end of September 2029. The loan runs over 2026-27 to 2029-30.', 'case A');
@@ -304,6 +314,7 @@ async function layout(page, v, step) {
 // The same filled page in dark mode.
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'dark' });
+  await openMore(page);
   await enterCaseA(page);
   await page.getByTestId('use-examples').click();
   await expectText(page, v, 'dscr-average', '1.45', 'case A, dark');
@@ -317,6 +328,7 @@ async function layout(page, v, step) {
 // and the question offers the later year.
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await openMore(page);
   await page.check('#fld-source-plan');
   await page.check('#fld-method-common');
   await leave(page, '#fld-loanAmount', '12 L');
@@ -359,6 +371,7 @@ async function layout(page, v, step) {
 // A few answers instead of every year: profit grows from one figure and one rate; the rest are one figure or None.
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await openMore(page);
   await page.check('#fld-source-plan');
   await page.check('#fld-method-common');
   await leave(page, '#fld-loanAmount', '50 L');
@@ -372,6 +385,7 @@ async function layout(page, v, step) {
   await leave(page, '#fld-pbdit-2027-28', '18 L');
   await leave(page, '#fld-pbdit-rate', '10');
   await expectText(page, v, 'readback-pbdit', 'Worked out: Rs. 18,00,000 in 2027-28 to Rs. 26,35,380 in 2031-32.', 'profit growing 10% a year');
+  await page.check('#fld-depreciation-same');
   await leave(page, '#fld-depreciation-2027-28', '4 L');
   await page.check('#fld-nonCash-none');
   await page.check('#fld-interestOther-same');
@@ -397,6 +411,7 @@ async function layout(page, v, step) {
 // worked by hand in tests/dscr-page.test.ts).
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await openMore(page);
   await leave(page, '#fld-loanAmount', '12 L');
   await leave(page, '#fld-ratePct', '12');
   await leave(page, '#fld-disbursed', '2026-04');
@@ -405,7 +420,9 @@ async function layout(page, v, step) {
   await leave(page, '#fld-instalments', '12');
   await leave(page, '#fld-pbdit-2026-27', '5 L');
   await leave(page, '#fld-pbdit-rate', '10');
+  await page.check('#fld-depreciation-same');
   await leave(page, '#fld-depreciation-2026-27', '1.5 L');
+  await page.check('#fld-interestOther-same');
   await leave(page, '#fld-interestOther-2026-27', '50,000');
   await expectText(page, v, 'dscr-status', 'Complete, on 9 assumptions', 'the quick path');
   await expectText(page, v, 'dscr-average', '1.16', 'the quick path');
@@ -483,6 +500,7 @@ async function layout(page, v, step) {
 // October 2026 (1,80,000 in 2026-27). Cash 6,30,000 against 7,61,000 in 2026-27: 0.83; average 33,80,500 / 26,91,000 = 1.26.
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await openMore(page);
   await leave(page, '#fld-loanAmount', '12 L');
   await leave(page, '#fld-ratePct', '12');
   await leave(page, '#fld-disbursed', '2026-04');
@@ -491,7 +509,9 @@ async function layout(page, v, step) {
   await leave(page, '#fld-instalments', '12');
   await leave(page, '#fld-pbdit-2026-27', '5 L');
   await leave(page, '#fld-pbdit-rate', '10');
+  await page.check('#fld-depreciation-same');
   await leave(page, '#fld-depreciation-2026-27', '1.5 L');
+  await page.check('#fld-interestOther-same');
   await leave(page, '#fld-interestOther-2026-27', '50,000');
   await page.check('#fld-borrowerType-proprietor');
   await expectText(page, v, 'tax-by', 'Worked out each year for a proprietor: slab rates of 5% to 30% with 4% cess, nothing up to Rs. 12,00,000 of profit.', "a proprietor's tax");
@@ -522,6 +542,7 @@ async function layout(page, v, step) {
 // instalment is not counted.
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await openMore(page);
   await page.check('#fld-source-own');
   await page.check('#fld-method-common');
   await page.waitForSelector('#fld-firstYear', { timeout: 3000 }).catch(() => v('own figures: the years are not asked'));
@@ -543,6 +564,31 @@ async function layout(page, v, step) {
   await expectText(page, v, 'dscr-not-counted', 'Not counted: 2026-27 (no term-loan instalment).', 'own figures');
   await expectText(page, v, 'dscr-verdict', 'Below the target: the lowest year, 2027-28, is 1.14 against 1.20; the average is 1.23 against 1.50.', 'own figures');
   await layout(page, v, 'own figures filled');
+  await ctx.close();
+}
+
+// The front door (P1f, D-UX-10): eight fields, More options closed on load, and the results without opening it. A textbook
+// EMI: Rs. 10,00,000 at 12% for one year is Rs. 88,848.79 a month; 12 of them less the loan is Rs. 66,185 of interest.
+{
+  const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  if (await page.locator('#more-options').evaluate((d) => d.open)) v('More options is open on load');
+  const texts = await page.locator('#front-door input[type="text"]').count(), radios = await page.locator('#front-door fieldset').count();
+  if (texts + radios > 8) v(`the front door asks ${texts + radios} fields (${texts} typed, ${radios} choices); the owner's list is 8`);
+  await expectText(page, v, 'fd-loan-note', 'The loan is taken as drawn in October 2026 and repaid by EMI every month, with no moratorium. Change it under More options.', 'the front door');
+  await page.check('#fld-fd-borrower-firm');
+  await leave(page, '#fld-fd-profit', '5 L');
+  await leave(page, '#fld-fd-growth', '10');
+  await leave(page, '#fld-fd-amount', '10 L');
+  await leave(page, '#fld-fd-rate', '12');
+  await leave(page, '#fld-fd-years', '1');
+  await expectText(page, v, 'dscr-instalment', 'EMI Rs. 88,848.79 a month', 'the front door');
+  await expectText(page, v, 'dscr-total-interest', 'Rs. 66,185', 'the front door');
+  if (!(await page.getByTestId('dscr-average').isVisible())) v('the front door: no average DSCR without opening More options');
+  if (!(await page.getByTestId('dscr-marks').isVisible())) v('the front door: the years are not marked against the target');
+  if (await page.locator('#more-options').evaluate((d) => d.open)) v('More options opened by itself');
+  await expectText(page, v, 'assumed-method', 'How DSCR is worked out, and the target: Common term-loan DSCR; average 1.50, lowest year 1.20', 'the method and the target in one line');
+  await expectText(page, v, 'part-2026-27', '6 of 12 instalments', 'the first part-year');
+  await layout(page, v, 'the front door filled, 390 px');
   await ctx.close();
 }
 

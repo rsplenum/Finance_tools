@@ -167,6 +167,10 @@ describe('the repayment schedule, month by month', () => {
       ['2026-27', 141000, 200000], ['2027-28', 102000, 400000], ['2028-29', 54000, 400000], ['2029-30', 9000, 200000],
     ]);
   });
+  it('the interest over the whole loan: 12 EMIs of 88,848.7887 less the 10,00,000 lent = 66,185.46', () => {
+    const a = amortization({ amount: 1000000, ratePct: 12, disbursed: '2026-04', moratoriumMonths: 0, instalments: 12, frequency: 'monthly', style: 'emi' }) as Amortization;
+    expect(a.totalInterest.toFixed(2)).toBe('66185.46');
+  });
   it('a textbook EMI: Rs. 10,00,000 at 12% for 12 months is Rs. 88,848.79; month 1 is 10,000 interest and 78,848.79 principal', () => {
     const a = amortization({ amount: 1000000, ratePct: 12, disbursed: '2026-04', moratoriumMonths: 0, instalments: 12, frequency: 'monthly', style: 'emi' }) as Amortization;
     expect(a.level.toFixed(2)).toBe('88848.79');
