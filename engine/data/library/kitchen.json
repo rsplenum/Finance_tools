@@ -1,0 +1,47 @@
+{
+  "title": "Kitchen",
+  "date": "2026-10-02",
+  "families": [
+    { "id": "cabinets", "name": "Kitchen cabinets, base and wall units", "unit": "rft", "levels": ["kc-laminate", "kc-membrane", "kc-acrylic", "kc-pu", "kc-glass"] },
+    { "id": "counter", "name": "Kitchen counter", "unit": "sqft", "levels": ["ct-granite", "ct-quartz", "ct-solid", "ct-sintered", "ct-marble"] },
+    { "id": "sink", "name": "Kitchen sink", "unit": "nos", "levels": ["sk-ss", "sk-ss304", "sk-quartz", "sk-granite-double", "sk-quartz-premium"] },
+    { "id": "sink-mixer", "name": "Sink mixer", "unit": "nos", "levels": ["sm-basic", "sm-wall", "sm-jaquar", "sm-jaquar", "sm-jaquar"] },
+    { "id": "hardware-upgrade", "name": "Cabinet hardware upgrade", "unit": "set", "levels": [null, null, null, null, "hw-blum"] },
+    { "id": "kitchen-hardware", "name": "Cabinet hardware, piece by piece", "unit": "nos" }
+  ],
+  "entries": [
+    { "id": "kc-laminate", "family": "cabinets", "name": "Laminate modular kitchen", "spec": "Base and wall units: BWR plywood carcass, laminate shutters, standard hardware", "level": 1, "brands": ["Hettich", "Ebco"], "unit": "rft", "basis": "installed", "rate": [9500, 14000], "src": ["gharkabudget-kitchen"] },
+    { "id": "kc-membrane", "family": "cabinets", "name": "Membrane modular kitchen", "spec": "Base and wall units: BWR plywood carcass, membrane (PVC) shutters, branded hardware", "level": 2, "brands": ["Hettich", "Hafele"], "unit": "rft", "basis": "installed", "rate": [11000, 15500], "src": ["gharkabudget-kitchen"] },
+    { "id": "kc-acrylic", "family": "cabinets", "name": "Acrylic modular kitchen", "spec": "Base and wall units: BWP plywood carcass, high-gloss acrylic shutters, branded hardware with tandem drawers", "level": 3, "brands": ["Hettich", "Hafele"], "unit": "rft", "basis": "installed", "rate": [15000, 22000], "src": ["gharkabudget-kitchen"] },
+    { "id": "kc-pu", "family": "cabinets", "name": "PU lacquer modular kitchen", "spec": "Base and wall units: BWP plywood carcass, PU lacquer shutters, premium hardware", "level": 4, "brands": ["Hafele", "Blum"], "unit": "rft", "basis": "installed", "rate": [18000, 28000], "src": ["gharkabudget-kitchen"] },
+    { "id": "kc-glass", "family": "cabinets", "name": "Lacquered glass modular kitchen", "spec": "Base and wall units: BWP plywood carcass, lacquered glass shutters, premium hardware", "level": 5, "brands": ["Blum"], "unit": "rft", "basis": "installed", "rate": [22000, 32000], "src": ["gharkabudget-kitchen"] },
+
+    { "id": "ct-granite", "family": "counter", "name": "Granite counter", "spec": "Granite counter 18–20 mm with a polished edge, fabricated and fixed", "level": 1, "unit": "sqft", "basis": "supply", "rate": [250, 500], "wastage": 0.10, "fix": ["fix-counter"], "src": ["designcafe-counters", "own"] },
+    { "id": "ct-quartz", "family": "counter", "name": "Quartz counter", "spec": "Quartz (engineered stone) counter, fabricated and fixed", "level": 2, "unit": "sqft", "basis": "supply", "rate": [400, 800], "wastage": 0.10, "fix": ["fix-counter"], "src": ["designcafe-counters", "own"] },
+    { "id": "ct-solid", "family": "counter", "name": "Solid-surface counter", "spec": "Solid-surface (Corian) counter with seamless joints, fabricated and fixed", "level": 3, "brands": ["Corian"], "unit": "sqft", "basis": "supply", "rate": [700, 1500], "wastage": 0.10, "fix": ["fix-counter"], "src": ["designcafe-counters", "poj-corian", "own"] },
+    { "id": "ct-sintered", "family": "counter", "name": "Sintered stone counter", "spec": "Sintered stone counter, fabricated and fixed", "level": 4, "unit": "sqft", "basis": "supply", "rate": [1600, 1600], "wastage": 0.10, "fix": ["fix-counter"], "src": ["indiamart-sintered", "own"] },
+    { "id": "ct-marble", "family": "counter", "name": "Italian marble counter (Calacatta)", "spec": "Calacatta Italian marble counter, fabricated, sealed and fixed", "level": 5, "unit": "sqft", "basis": "supply", "rate": [800, 1850], "wastage": 0.10, "fix": ["fix-counter"], "src": ["livspace-marble", "own"] },
+    { "id": "ct-corian-premium", "family": "counter", "name": "Premium solid surface", "spec": "Premium solid-surface counter (DuPont and high-end finishes)", "level": 5, "unit": "sqft", "basis": "supply", "rate": [1500, 4000], "wastage": 0.10, "fix": ["fix-counter"], "src": ["poj-corian"] },
+    { "id": "ct-marble-indian", "family": "counter", "name": "Indian marble counter", "spec": "Indian marble counter, fabricated and fixed", "level": 2, "unit": "sqft", "basis": "supply", "rate": [300, 700], "wastage": 0.10, "fix": ["fix-counter"], "src": ["designcafe-counters"] },
+
+    { "id": "sk-ss", "family": "sink", "name": "Stainless steel sink, single bowl", "spec": "Stainless steel single-bowl sink with waste coupling, fixed", "level": 1, "brands": ["Nirali", "Anupam"], "unit": "nos", "basis": "product", "rate": [800, 9800], "fix": ["fix-fixture"], "src": ["indiamart-sinks"] },
+    { "id": "sk-ss304", "family": "sink", "name": "Stainless steel 304 sink", "spec": "Grade 304 stainless steel sink, fixed", "level": 2, "brands": ["Glen", "Franke"], "unit": "nos", "basis": "product", "rate": [5836, 20796], "fix": ["fix-fixture"], "src": ["glen-sinks"] },
+    { "id": "sk-quartz", "family": "sink", "name": "Quartz sink", "spec": "Quartz composite sink, fixed", "level": 3, "brands": ["Carysil"], "unit": "nos", "basis": "product", "rate": [5500, 13500], "fix": ["fix-fixture"], "src": ["indiamart-sinks"] },
+    { "id": "sk-granite-double", "family": "sink", "name": "Granite double-bowl sink with drainboard", "spec": "Granite composite double-bowl sink with a drainboard, fixed", "level": 4, "brands": ["Franke"], "unit": "nos", "basis": "product", "rate": [20792, 21192], "fix": ["fix-fixture"], "src": ["indiamart-sinks"] },
+    { "id": "sk-quartz-premium", "family": "sink", "name": "Premium quartz sink, 39 × 19.5 in", "spec": "Premium large quartz sink, fixed", "level": 5, "brands": ["Nirali Granio"], "unit": "nos", "basis": "product", "rate": [31314, 31314], "fix": ["fix-fixture"], "src": ["decure-nirali"] },
+
+    { "id": "sm-basic", "family": "sink-mixer", "name": "Sink cock or mixer", "spec": "Sink cock or basic sink mixer, fixed", "level": 1, "unit": "nos", "basis": "product", "rate": [200, 3000], "fix": ["fix-fixture"], "src": ["ark-sink-mixers"] },
+    { "id": "sm-wall", "family": "sink-mixer", "name": "Wall-mounted sink mixer", "spec": "Wall-mounted sink mixer with a swinging spout, fixed", "level": 2, "unit": "nos", "basis": "product", "rate": [700, 4910], "fix": ["fix-fixture"], "src": ["ark-sink-mixers"] },
+    { "id": "sm-jaquar", "family": "sink-mixer", "name": "Single-lever sink mixer (Jaquar)", "spec": "Single-lever sink mixer, fixed", "level": 3, "brands": ["Jaquar"], "unit": "nos", "basis": "product", "rate": [6720, 9800], "fix": ["fix-fixture"], "src": ["ark-sink-mixers"] },
+
+    { "id": "hw-blum", "family": "hardware-upgrade", "name": "Blum hardware throughout", "spec": "Blum hinges, tandem boxes and lift-ups throughout, extra over standard hardware", "level": 5, "brands": ["Blum"], "unit": "set", "basis": "product", "rate": [40000, 100000], "src": ["woodage-hardware"], "note": "The reported difference between Hettich and Blum for a whole kitchen." },
+    { "id": "hk-hinge", "family": "kitchen-hardware", "name": "Soft-close hinge (Hettich, Hafele)", "spec": "Soft-close hinge", "level": 2, "brands": ["Hettich", "Hafele"], "unit": "nos", "basis": "product", "rate": [180, 450], "src": ["woodage-hardware", "homeli-hardware"] },
+    { "id": "hk-hinge-blum", "family": "kitchen-hardware", "name": "Soft-close hinge (Blum)", "spec": "Soft-close hinge", "level": 4, "brands": ["Blum"], "unit": "nos", "basis": "product", "rate": [350, 700], "src": ["woodage-hardware"] },
+    { "id": "hk-channel", "family": "kitchen-hardware", "name": "Soft-close drawer channel, a pair (Hettich, Hafele)", "spec": "Soft-close drawer channels", "level": 2, "brands": ["Hettich", "Hafele"], "unit": "nos", "basis": "product", "rate": [700, 2500], "src": ["woodage-hardware"] },
+    { "id": "hk-channel-blum", "family": "kitchen-hardware", "name": "Soft-close drawer channel, a pair (Blum)", "spec": "Soft-close drawer channels", "level": 4, "brands": ["Blum"], "unit": "nos", "basis": "product", "rate": [1800, 4500], "src": ["woodage-hardware"] },
+    { "id": "hk-tandem", "family": "kitchen-hardware", "name": "Tandem drawer system (Hettich, Hafele)", "spec": "Tandem or box drawer system", "level": 3, "brands": ["Hettich InnoTech", "Hafele Matrix"], "unit": "nos", "basis": "product", "rate": [2500, 7000], "src": ["woodage-hardware"] },
+    { "id": "hk-tandem-blum", "family": "kitchen-hardware", "name": "Tandem drawer system (Blum)", "spec": "Tandem or box drawer system", "level": 5, "brands": ["Blum Legrabox", "Blum Tandembox"], "unit": "nos", "basis": "product", "rate": [5000, 12000], "src": ["woodage-hardware"] },
+    { "id": "hk-liftup", "family": "kitchen-hardware", "name": "Lift-up fitting (Hettich, Hafele)", "spec": "Lift-up fitting for a wall unit", "level": 3, "brands": ["Hettich", "Hafele"], "unit": "nos", "basis": "product", "rate": [1500, 6000], "src": ["woodage-hardware"] },
+    { "id": "hk-liftup-blum", "family": "kitchen-hardware", "name": "Lift-up fitting (Blum Aventos)", "spec": "Lift-up fitting for a wall unit", "level": 5, "brands": ["Blum Aventos"], "unit": "nos", "basis": "product", "rate": [3500, 10000], "src": ["woodage-hardware"] }
+  ]
+}

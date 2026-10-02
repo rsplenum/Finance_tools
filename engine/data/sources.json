@@ -1,0 +1,930 @@
+{
+  "title": "Sources of the library and of the architect's rules",
+  "date": "2026-10-02",
+  "status": "Read through web-search summaries on 02-10-2026. The pages themselves could not be opened from the session, so every value is as reported and not yet checked against its page (D-UX-18). A value is checked when someone opens the page, reads the figure and sets checked on the source.",
+  "classes": {
+    "1": "An official schedule of rates (CPWD), scaled by the city's index",
+    "2": "A maker's or seller's price for a named product: a price list, an MRP, a listing",
+    "3": "A firm's published package, allowance or rate card",
+    "4": "A cost guide's range: a blog, a calculator or a guide",
+    "R": "A standard, a code or a law, for a rule rather than a rate",
+    "O": "Our own rule, with its reason given where it is used (D-UX-18)"
+  },
+  "sources": {
+    "own": {
+      "what": "Our own rule, with its reason given where it is used",
+      "url": "",
+      "class": "O"
+    },
+    "is4648": {
+      "what": "IS 4648:1968, guide for electrical layout in residential buildings",
+      "url": "https://archive.org/details/gov.in.is.4648.1968",
+      "class": "R"
+    },
+    "is1200-15": {
+      "what": "IS 1200 Part 15:1987, painting coefficients, as quoted",
+      "url": "https://testbook.com/question-answer/as-per-is-1200part-151987-the-pain--67349ea9da2d90cae15c89ca",
+      "class": "R"
+    },
+    "is1200-deductions": {
+      "what": "IS 1200 deductions for openings in plaster and paint: none up to 0.5 sq m, one face from 0.5 to 3 sq m, both faces and reveals above 3 sq m",
+      "url": "https://theconstructor.org/question/what-is-the-rule-for-deduction-in-the-measurement-of-plastering-work/",
+      "class": "R"
+    },
+    "civil4m-coefficients": {
+      "what": "Coefficients of measurement for painting",
+      "url": "https://civil4m.com/threads/coefficient-of-measurements-for-painting-on-various-surfaces.1441/",
+      "class": "R"
+    },
+    "infralens-nbc": {
+      "what": "NBC 2016 thumb rules: ceiling 2.75 m, room sizes",
+      "url": "https://infralens.in/thumbrules",
+      "class": "R"
+    },
+    "studiomatrx-bath-rules": {
+      "what": "Bathroom regulations in India: NBC 2016 and bye-laws",
+      "url": "https://www.studiomatrx.org/guides/bathroom-building-regulations-india",
+      "class": "R"
+    },
+    "studiomatrx-windows": {
+      "what": "Window size standards and the NBC 10 per cent rule",
+      "url": "https://www.studiomatrx.org/guides/window-size-standards-india",
+      "class": "R"
+    },
+    "testbook-window": {
+      "what": "Minimum window area in a habitable room",
+      "url": "https://testbook.com/question-answer/minimum-window-area-in-any-habitable-room-is-_____--5f786fd0d28ae65a18cdaee6",
+      "class": "R"
+    },
+    "studiomatrx-doors": {
+      "what": "Door size standards in India by room, NBC 2016 widths",
+      "url": "https://www.studiomatrx.org/guides/door-size-standards-india",
+      "class": "R"
+    },
+    "houseyog-door-window": {
+      "what": "Standard door and window sizes in India",
+      "url": "https://www.houseyog.com/blog/standard-door-window-sizes-india-schedule/",
+      "class": "4"
+    },
+    "civilguide-window": {
+      "what": "Standard window size for a house in India",
+      "url": "https://civilguide.in/standard-window-size-for-house-in-india/",
+      "class": "4"
+    },
+    "goldmedal-points": {
+      "what": "Goldmedal: electrical points in a 2BHK or 3BHK",
+      "url": "https://www.goldmedalindia.com/blog/2bhk-3bhk-electrical-layout-guide/",
+      "class": "4"
+    },
+    "greatwhite-sockets": {
+      "what": "Room-by-room guide to sockets in India",
+      "url": "https://great-white.in/room-by-room-guide-to-electrical-sockets-and-plug-points-in-india.php",
+      "class": "4"
+    },
+    "civilsir-bhk": {
+      "what": "Standard size of 1BHK to 4BHK flats",
+      "url": "https://civilsir.com/standard-size-of-1bhk-2bhk-3bhk-4bhk-flat-in-india/",
+      "class": "4"
+    },
+    "squareyards-1bhk": {
+      "what": "What is a 1 BHK: size and rooms",
+      "url": "https://www.squareyards.com/sale/guides/what-is-1-bhk",
+      "class": "4"
+    },
+    "squareyards-3bhk": {
+      "what": "What is a 3 BHK: size, layout and rooms",
+      "url": "https://www.squareyards.com/sale/guides/what-is-3-bhk",
+      "class": "4"
+    },
+    "rylinx-2bhk": {
+      "what": "Ideal size of a 2BHK flat: room-by-room carpet areas",
+      "url": "https://in.rylinx.com/blog/ideal-size-2bhk-flat-carpet-area-guide",
+      "class": "4"
+    },
+    "truststone-2bhk": {
+      "what": "How much space you get in a 2 BHK flat",
+      "url": "https://truststone.in/blog/how-much-space-do-you-actually-get-in-2-bhk-flat",
+      "class": "4"
+    },
+    "designtiles-waste": {
+      "what": "Tile wastage formula",
+      "url": "https://www.designtiles.com.au/how-many-tiles-do-i-need-the-simple-wastage-formula/",
+      "class": "4"
+    },
+    "makecalcs-waste": {
+      "what": "Tile waste factor by laying pattern",
+      "url": "https://makecalcs.net/blog/tile-waste-factor-guide",
+      "class": "4"
+    },
+    "homepride-adhesive": {
+      "what": "Tile adhesive coverage guide",
+      "url": "https://homepride.in/tile-adhesive/tile-adhesive-required/",
+      "class": "4"
+    },
+    "tradecalc-grout": {
+      "what": "Grout per square metre by tile size",
+      "url": "https://tradecalculator.co.uk/tiling/grout-calculator/",
+      "class": "4"
+    },
+    "yespainter-royale": {
+      "what": "Coverage of Asian Paints Royale Luxury Emulsion",
+      "url": "https://yespainter.com/faq-items/what-is-the-coverage-of-asian-paints-royale-luxury-emulsion/",
+      "class": "4"
+    },
+    "colourdrive-apcolite": {
+      "what": "Asian Paints Apcolite Premium Emulsion: price and coverage",
+      "url": "https://www.colourdrive.in/paintdetails.php?id=17&brand=Asian&name=Apcolite-Premium-Emulsion",
+      "class": "4"
+    },
+    "moglix-royale": {
+      "what": "Asian Paints Royale Luxury Emulsion 1 L, white",
+      "url": "https://www.moglix.com/asian-paints-1-l-white-royale-luxury-emulsion/mp/msnrkrex31w89n",
+      "class": "2"
+    },
+    "indiamart-apcolite": {
+      "what": "Asian Paints Apcolite Premium Emulsion 20 L, listings",
+      "url": "https://dir.indiamart.com/items/asian-paints-apcolite-premium-emulsion-20-l-s260454.html",
+      "class": "2"
+    },
+    "birlawhite-putty": {
+      "what": "Birla White WallCare putty and primer",
+      "url": "https://www.birlawhite.com/en/campaigns/putty-plus-primer-jodi",
+      "class": "2"
+    },
+    "homerun-putty": {
+      "what": "Birla White WallCare Putty 30 kg",
+      "url": "https://home-run.co/products/birla-whitebirla-white-wallcare-putty-30kg",
+      "class": "2"
+    },
+    "kanoon-architects-37": {
+      "what": "Architects Act 1972, section 37: use of the title of architect",
+      "url": "https://indiankanoon.org/doc/1190127/",
+      "class": "R"
+    },
+    "lawgico-architects": {
+      "what": "Supreme Court on the Architects Act: practice not barred, the title is",
+      "url": "https://lawgico.in/law-updates/supreme-court-clarifies-architects-act-practice-by-unregistered-persons-not-barred-but-government-posts-cannot-use-architect-title-without-registration/",
+      "class": "R"
+    },
+    "newsonair-gst": {
+      "what": "GST Council cuts rates on housing materials (September 2025)",
+      "url": "https://www.newsonair.gov.in/gst-council-cuts-rates-on-key-housing-materials-providing-big-relief-to-common-man",
+      "class": "R"
+    },
+    "jkcement-gst": {
+      "what": "GST 2.0 guide for home construction",
+      "url": "https://www.jkcement.com/blog/policies/gst-2-0-home-construction-guide-2025/",
+      "class": "4"
+    },
+    "asianpaints-kitchen": {
+      "what": "Standard modular kitchen dimensions",
+      "url": "https://www.beautifulhomes.asianpaints.com/blogs/standard-modular-kitchen-design-dimensions-and-measurements.html",
+      "class": "4"
+    },
+    "mccoymart-kitchen": {
+      "what": "Standard modular kitchen sizes in India",
+      "url": "https://mccoymart.com/post/standard-modular-kitchen-sizes-and-dimensions-in-india-for-your-home/",
+      "class": "4"
+    },
+    "woodenstreet-wardrobe": {
+      "what": "Standard wardrobe sizes",
+      "url": "https://www.woodenstreet.com/blog/standard-wardrobe-size",
+      "class": "4"
+    },
+    "drfixit-bathseal": {
+      "what": "Dr. Fixit Bathseal: wet-area waterproofing heights",
+      "url": "https://www.drfixit.co.in/resources/library/technical-data/home-owners/w012-dr-fixit-bathseal-select",
+      "class": "2"
+    },
+    "studiomatrx-waterproofing": {
+      "what": "Waterproofing guide for Indian homes, zone by zone",
+      "url": "https://www.studiomatrx.org/guides/waterproofing-guide",
+      "class": "4"
+    },
+    "indecimal-compare": {
+      "what": "Indecimal: comparison of house-building packages (bathroom wall tile allowances)",
+      "url": "https://www.indecimal.com/compare-package",
+      "class": "3"
+    },
+    "orientbell-tiles": {
+      "what": "Orientbell: tile price per sq ft in India",
+      "url": "https://www.orientbell.com/tile-guide/tile-price-per-square-foot-india",
+      "class": "4"
+    },
+    "aparna-vitrified": {
+      "what": "Vitrified tiles price per sq ft: full body, glazed, double charge",
+      "url": "https://www.aparnaenterprisesltd.com/blog/tiles/vitrified-tiles-price-per-sq-ft/",
+      "class": "4"
+    },
+    "nobroker-kajaria": {
+      "what": "Kajaria and Somany tiles: cost comparison",
+      "url": "https://www.nobroker.in/forum/what-is-the-cost-difference-between-kajaria-and-somany-floor-tiles/",
+      "class": "4"
+    },
+    "gharkabudget-tiling": {
+      "what": "Tile laying cost per sq ft, India 2026",
+      "url": "https://gharkabudget.com/articles/tile-laying-cost-per-sqft-2026/",
+      "class": "4"
+    },
+    "houseyog-tiling": {
+      "what": "Floor tiling cost in India, 2026",
+      "url": "https://www.houseyog.com/blog/floor-tiling-cost-per-sqft-india/",
+      "class": "4"
+    },
+    "comaron-tiling": {
+      "what": "Tile installation cost per sq ft, India 2026",
+      "url": "https://www.comaron.com/blog/tile-installation-cost-per-sq-ft-india-2026-complete-guide",
+      "class": "4"
+    },
+    "livspace-marble": {
+      "what": "Livspace: cost of marble flooring",
+      "url": "https://www.livspace.com/in/magazine/cost-of-marble-flooring",
+      "class": "4"
+    },
+    "rkmarbles-imported": {
+      "what": "RK Marbles: imported marble price list",
+      "url": "https://www.rkmarblesindia.com/imported-marble-pricelist/",
+      "class": "2"
+    },
+    "rkmarbles-makrana": {
+      "what": "RK Marbles: Makrana marble price for flooring",
+      "url": "https://www.rkmarblesindia.com/indian-marbles/makrana-marbles/",
+      "class": "2"
+    },
+    "infinity-marble": {
+      "what": "The Infinity Marble: marble price per sq ft",
+      "url": "https://www.theinfinitymarble.com/marble-price/",
+      "class": "2"
+    },
+    "omkar-marble": {
+      "what": "Marble flooring cost in India, price guide",
+      "url": "https://omkarmarble.com/blog/marble-flooring-cost-guide",
+      "class": "4"
+    },
+    "srmarble-polish": {
+      "what": "SR Marble Polishing: polishing rates for newly laid marble",
+      "url": "https://www.srmarblepolishing.in/new-laid-marble-silicate-polishing-rate",
+      "class": "3"
+    },
+    "kotastone-supplier": {
+      "what": "Kota stone flooring price per sq ft, 2026",
+      "url": "https://www.kotastonesupplier.com/kota-stone-flooring-price-per-sq-ft-in-india/",
+      "class": "2"
+    },
+    "kotastone-online": {
+      "what": "Kota stone flooring cost in India, 2026",
+      "url": "https://kotastone.online/kota-stone-flooring-cost/",
+      "class": "4"
+    },
+    "terazzo-cost": {
+      "what": "Terrazzo flooring cost per sq ft in India",
+      "url": "https://terazzo.in/blog/terrazzo-flooring-cost-per-sqft-2025/",
+      "class": "3"
+    },
+    "nobroker-wood": {
+      "what": "NoBroker: wooden flooring cost per sq ft",
+      "url": "https://www.nobroker.in/interiors/design-guides/wooden-flooring-cost/",
+      "class": "4"
+    },
+    "nobroker-vinyl": {
+      "what": "NoBroker: vinyl flooring price, 2026",
+      "url": "https://www.nobroker.in/interiors/design-guides/vinyl-flooring-price/",
+      "class": "4"
+    },
+    "hdhmr-wood": {
+      "what": "Wooden flooring cost in India 2026, room-wise and type-wise",
+      "url": "https://www.hdhmr.in/blog/wooden-flooring-cost-india/",
+      "class": "4"
+    },
+    "aapka-painting": {
+      "what": "AapkaPainter: house painting cost per sq ft, India 2026",
+      "url": "https://aapkapainter.com/blog/house-painting-cost-per-sq-ft-india/",
+      "class": "4"
+    },
+    "aapka-calculator": {
+      "what": "AapkaPainter: painting cost calculator, India 2026",
+      "url": "https://aapkapainter.com/resources/painting-cost-calculator",
+      "class": "4"
+    },
+    "gharkabudget-paint": {
+      "what": "Painting cost per sq ft, India 2026",
+      "url": "https://gharkabudget.com/painting-cost/",
+      "class": "4"
+    },
+    "aapka-gurgaon": {
+      "what": "AapkaPainter: interior and exterior painting rates, Gurgaon 2026",
+      "url": "https://aapkapainter.com/blog/painting-cost-in-gurgaon/",
+      "class": "4"
+    },
+    "nobroker-texture": {
+      "what": "NoBroker: texture painting cost per sq ft",
+      "url": "https://www.nobroker.in/painting-services/texture-painting-cost",
+      "class": "4"
+    },
+    "studiomatrx-finishes": {
+      "what": "Decorative wall finishes: microcement, Venetian plaster, lime wash and more",
+      "url": "https://www.studiomatrx.org/guides/decorative-wall-finishes-guide-india",
+      "class": "4"
+    },
+    "livspace-wallpaper": {
+      "what": "Livspace: wallpaper price list and installation",
+      "url": "https://www.livspace.com/in/magazine/wallpaper-price-and-its-installation",
+      "class": "4"
+    },
+    "designcafe-panelling": {
+      "what": "Design Cafe: wall panelling cost in India",
+      "url": "https://www.designcafe.com/blog/home-interiors/wall-panelling-cost-guide/",
+      "class": "4"
+    },
+    "houseyog-panelling": {
+      "what": "Wall panelling cost in India: PVC, WPC, MDF",
+      "url": "https://www.houseyog.com/blog/wall-panelling-cost-india-pvc-wpc-mdf-panels/",
+      "class": "4"
+    },
+    "advancelam-louvers": {
+      "what": "Louver panel price list, India 2026",
+      "url": "https://advancelam.com/louver-panel-price-india/",
+      "class": "2"
+    },
+    "nobroker-ceiling": {
+      "what": "NoBroker: false ceiling rates, 2026",
+      "url": "https://www.nobroker.in/interiors/design-guides/false-ceiling-rates/",
+      "class": "4"
+    },
+    "gharkabudget-ceiling": {
+      "what": "False ceiling cost per sq ft, India 2026",
+      "url": "https://gharkabudget.com/articles/false-ceiling-cost-india/",
+      "class": "4"
+    },
+    "studiomatrx-ceiling": {
+      "what": "False ceiling cost guide, India 2026",
+      "url": "https://www.studiomatrx.org/guides/false-ceiling-cost-guide-india",
+      "class": "4"
+    },
+    "indiamart-baffle": {
+      "what": "Baffle ceilings, listings",
+      "url": "https://dir.indiamart.com/impcat/baffle-ceilings.html",
+      "class": "2"
+    },
+    "housegyan-sanitary": {
+      "what": "Best sanitaryware brands in India with price ranges, 2026",
+      "url": "https://www.housegyan.com/blog/best-sanitaryware-brands-in-india",
+      "class": "4"
+    },
+    "houseyog-bath-fittings": {
+      "what": "Bathroom fitting cost in India, 2026: Jaquar, Hindware, Kohler",
+      "url": "https://www.houseyog.com/blog/bathroom-fitting-cost-in-india-jaquar-hindware-kohler-price-installation-guide/",
+      "class": "4"
+    },
+    "irely-wallhung": {
+      "what": "Wall-hung closets with cistern, listings",
+      "url": "https://www.irely.in/bath/sanitaryware/wall-hung-closet-with-cistern.html",
+      "class": "2"
+    },
+    "indiamart-geberit": {
+      "what": "Geberit concealed cisterns, listings",
+      "url": "https://www.indiamart.com/proddetail/geberit-concealed-cistern-2853861962688.html",
+      "class": "2"
+    },
+    "bharat-jaquar": {
+      "what": "Jaquar faucets, a dealer's listing (Florentine and Alive basin mixers)",
+      "url": "https://www.bharatironworks.com/jaquar-faucets.html",
+      "class": "2"
+    },
+    "homedurables-florentine": {
+      "what": "Jaquar Florentine series, a dealer's listing",
+      "url": "https://homedurables.com/product-category/shop-by-brands/jaquar/jaquar-florentine-series/?layout=list",
+      "class": "2"
+    },
+    "civilsite-cp": {
+      "what": "Bathroom CP fittings and sanitaryware: names and prices",
+      "url": "https://civilsite.in/bathroom-cp-sanitary-fittings/",
+      "class": "4"
+    },
+    "flipkart-hindware": {
+      "what": "Hindware CP fittings, listings (pillar cock, wall mixer, shower, angle valves)",
+      "url": "https://www.flipkart.com/hindware-f100001qt-pillar-cock-foam-flow-basin-mixer-faucet/p/itmegaky4vucb79h",
+      "class": "2"
+    },
+    "indiamart-basins": {
+      "what": "Hindware and Cera wash basins, listings",
+      "url": "https://dir.indiamart.com/impcat/hindware-wash-basin.html",
+      "class": "2"
+    },
+    "padmavati-faucets": {
+      "what": "Health faucet guide India: what to spend",
+      "url": "https://www.padmavaticeramics.com/guides/health-faucet-guide-india",
+      "class": "4"
+    },
+    "moglix-jaquar": {
+      "what": "Jaquar overhead showers and angle valves, listings",
+      "url": "https://www.moglix.com/brands/jaquar/plumbing/showers/overhead-showers/119201200",
+      "class": "2"
+    },
+    "woodenmax-shower": {
+      "what": "WoodenMax: glass shower partition price per sq ft, 2026 (GST extra)",
+      "url": "https://woodenmax.in/glass-shower-partition-price",
+      "class": "3"
+    },
+    "jabon-vanity": {
+      "what": "Bathroom vanity units with mirror, listings",
+      "url": "https://jabon.in/collections/bathroom-vanity",
+      "class": "2"
+    },
+    "mettas-vanity": {
+      "what": "Cost of a bathroom vanity in India",
+      "url": "https://mettaslifestyle.com/what-is-the-best-cost-of-bathroom-vanity/",
+      "class": "4"
+    },
+    "homelane-bath": {
+      "what": "HomeLane: bathroom renovation cost in India, 2026",
+      "url": "https://www.homelane.com/design-ideas/bathroom-design/bathroom-renovation-cost/",
+      "class": "4"
+    },
+    "studiomatrx-bath-cost": {
+      "what": "Bathroom renovation cost in India, line-item breakdown",
+      "url": "https://www.studiomatrx.org/guides/bathroom-renovation-cost-india",
+      "class": "4"
+    },
+    "houseyog-bath-cost": {
+      "what": "Bathroom renovation cost in India",
+      "url": "https://www.houseyog.com/blog/bathroom-renovation-cost-in-india/",
+      "class": "4"
+    },
+    "amazon-jaquar-accessories": {
+      "what": "Jaquar bathroom accessories, listings",
+      "url": "https://www.amazon.in/jaquar-bathroom-accessories/s?k=jaquar+bathroom+accessories",
+      "class": "2"
+    },
+    "woodenmax-mirror": {
+      "what": "LED bathroom mirror prices, 2026",
+      "url": "https://woodenmax.in/products/mirror-profiles/",
+      "class": "3"
+    },
+    "amazon-mirror": {
+      "what": "Plain bathroom mirror 18 × 24 in, listings",
+      "url": "https://www.amazon.in/SDG-18-24-Mirror-Bathroom/dp/B08KR7G82C",
+      "class": "2"
+    },
+    "housegyan-exhaust": {
+      "what": "Exhaust fan brands in India with prices, 2026",
+      "url": "https://www.housegyan.com/blog/top-exhaust-fan-brands-in-india",
+      "class": "4"
+    },
+    "mrhomes-exhaust": {
+      "what": "Exhaust fan buying guide 2026: 15 models compared",
+      "url": "https://www.mrhomes.in/blogs/guide/ultimate-exhaust-fan-buying-guide-2026",
+      "class": "4"
+    },
+    "gharkabudget-kitchen": {
+      "what": "Modular kitchen price per running foot, India 2026",
+      "url": "https://gharkabudget.com/articles/modular-kitchen-price-india-2026/",
+      "class": "4"
+    },
+    "woodage-hardware": {
+      "what": "Hettich, Häfele and Blum kitchen hardware: prices, 2026",
+      "url": "https://www.woodage.in/blogs/posts/2026/hettich-vs-hafele-vs-blum-kitchen-hardware-india-2026/",
+      "class": "4"
+    },
+    "homeli-hardware": {
+      "what": "Hettich, Hafele and Blum hardware compared, 2026",
+      "url": "https://homeli.in/hettich-hafele-blum-hardware-care-guide",
+      "class": "4"
+    },
+    "designcafe-counters": {
+      "what": "Design Cafe: kitchen countertop cost breakdown",
+      "url": "https://www.designcafe.com/blog/modular-kitchen-interiors/kitchen-countertops-cost/",
+      "class": "4"
+    },
+    "houseyog-kitchen": {
+      "what": "Kitchen construction cost in India: countertop, cabinets, sink",
+      "url": "https://www.houseyog.com/blog/kitchen-construction-cost-india/",
+      "class": "4"
+    },
+    "indiamart-sintered": {
+      "what": "Sintered stone kitchen countertop, a listing",
+      "url": "https://www.indiamart.com/proddetail/sintered-stone-kitchen-countertop-24167923588.html",
+      "class": "2"
+    },
+    "poj-corian": {
+      "what": "How much Corian costs in India, 2026",
+      "url": "https://www.pojfurniture.com/blogs/how-much-does-corian-cost-in-india-price-guide-for-2026",
+      "class": "4"
+    },
+    "indiamart-sinks": {
+      "what": "Kitchen sinks, listings (stainless steel, Carysil quartz)",
+      "url": "https://dir.indiamart.com/impcat/single-bowl-sink.html",
+      "class": "2"
+    },
+    "glen-sinks": {
+      "what": "Glen kitchen sinks",
+      "url": "https://glenindia.com/collections/kitchen-sinks",
+      "class": "2"
+    },
+    "decure-nirali": {
+      "what": "Nirali quartz sink, Granio premium range",
+      "url": "https://decure.in/products/nirali-quartz-sink-quartz-premium-range-granio-39-x-19-5-inches-beige-granite",
+      "class": "2"
+    },
+    "ark-sink-mixers": {
+      "what": "Kitchen sink mixers, listings",
+      "url": "https://www.arkbathfittings.com/kitchen-sink-mixers",
+      "class": "2"
+    },
+    "studiomatrx-wardrobe": {
+      "what": "Wardrobe cost guide, India 2026: per sq ft by type and finish",
+      "url": "https://www.studiomatrx.org/guides/wardrobe-cost-guide-india",
+      "class": "4"
+    },
+    "elvenwood-wardrobe": {
+      "what": "Elvenwood: wardrobe cost in Bangalore, 2026",
+      "url": "https://elvenwood.in/wardrobe-cost-bangalore",
+      "class": "3"
+    },
+    "realcostiq-wardrobe": {
+      "what": "Wardrobe cost calculator, India",
+      "url": "https://realcostiq.com/in/wardrobe-cost-calculator/",
+      "class": "4"
+    },
+    "studiomatrx-flush": {
+      "what": "Flush door price in India, 2026: shutter, frame, hardware, installed",
+      "url": "https://www.studiomatrx.org/guides/flush-door-price-india",
+      "class": "4"
+    },
+    "studiomatrx-wpc": {
+      "what": "WPC door price in India, 2026",
+      "url": "https://www.studiomatrx.org/guides/wpc-door-price-india",
+      "class": "4"
+    },
+    "studiomatrx-veneer": {
+      "what": "Veneer doors in India, 2026: cost",
+      "url": "https://www.studiomatrx.org/guides/veneer-doors-india",
+      "class": "4"
+    },
+    "indiamart-membrane": {
+      "what": "Membrane doors, listings",
+      "url": "https://dir.indiamart.com/impcat/membrane-doors.html",
+      "class": "2"
+    },
+    "indiamart-hinges": {
+      "what": "Concealed hinges, listings",
+      "url": "https://dir.indiamart.com/impcat/concealed-hinges.html",
+      "class": "2"
+    },
+    "houseyog-maindoor": {
+      "what": "Main door cost in India, 2026: wooden, steel and teak",
+      "url": "https://www.houseyog.com/blog/main-door-cost-india/",
+      "class": "4"
+    },
+    "smartify-locks": {
+      "what": "Best smart locks for Indian homes, 2026",
+      "url": "https://smartify.in/blog/best-smart-locks-india-2026/",
+      "class": "4"
+    },
+    "industrybuying-hafele": {
+      "what": "Hafele smart locks, listings",
+      "url": "https://www.industrybuying.com/brands/hafele-3692/smart-locks-18281",
+      "class": "2"
+    },
+    "aiswindows-sliding": {
+      "what": "Sliding window prices in India: uPVC and aluminium",
+      "url": "https://www.aiswindows.com/blog/sliding-window-price-in-india",
+      "class": "3"
+    },
+    "comaron-upvc": {
+      "what": "uPVC doors and windows price per sq ft, 2026",
+      "url": "https://www.comaron.com/blog/upvc-doors-windows-price-2026-per-sq-ft-brand-comparison-installation",
+      "class": "4"
+    },
+    "woodenmax-aluminium": {
+      "what": "WoodenMax: aluminium and system window prices, 2026 (before GST)",
+      "url": "https://woodenmax.in/products/aluminium-windows/aluminium-system-window-price",
+      "class": "3"
+    },
+    "indiamart-domal": {
+      "what": "Domal section sliding windows, listings",
+      "url": "https://www.indiamart.com/proddetail/domal-section-window-13643470948.html",
+      "class": "2"
+    },
+    "tradeindia-grills": {
+      "what": "SS invisible grills and pleated mosquito mesh, listings",
+      "url": "https://www.tradeindia.com/products/ss-invisible-grill-c10345525.html",
+      "class": "2"
+    },
+    "invisiblegrill-guide": {
+      "what": "What an invisible grill is: guide and prices, 2026",
+      "url": "https://theinvisiblegrill.com/guides/what-is-an-invisible-grill/",
+      "class": "4"
+    },
+    "indiamart-ms-grill": {
+      "what": "MS grills, listings",
+      "url": "https://m.indiamart.com/proddetail/ms-grill-13093233488.html",
+      "class": "2"
+    },
+    "contractorbhai-sills": {
+      "what": "Window frames and sills, rates",
+      "url": "https://www.contractorbhai.com/cost/window-frames/",
+      "class": "4"
+    },
+    "indiamart-granite-frame": {
+      "what": "Granite door frames, listings",
+      "url": "https://dir.indiamart.com/impcat/granite-door-frame.html",
+      "class": "2"
+    },
+    "princerailing": {
+      "what": "SS railing price per running foot in India, 2026",
+      "url": "https://princerailing.com/blog/stainless-steel-railing-price-per-foot-india",
+      "class": "3"
+    },
+    "woodenmax-railing": {
+      "what": "WoodenMax: balcony and staircase glass railing, 2026",
+      "url": "https://woodenmax.in/products/glass-railing/balcony-glass-railing",
+      "class": "3"
+    },
+    "spaceform-wiring": {
+      "what": "Electrical wiring cost calculator, India 2026",
+      "url": "https://spaceform.in/tools/electrical-wiring-cost-calculator",
+      "class": "4"
+    },
+    "clyfthome-wiring": {
+      "what": "Electrical wiring cost for a house in India, 2026",
+      "url": "https://www.clyfthome.com/blogs/articles/electrical-wiring-cost-for-a-house-in-india-2026-complete-breakdown-by-bhk-and-material",
+      "class": "4"
+    },
+    "houseyog-switches": {
+      "what": "Modular switches cost in India, 2026",
+      "url": "https://www.houseyog.com/blog/modular-switches-cost-in-india/",
+      "class": "4"
+    },
+    "amazon-havells-db": {
+      "what": "Havells 12-way double-door distribution board",
+      "url": "https://www.amazon.in/Havells-DB-SPN-QVE-Distribution/dp/B07BH62B8Q",
+      "class": "2"
+    },
+    "moglix-mcb": {
+      "what": "Single-pole MCBs, listings",
+      "url": "https://www.moglix.com/alp/single-pole-mcb",
+      "class": "2"
+    },
+    "bestofelectricals-rccb": {
+      "what": "4-pole 63 A 30 mA RCCBs (Havells, Legrand, L&T)",
+      "url": "https://www.bestofelectricals.com/havells-63a-30ma-four-pole-rccb",
+      "class": "2"
+    },
+    "houseyog-earthing": {
+      "what": "Earthing system cost in India",
+      "url": "https://www.houseyog.com/blog/earthing-system-cost-in-india/",
+      "class": "4"
+    },
+    "housegyan-fans": {
+      "what": "Ceiling fan brands in India with price ranges, 2026",
+      "url": "https://www.housegyan.com/blog/budget-friendly-best-ceiling-fan-brands-in-india",
+      "class": "4"
+    },
+    "smarthouse-bldc": {
+      "what": "Best BLDC ceiling fans in India, 2026",
+      "url": "https://smarthousegears.com/articles/best-bldc-ceiling-fans-india",
+      "class": "4"
+    },
+    "crompton-fans": {
+      "what": "Crompton 1200 mm ceiling fans",
+      "url": "https://www.crompton.co.in/collections/1200-mm-ceiling-fan",
+      "class": "2"
+    },
+    "polycab-fans": {
+      "what": "Polycab designer fans",
+      "url": "https://polycab.com/fans/ceiling-fan/designer-fan/c",
+      "class": "2"
+    },
+    "polycab-downlights": {
+      "what": "Polycab downlights",
+      "url": "https://polycab.com/lighting/downlight/c",
+      "class": "2"
+    },
+    "indiamart-wipro-panels": {
+      "what": "Wipro LED panel lights, listings",
+      "url": "https://dir.indiamart.com/impcat/wipro-panel-light.html",
+      "class": "2"
+    },
+    "indiamart-profiles": {
+      "what": "LED profile lights, listings",
+      "url": "https://dir.indiamart.com/impcat/led-profiles.html",
+      "class": "2"
+    },
+    "indiamart-chandeliers": {
+      "what": "Chandelier and pendant lights, listings",
+      "url": "https://dir.indiamart.com/impcat/chandelier-pendant-light.html",
+      "class": "2"
+    },
+    "jainsons-track": {
+      "what": "Magnetic track lights, listings",
+      "url": "https://jainsonslightsonline.com/collections/magnetic-track-lights",
+      "class": "2"
+    },
+    "studiomatrx-plumbing": {
+      "what": "Bathroom plumbing cost in India, 2026: per-point rates",
+      "url": "https://www.studiomatrx.org/guides/bathroom-plumbing-cost-india",
+      "class": "4"
+    },
+    "houseyog-plumbing": {
+      "what": "Plumbing cost in a new house, India 2026",
+      "url": "https://www.houseyog.com/blog/cost-of-plumbing-in-new-construction-per-bathroom-amp-whole-house-india-2025-guide/",
+      "class": "4"
+    },
+    "infralens-plumbing": {
+      "what": "Plumbing prices in India, 2026, 50 cities",
+      "url": "https://infralens.in/prices/plumbing",
+      "class": "4"
+    },
+    "hometriangle-bath-wp": {
+      "what": "Bathroom waterproofing in India, 2026: cost and process",
+      "url": "https://hometriangle.com/blogs/bathroom-waterproofing-guide-india-2026-cost-process-how-to-get-it-right-once/",
+      "class": "4"
+    },
+    "houseyog-wp": {
+      "what": "Waterproofing cost in India, 2026",
+      "url": "https://www.houseyog.com/blog/waterproofing-cost-per-sq-ft-india/",
+      "class": "4"
+    },
+    "hometriangle-terrace": {
+      "what": "Terrace waterproofing cost in India, 2026, by method",
+      "url": "https://hometriangle.com/blogs/terrace-waterproofing-cost-in-india-2026-per-sq-ft-rates-by-method-city/",
+      "class": "4"
+    },
+    "tilesfinders-demo": {
+      "what": "Bathroom tile cost calculator for Indian renovations, 2026",
+      "url": "https://tilesfinders.com/blog/bathroom-tile-cost-calculator-real-pricing-for-indian-renovations",
+      "class": "4"
+    },
+    "trenderior-demo": {
+      "what": "Interior demolition cost",
+      "url": "https://trenderior.com/interior-demolition-cost/",
+      "class": "4"
+    },
+    "constructionestimator-aac": {
+      "what": "AAC block work cost per sq ft in India, 2026",
+      "url": "https://constructionestimatorindia.com/aac-block-work-cost-per-sq-ft-in-india/",
+      "class": "4"
+    },
+    "houseyog-plaster": {
+      "what": "Plastering cost per sq ft: material and labour",
+      "url": "https://www.houseyog.com/blog/plastering-cost-per-sq-ft/",
+      "class": "4"
+    },
+    "kanish-gypsum": {
+      "what": "Gypsum plastering cost in India",
+      "url": "https://kanishplasters.com/what-are-the-costs-of-gypsum-plastering/",
+      "class": "3"
+    },
+    "safaiwale-cleaning": {
+      "what": "House cleaning services cost in India, 2026",
+      "url": "https://safaiwale.in/blog/house-cleaning-services-cost-delhi-india-2026-price-guide/",
+      "class": "3"
+    },
+    "indiamart-protection": {
+      "what": "Floor protection sheets, listings",
+      "url": "https://dir.indiamart.com/impcat/floor-protection-sheet.html",
+      "class": "2"
+    },
+    "homecostcalc-cities": {
+      "what": "Home construction cost calculator India: 2026 city rates",
+      "url": "https://homecostcalculator.in/",
+      "class": "4"
+    },
+    "aecord-cci": {
+      "what": "India construction cost index 2026: city and material prices",
+      "url": "https://aecord.com/tools/construction-cost-index",
+      "class": "4"
+    },
+    "nsrcivil-kolkata": {
+      "what": "CPWD cost index, SDG Kolkata region, 01-10-2025 (DPAR 2025)",
+      "url": "https://nsrcivil.in/cpwd-cost-index-sdg-kolkata-region-west-bengal-odisha-sikkim/",
+      "class": "1"
+    },
+    "kaff-chimney": {
+      "what": "Kitchen chimney price guide, 2026",
+      "url": "https://kaff.in/articles/best-kitchen-chimney-in-india-price-guide-2026-edition",
+      "class": "2"
+    },
+    "ifb-hobs": {
+      "what": "IFB built-in hobs",
+      "url": "https://www.ifbappliances.com/products/kitchen/built-in-hobs",
+      "class": "2"
+    },
+    "faber-ovens": {
+      "what": "Faber built-in ovens",
+      "url": "https://faberindia.com/collections/built-in-ovens-built-in-appliances",
+      "class": "2"
+    },
+    "pricedekho-dishwashers": {
+      "what": "Dishwasher prices in India, 2026",
+      "url": "https://www.pricedekho.com/dishwashers/dishwashers-price-list.html",
+      "class": "4"
+    },
+    "orient-geysers": {
+      "what": "Orient 25-litre geysers",
+      "url": "https://orientelectric.com/collections/25-litre-geyser",
+      "class": "2"
+    },
+    "bajaj-geysers": {
+      "what": "Bajaj 25-litre electric geysers",
+      "url": "https://www.bajajelectricals.com/collections/electric-geyser-25-litre",
+      "class": "2"
+    },
+    "pricee-ro": {
+      "what": "RO water purifier prices in India",
+      "url": "https://pricee.com/water-purifiers/ro-water-purifiers-products-price-in-india",
+      "class": "4"
+    },
+    "smartprix-ac": {
+      "what": "1.5 ton 5-star AC prices in India",
+      "url": "https://www.smartprix.com/air_conditioners/5-star-1-5-ton-ac-list",
+      "class": "4"
+    },
+    "solve24-ac": {
+      "what": "AC installation cost in India, 2026",
+      "url": "https://solve24.in/blog/ac-installation-cost-india-2026-split-window-rates",
+      "class": "4"
+    },
+    "smartify-automation": {
+      "what": "Home automation cost in India, 2026",
+      "url": "https://smartify.in/blog/home-automation-cost-india-2026-guide/",
+      "class": "4"
+    },
+    "sarlux-knx": {
+      "what": "How much KNX home automation costs",
+      "url": "https://www.sarluxelectronics.com/how-much-does-knx-cost/",
+      "class": "4"
+    },
+    "housegyan-vdp": {
+      "what": "Video door phone brands in India, 2026",
+      "url": "https://www.housegyan.com/blog/top-video-door-phone-brands-in-india-2026",
+      "class": "4"
+    },
+    "aliftech-cctv": {
+      "what": "CCTV camera set price in India, 2026",
+      "url": "https://aliftechsecure.in/cctv-camera-set-price-in-india-2026-complete-kit-cost-for-home-shop-office/",
+      "class": "4"
+    },
+    "cherrypick-sofa": {
+      "what": "Couch price in India, 2026: budget and premium",
+      "url": "https://www.cherrypickindia.in/couch-price-in-india-guide/",
+      "class": "4"
+    },
+    "royaloak-beds": {
+      "what": "Queen beds with storage, listings",
+      "url": "https://www.royaloakindia.com/bedroom/beds/queen-bed-with-storage.html",
+      "class": "2"
+    },
+    "homecentre-bed": {
+      "what": "Elysium queen bed with hydraulic storage",
+      "url": "https://www.homecentre.in/in/en/Bed-Room/Beds/Queen-Beds/HOMECENTRE-Elysium-Queen-Bed-with-Hydraulic-Storage--Brown/p/1000014219797",
+      "class": "2"
+    },
+    "wakefit-mattress": {
+      "what": "Mattresses, listings",
+      "url": "https://www.wakefit.co/mattress",
+      "class": "2"
+    },
+    "woodenstreet-dining": {
+      "what": "6-seater dining tables, listings",
+      "url": "https://www.woodenstreet.com/6-seater-dining-tables",
+      "class": "2"
+    },
+    "studiomatrx-curtains": {
+      "what": "Curtain cost in India, 2026",
+      "url": "https://www.studiomatrx.org/guides/curtain-cost-guide-india",
+      "class": "4"
+    },
+    "indiamart-blinds": {
+      "what": "Window blinds, listings",
+      "url": "https://dir.indiamart.com/impcat/window-blinds.html",
+      "class": "2"
+    },
+    "civiconcepts-materials": {
+      "what": "Building construction materials price list, 2026",
+      "url": "https://civiconcepts.com/blog/construction-and-building-materials-market-price",
+      "class": "4"
+    },
+    "comaron-steel-cement": {
+      "what": "Steel and cement rates in India, 2026",
+      "url": "https://www.comaron.com/blog/steel-and-cement-rates-today-india-2026-complete-price-guide",
+      "class": "4"
+    },
+    "ultratech-thumb": {
+      "what": "UltraTech home construction cost calculator",
+      "url": "https://www.ultratechcement.com/for-homebuilders/homebuilding-explained/home-planning-tools/cost-calculator",
+      "class": "4"
+    },
+    "nobroker-designer-fee": {
+      "what": "Interior designer costs in India, 2026",
+      "url": "https://www.nobroker.in/interiors/design-guides/interior-designer-costs-in-india/",
+      "class": "4"
+    },
+    "archiease-coa": {
+      "what": "Architect fees in India: the COA scale of charges",
+      "url": "https://www.archiease.com/articles/architect-fees-india/",
+      "class": "4"
+    }
+  }
+}

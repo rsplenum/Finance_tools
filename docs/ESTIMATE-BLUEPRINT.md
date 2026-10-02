@@ -1,11 +1,12 @@
 # The estimate tool: blueprint and research
 
-02-10-2026, version 2. A proposal for the owner to decide on; nothing in it is built yet. It grows the estimate at `/estimate/` (D-UX-13) rather than replacing it. Recorded as D-UX-16 (version 1) and D-UX-17 (version 2).
+02-10-2026, version 3. Version 3 builds the engine and its library (A0); the page and the documents come next (A17). It grows the estimate at `/estimate/` (D-UX-13) rather than replacing it. Recorded as D-UX-16 (version 1), D-UX-17 (version 2) and D-UX-18 (version 3).
 
 **Asked, in the owner's words:**
 - **Version 1:** "what to include in the construction estimate, what fields to include in the home repair and renovation estimate, what to include in the home improve or enrich estimate, how to calculate the estimate various costs, carpet area, built-up area etc., what to ask from the user as input data (most high value items of information that satisfies answers to various questions down the line) … a detailed blueprint for a estimate creation tool … structured so that a layperson can use it and a professional can also use it."
 - **Version 2, after reading version 1:** "not required: Loan … what is required: an itemised estimate, very detailed: that figures out all the technical details that only an architect knows from very little information. like an estimate for repair and renovation of flat or house may include, flooring, wall paint, ceiling, sanitary items like jaquar etc. so the user should be asked to choose the brands or quality of each item or they can just choose a package like (create packages for modest, upper class, high, luxury, ultra luxury; figure out on your own, maybe even sliders for each section, so that moving a slider will take that section from one end of the scale/spectrum to other end while simultaneously updating the contents and cost of that section. We would require a large library of all sorts of material and items under the different categories for this to implement."
 - The owner also asked for a critique of a second blueprint, made by another AI (Gemini), taking what is useful (B11).
+- **Version 3, after merging version 2:** "the big insight is that the engine must acts as the architect. give the engine all architects skills. find them online or create them from scratch. create a vast library of all sorts of construction materials and interior decoration material and finishes (sky is the limit here on what can be included here)". A second note from Gemini came with it, "take what is useful" (B12).
 
 **What changed from version 1:**
 - **The tool works the estimate out** from a few facts (A3 to A6). Before, it only laid out a quotation the user typed. Typing a quotation stays, as a second path (A9).
@@ -13,12 +14,19 @@
 - **A library** of items, specifications, brands and rates, each with its source and date (A7). This is now most of the work.
 - **The loan, your share and the EMI are gone** from the page and from More options.
 
+**What changed in version 3:**
+- **The engine is built as the architect** (A0): from the six answers it plans the rooms, places the doors and windows, measures every surface, puts in what each room needs at each level, prices it for the city and adds it up at all five levels, worked twice.
+- **The library is built:** 312 items in 79 families, every rate with its source (`docs/LIBRARY.md`).
+- **Rates are as reported until checked.** A18's decision 1 is taken on the owner's word, and marked on the page and in the documents (A7).
+- **The page is next** (E1, A17).
+
 **How it was made:**
 - **Version 1:** about 50 public sources, listed in B8:
   - regulators and standards;
   - banks, housing finance companies and NBFCs;
   - industry guides;
   - forums: Quora, the NoBroker forum, RenoTalk, owner-builder forums, Scribd and renovation-estimate guides.
+- **Version 3:** about 55 more searches for the library and the rules; 183 sources in `engine/data/sources.json`, listed with each rate in `docs/LIBRARY.md`.
 - **Version 2:** about 20 more, for the library (B10):
   - builders' and interior firms' published packages;
   - brand comparisons;
@@ -36,6 +44,7 @@ The owner also downloaded three documents from the internet, each said to have b
 
 **Contents**
 - Part A, the blueprint:
+  - A0 the engine is the architect (built in version 3);
   - A1 the contract;
   - A2 four kinds of work;
   - A3 the default path;
@@ -65,11 +74,37 @@ The owner also downloaded three documents from the internet, each said to have b
   - B8 sources;
   - B9 what could not be reached, and what to verify;
   - B10 the library: packages, brands, rates and quantities;
-  - B11 the second blueprint.
+  - B11 the second blueprint;
+  - B12 Gemini's second note.
 
 ---
 
 ## Part A: the blueprint
+
+### A0. The engine is the architect (version 3, built)
+
+The owner's insight: the engine, not the user, carries what an architect knows. Version 3 builds it and the library it draws on. No page shows it yet (E1).
+
+**What it does with the six answers** (`engine/architect.ts`):
+1. **Plans the rooms.** Each BHK has a programme of rooms whose reported sizes are used as proportions. The rooms share 85% of the carpet area, the passage and foyer 10% and the internal walls 5%; a balcony is added at its own size. Each room gets a usual length-to-breadth ratio. A room below the Code's minimum is flagged, never changed.
+2. **Places the doors and windows:** a main door, a door to each bedroom and bathroom, the kitchen's opening and a balcony door; enough 4 × 4 ft windows for a tenth of each habitable room's floor (NBC 2016); a ventilator in each bathroom.
+3. **Measures every surface by IS 1200:** floors with 100 mm skirting less the doorways; walls less their openings (none up to 0.5 sq m, one face up to 3 sq m, both faces and the reveals above); bathroom tiles to the level's height (7 ft, 8 ft or the ceiling); the kitchen counter as an L with tiles above it; waterproofing over the floor, 300 mm up the walls and 1.8 m in the shower; false ceilings, coves, wardrobes and units by the level.
+4. **Puts in what each room needs** at its section's level, from the library: about 40 kinds of item in a renovated 2BHK, from taking up the old floor to the deep cleaning. The layers an owner forgets are there: waterproofing under the tiles, debris, floor protection, making good, and the plumbing and electrical points.
+5. **Prices it for the city:** the middle of each reported range; a material's wastage and fixing; a set's parts; the city's factor on labour, never on a product; GST only on a rate quoted before it.
+6. **Adds it up:** by line, section and room; the total; the cost per sq ft of carpet area; the split into fixed, movable and appliance; the five-level strip.
+7. **Works it twice** (`engine/architect-check.ts`): rooms, quantities, rates and totals by another route; nothing is shown when the two disagree.
+8. **Says what it assumed and what to check:** the rooms, bathrooms, height, sections, city, rates and points as assumptions (D-UX-08); flags for a room below the Code, an unusual carpet area, the paint ratio, a place with no city figure, an item with no rate yet, and rates as reported.
+
+**The rules** are in `engine/data/architect.json`, each with its source or marked as our own rule with its reason, and in plain words in `docs/RULES.md`. "Find them online or create them" became both: about 30 rules, half from codes and reported practice and half our own, each saying which.
+
+**The library** is in `engine/data/library/` (15 files) and in plain words in `docs/LIBRARY.md`: 312 items in 79 families, 17 kinds of labour, 183 sources.
+- A **family** is a slot an architect fills: a floor finish, a WC and basin, a wardrobe.
+- Its **five levels** name one item each. Every other item of the family is an alternative for the item drawer: about 30 floor finishes from sheet vinyl to Calacatta marble, 25 wall finishes from economy emulsion to tadelakt, 12 ceilings, 9 windows, 8 railings, and so on.
+- **Items still without a rate** (granite flooring, epoxy, Athangudi and encaustic tiles, carpet) are listed, and cannot be a level's item.
+
+**Not yet:** a house (E5); furniture and furnishings in the estimate (E3; they are in the library); room sizes typed by the user (More options, E6); the page and the documents (E1).
+
+**Never "architect" on screen.** The Architects Act 1972, s. 37, keeps the title to registered architects (as reported; the Supreme Court has held that it bars the title, not the work). The page says "worked out as an architect would", and the document is a planning estimate that an architect or engineer may adopt and sign.
 
 ### A1. The contract
 
@@ -429,6 +464,12 @@ For building and extensions, the structure is costed by stages at one specificat
   - the brands' and firms' sites (B9).
 - Today they are blocked.
 
+**Version 3, as built:**
+- Every rate is from classes 2 to 4, read through search summaries because the pages are blocked, and marked "as reported, not yet checked" (A18, decision 1).
+- Class 1 (CPWD's schedule) is not yet used: its items and the cities' indices could not be read.
+- The city factor comes instead from one reported table of construction cost per sq ft in six cities. It scales labour and fitted rates, not products; other places use the rates as they are.
+- When the network opens, each source is read, its figure checked and the source marked as checked (E2).
+
 ### A8. The screen
 
 Phone first (390 px), then desktop. The amounts below are letters: every figure comes from the engine.
@@ -748,48 +789,27 @@ The documents follow the DSCR statement's rules (D-DOC-04 to 06): facts and work
 
 ### A16. Data and engine
 
-**`engine/data/estimate.json`,** as in version 1:
-- kinds `extension` and `interiors`;
-- each head's unit, example and kind of item;
-- the units point and set;
-- the often-forgotten list for each kind;
-- the method lines.
+**Built in version 3:**
+- `engine/data/architect.json`: the architect's rules: levels, sections and kinds, room programmes, shares, proportions, height, minimums, openings, IS 1200, skirting, tile heights, waterproofing, kitchen, wardrobes, false ceilings, feature walls, points, plumbing, ACs, debris, making good, cities, GST, checks, and each room's template.
+- `engine/data/library/*.json`: the 15 files of families and items, and `labour.json`.
+- `engine/data/sources.json`: every source, with its class.
+- `engine/library.ts`: loads the library; a family's five-level ladder; unit conversions; an item's price.
+- `engine/architect.ts`: rooms, openings, measurement, the lines, the totals, the strip, the assumptions and the flags.
+- `engine/architect-check.ts`: the second computation.
+- `tests/library.test.ts` and `tests/architect.test.ts`.
+- `scripts/rules-doc.mjs` writes `docs/RULES.md` and `docs/LIBRARY.md` from the data; CI fails when either is stale.
 
-**New `engine/data/estimate-library.json`:** the items and their levels (A7).
-
-**New `engine/data/estimate-rooms.json`,** each value with its source and date:
-- the room tables for each BHK;
-- the room templates and their quantity rules;
-- heights, wastage and points;
-- wardrobe and kitchen sizes.
-
-**New `engine/data/cost-index.json`:** CPWD's cost index by place, with its date. It is unverified until the owner checks it against the circular.
-
-**New `engine/estimate-plan.ts`:**
-- facts and choices → rooms → items with quantities and rates → the input of the existing `estimate.ts`, where the head is the section and the description is the specification;
-- the five-level strip runs it five times.
-
-**New `engine/estimate-plan-check.ts`:** the second computation.
-
-**`engine/areas.ts` and `engine/words.ts`,** as in version 1.
-
-**`engine/estimate.ts`,** as in version 1:
-- each item gains its room, kind, GST rate and basis;
-- the result gains the split, the other costs, the named area and the stages;
-- each is worked out twice.
-
-**Tests:**
-- every library value has a source, a class and a date;
-- every level of every item exists, or is marked "not offered";
-- items with a fixed specification are the same at every level;
-- the owner's fictional cases, worked at home.
+**Still to come:**
+- the planning estimate's document from the architect's lines (E1), on `engine/estimate.ts` and the `lender-documents` pipeline;
+- `engine/areas.ts` as in version 1; the total in words is `rupeesWords` in `engine/util.ts`.
 
 ### A17. Build order: thin versions, one session each, merged by the owner
 
 | Step | Delivers | Done when |
 |---|---|---|
-| E1 | A flat, for repair or renovation and for interiors. The six questions; rooms from the BHK; three sections end to end (Flooring, Walls and paint, Bathrooms), five levels each; the five-level strip, the section bar, the sliders and the item drawer with its ladder; the planning-estimate PDF, Excel and Word with Annexes 1 and 3; the field count asserted. The library for those three sections, from sources of classes 1 to 3 | The owner tries it on a phone and a desktop and says it feels simple |
-| E2 | The flat's other sections: Ceiling, Kitchen, Wardrobes and storage, Doors and windows, Electrical and lights, Plumbing, Civil and repairs, Waterproofing | As above |
+| E0 | Done in version 3: the architect engine and the library, worked twice and tested (A0) | Merged by the owner |
+| E1 | The page on the engine, for a flat, every section: the six questions; the five-level strip, the section bar, the sliders, and the item drawer with the library's alternatives; the assumptions and flags; the planning-estimate PDF, Excel and Word with Annexes 1 and 3; the field count asserted | The owner tries it on a phone and a desktop and says it feels simple |
+| E2 | The library checked against its sources, page by page, once the network allows; the owner's fictional flat, worked at home, as a test | Every level's item checked, or marked as not |
 | E3 | Rooms (sizes, a room's own level), What changed and Compare; the movable sections (Furniture, Soft furnishings, Appliances, Smart home) with the split | As above |
 | E4 | A quotation in hand, and the bill of quantities for quotes (A9) | As above |
 | E5 | A house: Terrace and exterior, External works, Water; Build a house and Add a floor, with the structure by stages; CPWD's plinth-area range as a check | The owner has checked `cost-index.json` and the plinth-area rates against the official texts |
@@ -800,6 +820,12 @@ The documents follow the DSCR statement's rules (D-DOC-04 to 06): facts and work
 **Test cases** are the owner's fictional cases worked at home, one for each kind. They are never the sample PDFs, which belong to real people.
 
 ### A18. Decisions for the owner
+
+**Version 3 (02-10-2026):**
+- **Decision 1 is taken on the owner's "create a vast library":** the rates are classes 2 to 4 as reported, marked, until each is checked (A7). Say if you would rather wait for the primary texts.
+- **Decision 5 changes:** the engine and the library are built for every section of a flat (A0), so E1 is the page and the documents on them.
+- **Decisions 2, 3 and 4 stand as recommended below.** On 3, the data holds both your words and the market's, so the page can show either.
+
 
 **Answered by the owner on 02-10-2026:**
 - the loan, your share and the EMI go;
@@ -1318,3 +1344,27 @@ Version 1 already had a fixed or movable tag on every line, sums worked twice, a
 10. **Built-up = carpet × 1.10 to 1.15, applied silently.** The tool asks for the area as in the agreement and names it (A13).
 11. **A new `engine/estimate/` folder layout.** The repo keeps `engine/estimate.ts`, the `*-check.ts` files and `engine/data/` (A16).
 12. **"Prime cost" for the subtotal.** In Indian estimates a prime-cost item is an allowance for something chosen later. The library uses allowances that way (A7, class 3).
+
+### B12. Gemini's second note: what was taken and what was left
+
+The owner forwarded a second note from Gemini with "take what is useful". It critiques version 1 (rates left to the user, the loan, brands not asked), which version 2 had already changed.
+
+**Taken, with changes:**
+- Its material ladders by level (plywood grades, laminate thickness, hardware tiers, paints, switches, lights, sanitaryware), checked against the sources and put into the library's specifications and brands.
+- Brands as what a valuer checks a cost against: each item names brands as examples, and the documents say "or equivalent".
+- The often-forgotten costs as default items: debris, floor protection, making good and cleaning are in every renovation.
+- The IS 1200 deductions, now in the engine (A0).
+- GST by each rate's basis, 18% added only to a rate quoted before GST; GST 2.0 from 22-09-2025 noted: cement 18%, unpolished marble and granite blocks 5%.
+- A modular kitchen priced by the running foot, as the market quotes it.
+- A slider whose caption is the level's specification (already A8).
+
+**Left:**
+- Its rates, which have no sources. Its electrical rule, 0.2 points a sq ft (200 points for 1,000 sq ft), is about four times the 45–58 points reported for a 3BHK.
+- Ratios of the carpet area as the method (paint 3.2 times, false ceiling 0.75 times): the engine measures room by room, and a ratio stays a check.
+- "Bank status: 100% immovable real estate work (certified loan-eligible)": eligibility is the lender's call, and no tool certifies it.
+- A "bank valuer vetting report" download: a valuer's report is the valuer's own document (A15).
+- Documents with "zero unverified flags": the document stays a planning estimate with its sources (Annex 3), and the flags stay on the page.
+- Rates in TypeScript (`library.ts` with 2026 rates): rates live in dated data files with their sources (CLAUDE.md).
+- A valuer and a bank named from the sample documents: no name or figure from the samples enters the repo.
+- Its check, "all lines sum = all trades sum", adds the same numbers twice; the engine's second computation takes another route.
+- `Sliders.astro`: a slider that moves needs a Preact island, not a static Astro component.

@@ -1,0 +1,17 @@
+{
+  "title": "Plumbing",
+  "date": "2026-10-02",
+  "families": [
+    { "id": "supply-point", "name": "Water supply points", "unit": "nos", "fixed": "pl-supply" },
+    { "id": "drain-point", "name": "Drainage points", "unit": "nos", "fixed": "pl-drain" },
+    { "id": "plumbing-part", "name": "Pipes and labour, one by one", "unit": "nos" }
+  ],
+  "entries": [
+    { "id": "pl-supply", "family": "supply-point", "name": "Water supply point", "spec": "One water point: concealed CPVC pipes and fittings to the outlet, tested, with labour", "brands": ["Astral", "Ashirvad", "Supreme"], "unit": "nos", "basis": "installed", "rate": [1200, 3500], "src": ["studiomatrx-plumbing"] },
+    { "id": "pl-drain", "family": "drain-point", "name": "Drainage point", "spec": "One drainage point: UPVC/SWR pipes and fittings to the stack, with labour", "brands": ["Supreme", "Prince", "Finolex"], "unit": "nos", "basis": "installed", "rate": [1500, 4000], "src": ["studiomatrx-plumbing"] },
+    { "id": "pp-cpvc-15", "family": "plumbing-part", "name": "CPVC pipe, 15 mm, a metre", "spec": "CPVC pipe ½ in", "unit": "m", "basis": "product", "rate": [70, 130], "src": ["studiomatrx-plumbing"] },
+    { "id": "pp-cpvc-25", "family": "plumbing-part", "name": "CPVC pipe, 20–25 mm, a metre", "spec": "CPVC pipe ¾–1 in", "unit": "m", "basis": "product", "rate": [120, 230], "src": ["studiomatrx-plumbing"] },
+    { "id": "pp-swr-110", "family": "plumbing-part", "name": "SWR pipe, 110 mm, a metre", "spec": "SWR drainage pipe 110 mm (Hyderabad price)", "unit": "m", "basis": "product", "rate": [67, 67], "src": ["infralens-plumbing"] },
+    { "id": "pp-plumber-day", "family": "plumbing-part", "name": "Plumber, a day", "spec": "Skilled plumber, one day of 8–10 hours", "unit": "nos", "basis": "installed", "rate": [500, 1000], "src": ["infralens-plumbing"] }
+  ]
+}

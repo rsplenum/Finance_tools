@@ -1,0 +1,22 @@
+{
+  "title": "Appliances",
+  "date": "2026-10-02",
+  "families": [
+    { "id": "chimney", "name": "Kitchen chimney", "unit": "nos", "levels": ["ch-60", "ch-60", "ch-90", "ch-90", "ch-90"], "kind": "appliance" },
+    { "id": "hob", "name": "Built-in hob", "unit": "nos", "levels": [null, "hb-builtin", "hb-builtin", "hb-builtin", "hb-builtin"], "kind": "appliance" },
+    { "id": "oven", "name": "Built-in oven", "unit": "nos", "levels": [null, null, null, "ov-builtin", "ov-premium"], "kind": "appliance" },
+    { "id": "dishwasher", "name": "Dishwasher", "unit": "nos", "levels": [null, null, null, "dw-builtin", "dw-builtin"], "kind": "appliance" },
+    { "id": "purifier", "name": "Water purifier", "unit": "nos", "levels": [null, "ro-unit", "ro-unit", "ro-unit", "ro-unit"], "kind": "appliance" },
+    { "id": "ac", "name": "Air conditioners", "unit": "nos", "levels": [null, null, "ac-split", "ac-split", "ac-split"], "kind": "appliance" }
+  ],
+  "entries": [
+    { "id": "ch-60", "family": "chimney", "name": "Auto-clean chimney, 60 cm", "spec": "60 cm filterless auto-clean chimney, fixed with its duct", "level": 1, "brands": ["Kaff", "Faber", "Glen", "Elica"], "unit": "nos", "basis": "product", "rate": [9000, 20000], "src": ["kaff-chimney"] },
+    { "id": "ch-90", "family": "chimney", "name": "Auto-clean chimney, 90 cm", "spec": "90 cm filterless auto-clean chimney, fixed with its duct", "level": 3, "brands": ["Kaff", "Faber", "Elica"], "unit": "nos", "basis": "product", "rate": [13000, 32000], "src": ["kaff-chimney"] },
+    { "id": "hb-builtin", "family": "hob", "name": "Built-in hob", "spec": "Built-in gas hob, fixed in the counter", "level": 2, "brands": ["IFB", "Faber", "Elica"], "unit": "nos", "basis": "product", "rate": [13000, 33000], "src": ["ifb-hobs"] },
+    { "id": "ov-builtin", "family": "oven", "name": "Built-in oven", "spec": "Built-in electric oven in a tall unit", "level": 4, "brands": ["Faber", "IFB", "Kaff"], "unit": "nos", "basis": "product", "rate": [27257, 79667], "src": ["faber-ovens"] },
+    { "id": "ov-premium", "family": "oven", "name": "Premium built-in oven", "spec": "Premium high-capacity built-in oven", "level": 5, "brands": ["Bosch", "Siemens", "Hafele"], "unit": "nos", "basis": "product", "rate": [38000, 190000], "src": ["faber-ovens"] },
+    { "id": "dw-builtin", "family": "dishwasher", "name": "Dishwasher", "spec": "Dishwasher, connected", "level": 4, "brands": ["Bosch", "IFB", "LG"], "unit": "nos", "basis": "product", "rate": [16990, 54990], "src": ["pricedekho-dishwashers"] },
+    { "id": "ro-unit", "family": "purifier", "name": "RO water purifier", "spec": "RO and UV water purifier, wall-mounted and connected", "level": 2, "brands": ["Kent", "Aquaguard", "A. O. Smith"], "unit": "nos", "basis": "product", "rate": [10000, 22000], "src": ["pricee-ro"] },
+    { "id": "ac-split", "family": "ac", "name": "Split AC, 1.5 ton, 5-star inverter", "spec": "1.5-ton 5-star inverter split AC, installed with 3 m of copper pipe", "level": 3, "brands": ["Voltas", "Daikin", "Godrej", "LG"], "unit": "nos", "basis": "product", "rate": [31290, 51663], "fix": ["fix-ac"], "src": ["smartprix-ac", "solve24-ac"] }
+  ]
+}

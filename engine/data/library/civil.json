@@ -1,0 +1,24 @@
+{
+  "title": "Civil and repairs",
+  "date": "2026-10-02",
+  "families": [
+    { "id": "demolish-floor", "name": "Taking up the old floor", "unit": "sqft", "fixed": "dm-floor" },
+    { "id": "demolish-bath", "name": "Stripping a bathroom", "unit": "nos", "fixed": "dm-bath" },
+    { "id": "debris", "name": "Debris removal", "unit": "lot", "fixed": "debris-lot" },
+    { "id": "making-good", "name": "Making good the plaster", "unit": "sqft", "fixed": "plaster-cement" },
+    { "id": "protection", "name": "Protecting the floors during the work", "unit": "sqft", "fixed": "protect-pp" },
+    { "id": "cleaning", "name": "Deep cleaning at handover", "unit": "sqft", "fixed": "clean-deep" },
+    { "id": "partition", "name": "New partition walls", "unit": "sqft" },
+    { "id": "plaster", "name": "Plaster", "unit": "sqft" }
+  ],
+  "entries": [
+    { "id": "dm-floor", "family": "demolish-floor", "name": "Taking up old floor tiles", "spec": "Taking up old floor tiles with their bedding, and stacking the debris", "unit": "sqft", "basis": "installed", "rate": [10, 25], "src": ["tilesfinders-demo", "trenderior-demo"] },
+    { "id": "dm-bath", "family": "demolish-bath", "name": "Stripping a bathroom", "spec": "Taking out the wall and floor tiles, the sanitaryware and the fittings of one bathroom", "unit": "nos", "basis": "installed", "rate": [8000, 18000], "src": ["studiomatrx-bath-cost"] },
+    { "id": "debris-lot", "family": "debris", "name": "Debris removal, one lot", "spec": "Loading the debris, carting it to an approved dump and paying the dumping charges: one lot", "unit": "lot", "basis": "installed", "rate": [4000, 12000], "src": ["studiomatrx-bath-cost"] },
+    { "id": "plaster-cement", "family": "plaster", "name": "Cement plaster, 12 mm", "spec": "Cement plaster 12 mm thick, 1:6, on internal walls, cured and finished", "unit": "sqft", "basis": "installed", "rate": [25, 35], "src": ["houseyog-plaster"] },
+    { "id": "plaster-gypsum", "family": "plaster", "name": "Gypsum plaster", "spec": "Gypsum plaster on internal walls, ready for paint", "unit": "sqft", "basis": "installed", "rate": [32, 55], "src": ["kanish-gypsum"] },
+    { "id": "aac-partition", "family": "partition", "name": "AAC block partition, 100 mm", "spec": "AAC block wall 100 mm (4 in) thick in thin-bed mortar", "unit": "sqft", "basis": "installed", "rate": [160, 200], "src": ["constructionestimator-aac"] },
+    { "id": "protect-pp", "family": "protection", "name": "Floor protection sheet", "spec": "3 mm polypropylene sheet laid over the finished floors for the length of the work", "unit": "sqft", "basis": "supply", "rate": [2.35, 3.75], "src": ["indiamart-protection"] },
+    { "id": "clean-deep", "family": "cleaning", "name": "Deep cleaning", "spec": "Deep cleaning of the whole home at handover: floors, tiles, glass, fittings and joinery", "unit": "sqft", "basis": "installed", "rate": [8, 15], "src": ["safaiwale-cleaning"] }
+  ]
+}

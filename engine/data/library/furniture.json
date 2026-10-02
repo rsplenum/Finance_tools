@@ -1,0 +1,30 @@
+{
+  "title": "Furniture and furnishings (movable)",
+  "date": "2026-10-02",
+  "status": "Movable items: in the library now, in the estimate when the movable sections come (E3). Lenders treat them apart from fixed works.",
+  "families": [
+    { "id": "sofa", "name": "Sofa", "unit": "nos", "kind": "movable" },
+    { "id": "bed", "name": "Bed", "unit": "nos", "kind": "movable" },
+    { "id": "mattress", "name": "Mattress", "unit": "nos", "kind": "movable" },
+    { "id": "dining", "name": "Dining set", "unit": "set", "kind": "movable" },
+    { "id": "curtains", "name": "Curtains", "unit": "nos", "kind": "movable" },
+    { "id": "blinds", "name": "Blinds", "unit": "sqft", "kind": "movable" }
+  ],
+  "entries": [
+    { "id": "sf-entry", "family": "sofa", "name": "3-seater sofa, entry", "spec": "3-seater sofa: plywood or engineered frame, polyester upholstery", "level": 1, "unit": "nos", "basis": "product", "rate": [25000, 45000], "src": ["cherrypick-sofa"] },
+    { "id": "sf-mid", "family": "sofa", "name": "3-seater sofa, mid-range", "spec": "3-seater sofa: part-hardwood frame, better weave or leatherette", "level": 2, "unit": "nos", "basis": "product", "rate": [50000, 90000], "src": ["cherrypick-sofa"] },
+    { "id": "bed-box", "family": "bed", "name": "Queen bed with box storage", "spec": "Queen bed with box storage", "level": 1, "unit": "nos", "basis": "product", "rate": [11600, 20000], "src": ["royaloak-beds"] },
+    { "id": "bed-hydraulic", "family": "bed", "name": "Queen bed with hydraulic storage", "spec": "Engineered-wood queen bed with hydraulic storage", "level": 2, "brands": ["Royaloak Baleno", "Wakefit Leo"], "unit": "nos", "basis": "product", "rate": [22500, 27969], "src": ["royaloak-beds"] },
+    { "id": "bed-premium", "family": "bed", "name": "Premium queen bed with hydraulic storage", "spec": "Premium queen bed with hydraulic storage", "level": 3, "brands": ["HomeCentre Elysium"], "unit": "nos", "basis": "product", "rate": [74996, 74996], "src": ["homecentre-bed"] },
+    { "id": "mt-daily", "family": "mattress", "name": "Mattress, queen", "spec": "Queen mattress: memory foam or pocket spring", "level": 2, "unit": "nos", "basis": "product", "rate": [10000, 25000], "src": ["wakefit-mattress"] },
+    { "id": "mt-premium", "family": "mattress", "name": "Premium mattress, queen", "spec": "Queen mattress: natural latex, advanced memory foam or hybrid", "level": 4, "unit": "nos", "basis": "product", "rate": [25000, 25000], "src": ["wakefit-mattress"], "note": "From Rs. 25,000, as reported." },
+    { "id": "dn-6", "family": "dining", "name": "6-seater dining set", "spec": "6-seater dining table and chairs", "level": 2, "unit": "set", "basis": "product", "rate": [13000, 83000], "src": ["woodenstreet-dining"] },
+    { "id": "crt-stitching", "family": "curtains", "name": "Curtain stitching, a panel", "spec": "Stitching one curtain panel", "unit": "nos", "basis": "installed", "rate": [150, 600], "src": ["studiomatrx-curtains"] },
+    { "id": "crt-fabric", "family": "curtains", "name": "Curtain fabric, a metre", "spec": "Curtain fabric, one metre", "unit": "m", "basis": "product", "rate": [150, 2500], "src": ["studiomatrx-curtains"] },
+    { "id": "crt-hardware", "family": "curtains", "name": "Curtain rod or track, a metre", "spec": "Rod or track with brackets and rings, one metre", "unit": "m", "basis": "product", "rate": [200, 1500], "src": ["studiomatrx-curtains"] },
+    { "id": "crt-install", "family": "curtains", "name": "Curtain installation, a window", "spec": "Installing the curtains of one window", "unit": "nos", "basis": "installed", "rate": [150, 500], "src": ["studiomatrx-curtains"] },
+    { "id": "bl-custom", "family": "blinds", "name": "Custom blinds", "spec": "Custom roller or venetian blinds", "level": 1, "unit": "sqft", "basis": "installed", "rate": [100, 100], "src": ["indiamart-blinds"] },
+    { "id": "bl-zebra", "family": "blinds", "name": "Zebra blinds", "spec": "Zebra (day and night) blinds", "level": 2, "unit": "sqft", "basis": "installed", "rate": [185, 185], "src": ["indiamart-blinds"] },
+    { "id": "bl-horizontal", "family": "blinds", "name": "Horizontal blinds (De-Lite, Symphony)", "spec": "Horizontal blinds", "level": 3, "unit": "sqft", "basis": "installed", "rate": [350, 350], "src": ["indiamart-blinds"] }
+  ]
+}

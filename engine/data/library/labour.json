@@ -1,0 +1,24 @@
+{
+  "title": "Labour, fixing and sundries",
+  "date": "2026-10-02",
+  "status": "Labour added to a material's price by the items that name it. The city's factor applies to labour, not to the material.",
+  "labour": [
+    { "id": "lay-tile-600", "name": "Laying 600 × 600 mm tiles", "unit": "sqft", "rate": [25, 40], "src": ["gharkabudget-tiling", "houseyog-tiling"] },
+    { "id": "lay-tile-800", "name": "Laying 800 × 800 mm tiles", "unit": "sqft", "rate": [30, 50], "src": ["gharkabudget-tiling"] },
+    { "id": "lay-tile-large", "name": "Laying large-format tiles and slabs (1200 × 600 mm and up)", "unit": "sqft", "rate": [60, 120], "src": ["gharkabudget-tiling"] },
+    { "id": "lay-dado", "name": "Fixing wall tiles (walls are slower than floors)", "unit": "sqft", "rate": [35, 60], "src": ["gharkabudget-tiling"] },
+    { "id": "adhesive-grout", "name": "Tile adhesive and grout", "unit": "sqft", "rate": [8, 18], "src": ["gharkabudget-tiling"] },
+    { "id": "lay-stone", "name": "Laying marble or stone in mortar", "unit": "sqft", "rate": [100, 200], "src": ["omkar-marble", "livspace-marble"] },
+    { "id": "polish-stone", "name": "Machine-polishing marble after laying", "unit": "sqft", "rate": [30, 70], "src": ["omkar-marble", "srmarble-polish"] },
+    { "id": "lay-spc", "name": "Installing SPC flooring", "unit": "sqft", "rate": [35, 55], "src": ["nobroker-vinyl"] },
+    { "id": "fix-counter", "name": "Fabricating and fixing a stone or quartz counter", "unit": "sqft", "rate": [200, 300], "src": ["designcafe-counters"] },
+    { "id": "fix-fixture", "name": "Fixing a sanitary fixture or fitting (plumber)", "unit": "nos", "rate": [360, 600], "src": ["infralens-plumbing"] },
+    { "id": "fix-wallpaper", "name": "Hanging wallpaper", "unit": "sqft", "rate": [30, 30], "src": ["livspace-wallpaper"], "note": "From Rs. 30 a sq ft, as reported." },
+    { "id": "fix-panel", "name": "Installing wall panels", "unit": "sqft", "rate": [20, 40], "src": ["designcafe-panelling"] },
+    { "id": "fix-door", "name": "Fitting a door: frame, shutter and hardware", "unit": "nos", "rate": [800, 2000], "src": ["studiomatrx-flush"] },
+    { "id": "fix-electrical", "name": "Electrician, fixing a light, fan or fitting", "unit": "nos", "rate": [25, 70], "src": ["clyfthome-wiring"] },
+    { "id": "fix-ac", "name": "Installing a split AC with up to 3 m of pipe", "unit": "nos", "rate": [1500, 3500], "src": ["solve24-ac"] },
+    { "id": "fix-cctv", "name": "Installing a 4-camera CCTV set", "unit": "set", "rate": [2000, 4000], "src": ["aliftech-cctv"] },
+    { "id": "fix-grill", "name": "Installing an invisible grill", "unit": "sqft", "rate": [50, 150], "src": ["invisiblegrill-guide"] }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "title": "Ceiling",
+  "date": "2026-10-02",
+  "families": [
+    { "id": "false-ceiling", "name": "False ceiling", "unit": "sqft", "levels": [null, "fc-pop", "fc-gypsum", "fc-gypsum-designer", "fc-wood"] },
+    { "id": "cove", "name": "Cove lighting", "unit": "rft", "levels": [null, "cv-led", "cv-led", "cv-led", "cv-led"] },
+    { "id": "bath-ceiling", "name": "Bathroom ceiling", "unit": "sqft", "levels": [null, null, "fc-pvc", "fc-metal", "fc-metal"] }
+  ],
+  "entries": [
+    { "id": "fc-pop", "family": "false-ceiling", "name": "POP false ceiling", "spec": "Plaster of Paris false ceiling on a GI frame, with a cove for lights", "level": 2, "unit": "sqft", "basis": "installed", "rate": [55, 85], "src": ["nobroker-ceiling", "gharkabudget-ceiling"] },
+    { "id": "fc-gypsum", "family": "false-ceiling", "name": "Gypsum board false ceiling", "spec": "Gypsum board false ceiling on a GI frame, jointed and finished, with a cove", "level": 3, "brands": ["Saint-Gobain Gyproc", "USG Boral"], "unit": "sqft", "basis": "installed", "rate": [75, 110], "src": ["nobroker-ceiling"] },
+    { "id": "fc-multilevel", "family": "false-ceiling", "name": "Designer multi-level work, extra over a plain ceiling", "spec": "Multi-level and profile work in the false ceiling, extra over a plain ceiling", "level": 4, "unit": "sqft", "basis": "installed", "rate": [55, 110], "src": ["gharkabudget-ceiling"] },
+    { "id": "fc-gypsum-designer", "family": "false-ceiling", "name": "Gypsum false ceiling, designer multi-level", "spec": "Gypsum board false ceiling on a GI frame with multi-level and profile work, and coves", "level": 4, "unit": "sqft", "basis": "set", "parts": [{ "id": "fc-gypsum", "n": 1 }, { "id": "fc-multilevel", "n": 1 }], "src": ["nobroker-ceiling", "gharkabudget-ceiling"] },
+    { "id": "fc-wood", "family": "false-ceiling", "name": "Wooden false ceiling", "spec": "Wooden slat or panel false ceiling on a frame, with linear lights", "level": 5, "unit": "sqft", "basis": "installed", "rate": [150, 400], "src": ["nobroker-ceiling"] },
+    { "id": "fc-pvc", "family": "bath-ceiling", "name": "PVC ceiling panels", "spec": "PVC ceiling panels on a frame, moisture-proof", "level": 3, "unit": "sqft", "basis": "installed", "rate": [60, 110], "src": ["nobroker-ceiling"] },
+    { "id": "fc-metal", "family": "bath-ceiling", "name": "Aluminium ceiling", "spec": "Aluminium clip-in or linear metal ceiling, moisture-proof", "level": 4, "unit": "sqft", "basis": "installed", "rate": [120, 300], "src": ["nobroker-ceiling"] },
+    { "id": "fc-grid", "family": "false-ceiling", "name": "Metal grid ceiling", "spec": "Exposed metal grid with mineral fibre tiles", "level": 2, "unit": "sqft", "basis": "installed", "rate": [85, 130], "src": ["gharkabudget-ceiling"] },
+    { "id": "fc-stretch", "family": "false-ceiling", "name": "Stretch ceiling", "spec": "PVC stretch membrane ceiling, with lights behind", "level": 5, "unit": "sqft", "basis": "installed", "rate": [200, 400], "src": ["studiomatrx-ceiling"] },
+    { "id": "fc-baffle-gi", "family": "false-ceiling", "name": "GI baffle ceiling", "spec": "GI baffle ceiling", "level": 4, "unit": "sqft", "basis": "installed", "rate": [150, 250], "src": ["indiamart-baffle"] },
+    { "id": "fc-baffle-al", "family": "false-ceiling", "name": "Aluminium baffle ceiling", "spec": "Aluminium baffle ceiling", "level": 4, "unit": "sqft", "basis": "installed", "rate": [220, 350], "src": ["indiamart-baffle"] },
+    { "id": "fc-baffle-acoustic", "family": "false-ceiling", "name": "Acoustic polyester baffles", "spec": "Acoustic polyester fibre baffles", "level": 5, "unit": "sqft", "basis": "installed", "rate": [850, 1200], "src": ["indiamart-baffle"] },
+    { "id": "cv-led", "family": "cove", "name": "Cove lighting", "spec": "LED strip in an aluminium profile with its driver, along the cove", "level": 2, "unit": "rft", "basis": "installed", "rate": [80, 150], "src": ["nobroker-ceiling", "studiomatrx-ceiling"] }
+  ]
+}
