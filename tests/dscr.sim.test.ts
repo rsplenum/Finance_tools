@@ -8,6 +8,7 @@ import {
   type Definition, type Plan, type ProjectionYear, type Statement, type Target,
 } from '../engine/dscr';
 import { fyOf, type LoanTerms } from '../engine/loan';
+import { emisByYear } from '../engine/project';
 
 const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8];
 const CASES = 250;
@@ -38,16 +39,20 @@ function makeCase(rnd: () => number) {
     moratoriumMonths, instalments: int(1, most), frequency, style,
   };
   const size = loan.amount;
+  // Tax by who the borrower is in some cases (the slab rates, the rebate and the surcharges), a typed rate in the rest.
+  const taxBy = rnd() < 0.4 ? pick(['proprietor', 'firm', 'company'] as const) : undefined;
   const proj: ProjectionYear[] = Array.from({ length: years }, (_, i) => ({
     fy: `${first + i}-${String((first + i + 1) % 100).padStart(2, '0')}`,
     pbdit: Math.round(size * (rnd() * 0.8 - 0.05)),
+    assetIncome: rnd() < 0.6 ? 0 : Math.round(size * rnd() * 0.2),
     depreciation: Math.round(size * rnd() * 0.1),
     nonCash: rnd() < 0.7 ? 0 : Math.round(size * rnd() * 0.02),
     interestOther: Math.round(size * rnd() * 0.05),
     leaseRentals: Math.round(size * rnd() * 0.03),
     otherLoansInterest: rnd() < 0.6 ? 0 : Math.round(size * rnd() * 0.03),
     otherLoansPrincipal: rnd() < 0.6 ? 0 : Math.round(size * rnd() * 0.1),
-    taxPct: pick([0, 25.17, 26, 30, 31.2, 34.94]),
+    existingEmis: rnd() < 0.5 ? 0 : Math.round(size * rnd() * 0.1),
+    ...(taxBy ? { taxBy } : { taxPct: pick([0, 25.17, 26, 30, 31.2, 34.94]) }),
   }));
   const def: Definition = {
     interest: pick(['term-loans', 'all-borrowings', 'none'] as const),
@@ -70,7 +75,7 @@ function meets(s: Statement, t: Target): boolean {
 function runSeed(seed: number): { cases: number; violations: string[]; seen: Record<string, number> } {
   const rnd = random(seed), violations: string[] = [];
   let cases = 0;
-  const seen: Record<string, number> = { amount: 0, noAmount: 0, instalments: 0, noInstalments: 0, lateStart: 0 };
+  const seen: Record<string, number> = { amount: 0, noAmount: 0, instalments: 0, noInstalments: 0, lateStart: 0, taxBy: 0, relief: 0 };
   while (cases < CASES) {
     const c = makeCase(rnd);
     if (!c) continue;
@@ -140,13 +145,34 @@ function runSeed(seed: number): { cases: number; violations: string[]; seen: Rec
       if (avg < lo - 1e-9 * Math.abs(lo) || avg > hi + 1e-9 * Math.abs(hi)) bad(`average ${avg} outside ${lo}..${hi}`);
     }
 
-    // A larger loan never raises a DSCR that is 1 or more.
+    // A larger loan never raises a DSCR that is 1 or more, unless the tax saved on its extra interest is more than that
+    // interest: just above the rebate's limit or a surcharge threshold, marginal relief with the cess saves up to 1.04.
+    if (proj[0].taxBy) seen.taxBy++;
     const bigger = planAt({ ...loan, amount: Math.ceil(loan.amount * 1.1) });
     if (bigger) bigger.statement.rows.forEach((x, i) => {
-      const before = p.statement.rows[i];
+      const before = p.statement.rows[i], was = p.profit[i], now = bigger.profit[i];
+      const saved = was.pbt === now.pbt ? 0 : (was.tax - now.tax) / (was.pbt - now.pbt);
+      if (saved > 1 + 1e-9) { seen.relief++; return; }
       if (x.counted && (x.dscr as number) >= 1 && (x.dscr as number) > (before.dscr as number) + 1e-9 * Math.abs(before.dscr as number))
         bad(`${x.fy}: DSCR rose from ${before.dscr} to ${x.dscr} with a larger loan`);
     });
+
+    // Existing EMIs from loans with an end month: no year pays more than 12 EMIs of every loan, and over the years each
+    // loan pays its EMI once for every month from the first April to its last EMI or the last March, whichever is first.
+    const loans = Array.from({ length: 1 + Math.floor(rnd() * 3) }, () => ({
+      emi: Math.round(loan.amount * rnd() * 0.01), ...(rnd() < 0.5 ? {} : { last: proj[Math.floor(rnd() * proj.length)].fy.slice(0, 4) + '-' + String(1 + Math.floor(rnd() * 12)).padStart(2, '0') }),
+    }));
+    const emis = emisByYear(loans, proj.map((y) => y.fy), 'EMIs');
+    if (!Array.isArray(emis)) bad(`no EMIs by year for complete loans: ${JSON.stringify(emis)}`);
+    else {
+      const most = 12 * loans.reduce((t, l) => t + l.emi, 0), start = Number(proj[0].fy.slice(0, 4)) * 12 + 3, end = start + 12 * proj.length - 1;
+      const expected = loans.reduce((t, l) => {
+        const last = l.last ? Math.min(end, Number(l.last.slice(0, 4)) * 12 + Number(l.last.slice(5)) - 1) : end;
+        return t + l.emi * Math.max(0, last - start + 1);
+      }, 0);
+      if (emis.some((e) => e > most + 1e-6)) bad('a year pays more than 12 EMIs');
+      if (Math.abs(emis.reduce((t, e) => t + e, 0) - expected) > 0.01) bad(`EMIs over the years ${emis.reduce((t, e) => t + e, 0)}, expected ${expected}`);
+    }
 
     // Largest loan: meets the target, and one rupee more does not.
     const { amount: _, ...terms } = loan;
@@ -186,7 +212,8 @@ function runSeed(seed: number): { cases: number; violations: string[]; seen: Rec
       expected = LOAN_LABELS[k];
     } else {
       const i = Math.floor(rnd() * proj.length), k = projKeys[Math.floor(rnd() * projKeys.length)];
-      dropped = planStatement(proj.map((y, j) => (j === i ? { ...y, [k]: undefined } : y)), loan, def);
+      // Dropping the tax drops who the borrower is too: then a rate is asked for.
+      dropped = planStatement(proj.map((y, j) => (j === i ? { ...y, [k]: undefined, ...(k === 'taxPct' ? { taxBy: undefined } : {}) } : y)), loan, def);
       expected = `${PROJECTION_LABELS[k]} for ${proj[i].fy}`;
     }
     if (!('needs' in dropped) || !dropped.needs.some((n) => n.startsWith(expected))) bad(`dropping "${expected}" gave ${JSON.stringify(dropped).slice(0, 120)}`);
@@ -198,7 +225,7 @@ describe('simulation', () => {
   for (const seed of SEEDS) {
     it(`seed ${seed}`, () => {
       const { cases, violations, seen } = runSeed(seed);
-      console.log(`simulation seed ${seed}: ${cases} cases, ${violations.length} violations (largest loan found ${seen.amount}, none ${seen.noAmount}; shortest repayment found ${seen.instalments}, none ${seen.noInstalments}; interest-only first year left out ${seen.lateStart})`);
+      console.log(`simulation seed ${seed}: ${cases} cases, ${violations.length} violations (largest loan found ${seen.amount}, none ${seen.noAmount}; shortest repayment found ${seen.instalments}, none ${seen.noInstalments}; interest-only first year left out ${seen.lateStart}; tax by borrower ${seen.taxBy}, years in marginal relief ${seen.relief})`);
       expect(violations.slice(0, 10)).toEqual([]);
     }, 60000);
   }

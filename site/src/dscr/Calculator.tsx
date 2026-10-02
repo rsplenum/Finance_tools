@@ -1,26 +1,27 @@
 /**
  * The DSCR calculator. It opens with the assumptions in engine/data/defaults.json answered (D-UX-08), so only the loan
  * and this year's figures are asked; each assumption is listed in the preview until changed. The two start questions
- * (where the yearly figures come from, how DSCR is worked out) stay on top to change. Then the loan (or the years), the
- * yearly figures, the lender's target, and a free preview that stays provisional while anything is missing: the DSCR
- * statement in the layout chartered accountants use, and the repayment schedule. Last, the statement to download: the
- * document's own facts asked once, then a PDF and an Excel copy made in the browser (document.ts). Figures: engine/dscr.ts
- * only, via model.ts.
+ * (where the yearly figures come from, how DSCR is worked out) stay on top to change. Then the loan (or the years); who
+ * the borrower is (it sets the tax and which existing EMIs count) and the yearly figures, with loans already running as
+ * EMIs a month and the new asset's income; the lender's target; and a free preview that stays provisional while anything
+ * is missing: the DSCR statement in the layout chartered accountants use, and the repayment schedule. Last, the statement
+ * to download: the document's own facts asked once, then a PDF and an Excel copy made in the browser (document.ts).
+ * Figures: engine/dscr.ts only, via model.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
 import { AmountField } from '../AmountField';
 import { OPTIONS, PRESETS } from '../../../engine/dscr';
 import { parseMonth } from '../../../engine/parse';
-import { TAX_STATUS } from '../../../engine/tax';
+import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import { BUTTON, CellInput, Choice, HINT, Section, SourceNote, TextField } from '../fields';
 import { pdfOf, printable } from '../doc/pdf';
 import { xlsxOf } from '../doc/xlsx';
 import { allNeeds, docNeeds, docStatus, fileName, statementDoc } from './document';
 import {
-  ASSUMED, EXAMPLE_TARGETS, OPTION_KEYS, TAX_CHOICES, amountOf, barText, choicesOf, loanRead, modeOf, numberOf, parseFy, presetText,
-  preview, rowValues, rowsOf, statusText, targetText, tidyAmount, withPlanStart, withSource, withTaxRate, yearsOf,
-  type DocFacts, type LoanText, type Preview, type RowDef, type RowMode, type ScheduleView, type State, type StatementView, type Years,
+  ASSUMED, BORROWER_CHOICES, EXAMPLE_TARGETS, GROUP_TITLES, OPTION_KEYS, amountOf, barText, choicesOf, emisAsk, loanRead, modeOf, numberOf,
+  parseFy, presetText, preview, rowValues, rowsOf, statusText, targetText, tidyAmount, withBorrower, withPlanStart, withSource, yearsOf,
+  type DocFacts, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 
 type Update = (f: (s: State) => State) => void;
@@ -138,6 +139,7 @@ function YearsSection({ s, update, y }: { s: State; update: Update; y: Years }) 
 
 const HOW: Record<RowMode, string> = {
   grow: 'Grows each year', same: 'Same every year', fall: 'Falls each year (written-down value)', years: 'Each year', none: 'None',
+  emi: 'EMIs a month', from: 'From the month it starts running', borrower: 'By who the borrower is',
 };
 
 /** When the loan's first year has interest only: which year the figures start in (the loan's first year while that assumption holds). */
@@ -164,6 +166,7 @@ function Figures({ s, update, rows, y, p }: { s: State; update: Update; rows: Ro
         ? 'Asked once the month first drawn, how it is repaid, the moratorium and the number of instalments are in.'
         : 'The years appear once the first year and the number of years are in.'}</p>
       : <>
+        {plan && <BorrowerQuestion s={s} update={update} />}
         {plan && <StartQuestion s={s} y={y} p={p} update={update} />}
         <p class={`mt-3 ${HINT}`}>{plan
           ? `One or two answers a line; the page works out every year from ${years[0]} to ${last}. In rupees, like 18,00,000 or 18 L.`
@@ -180,8 +183,13 @@ function Figures({ s, update, rows, y, p }: { s: State; update: Update; rows: Ro
   </Section>;
 }
 
-/** Rows answered together (the interest and instalments of other term loans) share one block. */
-const GROUP_TITLES: Record<string, string> = { otherLoans: 'Other term loans already running' };
+/** Who the borrower is: it sets the tax (worked out for that borrower) and which existing EMIs count (D-POL-06). */
+function BorrowerQuestion({ s, update }: { s: State; update: Update }) {
+  return <Choice name="fld-borrowerType" legend="Who is the borrower?" value={s.borrower} columns onChange={(id) => update((x) => withBorrower(x, id))}
+    options={BORROWER_CHOICES.map((b) => ({ value: b.id, label: b.label, hint: <>Tax: {b.tax}. EMIs: {b.emis.charAt(0).toLowerCase() + b.emis.slice(1)}.</> }))} />;
+}
+
+/** Rows answered together (loans already running: EMIs a month, or interest and instalments a year) share one block. */
 const groupsOf = (rows: RowDef[]) => rows.reduce<RowDef[][]>((gs, r) => {
   const g = gs.find((x) => x[0].modeKey === r.modeKey);
   if (g) g.push(r); else gs.push([r]);
@@ -191,6 +199,7 @@ const groupsOf = (rows: RowDef[]) => rows.reduce<RowDef[][]>((gs, r) => {
 /** One block of figures: how they are given (one choice), then only the one or two fields that answer needs. */
 function FigureRow({ s, group, years, update }: { s: State; group: RowDef[]; years: string[]; update: Update }) {
   const r0 = group[0], mode = modeOf(s, r0), title = group.length > 1 ? GROUP_TITLES[r0.modeKey] ?? r0.label : r0.label;
+  const shown = mode ? group.filter((r) => !r.only || r.only.includes(mode)) : [];
   const setMode = (m: RowMode) => update((x) => ({ ...x, modes: { ...x.modes, [r0.modeKey]: m } }));
   return <div id={`row-${r0.modeKey}`} data-testid={`row-${r0.modeKey}`} class="scroll-mt-4 rounded-lg border border-slate-300 p-3 dark:border-slate-700">
     <p class="font-medium text-slate-900 dark:text-slate-100">{title}</p>
@@ -202,17 +211,38 @@ function FigureRow({ s, group, years, update }: { s: State; group: RowDef[]; yea
         {HOW[m]}
       </label>)}
     </div>
-    {r0.key === 'taxPct' && s.source === 'plan' && <div class="mt-2">
-      <p class={`text-xs ${MUTED}`}>Fill in by borrower:</p>
-      <div class="mt-1 flex flex-wrap gap-2">
-        {TAX_CHOICES.map((t) => <button key={t.id} type="button" data-testid={`tax-${t.id}`} class={BUTTON}
-          onClick={() => update((x) => withTaxRate(x, t.pct))}>{t.label}: {t.pct}%</button>)}
-      </div>
-      <SourceNote what="About these rates">{TAX_STATUS}</SourceNote>
-    </div>}
     {mode === 'none'
       ? <p class={`mt-2 text-sm ${MUTED}`}>None in any year.</p>
-      : mode && group.map((r) => <RowFields key={r.key} s={s} r={r} mode={mode} years={years} update={update} titled={group.length > 1} />)}
+      : shown.map((r) => <RowFields key={r.key} s={s} r={r} mode={mode as RowMode} years={years} update={update} titled={shown.length > 1} />)}
+    {r0.key === 'taxPct' && <SourceNote what="About these rates">{TAX_STATUS}
+      {BORROWERS.map((b) => <span key={b.id} class="mt-1 block"><b>{b.label}:</b> {b.law}. Sources (secondary): {b.source}. Dated {showDate(b.date)}; not yet checked.</span>)}
+    </SourceNote>}
+  </div>;
+}
+
+/** Loans already running, as EMIs a month: one line a loan, and the month of its last EMI only when it ends sooner. */
+function RunningFields({ s, update }: { s: State; update: Update }) {
+  const set = (i: number, patch: Partial<RunningText>) => update((x) => ({ ...x, running: x.running.map((l, k) => (k === i ? { ...l, ...patch } : l)) }));
+  const several = s.running.length > 1;
+  return <div class="mt-2">
+    <p data-testid="emis-ask" class="text-sm text-slate-800 dark:text-slate-200">{emisAsk(s)}.</p>
+    <p class={`text-xs ${MUTED}`}>Interest and principal together; leave their interest out of the working-capital interest. Counted every month unless the last EMI is given.</p>
+    {s.running.map((l, i) => <div key={i} class="mt-2 grid gap-3 sm:grid-cols-2">
+      <div>
+        <label for={`fld-emi-${i + 1}`} class={`block text-xs ${MUTED}`}>{several ? `Loan ${i + 1}: EMI a month` : 'EMI a month'}</label>
+        <CellInput id={`fld-emi-${i + 1}`} name={`${several ? `Loan ${i + 1}: ` : ''}EMI a month`} value={l.emi} onCommit={(t) => set(i, { emi: t })}
+          tidy={tidyAmount} invalid={!!l.emi.trim() && amountOf(l.emi) === undefined} decimal />
+      </div>
+      <div>
+        <label for={`fld-emiLast-${i + 1}`} class={`block text-xs ${MUTED}`}>Last EMI, if it ends before this loan (month)</label>
+        <CellInput id={`fld-emiLast-${i + 1}`} name={`${several ? `Loan ${i + 1}: ` : ''}last EMI`} value={l.last} onCommit={(t) => set(i, { last: t })} month
+          invalid={!!l.last.trim() && parseMonth(l.last) === undefined} />
+      </div>
+    </div>)}
+    <div class="mt-2 flex flex-wrap gap-2">
+      <button type="button" data-testid="add-loan" class={BUTTON} onClick={() => update((x) => ({ ...x, running: [...x.running, { emi: '', last: '' }] }))}>Add a loan that ends at another time</button>
+      {several && <button type="button" data-testid="remove-loan" class={BUTTON} onClick={() => update((x) => ({ ...x, running: x.running.slice(0, -1) }))}>Remove loan {s.running.length}</button>}
+    </div>
   </div>;
 }
 
@@ -240,8 +270,28 @@ function RowFields({ s, r, mode, years, update, titled }: { s: State; r: RowDef;
   </div>;
   const worked = mode === 'grow' || mode === 'fall' ? rowValues(s, r, years).values : [];
   const lastValue = worked[worked.length - 1];
+  // Figures that step from year to year (EMIs that end, an asset from a month) are read back for every year.
+  const steps = mode === 'emi' || mode === 'from' ? rowValues(s, r, years).values : [];
+  const asset = s.asset, setAsset = (patch: Partial<State['asset']>) => update((x) => ({ ...x, asset: { ...x.asset, ...patch } }));
+  const by = borrowerOf(s.borrower);
   return <div class="mt-2">
     {titled && <p class="text-sm text-slate-800 dark:text-slate-200">{r.label}</p>}
+    {mode === 'borrower' && <p data-testid="tax-by" class="mt-2 text-sm text-slate-800 dark:text-slate-200">{by
+      ? `Worked out each year for a ${by.label.toLowerCase()}: ${BORROWER_CHOICES.find((b) => b.id === by.id)?.tax}.`
+      : 'Say who the borrower is, at the top of this section.'}</p>}
+    {mode === 'emi' && <RunningFields s={s} update={update} />}
+    {mode === 'from' && <div class="mt-2 grid gap-3 sm:grid-cols-2">
+      <div>
+        <label for="fld-assetIncome-yearly" class={`block text-xs ${MUTED}`}>A year</label>
+        <CellInput id="fld-assetIncome-yearly" name={`${r.label}, a year`} value={asset.yearly} onCommit={(t) => setAsset({ yearly: t })} tidy={tidyAmount}
+          invalid={!!asset.yearly.trim() && amountOf(asset.yearly) === undefined} decimal />
+      </div>
+      <div>
+        <label for="fld-assetIncome-start" class={`block text-xs ${MUTED}`}>From the month it starts running</label>
+        <CellInput id="fld-assetIncome-start" name={`${r.label}, from the month it starts running`} value={asset.from} onCommit={(t) => setAsset({ from: t })} month
+          invalid={!!asset.from.trim() && parseMonth(asset.from) === undefined} />
+      </div>
+    </div>}
     {mode === 'same' && <div class="mt-2 grid gap-3 sm:grid-cols-2">{cell(0, 'Every year')}</div>}
     {(mode === 'grow' || mode === 'fall') && <div class="mt-2 grid gap-3 sm:grid-cols-2">
       {cell(0, `In ${years[0]}`)}
@@ -250,6 +300,9 @@ function RowFields({ s, r, mode, years, update, titled }: { s: State; r: RowDef;
     {mode === 'years' && <div class="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">{years.map((fy, i) => cell(i, fy))}</div>}
     {worked[0] !== undefined && lastValue !== undefined && years.length > 1 && <p data-testid={`readback-${r.key}`} class="mt-2 text-sm text-slate-700 dark:text-slate-300">
       Worked out: {rs(worked[0])} in {years[0]} to {rs(lastValue)} in {years[years.length - 1]}.
+    </p>}
+    {steps.length > 0 && steps.every((v) => v !== undefined) && <p data-testid={`readback-${r.key}`} class="mt-2 text-sm text-slate-700 dark:text-slate-300">
+      Worked out: {steps.map((v, i) => `${rs(v)} in ${years[i]}`).join('; ')}.
     </p>}
   </div>;
 }

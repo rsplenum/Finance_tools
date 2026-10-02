@@ -11,13 +11,13 @@ import {
 import type { LoanTerms } from '../engine/loan';
 
 const year = (fy: string, pbdit: number, depreciation: number): ProjectionYear =>
-  ({ fy, pbdit, depreciation, nonCash: 0, interestOther: 50000, otherLoansInterest: 0, otherLoansPrincipal: 0, taxPct: 25 });
+  ({ fy, pbdit, assetIncome: 0, depreciation, nonCash: 0, interestOther: 50000, otherLoansInterest: 0, otherLoansPrincipal: 0, existingEmis: 0, taxPct: 25 });
 const CASE_A = [year('2026-27', 500000, 150000), year('2027-28', 750000, 130000), year('2028-29', 800000, 110000), year('2029-30', 800000, 100000)];
 const LOAN: LoanTerms = { amount: 1200000, ratePct: 12, disbursed: '2026-04', moratoriumMonths: 6, instalments: 12, frequency: 'quarterly', style: 'equal-principal' };
 const COMMON: Definition = { interest: 'term-loans', leases: 'no', years: 'repayment', average: 'totals' };
 
 const rows = (s: Statement) => s.rows.map((x) => [x.fy, Math.round(x.available), Math.round(x.service), x.dscr?.toFixed(4)]);
-const planned = (def: Definition) => (planStatement(CASE_A, LOAN, def) as Plan).statement;
+const planned = (def: Definition, proj: ProjectionYear[] = CASE_A) => (planStatement(proj, LOAN, def) as Plan).statement;
 
 describe('fictional case A, common definition', () => {
   // Interest by year (tests/loan.test.ts): 1,41,000 · 1,02,000 · 54,000 · 9,000; principal 2, 4, 4, 2 lakh.
@@ -190,5 +190,58 @@ describe('figures that start after the loan is drawn (operations start later)', 
   it('the solvers work from the same start', () => {
     const r = maxLoanAmount(PROJ, { ...LATE, amount: undefined }, COMMON, { minimum: 1.2 }, '2027-28');
     expect('amount' in r && r.plan.beforeStart[0].fy).toBe('2026-27');
+  });
+});
+
+describe('fictional case P: a proprietor with existing EMIs and a new asset', () => {
+  // Case A's loan (interest 1,41,000, 1,02,000, 54,000, 9,000; principal 2, 4, 4, 2 lakh). Profit before interest,
+  // depreciation and tax 15,00,000 growing 10% a year; the new asset adds 3,60,000 a year from October 2026 (6 months,
+  // 1,80,000, in 2026-27); depreciation 2,00,000 and working-capital interest 1,00,000 every year. Existing EMIs: 25,000 a
+  // month running on (a home loan) and 15,000 a month to December 2027: 4,80,000, then 3,00,000 + 9 × 15,000 = 4,35,000,
+  // then 3,00,000. Tax at a proprietor's slab rates.
+  // 2026-27: before tax 15,00,000 + 1,80,000 − 2,00,000 − 1,41,000 − 1,00,000 = 12,39,000. Slab tax 60,000 + 39,000 × 15%
+  //   = 65,850, but at most 39,000 above 12,00,000 (marginal relief); cess 1,560: tax 40,560. Cash available
+  //   16,80,000 − 1,00,000 − 40,560 = 15,39,440 against 2,00,000 + 1,41,000 + 4,80,000 = 8,21,000: 1.8751.
+  // 2027-28: before tax 20,10,000 − 2,00,000 − 1,02,000 − 1,00,000 = 16,08,000; tax 1,21,600 + 4,864 = 1,26,464;
+  //   cash 17,83,536 against 9,37,000: 1.9035.
+  // 2028-29: before tax 18,21,000; tax 1,64,200 + 6,568 = 1,70,768; cash 19,04,232 against 7,54,000: 2.5255.
+  // 2029-30: before tax 20,47,500; tax 2,11,875 + 8,475 = 2,20,350; cash 20,36,150 against 5,09,000: 4.0003.
+  // Average 72,63,358 / 30,21,000 = 2.4043; lowest 2026-27.
+  const fys = ['2026-27', '2027-28', '2028-29', '2029-30'];
+  const P: ProjectionYear[] = fys.map((fy, i) => ({
+    fy, pbdit: [1500000, 1650000, 1815000, 1996500][i], assetIncome: [180000, 360000, 360000, 360000][i], depreciation: 200000, nonCash: 0,
+    interestOther: 100000, otherLoansInterest: 0, otherLoansPrincipal: 0, existingEmis: [480000, 435000, 300000, 300000][i], taxBy: 'proprietor',
+  }));
+  it('year by year: the asset\'s income in profit, the EMIs in debt service, the slab tax', () => {
+    const p = planStatement(P, LOAN, COMMON) as Plan;
+    expect(p.profit.map((x) => [x.fy, Math.round(x.pbt), Math.round(x.tax)])).toEqual([
+      ['2026-27', 1239000, 40560], ['2027-28', 1608000, 126464], ['2028-29', 1821000, 170768], ['2029-30', 2047500, 220350],
+    ]);
+    expect(rows(p.statement)).toEqual([
+      ['2026-27', 1539440, 821000, '1.8751'],
+      ['2027-28', 1783536, 937000, '1.9035'],
+      ['2028-29', 1904232, 754000, '2.5255'],
+      ['2029-30', 2036150, 509000, '4.0003'],
+    ]);
+    expect([p.statement.average?.toFixed(4), p.statement.minimum?.fy]).toEqual(['2.4043', '2026-27']);
+  });
+  it('the same figures for a firm pay 31.2%: 3,86,568 in 2026-27 against the proprietor\'s 40,560', () => {
+    const firm = planStatement(P.map((y) => ({ ...y, taxBy: 'firm' })), LOAN, COMMON) as Plan;
+    expect(Math.round(firm.profit[0].tax)).toBe(386568);
+  });
+  it('existing EMIs are debt service under every method, and make a year count', () => {
+    // Cash accruals against instalments only, 2026-27: profit after tax 11,98,440 + depreciation 2,00,000 = 13,98,440
+    // against instalments 2,00,000 + EMIs 4,80,000 = 6,80,000: 2.0565.
+    expect(rows(planned({ ...COMMON, interest: 'none' }, P))[0]).toEqual(['2026-27', 1398440, 680000, '2.0565']);
+    // A year with no instalment of the new loan still counts when existing EMIs are paid in it.
+    const late = planStatement(P, { ...LOAN, moratoriumMonths: 12, instalments: 8 }, COMMON) as Plan;
+    expect(late.statement.rows[0]).toMatchObject({ fy: '2026-27', counted: true });
+    const none = planStatement(P.map((y) => ({ ...y, existingEmis: 0 })), { ...LOAN, moratoriumMonths: 12, instalments: 8 }, COMMON) as Plan;
+    expect(none.statement.rows[0]).toMatchObject({ fy: '2026-27', counted: false });
+  });
+  it('names a borrower it has no tax for, and asks for the new lines like any other', () => {
+    expect(planStatement([{ ...P[0], taxBy: 'trust' }, ...P.slice(1)], LOAN, COMMON)).toEqual({ needs: ['Who the borrower is, for the tax in 2026-27'] });
+    expect(planStatement([{ ...P[0], existingEmis: undefined, assetIncome: undefined }, ...P.slice(1)], LOAN, COMMON))
+      .toEqual({ needs: ['Extra income from the new asset for 2026-27', 'Existing EMIs (interest and principal) for 2026-27'] });
   });
 });

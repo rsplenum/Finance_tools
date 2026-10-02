@@ -30,3 +30,16 @@ Case A's loan, and only this year's figures; the page assumes the rest (`docs/RU
 Send back, your usual way: the DSCR for each year, the average and the lowest year.
 
 Status: model-worked in `tests/dscr-page.test.ts` and `npm run check:site`; not yet confirmed.
+
+## Case P (fictional): a proprietor with EMIs and a new asset
+Case A's loan, for a proprietor. Send back, your usual way: the tax, the DSCR for each year, the average and the lowest year. If you would count the EMIs, the new asset's income or the tax differently (`docs/RULES.md`), say how.
+
+**This year (2026-27):** profit before interest, depreciation and tax Rs. 15,00,000, growing 10% a year. Depreciation Rs. 2,00,000 and interest on working capital Rs. 1,00,000, both the same every year.
+
+**The new asset** adds Rs. 3,60,000 a year to that profit from October 2026, after its own running costs.
+
+**Loans already running:** a home loan EMI of Rs. 25,000 a month that runs on, and a vehicle loan EMI of Rs. 15,000 a month whose last EMI is in December 2027. The proprietor pays both, so both count.
+
+**Tax:** the proprietor's, under the new regime, on the business's profit as the only income.
+
+Status: model-worked in `tests/dscr.test.ts` (and through the page and the document in `tests/dscr-page.test.ts` and `tests/dscr-document.test.ts`); not yet confirmed.

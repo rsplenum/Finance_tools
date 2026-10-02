@@ -7,6 +7,7 @@
 import DATA from './data/dscr.json';
 import { PERIOD_MONTHS, fyOf, levelInstalment, monthAfter, months, schedule, termMonths, type LoanTerms, type MonthRow, type YearDebt } from './loan';
 import { levelCheck, monthsCheck, planCheck, scheduleCheck, statementCheck, type CheckResult } from './dscr-check';
+import { borrowerOf, taxOn } from './tax';
 
 type Data = typeof DATA;
 type Options = Data['options'];
@@ -20,13 +21,19 @@ export type YearFigures = { fy: string } & { [C in Component]?: number };
 export interface ProjectionYear {
   fy: string;
   pbdit?: number;
+  /** Extra profit before interest, depreciation and tax from the new asset, in the months of the year it runs. */
+  assetIncome?: number;
   depreciation?: number;
   nonCash?: number;
   interestOther?: number;
   leaseRentals?: number;
   otherLoansInterest?: number;
   otherLoansPrincipal?: number;
+  /** EMIs paid in the year on loans already running, interest and principal together. */
+  existingEmis?: number;
+  /** A tax rate, or instead who the borrower is (`taxBy`, an id in engine/data/tax.json), which sets the tax. */
   taxPct?: number;
+  taxBy?: string;
 }
 export type LoanInput = { [K in keyof LoanTerms]?: LoanTerms[K] };
 export interface Target { average?: number; minimum?: number }
@@ -34,7 +41,7 @@ export interface Target { average?: number; minimum?: number }
 export interface Row { fy: string; available: number; service: number; counted: boolean; dscr?: number }
 export interface Statement { rows: Row[]; average?: number; minimum?: { dscr: number; fy: string }; notes: string[] }
 /** How profit after tax is reached in a projected year (planning mode). */
-export interface ProfitYear { fy: string; pbdit: number; depreciation: number; nonCash: number; interestTL: number; interestOther: number; pbt: number; tax: number; pat: number }
+export interface ProfitYear { fy: string; pbdit: number; assetIncome: number; depreciation: number; nonCash: number; interestTL: number; interestOther: number; pbt: number; tax: number; pat: number }
 /** A year before the figures start (operations start later): no instalment falls in it, and its interest is paid from the project cost. */
 export interface BeforeStart { fy: string; interest: number }
 export interface Plan { schedule: YearDebt[]; years: YearFigures[]; profit: ProfitYear[]; statement: Statement; beforeStart: BeforeStart[] }
@@ -58,16 +65,20 @@ export const BENCHMARKS = DATA.benchmarks;
 export const OPTIONS = DATA.options;
 export const COMPONENTS = DATA.components;
 
-export const PROJECTION_LABELS: Record<Exclude<keyof ProjectionYear, 'fy'>, string> = {
+export const PROJECTION_LABELS: Record<Exclude<keyof ProjectionYear, 'fy' | 'taxBy'>, string> = {
   pbdit: 'Profit before interest, depreciation and tax',
+  assetIncome: 'Extra income from the new asset',
   depreciation: 'Depreciation',
   nonCash: 'Other non-cash charges',
   interestOther: 'Interest on other borrowings (working capital)',
   leaseRentals: 'Lease rentals',
   otherLoansInterest: 'Interest on other term loans',
   otherLoansPrincipal: 'Instalments of other term loans',
+  existingEmis: DATA.components.existingEmis,
   taxPct: 'Tax rate (%)',
 };
+/** Debt service that planning adds to the method's: existing EMIs, in full under every method (docs/RULES.md). */
+export const PLAN_SERVICE: Component[] = ['existingEmis'];
 export const LOAN_LABELS: Record<keyof LoanTerms, string> = {
   amount: 'Loan amount',
   ratePct: 'Interest rate (% a year)',
@@ -133,6 +144,11 @@ function projectionNeeds(proj: ProjectionYear[], def: Definition): string[] {
   const needs = yearsNeeds(proj.map((p) => p.fy));
   for (const p of proj) for (const k of Object.keys(PROJECTION_LABELS) as (keyof typeof PROJECTION_LABELS)[]) {
     if (k === 'leaseRentals' && def.leases !== 'yes') continue;
+    // Who the borrower is sets the tax in place of a rate.
+    if (k === 'taxPct' && p.taxBy !== undefined) {
+      if (!borrowerOf(p.taxBy)) needs.push(`Who the borrower is, for the tax in ${p.fy}`);
+      continue;
+    }
     const v = p[k], name = `${PROJECTION_LABELS[k]} for ${p.fy}`;
     if (!isNum(v)) needs.push(name);
     else if (k !== 'pbdit' && v < 0) needs.push(`${name}, as zero or more`);
@@ -195,12 +211,14 @@ function disagreement(s: Statement, c: CheckResult): string {
 
 // ---- Statement ----
 
-function computeStatement(years: YearFigures[], def: Definition, data: Data): Statement {
+/** `extra`: debt service paid in full beside the method's own, like existing EMIs; a year paying it has instalments. */
+function computeStatement(years: YearFigures[], def: Definition, data: Data, extra: Component[] = []): Statement {
   const { available, service } = componentsOf(def, data);
   const add = (y: YearFigures, cs: Component[]) => cs.reduce((s, c) => s + (y[c] as number), 0);
   const rows: Row[] = years.map((y) => {
-    const a = add(y, available), s = add(y, service);
-    return { fy: y.fy, available: a, service: s, counted: def.years === 'repayment' ? (y.principalTL as number) > 0 : s > 0, dscr: s > 0 ? a / s : undefined };
+    const a = add(y, available), s = add(y, [...service, ...extra]);
+    const instalments = add(y, ['principalTL', ...extra]);
+    return { fy: y.fy, available: a, service: s, counted: def.years === 'repayment' ? instalments > 0 : s > 0, dscr: s > 0 ? a / s : undefined };
   });
   const used = rows.filter((r) => r.counted), notes: string[] = [];
   for (const r of used) if (r.available <= 0) notes.push(`Cash available is nil or negative in ${r.fy}.`);
@@ -257,15 +275,16 @@ function plan(all: ProjectionYear[], loan: LoanTerms, def: Definition, start?: s
   const years: YearFigures[] = proj.map((y) => {
     const p = y as Required<ProjectionYear>, d = byFy.get(y.fy);
     const interestTL = (d?.interest ?? 0) + p.otherLoansInterest, principalTL = (d?.principal ?? 0) + p.otherLoansPrincipal;
-    const pbt = p.pbdit - p.depreciation - p.nonCash - interestTL - p.interestOther;
-    const tax = pbt > 0 ? pbt * p.taxPct / 100 : 0, pat = pbt - tax;
-    profit.push({ fy: y.fy, pbdit: p.pbdit, depreciation: p.depreciation, nonCash: p.nonCash, interestTL, interestOther: p.interestOther, pbt, tax, pat });
+    // Existing EMIs are not split into interest and principal, so none of their interest is set against tax (errs low).
+    const pbt = p.pbdit + p.assetIncome - p.depreciation - p.nonCash - interestTL - p.interestOther;
+    const by = borrowerOf(y.taxBy), tax = by ? taxOn(pbt, by) : pbt > 0 ? pbt * p.taxPct / 100 : 0, pat = pbt - tax;
+    profit.push({ fy: y.fy, pbdit: p.pbdit, assetIncome: p.assetIncome, depreciation: p.depreciation, nonCash: p.nonCash, interestTL, interestOther: p.interestOther, pbt, tax, pat });
     return {
-      fy: y.fy, pat, depreciation: p.depreciation, nonCash: p.nonCash, interestTL, principalTL, interestOther: p.interestOther,
+      fy: y.fy, pat, depreciation: p.depreciation, nonCash: p.nonCash, interestTL, principalTL, interestOther: p.interestOther, existingEmis: p.existingEmis,
       ...(isNum(y.leaseRentals) ? { leaseRentals: y.leaseRentals } : {}),
     };
   });
-  const statement = computeStatement(years, def, DATA), check = planCheck(proj, loan, def);
+  const statement = computeStatement(years, def, DATA, PLAN_SERVICE), check = planCheck(proj, loan, def);
   const where = disagreement(statement, check)
     || profit.map((x, i) => (money(x.pbt, check.rows[i]?.pbt ?? NaN) && money(x.tax, check.rows[i]?.tax ?? NaN) ? '' : `the tax in ${x.fy}`)).find(Boolean);
   return where ? blocked(where) : { schedule: debt, years, profit, statement, beforeStart: early.map((d) => ({ fy: d.fy, interest: d.interest })) };

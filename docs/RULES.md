@@ -57,34 +57,51 @@ Shown as examples only, never used unless chosen. Each lender sets its own.
 - No principal is repaid during the moratorium; interest is still paid.
 - Instalment 1 falls at the end of the first month or quarter after the moratorium, and so on.
 - Equal instalments of principal: loan ÷ number of instalments. Equated monthly instalments (EMI): the exact EMI, not rounded (as Excel's PMT); banks round it up to the rupee, a difference under Rs. 1 a month. EMI is worked monthly only.
-- Tax = tax rate × profit before tax, and nil in a year with a loss. Losses carried forward are not set off, so tax may be overstated in the year after a loss (the DSCR errs low).
+- Tax: set by who the borrower is (engine/data/tax.json), or a typed rate × profit before tax. Nil in a year with a loss. Losses carried forward are not set off, so tax may be overstated in the year after a loss (the DSCR errs low).
 - Profit before interest, depreciation and tax is taken after lease rentals.
+- Extra income from the new asset is added to profit before interest, depreciation and tax from the month the asset starts running: in that year a twelfth of the yearly figure for each month left to 31 March, then the whole yearly figure. It does not grow. Leaving it out errs low.
 - Years are Indian financial years, April to March.
 - A line given as one figure and a percentage a year: each year is the year before × (1 + the percentage) when it grows, or × (1 − the percentage) when it falls (depreciation on the written-down value). One figure for every year is the same in each year. A figure for each year is taken as typed.
 - When the figures start after the loan's first year (operations start later), no instalment may fall before they start; the interest before then is taken as paid from the project cost (capitalised, as Ind AS 23 does for an asset under construction), and those years are left out of the statement.
+- Existing EMIs (loans already running) count in full as debt service under every method: each EMI for every month of every year, or only up to the month of its last EMI when that is given. A year that pays them has instalments, so it counts. Their interest is not known apart from the principal, so none of it is set against tax (the DSCR errs low).
 
-## Tax rates the page can fill in
+### Which existing EMIs count
 
-Dated 30-09-2026. Rates on income of FY 2025-26 (AY 2026-27), as found by Claude in public summaries; not yet checked for FY 2026-27 onwards, when the Income-tax Act, 2025 applies. Later years are taken at the same rate. The borrower's CA confirms the rate; any other rate can be typed.
+By who the borrower is (the owner's decision of 01-10-2026, D-POL-06).
 
-| Borrower | Rate | Working | Law | Source | Date | Checked |
-|---|---|---|---|---|---|---|
-| Company on the concessional rate | 25.168% | 22% + 10% surcharge + 4% cess | Section 115BAA of the Income-tax Act, 1961; section 200 of the Income-tax Act, 2025 | taxmann.com and caalley.com rate charts for AY 2026-27; taxtmi.com on section 200 | 30-09-2026 | no |
-| Firm or LLP, income up to Rs. 1 crore | 31.2% | 30% + 4% cess | Rates in force for firms and LLPs | taxmann.com and caalley.com rate charts for AY 2026-27 | 30-09-2026 | no |
-| Firm or LLP, income above Rs. 1 crore | 34.944% | 30% + 12% surcharge + 4% cess | Rates in force for firms and LLPs; surcharge above Rs. 1 crore of income | taxmann.com and caalley.com rate charts for AY 2026-27 | 30-09-2026 | no |
+| Borrower | Counted | Asked as |
+|---|---|---|
+| Proprietor | All of the proprietor's EMIs, business and personal: one cash flow pays them | All EMIs a month, business and personal (home, car, personal loans) |
+| Partnership firm or LLP | The firm's or LLP's own loans only, not the partners' personal loans | EMIs a month on the firm's own loans |
+| Company | The company's own loans only, not the directors' personal loans | EMIs a month on the company's own loans |
+| Not yet said | | EMIs a month on loans already running: all of a proprietor's, business and personal; a firm's, LLP's or company's own loans only |
+
+## Tax by borrower
+
+Dated 01-10-2026. Rates for tax year 2026-27 (April 2026 to March 2027), the first under the Income-tax Act, 2025. Public summaries say the Finance Act, 2026 kept the rates of FY 2025-26. Secondary sources only, not yet checked against the Act or the Finance Act: the official sites (incometaxindia.gov.in, incometax.gov.in, indiabudget.gov.in, egazette.gov.in) could not be opened from the session. Later years are taken at the same rates. Tax is worked out on profit before tax, nil on a loss, and not rounded to the nearest Rs. 10 as a return is. The borrower's CA confirms it; any other rate can be typed.
+
+Who the borrower is sets the tax on profit before tax: the rates, less any rebate, then any surcharge (never more than the tax at its threshold plus the income above it: marginal relief), then the cess on both.
+
+| Borrower | Rates | Rebate | Surcharge | Cess | Law | Sources | Date | Checked |
+|---|---|---|---|---|---|---|---|---|
+| Proprietor: one person running the business in their own name | 0% up to Rs. 4,00,000; 5% above Rs. 4,00,000; 10% above Rs. 8,00,000; 15% above Rs. 12,00,000; 20% above Rs. 16,00,000; 25% above Rs. 20,00,000; 30% above Rs. 24,00,000 | Up to Rs. 60,000 on income up to Rs. 12,00,000; above that, the tax is at most the income above Rs. 12,00,000 | 10% above Rs. 50,00,000; 15% above Rs. 1,00,00,000; 25% above Rs. 2,00,00,000 | 4% | Section 202 (the new tax regime; section 115BAC of the 1961 Act) and section 156 (the rebate; section 87A of the 1961 Act) of the Income-tax Act, 2025; marginal relief just above the rebate's limit and at each surcharge threshold | cleartax.in and axismaxlife.com slab tables for FY 2026-27; bajajfinserv.in on Budget 2026 (slabs unchanged); aubsp.com and caclubindia.com on the section 156 rebate and its marginal relief; taxguru.in on section 202; cleartax.in on surcharge and marginal relief (secondary) | 01-10-2026 | no |
+| Partnership firm or LLP: a partnership firm or a limited liability partnership | 30% of income | None | 12% above Rs. 1,00,00,000 | 4% | Rates in force for firms and LLPs, with marginal relief on the surcharge | taxmann.com and caalley.com rate charts for AY 2026-27; taxguru.in and taxscan.in on rates after the Finance Act, 2026 (secondary) | 01-10-2026 | no |
+| Company: a company on the concessional rate of section 115BAA | 22% of income | None | 10% on any income | 4% | Section 115BAA of the Income-tax Act, 1961; section 200 of the Income-tax Act, 2025 | taxmann.com and caalley.com rate charts for AY 2026-27; taxtmi.com on section 200 (secondary) | 30-09-2026 | no |
 
 ## What the page assumes until you change it
 
-Dated 30-09-2026. Set by Claude at the owner's request (30-09-2026: work everything out from this year's figures and sales growth, and assume the rest). Chosen to be reasonable and on the careful side for a lender; not checked against a published source. Every one is shown on the page and can be changed.
+Dated 01-10-2026. Set by Claude at the owner's request (30-09-2026: work everything out from this year's figures and sales growth, and assume the rest). Chosen to be reasonable and on the careful side for a lender; not checked against a published source. Every one is shown on the page and can be changed.
 
 | What | Assumed | Why |
 |---|---|---|
 | How DSCR is worked out | Common term-loan DSCR | How chartered accountants and banks usually work it for term loans (docs/DSCR-RESEARCH.md) |
 | The lender's target | Average 1.50, lowest year 1.20 | The commonly quoted examples (benchmarks in dscr.json); each lender sets its own |
-| Tax rate | 31.2% | The rate for a firm or LLP, and the top rate for an individual with cess: on the careful side, since more tax gives a lower DSCR. A company on the concessional rate pays 25.168% |
+| Tax rate | 31.2% | The rate for a firm or LLP, and the top rate for an individual with cess: on the careful side, since more tax gives a lower DSCR. Say who the borrower is to work out the tax for that borrower |
+| A proprietor's tax | The new regime's slab rates, on the business's profit as the only income | Other income would put the profit in higher slabs, and the old regime (with deductions) is not offered: type a rate if either applies |
 | Profit margin | As this year: profit before interest, depreciation and tax grows with sales | The only growth asked for is in sales |
+| Extra income from the new asset | None beyond the growth | Leaving it out errs low. Add it if the asset adds to profit, from the month it starts running |
 | Depreciation | As this year, every year | Depreciation on the asset the loan buys is left out; it lowers tax, so leaving it out errs low |
 | Interest on other borrowings | As this year, every year, on top of this loan's interest | Working-capital limits are taken as unchanged |
-| Instalments of other term loans | None | Change it if other term loans are being repaid; their interest is already in this year's interest |
+| Loans already running | None | Change it if EMIs are paid on other loans: all of a proprietor's, business and personal; a firm's, LLP's or company's own loans only |
 | Other non-cash charges and lease rentals | None | Few small businesses have them |
 | The first year of the figures | The year the loan is first drawn | The business is running: it has this year's figures |

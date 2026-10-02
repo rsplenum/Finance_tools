@@ -8,6 +8,8 @@ import tax from '../engine/data/tax.json' with { type: 'json' };
 import defaults from '../engine/data/defaults.json' with { type: 'json' };
 
 const date = (iso) => iso.split('-').reverse().join('-');
+const rs = (n) => `Rs. ${n.toLocaleString('en-IN')}`;
+const borrowerLabel = (id) => tax.borrowers.find((b) => b.id === id)?.label ?? id;
 const list = (ids) => {
   const names = ids.map((id) => dscr.components[id].toLowerCase());
   return names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names.join('');
@@ -46,10 +48,19 @@ out.push('', '### Benchmarks', '', 'Shown as examples only, never used unless ch
   '| What | Value | Source | Date | Checked |', '|---|---|---|---|---|');
 for (const b of dscr.benchmarks) out.push(`| ${b.what} | ${b.value.toFixed(2)} | ${b.source} | ${date(b.date)} | ${b.verified ? 'yes' : 'no'} |`);
 out.push('', `### ${dscr.planning.label}`, '', ...dscr.planning.rules.map((r) => `- ${r}`), '');
+const emis = dscr.existingEmis;
+out.push(`### ${emis.question}`, '', `By who the borrower is (${emis.source.charAt(0).toLowerCase() + emis.source.slice(1)}).`, '', '| Borrower | Counted | Asked as |', '|---|---|---|');
+for (const [id, e] of Object.entries(emis.byBorrower)) out.push(`| ${borrowerLabel(id)} | ${e.counts} | ${e.ask} |`);
+out.push(`| Not yet said | | ${emis.unknown} |`, '');
+const slabs = (b) => b.slabs.length === 1 ? `${b.slabs[0][1]}% of income`
+  : b.slabs.map(([from, pct], i) => (i === 0 ? `${pct}% up to ${rs(b.slabs[1][0])}` : `${pct}% above ${rs(from)}`)).join('; ');
+const surcharge = (b) => b.surcharge.map(([from, pct]) => `${pct}% ${from ? `above ${rs(from)}` : 'on any income'}`).join('; ') || 'None';
+const rebate = (b) => (b.rebate ? `Up to ${rs(b.rebate.max)} on income up to ${rs(b.rebate.incomeUpTo)}; above that, the tax is at most the income above ${rs(b.rebate.incomeUpTo)}` : 'None');
 out.push(`## ${tax.title}`, '', `Dated ${date(tax.date)}. ${tax.status}`, '',
-  '| Borrower | Rate | Working | Law | Source | Date | Checked |', '|---|---|---|---|---|---|---|');
-for (const t of tax.rates)
-  out.push(`| ${t.label} | ${t.pct}% | ${t.base}%${t.surcharge ? ` + ${t.surcharge}% surcharge` : ''} + ${t.cess}% cess | ${t.law} | ${t.source} | ${date(t.date)} | ${t.verified ? 'yes' : 'no'} |`);
+  'Who the borrower is sets the tax on profit before tax: the rates, less any rebate, then any surcharge (never more than the tax at its threshold plus the income above it: marginal relief), then the cess on both.', '',
+  '| Borrower | Rates | Rebate | Surcharge | Cess | Law | Sources | Date | Checked |', '|---|---|---|---|---|---|---|---|---|');
+for (const b of tax.borrowers)
+  out.push(`| ${b.label}: ${b.who.charAt(0).toLowerCase() + b.who.slice(1)} | ${slabs(b)} | ${rebate(b)} | ${surcharge(b)} | ${b.cess}% | ${b.law} | ${b.source} (${b.kind}) | ${date(b.date)} | ${b.verified ? 'yes' : 'no'} |`);
 out.push('');
 out.push(`## ${defaults.title}`, '', `Dated ${date(defaults.date)}. ${defaults.status}`, '', '| What | Assumed | Why |', '|---|---|---|');
 for (const a of defaults.assumptions) out.push(`| ${a.what} | ${a.shown} | ${a.why} |`);
