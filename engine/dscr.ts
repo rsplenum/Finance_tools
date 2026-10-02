@@ -39,12 +39,17 @@ export type LoanInput = { [K in keyof LoanTerms]?: LoanTerms[K] };
 export interface Target { average?: number; minimum?: number }
 
 export interface Row { fy: string; available: number; service: number; counted: boolean; dscr?: number }
-export interface Statement { rows: Row[]; average?: number; minimum?: { dscr: number; fy: string }; notes: string[] }
+/** The Total column: cash available (A), debt service (B) and each figure, added up over the years counted. */
+export interface Totals { available: number; service: number; figures: { [C in Component]?: number } }
+/** `total` when any year counts; with the average by totals, the average is total A ÷ total B. */
+export interface Statement { rows: Row[]; average?: number; minimum?: { dscr: number; fy: string }; notes: string[]; total?: Totals }
 /** How profit after tax is reached in a projected year (planning mode). */
 export interface ProfitYear { fy: string; pbdit: number; assetIncome: number; depreciation: number; nonCash: number; interestTL: number; interestOther: number; pbt: number; tax: number; pat: number }
+export type ProfitTotals = Omit<ProfitYear, 'fy'>;
 /** A year before the figures start (operations start later): no instalment falls in it, and its interest is paid from the project cost. */
 export interface BeforeStart { fy: string; interest: number }
-export interface Plan { schedule: YearDebt[]; years: YearFigures[]; profit: ProfitYear[]; statement: Statement; beforeStart: BeforeStart[] }
+/** `profitTotal`: each line of the profit added up over the years counted, beside the statement's `total`. */
+export interface Plan { schedule: YearDebt[]; years: YearFigures[]; profit: ProfitYear[]; statement: Statement; beforeStart: BeforeStart[]; profitTotal?: ProfitTotals }
 /** The repayment schedule month by month, its totals by financial year, and the level instalment (EMI or principal). */
 export interface Amortization { months: MonthRow[]; years: YearDebt[]; level: number }
 /** What stops a larger loan or a shorter repayment: the average, the lowest year, or a year with no cash to pay from. */
@@ -204,6 +209,7 @@ function disagreement(s: Statement, c: CheckResult): string {
     if (a.fy !== b.fy || a.counted !== b.counted || !money(a.available, b.available) || !money(a.service, b.service) || !ratio(a.dscr, b.dscr)) return a.fy;
   }
   if (!ratio(s.average, c.average)) return 'the average';
+  if (!s.total !== !c.total || (s.total && c.total && (!money(s.total.available, c.total.available) || !money(s.total.service, c.total.service)))) return 'the totals';
   // Either computation may pick a different year when two years tie; the lowest value must agree either way.
   if (!ratio(s.minimum?.dscr, c.minimum?.dscr) || (s.minimum && !ratio(c.rows.find((r) => r.fy === s.minimum?.fy)?.dscr, c.minimum?.dscr))) return 'the lowest year';
   return '';
@@ -226,10 +232,24 @@ function computeStatement(years: YearFigures[], def: Definition, data: Data, ext
     notes.push(`No year has ${def.years === 'repayment' ? 'a term-loan instalment' : 'interest or instalments due'}, so there is no average or lowest year.`);
     return { rows, notes };
   }
-  const total = used.reduce((t, r) => ({ a: t.a + r.available, s: t.s + r.service }), { a: 0, s: 0 });
-  const average = def.average === 'totals' ? total.a / total.s : used.reduce((t, r) => t + (r.dscr as number), 0) / used.length;
+  // The Total column: each figure over the years counted, and A and B as the sums of their rows.
+  const figures: Totals['figures'] = {};
+  years.forEach((y, i) => {
+    if (!rows[i].counted) return;
+    for (const c of Object.keys(data.components) as Component[]) if (isNum(y[c])) figures[c] = (figures[c] ?? 0) + y[c];
+  });
+  const total: Totals = { available: used.reduce((t, r) => t + r.available, 0), service: used.reduce((t, r) => t + r.service, 0), figures };
+  const average = def.average === 'totals' ? total.available / total.service : used.reduce((t, r) => t + (r.dscr as number), 0) / used.length;
   const low = used.reduce((m, r) => ((r.dscr as number) < (m.dscr as number) ? r : m));
-  return { rows, average, minimum: { dscr: low.dscr as number, fy: low.fy }, notes };
+  return { rows, average, minimum: { dscr: low.dscr as number, fy: low.fy }, notes, total };
+}
+
+/** Where the Total column does not add up: A and B against the sums of their lines' totals, or '' when it does. */
+function totalsOff(s: Statement, def: Definition, data: Data, extra: Component[] = []): string {
+  if (!s.total) return '';
+  const { available, service } = componentsOf(def, data), f = s.total.figures;
+  const sum = (cs: Component[]) => cs.reduce((t, c) => t + (f[c] ?? 0), 0);
+  return money(sum(available), s.total.available) && money(sum([...service, ...extra]), s.total.service) ? '' : 'the totals';
 }
 
 /** DSCR from the borrower's own yearly figures. `data` is for tests only. */
@@ -237,7 +257,7 @@ export function dscrStatement(years: YearFigures[], def: Definition, data: Data 
   const needs = [...definitionNeeds(def, data), ...statementNeeds(years, def, data)];
   if (needs.length) return { needs };
   const s = computeStatement(years, def, data);
-  const where = disagreement(s, statementCheck(years, def));
+  const where = disagreement(s, statementCheck(years, def)) || totalsOff(s, def, data);
   return where ? blocked(where) : s;
 }
 
@@ -285,9 +305,33 @@ function plan(all: ProjectionYear[], loan: LoanTerms, def: Definition, start?: s
     };
   });
   const statement = computeStatement(years, def, DATA, PLAN_SERVICE), check = planCheck(proj, loan, def);
-  const where = disagreement(statement, check)
-    || profit.map((x, i) => (money(x.pbt, check.rows[i]?.pbt ?? NaN) && money(x.tax, check.rows[i]?.tax ?? NaN) ? '' : `the tax in ${x.fy}`)).find(Boolean);
-  return where ? blocked(where) : { schedule: debt, years, profit, statement, beforeStart: early.map((d) => ({ fy: d.fy, interest: d.interest })) };
+  const profitTotal = statement.total ? profitTotalOf(profit, statement) : undefined;
+  const where = disagreement(statement, check) || totalsOff(statement, def, DATA, PLAN_SERVICE)
+    || profit.map((x, i) => (money(x.pbt, check.rows[i]?.pbt ?? NaN) && money(x.tax, check.rows[i]?.tax ?? NaN) ? '' : `the tax in ${x.fy}`)).find(Boolean)
+    || profitTotalOff(profitTotal, statement, check);
+  return where ? blocked(where) : {
+    schedule: debt, years, profit, statement, beforeStart: early.map((d) => ({ fy: d.fy, interest: d.interest })), ...(profitTotal ? { profitTotal } : {}),
+  };
+}
+
+/** Each line of the profit added up over the years the statement counts. */
+function profitTotalOf(profit: ProfitYear[], s: Statement): ProfitTotals {
+  const t: ProfitTotals = { pbdit: 0, assetIncome: 0, depreciation: 0, nonCash: 0, interestTL: 0, interestOther: 0, pbt: 0, tax: 0, pat: 0 };
+  profit.forEach((y, i) => {
+    if (s.rows[i]?.counted) for (const k of Object.keys(t) as (keyof ProfitTotals)[]) t[k] += y[k];
+  });
+  return t;
+}
+
+/**
+ * Where the profit's totals do not hold, or '': profit before tax and the tax against the check's own loop, and the
+ * lines against each other (profit before tax from its lines, profit after tax from it, as in the statement).
+ */
+function profitTotalOff(t: ProfitTotals | undefined, s: Statement, c: CheckResult): string {
+  if (!t) return '';
+  const pbt = t.pbdit + t.assetIncome - t.depreciation - t.nonCash - t.interestTL - t.interestOther;
+  return money(t.pbt, c.total?.pbt ?? NaN) && money(t.tax, c.total?.tax ?? NaN) && money(pbt, t.pbt) && money(t.pbt - t.tax, t.pat)
+    && money(t.pat, s.total?.figures.pat ?? NaN) ? '' : 'the totals';
 }
 
 /** DSCR from projections and loan terms: the engine works out the loan's interest, the profit after tax and the DSCR. */

@@ -9,7 +9,7 @@ import DSCR from '../../../engine/data/dscr.json';
 import {
   BENCHMARKS, COMPONENTS, LOAN_LABELS, OPTIONS, PLAN_SERVICE, PRESETS, PROJECTION_LABELS, amortization, componentsOf, dscrStatement, fyRange,
   isFy, limitText, loanTimeline, maxLoanAmount, planStatement, shortestRepayment, shortfall, targetNeeds,
-  type Amortization, type Component, type Definition, type Limit, type LoanInput, type ProfitYear, type ProjectionYear, type Statement,
+  type Amortization, type Component, type Definition, type Limit, type LoanInput, type ProfitTotals, type ProfitYear, type ProjectionYear, type Statement,
   type Target, type YearFigures,
 } from '../../../engine/dscr';
 import { fyOf } from '../../../engine/loan';
@@ -383,9 +383,17 @@ export function assumedIn(s: State, y: Years = yearsOf(s)): AssumedLine[] {
 // ---- The preview ----
 
 /** One line of the DSCR statement: a figure for each year, in words (`values`) and as the engine gave it (`n`, for the Excel copy). */
-export interface Line { label: string; values: string[]; n?: (number | undefined)[]; kind?: 'head' | 'total' | 'ratio'; id?: 'pbdit' | 'asset' | 'pbt' | 'tax' | 'available' | 'emis' | 'service' | 'dscr' }
-/** The statement as chartered accountants lay it out: the years across, the working down. */
-export interface StatementView { years: string[]; counted: boolean[]; lines: Line[] }
+/** A line of the statement: the words for each year, the engine's exact figures in `n`, and its Total column. */
+export interface Line {
+  label: string; values: string[]; n?: (number | undefined)[]; kind?: 'head' | 'total' | 'ratio';
+  id?: 'pbdit' | 'asset' | 'pbt' | 'tax' | 'available' | 'emis' | 'service' | 'dscr';
+  total?: { text: string; n: number };
+}
+/**
+ * The statement as chartered accountants lay it out: the years across, the working down. `total` when the average is
+ * total A ÷ total B: a Total column of the years counted (`sub` says so when a year is not counted).
+ */
+export interface StatementView { years: string[]; counted: boolean[]; lines: Line[]; total?: { sub?: string } }
 type Money<K extends string> = Record<K, string> & { n: Record<K, number> };
 /** A month and a year of the schedule: rounded rupees in words, and the engine's exact figures in `n`. */
 export type MonthView = Money<'opening' | 'interest' | 'principal' | 'paid' | 'closing'> & { ym: string; month: string; instalment?: number };
@@ -482,14 +490,19 @@ function verdictOf(st: Statement, t: Target): Preview['verdict'] {
 
 const lower = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
 
-/** The statement's lines, from the engine's figures: the profit build-up when the page works it out, then A, B, DSCR. */
-function statementView(st: Statement, t: Target, def: Definition, parts: YearFigures[], profit?: ProfitYear[]): StatementView {
-  const amounts = (n: (number | undefined)[]) => ({ values: n.map((x) => inr(x)), n });
+/**
+ * The statement's lines, from the engine's figures: the profit build-up when the page works it out, then A, B, DSCR. With
+ * the average by totals, each line carries its total over the years counted, and the DSCR line the average.
+ */
+function statementView(st: Statement, t: Target, def: Definition, parts: YearFigures[], profit?: ProfitYear[], profitTotal?: ProfitTotals): StatementView {
+  const sums = def.average === 'totals' && st.total && st.average !== undefined ? st.total : undefined;
+  const sum = (n?: number) => (sums && n !== undefined ? { total: { text: inr(n), n } } : {});
+  const amounts = (n: (number | undefined)[], total?: number) => ({ values: n.map((x) => inr(x)), n, ...sum(total) });
   const { available } = componentsOf(def), lines: Line[] = [];
   // Existing EMIs and the new asset's income are lines only where they are not nil in every year.
   const service = [...componentsOf(def).service, ...(profit ? PLAN_SERVICE.filter((c) => parts.some((y) => (y[c] ?? 0) !== 0)) : [])];
   if (profit) {
-    const pc = (k: Exclude<keyof ProfitYear, 'fy'>) => amounts(profit.map((y) => y[k]));
+    const pc = (k: Exclude<keyof ProfitYear, 'fy'>) => amounts(profit.map((y) => y[k]), profitTotal?.[k]);
     lines.push(
       { label: 'Profit', values: [], kind: 'head' },
       { label: PROJECTION_LABELS.pbdit, ...pc('pbdit'), id: 'pbdit' },
@@ -503,20 +516,27 @@ function statementView(st: Statement, t: Target, def: Definition, parts: YearFig
       { label: 'Profit after tax', ...pc('pat'), kind: 'total' },
     );
   }
+  const figure = (c: Component) => amounts(parts.map((y) => y[c]), sums?.figures[c]);
   lines.push({ label: 'Cash available for debt service', values: [], kind: 'head' });
-  available.forEach((c, i) => lines.push({ label: i ? `Add: ${lower(COMPONENTS[c])}` : COMPONENTS[c], ...amounts(parts.map((y) => y[c])) }));
+  available.forEach((c, i) => lines.push({ label: i ? `Add: ${lower(COMPONENTS[c])}` : COMPONENTS[c], ...figure(c) }));
   lines.push(
-    { label: 'Cash available (A)', ...amounts(st.rows.map((r) => r.available)), kind: 'total', id: 'available' },
+    { label: 'Cash available (A)', ...amounts(st.rows.map((r) => r.available), sums?.available), kind: 'total', id: 'available' },
     { label: 'Debt service', values: [], kind: 'head' },
-    ...service.map((c): Line => ({ label: COMPONENTS[c], ...amounts(parts.map((y) => y[c])), ...(c === 'existingEmis' ? { id: 'emis' as const } : {}) })),
-    { label: 'Debt service (B)', ...amounts(st.rows.map((r) => r.service)), kind: 'total', id: 'service' },
-    { label: 'DSCR (A ÷ B)', values: st.rows.map((r) => (r.dscr === undefined ? '—' : ratioText(r.dscr, r.counted ? t.minimum : undefined))), n: st.rows.map((r) => r.dscr), kind: 'ratio', id: 'dscr' },
+    ...service.map((c): Line => ({ label: COMPONENTS[c], ...figure(c), ...(c === 'existingEmis' ? { id: 'emis' as const } : {}) })),
+    { label: 'Debt service (B)', ...amounts(st.rows.map((r) => r.service), sums?.service), kind: 'total', id: 'service' },
+    {
+      label: 'DSCR (A ÷ B)', values: st.rows.map((r) => (r.dscr === undefined ? '—' : ratioText(r.dscr, r.counted ? t.minimum : undefined))), n: st.rows.map((r) => r.dscr),
+      kind: 'ratio', id: 'dscr', ...(sums ? { total: { text: ratioText(st.average as number, t.average), n: st.average as number } } : {}),
+    },
   );
-  return { years: st.rows.map((r) => r.fy), counted: st.rows.map((r) => r.counted), lines };
+  return {
+    years: st.rows.map((r) => r.fy), counted: st.rows.map((r) => r.counted), lines,
+    ...(sums ? { total: st.rows.every((r) => r.counted) ? {} : { sub: 'years counted' } } : {}),
+  };
 }
 
-function fillStatement(p: Preview, st: Statement, t: Target, def: Definition, parts: YearFigures[], profit?: ProfitYear[]) {
-  p.statement = statementView(st, t, def, parts, profit);
+function fillStatement(p: Preview, st: Statement, t: Target, def: Definition, parts: YearFigures[], profit?: ProfitYear[], profitTotal?: ProfitTotals) {
+  p.statement = statementView(st, t, def, parts, profit, profitTotal);
   const skipped = st.rows.filter((r) => !r.counted).map((r) => r.fy);
   if (skipped.length && st.rows.length > skipped.length)
     p.notCounted = `Not counted: ${andList(skipped)} (${def.years === 'repayment' ? 'no term-loan instalment' : 'no interest or instalments due'}).`;
@@ -603,7 +623,7 @@ export function preview(s: State): Preview {
   if ('needs' in r) p.needs.push(...oneRepaymentNeed(merged(r.needs.filter((n) => y.years.length || n !== 'At least one year of figures'))));
   else if ('blocked' in r) p.blocked ??= r.blocked;
   else if (!y.startNeeded) {
-    fillStatement(p, r.statement, target, def, r.years, r.profit);
+    fillStatement(p, r.statement, target, def, r.years, r.profit, r.profitTotal);
     if (!tNeeds.length) p.verdict = verdictOf(r.statement, target);
     const b = r.beforeStart;
     if (b.length) p.beforeStart = `Left out: ${andList(b.map((x) => x.fy))}, before your figures start. ${b.length > 1 ? 'Their' : 'Its'} interest `

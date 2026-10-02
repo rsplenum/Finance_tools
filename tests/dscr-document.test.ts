@@ -91,7 +91,13 @@ describe('fictional case A′, complete: the statement for the lender', () => {
     expect(text).toContain('Cash available (A) | 4,00,392 | 4,22,624 | 4,45,488 | 4,73,072');
     expect(text).toContain('Debt service (B) | 3,41,000 | 5,02,000 | 4,54,000 | 2,09,000');
     expect(text).toContain('DSCR (A ÷ B) | 1.17 | 0.84 | 0.98 | 2.26');
-    for (const l of p.statement!.lines) expect(text).toContain(l.kind === 'head' ? l.label : [l.label, ...l.values].join(' | '));
+    for (const l of p.statement!.lines) expect(lines).toContain(l.kind === 'head' ? l.label : [l.label, ...l.values, l.total?.text].join(' | '));
+    // The Total column, worked by hand: 4,00,392 + 4,22,624 + 4,45,488 + 4,73,072 = 17,41,576; 3,41,000 + 5,02,000 +
+    // 4,54,000 + 2,09,000 = 15,06,000; 17,41,576 ÷ 15,06,000 = 1.1564, the average.
+    expect(lines).toContain('Rupees | 2026-27 | 2027-28 | 2028-29 | 2029-30 | Total');
+    expect(lines).toContain('Cash available (A) | 4,00,392 | 4,22,624 | 4,45,488 | 4,73,072 | 17,41,576');
+    expect(lines).toContain('Debt service (B) | 3,41,000 | 5,02,000 | 4,54,000 | 2,09,000 | 15,06,000');
+    expect(lines).toContain('DSCR (A ÷ B) | 1.17 | 0.84 | 0.98 | 2.26 | 1.16');
   });
   it('states the method in plain words, with its source; not how far this site checked it, and not the planning rules', () => {
     expect(lines).toContain('Common term-loan DSCR.');
@@ -161,10 +167,10 @@ describe('the PDF, read back by pdf.js', () => {
     expect(first.join('\n')).not.toMatch(/Below the target|target/i);
     expect(pages[1].split('\n')[1]).toBe('Annex 1. The basis');
     expect(pages[2].split('\n')[1]).toBe('Annex 2. Repayment schedule');
-    expect(first).toContain('Cash available (A) 4,00,392 4,22,624 4,45,488 4,73,072');
-    expect(first).toContain('DSCR (A ÷ B) 1.17 0.84 0.98 2.26');
-    // Every figure of the statement, on the first page, in the order the page shows it.
-    for (const l of p.statement!.lines) if (l.values.length) expect(first.some((x) => x.endsWith(l.values.join(' ')))).toBe(true);
+    expect(first).toContain('Cash available (A) 4,00,392 4,22,624 4,45,488 4,73,072 17,41,576');
+    expect(first).toContain('DSCR (A ÷ B) 1.17 0.84 0.98 2.26 1.16');
+    // Every figure of the statement, on the first page, in the order the page shows it, with its total.
+    for (const l of p.statement!.lines) if (l.values.length) expect(first.some((x) => x.endsWith([...l.values, l.total?.text].join(' ')))).toBe(true);
     pages.forEach((page, i) => expect(page).toMatch(new RegExp(`Page ${i + 1} of ${pages.length}$`)));
     const all = pages.join('\n');
     expect(all).toContain('Dec 2026 1 12,00,000 12,000 1,00,000 1,12,000 11,00,000');
@@ -198,7 +204,8 @@ describe('the PDF, read back by pdf.js', () => {
     const text = (await pdfPages(pdfOf(doc, MADE))).join('\n').split('\n');
     const dscr = text.filter((l) => l.startsWith('DSCR (A ÷ B) ')).map((l) => l.slice('DSCR (A ÷ B) '.length).split(' '));
     expect(dscr.length).toBeGreaterThan(1);
-    expect(dscr.flat()).toEqual(p.statement!.lines.find((l) => l.id === 'dscr')!.values);
+    const row = p.statement!.lines.find((l) => l.id === 'dscr')!;
+    expect(dscr.flat()).toEqual([...row.values, row.total?.text]);
   });
 });
 
@@ -212,12 +219,12 @@ describe('the Excel copy, read back by read-excel-file', () => {
     expect(row('Status')).toBeUndefined();
     expect(row('Average DSCR')).toEqual(['Average DSCR', '1.16', 'total cash available ÷ total debt service']);
     expect(row('Lowest year')).toEqual(['Lowest year', '0.84', 'in 2027-28']);
-    expect(row('Rupees')).toEqual(['Rupees', '2026-27', '2027-28', '2028-29', '2029-30']);
-    expect(row('Cash available (A)')).toEqual(['Cash available (A)', 400392, 422624, 445488, 473072]);
-    expect(row('Debt service (B)')).toEqual(['Debt service (B)', 341000, 502000, 454000, 209000]);
-    // The DSCR as the engine gave it, not rounded: 4,00,392 ÷ 3,41,000 and so on.
-    expect(row('DSCR (A ÷ B)')).toEqual(['DSCR (A ÷ B)', 400392 / 341000, 422624 / 502000, 445488 / 454000, 473072 / 209000]);
-    for (const l of p.statement!.lines) if (l.n) expect(row(l.label)?.slice(1)).toEqual(l.n);
+    expect(row('Rupees')).toEqual(['Rupees', '2026-27', '2027-28', '2028-29', '2029-30', 'Total']);
+    expect(row('Cash available (A)')).toEqual(['Cash available (A)', 400392, 422624, 445488, 473072, 1741576]);
+    expect(row('Debt service (B)')).toEqual(['Debt service (B)', 341000, 502000, 454000, 209000, 1506000]);
+    // The DSCR as the engine gave it, not rounded: 4,00,392 ÷ 3,41,000 and so on, and the average 17,41,576 ÷ 15,06,000.
+    expect(row('DSCR (A ÷ B)')).toEqual(['DSCR (A ÷ B)', 400392 / 341000, 422624 / 502000, 445488 / 454000, 473072 / 209000, 1741576 / 1506000]);
+    for (const l of p.statement!.lines) if (l.n) expect(row(l.label)?.slice(1)).toEqual([...l.n, l.total?.n]);
     expect(rows.flat()).toContain('Each cell holds the exact figure worked out on the page, shown in whole rupees; there are no formulas.');
     expect(book[1].data.flat()).toContain('Common term-loan DSCR.');
     const months = book[2].data;
@@ -239,7 +246,9 @@ describe('the Excel copy, read back by read-excel-file', () => {
     expect(lines).not.toContain('The loan');
     const book = await workbook(xlsxOf(doc, MADE));
     expect(book.map((x) => x.sheet)).toEqual(['DSCR statement', 'Basis']);
-    expect(book[0].data.find((r) => r[0] === 'Cash available (A)')?.filter((c) => c !== null)).toEqual(['Cash available (A)', 150000, 160000, 160000]);
+    // The Total column leaves out 2026-27, not counted: 1,60,000 + 1,60,000.
+    expect(book[0].data.find((r) => r[0] === 'Rupees')?.filter((c) => c !== null)).toEqual(['Rupees', '2026-27 (not counted)', '2027-28', '2028-29', 'Total (years counted)']);
+    expect(book[0].data.find((r) => r[0] === 'Cash available (A)')?.filter((c) => c !== null)).toEqual(['Cash available (A)', 150000, 160000, 160000, 320000]);
   });
   it('a stored zip that any reader opens: the checksum is the standard one', () => {
     expect(crc32(new TextEncoder().encode('123456789')).toString(16)).toBe('cbf43926');
@@ -254,8 +263,8 @@ describe('the Word copy, read back by mammoth', () => {
       'Asha Traders', 'Debt service coverage ratio (DSCR), 2026-27 to 2029-30', 'Lender | Example Bank, Pune branch | Prepared on | 30-09-2026', 'The loan',
       'Amount | Rs. 12,00,000 | Interest rate | 12% a year',
     ]);
-    expect(lines).toContain('Rupees | 2026-27 | 2027-28 | 2028-29 | 2029-30');
-    for (const l of p.statement!.lines) expect(lines).toContain(l.kind === 'head' ? l.label : [l.label, ...l.values].join(' | '));
+    expect(lines).toContain('Rupees | 2026-27 | 2027-28 | 2028-29 | 2029-30 | Total');
+    for (const l of p.statement!.lines) expect(lines).toContain(l.kind === 'head' ? l.label : [l.label, ...l.values, l.total?.text].join(' | '));
     expect(lines).toContain('Average DSCR 1.16 total cash available ÷ total debt service | Lowest year 0.84 in 2027-28');
     expect(lines).toContain('Annex 1. The basis');
     expect(lines).toContain('Dec 2026 | 1 | 12,00,000 | 12,000 | 1,00,000 | 1,12,000 | 11,00,000');
@@ -282,7 +291,8 @@ describe('the Word copy, read back by mammoth', () => {
     const { p, doc } = build(s), { lines } = await docxLines(docxOf(doc, MADE));
     const dscr = lines.filter((l) => l.startsWith('DSCR (A ÷ B) | ')).map((l) => l.split(' | ').slice(1));
     expect(dscr.length).toBeGreaterThan(1);
-    expect(dscr.flat()).toEqual(p.statement!.lines.find((l) => l.id === 'dscr')!.values);
+    const row = p.statement!.lines.find((l) => l.id === 'dscr')!;
+    expect(dscr.flat()).toEqual([...row.values, row.total?.text]);
   });
   it('keeps Word\'s letters beyond Latin, which the PDF cannot print', async () => {
     const { doc } = build(A2), named: Doc = { ...doc, header: 'DSCR statement · श्री गणेश ट्रेडर्स' };

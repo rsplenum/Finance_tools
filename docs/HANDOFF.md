@@ -1,9 +1,10 @@
 # Handoff — start here in a new session
 State at 02-10-2026: P0 to P1e are on `main` (PRs #2 to #5), which Cloudflare Pages builds: the DSCR engine, the calculator at `/dscr/`, the statement to download (D-DOC-01, D-DOC-02, D-TECH-13), free for now, and P1e: existing EMIs as debt service, the tax by who the borrower is (a proprietor's slab rates), and the new asset's income, each worked out twice and shown on the current page in the smallest way (D-POL-07 to 09, D-UX-11, D-TECH-15). The interest rule is in the owner's words (D-POL-10).
-- **P1g is in review** (draft PR from `ccr-ba2b6ab9-casbge`), with no change to the engine:
+- **P1g is in review** (draft PR #6 from `ccr-ba2b6ab9-casbge`):
   - the downloads laid out as a CA's DSCR statement: page 1 has the whole working, every line, then the average and the lowest year, signed; Annex 1 is the basis, Annex 2 the repayment schedule (D-DOC-04);
   - a Word copy as the third download (D-DOC-06);
   - the lender's target, how far the method was checked and the planning rules left out of the documents, kept on the page (D-DOC-05).
+  - a Total column in the statement, on the page and in the downloads: the engine adds each line over the years counted, checked twice (D-DOC-07).
 - **The owner is not satisfied with the page.** An outside review (Gemini, reading `main` before PR #2 was merged) and the owner's own words: it should ask seven inputs, not ten plus method choices. The engine's maths stands; the review's own formula taxes profit before interest. **Next:** the front door itself (P1f): the owner's inputs by default, everything else under one closed "More options" (D-POL-05, D-POL-06, D-UX-10): a borrower first.
 - **Skills** in `.claude/skills/` (D-TECH-14): `brief-first` (now with the finish line, the owner saying it feels simple, and what to refuse; D-UX-12), `money-maths-checks`, `lender-documents`. The owner's rule, now in CLAUDE.md: give the tradeoffs of every request.
 
@@ -78,7 +79,6 @@ The test figures are model-worked until the owner confirms fictional cases A and
   - is anything missing that a lender expects on them (the loan's purpose, the borrower's address, a GSTIN)?
   - do the borrower's signature block and "Not a CA's certificate" suit?
   - should the Excel copy carry formulas that redo the working (D-DOC-02)?
-  - a Total column (each line over the years counted) would need sums added to the engine (D-DOC-05): only if you want it.
 - **Check the page's assumptions** (`docs/RULES.md`, "What the page assumes until you change it"), above all the tax rate of 31.2% and profit growing with sales.
 - **Work fictional cases A and A′** (`docs/GOLDEN-CASES.md`) in your own Excel at home, or send public worked examples with their source. Never office files (D-BIZ-02).
 - **Read `docs/RULES.md` and `docs/DSCR-RESEARCH.md`.** From general knowledge and published material only (never an employer's norms), say:

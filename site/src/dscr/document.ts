@@ -58,13 +58,16 @@ function cell(text: string, value: number | undefined, kind: Figure['kind']): Ce
   return { text, figure: { value, kind, decimals: (text.split('.')[1] ?? '').length } };
 }
 
-/** The statement as the page shows it: the years across, the working down (StatementView). */
+/** The statement as the page shows it: the years across, the working down, and its Total column (StatementView). */
 function statementTable(st: StatementView): Table {
+  const kind = (l: { kind?: string }) => (l.kind === 'ratio' ? 'ratio' : 'amount');
   return {
-    columns: [{ label: 'Rupees' }, ...st.years.map((fy, i) => (st.counted[i] ? { label: fy } : { label: fy, sub: 'not counted' }))],
+    columns: [{ label: 'Rupees' }, ...st.years.map((fy, i) => (st.counted[i] ? { label: fy } : { label: fy, sub: 'not counted' })),
+      ...(st.total ? [{ label: 'Total', ...(st.total.sub ? { sub: st.total.sub } : {}) }] : [])],
     rows: st.lines.map((l) => (l.kind === 'head'
       ? { kind: 'head', cells: [{ text: l.label }] }
-      : { ...(l.kind ? { kind: l.kind } : {}), cells: [{ text: l.label }, ...l.values.map((v, i) => cell(v, l.n?.[i], l.kind === 'ratio' ? 'ratio' : 'amount'))] })),
+      : { ...(l.kind ? { kind: l.kind } : {}), cells: [{ text: l.label }, ...l.values.map((v, i) => cell(v, l.n?.[i], kind(l))),
+        ...(st.total ? [l.total ? cell(l.total.text, l.total.n, kind(l)) : { text: '' }] : [])] })),
   };
 }
 

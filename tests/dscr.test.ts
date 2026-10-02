@@ -39,6 +39,20 @@ describe('fictional case A, common definition', () => {
     expect(s.average?.toFixed(4)).toBe('1.4519');
     expect(s.minimum?.fy).toBe('2027-28');
   });
+  // The Total column, by hand: profit before interest, depreciation and tax 5,00,000 + 7,50,000 + 8,00,000 + 8,00,000 =
+  // 28,50,000; depreciation 4,90,000; interest on the term loan 3,06,000; on working capital 2,00,000; profit before tax
+  // 28,50,000 − 4,90,000 − 3,06,000 − 2,00,000 = 18,54,000; tax at 25% 4,63,500; profit after tax 13,90,500.
+  // A = 13,90,500 + 4,90,000 + 3,06,000 = 21,86,500; B = 12,00,000 + 3,06,000 = 15,06,000; 21,86,500 / 15,06,000 = 1.4519.
+  it('the Total column: each line added up over the years counted; total A ÷ total B is the average', () => {
+    const p = planStatement(CASE_A, LOAN, COMMON) as Plan, t = p.statement.total!;
+    expect([t.available, t.service].map(Math.round)).toEqual([2186500, 1506000]);
+    expect([t.figures.pat, t.figures.depreciation, t.figures.interestTL, t.figures.principalTL, t.figures.interestOther].map((x) => Math.round(x ?? NaN)))
+      .toEqual([1390500, 490000, 306000, 1200000, 200000]);
+    expect((t.available / t.service).toFixed(4)).toBe(p.statement.average?.toFixed(4));
+    const pt = p.profitTotal!;
+    expect([pt.pbdit, pt.depreciation, pt.interestTL, pt.interestOther, pt.pbt, pt.tax, pt.pat].map(Math.round))
+      .toEqual([2850000, 490000, 306000, 200000, 1854000, 463500, 1390500]);
+  });
   it('the simple average of the yearly DSCRs is much higher: (1.2031 + 1.1614 + 1.3293 + 2.8218) / 4 = 1.6289', () => {
     expect(planned({ ...COMMON, average: 'mean' }).average?.toFixed(4)).toBe('1.6289');
   });
@@ -90,6 +104,10 @@ describe('which years count', () => {
     const s = dscrStatement(Y, COMMON) as Statement;
     expect(s.rows.map((x) => x.counted)).toEqual([false, true, true]);
     expect([s.average?.toFixed(4), s.minimum?.fy]).toEqual(['1.2308', '2027-28']);
+  });
+  it('the Total column leaves out the year not counted: profit after tax 80,000 + 1,00,000 = 1,80,000; A 3,20,000, B 2,60,000', () => {
+    const t = (dscrStatement(Y, COMMON) as Statement).total!;
+    expect([t.figures.pat, t.figures.principalTL, t.available, t.service]).toEqual([180000, 200000, 320000, 260000]);
   });
   it('every year with debt service: 4,70,000 / 3,10,000 = 1.5161; simple average (3 + 1.1429 + 1.3333) / 3 = 1.8254', () => {
     expect((dscrStatement(Y, { ...COMMON, years: 'debt-service' }) as Statement).average?.toFixed(4)).toBe('1.5161');

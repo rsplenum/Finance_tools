@@ -233,6 +233,10 @@ async function layout(page, v, step) {
   }
   await expectText(page, v, 'pbt-2026-27', '1,59,000', 'case A, profit before tax in 2026-27');
   await expectText(page, v, 'tax-2026-27', '39,750', 'case A, tax in 2026-27');
+  // The Total column, by hand: cash available 21,86,500 and debt service 15,06,000 over the four years; DSCR 1.45, the average.
+  await expectText(page, v, 'available-total', '21,86,500', 'case A, total cash available');
+  await expectText(page, v, 'service-total', '15,06,000', 'case A, total debt service');
+  await expectText(page, v, 'dscr-total', '1.45', 'case A, the Total column\'s DSCR');
   // The repayment schedule: the year's totals, and each month once the year is opened.
   const year1 = await page.getByTestId('schedule-2026-27').locator('summary span.text-right').allTextContents();
   if (year1.join('|') !== '1,41,000|2,00,000|10,00,000') v(`schedule 2026-27 shows ${JSON.stringify(year1)}, want interest 1,41,000, principal 2,00,000, balance 10,00,000`);
@@ -256,6 +260,7 @@ async function layout(page, v, step) {
   const statement = page.getByTestId('dscr-statement'), card = page.getByTestId('card-2027-28');
   if (await statement.isVisible() || !(await card.isVisible())) v('390 px: the statement is shown as a table, not as cards');
   await expectText(page, v, card.locator('[data-line="dscr"]'), '1.16', 'the 2027-28 card on a phone');
+  await expectText(page, v, page.getByTestId('card-total').locator('[data-line="available"]'), '21,86,500', 'the Total card on a phone');
   await page.setViewportSize({ width: 1024, height: 900 });
   if (!(await statement.isVisible()) || await card.isVisible()) v('1024 px: the statement is shown as cards');
   await layout(page, v, 'case A filled, 1024 px');
@@ -441,8 +446,8 @@ async function layout(page, v, step) {
   pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
   // Page 1: the borrower's name, the lender, the whole working, the average and the lowest year, the signature (P1g).
   const first = pages[0].split('\n');
-  for (const want of ['Asha Traders', 'Average DSCR Lowest year', '1.16 0.84', 'For Asha Traders', 'Profit before tax 1,59,000 2,48,000 3,51,000 4,56,500',
-    'Cash available (A) 4,00,392 4,22,624 4,45,488 4,73,072', 'DSCR (A ÷ B) 1.17 0.84 0.98 2.26'])
+  for (const want of ['Asha Traders', 'Average DSCR Lowest year', '1.16 0.84', 'For Asha Traders', 'Profit before tax 1,59,000 2,48,000 3,51,000 4,56,500 12,14,500',
+    'Cash available (A) 4,00,392 4,22,624 4,45,488 4,73,072 17,41,576', 'DSCR (A ÷ B) 1.17 0.84 0.98 2.26 1.16'])
     if (!first.includes(want)) v(`the PDF's first page has no line "${want}"`);
   if (!first.some((l) => l.startsWith('Lender Example Bank, Pune branch Prepared on '))) v("the PDF's first page does not name the lender");
   if (pages.length < 3 || pages.join('\n').includes('Provisional')) v(`the PDF has ${pages.length} pages, or still says provisional`);
@@ -455,7 +460,7 @@ async function layout(page, v, step) {
   if (xlsx.name !== 'DSCR statement - Asha Traders.xlsx') v(`the Excel copy is named "${xlsx.name}"`);
   const book = await workbook(xlsx.bytes).catch((e) => v(`the Excel copy is not read: ${e.message}`)) ?? [];
   const cash = book[0]?.data.find((r) => r[0] === 'Cash available (A)')?.filter((c) => c !== null);
-  if (book.map((x) => x.sheet).join('|') !== 'DSCR statement|Basis|Repayment schedule' || JSON.stringify(cash) !== JSON.stringify(['Cash available (A)', 400392, 422624, 445488, 473072]))
+  if (book.map((x) => x.sheet).join('|') !== 'DSCR statement|Basis|Repayment schedule' || JSON.stringify(cash) !== JSON.stringify(['Cash available (A)', 400392, 422624, 445488, 473072, 1741576]))
     v(`the Excel copy holds sheets ${JSON.stringify(book.map((x) => x.sheet))} and cash available ${JSON.stringify(cash)}`);
   const cells = book.flatMap((x) => x.data.flat()).filter((c) => typeof c === 'string').join('\n');
   for (const not of ONLY_ON_THE_PAGE) if (cells.includes(not)) v(`the Excel copy says "${not}"`);
@@ -463,7 +468,7 @@ async function layout(page, v, step) {
   if (word.name !== 'DSCR statement - Asha Traders.docx') v(`the Word copy is named "${word.name}"`);
   const { lines: said, messages } = await docxLines(word.bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
   if (messages.length) v(`the Word copy is not read cleanly: ${JSON.stringify(messages).slice(0, 200)}`);
-  for (const want of ['Asha Traders', 'Cash available (A) | 4,00,392 | 4,22,624 | 4,45,488 | 4,73,072', 'DSCR (A ÷ B) | 1.17 | 0.84 | 0.98 | 2.26', 'Annex 1. The basis', 'Annex 2. Repayment schedule'])
+  for (const want of ['Asha Traders', 'Cash available (A) | 4,00,392 | 4,22,624 | 4,45,488 | 4,73,072 | 17,41,576', 'DSCR (A ÷ B) | 1.17 | 0.84 | 0.98 | 2.26 | 1.16', 'Annex 1. The basis', 'Annex 2. Repayment schedule'])
     if (!said.includes(want)) v(`the Word copy has no line "${want}"`);
   for (const not of ONLY_ON_THE_PAGE) if (said.join('\n').includes(not)) v(`the Word copy says "${not}"`);
   if (await docxPart(word.bytes, 'word/header1.xml') !== 'DSCR statement · Asha Traders') v("the Word copy's header does not name the borrower");

@@ -445,8 +445,9 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
 const lineClass = (kind?: string) => kind === 'total' || kind === 'ratio'
   ? 'font-semibold text-slate-900 dark:text-slate-100' : 'text-slate-800 dark:text-slate-200';
 
-/** The DSCR statement: years across on wider screens (as in a project report), one card per year on phones. */
+/** The DSCR statement: years across on wider screens (as in a project report), one card per year on phones; then the Total. */
 function StatementTable({ st }: { st: StatementView }) {
+  const cols = st.years.length + 1 + (st.total ? 1 : 0);
   return <div class="mt-6">
     <h3 class="font-semibold text-slate-900 dark:text-slate-100">DSCR statement</h3>
     <p class={`mt-1 ${HINT}`}>In rupees.</p>
@@ -458,15 +459,19 @@ function StatementTable({ st }: { st: StatementView }) {
             {st.years.map((fy, i) => <th key={fy} scope="col" class="px-2 py-2 text-right align-bottom font-medium text-slate-700 dark:text-slate-200">
               {fy}{!st.counted[i] && <span class={`block text-xs font-normal ${MUTED}`}>not counted</span>}
             </th>)}
+            {st.total && <th scope="col" class="px-2 py-2 text-right align-bottom font-semibold text-slate-900 dark:text-slate-100">
+              Total{st.total.sub && <span class={`block text-xs font-normal ${MUTED}`}>{st.total.sub}</span>}
+            </th>}
           </tr>
         </thead>
         <tbody>
           {st.lines.map((l) => l.kind === 'head'
-            ? <tr key={l.label}><th colSpan={st.years.length + 1} scope="colgroup" class="pt-4 pb-1 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase dark:text-slate-300">{l.label}</th></tr>
+            ? <tr key={l.label}><th colSpan={cols} scope="colgroup" class="pt-4 pb-1 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase dark:text-slate-300">{l.label}</th></tr>
             : <tr key={l.label} class={`border-b border-slate-100 dark:border-slate-800 ${l.kind ? 'border-t border-t-slate-300 dark:border-t-slate-600' : ''}`}>
               <th scope="row" class={`py-1.5 pr-3 text-left font-normal ${lineClass(l.kind)}`}>{l.label}</th>
               {l.values.map((v, i) => <td key={i} data-testid={l.id ? `${l.id}-${st.years[i]}` : undefined}
                 class={`px-2 py-1.5 text-right tabular-nums ${!st.counted[i] && l.kind === 'ratio' ? `font-semibold ${MUTED}` : lineClass(l.kind)}`}>{v}</td>)}
+              {st.total && <td data-testid={l.id ? `${l.id}-total` : undefined} class={`px-2 py-1.5 text-right font-semibold tabular-nums ${lineClass(l.kind)}`}>{l.total?.text ?? ''}</td>}
             </tr>)}
         </tbody>
       </table>
@@ -482,6 +487,16 @@ function StatementTable({ st }: { st: StatementView }) {
             </p>)}
         </div>
       </div>)}
+      {st.total && <div data-testid="card-total" class="rounded-lg border border-slate-400 p-3 dark:border-slate-600">
+        <p class="font-medium text-slate-900 dark:text-slate-100">Total{st.total.sub && <span class={`ml-2 text-xs font-normal ${MUTED}`}>{st.total.sub}</span>}</p>
+        <div class="mt-1 text-sm">
+          {st.lines.map((l) => l.kind === 'head'
+            ? <p key={l.label} class={`pt-2 text-xs font-semibold tracking-wide uppercase ${MUTED}`}>{l.label}</p>
+            : <p key={l.label} class={`flex justify-between gap-3 py-0.5 ${lineClass(l.kind)}`}>
+              <span>{l.label}</span><span data-line={l.id} class="text-right tabular-nums">{l.total?.text ?? ''}</span>
+            </p>)}
+        </div>
+      </div>}
     </div>
   </div>;
 }
