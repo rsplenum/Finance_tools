@@ -1,0 +1,19 @@
+{
+  "title": "Smart home and security",
+  "date": "2026-10-02",
+  "families": [
+    { "id": "video-door-phone", "name": "Video door phone", "unit": "nos", "levels": [null, null, "vdp-unit", "vdp-unit", "vdp-unit"] },
+    { "id": "smart-switch", "name": "Smart switches", "unit": "nos", "levels": [null, null, null, "sw-wifi", null] },
+    { "id": "cctv", "name": "CCTV", "unit": "set", "levels": [null, null, null, "cctv-4", "cctv-4"] },
+    { "id": "smart-part", "name": "Smart-home parts and packages", "unit": "nos" }
+  ],
+  "entries": [
+    { "id": "vdp-unit", "family": "video-door-phone", "name": "Video door phone", "spec": "Video door phone with an indoor screen, fixed", "level": 3, "brands": ["Godrej", "Hikvision"], "unit": "nos", "basis": "product", "rate": [5919, 19299], "fix": ["fix-electrical"], "src": ["housegyan-vdp"] },
+    { "id": "sw-wifi", "family": "smart-switch", "name": "Wi-Fi smart switch, per light point", "spec": "Wi-Fi smart switch module for one light point, app and voice control", "level": 4, "unit": "nos", "basis": "product", "rate": [800, 1500], "src": ["smartify-automation"] },
+    { "id": "cctv-4", "family": "cctv", "name": "CCTV, 4 cameras", "spec": "Four cameras with a recorder, a hard disk and cabling", "level": 4, "brands": ["Hikvision", "CP Plus"], "unit": "set", "basis": "product", "rate": [8000, 18000], "fix": ["fix-cctv"], "src": ["aliftech-cctv"] },
+    { "id": "sp-wifi-premium", "family": "smart-part", "name": "Wi-Fi smart switch, premium, 1 gang", "spec": "Premium Wi-Fi smart switch, one gang", "level": 5, "unit": "nos", "basis": "product", "rate": [4000, 8000], "src": ["smartify-automation"] },
+    { "id": "sp-2bhk-basic", "family": "smart-part", "name": "Smart home, 2BHK, basic", "spec": "Smart switches, a door lock, curtains and a video door phone for a 2BHK, basic", "level": 3, "unit": "set", "basis": "installed", "rate": [50000, 100000], "src": ["smartify-automation"] },
+    { "id": "sp-3bhk-basic", "family": "smart-part", "name": "Smart home, 3BHK, basic", "spec": "Smart home for a 3BHK, basic", "level": 3, "unit": "set", "basis": "installed", "rate": [100000, 200000], "src": ["smartify-automation"] },
+    { "id": "sp-knx-3bhk", "family": "smart-part", "name": "KNX automation, a 3BHK", "spec": "KNX wired automation for a 3BHK, basic", "level": 5, "unit": "set", "basis": "installed", "rate": [800000, 800000], "src": ["sarlux-knx"], "note": "From Rs. 8 lakh, as reported." }
+  ]
+}

@@ -1,0 +1,340 @@
+{
+  "title": "The architect's rules",
+  "date": "2026-10-02",
+  "status": "What an architect would decide from six answers: the rooms and their sizes, the doors and windows, how each surface is measured, what each room needs at each level, and how many points the wiring and plumbing need (D-UX-18). Each rule names its source, or says it is our own rule and why. A rule is an assumption until the user changes it, and the page and the document list it (D-UX-08). The sources were read through search summaries and are not yet checked against their pages.",
+  "levels": [
+    { "n": 1, "name": "Basic", "owner": "Modest", "means": "Sound and simple: ISI-marked materials, the economy ranges of known brands, nothing decorative" },
+    { "n": 2, "name": "Standard", "owner": "Upper class", "means": "What most new flats are sold with: branded mid-range materials and a few comforts" },
+    { "n": 3, "name": "Premium", "owner": "High", "means": "Premium Indian and mainstream international brands, better finishes, more lighting" },
+    { "n": 4, "name": "Luxury", "owner": "Luxury", "means": "International premium brands, natural stone, designer finishes, tiles to the ceiling" },
+    { "n": 5, "name": "Ultra luxury", "owner": "Ultra luxury", "means": "Imported designer brands, bespoke joinery, Italian marble, home automation" }
+  ],
+  "sections": [
+    { "id": "civil", "name": "Civil and repairs", "slider": false },
+    { "id": "waterproofing", "name": "Waterproofing", "slider": false },
+    { "id": "flooring", "name": "Flooring", "slider": true },
+    { "id": "walls", "name": "Walls and paint", "slider": true },
+    { "id": "ceiling", "name": "Ceiling", "slider": true },
+    { "id": "bathrooms", "name": "Bathrooms", "slider": true },
+    { "id": "kitchen", "name": "Kitchen", "slider": true },
+    { "id": "wardrobes", "name": "Wardrobes and storage", "slider": true },
+    { "id": "doors", "name": "Doors and windows", "slider": true },
+    { "id": "electrical", "name": "Electrical and lights", "slider": true },
+    { "id": "plumbing", "name": "Plumbing", "slider": false },
+    { "id": "appliances", "name": "Appliances", "slider": true },
+    { "id": "smart", "name": "Smart home and security", "slider": true }
+  ],
+  "kinds": {
+    "renovate": {
+      "label": "Repair or renovate",
+      "on": ["civil", "waterproofing", "flooring", "walls", "ceiling", "bathrooms", "kitchen", "doors", "electrical", "plumbing"],
+      "why": "A renovation renews the finishes and the services; appliances, furniture and smart controls are bought separately, so they start off and can be switched on."
+    },
+    "interiors": {
+      "label": "Interiors",
+      "on": ["civil", "walls", "ceiling", "kitchen", "wardrobes", "electrical", "appliances", "smart"],
+      "why": "Interiors fit out a flat whose floors, bathrooms, doors and services are already done; those sections start off and can be switched on."
+    }
+  },
+  "programmes": {
+    "1RK": {
+      "rooms": [
+        { "kind": "bedroom", "name": "Room", "ref": 180, "master": true },
+        { "kind": "kitchen", "name": "Kitchenette", "ref": 50 },
+        { "kind": "bath", "name": "Bathroom", "ref": 30 }
+      ],
+      "balcony": 0, "typical": null,
+      "src": ["own"], "why": "No source gave a 1 RK's rooms; these proportions keep each room above the Code's minimums."
+    },
+    "1": {
+      "rooms": [
+        { "kind": "living", "name": "Living and dining", "ref": 150 },
+        { "kind": "bedroom", "name": "Bedroom", "ref": 120, "master": true },
+        { "kind": "kitchen", "name": "Kitchen", "ref": 65 },
+        { "kind": "bath", "name": "Bathroom", "ref": 40 }
+      ],
+      "balcony": 40, "typical": [450, 600],
+      "src": ["civilsir-bhk", "squareyards-1bhk"], "why": "The middle of each room's reported range: bedroom 100–140, living 120–180, kitchen 50–80, toilet 30–50 sq ft. The balcony is our own allowance."
+    },
+    "2": {
+      "rooms": [
+        { "kind": "living", "name": "Living and dining", "ref": 200 },
+        { "kind": "bedroom", "name": "Main bedroom", "ref": 145, "master": true },
+        { "kind": "bedroom", "name": "Bedroom 2", "ref": 120 },
+        { "kind": "kitchen", "name": "Kitchen", "ref": 70 },
+        { "kind": "bath", "name": "Bathroom 1 (attached)", "ref": 32.5, "attached": true },
+        { "kind": "bath", "name": "Bathroom 2", "ref": 32.5 }
+      ],
+      "balcony": 50, "typical": [650, 850],
+      "src": ["rylinx-2bhk", "civilsir-bhk"], "why": "The middle of each room's reported range for a 700–850 sq ft 2BHK: main bedroom 130–160, second bedroom 110–130, living and dining 180–220, kitchen 60–80, bathrooms 30–35, balcony 40–60 sq ft."
+    },
+    "3": {
+      "rooms": [
+        { "kind": "living", "name": "Living and dining", "ref": 500 },
+        { "kind": "bedroom", "name": "Main bedroom", "ref": 215, "master": true },
+        { "kind": "bedroom", "name": "Bedroom 2", "ref": 175 },
+        { "kind": "bedroom", "name": "Bedroom 3", "ref": 175 },
+        { "kind": "kitchen", "name": "Kitchen", "ref": 150 },
+        { "kind": "bath", "name": "Bathroom 1 (attached)", "ref": 70, "attached": true },
+        { "kind": "bath", "name": "Bathroom 2", "ref": 70 },
+        { "kind": "bath", "name": "Bathroom 3", "ref": 70 }
+      ],
+      "balcony": 115, "typical": [850, 1200],
+      "src": ["squareyards-3bhk"], "why": "The middle of each room's reported range for a 3BHK: living 250–350 and dining 150–250, main bedroom 180–250, other bedrooms 150–200, kitchen 120–180, bathrooms 60–80, balconies 80–150 sq ft. Only the proportions are used: the rooms are scaled to your carpet area."
+    },
+    "4": {
+      "rooms": [
+        { "kind": "living", "name": "Living and dining", "ref": 500 },
+        { "kind": "bedroom", "name": "Main bedroom", "ref": 215, "master": true },
+        { "kind": "bedroom", "name": "Bedroom 2", "ref": 175 },
+        { "kind": "bedroom", "name": "Bedroom 3", "ref": 175 },
+        { "kind": "bedroom", "name": "Bedroom 4", "ref": 175 },
+        { "kind": "kitchen", "name": "Kitchen", "ref": 150 },
+        { "kind": "bath", "name": "Bathroom 1 (attached)", "ref": 70, "attached": true },
+        { "kind": "bath", "name": "Bathroom 2", "ref": 70 },
+        { "kind": "bath", "name": "Bathroom 3", "ref": 70 },
+        { "kind": "bath", "name": "Bathroom 4", "ref": 70 }
+      ],
+      "balcony": 115, "typical": [1300, 1700],
+      "src": ["civilsir-bhk", "squareyards-3bhk", "own"], "why": "A 3BHK's proportions with one more bedroom and bathroom of the same size (our rule); the typical carpet area is as reported."
+    },
+    "5": {
+      "rooms": [
+        { "kind": "living", "name": "Living and dining", "ref": 500 },
+        { "kind": "bedroom", "name": "Main bedroom", "ref": 215, "master": true },
+        { "kind": "bedroom", "name": "Bedroom 2", "ref": 175 },
+        { "kind": "bedroom", "name": "Bedroom 3", "ref": 175 },
+        { "kind": "bedroom", "name": "Bedroom 4", "ref": 175 },
+        { "kind": "bedroom", "name": "Bedroom 5", "ref": 175 },
+        { "kind": "kitchen", "name": "Kitchen", "ref": 150 },
+        { "kind": "bath", "name": "Bathroom 1 (attached)", "ref": 70, "attached": true },
+        { "kind": "bath", "name": "Bathroom 2", "ref": 70 },
+        { "kind": "bath", "name": "Bathroom 3", "ref": 70 },
+        { "kind": "bath", "name": "Bathroom 4", "ref": 70 },
+        { "kind": "bath", "name": "Bathroom 5", "ref": 70 }
+      ],
+      "balcony": 150, "typical": null,
+      "src": ["own"], "why": "A 4BHK's proportions with one more bedroom and bathroom (our rule)."
+    }
+  },
+  "bathrooms": { "rule": "One bathroom for a 1 RK and a 1BHK; one for each bedroom from a 2BHK, the first attached to the main bedroom.", "src": ["civilsir-bhk", "own"], "why": "Reported layouts give a 1BHK one toilet and a 2BHK two; one for each bedroom above that is our rule. Change the number if yours differs." },
+  "shares": {
+    "passage": { "value": 0.10, "src": ["own"], "why": "The passage and foyer: about a tenth of a flat's carpet area, from the gap between the rooms' reported sizes and the flats' reported carpet areas." },
+    "walls": { "value": 0.05, "src": ["own"], "why": "RERA carpet area includes the internal partition walls; 115 mm walls take about a twentieth of it." }
+  },
+  "aspect": {
+    "living": 1.3, "bedroom": 1.2, "kitchen": 1.25, "bath": 1.6, "passage": 3.0, "balcony": 3.0,
+    "src": ["own"], "why": "Length ÷ breadth of usual rooms: a 10 × 12 ft bedroom, a 14 × 18 ft living room, an 8 × 10 ft kitchen, a 5 × 8 ft bathroom; passages and balconies are long and narrow."
+  },
+  "height": { "m": 2.9, "src": ["own", "infralens-nbc"], "why": "The Code's minimum for a habitable room is 2.75 m and flats are usually built higher, so 2.9 m (9 ft 6 in) until you change it." },
+  "minimums": {
+    "habitable": 9.5, "kitchen": 5.0, "bath": 2.8,
+    "src": ["infralens-nbc", "studiomatrx-bath-rules"], "why": "National Building Code 2016, Part 3, as reported: a habitable room 9.5 sq m, a kitchen 5.0 sq m, a combined bath and WC 2.8 sq m. A room below its minimum is flagged, never changed."
+  },
+  "openings": {
+    "main": { "w": 1000, "h": 2100, "src": ["studiomatrx-doors"], "why": "The main door at least 1000 mm wide, 2100 mm high (NBC 2016, as reported)." },
+    "bedroom": { "w": 900, "h": 2100, "src": ["studiomatrx-doors"], "why": "A bedroom door 900 mm wide." },
+    "bath": { "w": 750, "h": 2100, "src": ["studiomatrx-doors"], "why": "A bathroom door 750 mm wide (700 mm the minimum)." },
+    "kitchen": { "w": 900, "h": 2100, "src": ["studiomatrx-doors"], "why": "A kitchen opening 800–900 mm wide; many new flats leave it without a shutter, so no door is priced." },
+    "balcony": { "w": 1500, "h": 2100, "src": ["own"], "why": "A two-panel sliding door from the living room to the balcony." },
+    "window": { "w": 1219, "h": 1219, "sill": 750, "src": ["houseyog-door-window", "civilguide-window"], "why": "A 4 × 4 ft window in a bedroom or the living room, its sill 750 mm above the floor." },
+    "kitchenWindow": { "w": 1219, "h": 914, "sill": 1050, "src": ["houseyog-door-window"], "why": "A 4 × 3 ft kitchen window, its sill 1050 mm above the floor." },
+    "ventilator": { "w": 610, "h": 457, "sill": 1500, "src": ["houseyog-door-window"], "why": "A 2 × 1.5 ft bathroom ventilator, its sill 1500 mm above the floor; the exhaust fan meets the Code's ventilation rule." },
+    "windowShare": { "value": 0.10, "src": ["studiomatrx-windows", "testbook-window"], "why": "Windows in a habitable room at least a tenth of its floor area (NBC 2016 Part 3 and Part 8, as reported): enough 4 × 4 ft windows are given to meet it." },
+    "walls": { "internal": 115, "external": 230, "src": ["own"], "why": "Half-brick internal walls and one-brick external walls, for the reveals of openings over 3 sq m." }
+  },
+  "is1200": {
+    "noDeduction": 0.5, "oneFace": 3.0,
+    "src": ["is1200-deductions"],
+    "why": "IS 1200, as reported: an opening up to 0.5 sq m is not deducted; one of 0.5 to 3 sq m is deducted from one face only; one over 3 sq m is deducted from both faces and its reveals are added. We deduct the one face inside the room the door or window belongs to (a bathroom's door from the bathroom, a bedroom's door from the bedroom)."
+  },
+  "skirting": { "m": 0.1, "src": ["own"], "why": "Skirting 100 mm high, of the floor's own tiles or stone, measured with the floor along the walls less the doorways." },
+  "tileHeights": {
+    "mm": [2133.6, 2438.4, "ceiling", "ceiling", "ceiling"],
+    "existing": 2133.6,
+    "src": ["indecimal-compare"], "why": "Bathroom wall tiles to 7 ft at Basic, 8 ft at Standard, to the ceiling above (a builder's package ladder). When the bathrooms are not being redone, existing tiles are taken to 7 ft."
+  },
+  "waterproofing": {
+    "upturn": 0.3, "showerWidth": 1.5, "showerHeight": 1.8, "balconyUpturn": 0.15,
+    "src": ["drfixit-bathseal", "own"], "why": "The bathroom floor, 300 mm up every wall, and the shower walls 1.5 m wide to 1.8 m high (Dr. Fixit's wet-area guidance, as reported); a balcony floor with a 150 mm upturn (our rule)."
+  },
+  "showerScreen": { "w": 1.5, "h": 2.0, "src": ["own"], "why": "One glass screen across the 1.5 m shower zone, 2.0 m high." },
+  "kitchen": {
+    "layout": "L", "depth": 0.6, "dado": 0.6,
+    "src": ["asianpaints-kitchen", "mccoymart-kitchen", "own"],
+    "why": "An L-shaped counter along two walls, 600 mm deep (24 in, as reported), so its run is the kitchen's length plus its breadth less one depth; base and wall units run the same length; tiles 600 mm high between the counter and the wall units (our rule). Reported L-kitchens run 8–12 ft on the long side and 4–8 ft on the short."
+  },
+  "wardrobes": {
+    "mainWidth": 2438.4, "otherWidth": 1828.8, "clearance": 609.6, "height": 2133.6, "loft": 609.6, "fullHeightFrom": 4,
+    "units": {
+      "tv": { "w": 1828.8, "h": 762, "from": 2, "room": "living" },
+      "crockery": { "w": 1219.2, "h": 2133.6, "from": 3, "room": "living" },
+      "shoes": { "w": 1219.2, "h": 914.4, "from": 2, "room": "passage" }
+    },
+    "src": ["woodenstreet-wardrobe", "own"],
+    "why": "An 8 ft wardrobe in the main bedroom and 6 ft in the others, never wider than the longer wall less 2 ft; 7 ft high with a 2 ft loft up to Premium, floor to ceiling from Luxury. A TV unit 6 × 2.5 ft and a shoe rack 4 × 3 ft from Standard, a crockery unit 4 × 7 ft from Premium (our rule; reported wardrobes are 7–8 ft high and 6–12 ft wide with 450–750 mm lofts)."
+  },
+  "falseCeiling": {
+    "byLevel": [
+      { "rooms": [], "cover": "none" },
+      { "rooms": ["living", "master"], "cover": "border" },
+      { "rooms": ["living", "bedroom"], "cover": "full" },
+      { "rooms": ["living", "bedroom", "passage"], "cover": "full" },
+      { "rooms": ["living", "bedroom", "passage"], "cover": "full" }
+    ],
+    "border": 0.6, "coveInset": 0.6,
+    "src": ["own"], "why": "No false ceiling at Basic; a 600 mm border with a cove in the living room and main bedroom at Standard; the whole ceiling of the living room and bedrooms at Premium, and of the passage too above that. The cove runs 600 mm in from the walls."
+  },
+  "feature": {
+    "living": 4, "master": 5,
+    "src": ["own"], "why": "A feature wall from Luxury: the living room's longer wall; at Ultra luxury also the wall behind the main bed (the bedroom's shorter wall)."
+  },
+  "points": {
+    "living": { "lights": 3, "fans": 2, "sockets": 3, "ac": 1, "tv": 1 },
+    "bedroom": { "lights": 2, "fans": 1, "sockets": 2, "ac": 1, "masterExtra": 1 },
+    "kitchen": { "lights": 1, "exhaust": 1, "sockets": 3, "power": 2 },
+    "bath": { "lights": 1, "exhaust": 1, "power": 1 },
+    "passage": { "lights": 2 },
+    "balcony": { "lights": 1, "sockets": 1 },
+    "src": ["own", "goldmedal-points", "greatwhite-sockets", "is4648"],
+    "why": "Our rule for each room, set so that a 2BHK comes to about 40 points and a 3BHK to about 50, inside the 32–42 and 45–58 points reported for them. A point is one light, fan, socket or power outlet with its wiring and switch."
+  },
+  "plumbing": {
+    "bath": { "supply": 5, "drain": 3 },
+    "kitchen": { "supply": 3, "drain": 2 },
+    "balcony": { "supply": 0, "drain": 1 },
+    "src": ["own"], "why": "A bathroom: water to the WC, the basin, the mixer (hot and cold) and the health faucet; drains from the WC, the basin and a floor trap. A kitchen: water to the sink, the purifier and the washing machine; drains from the sink and the washing machine. A balcony: one floor trap."
+  },
+  "ac": { "from": 3, "allBedroomsFrom": 4, "src": ["own"], "why": "Split ACs in the living room and main bedroom from Premium, and in every bedroom from Luxury, when Appliances is on." },
+  "debris": { "sqftPerLot": 500, "src": ["own"], "why": "One lot (a tempo load to an approved dump) for each bathroom stripped, and one for each 500 sq ft of floor taken up, rounded up." },
+  "makingGood": { "share": 0.10, "src": ["own"], "why": "Making good the plaster after chasing walls for new pipes and wiring: a tenth of the walls." },
+  "cities": {
+    "src": ["homecostcalc-cities", "aecord-cci"],
+    "why": "The middle of each city's reported construction cost per sq ft, against the average of the six cities' middles. It scales labour and rates that include labour, not the price of a product, which is the same across India. A place not in the list uses the rates as they are, and the page says so.",
+    "list": [
+      { "id": "bengaluru", "name": "Bengaluru", "cost": [1900, 3000] },
+      { "id": "chennai", "name": "Chennai", "cost": [1800, 2700] },
+      { "id": "delhi", "name": "Delhi NCR", "cost": [1900, 3000] },
+      { "id": "hyderabad", "name": "Hyderabad", "cost": [1700, 2700] },
+      { "id": "mumbai", "name": "Mumbai", "cost": [2200, 3500] },
+      { "id": "pune", "name": "Pune", "cost": [1800, 2900] }
+    ]
+  },
+  "gst": { "pct": 18, "src": ["newsonair-gst", "jkcement-gst", "woodenmax-shower"], "why": "A rate quoted before GST has 18% added; every other rate is taken as the price paid, as its source quotes it." },
+  "checks": {
+    "paintRatio": [2.5, 3.5],
+    "src": ["own"], "why": "Walls and ceilings to paint usually come to 2.5–3.5 times the carpet area; outside that, check the room sizes."
+  },
+  "templates": {
+    "flat": [
+      { "family": "protection", "section": "civil", "qty": "protect" },
+      { "family": "cleaning", "section": "civil", "qty": "carpet" },
+      { "family": "debris", "section": "civil", "qty": "debris", "kinds": ["renovate"] },
+      { "family": "making-good", "section": "civil", "qty": "making-good", "kinds": ["renovate"] },
+      { "family": "db", "section": "electrical", "qty": "one", "kinds": ["renovate"] },
+      { "family": "video-door-phone", "section": "smart", "qty": "one" },
+      { "family": "cctv", "section": "smart", "qty": "one" }
+    ],
+    "living": [
+      { "family": "demolish-floor", "section": "civil", "qty": "floor", "kinds": ["renovate"], "needs": "flooring" },
+      { "family": "floor", "section": "flooring", "qty": "floor-skirting" },
+      { "family": "paint", "section": "walls", "qty": "paint" },
+      { "family": "feature-wall", "section": "walls", "qty": "feature" },
+      { "family": "false-ceiling", "section": "ceiling", "qty": "false-ceiling" },
+      { "family": "cove", "section": "ceiling", "qty": "cove" },
+      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate"] },
+      { "family": "lights", "section": "electrical", "qty": "light-points" },
+      { "family": "fans", "section": "electrical", "qty": "fan-points" },
+      { "family": "chandelier", "section": "electrical", "qty": "one" },
+      { "family": "carpentry", "section": "wardrobes", "qty": "unit:tv", "name": "TV unit" },
+      { "family": "carpentry", "section": "wardrobes", "qty": "unit:crockery", "name": "Crockery unit" },
+      { "family": "windows", "section": "doors", "qty": "windows" },
+      { "family": "mesh", "section": "doors", "qty": "windows" },
+      { "family": "smart-switch", "section": "smart", "qty": "light-points" },
+      { "family": "ac", "section": "appliances", "qty": "ac" }
+    ],
+    "bedroom": [
+      { "family": "demolish-floor", "section": "civil", "qty": "floor", "kinds": ["renovate"], "needs": "flooring" },
+      { "family": "floor", "section": "flooring", "qty": "floor-skirting" },
+      { "family": "paint", "section": "walls", "qty": "paint" },
+      { "family": "feature-wall", "section": "walls", "qty": "feature" },
+      { "family": "false-ceiling", "section": "ceiling", "qty": "false-ceiling" },
+      { "family": "cove", "section": "ceiling", "qty": "cove" },
+      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate"] },
+      { "family": "lights", "section": "electrical", "qty": "light-points" },
+      { "family": "fans", "section": "electrical", "qty": "fan-points" },
+      { "family": "wardrobe", "section": "wardrobes", "qty": "wardrobe" },
+      { "family": "loft", "section": "wardrobes", "qty": "loft" },
+      { "family": "room-door", "section": "doors", "qty": "door" },
+      { "family": "windows", "section": "doors", "qty": "windows" },
+      { "family": "mesh", "section": "doors", "qty": "windows" },
+      { "family": "smart-switch", "section": "smart", "qty": "light-points" },
+      { "family": "ac", "section": "appliances", "qty": "ac" }
+    ],
+    "kitchen": [
+      { "family": "demolish-floor", "section": "civil", "qty": "floor", "kinds": ["renovate"], "needs": "flooring" },
+      { "family": "floor", "section": "flooring", "qty": "floor-skirting" },
+      { "family": "paint", "section": "walls", "qty": "paint" },
+      { "family": "cabinets", "section": "kitchen", "qty": "counter-run" },
+      { "family": "counter", "section": "kitchen", "qty": "counter-top" },
+      { "family": "wall-tile", "section": "kitchen", "qty": "dado", "name": "Tiles between the counter and the wall units" },
+      { "family": "sink", "section": "kitchen", "qty": "one" },
+      { "family": "sink-mixer", "section": "kitchen", "qty": "one" },
+      { "family": "hardware-upgrade", "section": "kitchen", "qty": "one" },
+      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate"] },
+      { "family": "lights", "section": "electrical", "qty": "light-points", "maxLevel": 3 },
+      { "family": "exhaust", "section": "electrical", "qty": "exhaust-points" },
+      { "family": "supply-point", "section": "plumbing", "qty": "supply-points" },
+      { "family": "drain-point", "section": "plumbing", "qty": "drain-points" },
+      { "family": "windows", "section": "doors", "qty": "windows" },
+      { "family": "mesh", "section": "doors", "qty": "windows" },
+      { "family": "chimney", "section": "appliances", "qty": "one" },
+      { "family": "hob", "section": "appliances", "qty": "one" },
+      { "family": "oven", "section": "appliances", "qty": "one" },
+      { "family": "dishwasher", "section": "appliances", "qty": "one" },
+      { "family": "purifier", "section": "appliances", "qty": "one" }
+    ],
+    "bath": [
+      { "family": "demolish-bath", "section": "civil", "qty": "one", "kinds": ["renovate"], "needs": "bathrooms" },
+      { "family": "waterproofing", "section": "waterproofing", "qty": "wp-bath" },
+      { "family": "floor-wet", "section": "bathrooms", "qty": "floor", "name": "Floor tiles, anti-skid" },
+      { "family": "wall-tile", "section": "bathrooms", "qty": "bath-tiles", "name": "Wall tiles" },
+      { "family": "sanitary", "section": "bathrooms", "qty": "one" },
+      { "family": "cp", "section": "bathrooms", "qty": "one" },
+      { "family": "shower-screen", "section": "bathrooms", "qty": "shower-screen" },
+      { "family": "vanity", "section": "bathrooms", "qty": "one" },
+      { "family": "mirror", "section": "bathrooms", "qty": "one" },
+      { "family": "accessories", "section": "bathrooms", "qty": "one" },
+      { "family": "bath-ceiling", "section": "bathrooms", "qty": "floor" },
+      { "family": "geyser", "section": "bathrooms", "qty": "one" },
+      { "family": "paint", "section": "walls", "qty": "paint" },
+      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate"] },
+      { "family": "lights", "section": "electrical", "qty": "light-points", "maxLevel": 3 },
+      { "family": "exhaust", "section": "electrical", "qty": "exhaust-points" },
+      { "family": "supply-point", "section": "plumbing", "qty": "supply-points" },
+      { "family": "drain-point", "section": "plumbing", "qty": "drain-points" },
+      { "family": "bath-door", "section": "doors", "qty": "door" }
+    ],
+    "passage": [
+      { "family": "demolish-floor", "section": "civil", "qty": "floor", "kinds": ["renovate"], "needs": "flooring" },
+      { "family": "floor", "section": "flooring", "qty": "floor-skirting" },
+      { "family": "paint", "section": "walls", "qty": "paint" },
+      { "family": "false-ceiling", "section": "ceiling", "qty": "false-ceiling" },
+      { "family": "cove", "section": "ceiling", "qty": "cove" },
+      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate"] },
+      { "family": "lights", "section": "electrical", "qty": "light-points" },
+      { "family": "carpentry", "section": "wardrobes", "qty": "unit:shoes", "name": "Shoe rack" },
+      { "family": "main-door", "section": "doors", "qty": "main-door" },
+      { "family": "smart-lock", "section": "doors", "qty": "main-door" },
+      { "family": "smart-switch", "section": "smart", "qty": "light-points" }
+    ],
+    "balcony": [
+      { "family": "demolish-floor", "section": "civil", "qty": "floor", "kinds": ["renovate"], "needs": "flooring" },
+      { "family": "waterproofing", "section": "waterproofing", "qty": "wp-balcony" },
+      { "family": "floor-wet", "section": "flooring", "qty": "floor-skirting", "name": "Floor tiles, anti-skid" },
+      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate"] },
+      { "family": "lights", "section": "electrical", "qty": "light-points", "maxLevel": 3 },
+      { "family": "drain-point", "section": "plumbing", "qty": "drain-points" }
+    ]
+  }
+}

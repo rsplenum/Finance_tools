@@ -1,0 +1,21 @@
+{
+  "title": "Building materials (a house)",
+  "date": "2026-10-02",
+  "status": "For building a house and adding floors (E5): the materials the structure is costed from.",
+  "families": [
+    { "id": "cement", "name": "Cement", "unit": "bag" },
+    { "id": "steel", "name": "Reinforcement steel", "unit": "kg" },
+    { "id": "aggregate", "name": "Sand and aggregate", "unit": "cum" },
+    { "id": "masonry-unit", "name": "Bricks and blocks", "unit": "nos" }
+  ],
+  "entries": [
+    { "id": "cm-opc53", "family": "cement", "name": "OPC 53-grade cement, 50 kg", "spec": "Ordinary Portland cement, 53 grade, a 50 kg bag (city range)", "brands": ["UltraTech", "ACC", "Ambuja"], "unit": "bag", "basis": "product", "rate": [342, 433], "src": ["civiconcepts-materials"] },
+    { "id": "cm-ppc", "family": "cement", "name": "PPC cement, 50 kg", "spec": "Portland pozzolana cement, a 50 kg bag", "brands": ["UltraTech", "ACC", "Ambuja"], "unit": "bag", "basis": "product", "rate": [364, 364], "src": ["civiconcepts-materials"] },
+    { "id": "st-tmt", "family": "steel", "name": "TMT bars Fe 500D, 12 mm", "spec": "TMT reinforcement bars Fe 500D, 12 mm", "brands": ["Tata Tiscon", "JSW Neosteel", "SAIL"], "unit": "kg", "basis": "product", "rate": [50, 64], "src": ["civiconcepts-materials", "comaron-steel-cement"] },
+    { "id": "ag-msand", "family": "aggregate", "name": "M-sand", "spec": "Manufactured sand", "unit": "cum", "basis": "product", "rate": [1600, 2100], "src": ["civiconcepts-materials"] },
+    { "id": "ag-river", "family": "aggregate", "name": "River sand", "spec": "River sand", "unit": "cum", "basis": "product", "rate": [2500, 3200], "src": ["civiconcepts-materials"] },
+    { "id": "ag-20mm", "family": "aggregate", "name": "Coarse aggregate, 20 mm", "spec": "20 mm crushed stone aggregate", "unit": "cum", "basis": "product", "rate": [1800, 2300], "src": ["civiconcepts-materials"] },
+    { "id": "mu-brick", "family": "masonry-unit", "name": "Red brick", "spec": "Standard red clay brick", "unit": "nos", "basis": "product", "rate": [8, 10], "src": ["civiconcepts-materials"] },
+    { "id": "mu-aac", "family": "masonry-unit", "name": "AAC block, 200 mm", "spec": "AAC block 200 mm thick", "unit": "nos", "basis": "product", "rate": [61, 78], "src": ["civiconcepts-materials"] }
+  ]
+}

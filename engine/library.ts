@@ -1,0 +1,152 @@
+/**
+ * The library (D-UX-18): every material, finish, fitting and appliance the estimate can use, each with its
+ * specification, brands, unit and reported rate (engine/data/library/*.json), and the labour that fixes them. A family is
+ * a slot an architect fills (a floor finish, a WC and basin, a wardrobe); its five levels name one item each, and every
+ * other item of the family is an alternative the user can pick. Pure, no DOM. A rate is the middle of the range its
+ * sources report; every source is in engine/data/sources.json, read through search summaries and not yet checked.
+ * architect-check.ts prices every item a second way.
+ */
+import SOURCES from './data/sources.json';
+import LABOUR from './data/library/labour.json';
+import CIVIL from './data/library/civil.json';
+import WATERPROOFING from './data/library/waterproofing.json';
+import FLOORING from './data/library/flooring.json';
+import WALLS from './data/library/walls.json';
+import CEILING from './data/library/ceiling.json';
+import BATHROOMS from './data/library/bathrooms.json';
+import KITCHEN from './data/library/kitchen.json';
+import WARDROBES from './data/library/wardrobes.json';
+import DOORS from './data/library/doors.json';
+import ELECTRICAL from './data/library/electrical.json';
+import PLUMBING from './data/library/plumbing.json';
+import APPLIANCES from './data/library/appliances.json';
+import SMART from './data/library/smart.json';
+import FURNITURE from './data/library/furniture.json';
+import STRUCTURE from './data/library/structure.json';
+
+export type Unit = 'sqft' | 'sqm' | 'rft' | 'm' | 'nos' | 'set' | 'lot' | 'kg' | 'cum' | 'bag';
+export type Basis = 'installed' | 'supply' | 'product' | 'set';
+export type ItemKind = 'fixed' | 'movable' | 'appliance';
+export type Band = [number, number];
+export interface Count { id: string; n: number }
+export interface Entry {
+  id: string; family: string; name: string; spec: string; level?: number; brands?: string[]; unit: Unit; basis: Basis;
+  /** The reported range, per unit, or per pack when `pack` is given. Missing: the rate is still to be found. */
+  rate?: Band; pack?: { qty: number; unit: Unit; what?: string }; wastage?: number;
+  /** Labour added per unit, by id in labour.json. */
+  fix?: Count[];
+  /** For a set: the items it is made of, each priced on its own. */
+  parts?: Count[];
+  /** 'extra' when the source quotes the rate before GST. */
+  gst?: 'extra';
+  src: string[]; note?: string; file: string;
+}
+export interface Family { id: string; name: string; unit: Unit; levels?: (string | null)[]; fixed?: string; kind?: ItemKind; file: string }
+export interface Labour { id: string; name: string; unit: Unit; rate: Band; src: string[]; note?: string }
+export interface Source { what: string; url: string; class: string }
+interface RawFile { title: string; date: string; families: Omit<Family, 'file'>[]; entries: (Omit<Entry, 'file' | 'fix'> & { fix?: (string | Count)[] })[] }
+
+/** The library's files, in the order of the estimate's sections. */
+export const FILES = [CIVIL, WATERPROOFING, FLOORING, WALLS, CEILING, BATHROOMS, KITCHEN, WARDROBES, DOORS, ELECTRICAL, PLUMBING, APPLIANCES, SMART, FURNITURE, STRUCTURE] as unknown as RawFile[];
+export const SOURCE: Record<string, Source> = SOURCES.sources;
+export const CLASSES: Record<string, string> = SOURCES.classes;
+export const LIBRARY_DATE = SOURCES.date;
+export const LIBRARY_STATUS = SOURCES.status;
+
+const counts = (xs?: (string | Count)[]): Count[] | undefined => xs?.map((x) => (typeof x === 'string' ? { id: x, n: 1 } : x));
+export const FAMILIES = new Map<string, Family>();
+export const ENTRIES = new Map<string, Entry>();
+for (const f of FILES) {
+  for (const fam of f.families) FAMILIES.set(fam.id, { ...fam, file: f.title });
+  for (const e of f.entries) ENTRIES.set(e.id, { ...e, fix: counts(e.fix), file: f.title });
+}
+export const LABOUR_ITEMS = new Map<string, Labour>((LABOUR.labour as Labour[]).map((l) => [l.id, l]));
+
+/** The id of the item a family puts at a level (1 to 5), or null when it has nothing at that level. */
+export function ladder(family: Family, level: number): string | null {
+  if (family.fixed) return family.fixed;
+  return family.levels?.[level - 1] ?? null;
+}
+
+/** Exact conversions from 1 ft = 0.3048 m. */
+export const SQFT_PER_SQM = 1 / (0.3048 * 0.3048);
+export const FT_PER_M = 1 / 0.3048;
+const AREA: Unit[] = ['sqft', 'sqm'], LENGTH: Unit[] = ['rft', 'm'];
+/** How many of `to` make one `from`; only between units of the same kind. */
+export function per(from: Unit, to: Unit): number {
+  if (from === to) return 1;
+  if (from === 'sqm' && to === 'sqft') return SQFT_PER_SQM;
+  if (from === 'sqft' && to === 'sqm') return 1 / SQFT_PER_SQM;
+  if (from === 'm' && to === 'rft') return FT_PER_M;
+  if (from === 'rft' && to === 'm') return 1 / FT_PER_M;
+  throw new Error(`No conversion from ${from} to ${to}`);
+}
+export const sameKind = (a: Unit, b: Unit) => a === b || (AREA.includes(a) && AREA.includes(b)) || (LENGTH.includes(a) && LENGTH.includes(b));
+
+export const mid = (b: Band) => (b[0] + b[1]) / 2;
+const r2 = (x: number) => Math.round(x * 100) / 100;
+const inr = (x: number) => x.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+
+/** An item's rate and how it was worked out. `rate` is in rupees per unit, to the paisa. */
+export interface Price { rate: number; how: string[] }
+
+/**
+ * The rate of an item for a city: the middle of its reported range; for a material, per unit (a pack's price divided by
+ * what the pack covers), plus its wastage, plus the labour that fixes it; for a set, its parts added up. The city's
+ * factor scales labour and rates that include labour, never the price of a product, which is the same across India.
+ * GST is added only to a rate quoted before it. Null when the item, or a part of it, has no rate yet.
+ */
+export function price(id: string, city: number, gstPct: number): Price | null {
+  const raw = rawPrice(id, city);
+  if (!raw) return null;
+  const e = ENTRIES.get(id) as Entry;
+  let rate = raw.rate;
+  const how = [...raw.how];
+  if (e.gst === 'extra') { rate *= 1 + gstPct / 100; how.push(`GST ${gstPct}% added: the source quotes before GST`); }
+  return { rate: r2(rate), how };
+}
+
+function rawPrice(id: string, city: number): { rate: number; how: string[] } | null {
+  const e = ENTRIES.get(id);
+  if (!e) throw new Error(`No item ${id} in the library`);
+  const how: string[] = [];
+  let base = 0;
+  if (e.basis === 'set') {
+    for (const p of e.parts ?? []) {
+      const part = rawPrice(p.id, city);
+      if (!part) return null;
+      base += p.n * part.rate;
+      how.push(`${p.n} × ${(ENTRIES.get(p.id) as Entry).name} at Rs. ${inr(r2(part.rate))}`);
+    }
+  } else {
+    if (!e.rate) return null;
+    const m = mid(e.rate);
+    if (e.basis === 'installed') {
+      base = m * city;
+      how.push(`Rs. ${inr(m)}, the middle of Rs. ${inr(e.rate[0])}–${inr(e.rate[1])} a ${e.unit}, supplied and fixed${city !== 1 ? `, × ${city.toFixed(3)} for the city` : ''}`);
+    } else {
+      const each = e.pack ? m / (e.pack.qty * per(e.pack.unit, e.unit)) : m;
+      const w = e.basis === 'supply' ? e.wastage ?? 0 : 0;
+      base = each * (1 + w);
+      how.push(e.pack
+        ? `Rs. ${inr(m)} for ${e.pack.what ?? 'a pack'} covering ${e.pack.qty} ${e.pack.unit}: Rs. ${inr(r2(each))} a ${e.unit}`
+        : `Rs. ${inr(m)}, the middle of Rs. ${inr(e.rate[0])}–${inr(e.rate[1])} a ${e.unit}`);
+      if (w) how.push(`${+(w * 100).toFixed(2)}% wastage`);
+    }
+  }
+  for (const f of e.fix ?? []) {
+    const l = LABOUR_ITEMS.get(f.id);
+    if (!l) throw new Error(`No labour ${f.id} for ${id}`);
+    base += f.n * mid(l.rate) * city;
+    how.push(`${f.n > 1 ? `${f.n} × ` : ''}${l.name.charAt(0).toLowerCase() + l.name.slice(1)} at Rs. ${inr(mid(l.rate))}${city !== 1 ? ` × ${city.toFixed(3)}` : ''}`);
+  }
+  return { rate: base, how };
+}
+
+/** The items a family can take: its own and any item a level names, the level's item first. */
+export function choices(familyId: string): Entry[] {
+  const fam = FAMILIES.get(familyId);
+  if (!fam) return [];
+  const named = new Set([...(fam.levels ?? []), fam.fixed].filter((x): x is string => !!x));
+  return [...ENTRIES.values()].filter((e) => e.family === familyId || named.has(e.id)).sort((a, b) => (a.level ?? 0) - (b.level ?? 0));
+}
