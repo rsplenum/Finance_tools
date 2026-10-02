@@ -10,7 +10,8 @@
     "interestTL": "Interest on term loans",
     "principalTL": "Term-loan instalments (principal)",
     "interestOther": "Interest on other borrowings (working capital)",
-    "leaseRentals": "Lease rentals"
+    "leaseRentals": "Lease rentals",
+    "existingEmis": "Existing EMIs (interest and principal)"
   },
   "base": {
     "available": ["pat", "depreciation", "nonCash"],
@@ -98,11 +99,24 @@
       "No principal is repaid during the moratorium; interest is still paid.",
       "Instalment 1 falls at the end of the first month or quarter after the moratorium, and so on.",
       "Equal instalments of principal: loan ÷ number of instalments. Equated monthly instalments (EMI): the exact EMI, not rounded (as Excel's PMT); banks round it up to the rupee, a difference under Rs. 1 a month. EMI is worked monthly only.",
-      "Tax = tax rate × profit before tax, and nil in a year with a loss. Losses carried forward are not set off, so tax may be overstated in the year after a loss (the DSCR errs low).",
+      "Tax: set by who the borrower is (engine/data/tax.json), or a typed rate × profit before tax. Nil in a year with a loss. Losses carried forward are not set off, so tax may be overstated in the year after a loss (the DSCR errs low).",
       "Profit before interest, depreciation and tax is taken after lease rentals.",
+      "Extra income from the new asset is added to profit before interest, depreciation and tax from the month the asset starts running: in that year a twelfth of the yearly figure for each month left to 31 March, then the whole yearly figure. It does not grow. Leaving it out errs low.",
       "Years are Indian financial years, April to March.",
       "A line given as one figure and a percentage a year: each year is the year before × (1 + the percentage) when it grows, or × (1 − the percentage) when it falls (depreciation on the written-down value). One figure for every year is the same in each year. A figure for each year is taken as typed.",
-      "When the figures start after the loan's first year (operations start later), no instalment may fall before they start; the interest before then is taken as paid from the project cost (capitalised, as Ind AS 23 does for an asset under construction), and those years are left out of the statement."
+      "When the figures start after the loan's first year (operations start later), no instalment may fall before they start; the interest before then is taken as paid from the project cost (capitalised, as Ind AS 23 does for an asset under construction), and those years are left out of the statement.",
+      "Existing EMIs (loans already running) count in full as debt service under every method: each EMI for every month of every year, or only up to the month of its last EMI when that is given. A year that pays them has instalments, so it counts. Their interest is not known apart from the principal, so none of it is set against tax (the DSCR errs low)."
     ]
+  },
+  "existingEmis": {
+    "question": "Which existing EMIs count",
+    "byBorrower": {
+      "proprietor": { "counts": "All of the proprietor's EMIs, business and personal: one cash flow pays them", "ask": "All EMIs a month, business and personal (home, car, personal loans)" },
+      "firm": { "counts": "The firm's or LLP's own loans only, not the partners' personal loans", "ask": "EMIs a month on the firm's own loans" },
+      "company": { "counts": "The company's own loans only, not the directors' personal loans", "ask": "EMIs a month on the company's own loans" }
+    },
+    "unknown": "EMIs a month on loans already running: all of a proprietor's, business and personal; a firm's, LLP's or company's own loans only",
+    "source": "The owner's decision of 01-10-2026, D-POL-06",
+    "date": "2026-10-01"
   }
 }

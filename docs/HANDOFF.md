@@ -1,6 +1,6 @@
 # Handoff — start here in a new session
-State at 30-09-2026: P0 to P1c are on `main` (PRs #2 and #3 merged), which Cloudflare Pages builds: the DSCR engine, the calculator at `/dscr/`, and the statement to download as a PDF and an Excel copy (D-DOC-01, D-DOC-02, D-TECH-13), free for now.
-- **The owner is not satisfied with the page.** An outside review (Gemini, reading `main` before PR #2 was merged) and the owner's own words: it should ask seven inputs, not ten plus method choices. The engine's maths stands; the review's own formula taxes profit before interest. **Next is the front door (P1e)**: the owner's seven inputs by default, everything else under one closed "More options". Six choices for it wait on the owner (below).
+State at 02-10-2026: P0 to P1c are on `main` (PRs #2 and #3 merged), which Cloudflare Pages builds: the DSCR engine, the calculator at `/dscr/`, and the statement to download as a PDF and an Excel copy (D-DOC-01, D-DOC-02, D-TECH-13), free for now. **P1e is on PR #4** (branch `ccr-ba2b6ab9-casbge`, with the owner's front-door answers), waiting for "merge": existing EMIs as debt service, the tax by who the borrower is (a proprietor's slab rates), and the new asset's income, each worked out twice and shown on the current page in the smallest way (D-POL-07 to 09, D-UX-11, D-TECH-15).
+- **The owner is not satisfied with the page.** An outside review (Gemini, reading `main` before PR #2 was merged) and the owner's own words: it should ask seven inputs, not ten plus method choices. The engine's maths stands; the review's own formula taxes profit before interest. **Next: the front door itself (P1f)**: the owner's inputs by default, everything else under one closed "More options" (D-POL-05, D-POL-06, D-UX-10): a borrower first.
 - **Skills** in `.claude/skills/` (D-TECH-14): `brief-first`, `money-maths-checks`, `lender-documents`. The owner's rule, now in CLAUDE.md: give the tradeoffs of every request.
 
 The test figures are model-worked until the owner confirms fictional cases A and A′ (`docs/GOLDEN-CASES.md`); nothing from the owner's office, ever (D-BIZ-02). Keep this file short and current.
@@ -15,13 +15,14 @@ The test figures are model-worked until the owner confirms fictional cases A and
   - `engine/loan.ts`: the loan month by month (`months`), and by financial year (`schedule`).
   - `engine/dscr.ts`:
     - `dscrStatement` from the borrower's own figures;
-    - `planStatement` from projections and loan terms, with the profit build-up and tax;
+    - `planStatement` from projections and loan terms, with the profit build-up and tax; per year it also takes the new asset's income (`assetIncome`, added to profit), existing EMIs (`existingEmis`, debt service in full under every method, `PLAN_SERVICE`) and, in place of a rate, who the borrower is (`taxBy`);
     - `amortization`, `maxLoanAmount`, `shortestRepayment` and `loanTimeline`;
     - an optional first year of figures (`start`) that leaves out an interest-only first year by the user's choice (D-POL-04);
-  - `engine/project.ts`: yearly figures from one or two answers (the same, grows by %, falls by %), checked in closed form (D-TECH-12). The page asks a few answers per line, not every year (D-UX-07);
+  - `engine/project.ts`: yearly figures from one or two answers (the same, grows by %, falls by %), checked in closed form (D-TECH-12). The page asks a few answers per line, not every year (D-UX-07). Also `emisByYear` (EMIs a month to each year, up to each loan's last EMI) and `fromMonth` (a yearly figure from the month it starts running);
     - a list of facts needed instead of figures.
-  - `engine/dscr-check.ts`: the second computation, closed-form month by month. Figures are withheld if it disagrees.
-  - Data: the method and three presets in `engine/data/dscr.json`; tax rates by borrower in `engine/data/tax.json`.
+  - `engine/tax.ts`: `taxOn` by borrower (slabs, rebate and marginal relief, surcharge and marginal relief, cess), `taxSummary`, `BORROWERS`.
+  - `engine/dscr-check.ts`: the second computation, closed-form month by month; `taxCheck`, `emisCheck`, `fromMonthCheck`. Figures are withheld if it disagrees.
+  - Data: the method, three presets and which existing EMIs count by borrower (`existingEmis`) in `engine/data/dscr.json`; the tax by borrower (proprietor, firm or LLP, company; secondary sources) in `engine/data/tax.json`.
 - DSCR page (D-UX-03 to 06, D-TECH-09 and 11):
   - Files:
     - `site/src/dscr/model.ts`: pure; typed text to engine to words, with the statement and schedule views; unit-tested.
@@ -34,7 +35,11 @@ The test figures are model-worked until the owner confirms fictional cases A and
     - statement: `dscr-<year>`, `available-<year>`, `service-<year>`, `pbt-<year>`, `tax-<year>`, `card-<year>`;
     - schedule: `schedule-<year>`, `month-<YYYY-MM>`;
     - loan read-back: `loan-level`, `loan-dates`, `amount-read`;
-    - buttons: `tax-<borrower>`, `clear-all`;
+    - who the borrower is: `fld-borrowerType-<proprietor|firm|company>`; `tax-by` (the tax line's words);
+    - loans already running: the mode `fld-otherLoansInterest-emi`, then `fld-emi-<n>`, `fld-emiLast-<n>`, `add-loan`, `remove-loan`, `emis-ask`, `readback-existingEmis`;
+    - the new asset: the mode `fld-assetIncome-from`, then `fld-assetIncome-yearly`, `fld-assetIncome-start`, `readback-assetIncome`;
+    - statement lines shown only when not nil: `asset-<year>`, `emis-<year>`;
+    - buttons: `clear-all`;
     - download: fields `fld-borrower`, `fld-lender`, `fld-preparedBy`; `doc-status`, `doc-needs`, `doc-wait`, `download-pdf`, `download-xlsx`.
 - The document (P1c):
   - `site/src/dscr/document.ts`: `statementDoc` builds it from the state and the preview; `docNeeds`, `docStatus`, `fileName`.
@@ -42,31 +47,27 @@ The test figures are model-worked until the owner confirms fictional cases A and
   - `scripts/read-doc.mjs`: reads the files back with pdf.js and read-excel-file, for the tests and the site check.
 - `site/`: home, `/dscr/`, 404; dark mode without a flash. `worker/`: `GET /health`.
 - Checks, all in CI:
-  - `npm test` (103, including the simulation and the document read back by pdf.js and read-excel-file);
+  - `npm test` (130, including the simulation and the document read back by pdf.js and read-excel-file);
   - `npm run typecheck`;
   - `npm run rules-doc -- --check`;
   - `npm run build`;
   - `npm run worker:build`;
-  - `npm run check:site`: 0 violations. It drives the calculator with case A, the quick path and own figures, downloads the PDF and the Excel copy at 390 px (provisional, then complete) and reads them back; about 16 s.
+  - `npm run check:site`: 0 violations. It drives the calculator with case A, the quick path, a proprietor with EMIs and the new asset, and own figures, downloads the PDF and the Excel copy at 390 px (provisional, then complete) and reads them back; about 20 s.
 
 ## Next — one fresh session per item
 | # | Session | Starter prompt (paste as the first message) |
 |---|---|---|
-| P1e | The front door for `/dscr/` | "Work from `main`. Read CLAUDE.md and docs/HANDOFF.md (the six front-door choices under 'Waiting on the owner'). P1e: the front door. My answers to the six choices: <your answers, or 'as recommended'>. By default the page asks only: this year's profit (before tax, depreciation and loan interest), growth % a year, existing loans' EMIs a month, tax (borrower buttons), loan amount, interest rate, term in years. Map them onto the existing engine; any new arithmetic (EMIs a month to a year, years to instalments) goes in the engine, worked out twice. The rest are assumptions in engine/data/defaults.json, listed on the page in one line with a way to change each. Everything else goes under one closed 'More options'. Results first: the EMI, total interest, the average and lowest DSCR, each year marked against the target in words and colour; then the year-wise table and the schedule; buttons PDF, Excel, Print. The site check counts the default fields. Keep cases A and A′ passing through More options, and the document in step. Finish per HANDOFF." |
-| P1d | Payment for the download (after P1e, and after the owner's Phase 0 items: business entity, GST, Razorpay account) | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md, docs/DECISIONS.md (D-TECH-01, D-TECH-06, D-DOC-01) and docs/CLOUDFLARE.md. P1d: payment for the DSCR statement download, through Razorpay and the Worker. Ask me first, in one message: the price; whether the Worker stays separate or moves beside the site as Pages Functions; and, since the document is made in the browser, whether payment only unlocks the two buttons (anyone reading the page's code could still make the file) or the file must come from the server. Then build it: the order made in the Worker, the payment verified by its signature, and the buttons unlocked for that statement only. Test with Razorpay's test keys, set only in the environment settings, never in the repo. The preview stays free. Finish per HANDOFF." |
+| P1f | The front door for `/dscr/` | "Work from `main` (after PR #4 is merged). Read CLAUDE.md, docs/HANDOFF.md and docs/DECISIONS.md D-UX-10 and D-UX-11. P1f: the front door, for a borrower first, with a visible link at the top for a DSA's or CA's year-by-year projections. By default the page asks only: who the borrower is (it sets the tax and which EMIs count); this year's profit (before tax, depreciation and loan interest); growth % a year; existing EMIs a month (labelled by borrower type); depreciation, if any; loan amount; interest rate; term in years. The loan starts this month, listed as an assumption. Everything else goes under one closed 'More options', with a visible link for year-by-year projections. Results first: the EMI (or the first instalment), total interest, the average and lowest DSCR, each year marked against the target in words and colour; then the year-wise table, with each part-year marked with its instalments ('7 of 12 instalments'), and the schedule; buttons PDF, Excel and Print (Print opens the same PDF). More options also takes extra income from the new asset and each existing loan's end month (the engine has them: P1e). The site check counts the default fields. Keep cases A and A′ passing through More options, and the document in step. Finish per HANDOFF." |
+| P1d | Payment for the download (after P1f, and after the owner's Phase 0 items: business entity, GST, Razorpay account) | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md, docs/DECISIONS.md (D-TECH-01, D-TECH-06, D-DOC-01) and docs/CLOUDFLARE.md. P1d: payment for the DSCR statement download, through Razorpay and the Worker. Ask me first, in one message: the price; whether the Worker stays separate or moves beside the site as Pages Functions; and, since the document is made in the browser, whether payment only unlocks the two buttons (anyone reading the page's code could still make the file) or the file must come from the server. Then build it: the order made in the Worker, the payment verified by its signature, and the buttons unlocked for that statement only. Test with Razorpay's test keys, set only in the environment settings, never in the repo. The preview stays free. Finish per HANDOFF." |
 
 ## End of every session
 1. `npm test` (includes the simulation; `npm run sim` prints it: 0 violations), `npm run typecheck`, `npm run rules-doc`, `npm run build`, `npm run check:site` (0 violations). One line in `docs/DECISIONS.md` per decision.
 2. Update this file (state + next), commit, draft PR. The branch preview builds itself (link on the PR); open it and say so.
 
 ## Waiting on the owner
-- **Six choices for the front door** (Claude's recommendation first; the tradeoffs are in the session of 30-09-2026):
-  1. Years: April to March with the loan assumed drawn this month; or from next April; or loan years (Year 1 = the first 12 months).
-  2. Tax for a proprietor: the flat rate for now, with individual slab rates added as a borrower type in a later session; or slab rates in P1e.
-  3. Profit: one figure, plus depreciation as an optional eighth line on the front; or strictly seven fields.
-  4. Existing EMIs: counted in full and running through the new loan, with "ends in" under More options.
-  5. Print: opens the same PDF for printing; or a print layout of the page.
-  6. First customer: borrowers, with a visible link for a CA's year-wise projection; or DSAs and CAs first.
+- **Merge PR #4** once you have tried P1e on its preview: who the borrower is, EMIs a month, the new asset's income.
+- **Work fictional case P** (`docs/GOLDEN-CASES.md`: a proprietor with EMIs and a new asset) at home, as for A and A′.
+- **Check the tax by borrower** (`docs/RULES.md`, "Tax by borrower"): a proprietor's new-regime slab rates for 2026-27, the firm's surcharge above Rs. 1 crore, and the assumption that a proprietor's business profit is their only income. Read from secondary sources only.
 - **Try the download on the live site** (https://finance-tools-9if.pages.dev/dscr/), on a phone too: open the PDF, and the Excel copy in Excel itself (it was read by pdf.js, read-excel-file and openpyxl, but not opened in Excel). Say what reads wrong. In particular:
   - is anything missing that a lender expects on it (the loan's purpose, the borrower's address, a GSTIN)?
   - do the signature block and "Not a CA's certificate" suit?
@@ -79,7 +80,7 @@ The test figures are model-worked until the owner confirms fictional cases A and
   - whether the tax rates by borrower hold for FY 2026-27.
 
   The page shows the method as "not yet checked" until then.
-- **Network settings:** allow `rbi.org.in`, `rbidocs.rbi.org.in`, `icai.org` and `bcasonline.org` so a session can read the primary texts (the research used secondary sources), and `developers.cloudflare.com` and `pages.dev` so it can check `docs/CLOUDFLARE.md` and open previews itself. All are blocked now.
+- **Network settings:** allow `rbi.org.in`, `rbidocs.rbi.org.in`, `icai.org` and `bcasonline.org` so a session can read the primary texts (the research used secondary sources); `incometaxindia.gov.in`, `incometax.gov.in`, `indiabudget.gov.in` and `egazette.gov.in` for the tax rates; and `developers.cloudflare.com` and `pages.dev` so it can check `docs/CLOUDFLARE.md` and open previews itself. All are blocked now.
 - The Worker (`docs/CLOUDFLARE.md` §2: create D1 + KV, send the IDs) can wait until the payment session.
 - Business entity, GST registration and Razorpay account (Phase 0).
 - Before payments: keep the separate Worker (D-TECH-01) or move the API beside the site as Pages Functions (same address, separate preview data per branch)? Branch previews of a separate Worker share the live D1 and KV. Decide with the Cloudflare docs open.
@@ -102,3 +103,5 @@ The test figures are model-worked until the owner confirms fictional cases A and
 - A field's `change` event (a month picker, or Playwright's `fill`) can arrive before Preact re-renders the draft: commit from the input's own value, as `useDraft` in `site/src/fields.tsx` does. Preact runs `useEffect` only after the next frame (or 35 ms): use `useLayoutEffect` where a field must show a change at once, and make checks wait for what they read (`expectText`, `expectValue`).
 - Scratch scripts outside the repo cannot import `playwright` by name; import `node_modules/playwright/index.mjs` by path.
 - WebFetch goes through the same network policy: rbi.org.in, bcasonline.org and srbatliboi.in were refused, while WebSearch works. Mark anything read only through search results as secondary.
+- A row's answers are radios `fld-<key>-<answer>`: a field of that row must not reuse one (the new asset's month is `fld-assetIncome-start`, since `fld-assetIncome-from` is the radio).
+- Expected figures in tests: round the exact value once. 6,15,500 ÷ 2,09,000 is 2.94498, which shows as 2.94; rounding 2.9450 again gives a wrong 2.95.

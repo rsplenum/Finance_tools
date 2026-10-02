@@ -61,12 +61,13 @@ export function TextField(p: TextProps) {
   </div>;
 }
 
-/** A figure in the yearly table: labelled by its year, named for screen readers by its row and year. */
-export function CellInput(p: { id: string; name: string; value: string; onCommit: (t: string) => void; tidy?: (t: string) => string; invalid?: boolean; decimal?: boolean }) {
+/** A figure in the yearly table: labelled by its year, named for screen readers by its row and year. `month`: a month, like 2028-03. */
+export function CellInput(p: { id: string; name: string; value: string; onCommit: (t: string) => void; tidy?: (t: string) => string; invalid?: boolean; decimal?: boolean; month?: boolean }) {
   const d = useDraft(p.value, p.onCommit, p.tidy);
-  return <input id={p.id} type="text" inputMode={p.decimal ? 'decimal' : undefined} autocomplete="off" spellcheck={false} enterkeyhint="next"
-    aria-label={p.name} aria-invalid={p.invalid || undefined} title={p.invalid ? 'Not understood: type 1,50,000 or 1.5 L' : undefined}
-    {...d} class={`${INPUT} ${p.invalid ? BAD : BORDER} px-2 text-right tabular-nums sm:min-w-28`} />;
+  return <input id={p.id} type={p.month ? 'month' : 'text'} inputMode={p.decimal ? 'decimal' : undefined} autocomplete="off" spellcheck={false} enterkeyhint="next"
+    aria-label={p.name} aria-invalid={p.invalid || undefined} placeholder={p.month ? 'like 2028-03' : undefined}
+    title={p.invalid ? (p.month ? 'Not understood: type 2028-03 or Mar 2028' : 'Not understood: type 1,50,000 or 1.5 L') : undefined}
+    {...d} class={`${INPUT} ${p.invalid ? BAD : BORDER} px-2 ${p.month ? '' : 'text-right tabular-nums'} sm:min-w-28`} />;
 }
 
 export interface Option<T extends string> { value: T; label: string; hint?: ComponentChildren }

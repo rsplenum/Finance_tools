@@ -5,13 +5,14 @@
  * missing the document says provisional and lists it; the document's own facts are asked beside the download, once.
  */
 import DSCR from '../../../engine/data/dscr.json';
-import { COMPONENTS, OPTIONS, componentsOf, type Component, type Definition } from '../../../engine/dscr';
+import { COMPONENTS, OPTIONS, PLAN_SERVICE, componentsOf, type Component, type Definition } from '../../../engine/dscr';
 import { parseMonth } from '../../../engine/parse';
 import type { Block, Cell, Doc, Figure, Part, Table } from '../doc/doc';
 import { printable } from '../doc/pdf';
 import { SITE_NAME } from '../site';
 import {
-  amountOf, definitionOf, loanRead, modeOf, monthText, numberOf, presetOf, rowsOf, statusText, targetOf, targetText, tidyAmount, yearsOf,
+  BORROWER_CHOICES, GROUP_TITLES, amountOf, definitionOf, loanRead, modeOf, monthText, numberOf, presetOf, rowsOf, runningLoan, statusText, targetOf,
+  targetText, tidyAmount, yearsOf,
   type DocFacts, type OptionKey, type Preview, type RowDef, type RowMode, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 
@@ -97,8 +98,10 @@ const choiceLabel = (def: Definition, k: OptionKey) => (OPTIONS[k].choices as Re
 const sum = (cs: Component[]) => cs.map((c) => lower(COMPONENTS[c])).join(' + ');
 
 /** The method in plain words, from the data file (engine/data/dscr.json), with its source. */
-function methodBlocks(s: State, def: Definition): Block[] {
-  const preset = presetOf(s.method), { available, service } = componentsOf(def);
+function methodBlocks(s: State, p: Preview, def: Definition): Block[] {
+  const preset = presetOf(s.method), { available } = componentsOf(def);
+  // Existing EMIs are debt service in full when the statement has them (PLAN_SERVICE).
+  const service = [...componentsOf(def).service, ...(p.statement?.lines.some((l) => l.id === 'emis') ? PLAN_SERVICE : [])];
   const out: Block[] = [
     { kind: 'text', text: preset ? `${preset.label}${preset.verified ? '' : ' (not yet checked against a published source)'}.` : 'Chosen for this lender, one choice at a time.' },
     { kind: 'list', items: [
@@ -116,9 +119,8 @@ function methodBlocks(s: State, def: Definition): Block[] {
 
 /** Which assumption (engine/data/defaults.json) answers a line of figures while it holds. */
 const ASSUMPTION_OF: Record<string, string> = {
-  pbdit: 'margin', depreciation: 'depreciation', interestOther: 'interest', otherLoans: 'otherLoans', nonCash: 'nonCash', leaseRentals: 'nonCash', taxPct: 'tax',
+  pbdit: 'margin', assetIncome: 'asset', depreciation: 'depreciation', interestOther: 'interest', otherLoans: 'otherLoans', nonCash: 'nonCash', leaseRentals: 'nonCash', taxPct: 'tax',
 };
-const GROUP_TITLES: Record<string, string> = { otherLoans: 'Other term loans already running' };
 
 /** A figure as typed, read back: Rs. 1,50,000, or 25%. */
 function typed(t: string | undefined, percent?: boolean): string {
@@ -138,23 +140,46 @@ function howGiven(s: State, r: RowDef, mode: RowMode | undefined, years: string[
     case 'fall': return `${first} in ${years[0]}, then falling ${rate} a year (written-down value)`;
     case 'years': return years.map((fy, i) => `${fy}: ${typed(cells[i], r.percent)}`).join('; ');
     case 'none': return 'None';
+    case 'emi': return emisGiven(s);
+    case 'from': {
+      const from = parseMonth(s.asset.from);
+      return `${typed(s.asset.yearly)} a year from ${from ? monthText(from) : s.asset.from.trim() ? `"${s.asset.from.trim()}" (not understood)` : 'a month still needed'}`;
+    }
+    case 'borrower': {
+      const b = BORROWER_CHOICES.find((x) => x.id === s.borrower);
+      return b ? `Worked out for a ${b.label.toLowerCase()}: ${b.tax}` : 'Who the borrower is: still needed';
+    }
     default: return 'Still needed';
   }
+}
+
+/** Loans already running, as typed: each EMI a month, and when it ends; then which EMIs these are, by who the borrower is. */
+function emisGiven(s: State): string {
+  const loans = s.running.map((t) => {
+    const l = runningLoan(t), last = l.last && /^\d{4}-\d{2}$/.test(l.last) ? `, the last in ${monthText(l.last)}` : l.last ? `, the last in "${l.last}" (not understood)` : ', running on';
+    return `${typed(t.emi)} a month${last}`;
+  });
+  const counts = BORROWER_CHOICES.find((b) => b.id === s.borrower)?.emis;
+  return `EMIs of ${loans.join('; ')}${counts ? `. ${counts}` : ''}`;
 }
 
 /** The figures as entered, each once; a line answered wholly by an assumption is listed with the assumptions instead. */
 function enteredPairs(s: State, p: Preview, y: Years): [string, string][] {
   const held = new Set(p.assumed.map((a) => a.id)), pairs: [string, string][] = [], done = new Set<string>();
   if (s.source === 'own') pairs.push(['Years', y.years.length > 1 ? `${y.years[0]} to ${y.years[y.years.length - 1]}` : y.years[0]]);
+  const who = BORROWER_CHOICES.find((b) => b.id === s.borrower);
+  if (s.source === 'plan' && who) pairs.push(['The borrower', who.label]);
   for (const r of rowsOf(s)) {
     const mode = modeOf(s, r), assumed = held.has(ASSUMPTION_OF[r.modeKey] ?? '');
+    // In a block of rows answered together, only the rows its answer uses.
+    if (mode && mode !== 'none' && r.only && !r.only.includes(mode)) continue;
     if (assumed && (mode === 'none' || r.key === 'taxPct')) continue;
     if (mode === 'none') {
       if (!done.has(r.modeKey)) pairs.push([GROUP_TITLES[r.modeKey] ?? r.label, 'None']);
       done.add(r.modeKey);
       continue;
     }
-    pairs.push([r.label, howGiven(s, r, mode, y.years, assumed)]);
+    pairs.push([mode === 'emi' ? GROUP_TITLES[r.modeKey] ?? r.label : r.label, howGiven(s, r, mode, y.years, assumed)]);
   }
   return pairs;
 }
@@ -215,7 +240,7 @@ export function statementDoc(s: State, p: Preview, today: string): Doc | undefin
   const notes = [p.beforeStart, p.notCounted, ...p.notes].filter((x): x is string => !!x);
   if (notes.length) blocks.push({ kind: 'list', items: notes, small: true });
   if (s.source === 'plan') blocks.push({ kind: 'heading', text: 'The loan' }, { kind: 'pairs', pairs: loanPairs(s, p, y) });
-  blocks.push({ kind: 'heading', text: 'How DSCR is worked out' }, ...methodBlocks(s, def));
+  blocks.push({ kind: 'heading', text: 'How DSCR is worked out' }, ...methodBlocks(s, p, def));
   const entered = enteredPairs(s, p, y);
   if (entered.length) blocks.push({ kind: 'heading', text: s.source === 'plan' ? 'The business figures entered' : 'The figures entered' }, { kind: 'pairs', pairs: entered });
   if (p.assumed.length) blocks.push(

@@ -4,8 +4,10 @@
  * profit before interest, depreciation and tax, and the DSCR options as explicit formulas instead of the data file's lists.
  * dscr.ts shows no figure unless both computations agree.
  */
+import TAX from './data/tax.json';
 import type { LoanTerms, YearDebt } from './loan';
 import type { Definition, ProjectionYear, YearFigures } from './dscr';
+import type { Borrower } from './tax';
 
 export interface CheckRow { fy: string; available: number; service: number; counted: boolean; dscr?: number; pbt?: number; tax?: number }
 export interface CheckResult { rows: CheckRow[]; average?: number; minimum?: { dscr: number; fy: string } }
@@ -96,23 +98,75 @@ export function statementCheck(years: YearFigures[], def: Definition): CheckResu
   }), def);
 }
 
-/** From projections and loan terms (planning mode): cash available = PBDIT − tax − interest not added back (+ leases). */
+/**
+ * From projections and loan terms (planning mode): cash available = PBDIT and the new asset's income − tax − interest not
+ * added back (+ leases); existing EMIs are debt service in full, and a year paying them has instalments.
+ */
 export function planCheck(proj: ProjectionYear[], loan: LoanTerms, def: Definition): CheckResult {
   const debt = new Map(scheduleCheck(loan).map((d) => [d.fy, d]));
   return summarise(proj.map((y) => {
     const p = y as Required<ProjectionYear>, d = debt.get(y.fy);
     const tl = (d?.interest ?? 0) + p.otherLoansInterest, principal = (d?.principal ?? 0) + p.otherLoansPrincipal;
-    const profitBeforeTax = p.pbdit - p.depreciation - p.nonCash - tl - p.interestOther;
-    const tax = Math.max(0, profitBeforeTax) * p.taxPct / 100;
+    const earned = p.pbdit + p.assetIncome;
+    const profitBeforeTax = earned - p.depreciation - p.nonCash - tl - p.interestOther;
+    const schedule = TAX.borrowers.find((b) => b.id === y.taxBy) as Borrower | undefined;
+    const tax = y.taxBy === undefined ? Math.max(0, profitBeforeTax) * p.taxPct / 100 : schedule ? taxCheck(profitBeforeTax, schedule) : NaN;
     const lease = def.leases === 'yes' ? y.leaseRentals ?? 0 : 0;
-    const available = p.pbdit - tax
+    const available = earned - tax
       - (def.interest === 'all-borrowings' ? 0 : p.interestOther)
       - (def.interest === 'none' ? tl : 0)
       + lease;
     const interest = def.interest === 'none' ? 0 : def.interest === 'term-loans' ? tl : tl + p.interestOther;
-    return { ...row(y.fy, available, principal + interest + lease, principal, def), pbt: profitBeforeTax, tax };
+    return { ...row(y.fy, available, principal + interest + lease + p.existingEmis, principal + p.existingEmis, def), pbt: profitBeforeTax, tax };
   }), def);
 }
+
+/**
+ * The tax a second way: the slab rates as the sum of each slab's share of the income; the rebate, then the marginal
+ * relief on the surcharge, taken off as amounts; the surcharge rate as that of the last threshold passed.
+ */
+export function taxCheck(income: number, b: Borrower): number {
+  if (income <= 0) return 0;
+  const slab = (x: number) => b.slabs.reduce((t, [from, pct], k) => {
+    const to = k + 1 < b.slabs.length ? b.slabs[k + 1][0] : Infinity;
+    return t + (Math.max(0, Math.min(x, to) - from) * pct) / 100;
+  }, 0);
+  const rebate = (x: number, t: number) => (!b.rebate ? 0
+    : x <= b.rebate.incomeUpTo ? Math.min(t, b.rebate.max) : Math.max(0, t - (x - b.rebate.incomeUpTo)));
+  const incomeTax = (x: number) => slab(x) - rebate(x, slab(x));
+  const rateAt = (x: number) => b.surcharge.filter(([from]) => x > from).reduce((_, [, pct]) => pct, 0);
+  let due = incomeTax(income) * (1 + rateAt(income) / 100);
+  const passed = b.surcharge.filter(([from]) => income > from).pop();
+  if (passed) {
+    const [from] = passed, limit = incomeTax(from) * (1 + rateAt(from) / 100) + (income - from);
+    due -= Math.max(0, due - limit);
+  }
+  return due * (1 + b.cess / 100);
+}
+
+/** Month number of 'YYYY-MM' counted from year 0, by Date arithmetic. */
+const monthNo = (ym: string) => {
+  const d = new Date(`${ym}-01T00:00:00Z`);
+  return d.getUTCFullYear() * 12 + d.getUTCMonth();
+};
+/** Months of financial year `fy` from its April to 'YYYY-MM', both counted, within 0 to 12. */
+const monthsTo = (fy: string, ym: string) => Math.min(12, Math.max(0, monthNo(ym) - monthNo(`${fy.slice(0, 4)}-04`) + 1));
+
+/** Existing EMIs by year in closed form: each EMI × the months of the year up to its last EMI (all 12 when it runs on). */
+export function emisCheck(loans: { emi: number; last?: string }[], years: string[]): number[] {
+  return years.map((fy) => loans.reduce((t, l) => t + l.emi * (l.last === undefined ? 12 : monthsTo(fy, l.last)), 0));
+}
+
+/** A yearly figure from the month it starts, in closed form: × the months of each year from that month on, ÷ 12. */
+export function fromMonthCheck(yearly: number, start: string, years: string[]): number[] {
+  return years.map((fy) => (yearly * (12 - monthsTo(fy, monthOfBefore(start)))) / 12);
+}
+/** The month before 'YYYY-MM', by Date arithmetic. */
+const monthOfBefore = (ym: string) => {
+  const d = new Date(`${ym}-01T00:00:00Z`);
+  d.setUTCMonth(d.getUTCMonth() - 1);
+  return d.toISOString().slice(0, 7);
+};
 
 /** A yearly series in closed form: first × (1 ± rate)^k, the rate read the other way round from project.ts. */
 export function seriesCheck(kind: 'same' | 'grow' | 'fall', first: number, pct: number, count: number): number[] {

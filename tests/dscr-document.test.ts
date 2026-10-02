@@ -11,7 +11,7 @@ import { docText, type Doc } from '../site/src/doc/doc';
 import { pdfOf, printable } from '../site/src/doc/pdf';
 import { crc32, xlsxOf } from '../site/src/doc/xlsx';
 import { docNeeds, docStatus, fileName, statementDoc } from '../site/src/dscr/document';
-import { ASSUMED, START, preview, tidyAmount, type State } from '../site/src/dscr/model';
+import { ASSUMED, BORROWER_CHOICES, START, preview, tidyAmount, withBorrower, type State } from '../site/src/dscr/model';
 import { SITE_NAME } from '../site/src/site';
 import { pdfPages, workbook } from '../scripts/read-doc.mjs';
 
@@ -66,7 +66,7 @@ describe('fictional case A′, complete: the statement for the lender', () => {
   it('heads it with the borrower, the lender, the date and the status', () => {
     expect(lines.slice(3, 10)).toEqual([
       'DSCR statement', 'Debt service coverage ratio, 2026-27 to 2029-30',
-      'Borrower: Asha Traders', 'Lender: Example Bank, Pune branch', 'Prepared on: 30-09-2026', 'Status: Complete, on 8 assumptions', 'The result',
+      'Borrower: Asha Traders', 'Lender: Example Bank, Pune branch', 'Prepared on: 30-09-2026', 'Status: Complete, on 9 assumptions', 'The result',
     ]);
     expect(doc.header).toBe('DSCR statement · Asha Traders');
     expect(doc.mark).toBeUndefined();
@@ -104,7 +104,7 @@ describe('fictional case A′, complete: the statement for the lender', () => {
     expect(lines).toContain('Depreciation: Rs. 1,50,000 in 2026-27');
     // The tax rate and the lines answered None are the assumptions', so they are listed there, not as entered.
     expect(text).not.toMatch(/^Tax rate \(%\):/m);
-    expect(p.assumed).toHaveLength(8);
+    expect(p.assumed).toHaveLength(9);
     for (const a of p.assumed) expect(lines).toContain(`${a.what}: ${a.shown}. ${a.why}.`);
   });
   it('adds the repayment schedule by year and by month', () => {
@@ -178,7 +178,7 @@ describe('the Excel copy, read back by read-excel-file', () => {
     expect(book.map((x) => x.sheet)).toEqual(['Statement', 'Repayment schedule']);
     const rows = book[0].data, row = (label: string) => rows.find((r) => r[0] === label)?.filter((c) => c !== null);
     expect(row('Borrower')).toEqual(['Borrower', 'Asha Traders']);
-    expect(row('Status')).toEqual(['Status', 'Complete, on 8 assumptions']);
+    expect(row('Status')).toEqual(['Status', 'Complete, on 9 assumptions']);
     expect(row('Rupees')).toEqual(['Rupees', '2026-27', '2027-28', '2028-29', '2029-30']);
     expect(row('Cash available (A)')).toEqual(['Cash available (A)', 400392, 422624, 445488, 473072]);
     expect(row('Debt service (B)')).toEqual(['Debt service (B)', 341000, 502000, 454000, 209000]);
@@ -216,9 +216,43 @@ describe('one document, two files', () => {
   it('the PDF and the Excel copy carry the same words', async () => {
     const { doc } = build(A2), pdf = (await pdfPages(pdfOf(doc, MADE))).join('\n');
     const cells = (await workbook(xlsxOf(doc, MADE))).flatMap((x) => x.data.flat()).filter((c): c is string => typeof c === 'string');
-    for (const t of ['Asha Traders', 'Example Bank, Pune branch', 'Complete, on 8 assumptions', 'Common term-loan DSCR (not yet checked against a published source).'])
+    for (const t of ['Asha Traders', 'Example Bank, Pune branch', 'Complete, on 9 assumptions', 'Common term-loan DSCR (not yet checked against a published source).'])
       expect([pdf.includes(t), cells.some((c) => c.includes(t))]).toEqual([true, true]);
     const doc2: Doc = { ...doc, parts: doc.parts.slice(0, 1) };
     expect((await pdfPages(pdfOf(doc2, MADE))).join('\n')).not.toContain('Repayment schedule');
+  });
+});
+
+describe('fictional case P: who the borrower is, loans already running and the new asset, in the document', () => {
+  // Worked by hand in tests/dscr.test.ts: a proprietor; EMIs of 25,000 a month running on and 15,000 a month to December
+  // 2027; the new asset's 3,60,000 a year from October 2026.
+  const P: State = withBorrower({
+    ...A2,
+    cells: { ...A2.cells, pbdit: ['15 L'], depreciation: ['2 L'], interestOther: ['1 L'] },
+    modes: { ...A2.modes, otherLoans: 'emi', assetIncome: 'from' },
+    running: [{ emi: '25,000', last: '' }, { emi: '15,000', last: '2027-12' }], asset: { yearly: '3,60,000', from: '2026-10' },
+  }, 'proprietor');
+  const { p, text, lines } = build(P);
+  it('holds no figure the page did not already show or the user did not type', () => {
+    // The page shows each borrower's tax in words (BORROWER_CHOICES); the EMIs and the asset's income are typed.
+    const sources = [JSON.stringify(p), JSON.stringify(P), JSON.stringify(DSCR), JSON.stringify(DEFAULTS), JSON.stringify(BORROWER_CHOICES), tidyAmount(P.loan.amount),
+      ...Object.values(P.cells).flat().map(tidyAmount), ...P.running.map((l) => tidyAmount(l.emi)), tidyAmount(P.asset.yearly), '30-09-2026', SITE_NAME].join('\n');
+    const figures = text.match(/\d+(?:,\d+)*(?:\.\d+)?/g) ?? [];
+    expect(figures.length).toBeGreaterThan(300);
+    expect(figures.filter((f) => !sources.includes(f))).toEqual([]);
+  });
+  it('says who the borrower is, how the tax and the EMIs were given, and the new asset', () => {
+    expect(lines).toContain('The borrower: Proprietor');
+    expect(lines).toContain("Loans already running: EMIs of Rs. 25,000 a month, running on; Rs. 15,000 a month, the last in December 2027. All of the proprietor's EMIs, business and personal: one cash flow pays them");
+    expect(lines).toContain('Extra income from the new asset: Rs. 3,60,000 a year from October 2026');
+    expect(lines).toContain('Tax rate (%): Worked out for a proprietor: slab rates of 5% to 30% with 4% cess, nothing up to Rs. 12,00,000 of profit');
+    expect(lines.some((l) => l.startsWith("A proprietor's tax: The new regime's slab rates, on the business's profit as the only income."))).toBe(true);
+  });
+  it('carries the new lines of the statement, with the engine\'s figures', () => {
+    expect(text).toContain('Add: extra income from the new asset | 1,80,000 | 3,60,000 | 3,60,000 | 3,60,000');
+    expect(text).toContain('Existing EMIs (interest and principal) | 4,80,000 | 4,35,000 | 3,00,000 | 3,00,000');
+    expect(text).toContain('Less: tax | 40,560 | 1,26,464 | 1,70,768 | 2,20,350');
+    expect(text).toContain('DSCR (A ÷ B) | 1.88 | 1.90 | 2.53 | 4.00');
+    expect(lines).toContain('Debt service (B) = term-loan instalments (principal) + interest on term loans + existing EMIs (interest and principal).');
   });
 });

@@ -5,16 +5,17 @@
  * changed (`assumedIn`); nothing else missing is filled in, and anything else missing is listed as needed.
  */
 import DEFAULTS from '../../../engine/data/defaults.json';
+import DSCR from '../../../engine/data/dscr.json';
 import {
-  BENCHMARKS, COMPONENTS, LOAN_LABELS, OPTIONS, PRESETS, PROJECTION_LABELS, amortization, componentsOf, dscrStatement, fyRange,
+  BENCHMARKS, COMPONENTS, LOAN_LABELS, OPTIONS, PLAN_SERVICE, PRESETS, PROJECTION_LABELS, amortization, componentsOf, dscrStatement, fyRange,
   isFy, limitText, loanTimeline, maxLoanAmount, planStatement, shortestRepayment, shortfall, targetNeeds,
   type Amortization, type Component, type Definition, type Limit, type LoanInput, type ProfitYear, type ProjectionYear, type Statement,
   type Target, type YearFigures,
 } from '../../../engine/dscr';
 import { fyOf } from '../../../engine/loan';
-import { series } from '../../../engine/project';
+import { emisByYear, fromMonth, series, type RunningLoan } from '../../../engine/project';
 import { parseAmount, parseMonth } from '../../../engine/parse';
-import { TAX_RATES } from '../../../engine/tax';
+import { BORROWERS, borrowerOf, taxSummary } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 
 export type Source = 'own' | 'plan';
@@ -22,14 +23,19 @@ export type Source = 'own' | 'plan';
 export type Method = string;
 /** One answer for two facts: an EMI is monthly; equal principal is monthly or quarterly. */
 export type Repayment = 'emi' | 'monthly' | 'quarterly';
-/** How a row is filled: one figure for every year, a first year that grows or falls by a %, a figure for each year, or none. */
-export type RowMode = 'same' | 'grow' | 'fall' | 'years' | 'none';
+/**
+ * How a row is filled: one figure for every year, a first year that grows or falls by a %, a figure for each year, or
+ * none; EMIs a month (loans already running), a yearly figure from a month (the new asset), or by who the borrower is (tax).
+ */
+export type RowMode = 'same' | 'grow' | 'fall' | 'years' | 'none' | 'emi' | 'from' | 'borrower';
 export type OptionKey = keyof Definition;
 
 export interface LoanText {
   amount: string; ratePct: string; disbursed: string; moratoriumMonths: string; instalments: string;
   repayment?: Repayment;
 }
+/** A loan already running, as typed: its EMI a month, and the month of its last EMI when it ends (empty: it runs on). */
+export interface RunningText { emi: string; last: string }
 
 export interface State {
   source?: Source;
@@ -50,6 +56,12 @@ export interface State {
   /** The % a year for rows that grow or fall. */
   rates: Record<string, string>;
   target: { average: string; minimum: string };
+  /** Who the borrower is (an id in engine/data/tax.json): it sets the tax, and which existing EMIs count (D-POL-06). */
+  borrower?: string;
+  /** Loans already running, when given as EMIs a month. */
+  running: RunningText[];
+  /** The new asset's extra income a year, and the month it starts running, as typed. */
+  asset: { yearly: string; from: string };
   /** Started from the assumptions (ASSUMED): switching back to working the figures out puts them back. */
   assume?: boolean;
   /** What only the document needs: asked beside the download, taken once for the PDF and the Excel copy. */
@@ -64,6 +76,7 @@ export const START: State = {
   choice: {}, firstYear: '', yearCount: '',
   loan: { amount: '', ratePct: '', disbursed: '', moratoriumMonths: '', instalments: '' },
   cells: {}, modes: {}, rates: {}, target: { average: '', minimum: '' }, doc: { borrower: '', lender: '', preparedBy: '' },
+  running: [{ emi: '', last: '' }], asset: { yearly: '', from: '' },
 };
 
 /** `planStart` when the figures start in the year the loan is first drawn, whichever year that turns out to be. */
@@ -75,7 +88,7 @@ const assumedValue = <T,>(id: string) => ASSUMPTION[id].value as T;
 
 /** How each line is given while its assumption holds: profit grows with sales; depreciation and other interest as this year. */
 const ASSUMED_MODES: Record<string, RowMode> = {
-  pbdit: 'grow', depreciation: 'same', interestOther: 'same', otherLoans: 'none', nonCash: 'none', leaseRentals: 'none', taxPct: 'same',
+  pbdit: 'grow', assetIncome: 'none', depreciation: 'same', interestOther: 'same', otherLoans: 'none', nonCash: 'none', leaseRentals: 'none', taxPct: 'same',
 };
 
 /**
@@ -159,6 +172,8 @@ export interface RowDef {
   /** The answers offered, first shown first. With `ask`, nothing is taken until one is picked (None is taken only as answered, or as assumed in engine/data/defaults.json). */
   modes: RowMode[];
   ask?: boolean;
+  /** In a block of rows answered together: the answers that use this row; in the block's other answers it is nil. */
+  only?: RowMode[];
   /** A loss may be typed with a minus. */
   negative?: boolean;
   percent?: boolean;
@@ -168,6 +183,11 @@ export interface RowDef {
 
 const row = (key: string, label: string, modes: RowMode[], extra: Partial<RowDef> = {}): RowDef => ({ key, label, modeKey: key, modes, ...extra });
 const OPTIONAL: RowMode[] = ['none', 'same', 'years'];
+/** Loans already running: none, their EMIs a month, or a CA's interest and instalments a year. */
+const RUNNING: RowMode[] = ['none', 'emi', 'same', 'years'];
+/** Titles of the blocks of rows answered together. */
+export const GROUP_TITLES: Record<string, string> = { otherLoans: 'Loans already running' };
+export const titleOf = (r: RowDef) => GROUP_TITLES[r.modeKey] ?? r.label;
 
 /**
  * The rows of the yearly figures, from where they come from and the method: only what changes the answer. When the page
@@ -189,13 +209,15 @@ export function rowsOf(s: State): RowDef[] {
   const L = PROJECTION_LABELS;
   return [
     row('pbdit', L.pbdit, ['grow', 'same', 'years'], { negative: true, hint: 'Sales less every cost except interest, depreciation and tax.' }),
+    row('assetIncome', L.assetIncome, ['none', 'from'], { hint: 'What the asset adds to profit before interest, depreciation and tax, after its own running costs.' }),
     row('depreciation', L.depreciation, ['same', 'fall', 'years'], { hint: 'The same every year (straight line), or falling by its rate (written-down value).' }),
     row('nonCash', L.nonCash, OPTIONAL, { ask: true, hint: HINTS.nonCash }),
     row('interestOther', L.interestOther, ['none', 'same', 'grow', 'years'], { ask: true, hint: 'Cash credit or overdraft interest.' }),
     ...(def.leases === 'yes' ? [row('leaseRentals', L.leaseRentals, OPTIONAL, { ask: true, hint: HINTS.leaseRentals })] : []),
-    row('otherLoansInterest', L.otherLoansInterest, OPTIONAL, { modeKey: 'otherLoans', ask: true, hint: 'Term loans already running, besides this one.' }),
-    row('otherLoansPrincipal', L.otherLoansPrincipal, OPTIONAL, { modeKey: 'otherLoans', ask: true }),
-    row('taxPct', L.taxPct, ['same', 'years'], { percent: true, hint: 'On profit before tax; nil in a year with a loss.' }),
+    row('otherLoansInterest', L.otherLoansInterest, RUNNING, { modeKey: 'otherLoans', ask: true, only: ['same', 'years'], hint: 'Loans the borrower already repays, besides this one.' }),
+    row('otherLoansPrincipal', L.otherLoansPrincipal, RUNNING, { modeKey: 'otherLoans', ask: true, only: ['same', 'years'] }),
+    row('existingEmis', L.existingEmis, RUNNING, { modeKey: 'otherLoans', ask: true, only: ['emi'] }),
+    row('taxPct', L.taxPct, ['borrower', 'same', 'years'], { percent: true, hint: 'On profit before tax; nil in a year with a loss.' }),
   ];
 }
 
@@ -212,16 +234,35 @@ export const modeOf = (s: State, r: RowDef): RowMode | undefined => {
 
 export interface RowValues { values: (number | undefined)[]; needs: string[]; blocked?: string }
 
+/** Asked when the tax is to be worked out by who the borrower is, and that is not yet answered. */
+export const BORROWER_NEED = 'Who the borrower is: it sets the tax';
+
+/** A loan already running, read: an EMI not understood is missing; a last month typed but not understood is passed on to be asked again. */
+export const runningLoan = (t: RunningText): RunningLoan =>
+  ({ emi: amountOf(t.emi), ...(t.last.trim() ? { last: parseMonth(t.last) ?? t.last.trim() } : {}) });
+
 /** A row's figure for each year: typed, or worked out by the engine from one or two answers. */
 export function rowValues(s: State, r: RowDef, years: string[]): RowValues {
   const n = years.length, mode = modeOf(s, r), missing: (number | undefined)[] = Array(n).fill(undefined);
-  if (!mode) return { values: missing, needs: [`${r.label}: none, or how much`] };
-  if (mode === 'none') return { values: Array(n).fill(0), needs: [] };
+  if (!mode) return { values: missing, needs: [`${titleOf(r)}: none, or how much`] };
+  if (mode === 'none' || (r.only && !r.only.includes(mode))) return { values: Array(n).fill(0), needs: [] };
+  // The tax then comes from who the borrower is (`taxBy`), not from a rate.
+  if (mode === 'borrower') return { values: missing, needs: borrowerOf(s.borrower) ? [] : [BORROWER_NEED] };
   const read = r.percent ? numberOf : amountOf, text = s.cells[r.key] ?? [];
   if (mode === 'years') return { values: years.map((_, i) => read(text[i])), needs: [] }; // the engine names each missing year
-  const out = series({ kind: mode, first: read(text[0]), pct: numberOf(s.rates[r.key]) }, n, r.label, years[0] ?? '');
+  const out = mode === 'emi' ? emisByYear(s.running.map(runningLoan), years, titleOf(r))
+    : mode === 'from' ? fromMonth(amountOf(s.asset.yearly), parseMonth(s.asset.from), years, r.label)
+      : series({ kind: mode, first: read(text[0]), pct: numberOf(s.rates[r.key]) }, n, r.label, years[0] ?? '');
   return 'needs' in out ? { values: missing, needs: out.needs } : 'blocked' in out ? { values: missing, needs: [], blocked: out.blocked } : { values: out, needs: [] };
 }
+
+/** Who the borrower can be, with the tax and the EMIs each answer brings (engine/data/tax.json, dscr.json). */
+const EMIS_BY = DSCR.existingEmis.byBorrower as Record<string, { counts: string; ask: string }>;
+export const BORROWER_CHOICES = BORROWERS.map((b) => ({ id: b.id, label: b.label, who: b.who, tax: taxSummary(b), emis: EMIS_BY[b.id]?.counts ?? '' }));
+/** What to give as EMIs a month, by who the borrower is (D-POL-06). */
+export const emisAsk = (s: State) => EMIS_BY[s.borrower ?? '']?.ask ?? DSCR.existingEmis.unknown;
+/** Saying who the borrower is works out the tax for that borrower, in place of a rate. */
+export const withBorrower = (s: State, id: string): State => ({ ...s, borrower: id, modes: { ...s.modes, taxPct: 'borrower' } });
 
 export function loanInput(s: State): LoanInput {
   const l = s.loan, r = l.repayment;
@@ -313,8 +354,8 @@ export function withPlanStart(s: State, start?: string): State {
 export interface AssumedLine { id: string; what: string; shown: string; why: string; where: string }
 
 const WHERE: Record<string, string> = {
-  method: 'method', target: 'target', tax: 'row-taxPct', margin: 'row-pbdit', depreciation: 'row-depreciation',
-  interest: 'row-interestOther', otherLoans: 'row-otherLoans', nonCash: 'row-nonCash', start: 'start-question',
+  method: 'method', target: 'target', tax: 'row-taxPct', proprietorTax: 'row-taxPct', margin: 'row-pbdit', asset: 'row-assetIncome',
+  depreciation: 'row-depreciation', interest: 'row-interestOther', otherLoans: 'row-otherLoans', nonCash: 'row-nonCash', start: 'start-question',
 };
 
 /** The assumptions (engine/data/defaults.json) still as assumed; one that makes no difference to these figures is not listed. */
@@ -327,7 +368,9 @@ export function assumedIn(s: State, y: Years = yearsOf(s)): AssumedLine[] {
     method: s.method === assumedValue<string>('method'),
     target: numberOf(s.target.average) === target.average && numberOf(s.target.minimum) === target.minimum,
     tax: plan && at('taxPct') && numberOf(s.cells.taxPct?.[0]) === assumedValue<number>('tax'),
+    proprietorTax: plan && s.modes.taxPct === 'borrower' && s.borrower === 'proprietor',
     margin: plan && at('pbdit'),
+    asset: plan && at('assetIncome'),
     depreciation: plan && at('depreciation'),
     interest: plan && at('interestOther'),
     otherLoans: plan && at('otherLoans'),
@@ -340,7 +383,7 @@ export function assumedIn(s: State, y: Years = yearsOf(s)): AssumedLine[] {
 // ---- The preview ----
 
 /** One line of the DSCR statement: a figure for each year, in words (`values`) and as the engine gave it (`n`, for the Excel copy). */
-export interface Line { label: string; values: string[]; n?: (number | undefined)[]; kind?: 'head' | 'total' | 'ratio'; id?: 'pbdit' | 'pbt' | 'tax' | 'available' | 'service' | 'dscr' }
+export interface Line { label: string; values: string[]; n?: (number | undefined)[]; kind?: 'head' | 'total' | 'ratio'; id?: 'pbdit' | 'asset' | 'pbt' | 'tax' | 'available' | 'emis' | 'service' | 'dscr' }
 /** The statement as chartered accountants lay it out: the years across, the working down. */
 export interface StatementView { years: string[]; counted: boolean[]; lines: Line[] }
 type Money<K extends string> = Record<K, string> & { n: Record<K, number> };
@@ -442,12 +485,15 @@ const lower = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
 /** The statement's lines, from the engine's figures: the profit build-up when the page works it out, then A, B, DSCR. */
 function statementView(st: Statement, t: Target, def: Definition, parts: YearFigures[], profit?: ProfitYear[]): StatementView {
   const amounts = (n: (number | undefined)[]) => ({ values: n.map((x) => inr(x)), n });
-  const { available, service } = componentsOf(def), lines: Line[] = [];
+  const { available } = componentsOf(def), lines: Line[] = [];
+  // Existing EMIs and the new asset's income are lines only where they are not nil in every year.
+  const service = [...componentsOf(def).service, ...(profit ? PLAN_SERVICE.filter((c) => parts.some((y) => (y[c] ?? 0) !== 0)) : [])];
   if (profit) {
     const pc = (k: Exclude<keyof ProfitYear, 'fy'>) => amounts(profit.map((y) => y[k]));
     lines.push(
       { label: 'Profit', values: [], kind: 'head' },
       { label: PROJECTION_LABELS.pbdit, ...pc('pbdit'), id: 'pbdit' },
+      ...(profit.some((y) => y.assetIncome !== 0) ? [{ label: 'Add: extra income from the new asset', ...pc('assetIncome'), id: 'asset' } as Line] : []),
       { label: 'Less: depreciation', ...pc('depreciation') },
       { label: 'Less: other non-cash charges', ...pc('nonCash') },
       { label: 'Less: interest on term loans', ...pc('interestTL') },
@@ -462,7 +508,7 @@ function statementView(st: Statement, t: Target, def: Definition, parts: YearFig
   lines.push(
     { label: 'Cash available (A)', ...amounts(st.rows.map((r) => r.available)), kind: 'total', id: 'available' },
     { label: 'Debt service', values: [], kind: 'head' },
-    ...service.map((c) => ({ label: COMPONENTS[c], ...amounts(parts.map((y) => y[c])) })),
+    ...service.map((c): Line => ({ label: COMPONENTS[c], ...amounts(parts.map((y) => y[c])), ...(c === 'existingEmis' ? { id: 'emis' as const } : {}) })),
     { label: 'Debt service (B)', ...amounts(st.rows.map((r) => r.service)), kind: 'total', id: 'service' },
     { label: 'DSCR (A ÷ B)', values: st.rows.map((r) => (r.dscr === undefined ? '—' : ratioText(r.dscr, r.counted ? t.minimum : undefined))), n: st.rows.map((r) => r.dscr), kind: 'ratio', id: 'dscr' },
   );
@@ -522,7 +568,8 @@ export function preview(s: State): Preview {
     const ruled = rows.filter((_, k) => vals[k].needs.length).map((r) => r.label);
     const lines = groupNeeds(engine.filter((n) => !ruled.some((l) => n.startsWith(`${l} for `))), y.years, labels);
     const rowOf = (line: string) => labels.find((l) => line.startsWith(`${l} for `));
-    return [...lines.filter((l) => !rowOf(l)), ...rows.flatMap((r, k) => (vals[k].needs.length ? vals[k].needs : lines.filter((l) => rowOf(l) === r.label)))];
+    // Rows answered together ask once ("Loans already running: none, or how much").
+    return [...new Set([...lines.filter((l) => !rowOf(l)), ...rows.flatMap((r, k) => (vals[k].needs.length ? vals[k].needs : lines.filter((l) => rowOf(l) === r.label)))])];
   };
 
   if (s.source === 'own') {
@@ -545,7 +592,9 @@ export function preview(s: State): Preview {
   else if ('blocked' in am) p.blocked = am.blocked;
   if ('months' in am && y.leading.length)
     p.leadingInterest = am.years.filter((d) => y.leading.includes(d.fy)).map((d) => ({ fy: d.fy, amount: rs(d.interest) }));
-  const proj = y.years.map((fy, i) => ({ fy, ...figures(i) }) as ProjectionYear);
+  // By who the borrower is, the tax is worked out for that borrower in place of a rate.
+  const tax = rows.find((r) => r.key === 'taxPct'), taxBy = tax && modeOf(s, tax) === 'borrower' ? borrowerOf(s.borrower)?.id : undefined;
+  const proj = y.years.map((fy, i) => ({ fy, ...figures(i), ...(taxBy ? { taxBy } : {}) }) as ProjectionYear);
   const r = planStatement(proj, loan, def, y.start);
   // A first year with interest only may come before the operations the figures describe: which year the figures start in
   // decides what the first year's figure means: it is asked, unless the loan's first year is assumed (D-UX-08).
@@ -614,7 +663,6 @@ export const presetText = (id: string) => cap(OPTION_KEYS
   .map((k) => choicesOf(k).find((c) => c.value === (presetOf(id)?.choice as Record<string, string> | undefined)?.[k])?.label.toLowerCase())
   .join('; '));
 
-/** The tax rates the page can fill in for every year, by kind of borrower (engine/data/tax.json). */
-export const TAX_CHOICES = TAX_RATES.map((t) => ({ id: t.id, label: t.label, pct: String(t.pct), verified: t.verified }));
+/** One rate typed for every year. */
 export const withTaxRate = (s: State, pct: string): State =>
   ({ ...s, modes: { ...s.modes, taxPct: 'same' }, cells: { ...s.cells, taxPct: [pct, ...(s.cells.taxPct ?? []).slice(1)] } });

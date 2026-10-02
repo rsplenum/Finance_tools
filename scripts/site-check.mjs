@@ -242,14 +242,14 @@ async function layout(page, v, step) {
 
   // The common examples as the target: what limits the result, and the loan that meets it.
   await page.getByTestId('use-examples').click();
-  // Five assumptions still hold: the method, the target, and working-capital interest, other term loans and other
-  // non-cash charges as answered by the assumptions (tax, profit and depreciation were typed).
-  await expectText(page, v, 'dscr-status', 'Complete, on 5 assumptions', 'case A with the examples');
+  // Six assumptions still hold: the method, the target, and the new asset, working-capital interest, loans already running
+  // and other non-cash charges as answered by the assumptions (tax, profit and depreciation were typed).
+  await expectText(page, v, 'dscr-status', 'Complete, on 6 assumptions', 'case A with the examples');
   await expectText(page, v, 'dscr-verdict', 'Below the target: the lowest year, 2027-28, is 1.16 against 1.20; the average is 1.45 against 1.50.', 'case A with the examples');
   await expectText(page, v, 'dscr-largest', 'The largest loan on these terms is Rs. 11,59,646, limited by the lowest year, 2027-28.', 'case A with the examples');
   await expectText(page, v, 'use-amount', 'Use Rs. 11,59,646', 'case A with the examples');
   await expectText(page, v, 'dscr-fewest', 'Even 14 instalments, the most the projections cover (to 2029-30), miss the target: the average is below the target. Add later years to try a longer repayment.', 'case A with the examples');
-  await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · below the target · complete, on 5 assumptions ↓', 'case A with the examples');
+  await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · below the target · complete, on 6 assumptions ↓', 'case A with the examples');
 
   // Tables become cards on phones and stay tables on wider screens, without a sideways scroll either way.
   await layout(page, v, 'case A filled, a schedule year open, 390 px');
@@ -282,9 +282,10 @@ async function layout(page, v, step) {
   if (missing.join('|') !== 'Profit before interest, depreciation and tax for 2028-29') v(`a figure not understood: still needed ${JSON.stringify(missing)}`);
   if (await page.getByTestId('dscr-average').count()) v('figures shown while a figure is not understood');
 
-  // The borrower sets the tax rate for every year in one tap.
-  await page.getByTestId('tax-company').click();
-  await expectValue(page, v, '#fld-taxPct-2026-27', '25.168', 'the company tax rate');
+  // Who the borrower is sets the tax for every year in one tap.
+  await page.check('#fld-borrowerType-company');
+  await expectText(page, v, 'tax-by', 'Worked out each year for a company: 25.168%.', "the company's tax");
+  if (await page.locator('#fld-taxPct-2026-27').count()) v('a tax rate is still asked after saying who the borrower is');
   // Clear all asks first, then takes the page back to where it opened: the assumptions, and nothing typed.
   await page.getByTestId('clear-all').click();
   await page.getByTestId('clear-yes').click();
@@ -338,7 +339,7 @@ async function layout(page, v, step) {
   await expectText(page, v, 'assumed-start', 'The first year of the figures: The year the loan is first drawn', 'the start assumption listed');
   await expectText(page, v, page.getByTestId('start-question').locator('p').first(), 'No instalment falls in 2026-27, only interest of Rs. 72,000. If operations start later, start your figures there: the interest before then is taken as paid from the project cost, not from profits.', 'the question about the first year');
   await page.check('#fld-start-2027-28');
-  await expectText(page, v, 'dscr-status', 'Complete, on 5 assumptions', 'figures starting in 2027-28');
+  await expectText(page, v, 'dscr-status', 'Complete, on 6 assumptions', 'figures starting in 2027-28');
   if (await page.getByTestId('assumed-start').count()) v('the start assumption is still listed after choosing 2027-28');
   await expectText(page, v, 'dscr-before-start', 'Left out: 2026-27, before your figures start. Its interest (Rs. 72,000) is taken as paid from the project cost (capitalised), not from profits.', 'figures starting in 2027-28');
   await expectValue(page, v, '#fld-pbdit-2027-28', '7,50,000', 'each figure stays under its year');
@@ -370,14 +371,15 @@ async function layout(page, v, step) {
   await page.check('#fld-interestOther-same');
   await leave(page, '#fld-interestOther-2027-28', '1 L');
   await page.check('#fld-otherLoansInterest-none');
-  await page.getByTestId('tax-company').click();
+  await page.check('#fld-borrowerType-company');
   await page.getByTestId('use-examples').click();
-  // Seven assumptions hold: all but the tax rate (the company rate was chosen); this year's depreciation typed once is
+  // Eight assumptions hold: all but the tax rate (a company's tax is worked out); this year's depreciation typed once is
   // "as this year, every year".
-  await expectText(page, v, 'dscr-status', 'Complete, on 7 assumptions', 'a few answers');
-  // Five fields for a five-year loan (profit and its rate, depreciation, working-capital interest, tax), not five a line.
+  await expectText(page, v, 'dscr-status', 'Complete, on 8 assumptions', 'a few answers');
+  // Four fields for a five-year loan (profit and its rate, depreciation, working-capital interest; the tax from who the
+  // borrower is), not five a line.
   const inputs = await page.locator('#figures input[type="text"]').count();
-  if (inputs > 5) v(`${inputs} fields asked for a 5-year loan; want 5`);
+  if (inputs > 4) v(`${inputs} fields asked for a 5-year loan; want 4`);
   // 18,00,000 growing 10% a year: 19,80,000, 21,78,000, 23,95,800, 26,35,380.
   for (const [fy, want] of [['2027-28', '18,00,000'], ['2028-29', '19,80,000'], ['2031-32', '26,35,380']])
     await expectText(page, v, `pbdit-${fy}`, want, `profit worked out for ${fy}`);
@@ -399,7 +401,7 @@ async function layout(page, v, step) {
   await leave(page, '#fld-pbdit-rate', '10');
   await leave(page, '#fld-depreciation-2026-27', '1.5 L');
   await leave(page, '#fld-interestOther-2026-27', '50,000');
-  await expectText(page, v, 'dscr-status', 'Complete, on 8 assumptions', 'the quick path');
+  await expectText(page, v, 'dscr-status', 'Complete, on 9 assumptions', 'the quick path');
   await expectText(page, v, 'dscr-average', '1.16', 'the quick path');
   await expectText(page, v, 'dscr-lowest', '0.84', 'the quick path');
   await expectText(page, v, 'assumed-tax', 'Tax rate: 31.2%', 'the quick path');
@@ -428,13 +430,13 @@ async function layout(page, v, step) {
   await expectText(page, v, page.getByTestId('doc-needs').locator('li').first(), "The borrower's name, in English letters", 'a name in Devanagari');
   await leave(page, '#fld-borrower', 'Asha Traders');
   await leave(page, '#fld-lender', 'Example Bank, Pune branch');
-  await expectText(page, v, 'doc-status', 'Complete, on 8 assumptions', 'the download with its facts');
+  await expectText(page, v, 'doc-status', 'Complete, on 9 assumptions', 'the download with its facts');
   if (await page.getByTestId('doc-needs').count()) v('the download still lists needs once its facts are in');
   pdf = await save('download-pdf');
   if (pdf.name !== 'DSCR statement - Asha Traders.pdf') v(`the PDF is named "${pdf.name}"`);
   pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
   const first = pages[0].split('\n');
-  for (const want of ['Borrower Asha Traders', 'Lender Example Bank, Pune branch', 'Status Complete, on 8 assumptions', 'Average DSCR 1.16', 'Lowest year 0.84 in 2027-28',
+  for (const want of ['Borrower Asha Traders', 'Lender Example Bank, Pune branch', 'Status Complete, on 9 assumptions', 'Average DSCR 1.16', 'Lowest year 0.84 in 2027-28',
     'Cash available (A) 4,00,392 4,22,624 4,45,488 4,73,072', 'DSCR (A ÷ B) 1.17 0.84 0.98 2.26'])
     if (!first.includes(want)) v(`the PDF's first page has no line "${want}"`);
   if (pages.length < 3 || pages.join('\n').includes('Provisional')) v(`the PDF has ${pages.length} pages, or still says provisional`);
@@ -445,6 +447,47 @@ async function layout(page, v, step) {
   if (book.map((x) => x.sheet).join('|') !== 'Statement|Repayment schedule' || JSON.stringify(cash) !== JSON.stringify(['Cash available (A)', 400392, 422624, 445488, 473072]))
     v(`the Excel copy holds sheets ${JSON.stringify(book.map((x) => x.sheet))} and cash available ${JSON.stringify(cash)}`);
   await layout(page, v, 'the download, 390 px');
+  await ctx.close();
+}
+
+// Who the borrower is, loans already running and the new asset (P1e), on the quick path (fictional case A′, worked by
+// hand in tests/dscr-page.test.ts). A proprietor pays no tax on these profits; then EMIs of 20,000 a month running on and
+// 15,000 a month to June 2027 (4,20,000, 2,85,000, 2,40,000, 2,40,000 a year) and the new asset's 3,60,000 a year from
+// October 2026 (1,80,000 in 2026-27). Cash 6,30,000 against 7,61,000 in 2026-27: 0.83; average 33,80,500 / 26,91,000 = 1.26.
+{
+  const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await leave(page, '#fld-loanAmount', '12 L');
+  await leave(page, '#fld-ratePct', '12');
+  await leave(page, '#fld-disbursed', '2026-04');
+  await leave(page, '#fld-moratoriumMonths', '6');
+  await page.check('#fld-repayment-quarterly');
+  await leave(page, '#fld-instalments', '12');
+  await leave(page, '#fld-pbdit-2026-27', '5 L');
+  await leave(page, '#fld-pbdit-rate', '10');
+  await leave(page, '#fld-depreciation-2026-27', '1.5 L');
+  await leave(page, '#fld-interestOther-2026-27', '50,000');
+  await page.check('#fld-borrowerType-proprietor');
+  await expectText(page, v, 'tax-by', 'Worked out each year for a proprietor: slab rates of 5% to 30% with 4% cess, nothing up to Rs. 12,00,000 of profit.', "a proprietor's tax");
+  await expectText(page, v, 'tax-2026-27', '0', "a proprietor's tax");
+  await expectText(page, v, 'dscr-average', '1.41', "a proprietor's tax");
+  await expectText(page, v, 'assumed-proprietorTax', "A proprietor's tax: The new regime's slab rates, on the business's profit as the only income", "a proprietor's tax");
+  await page.check('#fld-otherLoansInterest-emi');
+  await expectText(page, v, 'emis-ask', 'All EMIs a month, business and personal (home, car, personal loans).', "a proprietor's EMIs");
+  await leave(page, '#fld-emi-1', '20000');
+  await page.getByTestId('add-loan').click();
+  await leave(page, '#fld-emi-2', '15,000');
+  await leave(page, '#fld-emiLast-2', '2027-06');
+  await expectText(page, v, 'readback-existingEmis', 'Worked out: Rs. 4,20,000 in 2026-27; Rs. 2,85,000 in 2027-28; Rs. 2,40,000 in 2028-29; Rs. 2,40,000 in 2029-30.', 'EMIs a month');
+  await expectText(page, v, 'emis-2027-28', '2,85,000', 'EMIs a month in the statement');
+  await expectText(page, v, 'service-2026-27', '7,61,000', 'EMIs a month in the statement');
+  await page.check('#fld-assetIncome-from');
+  await leave(page, '#fld-assetIncome-yearly', '3.6 L');
+  await leave(page, '#fld-assetIncome-start', '2026-10');
+  await expectText(page, v, 'asset-2026-27', '1,80,000', 'the new asset from October 2026');
+  await expectText(page, v, 'dscr-2026-27', '0.83', 'the new asset from October 2026');
+  await expectText(page, v, 'dscr-average', '1.26', 'the new asset from October 2026');
+  for (const id of ['assumed-asset', 'assumed-otherLoans', 'assumed-tax']) if (await page.getByTestId(id).count()) v(`${id} is still listed after it was answered`);
+  await layout(page, v, 'borrower, EMIs and the new asset, 390 px');
   await ctx.close();
 }
 
