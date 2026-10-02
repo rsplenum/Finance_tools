@@ -105,3 +105,55 @@ Dated 01-10-2026. Set by Claude at the owner's request (30-09-2026: work everyth
 | Loans already running | None | Change it if EMIs are paid on other loans: all of a proprietor's, business and personal; a firm's, LLP's or company's own loans only |
 | Other non-cash charges and lease rentals | None | Few small businesses have them |
 | The first year of the figures | The year the loan is first drawn | The business is running: it has this year's figures |
+
+## Construction and renovation estimates
+
+Dated 02-10-2026. The heads follow the usual order of a building estimate, as in public works schedules of rates; they are a convention, not a regulation. No rate is given anywhere: every estimate states the basis of its own rates, such as a contractor's quotation or a schedule of rates and its year.
+
+**New construction**: Earthwork (cum); Plain concrete (cum); Reinforced concrete (cum); Reinforcement steel (kg); Masonry (cum); Plastering (sqm); Flooring and tiling (sqft); Doors and windows (LS); Painting (sqm); Waterproofing (sqm); Plumbing and sanitary (LS); Electrical (LS); Other works (LS).
+
+**Renovation or repair**: Dismantling and removal (LS); Masonry and plaster repairs (sqm); Flooring and tiling (sqft); Doors and windows (nos); Kitchen (LS); Toilets and bathrooms (LS); Plumbing and sanitary (LS); Electrical (LS); Waterproofing (sqm); Painting (sqm); Other works (LS).
+
+Units: cum (cubic metre), sqm (square metre), rmt (running metre), sqft (square foot), cft (cubic foot), rft (running foot), kg (kilogram), MT (tonne), nos (number), LS (lump sum).
+
+- Each item's amount is its quantity × its rate.
+- The abstract of cost adds up the items under each head; the total of the works is the sum of the heads.
+- GST, when the rates leave it out, is added on the total of the works.
+- Contingency, for unforeseen work, is added on the works with GST.
+- The cost per sq ft is the total estimated cost ÷ the built-up area.
+
+## Project report
+
+Dated 02-10-2026. How a project report for a term loan with working capital is worked out here, in the form chartered accountants commonly use for small and medium enterprises. Set by Claude at the owner's request (02-10-2026); the depreciation rates and the working-capital methods are as described in public sources, not checked against the primary texts from here.
+
+| Head of the project | Depreciation a year |
+|---|---|
+| Land | none |
+| Building and civil works | 10% on the written-down value |
+| Plant and machinery | 15% on the written-down value |
+| Furniture and fixtures | 10% on the written-down value |
+| Other fixed assets | 15% on the written-down value |
+| Contingency on fixed assets | 15% on the written-down value |
+| Preliminary and pre-operative expenses | written off over 5 years |
+
+Written-down value at the income-tax rates (Income-tax Rules, 1962, Appendix I): buildings 10%, plant and machinery 15%, furniture 10%; other fixed assets and the contingency on them at the plant-and-machinery rate. A full year's depreciation in the first year.
+
+Working capital: The second method of lending (Tandon Committee): the bank finances up to 75% of current assets, less creditors. The turnover method for small enterprises (Nayak Committee, RBI): working capital of 25% of the year's sales, of which the bank finances 20%.
+
+**What the page assumes until you change it**
+
+- **Stock, debtors and creditors**: 30 days each: stock and creditors of the year's materials and other variable costs, debtors of the year's sales. A common level for a small business; type the business's own.
+- **The working-capital limit**: Fully used, and its interest paid, in every year. On the careful side: more interest, lower profit.
+- **Drawings and dividends**: None: the profits stay in the business. Type them in the figures if the owners take money out.
+- **Tax**: Paid in the year it falls due. No tax is left owing in the balance sheet.
+
+**How the figures are worked out**
+
+- Sales and fixed costs grow by the percentages given; materials and other variable costs are the same share of sales every year.
+- Profit before interest, depreciation and tax is sales less variable and fixed costs. Depreciation is on the written-down value; preliminary expenses are written off in five equal parts.
+- Interest on the term loan is from its repayment schedule; interest on working capital is the limit × its rate. Tax is worked out by who the borrower is.
+- Stock, debtors and creditors are the days given of the year's figures. The margin for working capital, part of the cost of the project, is what the first year's stock and debtors need beyond the creditors and the bank's limit.
+- The promoters bring in the cost of the project less the term loan, any subsidy and any unsecured loans.
+- Cash in hand is what the cash flow leaves; the balance sheet must balance with it, or no figures are shown.
+- DSCR is the common term-loan DSCR: (profit after tax + depreciation + preliminary expenses written off + interest on the term loan) ÷ (principal + interest on the term loan); the average is the totals' ratio.
+- Break-even: fixed costs (with depreciation, preliminary expenses written off and interest) ÷ the contribution (sales less variable costs), as a share of sales; the cash break-even leaves out depreciation and the write-off.

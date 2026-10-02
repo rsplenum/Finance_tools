@@ -6,6 +6,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import dscr from '../engine/data/dscr.json' with { type: 'json' };
 import tax from '../engine/data/tax.json' with { type: 'json' };
 import defaults from '../engine/data/defaults.json' with { type: 'json' };
+import estimate from '../engine/data/estimate.json' with { type: 'json' };
+import report from '../engine/data/report.json' with { type: 'json' };
 
 const date = (iso) => iso.split('-').reverse().join('-');
 const rs = (n) => `Rs. ${n.toLocaleString('en-IN')}`;
@@ -65,6 +67,19 @@ out.push('');
 out.push(`## ${defaults.title}`, '', `Dated ${date(defaults.date)}. ${defaults.status}`, '', '| What | Assumed | Why |', '|---|---|---|');
 for (const a of defaults.assumptions) out.push(`| ${a.what} | ${a.shown} | ${a.why} |`);
 out.push('');
+
+// The construction or renovation estimate (engine/estimate.ts).
+out.push(`## ${estimate.title}`, '', `Dated ${date(estimate.date)}. ${estimate.status}`, '');
+for (const kind of Object.values(estimate.kinds))
+  out.push(`**${kind.label}**: ${kind.heads.map((h) => `${h.label} (${h.unit})`).join('; ')}.`, '');
+out.push(`Units: ${estimate.units.map((u) => `${u.id} (${u.what})`).join(', ')}.`, '', ...estimate.method.map((m) => `- ${m}`), '');
+
+// The project report (engine/report.ts).
+out.push(`## ${report.title}`, '', `Dated ${date(report.date)}. ${report.status}`, '');
+out.push('| Head of the project | Depreciation a year |', '|---|---|', ...report.heads.map((h) => `| ${h.label} | ${h.id === 'preliminary' ? `written off over ${report.preliminaryYears} years` : h.depreciationPct ? `${h.depreciationPct}% on the written-down value` : 'none'} |`), '');
+out.push(report.depreciationSource, '', `Working capital: ${report.workingCapital.source}`, '');
+out.push('**What the page assumes until you change it**', '', ...report.assumptions.map((a) => `- **${a.what}**: ${a.shown}. ${a.why}.`), '');
+out.push('**How the figures are worked out**', '', ...report.method.map((m) => `- ${m}`), '');
 
 const text = out.join('\n');
 const path = new URL('../docs/RULES.md', import.meta.url);
