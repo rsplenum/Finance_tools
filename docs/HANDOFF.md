@@ -10,10 +10,14 @@ State at 02-10-2026: P0 to P1g are on `main` (PRs #2 to #6), which Cloudflare Pa
   - the project report at `/project-report/` (D-UX-14);
   - the DSCR front door (P1f, D-UX-15): eight fields, everything else under a closed More options, results first, Print.
   Each tool has its own engine, worked out twice, and downloads in PDF, Excel and Word. PR #6 is merged, so all of it is on the live site.
-- **The estimate's blueprint** (`docs/ESTIMATE-BLUEPRINT.md`, D-UX-16) is a proposal; nothing in it is built.
-  - It draws on about 50 public sources, and on three sample documents the owner downloaded, used for structure only.
-  - It plans the estimate for a layperson and a professional, in five thin steps, E1 to E5.
-  - It waits on the owner's five decisions (A14).
+- **The estimate's blueprint, version 2** (`docs/ESTIMATE-BLUEPRINT.md`, D-UX-16 and D-UX-17) is a proposal; nothing in it is built.
+  - It draws on about 70 public sources, and on three sample documents the owner downloaded, used for structure only.
+  - At the owner's direction, the tool works the estimate out from six answers (the work, flat or house, the city, the area, the bedrooms, the level). It gives five levels, a slider for each section and a brand or level for each item.
+  - Every rate comes from a library with its source, class and date. Building the library is most of the work.
+  - The loan and the EMI are out.
+  - It is built in eight thin steps, E1 to E8.
+  - It waits on the owner's five decisions (A18) and on network access to the sources (A7, B9).
+  - B11 critiques Gemini's blueprint.
 - **The owner is not satisfied with the page.** An outside review (Gemini, reading `main` before PR #2 was merged) and the owner's own words: it should ask seven inputs, not ten plus method choices. The engine's maths stands; the review's own formula taxes profit before interest. **Next:** the owner tries the three tools on the live site, then payment (P1d) once the business entity, GST and Razorpay account exist. The front door is done when the owner says it feels simple (D-UX-15).
 - **Skills** in `.claude/skills/` (D-TECH-14): `brief-first` (now with the finish line, the owner saying it feels simple, and what to refuse; D-UX-12), `money-maths-checks`, `lender-documents`. The owner's rule, now in CLAUDE.md: give the tradeoffs of every request.
 
@@ -74,14 +78,14 @@ The test figures are model-worked until the owner confirms fictional cases A and
 | # | Session | Starter prompt (paste as the first message) |
 |---|---|---|
 | P1d | Payment for the download (after P1f, and after the owner's Phase 0 items: business entity, GST, Razorpay account) | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md, docs/DECISIONS.md (D-TECH-01, D-TECH-06, D-DOC-01) and docs/CLOUDFLARE.md. P1d: payment for the DSCR statement download, through Razorpay and the Worker. Ask me first, in one message: the price; whether the Worker stays separate or moves beside the site as Pages Functions; and, since the document is made in the browser, whether payment only unlocks the two buttons (anyone reading the page's code could still make the file) or the file must come from the server. Then build it: the order made in the Worker, the payment verified by its signature, and the buttons unlocked for that statement only. Test with Razorpay's test keys, set only in the environment settings, never in the repo. The preview stays free. Finish per HANDOFF." |
-| E1 | The estimate's front door (after the owner's A14 decisions) | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md and docs/ESTIMATE-BLUEPRINT.md: Part A, and Part B only where A points to it. My A14 decisions: [as recommended, or your changes]. Build E1 per A13: the four kinds, the area by kind, item buttons with lump sums, GST three ways, and who gave the rates; results first (the total, the cost per sq ft, the split, what is missing); the documents with the property's facts and the total in words; the default field count asserted. My fictional case, worked at home: [yours]. Finish per HANDOFF." |
+| E1 | The estimate worked out from six answers, three sections at five levels (after the owner's A18 decisions and the network settings) | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md and docs/ESTIMATE-BLUEPRINT.md: Part A, and Part B only where A points to it. My A18 decisions: [as recommended, or your changes]. Build E1 per A17. Start with the library for Flooring, Walls and paint, and Bathrooms, each value with its source, class and date (A7). Then the six questions, rooms from the BHK, the five-level strip, the section bar, the sliders and the item drawer, and the planning estimate as PDF, Excel and Word with Annexes 1 and 3. Assert the field count. My fictional flat, with the room sizes and quantities I worked at home: [yours]. Finish per HANDOFF." |
 
 ## End of every session
 1. `npm test` (includes the simulation; `npm run sim` prints it: 0 violations), `npm run typecheck`, `npm run rules-doc`, `npm run build`, `npm run check:site` (0 violations). One line in `docs/DECISIONS.md` per decision.
 2. Update this file (state + next), commit, draft PR. The branch preview builds itself (link on the PR); open it and say so.
 
 ## Waiting on the owner
-- **Read `docs/ESTIMATE-BLUEPRINT.md`** and decide the five choices in A14, or say "as recommended". Then the next session builds E1.
+- **Read `docs/ESTIMATE-BLUEPRINT.md`** (version 2) and decide the five choices in A18, or say "as recommended". Then the next session builds E1.
 - **Try the three downloads on the live site.** Open the Word copy in Word itself and the Excel copy in Excel: they were checked with mammoth, read-excel-file and LibreOffice, not with Microsoft Office.
 - **Try P1e on the live site**: who the borrower is, EMIs a month, the new asset's income.
 - **Try the front door (P1f)** on the live site, on a phone and a desktop: it is done when you say it feels simple. Then the estimate and the project report, with your own fictional cases.
@@ -99,12 +103,12 @@ The test figures are model-worked until the owner confirms fictional cases A and
   - whether the tax rates by borrower hold for FY 2026-27.
 
   The page shows the method as "not yet checked" until then.
-- **Network settings:** allow `rbi.org.in`, `rbidocs.rbi.org.in`, `icai.org` and `bcasonline.org` so a session can read the primary texts (the research used secondary sources); `incometaxindia.gov.in`, `incometax.gov.in`, `indiabudget.gov.in` and `egazette.gov.in` for the tax rates; and `developers.cloudflare.com` and `pages.dev` so it can check `docs/CLOUDFLARE.md` and open previews itself. For the estimate's primary texts (`docs/ESTIMATE-BLUEPRINT.md` B9), allow `indiacode.nic.in`, `cpwd.gov.in`, `bis.gov.in`, `coa.gov.in`, `cbic-gst.gov.in` and `labour.gov.in`. All are blocked now.
+- **Network settings:** allow `rbi.org.in`, `rbidocs.rbi.org.in`, `icai.org` and `bcasonline.org` so a session can read the primary texts (the research used secondary sources); `incometaxindia.gov.in`, `incometax.gov.in`, `indiabudget.gov.in` and `egazette.gov.in` for the tax rates; and `developers.cloudflare.com` and `pages.dev` so it can check `docs/CLOUDFLARE.md` and open previews itself. For the estimate's primary texts and its library (`docs/ESTIMATE-BLUEPRINT.md` A7, B9), allow `indiacode.nic.in`, `cpwd.gov.in`, `bis.gov.in`, `coa.gov.in`, `cbic-gst.gov.in`, `labour.gov.in`, `archive.org` and `law.resource.org`, and the brands' and firms' sites, or give the library's sessions full network access. All are blocked now.
 - The Worker (`docs/CLOUDFLARE.md` §2: create D1 + KV, send the IDs) can wait until the payment session.
 - Business entity, GST registration and Razorpay account (Phase 0).
 - Before payments: keep the separate Worker (D-TECH-01) or move the API beside the site as Pages Functions (same address, separate preview data per branch)? Branch previews of a separate Worker share the live D1 and KV. Decide with the Cloudflare docs open.
 - A product name and domain (the site says "Loan document tools" for now); at launch remove the `noindex` in `site/public/_headers`.
-- First region and cities for construction rates (Phase 2).
+- First region and cities for construction rates (Phase 2): now the cities the estimate's library is checked for first (A7).
 - Main customer first, for the price (P1d): DSAs (plans) or borrowers (one-off). The page is built for a borrower first (D-UX-10).
 
 ## Gotchas
