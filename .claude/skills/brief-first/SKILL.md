@@ -47,6 +47,5 @@ Done means the owner has tried it on a phone and on a desktop and says it feels 
 - A field added to the default path "just in case".
 - Explanatory paragraphs above the inputs.
 - The professional surface (a CA's or DSA's year-by-year figures) as the main experience: it sits behind a visible link (D-UX-10).
-- Work held back by the freeze in CLAUDE.md, while it holds (new depth, payment, Phase 2).
 - A silent default of a fact that changes the answer. An assumption from `engine/data/defaults.json`, listed on the page, is not silent.
 - Any figure worked out by an AI instead of the engine.

@@ -32,8 +32,8 @@ export function docNeeds(f: DocFacts): string[] {
 /** Everything the document still needs: the page's own needs, then the document's. */
 export const allNeeds = (s: State, p: Preview) => [...p.needs, ...docNeeds(s.doc)];
 
-/** "Complete, on 5 assumptions", or "Provisional: 2 still needed" counting the document's own facts. */
-export const docStatus = (s: State, p: Preview) => statusText({ ...p, needs: allNeeds(s, p) });
+/** "Complete", or "Provisional: 2 still needed" counting the document's own facts. The document lists no assumptions, so counts none. */
+export const docStatus = (s: State, p: Preview) => statusText({ ...p, needs: allNeeds(s, p), assumed: [] });
 
 /** The file's name: the borrower's, and "(provisional)" while anything is missing. */
 export function fileName(s: State, p: Preview, ext: 'pdf' | 'xlsx'): string {
@@ -81,6 +81,7 @@ function loanPairs(s: State, p: Preview, y: Years): [string, string][] {
   return pairs;
 }
 
+/** The average and the lowest year beside the lender's target; the verdict, the largest loan and the fewest instalments stay on the page. */
 function resultBlocks(s: State, p: Preview): Block[] {
   const t = targetOf(s), shown = (x?: number) => x !== undefined && Number.isFinite(x);
   const target = [shown(t.average) ? `average ${targetText(t.average as number)}` : '', shown(t.minimum) ? `lowest year ${targetText(t.minimum as number)}` : '']
@@ -88,10 +89,7 @@ function resultBlocks(s: State, p: Preview): Block[] {
   const pairs: [string, string][] = [];
   if (p.average !== undefined) pairs.push(['Average DSCR', p.average], ['Lowest year', `${p.lowest} in ${p.lowestYear}`]);
   pairs.push(["The lender's target", target ? cap(target) : 'Still needed']);
-  return [
-    { kind: 'pairs', pairs },
-    ...[p.verdict?.text, p.largest?.text, p.fewest?.text].filter((x): x is string => !!x).map((text): Block => ({ kind: 'text', text })),
-  ];
+  return [{ kind: 'pairs', pairs }];
 }
 
 const choiceLabel = (def: Definition, k: OptionKey) => (OPTIONS[k].choices as Record<string, { label: string }>)[def[k] as string].label;
@@ -130,12 +128,12 @@ function typed(t: string | undefined, percent?: boolean): string {
   return n === undefined ? `"${text}" (not understood)` : percent ? `${n}%` : `Rs. ${tidyAmount(text)}`;
 }
 
-/** How a line was given, in words; while its assumption holds, only what was typed (the assumption says the rest). */
-function howGiven(s: State, r: RowDef, mode: RowMode | undefined, years: string[], assumed: boolean): string {
+/** How a line was given, in words. */
+function howGiven(s: State, r: RowDef, mode: RowMode | undefined, years: string[]): string {
   const cells = s.cells[r.key] ?? [], first = typed(cells[0], r.percent), rateText = s.rates[r.key]?.trim() ?? '';
   const rate = rateText ? (numberOf(rateText) === undefined ? `"${rateText}" (not understood)` : `${numberOf(rateText)}%`) : 'a rate still needed';
   switch (mode) {
-    case 'same': return assumed ? `${first} in ${years[0]}` : `${first} every year`;
+    case 'same': return `${first} every year`;
     case 'grow': return r.key === 'pbdit' ? `${first} in ${years[0]}; sales growth ${rate} a year` : `${first} in ${years[0]}, then growing ${rate} a year`;
     case 'fall': return `${first} in ${years[0]}, then falling ${rate} a year (written-down value)`;
     case 'years': return years.map((fy, i) => `${fy}: ${typed(cells[i], r.percent)}`).join('; ');
@@ -163,7 +161,7 @@ function emisGiven(s: State): string {
   return `EMIs of ${loans.join('; ')}${counts ? `. ${counts}` : ''}`;
 }
 
-/** The figures as entered, each once; a line answered wholly by an assumption is listed with the assumptions instead. */
+/** The figures as entered, each once. The page's assumptions are not listed (the owner, D-DOC-03), so a line they leave at None is left out. */
 function enteredPairs(s: State, p: Preview, y: Years): [string, string][] {
   const held = new Set(p.assumed.map((a) => a.id)), pairs: [string, string][] = [], done = new Set<string>();
   if (s.source === 'own') pairs.push(['Years', y.years.length > 1 ? `${y.years[0]} to ${y.years[y.years.length - 1]}` : y.years[0]]);
@@ -173,13 +171,13 @@ function enteredPairs(s: State, p: Preview, y: Years): [string, string][] {
     const mode = modeOf(s, r), assumed = held.has(ASSUMPTION_OF[r.modeKey] ?? '');
     // In a block of rows answered together, only the rows its answer uses.
     if (mode && mode !== 'none' && r.only && !r.only.includes(mode)) continue;
-    if (assumed && (mode === 'none' || r.key === 'taxPct')) continue;
+    if (assumed && mode === 'none') continue;
     if (mode === 'none') {
       if (!done.has(r.modeKey)) pairs.push([GROUP_TITLES[r.modeKey] ?? r.label, 'None']);
       done.add(r.modeKey);
       continue;
     }
-    pairs.push([mode === 'emi' ? GROUP_TITLES[r.modeKey] ?? r.label : r.label, howGiven(s, r, mode, y.years, assumed)]);
+    pairs.push([mode === 'emi' ? GROUP_TITLES[r.modeKey] ?? r.label : r.label, howGiven(s, r, mode, y.years)]);
   }
   return pairs;
 }
@@ -243,10 +241,6 @@ export function statementDoc(s: State, p: Preview, today: string): Doc | undefin
   blocks.push({ kind: 'heading', text: 'How DSCR is worked out' }, ...methodBlocks(s, p, def));
   const entered = enteredPairs(s, p, y);
   if (entered.length) blocks.push({ kind: 'heading', text: s.source === 'plan' ? 'The business figures entered' : 'The figures entered' }, { kind: 'pairs', pairs: entered });
-  if (p.assumed.length) blocks.push(
-    { kind: 'heading', text: 'Assumed until changed' },
-    { kind: 'list', items: p.assumed.map((a) => `${a.what}: ${a.shown}. ${a.why}.`) },
-  );
   blocks.push({ kind: 'signature', lines: [`For ${borrower || 'the borrower'}`, '', 'Authorised signatory', 'Date:', 'Place:'] });
 
   return {

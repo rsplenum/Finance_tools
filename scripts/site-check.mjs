@@ -430,16 +430,19 @@ async function layout(page, v, step) {
   await expectText(page, v, page.getByTestId('doc-needs').locator('li').first(), "The borrower's name, in English letters", 'a name in Devanagari');
   await leave(page, '#fld-borrower', 'Asha Traders');
   await leave(page, '#fld-lender', 'Example Bank, Pune branch');
-  await expectText(page, v, 'doc-status', 'Complete, on 9 assumptions', 'the download with its facts');
+  await expectText(page, v, 'doc-status', 'Complete', 'the download with its facts');
   if (await page.getByTestId('doc-needs').count()) v('the download still lists needs once its facts are in');
   pdf = await save('download-pdf');
   if (pdf.name !== 'DSCR statement - Asha Traders.pdf') v(`the PDF is named "${pdf.name}"`);
   pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
   const first = pages[0].split('\n');
-  for (const want of ['Borrower Asha Traders', 'Lender Example Bank, Pune branch', 'Status Complete, on 9 assumptions', 'Average DSCR 1.16', 'Lowest year 0.84 in 2027-28',
+  for (const want of ['Borrower Asha Traders', 'Lender Example Bank, Pune branch', 'Status Complete', 'Average DSCR 1.16', 'Lowest year 0.84 in 2027-28',
     'Cash available (A) 4,00,392 4,22,624 4,45,488 4,73,072', 'DSCR (A ÷ B) 1.17 0.84 0.98 2.26'])
     if (!first.includes(want)) v(`the PDF's first page has no line "${want}"`);
   if (pages.length < 3 || pages.join('\n').includes('Provisional')) v(`the PDF has ${pages.length} pages, or still says provisional`);
+  // The page's assumptions, its verdict, the largest loan and the fewest instalments stay on the page (D-DOC-03).
+  for (const not of ['Assumed until changed', 'Below the target', 'The largest loan', 'The fewest instalments'])
+    if (pages.join('\n').includes(not)) v(`the PDF says "${not}"`);
   const xlsx = await save('download-xlsx');
   if (xlsx.name !== 'DSCR statement - Asha Traders.xlsx') v(`the Excel copy is named "${xlsx.name}"`);
   const book = await workbook(xlsx.bytes).catch((e) => v(`the Excel copy is not read: ${e.message}`)) ?? [];
