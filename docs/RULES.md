@@ -53,7 +53,7 @@ Shown as examples only, never used unless chosen. Each lender sets its own.
 
 ### When the engine builds the figures from the loan terms
 
-- Interest is charged every month on the balance at the start of the month, and paid that month.
+- Interest accrues at the end of each day on that day's closing balance, and is charged (debited) at the end of the month, when it is paid. The loan is taken as drawn on the first day of its first month, and the balance changes only at a month's end, when an instalment is paid; so each month's interest is a twelfth of the yearly rate on the balance after the last instalment, as Excel's PMT and IPMT work it. A bank's account counts the days in each month instead, so its interest differs a little from month to month, but hardly over a year.
 - No principal is repaid during the moratorium; interest is still paid.
 - Instalment 1 falls at the end of the first month or quarter after the moratorium, and so on.
 - Equal instalments of principal: loan ÷ number of instalments. Equated monthly instalments (EMI): the exact EMI, not rounded (as Excel's PMT); banks round it up to the rupee, a difference under Rs. 1 a month. EMI is worked monthly only.

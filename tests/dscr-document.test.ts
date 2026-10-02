@@ -66,19 +66,20 @@ describe('fictional case A′, complete: the statement for the lender', () => {
   it('heads it with the borrower, the lender, the date and the status', () => {
     expect(lines.slice(3, 10)).toEqual([
       'DSCR statement', 'Debt service coverage ratio, 2026-27 to 2029-30',
-      'Borrower: Asha Traders', 'Lender: Example Bank, Pune branch', 'Prepared on: 30-09-2026', 'Status: Complete, on 9 assumptions', 'The result',
+      'Borrower: Asha Traders', 'Lender: Example Bank, Pune branch', 'Prepared on: 30-09-2026', 'Status: Complete', 'The result',
     ]);
     expect(doc.header).toBe('DSCR statement · Asha Traders');
     expect(doc.mark).toBeUndefined();
     expect(text).not.toMatch(/provisional|still needed/i);
   });
-  it('gives the average, the lowest year, the target and what limits the result', () => {
-    expect(lines.slice(10, 16)).toEqual([
-      'Average DSCR: 1.16', 'Lowest year: 0.84 in 2027-28', "The lender's target: Average 1.50, lowest year 1.20",
-      'Below the target: the lowest year, 2027-28, is 0.84 against 1.20; the average is 1.16 against 1.50.',
-      p.largest?.text, p.fewest?.text,
+  it('gives the average and the lowest year beside the target; the verdict, the largest loan and the fewest instalments stay on the page', () => {
+    expect(lines.slice(10, 14)).toEqual([
+      'Average DSCR: 1.16', 'Lowest year: 0.84 in 2027-28', "The lender's target: Average 1.50, lowest year 1.20", 'Year by year',
     ]);
-    expect(p.largest?.text).toMatch(/limited by the lowest year, 2027-28\.$/);
+    for (const t of [p.verdict?.text, p.largest?.text, p.fewest?.text]) {
+      expect(t).toBeTruthy();
+      expect(text).not.toContain(t);
+    }
   });
   it('shows the year-wise statement as the page does', () => {
     expect(text).toContain('Rupees | 2026-27 | 2027-28 | 2028-29 | 2029-30');
@@ -95,17 +96,19 @@ describe('fictional case A′, complete: the statement for the lender', () => {
     expect(lines).toContain('The average: total cash available ÷ total debt service. The lowest year is the lowest DSCR among the years counted.');
     for (const rule of DSCR.planning.rules) expect(lines).toContain(rule);
   });
-  it('lists the facts entered once, and every assumption still in use with its reason', () => {
+  it('lists the facts entered once, and not the page\'s assumptions', () => {
     expect(lines).toContain('Amount: Rs. 12,00,000');
     expect(lines).toContain('Repaid: Equal principal every quarter');
     expect(lines).toContain('Instalments: 12 quarterly');
     expect(lines).toContain('Each instalment: Principal Rs. 1,00,000 a quarter, and interest on the balance every month.');
     expect(lines).toContain('Profit before interest, depreciation and tax: Rs. 5,00,000 in 2026-27; sales growth 10% a year');
-    expect(lines).toContain('Depreciation: Rs. 1,50,000 in 2026-27');
-    // The tax rate and the lines answered None are the assumptions', so they are listed there, not as entered.
-    expect(text).not.toMatch(/^Tax rate \(%\):/m);
+    expect(lines).toContain('Depreciation: Rs. 1,50,000 every year');
+    expect(lines).toContain('Tax rate (%): 31.2% every year');
+    // The assumptions are listed on the page only (the owner, D-DOC-03); the lines they leave at None are left out.
     expect(p.assumed).toHaveLength(9);
-    for (const a of p.assumed) expect(lines).toContain(`${a.what}: ${a.shown}. ${a.why}.`);
+    expect(text).not.toContain('Assumed until changed');
+    for (const a of p.assumed) expect(text).not.toContain(a.why);
+    expect(text).not.toMatch(/^(Extra income from the new asset|Loans already running|Other non-cash charges[^:]*):/m);
   });
   it('adds the repayment schedule by year and by month', () => {
     expect(doc.parts.map((x) => x.name)).toEqual(['Statement', 'Repayment schedule']);
@@ -133,7 +136,7 @@ describe('the PDF, read back by pdf.js', () => {
     expect(first.slice(0, 5)).toEqual(['DSCR statement · Asha Traders', 'DSCR statement', 'Debt service coverage ratio, 2026-27 to 2029-30', 'Borrower Asha Traders', 'Lender Example Bank, Pune branch']);
     expect(first).toContain('Average DSCR 1.16');
     expect(first).toContain('Lowest year 0.84 in 2027-28');
-    expect(first).toContain('Below the target: the lowest year, 2027-28, is 0.84 against 1.20; the average is 1.16 against 1.50.');
+    expect(first.join('\n')).not.toContain('Below the target');
     expect(first).toContain('Cash available (A) 4,00,392 4,22,624 4,45,488 4,73,072');
     expect(first).toContain('DSCR (A ÷ B) 1.17 0.84 0.98 2.26');
     // Every figure of the statement, on the first page, in the order the page shows it.
@@ -178,7 +181,7 @@ describe('the Excel copy, read back by read-excel-file', () => {
     expect(book.map((x) => x.sheet)).toEqual(['Statement', 'Repayment schedule']);
     const rows = book[0].data, row = (label: string) => rows.find((r) => r[0] === label)?.filter((c) => c !== null);
     expect(row('Borrower')).toEqual(['Borrower', 'Asha Traders']);
-    expect(row('Status')).toEqual(['Status', 'Complete, on 9 assumptions']);
+    expect(row('Status')).toEqual(['Status', 'Complete']);
     expect(row('Rupees')).toEqual(['Rupees', '2026-27', '2027-28', '2028-29', '2029-30']);
     expect(row('Cash available (A)')).toEqual(['Cash available (A)', 400392, 422624, 445488, 473072]);
     expect(row('Debt service (B)')).toEqual(['Debt service (B)', 341000, 502000, 454000, 209000]);
@@ -216,7 +219,7 @@ describe('one document, two files', () => {
   it('the PDF and the Excel copy carry the same words', async () => {
     const { doc } = build(A2), pdf = (await pdfPages(pdfOf(doc, MADE))).join('\n');
     const cells = (await workbook(xlsxOf(doc, MADE))).flatMap((x) => x.data.flat()).filter((c): c is string => typeof c === 'string');
-    for (const t of ['Asha Traders', 'Example Bank, Pune branch', 'Complete, on 9 assumptions', 'Common term-loan DSCR (not yet checked against a published source).'])
+    for (const t of ['Asha Traders', 'Example Bank, Pune branch', 'Debt service coverage ratio, 2026-27 to 2029-30', 'Common term-loan DSCR (not yet checked against a published source).'])
       expect([pdf.includes(t), cells.some((c) => c.includes(t))]).toEqual([true, true]);
     const doc2: Doc = { ...doc, parts: doc.parts.slice(0, 1) };
     expect((await pdfPages(pdfOf(doc2, MADE))).join('\n')).not.toContain('Repayment schedule');
@@ -246,7 +249,7 @@ describe('fictional case P: who the borrower is, loans already running and the n
     expect(lines).toContain("Loans already running: EMIs of Rs. 25,000 a month, running on; Rs. 15,000 a month, the last in December 2027. All of the proprietor's EMIs, business and personal: one cash flow pays them");
     expect(lines).toContain('Extra income from the new asset: Rs. 3,60,000 a year from October 2026');
     expect(lines).toContain('Tax rate (%): Worked out for a proprietor: slab rates of 5% to 30% with 4% cess, nothing up to Rs. 12,00,000 of profit');
-    expect(lines.some((l) => l.startsWith("A proprietor's tax: The new regime's slab rates, on the business's profit as the only income."))).toBe(true);
+    expect(text).not.toContain("A proprietor's tax: The new regime's slab rates");
   });
   it('carries the new lines of the statement, with the engine\'s figures', () => {
     expect(text).toContain('Add: extra income from the new asset | 1,80,000 | 3,60,000 | 3,60,000 | 3,60,000');

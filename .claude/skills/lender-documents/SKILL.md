@@ -21,9 +21,9 @@ No figure is computed in document code. The test that the document "holds no fig
 In order:
 
 1. Who and what: the borrower, the lender, the date and the status. While anything is missing, "Provisional" goes on every page, with what is still needed.
-2. The result, then the table.
+2. The average and the lowest year beside the lender's target, then the table. The verdict, the largest loan and the fewest instalments stay on the page (D-DOC-03).
 3. The working: the method in plain words, with its source.
-4. The facts entered, each once, and every assumption still in use with its reason.
+4. The facts entered, each once, each with its basis in full ("Rs. 1,50,000 every year"). The page's assumptions stay on the page, not in the document (D-DOC-03).
 5. A signature block, then any annexes.
 
 Ask only for facts the page does not already have (such as the borrower's name and the lender), once.
