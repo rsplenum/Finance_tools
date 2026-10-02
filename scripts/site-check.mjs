@@ -7,8 +7,9 @@
  * and its answers read as text (data-testid): fictional case A from the loan terms, own yearly figures, the amount
  * field's read-back, the DSCR statement and the repayment schedule, the tax rate by borrower, Clear all, and the same
  * layout checks once the tables are filled, in light and dark, with the tables as cards at 390 px and as tables at 1024 px.
- * The statement downloads at 390 px, as a PDF and as an Excel copy, each read back (scripts/read-doc.mjs): provisional
- * until the borrower's name and the lender are in, then complete.
+ * The statement downloads at 390 px, as a PDF, an Excel copy and a Word copy, each read back (scripts/read-doc.mjs):
+ * provisional until the borrower's name and the lender are in, then complete, laid out as a CA's statement (P1g).
+ * The construction estimate (P2) and the project report (P3) are filled in, worked out and downloaded the same way.
  * Run after `npm run build`. CHROMIUM_PATH overrides the browser Playwright would use.
  */
 import { createServer } from 'node:http';
@@ -16,7 +17,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-import { pdfPages, workbook } from './read-doc.mjs';
+import { docxLines, docxPart, pdfPages, workbook } from './read-doc.mjs';
 
 const DIST = fileURLToPath(new URL('../site/dist/', import.meta.url));
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
@@ -51,6 +52,8 @@ async function open(path, { scheme = 'light', stored, blockScripts = false } = {
   if (stored) await ctx.addInitScript((v) => { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('app-theme', v); sessionStorage.setItem('seeded', '1'); } }, stored);
   if (blockScripts) await ctx.route('**/*.js', (r) => r.abort());
   const page = await ctx.newPage();
+  // A fixed day, so the front door's "this month" (October 2026) and the documents' dates never depend on when this runs.
+  await page.clock.setFixedTime(new Date('2026-10-02T10:00:00+05:30'));
   const v = (m) => violations.push(`${path} (${scheme}${stored ? `, saved ${stored}` : ''}${blockScripts ? ', no scripts' : ''}): ${m}`);
   page.on('pageerror', (e) => v(`script error: ${e.message}`));
   if (!blockScripts) {
@@ -152,6 +155,11 @@ async function expectValue(page, v, sel, want, step) {
   if (got !== want) v(`${step}: ${sel} holds "${got}", want "${want}"`);
 }
 const leave = async (page, sel, value) => { await page.fill(sel, value); await page.press(sel, 'Tab'); };
+/** The detailed form sits under the closed "More options" (P1f): the flows below open it first. */
+const openMore = async (page) => {
+  const more = page.locator('#more-options');
+  if (!(await more.evaluate((d) => d.open))) await more.locator(':scope > summary').click();
+};
 
 /** Case A from the loan terms, typed the way a user would, with a None or one figure for every year where that is the answer. */
 async function enterCaseA(page) {
@@ -188,12 +196,14 @@ async function layout(page, v, step) {
 
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await openMore(page);
   // The page opens with the assumptions answered (D-UX-08): the start questions chosen, the loan asked at once, the target
   // filled in, and the preview listing what it assumes.
   if (!(await page.isChecked('#fld-source-plan')) || !(await page.isChecked('#fld-method-common'))) v('the start questions are not answered from the assumptions');
   await page.locator('#fld-loanAmount').waitFor({ timeout: 3000 }).catch(() => v('the loan is not asked at once'));
   await expectValue(page, v, '#fld-targetAverage', '1.50', 'the assumed target');
-  await expectText(page, v, 'assumed-target', "The lender's target: Average 1.50, lowest year 1.20", 'the assumptions listed');
+  // The method and the target read as one line (P1f).
+  await expectText(page, v, 'assumed-method', 'How DSCR is worked out, and the target: Common term-loan DSCR; average 1.50, lowest year 1.20', 'the assumptions listed');
 
   // The loan amount field, kept from P0: read back in figures and words while typing; long words wrap.
   const field = page.locator('#fld-loanAmount');
@@ -207,9 +217,10 @@ async function layout(page, v, step) {
   // One answer for how the loan is repaid (an EMI is monthly), listed once while it is missing.
   await page.locator('#fld-repayment-emi').waitFor({ timeout: 3000 }).catch(() => v('how the loan is repaid is not asked'));
   if (await page.locator('#fld-frequency-quarterly, #fld-style-emi').count()) v('how the loan is repaid is asked as two questions');
+  // The front door takes the loan as repaid by EMI (P1f): cleared, it is listed once as needed.
+  if (!(await page.isChecked('#fld-repayment-emi'))) v('the front door does not take the loan as repaid by EMI');
   const repaid = await page.getByTestId('dscr-needs').locator('li').allTextContents();
-  if (repaid.filter((n) => /repaid|How often|Instalment type/.test(n)).join('|') !== 'How the loan is repaid (EMI, or equal principal every month or quarter)')
-    v(`how the loan is repaid is not listed once as needed: ${JSON.stringify(repaid)}`);
+  if (repaid.some((n) => /repaid|How often|Instalment type/.test(n))) v(`how the loan is repaid is asked though the front door answers it: ${JSON.stringify(repaid)}`);
 
   await enterCaseA(page);
   await expectText(page, v, 'loan-dates', 'First instalment at the end of December 2026, the last at the end of September 2029. The loan runs over 2026-27 to 2029-30.', 'case A');
@@ -233,6 +244,10 @@ async function layout(page, v, step) {
   }
   await expectText(page, v, 'pbt-2026-27', '1,59,000', 'case A, profit before tax in 2026-27');
   await expectText(page, v, 'tax-2026-27', '39,750', 'case A, tax in 2026-27');
+  // The Total column, by hand: cash available 21,86,500 and debt service 15,06,000 over the four years; DSCR 1.45, the average.
+  await expectText(page, v, 'available-total', '21,86,500', 'case A, total cash available');
+  await expectText(page, v, 'service-total', '15,06,000', 'case A, total debt service');
+  await expectText(page, v, 'dscr-total', '1.45', 'case A, the Total column\'s DSCR');
   // The repayment schedule: the year's totals, and each month once the year is opened.
   const year1 = await page.getByTestId('schedule-2026-27').locator('summary span.text-right').allTextContents();
   if (year1.join('|') !== '1,41,000|2,00,000|10,00,000') v(`schedule 2026-27 shows ${JSON.stringify(year1)}, want interest 1,41,000, principal 2,00,000, balance 10,00,000`);
@@ -256,6 +271,7 @@ async function layout(page, v, step) {
   const statement = page.getByTestId('dscr-statement'), card = page.getByTestId('card-2027-28');
   if (await statement.isVisible() || !(await card.isVisible())) v('390 px: the statement is shown as a table, not as cards');
   await expectText(page, v, card.locator('[data-line="dscr"]'), '1.16', 'the 2027-28 card on a phone');
+  await expectText(page, v, page.getByTestId('card-total').locator('[data-line="available"]'), '21,86,500', 'the Total card on a phone');
   await page.setViewportSize({ width: 1024, height: 900 });
   if (!(await statement.isVisible()) || await card.isVisible()) v('1024 px: the statement is shown as cards');
   await layout(page, v, 'case A filled, 1024 px');
@@ -298,6 +314,7 @@ async function layout(page, v, step) {
 // The same filled page in dark mode.
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'dark' });
+  await openMore(page);
   await enterCaseA(page);
   await page.getByTestId('use-examples').click();
   await expectText(page, v, 'dscr-average', '1.45', 'case A, dark');
@@ -311,6 +328,7 @@ async function layout(page, v, step) {
 // and the question offers the later year.
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await openMore(page);
   await page.check('#fld-source-plan');
   await page.check('#fld-method-common');
   await leave(page, '#fld-loanAmount', '12 L');
@@ -353,6 +371,7 @@ async function layout(page, v, step) {
 // A few answers instead of every year: profit grows from one figure and one rate; the rest are one figure or None.
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await openMore(page);
   await page.check('#fld-source-plan');
   await page.check('#fld-method-common');
   await leave(page, '#fld-loanAmount', '50 L');
@@ -366,6 +385,7 @@ async function layout(page, v, step) {
   await leave(page, '#fld-pbdit-2027-28', '18 L');
   await leave(page, '#fld-pbdit-rate', '10');
   await expectText(page, v, 'readback-pbdit', 'Worked out: Rs. 18,00,000 in 2027-28 to Rs. 26,35,380 in 2031-32.', 'profit growing 10% a year');
+  await page.check('#fld-depreciation-same');
   await leave(page, '#fld-depreciation-2027-28', '4 L');
   await page.check('#fld-nonCash-none');
   await page.check('#fld-interestOther-same');
@@ -391,6 +411,7 @@ async function layout(page, v, step) {
 // worked by hand in tests/dscr-page.test.ts).
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await openMore(page);
   await leave(page, '#fld-loanAmount', '12 L');
   await leave(page, '#fld-ratePct', '12');
   await leave(page, '#fld-disbursed', '2026-04');
@@ -399,7 +420,9 @@ async function layout(page, v, step) {
   await leave(page, '#fld-instalments', '12');
   await leave(page, '#fld-pbdit-2026-27', '5 L');
   await leave(page, '#fld-pbdit-rate', '10');
+  await page.check('#fld-depreciation-same');
   await leave(page, '#fld-depreciation-2026-27', '1.5 L');
+  await page.check('#fld-interestOther-same');
   await leave(page, '#fld-interestOther-2026-27', '50,000');
   await expectText(page, v, 'dscr-status', 'Complete, on 9 assumptions', 'the quick path');
   await expectText(page, v, 'dscr-average', '1.16', 'the quick path');
@@ -424,6 +447,10 @@ async function layout(page, v, step) {
   let pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
   if (!pages.every((t) => t.startsWith('DSCR statement Provisional\n'))) v('the provisional PDF is not marked provisional on every page');
   if (!pages[0].includes("• The borrower's name\n• The lender")) v('the provisional PDF does not list what is still needed');
+  let word = await save('download-docx');
+  if (word.name !== 'DSCR statement (provisional).docx') v(`the provisional Word copy is named "${word.name}"`);
+  const mark = await docxPart(word.bytes, 'word/header1.xml').catch((e) => `(not read: ${e.message})`);
+  if (mark !== 'DSCR statement\tProvisional') v(`the provisional Word copy's header says ${JSON.stringify(mark)}`);
   // A name the PDF cannot print is flagged, and asked for in English letters.
   await leave(page, '#fld-borrower', 'श्री गणेश');
   await expectText(page, v, 'fld-borrower-said', 'The document is in English: type this in English letters.', 'a name in Devanagari');
@@ -435,20 +462,34 @@ async function layout(page, v, step) {
   pdf = await save('download-pdf');
   if (pdf.name !== 'DSCR statement - Asha Traders.pdf') v(`the PDF is named "${pdf.name}"`);
   pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
+  // Page 1: the borrower's name, the lender, the whole working, the average and the lowest year, the signature (P1g).
   const first = pages[0].split('\n');
-  for (const want of ['Borrower Asha Traders', 'Lender Example Bank, Pune branch', 'Status Complete', 'Average DSCR 1.16', 'Lowest year 0.84 in 2027-28',
-    'Cash available (A) 4,00,392 4,22,624 4,45,488 4,73,072', 'DSCR (A ÷ B) 1.17 0.84 0.98 2.26'])
+  for (const want of ['Asha Traders', 'Average DSCR Lowest year', '1.16 0.84', 'For Asha Traders', 'Profit before tax 1,59,000 2,48,000 3,51,000 4,56,500 12,14,500',
+    'Cash available (A) 4,00,392 4,22,624 4,45,488 4,73,072 17,41,576', 'DSCR (A ÷ B) 1.17 0.84 0.98 2.26 1.16'])
     if (!first.includes(want)) v(`the PDF's first page has no line "${want}"`);
+  if (!first.some((l) => l.startsWith('Lender Example Bank, Pune branch Prepared on '))) v("the PDF's first page does not name the lender");
   if (pages.length < 3 || pages.join('\n').includes('Provisional')) v(`the PDF has ${pages.length} pages, or still says provisional`);
-  // The page's assumptions, its verdict, the largest loan and the fewest instalments stay on the page (D-DOC-03).
-  for (const not of ['Assumed until changed', 'Below the target', 'The largest loan', 'The fewest instalments'])
-    if (pages.join('\n').includes(not)) v(`the PDF says "${not}"`);
+  if (!pages[1]?.includes('Annex 1. The basis') || !pages[2]?.includes('Annex 2. Repayment schedule')) v('the annexes do not start pages 2 and 3');
+  // What stays on the page only (D-DOC-03, and the owner on 02-10-2026): the assumptions, the verdict, the largest loan,
+  // the fewest instalments, the lender's target, how far the method was checked, and the rules for building the figures.
+  const ONLY_ON_THE_PAGE = ['Assumed until changed', 'Below the target', 'The largest loan', 'The fewest instalments', 'target', 'checked', 'How the figures are built', 'Status'];
+  for (const not of ONLY_ON_THE_PAGE) if (pages.join('\n').includes(not)) v(`the PDF says "${not}"`);
   const xlsx = await save('download-xlsx');
   if (xlsx.name !== 'DSCR statement - Asha Traders.xlsx') v(`the Excel copy is named "${xlsx.name}"`);
   const book = await workbook(xlsx.bytes).catch((e) => v(`the Excel copy is not read: ${e.message}`)) ?? [];
   const cash = book[0]?.data.find((r) => r[0] === 'Cash available (A)')?.filter((c) => c !== null);
-  if (book.map((x) => x.sheet).join('|') !== 'Statement|Repayment schedule' || JSON.stringify(cash) !== JSON.stringify(['Cash available (A)', 400392, 422624, 445488, 473072]))
+  if (book.map((x) => x.sheet).join('|') !== 'DSCR statement|Basis|Repayment schedule' || JSON.stringify(cash) !== JSON.stringify(['Cash available (A)', 400392, 422624, 445488, 473072, 1741576]))
     v(`the Excel copy holds sheets ${JSON.stringify(book.map((x) => x.sheet))} and cash available ${JSON.stringify(cash)}`);
+  const cells = book.flatMap((x) => x.data.flat()).filter((c) => typeof c === 'string').join('\n');
+  for (const not of ONLY_ON_THE_PAGE) if (cells.includes(not)) v(`the Excel copy says "${not}"`);
+  word = await save('download-docx');
+  if (word.name !== 'DSCR statement - Asha Traders.docx') v(`the Word copy is named "${word.name}"`);
+  const { lines: said, messages } = await docxLines(word.bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
+  if (messages.length) v(`the Word copy is not read cleanly: ${JSON.stringify(messages).slice(0, 200)}`);
+  for (const want of ['Asha Traders', 'Cash available (A) | 4,00,392 | 4,22,624 | 4,45,488 | 4,73,072 | 17,41,576', 'DSCR (A ÷ B) | 1.17 | 0.84 | 0.98 | 2.26 | 1.16', 'Annex 1. The basis', 'Annex 2. Repayment schedule'])
+    if (!said.includes(want)) v(`the Word copy has no line "${want}"`);
+  for (const not of ONLY_ON_THE_PAGE) if (said.join('\n').includes(not)) v(`the Word copy says "${not}"`);
+  if (await docxPart(word.bytes, 'word/header1.xml') !== 'DSCR statement · Asha Traders') v("the Word copy's header does not name the borrower");
   await layout(page, v, 'the download, 390 px');
   await ctx.close();
 }
@@ -459,6 +500,7 @@ async function layout(page, v, step) {
 // October 2026 (1,80,000 in 2026-27). Cash 6,30,000 against 7,61,000 in 2026-27: 0.83; average 33,80,500 / 26,91,000 = 1.26.
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await openMore(page);
   await leave(page, '#fld-loanAmount', '12 L');
   await leave(page, '#fld-ratePct', '12');
   await leave(page, '#fld-disbursed', '2026-04');
@@ -467,7 +509,9 @@ async function layout(page, v, step) {
   await leave(page, '#fld-instalments', '12');
   await leave(page, '#fld-pbdit-2026-27', '5 L');
   await leave(page, '#fld-pbdit-rate', '10');
+  await page.check('#fld-depreciation-same');
   await leave(page, '#fld-depreciation-2026-27', '1.5 L');
+  await page.check('#fld-interestOther-same');
   await leave(page, '#fld-interestOther-2026-27', '50,000');
   await page.check('#fld-borrowerType-proprietor');
   await expectText(page, v, 'tax-by', 'Worked out each year for a proprietor: slab rates of 5% to 30% with 4% cess, nothing up to Rs. 12,00,000 of profit.', "a proprietor's tax");
@@ -498,6 +542,7 @@ async function layout(page, v, step) {
 // instalment is not counted.
 {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await openMore(page);
   await page.check('#fld-source-own');
   await page.check('#fld-method-common');
   await page.waitForSelector('#fld-firstYear', { timeout: 3000 }).catch(() => v('own figures: the years are not asked'));
@@ -519,6 +564,123 @@ async function layout(page, v, step) {
   await expectText(page, v, 'dscr-not-counted', 'Not counted: 2026-27 (no term-loan instalment).', 'own figures');
   await expectText(page, v, 'dscr-verdict', 'Below the target: the lowest year, 2027-28, is 1.14 against 1.20; the average is 1.23 against 1.50.', 'own figures');
   await layout(page, v, 'own figures filled');
+  await ctx.close();
+}
+
+// The front door (P1f, D-UX-10): eight fields, More options closed on load, and the results without opening it. A textbook
+// EMI: Rs. 10,00,000 at 12% for one year is Rs. 88,848.79 a month; 12 of them less the loan is Rs. 66,185 of interest.
+{
+  const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  if (await page.locator('#more-options').evaluate((d) => d.open)) v('More options is open on load');
+  const texts = await page.locator('#front-door input[type="text"]').count(), radios = await page.locator('#front-door fieldset').count();
+  if (texts + radios > 8) v(`the front door asks ${texts + radios} fields (${texts} typed, ${radios} choices); the owner's list is 8`);
+  await expectText(page, v, 'fd-loan-note', 'The loan is taken as drawn in October 2026 and repaid by EMI every month, with no moratorium. Change it under More options.', 'the front door');
+  await page.check('#fld-fd-borrower-firm');
+  await leave(page, '#fld-fd-profit', '5 L');
+  await leave(page, '#fld-fd-growth', '10');
+  await leave(page, '#fld-fd-amount', '10 L');
+  await leave(page, '#fld-fd-rate', '12');
+  await leave(page, '#fld-fd-years', '1');
+  await expectText(page, v, 'dscr-instalment', 'EMI Rs. 88,848.79 a month', 'the front door');
+  await expectText(page, v, 'dscr-total-interest', 'Rs. 66,185', 'the front door');
+  if (!(await page.getByTestId('dscr-average').isVisible())) v('the front door: no average DSCR without opening More options');
+  if (!(await page.getByTestId('dscr-marks').isVisible())) v('the front door: the years are not marked against the target');
+  if (await page.locator('#more-options').evaluate((d) => d.open)) v('More options opened by itself');
+  await expectText(page, v, 'assumed-method', 'How DSCR is worked out, and the target: Common term-loan DSCR; average 1.50, lowest year 1.20', 'the method and the target in one line');
+  await expectText(page, v, 'part-2026-27', '6 of 12 instalments', 'the first part-year');
+  await layout(page, v, 'the front door filled, 390 px');
+  await ctx.close();
+}
+
+// The construction estimate (P2), by hand: excavation 45 cum × 350 = 15,750 and RCC 28 cum × 9,500 = 2,66,000; works
+// 2,81,750; GST at 18% 50,715; no contingency; total 3,32,465; per sq ft 3,32,465 ÷ 1,200 = 277.05.
+{
+  const { ctx, page, v } = await open('/estimate/', { scheme: 'light' });
+  await page.check('#fld-kind-construction');
+  await leave(page, '#fld-area', '1,200');
+  await page.selectOption('#fld-item-1-head', 'earthwork');
+  await expectValue(page, v, '#fld-item-1-unit', 'cum', "the head's usual unit");
+  await leave(page, '#fld-item-1-description', 'Excavation for foundations');
+  await leave(page, '#fld-item-1-quantity', '45');
+  await leave(page, '#fld-item-1-rate', '350');
+  await page.getByTestId('add-item').click();
+  await page.selectOption('#fld-item-2-head', 'rcc');
+  await leave(page, '#fld-item-2-description', 'RCC M20 in footings, columns, beams and slabs');
+  await leave(page, '#fld-item-2-quantity', '28');
+  await leave(page, '#fld-item-2-rate', '9,500');
+  await leave(page, '#fld-basis', 'Contractor’s quotation of 25-09-2026');
+  await page.check('#fld-gst-add');
+  await leave(page, '#fld-gstPct', '18');
+  await expectText(page, v, 'est-status', 'Provisional: 1 still needed', 'the estimate before contingency');
+  await page.check('#fld-contingency-none');
+  await expectText(page, v, 'est-status', 'Complete', 'the estimate');
+  for (const [id, want] of [['est-works', '2,81,750'], ['est-gst', '50,715'], ['est-total', '3,32,465'], ['est-per-sqft', 'Rs. 277'], ['item-2-amount', 'Rs. 2,66,000']])
+    await expectText(page, v, id, want, 'the estimate');
+  await layout(page, v, 'the estimate filled, 390 px');
+  await expectText(page, v, 'est-doc-status', 'Provisional: 2 still needed', 'the estimate before its facts');
+  await leave(page, '#fld-est-borrower', 'Asha Traders');
+  await leave(page, '#fld-est-property', 'Plot 12, Example Nagar, Pune');
+  await expectText(page, v, 'est-doc-status', 'Complete', 'the estimate with its facts');
+  const save = async (id) => {
+    const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.getByTestId(id).click()]);
+    const path = await file.path();
+    return { name: file.suggestedFilename(), bytes: path ? await readFile(path) : Buffer.alloc(0) };
+  };
+  const pdf = await save('est-download-pdf');
+  if (pdf.name !== 'Estimate - Asha Traders.pdf') v(`the estimate PDF is named "${pdf.name}"`);
+  const pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
+  if (!pages[0].split('\n').includes('Total estimated cost 3,32,465') || !pages[1]?.includes('Annex 1. Detailed estimate')) v('the estimate PDF does not read back its total and its annex');
+  const book = await workbook((await save('est-download-xlsx')).bytes).catch((e) => v(`the estimate's Excel copy is not read: ${e.message}`)) ?? [];
+  const total = book[0]?.data.find((r) => r[0] === 'Total estimated cost')?.filter((c) => c !== null);
+  if (book.map((x) => x.sheet).join('|') !== 'Estimate|Detailed estimate' || JSON.stringify(total) !== JSON.stringify(['Total estimated cost', 332465]))
+    v(`the estimate's Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))} and a total of ${JSON.stringify(total)}`);
+  const { lines, messages } = await docxLines((await save('est-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
+  if (messages.length || !lines.includes('Total estimated cost | 3,32,465') || !lines.includes('2.1 RCC M20 in footings, columns, beams and slabs | 28 | cum | 9,500 | 2,66,000'))
+    v(`the estimate's Word copy reads back ${JSON.stringify(lines.slice(0, 6))} ${JSON.stringify(messages).slice(0, 120)}`);
+  await layout(page, v, 'the estimate download, 390 px');
+  await ctx.close();
+}
+
+// The project report (P3), fictional case R worked by hand in tests/report.test.ts: a firm; building 10 L, plant 20 L,
+// furniture 2 L, preliminary 1 L; a term loan of 25 L at 10% from April 2026, 60 monthly instalments of equal principal;
+// sales 1.2 Cr growing 10%, variable costs 65%, fixed costs 18 L growing 5%; a cash credit of 5 L at 11%. The project
+// costs 37,86,301; in 2026-27 the profit after tax is 11,54,407 and the balance sheet totals 55,81,804 on both sides.
+{
+  const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
+  await page.check('#fld-borrower-firm');
+  for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-furniture', '2 L'], ['#fld-cost-preliminary', '1 L'],
+    ['#fld-tl-amount', '25 L'], ['#fld-tl-rate', '10'], ['#fld-tl-disbursed', '2026-04'], ['#fld-tl-moratorium', '0'], ['#fld-tl-instalments', '60'],
+    ['#fld-sales', '1.2 Cr'], ['#fld-salesGrowth', '10'], ['#fld-variablePct', '65'], ['#fld-fixed', '18 L'], ['#fld-fixedGrowth', '5'], ['#fld-wcLimit', '5 L'], ['#fld-wcRate', '11']])
+    await leave(page, id, value);
+  await expectText(page, v, 'rep-status', 'Provisional: 1 still needed', 'the report before the repayment');
+  await page.check('#fld-tl-repayment-monthly');
+  await expectText(page, v, 'rep-status', 'Complete', 'the report');
+  await expectText(page, v, 'rep-key-0', 'Rs. 37,86,301', 'the cost of the project');
+  const cells = async (table, label) => (await page.getByTestId(table).locator('tr', { has: page.locator('th', { hasText: label }) }).first().locator('td').allTextContents());
+  for (const [table, label, want] of [['rep-pl', 'Profit after tax', '11,54,407'], ['rep-bs', 'Total liabilities', '55,81,804'], ['rep-bs', 'Total assets', '55,81,804'], ['rep-dscr', 'DSCR (A ÷ B)', '2.51']]) {
+    if (table !== 'rep-dscr') await page.getByTestId(table).evaluate((t) => t.closest('details').open = true);
+    const got = await cells(table, label);
+    if (got[0] !== want) v(`the report's ${table} "${label}" shows ${JSON.stringify(got.slice(0, 2))}, want ${want} first`);
+  }
+  await layout(page, v, 'the report filled, 390 px');
+  await expectText(page, v, 'rep-doc-status', 'Provisional: 3 still needed', 'the report before its facts');
+  await leave(page, '#fld-rep-name', 'Asha Packaging');
+  await leave(page, '#fld-rep-activity', 'Manufacture of corrugated boxes');
+  await leave(page, '#fld-rep-address', 'Plot 4, Example MIDC, Pune');
+  await expectText(page, v, 'rep-doc-status', 'Complete', 'the report with its facts');
+  const save = async (id) => {
+    const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.getByTestId(id).click()]);
+    const path = await file.path();
+    return { name: file.suggestedFilename(), bytes: path ? await readFile(path) : Buffer.alloc(0) };
+  };
+  const pdf = await save('rep-download-pdf');
+  if (pdf.name !== 'Project report - Asha Packaging.pdf') v(`the report PDF is named "${pdf.name}"`);
+  const pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
+  if (!pages[0].includes('Total cost of the project 37,86,301') || !pages.join('\n').includes('Total assets 55,81,804')) v('the report PDF does not read back its cost and its balance sheet');
+  const book = await workbook((await save('rep-download-xlsx')).bytes).catch((e) => v(`the report's Excel copy is not read: ${e.message}`)) ?? [];
+  if (book.map((x) => x.sheet).join('|') !== 'Summary|Projections|DSCR and ratios|Annex') v(`the report's Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))}`);
+  const { lines, messages } = await docxLines((await save('rep-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
+  if (messages.length || !lines.some((l) => l.startsWith('Total assets | 55,81,804'))) v(`the report's Word copy reads back ${JSON.stringify(lines.slice(0, 4))} ${JSON.stringify(messages).slice(0, 120)}`);
   await ctx.close();
 }
 

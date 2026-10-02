@@ -1,0 +1,60 @@
+{
+  "title": "Construction and renovation estimates",
+  "date": "2026-10-02",
+  "status": "The heads follow the usual order of a building estimate, as in public works schedules of rates; they are a convention, not a regulation. No rate is given anywhere: every estimate states the basis of its own rates, such as a contractor's quotation or a schedule of rates and its year.",
+  "kinds": {
+    "construction": {
+      "label": "New construction",
+      "heads": [
+        { "id": "earthwork", "label": "Earthwork", "unit": "cum", "example": "Excavation for foundations" },
+        { "id": "pcc", "label": "Plain concrete", "unit": "cum", "example": "PCC 1:4:8 under footings" },
+        { "id": "rcc", "label": "Reinforced concrete", "unit": "cum", "example": "RCC M20 in footings, columns, beams and slabs" },
+        { "id": "steel", "label": "Reinforcement steel", "unit": "kg", "example": "Steel bars Fe 500" },
+        { "id": "masonry", "label": "Masonry", "unit": "cum", "example": "Brickwork in cement mortar 1:6" },
+        { "id": "plaster", "label": "Plastering", "unit": "sqm", "example": "Cement plaster 12 mm" },
+        { "id": "flooring", "label": "Flooring and tiling", "unit": "sqft", "example": "Vitrified tiles" },
+        { "id": "joinery", "label": "Doors and windows", "unit": "LS", "example": "Doors and windows, complete" },
+        { "id": "painting", "label": "Painting", "unit": "sqm", "example": "Interior and exterior painting" },
+        { "id": "waterproofing", "label": "Waterproofing", "unit": "sqm", "example": "Terrace waterproofing" },
+        { "id": "plumbing", "label": "Plumbing and sanitary", "unit": "LS", "example": "Water supply, drainage and fittings" },
+        { "id": "electrical", "label": "Electrical", "unit": "LS", "example": "Wiring, switches and fittings" },
+        { "id": "other", "label": "Other works", "unit": "LS", "example": "Compound wall and gate" }
+      ]
+    },
+    "renovation": {
+      "label": "Renovation or repair",
+      "heads": [
+        { "id": "dismantling", "label": "Dismantling and removal", "unit": "LS", "example": "Removing old tiles and debris" },
+        { "id": "masonry", "label": "Masonry and plaster repairs", "unit": "sqm", "example": "Repairs to plaster" },
+        { "id": "flooring", "label": "Flooring and tiling", "unit": "sqft", "example": "Vitrified tiles" },
+        { "id": "joinery", "label": "Doors and windows", "unit": "nos", "example": "New doors" },
+        { "id": "kitchen", "label": "Kitchen", "unit": "LS", "example": "Platform and fittings" },
+        { "id": "toilets", "label": "Toilets and bathrooms", "unit": "LS", "example": "Fittings and tiling" },
+        { "id": "plumbing", "label": "Plumbing and sanitary", "unit": "LS", "example": "New pipes and fittings" },
+        { "id": "electrical", "label": "Electrical", "unit": "LS", "example": "Rewiring" },
+        { "id": "waterproofing", "label": "Waterproofing", "unit": "sqm", "example": "Terrace waterproofing" },
+        { "id": "painting", "label": "Painting", "unit": "sqm", "example": "Interior painting" },
+        { "id": "other", "label": "Other works", "unit": "LS", "example": "Grills and railings" }
+      ]
+    }
+  },
+  "units": [
+    { "id": "cum", "what": "cubic metre" },
+    { "id": "sqm", "what": "square metre" },
+    { "id": "rmt", "what": "running metre" },
+    { "id": "sqft", "what": "square foot" },
+    { "id": "cft", "what": "cubic foot" },
+    { "id": "rft", "what": "running foot" },
+    { "id": "kg", "what": "kilogram" },
+    { "id": "MT", "what": "tonne" },
+    { "id": "nos", "what": "number" },
+    { "id": "LS", "what": "lump sum" }
+  ],
+  "method": [
+    "Each item's amount is its quantity × its rate.",
+    "The abstract of cost adds up the items under each head; the total of the works is the sum of the heads.",
+    "GST, when the rates leave it out, is added on the total of the works.",
+    "Contingency, for unforeseen work, is added on the works with GST.",
+    "The cost per sq ft is the total estimated cost ÷ the built-up area."
+  ]
+}

@@ -1,11 +1,13 @@
 /**
- * The DSCR calculator. It opens with the assumptions in engine/data/defaults.json answered (D-UX-08), so only the loan
- * and this year's figures are asked; each assumption is listed in the preview until changed. The two start questions
+ * The DSCR calculator. The front door (D-UX-10, P1f) asks the owner's eight inputs: who the borrower is, this year's
+ * profit and its growth, EMIs already paid, depreciation if any, and the loan's amount, rate and term; the loan is taken
+ * as drawn this month, by EMI. Everything else sits under one closed "More options": the detailed form below. It opens
+ * with the assumptions in engine/data/defaults.json answered (D-UX-08); each is listed with the results until changed. The two start questions
  * (where the yearly figures come from, how DSCR is worked out) stay on top to change. Then the loan (or the years); who
  * the borrower is (it sets the tax and which existing EMIs count) and the yearly figures, with loans already running as
  * EMIs a month and the new asset's income; the lender's target; and a free preview that stays provisional while anything
  * is missing: the DSCR statement in the layout chartered accountants use, and the repayment schedule. Last, the statement
- * to download: the document's own facts asked once, then a PDF and an Excel copy made in the browser (document.ts).
+ * to download: the document's own facts asked once, then a PDF, an Excel copy and a Word copy made in the browser (document.ts).
  * Figures: engine/dscr.ts only, via model.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
@@ -15,11 +17,11 @@ import { parseMonth } from '../../../engine/parse';
 import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import { BUTTON, CellInput, Choice, HINT, Section, SourceNote, TextField } from '../fields';
-import { pdfOf, printable } from '../doc/pdf';
-import { xlsxOf } from '../doc/xlsx';
+import { printable } from '../doc/pdf';
+import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
 import { allNeeds, docNeeds, docStatus, fileName, statementDoc } from './document';
 import {
-  ASSUMED, BORROWER_CHOICES, EXAMPLE_TARGETS, GROUP_TITLES, OPTION_KEYS, amountOf, barText, choicesOf, emisAsk, loanRead, modeOf, numberOf,
+  BORROWER_CHOICES, EXAMPLE_TARGETS, GROUP_TITLES, OPTION_KEYS, amountOf, barText, choicesOf, emisAsk, frontDoor, loanRead, modeOf, monthText, numberOf,
   parseFy, presetText, preview, rowValues, rowsOf, statusText, targetText, tidyAmount, withBorrower, withPlanStart, withSource, yearsOf,
   type DocFacts, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
@@ -31,19 +33,31 @@ const notUnderstood = (text: string, read: (t: string) => unknown, example: stri
 const MUTED = 'text-slate-600 dark:text-slate-300';
 
 export function DscrCalculator() {
-  const [s, setS] = useState<State>(ASSUMED);
+  const start = () => frontDoor(isoDate(new Date()).slice(0, 7));
+  const [s, setS] = useState<State>(start);
+  const [more, setMore] = useState(false);
   const update: Update = (f) => setS(f);
   const p = useMemo(() => preview(s), [s]);
   const rows = useMemo(() => rowsOf(s), [s]);
   const y = useMemo(() => yearsOf(s), [s]);
+  const openMore = () => setMore(true);
   return <div>
-    <ClearAll shown={JSON.stringify(s) !== JSON.stringify(ASSUMED)} onClear={() => setS(ASSUMED)} />
-    <Start s={s} update={update} />
+    <ClearAll shown={JSON.stringify(s) !== JSON.stringify(start())} onClear={() => setS(start())} />
+    {s.source === 'plan' && <FrontDoor s={s} update={update} openMore={openMore} />}
+    <details id="more-options" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)}
+      class="mt-8 rounded-lg border border-slate-300 dark:border-slate-700">
+      <summary class="cursor-pointer px-4 py-3 font-medium text-teal-800 dark:text-teal-300">More options: the method, the loan in full, year-by-year figures</summary>
+      <div class="px-4 pb-6">
+        <Start s={s} update={update} />
+        {p.started && <>
+          {s.source === 'plan' ? <Loan s={s} update={update} y={y} p={p} /> : <YearsSection s={s} update={update} y={y} />}
+          <Figures s={s} update={update} rows={rows} y={y} p={p} />
+          <TargetSection s={s} update={update} />
+        </>}
+      </div>
+    </details>
     {p.started && <>
-      {s.source === 'plan' ? <Loan s={s} update={update} y={y} p={p} /> : <YearsSection s={s} update={update} y={y} />}
-      <Figures s={s} update={update} rows={rows} y={y} p={p} />
-      <TargetSection s={s} update={update} />
-      <PreviewSection p={p} update={update} />
+      <PreviewSection p={p} update={update} openMore={openMore} />
       <DownloadSection s={s} p={p} update={update} />
       <div class="sticky bottom-0 z-10 -mx-4 mt-10 border-t border-slate-200 bg-white px-4 py-2.5 dark:border-slate-800 dark:bg-slate-950">
         <a href="#preview" data-testid="answer-bar" aria-live="polite" class="block text-sm font-medium text-slate-900 dark:text-slate-100">
@@ -52,6 +66,50 @@ export function DscrCalculator() {
       </div>
     </>}
   </div>;
+}
+
+/**
+ * The front door: the owner's eight inputs, written into the same state the detailed form uses, so More options shows
+ * them too. Depreciation is optional (empty: none); EMIs already paid are one figure a month (empty: none).
+ */
+function FrontDoor({ s, update, openMore }: { s: State; update: Update; openMore: () => void }) {
+  const perYear = s.loan.repayment === 'quarterly' ? 4 : 12, k = numberOf(s.loan.instalments);
+  const years = k === undefined ? '' : String(+(k / perYear).toFixed(2));
+  const emi = s.modes.otherLoans === 'emi' ? s.running[0]?.emi ?? '' : '';
+  const dep = s.modes.depreciation === 'none' ? '' : s.cells.depreciation?.[0] ?? '';
+  // The field tidies what is typed (5 L → 5,00,000), so only what is not understood is said under it.
+  const amountSaid = (t: string) => notUnderstood(t, amountOf, '5,00,000 or 5 L');
+  const first = (key: string, t: string) => (x: State) => ({ ...x, cells: { ...x.cells, [key]: [t, ...(x.cells[key] ?? []).slice(1)] } });
+  return <section id="front-door" aria-label="The loan and the business" class="mt-4">
+    <p class={HINT}>Have year-by-year projections, a moratorium, or a loan already drawn? <a href="#more-options" onClick={openMore}
+      class="text-teal-700 underline underline-offset-2 dark:text-teal-400">Use More options</a>.</p>
+    <Choice name="fld-fd-borrower" legend="Who is the borrower?" columns value={s.borrower as string | undefined}
+      options={BORROWER_CHOICES.map((b) => ({ value: b.id, label: b.label }))} onChange={(id) => update((x) => withBorrower(x, id))} />
+    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <TextField id="fld-fd-profit" label="This year’s profit before interest, depreciation and tax" inputMode="decimal" value={s.cells.pbdit?.[0] ?? ''}
+        tidy={tidyAmount} placeholder="like 5 L" said={amountSaid(s.cells.pbdit?.[0] ?? '')}
+        onCommit={(t) => update((x) => ({ ...first('pbdit', t)(x), modes: { ...x.modes, pbdit: 'grow' } }))} />
+      <TextField id="fld-fd-growth" label="Growth in sales a year (%)" inputMode="decimal" value={s.rates.pbdit ?? ''} placeholder="like 10"
+        said={notUnderstood(s.rates.pbdit ?? '', numberOf, 'a number, like 10')} onCommit={(t) => update((x) => ({ ...x, rates: { ...x.rates, pbdit: t } }))} />
+      <TextField id="fld-fd-emis" label="EMIs already paid, a month" hint={`${emisAsk(s).replace(/\.?$/, '.')} Leave empty if none.`} inputMode="decimal" value={emi} tidy={tidyAmount}
+        said={amountSaid(emi)} onCommit={(t) => update((x) => (t.trim()
+          ? { ...x, modes: { ...x.modes, otherLoans: 'emi' }, running: [{ emi: t, last: x.running[0]?.last ?? '' }, ...x.running.slice(1)] }
+          : { ...x, modes: { ...x.modes, otherLoans: 'none' } }))} />
+      <TextField id="fld-fd-depreciation" label="Depreciation a year, if any" hint="Leave empty if none." inputMode="decimal" value={dep} tidy={tidyAmount}
+        said={amountSaid(dep)} onCommit={(t) => update((x) => (t.trim() ? { ...first('depreciation', t)(x), modes: { ...x.modes, depreciation: 'same' } } : { ...x, modes: { ...x.modes, depreciation: 'none' } }))} />
+      <TextField id="fld-fd-amount" label="Loan amount" inputMode="decimal" value={s.loan.amount} tidy={tidyAmount} placeholder="like 12 L"
+        said={amountSaid(s.loan.amount)} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, amount: t } }))} />
+      <TextField id="fld-fd-rate" label="Interest rate (% a year)" inputMode="decimal" value={s.loan.ratePct} placeholder="like 12"
+        said={notUnderstood(s.loan.ratePct, numberOf, 'a number, like 12')} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, ratePct: t } }))} />
+      <TextField id="fld-fd-years" label="Term (years)" inputMode="decimal" value={years} placeholder="like 5"
+        said={notUnderstood(years, numberOf, 'a number, like 5')} onCommit={(t) => update((x) => {
+          const n = numberOf(t), per = x.loan.repayment === 'quarterly' ? 4 : 12;
+          return { ...x, loan: { ...x.loan, instalments: n === undefined ? t : String(Math.round(n * per)) } };
+        })} />
+    </div>
+    {s.door && s.loan.disbursed === s.door.month && <p data-testid="fd-loan-note" class={`mt-3 ${HINT}`}>
+      The loan is taken as drawn in {monthText(s.door.month)} and repaid by EMI every month, with no moratorium. Change it under More options.</p>}
+  </section>;
 }
 
 /** Start again, asked twice so that one stray tap never wipes the figures. */
@@ -328,10 +386,18 @@ function TargetSection({ s, update }: { s: State; update: Update }) {
   </Section>;
 }
 
-function PreviewSection({ p, update }: { p: Preview; update: Update }) {
+function PreviewSection({ p, update, openMore }: { p: Preview; update: Update; openMore: () => void }) {
   const box = 'mt-4 rounded-md border px-3 py-2';
   const largest = p.largest?.amount, fewest = p.fewest?.instalments;
-  return <Section id="preview" title="Preview">
+  // The method and the target read as one line (D-UX-10: shorter).
+  const method = p.assumed.find((a) => a.id === 'method'), target = p.assumed.find((a) => a.id === 'target');
+  const assumed = p.assumed.filter((a) => !(method && target && a.id === 'target'))
+    .map((a) => (a.id === 'method' && target ? { ...a, what: 'How DSCR is worked out, and the target', shown: `${a.shown}; ${target.shown.toLowerCase()}` } : a));
+  return <Section id="preview" title="Results">
+    {p.loanLine && <dl data-testid="dscr-loan-line" class="mt-3 grid grid-cols-2 gap-3 text-slate-900 dark:text-slate-100">
+      <div><dt class={`text-sm ${MUTED}`}>Each instalment</dt><dd data-testid="dscr-instalment" class="font-semibold tabular-nums">{p.loanLine.instalment}</dd></div>
+      <div><dt class={`text-sm ${MUTED}`}>Interest over the whole loan</dt><dd data-testid="dscr-total-interest" class="font-semibold tabular-nums">{p.loanLine.totalInterest}</dd></div>
+    </dl>}
     <p data-testid="dscr-status" class={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.blocked
       ? 'bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200' : p.needs.length
         ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200'}`}>
@@ -351,6 +417,12 @@ function PreviewSection({ p, update }: { p: Preview; update: Update }) {
         </dd>
       </div>
     </dl>}
+    {p.marks && p.marks.length > 0 && <ul data-testid="dscr-marks" class="mt-3 flex flex-wrap gap-2 text-sm">
+      {p.marks.map((m) => <li key={m.fy} data-testid={`mark-${m.fy}`} class={`rounded-full px-2.5 py-0.5 ${!m.counted ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+        : m.meets ? 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200' : 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200'}`}>
+        {m.fy}: {m.dscr}, {!m.counted ? 'not counted' : m.meets ? 'meets the target' : 'below the target'}
+      </li>)}
+    </ul>}
     {p.verdict && <p data-testid="dscr-verdict" class={`${box} ${p.verdict.meets
       ? 'border-teal-300 bg-teal-50 text-teal-900 dark:border-teal-800 dark:bg-teal-950 dark:text-teal-100'
       : 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100'}`}>{p.verdict.text}</p>}
@@ -368,16 +440,16 @@ function PreviewSection({ p, update }: { p: Preview; update: Update }) {
       <p class="font-medium">Still needed</p>
       <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>
     </div>}
-    {p.assumed.length > 0 && <div data-testid="dscr-assumed" class="mt-4 text-slate-900 dark:text-slate-100">
+    {assumed.length > 0 && <div data-testid="dscr-assumed" class="mt-4 text-slate-900 dark:text-slate-100">
       <p class="font-medium">Assumed until you change them</p>
       <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">
-        {p.assumed.map((a) => <li key={a.id} data-testid={`assumed-${a.id}`}>
-          <a href={`#${a.where}`} class="text-teal-700 underline underline-offset-2 dark:text-teal-400">{a.what}</a>: {a.shown}
+        {assumed.map((a) => <li key={a.id} data-testid={`assumed-${a.id}`}>
+          <a href={`#${a.where}`} onClick={openMore} class="text-teal-700 underline underline-offset-2 dark:text-teal-400">{a.what}</a>: {a.shown}
         </li>)}
       </ul>
       <SourceNote what="Why these">{p.assumed.map((a) => <span key={a.id} class="mt-1 block"><b>{a.what}:</b> {a.why}.</span>)}</SourceNote>
     </div>}
-    {p.statement && <StatementTable st={p.statement} />}
+    {p.statement && <StatementTable st={p.statement} parts={p.partYears} />}
     {p.beforeStart && <p data-testid="dscr-before-start" class={`mt-2 ${HINT}`}>{p.beforeStart}</p>}
     {p.notCounted && <p data-testid="dscr-not-counted" class={`mt-2 ${HINT}`}>{p.notCounted}</p>}
     {p.notes.length > 0 && <ul data-testid="dscr-notes" class="mt-2 space-y-0.5 text-sm text-amber-900 dark:text-amber-200">{p.notes.map((n) => <li key={n}>{n}</li>)}</ul>}
@@ -386,33 +458,20 @@ function PreviewSection({ p, update }: { p: Preview; update: Update }) {
   </Section>;
 }
 
-const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-const isoDate = (d: Date) => [d.getFullYear(), d.getMonth() + 1, d.getDate()].map((n) => String(n).padStart(2, '0')).join('-');
-
-/** Hands the file to the browser to save. */
-function download(bytes: Uint8Array<ArrayBuffer>, name: string, type: string) {
-  const url = URL.createObjectURL(new Blob([bytes], { type }));
-  const a = Object.assign(document.createElement('a'), { href: url, download: name });
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
-}
-
-/** The statement to download: first what only the document needs, asked once; then the PDF and the Excel copy. */
+/** The statement to download: first what only the document needs, asked once; then the PDF, the Excel copy and the Word copy. */
 function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Update }) {
   const f = s.doc, set = (patch: Partial<DocFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
   const english = (t: string) => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
   const own = docNeeds(f), provisional = allNeeds(s, p).length > 0, ready = !!p.statement && !p.blocked;
-  const save = (kind: 'pdf' | 'xlsx') => {
-    const now = new Date(), doc = statementDoc(s, p, isoDate(now));
-    if (doc) download(kind === 'pdf' ? pdfOf(doc, now) : xlsxOf(doc, now), fileName(s, p, kind), kind === 'pdf' ? 'application/pdf' : XLSX_TYPE);
+  const save = (kind: FileKind) => {
+    const now = new Date();
+    saveFile(statementDoc(s, p, isoDate(now)), kind, fileName(s, p, kind), now);
   };
   const field = (id: keyof DocFacts, label: string, hint?: string, placeholder?: string) =>
     <TextField id={`fld-${id}`} label={label} hint={hint} placeholder={placeholder} value={f[id]} onCommit={(t) => set({ [id]: t })}
       said={english(f[id])} invalid={!!english(f[id])} />;
   return <Section id="download" title="Download the statement">
-    <p class={`mt-2 ${HINT}`}>A PDF for the lender, and an Excel copy with the working for the accountant, made in your browser from the figures above.</p>
+    <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy for the accountant and a Word copy to edit, made in your browser from the figures above.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       {field('borrower', 'Borrower’s name', undefined, 'like Asha Traders')}
       {field('lender', 'Lender', 'The bank or finance company, and the branch.')}
@@ -429,6 +488,8 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
         <div class="mt-3 flex flex-wrap gap-2">
           <button type="button" data-testid="download-pdf" class={BUTTON} onClick={() => save('pdf')}>Download PDF</button>
           <button type="button" data-testid="download-xlsx" class={BUTTON} onClick={() => save('xlsx')}>Download Excel</button>
+          <button type="button" data-testid="download-docx" class={BUTTON} onClick={() => save('docx')}>Download Word</button>
+          <button type="button" data-testid="print" class={BUTTON} onClick={() => { const now = new Date(); openPdf(statementDoc(s, p, isoDate(now)), now); }}>Print</button>
         </div>
       </div>
       : <p data-testid="doc-wait" class={`mt-4 ${HINT}`}>{p.blocked ? 'No document while the two computations disagree.' : 'The document can be made once the statement shows figures.'}</p>}
@@ -438,8 +499,9 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
 const lineClass = (kind?: string) => kind === 'total' || kind === 'ratio'
   ? 'font-semibold text-slate-900 dark:text-slate-100' : 'text-slate-800 dark:text-slate-200';
 
-/** The DSCR statement: years across on wider screens (as in a project report), one card per year on phones. */
-function StatementTable({ st }: { st: StatementView }) {
+/** The DSCR statement: years across on wider screens (as in a project report), one card per year on phones; then the Total. */
+function StatementTable({ st, parts = {} }: { st: StatementView; parts?: Record<string, string> }) {
+  const cols = st.years.length + 1 + (st.total ? 1 : 0);
   return <div class="mt-6">
     <h3 class="font-semibold text-slate-900 dark:text-slate-100">DSCR statement</h3>
     <p class={`mt-1 ${HINT}`}>In rupees.</p>
@@ -450,23 +512,29 @@ function StatementTable({ st }: { st: StatementView }) {
             <th scope="col" class="py-2 pr-3 text-left font-medium text-slate-700 dark:text-slate-200"><span class="sr-only">Line</span></th>
             {st.years.map((fy, i) => <th key={fy} scope="col" class="px-2 py-2 text-right align-bottom font-medium text-slate-700 dark:text-slate-200">
               {fy}{!st.counted[i] && <span class={`block text-xs font-normal ${MUTED}`}>not counted</span>}
+              {parts[fy] && <span data-testid={`part-${fy}`} class={`block text-xs font-normal ${MUTED}`}>{parts[fy]}</span>}
             </th>)}
+            {st.total && <th scope="col" class="px-2 py-2 text-right align-bottom font-semibold text-slate-900 dark:text-slate-100">
+              Total{st.total.sub && <span class={`block text-xs font-normal ${MUTED}`}>{st.total.sub}</span>}
+            </th>}
           </tr>
         </thead>
         <tbody>
           {st.lines.map((l) => l.kind === 'head'
-            ? <tr key={l.label}><th colSpan={st.years.length + 1} scope="colgroup" class="pt-4 pb-1 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase dark:text-slate-300">{l.label}</th></tr>
+            ? <tr key={l.label}><th colSpan={cols} scope="colgroup" class="pt-4 pb-1 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase dark:text-slate-300">{l.label}</th></tr>
             : <tr key={l.label} class={`border-b border-slate-100 dark:border-slate-800 ${l.kind ? 'border-t border-t-slate-300 dark:border-t-slate-600' : ''}`}>
               <th scope="row" class={`py-1.5 pr-3 text-left font-normal ${lineClass(l.kind)}`}>{l.label}</th>
               {l.values.map((v, i) => <td key={i} data-testid={l.id ? `${l.id}-${st.years[i]}` : undefined}
                 class={`px-2 py-1.5 text-right tabular-nums ${!st.counted[i] && l.kind === 'ratio' ? `font-semibold ${MUTED}` : lineClass(l.kind)}`}>{v}</td>)}
+              {st.total && <td data-testid={l.id ? `${l.id}-total` : undefined} class={`px-2 py-1.5 text-right font-semibold tabular-nums ${lineClass(l.kind)}`}>{l.total?.text ?? ''}</td>}
             </tr>)}
         </tbody>
       </table>
     </div>
     <div class="mt-2 space-y-3 sm:hidden">
       {st.years.map((fy, i) => <div key={fy} data-testid={`card-${fy}`} class="rounded-lg border border-slate-300 p-3 dark:border-slate-700">
-        <p class="font-medium text-slate-900 dark:text-slate-100">{fy}{!st.counted[i] && <span class={`ml-2 text-xs font-normal ${MUTED}`}>not counted</span>}</p>
+        <p class="font-medium text-slate-900 dark:text-slate-100">{fy}{!st.counted[i] && <span class={`ml-2 text-xs font-normal ${MUTED}`}>not counted</span>}
+          {parts[fy] && <span class={`ml-2 text-xs font-normal ${MUTED}`}>{parts[fy]}</span>}</p>
         <div class="mt-1 text-sm">
           {st.lines.map((l) => l.kind === 'head'
             ? <p key={l.label} class={`pt-2 text-xs font-semibold tracking-wide uppercase ${MUTED}`}>{l.label}</p>
@@ -475,6 +543,16 @@ function StatementTable({ st }: { st: StatementView }) {
             </p>)}
         </div>
       </div>)}
+      {st.total && <div data-testid="card-total" class="rounded-lg border border-slate-400 p-3 dark:border-slate-600">
+        <p class="font-medium text-slate-900 dark:text-slate-100">Total{st.total.sub && <span class={`ml-2 text-xs font-normal ${MUTED}`}>{st.total.sub}</span>}</p>
+        <div class="mt-1 text-sm">
+          {st.lines.map((l) => l.kind === 'head'
+            ? <p key={l.label} class={`pt-2 text-xs font-semibold tracking-wide uppercase ${MUTED}`}>{l.label}</p>
+            : <p key={l.label} class={`flex justify-between gap-3 py-0.5 ${lineClass(l.kind)}`}>
+              <span>{l.label}</span><span data-line={l.id} class="text-right tabular-nums">{l.total?.text ?? ''}</span>
+            </p>)}
+        </div>
+      </div>}
     </div>
   </div>;
 }

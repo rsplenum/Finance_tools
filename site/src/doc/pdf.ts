@@ -1,8 +1,9 @@
 /**
  * A PDF writer for documents made in the browser (doc.ts): A4 pages, text in the standard Helvetica fonts (every PDF
- * reader has them, so no font file is embedded), rules, a shaded box, and tables whose rows continue on the next page
- * with their header, and whose columns split into further tables when there are too many for the width.
- * Pure: bytes in memory, no DOM. Text is WinAnsi (Latin letters); `printable` says whether a user's text prints as typed.
+ * reader has them, so no font file is embedded), rules, shaded boxes and strips, facts two to a line, and tables whose
+ * rows continue on the next page with their header, and whose columns split into further tables when there are too many
+ * for the width. Pure: bytes in memory, no DOM. Text is WinAnsi (Latin letters); `printable` says whether a user's text
+ * prints as typed.
  */
 import type { Block, Doc, Row, Table } from './doc';
 
@@ -62,18 +63,18 @@ const HELVETICA_BOLD = widths(`278 333 474 556 556 889 722 238 333 333 389 584 2
   278 333 556 556 556 556 280 556 333 737 370 556 584 333 737 333 400 584 333 333 333 611 556 278 333 333 365 556 834 834 834 611
   722*6 1000 722 667*4 278*4 722 722 778*5 584 778 722*4 667 667 611 556*6 889 556 556*4 278*4 611 611 611*5 584 611 611*4 556 611 556`);
 
-type Font = 'R' | 'B';
+export type Font = 'R' | 'B';
 const FONTS: Record<Font, number[]> = { R: HELVETICA, B: HELVETICA_BOLD };
 
-/** The width of text in points. */
-function textWidth(t: string, font: Font, size: number): number {
+/** The width of text in points (also how the Word copy sizes its columns). */
+export function textWidth(t: string, font: Font, size: number): number {
   let w = 0;
   for (const c of encode(t)) w += FONTS[font][c] || 556;
   return (w * size) / 1000;
 }
 
 /** Lines no wider than `max`: words stay whole unless one alone is wider than the line. */
-function wrap(t: string, font: Font, size: number, max: number): string[] {
+export function wrap(t: string, font: Font, size: number, max: number): string[] {
   const lines: string[] = [];
   for (const para of t.split('\n')) {
     let line = '';
@@ -96,8 +97,8 @@ function wrap(t: string, font: Font, size: number, max: number): string[] {
 
 // ---- Pages ----
 
-const PAGE_W = 595.28, PAGE_H = 841.89, LEFT = 42, WIDTH = PAGE_W - 2 * LEFT, TOP = PAGE_H - 60, BOTTOM = 60;
-const INK = '0.1 g', MUTED = '0.33 g';
+export const PAGE_W = 595.28, PAGE_H = 841.89, LEFT = 42, WIDTH = PAGE_W - 2 * LEFT, TOP = PAGE_H - 60, BOTTOM = 60;
+const INK = '0.1 g', MUTED = '0.33 g', SHADE = '0.925 g';
 const num = (x: number) => String(Math.round(x * 100) / 100);
 const esc = (codes: number[]) => codes.map((c) =>
   c === 40 || c === 41 || c === 92 ? `\\${String.fromCharCode(c)}` : c < 32 || c > 126 ? `\\${c.toString(8).padStart(3, '0')}` : String.fromCharCode(c)).join('');
@@ -120,6 +121,10 @@ class Layout {
   rule(x1: number, x2: number, y: number, width = 0.5, gray = 0.6) {
     this.ops.push(`${gray} G ${width} w ${num(x1)} ${num(y)} m ${num(x2)} ${num(y)} l S`);
   }
+  /** A filled band from the top `y` down `h` points. */
+  shade(x: number, y: number, w: number, h: number, fill = SHADE) {
+    this.ops.push(`${fill} ${num(x)} ${num(y - h)} ${num(w)} ${num(h)} re f`);
+  }
   /** Lines of text from the cursor down, each on the page it fits. */
   lines(lines: string[], x: number, size: number, font: Font = 'R', color = INK) {
     const lh = size * 1.38;
@@ -138,12 +143,14 @@ const KEEP = (TOP - BOTTOM) * 0.6;
 /** One block from the cursor down; `next` lets a heading stay with the table after it. */
 function block(L: Layout, b: Block, next?: Block) {
   switch (b.kind) {
-    case 'title':
-      L.text(LEFT, L.y - 17, b.text, 'B', 17);
-      L.y -= 24;
+    case 'title': {
+      const size = b.small ? 14 : 17;
+      for (const line of wrap(b.text, 'B', size, WIDTH)) { L.text(LEFT, L.y - size, line, 'B', size); L.y -= size * 1.3; }
+      L.y -= 3;
       if (b.sub) L.lines(wrap(b.sub, 'R', 10.5, WIDTH), LEFT, 10.5, 'R', MUTED);
       L.y -= 8;
       return;
+    }
     case 'heading': {
       L.y -= 9;
       // Never the last line of a page, and on the same page as a short table after it.
@@ -190,6 +197,41 @@ function block(L: Layout, b: Block, next?: Block) {
       L.y -= 3;
       return;
     }
+    case 'facts': {
+      // Two to a line: each fact's name in a column of its own, its value beside it; one fact alone runs across.
+      const key = 78, half = WIDTH / 2;
+      for (const line of b.lines) {
+        const cols = line.map(([k, v], i) => {
+          const x = LEFT + i * half, w = line.length > 1 ? half - key - 8 : WIDTH - key;
+          return { x, k: wrap(k, 'R', SIZE, key - 6), v: wrap(v, 'R', SIZE, w) };
+        });
+        const n = Math.max(...cols.map((c) => Math.max(c.k.length, c.v.length)));
+        L.room(n * LH);
+        for (const c of cols) {
+          c.k.forEach((t, i) => L.text(c.x, L.y - SIZE - i * LH, t, 'R', SIZE, MUTED));
+          c.v.forEach((t, i) => L.text(c.x + key, L.y - SIZE - i * LH, t, 'R', SIZE));
+        }
+        L.y -= n * LH + 1.5;
+      }
+      L.y -= 4;
+      return;
+    }
+    case 'figures': {
+      // A shaded strip: each figure's name, the figure in large bold, and its note.
+      const pad = 8, w = WIDTH / Math.max(1, b.items.length), notes = b.items.map((f) => (f.note ? wrap(f.note, 'R', 8, w - 2 * pad) : []));
+      const h = 2 * pad + 11 + 17 + 10.5 * Math.max(0, ...notes.map((n) => n.length));
+      L.y -= 6;
+      L.room(h + 6);
+      L.shade(LEFT, L.y, WIDTH, h);
+      b.items.forEach((f, i) => {
+        const x = LEFT + i * w + pad;
+        L.text(x, L.y - pad - 8, f.label, 'R', 8, MUTED);
+        L.text(x, L.y - pad - 11 - 13, f.value, 'B', 14);
+        notes[i].forEach((t, k) => L.text(x, L.y - pad - 28 - 8 - k * 10.5, t, 'R', 8, MUTED));
+      });
+      L.y -= h + 8;
+      return;
+    }
     case 'box': {
       const pad = 8, items = b.items.map((i) => wrap(i, 'R', SIZE, WIDTH - 2 * pad - 11));
       const h = 2 * pad + LH * (1 + items.reduce((a, l) => a + l.length, 0));
@@ -207,6 +249,7 @@ function block(L: Layout, b: Block, next?: Block) {
       return;
     }
     case 'table':
+      L.y -= 4;
       table(L, b.table);
       return;
     case 'signature':
@@ -221,8 +264,8 @@ function block(L: Layout, b: Block, next?: Block) {
 
 const bold = (r: Row): Font => (r.kind ? 'B' : 'R');
 
-/** A table's measures: the first column's width, the others', and the groups of columns that fit the width. */
-function measure(t: Table) {
+/** A table's measures: the first column's width, the others', and the groups of columns that fit the width (the Word copy splits the same way). */
+export function measure(t: Table) {
   const size = t.size === 'small' ? 7.8 : 8.5, lh = size * 1.42, pad = 5;
   const body = t.rows.filter((r) => r.kind !== 'head');
   // The first column as wide as its longest name, within limits (a longer one wraps); a head row runs across the table.
@@ -243,8 +286,8 @@ function measure(t: Table) {
 
 /** Rows as tall as their first cell's lines; a head row a line more. */
 const rowHeight = (t: Table, r: Row, m: ReturnType<typeof measure>, width: number) => r.kind === 'head'
-  ? wrap(r.cells[0]?.text ?? '', 'B', m.size, width).length * m.lh + 4
-  : wrap(r.cells[0]?.text ?? '', bold(r), m.size, m.keyW - m.pad).length * m.lh + (r.kind ? 2 : 0);
+  ? wrap(r.cells[0]?.text ?? '', 'B', m.size, width - 6).length * m.lh + 6
+  : wrap(r.cells[0]?.text ?? '', bold(r), m.size, m.keyW - m.pad).length * m.lh + (r.kind === 'ratio' ? 6 : r.kind ? 2 : 0);
 
 /** The height of one group of columns: the header and every row. */
 function groupHeight(t: Table): number {
@@ -277,18 +320,24 @@ function table(L: Layout, t: Table) {
     header();
     for (const r of t.rows) {
       if (r.kind === 'head') {
-        const lines = wrap(r.cells[0]?.text ?? '', 'B', size, end - LEFT);
-        if (L.y - rowHeight(t, r, m, end - LEFT) - lh < BOTTOM) { L.newPage(); header(); }
-        L.y -= 4;
-        lines.forEach((line) => { L.text(LEFT, L.y - size, line, 'B', size, MUTED); L.y -= lh; });
+        // A group's name on a shaded band across the table.
+        const lines = wrap(r.cells[0]?.text ?? '', 'B', size, end - LEFT - 6), h = rowHeight(t, r, m, end - LEFT);
+        if (L.y - h - lh < BOTTOM) { L.newPage(); header(); }
+        L.y -= 2;
+        L.shade(LEFT, L.y, end - LEFT, h - 2);
+        L.y -= 2;
+        lines.forEach((line) => { L.text(LEFT + 3, L.y - size, line, 'B', size); L.y -= lh; });
+        L.y -= 2;
         continue;
       }
       const f = bold(r), lines = wrap(r.cells[0]?.text ?? '', f, size, keyW - pad);
       if (L.y - rowHeight(t, r, m, end - LEFT) < BOTTOM) { L.newPage(); header(); }
-      if (r.kind) { L.rule(LEFT + keyW, end, L.y, 0.5, 0.55); L.y -= 2; }
+      if (r.kind === 'ratio') { L.rule(LEFT, end, L.y, 0.8, 0.3); L.y -= 3; }
+      else if (r.kind) { L.rule(LEFT + keyW, end, L.y, 0.5, 0.55); L.y -= 2; }
       lines.forEach((line, i) => L.text(LEFT, L.y - size - i * lh, line, f, size));
       g.forEach((j, k) => L.right(rights[k] - pad, L.y - size, r.cells[j + 1]?.text ?? '', f, size));
       L.y -= lines.length * lh;
+      if (r.kind === 'ratio') { L.y -= 1; L.rule(LEFT, end, L.y, 0.8, 0.3); L.y -= 2; }
     }
     L.y -= 8;
   });

@@ -10,7 +10,8 @@ import type { Definition, ProjectionYear, YearFigures } from './dscr';
 import type { Borrower } from './tax';
 
 export interface CheckRow { fy: string; available: number; service: number; counted: boolean; dscr?: number; pbt?: number; tax?: number }
-export interface CheckResult { rows: CheckRow[]; average?: number; minimum?: { dscr: number; fy: string } }
+/** `total`: the years counted added up, a loop of its own (the Total column, dscr.ts). */
+export interface CheckResult { rows: CheckRow[]; average?: number; minimum?: { dscr: number; fy: string }; total?: { available: number; service: number; pbt: number; tax: number } }
 
 function fyLabel(ym: string, k: number): string {
   const [y, m] = ym.split('-').map(Number);
@@ -70,15 +71,12 @@ export function scheduleCheck(t: LoanTerms): YearDebt[] {
 function summarise(rows: CheckRow[], def: Definition): CheckResult {
   const used = rows.filter((x) => x.counted);
   if (!used.length) return { rows };
-  let average: number;
-  if (def.average === 'totals') {
-    let a = 0, s = 0;
-    for (const x of used) { a += x.available; s += x.service; }
-    average = a / s;
-  } else average = used.reduce((s, x) => s + (x.dscr as number), 0) / used.length;
+  const total = { available: 0, service: 0, pbt: 0, tax: 0 };
+  for (const x of used) { total.available += x.available; total.service += x.service; total.pbt += x.pbt ?? 0; total.tax += x.tax ?? 0; }
+  const average = def.average === 'totals' ? total.available / total.service : used.reduce((s, x) => s + (x.dscr as number), 0) / used.length;
   let minimum = { dscr: used[0].dscr as number, fy: used[0].fy };
   for (const x of used) if ((x.dscr as number) < minimum.dscr) minimum = { dscr: x.dscr as number, fy: x.fy };
-  return { rows, average, minimum };
+  return { rows, average, minimum, total };
 }
 
 const row = (fy: string, available: number, service: number, principal: number, def: Definition): CheckRow => ({

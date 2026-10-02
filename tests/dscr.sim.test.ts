@@ -145,6 +145,17 @@ function runSeed(seed: number): { cases: number; violations: string[]; seen: Rec
       if (avg < lo - 1e-9 * Math.abs(lo) || avg > hi + 1e-9 * Math.abs(hi)) bad(`average ${avg} outside ${lo}..${hi}`);
     }
 
+    // The Total column: A and B added up over the years counted, the average by totals is total A ÷ total B, and profit
+    // after tax there is the same in the profit and in cash available.
+    const t = p.statement.total, pt = p.profitTotal, near = (a: number, b: number) => Math.abs(a - b) <= Math.max(0.01, 1e-9 * Math.abs(b));
+    if (counted.length && (!t || !pt)) bad('no Total column though a year counts');
+    if (t && pt) {
+      const used = p.statement.rows.filter((x) => x.counted);
+      if (!near(t.available, used.reduce((a, x) => a + x.available, 0)) || !near(t.service, used.reduce((a, x) => a + x.service, 0))) bad('total A or B is not the sum of the years counted');
+      if (def.average === 'totals' && Math.abs(t.available / t.service - (p.statement.average as number)) > 1e-9) bad('total A ÷ total B is not the average');
+      if (!near(pt.pat, t.figures.pat ?? NaN)) bad('profit after tax totals differ');
+    }
+
     // A larger loan never raises a DSCR that is 1 or more, unless the tax saved on its extra interest is more than that
     // interest: just above the rebate's limit or a surcharge threshold, marginal relief with the cess saves up to 1.04.
     if (proj[0].taxBy) seen.taxBy++;

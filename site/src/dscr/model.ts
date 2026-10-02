@@ -9,7 +9,7 @@ import DSCR from '../../../engine/data/dscr.json';
 import {
   BENCHMARKS, COMPONENTS, LOAN_LABELS, OPTIONS, PLAN_SERVICE, PRESETS, PROJECTION_LABELS, amortization, componentsOf, dscrStatement, fyRange,
   isFy, limitText, loanTimeline, maxLoanAmount, planStatement, shortestRepayment, shortfall, targetNeeds,
-  type Amortization, type Component, type Definition, type Limit, type LoanInput, type ProfitYear, type ProjectionYear, type Statement,
+  type Amortization, type Component, type Definition, type Limit, type LoanInput, type ProfitTotals, type ProfitYear, type ProjectionYear, type Statement,
   type Target, type YearFigures,
 } from '../../../engine/dscr';
 import { fyOf } from '../../../engine/loan';
@@ -64,7 +64,9 @@ export interface State {
   asset: { yearly: string; from: string };
   /** Started from the assumptions (ASSUMED): switching back to working the figures out puts them back. */
   assume?: boolean;
-  /** What only the document needs: asked beside the download, taken once for the PDF and the Excel copy. */
+  /** Started from the front door (frontDoor): the month the loan is taken as drawn in, until changed. */
+  door?: { month: string };
+  /** What only the document needs: asked beside the download, taken once for the PDF, the Excel copy and the Word copy. */
   doc: DocFacts;
 }
 
@@ -109,6 +111,17 @@ export const ASSUMED: State = {
   },
   planStart: LOAN_YEAR,
 };
+
+/**
+ * The front door (D-UX-10): the assumptions as above, the loan drawn in `month` (this month, as 2026-10) and repaid by EMI
+ * every month with no moratorium, and no interest on working capital or depreciation until given (the profit asked is
+ * before all interest; depreciation is an optional field). Each shows on the page until changed.
+ */
+export const frontDoor = (month: string): State => ({
+  ...ASSUMED, door: { month },
+  modes: { ...ASSUMED.modes, depreciation: 'none', interestOther: 'none' },
+  loan: { ...ASSUMED.loan, disbursed: month, moratoriumMonths: '0', repayment: 'emi' },
+});
 
 /** The assumptions about the figures belong to working them out: own yearly figures leave them, and coming back restores them. */
 export function withSource(s: State, source: Source): State {
@@ -210,7 +223,7 @@ export function rowsOf(s: State): RowDef[] {
   return [
     row('pbdit', L.pbdit, ['grow', 'same', 'years'], { negative: true, hint: 'Sales less every cost except interest, depreciation and tax.' }),
     row('assetIncome', L.assetIncome, ['none', 'from'], { hint: 'What the asset adds to profit before interest, depreciation and tax, after its own running costs.' }),
-    row('depreciation', L.depreciation, ['same', 'fall', 'years'], { hint: 'The same every year (straight line), or falling by its rate (written-down value).' }),
+    row('depreciation', L.depreciation, ['same', 'fall', 'years', 'none'], { hint: 'The same every year (straight line), or falling by its rate (written-down value).' }),
     row('nonCash', L.nonCash, OPTIONAL, { ask: true, hint: HINTS.nonCash }),
     row('interestOther', L.interestOther, ['none', 'same', 'grow', 'years'], { ask: true, hint: 'Cash credit or overdraft interest.' }),
     ...(def.leases === 'yes' ? [row('leaseRentals', L.leaseRentals, OPTIONAL, { ask: true, hint: HINTS.leaseRentals })] : []),
@@ -355,7 +368,8 @@ export interface AssumedLine { id: string; what: string; shown: string; why: str
 
 const WHERE: Record<string, string> = {
   method: 'method', target: 'target', tax: 'row-taxPct', proprietorTax: 'row-taxPct', margin: 'row-pbdit', asset: 'row-assetIncome',
-  depreciation: 'row-depreciation', interest: 'row-interestOther', otherLoans: 'row-otherLoans', nonCash: 'row-nonCash', start: 'start-question',
+  depreciation: 'row-depreciation', interest: 'row-interestOther', interestNone: 'row-interestOther', otherLoans: 'row-otherLoans', nonCash: 'row-nonCash',
+  start: 'start-question', loanStart: 'loan',
 };
 
 /** The assumptions (engine/data/defaults.json) still as assumed; one that makes no difference to these figures is not listed. */
@@ -373,6 +387,8 @@ export function assumedIn(s: State, y: Years = yearsOf(s)): AssumedLine[] {
     asset: plan && at('assetIncome'),
     depreciation: plan && at('depreciation'),
     interest: plan && at('interestOther'),
+    interestNone: plan && !!s.door && s.modes.interestOther === 'none',
+    loanStart: plan && !!s.door && s.loan.disbursed === s.door.month && s.loan.moratoriumMonths === '0' && s.loan.repayment === 'emi',
     otherLoans: plan && at('otherLoans'),
     nonCash: plan && at('nonCash') && (definitionOf(s)?.leases !== 'yes' || at('leaseRentals')),
     start: plan && s.planStart === LOAN_YEAR && y.startChoices.length > 0,
@@ -383,9 +399,17 @@ export function assumedIn(s: State, y: Years = yearsOf(s)): AssumedLine[] {
 // ---- The preview ----
 
 /** One line of the DSCR statement: a figure for each year, in words (`values`) and as the engine gave it (`n`, for the Excel copy). */
-export interface Line { label: string; values: string[]; n?: (number | undefined)[]; kind?: 'head' | 'total' | 'ratio'; id?: 'pbdit' | 'asset' | 'pbt' | 'tax' | 'available' | 'emis' | 'service' | 'dscr' }
-/** The statement as chartered accountants lay it out: the years across, the working down. */
-export interface StatementView { years: string[]; counted: boolean[]; lines: Line[] }
+/** A line of the statement: the words for each year, the engine's exact figures in `n`, and its Total column. */
+export interface Line {
+  label: string; values: string[]; n?: (number | undefined)[]; kind?: 'head' | 'total' | 'ratio';
+  id?: 'pbdit' | 'asset' | 'pbt' | 'tax' | 'available' | 'emis' | 'service' | 'dscr';
+  total?: { text: string; n: number };
+}
+/**
+ * The statement as chartered accountants lay it out: the years across, the working down. `total` when the average is
+ * total A ÷ total B: a Total column of the years counted (`sub` says so when a year is not counted).
+ */
+export interface StatementView { years: string[]; counted: boolean[]; lines: Line[]; total?: { sub?: string } }
 type Money<K extends string> = Record<K, string> & { n: Record<K, number> };
 /** A month and a year of the schedule: rounded rupees in words, and the engine's exact figures in `n`. */
 export type MonthView = Money<'opening' | 'interest' | 'principal' | 'paid' | 'closing'> & { ym: string; month: string; instalment?: number };
@@ -415,6 +439,12 @@ export interface Preview {
   leadingInterest?: { fy: string; amount: string }[];
   /** The years left out because the figures start later, in words. */
   beforeStart?: string;
+  /** The instalment (the EMI, or the first instalment) and the interest over the whole loan, in words. */
+  loanLine?: { instalment: string; totalInterest: string };
+  /** A year that pays fewer instalments than a full year: "7 of 12 instalments". */
+  partYears?: Record<string, string>;
+  /** Each year's DSCR against the target for the lowest year, while one is set. */
+  marks?: { fy: string; dscr: string; meets: boolean; counted: boolean }[];
 }
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -482,14 +512,19 @@ function verdictOf(st: Statement, t: Target): Preview['verdict'] {
 
 const lower = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
 
-/** The statement's lines, from the engine's figures: the profit build-up when the page works it out, then A, B, DSCR. */
-function statementView(st: Statement, t: Target, def: Definition, parts: YearFigures[], profit?: ProfitYear[]): StatementView {
-  const amounts = (n: (number | undefined)[]) => ({ values: n.map((x) => inr(x)), n });
+/**
+ * The statement's lines, from the engine's figures: the profit build-up when the page works it out, then A, B, DSCR. With
+ * the average by totals, each line carries its total over the years counted, and the DSCR line the average.
+ */
+function statementView(st: Statement, t: Target, def: Definition, parts: YearFigures[], profit?: ProfitYear[], profitTotal?: ProfitTotals): StatementView {
+  const sums = def.average === 'totals' && st.total && st.average !== undefined ? st.total : undefined;
+  const sum = (n?: number) => (sums && n !== undefined ? { total: { text: inr(n), n } } : {});
+  const amounts = (n: (number | undefined)[], total?: number) => ({ values: n.map((x) => inr(x)), n, ...sum(total) });
   const { available } = componentsOf(def), lines: Line[] = [];
   // Existing EMIs and the new asset's income are lines only where they are not nil in every year.
   const service = [...componentsOf(def).service, ...(profit ? PLAN_SERVICE.filter((c) => parts.some((y) => (y[c] ?? 0) !== 0)) : [])];
   if (profit) {
-    const pc = (k: Exclude<keyof ProfitYear, 'fy'>) => amounts(profit.map((y) => y[k]));
+    const pc = (k: Exclude<keyof ProfitYear, 'fy'>) => amounts(profit.map((y) => y[k]), profitTotal?.[k]);
     lines.push(
       { label: 'Profit', values: [], kind: 'head' },
       { label: PROJECTION_LABELS.pbdit, ...pc('pbdit'), id: 'pbdit' },
@@ -503,20 +538,29 @@ function statementView(st: Statement, t: Target, def: Definition, parts: YearFig
       { label: 'Profit after tax', ...pc('pat'), kind: 'total' },
     );
   }
+  const figure = (c: Component) => amounts(parts.map((y) => y[c]), sums?.figures[c]);
   lines.push({ label: 'Cash available for debt service', values: [], kind: 'head' });
-  available.forEach((c, i) => lines.push({ label: i ? `Add: ${lower(COMPONENTS[c])}` : COMPONENTS[c], ...amounts(parts.map((y) => y[c])) }));
+  available.forEach((c, i) => lines.push({ label: i ? `Add: ${lower(COMPONENTS[c])}` : COMPONENTS[c], ...figure(c) }));
   lines.push(
-    { label: 'Cash available (A)', ...amounts(st.rows.map((r) => r.available)), kind: 'total', id: 'available' },
+    { label: 'Cash available (A)', ...amounts(st.rows.map((r) => r.available), sums?.available), kind: 'total', id: 'available' },
     { label: 'Debt service', values: [], kind: 'head' },
-    ...service.map((c): Line => ({ label: COMPONENTS[c], ...amounts(parts.map((y) => y[c])), ...(c === 'existingEmis' ? { id: 'emis' as const } : {}) })),
-    { label: 'Debt service (B)', ...amounts(st.rows.map((r) => r.service)), kind: 'total', id: 'service' },
-    { label: 'DSCR (A ÷ B)', values: st.rows.map((r) => (r.dscr === undefined ? '—' : ratioText(r.dscr, r.counted ? t.minimum : undefined))), n: st.rows.map((r) => r.dscr), kind: 'ratio', id: 'dscr' },
+    ...service.map((c): Line => ({ label: COMPONENTS[c], ...figure(c), ...(c === 'existingEmis' ? { id: 'emis' as const } : {}) })),
+    { label: 'Debt service (B)', ...amounts(st.rows.map((r) => r.service), sums?.service), kind: 'total', id: 'service' },
+    {
+      label: 'DSCR (A ÷ B)', values: st.rows.map((r) => (r.dscr === undefined ? '—' : ratioText(r.dscr, r.counted ? t.minimum : undefined))), n: st.rows.map((r) => r.dscr),
+      kind: 'ratio', id: 'dscr', ...(sums ? { total: { text: ratioText(st.average as number, t.average), n: st.average as number } } : {}),
+    },
   );
-  return { years: st.rows.map((r) => r.fy), counted: st.rows.map((r) => r.counted), lines };
+  return {
+    years: st.rows.map((r) => r.fy), counted: st.rows.map((r) => r.counted), lines,
+    ...(sums ? { total: st.rows.every((r) => r.counted) ? {} : { sub: 'years counted' } } : {}),
+  };
 }
 
-function fillStatement(p: Preview, st: Statement, t: Target, def: Definition, parts: YearFigures[], profit?: ProfitYear[]) {
-  p.statement = statementView(st, t, def, parts, profit);
+function fillStatement(p: Preview, st: Statement, t: Target, def: Definition, parts: YearFigures[], profit?: ProfitYear[], profitTotal?: ProfitTotals) {
+  p.statement = statementView(st, t, def, parts, profit, profitTotal);
+  if (t.minimum !== undefined) p.marks = st.rows.filter((r) => r.dscr !== undefined)
+    .map((r) => ({ fy: r.fy, dscr: ratioText(r.dscr as number, t.minimum), meets: (r.dscr as number) >= (t.minimum as number), counted: r.counted }));
   const skipped = st.rows.filter((r) => !r.counted).map((r) => r.fy);
   if (skipped.length && st.rows.length > skipped.length)
     p.notCounted = `Not counted: ${andList(skipped)} (${def.years === 'repayment' ? 'no term-loan instalment' : 'no interest or instalments due'}).`;
@@ -588,7 +632,17 @@ export function preview(s: State): Preview {
   const loan = loanInput(s);
   // The repayment schedule needs only the loan terms, so it is shown before the projections are in.
   const am = amortization(loan);
-  if ('months' in am) p.schedule = scheduleView(am, s.loan.repayment);
+  if ('months' in am) {
+    p.schedule = scheduleView(am, s.loan.repayment);
+    const first = am.months.find((m) => m.instalment), perYear = loan.frequency === 'quarterly' ? 4 : 12;
+    p.loanLine = {
+      instalment: loan.style === 'emi' ? `EMI ${rs(am.level, 2)} a month` : `First instalment ${rs(first?.paid ?? 0)}, then less as the balance falls`,
+      totalInterest: rs(am.totalInterest),
+    };
+    const count = new Map<string, number>();
+    for (const m of am.months) if (m.instalment) count.set(m.fy, (count.get(m.fy) ?? 0) + 1);
+    p.partYears = Object.fromEntries([...count].filter(([, n]) => n < perYear).map(([fy, n]) => [fy, `${n} of ${perYear} instalments`]));
+  }
   else if ('blocked' in am) p.blocked = am.blocked;
   if ('months' in am && y.leading.length)
     p.leadingInterest = am.years.filter((d) => y.leading.includes(d.fy)).map((d) => ({ fy: d.fy, amount: rs(d.interest) }));
@@ -603,7 +657,7 @@ export function preview(s: State): Preview {
   if ('needs' in r) p.needs.push(...oneRepaymentNeed(merged(r.needs.filter((n) => y.years.length || n !== 'At least one year of figures'))));
   else if ('blocked' in r) p.blocked ??= r.blocked;
   else if (!y.startNeeded) {
-    fillStatement(p, r.statement, target, def, r.years, r.profit);
+    fillStatement(p, r.statement, target, def, r.years, r.profit, r.profitTotal);
     if (!tNeeds.length) p.verdict = verdictOf(r.statement, target);
     const b = r.beforeStart;
     if (b.length) p.beforeStart = `Left out: ${andList(b.map((x) => x.fy))}, before your figures start. ${b.length > 1 ? 'Their' : 'Its'} interest `
