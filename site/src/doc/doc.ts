@@ -4,8 +4,8 @@
  * text shown and, for the Excel copy, the number the engine gave.
  */
 
-/** A figure as the engine gave it: an amount in rupees, a ratio or a count, and the decimals shown. */
-export interface Figure { value: number; kind: 'amount' | 'ratio' | 'count'; decimals: number }
+/** A figure as the engine gave it: an amount in rupees, a ratio, a count or a quantity (as typed), and the decimals shown. */
+export interface Figure { value: number; kind: 'amount' | 'ratio' | 'count' | 'quantity'; decimals: number }
 export interface Cell { text: string; figure?: Figure }
 /** `head` names a group of rows, on a shaded band; `total` rows are in bold under a rule, and a `ratio` row between two. */
 export type RowKind = 'head' | 'total' | 'ratio';

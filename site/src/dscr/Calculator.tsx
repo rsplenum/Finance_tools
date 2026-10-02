@@ -15,9 +15,8 @@ import { parseMonth } from '../../../engine/parse';
 import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import { BUTTON, CellInput, Choice, HINT, Section, SourceNote, TextField } from '../fields';
-import { pdfOf, printable } from '../doc/pdf';
-import { xlsxOf } from '../doc/xlsx';
-import { docxOf } from '../doc/docx';
+import { printable } from '../doc/pdf';
+import { isoDate, save as saveFile, type FileKind } from '../download';
 import { allNeeds, docNeeds, docStatus, fileName, statementDoc } from './document';
 import {
   ASSUMED, BORROWER_CHOICES, EXAMPLE_TARGETS, GROUP_TITLES, OPTION_KEYS, amountOf, barText, choicesOf, emisAsk, loanRead, modeOf, numberOf,
@@ -387,32 +386,14 @@ function PreviewSection({ p, update }: { p: Preview; update: Update }) {
   </Section>;
 }
 
-/** Each file: its writer and its type. */
-const FILES = {
-  pdf: { write: pdfOf, type: 'application/pdf' },
-  xlsx: { write: xlsxOf, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
-  docx: { write: docxOf, type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
-} as const;
-const isoDate = (d: Date) => [d.getFullYear(), d.getMonth() + 1, d.getDate()].map((n) => String(n).padStart(2, '0')).join('-');
-
-/** Hands the file to the browser to save. */
-function download(bytes: Uint8Array<ArrayBuffer>, name: string, type: string) {
-  const url = URL.createObjectURL(new Blob([bytes], { type }));
-  const a = Object.assign(document.createElement('a'), { href: url, download: name });
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 60_000);
-}
-
 /** The statement to download: first what only the document needs, asked once; then the PDF, the Excel copy and the Word copy. */
 function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Update }) {
   const f = s.doc, set = (patch: Partial<DocFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
   const english = (t: string) => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
   const own = docNeeds(f), provisional = allNeeds(s, p).length > 0, ready = !!p.statement && !p.blocked;
-  const save = (kind: keyof typeof FILES) => {
-    const now = new Date(), doc = statementDoc(s, p, isoDate(now));
-    if (doc) download(FILES[kind].write(doc, now), fileName(s, p, kind), FILES[kind].type);
+  const save = (kind: FileKind) => {
+    const now = new Date();
+    saveFile(statementDoc(s, p, isoDate(now)), kind, fileName(s, p, kind), now);
   };
   const field = (id: keyof DocFacts, label: string, hint?: string, placeholder?: string) =>
     <TextField id={`fld-${id}`} label={label} hint={hint} placeholder={placeholder} value={f[id]} onCommit={(t) => set({ [id]: t })}

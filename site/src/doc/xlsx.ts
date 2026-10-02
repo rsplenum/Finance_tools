@@ -20,8 +20,8 @@ const xml = (t: string) => t.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g
 /** Lakh and crore grouping ([>=1,00,00,000] 1,00,00,000; [>=1,00,000] 1,00,000; else 99,999), in rupees or to the paisa. */
 const INDIAN = (dec: string) => `[>=10000000]##\\,##\\,##\\,##0${dec};[>=100000]##\\,##\\,##0${dec};##,##0${dec}`;
 const FORMATS = [INDIAN(''), INDIAN('.00'), '0.0000'];
-/** Number formats: rupees, to the paisa, a ratio to 2 and to 4 decimals, a count. */
-const NUMBER_FORMATS = [164, 165, 2, 166, 1];
+/** Number formats: rupees, to the paisa, a ratio to 2 and to 4 decimals, a count, a quantity (Excel's General). */
+const NUMBER_FORMATS = [164, 165, 2, 166, 1, 0];
 
 // Fonts: plain, bold, the title, muted, an annex's title, a key figure. Fills: none, gray125 (required), shaded, amber.
 // Borders: none, a rule above, a rule below, rules above and below.
@@ -78,7 +78,7 @@ const column = (i: number): string => (i < 26 ? String.fromCharCode(65 + i) : co
 function numberCell(c: Cell, kind?: Row['kind']): XCell {
   const f = c.figure, k = kind === 'ratio' ? 2 : kind ? 1 : 0;
   if (!f || !Number.isFinite(f.value)) return { text: c.text, style: kind === 'ratio' ? S.ratioRight : S.right };
-  const fmt = f.kind === 'count' ? 1 : f.kind === 'ratio' ? (f.decimals > 2 ? 166 : 2) : f.decimals > 0 ? 165 : 164;
+  const fmt = f.kind === 'quantity' ? 0 : f.kind === 'count' ? 1 : f.kind === 'ratio' ? (f.decimals > 2 ? 166 : 2) : f.decimals > 0 ? 165 : 164;
   return { value: f.value === 0 ? 0 : f.value, style: NUMBER[NUMBER_FORMATS.indexOf(fmt)][k] };
 }
 

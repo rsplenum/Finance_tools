@@ -70,6 +70,18 @@ export function CellInput(p: { id: string; name: string; value: string; onCommit
     {...d} class={`${INPUT} ${p.invalid ? BAD : BORDER} px-2 ${p.month ? '' : 'text-right tabular-nums'} sm:min-w-28`} />;
 }
 
+/** A choice from a list, as a select; `placeholder` is the empty first option. */
+export function SelectField(p: { id: string; label: ComponentChildren; value: string; options: { value: string; label: string }[]; onChange: (v: string) => void; placeholder?: string; class?: string; invalid?: boolean }) {
+  return <div class={p.class}>
+    <label for={p.id} class={LABEL}>{p.label}</label>
+    <select id={p.id} value={p.value} aria-invalid={p.invalid || undefined} onChange={(e) => p.onChange((e.currentTarget as HTMLSelectElement).value)}
+      class={`mt-1 ${INPUT} ${p.invalid ? BAD : BORDER}`}>
+      {p.placeholder !== undefined && <option value="">{p.placeholder}</option>}
+      {p.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
+  </div>;
+}
+
 export interface Option<T extends string> { value: T; label: string; hint?: ComponentChildren }
 
 /** One choice from a few, as cards; `name` is the field id, each card fld-<name>-<value>. */

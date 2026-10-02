@@ -9,6 +9,7 @@
  * layout checks once the tables are filled, in light and dark, with the tables as cards at 390 px and as tables at 1024 px.
  * The statement downloads at 390 px, as a PDF, an Excel copy and a Word copy, each read back (scripts/read-doc.mjs):
  * provisional until the borrower's name and the lender are in, then complete, laid out as a CA's statement (P1g).
+ * The construction estimate is filled in, worked out and downloaded the same way (P2).
  * Run after `npm run build`. CHROMIUM_PATH overrides the browser Playwright would use.
  */
 import { createServer } from 'node:http';
@@ -542,6 +543,55 @@ async function layout(page, v, step) {
   await expectText(page, v, 'dscr-not-counted', 'Not counted: 2026-27 (no term-loan instalment).', 'own figures');
   await expectText(page, v, 'dscr-verdict', 'Below the target: the lowest year, 2027-28, is 1.14 against 1.20; the average is 1.23 against 1.50.', 'own figures');
   await layout(page, v, 'own figures filled');
+  await ctx.close();
+}
+
+// The construction estimate (P2), by hand: excavation 45 cum × 350 = 15,750 and RCC 28 cum × 9,500 = 2,66,000; works
+// 2,81,750; GST at 18% 50,715; no contingency; total 3,32,465; per sq ft 3,32,465 ÷ 1,200 = 277.05.
+{
+  const { ctx, page, v } = await open('/estimate/', { scheme: 'light' });
+  await page.check('#fld-kind-construction');
+  await leave(page, '#fld-area', '1,200');
+  await page.selectOption('#fld-item-1-head', 'earthwork');
+  await expectValue(page, v, '#fld-item-1-unit', 'cum', "the head's usual unit");
+  await leave(page, '#fld-item-1-description', 'Excavation for foundations');
+  await leave(page, '#fld-item-1-quantity', '45');
+  await leave(page, '#fld-item-1-rate', '350');
+  await page.getByTestId('add-item').click();
+  await page.selectOption('#fld-item-2-head', 'rcc');
+  await leave(page, '#fld-item-2-description', 'RCC M20 in footings, columns, beams and slabs');
+  await leave(page, '#fld-item-2-quantity', '28');
+  await leave(page, '#fld-item-2-rate', '9,500');
+  await leave(page, '#fld-basis', 'Contractor’s quotation of 25-09-2026');
+  await page.check('#fld-gst-add');
+  await leave(page, '#fld-gstPct', '18');
+  await expectText(page, v, 'est-status', 'Provisional: 1 still needed', 'the estimate before contingency');
+  await page.check('#fld-contingency-none');
+  await expectText(page, v, 'est-status', 'Complete', 'the estimate');
+  for (const [id, want] of [['est-works', '2,81,750'], ['est-gst', '50,715'], ['est-total', '3,32,465'], ['est-per-sqft', 'Rs. 277'], ['item-2-amount', 'Rs. 2,66,000']])
+    await expectText(page, v, id, want, 'the estimate');
+  await layout(page, v, 'the estimate filled, 390 px');
+  await expectText(page, v, 'est-doc-status', 'Provisional: 2 still needed', 'the estimate before its facts');
+  await leave(page, '#fld-est-borrower', 'Asha Traders');
+  await leave(page, '#fld-est-property', 'Plot 12, Example Nagar, Pune');
+  await expectText(page, v, 'est-doc-status', 'Complete', 'the estimate with its facts');
+  const save = async (id) => {
+    const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.getByTestId(id).click()]);
+    const path = await file.path();
+    return { name: file.suggestedFilename(), bytes: path ? await readFile(path) : Buffer.alloc(0) };
+  };
+  const pdf = await save('est-download-pdf');
+  if (pdf.name !== 'Estimate - Asha Traders.pdf') v(`the estimate PDF is named "${pdf.name}"`);
+  const pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
+  if (!pages[0].split('\n').includes('Total estimated cost 3,32,465') || !pages[1]?.includes('Annex 1. Detailed estimate')) v('the estimate PDF does not read back its total and its annex');
+  const book = await workbook((await save('est-download-xlsx')).bytes).catch((e) => v(`the estimate's Excel copy is not read: ${e.message}`)) ?? [];
+  const total = book[0]?.data.find((r) => r[0] === 'Total estimated cost')?.filter((c) => c !== null);
+  if (book.map((x) => x.sheet).join('|') !== 'Estimate|Detailed estimate' || JSON.stringify(total) !== JSON.stringify(['Total estimated cost', 332465]))
+    v(`the estimate's Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))} and a total of ${JSON.stringify(total)}`);
+  const { lines, messages } = await docxLines((await save('est-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
+  if (messages.length || !lines.includes('Total estimated cost | 3,32,465') || !lines.includes('2.1 RCC M20 in footings, columns, beams and slabs | 28 | cum | 9,500 | 2,66,000'))
+    v(`the estimate's Word copy reads back ${JSON.stringify(lines.slice(0, 6))} ${JSON.stringify(messages).slice(0, 120)}`);
+  await layout(page, v, 'the estimate download, 390 px');
   await ctx.close();
 }
 
