@@ -817,7 +817,7 @@ In the library:
 
 ## Furniture and furnishings (movable)
 
-Movable items: in the library now, in the estimate when the movable sections come (E3). Lenders treat them apart from fixed works.
+Movable items: in the library now, in the estimate when the movable sections come (E3), on for Interiors and off for Repair, as Appliances and Smart home are (the owner, D-UX-19). Lenders treat them apart from fixed works.
 
 ### Sofa (each, movable)
 

@@ -210,9 +210,9 @@ The section cards follow (A8).
 
 ### A4. Five levels, a slider for each section, and brands
 
-**The levels** (the names are decision 3 in A18):
+**The levels** (on screen, the market's words: the owner's choice on 02-10-2026, A18 decision 3, D-UX-19):
 
-| The owner's word | On screen | What it means |
+| Your word | On screen | What it means |
 |---|---|---|
 | Modest | Basic | Sound and simple: ISI-marked materials, the economy ranges of known brands, nothing decorative |
 | Upper (middle) class | Standard | What most new flats are sold with: branded mid-range materials and a few comforts |
@@ -824,7 +824,8 @@ The documents follow the DSCR statement's rules (D-DOC-04 to 06): facts and work
 **Version 3 (02-10-2026):**
 - **Decision 1 is taken on the owner's "create a vast library":** the rates are classes 2 to 4 as reported, marked, until each is checked (A7). Say if you would rather wait for the primary texts.
 - **Decision 5 changes:** the engine and the library are built for every section of a flat (A0), so E1 is the page and the documents on them.
-- **Decisions 2, 3 and 4 stand as recommended below.** On 3, the data holds both your words and the market's, so the page can show either.
+- **Decisions 3 and 4 answered by the owner on 02-10-2026, as recommended (D-UX-19):** Basic to Ultra luxury on screen, with your words kept beside them in the data; movable items in sections of their own, on for Interiors and off for Repair. Appliances and Smart home already work this way; Furniture and Soft furnishings join on the same rule in E3.
+- **Decision 2 stands as recommended below.**
 
 
 **Answered by the owner on 02-10-2026:**
