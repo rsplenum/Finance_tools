@@ -9,7 +9,7 @@
  * layout checks once the tables are filled, in light and dark, with the tables as cards at 390 px and as tables at 1024 px.
  * The statement downloads at 390 px, as a PDF, an Excel copy and a Word copy, each read back (scripts/read-doc.mjs):
  * provisional until the borrower's name and the lender are in, then complete, laid out as a CA's statement (P1g).
- * The construction estimate is filled in, worked out and downloaded the same way (P2).
+ * The construction estimate (P2) and the project report (P3) are filled in, worked out and downloaded the same way.
  * Run after `npm run build`. CHROMIUM_PATH overrides the browser Playwright would use.
  */
 import { createServer } from 'node:http';
@@ -592,6 +592,49 @@ async function layout(page, v, step) {
   if (messages.length || !lines.includes('Total estimated cost | 3,32,465') || !lines.includes('2.1 RCC M20 in footings, columns, beams and slabs | 28 | cum | 9,500 | 2,66,000'))
     v(`the estimate's Word copy reads back ${JSON.stringify(lines.slice(0, 6))} ${JSON.stringify(messages).slice(0, 120)}`);
   await layout(page, v, 'the estimate download, 390 px');
+  await ctx.close();
+}
+
+// The project report (P3), fictional case R worked by hand in tests/report.test.ts: a firm; building 10 L, plant 20 L,
+// furniture 2 L, preliminary 1 L; a term loan of 25 L at 10% from April 2026, 60 monthly instalments of equal principal;
+// sales 1.2 Cr growing 10%, variable costs 65%, fixed costs 18 L growing 5%; a cash credit of 5 L at 11%. The project
+// costs 37,86,301; in 2026-27 the profit after tax is 11,54,407 and the balance sheet totals 55,81,804 on both sides.
+{
+  const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
+  await page.check('#fld-borrower-firm');
+  for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-furniture', '2 L'], ['#fld-cost-preliminary', '1 L'],
+    ['#fld-tl-amount', '25 L'], ['#fld-tl-rate', '10'], ['#fld-tl-disbursed', '2026-04'], ['#fld-tl-moratorium', '0'], ['#fld-tl-instalments', '60'],
+    ['#fld-sales', '1.2 Cr'], ['#fld-salesGrowth', '10'], ['#fld-variablePct', '65'], ['#fld-fixed', '18 L'], ['#fld-fixedGrowth', '5'], ['#fld-wcLimit', '5 L'], ['#fld-wcRate', '11']])
+    await leave(page, id, value);
+  await expectText(page, v, 'rep-status', 'Provisional: 1 still needed', 'the report before the repayment');
+  await page.check('#fld-tl-repayment-monthly');
+  await expectText(page, v, 'rep-status', 'Complete', 'the report');
+  await expectText(page, v, 'rep-key-0', 'Rs. 37,86,301', 'the cost of the project');
+  const cells = async (table, label) => (await page.getByTestId(table).locator('tr', { has: page.locator('th', { hasText: label }) }).first().locator('td').allTextContents());
+  for (const [table, label, want] of [['rep-pl', 'Profit after tax', '11,54,407'], ['rep-bs', 'Total liabilities', '55,81,804'], ['rep-bs', 'Total assets', '55,81,804'], ['rep-dscr', 'DSCR (A ÷ B)', '2.51']]) {
+    if (table !== 'rep-dscr') await page.getByTestId(table).evaluate((t) => t.closest('details').open = true);
+    const got = await cells(table, label);
+    if (got[0] !== want) v(`the report's ${table} "${label}" shows ${JSON.stringify(got.slice(0, 2))}, want ${want} first`);
+  }
+  await layout(page, v, 'the report filled, 390 px');
+  await expectText(page, v, 'rep-doc-status', 'Provisional: 3 still needed', 'the report before its facts');
+  await leave(page, '#fld-rep-name', 'Asha Packaging');
+  await leave(page, '#fld-rep-activity', 'Manufacture of corrugated boxes');
+  await leave(page, '#fld-rep-address', 'Plot 4, Example MIDC, Pune');
+  await expectText(page, v, 'rep-doc-status', 'Complete', 'the report with its facts');
+  const save = async (id) => {
+    const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.getByTestId(id).click()]);
+    const path = await file.path();
+    return { name: file.suggestedFilename(), bytes: path ? await readFile(path) : Buffer.alloc(0) };
+  };
+  const pdf = await save('rep-download-pdf');
+  if (pdf.name !== 'Project report - Asha Packaging.pdf') v(`the report PDF is named "${pdf.name}"`);
+  const pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
+  if (!pages[0].includes('Total cost of the project 37,86,301') || !pages.join('\n').includes('Total assets 55,81,804')) v('the report PDF does not read back its cost and its balance sheet');
+  const book = await workbook((await save('rep-download-xlsx')).bytes).catch((e) => v(`the report's Excel copy is not read: ${e.message}`)) ?? [];
+  if (book.map((x) => x.sheet).join('|') !== 'Summary|Projections|DSCR and ratios|Annex') v(`the report's Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))}`);
+  const { lines, messages } = await docxLines((await save('rep-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
+  if (messages.length || !lines.some((l) => l.startsWith('Total assets | 55,81,804'))) v(`the report's Word copy reads back ${JSON.stringify(lines.slice(0, 4))} ${JSON.stringify(messages).slice(0, 120)}`);
   await ctx.close();
 }
 

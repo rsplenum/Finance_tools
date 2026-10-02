@@ -8,7 +8,7 @@ export const TOOLS: Tool[] = [
     what: 'Year-wise DSCR, the average and the lowest year, and the loan or tenure that meets the lender’s target.' },
   { name: 'Construction or renovation estimate', status: 'Being built', href: '/estimate/',
     what: 'Item by item, with the basis of each rate stated, in the format lenders use.' },
-  { name: 'Project report', status: 'Later',
+  { name: 'Project report', status: 'Being built', href: '/project-report/',
     what: 'For term loans and working capital: projected balance sheet, profit and loss, cash flow, DSCR, break-even and ratio checks.' },
   { name: 'Home-loan project cost', status: 'Later', what: 'A free calculator for the total cost of a home project.' },
 ];

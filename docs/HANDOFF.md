@@ -5,6 +5,10 @@ State at 02-10-2026: P0 to P1e are on `main` (PRs #2 to #5), which Cloudflare Pa
   - a Word copy as the third download (D-DOC-06);
   - the lender's target, how far the method was checked and the planning rules left out of the documents, kept on the page (D-DOC-05).
   - a Total column in the statement, on the page and in the downloads: the engine adds each line over the years counted, checked twice (D-DOC-07).
+- **Also in PR #6 (02-10-2026), the owner's "finish the project today":**
+  - the construction or renovation estimate at `/estimate/` (D-UX-13);
+  - the project report at `/project-report/` (D-UX-14).
+  Each has its own engine, worked out twice, and downloads in PDF, Excel and Word.
 - **The owner is not satisfied with the page.** An outside review (Gemini, reading `main` before PR #2 was merged) and the owner's own words: it should ask seven inputs, not ten plus method choices. The engine's maths stands; the review's own formula taxes profit before interest. **Next:** the front door itself (P1f): the owner's inputs by default, everything else under one closed "More options" (D-POL-05, D-POL-06, D-UX-10): a borrower first.
 - **Skills** in `.claude/skills/` (D-TECH-14): `brief-first` (now with the finish line, the owner saying it feels simple, and what to refuse; D-UX-12), `money-maths-checks`, `lender-documents`. The owner's rule, now in CLAUDE.md: give the tradeoffs of every request.
 
@@ -46,6 +50,8 @@ The test figures are model-worked until the owner confirms fictional cases A and
     - statement lines shown only when not nil: `asset-<year>`, `emis-<year>`;
     - buttons: `clear-all`;
     - download: fields `fld-borrower`, `fld-lender`, `fld-preparedBy`; `doc-status`, `doc-needs`, `doc-wait`, `download-pdf`, `download-xlsx`, `download-docx`.
+- Estimate: `engine/estimate.ts` (+ `estimate-check.ts`, `data/estimate.json`); page `site/src/estimate/` (`model.ts`, `Estimate.tsx`, `document.ts`); tests `tests/estimate*.test.ts` (fictional case E).
+- Project report: `engine/report.ts` (+ `report-check.ts`, `data/report.json`; it calls `planStatement`); page `site/src/report/` (the page's tables in `model.ts` `viewOf` are the document's); tests `tests/report*.test.ts` (fictional case R, year 1 worked by hand). Shared: `site/src/download.ts` (the three files), `SelectField` in `site/src/fields.tsx`.
 - The document (P1c, laid out in P1g):
   - `site/src/dscr/document.ts`: `statementDoc` builds it from the state and the preview: page 1, then `basisPart` (Annex 1) and `schedulePart` (Annex 2); `docNeeds`, `allNeeds` (not the target), `docStatus`, `fileName`, `sourceForLender`.
   - `site/src/doc/`: `doc.ts` (blocks, `docText` for tests), `pdf.ts` (PDF writer, `printable`, `measure`), `xlsx.ts` (Excel writer), `docx.ts` (Word writer), `zip.ts` (the stored zip of both). Pure, no DOM.
