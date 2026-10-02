@@ -1,0 +1,39 @@
+{
+  "title": "Project report",
+  "date": "2026-10-02",
+  "status": "How a project report for a term loan with working capital is worked out here, in the form chartered accountants commonly use for small and medium enterprises. Set by Claude at the owner's request (02-10-2026); the depreciation rates and the working-capital methods are as described in public sources, not checked against the primary texts from here.",
+  "heads": [
+    { "id": "land", "label": "Land", "depreciationPct": 0 },
+    { "id": "building", "label": "Building and civil works", "depreciationPct": 10 },
+    { "id": "machinery", "label": "Plant and machinery", "depreciationPct": 15 },
+    { "id": "furniture", "label": "Furniture and fixtures", "depreciationPct": 10 },
+    { "id": "otherAssets", "label": "Other fixed assets", "depreciationPct": 15 },
+    { "id": "contingency", "label": "Contingency on fixed assets", "depreciationPct": 15 },
+    { "id": "preliminary", "label": "Preliminary and pre-operative expenses", "depreciationPct": 0 }
+  ],
+  "depreciationSource": "Written-down value at the income-tax rates (Income-tax Rules, 1962, Appendix I): buildings 10%, plant and machinery 15%, furniture 10%; other fixed assets and the contingency on them at the plant-and-machinery rate. A full year's depreciation in the first year.",
+  "preliminaryYears": 5,
+  "dscrMethod": "common",
+  "workingCapital": {
+    "mpbfSharePct": 75,
+    "turnoverNeedPct": 25,
+    "turnoverBankPct": 20,
+    "source": "The second method of lending (Tandon Committee): the bank finances up to 75% of current assets, less creditors. The turnover method for small enterprises (Nayak Committee, RBI): working capital of 25% of the year's sales, of which the bank finances 20%."
+  },
+  "assumptions": [
+    { "id": "days", "what": "Stock, debtors and creditors", "value": { "stock": 30, "debtors": 30, "creditors": 30 }, "shown": "30 days each: stock and creditors of the year's materials and other variable costs, debtors of the year's sales", "why": "A common level for a small business; type the business's own" },
+    { "id": "wcUsed", "what": "The working-capital limit", "value": "full", "shown": "Fully used, and its interest paid, in every year", "why": "On the careful side: more interest, lower profit" },
+    { "id": "drawings", "what": "Drawings and dividends", "value": 0, "shown": "None: the profits stay in the business", "why": "Type them in the figures if the owners take money out" },
+    { "id": "tax", "what": "Tax", "value": "paid", "shown": "Paid in the year it falls due", "why": "No tax is left owing in the balance sheet" }
+  ],
+  "method": [
+    "Sales and fixed costs grow by the percentages given; materials and other variable costs are the same share of sales every year.",
+    "Profit before interest, depreciation and tax is sales less variable and fixed costs. Depreciation is on the written-down value; preliminary expenses are written off in five equal parts.",
+    "Interest on the term loan is from its repayment schedule; interest on working capital is the limit × its rate. Tax is worked out by who the borrower is.",
+    "Stock, debtors and creditors are the days given of the year's figures. The margin for working capital, part of the cost of the project, is what the first year's stock and debtors need beyond the creditors and the bank's limit.",
+    "The promoters bring in the cost of the project less the term loan, any subsidy and any unsecured loans.",
+    "Cash in hand is what the cash flow leaves; the balance sheet must balance with it, or no figures are shown.",
+    "DSCR is the common term-loan DSCR: (profit after tax + depreciation + preliminary expenses written off + interest on the term loan) ÷ (principal + interest on the term loan); the average is the totals' ratio.",
+    "Break-even: fixed costs (with depreciation, preliminary expenses written off and interest) ÷ the contribution (sales less variable costs), as a share of sales; the cash break-even leaves out depreciation and the write-off."
+  ]
+}
