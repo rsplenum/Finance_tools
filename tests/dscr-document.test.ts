@@ -1,19 +1,22 @@
 /**
  * The DSCR statement to download (site/src/dscr/document.ts), tested on its text: the document as built, the PDF as
- * pdf.js reads it back, and the Excel copy as read-excel-file reads it back (scripts/read-doc.mjs). Figures: fictional
- * cases A and A′ (docs/GOLDEN-CASES.md), worked by hand in tests/dscr.test.ts and tests/dscr-page.test.ts; model-worked
- * until the owner confirms them.
+ * pdf.js reads it back, the Excel copy as read-excel-file reads it back, and the Word copy as mammoth reads it back
+ * (scripts/read-doc.mjs). Figures: fictional cases A and A′ (docs/GOLDEN-CASES.md), worked by hand in tests/dscr.test.ts
+ * and tests/dscr-page.test.ts; model-worked until the owner confirms them.
  */
 import { describe, it, expect } from 'vitest';
 import DSCR from '../engine/data/dscr.json';
 import DEFAULTS from '../engine/data/defaults.json';
+import { PRESETS } from '../engine/dscr';
 import { docText, type Doc } from '../site/src/doc/doc';
+import { docxOf } from '../site/src/doc/docx';
 import { pdfOf, printable } from '../site/src/doc/pdf';
-import { crc32, xlsxOf } from '../site/src/doc/xlsx';
-import { docNeeds, docStatus, fileName, statementDoc } from '../site/src/dscr/document';
+import { xlsxOf } from '../site/src/doc/xlsx';
+import { crc32 } from '../site/src/doc/zip';
+import { docNeeds, docStatus, fileName, sourceForLender, statementDoc } from '../site/src/dscr/document';
 import { ASSUMED, BORROWER_CHOICES, START, preview, tidyAmount, withBorrower, type State } from '../site/src/dscr/model';
 import { SITE_NAME } from '../site/src/site';
-import { pdfPages, workbook } from '../scripts/read-doc.mjs';
+import { docxLines, docxPart, pdfPages, workbook } from '../scripts/read-doc.mjs';
 
 const TODAY = '2026-09-30', MADE = new Date('2026-09-30T10:00:00Z');
 const FACTS = { borrower: 'Asha Traders', lender: 'Example Bank, Pune branch', preparedBy: '' };
@@ -63,38 +66,51 @@ describe('what the document asks that the page does not', () => {
 
 describe('fictional case A′, complete: the statement for the lender', () => {
   const { p, doc, text, lines } = build(A2);
-  it('heads it with the borrower, the lender, the date and the status', () => {
-    expect(lines.slice(3, 10)).toEqual([
-      'DSCR statement', 'Debt service coverage ratio, 2026-27 to 2029-30',
-      'Borrower: Asha Traders', 'Lender: Example Bank, Pune branch', 'Prepared on: 30-09-2026', 'Status: Complete', 'The result',
+  it('heads it with the borrower\'s name, the lender and the date; no status line once complete', () => {
+    expect(lines.slice(3, 8)).toEqual([
+      'Asha Traders', 'Debt service coverage ratio (DSCR), 2026-27 to 2029-30', 'Lender: Example Bank, Pune branch', 'Prepared on: 30-09-2026', 'The loan',
     ]);
     expect(doc.header).toBe('DSCR statement · Asha Traders');
     expect(doc.mark).toBeUndefined();
-    expect(text).not.toMatch(/provisional|still needed/i);
+    expect(text).not.toMatch(/provisional|still needed|^Status:/im);
   });
-  it('gives the average and the lowest year beside the target; the verdict, the largest loan and the fewest instalments stay on the page', () => {
-    expect(lines.slice(10, 14)).toEqual([
-      'Average DSCR: 1.16', 'Lowest year: 0.84 in 2027-28', "The lender's target: Average 1.50, lowest year 1.20", 'Year by year',
-    ]);
+  it('gives the average and the lowest year under the working; the verdict, the largest loan, the fewest instalments and the target stay on the page', () => {
+    const at = (l: string) => lines.indexOf(l);
+    expect(lines).toContain('Average DSCR: 1.16 total cash available ÷ total debt service');
+    expect(lines).toContain('Lowest year: 0.84 in 2027-28');
+    expect(at('Average DSCR: 1.16 total cash available ÷ total debt service')).toBeGreaterThan(at('DSCR (A ÷ B) | 1.17 | 0.84 | 0.98 | 2.26'));
+    expect(at('For Asha Traders')).toBeGreaterThan(at('Lowest year: 0.84 in 2027-28'));
     for (const t of [p.verdict?.text, p.largest?.text, p.fewest?.text]) {
       expect(t).toBeTruthy();
       expect(text).not.toContain(t);
     }
+    expect(text).not.toMatch(/target/i);
   });
-  it('shows the year-wise statement as the page does', () => {
+  it('shows the whole working as the page does, every line, nil lines too', () => {
     expect(text).toContain('Rupees | 2026-27 | 2027-28 | 2028-29 | 2029-30');
     expect(text).toContain('Cash available (A) | 4,00,392 | 4,22,624 | 4,45,488 | 4,73,072');
     expect(text).toContain('Debt service (B) | 3,41,000 | 5,02,000 | 4,54,000 | 2,09,000');
     expect(text).toContain('DSCR (A ÷ B) | 1.17 | 0.84 | 0.98 | 2.26');
     for (const l of p.statement!.lines) expect(text).toContain(l.kind === 'head' ? l.label : [l.label, ...l.values].join(' | '));
   });
-  it('states the method in plain words, with its source', () => {
-    expect(text).toContain('Common term-loan DSCR (not yet checked against a published source).');
+  it('states the method in plain words, with its source; not how far this site checked it, and not the planning rules', () => {
+    expect(lines).toContain('Common term-loan DSCR.');
     expect(lines).toContain('Cash available (A) = profit after tax + depreciation + other non-cash charges (amortisation, amounts written off) + interest on term loans.');
     expect(lines).toContain('Debt service (B) = term-loan instalments (principal) + interest on term loans.');
     expect(lines).toContain('Years counted: years with a term-loan instalment.');
     expect(lines).toContain('The average: total cash available ÷ total debt service. The lowest year is the lowest DSCR among the years counted.');
-    for (const rule of DSCR.planning.rules) expect(lines).toContain(rule);
+    expect(lines).toContain('Source: How chartered accountants and banks work DSCR for term loans, as described in public articles (bankingfinance.in, finpab.com). Dated 30-09-2026.');
+    expect(text).not.toMatch(/checked|could not be opened|summaries|docs\//i);
+    expect(text).not.toContain('How the figures are built');
+    for (const rule of DSCR.planning.rules) expect(text).not.toContain(rule);
+  });
+  it('words every method\'s source for the lender: where it comes from, without this site\'s notes on checking it', () => {
+    for (const x of PRESETS) {
+      const t = sourceForLender(x.source);
+      expect(t).not.toMatch(/checked|could not be opened|summaries|docs\//i);
+      expect(x.source.startsWith(t.slice(0, 40))).toBe(true);
+    }
+    expect(sourceForLender(PRESETS[1].source)).toMatch(/^RBI circular DOR\.No\.BP\.BC\/13\/21\.04\.048\/2020-21 of 7 September 2020: .*period of the loan$/);
   });
   it('lists the facts entered once, and not the page\'s assumptions', () => {
     expect(lines).toContain('Amount: Rs. 12,00,000');
@@ -110,8 +126,9 @@ describe('fictional case A′, complete: the statement for the lender', () => {
     for (const a of p.assumed) expect(text).not.toContain(a.why);
     expect(text).not.toMatch(/^(Extra income from the new asset|Loans already running|Other non-cash charges[^:]*):/m);
   });
-  it('adds the repayment schedule by year and by month', () => {
-    expect(doc.parts.map((x) => x.name)).toEqual(['Statement', 'Repayment schedule']);
+  it('puts the basis and the repayment schedule in two annexes, each from a new page', () => {
+    expect(doc.parts.map((x) => x.name)).toEqual(['DSCR statement', 'Basis', 'Repayment schedule']);
+    expect(doc.parts.map((x) => x.blocks[0].kind === 'title' && x.blocks[0].text)).toEqual(['Asha Traders', 'Annex 1. The basis', 'Annex 2. Repayment schedule']);
     expect(text).toContain('2026-27 | 1,41,000 | 2,00,000 | 10,00,000');
     // December 2026, by hand: interest 1% of 12,00,000 = 12,000; the first quarterly instalment of 1,00,000.
     expect(text).toContain('Dec 2026 | 1 | 12,00,000 | 12,000 | 1,00,000 | 1,12,000 | 11,00,000');
@@ -129,14 +146,21 @@ describe('fictional case A′, complete: the statement for the lender', () => {
 });
 
 describe('the PDF, read back by pdf.js', () => {
-  it('fictional case A′: the statement and the result on the first page, the schedule after', async () => {
+  it('fictional case A′: the whole working, the result and the signature on the first page; the annexes after', async () => {
     const { p, doc } = build(A2), pages = await pdfPages(pdfOf(doc, MADE));
     expect(pages.length).toBeGreaterThanOrEqual(3);
     const first = pages[0].split('\n');
-    expect(first.slice(0, 5)).toEqual(['DSCR statement · Asha Traders', 'DSCR statement', 'Debt service coverage ratio, 2026-27 to 2029-30', 'Borrower Asha Traders', 'Lender Example Bank, Pune branch']);
-    expect(first).toContain('Average DSCR 1.16');
-    expect(first).toContain('Lowest year 0.84 in 2027-28');
-    expect(first.join('\n')).not.toContain('Below the target');
+    expect(first.slice(0, 5)).toEqual([
+      'DSCR statement · Asha Traders', 'Asha Traders', 'Debt service coverage ratio (DSCR), 2026-27 to 2029-30', 'Lender Example Bank, Pune branch Prepared on 30-09-2026', 'The loan',
+    ]);
+    expect(first).toContain('Amount Rs. 12,00,000 Interest rate 12% a year');
+    // The strip: the names, then the figures, then the notes, each a row of text.
+    const strip = first.indexOf('Average DSCR Lowest year');
+    expect(first.slice(strip, strip + 3)).toEqual(['Average DSCR Lowest year', '1.16 0.84', 'total cash available ÷ total debt service in 2027-28']);
+    expect(first.slice(-5, -1)).toEqual(['For Asha Traders', 'Authorised signatory', 'Date:', 'Place:']);
+    expect(first.join('\n')).not.toMatch(/Below the target|target/i);
+    expect(pages[1].split('\n')[1]).toBe('Annex 1. The basis');
+    expect(pages[2].split('\n')[1]).toBe('Annex 2. Repayment schedule');
     expect(first).toContain('Cash available (A) 4,00,392 4,22,624 4,45,488 4,73,072');
     expect(first).toContain('DSCR (A ÷ B) 1.17 0.84 0.98 2.26');
     // Every figure of the statement, on the first page, in the order the page shows it.
@@ -147,22 +171,25 @@ describe('the PDF, read back by pdf.js', () => {
     expect(all).toContain('Sep 2029 12 1,00,000 1,000 1,00,000 1,01,000 0');
     expect(all).not.toContain('Provisional');
   });
-  it('fictional case A, provisional: marked on every page, with what is still needed', async () => {
+  it('fictional case A, provisional: marked on every page, with what is still needed; not the target, which it does not show', async () => {
     const { doc, lines } = build(CASE_A);
-    expect(lines).toContain('Status: Provisional: 3 still needed');
-    expect(lines).toContain('Borrower: Still needed');
-    expect(lines).toContain("The lender's target: Still needed");
-    const box = lines.indexOf('Provisional: 3 still needed');
-    expect(lines.slice(box + 1, box + 4)).toEqual(['A target DSCR for the average, the lowest year, or both', "The borrower's name", 'The lender']);
-    expect(docStatus(CASE_A, preview(CASE_A))).toBe('Provisional: 3 still needed');
+    expect(lines.slice(4, 6)).toEqual(['DSCR statement', 'Debt service coverage ratio (DSCR), 2026-27 to 2029-30']);
+    expect(lines).toContain('Lender: Still needed');
+    const box = lines.indexOf('Provisional: 2 still needed');
+    expect(lines.slice(box + 1, box + 3)).toEqual(["The borrower's name", 'The lender']);
+    // The page still asks for a target (for its verdict); the document is complete without one.
+    expect(preview(CASE_A).needs).toEqual(['A target DSCR for the average, the lowest year, or both']);
+    expect(docStatus(CASE_A, preview(CASE_A))).toBe('Provisional: 2 still needed');
+    expect(docStatus({ ...CASE_A, doc: FACTS }, preview({ ...CASE_A, doc: FACTS }))).toBe('Complete');
+    expect(fileName({ ...CASE_A, doc: FACTS }, preview({ ...CASE_A, doc: FACTS }), 'docx')).toBe('DSCR statement - Asha Traders.docx');
     const pages = await pdfPages(pdfOf(doc, MADE));
     for (const page of pages) expect(page.split('\n')[0]).toBe('DSCR statement Provisional');
-    expect(pages[0]).toContain('• A target DSCR for the average, the lowest year, or both');
+    expect(pages[0]).toContain("• The borrower's name");
     // Case A by hand (tests/dscr.test.ts): cash available 4,10,250 and 5,83,000 against 3,41,000 and 5,02,000 in the
     // first two years; DSCR 1.2031, 1.1614, 1.3293 and 2.8218; average 1.45, lowest 1.16 in 2027-28.
     expect(pages[0]).toContain('Cash available (A) 4,10,250 5,83,000 6,03,500 5,89,750');
     expect(pages[0]).toContain('DSCR (A ÷ B) 1.20 1.16 1.33 2.82');
-    expect(pages[0]).toContain('Average DSCR 1.45');
+    expect(pages[0]).toContain('1.45 1.16');
   });
   it('a long loan: the year columns split into tables that fit the page, every year kept', async () => {
     const s: State = { ...A2, loan: { amount: '50 L', ratePct: '10', disbursed: '2027-04', moratoriumMonths: '0', instalments: '144', repayment: 'emi' } };
@@ -176,12 +203,15 @@ describe('the PDF, read back by pdf.js', () => {
 });
 
 describe('the Excel copy, read back by read-excel-file', () => {
-  it('fictional case A′: the engine\'s figures as numbers, the schedule on its own sheet', async () => {
+  it('fictional case A′: the engine\'s figures as numbers, a sheet for each part', async () => {
     const { p, doc } = build(A2), book = await workbook(xlsxOf(doc, MADE));
-    expect(book.map((x) => x.sheet)).toEqual(['Statement', 'Repayment schedule']);
+    expect(book.map((x) => x.sheet)).toEqual(['DSCR statement', 'Basis', 'Repayment schedule']);
     const rows = book[0].data, row = (label: string) => rows.find((r) => r[0] === label)?.filter((c) => c !== null);
-    expect(row('Borrower')).toEqual(['Borrower', 'Asha Traders']);
-    expect(row('Status')).toEqual(['Status', 'Complete']);
+    expect(rows[0][0]).toBe('Asha Traders');
+    expect(row('Lender')).toEqual(['Lender', 'Example Bank, Pune branch']);
+    expect(row('Status')).toBeUndefined();
+    expect(row('Average DSCR')).toEqual(['Average DSCR', '1.16', 'total cash available ÷ total debt service']);
+    expect(row('Lowest year')).toEqual(['Lowest year', '0.84', 'in 2027-28']);
     expect(row('Rupees')).toEqual(['Rupees', '2026-27', '2027-28', '2028-29', '2029-30']);
     expect(row('Cash available (A)')).toEqual(['Cash available (A)', 400392, 422624, 445488, 473072]);
     expect(row('Debt service (B)')).toEqual(['Debt service (B)', 341000, 502000, 454000, 209000]);
@@ -189,11 +219,12 @@ describe('the Excel copy, read back by read-excel-file', () => {
     expect(row('DSCR (A ÷ B)')).toEqual(['DSCR (A ÷ B)', 400392 / 341000, 422624 / 502000, 445488 / 454000, 473072 / 209000]);
     for (const l of p.statement!.lines) if (l.n) expect(row(l.label)?.slice(1)).toEqual(l.n);
     expect(rows.flat()).toContain('Each cell holds the exact figure worked out on the page, shown in whole rupees; there are no formulas.');
-    const months = book[1].data;
+    expect(book[1].data.flat()).toContain('Common term-loan DSCR.');
+    const months = book[2].data;
     expect(months.find((r) => r[0] === 'Dec 2026')).toEqual(['Dec 2026', 1, 1200000, 12000, 100000, 112000, 1100000]);
     expect(months.filter((r) => /^[A-Z][a-z]{2} \d{4}$/.test(String(r[0])))).toHaveLength(42);
   });
-  it('own yearly figures: one sheet, the figures as entered, the years not counted said once', async () => {
+  it('own yearly figures: no loan and no schedule, the figures as entered, the years not counted said once', async () => {
     const OWN: State = {
       ...START, source: 'own', method: 'common', firstYear: '2026-27', yearCount: '3', doc: FACTS,
       cells: { pat: ['60,000', '80,000', '1,00,000'], depreciation: ['40,000', '40,000', '40,000'], interestTL: ['50,000', '40,000', '20,000'], principalTL: ['0', '1,00,000', '1,00,000'] },
@@ -204,10 +235,10 @@ describe('the Excel copy, read back by read-excel-file', () => {
     expect(lines).toContain('Profit after tax: 2026-27: Rs. 60,000; 2027-28: Rs. 80,000; 2028-29: Rs. 1,00,000');
     expect(lines).toContain('Other non-cash charges (amortisation, amounts written off): None');
     expect(lines).toContain('Not counted: 2026-27 (no term-loan instalment).');
-    expect(lines).toContain("The lender's target: Average 1.50");
+    expect(lines.join('\n')).not.toMatch(/target/i);
     expect(lines).not.toContain('The loan');
     const book = await workbook(xlsxOf(doc, MADE));
-    expect(book.map((x) => x.sheet)).toEqual(['Statement']);
+    expect(book.map((x) => x.sheet)).toEqual(['DSCR statement', 'Basis']);
     expect(book[0].data.find((r) => r[0] === 'Cash available (A)')?.filter((c) => c !== null)).toEqual(['Cash available (A)', 150000, 160000, 160000]);
   });
   it('a stored zip that any reader opens: the checksum is the standard one', () => {
@@ -215,13 +246,57 @@ describe('the Excel copy, read back by read-excel-file', () => {
   });
 });
 
-describe('one document, two files', () => {
-  it('the PDF and the Excel copy carry the same words', async () => {
-    const { doc } = build(A2), pdf = (await pdfPages(pdfOf(doc, MADE))).join('\n');
+describe('the Word copy, read back by mammoth', () => {
+  it('fictional case A′: the same page 1, as Word tables; the annexes each from a new page', async () => {
+    const { p, doc } = build(A2), bytes = docxOf(doc, MADE), { lines, messages } = await docxLines(bytes);
+    expect(messages).toEqual([]);
+    expect(lines.slice(0, 5)).toEqual([
+      'Asha Traders', 'Debt service coverage ratio (DSCR), 2026-27 to 2029-30', 'Lender | Example Bank, Pune branch | Prepared on | 30-09-2026', 'The loan',
+      'Amount | Rs. 12,00,000 | Interest rate | 12% a year',
+    ]);
+    expect(lines).toContain('Rupees | 2026-27 | 2027-28 | 2028-29 | 2029-30');
+    for (const l of p.statement!.lines) expect(lines).toContain(l.kind === 'head' ? l.label : [l.label, ...l.values].join(' | '));
+    expect(lines).toContain('Average DSCR 1.16 total cash available ÷ total debt service | Lowest year 0.84 in 2027-28');
+    expect(lines).toContain('Annex 1. The basis');
+    expect(lines).toContain('Dec 2026 | 1 | 12,00,000 | 12,000 | 1,00,000 | 1,12,000 | 11,00,000');
+    expect(lines.join('\n')).not.toMatch(/target|checked|Provisional/i);
+    // The header and footer on every page: the borrower, and the page number as Word counts it.
+    expect(await docxPart(bytes, 'word/header1.xml')).toBe('DSCR statement · Asha Traders');
+    expect(await docxPart(bytes, 'word/footer1.xml')).toMatch(/^Made with .+ Not a CA's certificate\.\tPage \{PAGE\}1 of \{NUMPAGES\}1$/);
+  });
+  it('fictional case A, provisional: "Provisional" in the header of every page, and what is still needed', async () => {
+    const { doc } = build(CASE_A), bytes = docxOf(doc, MADE), { lines } = await docxLines(bytes);
+    expect(await docxPart(bytes, 'word/header1.xml')).toBe('DSCR statement\tProvisional');
+    expect(lines).toContain("Provisional: 2 still needed • The borrower's name • The lender");
+  });
+  it('holds no figure the page did not already show or the user did not type', async () => {
+    const { p, doc } = build(A2), { lines } = await docxLines(docxOf(doc, MADE));
+    const sources = [JSON.stringify(p), JSON.stringify(A2), JSON.stringify(DSCR), JSON.stringify(DEFAULTS), tidyAmount(A2.loan.amount),
+      ...Object.values(A2.cells).flat().map(tidyAmount), '30-09-2026', SITE_NAME].join('\n');
+    const figures = lines.join('\n').match(/\d+(?:,\d+)*(?:\.\d+)?/g) ?? [];
+    expect(figures.length).toBeGreaterThan(300);
+    expect(figures.filter((f) => !sources.includes(f))).toEqual([]);
+  });
+  it('a long loan: the year columns split into tables that fit the page, as in the PDF, every year kept', async () => {
+    const s: State = { ...A2, loan: { amount: '50 L', ratePct: '10', disbursed: '2027-04', moratoriumMonths: '0', instalments: '144', repayment: 'emi' } };
+    const { p, doc } = build(s), { lines } = await docxLines(docxOf(doc, MADE));
+    const dscr = lines.filter((l) => l.startsWith('DSCR (A ÷ B) | ')).map((l) => l.split(' | ').slice(1));
+    expect(dscr.length).toBeGreaterThan(1);
+    expect(dscr.flat()).toEqual(p.statement!.lines.find((l) => l.id === 'dscr')!.values);
+  });
+  it('keeps Word\'s letters beyond Latin, which the PDF cannot print', async () => {
+    const { doc } = build(A2), named: Doc = { ...doc, header: 'DSCR statement · श्री गणेश ट्रेडर्स' };
+    expect(await docxPart(docxOf(named, MADE), 'word/header1.xml')).toBe('DSCR statement · श्री गणेश ट्रेडर्स');
+  });
+});
+
+describe('one document, three files', () => {
+  it('the PDF, the Excel copy and the Word copy carry the same words', async () => {
+    const { doc } = build(A2), pdf = (await pdfPages(pdfOf(doc, MADE))).join('\n'), word = (await docxLines(docxOf(doc, MADE))).lines.join('\n');
     const cells = (await workbook(xlsxOf(doc, MADE))).flatMap((x) => x.data.flat()).filter((c): c is string => typeof c === 'string');
-    for (const t of ['Asha Traders', 'Example Bank, Pune branch', 'Debt service coverage ratio, 2026-27 to 2029-30', 'Common term-loan DSCR (not yet checked against a published source).'])
-      expect([pdf.includes(t), cells.some((c) => c.includes(t))]).toEqual([true, true]);
-    const doc2: Doc = { ...doc, parts: doc.parts.slice(0, 1) };
+    for (const t of ['Asha Traders', 'Example Bank, Pune branch', 'Debt service coverage ratio (DSCR), 2026-27 to 2029-30', 'Common term-loan DSCR.', 'Annex 1. The basis', 'Annex 2. Repayment schedule'])
+      expect([pdf.includes(t), cells.some((c) => c.includes(t)), word.includes(t)]).toEqual([true, true, true]);
+    const doc2: Doc = { ...doc, parts: doc.parts.slice(0, 2) };
     expect((await pdfPages(pdfOf(doc2, MADE))).join('\n')).not.toContain('Repayment schedule');
   });
 });

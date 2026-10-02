@@ -64,7 +64,7 @@ export interface State {
   asset: { yearly: string; from: string };
   /** Started from the assumptions (ASSUMED): switching back to working the figures out puts them back. */
   assume?: boolean;
-  /** What only the document needs: asked beside the download, taken once for the PDF and the Excel copy. */
+  /** What only the document needs: asked beside the download, taken once for the PDF, the Excel copy and the Word copy. */
   doc: DocFacts;
 }
 

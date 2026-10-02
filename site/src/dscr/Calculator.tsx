@@ -5,7 +5,7 @@
  * the borrower is (it sets the tax and which existing EMIs count) and the yearly figures, with loans already running as
  * EMIs a month and the new asset's income; the lender's target; and a free preview that stays provisional while anything
  * is missing: the DSCR statement in the layout chartered accountants use, and the repayment schedule. Last, the statement
- * to download: the document's own facts asked once, then a PDF and an Excel copy made in the browser (document.ts).
+ * to download: the document's own facts asked once, then a PDF, an Excel copy and a Word copy made in the browser (document.ts).
  * Figures: engine/dscr.ts only, via model.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
@@ -17,6 +17,7 @@ import { inr, rs } from '../../../engine/util';
 import { BUTTON, CellInput, Choice, HINT, Section, SourceNote, TextField } from '../fields';
 import { pdfOf, printable } from '../doc/pdf';
 import { xlsxOf } from '../doc/xlsx';
+import { docxOf } from '../doc/docx';
 import { allNeeds, docNeeds, docStatus, fileName, statementDoc } from './document';
 import {
   ASSUMED, BORROWER_CHOICES, EXAMPLE_TARGETS, GROUP_TITLES, OPTION_KEYS, amountOf, barText, choicesOf, emisAsk, loanRead, modeOf, numberOf,
@@ -386,7 +387,12 @@ function PreviewSection({ p, update }: { p: Preview; update: Update }) {
   </Section>;
 }
 
-const XLSX_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+/** Each file: its writer and its type. */
+const FILES = {
+  pdf: { write: pdfOf, type: 'application/pdf' },
+  xlsx: { write: xlsxOf, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' },
+  docx: { write: docxOf, type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
+} as const;
 const isoDate = (d: Date) => [d.getFullYear(), d.getMonth() + 1, d.getDate()].map((n) => String(n).padStart(2, '0')).join('-');
 
 /** Hands the file to the browser to save. */
@@ -399,20 +405,20 @@ function download(bytes: Uint8Array<ArrayBuffer>, name: string, type: string) {
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
-/** The statement to download: first what only the document needs, asked once; then the PDF and the Excel copy. */
+/** The statement to download: first what only the document needs, asked once; then the PDF, the Excel copy and the Word copy. */
 function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Update }) {
   const f = s.doc, set = (patch: Partial<DocFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
   const english = (t: string) => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
   const own = docNeeds(f), provisional = allNeeds(s, p).length > 0, ready = !!p.statement && !p.blocked;
-  const save = (kind: 'pdf' | 'xlsx') => {
+  const save = (kind: keyof typeof FILES) => {
     const now = new Date(), doc = statementDoc(s, p, isoDate(now));
-    if (doc) download(kind === 'pdf' ? pdfOf(doc, now) : xlsxOf(doc, now), fileName(s, p, kind), kind === 'pdf' ? 'application/pdf' : XLSX_TYPE);
+    if (doc) download(FILES[kind].write(doc, now), fileName(s, p, kind), FILES[kind].type);
   };
   const field = (id: keyof DocFacts, label: string, hint?: string, placeholder?: string) =>
     <TextField id={`fld-${id}`} label={label} hint={hint} placeholder={placeholder} value={f[id]} onCommit={(t) => set({ [id]: t })}
       said={english(f[id])} invalid={!!english(f[id])} />;
   return <Section id="download" title="Download the statement">
-    <p class={`mt-2 ${HINT}`}>A PDF for the lender, and an Excel copy with the working for the accountant, made in your browser from the figures above.</p>
+    <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy for the accountant and a Word copy to edit, made in your browser from the figures above.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       {field('borrower', 'Borrower’s name', undefined, 'like Asha Traders')}
       {field('lender', 'Lender', 'The bank or finance company, and the branch.')}
@@ -429,6 +435,7 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
         <div class="mt-3 flex flex-wrap gap-2">
           <button type="button" data-testid="download-pdf" class={BUTTON} onClick={() => save('pdf')}>Download PDF</button>
           <button type="button" data-testid="download-xlsx" class={BUTTON} onClick={() => save('xlsx')}>Download Excel</button>
+          <button type="button" data-testid="download-docx" class={BUTTON} onClick={() => save('docx')}>Download Word</button>
         </div>
       </div>
       : <p data-testid="doc-wait" class={`mt-4 ${HINT}`}>{p.blocked ? 'No document while the two computations disagree.' : 'The document can be made once the statement shows figures.'}</p>}

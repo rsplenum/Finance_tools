@@ -7,8 +7,8 @@
  * and its answers read as text (data-testid): fictional case A from the loan terms, own yearly figures, the amount
  * field's read-back, the DSCR statement and the repayment schedule, the tax rate by borrower, Clear all, and the same
  * layout checks once the tables are filled, in light and dark, with the tables as cards at 390 px and as tables at 1024 px.
- * The statement downloads at 390 px, as a PDF and as an Excel copy, each read back (scripts/read-doc.mjs): provisional
- * until the borrower's name and the lender are in, then complete.
+ * The statement downloads at 390 px, as a PDF, an Excel copy and a Word copy, each read back (scripts/read-doc.mjs):
+ * provisional until the borrower's name and the lender are in, then complete, laid out as a CA's statement (P1g).
  * Run after `npm run build`. CHROMIUM_PATH overrides the browser Playwright would use.
  */
 import { createServer } from 'node:http';
@@ -16,7 +16,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-import { pdfPages, workbook } from './read-doc.mjs';
+import { docxLines, docxPart, pdfPages, workbook } from './read-doc.mjs';
 
 const DIST = fileURLToPath(new URL('../site/dist/', import.meta.url));
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
@@ -424,6 +424,10 @@ async function layout(page, v, step) {
   let pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
   if (!pages.every((t) => t.startsWith('DSCR statement Provisional\n'))) v('the provisional PDF is not marked provisional on every page');
   if (!pages[0].includes("• The borrower's name\n• The lender")) v('the provisional PDF does not list what is still needed');
+  let word = await save('download-docx');
+  if (word.name !== 'DSCR statement (provisional).docx') v(`the provisional Word copy is named "${word.name}"`);
+  const mark = await docxPart(word.bytes, 'word/header1.xml').catch((e) => `(not read: ${e.message})`);
+  if (mark !== 'DSCR statement\tProvisional') v(`the provisional Word copy's header says ${JSON.stringify(mark)}`);
   // A name the PDF cannot print is flagged, and asked for in English letters.
   await leave(page, '#fld-borrower', 'श्री गणेश');
   await expectText(page, v, 'fld-borrower-said', 'The document is in English: type this in English letters.', 'a name in Devanagari');
@@ -435,20 +439,34 @@ async function layout(page, v, step) {
   pdf = await save('download-pdf');
   if (pdf.name !== 'DSCR statement - Asha Traders.pdf') v(`the PDF is named "${pdf.name}"`);
   pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
+  // Page 1: the borrower's name, the lender, the whole working, the average and the lowest year, the signature (P1g).
   const first = pages[0].split('\n');
-  for (const want of ['Borrower Asha Traders', 'Lender Example Bank, Pune branch', 'Status Complete', 'Average DSCR 1.16', 'Lowest year 0.84 in 2027-28',
+  for (const want of ['Asha Traders', 'Average DSCR Lowest year', '1.16 0.84', 'For Asha Traders', 'Profit before tax 1,59,000 2,48,000 3,51,000 4,56,500',
     'Cash available (A) 4,00,392 4,22,624 4,45,488 4,73,072', 'DSCR (A ÷ B) 1.17 0.84 0.98 2.26'])
     if (!first.includes(want)) v(`the PDF's first page has no line "${want}"`);
+  if (!first.some((l) => l.startsWith('Lender Example Bank, Pune branch Prepared on '))) v("the PDF's first page does not name the lender");
   if (pages.length < 3 || pages.join('\n').includes('Provisional')) v(`the PDF has ${pages.length} pages, or still says provisional`);
-  // The page's assumptions, its verdict, the largest loan and the fewest instalments stay on the page (D-DOC-03).
-  for (const not of ['Assumed until changed', 'Below the target', 'The largest loan', 'The fewest instalments'])
-    if (pages.join('\n').includes(not)) v(`the PDF says "${not}"`);
+  if (!pages[1]?.includes('Annex 1. The basis') || !pages[2]?.includes('Annex 2. Repayment schedule')) v('the annexes do not start pages 2 and 3');
+  // What stays on the page only (D-DOC-03, and the owner on 02-10-2026): the assumptions, the verdict, the largest loan,
+  // the fewest instalments, the lender's target, how far the method was checked, and the rules for building the figures.
+  const ONLY_ON_THE_PAGE = ['Assumed until changed', 'Below the target', 'The largest loan', 'The fewest instalments', 'target', 'checked', 'How the figures are built', 'Status'];
+  for (const not of ONLY_ON_THE_PAGE) if (pages.join('\n').includes(not)) v(`the PDF says "${not}"`);
   const xlsx = await save('download-xlsx');
   if (xlsx.name !== 'DSCR statement - Asha Traders.xlsx') v(`the Excel copy is named "${xlsx.name}"`);
   const book = await workbook(xlsx.bytes).catch((e) => v(`the Excel copy is not read: ${e.message}`)) ?? [];
   const cash = book[0]?.data.find((r) => r[0] === 'Cash available (A)')?.filter((c) => c !== null);
-  if (book.map((x) => x.sheet).join('|') !== 'Statement|Repayment schedule' || JSON.stringify(cash) !== JSON.stringify(['Cash available (A)', 400392, 422624, 445488, 473072]))
+  if (book.map((x) => x.sheet).join('|') !== 'DSCR statement|Basis|Repayment schedule' || JSON.stringify(cash) !== JSON.stringify(['Cash available (A)', 400392, 422624, 445488, 473072]))
     v(`the Excel copy holds sheets ${JSON.stringify(book.map((x) => x.sheet))} and cash available ${JSON.stringify(cash)}`);
+  const cells = book.flatMap((x) => x.data.flat()).filter((c) => typeof c === 'string').join('\n');
+  for (const not of ONLY_ON_THE_PAGE) if (cells.includes(not)) v(`the Excel copy says "${not}"`);
+  word = await save('download-docx');
+  if (word.name !== 'DSCR statement - Asha Traders.docx') v(`the Word copy is named "${word.name}"`);
+  const { lines: said, messages } = await docxLines(word.bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
+  if (messages.length) v(`the Word copy is not read cleanly: ${JSON.stringify(messages).slice(0, 200)}`);
+  for (const want of ['Asha Traders', 'Cash available (A) | 4,00,392 | 4,22,624 | 4,45,488 | 4,73,072', 'DSCR (A ÷ B) | 1.17 | 0.84 | 0.98 | 2.26', 'Annex 1. The basis', 'Annex 2. Repayment schedule'])
+    if (!said.includes(want)) v(`the Word copy has no line "${want}"`);
+  for (const not of ONLY_ON_THE_PAGE) if (said.join('\n').includes(not)) v(`the Word copy says "${not}"`);
+  if (await docxPart(word.bytes, 'word/header1.xml') !== 'DSCR statement · Asha Traders') v("the Word copy's header does not name the borrower");
   await layout(page, v, 'the download, 390 px');
   await ctx.close();
 }
