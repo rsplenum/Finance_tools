@@ -2,8 +2,8 @@
  * The planning estimate (E1, E3): six questions, then the estimate worked out as an architect would. The total, the cost
  * a sq ft and the five levels come first, with Compare (each section at each level) closed under them; then the total by
  * section, a card for each section with its slider, the items with their drawer (the family's five levels and its other
- * items, brands, and how each line was worked out), the rooms (the bar of shares, each one's size by a word or typed, and
- * its own level, closed until opened), what
+ * items, brands, and how each line was worked out), the rooms (the bar of shares; rooms added or taken out; each one's size
+ * by a word or typed, and its own level; closed until opened), what
  * the estimate assumes, what to check, and the planning estimate to download. The bar at the bottom says what the last
  * change did. Figures: engine/architect.ts only, via plan-model.ts.
  */
@@ -14,7 +14,7 @@ import { isoDate, save, type FileKind } from '../download';
 import { planDoc, planDocNeeds, planDocStatus, planFileName } from './plan-document';
 import {
   BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, FLOOR_CHOICES, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORD_CHOICES, WORK_CHOICES, areaLabel, drawerView, heightOf, plainOf, planPreview, sideUnit,
-  withItem, withKind, withLevel, withPlotReset, withPlotSide, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit,
+  withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit,
   type AreaUnit, type DrawerView, type LineView, type PlanFacts, type PlanPreview, type PlanState, type PlanView, type RoomView, type RungView, type SectionView,
 } from './plan-model';
 import type { Bhk, Level } from '../../../engine/architect';
@@ -26,6 +26,8 @@ const CARD = 'rounded-lg border border-slate-300 bg-white p-4 dark:border-slate-
 const CHIP = 'flex cursor-pointer items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-slate-900 has-checked:border-teal-700 has-checked:bg-teal-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:has-checked:border-teal-500 dark:has-checked:bg-teal-950';
 const RADIO = 'size-4 shrink-0 text-base accent-teal-700 dark:accent-teal-500';
 /** One of a room's four size buttons: a radio, so the arrow keys move along them and a screen reader names the group. */
+/** "× Take out" on a room (R2): quieter than the buttons that add. */
+const OUT = 'rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800';
 const SEG = 'flex min-h-11 cursor-pointer items-center justify-center rounded-md border border-slate-300 bg-white px-1 py-1 text-center text-[13px] leading-tight text-slate-900 has-checked:border-teal-700 has-checked:bg-teal-50 has-checked:font-semibold has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:has-checked:border-teal-500 dark:has-checked:bg-teal-950';
 /**
  * The bar of shares' colours by kind: the four kinds of room in the reference palette's first four slots, in that order,
@@ -114,7 +116,7 @@ function Questions({ s, update, p, done }: { s: PlanState; update: Update; p: Pl
         <legend class={LABEL}>How many bedrooms?</legend>
         <div class="mt-2 flex flex-wrap gap-2">
           {BHK_CHOICES.map((b) => <label key={b.value} for={`fld-bhk-${b.value}`} class={CHIP}>
-            <input type="radio" id={`fld-bhk-${b.value}`} name="fld-bhk" checked={s.bhk === b.value} onChange={() => update((x) => ({ ...x, bhk: b.value as Bhk }))} class={RADIO} />
+            <input type="radio" id={`fld-bhk-${b.value}`} name="fld-bhk" checked={s.bhk === b.value} onChange={() => update((x) => withBhk(x, b.value as Bhk))} class={RADIO} />
             {b.label}
           </label>)}
         </div>
@@ -339,8 +341,9 @@ function Shares({ v }: { v: PlanView }) {
 }
 
 /**
- * The rooms (A8, R1): how the carpet area is shared; each room's size by four buttons (Compact, Medium, Above medium,
- * Spacious) or typed, and its own level. Closed until opened: not on the default path.
+ * The rooms (A8, R1, R2): how the carpet area is shared; a bedroom, a bathroom or the balcony added or taken out, a bathroom
+ * attached to a bedroom; each room's size by four buttons (Compact, Medium, Above medium, Spacious) or typed, and its own
+ * level. Closed until opened: not on the default path.
  */
 function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) {
   const unit = sideUnit(s.unit);
@@ -351,7 +354,7 @@ function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) 
     value={r[which]} placeholder={r.planned[which]} invalid={!!r.bad} onCommit={(t) => update((x) => withRoomSide(x, r.id, which, t, r.name))} />;
   return <Section id="pl-rooms" title="Rooms">
     <details data-testid="pl-rooms" class="mt-2">
-      <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">{v.rooms.length} rooms, from your {v.bhk}: make a room larger or smaller, or give it its own level</summary>
+      <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">{v.rooms.length} rooms, from your {v.bhk}: add or take out a room, size each one, or give it its own level</summary>
       <p class={`mt-3 text-sm ${MUTED}`}>The rooms share the carpet area: a room made larger takes its extra from the others, and a size you type moves no other room. To make them all larger, change the area.</p>
       <Shares v={v} />
       {v.roomsNote && <p data-testid="pl-rooms-note" class="mt-3 text-sm text-amber-900 dark:text-amber-200">{v.roomsNote}</p>}
@@ -372,6 +375,15 @@ function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) 
             </div>
           </fieldset>}
           {r.below && <p data-testid={`pl-room-below-${r.id}`} class="mt-1 text-sm text-amber-900 dark:text-amber-200">{r.below}</p>}
+          {(r.bedroom || r.out) && <div class="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            {r.bedroom ? <label for={`fld-attached-${r.id}`} class={`flex min-h-11 cursor-pointer items-center gap-2 text-sm ${INK}`}>
+              <input type="checkbox" id={`fld-attached-${r.id}`} checked={r.attached} class={RADIO}
+                onChange={(ev) => update((x) => withAttached(x, r.id, (ev.currentTarget as HTMLInputElement).checked, r.name))} />
+              <span><span class="sr-only">{r.name}: </span>Attached bathroom</span>
+            </label> : <span />}
+            {r.out && <button type="button" data-testid={`pl-room-out-${r.id}`} class={OUT} aria-label={`Take out ${r.name}`}
+              onClick={() => update((x) => (r.id.startsWith('bedroom-') ? withBedroomTakenOut(x, r.id, r.name) : r.id.startsWith('bath-') ? withBathTakenOut(x, r.id, r.name) : withBalcony(x, false)))}>× Take out</button>}
+          </div>}
           {/* A size typed and a level of the room's own, behind one line (R1): open when either is set. */}
           <details data-testid={`pl-room-more-${r.id}`} class="mt-2" open={r.typed || !!r.bad || r.level !== null}>
             <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300"><span class="sr-only">{r.name}: </span>Your own size or level</summary>
@@ -385,6 +397,11 @@ function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) 
           </details>
         </li>)}
       </ul>
+      {(v.add.bedroom || v.add.bath || v.add.balcony) && <div data-testid="pl-room-add" class="mt-2 flex flex-wrap gap-2">
+        {v.add.bedroom && <button type="button" data-testid="pl-room-add-bedroom" class={BUTTON} onClick={() => update(withBedroomAdded)}>+ Bedroom</button>}
+        {v.add.bath && <button type="button" data-testid="pl-room-add-bath" class={BUTTON} onClick={() => update(withBathAdded)}>+ Bathroom</button>}
+        {v.add.balcony && <button type="button" data-testid="pl-room-add-balcony" class={BUTTON} onClick={() => update((x) => withBalcony(x, true))}>+ Balcony</button>}
+      </div>}
     </details>
   </Section>;
 }

@@ -12,7 +12,7 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf, printable } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import {
-  EMPTY_PLAN, areaLabel, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withPlotReset, withPlotSide, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit, type PlanState,
+  EMPTY_PLAN, areaLabel, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit, type PlanState,
 } from '../site/src/estimate/plan-model';
 import { planDoc, planDocStatus, planFileName } from '../site/src/estimate/plan-document';
 import { SITE_NAME } from '../site/src/site';
@@ -338,5 +338,55 @@ describe('R1 on the page: four size buttons on each room, the bar of shares and 
     const v = view(tight), bed = v.rooms.find((r) => r.id === 'bedroom-2');
     expect(bed?.below).toBe('Below the Code\'s 9.5 sq m (102 sq ft) for this room.');
     expect(v.flags.some((f) => f.startsWith('Bedroom 2 works out at') && f.endsWith('with the sizes picked, below the Code\'s 9.5 sq m: make it larger, or another room smaller.'))).toBe(true);
+  });
+});
+
+describe('R2 on the page: rooms by buttons', () => {
+  const total = (s: PlanState) => (architect(inputOf(s)) as ArchitectEstimate).total;
+  const by = (s: PlanState, from: PlanState) => { const x = Math.round((total(s) - total(from)) * 100) / 100; return `Rs. ${inr(Math.abs(x))} ${x > 0 ? 'more' : 'less'}`; };
+  it('the owner\'s example: a 1BHK whose bathroom is attached to the bedroom, and no balcony; ticking it off brings the plan back', () => {
+    const one: PlanState = { ...FLAT, bhk: '1', area: '600' };
+    const s = withAttached(one, 'bedroom-1', true, 'Bedroom');
+    expect([s.baths, inputOf(s).baths, view(s).change?.text]).toEqual([['bedroom-1'], ['bedroom-1'], `The bathroom attached to Bedroom: ${by(s, one)}`]);
+    const v = view(s);
+    expect(v.rooms.find((r) => r.id === 'bedroom-1')).toMatchObject({ bedroom: true, attached: true, out: true });
+    expect(v.rooms.find((r) => r.id === 'bath-1')).toMatchObject({ name: 'Bathroom (attached)', out: false });
+    const none = withBalcony(s, false);
+    expect([inputOf(none).balcony, view(none).rooms.some((r) => r.id === 'balcony'), view(none).add]).toEqual([false, false, { bedroom: true, bath: true, balcony: true }]);
+    expect(view(none).change?.text).toBe(`The balcony taken out: ${by(none, s)}`);
+    const back = withAttached(withBalcony(none, true), 'bedroom-1', false, 'Bedroom');
+    expect([back.baths, back.balcony, view(back).change?.text]).toEqual([undefined, undefined, `Bedroom's bathroom made common: ${by(back, withBalcony(none, true))}`]);
+  });
+  it('+ Bathroom and its ×: a common bathroom more, the others sharing what is left; taken out again, the plan\'s own is back', () => {
+    const s = withBathAdded(FLAT);
+    expect([s.baths, view(s).rooms.filter((r) => r.id.startsWith('bath-')).map((r) => r.name)]).toEqual([['bedroom-1', null, null], ['Bathroom 1 (attached)', 'Bathroom 2', 'Bathroom 3']]);
+    // 200 + 145 + 120 + 70 + 32.5 + 32.5 = 600, and a bathroom more at 32.5 makes 632.5: the others 600 / 632.5 of their
+    // size, 5.1% smaller; taken out again, 632.5 / 600, 5.4% larger.
+    expect(view(s).change?.text).toMatch(/^A bathroom added: the other rooms 5\.1% smaller · Rs\. [\d,]+ (more|less)$/);
+    const out = withBathTakenOut(s, 'bath-3', 'Bathroom 3');
+    expect([out.baths, view(out).change?.text]).toEqual([undefined, `Bathroom 3 taken out: the other rooms 5.4% larger · ${by(out, s)}`]);
+  });
+  it('× on a bathroom moves the later ones up, with their own words, sizes, levels and items; one bathroom is always kept', () => {
+    const three: PlanState = { ...FLAT, bhk: '3', area: '1,200', roomWords: { 'bath-3': 'spacious' }, roomLevels: { 'bath-2': 4, 'bath-3': 5 }, items: { 'bath-3:wc:count': 'x' }, brands: { 'bath-2:wc:count': 'Jaquar' } };
+    const s = withBathTakenOut(three, 'bath-2', 'Bathroom 2');
+    expect([s.baths, s.roomWords, s.roomLevels, s.items, s.brands]).toEqual([['bedroom-1', null], { 'bath-2': 'spacious' }, { 'bath-2': 5 }, { 'bath-2:wc:count': 'x' }, {}]);
+    const one: PlanState = { ...FLAT, bhk: '1' };
+    expect(withBathTakenOut(one, 'bath-1', 'Bathroom')).toBe(one);
+    expect(view(one).rooms.find((r) => r.id === 'bath-1')?.out).toBe(false);
+  });
+  it('+ Bedroom and its ×: the bedrooms answer follows; the later bedrooms move up with what is theirs, and a bathroom attached to the one taken out becomes common', () => {
+    const up = withBedroomAdded(FLAT);
+    expect([up.bhk, view(up).change?.text, view(up).summary]).toEqual(['3', `A bedroom added, now 3 BHK: ${by(up, FLAT)}`, view({ ...FLAT, bhk: '3' }).summary]);
+    const three: PlanState = { ...up, roomWords: { 'bedroom-3': 'compact' }, baths: ['bedroom-1', 'bedroom-2', 'bedroom-3'], rooms: { 'bedroom-2': { l: '12', b: '10' } } };
+    const s = withBedroomTakenOut(three, 'bedroom-2', 'Bedroom 2');
+    expect([s.bhk, s.roomWords, s.baths, s.rooms]).toEqual(['2', { 'bedroom-2': 'compact' }, ['bedroom-1', null, 'bedroom-2'], {}]);
+    expect(view(s).change?.text).toBe(`Bedroom 2 taken out, now 2 BHK: ${by(s, three)}`);
+    expect(withBedroomAdded({ ...FLAT, bhk: '5' }).bhk).toBe('5');
+    const rk = withBedroomTakenOut({ ...FLAT, bhk: '1' }, 'bedroom-1', 'Bedroom');
+    expect([rk.bhk, view(rk).rooms.find((r) => r.id === 'bedroom-1')?.out]).toEqual(['1RK', false]);
+  });
+  it('a new count of bedrooms from the question keeps the bathrooms of one\'s own, made common where their bedroom is gone, and brings the plan\'s own when they were the plan\'s', () => {
+    expect(withBhk({ ...FLAT, bhk: '3', baths: ['bedroom-3', null] }, '2').baths).toEqual([null, null]);
+    expect(withBhk({ ...FLAT, baths: ['bedroom-1', null] }, '3').baths).toBeUndefined();
   });
 });

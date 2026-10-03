@@ -9,7 +9,9 @@
  * A room's own size is put in after the plan, its breadth the shorter side; a room's own level is looked up before the
  * section's slider. The split into fixed works, movable items and appliances is added up row by row. A new house's plot
  * is drawn side by side, its stairs part by part (the landings as the well less the flights and their gap), its tanks
- * filled a step at a time, and its stages taken from the sections and the rows as this computation adds them up.
+ * filled a step at a time, and its stages taken from the sections and the rows as this computation adds them up. The
+ * user's bathrooms (R2) are put after the programme's other rooms with the range of its last bathroom, each door opening
+ * into the bedroom named or the passage.
  * architect.ts shows no figure unless both agree.
  */
 import RULES from './data/architect.json';
@@ -31,7 +33,7 @@ const FOOT = 0.3048, SQ_FOOT = FOOT * FOOT;
 // To the paisa, half up, an exact half kept from floating point.
 const round2 = (x: number) => Math.round(x * 100 + 1e-6) / 100;
 
-interface Space { id: string; kind: RoomKind; master: boolean; attached: boolean; sqm: number; len: number; wide: number }
+interface Space { id: string; kind: RoomKind; master: boolean; of: string | null; sqm: number; len: number; wide: number }
 interface Hole { w: number; h: number; sill: number; door: boolean; owner: string; other: string | null; kind: string }
 
 export function architectCheck(input: ArchitectInput): ArchitectCheck {
@@ -59,23 +61,30 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
   // breadth first, then the length.
   const prog = Q.programmes[input.bhk as keyof Rules['programmes']];
   const medium = Q.sizes.words.find((w) => w.id === 'medium') as { at: number };
+  // The programme's rooms other than the bathrooms, then the bathrooms: the user's list (each the bedroom it opens into, or
+  // null) or the programme's, the one marked attached opening into the main bedroom; each of the last bathroom's range.
   const counter: Record<string, number> = {};
-  const listed = prog.rooms.map((r) => {
+  const others = prog.rooms.filter((r) => r.kind !== 'bath').map((r) => {
     counter[r.kind] = (counter[r.kind] ?? 0) + 1;
-    const id = r.kind === 'bedroom' || r.kind === 'bath' ? `${r.kind}-${counter[r.kind]}` : r.kind;
-    const w = Q.sizes.words.find((x) => x.id === input.roomWords?.[id]) ?? medium;
-    return { r, id, size: r.range[1] * w.at + r.range[0] * (1 - w.at) };
+    return { kind: r.kind, master: !!r.master, of: null as string | null, range: r.range, id: r.kind === 'bedroom' ? `bedroom-${counter[r.kind]}` : r.kind };
+  });
+  const programmeBaths = prog.rooms.filter((r) => r.kind === 'bath'), mainBedroom = others.find((x) => x.master)?.id ?? null;
+  const bathList = input.baths ?? programmeBaths.map((r) => (r.attached ? mainBedroom : null));
+  const lastRange = programmeBaths[programmeBaths.length - 1].range;
+  const listed = [...others, ...bathList.map((of, i) => ({ kind: 'bath' as RoomKind, master: false, of, range: lastRange, id: `bath-${i + 1}` }))].map((x) => {
+    const w = Q.sizes.words.find((y) => y.id === input.roomWords?.[x.id]) ?? medium;
+    return { ...x, size: x.range[1] * w.at + x.range[0] * (1 - w.at) };
   });
   const open = 1 - Q.shares.walls.value - Q.shares.passage.value, sizes = listed.map((x) => x.size).reduce((a, b) => a + b, 0);
   const scale = (carpet * open) / sizes;
   const spaces: Space[] = [];
-  const make = (id: string, k: RoomKind, sqm: number, master = false, attached = false) => {
+  const make = (id: string, k: RoomKind, sqm: number, master = false, of: string | null = null) => {
     const wide = Math.sqrt(sqm / Q.aspect[k]);
-    spaces.push({ id, kind: k, master, attached, sqm, len: sqm / wide, wide });
+    spaces.push({ id, kind: k, master, of, sqm, len: sqm / wide, wide });
   };
-  for (const x of listed) make(x.id, x.r.kind, x.size * scale, !!x.r.master, !!x.r.attached);
+  for (const x of listed) make(x.id, x.kind, x.size * scale, x.master, x.of);
   make('passage', 'passage', Q.shares.passage.value * carpet);
-  if (prog.balcony > 0) make('balcony', 'balcony', prog.balcony * SQ_FOOT);
+  if (prog.balcony > 0 && input.balcony !== false) make('balcony', 'balcony', prog.balcony * SQ_FOOT);
   // Each room's share of the carpet area in closed form: a planned room its part of the open share by its size, the
   // passage its rule; a room of the user's own size, that size over the carpet area. The balcony is outside the carpet area.
   const shares = new Map<string, number>(listed.map((x) => [x.id, (open * x.size) / sizes]));
@@ -90,7 +99,6 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
   }
   shares.set('walls', Q.shares.walls.value);
   const exists = (id: string) => spaces.some((s) => s.id === id);
-  const masterId = spaces.find((s) => s.master)?.id;
 
   // Openings, listed by the room whose wall they are in.
   const holes: Hole[] = [];
@@ -106,7 +114,7 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
     if (s.kind === 'bedroom') { put('bedroom', s.id, exists('passage') ? 'passage' : null); for (let i = 0; i < nWin; i++) put('window', s.id, null); }
     if (s.kind === 'living') { for (let i = 0; i < nWin; i++) put('window', s.id, null); if (exists('balcony')) put('balcony', s.id, 'balcony'); }
     if (s.kind === 'kitchen') { put('kitchen', s.id, exists('living') ? 'living' : 'passage'); put('kitchenWindow', s.id, null); }
-    if (s.kind === 'bath') { put('bath', s.id, s.attached && masterId ? masterId : 'passage'); put('ventilator', s.id, null); }
+    if (s.kind === 'bath') { put('bath', s.id, s.of ?? 'passage'); put('ventilator', s.id, null); }
   }
 
   const shown = (sec: string) => { const only = Q.sections.find((x) => x.id === sec)?.kinds; return only === undefined || only.includes(kind); };

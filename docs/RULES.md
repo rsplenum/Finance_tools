@@ -195,6 +195,8 @@ Dated 03-10-2026. What an architect would decide from six answers: the rooms and
 
 **A room of your own size or level** (E3): a size you give a room replaces the planned one, its longer side the length, and the other rooms keep theirs; the page flags when the rooms no longer fit the carpet area. A room's own level stands above the section's slider and below an item of your own (A4), and moves only the sections with a slider: the structure, waterproofing and plumbing stay as they are.
 
+**Rooms by buttons** (R2): + Bedroom and a bedroom's × change the bedrooms answer, the later bedrooms moving up with what is theirs. + Bathroom adds a common bathroom of the programme's bathroom range, from 1 to 8, and the rooms share the area with it; a bathroom attached to a bedroom opens into it, so its door comes off that bedroom's skirting instead of the passage's. The balcony can be taken out; it is outside the area the rooms share, so no room moves.
+
 **How the rooms are drawn and measured**
 
 - **Bathrooms**: One bathroom for a 1 RK and a 1BHK; one for each bedroom from a 2BHK, the first attached to the main bedroom. Reported layouts give a 1BHK one toilet and a 2BHK two; one for each bedroom above that is our rule. Change the number if yours differs. (Standard size of 1BHK to 4BHK flats; our rule)

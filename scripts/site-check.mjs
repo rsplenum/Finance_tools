@@ -712,6 +712,27 @@ for (const scheme of ['light', 'dark']) {
   await page.locator('label[for="fld-roomword-living-medium"]').click();
   await expectText(page, v, 'pl-what-changed', /^Living and dining to Medium, in place of your size: the other rooms 3\.3% larger · Rs\. [\d,]+ (more|less)/, 'a word in place of a typed size');
   await expectText(page, v, 'pl-room-size-living', /· 2\d\d sq ft$/, 'the living room planned again');
+  // R2: rooms by buttons. A bathroom attached to the second bedroom, one added and taken out again (the other rooms
+  // sharing what is left), the balcony taken out and put back, a bedroom added and taken out: back to the plan's 2 BHK.
+  await page.locator('label[for="fld-attached-bedroom-2"]').click();
+  await expectText(page, v, 'pl-what-changed', /^Bathroom 2 attached to Bedroom 2: (Rs\. [\d,]+ (more|less)|no change in the total)/, 'a bathroom attached to a bedroom');
+  await expectText(page, v, page.getByTestId('pl-room-bath-2').locator('h3'), 'Bathroom 2 (attached to Bedroom 2)', 'the bathroom named for its bedroom');
+  await page.getByTestId('pl-room-add-bath').click();
+  await expectText(page, v, 'pl-what-changed', /^A bathroom added: the other rooms [\d.]+% smaller · Rs\. [\d,]+ (more|less)/, 'a bathroom added, the others sharing what is left');
+  await page.getByTestId('pl-room-out-bath-3').click();
+  await expectText(page, v, 'pl-what-changed', /^Bathroom 3 taken out: the other rooms [\d.]+% larger · Rs\. [\d,]+ (more|less)/, 'a bathroom taken out');
+  await page.locator('label[for="fld-attached-bedroom-2"]').click();
+  await expectText(page, v, 'pl-what-changed', /^Bedroom 2's bathroom made common: /, 'the bathroom made common again');
+  await page.getByTestId('pl-room-out-balcony').click();
+  await expectText(page, v, 'pl-what-changed', /^The balcony taken out: Rs\. [\d,]+ less/, 'the balcony taken out');
+  await page.getByTestId('pl-room-add-balcony').click();
+  await expectText(page, v, 'pl-what-changed', /^The balcony put back: Rs\. [\d,]+ more/, 'the balcony put back');
+  await page.getByTestId('pl-room-add-bedroom').click();
+  await expectText(page, v, 'pl-what-changed', /^A bedroom added, now 3 BHK: Rs\. [\d,]+ more/, 'a bedroom added');
+  await expectText(page, v, 'pl-summary', /· 3 BHK ·/, 'the bedrooms answer follows the rooms');
+  await page.getByTestId('pl-room-out-bedroom-3').click();
+  await expectText(page, v, 'pl-what-changed', /^Bedroom 3 taken out, now 2 BHK: Rs\. [\d,]+ less/, 'a bedroom taken out');
+  await layout(page, v, 'the rooms by buttons, 390 px');
   // Interiors: ten sections on, with Appliances, Smart home, Furniture and Soft furnishings, the movable items apart (D-UX-19).
   await page.getByTestId('pl-change').click();
   await page.check('#fld-work-interiors');
