@@ -499,7 +499,7 @@ But it gives no source or date for any figure. It puts the studio first and the 
 6. **The concrete's grade, for a reason it does not give.** It makes M25 "non-negotiable".
    - IS 456 sets the lowest grade of reinforced concrete by exposure (Tables 3 and 5, as reported): M20 mild, M25 moderate, M30 severe.
    - Concrete in the ground or in the rain is moderate. Concrete exposed to the coastal air, as in Mumbai and Chennai, is severe.
-   - The structure's rules of thumb name no grade and are flagged for the engineer's design. But the full form's example line says "RCC M20 in footings, columns, beams and slabs" → to correct with the next data session (HANDOFF).
+   - The structure's rules of thumb name no grade and are flagged for the engineer's design. But the example in the typed-items form ("Have a contractor's quotation? Type its items instead") says "RCC M20 in footings, columns, beams and slabs" → to correct with the next data session (HANDOFF).
 
 Already here before it:
 - the fixed or movable split on every line (its `assetEligibility`);
