@@ -97,6 +97,7 @@ for (const [id, p] of Object.entries(A.programmes))
   out.push(`| ${id === '1RK' ? '1 RK' : `${id} BHK`} | ${p.rooms.map((r) => `${r.name} ${r.range[0]}–${r.range[1]}`).join('; ')} | ${p.balcony || 'none'} | ${p.typical ? `${p.typical[0]}–${p.typical[1]}` : '—'} | ${p.why}${cite(p.src)} |`);
 out.push('', `**A room\'s size by a word** (R1): ${A.sizes.words.map((w) => `${w.name} ${w.at}`).join(', ')} of the way up the range. ${A.sizes.why}${cite(A.sizes.src)}`);
 out.push('', '**A room of your own size or level** (E3): a size you give a room replaces the planned one, its longer side the length, and the other rooms keep theirs; the page flags when the rooms no longer fit the carpet area. A room\'s own level stands above the section\'s slider and below an item of your own (A4), and moves only the sections with a slider: the structure, waterproofing and plumbing stay as they are.', '');
+out.push(`**Rooms by buttons** (R2): + Bedroom and a bedroom's × change the bedrooms answer, the later bedrooms moving up with what is theirs. + Bathroom adds a common bathroom of the programme's bathroom range, from 1 to 8, and the rooms share the area with it; a bathroom attached to a bedroom opens into it, so its door comes off that bedroom's skirting instead of the passage's. The balcony can be taken out; it is outside the area the rooms share, so no room moves.`, '');
 const rule = (label, text, x) => `- **${label}**: ${text} ${x.why}${cite(x.src)}`;
 out.push('**How the rooms are drawn and measured**', '',
   rule('Bathrooms', A.bathrooms.rule, A.bathrooms),

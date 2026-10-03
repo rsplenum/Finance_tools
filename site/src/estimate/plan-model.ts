@@ -4,10 +4,11 @@
  * no DOM. Every figure comes from the engine: the estimate, the five levels (the strip and Compare), the change from the
  * package, what the last change did and the drawer's rates are each worked out twice there; this file only words, groups
  * and orders them. The rooms' own sizes, and a new house's plot (E5), are typed in the page's unit and passed on in metres;
- * a room's size word (R1) is passed on as it is, Medium left out.
+ * a room's size word (R1) is passed on as it is, Medium left out. Rooms added or taken out (R2) move the rooms' own sizes,
+ * words, levels and items with them.
  */
 import {
-  BHKS, CITIES, FLOORS, LEVELS, PLOT_SIDE, R, ROOM_SIDE, SIZE_WORDS, WORK_KINDS, architect, architectNeeds, changeOf, choicesFor, levelName, levelRuns, overPackage, planRooms, wordName,
+  BATHS, BHKS, CITIES, FLOORS, LEVELS, PLOT_SIDE, R, ROOM_SIDE, SIZE_WORDS, bathsOf, bedroomsOf, WORK_KINDS, architect, architectNeeds, changeOf, choicesFor, levelName, levelRuns, overPackage, planRooms, wordName,
   type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choice, type House, type Level, type LevelRuns, type Line, type RoomKind, type SizeWord, type Stage, type WorkKind,
 } from '../../../engine/architect';
 import { CLASSES, FT_PER_M, LIBRARY_DATE, PER, SOURCE, SQFT_PER_SQM, type ItemKind, type Unit } from '../../../engine/library';
@@ -39,6 +40,10 @@ export interface PlanState {
   roomLevels: Record<string, Level>;
   /** A room's size word by its id (R1); Medium is left out. */
   roomWords: Record<string, SizeWord>;
+  /** The bathrooms in order (R2), each the id of the bedroom it is attached to or null for a common one; absent, the programme's. */
+  baths?: (string | null)[];
+  /** The balcony taken out (R2): false; absent, the programme's. */
+  balcony?: boolean;
   /** A new house's plot, its two sides as typed in the page's unit; empty for the rule's plot round the outline (E5). */
   plot: { l: string; b: string };
   /** A new house: the city's sewer reaches the plot, so it takes the septic tank's place (E5). */
@@ -134,7 +139,7 @@ export function inputOf(s: PlanState): ArchitectInput {
     city: s.city, ...(typeof area === 'number' ? { area } : {}), areaUnit: s.unit, bhk: s.bhk, level: s.level,
     sections: s.sections, sliders: s.sliders, items: s.items, ...(typeof h === 'number' ? { heightM: h } : {}),
     ...(Object.keys(rooms).length ? { rooms } : {}), ...(Object.keys(s.roomLevels).length ? { roomLevels: s.roomLevels } : {}),
-    ...(Object.keys(s.roomWords).length ? { roomWords: s.roomWords } : {}),
+    ...(Object.keys(s.roomWords).length ? { roomWords: s.roomWords } : {}), ...(s.baths ? { baths: s.baths } : {}), ...(s.balcony === false ? { balcony: false } : {}),
     ...(plot ? { plot } : {}), ...(s.kind === 'build' && s.sewer ? { sewer: true } : {}),
   };
 }
@@ -217,6 +222,87 @@ export function withRoomWord(s: PlanState, id: string, word: SizeWord, name: str
   delete rooms[id];
   return noted(s, { ...s, roomWords, rooms }, `${name} to ${wordName(word)}${typed ? ', in place of your size' : ''}`);
 }
+// ---- Rooms added and taken out (R2) ----
+
+const BHK_ORDER: Bhk[] = ['1RK', '1', '2', '3', '4', '5'];
+const bhkLabel = (bhk: Bhk) => BHK_CHOICES.find((b) => b.value === bhk)?.label ?? bhk;
+/** The bathrooms as the estimate has them: the user's, or the programme's. */
+const bathList = (s: PlanState): (string | null)[] => s.baths ?? (s.bhk ? bathsOf(s.bhk) : []);
+/**
+ * The state with every record kept by a room's id moved by `move` (an id to its new id, or null to drop it): the sizes,
+ * words and levels by room, the items and brands by line (`<room>:<family>:<rule>`), and the bathrooms' bedrooms.
+ */
+function moveRooms(s: PlanState, move: (id: string) => string | null): PlanState {
+  const byRoom = <T>(r: Record<string, T>) => Object.fromEntries(Object.entries(r).flatMap(([id, x]) => { const to = move(id); return to ? [[to, x]] : []; })) as Record<string, T>;
+  const byLine = <T>(r: Record<string, T>) => Object.fromEntries(Object.entries(r).flatMap(([key, x]) => {
+    const at = key.indexOf(':'), to = move(key.slice(0, at));
+    return to ? [[`${to}${key.slice(at)}`, x]] : [];
+  })) as Record<string, T>;
+  return {
+    ...s, rooms: byRoom(s.rooms), roomLevels: byRoom(s.roomLevels), roomWords: byRoom(s.roomWords), items: byLine(s.items), brands: byLine(s.brands),
+    ...(s.baths ? { baths: s.baths.map((of) => (of === null ? null : move(of))) } : {}),
+  };
+}
+/** Moves the rooms of a kind up past the one taken out: bedroom-3 to bedroom-2 when bedroom-2 goes, which is dropped. */
+const without = (kind: 'bedroom' | 'bath', k: number) => (id: string): string | null => {
+  const m = id.match(kind === 'bedroom' ? /^bedroom-(\d+)$/ : /^bath-(\d+)$/);
+  if (!m) return id;
+  const j = Number(m[1]);
+  return j === k ? null : j > k ? `${kind}-${j - 1}` : id;
+};
+
+/** The bathrooms kept only when they differ from the programme's, as Medium is left out (R1): so a new count of bedrooms brings its own. */
+function canon(s: PlanState): PlanState {
+  if (!s.baths || !s.bhk || JSON.stringify(s.baths) !== JSON.stringify(bathsOf(s.bhk))) return s;
+  const { baths: _, ...rest } = s;
+  return rest;
+}
+/** A new count of bedrooms, from the question or the buttons: a bathroom of one's own attached to a bedroom now gone becomes common. */
+export function withBhk(s: PlanState, bhk: Bhk): PlanState {
+  const was = canon(s), beds = new Set(bedroomsOf(bhk));
+  return canon({ ...was, bhk, ...(was.baths ? { baths: was.baths.map((of) => (of !== null && beds.has(of) ? of : null)) } : {}) });
+}
+/** + Bedroom (R2): the next count of bedrooms; the rooms are planned again for it. */
+export function withBedroomAdded(s: PlanState): PlanState {
+  const i = BHK_ORDER.indexOf(s.bhk as Bhk);
+  if (i < 0 || i === BHK_ORDER.length - 1) return s;
+  return noted(s, withBhk(s, BHK_ORDER[i + 1]), `A bedroom added, now ${bhkLabel(BHK_ORDER[i + 1])}`);
+}
+/** × on a bedroom (R2): one bedroom fewer, the later ones moving up with their own sizes, words, levels and items; a 1 BHK becomes a 1 RK. */
+export function withBedroomTakenOut(s: PlanState, id: string, name: string): PlanState {
+  const i = BHK_ORDER.indexOf(s.bhk as Bhk), k = Number(id.replace('bedroom-', ''));
+  if (i <= 0 || !(k >= 1)) return s;
+  return noted(s, withBhk(moveRooms(s, without('bedroom', k)), BHK_ORDER[i - 1]), `${name} taken out, now ${bhkLabel(BHK_ORDER[i - 1])}`);
+}
+/** + Bathroom (R2): a common bathroom more; the other rooms share what is left. */
+export function withBathAdded(s: PlanState): PlanState {
+  const baths = bathList(s);
+  return baths.length >= BATHS.max ? s : noted(s, canon({ ...s, baths: [...baths, null] }), 'A bathroom added');
+}
+/** × on a bathroom (R2): the later ones move up with their own sizes, words, levels and items; one is always kept. */
+export function withBathTakenOut(s: PlanState, id: string, name: string): PlanState {
+  const baths = bathList(s), k = Number(id.replace('bath-', ''));
+  if (baths.length <= BATHS.min || !(k >= 1 && k <= baths.length)) return s;
+  return noted(s, canon({ ...moveRooms(s, without('bath', k)), baths: baths.filter((_, i) => i !== k - 1) }), `${name} taken out`);
+}
+/**
+ * Attached bathroom on a bedroom (R2): on, the first common bathroom opens into the bedroom instead, or a new one is added
+ * attached to it when none is common; off, its bathroom becomes common.
+ */
+export function withAttached(s: PlanState, bedroom: string, on: boolean, name: string): PlanState {
+  const baths = [...bathList(s)], at = baths.indexOf(on ? null : bedroom);
+  if (on === baths.includes(bedroom)) return s;
+  if (!on) { baths[at] = null; return noted(s, canon({ ...s, baths }), `${name}'s bathroom made common`); }
+  if (at < 0 && baths.length >= BATHS.max) return s;
+  if (at >= 0) baths[at] = bedroom; else baths.push(bedroom);
+  return noted(s, canon({ ...s, baths }), at >= 0 ? `${baths.length > 1 ? `Bathroom ${at + 1}` : 'The bathroom'} attached to ${name}` : `A bathroom added, attached to ${name}`);
+}
+/** × on the balcony, or + Balcony to put it back (R2). */
+export function withBalcony(s: PlanState, on: boolean): PlanState {
+  const { balcony: _, ...rest } = s;
+  return noted(s, on ? rest : { ...s, balcony: false }, on ? 'The balcony put back' : 'The balcony taken out');
+}
+
 /** A room's own level, or null for the sections' levels again. */
 export function withRoomLevel(s: PlanState, id: string, level: Level | null, name: string): PlanState {
   const roomLevels = { ...s.roomLevels };
@@ -275,6 +361,8 @@ export interface RoomView {
   word: SizeWord | null;
   /** The Code's minimum when the room is below it: flagged, never changed. */
   below?: string;
+  /** R2: whether it can be taken out (a bedroom but a 1 RK's room, a bathroom but the last, the balcony); for a bedroom, whether a bathroom is attached to it. */
+  out: boolean; bedroom: boolean; attached: boolean;
   /** The sides as typed (empty when not), and the planned ones for the fields' placeholders, in the page's unit. */
   l: string; b: string; planned: { l: string; b: string };
   /** Why a typed size is not used yet, or nothing. */
@@ -303,6 +391,8 @@ export interface PlanView {
   rooms: RoomView[]; roomsNote?: string; compare: CompareView; change?: ChangeView;
   /** The bar of shares: each room's, the passage's and the inside walls' share of the carpet area (R1). */
   shares: ShareView[];
+  /** The rooms that can be added (R2): a bedroom up to 5, a bathroom up to the limit, the balcony when taken out. */
+  add: { bedroom: boolean; bath: boolean; balcony: boolean };
   /** A new house's stages, adding up to the total, and its plot. */
   stages?: StageView[]; plot?: PlotView;
   /** Fixed works, movable items and appliances, when there is more than fixed works. */
@@ -378,7 +468,8 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
   const home = e.house ? FLOORS[e.house.floors - 1].label : e.property === 'house' ? 'House' : 'Flat';
   const roomsNote = e.flags.find((f) => f.startsWith('With your sizes'));
   return {
-    rooms: roomsOf(s, e), ...(roomsNote ? { roomsNote } : {}), shares: sharesOf(e), compare: compareOf(e, runs, sections), ...(change ? { change: changeText(change) } : {}),
+    rooms: roomsOf(s, e), ...(roomsNote ? { roomsNote } : {}), shares: sharesOf(e),
+    add: { bedroom: e.bhk !== '5', bath: e.rooms.filter((r) => r.kind === 'bath').length < BATHS.max, balcony: R.programmes[e.bhk].balcony > 0 && s.balcony === false }, compare: compareOf(e, runs, sections), ...(change ? { change: changeText(change) } : {}),
     ...(e.stages ? { stages: stageViews(e.stages) } : {}), ...(e.house ? { plot: plotView(s, e.house) } : {}),
     // Each answer kept on one line (no-break spaces inside it), so a phone wraps only between answers.
     summary: [kind, home, city, s.unit === 'sqm' ? `${qtyText(sqm)} sq m` : `${qtyText(sqft)} sq ft`, bhk, pkg].map((x) => x.replace(/ /g, '\u00a0')).join(' · '),
@@ -396,7 +487,8 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
 /** The rooms as planned or sized, in the page's unit, each with its own level. */
 function roomsOf(s: PlanState, e: ArchitectEstimate): RoomView[] {
   const ft = s.unit !== 'sqm', side = (m: number) => qtyText(ft ? m * FT_PER_M : m), unit = sideUnit(s.unit);
-  const planned = new Map(planRooms(e.bhk, e.carpetSqm, s.roomWords).map((r) => [r.id, r]));
+  const planned = new Map(planRooms(e.bhk, e.carpetSqm, s.roomWords, { baths: s.baths, balcony: s.balcony }).map((r) => [r.id, r]));
+  const baths = e.rooms.filter((r) => r.kind === 'bath').length;
   const [lo, hi] = sideRange(s.unit);
   return e.rooms.map((r) => {
     const typed = s.rooms[r.id] ?? { l: '', b: '' }, p = planned.get(r.id) ?? r;
@@ -405,6 +497,8 @@ function roomsOf(s: PlanState, e: ArchitectEstimate): RoomView[] {
     return {
       id: r.id, name: r.name, size: `${side(r.l)} × ${side(r.b)} ${unit}`, area: ft ? `${inr(Math.round(r.sqm * SQFT_PER_SQM))} sq ft` : `${qtyText(r.sqm)} sq m`,
       typed: r.typed, level: r.level, word: r.word, l: typed.l, b: typed.b, planned: { l: side(p.l), b: side(p.b) }, ...(bad ? { bad } : {}),
+      out: r.kind === 'bedroom' ? e.bhk !== '1RK' : r.kind === 'bath' ? baths > 1 : r.kind === 'balcony', bedroom: r.kind === 'bedroom',
+      attached: r.kind === 'bedroom' && e.rooms.some((x) => x.of === r.id),
       ...(e.below[r.id] ? { below: `Below the Code's ${e.below[r.id]} sq m (${inr(Math.round(e.below[r.id] * SQFT_PER_SQM))} sq ft) for this room.` } : {}),
     };
   });

@@ -507,3 +507,67 @@ describe('R1: a room\'s size by a word, along its reported range; the rooms shar
     }
   });
 });
+
+describe('R2: rooms by buttons; bathrooms added, taken out or attached to a bedroom, and the balcony taken out', () => {
+  // The owner's example ("one living room, one master bedroom with attached bathroom, one kitchen"): a 1BHK of 600 sq ft
+  // renovated at Standard in Pune, the living room Spacious and the bedroom Above medium as in R1, the bathroom attached to
+  // the bedroom and the balcony taken out. The balcony is outside the area the rooms share, so the rooms keep R1's sizes:
+  // living 221.2048, bedroom 159.7590, kitchen 79.8795, bathroom 49.1566 and the passage 60 sq ft. The bedroom, 14.84210 sq m
+  // at 1.2 to 1, is 4.22025 × 3.51688 m, 15.47425 m round; its skirting runs round it less its own 0.9 m door and now the
+  // bathroom's 0.75 m door: (15.47425 − 1.65) × 0.1 = 1.38243 sq m, with the floor 16.22453 sq m = 174.64 sq ft (175.45 with
+  // the bathroom common). The passage, 60 sq ft at 3 to 1, 10.90486 m round, no longer loses the bathroom's door from its
+  // skirting: 69.69 sq ft against 68.89.
+  const home = (x: Partial<ArchitectInput> = {}) => flat({ bhk: '1', area: 600, roomWords: { living: 'spacious', 'bedroom-1': 'above' }, ...x });
+  it('the owner\'s example by hand: the rooms keep R1\'s sizes, the bathroom opens into the bedroom, and the skirting follows its door', () => {
+    const e = architect(home({ baths: ['bedroom-1'], balcony: false })) as ArchitectEstimate, common = architect(home({ balcony: false })) as ArchitectEstimate;
+    expect(e.rooms.map((r) => [r.id, r.name, r.of, (r.sqm / SQ).toFixed(4)])).toEqual([
+      ['living', 'Living and dining', null, '221.2048'], ['bedroom-1', 'Bedroom', null, '159.7590'], ['kitchen', 'Kitchen', null, '79.8795'],
+      ['bath-1', 'Bathroom (attached)', 'bedroom-1', '49.1566'], ['passage', 'Passage and foyer', null, '60.0000'],
+    ]);
+    expect(e.openings.find((o) => o.id === 'bath-1:bath')?.other).toBe('bedroom-1');
+    expect(e.openings.some((o) => o.type === 'balcony') || e.lines.some((l) => l.room === 'balcony')).toBe(false);
+    const sk = (x: ArchitectEstimate, room: string) => line(x, `${room}:floor:floor-skirting`)?.qty;
+    expect([sk(e, 'bedroom-1'), sk(common, 'bedroom-1'), sk(e, 'passage'), sk(common, 'passage')]).toEqual([174.64, 175.45, 69.69, 68.89]);
+    expect(e.assumptions.find((a) => a.what === 'Rooms')?.shown).toBe('Living and dining 221 sq ft, Spacious; Bedroom 160 sq ft, Above medium; Kitchen 80 sq ft; Bathroom (attached) 49 sq ft; Passage and foyer 60 sq ft; no balcony, taken out');
+    expect([e.assumptions.find((a) => a.what === 'Bathrooms')?.shown, common.assumptions.find((a) => a.what === 'Bathrooms')?.shown]).toEqual(['1, as you chose', '1']);
+  });
+  it('a bathroom added takes its share from the others: a 1BHK of 600 sq ft at Medium, 150 + 120 + 65 + 40 + 40 = 415, each bathroom 510 × 40 / 415 = 49.1566 sq ft and the others 375 / 415 of their size; one taken out of a 2BHK leaves 567.5, the others 600 / 567.5', () => {
+    const plain = flat({ bhk: '1', area: 600 });
+    const e = architect({ ...plain, baths: [null, null] }) as ArchitectEstimate;
+    expect(e.rooms.filter((r) => r.kind === 'bath').map((r) => [r.id, r.name, (r.sqm / SQ).toFixed(4)])).toEqual([['bath-1', 'Bathroom 1', '49.1566'], ['bath-2', 'Bathroom 2', '49.1566']]);
+    expect((changeOf(plain, { ...plain, baths: [null, null] }) as Change).others).toBeCloseTo(375 / 415 - 1, 12);
+    expect((changeOf(flat(), flat({ baths: ['bedroom-1'] })) as Change).others).toBeCloseTo(600 / 567.5 - 1, 12);
+    expect(run({ baths: ['bedroom-1'] }).rooms.find((r) => r.kind === 'bath')?.name).toBe('Bathroom (attached)');
+  });
+  it('the programme\'s own bathrooms given as the user\'s change nothing; a bathroom attached to another bedroom is named for it and opens into it', () => {
+    const own = run({ baths: ['bedroom-1', null] }), plan = run();
+    expect([own.total, own.rooms.map((r) => r.name)]).toEqual([plan.total, plan.rooms.map((r) => r.name)]);
+    const e = run({ baths: [null, 'bedroom-2', 'bedroom-1'] });
+    expect(e.rooms.filter((r) => r.kind === 'bath').map((r) => r.name)).toEqual(['Bathroom 1', 'Bathroom 2 (attached to Bedroom 2)', 'Bathroom 3 (attached)']);
+    expect(e.openings.filter((o) => o.type === 'bath').map((o) => o.other)).toEqual(['passage', 'bedroom-2', 'bedroom-1']);
+  });
+  it('the balcony taken out: its lines and the living room\'s door to it go, and the rooms keep their sizes, the balcony being outside the area they share', () => {
+    const out = run({ balcony: false }), plan = run(), kept = plan.rooms.filter((r) => r.id !== 'balcony');
+    expect([out.rooms.map((r) => r.id), out.rooms.map((r) => r.sqm)]).toEqual([kept.map((r) => r.id), kept.map((r) => r.sqm)]);
+    expect([out.lines.some((l) => l.room === 'balcony'), out.openings.some((o) => o.type === 'balcony'), out.total < plan.total]).toEqual([false, false, true]);
+    expect((changeOf(flat(), flat({ balcony: false })) as Change).others).toBeUndefined();
+  });
+  it('the bathrooms must be ones the home can take', () => {
+    const need = 'Bathrooms from 1 to 8, each common or attached to one of the home\'s bedrooms, one to a bedroom';
+    for (const baths of [[], ['bedroom-3'], ['bedroom-1', 'bedroom-1'], Array(9).fill(null), ['bedroom-01']] as (string | null)[][])
+      expect(architectNeeds(flat({ baths })), JSON.stringify(baths)).toEqual([need]);
+    expect(architectNeeds(flat({ baths: ['bedroom-2', 'bedroom-1', null, null, null, null, null, null] }))).toEqual([]);
+  });
+  it('bathrooms, balconies and words set at random never block, and the rooms still fill the carpet area', () => {
+    let seed = 13;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const areas: Record<Bhk, number> = { '1RK': 350, '1': 520, '2': 850, '3': 1150, '4': 1600, '5': 2200 };
+    for (let n = 0; n < 24; n++) {
+      const bhk = (['1RK', '1', '2', '3', '4', '5'] as Bhk[])[n % 6], beds = planRooms(bhk, 100).filter((r) => r.kind === 'bedroom').map((r) => r.id);
+      const free = [...beds], baths = Array.from({ length: 1 + Math.floor(rnd() * 5) }, () => (free.length && rnd() > 0.5 ? (free.splice(Math.floor(rnd() * free.length), 1)[0] as string) : null));
+      const e = architect(flat({ bhk, area: areas[bhk], baths, balcony: rnd() > 0.5, roomWords: { kitchen: 'spacious', 'bath-1': 'compact' }, kind: n % 3 ? 'renovate' : 'interiors' }));
+      expect('total' in e, `${bhk} ${JSON.stringify(baths)}: ${JSON.stringify(e).slice(0, 160)}`).toBe(true);
+      expect((e as ArchitectEstimate).shares.reduce((t, x) => t + x.share, 0)).toBeCloseTo(1, 12);
+    }
+  });
+});

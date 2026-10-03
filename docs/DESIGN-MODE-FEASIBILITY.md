@@ -149,7 +149,7 @@ To make the value felt, each item needs a few more facts, each from a source:
 - **The facts a professional checks**, in plain words:
   - for tiles: abrasion class, water absorption, slip rating;
   - for paint: washability, VOC;
-  - for plywood: its grade (IS 710 or IS 303);
+  - for plywood and boards: the grade (IS 710 or IS 303) and the formaldehyde class (E0, E1);
   - for fittings: a brass body and a ceramic cartridge;
   - for wire: FR, FRLS or zero-halogen;
   - for windows: glass, sound and heat insulation;
@@ -157,7 +157,8 @@ To make the value felt, each item needs a few more facts, each from a source:
 - **Comfort and safety:**
   - quieter (soft-close fittings, double glazing);
   - cooler (roof insulation, reflective paint);
-  - safer (anti-skid, toughened glass).
+  - safer (anti-skid, toughened glass);
+  - healthier air (low-VOC paint, E0 or E1 boards), stated as the specification, never as a health claim.
 
 On the page:
 - **What changed:** one line after a slider moves (E3). For example: "Flooring, Standard to Premium: fewer joints, the look of stone, Rs. 1,12,000 more".
@@ -218,7 +219,7 @@ The engine supports this now through its line keys. What is missing is the scree
 - **Facts typed by category**, which are new:
   - for tiles: the size, thickness, abrasion class, water absorption and slip rating;
   - for paint: the type, sheen, VOC, washability, coverage a litre and warranty;
-  - for plywood: the grade and thickness;
+  - for plywood and boards: the grade, the thickness and the formaldehyde class;
   - for wire: the size and type;
   - for windows: the profile, the glass and the insulation;
   - for air conditioners: the rating;
@@ -299,7 +300,7 @@ No figure is entered twice.
 - Nothing needs installing; it runs on the user's phone or computer, so there is no server cost for drawing.
 
 **What it can show well:**
-- **Rooms built from the plan.** Walls go up to the ceiling height, with openings for doors and windows, and skirting.
+- **Rooms built from the plan.** Walls go up to the ceiling height, with openings for doors and windows, and skirting. Each wall is drawn as its outline with the openings cut out, then given its thickness; subtracting solids is slow and breaks easily.
 - **Tiles at their real size:**
   - 600 × 600 or 800 × 1600 mm;
   - the grout lines;
@@ -330,7 +331,9 @@ No figure is entered twice.
 - **Phone memory and heat:**
   - iPhones close a tab that uses too much memory;
   - phones slow down when hot;
-  - we need quality settings (low, medium, high), chosen from the device, and a budget of 30 frames a second on a Rs. 15,000 Android phone.
+  - we need quality settings (low, medium, high), chosen from the device, and a budget of 30 frames a second on a Rs. 15,000 Android phone;
+  - on a phone: the pixel ratio capped at about 1.5, and shadows and soft corner shading baked in, not live;
+  - each room loaded as you enter it, and its shapes and textures freed when you leave.
 - **Touch controls:**
   - walking and placing furniture with fingers is fiddly;
   - recommended: arrange on the 2D plan, look in 3D;
@@ -472,3 +475,71 @@ Each phase is a few thin versions, each one a session and a pull request you try
   - the annexes numbered with no gap (Annex 1 the detailed estimate, Annex 2 what the estimate assumes, one line each).
 
   The sources stay in the data and on the page.
+
+## 14. Antigravity's plan: what was taken and what was left
+
+The owner forwarded a second plan for the same vision, "Feasibility Plan & Architecture Blueprint: The Ultimate House Design, 3D Visualization & Cost Calculation Studio" (signed Antigravity), with "see if there is anything useful in it… keep the useful". It agrees with this plan on the shape:
+- levels like a car's variants;
+- the basics fixed and the finishes free;
+- a 3D view that shows only what the engine works out.
+
+But it gives no source or date for any figure. It puts the studio first and the estimate second. And it lists as done documents this repo refused (B11 and B12 of the estimate blueprint).
+
+**Taken, with changes:**
+1. **A board's formaldehyde class** (E0, E1) among the facts a professional checks → sections 4 and 6. Not "formaldehyde-free", as it has it: E0 is a low-emission class (at most 0.5 mg/L against E1's 1.5, as reported), and "no added formaldehyde" is another claim.
+2. **Healthier air as part of what a step up buys** → section 4, as the specification (low-VOC paint, E0 or E1 boards), never as a health claim.
+3. **Walls drawn as outlines with their openings cut out, then given their thickness,** not by subtracting solids → section 8.
+4. **What keeps 3D running on a cheap phone** → section 8:
+   - the pixel ratio capped at about 1.5;
+   - shadows and soft corner shading baked in, not live;
+   - each room loaded on entering and freed on leaving.
+
+   Tiles stay a texture at their real size, not a shape for each tile.
+5. **A light's colour in a false ceiling's cove** (warm 3000 K or neutral 4000 K), shown in 3D → phase 5.
+6. **The concrete's grade, for a reason it does not give.** It makes M25 "non-negotiable".
+   - IS 456 sets the lowest grade of reinforced concrete by exposure (Tables 3 and 5, as reported): M20 mild, M25 moderate, M30 severe.
+   - Concrete in the ground or in the rain is moderate. Concrete exposed to the coastal air, as in Mumbai and Chennai, is severe.
+   - The structure's rules of thumb name no grade and are flagged for the engineer's design. But the example in the typed-items form ("Have a contractor's quotation? Type its items instead") says "RCC M20 in footings, columns, beams and slabs" → to correct with the next data session (HANDOFF).
+
+Already here before it:
+- the fixed or movable split on every line (its `assetEligibility`);
+- wastage and labour on each item;
+- the material ladders by level (B12);
+- one model behind the plan, the 3D view and the figures (section 7);
+- KTX2, Draco and a first view under 5 MB (section 8).
+
+**Left, and why:**
+1. **A "Bank-approved Contractor Quotation", a "Chartered Engineer Vetting Report" and "certified bank valuation exports".**
+   - No lender approves a tool's output.
+   - An engineer's or a valuer's report is their own, written after their inspection (B11, B12).
+   - A claim of approval misleads (Consumer Protection Act 2019). With the owner at a bank, it could also read as that bank's approval (D-BIZ-01).
+2. **An "Architect & Contractor Studio Mode".** The tool never takes the word (Architects Act s. 37). The professional page stays behind its link (D-UX-10, E7).
+3. **"The engine flags any downgrade of the structure below the national safety standards".**
+   - The tool never designs a structure, and cannot tell a safe footing from the area (section 7).
+   - The basics are fixed, not sliders with a floor.
+   - The structure is "to be designed by a structural engineer".
+4. **Its fixed core as written: Fe 550 bars of two named brands, and "mechanised" M25.**
+   - The bar's grade is the engineer's choice. Section 5 names Fe 500D, the ductile grade, as reported.
+   - Any maker with the ISI mark will do.
+   - Ready-mixed concrete is a way of making it, not the Code.
+5. **"Unrestricted freedom" on finishes.** Some finishes are fixed for safety: anti-skid floors where it is wet, and a bathroom door that stands water (section 3).
+6. **Its figures:**
+   - Rs. 1,650 to Rs. 8,500 a sq ft;
+   - rooms 4–6 °C cooler;
+   - 35–45% less air conditioning;
+   - repainting every 2–3 years;
+   - repairs costing 10 times the saving.
+
+   None has a source, a date, a city or the area it is of. The engine prices room by room, by city (A5, A7).
+7. **Standards misapplied:**
+   - IS 15658, the standard for concrete paving blocks, is given for a vitrified tile.
+   - It counts a stair's risers as the height ÷ 150 mm. The Code allows a house 190 mm (`architect.json` `stair`, as reported), and a count is a whole number.
+   - "CPWD 2026" names no edition. The civil schedule in use is DSR 2023, and the electrical one DSR (E&M) 2025, as reported.
+8. **Tier names that disagree with each other:** Classic to Bespoke in its text, modest to ultra luxury in its data. Its "Phase 1, done" matches neither this repo nor its own names. The levels stay Basic to Bespoke (D-UX-19).
+9. **A catalogue item with one 2026 rate and no source, date, city or tax basis.** Every value here has its source and date (CLAUDE.md), and labour is its own rate, by kind.
+10. **500 items in two weeks and a full 3D studio by January, with no "done when".** An item takes 5 to 10 minutes to check against its source (section 6). Each phase here ends with the owner trying it on a phone (section 10).
+11. **Photo-real walk-throughs at 60 frames a second on budget phones, and furniture dragged in 3D.** Section 8's limits stand:
+    - simpler light when live;
+    - photo-like stills, on a computer;
+    - 30 frames a second on a Rs. 15,000 phone;
+    - arranging in 2D and looking in 3D.
