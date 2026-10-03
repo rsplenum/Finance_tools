@@ -6,7 +6,8 @@
  * stairs off it for the rooms, and adds the structure (rules of thumb a sq ft), the terrace, the outside walls, the stairs
  * with the cabin over the one to the terrace (D-UX-23), the outside works round the plot and the water, and splits the cost
  * into the stages a construction loan pays by (E5). A room can take the user's own size and its own level (E3): the size
- * replaces the planned one, and the level stands above the section's slider for every line in the room.
+ * replaces the planned one, and the level stands above the section's slider for every line in the room. A room's size word
+ * (R1) moves it along its reported range, and the planned rooms share the area by those sizes.
  * Pure, no DOM. Every rule is in engine/data/architect.json with its source or reason, and every rate in
  * engine/data/library/ with its source. architect-check.ts works every figure a second way; nothing is returned unless
  * both agree.
@@ -21,12 +22,15 @@ export type WorkKind = 'build' | 'renovate' | 'interiors';
 export type Bhk = '1RK' | '1' | '2' | '3' | '4' | '5';
 export type Level = 1 | 2 | 3 | 4 | 5;
 export type RoomKind = 'living' | 'bedroom' | 'kitchen' | 'bath' | 'passage' | 'balcony';
+/** A room's size by a word (R1): where it sits on the room's reported range. */
+export type SizeWord = 'compact' | 'medium' | 'above' | 'spacious';
 export type OpeningType = 'main' | 'bedroom' | 'bath' | 'kitchen' | 'balcony' | 'window' | 'kitchenWindow' | 'ventilator';
 
 interface Sourced { src: string[]; why: string }
 interface Valued extends Sourced { value: number }
 export interface Slot { family: string; section: string; qty: string; kinds?: WorkKind[]; needs?: string; name?: string; maxLevel?: number }
-interface ProgrammeRoom { kind: RoomKind; name: string; ref: number; master?: boolean; attached?: boolean }
+/** A room of a programme, with its reported range of sizes in sq ft: its size word puts it along the range (R1). */
+interface ProgrammeRoom { kind: RoomKind; name: string; range: [number, number]; master?: boolean; attached?: boolean }
 export interface Programme extends Sourced { rooms: ProgrammeRoom[]; balcony: number; typical: [number, number] | null }
 type Size = { w: number; h: number; sill?: number } & Sourced;
 export interface Rules {
@@ -38,6 +42,8 @@ export interface Rules {
   programmes: Record<Bhk, Programme>;
   bathrooms: { rule: string } & Sourced;
   shares: { passage: Valued; walls: Valued };
+  /** The size words, each a point along a room's range: 0 its bottom, 1 its top (R1). */
+  sizes: { words: { id: SizeWord; name: string; at: number }[] } & Sourced;
   aspect: Record<RoomKind, number> & Sourced;
   height: { m: number } & Sourced;
   minimums: { habitable: number; kitchen: number; bath: number } & Sourced;
@@ -79,6 +85,9 @@ export const LEVELS = R.levels;
 export const SECTIONS = R.sections;
 export const WORK_KINDS = R.kinds;
 export const CITIES = R.cities.list;
+/** The four size words, in order (R1). */
+export const SIZE_WORDS = R.sizes.words;
+const WORD_AT = new Map(R.sizes.words.map((w) => [w.id, w.at]));
 export const BHKS: { id: Bhk; label: string }[] = [
   { id: '1RK', label: '1 RK' }, { id: '1', label: '1 BHK' }, { id: '2', label: '2 BHK' }, { id: '3', label: '3 BHK' }, { id: '4', label: '4 BHK' }, { id: '5', label: '5 BHK' },
 ];
@@ -109,6 +118,8 @@ export interface ArchitectInput {
   rooms?: Record<string, { l: number; b: number }>;
   /** A room's own level, by the room's id: above the section's slider and below a line's own item (A4). */
   roomLevels?: Record<string, Level>;
+  /** A room's size word, by the room's id (R1): Medium when not given; the passage and the balcony take none. */
+  roomWords?: Record<string, SizeWord>;
   /** For a new house: the plot's two sides in metres, the longer one its length; else the plot is the outline with the rule's margins. */
   plot?: { l: number; b: number };
   /** For a new house: the city's sewer reaches the plot, so a sewer connection takes the septic tank's place. */
@@ -125,6 +136,8 @@ export interface Room {
   typed: boolean;
   /** The room's own level, or null when its lines follow the sections. */
   level: Level | null;
+  /** The room's size word, which sets its share of the area when it is planned; null for the passage and the balcony. */
+  word: SizeWord | null;
 }
 export interface Opening { id: string; type: OpeningType; room: string; other: string | null; w: number; h: number; sill: number; door: boolean }
 export interface Line {
@@ -141,6 +154,8 @@ export interface Plot { l: number; b: number; sqm: number; own: boolean; fits: b
 export interface House { floors: number; builtSqm: number; footprint: number; l: number; b: number; wall: number; stair: number; carpetSqm: number; floorToFloor: number; cabin: number; plot: Plot }
 /** A stage of a new house for a construction loan's payments: what is done by then, and its amount (E5). */
 export interface Stage { id: string; name: string; what: string; amount: number; share: number }
+/** A part of the carpet area: a room, the passage, or the inside walls (id 'walls'); its share of the carpet area. */
+export interface RoomShare { id: string; name: string; kind: RoomKind | 'walls'; share: number }
 export interface ArchitectEstimate {
   kind: WorkKind; property: 'flat' | 'house'; city: string; cityName: string; cityFactor: number; bhk: Bhk; level: Level; heightM: number;
   carpetSqm: number; carpetSqft: number;
@@ -153,6 +168,10 @@ export interface ArchitectEstimate {
   total: number; perSqft: number; split: Record<ItemKind, number>;
   /** A new house's stages, adding up to the total; null for other work. */
   stages: Stage[] | null;
+  /** Each room's share of the carpet area, the passage's and the inside walls' (not the balcony, which is outside it): the bar of shares (R1). */
+  shares: RoomShare[];
+  /** The rooms below the Code's minimum: the minimum in sq m, by the room's id. Flagged, never changed. */
+  below: Record<string, number>;
   assumptions: Assumption[]; flags: string[]; ratesDate: string;
 }
 
@@ -177,24 +196,31 @@ export function cityFactor(id: string): number | null {
   return (c.cost[0] + c.cost[1]) / 2 / (mids.reduce((t, m) => t + m, 0) / mids.length);
 }
 
-/** The rooms of a flat: its programme's rooms scaled to the carpet area left after the passage and the walls; a balcony at its own size. */
-export function planRooms(bhk: Bhk, carpetSqm: number): Room[] {
+/** A size word, or Medium for none or one not known. */
+export const wordOf = (w: string | undefined): SizeWord => (w !== undefined && WORD_AT.has(w as SizeWord) ? (w as SizeWord) : 'medium');
+/** A room's size on its reported range at a size word, in sq ft: the bottom plus the word's share of the range's width (R1). */
+export const sizeAt = (range: [number, number], w: SizeWord) => range[0] + (WORD_AT.get(w) as number) * (range[1] - range[0]);
+
+/**
+ * The rooms of a flat: its programme's rooms sharing the carpet area left after the passage and the walls in proportion to
+ * their sizes at their words (Medium, the middle of each reported range, unless a word is given: R1); the passage its share
+ * of the carpet area; a balcony at its own size.
+ */
+export function planRooms(bhk: Bhk, carpetSqm: number, words: Record<string, SizeWord> = {}): Room[] {
   const p = R.programmes[bhk];
   const share = 1 - R.shares.passage.value - R.shares.walls.value;
-  const refs = p.rooms.reduce((t, r) => t + r.ref, 0);
-  const out: Room[] = [];
   let bed = 0, bath = 0;
-  for (const r of p.rooms) {
-    const id = r.kind === 'bedroom' ? `bedroom-${++bed}` : r.kind === 'bath' ? `bath-${++bath}` : r.kind;
-    out.push(room(id, r.kind, r.name, (carpetSqm * share * r.ref) / refs, !!r.master, !!r.attached));
-  }
-  out.push(room('passage', 'passage', 'Passage and foyer', carpetSqm * R.shares.passage.value, false, false));
-  if (p.balcony > 0) out.push(room('balcony', 'balcony', 'Balcony', p.balcony / SQFT_PER_SQM, false, false));
+  const ids = p.rooms.map((r) => (r.kind === 'bedroom' ? `bedroom-${++bed}` : r.kind === 'bath' ? `bath-${++bath}` : r.kind));
+  const sizes = p.rooms.map((r, i) => sizeAt(r.range, wordOf(words[ids[i]])));
+  const sum = sizes.reduce((t, x) => t + x, 0);
+  const out = p.rooms.map((r, i) => room(ids[i], r.kind, r.name, (carpetSqm * share * sizes[i]) / sum, !!r.master, !!r.attached, wordOf(words[ids[i]])));
+  out.push(room('passage', 'passage', 'Passage and foyer', carpetSqm * R.shares.passage.value, false, false, null));
+  if (p.balcony > 0) out.push(room('balcony', 'balcony', 'Balcony', p.balcony / SQFT_PER_SQM, false, false, null));
   return out;
 }
-function room(id: string, kind: RoomKind, name: string, sqm: number, master: boolean, attached: boolean): Room {
+function room(id: string, kind: RoomKind, name: string, sqm: number, master: boolean, attached: boolean, word: SizeWord | null): Room {
   const l = Math.sqrt(sqm * R.aspect[kind]);
-  return { id, kind, name, master, attached, sqm, l, b: sqm / l, typed: false, level: null };
+  return { id, kind, name, master, attached, sqm, l, b: sqm / l, typed: false, level: null, word };
 }
 
 /** The user's own sizes and levels on the planned rooms (E3): a size's longer side is the room's length. */
@@ -260,6 +286,7 @@ export function architectNeeds(input: ArchitectInput): string[] {
   const side = (x: unknown) => isNum(x) && x >= ROOM_SIDE.min && x <= ROOM_SIDE.max;
   if (Object.values(input.rooms ?? {}).some((x) => !side(x?.l) || !side(x?.b))) needs.push(`Each side of a room from ${ROOM_SIDE.min} to ${ROOM_SIDE.max} m`);
   if (Object.values(input.roomLevels ?? {}).some((x) => ![1, 2, 3, 4, 5].includes(x))) needs.push('A room\'s level from 1 to 5');
+  if (Object.values(input.roomWords ?? {}).some((x) => !WORD_AT.has(x))) needs.push(`A room\'s size: ${R.sizes.words.map((w) => w.name).join(', ').replace(/, ([^,]*)$/, ' or $1')}`);
   const plotSide = (x: unknown) => isNum(x) && x >= PLOT_SIDE.min && x <= PLOT_SIDE.max;
   if (input.plot && (!plotSide(input.plot.l) || !plotSide(input.plot.b))) needs.push(`Each side of the plot from ${PLOT_SIDE.min} to ${PLOT_SIDE.max} m`);
   if (build && floorsOk && areaOk && heightOk) {
@@ -323,7 +350,7 @@ function work(input: ArchitectInput): ArchitectEstimate {
   const H = input.heightM ?? R.height.m;
   const house = kind === 'build' ? houseOf(typedSqm, input.floors as number, H, input.plot) : null;
   const carpetSqm = house ? house.carpetSqm : typedSqm;
-  const rooms = ownRooms(planRooms(bhk, carpetSqm), input), openings = planOpenings(rooms);
+  const rooms = ownRooms(planRooms(bhk, carpetSqm, input.roomWords), input), openings = planOpenings(rooms);
   const on = (s: string) => sectionFor(s, kind) && (input.sections?.[s] ?? R.kinds[kind].on.includes(s));
   const slider = (s: string) => R.sections.find((x) => x.id === s)?.slider ?? false;
   const levelOf = (s: string, r?: Room | null): Level => (slider(s) ? r?.level ?? input.sliders?.[s] ?? level : level);
@@ -373,12 +400,31 @@ function work(input: ArchitectInput): ArchitectEstimate {
   for (const l of lines) split[l.kind] = r2(split[l.kind] + l.amount);
   const cityName = R.cities.list.find((c) => c.id === input.city)?.name ?? 'Other';
   const stages = house ? stagesOf(house, sections, split, total) : null;
+  // The bar of shares: each room's share of the carpet area (the balcony is outside it), and the inside walls' (R1).
+  const shares: RoomShare[] = [
+    ...rooms.filter((r) => r.kind !== 'balcony').map((r) => ({ id: r.id, name: r.name, kind: r.kind, share: r.sqm / carpetSqm })),
+    { id: 'walls', name: 'Inside walls', kind: 'walls' as const, share: R.shares.walls.value },
+  ];
+  const below = belowCode(rooms);
   return {
     kind, property: home, city: input.city as string, cityName, cityFactor: city, bhk, level, heightM: H, carpetSqm, carpetSqft,
     house, per: house ? 'built-up' : 'carpet',
-    rooms, openings, lines, unpriced, roomsSqm, plannedSqm, sections, byRoom, total, perSqft, split, stages,
-    assumptions: assumptions(ctx, bhk, cityName, factor), flags: flags(ctx, bhk, carpetSqft, lines, unpriced, factor, perSqft, roomsSqm, plannedSqm), ratesDate: LIBRARY_DATE,
+    rooms, openings, lines, unpriced, roomsSqm, plannedSqm, sections, byRoom, total, perSqft, split, stages, shares, below,
+    assumptions: assumptions(ctx, bhk, cityName, factor), flags: flags(ctx, bhk, carpetSqft, lines, unpriced, factor, perSqft, roomsSqm, plannedSqm, below), ratesDate: LIBRARY_DATE,
   };
+}
+
+/** A size word's name: "Above medium". */
+export const wordName = (w: SizeWord) => R.sizes.words.find((x) => x.id === w)?.name ?? '';
+/** Whether any room has a size word other than Medium. */
+const worded = (rooms: Room[]) => rooms.some((r) => r.word !== null && r.word !== 'medium');
+/** The Code's minimum for a kind of room in sq m, or 0 where it sets none (the passage and the balcony). */
+const codeMinimum = (kind: RoomKind) => (kind === 'living' || kind === 'bedroom' ? R.minimums.habitable : kind === 'kitchen' ? R.minimums.kitchen : kind === 'bath' ? R.minimums.bath : 0);
+/** The rooms below the Code's minimum, by id: the minimum in sq m. */
+function belowCode(rooms: Room[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const r of rooms) { const want = codeMinimum(r.kind); if (want && r.sqm < want - 1e-9) out[r.id] = want; }
+  return out;
 }
 
 /** The floors' names, for the slabs' stages. */
@@ -647,14 +693,16 @@ function measureHouse(rule: string, h: House, ctx: Ctx): { base: number; how: st
 function assumptions(ctx: Ctx, bhk: Bhk, cityName: string, factor: number | null): Assumption[] {
   const p = R.programmes[bhk], sqft = (x: number) => Math.round(x * SQFT_PER_SQM);
   const m = ctx.input.areaUnit === 'sqm', side = (x: number) => String(+(m ? x : x * FT_PER_M).toFixed(2));
-  const rooms = ctx.rooms.map((r) => `${r.name} ${sqft(r.sqm)} sq ft${r.typed ? ` (${side(r.l)} × ${side(r.b)} ${m ? 'm' : 'ft'}, your size)` : ''}${r.level ? `, at ${levelName(r.level)}` : ''}`).join('; ');
+  const word = (r: Room) => (!r.typed && r.word && r.word !== 'medium' ? `, ${wordName(r.word)}` : '');
+  const rooms = ctx.rooms.map((r) => `${r.name} ${sqft(r.sqm)} sq ft${r.typed ? ` (${side(r.l)} × ${side(r.b)} ${m ? 'm' : 'ft'}, your size)` : ''}${word(r)}${r.level ? `, at ${levelName(r.level)}` : ''}`).join('; ');
   const own = ctx.rooms.some((r) => r.typed) ? ' A size you typed is used as it is, and the other rooms keep their planned sizes.' : '';
+  const words = worded(ctx.rooms) ? ` ${R.sizes.why}` : '';
   const baths = ctx.rooms.filter((r) => r.kind === 'bath').length;
   const on = R.sections.filter((s) => ctx.on(s.id)).map((s) => s.name).join(', ');
   const h = ctx.house;
   return [
     ...(h ? houseAssumed(ctx, h, side, m) : []),
-    { what: 'Rooms', shown: rooms, why: `${p.why} ${R.shares.passage.why} ${R.shares.walls.why}${own}`, src: [...p.src, ...R.shares.passage.src] },
+    { what: 'Rooms', shown: rooms, why: `${p.why}${words} ${R.shares.passage.why} ${R.shares.walls.why}${own}`, src: [...new Set([...p.src, ...R.shares.passage.src, ...(words ? R.sizes.src : [])])] },
     { what: 'Bathrooms', shown: `${baths}`, why: R.bathrooms.why, src: R.bathrooms.src },
     { what: 'Ceiling height', shown: `${f2(ctx.H)} m`, why: R.height.why, src: R.height.src },
     { what: 'Sections', shown: on, why: R.kinds[ctx.kind].why, src: ['own'] },
@@ -684,14 +732,16 @@ function houseAssumed(ctx: Ctx, h: House, side: (x: number) => string, m: boolea
   ];
 }
 
-function flags(ctx: Ctx, bhk: Bhk, carpetSqft: number, lines: Line[], unpriced: Unpriced[], factor: number | null, perSqft: number, roomsSqm: number, plannedSqm: number): string[] {
+function flags(ctx: Ctx, bhk: Bhk, carpetSqft: number, lines: Line[], unpriced: Unpriced[], factor: number | null, perSqft: number, roomsSqm: number, plannedSqm: number, below: Record<string, number>): string[] {
   const out: string[] = [];
-  const min = R.minimums, sqft = (x: number) => inr(Math.round(x * SQFT_PER_SQM));
+  const sqft = (x: number) => inr(Math.round(x * SQFT_PER_SQM)), picked = worded(ctx.rooms);
   for (const r of ctx.rooms) {
-    const want = r.kind === 'living' || r.kind === 'bedroom' ? min.habitable : r.kind === 'kitchen' ? min.kitchen : r.kind === 'bath' ? min.bath : 0;
-    if (want && r.sqm < want - 1e-9) out.push(r.typed
+    const want = below[r.id];
+    if (want) out.push(r.typed
       ? `${r.name} is ${f2(r.sqm)} sq m as you sized it, below the Code's ${want} sq m.`
-      : `${r.name} works out at ${f2(r.sqm)} sq m, below the Code's ${want} sq m: is the carpet area right for ${BHKS.find((b) => b.id === bhk)?.label}?`);
+      : picked
+        ? `${r.name} works out at ${f2(r.sqm)} sq m with the sizes picked, below the Code's ${want} sq m: make it larger, or another room smaller.`
+        : `${r.name} works out at ${f2(r.sqm)} sq m, below the Code's ${want} sq m: is the carpet area right for ${BHKS.find((b) => b.id === bhk)?.label}?`);
   }
   if (ctx.rooms.some((r) => r.typed) && sqft(roomsSqm) !== sqft(plannedSqm)) out.push(`With your sizes the rooms and the passage come to ${sqft(roomsSqm)} sq ft, against the ${sqft(plannedSqm)} sq ft the carpet area leaves for them after the inside walls: check the sizes, or the carpet area.`);
   if (ctx.on('furniture')) out.push(`The furniture is ${ctx.rooms.some((r) => r.kind === 'living') ? 'a sofa and a dining set for the living room, and ' : ''}a bed and a mattress for each bedroom; side tables, a study desk, rugs and bed linen are not in yet.`);
@@ -729,6 +779,8 @@ function disagreement(e: ArchitectEstimate, c: ArchitectCheck): string {
   }
   if (c.rooms.size !== e.rooms.length) return 'the rooms';
   if (Math.abs(c.roomsSqm - e.roomsSqm) > 1e-6 || Math.abs(c.plannedSqm - e.plannedSqm) > 1e-6) return 'the area of the rooms';
+  if (c.shares.size !== e.shares.length) return 'the shares of the carpet area';
+  for (const x of e.shares) if (Math.abs((c.shares.get(x.id) ?? NaN) - x.share) > 1e-9) return `the share of ${x.name}`;
   if (c.lines.size !== e.lines.length) return 'the number of items';
   for (const l of e.lines) {
     const x = c.lines.get(l.key);
@@ -775,8 +827,11 @@ export function overPackage(input: ArchitectInput, check: typeof architectCheck 
 
 /** A line whose item changed, came or went: the item before and after (null when there was none, or is none). */
 export interface Swap { roomName: string; name: string; from: string | null; to: string | null }
-/** What a change did (A8, "What changed"): the new total less the old, and the lines whose item changed, came or went. */
-export interface Change { by: number; swaps: Swap[] }
+/**
+ * What a change did (A8, "What changed"): the new total less the old, and the lines whose item changed, came or went;
+ * and when a size word moved one room's share (R1), how much the other planned rooms changed: -0.074 for 7.4% smaller.
+ */
+export interface Change { by: number; swaps: Swap[]; others?: number }
 
 /**
  * What a change did, from the estimate before it to the estimate after: the change in the total, worked twice (from the
@@ -788,7 +843,8 @@ export function changeOf(before: ArchitectInput, after: ArchitectInput, check: t
   if (!('total' in was)) return was;
   const now = architect(after, check);
   if (!('total' in now)) return now;
-  const by = r2(now.total - was.total), again = check(after).total - check(before).total;
+  const c0 = check(before), c1 = check(after);
+  const by = r2(now.total - was.total), again = c1.total - c0.total;
   if (!money(by, again, 0.01 * (was.lines.length + now.lines.length + 2) + 1e-6 * (was.total + now.total))) return { blocked: 'The two computations disagree on what the change did, so no figures are shown. Please report this.' };
   const old = new Map(was.lines.map((l) => [l.key, l])), keys = new Set(now.lines.map((l) => l.key));
   const swaps: Swap[] = [];
@@ -797,7 +853,30 @@ export function changeOf(before: ArchitectInput, after: ArchitectInput, check: t
     if (!o || o.entry !== l.entry) swaps.push({ roomName: l.roomName, name: l.name, from: o ? o.entryName : null, to: l.entryName });
   }
   for (const o of was.lines) if (!keys.has(o.key)) swaps.push({ roomName: o.roomName, name: o.name, from: o.entryName, to: null });
-  return { by, swaps };
+  // The knock-on of a size word, worked again from the second computation's rooms before and after.
+  const others = knockOn(was, now);
+  if (others !== undefined && othersOf(was, now).some((id) => !(Math.abs((c1.rooms.get(id)?.sqm ?? NaN) / (c0.rooms.get(id)?.sqm ?? NaN) - 1 - others) <= 1e-9)))
+    return { blocked: 'The two computations disagree on how the other rooms changed, so no figures are shown. Please report this.' };
+  return { by, swaps, ...(others !== undefined ? { others } : {}) };
+}
+
+/** The planned rooms a change left alone: in both estimates, of the same size word, and not of the user's own size in either. */
+function othersOf(was: ArchitectEstimate, now: ArchitectEstimate): string[] {
+  if (was.bhk !== now.bhk || Math.abs(was.carpetSqm - now.carpetSqm) > 1e-9) return [];
+  const old = new Map(was.rooms.map((r) => [r.id, r]));
+  return now.rooms.filter((r) => { const o = old.get(r.id); return !!o && r.word !== null && o.word === r.word && !r.typed && !o.typed; }).map((r) => r.id);
+}
+/**
+ * The knock-on of a size word (R1): the other planned rooms' change in size, alike for each of them since they share what is
+ * left; undefined when the carpet area, the bedrooms or no other room changed, or when they did not all change alike.
+ */
+function knockOn(was: ArchitectEstimate, now: ArchitectEstimate): number | undefined {
+  const ids = othersOf(was, now);
+  if (!ids.length) return undefined;
+  const size = (e: ArchitectEstimate, id: string) => (e.rooms.find((r) => r.id === id) as Room).sqm;
+  const ratios = ids.map((id) => size(now, id) / size(was, id));
+  if (ratios.some((x) => Math.abs(x - ratios[0]) > 1e-9) || Math.abs(ratios[0] - 1) <= 1e-12) return undefined;
+  return ratios[0] - 1;
 }
 
 /** An item the drawer offers: its specification, brands and unit, and its rate for the city (null: no rate yet). */

@@ -1,6 +1,7 @@
 /**
  * Independent second computation of the architect's estimate (CLAUDE.md), written apart from architect.ts on purpose:
- * the rooms from one scale factor on the reference areas, each room's breadth before its length, walls as four sides,
+ * the rooms from one scale factor on their sizes along their ranges (the top's part plus the bottom's, by the size word),
+ * each room's share of the carpet area in closed form, each room's breadth before its length, walls as four sides,
  * a foot as 0.3048 m (dividing, where architect.ts multiplies), the library priced by walking it afresh (the middle of
  * a range as its low end plus half its width, the city's factor from the sums of the ranges), and the total added up
  * room by room before the sections. A new house's outline is drawn breadth first, its outer walls as the outline less the
@@ -21,6 +22,8 @@ export interface ArchitectCheck {
   rooms: Map<string, { sqm: number; len: number; wide: number }>; roomsSqm: number; plannedSqm: number;
   /** A new house's stages by id; empty for other work. */
   stages: Map<string, number>;
+  /** Each room's share of the carpet area, the passage's and the inside walls' (id walls), by id; not the balcony's (R1). */
+  shares: Map<string, number>;
 }
 
 const Q = RULES as unknown as Rules;
@@ -52,26 +55,40 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
     shell = { floors, built: typed, foot, len, wide, storey: Q.house.slab.m + H, well, plotLen, plotWide };
   }
 
-  // The rooms: one scale factor on the reference areas; the breadth first, then the length.
+  // The rooms: each one's size at its word along its range (Medium unless given), one scale factor on those sizes; the
+  // breadth first, then the length.
   const prog = Q.programmes[input.bhk as keyof Rules['programmes']];
-  const scale = (carpet * (1 - Q.shares.walls.value - Q.shares.passage.value)) / prog.rooms.map((r) => r.ref).reduce((a, b) => a + b, 0);
-  const spaces: Space[] = [];
+  const medium = Q.sizes.words.find((w) => w.id === 'medium') as { at: number };
   const counter: Record<string, number> = {};
+  const listed = prog.rooms.map((r) => {
+    counter[r.kind] = (counter[r.kind] ?? 0) + 1;
+    const id = r.kind === 'bedroom' || r.kind === 'bath' ? `${r.kind}-${counter[r.kind]}` : r.kind;
+    const w = Q.sizes.words.find((x) => x.id === input.roomWords?.[id]) ?? medium;
+    return { r, id, size: r.range[1] * w.at + r.range[0] * (1 - w.at) };
+  });
+  const open = 1 - Q.shares.walls.value - Q.shares.passage.value, sizes = listed.map((x) => x.size).reduce((a, b) => a + b, 0);
+  const scale = (carpet * open) / sizes;
+  const spaces: Space[] = [];
   const make = (id: string, k: RoomKind, sqm: number, master = false, attached = false) => {
     const wide = Math.sqrt(sqm / Q.aspect[k]);
     spaces.push({ id, kind: k, master, attached, sqm, len: sqm / wide, wide });
   };
-  for (const r of prog.rooms) {
-    counter[r.kind] = (counter[r.kind] ?? 0) + 1;
-    make(r.kind === 'bedroom' || r.kind === 'bath' ? `${r.kind}-${counter[r.kind]}` : r.kind, r.kind, r.ref * scale, !!r.master, !!r.attached);
-  }
+  for (const x of listed) make(x.id, x.r.kind, x.size * scale, !!x.r.master, !!x.r.attached);
   make('passage', 'passage', Q.shares.passage.value * carpet);
   if (prog.balcony > 0) make('balcony', 'balcony', prog.balcony * SQ_FOOT);
+  // Each room's share of the carpet area in closed form: a planned room its part of the open share by its size, the
+  // passage its rule; a room of the user's own size, that size over the carpet area. The balcony is outside the carpet area.
+  const shares = new Map<string, number>(listed.map((x) => [x.id, (open * x.size) / sizes]));
+  shares.set('passage', Q.shares.passage.value);
   // A room's own size after the plan: the shorter side its breadth.
   for (const s of spaces) {
     const own = input.rooms?.[s.id];
-    if (own) { s.wide = Math.min(own.b, own.l); s.len = Math.max(own.b, own.l); s.sqm = s.wide * s.len; }
+    if (own) {
+      s.wide = Math.min(own.b, own.l); s.len = Math.max(own.b, own.l); s.sqm = s.wide * s.len;
+      if (shares.has(s.id)) shares.set(s.id, s.sqm / carpet);
+    }
   }
+  shares.set('walls', Q.shares.walls.value);
   const exists = (id: string) => spaces.some((s) => s.id === id);
   const masterId = spaces.find((s) => s.master)?.id;
 
@@ -300,7 +317,7 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
     put('outside', outside);
     put('movable', split.movable);
   }
-  return { lines, sections, total, split, rooms, roomsSqm, plannedSqm: carpet - carpet * Q.shares.walls.value, stages };
+  return { lines, sections, total, split, rooms, roomsSqm, plannedSqm: carpet - carpet * Q.shares.walls.value, stages, shares };
 }
 
 /** The city's factor the check's way: the sum of its range against the average of every listed city's sum; 1 for a place not listed. */

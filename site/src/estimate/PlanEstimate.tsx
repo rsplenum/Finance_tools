@@ -2,7 +2,8 @@
  * The planning estimate (E1, E3): six questions, then the estimate worked out as an architect would. The total, the cost
  * a sq ft and the five levels come first, with Compare (each section at each level) closed under them; then the total by
  * section, a card for each section with its slider, the items with their drawer (the family's five levels and its other
- * items, brands, and how each line was worked out), the rooms (each one's size and own level, closed until opened), what
+ * items, brands, and how each line was worked out), the rooms (the bar of shares, each one's size by a word or typed, and
+ * its own level, closed until opened), what
  * the estimate assumes, what to check, and the planning estimate to download. The bar at the bottom says what the last
  * change did. Figures: engine/architect.ts only, via plan-model.ts.
  */
@@ -12,8 +13,8 @@ import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { planDoc, planDocNeeds, planDocStatus, planFileName } from './plan-document';
 import {
-  BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, FLOOR_CHOICES, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORK_CHOICES, areaLabel, drawerView, heightOf, plainOf, planPreview, sideUnit,
-  withItem, withKind, withLevel, withPlotReset, withPlotSide, withRoomLevel, withRoomReset, withRoomSide, withSection, withSewer, withSlider, withUnit,
+  BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, FLOOR_CHOICES, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORD_CHOICES, WORK_CHOICES, areaLabel, drawerView, heightOf, plainOf, planPreview, sideUnit,
+  withItem, withKind, withLevel, withPlotReset, withPlotSide, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit,
   type AreaUnit, type DrawerView, type LineView, type PlanFacts, type PlanPreview, type PlanState, type PlanView, type RoomView, type RungView, type SectionView,
 } from './plan-model';
 import type { Bhk, Level } from '../../../engine/architect';
@@ -24,6 +25,17 @@ const INK = 'text-slate-900 dark:text-slate-100';
 const CARD = 'rounded-lg border border-slate-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-900';
 const CHIP = 'flex cursor-pointer items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-slate-900 has-checked:border-teal-700 has-checked:bg-teal-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:has-checked:border-teal-500 dark:has-checked:bg-teal-950';
 const RADIO = 'size-4 shrink-0 text-base accent-teal-700 dark:accent-teal-500';
+/** One of a room's four size buttons: a radio, so the arrow keys move along them and a screen reader names the group. */
+const SEG = 'flex min-h-11 cursor-pointer items-center justify-center rounded-md border border-slate-300 bg-white px-1 py-1 text-center text-[13px] leading-tight text-slate-900 has-checked:border-teal-700 has-checked:bg-teal-50 has-checked:font-semibold has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:has-checked:border-teal-500 dark:has-checked:bg-teal-950';
+/**
+ * The bar of shares' colours by kind: the four kinds of room in the reference palette's first four slots, in that order,
+ * checked for colour-blind separation in light and dark; the passage and the inside walls in greys. Every part is also named
+ * with its share in the list under the bar, so no colour is read alone.
+ */
+const SHARE_COLOR: Record<string, string> = {
+  living: 'bg-[#2a78d6] dark:bg-[#3987e5]', bedroom: 'bg-[#eb6834] dark:bg-[#d95926]', kitchen: 'bg-[#1baf7a] dark:bg-[#199e70]', bath: 'bg-[#eda100] dark:bg-[#c98500]',
+  passage: 'bg-slate-300 dark:bg-slate-600', walls: 'bg-slate-500 dark:bg-slate-400',
+};
 
 export function PlanEstimate() {
   const [s, setS] = useState<PlanState>(EMPTY_PLAN);
@@ -310,7 +322,26 @@ function Stages({ v }: { v: PlanView }) {
   </details>;
 }
 
-/** The rooms (A8): each one's size, which can be changed, and its own level. Closed until opened: not on the default path. */
+/** How the carpet area is shared (R1): a bar of the rooms, the passage and the inside walls, and the same as a list. */
+function Shares({ v }: { v: PlanView }) {
+  return <figure data-testid="pl-shares" class="mt-3">
+    <figcaption class={`text-sm font-medium ${INK}`}>How your carpet area is shared</figcaption>
+    <div aria-hidden="true" class="mt-1.5 flex h-4 w-full gap-[2px] overflow-hidden rounded bg-slate-100 dark:bg-slate-800">
+      {v.shares.map((x) => <span key={x.id} title={`${x.name} ${x.share}`} class={`h-full shrink-0 ${SHARE_COLOR[x.kind]}`} style={{ width: `calc(${x.width.toFixed(3)}% - 2px)` }} />)}
+    </div>
+    <ul class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[13px] sm:grid-cols-3">
+      {v.shares.map((x) => <li key={x.id} data-testid={`pl-share-${x.id}`} class={`flex items-baseline gap-1.5 ${INK}`}>
+        <span aria-hidden="true" class={`inline-block size-2.5 shrink-0 rounded-sm ${SHARE_COLOR[x.kind]}`} />
+        <span class="min-w-0">{x.name}</span><span class="ml-auto tabular-nums">{x.share}</span>
+      </li>)}
+    </ul>
+  </figure>;
+}
+
+/**
+ * The rooms (A8, R1): how the carpet area is shared; each room's size by four buttons (Compact, Medium, Above medium,
+ * Spacious) or typed, and its own level. Closed until opened: not on the default path.
+ */
 function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) {
   const unit = sideUnit(s.unit);
   const levels = [{ value: '', label: 'As the sections' }, ...LEVEL_CHOICES.map((l) => ({ value: l.value, label: l.label }))];
@@ -320,7 +351,9 @@ function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) 
     value={r[which]} placeholder={r.planned[which]} invalid={!!r.bad} onCommit={(t) => update((x) => withRoomSide(x, r.id, which, t, r.name))} />;
   return <Section id="pl-rooms" title="Rooms">
     <details data-testid="pl-rooms" class="mt-2">
-      <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">{v.rooms.length} rooms, from your {v.bhk}: change a size, or give a room its own level</summary>
+      <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">{v.rooms.length} rooms, from your {v.bhk}: make a room larger or smaller, or give it its own level</summary>
+      <p class={`mt-3 text-sm ${MUTED}`}>The rooms share the carpet area: a room made larger takes its extra from the others, and a size you type moves no other room. To make them all larger, change the area.</p>
+      <Shares v={v} />
       {v.roomsNote && <p data-testid="pl-rooms-note" class="mt-3 text-sm text-amber-900 dark:text-amber-200">{v.roomsNote}</p>}
       <ul class="mt-2 divide-y divide-slate-200 dark:divide-slate-800">
         {v.rooms.map((r) => <li key={r.id} data-testid={`pl-room-${r.id}`} class="py-3">
@@ -328,13 +361,28 @@ function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) 
             <h3 class={`font-medium ${INK}`}>{r.name}</h3>
             <p data-testid={`pl-room-size-${r.id}`} class={`text-sm tabular-nums ${MUTED}`}>{r.size} · {r.area}{r.typed ? ' · your size' : ''}{r.level ? ` · ${LEVEL_NAMES[r.level - 1]}` : ''}</p>
           </div>
-          <div class="mt-1 flex flex-wrap items-end gap-x-3 gap-y-2">
-            {side(r, 'l')}{side(r, 'b')}
-            <SelectField id={`fld-roomlevel-${r.id}`} class="w-40" label={named(r, 'Level')} value={r.level ? String(r.level) : ''} options={levels}
-              onChange={(lv) => update((x) => withRoomLevel(x, r.id, lv ? (Number(lv) as Level) : null, r.name))} />
-            {r.typed && <button type="button" data-testid={`pl-room-reset-${r.id}`} class={BUTTON} onClick={() => update((x) => withRoomReset(x, r.id, r.name))}>Planned size</button>}
-          </div>
-          {r.bad && <p data-testid={`pl-room-bad-${r.id}`} class="mt-1 text-sm text-red-700 dark:text-red-300">{r.bad} Until then the planned size is used.</p>}
+          {r.word && <fieldset data-testid={`pl-room-words-${r.id}`} class="mt-2 min-w-0">
+            <legend class="sr-only">{r.name}, size{r.typed ? ': your size for now' : ''}</legend>
+            <div class="grid grid-cols-4 gap-1">
+              {WORD_CHOICES.map((w) => <label key={w.value} for={`fld-roomword-${r.id}-${w.value}`} class={SEG}>
+                <input type="radio" class="sr-only" id={`fld-roomword-${r.id}-${w.value}`} name={`fld-roomword-${r.id}`} value={w.value}
+                  checked={!r.typed && r.word === w.value} onChange={() => update((x) => withRoomWord(x, r.id, w.value, r.name))} />
+                {w.label}
+              </label>)}
+            </div>
+          </fieldset>}
+          {r.below && <p data-testid={`pl-room-below-${r.id}`} class="mt-1 text-sm text-amber-900 dark:text-amber-200">{r.below}</p>}
+          {/* A size typed and a level of the room's own, behind one line (R1): open when either is set. */}
+          <details data-testid={`pl-room-more-${r.id}`} class="mt-2" open={r.typed || !!r.bad || r.level !== null}>
+            <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300"><span class="sr-only">{r.name}: </span>Your own size or level</summary>
+            <div class="mt-1 flex flex-wrap items-end gap-x-3 gap-y-2">
+              {side(r, 'l')}{side(r, 'b')}
+              <SelectField id={`fld-roomlevel-${r.id}`} class="w-40" label={named(r, 'Level')} value={r.level ? String(r.level) : ''} options={levels}
+                onChange={(lv) => update((x) => withRoomLevel(x, r.id, lv ? (Number(lv) as Level) : null, r.name))} />
+              {r.typed && <button type="button" data-testid={`pl-room-reset-${r.id}`} class={BUTTON} onClick={() => update((x) => withRoomReset(x, r.id, r.name))}>Planned size</button>}
+            </div>
+            {r.bad && <p data-testid={`pl-room-bad-${r.id}`} class="mt-1 text-sm text-red-700 dark:text-red-300">{r.bad} Until then the planned size is used.</p>}
+          </details>
         </li>)}
       </ul>
     </details>

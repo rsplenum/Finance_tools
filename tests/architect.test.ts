@@ -426,3 +426,84 @@ describe('E3: a room of your own size and level, the furniture and soft furnishi
     expect('blocked' in (changeOf(flat(), flat({ sliders: { bathrooms: 4 } }), wrong) as Blocked)).toBe(true);
   });
 });
+
+describe('R1: a room\'s size by a word, along its reported range; the rooms share the area', () => {
+  const FT = 0.3048;
+  // A 1BHK of 600 sq ft, as in docs/ROOM-PICKER-PLAN.md: the living room Spacious (the top of 120–180, so 180) and the
+  // bedroom Above medium (100 + three quarters of 40, so 130); the kitchen (65) and the bathroom (40) Medium, the middle
+  // of 50–80 and 30–50. The rooms share 85% of 600 = 510 sq ft in proportion to 180 : 130 : 65 : 40 (415): living
+  // 91,800 / 415 = 221.2048, bedroom 66,300 / 415 = 159.7590, kitchen 33,150 / 415 = 79.8795, bathroom 20,400 / 415 =
+  // 49.1566 sq ft; the passage 10% = 60, the balcony its own 40. Shares of the carpet area: 153 / 415 = 36.87%, 110.5 /
+  // 415 = 26.63%, 55.25 / 415 = 13.31%, 34 / 415 = 8.19%, the passage 10% and the inside walls 5%: 100% in all.
+  const one = (x: Partial<ArchitectInput> = {}): ArchitectInput => flat({ kind: 'interiors', bhk: '1', area: 600, ...x });
+  const picked = { living: 'spacious', 'bedroom-1': 'above' } as const;
+  it('the plan\'s example, by hand: each room\'s size and its share of the carpet area', () => {
+    const e = architect(one({ roomWords: picked })) as ArchitectEstimate;
+    expect(e.rooms.map((r) => [r.id, r.word, (r.sqm / SQ).toFixed(4)])).toEqual([
+      ['living', 'spacious', '221.2048'], ['bedroom-1', 'above', '159.7590'], ['kitchen', 'medium', '79.8795'], ['bath-1', 'medium', '49.1566'],
+      ['passage', null, '60.0000'], ['balcony', null, '40.0000'],
+    ]);
+    expect(e.shares.map((x) => [x.id, (x.share * 100).toFixed(2)])).toEqual([
+      ['living', '36.87'], ['bedroom-1', '26.63'], ['kitchen', '13.31'], ['bath-1', '8.19'], ['passage', '10.00'], ['walls', '5.00'],
+    ]);
+    expect(e.shares.reduce((t, x) => t + x.share, 0)).toBeCloseTo(1, 12);
+    expect(e.assumptions.find((a) => a.what === 'Rooms')?.shown).toBe('Living and dining 221 sq ft, Spacious; Bedroom 160 sq ft, Above medium; Kitchen 80 sq ft; Bathroom 49 sq ft; Passage and foyer 60 sq ft; Balcony 40 sq ft');
+    expect(e.assumptions.find((a) => a.what === 'Rooms')?.why).toMatch(/Compact at the bottom, Medium in the middle \(the plan's own\), Above medium three quarters of the way up, Spacious at the top/);
+  });
+  it('the knock-on in What changed, worked twice: Spacious takes 375 to 405, so the others are 375 / 405 of their size, 7.41% smaller; Above medium on the bedroom then takes 405 to 415, 2.41% smaller', () => {
+    const spacious = changeOf(one(), one({ roomWords: { living: 'spacious' } })) as Change;
+    expect(spacious.others).toBeCloseTo(-2 / 27, 12);
+    const then = changeOf(one({ roomWords: { living: 'spacious' } }), one({ roomWords: picked })) as Change;
+    expect(then.others).toBeCloseTo(-2 / 83, 12);
+    expect((changeOf(one({ roomWords: picked }), one()) as Change).others).toBeCloseTo(415 / 375 - 1, 12);
+    // No knock-on where no other room moved: a slider, a size typed (E3), or a new carpet area, which moves every room.
+    expect((changeOf(one(), one({ sliders: { flooring: 4 } })) as Change).others).toBeUndefined();
+    expect((changeOf(one(), one({ rooms: { living: { l: 16 * FT, b: 14 * FT } } })) as Change).others).toBeUndefined();
+    expect((changeOf(one(), one({ area: 700 })) as Change).others).toBeUndefined();
+  });
+  it('a size typed keeps E3\'s rule: it moves no other room, words or not; a word on another room moves only the rooms planned, by 600 / 620 in a 2BHK', () => {
+    const word = run({ roomWords: { living: 'spacious' } }), typed = run({ roomWords: { living: 'spacious' }, rooms: { living: { l: 16 * FT, b: 20 * FT } } });
+    expect(typed.rooms.filter((r) => r.id !== 'living').map((r) => r.sqm)).toEqual(word.rooms.filter((r) => r.id !== 'living').map((r) => r.sqm));
+    // The kitchen typed, then the living room Spacious (220 of 180–220): 200 + 145 + 120 + 70 + 32.5 + 32.5 = 600 becomes
+    // 620, so each planned room is 600 / 620 of its size (3.23% smaller) and the living room 850 × 220 / 620 = 301.6129 sq ft.
+    const kitchen = { kitchen: { l: 10 * FT, b: 8 * FT } };
+    const c = changeOf(flat({ rooms: kitchen }), flat({ rooms: kitchen, roomWords: { living: 'spacious' } })) as Change;
+    expect(c.others).toBeCloseTo(600 / 620 - 1, 12);
+    const after = run({ rooms: kitchen, roomWords: { living: 'spacious' } });
+    expect([(after.rooms[0].sqm / SQ).toFixed(4), (after.rooms.find((r) => r.id === 'kitchen')!.sqm / SQ).toFixed(4)]).toEqual(['301.6129', '80.0000']);
+  });
+  it('a room squeezed below the Code\'s minimum is flagged, never changed: a 1BHK of 450 sq ft with the bedroom Compact and the rest Spacious gives the bedroom 382.5 × 100 / 410 = 93.29 sq ft, 8.67 sq m, under 9.5', () => {
+    const e = architect(one({ area: 450, roomWords: { living: 'spacious', 'bedroom-1': 'compact', kitchen: 'spacious', 'bath-1': 'spacious' } })) as ArchitectEstimate;
+    expect((e.rooms[1].sqm / SQ).toFixed(2)).toBe('93.29');
+    expect(e.below).toEqual({ 'bedroom-1': 9.5 });
+    expect(e.flags).toContain('Bedroom works out at 8.67 sq m with the sizes picked, below the Code\'s 9.5 sq m: make it larger, or another room smaller.');
+    expect((architect(one({ area: 450 })) as ArchitectEstimate).below).toEqual({});
+  });
+  it('each kind of room\'s range is in the rules with its source, Medium its middle; a word must be one of the four', () => {
+    for (const bhk of ['1RK', '1', '2', '3', '4', '5'] as Bhk[]) {
+      const p = planRooms(bhk, 100);
+      expect(p.filter((r) => r.word !== null).every((r) => r.word === 'medium'), bhk).toBe(true);
+    }
+    expect(architectNeeds(flat({ roomWords: { living: 'huge' as 'spacious' } }))).toEqual(['A room\'s size: Compact, Medium, Above medium or Spacious']);
+    // A word for a room the flat does not have, or for the passage, changes nothing.
+    expect(run({ roomWords: { 'bedroom-3': 'spacious', passage: 'compact' } }).total).toBe(run().total);
+  });
+  it('the shares are worked twice: a second computation that disagrees on one shows nothing; the words stay in Compare\'s package', () => {
+    const wrong = (input: ArchitectInput) => { const c = architectCheck(input); c.shares.set('kitchen', (c.shares.get('kitchen') ?? 0) + 1e-6); return c; };
+    expect((architect(flat(), wrong) as Blocked).blocked).toMatch(/share of Kitchen/);
+    const words = { roomWords: { living: 'spacious', kitchen: 'compact' } } as const;
+    expect((levelRuns(flat(words)) as LevelRuns).totals[1]).toBe(run(words).total);
+  });
+  it('words set at random never block, and the planned rooms with the passage and the walls fill the carpet area', () => {
+    let seed = 11;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const words = ['compact', 'medium', 'above', 'spacious'] as const, areas: Record<Bhk, number> = { '1RK': 350, '1': 520, '2': 850, '3': 1150, '4': 1600, '5': 2200 };
+    for (let n = 0; n < 24; n++) {
+      const bhk = (['1RK', '1', '2', '3', '4', '5'] as Bhk[])[n % 6], ids = planRooms(bhk, 100).filter((r) => r.word !== null).map((r) => r.id);
+      const roomWords = Object.fromEntries(ids.filter(() => rnd() > 0.4).map((id) => [id, words[Math.floor(rnd() * 4)]]));
+      const e = architect(flat({ bhk, area: areas[bhk], roomWords, kind: n % 3 ? 'renovate' : 'interiors', level: (1 + (n % 5)) as Level }));
+      expect('total' in e, JSON.stringify(e).slice(0, 200)).toBe(true);
+      expect((e as ArchitectEstimate).shares.reduce((t, x) => t + x.share, 0)).toBeCloseTo(1, 12);
+    }
+  });
+});

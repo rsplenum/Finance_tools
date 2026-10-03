@@ -12,7 +12,7 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf, printable } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import {
-  EMPTY_PLAN, areaLabel, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withPlotReset, withPlotSide, withRoomLevel, withRoomReset, withRoomSide, withSection, withSewer, withSlider, withUnit, type PlanState,
+  EMPTY_PLAN, areaLabel, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withPlotReset, withPlotSide, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit, type PlanState,
 } from '../site/src/estimate/plan-model';
 import { planDoc, planDocStatus, planFileName } from '../site/src/estimate/plan-document';
 import { SITE_NAME } from '../site/src/site';
@@ -292,5 +292,51 @@ describe('E3 on the page: the rooms, What changed, Compare and the movable secti
     expect(lines).toContain('Movable items | 2,43,009');
     expect(lines).toContain('8. Furniture | 2,03,469');
     expect(lines).toContain('9. Soft furnishings | 39,540');
+  });
+});
+
+describe('R1 on the page: four size buttons on each room, the bar of shares and the knock-on', () => {
+  const e = architect(inputOf(FLAT)) as ArchitectEstimate;
+  const total = (s: PlanState) => (architect(inputOf(s)) as ArchitectEstimate).total;
+  const more = (s: PlanState, from: PlanState) => { const by = Math.round((total(s) - total(from)) * 100) / 100; return `Rs. ${inr(Math.abs(by))} ${by > 0 ? 'more' : 'less'}`; };
+  it('every room Medium at first, the passage and the balcony without words; the bar shares the carpet area: 28, 21, 17, 10, 5, 5, the passage 10 and the walls 5', () => {
+    const v = view(FLAT);
+    expect(v.rooms.map((r) => [r.id, r.word])).toEqual([['living', 'medium'], ['bedroom-1', 'medium'], ['bedroom-2', 'medium'], ['kitchen', 'medium'], ['bath-1', 'medium'], ['bath-2', 'medium'], ['passage', null], ['balcony', null]]);
+    expect(v.shares.map((x) => [x.name, x.share])).toEqual([
+      ['Living and dining', '28%'], ['Main bedroom', '21%'], ['Bedroom 2', '17%'], ['Kitchen', '10%'], ['Bathroom 1 (attached)', '5%'], ['Bathroom 2', '5%'], ['Passage and foyer', '10%'], ['Inside walls', '5%'],
+    ]);
+    expect(v.shares.reduce((t, x) => t + x.width, 0)).toBeCloseTo(100, 9);
+    e.shares.forEach((x, i) => expect(v.shares[i].width).toBeCloseTo(x.share * 100, 9));
+  });
+  it('a word reaches the engine and What changed names the knock-on: the living room Spacious, 200 to 220 of 600, the others 600 / 620 of their size, 3.2% smaller', () => {
+    const s = withRoomWord(FLAT, 'living', 'spacious', 'Living and dining'), v = view(s);
+    expect(inputOf(s).roomWords).toEqual({ living: 'spacious' });
+    expect(v.rooms[0]).toMatchObject({ word: 'spacious', area: '302 sq ft', typed: false });
+    expect(v.shares[0].share).toBe('30%');
+    expect(v.change?.text).toBe(`Living and dining to Spacious: the other rooms 3.2% smaller · ${more(s, FLAT)}`);
+    // Medium again is the plan's own: left out, and the others grow back by 620 / 600, 3.3% larger.
+    const back = withRoomWord(s, 'living', 'medium', 'Living and dining');
+    expect([inputOf(back).roomWords, view(back).change?.text]).toEqual([undefined, `Living and dining to Medium: the other rooms 3.3% larger · ${more(back, s)}`]);
+    // A new package keeps the words: they are sizes, not levels.
+    expect(inputOf(withLevel(s, 4)).roomWords).toEqual({ living: 'spacious' });
+  });
+  it('a word on a room of one\'s own size puts the size aside, and says so; a size typed leaves no word checked', () => {
+    const sized = withRoomSide(withRoomSide(FLAT, 'living', 'l', '16', 'Living and dining'), 'living', 'b', '20', 'Living and dining');
+    expect(view(sized).rooms[0]).toMatchObject({ typed: true, word: 'medium' });
+    const s = withRoomWord(sized, 'living', 'above', 'Living and dining');
+    expect([s.rooms.living, inputOf(s).rooms, view(s).rooms[0].typed]).toEqual([undefined, undefined, false]);
+    expect(view(s).change?.text).toMatch(/^Living and dining to Above medium, in place of your size: the other rooms 1\.6% smaller · Rs\. [\d,]+ (more|less)$/);
+    // Sizes typed past the carpet area keep the bar to its width; the note says why. The living room typed is 320 of 1,000
+    // sq ft, 32%; the others keep 205.42 + 170 + 99.17 + 46.04 × 2 and the passage 100, so with it 986.67 sq ft, and the
+    // walls' 50 make 1,036.67, 103.67%: the living room takes 32 / 1.036667 = 30.87% of the bar.
+    const v = view(sized);
+    expect(v.shares.reduce((t, x) => t + x.width, 0)).toBeCloseTo(100, 9);
+    expect([v.shares[0].share, v.shares[0].width.toFixed(2)]).toEqual(['32%', '30.87']);
+  });
+  it('a room below the Code\'s minimum is named under its buttons and in what to check, never changed', () => {
+    const tight = { ...FLAT, area: '600', roomWords: { living: 'spacious', 'bedroom-1': 'spacious', 'bedroom-2': 'compact', kitchen: 'spacious', 'bath-1': 'spacious', 'bath-2': 'spacious' } } as PlanState;
+    const v = view(tight), bed = v.rooms.find((r) => r.id === 'bedroom-2');
+    expect(bed?.below).toBe('Below the Code\'s 9.5 sq m (102 sq ft) for this room.');
+    expect(v.flags.some((f) => f.startsWith('Bedroom 2 works out at') && f.endsWith('with the sizes picked, below the Code\'s 9.5 sq m: make it larger, or another room smaller.'))).toBe(true);
   });
 });
