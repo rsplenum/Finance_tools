@@ -6,7 +6,7 @@
     { "id": "feature-wall", "name": "Feature wall", "unit": "sqft", "levels": [null, null, null, "ft-texture", "ft-venetian"] },
     { "id": "wallpaper", "name": "Wallpaper", "unit": "sqft" },
     { "id": "panelling", "name": "Wall panelling", "unit": "sqft" },
-    { "id": "exterior-paint", "name": "Exterior paint (a house)", "unit": "sqft" }
+    { "id": "exterior-paint", "name": "Exterior paint (a house)", "unit": "sqft", "levels": ["ex-ace", "ex-apex-ultima", "ex-protek", "ex-duracast", "ex-duracast"] }
   ],
   "entries": [
     { "id": "pt-tractor", "family": "paint", "name": "Economy emulsion", "spec": "Putty, primer and two coats of an economy emulsion", "level": 1, "brands": ["Asian Paints Tractor", "Berger Bison", "Nerolac Beauty"], "unit": "sqft", "basis": "installed", "rate": [12, 18], "src": ["aapka-painting", "gharkabudget-paint"] },
@@ -34,6 +34,7 @@
     { "id": "pn-veneer", "family": "panelling", "name": "Veneer panelling", "spec": "Natural wood veneer panelling, polished", "level": 4, "unit": "sqft", "basis": "installed", "rate": [350, 900], "src": ["designcafe-panelling"] },
     { "id": "pn-fabric", "family": "panelling", "name": "Fabric or leatherette panels", "spec": "Upholstered fabric or leatherette panels, sound-absorbing", "level": 5, "unit": "sqft", "basis": "installed", "rate": [500, 1500], "src": ["designcafe-panelling"] },
     { "id": "pn-solid-wood", "family": "panelling", "name": "Solid wood or designer panelling", "spec": "Solid wood or designer panelling", "level": 5, "unit": "sqft", "basis": "installed", "rate": [600, 2500], "src": ["designcafe-panelling"] },
+    { "id": "ex-ace", "family": "exterior-paint", "name": "Exterior emulsion, economy", "spec": "Crack filling, exterior primer and two coats of an economy exterior emulsion", "level": 1, "brands": ["Asian Paints Ace Exterior"], "unit": "sqft", "basis": "installed", "rate": [14, 22], "src": ["aapka-calculator", "aapka-hyderabad"] },
     { "id": "ex-apex-ultima", "family": "exterior-paint", "name": "Exterior emulsion, premium", "spec": "Exterior primer and two coats of a premium weatherproof emulsion", "level": 2, "brands": ["Asian Paints Apex Ultima"], "unit": "sqft", "basis": "installed", "rate": [25, 38], "src": ["aapka-calculator"] },
     { "id": "ex-protek", "family": "exterior-paint", "name": "Exterior emulsion, top of range", "spec": "Exterior primer and top-of-range weatherproof emulsion", "level": 3, "brands": ["Asian Paints Apex Ultima Protek"], "unit": "sqft", "basis": "installed", "rate": [28, 42], "src": ["aapka-calculator"] },
     { "id": "ex-duracast", "family": "exterior-paint", "name": "Exterior texture", "spec": "Exterior texture finish with a top coat", "level": 4, "brands": ["Asian Paints Apex Duracast"], "unit": "sqft", "basis": "installed", "rate": [80, 200], "src": ["aapka-gurgaon"] }

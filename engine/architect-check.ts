@@ -3,26 +3,42 @@
  * the rooms from one scale factor on the reference areas, each room's breadth before its length, walls as four sides,
  * a foot as 0.3048 m (dividing, where architect.ts multiplies), the library priced by walking it afresh (the middle of
  * a range as its low end plus half its width, the city's factor from the sums of the ranges), and the total added up
- * room by room before the sections. architect.ts shows no figure unless both agree.
+ * room by room before the sections. A new house's outline is drawn breadth first, its outer walls as the outline less the
+ * rectangle inside them, cubic feet turned to cubic metres by multiplying by a foot cubed, and its sides added one by one.
+ * architect.ts shows no figure unless both agree.
  */
 import RULES from './data/architect.json';
 import { ENTRIES, FAMILIES, LABOUR_ITEMS, type Entry, type Unit } from './library';
-import type { ArchitectInput, Rules, RoomKind } from './architect';
+import type { ArchitectInput, Rules, RoomKind, WorkKind } from './architect';
 
 export interface CheckLine { qty: number; rate: number; amount: number }
 export interface ArchitectCheck { lines: Map<string, CheckLine>; sections: Map<string, number>; total: number }
 
 const Q = RULES as unknown as Rules;
 const FOOT = 0.3048, SQ_FOOT = FOOT * FOOT;
-const round2 = (x: number) => Math.round(x * 100) / 100;
+// To the paisa, half up, an exact half kept from floating point.
+const round2 = (x: number) => Math.round(x * 100 + 1e-6) / 100;
 
 interface Space { id: string; kind: RoomKind; master: boolean; attached: boolean; sqm: number; len: number; wide: number }
 interface Hole { w: number; h: number; sill: number; door: boolean; owner: string; other: string | null; kind: string }
 
 export function architectCheck(input: ArchitectInput): ArchitectCheck {
-  const kind = input.kind as 'renovate' | 'interiors', level = input.level as number;
-  const carpet = input.areaUnit === 'sqm' ? (input.area as number) : (input.area as number) * SQ_FOOT;
+  const kind = input.kind as WorkKind, level = input.level as number;
+  const typed = input.areaUnit === 'sqm' ? (input.area as number) : (input.area as number) * SQ_FOOT;
   const H = input.heightM ?? Q.height.m;
+
+  // A new house: the outline breadth first, the outer walls as the outline less the rectangle inside them, the stair wells.
+  const thick = Q.openings.walls.external / 1000;
+  let shell: { floors: number; built: number; foot: number; len: number; wide: number; storey: number } | null = null;
+  let carpet = typed;
+  if (kind === 'build') {
+    const floors = input.floors as number, foot = typed / floors;
+    const wide = Math.sqrt(foot / Q.house.shape.aspect), len = foot / wide;
+    const ring = len * wide - (len - thick * 2) * (wide - thick * 2);
+    const well = floors > 1 ? Q.house.stair.l * Q.house.stair.w : 0;
+    carpet = typed - floors * ring - floors * well;
+    shell = { floors, built: typed, foot, len, wide, storey: Q.house.slab.m + H };
+  }
 
   // The rooms: one scale factor on the reference areas; the breadth first, then the length.
   const prog = Q.programmes[input.bhk as keyof Rules['programmes']];
@@ -59,7 +75,8 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
     if (s.kind === 'bath') { put('bath', s.id, s.attached && masterId ? masterId : 'passage'); put('ventilator', s.id, null); }
   }
 
-  const sectionOn = (sec: string) => input.sections?.[sec] ?? Q.kinds[kind].on.includes(sec);
+  const shown = (sec: string) => { const only = Q.sections.find((x) => x.id === sec)?.kinds; return only === undefined || only.includes(kind); };
+  const sectionOn = (sec: string) => shown(sec) && (input.sections?.[sec] ?? Q.kinds[kind].on.includes(sec));
   const sliding = (sec: string) => !!Q.sections.find((x) => x.id === sec)?.slider;
   const levelAt = (sec: string) => (sliding(sec) ? input.sliders?.[sec] ?? level : level);
   const sides = (s: Space) => [s.len, s.wide, s.len, s.wide];
@@ -86,6 +103,23 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
   // A quantity in its base unit: square metres, metres or a count.
   const qty = (rule: string, s: Space | null, lv: number): number => {
     if (!s) {
+      if (shell) {
+        const builtFeet = shell.built / SQ_FOOT, hs = Q.house;
+        const li = shell.len - thick * 2, bi = shell.wide - thick * 2, insideRun = [li, bi, li, bi].reduce((a, b) => a + b, 0);
+        if (rule === 'built-up') return shell.built;
+        if (rule === 'plinth') return shell.foot;
+        if (rule.startsWith('struct:')) {
+          const k = rule.replace('struct:', '') as keyof Rules['house']['thumb'];
+          const n = (hs.thumb[k] as number) * builtFeet;
+          return k === 'sand' || k === 'aggregate' ? n * FOOT * FOOT * FOOT : n;
+        }
+        if (rule === 'terrace') return li * bi + insideRun * hs.terraceUpturn.m;
+        if (rule === 'exterior-walls') {
+          const outsideRun = [shell.len, shell.wide, shell.len, shell.wide].reduce((a, b) => a + b, 0);
+          return outsideRun * shell.storey * shell.floors + outsideRun * hs.parapet.m + insideRun * hs.parapet.m;
+        }
+        if (rule === 'stair-railing') return shell.floors < 2 ? 0 : (shell.floors - 1) * (Math.hypot(hs.stair.going, shell.storey / 2) * 2 + hs.stair.gap);
+      }
       if (rule === 'one') return 1;
       if (rule === 'carpet') return carpet;
       if (rule === 'protect') return spaces.reduce((a, x) => a + (x.kind === 'bath' || x.kind === 'balcony' ? 0 : x.sqm), 0);

@@ -3,7 +3,7 @@
   "date": "2026-10-02",
   "families": [
     { "id": "waterproofing", "name": "Waterproofing of wet areas", "unit": "sqft", "fixed": "wp-cementitious-2k" },
-    { "id": "roof-waterproofing", "name": "Terrace and roof waterproofing", "unit": "sqft" }
+    { "id": "roof-waterproofing", "name": "Terrace and roof waterproofing", "unit": "sqft", "fixed": "wp-app" }
   ],
   "entries": [
     { "id": "wp-cementitious-2k", "family": "waterproofing", "name": "Flexible cementitious waterproofing", "spec": "Two-component flexible cementitious waterproofing in two coats, on the floor, 300 mm up the walls and to 1.8 m in the shower, before tiling", "brands": ["Dr. Fixit", "STP", "Fosroc", "MYK Laticrete"], "unit": "sqft", "basis": "installed", "rate": [80, 120], "src": ["hometriangle-bath-wp"] },

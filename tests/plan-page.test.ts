@@ -11,7 +11,7 @@ import { docText } from '../site/src/doc/doc';
 import { docxOf } from '../site/src/doc/docx';
 import { pdfOf, printable } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
-import { EMPTY_PLAN, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withSlider, type PlanState } from '../site/src/estimate/plan-model';
+import { EMPTY_PLAN, areaLabel, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withSlider, type PlanState } from '../site/src/estimate/plan-model';
 import { planDoc, planDocStatus, planFileName } from '../site/src/estimate/plan-document';
 import { SITE_NAME } from '../site/src/site';
 import { docxLines, pdfPages, workbook } from '../scripts/read-doc.mjs';
@@ -22,7 +22,7 @@ const view = (s: PlanState) => planPreview(s).view!;
 
 describe('the six questions', () => {
   it('nothing answered: the six, in the order asked', () => {
-    expect(planNeeds(EMPTY_PLAN)).toEqual(['What the work is: repair or renovate, or interiors', 'Flat or house', 'Which city', 'The carpet area', 'How many bedrooms', 'Which level']);
+    expect(planNeeds(EMPTY_PLAN)).toEqual(['What the work is: build a new house, repair or renovate, or interiors', 'Flat or house', 'Which city', 'The carpet area', 'How many bedrooms', 'Which level']);
     expect(planPreview({ ...FLAT, home: undefined }).needs).toEqual(['Flat or house']);
   });
   it('a carpet area not understood is asked again; one in sq m is the engine\'s too', () => {
@@ -115,6 +115,31 @@ describe('sliders, items and brands', () => {
   });
 });
 
+describe('a new house on the page (D-UX-23)', () => {
+  const HOUSE: PlanState = { ...EMPTY_PLAN, kind: 'build', floors: 2, city: 'pune', area: '2,000', bhk: '3', level: 1, doc: { owner: 'Asha Rao', property: 'Plot 12, Example Layout, Pune', lender: '', preparedBy: '' } };
+  it('asks how many floors instead of flat or house, and the built-up area of all floors: still six questions', () => {
+    expect(planNeeds({ ...EMPTY_PLAN, kind: 'build' })).toEqual(['How many floors', 'Which city', 'The built-up area of all floors', 'How many bedrooms', 'Which level']);
+    expect(areaLabel('build')).toBe('Built-up area of all floors');
+    expect(inputOf(HOUSE)).toMatchObject({ kind: 'build', property: 'house', floors: 2, area: 2000 });
+  });
+  it('the summary, the area typed and the cost a sq ft of it; fourteen sections, the structure first and eleven on', () => {
+    const v = view(HOUSE);
+    expect(v.summary.replace(/ /g, ' ')).toBe('Build a new house · G+1 · Pune · 2,000 sq ft · 3 BHK · Basic');
+    expect([v.area, v.areaName, v.title]).toEqual(['2,000 sq ft (185.81 sq m)', 'Built-up area', 'Estimate of cost of construction']);
+    expect(v.sections.map((x) => x.id)[0]).toBe('structure');
+    expect([v.sections.length, v.sections.filter((x) => x.on).length]).toEqual([14, 11]);
+    expect(view(FLAT).sections.length).toBe(13);
+  });
+  it('the document: titled for construction, the floors in the work, the built-up area, the cost a sq ft of it, the cement by hand, and the house in Annex 2', () => {
+    const p = planPreview(HOUSE), lines = docText(planDoc(HOUSE, p, TODAY)!).split('\n');
+    for (const want of ['Estimate of cost of construction', 'Work: Build a new house, G+1, 3 BHK', 'Built-up area: 2,000 sq ft (185.81 sq m)', `Cost per sq ft: Rs. ${p.view!.perSqft} of built-up area`])
+      expect(lines, want).toContain(want);
+    expect(lines.find((l) => l.includes('Whole house: OPC 53-grade cement'))).toMatch(/\| All \| 800 \| bag \| 401\.06 \| 3,20,848$/);
+    const at = lines.indexOf('Annex 2. What the estimate assumes');
+    expect(lines.slice(at + 1).map((l) => l.split(':')[0])).toEqual(['The house', 'Floor to floor', 'Structure', 'Rooms', 'Bathrooms', 'Ceiling height', 'Doors and windows', 'Electrical points']);
+  });
+});
+
 describe('the planning estimate to download', () => {
   // At Basic, the living room's floor is 303.03 sq ft (architect.test.ts) of the tile priced at Rs. 114.09 in Pune
   // (library.test.ts): 303.03 × 114.09 = 34,572.69, shown as 34,573.
@@ -122,7 +147,7 @@ describe('the planning estimate to download', () => {
   const p = planPreview(s), doc = planDoc(s, p, TODAY)!, lines = docText(doc).split('\n');
   it('page 1: the title by the kind, the facts, the abstract by section and the total in figures and words, signed', () => {
     expect(lines.slice(3, 11)).toEqual([
-      'Estimate of cost of renovation', `Planning estimate prepared with ${SITE_NAME} on 03-10-2026; rates from the sources in Annex 3.`,
+      'Estimate of cost of renovation', `Planning estimate prepared with ${SITE_NAME} on 03-10-2026.`,
       'Owner: Asha Rao', 'Property: Flat 4, Example Towers, Pune', 'Work: Repair or renovate, flat, 2 BHK', 'Carpet area: 1,000 sq ft (92.9 sq m)', 'City: Pune', 'Level: Basic',
     ]);
     expect(lines).toContain(`Total estimated cost | ${p.view!.total}`);
@@ -137,11 +162,13 @@ describe('the planning estimate to download', () => {
     expect(floor).toContain('Kajaria, Somany, Johnson, Nitco, Orientbell or equivalent');
     expect(lines.filter((l) => /^\d+\.\d+ /.test(l)).length).toBe(p.view!.sections.reduce((t, x) => t + x.lines.length, 0));
   });
-  it('Annex 3: what the estimate assumes and every source, numbered with its class', () => {
-    expect(lines).toContain('Annex 3. Assumptions and sources');
-    expect(lines.some((l) => l.startsWith('Rooms: Living and dining'))).toBe(true);
-    expect(lines.some((l) => /^\[1\] .+ \(class [1-4RO]\)/.test(l))).toBe(true);
-    expect(lines).toContain('Class 2: A maker\'s or seller\'s price for a named product: a price list, an MRP, a listing');
+  it('Annex 2: what the estimate assumes, one line each, with no reasons and no sources (owner, 03-10-2026)', () => {
+    const at = lines.indexOf('Annex 2. What the estimate assumes');
+    expect(at).toBeGreaterThan(0);
+    expect(lines.slice(at + 1).map((l) => l.split(':')[0])).toEqual(['Rooms', 'Bathrooms', 'Ceiling height', 'Doors and windows', 'Electrical points']);
+    expect(lines).toContain('Ceiling height: 2.90 m');
+    const text = docText(doc);
+    for (const x of ['Annex 3', 'Class 2', 'http', '[1]', 'sources', 'the middle of each room']) expect(text).not.toContain(x);
   });
   it('leaves out the flags, the five levels and the change from the package (A15)', () => {
     const text = docText(doc);
@@ -157,9 +184,9 @@ describe('the planning estimate to download', () => {
     const pages = await pdfPages(pdfOf(doc, MADE));
     expect(pages[0]).toContain(`Total estimated cost ${p.view!.total}`);
     expect(pages.some((x) => x.includes('Annex 1. Detailed estimate'))).toBe(true);
-    expect(pages.some((x) => x.includes('Annex 3. Assumptions and sources'))).toBe(true);
+    expect(pages.some((x) => x.includes('Annex 2. What the estimate assumes'))).toBe(true);
     const book = await workbook(xlsxOf(doc, MADE));
-    expect(book.map((x) => x.sheet)).toEqual(['Estimate', 'Detailed estimate', 'Assumptions and sources']);
+    expect(book.map((x) => x.sheet)).toEqual(['Estimate', 'Detailed estimate', 'Assumptions']);
     expect(book[0].data.find((r) => r[0] === 'Total estimated cost')?.filter((c) => c !== null)).toEqual(['Total estimated cost', p.view!.n.total]);
     const row = book[1].data.find((r) => typeof r[0] === 'string' && r[0].includes('Living and dining: Double-charge vitrified tiles'))?.filter((c) => c !== null);
     expect(row?.slice(1)).toEqual(['Basic', 303.03, 'sq ft', 114.09, 34572.69]);

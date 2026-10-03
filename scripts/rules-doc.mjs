@@ -124,9 +124,18 @@ out.push('**How the rooms are drawn and measured**', '',
   rule('GST', `${A.gst.pct}%.`, A.gst),
   rule('Check', `paint ${A.checks.paintRatio[0]}–${A.checks.paintRatio[1]} × the carpet area.`, A.checks),
   '');
+const H = A.house;
+out.push('**A new house** (D-UX-23): the outline from the built-up area and the floors, the rooms from what is left, the structure by rules of thumb', '',
+  rule('Outline', `each floor ${H.shape.aspect} times as long as it is wide, the outer walls ${A.openings.walls.external} mm.`, H.shape),
+  rule('Floor to floor', `the ceiling height plus a ${H.slab.m * 1000} mm slab.`, H.slab),
+  rule('Parapet', `${H.parapet.m} m, painted on both faces.`, H.parapet),
+  rule('Terrace', `waterproofed inside the parapet and ${H.terraceUpturn.m * 1000} mm up it.`, H.terraceUpturn),
+  rule('Stairs', `from two floors up, a ${H.stair.w} × ${H.stair.l} m well on each floor; flights ${H.stair.going} m along; ${H.stair.gap} m between them.`, H.stair),
+  rule('Structure', `for each sq ft of built-up area: ${H.thumb.cement} bags of cement, ${H.thumb.steel} kg of steel, ${H.thumb.sand} cft of sand, ${H.thumb.aggregate} cft of aggregate, ${H.thumb.bricks} bricks.`, H.thumb),
+  '');
 out.push('**What each room gets** (the library\'s family, its section, and how it is measured)', '');
 for (const [room, slots] of Object.entries(A.templates))
-  out.push(`- **${room === 'flat' ? 'The whole flat' : room === 'bath' ? 'Each bathroom' : `Each ${room}`}**: ${slots.map((x) => `${x.name ?? x.family} (${A.sections.find((s) => s.id === x.section).name.toLowerCase()}, by ${x.qty}${x.kinds ? `, ${x.kinds.join(' and ')} only` : ''})`).join('; ')}.`);
+  out.push(`- **${room === 'flat' ? 'The whole flat or house' : room === 'bath' ? 'Each bathroom' : `Each ${room}`}**: ${slots.map((x) => `${x.name ?? x.family} (${A.sections.find((s) => s.id === x.section).name.toLowerCase()}, by ${x.qty}${x.kinds ? `, ${x.kinds.join(' and ')} only` : ''})`).join('; ')}.`);
 out.push('', 'The library of materials, finishes and fittings, with every rate and its source, is in `docs/LIBRARY.md`.', '');
 
 const text = out.join('\n');

@@ -1,21 +1,33 @@
 {
-  "title": "Building materials (a house)",
-  "date": "2026-10-02",
-  "status": "For building a house and adding floors (E5): the materials the structure is costed from.",
+  "title": "Building a house: materials, labour and treatment",
+  "date": "2026-10-03",
+  "status": "For building a house (E5, thin): the structure costed at one specification from rules of thumb a sq ft of built-up area (house.thumb in engine/data/architect.json), its materials with their wastage, its labour by stage and the anti-termite treatment. A structural engineer's design replaces them.",
   "families": [
-    { "id": "cement", "name": "Cement", "unit": "bag" },
-    { "id": "steel", "name": "Reinforcement steel", "unit": "kg" },
-    { "id": "aggregate", "name": "Sand and aggregate", "unit": "cum" },
-    { "id": "masonry-unit", "name": "Bricks and blocks", "unit": "nos" }
+    { "id": "anti-termite", "name": "Anti-termite treatment before building", "unit": "sqft", "fixed": "at-soil" },
+    { "id": "cement", "name": "Cement", "unit": "bag", "fixed": "cm-opc53" },
+    { "id": "steel", "name": "Reinforcement steel", "unit": "kg", "fixed": "st-tmt" },
+    { "id": "sand", "name": "Sand", "unit": "cum", "fixed": "ag-msand" },
+    { "id": "coarse-aggregate", "name": "Coarse aggregate", "unit": "cum", "fixed": "ag-20mm" },
+    { "id": "brick", "name": "Bricks", "unit": "nos", "fixed": "mu-brick" },
+    { "id": "aac-block", "name": "AAC blocks", "unit": "nos", "fixed": "mu-aac" },
+    { "id": "labour-foundation", "name": "Labour: excavation and foundation", "unit": "sqft", "fixed": "lb-foundation" },
+    { "id": "labour-rcc", "name": "Labour: RCC frame and slabs", "unit": "sqft", "fixed": "lb-rcc" },
+    { "id": "labour-masonry", "name": "Labour: brick walls", "unit": "sqft", "fixed": "lb-masonry" },
+    { "id": "labour-plaster", "name": "Labour: plaster", "unit": "sqft", "fixed": "lb-plaster" }
   ],
   "entries": [
-    { "id": "cm-opc53", "family": "cement", "name": "OPC 53-grade cement, 50 kg", "spec": "Ordinary Portland cement, 53 grade, a 50 kg bag (city range)", "brands": ["UltraTech", "ACC", "Ambuja"], "unit": "bag", "basis": "product", "rate": [342, 433], "src": ["civiconcepts-materials"] },
-    { "id": "cm-ppc", "family": "cement", "name": "PPC cement, 50 kg", "spec": "Portland pozzolana cement, a 50 kg bag", "brands": ["UltraTech", "ACC", "Ambuja"], "unit": "bag", "basis": "product", "rate": [364, 364], "src": ["civiconcepts-materials"] },
-    { "id": "st-tmt", "family": "steel", "name": "TMT bars Fe 500D, 12 mm", "spec": "TMT reinforcement bars Fe 500D, 12 mm", "brands": ["Tata Tiscon", "JSW Neosteel", "SAIL"], "unit": "kg", "basis": "product", "rate": [50, 64], "src": ["civiconcepts-materials", "comaron-steel-cement"] },
-    { "id": "ag-msand", "family": "aggregate", "name": "M-sand", "spec": "Manufactured sand", "unit": "cum", "basis": "product", "rate": [1600, 2100], "src": ["civiconcepts-materials"] },
-    { "id": "ag-river", "family": "aggregate", "name": "River sand", "spec": "River sand", "unit": "cum", "basis": "product", "rate": [2500, 3200], "src": ["civiconcepts-materials"] },
-    { "id": "ag-20mm", "family": "aggregate", "name": "Coarse aggregate, 20 mm", "spec": "20 mm crushed stone aggregate", "unit": "cum", "basis": "product", "rate": [1800, 2300], "src": ["civiconcepts-materials"] },
-    { "id": "mu-brick", "family": "masonry-unit", "name": "Red brick", "spec": "Standard red clay brick", "unit": "nos", "basis": "product", "rate": [8, 10], "src": ["civiconcepts-materials"] },
-    { "id": "mu-aac", "family": "masonry-unit", "name": "AAC block, 200 mm", "spec": "AAC block 200 mm thick", "unit": "nos", "basis": "product", "rate": [61, 78], "src": ["civiconcepts-materials"] }
+    { "id": "at-soil", "family": "anti-termite", "name": "Soil treatment against termites (IS 6313 Part 2)", "spec": "Chemical treatment of the foundation trenches, the plinth fill and the ground round the house before the floor is laid", "unit": "sqft", "basis": "installed", "rate": [8, 10], "src": ["99acres-termite"], "note": "Comaron reports Rs. 30–50 a sq ft for a full-depth treatment (2026)." },
+    { "id": "cm-opc53", "family": "cement", "name": "OPC 53-grade cement, 50 kg", "spec": "Ordinary Portland cement, 53 grade, a 50 kg bag (city range)", "brands": ["UltraTech", "ACC", "Ambuja"], "unit": "bag", "basis": "supply", "rate": [342, 433], "wastage": 0.035, "src": ["civiconcepts-materials", "bricknbolt-1000"] },
+    { "id": "cm-ppc", "family": "cement", "name": "PPC cement, 50 kg", "spec": "Portland pozzolana cement, a 50 kg bag", "brands": ["UltraTech", "ACC", "Ambuja"], "unit": "bag", "basis": "supply", "rate": [364, 364], "wastage": 0.035, "src": ["civiconcepts-materials", "bricknbolt-1000"] },
+    { "id": "st-tmt", "family": "steel", "name": "TMT bars Fe 500D, 12 mm", "spec": "TMT reinforcement bars Fe 500D, 12 mm", "brands": ["Tata Tiscon", "JSW Neosteel", "SAIL"], "unit": "kg", "basis": "supply", "rate": [50, 64], "wastage": 0.04, "src": ["civiconcepts-materials", "comaron-steel-cement", "bricknbolt-1000"] },
+    { "id": "ag-msand", "family": "sand", "name": "M-sand", "spec": "Manufactured sand", "unit": "cum", "basis": "supply", "rate": [1600, 2100], "wastage": 0.075, "src": ["civiconcepts-materials", "bricknbolt-1000"] },
+    { "id": "ag-river", "family": "sand", "name": "River sand", "spec": "River sand", "unit": "cum", "basis": "supply", "rate": [2500, 3200], "wastage": 0.075, "src": ["civiconcepts-materials", "bricknbolt-1000"] },
+    { "id": "ag-20mm", "family": "coarse-aggregate", "name": "Coarse aggregate, 20 mm", "spec": "20 mm crushed stone aggregate", "unit": "cum", "basis": "supply", "rate": [1800, 2300], "wastage": 0.075, "src": ["civiconcepts-materials", "bricknbolt-1000"] },
+    { "id": "mu-brick", "family": "brick", "name": "Red brick", "spec": "Standard red clay brick", "unit": "nos", "basis": "supply", "rate": [8, 10], "wastage": 0.065, "src": ["civiconcepts-materials", "bricknbolt-1000"] },
+    { "id": "mu-aac", "family": "aac-block", "name": "AAC block, 200 mm", "spec": "AAC block 200 mm thick", "unit": "nos", "basis": "supply", "rate": [61, 78], "wastage": 0.065, "src": ["civiconcepts-materials", "bricknbolt-1000"] },
+    { "id": "lb-foundation", "family": "labour-foundation", "name": "Excavation and foundation, labour only", "spec": "Excavation, footings, the plinth beam and backfilling, by the sq ft of built-up area", "unit": "sqft", "basis": "installed", "rate": [60, 90], "src": ["houseyog-labour"] },
+    { "id": "lb-rcc", "family": "labour-rcc", "name": "RCC frame and slabs, labour only", "spec": "Columns, beams and slabs: bar bending, shuttering, concreting and curing, by the sq ft of built-up area", "unit": "sqft", "basis": "installed", "rate": [140, 220], "src": ["houseyog-labour"], "note": "Shuttering is usually included in RCC labour; HouseYog's RCC page reports Rs. 180–300 a sq ft." },
+    { "id": "lb-masonry", "family": "labour-masonry", "name": "Brick walls, labour only", "spec": "Brick or block walls, by the sq ft of built-up area", "unit": "sqft", "basis": "installed", "rate": [70, 120], "src": ["houseyog-labour"] },
+    { "id": "lb-plaster", "family": "labour-plaster", "name": "Plaster, labour only", "spec": "Plaster inside and outside, by the sq ft of built-up area", "unit": "sqft", "basis": "installed", "rate": [40, 70], "src": ["houseyog-labour"] }
   ]
 }

@@ -1,17 +1,21 @@
 /**
- * The engine as the architect (D-UX-18). From six answers (the work, flat, city, carpet area, bedrooms, level) it plans
- * the rooms, places the doors and windows, measures every surface by the IS 1200 rules, puts in what each room needs at
- * each level from the library, prices it for the city, and adds it up by section, by room and at all five levels.
+ * The engine as the architect (D-UX-18). From six answers (the work, flat or house or the floors, city, area, bedrooms,
+ * level) it plans the rooms, places the doors and windows, measures every surface by the IS 1200 rules, puts in what each
+ * room needs at each level from the library, prices it for the city, and adds it up by section, by room and at all five
+ * levels. For a new house it first draws the outline from the built-up area and the floors, takes the outer walls and the
+ * stairs off it for the rooms, and adds the structure (rules of thumb a sq ft), the terrace, the outside walls and the
+ * stair railing (D-UX-23).
  * Pure, no DOM. Every rule is in engine/data/architect.json with its source or reason, and every rate in
  * engine/data/library/ with its source. architect-check.ts works every figure a second way; nothing is returned unless
  * both agree.
  */
 import RULES from './data/architect.json';
-import { choices, ENTRIES, FAMILIES, LIBRARY_DATE, LIBRARY_STATUS, ladder, per, price, SQFT_PER_SQM, type Entry, type ItemKind, type Unit } from './library';
+import { CFT_PER_CUM, choices, ENTRIES, FAMILIES, LIBRARY_DATE, LIBRARY_STATUS, ladder, per, price, SQFT_PER_SQM, type Entry, type ItemKind, type Unit } from './library';
+import { inr } from './util';
 import { architectCheck, checkRate, type ArchitectCheck } from './architect-check';
 import type { Blocked, Needs } from './dscr';
 
-export type WorkKind = 'renovate' | 'interiors';
+export type WorkKind = 'build' | 'renovate' | 'interiors';
 export type Bhk = '1RK' | '1' | '2' | '3' | '4' | '5';
 export type Level = 1 | 2 | 3 | 4 | 5;
 export type RoomKind = 'living' | 'bedroom' | 'kitchen' | 'bath' | 'passage' | 'balcony';
@@ -26,7 +30,8 @@ type Size = { w: number; h: number; sill?: number } & Sourced;
 export interface Rules {
   title: string; date: string; status: string;
   levels: { n: Level; name: string; owner: string; means: string }[];
-  sections: { id: string; name: string; slider: boolean }[];
+  /** A section with `kinds` is shown only for those kinds of work. */
+  sections: { id: string; name: string; slider: boolean; kinds?: WorkKind[] }[];
   kinds: Record<WorkKind, { label: string; on: string[]; why: string }>;
   programmes: Record<Bhk, Programme>;
   bathrooms: { rule: string } & Sourced;
@@ -52,6 +57,11 @@ export interface Rules {
   cities: { list: { id: string; name: string; cost: [number, number] }[] } & Sourced;
   gst: { pct: number } & Sourced;
   checks: { paintRatio: [number, number] } & Sourced;
+  house: {
+    shape: { aspect: number } & Sourced; slab: { m: number } & Sourced; parapet: { m: number } & Sourced; terraceUpturn: { m: number } & Sourced;
+    stair: { w: number; l: number; going: number; gap: number } & Sourced;
+    thumb: { cement: number; steel: number; sand: number; aggregate: number; bricks: number } & Sourced;
+  };
   templates: Record<'flat' | RoomKind, Slot[]>;
 }
 export const R = RULES as unknown as Rules;
@@ -62,13 +72,17 @@ export const CITIES = R.cities.list;
 export const BHKS: { id: Bhk; label: string }[] = [
   { id: '1RK', label: '1 RK' }, { id: '1', label: '1 BHK' }, { id: '2', label: '2 BHK' }, { id: '3', label: '3 BHK' }, { id: '4', label: '4 BHK' }, { id: '5', label: '5 BHK' },
 ];
+/** A new house's floors (A3): the ground floor only, or up to three more. */
+export const FLOORS: { n: number; label: string }[] = [{ n: 1, label: 'Ground only' }, { n: 2, label: 'G+1' }, { n: 3, label: 'G+2' }, { n: 4, label: 'G+3' }];
 
 export interface ArchitectInput {
   kind?: WorkKind;
   property?: 'flat' | 'house';
+  /** For a new house: its floors, 1 (the ground floor only) to 4 (G+3). */
+  floors?: number;
   /** A city's id from the list, or 'other'. */
   city?: string;
-  /** The carpet area, in `areaUnit` (sq ft unless said). */
+  /** The carpet area, or for a new house the built-up area of all floors, in `areaUnit` (sq ft unless said). */
   area?: number;
   areaUnit?: 'sqft' | 'sqm';
   bhk?: Bhk;
@@ -93,9 +107,13 @@ export interface Line {
 export interface Unpriced { key: string; roomName: string; name: string; entryName: string; qty: number; unit: Unit }
 export interface SectionTotal { id: string; name: string; on: boolean; slider: boolean; level: Level | null; amount: number; lines: number }
 export interface Assumption { what: string; shown: string; why: string; src: string[] }
+/** A new house's outline: lengths in metres, areas in sq m, each floor alike. */
+export interface House { floors: number; builtSqm: number; footprint: number; l: number; b: number; wall: number; stair: number; carpetSqm: number; floorToFloor: number }
 export interface ArchitectEstimate {
   kind: WorkKind; property: 'flat' | 'house'; city: string; cityName: string; cityFactor: number; bhk: Bhk; level: Level; heightM: number;
   carpetSqm: number; carpetSqft: number;
+  /** A new house's outline, and the area the cost a sq ft is of: the built-up area for a new house, else the carpet area. */
+  house: House | null; per: 'built-up' | 'carpet';
   rooms: Room[]; openings: Opening[]; lines: Line[]; unpriced: Unpriced[];
   sections: SectionTotal[]; byRoom: { room: string | null; name: string; amount: number }[];
   total: number; perSqft: number; split: Record<ItemKind, number>;
@@ -103,14 +121,16 @@ export interface ArchitectEstimate {
 }
 
 const LEVEL_NAMES = R.levels.map((l) => l.name);
-const r2 = (x: number) => Math.round(x * 100) / 100;
+// To the paisa, half up, an exact half kept from floating point (as library.ts).
+const r2 = (x: number) => Math.round(x * 100 + 1e-6) / 100;
 const f2 = (x: number) => x.toFixed(2);
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
-const AREA_RULES = ['floor', 'floor-skirting', 'paint', 'feature', 'false-ceiling', 'bath-tiles', 'dado', 'wp-bath', 'wp-balcony', 'counter-top', 'wardrobe', 'loft', 'windows', 'shower-screen', 'protect', 'carpet', 'making-good'];
-const LENGTH_RULES = ['cove', 'counter-run'];
-export type Dimension = 'area' | 'length' | 'count';
-export const dimensionOf = (rule: string): Dimension => (AREA_RULES.includes(rule) || rule.startsWith('unit:') ? 'area' : LENGTH_RULES.includes(rule) ? 'length' : 'count');
-const UNIT_OF: Record<Dimension, Unit[]> = { area: ['sqft', 'sqm'], length: ['rft', 'm'], count: ['nos', 'set', 'lot'] };
+const AREA_RULES = ['floor', 'floor-skirting', 'paint', 'feature', 'false-ceiling', 'bath-tiles', 'dado', 'wp-bath', 'wp-balcony', 'counter-top', 'wardrobe', 'loft', 'windows', 'shower-screen', 'protect', 'carpet', 'making-good', 'built-up', 'plinth', 'terrace', 'exterior-walls'];
+const LENGTH_RULES = ['cove', 'counter-run', 'stair-railing'];
+/** 'material': a structure's rule of thumb, in the material's own unit (bags, kg, cu m, bricks). */
+export type Dimension = 'area' | 'length' | 'count' | 'material';
+export const dimensionOf = (rule: string): Dimension => (AREA_RULES.includes(rule) || rule.startsWith('unit:') ? 'area' : LENGTH_RULES.includes(rule) ? 'length' : rule.startsWith('struct:') ? 'material' : 'count');
+const UNIT_OF: Record<Dimension, Unit[]> = { area: ['sqft', 'sqm'], length: ['rft', 'm'], count: ['nos', 'set', 'lot'], material: ['bag', 'kg', 'cum', 'nos'] };
 
 /** The city's factor: the middle of its construction cost against the average of the listed cities' middles. Null for a place not listed. */
 export function cityFactor(id: string): number | null {
@@ -140,6 +160,18 @@ function room(id: string, kind: RoomKind, name: string, sqm: number, master: boo
   return { id, kind, name, master, attached, sqm, l, b: sqm / l };
 }
 
+/**
+ * A new house's outline from its built-up area (sq m) and floors: each floor a rectangle of the rule's proportions, its
+ * outer walls one brick thick, and from two floors up a stair well on each floor. The carpet area left for the rooms is
+ * the built-up area less the outer walls' and the stairs' footprints (A5, A13).
+ */
+export function houseOf(builtSqm: number, floors: number, H: number): House {
+  const s = R.house, t = R.openings.walls.external / 1000;
+  const footprint = builtSqm / floors, l = Math.sqrt(footprint * s.shape.aspect), b = footprint / l;
+  const wall = 2 * t * (l + b) - 4 * t * t, stair = floors >= 2 ? s.stair.w * s.stair.l : 0;
+  return { floors, builtSqm, footprint, l, b, wall, stair, carpetSqm: builtSqm - floors * (wall + stair), floorToFloor: H + s.slab.m };
+}
+
 /** Doors and windows: each in its own room's wall, a door's other side named; enough windows for a tenth of a habitable room's floor. */
 export function planOpenings(rooms: Room[]): Opening[] {
   const out: Opening[] = [];
@@ -165,12 +197,21 @@ export function planOpenings(rooms: Room[]): Opening[] {
 /** What the estimate needs before it can be worked out, in the order asked. */
 export function architectNeeds(input: ArchitectInput): string[] {
   const needs: string[] = [];
-  if (!input.kind || !(input.kind in R.kinds)) needs.push('What the work is: repair or renovate, or interiors');
+  const build = input.kind === 'build', floorsOk = isNum(input.floors) && Number.isInteger(input.floors) && input.floors >= 1 && input.floors <= 4;
+  if (!input.kind || !(input.kind in R.kinds)) needs.push('What the work is: build a new house, repair or renovate, or interiors');
+  if (build && !floorsOk) needs.push('How many floors');
   if (!input.city) needs.push('Which city');
-  if (!(isNum(input.area) && input.area > 0)) needs.push('The carpet area');
+  const areaOk = isNum(input.area) && input.area > 0;
+  if (!areaOk) needs.push(build ? 'The built-up area of all floors' : 'The carpet area');
   if (!input.bhk || !(input.bhk in R.programmes)) needs.push('How many bedrooms');
   if (!input.level || !(input.level >= 1 && input.level <= 5)) needs.push('Which level');
-  if (input.heightM !== undefined && !(input.heightM >= 2 && input.heightM <= 6)) needs.push('A ceiling height from 2 to 6 m');
+  const heightOk = input.heightM === undefined || (input.heightM >= 2 && input.heightM <= 6);
+  if (!heightOk) needs.push('A ceiling height from 2 to 6 m');
+  if (build && floorsOk && areaOk && heightOk) {
+    const sqm = input.areaUnit === 'sqm' ? (input.area as number) : (input.area as number) / SQFT_PER_SQM;
+    const h = houseOf(sqm, input.floors as number, input.heightM ?? R.height.m);
+    if (h.carpetSqm < sqm / 2) needs.push(`A larger built-up area: the outer walls and stairs of ${h.floors} floors take more than half of it`);
+  }
   return needs;
 }
 
@@ -196,21 +237,25 @@ export function strip(input: ArchitectInput, check: typeof architectCheck = arch
 
 interface Ctx {
   input: ArchitectInput; kind: WorkKind; home: 'flat' | 'house'; H: number; carpetSqm: number; rooms: Room[]; openings: Opening[];
-  on: (section: string) => boolean; levelOf: (section: string) => Level;
+  on: (section: string) => boolean; levelOf: (section: string) => Level; house: House | null;
 }
+/** Whether a section is shown for a kind of work. */
+export const sectionFor = (section: string, kind: WorkKind) => { const k = R.sections.find((x) => x.id === section)?.kinds; return !k || k.includes(kind); };
 
 function work(input: ArchitectInput): ArchitectEstimate {
   const kind = input.kind as WorkKind, bhk = input.bhk as Bhk, level = input.level as Level;
-  const home = input.property === 'house' ? 'house' : 'flat', whole = `Whole ${home}`;
-  const carpetSqm = input.areaUnit === 'sqm' ? (input.area as number) : (input.area as number) / SQFT_PER_SQM;
+  const home = kind === 'build' || input.property === 'house' ? 'house' : 'flat', whole = `Whole ${home}`;
+  const typedSqm = input.areaUnit === 'sqm' ? (input.area as number) : (input.area as number) / SQFT_PER_SQM;
   const factor = cityFactor(input.city as string);
   const city = factor ?? 1;
   const H = input.heightM ?? R.height.m;
+  const house = kind === 'build' ? houseOf(typedSqm, input.floors as number, H) : null;
+  const carpetSqm = house ? house.carpetSqm : typedSqm;
   const rooms = planRooms(bhk, carpetSqm), openings = planOpenings(rooms);
-  const on = (s: string) => input.sections?.[s] ?? R.kinds[kind].on.includes(s);
+  const on = (s: string) => sectionFor(s, kind) && (input.sections?.[s] ?? R.kinds[kind].on.includes(s));
   const slider = (s: string) => R.sections.find((x) => x.id === s)?.slider ?? false;
   const levelOf = (s: string): Level => (slider(s) ? input.sliders?.[s] ?? level : level);
-  const ctx: Ctx = { input, kind, home, H, carpetSqm, rooms, openings, on, levelOf };
+  const ctx: Ctx = { input, kind, home, H, carpetSqm, rooms, openings, on, levelOf, house };
 
   const lines: Line[] = [], unpriced: Unpriced[] = [];
   const place = (slot: Slot, r: Room | null) => {
@@ -228,7 +273,7 @@ function work(input: ArchitectInput): ArchitectEstimate {
     const ent = ENTRIES.get(id) as Entry;
     const dim = dimensionOf(slot.qty);
     if (!UNIT_OF[dim].includes(ent.unit)) throw new Error(`${id} is priced by ${ent.unit}, but ${slot.qty} gives ${dim}`);
-    const qty = r2(dim === 'count' ? m.base : m.base * per(dim === 'area' ? 'sqm' : 'm', ent.unit));
+    const qty = r2(dim === 'count' || dim === 'material' ? m.base : m.base * per(dim === 'area' ? 'sqm' : 'm', ent.unit));
     const roomName = r?.name ?? whole;
     const name = slot.name ?? fam.name;
     const p = price(id, city, R.gst.pct);
@@ -242,7 +287,7 @@ function work(input: ArchitectInput): ArchitectEstimate {
   for (const r of rooms) for (const slot of R.templates[r.kind]) place(slot, r);
   for (const slot of R.templates.flat) place(slot, null);
 
-  const sections: SectionTotal[] = R.sections.map((s) => {
+  const sections: SectionTotal[] = R.sections.filter((s) => sectionFor(s.id, kind)).map((s) => {
     const ls = lines.filter((l) => l.section === s.id);
     return { id: s.id, name: s.name, on: on(s.id), slider: s.slider, level: s.slider ? levelOf(s.id) : null, amount: r2(ls.reduce((t, l) => t + l.amount, 0)), lines: ls.length };
   });
@@ -250,13 +295,15 @@ function work(input: ArchitectInput): ArchitectEstimate {
     .map((x) => ({ ...x, amount: r2(lines.filter((l) => l.room === x.room).reduce((t, l) => t + l.amount, 0)) }));
   const total = r2(sections.reduce((t, s) => t + s.amount, 0));
   const carpetSqft = carpetSqm * SQFT_PER_SQM;
+  const perSqft = r2(total / (house ? house.builtSqm * SQFT_PER_SQM : carpetSqft));
   const split = { fixed: 0, movable: 0, appliance: 0 } as Record<ItemKind, number>;
   for (const l of lines) split[l.kind] = r2(split[l.kind] + l.amount);
   const cityName = R.cities.list.find((c) => c.id === input.city)?.name ?? 'Other';
   return {
     kind, property: home, city: input.city as string, cityName, cityFactor: city, bhk, level, heightM: H, carpetSqm, carpetSqft,
-    rooms, openings, lines, unpriced, sections, byRoom, total, perSqft: r2(total / carpetSqft), split,
-    assumptions: assumptions(ctx, bhk, cityName, factor), flags: flags(ctx, bhk, carpetSqft, lines, unpriced, factor), ratesDate: LIBRARY_DATE,
+    house, per: house ? 'built-up' : 'carpet',
+    rooms, openings, lines, unpriced, sections, byRoom, total, perSqft, split,
+    assumptions: assumptions(ctx, bhk, cityName, factor), flags: flags(ctx, bhk, carpetSqft, lines, unpriced, factor, perSqft), ratesDate: LIBRARY_DATE,
   };
 }
 
@@ -303,6 +350,7 @@ function wardrobeWidth(r: Room): number {
 function measure(rule: string, r: Room | null, lv: Level, ctx: Ctx): { base: number; how: string } {
   const H = ctx.H, t = (x: number) => f2(x);
   if (r === null) {
+    if (ctx.house) { const m = measureHouse(rule, ctx.house); if (m) return m; }
     if (rule === 'one') return { base: 1, how: `One for the ${ctx.home}` };
     if (rule === 'carpet') return { base: ctx.carpetSqm, how: `The carpet area: ${t(ctx.carpetSqm)} sq m` };
     if (rule === 'protect') {
@@ -421,12 +469,53 @@ function measure(rule: string, r: Room | null, lv: Level, ctx: Ctx): { base: num
   }
 }
 
+/**
+ * A new house's own quantities: the structure's materials by the rules of thumb a sq ft of built-up area (in their own
+ * units), its labour and the anti-termite treatment by area, the terrace inside the parapet with the upturn, the outside
+ * walls of every floor and the parapet, and the stair railing between floors. Null for a rule that is not the house's.
+ */
+function measureHouse(rule: string, h: House): { base: number; how: string } | null {
+  const s = R.house, t = R.openings.walls.external / 1000, sqft = h.builtSqm * SQFT_PER_SQM;
+  const floors = `${h.floors} floor${h.floors > 1 ? 's' : ''}`;
+  if (rule === 'built-up') return { base: h.builtSqm, how: `The built-up area of ${floors}: ${f2(h.builtSqm)} sq m` };
+  if (rule === 'plinth') return { base: h.footprint, how: `The ground floor's outline, ${f2(h.l)} × ${f2(h.b)} m: ${f2(h.footprint)} sq m` };
+  if (rule.startsWith('struct:')) {
+    const what = rule.slice(7) as 'cement' | 'steel' | 'sand' | 'aggregate' | 'bricks', each = s.thumb[what], n = each * sqft;
+    if (what === 'sand' || what === 'aggregate') return { base: n / CFT_PER_CUM, how: `${each} cft a sq ft × ${f2(sqft)} sq ft of built-up area = ${f2(n)} cft = ${f2(n / CFT_PER_CUM)} cu m` };
+    const word = what === 'cement' ? 'bags' : what === 'steel' ? 'kg' : 'bricks';
+    return { base: n, how: `${each} ${word} a sq ft × ${f2(sqft)} sq ft of built-up area = ${f2(n)} ${word}` };
+  }
+  const li = h.l - 2 * t, bi = h.b - 2 * t, inner = 2 * (li + bi);
+  if (rule === 'terrace') {
+    const roof = li * bi, edge = inner * s.terraceUpturn.m;
+    return { base: roof + edge, how: `The roof inside the parapet, ${f2(li)} × ${f2(bi)} m = ${f2(roof)} sq m, and ${f2(inner)} m × ${s.terraceUpturn.m} m up the parapet = ${f2(edge)} sq m` };
+  }
+  if (rule === 'exterior-walls') {
+    // IS 1200: openings up to 3 sq m come off one face only, the inside's (as `paint` measures it), so none off the outside.
+    const P = 2 * (h.l + h.b), up = h.floors * h.floorToFloor + s.parapet.m, a = P * up + inner * s.parapet.m;
+    return { base: a, how: `Outside ${f2(P)} m × (${floors} × ${f2(h.floorToFloor)} m + a ${f2(s.parapet.m)} m parapet) = ${f2(P * up)} sq m, and the parapet's inside ${f2(inner)} m × ${f2(s.parapet.m)} m = ${f2(inner * s.parapet.m)} sq m; openings come off the inside only (IS 1200)` };
+  }
+  if (rule === 'stair-railing') {
+    const runs = h.floors - 1;
+    if (runs < 1) return { base: 0, how: '' };
+    const flight = Math.sqrt(s.stair.going ** 2 + (h.floorToFloor / 2) ** 2), len = runs * (2 * flight + s.stair.gap);
+    return { base: len, how: `${runs} stair${runs > 1 ? 's' : ''}, each two flights of ${f2(flight)} m (${f2(s.stair.going)} m along, ${f2(h.floorToFloor / 2)} m up) and ${f2(s.stair.gap)} m at the landing: ${f2(len)} m` };
+  }
+  return null;
+}
+
 function assumptions(ctx: Ctx, bhk: Bhk, cityName: string, factor: number | null): Assumption[] {
   const p = R.programmes[bhk], sqft = (x: number) => Math.round(x * SQFT_PER_SQM);
   const rooms = ctx.rooms.map((r) => `${r.name} ${sqft(r.sqm)} sq ft`).join('; ');
   const baths = ctx.rooms.filter((r) => r.kind === 'bath').length;
   const on = R.sections.filter((s) => ctx.on(s.id)).map((s) => s.name).join(', ');
+  const h = ctx.house, hs = R.house, th = hs.thumb;
   return [
+    ...(h ? [
+      { what: 'The house', shown: `${FLOORS[h.floors - 1].label}: ${h.floors} floor${h.floors > 1 ? 's' : ''} of ${sqft(h.footprint)} sq ft, ${f2(h.l)} × ${f2(h.b)} m outside with ${R.openings.walls.external} mm outer walls${h.stair ? `, and a ${hs.stair.w} × ${hs.stair.l} m stair on each floor` : ''}; ${sqft(h.carpetSqm)} sq ft of carpet area left for the rooms`, why: `${hs.shape.why}${h.stair ? ` ${hs.stair.why}` : ''}`, src: [...hs.shape.src, ...(h.stair ? hs.stair.src : [])] },
+      { what: 'Floor to floor', shown: `${f2(h.floorToFloor)} m: the ceiling and a ${hs.slab.m * 1000} mm slab; a ${f2(hs.parapet.m)} m parapet on the terrace`, why: `${hs.slab.why} ${hs.parapet.why}`, src: [...hs.slab.src, ...hs.parapet.src] },
+      { what: 'Structure', shown: `For each sq ft of built-up area: ${th.cement} bags of cement, ${th.steel} kg of steel, ${th.sand} cft of sand, ${th.aggregate} cft of aggregate and ${th.bricks} bricks, and the labour by stage`, why: th.why, src: th.src },
+    ] : []),
     { what: 'Rooms', shown: rooms, why: `${p.why} ${R.shares.passage.why} ${R.shares.walls.why}`, src: [...p.src, ...R.shares.passage.src] },
     { what: 'Bathrooms', shown: `${baths}`, why: R.bathrooms.why, src: R.bathrooms.src },
     { what: 'Ceiling height', shown: `${f2(ctx.H)} m`, why: R.height.why, src: R.height.src },
@@ -438,14 +527,21 @@ function assumptions(ctx: Ctx, bhk: Bhk, cityName: string, factor: number | null
   ];
 }
 
-function flags(ctx: Ctx, bhk: Bhk, carpetSqft: number, lines: Line[], unpriced: Unpriced[], factor: number | null): string[] {
+function flags(ctx: Ctx, bhk: Bhk, carpetSqft: number, lines: Line[], unpriced: Unpriced[], factor: number | null, perSqft: number): string[] {
   const out: string[] = [];
   const min = R.minimums;
   for (const r of ctx.rooms) {
     const want = r.kind === 'living' || r.kind === 'bedroom' ? min.habitable : r.kind === 'kitchen' ? min.kitchen : r.kind === 'bath' ? min.bath : 0;
     if (want && r.sqm < want - 1e-9) out.push(`${r.name} works out at ${f2(r.sqm)} sq m, below the Code's ${want} sq m: is the carpet area right for ${BHKS.find((b) => b.id === bhk)?.label}?`);
   }
-  if (ctx.home === 'house') out.push('A house: its rooms inside are worked out as a flat\'s of the same carpet area and bedrooms. The terrace, the outside walls, the compound and the water tank are not in this estimate yet.');
+  if (ctx.home === 'house' && !ctx.house) out.push('A house: its rooms inside are worked out as a flat\'s of the same carpet area and bedrooms. The terrace, the outside walls, the compound and the water tank are not in this estimate yet.');
+  if (ctx.house) {
+    out.push('The structure\'s materials and labour are rules of thumb for each sq ft of built-up area (as reported). A structural engineer\'s design and quantities replace them; more floors, poor soil or seismic zone IV or V usually need more steel.');
+    out.push(`The rooms are planned as one home of ${Math.round(carpetSqft)} sq ft of carpet area, the built-up area less the outer walls${ctx.house.stair ? ' and the stairs' : ''}; how they sit on each floor is not drawn yet.`);
+    out.push(`Not in this estimate yet: the compound wall, gate and paving; the sump, overhead tank, septic tank or sewer connection, borewell and rainwater harvesting; ${ctx.house.stair ? 'the stairs\' finish, ' : ''}a stair to the terrace and its cabin; the plan's approval fees, the labour cess and the electricity and water connections.`);
+    const c = R.cities.list.find((x) => x.id === ctx.input.city);
+    if (c && (perSqft < c.cost[0] || perSqft > c.cost[1])) out.push(`This estimate comes to Rs. ${inr(perSqft)} a sq ft of built-up area; houses in ${c.name} are reported at Rs. ${inr(c.cost[0])}–${inr(c.cost[1])} a sq ft (as reported), and this estimate leaves out the outside works and the water.`);
+  }
   const typical = R.programmes[bhk].typical;
   if (typical && (carpetSqft < typical[0] || carpetSqft > typical[1])) out.push(`A ${BHKS.find((b) => b.id === bhk)?.label} is usually ${typical[0]}–${typical[1]} sq ft of carpet area; yours is ${Math.round(carpetSqft)}.`);
   const paint = lines.filter((l) => l.family === 'paint').reduce((s, l) => s + l.qty, 0);

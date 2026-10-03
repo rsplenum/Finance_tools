@@ -10,7 +10,7 @@ import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { planDoc, planDocNeeds, planDocStatus, planFileName } from './plan-document';
 import {
-  BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORK_CHOICES, drawerView, heightOf, plainOf, planPreview,
+  BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, FLOOR_CHOICES, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORK_CHOICES, areaLabel, drawerView, heightOf, plainOf, planPreview,
   withItem, withKind, withLevel, withSection, withSlider,
   type AreaUnit, type DrawerView, type LineView, type PlanFacts, type PlanPreview, type PlanState, type PlanView, type RungView, type SectionView,
 } from './plan-model';
@@ -66,19 +66,21 @@ function Questions({ s, update, p, done }: { s: PlanState; update: Update; p: Pl
       <Choice name="fld-work" legend="What is the work?" options={WORK_CHOICES} value={s.kind} columns onChange={(k) => update((x) => withKind(x, k))} />
     </div>
     <div data-question>
-      <Choice name="fld-home" legend="Flat or house?" options={HOME_CHOICES} value={s.home} columns onChange={(home) => update((x) => ({ ...x, home }))} />
+      {s.kind === 'build'
+        ? <Choice name="fld-floors" legend="How many floors?" options={FLOOR_CHOICES} value={s.floors ? String(s.floors) : undefined} columns onChange={(f) => update((x) => ({ ...x, floors: Number(f) }))} />
+        : <Choice name="fld-home" legend="Flat or house?" options={HOME_CHOICES} value={s.home} columns onChange={(home) => update((x) => ({ ...x, home }))} />}
     </div>
     <div data-question>
       <SelectField id="fld-city" class="mt-6" label="Which city?" value={s.city ?? ''} placeholder="Choose a city" options={CITY_CHOICES}
         onChange={(city) => update((x) => ({ ...x, city: city || undefined }))} />
     </div>
     <div data-question class="mt-6">
-      <label for="fld-carpet" class={LABEL}>How big? Carpet area, as in your agreement</label>
+      <label for="fld-carpet" class={LABEL}>How big? {areaLabel(s.kind)}</label>
       <div class="mt-1 flex flex-wrap items-start gap-3">
-        <TextField id="fld-carpet" class="w-40 [&>label]:sr-only" label="Carpet area" inputMode="decimal" value={s.area} placeholder="like 850"
+        <TextField id="fld-carpet" class="w-40 [&>label]:sr-only" label={s.kind === 'build' ? 'Built-up area' : 'Carpet area'} inputMode="decimal" value={s.area} placeholder={s.kind === 'build' ? 'like 2000' : 'like 850'}
           invalid={badArea} said={badArea ? 'Not understood. Type a number, like 850.' : undefined} onCommit={(area) => update((x) => ({ ...x, area }))} />
         <fieldset class="mt-2 flex gap-2">
-          <legend class="sr-only">Unit of the carpet area</legend>
+          <legend class="sr-only">Unit of the area</legend>
           {(['sqft', 'sqm'] as AreaUnit[]).map((u) => <label key={u} for={`fld-carpetUnit-${u}`} class={CHIP}>
             <input type="radio" id={`fld-carpetUnit-${u}`} name="fld-carpetUnit" checked={s.unit === u} onChange={() => update((x) => ({ ...x, unit: u }))} class={RADIO} />
             {u === 'sqft' ? 'sq ft' : 'sq m'}
@@ -111,7 +113,7 @@ function Answer({ v, update, heading }: { v: PlanView; update: Update; heading: 
   return <section id="pl-result" aria-labelledby="pl-result-h" class="mt-6">
     <h2 id="pl-result-h" ref={heading} tabIndex={-1} class="sr-only">The estimate</h2>
     <p data-testid="pl-total" class={`text-3xl font-semibold tabular-nums ${INK}`}>Rs. {v.total}</p>
-    <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="tabular-nums">Rs. {v.perSqft}</span> a sq ft of carpet area</p>
+    <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="tabular-nums">Rs. {v.perSqft}</span> a sq ft of {v.areaName.toLowerCase()}</p>
     <div role="group" aria-label="The total at each level; choose one to switch the package" class="mt-4 grid grid-cols-5 gap-1.5">
       {v.strip.map((x) => <button key={x.level} type="button" data-testid={`pl-strip-${x.level}`} aria-pressed={x.current} aria-label={`${x.name}: Rs. ${x.full}`}
         title={`Rs. ${x.full}`} onClick={() => update((s) => withLevel(s, x.level))}
@@ -285,7 +287,7 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
   const field = (id: keyof PlanFacts, label: string, hint?: string) =>
     <TextField id={`fld-pl-${id}`} label={label} hint={hint} value={f[id]} said={english(f[id])} invalid={!!english(f[id])} onCommit={(t) => set({ [id]: t })} />;
   return <Section id="pl-download" title="Download the planning estimate">
-    <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy and a Word copy to edit, made in your browser from the figures above: the abstract by section, every item (Annex 1), and the assumptions and sources (Annex 3).</p>
+    <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy and a Word copy to edit, made in your browser from the figures above: the abstract by section, every item (Annex 1) and what the estimate assumes (Annex 2).</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       {field('owner', 'Owner’s name')}
       {field('property', 'Property’s address')}

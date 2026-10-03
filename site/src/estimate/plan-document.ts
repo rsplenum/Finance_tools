@@ -1,9 +1,9 @@
 /**
  * The planning estimate as a document to download (A15), written three times (site/src/doc/): page 1 the facts, the
  * abstract of cost by section, the total in figures and words and the cost a sq ft, signed; Annex 1 every item under its
- * section with its quantity, rate and amount; Annex 3 what the estimate assumes and the sources of its rates. Built from
- * the page's state and preview only: every figure is the engine's, and none is computed here. The flags, the five-level
- * strip and the change from the package stay on the page.
+ * section with its quantity, rate and amount; Annex 2 what the estimate assumes, one line each. Annexes are numbered in
+ * order with no gap (D-DOC-09). Built from the page's state and preview only: every figure is the engine's, and none is
+ * computed here. The flags, the five-level strip, the change from the package and the sources stay on the page.
  */
 import type { Block, Cell, Doc, Figure, Table } from '../doc/doc';
 import { printable } from '../doc/pdf';
@@ -33,6 +33,8 @@ export function planFileName(s: PlanState, p: PlanPreview, ext: string): string 
 }
 
 const dmy = (iso: string) => iso.split('-').reverse().join('-');
+/** Assumptions page 1 already shows: the city and the rates' date in the facts, the sections in the abstract. */
+const ON_PAGE_1 = ['City', 'Rates', 'Sections'];
 const ok = (t: string) => (t.trim() && printable(t) ? t.trim() : '');
 const cell = (text: string, value: number, kind: Figure['kind'] = 'amount'): Cell =>
   ({ text, figure: { value, kind, decimals: (text.split('.')[1] ?? '').length } });
@@ -47,7 +49,7 @@ export function planDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
   const facts: [string, string][][] = [
     [['Owner', owner || 'Still needed']],
     [['Property', ok(f.property) || 'Still needed']],
-    [['Work', `${v.kind}, ${v.home.toLowerCase()}, ${v.bhk}`], ['Carpet area', v.area]],
+    [['Work', `${v.kind}, ${['Flat', 'House'].includes(v.home) ? v.home.toLowerCase() : v.home}, ${v.bhk}`], [v.areaName, v.area]],
     [['City', v.city], ['Level', v.level]],
     [['Lender', ok(f.lender) || 'Not given'], ['Rates as of', v.ratesDate]],
   ];
@@ -61,7 +63,7 @@ export function planDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
     ],
   };
   const blocks: Block[] = [
-    { kind: 'title', text: v.title, sub: `Planning estimate prepared with ${SITE_NAME} on ${dmy(today)}; rates from the sources in Annex 3.` },
+    { kind: 'title', text: v.title, sub: `Planning estimate prepared with ${SITE_NAME} on ${dmy(today)}.` },
     { kind: 'facts', lines: facts },
   ];
   if (needs.length) blocks.push({ kind: 'box', title: `Provisional: ${needs.length} still needed`, items: needs });
@@ -69,7 +71,7 @@ export function planDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
   blocks.push({ kind: 'text', text: `In words: ${v.words}` });
   blocks.push({ kind: 'figures', items: [
     { label: 'Total estimated cost', value: `Rs. ${v.total}` },
-    { label: 'Cost per sq ft', value: `Rs. ${v.perSqft}`, note: 'of carpet area' },
+    { label: 'Cost per sq ft', value: `Rs. ${v.perSqft}`, note: `of ${v.areaName.toLowerCase()}` },
   ] });
   if (v.split) blocks.push({ kind: 'table', table: { columns: [{ label: 'Of the total' }, { label: 'Rupees' }], rows: v.split.map((x) => ({ cells: [{ text: x.label }, cell(x.amount, x.n)] })) } });
   blocks.push({ kind: 'signature', lines: [`For ${by || 'the engineer or architect who adopts this estimate'}`, '', 'Signature and seal', 'Name and registration number:', 'Date:', 'Place:'] });
@@ -80,7 +82,7 @@ export function planDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
       ...sections.flatMap((x) => [
         { kind: 'head' as const, cells: [{ text: `${x.no}. ${x.name}` }] },
         ...x.lines.map((l) => ({ cells: [
-          { text: `${l.no} ${l.room}: ${l.item}. ${l.spec}${l.brands ? `. ${l.brands}` : ''}${l.sources.length ? ` ${l.sources.map((r) => `[${r.no}]`).join('')}` : ''}` },
+          { text: `${l.no} ${l.room}: ${l.item}. ${l.spec}${l.brands ? `. ${l.brands}` : ''}` },
           { text: l.level || 'All' }, cell(l.qty, l.n.qty, 'quantity'), { text: l.unit }, cell(l.rate, l.n.rate), cell(l.amount, l.n.amount),
         ] })),
         { kind: 'total' as const, cells: [{ text: `Total of ${x.name.toLowerCase()}` }, { text: '' }, { text: '' }, { text: '' }, { text: '' }, cell(x.amount, x.n)] },
@@ -102,17 +104,12 @@ export function planDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
       { name: 'Estimate', blocks },
       { name: 'Detailed estimate', blocks: [
         { kind: 'title', text: 'Annex 1. Detailed estimate', small: true },
-        { kind: 'text', text: 'In rupees; amounts rounded to the rupee, totals from the exact figures. Each rate includes fixing, wastage and the city’s labour; brands are examples at the level, and "or equivalent" means any brand of the same level. The numbers in brackets are the sources in Annex 3.', small: true },
+        { kind: 'text', text: 'In rupees; amounts rounded to the rupee, totals from the exact figures. Each rate includes fixing, wastage and the city’s labour; brands are examples at the level, and "or equivalent" means any brand of the same level.', small: true },
         { kind: 'table', table: detail },
       ] },
-      { name: 'Assumptions and sources', blocks: [
-        { kind: 'title', text: 'Annex 3. Assumptions and sources', small: true },
-        { kind: 'heading', text: 'What the estimate assumes' },
-        { kind: 'list', items: v.assumed.map((a) => `${a.what}: ${a.shown}. ${a.why}`), small: true },
-        { kind: 'heading', text: 'Sources of the rates and rules' },
-        { kind: 'text', text: `Each rate is the middle of the range its sources report, read on ${v.ratesDate}. Each source is listed with its class so that it can be checked.`, small: true },
-        { kind: 'list', items: v.classes.map((c) => `Class ${c.id}: ${c.means}`), small: true },
-        { kind: 'list', items: v.sources.map((x) => `[${x.no}] ${x.what}${x.cls ? ` (class ${x.cls})` : ''}${x.url ? `: ${x.url}` : ''}`), small: true },
+      { name: 'Assumptions', blocks: [
+        { kind: 'title', text: 'Annex 2. What the estimate assumes', small: true },
+        { kind: 'pairs', pairs: v.assumed.filter((a) => !ON_PAGE_1.includes(a.what)).map((a): [string, string] => [a.what, a.shown]) },
       ] },
     ],
   };
