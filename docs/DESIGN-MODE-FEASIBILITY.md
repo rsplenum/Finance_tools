@@ -2,6 +2,8 @@
 
 Written 03-10-2026 at the owner's request: "Prepare a detailed feasibility plan detailing all technical or other challenges that we would have to face in realising this vision." It is a plan for discussion, not a decision. Nothing here is built except what section 13 lists.
 
+**Paused after phase 2 on 03-10-2026 (D-UX-31).** Phases 0 to 2 (the estimate's core, value, the library) go on as the estimate's own work. Phases 3 to 7 (the 2D plan, the 3D view, choosing in 3D, the professional's tools, later) wait here as a plan until the owner reopens them.
+
 ## The short answer
 
 - **Yes, it is possible, built in layers over the estimate we already have.** The engine already works as an architect would: it plans the rooms, measures them by IS 1200, fills each one at five levels and prices every line twice. It already lets the user change a single item, keeps some items fixed at every level, and gives every line a "how we worked this out".
