@@ -123,6 +123,7 @@ out.push('**How the rooms are drawn and measured**', '',
   rule('Debris', `one lot per bathroom and per ${A.debris.sqftPerLot} sq ft of floor taken up.`, A.debris),
   rule('Making good', `${A.makingGood.share * 100}% of the walls.`, A.makingGood),
   rule('Cities', A.cities.list.map((c) => `${c.name} Rs. ${c.cost[0].toLocaleString('en-IN')}–${c.cost[1].toLocaleString('en-IN')} a sq ft`).join('; ') + '.', A.cities),
+  rule('The cities\' ranges', `read as for a house ${A.cities.range.for}; a new house is flagged with the answer outside its city's range at ${levelName(1)} to ${levelName(A.cities.range.upTo)}, and below it at any level (V1).`, A.cities.range),
   rule('GST', `${A.gst.pct}%.`, A.gst),
   rule('Check', `paint ${A.checks.paintRatio[0]}–${A.checks.paintRatio[1]} × the carpet area.`, A.checks),
   '');

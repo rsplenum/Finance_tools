@@ -63,7 +63,7 @@ export interface Rules {
   ac: { from: number; allBedroomsFrom: number } & Sourced;
   debris: { sqftPerLot: number } & Sourced;
   makingGood: { share: number } & Sourced;
-  cities: { list: { id: string; name: string; cost: [number, number] }[] } & Sourced;
+  cities: { list: { id: string; name: string; cost: [number, number] }[]; range: { for: string; upTo: number } & Sourced } & Sourced;
   gst: { pct: number } & Sourced;
   checks: { paintRatio: [number, number] } & Sourced;
   house: {
@@ -157,6 +157,12 @@ export interface Line {
 export interface Unpriced { key: string; roomName: string; name: string; entryName: string; qty: number; unit: Unit }
 export interface SectionTotal { id: string; name: string; on: boolean; slider: boolean; level: Level | null; amount: number; lines: number }
 export interface Assumption { what: string; shown: string; why: string; src: string[] }
+/**
+ * Something to check (A8). `decides` when the answers raised it, a figure outside what the rules or the sources expect or
+ * an item with no rate, so it can change the decision; the rest hold for every estimate of its kind. `n` is the rupees of
+ * the estimate it is about (the total, a section, a room's items), so the largest come first (V1).
+ */
+export interface Flag { text: string; decides: boolean; n: number }
 /** A new house's plot: its sides in metres (the longer one its length), whether they are the user's, and whether the outline fits in it. */
 export interface Plot { l: number; b: number; sqm: number; own: boolean; fits: boolean }
 /** A new house's outline: lengths in metres, areas in sq m, each floor alike; a stair on each floor and a cabin over the top one. */
@@ -181,7 +187,8 @@ export interface ArchitectEstimate {
   shares: RoomShare[];
   /** The rooms below the Code's minimum: the minimum in sq m, by the room's id. Flagged, never changed. */
   below: Record<string, number>;
-  assumptions: Assumption[]; flags: string[]; ratesDate: string;
+  /** Largest first; the page shows those that decide with the answer and the rest one tap away (V1). */
+  assumptions: Assumption[]; flags: Flag[]; ratesDate: string;
 }
 
 const LEVEL_NAMES = R.levels.map((l) => l.name);
@@ -775,43 +782,58 @@ function houseAssumed(ctx: Ctx, h: House, side: (x: number) => string, m: boolea
   ];
 }
 
-function flags(ctx: Ctx, bhk: Bhk, carpetSqft: number, lines: Line[], unpriced: Unpriced[], factor: number | null, perSqft: number, roomsSqm: number, plannedSqm: number, below: Record<string, number>): string[] {
-  const out: string[] = [];
+function flags(ctx: Ctx, bhk: Bhk, carpetSqft: number, lines: Line[], unpriced: Unpriced[], factor: number | null, perSqft: number, roomsSqm: number, plannedSqm: number, below: Record<string, number>): Flag[] {
+  const out: Flag[] = [];
   const sqft = (x: number) => inr(Math.round(x * SQFT_PER_SQM)), picked = worded(ctx.rooms);
+  // What each flag is about, in rupees, to put the largest first: the whole estimate, a section, the rooms' items or a room's.
+  const sum = (f: (l: Line) => boolean) => r2(lines.filter(f).reduce((t, l) => t + l.amount, 0));
+  const total = sum(() => true), section = (id: string) => sum((l) => l.section === id), inRooms = sum((l) => l.room !== null);
+  const check = (text: string, n: number) => out.push({ text, decides: true, n });
+  const note = (text: string, n: number) => out.push({ text, decides: false, n });
   for (const r of ctx.rooms) {
     const want = below[r.id];
-    if (want) out.push(r.typed
+    if (want) check(r.typed
       ? `${r.name} is ${f2(r.sqm)} sq m as you sized it, below the Code's ${want} sq m.`
       : picked
         ? `${r.name} works out at ${f2(r.sqm)} sq m with the sizes picked, below the Code's ${want} sq m: make it larger, or another room smaller.`
-        : `${r.name} works out at ${f2(r.sqm)} sq m, below the Code's ${want} sq m: is the carpet area right for ${BHKS.find((b) => b.id === bhk)?.label}?`);
+        : `${r.name} works out at ${f2(r.sqm)} sq m, below the Code's ${want} sq m: is the carpet area right for ${BHKS.find((b) => b.id === bhk)?.label}?`, sum((l) => l.room === r.id));
   }
-  if (ctx.rooms.some((r) => r.typed) && sqft(roomsSqm) !== sqft(plannedSqm)) out.push(`With your sizes the rooms and the passage come to ${sqft(roomsSqm)} sq ft, against the ${sqft(plannedSqm)} sq ft the carpet area leaves for them after the inside walls: check the sizes, or the carpet area.`);
-  if (ctx.on('furniture')) out.push(`The furniture is ${ctx.rooms.some((r) => r.kind === 'living') ? 'a sofa and a dining set for the living room, and ' : ''}a bed and a mattress for each bedroom; side tables, a study desk, rugs and bed linen are not in yet.`);
-  if (ctx.on('furnishings')) out.push(`The soft furnishings are curtains for each window of ${ctx.rooms.some((r) => r.kind === 'living') ? 'the living room and ' : ''}the bedrooms; blinds and cushions are not in yet.`);
-  if (ctx.home === 'house' && !ctx.house) out.push('A house: its rooms inside are worked out as a flat\'s of the same carpet area and bedrooms. The terrace, the outside walls, the compound and the water tank are not in this estimate yet.');
+  if (ctx.rooms.some((r) => r.typed) && sqft(roomsSqm) !== sqft(plannedSqm)) check(`With your sizes the rooms and the passage come to ${sqft(roomsSqm)} sq ft, against the ${sqft(plannedSqm)} sq ft the carpet area leaves for them after the inside walls: check the sizes, or the carpet area.`, inRooms);
+  if (ctx.on('furniture')) note(`The furniture is ${ctx.rooms.some((r) => r.kind === 'living') ? 'a sofa and a dining set for the living room, and ' : ''}a bed and a mattress for each bedroom; side tables, a study desk, rugs and bed linen are not in yet.`, section('furniture'));
+  if (ctx.on('furnishings')) note(`The soft furnishings are curtains for each window of ${ctx.rooms.some((r) => r.kind === 'living') ? 'the living room and ' : ''}the bedrooms; blinds and cushions are not in yet.`, section('furnishings'));
+  if (ctx.home === 'house' && !ctx.house) note('A house: its rooms inside are worked out as a flat\'s of the same carpet area and bedrooms. The terrace, the outside walls, the compound and the water tank are not in this estimate yet.', total);
   if (ctx.house) {
     const h = ctx.house, riser = h.floorToFloor / (2 * (R.house.stair.treads + 1)), unit = ctx.input.areaUnit === 'sqm' ? 'm' : 'ft';
     const side = (x: number) => (unit === 'm' ? f2(x) : f2(x * FT_PER_M));
-    out.push('The structure\'s materials and labour are rules of thumb for each sq ft of built-up area (as reported). A structural engineer\'s design and quantities replace them; more floors, poor soil or seismic zone IV or V usually need more steel.');
-    out.push(`The rooms are planned as one home of ${Math.round(carpetSqft)} sq ft of carpet area, the built-up area less the outer walls and the stairs; how they sit on each floor is not drawn yet.`);
-    if (!h.plot.fits) out.push(`Your plot, ${side(h.plot.l)} × ${side(h.plot.b)} ${unit}, is smaller than the house's outline, ${side(h.l)} × ${side(h.b)} ${unit}: check the plot's size, or the built-up area and the floors.`);
-    out.push('The compound wall runs round all four sides of the plot and the paving covers all the open ground round the house: take off a side that a neighbour\'s wall already closes, or a garden left unpaved.');
-    if (riser > 0.19 + 1e-9) out.push(`The stairs' risers come to ${Math.round(riser * 1000)} mm, above the Code's 190 mm for a house: a floor this tall needs more steps than the rule's ${2 * (R.house.stair.treads + 1)}.`);
-    out.push('Rainwater harvesting is one recharge pit with a filter: many cities require it on a new house and some size it by the roof, so check your city\'s rule.');
-    out.push('Not in this estimate yet: a borewell; the plan\'s approval fees, the labour cess and the electricity and water connections.');
-    const c = R.cities.list.find((x) => x.id === ctx.input.city);
-    if (c && (perSqft < c.cost[0] || perSqft > c.cost[1])) out.push(`This estimate comes to Rs. ${inr(perSqft)} a sq ft of built-up area; houses in ${c.name} are reported at Rs. ${inr(c.cost[0])}–${inr(c.cost[1])} a sq ft (as reported).`);
+    note('The structure\'s materials and labour are rules of thumb for each sq ft of built-up area (as reported). A structural engineer\'s design and quantities replace them; more floors, poor soil or seismic zone IV or V usually need more steel.', section('structure'));
+    note(`The rooms are planned as one home of ${Math.round(carpetSqft)} sq ft of carpet area, the built-up area less the outer walls and the stairs; how they sit on each floor is not drawn yet.`, inRooms);
+    if (!h.plot.fits) check(`Your plot, ${side(h.plot.l)} × ${side(h.plot.b)} ${unit}, is smaller than the house's outline, ${side(h.l)} × ${side(h.b)} ${unit}: check the plot's size, or the built-up area and the floors.`, section('outside'));
+    note('The compound wall runs round all four sides of the plot and the paving covers all the open ground round the house: take off a side that a neighbour\'s wall already closes, or a garden left unpaved.', section('outside'));
+    if (riser > 0.19 + 1e-9) check(`The stairs' risers come to ${Math.round(riser * 1000)} mm, above the Code's 190 mm for a house: a floor this tall needs more steps than the rule's ${2 * (R.house.stair.treads + 1)}.`, section('exterior'));
+    note('Rainwater harvesting is one recharge pit with a filter: many cities require it on a new house and some size it by the roof, so check your city\'s rule.', section('water'));
+    note('Not in this estimate yet: a borewell; the plan\'s approval fees, the labour cess and the electricity and water connections.', total);
+    // The cities' range is read as a standard finish's (V1): outside it at Basic or Standard, or below it at any level,
+    // the estimate is out of line and the flag goes with the answer; above it at Premium and up is to be expected.
+    const c = R.cities.list.find((x) => x.id === ctx.input.city), range = R.cities.range, level = ctx.input.level as Level;
+    if (c && (perSqft < c.cost[0] || perSqft > c.cost[1])) {
+      const reported = `houses in ${c.name} ${range.for} are reported at Rs. ${inr(c.cost[0])}–${inr(c.cost[1])} a sq ft (as reported)`;
+      if (perSqft < c.cost[0] || level <= range.upTo) check(`This estimate comes to Rs. ${inr(perSqft)} a sq ft of built-up area; ${reported}.`, total);
+      else note(`At ${LEVEL_NAMES[level - 1]} this estimate comes to Rs. ${inr(perSqft)} a sq ft of built-up area; ${reported}, and dearer finishes cost more.`, total);
+    }
   }
+  // A flat's usual carpet area for its bedrooms: off it, the area typed may be the wrong one (V1). A new house's rooms are
+  // what its floors leave, so the range is only a note there.
   const typical = R.programmes[bhk].typical;
-  if (typical && (carpetSqft < typical[0] || carpetSqft > typical[1])) out.push(`A ${BHKS.find((b) => b.id === bhk)?.label} is usually ${typical[0]}–${typical[1]} sq ft of carpet area; yours is ${Math.round(carpetSqft)}.`);
+  if (typical && (carpetSqft < typical[0] || carpetSqft > typical[1])) (ctx.house ? note : check)(`A ${BHKS.find((b) => b.id === bhk)?.label} is usually ${typical[0]}–${typical[1]} sq ft of carpet area; yours is ${Math.round(carpetSqft)}.`, total);
+  // The paint against the carpet area checks the sizes typed; with the rooms as planned (and a house's stair walls) it is a note.
   const paint = lines.filter((l) => l.family === 'paint').reduce((s, l) => s + l.qty, 0);
   const ratio = paint / carpetSqft, [lo, hi] = R.checks.paintRatio;
-  if (paint > 0 && (ratio < lo || ratio > hi)) out.push(`The walls and ceilings to paint come to ${ratio.toFixed(2)} times the carpet area, outside the usual ${lo}–${hi}: check the room sizes.`);
-  if (factor === null) out.push('No city figure for your city: the rates are used as they are.');
-  for (const u of unpriced) out.push(`${u.roomName}, ${u.name.toLowerCase()}: ${u.entryName} has no rate yet, so it is left out of the total.`);
-  out.push('Rates are as reported by their sources and not yet checked against them: a planning estimate, until a contractor, architect or engineer adopts it.');
-  return out;
+  if (paint > 0 && (ratio < lo || ratio > hi)) (ctx.rooms.some((r) => r.typed) ? check : note)(`The walls and ceilings to paint come to ${ratio.toFixed(2)} times the carpet area, outside the usual ${lo}–${hi}: check the room sizes.`, sum((l) => l.family === 'paint'));
+  if (factor === null) check('No city figure for your city: the rates are used as they are.', total);
+  // An item with no rate is not in any amount: it comes after the flags with one.
+  for (const u of unpriced) check(`${u.roomName}, ${u.name.toLowerCase()}: ${u.entryName} has no rate yet, so it is left out of the total.`, 0);
+  // Sorted by what each is about, largest first; Array.prototype.sort is stable, so equal ones keep the order above.
+  return out.sort((a, b) => b.n - a.n);
 }
 
 const money = (a: number, b: number, tol: number) => Math.abs(a - b) <= tol;

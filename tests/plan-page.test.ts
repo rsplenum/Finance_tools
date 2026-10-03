@@ -75,7 +75,7 @@ describe('the answer, worded from the engine', () => {
   it('a house: the same rooms inside, said so', () => {
     const h = view({ ...FLAT, home: 'house' });
     expect(h.total).toBe(v.total);
-    expect(h.flags[0]).toMatch(/^A house: its rooms inside/);
+    expect(h.notes[0]).toMatch(/^A house: its rooms inside/);
   });
 });
 
@@ -388,5 +388,25 @@ describe('R2 on the page: rooms by buttons', () => {
   it('a new count of bedrooms from the question keeps the bathrooms of one\'s own, made common where their bedroom is gone, and brings the plan\'s own when they were the plan\'s', () => {
     expect(withBhk({ ...FLAT, bhk: '3', baths: ['bedroom-3', null] }, '2').baths).toEqual([null, null]);
     expect(withBhk({ ...FLAT, baths: ['bedroom-1', null] }, '3').baths).toBeUndefined();
+  });
+});
+
+describe('V1 on the page: short by default', () => {
+  const interiors = view(withKind(FLAT, 'interiors'));
+  it('the flags that can change the decision go with the answer and the rest one tap away, each largest first', () => {
+    expect(interiors.flags).toEqual(['A 2 BHK is usually 650–850 sq ft of carpet area; yours is 1000.']);
+    expect(interiors.notes.map((f) => f.slice(0, 26))).toEqual(['The furniture is a sofa an', 'The soft furnishings are c']);
+  });
+  it('the rates as reported in one line by the total, for the city or another place', () => {
+    expect(interiors.ratesLine).toMatch(/^A planning estimate: rates as reported on \d\d-\d\d-\d{4} for Pune, not yet checked$/);
+    expect(view({ ...FLAT, city: 'other' }).ratesLine).toMatch(/for another place, at the six cities’ average, not yet checked$/);
+    expect([...interiors.flags, ...interiors.notes].some((f) => f.startsWith('Rates are as reported'))).toBe(false);
+  });
+  it('each section\'s amount in the package orders the list, steady while its slider moves', () => {
+    const e = architect(inputOf(FLAT)) as ArchitectEstimate, runs = levelRuns(inputOf(FLAT)) as LevelRuns, v = view(FLAT);
+    for (const x of v.sections.filter((y) => y.on)) expect(x.pkg, x.id).toBe(runs.sections[x.id][e.level - 1]);
+    const floor = v.sections.find((x) => x.id === 'flooring')!;
+    const moved = view(withSlider(FLAT, 'flooring', 4, floor.lines.map((l) => l.key))).sections.find((x) => x.id === 'flooring')!;
+    expect([moved.n > floor.n, moved.pkg]).toEqual([true, floor.pkg]);
   });
 });

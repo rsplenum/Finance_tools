@@ -1,11 +1,12 @@
 /**
- * The planning estimate (E1, E3): six questions, then the estimate worked out as an architect would. The total, the cost
- * a sq ft and the five levels come first, with Compare (each section at each level) closed under them; then the total by
- * section, a card for each section with its slider, the items with their drawer (the family's five levels and its other
- * items, brands, and how each line was worked out), the rooms (the bar of shares; rooms added or taken out; each one's size
- * by a word or typed, and its own level; closed until opened), what
- * the estimate assumes, what to check, and the planning estimate to download. The bar at the bottom says what the last
- * change did. Figures: engine/architect.ts only, via plan-model.ts.
+ * The planning estimate (E1, E3, V1): six questions, then the estimate worked out as an architect would, short by default
+ * and deeper by tapping. The answer: the total, the cost a sq ft with the rates' line, the five levels (Compare and a new
+ * house's stages closed under them), each section as one line with its amount, and the flags that can change the
+ * decision, largest first. One tap away, each with its count: a section's switch, slider and items; the other things to
+ * check; what the estimate assumes; the rooms (the bar of shares; rooms added or taken out; each one's size by a word or
+ * typed, and its own level). Two taps: an item's drawer (the family's five levels and its other items, brands, and how
+ * the line was worked out, with its sources). Then the planning estimate to download; the bar at the bottom says what the
+ * last change did. Figures: engine/architect.ts only, via plan-model.ts.
  */
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { BUTTON, Choice, HINT, LABEL, Section, SelectField, SourceNote, TextField } from '../fields';
@@ -62,10 +63,9 @@ export function PlanEstimate() {
     {p.blocked && <p data-testid="pl-blocked" class="mt-4 text-sm text-red-700 dark:text-red-300">{p.blocked}</p>}
     {v && <>
       <Answer v={v} update={update} heading={result} />
-      <Cards s={s} v={v} update={update} />
+      <Sections s={s} v={v} update={update} />
+      <Checks s={s} v={v} update={update} />
       <Rooms s={s} v={v} update={update} />
-      <Assumed s={s} v={v} update={update} />
-      <Flags v={v} />
       <Download s={s} p={p} update={update} />
       <div data-testid="pl-sticky" class="sticky bottom-0 z-10 -mx-4 mt-8 border-t border-slate-300 bg-white/95 px-4 py-3 backdrop-blur dark:border-slate-700 dark:bg-slate-950/95">
         {/* What changed (A8): one line after a change, said aloud as it comes. */}
@@ -131,12 +131,13 @@ function Questions({ s, update, p, done }: { s: PlanState; update: Update; p: Pl
   </div>;
 }
 
-/** The answer: the total, the cost a sq ft, the five levels and the total by section (A8). */
+/** The answer (A8, V1): the total, the cost a sq ft and the rates' line by it, the five levels, Compare and a new house's stages. */
 function Answer({ v, update, heading }: { v: PlanView; update: Update; heading: { current: HTMLHeadingElement | null } }) {
   return <section id="pl-result" aria-labelledby="pl-result-h" class="mt-6">
     <h2 id="pl-result-h" ref={heading} tabIndex={-1} class="sr-only">The estimate</h2>
     <p data-testid="pl-total" class={`text-3xl font-semibold tabular-nums ${INK}`}>Rs. {v.total}</p>
     <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="tabular-nums">Rs. {v.perSqft}</span> a sq ft of {v.areaName.toLowerCase()}</p>
+    <p data-testid="pl-rates" class={`mt-1 text-sm ${MUTED}`}>{v.ratesLine}</p>
     <div role="group" aria-label="The total at each level; choose one to switch the package" class="mt-4 grid grid-cols-5 gap-1.5">
       {v.strip.map((x) => <button key={x.level} type="button" data-testid={`pl-strip-${x.level}`} aria-pressed={x.current} aria-label={`${x.name}: Rs. ${x.full}`}
         title={`Rs. ${x.full}`} onClick={() => update((s) => withLevel(s, x.level))}
@@ -148,54 +149,68 @@ function Answer({ v, update, heading }: { v: PlanView; update: Update; heading: 
     <p class={`mt-1 text-xs ${MUTED}`}>Each level as a package; tap one to switch.</p>
     <Compare v={v} />
     {v.stages && <Stages v={v} />}
-    <h3 class={`mt-5 text-sm font-medium ${INK}`}>By section</h3>
-    <ul data-testid="pl-bar" class="mt-1 space-y-1">
-      {[...v.bar].sort((a, b) => b.n - a.n).map((x) => <li key={x.id}>
-        <a href={`#pl-card-${x.id}`} data-testid={`pl-bar-${x.id}`} class="block rounded px-1 py-0.5 hover:bg-slate-50 dark:hover:bg-slate-800">
-          <span class={`flex justify-between gap-3 text-sm ${INK}`}><span>{x.name}</span><span class="tabular-nums">{x.amount}</span></span>
-          <span aria-hidden="true" class="mt-0.5 block h-1.5 rounded-r bg-teal-600 dark:bg-teal-400" style={{ width: `${x.width}%` }} />
-        </a>
-      </li>)}
-    </ul>
-    {v.split && <p data-testid="pl-split" class={`mt-3 text-sm ${INK}`}>{v.split.map((x) => `${x.label} Rs. ${x.amount}`).join(' · ')}</p>}
-    <p data-testid="pl-rates" class={`mt-3 text-sm ${MUTED}`}>{v.ratesLine}</p>
   </section>;
 }
 
-/** A card for each section: on or off, its slider of five stops, its line of specification, its amount and its items. */
-function Cards({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) {
-  const [shown, setShown] = useState<Record<string, boolean>>({});
+/** A chevron for a line that opens, turned down when open; drawn, so it adds no word to the page. */
+const CHEVRON = <svg aria-hidden="true" viewBox="0 0 20 20" class="size-4 shrink-0 text-slate-500 transition-transform group-open:rotate-90 dark:text-slate-400">
+  <path fill="currentColor" d="M7.3 4.3a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1 0 1.4l-5 5a1 1 0 1 1-1.4-1.4L11.6 10 7.3 5.7a1 1 0 0 1 0-1.4z" />
+</svg>;
+
+/**
+ * The sections (V1): one line each with its count of items and its amount, the largest in the package first and those
+ * off last, so a slider moves no line. A tap opens the section: its switch, its slider and its items, each with Change
+ * for its drawer. The items are drawn only while the section is open.
+ */
+function Sections({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) {
+  const [opened, setOpened] = useState<Record<string, boolean>>({});
   const [open, setOpen] = useState<string | null>(null);
-  return <Section id="pl-sections" title="Sections">
-    <ul class="mt-4 space-y-3">
-      {v.sections.map((x) => <li key={x.id}>
-        <article id={`pl-card-${x.id}`} data-testid={`pl-card-${x.id}`} aria-labelledby={`pl-card-${x.id}-h`} class={CARD}>
-          <div class="flex items-center justify-between gap-3">
-            <h3 id={`pl-card-${x.id}-h`} class={`font-medium ${INK}`}>{x.name}</h3>
-            <label for={`fld-on-${x.id}`} class={`flex items-center gap-2 text-sm ${INK}`}>
-              <input type="checkbox" role="switch" id={`fld-on-${x.id}`} checked={x.on} onChange={(e) => update((st) => withSection(st, x.id, (e.currentTarget as HTMLInputElement).checked))}
-                class="size-5 text-base accent-teal-700 dark:accent-teal-500" />
-              {x.on ? 'On' : 'Off'}
-            </label>
-          </div>
-          {x.on && <>
-            {x.slider ? <Slider s={s} x={x} update={update} /> : <p class={`mt-1 text-sm ${MUTED}`}>The same at every level</p>}
-            <p data-testid={`pl-spec-${x.id}`} class={`mt-2 text-sm ${INK}`}>{x.spec || 'Nothing at this level'}</p>
-            {x.where && <p class={`text-sm ${MUTED}`}>{x.where}</p>}
-            <div class="mt-2 flex flex-wrap items-baseline justify-between gap-2">
-              <p data-testid={`pl-amount-${x.id}`} class={`font-semibold tabular-nums ${INK}`}>Rs. {x.amount}</p>
-              {x.over && <p data-testid={`pl-over-${x.id}`} class={`text-sm tabular-nums ${MUTED}`}>{x.over.text}</p>}
+  const width = new Map(v.bar.map((b) => [b.id, b.width]));
+  const list = [...v.sections.filter((x) => x.on).sort((a, b) => b.pkg - a.pkg), ...v.sections.filter((x) => !x.on)];
+  return <section id="pl-sections" aria-labelledby="pl-sections-h" class="mt-6">
+    <h2 id="pl-sections-h" class={`text-sm font-medium ${INK}`}>By section</h2>
+    <ul data-testid="pl-bar" class="mt-1 divide-y divide-slate-200 dark:divide-slate-800">
+      {list.map((x) => {
+        // The section's own level, named on its line only when it differs from the package.
+        const own = x.on && x.slider && (x.mixed > 0 || (x.level !== null && x.level !== s.level));
+        return <li key={x.id}>
+          <details id={`pl-card-${x.id}`} data-testid={`pl-card-${x.id}`} class="group"
+            onToggle={(ev) => { const o = (ev.currentTarget as HTMLDetailsElement).open; setOpened((m) => (m[x.id] === o ? m : { ...m, [x.id]: o })); }}>
+            <summary data-testid={`pl-bar-${x.id}`} class="flex cursor-pointer list-none items-center gap-2 rounded px-1 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 [&::-webkit-details-marker]:hidden">
+              <span class="min-w-0 flex-1">
+                <span class={`flex items-baseline justify-between gap-3 text-sm ${INK}`}>
+                  <span class="min-w-0">{x.name}{x.on && x.lines.length > 0 && <> <span class={`ml-1 text-xs ${MUTED}`}>{x.lines.length} item{x.lines.length === 1 ? '' : 's'}</span></>}
+                    {own && <> <span data-testid={`pl-own-${x.id}`} class={`ml-1 text-xs ${MUTED}`}>{x.mixed ? x.mixedText : x.levelName}</span></>}</span>
+                  <span data-testid={`pl-amount-${x.id}`} class={`shrink-0 tabular-nums ${x.on ? '' : MUTED}`}>{x.on ? x.amount : 'Off'}</span>
+                </span>
+                {x.on && x.n > 0 && <span aria-hidden="true" class="mt-1 block h-1.5 rounded-r bg-teal-600 dark:bg-teal-400" style={{ width: `${width.get(x.id) ?? 1}%` }} />}
+              </span>
+              {CHEVRON}
+            </summary>
+            <div class="mb-3 rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900">
+              <div class="flex items-center justify-between gap-3">
+                <p class={`min-w-0 text-sm ${MUTED}`}>{x.on ? x.where : 'Not in this estimate'}</p>
+                <label for={`fld-on-${x.id}`} class={`flex shrink-0 items-center gap-2 text-sm ${INK}`}>
+                  <input type="checkbox" role="switch" id={`fld-on-${x.id}`} checked={x.on} onChange={(e) => update((st) => withSection(st, x.id, (e.currentTarget as HTMLInputElement).checked))}
+                    class="size-5 text-base accent-teal-700 dark:accent-teal-500" />
+                  <span><span class="sr-only">{x.name}: </span>{x.on ? 'On' : 'Off'}</span>
+                </label>
+              </div>
+              {x.on && <>
+                {x.slider ? <Slider s={s} x={x} update={update} /> : <p class={`mt-1 text-sm ${MUTED}`}>The same at every level</p>}
+                {x.over && <p data-testid={`pl-over-${x.id}`} class={`mt-2 text-sm tabular-nums ${MUTED}`}>{x.over.text}</p>}
+                {x.lines.length === 0 && <p data-testid={`pl-spec-${x.id}`} class={`mt-2 text-sm ${INK}`}>Nothing at this level</p>}
+                {opened[x.id] && x.lines.length > 0 && <ol data-testid={`pl-items-${x.id}`} class="mt-2 divide-y divide-slate-200 dark:divide-slate-700">
+                  {x.lines.map((l) => <Item key={l.key} s={s} v={v} l={l} open={open === l.key} toggle={() => setOpen((k) => (k === l.key ? null : l.key))} update={update} />)}
+                </ol>}
+              </>}
             </div>
-            {x.lines.length > 0 && <button type="button" data-testid={`pl-items-${x.id}`} aria-expanded={!!shown[x.id]} class={`mt-2 ${BUTTON}`}
-              onClick={() => setShown((m) => ({ ...m, [x.id]: !m[x.id] }))}>{shown[x.id] ? 'Hide the items' : `See the ${x.lines.length} item${x.lines.length === 1 ? '' : 's'}`}</button>}
-            {shown[x.id] && <ol class="mt-3 divide-y divide-slate-200 dark:divide-slate-800">
-              {x.lines.map((l) => <Item key={l.key} s={s} v={v} l={l} open={open === l.key} toggle={() => setOpen((k) => (k === l.key ? null : l.key))} update={update} />)}
-            </ol>}
-          </>}
-        </article>
-      </li>)}
+          </details>
+        </li>;
+      })}
     </ul>
-  </Section>;
+    {v.split && <p data-testid="pl-split" class={`mt-3 text-sm ${INK}`}>{v.split.map((x) => `${x.label} Rs. ${x.amount}`).join(' · ')}</p>}
+  </section>;
 }
 
 /** Five stops, snapping; the package's stop marked. Moving it sets every item of the section to that level. */
@@ -304,7 +319,7 @@ function Compare({ v }: { v: PlanView }) {
 function Stages({ v }: { v: PlanView }) {
   const st = v.stages ?? [];
   return <details data-testid="pl-stages" class="mt-2">
-    <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">Stages for a construction loan: what each one costs</summary>
+    <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">Stages for a construction loan</summary>
     <div class="mt-2 overflow-x-auto">
       <table class={`w-full text-xs tabular-nums ${INK}`}>
         <caption class={`text-left text-xs ${MUTED}`}>The structure split by published shares; the rest from the estimate's own items. For planning a loan's payments, not a lender's own schedule.</caption>
@@ -352,9 +367,9 @@ function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) 
   const named = (r: RoomView, what: string) => <><span class="sr-only">{r.name}, </span>{what}</>;
   const side = (r: RoomView, which: 'l' | 'b') => <TextField id={`fld-room-${r.id}-${which}`} class="w-24" label={named(r, `${which === 'l' ? 'Length' : 'Breadth'}, ${unit}`)} inputMode="decimal"
     value={r[which]} placeholder={r.planned[which]} invalid={!!r.bad} onCommit={(t) => update((x) => withRoomSide(x, r.id, which, t, r.name))} />;
-  return <Section id="pl-rooms" title="Rooms">
-    <details data-testid="pl-rooms" class="mt-2">
-      <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">{v.rooms.length} rooms, from your {v.bhk}: add or take out a room, size each one, or give it its own level</summary>
+  return <section id="pl-rooms" aria-labelledby="pl-rooms-h" class="mt-6">
+    <details data-testid="pl-rooms">
+      <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300"><h2 id="pl-rooms-h" class="inline font-medium">Rooms ({v.rooms.length})</h2>: add or take out a room, size each, give one its own level</summary>
       <p class={`mt-3 text-sm ${MUTED}`}>The rooms share the carpet area: a room made larger takes its extra from the others, and a size you type moves no other room. To make them all larger, change the area.</p>
       <Shares v={v} />
       {v.roomsNote && <p data-testid="pl-rooms-note" class="mt-3 text-sm text-amber-900 dark:text-amber-200">{v.roomsNote}</p>}
@@ -403,16 +418,20 @@ function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) 
         {v.add.balcony && <button type="button" data-testid="pl-room-add-balcony" class={BUTTON} onClick={() => update((x) => withBalcony(x, true))}>+ Balcony</button>}
       </div>}
     </details>
-  </Section>;
+  </section>;
 }
 
-/** What the estimate assumes, each with its reason (D-UX-08, D-UX-18); the ceiling height, a new house's plot and its sewer can be changed here. */
+/**
+ * What the estimate assumes, each with its reason (D-UX-08, D-UX-18), behind one line with its count (V1, the owner's
+ * answer of 03-10-2026); the ceiling height, a new house's plot and its sewer can be changed here.
+ */
 function Assumed({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) {
   const [height, setHeight] = useState(false), [plotOpen, setPlot] = useState(false);
   const bad = heightOf(s.height) === null, unit = sideUnit(s.unit), plot = v.plot;
   const plotSide = (which: 'l' | 'b') => plot && <TextField id={`fld-plot-${which}`} class="w-28" label={`Plot ${which === 'l' ? 'length' : 'width'}, ${unit}`} inputMode="decimal"
     value={plot[which]} placeholder={plot.planned[which]} invalid={!!plot.bad} onCommit={(t) => update((x) => withPlotSide(x, which, t))} />;
-  return <Section id="pl-assumed" title="What the estimate assumes">
+  return <details id="pl-assumed" data-testid="pl-assumed" class="mt-2">
+    <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">What the estimate assumes ({v.assumed.length})</summary>
     <ul class="mt-3 space-y-2">
       {v.assumed.map((a, i) => <li key={a.what} data-testid={`pl-assumed-${i}`} class={`text-sm ${INK}`}>
         <span class="font-medium">{a.what}:</span> {a.shown}
@@ -432,15 +451,25 @@ function Assumed({ s, v, update }: { s: PlanState; v: PlanView; update: Update }
         <SourceNote what="Why">{a.why}{a.sources.length ? ` Sources: ${a.sources.map((x) => x.what).join('; ')}.` : ''}</SourceNote>
       </li>)}
     </ul>
-  </Section>;
+  </details>;
 }
 
-function Flags({ v }: { v: PlanView }) {
-  return <Section id="pl-flags" title="To check">
-    <ul data-testid="pl-flags" class="mt-3 list-disc space-y-1 rounded-md border border-amber-300 bg-amber-50 py-3 pr-3 pl-8 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
+/**
+ * What to check (V1): the flags that can change the decision, largest first, with the answer; one tap away, each with its
+ * count, the other things to check and what the estimate assumes.
+ */
+function Checks({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) {
+  return <section id="pl-checks" aria-labelledby="pl-checks-h" class="mt-6">
+    <h2 id="pl-checks-h" class={`text-sm font-medium ${INK}`}>To check</h2>
+    {v.flags.length > 0 && <ul data-testid="pl-flags" class="mt-2 list-disc space-y-1 rounded-md border border-amber-300 bg-amber-50 py-3 pr-3 pl-8 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
       {v.flags.map((f) => <li key={f}>{f}</li>)}
-    </ul>
-  </Section>;
+    </ul>}
+    {v.notes.length > 0 && <details data-testid="pl-notes" class="mt-2">
+      <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">Other things to check ({v.notes.length})</summary>
+      <ul class={`mt-2 list-disc space-y-1 pl-5 text-sm ${INK}`}>{v.notes.map((f) => <li key={f}>{f}</li>)}</ul>
+    </details>}
+    <Assumed s={s} v={v} update={update} />
+  </section>;
 }
 
 /** The document's own facts, asked once, then the planning estimate as a PDF, an Excel copy and a Word copy. */
@@ -455,7 +484,7 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
   const field = (id: keyof PlanFacts, label: string, hint?: string) =>
     <TextField id={`fld-pl-${id}`} label={label} hint={hint} value={f[id]} said={english(f[id])} invalid={!!english(f[id])} onCommit={(t) => set({ [id]: t })} />;
   return <Section id="pl-download" title="Download the planning estimate">
-    <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy and a Word copy to edit, made in your browser from the figures above: the abstract by section, every item (Annex 1) and what the estimate assumes (Annex 2).</p>
+    <p class={`mt-2 ${HINT}`}>A PDF for the lender, with Excel and Word copies to edit, made in your browser: every item and what the estimate assumes.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       {field('owner', 'Owner’s name')}
       {field('property', 'Property’s address')}

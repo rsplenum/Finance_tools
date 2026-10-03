@@ -4,7 +4,7 @@ Generated from `engine/data/library/` by `npm run rules-doc`; edit the data file
 
 Dated 03-10-2026. Read through web-search summaries on 02-10-2026. The pages themselves could not be opened from the session, so every value is as reported and not yet checked against its page (D-UX-18). A value is checked when someone opens the page, reads the figure and sets checked on the source.
 
-362 items in 97 families, from 225 sources. The estimate uses the middle of each range. A family's five levels name one item each (Basic, Standard, Premium, Luxury, Bespoke); every other item in the family is an alternative you can choose instead.
+362 items in 97 families, from 226 sources. The estimate uses the middle of each range. A family's five levels name one item each (Basic, Standard, Premium, Luxury, Bespoke); every other item in the family is an alternative you can choose instead.
 
 ## Civil and repairs
 

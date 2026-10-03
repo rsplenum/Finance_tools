@@ -8,6 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { architect, architectNeeds, changeOf, choicesFor, cityFactor, levelRuns, overPackage, planOpenings, planRooms, strip, type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Level, type LevelRuns, type Stage } from '../engine/architect';
 import { architectCheck, checkRate } from '../engine/architect-check';
 import { price } from '../engine/library';
+import { inr } from '../engine/util';
 import type { Blocked, Needs } from '../engine/dscr';
 
 const SQ = 0.3048 * 0.3048;
@@ -112,13 +113,14 @@ describe('a new house: G+1, 2,000 sq ft built up, 3 BHK, in Pune at Basic, by ha
     expect(e.per).toBe('built-up');
     expect(e.perSqft).toBeCloseTo(e.total / 2000, 2);
     for (const start of ['The structure\'s materials and labour are rules of thumb', 'The rooms are planned as one home of 1570 sq ft', 'Not in this estimate yet: a borewell', 'The compound wall runs round all four sides'])
-      expect(e.flags.some((f) => f.startsWith(start)), start).toBe(true);
+      expect(e.flags.some((f) => f.text.startsWith(start)), start).toBe(true);
     // With the outside works and the water in (E5), Basic comes inside Pune's reported Rs. 1,800–2,900 a sq ft, so no range flag; Bespoke goes above it.
     expect(e.perSqft > 1800 && e.perSqft < 2900).toBe(true);
-    expect(e.flags.some((f) => f.startsWith('This estimate comes to'))).toBe(false);
-    const top = house({ level: 5 });
-    expect(top.flags.some((f) => f.startsWith(`This estimate comes to Rs. ${Math.round(top.perSqft).toLocaleString('en-IN')} a sq ft of built-up area; houses in Pune are reported at Rs. 1,800–2,900`))).toBe(true);
-    expect(e.flags.some((f) => f.startsWith('A house: its rooms inside'))).toBe(false);
+    expect(e.flags.some((f) => f.text.startsWith('This estimate comes to'))).toBe(false);
+    // V1: the range is read as a standard finish's, so above it at Bespoke is a note, not a flag with the answer.
+    const top = house({ level: 5 }), range = top.flags.find((f) => f.text.includes('houses in Pune'));
+    expect(range).toEqual({ text: `At Bespoke this estimate comes to Rs. ${Math.round(top.perSqft).toLocaleString('en-IN')} a sq ft of built-up area; houses in Pune built to a standard finish are reported at Rs. 1,800–2,900 a sq ft (as reported), and dearer finishes cost more.`, decides: false, n: top.total });
+    expect(e.flags.some((f) => f.text.startsWith('A house: its rooms inside'))).toBe(false);
   });
   it('the second computation draws the house its own way and agrees line by line', () => {
     const c = architectCheck({ kind: 'build', floors: 2, city: 'pune', area: 2000, bhk: '3', level: 1 });
@@ -162,7 +164,7 @@ describe('E5: a new house\'s plot, outside works, water, stairs and stages, by h
     const w = house({ sewer: true });
     expect(line(w, 'flat:septic:septic')).toBeUndefined();
     expect(w.unpriced.map((u) => u.key)).toContain('flat:sewer:sewer');
-    expect(w.flags.some((f) => f.includes('Sewer connection has no rate yet'))).toBe(true);
+    expect(w.flags.some((f) => f.text.includes('Sewer connection has no rate yet'))).toBe(true);
     expect(w.total).toBeCloseTo(e.total - 89610, 2);
     expect(w.assumptions.find((a) => a.what === 'Water')?.shown).toContain('the city\'s sewer in place of a septic tank');
   });
@@ -201,7 +203,7 @@ describe('E5: a new house\'s plot, outside works, water, stairs and stages, by h
     expect(own.house?.plot).toMatchObject({ own: true, fits: true });
     const small = house({ plot: { l: 10, b: 8 } });
     expect(small.house?.plot.fits).toBe(false);
-    expect(small.flags.some((f) => f.startsWith('Your plot, 32.81 × 26.25 ft, is smaller than the house\'s outline, 35.36 × 28.28 ft'))).toBe(true);
+    expect(small.flags.some((f) => f.text.startsWith('Your plot, 32.81 × 26.25 ft, is smaller than the house\'s outline, 35.36 × 28.28 ft'))).toBe(true);
     expect(line(small, 'flat:paving:paving')).toBeUndefined();
     expect(architectNeeds({ ...input, plot: { l: 2, b: 9 } })).toEqual(['Each side of the plot from 3 to 300 m']);
   });
@@ -214,11 +216,11 @@ describe('E5: a new house\'s plot, outside works, water, stairs and stages, by h
     expect(architect(input, wrong)).toEqual({ blocked: 'The two computations disagree on the stage Walls and plaster, so no figures are shown. Please report this.' });
   });
   it('the flags: the compound wall and the water are no longer among what is left out; the rainwater pit and the margins to check; risers above 190 mm', () => {
-    expect(e.flags.some((f) => f.startsWith('Not in this estimate yet: a borewell; the plan\'s approval fees'))).toBe(true);
-    expect(e.flags.some((f) => f.includes('the compound wall, gate and paving;'))).toBe(false);
-    expect(e.flags.some((f) => f.startsWith('Rainwater harvesting is one recharge pit'))).toBe(true);
-    expect(e.flags.some((f) => f.startsWith('The stairs\' risers'))).toBe(false);
-    expect(house({ heightM: 3.5 }).flags.some((f) => f.startsWith('The stairs\' risers come to 203 mm'))).toBe(true);
+    expect(e.flags.some((f) => f.text.startsWith('Not in this estimate yet: a borewell; the plan\'s approval fees'))).toBe(true);
+    expect(e.flags.some((f) => f.text.includes('the compound wall, gate and paving;'))).toBe(false);
+    expect(e.flags.some((f) => f.text.startsWith('Rainwater harvesting is one recharge pit'))).toBe(true);
+    expect(e.flags.some((f) => f.text.startsWith('The stairs\' risers'))).toBe(false);
+    expect(house({ heightM: 3.5 }).flags.some((f) => f.text.startsWith('The stairs\' risers come to 203 mm'))).toBe(true);
   });
 });
 
@@ -231,8 +233,8 @@ describe('the estimate', () => {
     const h = run({ property: 'house' }), f = run();
     expect(h.total).toBe(f.total);
     expect(h.property).toBe('house');
-    expect(h.flags.some((x) => x.startsWith('A house: its rooms inside are worked out as a flat\'s'))).toBe(true);
-    expect(f.flags.some((x) => x.startsWith('A house'))).toBe(false);
+    expect(h.flags.some((x) => x.text.startsWith('A house: its rooms inside are worked out as a flat\'s'))).toBe(true);
+    expect(f.flags.some((x) => x.text.startsWith('A house'))).toBe(false);
     expect(h.lines.filter((l) => l.room === null).map((l) => l.roomName)).toEqual(f.lines.filter((l) => l.room === null).map(() => 'Whole house'));
   });
   it('adds up: each line is its quantity × its rate, the sections are the lines, the total is the sections, the cost per sq ft is the total ÷ the carpet area', () => {
@@ -272,14 +274,14 @@ describe('the estimate', () => {
     const e = run({ items: { 'living:floor:floor-skirting': 'fl-granite' } });
     expect(line(e, 'living:floor:floor-skirting')).toBeUndefined();
     expect(e.unpriced.map((u) => u.entryName)).toEqual(['Granite flooring']);
-    expect(e.flags.some((f) => f.includes('Granite flooring has no rate yet'))).toBe(true);
+    expect(e.flags.some((f) => f.text.includes('Granite flooring has no rate yet'))).toBe(true);
   });
   it('flags a room below the Code\'s minimum, and a place with no city figure', () => {
     const tiny = run({ area: 450, bhk: '3' });
-    expect(tiny.flags.some((f) => f.includes('below the Code'))).toBe(true);
+    expect(tiny.flags.some((f) => f.text.includes('below the Code'))).toBe(true);
     const other = run({ city: 'other' });
     expect(other.cityFactor).toBe(1);
-    expect(other.flags).toContain('No city figure for your city: the rates are used as they are.');
+    expect(other.flags.map((f) => f.text)).toContain('No city figure for your city: the rates are used as they are.');
   });
   it('the city factor: Mumbai\'s middle 2,850 against the average 2,425 is 1.1753; Pune\'s 2,350 is 0.9691', () => {
     expect(cityFactor('mumbai')?.toFixed(4)).toBe('1.1753');
@@ -362,7 +364,7 @@ describe('E3: a room of your own size and level, the furniture and soft furnishi
     expect(line(e, 'living:floor:floor-skirting')?.qty).toBe(341.04);
     expect(e.openings.filter((o) => o.room === 'living' && o.type === 'window').length).toBe(3);
     expect(+((e.rooms.find((r) => r.id === 'bedroom-1')?.sqm ?? 0) / SQ).toFixed(2)).toBe(205.42);
-    expect(e.flags).toContain('With your sizes the rooms and the passage come to 987 sq ft, against the 950 sq ft the carpet area leaves for them after the inside walls: check the sizes, or the carpet area.');
+    expect(e.flags.map((f) => f.text)).toContain('With your sizes the rooms and the passage come to 987 sq ft, against the 950 sq ft the carpet area leaves for them after the inside walls: check the sizes, or the carpet area.');
     expect(e.assumptions.find((a) => a.what === 'Rooms')?.shown).toMatch(/^Living and dining 320 sq ft \(20 × 16 ft, your size\); Main bedroom 205 sq ft/);
   });
   it('a room\'s own level stands above the section\'s slider and below an item\'s own choice (A4): the first bathroom at Luxury tiles to the ceiling, 2.9 m less the door, while the second keeps 8 ft; the waterproofing does not move', () => {
@@ -476,7 +478,7 @@ describe('R1: a room\'s size by a word, along its reported range; the rooms shar
     const e = architect(one({ area: 450, roomWords: { living: 'spacious', 'bedroom-1': 'compact', kitchen: 'spacious', 'bath-1': 'spacious' } })) as ArchitectEstimate;
     expect((e.rooms[1].sqm / SQ).toFixed(2)).toBe('93.29');
     expect(e.below).toEqual({ 'bedroom-1': 9.5 });
-    expect(e.flags).toContain('Bedroom works out at 8.67 sq m with the sizes picked, below the Code\'s 9.5 sq m: make it larger, or another room smaller.');
+    expect(e.flags.map((f) => f.text)).toContain('Bedroom works out at 8.67 sq m with the sizes picked, below the Code\'s 9.5 sq m: make it larger, or another room smaller.');
     expect((architect(one({ area: 450 })) as ArchitectEstimate).below).toEqual({});
   });
   it('each kind of room\'s range is in the rules with its source, Medium its middle; a word must be one of the four', () => {
@@ -569,5 +571,50 @@ describe('R2: rooms by buttons; bathrooms added, taken out or attached to a bedr
       expect('total' in e, `${bhk} ${JSON.stringify(baths)}: ${JSON.stringify(e).slice(0, 160)}`).toBe(true);
       expect((e as ArchitectEstimate).shares.reduce((t, x) => t + x.share, 0)).toBeCloseTo(1, 12);
     }
+  });
+});
+
+describe('V1: the flags that can change the decision, largest first', () => {
+  const FT = 0.3048;
+  const build = (x: Partial<ArchitectInput>) => architect({ kind: 'build', floors: 2, city: 'pune', area: 2000, bhk: '3', level: 1, ...x }) as ArchitectEstimate;
+  const decides = (e: ArchitectEstimate) => e.flags.filter((f) => f.decides).map((f) => f.text);
+  it('each flag is about some rupees of the estimate, and they come largest first', () => {
+    for (const e of [run(), build({}), build({ level: 4 }), run({ kind: 'interiors' })]) {
+      expect(e.flags.length).toBeGreaterThan(0);
+      for (let i = 1; i < e.flags.length; i++) expect(e.flags[i - 1].n).toBeGreaterThanOrEqual(e.flags[i].n);
+    }
+  });
+  it('a 2BHK flat of 1,000 sq ft as interiors: its area against the usual decides, the whole estimate; the furniture and soft furnishings are notes, each its section', () => {
+    const e = run({ kind: 'interiors', level: 2 }), sec = (id: string) => e.sections.find((x) => x.id === id)?.amount;
+    expect(e.flags.map((f) => [f.text.slice(0, 30), f.decides, f.n])).toEqual([
+      ['A 2 BHK is usually 650–850 sq ', true, e.total], ['The furniture is a sofa and a ', false, sec('furniture')], ['The soft furnishings are curta', false, sec('furnishings')],
+    ]);
+  });
+  it('the rates as reported are no longer a flag: the page says so by the total', () => {
+    expect(run().flags.some((f) => f.text.startsWith('Rates are as reported'))).toBe(false);
+  });
+  it('a new house\'s standing notes never decide: the structure, the rooms, the compound, the rainwater pit, what is not in yet, its bedrooms\' usual area and the paint', () => {
+    const e = build({});
+    expect(decides(e)).toEqual([]);
+    for (const start of ['The structure\'s materials', 'The rooms are planned as one home', 'The compound wall', 'Rainwater harvesting', 'Not in this estimate yet', 'A 3 BHK is usually', 'The walls and ceilings to paint'])
+      expect(e.flags.find((f) => f.text.startsWith(start))?.decides, start).toBe(false);
+  });
+  it('the city\'s range decides outside it at Basic or Standard and below it at any level; above it at Premium and up it is a note', () => {
+    // A G+0 of 900 sq ft, 2 BHK, comes to Rs. 3,180 a sq ft at Standard, above Pune's Rs. 1,800–2,900; a G+2 of 4,000 sq ft
+    // at Basic to Rs. 1,751, below it.
+    const small = build({ floors: 1, area: 900, bhk: '2', level: 2 }), big = build({ floors: 3, area: 4000, bhk: '4', level: 1 }), prem = build({ floors: 1, area: 900, bhk: '2', level: 3 });
+    expect(decides(small)).toEqual([`This estimate comes to Rs. ${inr(Math.round(small.perSqft))} a sq ft of built-up area; houses in Pune built to a standard finish are reported at Rs. 1,800–2,900 a sq ft (as reported).`]);
+    expect(small.perSqft > 2900 && big.perSqft < 1800 && prem.perSqft > 2900).toBe(true);
+    expect(decides(big)).toEqual([`This estimate comes to Rs. ${inr(Math.round(big.perSqft))} a sq ft of built-up area; houses in Pune built to a standard finish are reported at Rs. 1,800–2,900 a sq ft (as reported).`]);
+    expect(decides(prem)).toEqual([]);
+    expect(prem.flags.find((f) => f.text.startsWith('At Premium this estimate comes to'))?.decides).toBe(false);
+  });
+  it('what your own figures raise decides: a plot smaller than the house, risers above the Code, sizes that do not add up, a place with no city figure, an item with no rate', () => {
+    expect(build({ plot: { l: 10, b: 8 } }).flags.find((f) => f.text.startsWith('Your plot'))?.decides).toBe(true);
+    expect(build({ heightM: 3.5 }).flags.find((f) => f.text.startsWith('The stairs\' risers'))?.decides).toBe(true);
+    expect(run({ rooms: { living: { l: 16 * FT, b: 20 * FT } } }).flags.find((f) => f.text.startsWith('With your sizes'))?.decides).toBe(true);
+    expect(run({ city: 'other' }).flags.find((f) => f.text.startsWith('No city figure'))?.decides).toBe(true);
+    const granite = run({ items: { 'living:floor:floor-skirting': 'fl-granite' } }).flags.find((f) => f.text.includes('has no rate yet'));
+    expect([granite?.decides, granite?.n]).toEqual([true, 0]);
   });
 });
