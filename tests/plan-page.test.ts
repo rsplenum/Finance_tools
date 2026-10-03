@@ -105,15 +105,45 @@ describe('sliders, items and brands', () => {
     expect(line({ ...FLAT, brands: { [key]: 'Somany' } }).brands).toBe('Brand: Somany');
     expect(line({ ...FLAT, brands: { [key]: 'Nobody' } }).brands).toBe('Kajaria, Somany, Simpolo, Johnson or equivalent');
   });
-  it('the drawer: the five levels with the package marked, the line\'s item current, other choices, and how it was worked out', () => {
+  it('the drawer (L1): the choices at the line\'s level first under its name, its item marked and current; each other level\'s after, the cheapest level first, closed, each item once; how it was worked out', () => {
     const v = view(FLAT), d = drawerView(FLAT, v, 'living:floor:floor-skirting')!;
-    expect(d.rungs.map((x) => x.label)).toEqual(['Basic', 'Standard', 'Premium', 'Luxury', 'Bespoke']);
-    expect(d.rungs.map((x) => x.pkg)).toEqual([false, true, false, false, false]);
-    expect(d.rungs[1].current).toBe(true);
-    expect(d.rungs[0].rate).toBe('Rs. 114.09 a sq ft');
-    expect(d.others.length).toBeGreaterThan(10);
+    expect(d.groups.map((g) => g.title)).toEqual(['At Standard: 8 choices', 'At Basic: 5 choices', 'At Premium: 8 choices', 'At Luxury: 6 choices', 'At Bespoke: 4 choices']);
+    expect(d.groups.map((g) => g.open)).toEqual([true, false, false, false, false]);
+    expect(d.groups[0].choices[0]).toMatchObject({ id: 'fl-gvt-800', mark: 'the level’s item', current: true });
+    expect(d.groups[0].choices.slice(1).every((x) => x.mark === '' && !x.current)).toBe(true);
+    expect(d.groups[1].choices[0]).toMatchObject({ id: 'fl-vit-dc-600', rate: 'Rs. 114.09 a sq ft', mark: 'the level’s item', current: false });
+    expect(d.groups[2].choices.find((x) => x.id === 'fl-granite')).toMatchObject({ rate: 'No rate yet', usable: false });
+    const ids = d.groups.flatMap((g) => g.choices.map((x) => x.id));
+    expect(ids.length).toBe(new Set(ids).size);
     expect(d.how.quantity).toMatch(/floor .* sq m, and skirting/);
     expect(d.how.amount).toMatch(/^303\.03 sq ft × Rs\. [\d,.]+ = Rs\. [\d,]+$/);
+  });
+  it('the drawer follows the line\'s own level, names the package\'s level where it differs, and opens the level holding an item of your own', () => {
+    const key = 'living:floor:floor-skirting';
+    const slid = withSlider(FLAT, 'flooring', 4, view(FLAT).sections.find((x) => x.id === 'flooring')!.lines.map((l) => l.key));
+    expect(drawerView(slid, view(slid), key)!.groups.map((g) => g.title)).toEqual(['At Luxury: 6 choices', 'At Basic: 5 choices', 'At Standard (the package): 8 choices', 'At Premium: 8 choices', 'At Bespoke: 4 choices']);
+    const kota = withItem(FLAT, key, 'fl-kota');
+    const d = drawerView(kota, view(kota), key)!;
+    expect(d.groups.map((g) => g.open)).toEqual([true, true, false, false, false]);
+    expect(d.groups[1].choices.find((x) => x.id === 'fl-kota')?.current).toBe(true);
+    const fixed = drawerView(FLAT, view(FLAT), 'flat:debris:debris')!;
+    expect(fixed.groups.map((g) => g.title)).toEqual(['At Standard: 1 choice']);
+    expect(fixed.groups[0].choices[0]).toMatchObject({ mark: 'every level', current: true });
+  });
+});
+
+describe('L1 on the page: the level\'s range under the total', () => {
+  it('from the cheapest priced choice at the level in every item to the dearest, with how many items offer a choice; "as a package" when the estimate is not the package', () => {
+    const r = (levelRuns(inputOf(FLAT)) as LevelRuns).range, v = view(FLAT);
+    expect(r.low < v.n.total && v.n.total < r.high).toBe(true);
+    expect(v.range.text).toBe(`At Standard, the choices run from Rs. ${inr(r.low)} to Rs. ${inr(r.high)}: the cheapest in each item to the dearest. ${r.lines} of the ${r.of} items offer a choice.`);
+    const slid = withSlider(FLAT, 'flooring', 4, v.sections.find((x) => x.id === 'flooring')!.lines.map((l) => l.key));
+    expect(view(slid).range.text).toBe(v.range.text.replace('At Standard,', 'At Standard as a package,'));
+  });
+  it('says so when no item offers a choice at the level', () => {
+    const all = view(FLAT).sections.map((x) => x.id), only = (id: string) => ({ ...FLAT, sections: Object.fromEntries(all.map((x) => [x, x === id])) });
+    expect(view(only('wardrobes')).range.text).toBe('At Standard, each of the 6 items has one choice.');
+    expect(view(only('nothing')).range.text).toBe('');
   });
 });
 

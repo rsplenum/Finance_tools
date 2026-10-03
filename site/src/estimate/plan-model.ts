@@ -340,6 +340,8 @@ export interface LineView {
   key: string; no: string; room: string; name: string; entry: string; item: string; spec: string;
   /** "Kajaria, Somany or equivalent", or the brand chosen. */
   brands: string; brand?: string; level: string; chosen: boolean;
+  /** The level whose item the line takes, for the drawer's first choices (L1). */
+  at: Level;
   qty: string; unit: string; rate: string; amount: string; n: { qty: number; rate: number; amount: number };
   kind: string; how: string; rateHow: string[]; sources: SourceView[]; note?: string;
 }
@@ -403,6 +405,8 @@ export interface PlanView {
   assumed: AssumedView[]; flags: string[]; notes: string[]; unpriced: string[];
   /** One line by the total: a planning estimate, its rates as reported on their date for the city, not yet checked. */
   ratesLine: string; ratesDate: string;
+  /** One line under the total (L1): the chosen level's range, from the cheapest priced choice at it in every item to the dearest; empty with no items. */
+  range: { text: string; low: number; high: number; lines: number; of: number };
   /** Every source the lines and the assumptions use, numbered in order of first use, and what each class means; on the page only. */
   sources: SourceView[]; classes: { id: string; means: string }[];
 }
@@ -483,9 +487,24 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
     bar, sections, ...(split ? { split } : {}), assumed, flags: e.flags.filter((f) => f.decides).map((f) => f.text), notes: e.flags.filter((f) => !f.decides).map((f) => f.text),
     unpriced: e.unpriced.map((u) => `${u.roomName}, ${u.name.toLowerCase()}: ${u.entryName}`),
     ratesLine: `A planning estimate: rates as reported on ${dmy(e.ratesDate)} for ${listed ? city : 'another place, at the six cities’ average'}, not yet checked`,
+    range: rangeOf(e, runs),
     ratesDate: dmy(LIBRARY_DATE), sources: [...numbered.values()],
     classes: Object.entries(CLASSES).filter(([id]) => [...numbered.values()].some((x) => x.cls === id)).map(([id, means]) => ({ id, means })),
   };
+}
+
+/**
+ * The chosen level's range in one line (L1): the package at that level, from the cheapest priced choice at it in every item to
+ * the dearest, and how many items offer more than one; "as a package" when the estimate is not the package. Empty when no
+ * section is on.
+ */
+function rangeOf(e: ArchitectEstimate, runs: LevelRuns): PlanView['range'] {
+  const r = runs.range, name = levelName(e.level), items = (n: number) => `${n} item${n === 1 ? '' : 's'}`;
+  const at = `At ${name}${Math.abs(e.total - runs.totals[e.level - 1]) >= 0.005 ? ' as a package' : ''}`;
+  const text = !r.of ? '' : r.lines
+    ? `${at}, the choices run from Rs. ${rupees(r.low)} to Rs. ${rupees(r.high)}: the cheapest in each item to the dearest. ${r.lines} of the ${items(r.of)} offer a choice.`
+    : `${at}, each of the ${items(r.of)} has one choice.`;
+  return { text, low: r.low, high: r.high, lines: r.lines, of: r.of };
 }
 
 /** The rooms as planned or sized, in the page's unit, each with its own level. */
@@ -552,7 +571,7 @@ function lineView(s: PlanState, l: Line, no: string, sourceOf: (id: string) => S
   const brands = chosen ? `Brand: ${chosen}` : l.brands.length ? `${l.brands.join(', ')} or equivalent` : '';
   return {
     key: l.key, no, room: l.roomName, name: l.name, entry: l.entry, item: l.entryName, spec: l.spec, brands, ...(chosen ? { brand: chosen } : {}),
-    level: l.level ? levelName(l.level) : '', chosen: l.chosen,
+    level: l.level ? levelName(l.level) : '', chosen: l.chosen, at: l.at,
     qty: lineQty(l.qty, l.unit), unit: unitText(l.unit), rate: rateText(l.rate), amount: rupees(l.amount), n: { qty: l.qty, rate: l.rate, amount: l.amount },
     kind: KIND_WORD[l.kind], how: l.how, rateHow: l.rateHow, sources: l.sources.filter((x) => x !== 'own').map(sourceOf), ...(l.note ? { note: l.note } : {}),
   };
@@ -580,31 +599,48 @@ export const statusText = (p: PlanPreview, more: string[] = []) =>
 // ---- The item drawer ----
 
 export interface RungView {
-  id: string; label: string; name: string; spec: string; brands: string[]; rate: string; usable: boolean; current: boolean;
+  id: string; name: string; spec: string; brands: string[]; rate: string; usable: boolean; current: boolean;
+  /** "every level" for an item a family has at every level; "the level’s item" for the item its level names among others; else empty. */
+  mark: string;
 }
+/** The choices at a level (L1), or the family's items at no level (`level` null). */
+export interface ChoiceGroup { level: Level | null; title: string; open: boolean; choices: RungView[] }
 export interface DrawerView {
   key: string; fixed: boolean;
-  /** The family's item at each level, named by the level; the package's level marked. */
-  rungs: (RungView & { level: Level; pkg: boolean })[];
-  others: RungView[];
+  /**
+   * The choices at the line's level first, "At Luxury: 6 choices", then each other level's, cheapest level first, and the
+   * family's items at no level last; each item once. A group holding the line's item is open.
+   */
+  groups: ChoiceGroup[];
   how: { quantity: string; rate: string[]; amount: string };
 }
 
-/** The drawer for one line of the estimate: its ladder of five levels, the family's other items, and how it was worked out. */
+/** The drawer for one line of the estimate: the choices at its level and at the others (L1), and how it was worked out. */
 export function drawerView(s: PlanState, v: PlanView, key: string): DrawerView | undefined {
   const line = v.sections.flatMap((x) => x.lines).find((l) => l.key === key);
   const c = line && choicesFor(inputOf(s), key);
   if (!line || !c) return undefined;
-  const rung = (x: Choice, label: string): RungView => ({
-    id: x.id, label, name: x.name, spec: x.spec, brands: x.brands, rate: x.rate === null ? 'No rate yet' : rateWords(x.rate, x.unit),
-    usable: x.rate !== null, current: x.id === line.entry,
-  });
-  const rungs = c.fixed
-    ? c.ladder.filter((x): x is Choice => !!x).map((x) => ({ ...rung(x, 'Every level'), level: s.level as Level, pkg: true }))
-    : c.ladder.flatMap((x, i) => (x ? [{ ...rung(x, LEVEL_NAMES[i]), level: (i + 1) as Level, pkg: i + 1 === s.level }] : []));
-  const others = c.others.map((x) => rung(x, x.level ? `Usually ${LEVEL_NAMES[x.level - 1]}` : 'Also in the library'));
+  const named = (lv: Level) => (c.fixed ? c.ladder[0] : c.ladder[lv - 1])?.id;
+  const shown = new Set<string>(), groups: ChoiceGroup[] = [];
+  const group = (level: Level | null, xs: Choice[]) => {
+    const fresh = xs.filter((x) => !shown.has(x.id));
+    if (!fresh.length) return;
+    for (const x of fresh) shown.add(x.id);
+    const n = `${fresh.length} choice${fresh.length === 1 ? '' : 's'}`;
+    const title = level === null ? `Also in the library: ${n}` : `At ${LEVEL_NAMES[level - 1]}${level === s.level && level !== line.at ? ' (the package)' : ''}: ${n}`;
+    groups.push({
+      level, title, open: !groups.length || fresh.some((x) => x.id === line.entry),
+      choices: fresh.map((x) => ({
+        id: x.id, name: x.name, spec: x.spec, brands: x.brands, rate: x.rate === null ? 'No rate yet' : rateWords(x.rate, x.unit),
+        usable: x.rate !== null, current: x.id === line.entry,
+        mark: level === null || x.id !== named(level) ? '' : c.fixed ? 'every level' : fresh.length > 1 ? 'the level’s item' : '',
+      })),
+    });
+  };
+  for (const lv of [line.at, ...([1, 2, 3, 4, 5] as Level[]).filter((x) => x !== line.at)]) group(lv, c.levels[lv - 1]);
+  group(null, c.others);
   return {
-    key, fixed: c.fixed, rungs, others,
+    key, fixed: c.fixed, groups,
     how: {
       quantity: line.how,
       rate: [...line.rateHow, `= Rs. ${line.rate} ${UNIT_RATE[unitOf(line.unit)]}`],
