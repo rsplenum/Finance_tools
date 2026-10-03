@@ -92,9 +92,10 @@ const levelName = (n) => A.levels[n - 1].name;
 out.push(`## ${A.title}`, '', `Dated ${date(A.date)}. ${A.status}`, '', '**The five levels**', '', '| On screen | Your word | What it means |', '|---|---|---|',
   ...A.levels.map((l) => `| ${l.name} | ${l.owner} | ${l.means} |`), '');
 out.push('**Sections on for each kind of work**', '', ...Object.values(A.kinds).map((k) => `- **${k.label}**: ${k.on.map((id) => A.sections.find((x) => x.id === id).name).join(', ')}. ${k.why}`), '');
-out.push('**The rooms for each BHK** (reference sizes in sq ft; only their proportions are used, scaled to your carpet area)', '', '| BHK | Rooms | Balcony | Usual carpet area | Why |', '|---|---|---|---|---|');
+out.push('**The rooms for each BHK** (each room\'s reported range in sq ft; only the sizes\' proportions are used, shared out over your carpet area)', '', '| BHK | Rooms | Balcony | Usual carpet area | Why |', '|---|---|---|---|---|');
 for (const [id, p] of Object.entries(A.programmes))
-  out.push(`| ${id === '1RK' ? '1 RK' : `${id} BHK`} | ${p.rooms.map((r) => `${r.name} ${r.ref}`).join('; ')} | ${p.balcony || 'none'} | ${p.typical ? `${p.typical[0]}–${p.typical[1]}` : '—'} | ${p.why}${cite(p.src)} |`);
+  out.push(`| ${id === '1RK' ? '1 RK' : `${id} BHK`} | ${p.rooms.map((r) => `${r.name} ${r.range[0]}–${r.range[1]}`).join('; ')} | ${p.balcony || 'none'} | ${p.typical ? `${p.typical[0]}–${p.typical[1]}` : '—'} | ${p.why}${cite(p.src)} |`);
+out.push('', `**A room\'s size by a word** (R1): ${A.sizes.words.map((w) => `${w.name} ${w.at}`).join(', ')} of the way up the range. ${A.sizes.why}${cite(A.sizes.src)}`);
 out.push('', '**A room of your own size or level** (E3): a size you give a room replaces the planned one, its longer side the length, and the other rooms keep theirs; the page flags when the rooms no longer fit the carpet area. A room\'s own level stands above the section\'s slider and below an item of your own (A4), and moves only the sections with a slider: the structure, waterproofing and plumbing stay as they are.', '');
 const rule = (label, text, x) => `- **${label}**: ${text} ${x.why}${cite(x.src)}`;
 out.push('**How the rooms are drawn and measured**', '',

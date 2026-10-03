@@ -50,88 +50,98 @@
   "programmes": {
     "1RK": {
       "rooms": [
-        { "kind": "bedroom", "name": "Room", "ref": 180, "master": true },
-        { "kind": "kitchen", "name": "Kitchenette", "ref": 50 },
-        { "kind": "bath", "name": "Bathroom", "ref": 30 }
+        { "kind": "bedroom", "name": "Room", "range": [150, 210], "master": true },
+        { "kind": "kitchen", "name": "Kitchenette", "range": [40, 60] },
+        { "kind": "bath", "name": "Bathroom", "range": [25, 35] }
       ],
       "balcony": 0, "typical": null,
-      "src": ["own"], "why": "No source gave a 1 RK's rooms; these proportions keep each room above the Code's minimums."
+      "src": ["own"], "why": "No source gave a 1 RK's rooms, so the ranges are our own: a room of 150–210 sq ft, a kitchenette of 40–60 and a bathroom of 25–35, Medium the middle of each."
     },
     "1": {
       "rooms": [
-        { "kind": "living", "name": "Living and dining", "ref": 150 },
-        { "kind": "bedroom", "name": "Bedroom", "ref": 120, "master": true },
-        { "kind": "kitchen", "name": "Kitchen", "ref": 65 },
-        { "kind": "bath", "name": "Bathroom", "ref": 40 }
+        { "kind": "living", "name": "Living and dining", "range": [120, 180] },
+        { "kind": "bedroom", "name": "Bedroom", "range": [100, 140], "master": true },
+        { "kind": "kitchen", "name": "Kitchen", "range": [50, 80] },
+        { "kind": "bath", "name": "Bathroom", "range": [30, 50] }
       ],
       "balcony": 40, "typical": [450, 600],
-      "src": ["civilsir-bhk", "squareyards-1bhk"], "why": "The middle of each room's reported range: bedroom 100–140, living 120–180, kitchen 50–80, toilet 30–50 sq ft. The balcony is our own allowance."
+      "src": ["civilsir-bhk", "squareyards-1bhk"], "why": "Each room's reported range, Medium its middle: bedroom 100–140, living 120–180, kitchen 50–80, toilet 30–50 sq ft. The balcony is our own allowance."
     },
     "2": {
       "rooms": [
-        { "kind": "living", "name": "Living and dining", "ref": 200 },
-        { "kind": "bedroom", "name": "Main bedroom", "ref": 145, "master": true },
-        { "kind": "bedroom", "name": "Bedroom 2", "ref": 120 },
-        { "kind": "kitchen", "name": "Kitchen", "ref": 70 },
-        { "kind": "bath", "name": "Bathroom 1 (attached)", "ref": 32.5, "attached": true },
-        { "kind": "bath", "name": "Bathroom 2", "ref": 32.5 }
+        { "kind": "living", "name": "Living and dining", "range": [180, 220] },
+        { "kind": "bedroom", "name": "Main bedroom", "range": [130, 160], "master": true },
+        { "kind": "bedroom", "name": "Bedroom 2", "range": [110, 130] },
+        { "kind": "kitchen", "name": "Kitchen", "range": [60, 80] },
+        { "kind": "bath", "name": "Bathroom 1 (attached)", "range": [30, 35], "attached": true },
+        { "kind": "bath", "name": "Bathroom 2", "range": [30, 35] }
       ],
       "balcony": 50, "typical": [650, 850],
-      "src": ["rylinx-2bhk", "civilsir-bhk"], "why": "The middle of each room's reported range for a 700–850 sq ft 2BHK: main bedroom 130–160, second bedroom 110–130, living and dining 180–220, kitchen 60–80, bathrooms 30–35, balcony 40–60 sq ft."
+      "src": ["rylinx-2bhk", "civilsir-bhk"], "why": "Each room's reported range for a 700–850 sq ft 2BHK, Medium its middle: main bedroom 130–160, second bedroom 110–130, living and dining 180–220, kitchen 60–80, bathrooms 30–35, balcony 40–60 sq ft."
     },
     "3": {
       "rooms": [
-        { "kind": "living", "name": "Living and dining", "ref": 500 },
-        { "kind": "bedroom", "name": "Main bedroom", "ref": 215, "master": true },
-        { "kind": "bedroom", "name": "Bedroom 2", "ref": 175 },
-        { "kind": "bedroom", "name": "Bedroom 3", "ref": 175 },
-        { "kind": "kitchen", "name": "Kitchen", "ref": 150 },
-        { "kind": "bath", "name": "Bathroom 1 (attached)", "ref": 70, "attached": true },
-        { "kind": "bath", "name": "Bathroom 2", "ref": 70 },
-        { "kind": "bath", "name": "Bathroom 3", "ref": 70 }
+        { "kind": "living", "name": "Living and dining", "range": [400, 600] },
+        { "kind": "bedroom", "name": "Main bedroom", "range": [180, 250], "master": true },
+        { "kind": "bedroom", "name": "Bedroom 2", "range": [150, 200] },
+        { "kind": "bedroom", "name": "Bedroom 3", "range": [150, 200] },
+        { "kind": "kitchen", "name": "Kitchen", "range": [120, 180] },
+        { "kind": "bath", "name": "Bathroom 1 (attached)", "range": [60, 80], "attached": true },
+        { "kind": "bath", "name": "Bathroom 2", "range": [60, 80] },
+        { "kind": "bath", "name": "Bathroom 3", "range": [60, 80] }
       ],
       "balcony": 115, "typical": [850, 1200],
-      "src": ["squareyards-3bhk"], "why": "The middle of each room's reported range for a 3BHK: living 250–350 and dining 150–250, main bedroom 180–250, other bedrooms 150–200, kitchen 120–180, bathrooms 60–80, balconies 80–150 sq ft. Only the proportions are used: the rooms are scaled to your carpet area."
+      "src": ["squareyards-3bhk"], "why": "Each room's reported range for a 3BHK, Medium its middle: living 250–350 and dining 150–250, main bedroom 180–250, other bedrooms 150–200, kitchen 120–180, bathrooms 60–80, balconies 80–150 sq ft. Only the proportions are used: the rooms are scaled to your carpet area."
     },
     "4": {
       "rooms": [
-        { "kind": "living", "name": "Living and dining", "ref": 500 },
-        { "kind": "bedroom", "name": "Main bedroom", "ref": 215, "master": true },
-        { "kind": "bedroom", "name": "Bedroom 2", "ref": 175 },
-        { "kind": "bedroom", "name": "Bedroom 3", "ref": 175 },
-        { "kind": "bedroom", "name": "Bedroom 4", "ref": 175 },
-        { "kind": "kitchen", "name": "Kitchen", "ref": 150 },
-        { "kind": "bath", "name": "Bathroom 1 (attached)", "ref": 70, "attached": true },
-        { "kind": "bath", "name": "Bathroom 2", "ref": 70 },
-        { "kind": "bath", "name": "Bathroom 3", "ref": 70 },
-        { "kind": "bath", "name": "Bathroom 4", "ref": 70 }
+        { "kind": "living", "name": "Living and dining", "range": [400, 600] },
+        { "kind": "bedroom", "name": "Main bedroom", "range": [180, 250], "master": true },
+        { "kind": "bedroom", "name": "Bedroom 2", "range": [150, 200] },
+        { "kind": "bedroom", "name": "Bedroom 3", "range": [150, 200] },
+        { "kind": "bedroom", "name": "Bedroom 4", "range": [150, 200] },
+        { "kind": "kitchen", "name": "Kitchen", "range": [120, 180] },
+        { "kind": "bath", "name": "Bathroom 1 (attached)", "range": [60, 80], "attached": true },
+        { "kind": "bath", "name": "Bathroom 2", "range": [60, 80] },
+        { "kind": "bath", "name": "Bathroom 3", "range": [60, 80] },
+        { "kind": "bath", "name": "Bathroom 4", "range": [60, 80] }
       ],
       "balcony": 115, "typical": [1300, 1700],
-      "src": ["civilsir-bhk", "squareyards-3bhk", "own"], "why": "A 3BHK's proportions with one more bedroom and bathroom of the same size (our rule); the typical carpet area is as reported."
+      "src": ["civilsir-bhk", "squareyards-3bhk", "own"], "why": "A 3BHK's ranges with one more bedroom and bathroom of the same size (our rule); the typical carpet area is as reported."
     },
     "5": {
       "rooms": [
-        { "kind": "living", "name": "Living and dining", "ref": 500 },
-        { "kind": "bedroom", "name": "Main bedroom", "ref": 215, "master": true },
-        { "kind": "bedroom", "name": "Bedroom 2", "ref": 175 },
-        { "kind": "bedroom", "name": "Bedroom 3", "ref": 175 },
-        { "kind": "bedroom", "name": "Bedroom 4", "ref": 175 },
-        { "kind": "bedroom", "name": "Bedroom 5", "ref": 175 },
-        { "kind": "kitchen", "name": "Kitchen", "ref": 150 },
-        { "kind": "bath", "name": "Bathroom 1 (attached)", "ref": 70, "attached": true },
-        { "kind": "bath", "name": "Bathroom 2", "ref": 70 },
-        { "kind": "bath", "name": "Bathroom 3", "ref": 70 },
-        { "kind": "bath", "name": "Bathroom 4", "ref": 70 },
-        { "kind": "bath", "name": "Bathroom 5", "ref": 70 }
+        { "kind": "living", "name": "Living and dining", "range": [400, 600] },
+        { "kind": "bedroom", "name": "Main bedroom", "range": [180, 250], "master": true },
+        { "kind": "bedroom", "name": "Bedroom 2", "range": [150, 200] },
+        { "kind": "bedroom", "name": "Bedroom 3", "range": [150, 200] },
+        { "kind": "bedroom", "name": "Bedroom 4", "range": [150, 200] },
+        { "kind": "bedroom", "name": "Bedroom 5", "range": [150, 200] },
+        { "kind": "kitchen", "name": "Kitchen", "range": [120, 180] },
+        { "kind": "bath", "name": "Bathroom 1 (attached)", "range": [60, 80], "attached": true },
+        { "kind": "bath", "name": "Bathroom 2", "range": [60, 80] },
+        { "kind": "bath", "name": "Bathroom 3", "range": [60, 80] },
+        { "kind": "bath", "name": "Bathroom 4", "range": [60, 80] },
+        { "kind": "bath", "name": "Bathroom 5", "range": [60, 80] }
       ],
       "balcony": 150, "typical": null,
-      "src": ["own"], "why": "A 4BHK's proportions with one more bedroom and bathroom (our rule)."
+      "src": ["own"], "why": "A 4BHK's ranges with one more bedroom and bathroom (our rule)."
     }
   },
   "bathrooms": { "rule": "One bathroom for a 1 RK and a 1BHK; one for each bedroom from a 2BHK, the first attached to the main bedroom.", "src": ["civilsir-bhk", "own"], "why": "Reported layouts give a 1BHK one toilet and a 2BHK two; one for each bedroom above that is our rule. Change the number if yours differs." },
   "shares": {
     "passage": { "value": 0.10, "src": ["own"], "why": "The passage and foyer: about a tenth of a flat's carpet area, from the gap between the rooms' reported sizes and the flats' reported carpet areas." },
     "walls": { "value": 0.05, "src": ["own"], "why": "RERA carpet area includes the internal partition walls; 115 mm walls take about a twentieth of it." }
+  },
+  "sizes": {
+    "words": [
+      { "id": "compact", "name": "Compact", "at": 0 },
+      { "id": "medium", "name": "Medium", "at": 0.5 },
+      { "id": "above", "name": "Above medium", "at": 0.75 },
+      { "id": "spacious", "name": "Spacious", "at": 1 }
+    ],
+    "src": ["own"],
+    "why": "A room's size word puts it along the room's reported range: Compact at the bottom, Medium in the middle (the plan's own), Above medium three quarters of the way up, Spacious at the top. The rooms share the area left after the passage and the walls in proportion to these sizes, so a word sets a room's share of your area, and a room made larger takes its extra from the other rooms in proportion. A size you type is used as it is and moves no other room."
   },
   "aspect": {
     "living": 1.3, "bedroom": 1.2, "kitchen": 1.25, "bath": 1.6, "passage": 3.0, "balcony": 3.0,

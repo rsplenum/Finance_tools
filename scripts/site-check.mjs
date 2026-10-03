@@ -679,17 +679,39 @@ for (const scheme of ['light', 'dark']) {
   await layout(page, v, 'Compare open, 390 px');
   // The rooms (A8): closed until opened; a size of one's own in feet, and a bathroom at its own level (A4).
   if (await page.getByTestId('pl-rooms').evaluate((d) => d.open)) v('the rooms are open on load');
-  await page.getByTestId('pl-rooms').locator('summary').click();
+  await page.getByTestId('pl-rooms').locator(':scope > summary').click();
+  // R1: the bar of shares and four size buttons on each room. A word moves the room's share along its range, the other
+  // rooms share what is left, and What changed names the knock-on; the arrow keys move along the buttons.
+  await expectText(page, v, 'pl-share-living', /^Living and dining ?28%$/, 'the living room\'s share of the carpet area');
+  await expectText(page, v, 'pl-share-walls', /^Inside walls ?5%$/, 'the inside walls\' share');
+  if (!(await page.isChecked('#fld-roomword-living-medium'))) v('the living room is not Medium on load');
+  await page.locator('label[for="fld-roomword-living-spacious"]').click();
+  await expectText(page, v, 'pl-what-changed', /^Living and dining to Spacious: the other rooms 3\.2% smaller · Rs\. [\d,]+ (more|less)/, 'what the word changed, and its knock-on');
+  await expectText(page, v, 'pl-room-size-living', /· 302 sq ft$/, 'the living room made Spacious');
+  await expectText(page, v, 'pl-share-living', /^Living and dining ?30%$/, 'the bar after the word');
+  await page.focus('#fld-roomword-kitchen-medium');
+  await page.keyboard.press('ArrowRight');
+  await expectText(page, v, 'pl-what-changed', /^Kitchen to Above medium: the other rooms [\d.]+% smaller · /, 'a word moved by the arrow keys');
+  if (!(await page.isChecked('#fld-roomword-kitchen-above'))) v('the arrow key did not check Above medium');
+  // A size typed and a level of its own sit behind one line under each room's buttons, closed until one is set.
+  if (await page.getByTestId('pl-room-more-living').evaluate((d) => d.open)) v('a room\'s own size and level are open with nothing set');
+  await page.getByTestId('pl-room-more-living').locator('summary').click();
   await leave(page, '#fld-room-living-l', '16');
   await expectText(page, v, 'pl-room-bad-living', 'Type both sides. Until then the planned size is used.', 'one side of a room typed');
   await leave(page, '#fld-room-living-b', '20');
   await expectText(page, v, 'pl-room-size-living', '20 × 16 ft · 320 sq ft · your size', 'the living room at its own size');
-  await expectText(page, v, 'pl-what-changed', /^Living and dining to 16 × 20 ft: Rs\. [\d,]+ more$/, 'what the size changed');
+  await expectText(page, v, 'pl-what-changed', /^Living and dining to 16 × 20 ft: Rs\. [\d,]+ (more|less)$/, 'what the size changed');
+  if (await page.locator('[name="fld-roomword-living"]:checked').count()) v('a size typed leaves a size word checked');
   await expectText(page, v, 'pl-rooms-note', /^With your sizes the rooms and the passage come to [\d,]+ sq ft/, 'the rooms against the carpet area');
+  await page.getByTestId('pl-room-more-bath-1').locator('summary').click();
   await page.selectOption('#fld-roomlevel-bath-1', '4');
   await expectText(page, v, 'pl-level-bathrooms', 'Mixed (1 room at its own level)', 'a bathroom at its own level');
   await expectText(page, v, 'pl-what-changed', /^Bathroom 1 \(attached\) at Luxury: Rs\. [\d,]+ more · /, 'what the room\'s level changed');
   await layout(page, v, 'the rooms open, 390 px');
+  // A word on a room of one's own size puts the size aside: the planned size at that word, the others sharing what is left.
+  await page.locator('label[for="fld-roomword-living-medium"]').click();
+  await expectText(page, v, 'pl-what-changed', /^Living and dining to Medium, in place of your size: the other rooms 3\.3% larger · Rs\. [\d,]+ (more|less)/, 'a word in place of a typed size');
+  await expectText(page, v, 'pl-room-size-living', /· 2\d\d sq ft$/, 'the living room planned again');
   // Interiors: ten sections on, with Appliances, Smart home, Furniture and Soft furnishings, the movable items apart (D-UX-19).
   await page.getByTestId('pl-change').click();
   await page.check('#fld-work-interiors');

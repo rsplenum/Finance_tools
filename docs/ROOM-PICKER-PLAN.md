@@ -1,6 +1,6 @@
 # Rooms by buttons: a plan
 
-Written 03-10-2026 at the owner's request: "make provision such that the user knows the area of the floor and asks for one living room, one master bedroom with attached bathroom, one kitchen and make the living room spacious and the bedroom medium sized or slightly above medium etc. give buttons for such options. Or maybe they can adjust the rooms in sized in 3d lateron. Think about this and make plans to implement this in an intuitive interface." This is a plan. Nothing in it is built yet.
+Written 03-10-2026 at the owner's request: "make provision such that the user knows the area of the floor and asks for one living room, one master bedroom with attached bathroom, one kitchen and make the living room spacious and the bedroom medium sized or slightly above medium etc. give buttons for such options. Or maybe they can adjust the rooms in sized in 3d lateron. Think about this and make plans to implement this in an intuitive interface." This is a plan. R1 was built on 03-10-2026 (D-UX-28, D-TECH-20, D-DATA-07) on the recommendations below; R2 and R3 are not built.
 
 ## The short answer
 
@@ -128,7 +128,7 @@ Each item needs its sources, so R2 is mostly research and data.
 
 | # | What | Sessions | Done when |
 |---|---|---|---|
-| R1 | Size buttons on each room; the bar of shares; the knock-on in What changed; flags below the Code's minimums. Worked out twice | 1 | You make the living room Spacious on a phone and the sizes make sense |
+| R1 | Size buttons on each room; the bar of shares; the knock-on in What changed; flags below the Code's minimums. Worked out twice. **Built 03-10-2026** | 1 | You make the living room Spacious on a phone and the sizes make sense |
 | R2 | Rooms by buttons: + Bedroom (the bedrooms answer), + Bathroom, attached or common, + Study, + Pooja room, + Utility, + Store, a room's ×. Each new room's items at five levels, with sources | 1–2 | You build "one living room, one main bedroom with attached bathroom, one kitchen" in a few taps |
 | R3 | For a new house only, and optional: the area follows the rooms, and the structure follows the area | 1 | You decide it is wanted |
 | Design mode, phases 3 and 4 | The 2D plan from checked templates (drag a wall), then the 3D view of the same rooms | See `docs/DESIGN-MODE-FEASIBILITY.md` §10 | As there |

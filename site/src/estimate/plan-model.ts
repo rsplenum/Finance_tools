@@ -3,11 +3,12 @@
  * (engine/architect.ts), and its answer to words, with the engine's exact figures beside them for the Excel copy. Pure,
  * no DOM. Every figure comes from the engine: the estimate, the five levels (the strip and Compare), the change from the
  * package, what the last change did and the drawer's rates are each worked out twice there; this file only words, groups
- * and orders them. The rooms' own sizes, and a new house's plot (E5), are typed in the page's unit and passed on in metres.
+ * and orders them. The rooms' own sizes, and a new house's plot (E5), are typed in the page's unit and passed on in metres;
+ * a room's size word (R1) is passed on as it is, Medium left out.
  */
 import {
-  BHKS, CITIES, FLOORS, LEVELS, PLOT_SIDE, R, ROOM_SIDE, WORK_KINDS, architect, architectNeeds, changeOf, choicesFor, levelName, levelRuns, overPackage, planRooms,
-  type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choice, type House, type Level, type LevelRuns, type Line, type Stage, type WorkKind,
+  BHKS, CITIES, FLOORS, LEVELS, PLOT_SIDE, R, ROOM_SIDE, SIZE_WORDS, WORK_KINDS, architect, architectNeeds, changeOf, choicesFor, levelName, levelRuns, overPackage, planRooms, wordName,
+  type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choice, type House, type Level, type LevelRuns, type Line, type RoomKind, type SizeWord, type Stage, type WorkKind,
 } from '../../../engine/architect';
 import { CLASSES, FT_PER_M, LIBRARY_DATE, PER, SOURCE, SQFT_PER_SQM, type ItemKind, type Unit } from '../../../engine/library';
 import { parseAmount } from '../../../engine/parse';
@@ -36,6 +37,8 @@ export interface PlanState {
   rooms: Record<string, { l: string; b: string }>;
   /** A room's own level by its id (A4, A8). */
   roomLevels: Record<string, Level>;
+  /** A room's size word by its id (R1); Medium is left out. */
+  roomWords: Record<string, SizeWord>;
   /** A new house's plot, its two sides as typed in the page's unit; empty for the rule's plot round the outline (E5). */
   plot: { l: string; b: string };
   /** A new house: the city's sewer reaches the plot, so it takes the septic tank's place (E5). */
@@ -47,7 +50,7 @@ export interface PlanState {
 export interface Made { what: string; before: ArchitectInput; after: ArchitectInput }
 
 export const EMPTY_PLAN: PlanState = {
-  area: '', unit: 'sqft', sections: {}, sliders: {}, items: {}, brands: {}, height: '', rooms: {}, roomLevels: {}, plot: { l: '', b: '' }, sewer: false,
+  area: '', unit: 'sqft', sections: {}, sliders: {}, items: {}, brands: {}, height: '', rooms: {}, roomLevels: {}, roomWords: {}, plot: { l: '', b: '' }, sewer: false,
   doc: { owner: '', property: '', lender: '', preparedBy: '' },
 };
 
@@ -131,6 +134,7 @@ export function inputOf(s: PlanState): ArchitectInput {
     city: s.city, ...(typeof area === 'number' ? { area } : {}), areaUnit: s.unit, bhk: s.bhk, level: s.level,
     sections: s.sections, sliders: s.sliders, items: s.items, ...(typeof h === 'number' ? { heightM: h } : {}),
     ...(Object.keys(rooms).length ? { rooms } : {}), ...(Object.keys(s.roomLevels).length ? { roomLevels: s.roomLevels } : {}),
+    ...(Object.keys(s.roomWords).length ? { roomWords: s.roomWords } : {}),
     ...(plot ? { plot } : {}), ...(s.kind === 'build' && s.sewer ? { sewer: true } : {}),
   };
 }
@@ -203,6 +207,16 @@ export function withRoomReset(s: PlanState, id: string, name: string): PlanState
   delete rooms[id];
   return noted(s, { ...s, rooms }, `${name} back to its planned size`);
 }
+/**
+ * A room's size word (R1): Medium is the plan's own, so it is left out. A word puts a typed size aside, the planned size
+ * back at that word, and the other planned rooms share what is left.
+ */
+export function withRoomWord(s: PlanState, id: string, word: SizeWord, name: string): PlanState {
+  const roomWords = { ...s.roomWords }, rooms = { ...s.rooms }, typed = !!rooms[id];
+  if (word === 'medium') delete roomWords[id]; else roomWords[id] = word;
+  delete rooms[id];
+  return noted(s, { ...s, roomWords, rooms }, `${name} to ${wordName(word)}${typed ? ', in place of your size' : ''}`);
+}
 /** A room's own level, or null for the sections' levels again. */
 export function withRoomLevel(s: PlanState, id: string, level: Level | null, name: string): PlanState {
   const roomLevels = { ...s.roomLevels };
@@ -257,11 +271,19 @@ export interface AssumedView { what: string; shown: string; why: string; sources
 /** A room in the list (A8): its size and area now, its sides as typed and as planned, its own level. */
 export interface RoomView {
   id: string; name: string; size: string; area: string; typed: boolean; level: Level | null;
+  /** The room's size word, its buttons' choice (none checked while the size is typed); null for the passage and the balcony. */
+  word: SizeWord | null;
+  /** The Code's minimum when the room is below it: flagged, never changed. */
+  below?: string;
   /** The sides as typed (empty when not), and the planned ones for the fields' placeholders, in the page's unit. */
   l: string; b: string; planned: { l: string; b: string };
   /** Why a typed size is not used yet, or nothing. */
   bad?: string;
 }
+/** A part of the carpet area in the bar of shares (R1): its share in words, and its width on the bar out of 100. */
+export interface ShareView { id: string; name: string; kind: RoomKind | 'walls'; share: string; width: number }
+/** The size words for the buttons, in order. */
+export const WORD_CHOICES: { value: SizeWord; label: string }[] = SIZE_WORDS.map((w) => ({ value: w.id, label: w.name }));
 /** One amount in Compare: in lakhs for the table, in full for its label; `mine` marks the level the estimate is at. */
 export interface CompareCell { text: string; full: string; n: number; mine: boolean }
 /** Compare (A8): each section on and the total, at the five levels as a package; "Yours" where the estimate differs. */
@@ -279,6 +301,8 @@ export interface PlanView {
   total: string; perSqft: string; words: string; n: { total: number; perSqft: number };
   strip: StripView[]; bar: BarView[]; sections: SectionView[];
   rooms: RoomView[]; roomsNote?: string; compare: CompareView; change?: ChangeView;
+  /** The bar of shares: each room's, the passage's and the inside walls' share of the carpet area (R1). */
+  shares: ShareView[];
   /** A new house's stages, adding up to the total, and its plot. */
   stages?: StageView[]; plot?: PlotView;
   /** Fixed works, movable items and appliances, when there is more than fixed works. */
@@ -354,7 +378,7 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
   const home = e.house ? FLOORS[e.house.floors - 1].label : e.property === 'house' ? 'House' : 'Flat';
   const roomsNote = e.flags.find((f) => f.startsWith('With your sizes'));
   return {
-    rooms: roomsOf(s, e), ...(roomsNote ? { roomsNote } : {}), compare: compareOf(e, runs, sections), ...(change ? { change: changeText(change) } : {}),
+    rooms: roomsOf(s, e), ...(roomsNote ? { roomsNote } : {}), shares: sharesOf(e), compare: compareOf(e, runs, sections), ...(change ? { change: changeText(change) } : {}),
     ...(e.stages ? { stages: stageViews(e.stages) } : {}), ...(e.house ? { plot: plotView(s, e.house) } : {}),
     // Each answer kept on one line (no-break spaces inside it), so a phone wraps only between answers.
     summary: [kind, home, city, s.unit === 'sqm' ? `${qtyText(sqm)} sq m` : `${qtyText(sqft)} sq ft`, bhk, pkg].map((x) => x.replace(/ /g, '\u00a0')).join(' · '),
@@ -372,7 +396,7 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
 /** The rooms as planned or sized, in the page's unit, each with its own level. */
 function roomsOf(s: PlanState, e: ArchitectEstimate): RoomView[] {
   const ft = s.unit !== 'sqm', side = (m: number) => qtyText(ft ? m * FT_PER_M : m), unit = sideUnit(s.unit);
-  const planned = new Map(planRooms(e.bhk, e.carpetSqm).map((r) => [r.id, r]));
+  const planned = new Map(planRooms(e.bhk, e.carpetSqm, s.roomWords).map((r) => [r.id, r]));
   const [lo, hi] = sideRange(s.unit);
   return e.rooms.map((r) => {
     const typed = s.rooms[r.id] ?? { l: '', b: '' }, p = planned.get(r.id) ?? r;
@@ -380,9 +404,16 @@ function roomsOf(s: PlanState, e: ArchitectEstimate): RoomView[] {
     const bad = !any ? undefined : l === null || b === null ? `Type each side from ${lo} to ${hi} ${unit}.` : l === undefined || b === undefined ? 'Type both sides.' : undefined;
     return {
       id: r.id, name: r.name, size: `${side(r.l)} × ${side(r.b)} ${unit}`, area: ft ? `${inr(Math.round(r.sqm * SQFT_PER_SQM))} sq ft` : `${qtyText(r.sqm)} sq m`,
-      typed: r.typed, level: r.level, l: typed.l, b: typed.b, planned: { l: side(p.l), b: side(p.b) }, ...(bad ? { bad } : {}),
+      typed: r.typed, level: r.level, word: r.word, l: typed.l, b: typed.b, planned: { l: side(p.l), b: side(p.b) }, ...(bad ? { bad } : {}),
+      ...(e.below[r.id] ? { below: `Below the Code's ${e.below[r.id]} sq m (${inr(Math.round(e.below[r.id] * SQFT_PER_SQM))} sq ft) for this room.` } : {}),
     };
   });
+}
+
+/** The bar of shares: each part's share of the carpet area in whole per cent, and its width, the bar kept to 100 when sizes typed overrun it. */
+function sharesOf(e: ArchitectEstimate): ShareView[] {
+  const sum = e.shares.reduce((t, x) => t + x.share, 0), full = Math.max(1, sum);
+  return e.shares.map((x) => ({ id: x.id, name: x.name, kind: x.kind, share: `${Math.round(x.share * 100)}%`, width: (x.share / full) * 100 }));
 }
 
 const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
@@ -414,7 +445,8 @@ function compareOf(e: ArchitectEstimate, runs: LevelRuns, sections: SectionView[
 function changeText(c: Change & { what: string }): ChangeView {
   const names = [...new Set(c.swaps.flatMap((x) => (x.to ? [x.to] : [])))];
   const by = Math.round(c.by) === 0 ? 'no change in the total' : `Rs. ${rupees(Math.abs(c.by))} ${c.by > 0 ? 'more' : 'less'}`;
-  return { text: `${c.what}: ${by}`, n: c.by, items: names.length ? `${names.slice(0, 3).join(' · ')}${names.length > 3 ? ` · and ${names.length - 3} more` : ''}` : '' };
+  const others = c.others === undefined ? '' : `the other rooms ${+(Math.abs(c.others) * 100).toFixed(1)}% ${c.others < 0 ? 'smaller' : 'larger'} · `;
+  return { text: `${c.what}: ${others}${by}`, n: c.by, items: names.length ? `${names.slice(0, 3).join(' · ')}${names.length > 3 ? ` · and ${names.length - 3} more` : ''}` : '' };
 }
 
 function lineView(s: PlanState, l: Line, no: string, sourceOf: (id: string) => SourceView): LineView {
