@@ -2,9 +2,9 @@
 
 Generated from `engine/data/library/` by `npm run rules-doc`; edit the data files, not this page.
 
-Dated 02-10-2026. Read through web-search summaries on 02-10-2026. The pages themselves could not be opened from the session, so every value is as reported and not yet checked against its page (D-UX-18). A value is checked when someone opens the page, reads the figure and sets checked on the source.
+Dated 03-10-2026. Read through web-search summaries on 02-10-2026. The pages themselves could not be opened from the session, so every value is as reported and not yet checked against its page (D-UX-18). A value is checked when someone opens the page, reads the figure and sets checked on the source.
 
-318 items in 86 families, from 192 sources. The estimate uses the middle of each range. A family's five levels name one item each (Basic, Standard, Premium, Luxury, Bespoke); every other item in the family is an alternative you can choose instead.
+338 items in 87 families, from 203 sources. The estimate uses the middle of each range. A family's five levels name one item each (Basic, Standard, Premium, Luxury, Bespoke); every other item in the family is an alternative you can choose instead.
 
 ## Civil and repairs
 
@@ -823,54 +823,74 @@ In the library:
 
 ## Furniture and furnishings (movable)
 
-Movable items: in the library now, in the estimate when the movable sections come (E3), on for Interiors and off for Repair, as Appliances and Smart home are (the owner, D-UX-19). Lenders treat them apart from fixed works.
+Movable items, in sections of their own: Furniture and Soft furnishings, on for Interiors and off for Repair and for a new house, as Appliances and Smart home are (the owner, D-UX-19). Lenders treat them apart from fixed works. Where the library has nothing above a level yet, its highest item stands for the levels above, and its note says so.
 
 ### Sofa (each, movable)
 
-In the library:
-
-| Item | Usual level | Specification | Rate | Sources |
-|---|---|---|---|---|
-| 3-seater sofa, entry | Basic | 3-seater sofa: plywood or engineered frame, polyester upholstery | Rs. 25,000–45,000 a each | [124] |
-| 3-seater sofa, mid-range | Standard | 3-seater sofa: part-hardwood frame, better weave or leatherette | Rs. 50,000–90,000 a each | [124] |
-
-### Bed (each, movable)
-
-In the library:
-
-| Item | Usual level | Specification | Rate | Sources |
-|---|---|---|---|---|
-| Queen bed with box storage | Basic | Queen bed with box storage | Rs. 11,600–20,000 a each | [125] |
-| Queen bed with hydraulic storage | Standard | Engineered-wood queen bed with hydraulic storage | Rs. 22,500–27,969 a each | [125] |
-| Premium queen bed with hydraulic storage | Premium | Premium queen bed with hydraulic storage | Rs. 74,996 a each | [126] |
-
-### Mattress (each, movable)
-
-In the library:
-
-| Item | Usual level | Specification | Rate | Sources |
-|---|---|---|---|---|
-| Mattress, queen | Standard | Queen mattress: memory foam or pocket spring | Rs. 10,000–25,000 a each | [127] |
-| Premium mattress, queen | Luxury | Queen mattress: natural latex, advanced memory foam or hybrid From Rs. 25,000, as reported. | Rs. 25,000 a each | [127] |
+| Level | Item | Specification | Brands, as examples | Rate | Sources |
+|---|---|---|---|---|---|
+| Basic | 3-seater sofa, entry | 3-seater sofa: plywood or engineered frame, polyester upholstery |  | Rs. 25,000–45,000 a each | [124] |
+| Standard | 3-seater sofa, mid-range | 3-seater sofa: part-hardwood frame, better weave or leatherette |  | Rs. 50,000–90,000 a each | [124] |
+| Premium | 3-seater sofa, leather or suede | 3-seater sofa in leather, nubuck or suede, with lumbar cushions | Durian Cardiff, Durian Veronica, Durian Hensley | Rs. 1,18,260–1,59,940 a each | [125] |
+| Luxury | 3-seater leather sofa, powered recliners | 3-seater leather sofa with dual-motor recliners | Durian Splendor | Rs. 2,24,100 a each | [125] |
+| Bespoke | 3-seater leather sofa, powered recliners | 3-seater leather sofa with dual-motor recliners | Durian Splendor | Rs. 2,24,100 a each | [125] |
 
 ### Dining set (set, movable)
 
+| Level | Item | Specification | Brands, as examples | Rate | Sources |
+|---|---|---|---|---|---|
+| Basic | 6-seater dining set, wooden, economy | 6-seater wooden dining table and chairs |  | Rs. 15,000 a set | [126] |
+| Standard | 6-seater dining set | 6-seater dining table and chairs |  | Rs. 13,000–83,000 a set | [127] |
+| Premium | 6-seater dining set, marble top | Sheesham wood table with a marble top, six upholstered chairs | Wooden Street Vivara | Rs. 98,999 a set | [128] |
+| Luxury | 6-seater dining set, designer, marble-finished top | Marble-finished table on a solid wood base, six upholstered chairs | Durian Cardinal | Rs. 1,52,880–1,74,240 a set | [129] |
+| Bespoke | 6-seater dining set, designer, marble-finished top | Marble-finished table on a solid wood base, six upholstered chairs | Durian Cardinal | Rs. 1,52,880–1,74,240 a set | [129] |
+
+### Bed (each, movable)
+
+| Level | Item | Specification | Brands, as examples | Rate | Sources |
+|---|---|---|---|---|---|
+| Basic | Queen bed with box storage | Queen bed with box storage |  | Rs. 11,600–20,000 a each | [130] |
+| Standard | Queen bed with hydraulic storage | Engineered-wood queen bed with hydraulic storage | Royaloak Baleno, Wakefit Leo | Rs. 22,500–27,969 a each | [130] |
+| Premium | Solid wood queen bed | Solid wood queen bed with an upholstered headboard | Durian Leeds, Durian York, Durian Cayman | Rs. 37,440–48,330 a each | [131] |
+| Luxury | Premium queen bed with hydraulic storage | Premium queen bed with hydraulic storage | HomeCentre Elysium | Rs. 74,996 a each | [132] |
+| Bespoke | Premium queen bed with hydraulic storage | Premium queen bed with hydraulic storage | HomeCentre Elysium | Rs. 74,996 a each | [132] |
+
+### Mattress (each, movable)
+
+| Level | Item | Specification | Brands, as examples | Rate | Sources |
+|---|---|---|---|---|---|
+| Basic | Foam mattress, queen | Queen foam mattress |  | Rs. 4,499–6,499 a each | [133] |
+| Standard | Mattress, queen | Queen mattress: memory foam or pocket spring |  | Rs. 10,000–25,000 a each | [134] |
+| Premium | Latex mattress, queen | Queen latex mattress |  | Rs. 17,090–24,490 a each | [135] |
+| Luxury | Premium mattress, queen | Queen mattress: natural latex, advanced memory foam or hybrid |  | Rs. 25,000 a each | [134] |
+| Bespoke | Imported memory-foam mattress | Imported pressure-relieving memory-foam mattress | Tempur | Rs. 1,76,388 a each | [136] |
+
+### Curtains (set, movable)
+
+| Level | Item | Specification | Brands, as examples | Rate | Sources |
+|---|---|---|---|---|---|
+| Basic | Curtains for a window, one layer, economy | One layer of polyester or a blend, stitched, on a 1.5 m rod, fitted |  | Curtains, one layer, economy, a window + 1.5 × Curtain rod or track, a metre + Curtain installation, a window | [137] |
+| Standard | Curtains for a window, one layer, mid-range | One layer of cotton or cotton-poly, stitched, on a 1.5 m rod or track, fitted |  | Curtains, one layer, mid-range, a window + 1.5 × Curtain rod or track, a metre + Curtain installation, a window | [137] |
+| Premium | Curtains for a window, sheer and blackout | A sheer and a blackout layer of mid-range fabric, on two 1.5 m tracks, fitted |  | Curtains, sheer and blackout, mid-range, a window + 3 × Curtain rod or track, a metre + Curtain installation, a window | [137] |
+| Luxury | Curtains for a window, two layers, premium fabric | A sheer and a blackout layer in linen, velvet or a heavy weave, lined, on two tracks, fitted |  | Curtains, two layers, premium, a window + 3 × Curtain rod or track, a metre + Curtain installation, a window | [137] |
+| Bespoke | Curtains for a window, two layers, motorised | Two layers of premium fabric, the main one on a motorised track, the sheer on a 1.5 m track | Somfy | Curtains, two layers, premium, a window + Motorised curtain track with its motor + 1.5 × Curtain rod or track, a metre + Fitting a motorised curtain | [137][138][139] |
+
+### Curtain parts (each, movable)
+
 In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| 6-seater dining set | Standard | 6-seater dining table and chairs | Rs. 13,000–83,000 a set | [128] |
-
-### Curtains (each, movable)
-
-In the library:
-
-| Item | Usual level | Specification | Rate | Sources |
-|---|---|---|---|---|
-| Curtain stitching, a panel | — | Stitching one curtain panel | Rs. 150–600 a each, supplied and fixed | [129] |
-| Curtain fabric, a metre | — | Curtain fabric, one metre | Rs. 150–2,500 a m | [129] |
-| Curtain rod or track, a metre | — | Rod or track with brackets and rings, one metre | Rs. 200–1,500 a m | [129] |
-| Curtain installation, a window | — | Installing the curtains of one window | Rs. 150–500 a each, supplied and fixed | [129] |
+| Curtains, one layer, economy, a window | — | Polyester or a cheap blend, stitched, for a window of about 4 × 7 ft | Rs. 800–2,500 a each | [137] |
+| Curtains, one layer, mid-range, a window | — | Cotton or cotton-poly, stitched, for a window of about 4 × 7 ft | Rs. 3,000–7,000 a each | [137] |
+| Curtains, sheer and blackout, mid-range, a window | — | Two layers, a sheer and a blackout, stitched, for a window of about 4 × 7 ft | Rs. 6,000–12,000 a each | [137] |
+| Curtains, two layers, premium, a window | — | Two layers in linen, velvet or a heavy weave, lined, for a window of about 4 × 7 ft Rs. 35,000 and up at the top, as reported. | Rs. 15,000–35,000 a each | [137] |
+| Motorised curtain track with its motor | — | Aluminium motorised curtain track with a motor and remote | Rs. 12,500–15,000 a each | [138][140] |
+| Fitting a motorised curtain | — | Fitting and setting up a motorised curtain track | Rs. 2,000–4,000 a each, supplied and fixed | [139] |
+| Curtain stitching, a panel | — | Stitching one curtain panel | Rs. 150–600 a each, supplied and fixed | [137] |
+| Curtain fabric, a metre | — | Curtain fabric, one metre | Rs. 150–2,500 a m | [137] |
+| Curtain rod or track, a metre | — | Rod or track with brackets and rings, one metre | Rs. 200–1,500 a m | [137] |
+| Curtain installation, a window | — | Installing the curtains of one window | Rs. 150–500 a each, supplied and fixed | [137] |
 
 ### Blinds (sq ft, movable)
 
@@ -878,9 +898,9 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Custom blinds | Basic | Custom roller or venetian blinds | Rs. 100 a sq ft, supplied and fixed | [130] |
-| Zebra blinds | Standard | Zebra (day and night) blinds | Rs. 185 a sq ft, supplied and fixed | [130] |
-| Horizontal blinds (De-Lite, Symphony) | Premium | Horizontal blinds | Rs. 350 a sq ft, supplied and fixed | [130] |
+| Custom blinds | Basic | Custom roller or venetian blinds | Rs. 100 a sq ft, supplied and fixed | [141] |
+| Zebra blinds | Standard | Zebra (day and night) blinds | Rs. 185 a sq ft, supplied and fixed | [141] |
+| Horizontal blinds (De-Lite, Symphony) | Premium | Horizontal blinds | Rs. 350 a sq ft, supplied and fixed | [141] |
 
 ## Building a house: materials, labour and treatment
 
@@ -890,91 +910,91 @@ For building a house (E5, thin): the structure costed at one specification from 
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Soil treatment against termites (IS 6313 Part 2) | Chemical treatment of the foundation trenches, the plinth fill and the ground round the house before the floor is laid |  | Rs. 8–10 a sq ft, supplied and fixed | [131] |
+| Every level | Soil treatment against termites (IS 6313 Part 2) | Chemical treatment of the foundation trenches, the plinth fill and the ground round the house before the floor is laid |  | Rs. 8–10 a sq ft, supplied and fixed | [142] |
 
 ### Cement (bag)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | OPC 53-grade cement, 50 kg | Ordinary Portland cement, 53 grade, a 50 kg bag (city range) | UltraTech, ACC, Ambuja | Rs. 342–433 a bag, material, 3.5% wastage | [132][133] |
+| Every level | OPC 53-grade cement, 50 kg | Ordinary Portland cement, 53 grade, a 50 kg bag (city range) | UltraTech, ACC, Ambuja | Rs. 342–433 a bag, material, 3.5% wastage | [143][144] |
 
 Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| PPC cement, 50 kg | — | Portland pozzolana cement, a 50 kg bag | Rs. 364 a bag, material, 3.5% wastage | [132][133] |
+| PPC cement, 50 kg | — | Portland pozzolana cement, a 50 kg bag | Rs. 364 a bag, material, 3.5% wastage | [143][144] |
 
 ### Reinforcement steel (kg)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | TMT bars Fe 500D, 12 mm | TMT reinforcement bars Fe 500D, 12 mm | Tata Tiscon, JSW Neosteel, SAIL | Rs. 50–64 a kg, material, 4% wastage | [132][134][133] |
+| Every level | TMT bars Fe 500D, 12 mm | TMT reinforcement bars Fe 500D, 12 mm | Tata Tiscon, JSW Neosteel, SAIL | Rs. 50–64 a kg, material, 4% wastage | [143][145][144] |
 
 ### Sand (cu m)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | M-sand | Manufactured sand |  | Rs. 1,600–2,100 a cu m, material, 7.5% wastage | [132][133] |
+| Every level | M-sand | Manufactured sand |  | Rs. 1,600–2,100 a cu m, material, 7.5% wastage | [143][144] |
 
 Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| River sand | — | River sand | Rs. 2,500–3,200 a cu m, material, 7.5% wastage | [132][133] |
+| River sand | — | River sand | Rs. 2,500–3,200 a cu m, material, 7.5% wastage | [143][144] |
 
 ### Coarse aggregate (cu m)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Coarse aggregate, 20 mm | 20 mm crushed stone aggregate |  | Rs. 1,800–2,300 a cu m, material, 7.5% wastage | [132][133] |
+| Every level | Coarse aggregate, 20 mm | 20 mm crushed stone aggregate |  | Rs. 1,800–2,300 a cu m, material, 7.5% wastage | [143][144] |
 
 ### Bricks (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Red brick | Standard red clay brick |  | Rs. 8–10 a each, material, 6.5% wastage | [132][133] |
+| Every level | Red brick | Standard red clay brick |  | Rs. 8–10 a each, material, 6.5% wastage | [143][144] |
 
 ### AAC blocks (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | AAC block, 200 mm | AAC block 200 mm thick |  | Rs. 61–78 a each, material, 6.5% wastage | [132][133] |
+| Every level | AAC block, 200 mm | AAC block 200 mm thick |  | Rs. 61–78 a each, material, 6.5% wastage | [143][144] |
 
 ### Labour: excavation and foundation (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Excavation and foundation, labour only | Excavation, footings, the plinth beam and backfilling, by the sq ft of built-up area |  | Rs. 60–90 a sq ft, supplied and fixed | [135] |
+| Every level | Excavation and foundation, labour only | Excavation, footings, the plinth beam and backfilling, by the sq ft of built-up area |  | Rs. 60–90 a sq ft, supplied and fixed | [146] |
 
 ### Labour: RCC frame and slabs (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | RCC frame and slabs, labour only | Columns, beams and slabs: bar bending, shuttering, concreting and curing, by the sq ft of built-up area |  | Rs. 140–220 a sq ft, supplied and fixed | [135] |
+| Every level | RCC frame and slabs, labour only | Columns, beams and slabs: bar bending, shuttering, concreting and curing, by the sq ft of built-up area |  | Rs. 140–220 a sq ft, supplied and fixed | [146] |
 
 ### Labour: brick walls (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Brick walls, labour only | Brick or block walls, by the sq ft of built-up area |  | Rs. 70–120 a sq ft, supplied and fixed | [135] |
+| Every level | Brick walls, labour only | Brick or block walls, by the sq ft of built-up area |  | Rs. 70–120 a sq ft, supplied and fixed | [146] |
 
 ### Labour: plaster (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Plaster, labour only | Plaster inside and outside, by the sq ft of built-up area |  | Rs. 40–70 a sq ft, supplied and fixed | [135] |
+| Every level | Plaster, labour only | Plaster inside and outside, by the sq ft of built-up area |  | Rs. 40–70 a sq ft, supplied and fixed | [146] |
 
 ## Labour
 
 | Labour | Rate | Sources |
 |---|---|---|
-| Laying 600 × 600 mm tiles | Rs. 25–40 a sq ft | [136][137] |
-| Laying 800 × 800 mm tiles | Rs. 30–50 a sq ft | [136] |
-| Laying large-format tiles and slabs (1200 × 600 mm and up) | Rs. 60–120 a sq ft | [136] |
-| Fixing wall tiles (walls are slower than floors) | Rs. 35–60 a sq ft | [136] |
-| Tile adhesive and grout | Rs. 8–18 a sq ft | [136] |
-| Laying marble or stone in mortar | Rs. 100–200 a sq ft | [138][16] |
-| Machine-polishing marble after laying | Rs. 30–70 a sq ft | [138][139] |
+| Laying 600 × 600 mm tiles | Rs. 25–40 a sq ft | [147][148] |
+| Laying 800 × 800 mm tiles | Rs. 30–50 a sq ft | [147] |
+| Laying large-format tiles and slabs (1200 × 600 mm and up) | Rs. 60–120 a sq ft | [147] |
+| Fixing wall tiles (walls are slower than floors) | Rs. 35–60 a sq ft | [147] |
+| Tile adhesive and grout | Rs. 8–18 a sq ft | [147] |
+| Laying marble or stone in mortar | Rs. 100–200 a sq ft | [149][16] |
+| Machine-polishing marble after laying | Rs. 30–70 a sq ft | [149][150] |
 | Installing SPC flooring | Rs. 35–55 a sq ft | [26] |
 | Fabricating and fixing a stone or quartz counter | Rs. 200–300 a sq ft | [63] |
 | Fixing a sanitary fixture or fitting (plumber) | Rs. 360–600 a each | [113] |
@@ -1112,18 +1132,29 @@ Also in the library:
 122. [Home automation cost in India, 2026](https://smartify.in/blog/home-automation-cost-india-2026-guide/) (class 4: A cost guide's range: a blog, a calculator or a guide)
 123. [CCTV camera set price in India, 2026](https://aliftechsecure.in/cctv-camera-set-price-in-india-2026-complete-kit-cost-for-home-shop-office/) (class 4: A cost guide's range: a blog, a calculator or a guide)
 124. [Couch price in India, 2026: budget and premium](https://www.cherrypickindia.in/couch-price-in-india-guide/) (class 4: A cost guide's range: a blog, a calculator or a guide)
-125. [Queen beds with storage, listings](https://www.royaloakindia.com/bedroom/beds/queen-bed-with-storage.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
-126. [Elysium queen bed with hydraulic storage](https://www.homecentre.in/in/en/Bed-Room/Beds/Queen-Beds/HOMECENTRE-Elysium-Queen-Bed-with-Hydraulic-Storage--Brown/p/1000014219797) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
-127. [Mattresses, listings](https://www.wakefit.co/mattress) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
-128. [6-seater dining tables, listings](https://www.woodenstreet.com/6-seater-dining-tables) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
-129. [Curtain cost in India, 2026](https://www.studiomatrx.org/guides/curtain-cost-guide-india) (class 4: A cost guide's range: a blog, a calculator or a guide)
-130. [Window blinds, listings](https://dir.indiamart.com/impcat/window-blinds.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
-131. [99acres: anti-termite treatment, technique and price in India](https://www.99acres.com/articles/anti-termite-treatment.html) (class 4: A cost guide's range: a blog, a calculator or a guide)
-132. [Building construction materials price list, 2026](https://civiconcepts.com/blog/construction-and-building-materials-market-price) (class 4: A cost guide's range: a blog, a calculator or a guide)
-133. [Brick&Bolt: construction material quantity estimation for a 1000 sq ft house (rules of thumb a sq ft, wastage)](https://www.bricknbolt.com/blogs-and-articles/construction-guide/construction-material-quantity-estimation-for-1000-sqft-of-house-construction) (class 4: A cost guide's range: a blog, a calculator or a guide)
-134. [Steel and cement rates in India, 2026](https://www.comaron.com/blog/steel-and-cement-rates-today-india-2026-complete-price-guide) (class 4: A cost guide's range: a blog, a calculator or a guide)
-135. [HouseYog: house construction labour rate a sq ft in India, by stage](https://www.houseyog.com/blog/house-construction-labour-rate-per-sq-ft/) (class 4: A cost guide's range: a blog, a calculator or a guide)
-136. [Tile laying cost per sq ft, India 2026](https://gharkabudget.com/articles/tile-laying-cost-per-sqft-2026/) (class 4: A cost guide's range: a blog, a calculator or a guide)
-137. [Floor tiling cost in India, 2026](https://www.houseyog.com/blog/floor-tiling-cost-per-sqft-india/) (class 4: A cost guide's range: a blog, a calculator or a guide)
-138. [Marble flooring cost in India, price guide](https://omkarmarble.com/blog/marble-flooring-cost-guide) (class 4: A cost guide's range: a blog, a calculator or a guide)
-139. [SR Marble Polishing: polishing rates for newly laid marble](https://www.srmarblepolishing.in/new-laid-marble-silicate-polishing-rate) (class 3: A firm's published package, allowance or rate card)
+125. [Durian: premium 3-seater sofas (Cardiff, Veronica, Hensley, Splendor), listed prices](https://www.durian.in/buy-furniture/premium-sofas) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+126. [IndiaMART: 6-seater wooden dining table set, a listing](https://www.indiamart.com/proddetail/6-seater-wooden-dining-table-set-22519351812.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+127. [6-seater dining tables, listings](https://www.woodenstreet.com/6-seater-dining-tables) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+128. [Wooden Street: Vivara 6-seater dining set, sheesham with a marble top](https://www.woodenstreet.com/product/vivara-6-seater-dinining-set-with-valence-marble-top-table-and-vinara-upholstered-chair-sage-green) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+129. [Durian: Cardinal 6-seater dining set, marble-finished top](https://www.durian.in/product/cardinal-brown-black-grey-composite-marble-solid-wood-6-seater-dining-set) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+130. [Queen beds with storage, listings](https://www.royaloakindia.com/bedroom/beds/queen-bed-with-storage.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+131. [Durian: solid wood queen beds (Leeds, York, Cayman), listed prices](https://www.durian.in/buy-furniture/solid-wood-beds-2) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+132. [Elysium queen bed with hydraulic storage](https://www.homecentre.in/in/en/Bed-Room/Beds/Queen-Beds/HOMECENTRE-Elysium-Queen-Bed-with-Hydraulic-Storage--Brown/p/1000014219797) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+133. [Urban Ladder: foam mattresses, listings](https://www.urbanladder.com/collection/foam-mattress) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+134. [Mattresses, listings](https://www.wakefit.co/mattress) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+135. [Nilkamal Sleep: latex mattresses, listings](https://www.nilkamalsleep.com/collections/latex-mattress) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+136. [Amazon.in: Tempur mattresses, listings](https://www.amazon.in/tempur-mattress/s?k=tempur+mattress) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+137. [Curtain cost in India, 2026](https://www.studiomatrx.org/guides/curtain-cost-guide-india) (class 4: A cost guide's range: a blog, a calculator or a guide)
+138. [IndiaMART: Somfy motorised curtain track, a listing](https://www.indiamart.com/proddetail/somfy-motorised-curtain-track-23215044555.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+139. [Urban Decor Curtains: curtain installation cost in Bangalore (rods, tracks, motorised)](https://urbandecorcurtains.com/blog/curtain-installation-cost-bangalore/) (class 4: A cost guide's range: a blog, a calculator or a guide)
+140. [TradeIndia: Somfy motorised curtain track, a listing](https://www.tradeindia.com/products/somfy-motorized-curtain-track-c10140640.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+141. [Window blinds, listings](https://dir.indiamart.com/impcat/window-blinds.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+142. [99acres: anti-termite treatment, technique and price in India](https://www.99acres.com/articles/anti-termite-treatment.html) (class 4: A cost guide's range: a blog, a calculator or a guide)
+143. [Building construction materials price list, 2026](https://civiconcepts.com/blog/construction-and-building-materials-market-price) (class 4: A cost guide's range: a blog, a calculator or a guide)
+144. [Brick&Bolt: construction material quantity estimation for a 1000 sq ft house (rules of thumb a sq ft, wastage)](https://www.bricknbolt.com/blogs-and-articles/construction-guide/construction-material-quantity-estimation-for-1000-sqft-of-house-construction) (class 4: A cost guide's range: a blog, a calculator or a guide)
+145. [Steel and cement rates in India, 2026](https://www.comaron.com/blog/steel-and-cement-rates-today-india-2026-complete-price-guide) (class 4: A cost guide's range: a blog, a calculator or a guide)
+146. [HouseYog: house construction labour rate a sq ft in India, by stage](https://www.houseyog.com/blog/house-construction-labour-rate-per-sq-ft/) (class 4: A cost guide's range: a blog, a calculator or a guide)
+147. [Tile laying cost per sq ft, India 2026](https://gharkabudget.com/articles/tile-laying-cost-per-sqft-2026/) (class 4: A cost guide's range: a blog, a calculator or a guide)
+148. [Floor tiling cost in India, 2026](https://www.houseyog.com/blog/floor-tiling-cost-per-sqft-india/) (class 4: A cost guide's range: a blog, a calculator or a guide)
+149. [Marble flooring cost in India, price guide](https://omkarmarble.com/blog/marble-flooring-cost-guide) (class 4: A cost guide's range: a blog, a calculator or a guide)
+150. [SR Marble Polishing: polishing rates for newly laid marble](https://www.srmarblepolishing.in/new-laid-marble-silicate-polishing-rate) (class 3: A firm's published package, allowance or rate card)

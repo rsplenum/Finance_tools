@@ -5,14 +5,19 @@
  * a range as its low end plus half its width, the city's factor from the sums of the ranges), and the total added up
  * room by room before the sections. A new house's outline is drawn breadth first, its outer walls as the outline less the
  * rectangle inside them, cubic feet turned to cubic metres by multiplying by a foot cubed, and its sides added one by one.
+ * A room's own size is put in after the plan, its breadth the shorter side; a room's own level is looked up before the
+ * section's slider. The split into fixed works, movable items and appliances is added up row by row.
  * architect.ts shows no figure unless both agree.
  */
 import RULES from './data/architect.json';
-import { ENTRIES, FAMILIES, LABOUR_ITEMS, type Entry, type Unit } from './library';
+import { ENTRIES, FAMILIES, LABOUR_ITEMS, type Entry, type ItemKind, type Unit } from './library';
 import type { ArchitectInput, Rules, RoomKind, WorkKind } from './architect';
 
 export interface CheckLine { qty: number; rate: number; amount: number }
-export interface ArchitectCheck { lines: Map<string, CheckLine>; sections: Map<string, number>; total: number }
+export interface ArchitectCheck {
+  lines: Map<string, CheckLine>; sections: Map<string, number>; total: number; split: Record<ItemKind, number>;
+  rooms: Map<string, { sqm: number; len: number; wide: number }>; roomsSqm: number; plannedSqm: number;
+}
 
 const Q = RULES as unknown as Rules;
 const FOOT = 0.3048, SQ_FOOT = FOOT * FOOT;
@@ -55,6 +60,11 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
   }
   make('passage', 'passage', Q.shares.passage.value * carpet);
   if (prog.balcony > 0) make('balcony', 'balcony', prog.balcony * SQ_FOOT);
+  // A room's own size after the plan: the shorter side its breadth.
+  for (const s of spaces) {
+    const own = input.rooms?.[s.id];
+    if (own) { s.wide = Math.min(own.b, own.l); s.len = Math.max(own.b, own.l); s.sqm = s.wide * s.len; }
+  }
   const exists = (id: string) => spaces.some((s) => s.id === id);
   const masterId = spaces.find((s) => s.master)?.id;
 
@@ -78,18 +88,22 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
   const shown = (sec: string) => { const only = Q.sections.find((x) => x.id === sec)?.kinds; return only === undefined || only.includes(kind); };
   const sectionOn = (sec: string) => shown(sec) && (input.sections?.[sec] ?? Q.kinds[kind].on.includes(sec));
   const sliding = (sec: string) => !!Q.sections.find((x) => x.id === sec)?.slider;
-  const levelAt = (sec: string) => (sliding(sec) ? input.sliders?.[sec] ?? level : level);
+  const levelAt = (sec: string, s: Space | null = null) => {
+    if (!sliding(sec)) return level;
+    const own = s ? input.roomLevels?.[s.id] : undefined;
+    return own ?? input.sliders?.[sec] ?? level;
+  };
   const sides = (s: Space) => [s.len, s.wide, s.len, s.wide];
   const wallRun = (s: Space) => sides(s).reduce((a, b) => a + b, 0);
-  const tile = () => {
+  const tile = (s: Space) => {
     if (!sectionOn('bathrooms')) return Math.min(H, Q.tileHeights.existing / 1000);
-    const v = Q.tileHeights.mm[levelAt('bathrooms') - 1];
+    const v = Q.tileHeights.mm[levelAt('bathrooms', s) - 1];
     return v === 'ceiling' ? H : Math.min(H, v / 1000);
   };
   const run = (s: Space) => s.wide + s.len - Q.kitchen.depth;
   const feature = (s: Space) => {
     if (!sectionOn('walls')) return 0;
-    const lv = levelAt('walls');
+    const lv = levelAt('walls', s);
     return s.kind === 'living' && lv >= Q.feature.living ? s.len * H : s.kind === 'bedroom' && s.master && lv >= Q.feature.master ? s.wide * H : 0;
   };
   const familyAt = (fam: string, lv: number) => { const f = FAMILIES.get(fam); return f ? (f.fixed ?? f.levels?.[lv - 1] ?? null) : null; };
@@ -140,9 +154,9 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
       }
       case 'paint': {
         if (s.kind === 'balcony') return 0;
-        const roof = s.kind === 'bath' && sectionOn('bathrooms') && familyAt('bath-ceiling', levelAt('bathrooms')) ? 0 : s.sqm;
+        const roof = s.kind === 'bath' && sectionOn('bathrooms') && familyAt('bath-ceiling', levelAt('bathrooms', s)) ? 0 : s.sqm;
         if (s.kind === 'bath') {
-          const th = tile();
+          const th = tile(s);
           const cut = own.filter((o) => o.w * o.h > small).reduce((a, o) => a + o.w * Math.max(0, o.sill + o.h - Math.max(o.sill, th)), 0);
           return Math.max(0, sides(s).reduce((a, x) => a + x * Math.max(0, H - th), 0) - cut) + roof;
         }
@@ -165,7 +179,7 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
       }
       case 'cove': return cover(s, lv) === 'none' ? 0 : sides(s).reduce((a, x) => a + Math.max(0, x - Q.falseCeiling.coveInset * 2), 0);
       case 'bath-tiles': {
-        const th = tile();
+        const th = tile(s);
         const cut = own.filter((o) => o.w * o.h > small).reduce((a, o) => a + o.w * Math.max(0, Math.min(o.sill + o.h, th) - o.sill), 0);
         return Math.max(0, sides(s).reduce((a, x) => a + x * th, 0) - cut);
       }
@@ -177,6 +191,7 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
       case 'wardrobe': return wardrobeW(s) * (lv >= Q.wardrobes.fullHeightFrom ? H : Q.wardrobes.height / 1000);
       case 'loft': return lv >= Q.wardrobes.fullHeightFrom ? 0 : wardrobeW(s) * (Q.wardrobes.loft / 1000);
       case 'windows': return own.filter((o) => o.kind === 'window' || o.kind === 'kitchenWindow').reduce((a, o) => a + o.w * o.h, 0);
+      case 'window-count': return own.filter((o) => o.kind === 'window').length;
       case 'shower-screen': return Q.showerScreen.w * Q.showerScreen.h;
       case 'door': return own.filter((o) => o.kind === s.kind).length;
       case 'main-door': return s.kind === 'passage' ? 1 : 0;
@@ -202,12 +217,12 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
 
   const priced = (id: string) => checkRate(id, input.city);
 
-  const lines = new Map<string, CheckLine>(), bySpace = new Map<string, { section: string; amount: number }[]>();
+  const lines = new Map<string, CheckLine>(), bySpace = new Map<string, { section: string; amount: number; kind: ItemKind }[]>();
   const visit = (slot: Rules['templates']['flat'][number], s: Space | null) => {
     if (!sectionOn(slot.section)) return;
     if (slot.kinds && !slot.kinds.includes(kind)) return;
     if (slot.needs && !sectionOn(slot.needs)) return;
-    const lv = Math.min(levelAt(slot.section), slot.maxLevel ?? 5);
+    const lv = Math.min(levelAt(slot.section, s), slot.maxLevel ?? 5);
     const key = [s ? s.id : 'flat', slot.family, slot.qty].join(':');
     const chosen = input.items?.[key];
     const id = chosen && ENTRIES.has(chosen) ? chosen : familyAt(slot.family, lv);
@@ -223,20 +238,23 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
     const amount = round2(q * rate);
     lines.set(key, { qty: q, rate, amount });
     const where = s ? s.id : 'flat';
-    bySpace.set(where, [...(bySpace.get(where) ?? []), { section: slot.section, amount }]);
+    bySpace.set(where, [...(bySpace.get(where) ?? []), { section: slot.section, amount, kind: FAMILIES.get(slot.family)?.kind ?? 'fixed' }]);
   };
   for (const s of spaces) for (const slot of Q.templates[s.kind]) visit(slot, s);
   for (const slot of Q.templates.flat) visit(slot, null);
 
-  // Room by room first, then the sections from the same rows, then the total from the rooms.
-  const sections = new Map<string, number>();
+  // Room by room first, then the sections and the split from the same rows, then the total from the rooms.
+  const sections = new Map<string, number>(), split: Record<ItemKind, number> = { fixed: 0, movable: 0, appliance: 0 };
   let total = 0;
   for (const rows of bySpace.values()) {
     let roomTotal = 0;
-    for (const row of rows) { roomTotal += row.amount; sections.set(row.section, (sections.get(row.section) ?? 0) + row.amount); }
+    for (const row of rows) { roomTotal += row.amount; sections.set(row.section, (sections.get(row.section) ?? 0) + row.amount); split[row.kind] += row.amount; }
     total += roomTotal;
   }
-  return { lines, sections, total };
+  const rooms = new Map(spaces.map((s) => [s.id, { sqm: s.sqm, len: s.len, wide: s.wide }]));
+  let roomsSqm = 0;
+  for (const s of spaces) if (s.kind !== 'balcony') roomsSqm += s.wide * s.len;
+  return { lines, sections, total, split, rooms, roomsSqm, plannedSqm: carpet - carpet * Q.shares.walls.value };
 }
 
 /** The city's factor the check's way: the sum of its range against the average of every listed city's sum; 1 for a place not listed. */

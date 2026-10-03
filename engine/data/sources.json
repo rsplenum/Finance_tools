@@ -1,6 +1,6 @@
 {
   "title": "Sources of the library and of the architect's rules",
-  "date": "2026-10-02",
+  "date": "2026-10-03",
   "status": "Read through web-search summaries on 02-10-2026. The pages themselves could not be opened from the session, so every value is as reported and not yet checked against its page (D-UX-18). A value is checked when someone opens the page, reads the figure and sets checked on the source.",
   "classes": {
     "1": "An official schedule of rates (CPWD), scaled by the city's index",
@@ -969,6 +969,61 @@
     "aapka-hyderabad": {
       "what": "AapkaPainter: painting cost in Hyderabad (Ace exterior emulsion, all in)",
       "url": "https://aapkapainter.com/blog/painting-cost-in-hyderabad/",
+      "class": "4"
+    },
+    "durian-sofas": {
+      "what": "Durian: premium 3-seater sofas (Cardiff, Veronica, Hensley, Splendor), listed prices",
+      "url": "https://www.durian.in/buy-furniture/premium-sofas",
+      "class": "2"
+    },
+    "durian-beds": {
+      "what": "Durian: solid wood queen beds (Leeds, York, Cayman), listed prices",
+      "url": "https://www.durian.in/buy-furniture/solid-wood-beds-2",
+      "class": "2"
+    },
+    "durian-cardinal": {
+      "what": "Durian: Cardinal 6-seater dining set, marble-finished top",
+      "url": "https://www.durian.in/product/cardinal-brown-black-grey-composite-marble-solid-wood-6-seater-dining-set",
+      "class": "2"
+    },
+    "woodenstreet-vivara": {
+      "what": "Wooden Street: Vivara 6-seater dining set, sheesham with a marble top",
+      "url": "https://www.woodenstreet.com/product/vivara-6-seater-dinining-set-with-valence-marble-top-table-and-vinara-upholstered-chair-sage-green",
+      "class": "2"
+    },
+    "indiamart-dining": {
+      "what": "IndiaMART: 6-seater wooden dining table set, a listing",
+      "url": "https://www.indiamart.com/proddetail/6-seater-wooden-dining-table-set-22519351812.html",
+      "class": "2"
+    },
+    "urbanladder-foam": {
+      "what": "Urban Ladder: foam mattresses, listings",
+      "url": "https://www.urbanladder.com/collection/foam-mattress",
+      "class": "2"
+    },
+    "nilkamal-latex": {
+      "what": "Nilkamal Sleep: latex mattresses, listings",
+      "url": "https://www.nilkamalsleep.com/collections/latex-mattress",
+      "class": "2"
+    },
+    "amazon-tempur": {
+      "what": "Amazon.in: Tempur mattresses, listings",
+      "url": "https://www.amazon.in/tempur-mattress/s?k=tempur+mattress",
+      "class": "2"
+    },
+    "indiamart-somfy-track": {
+      "what": "IndiaMART: Somfy motorised curtain track, a listing",
+      "url": "https://www.indiamart.com/proddetail/somfy-motorised-curtain-track-23215044555.html",
+      "class": "2"
+    },
+    "tradeindia-somfy-track": {
+      "what": "TradeIndia: Somfy motorised curtain track, a listing",
+      "url": "https://www.tradeindia.com/products/somfy-motorized-curtain-track-c10140640.html",
+      "class": "2"
+    },
+    "urbandecor-install": {
+      "what": "Urban Decor Curtains: curtain installation cost in Bangalore (rods, tracks, motorised)",
+      "url": "https://urbandecorcurtains.com/blog/curtain-installation-cost-bangalore/",
       "class": "4"
     }
   }

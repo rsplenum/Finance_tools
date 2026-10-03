@@ -5,7 +5,7 @@
  * employer (D-BIZ-02). The owner's own fictional flat, worked at home, is still to come (HANDOFF).
  */
 import { describe, it, expect } from 'vitest';
-import { architect, architectNeeds, choicesFor, cityFactor, overPackage, planOpenings, planRooms, strip, type ArchitectEstimate, type ArchitectInput, type Bhk, type Level } from '../engine/architect';
+import { architect, architectNeeds, changeOf, choicesFor, cityFactor, levelRuns, overPackage, planOpenings, planRooms, strip, type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Level, type LevelRuns } from '../engine/architect';
 import { architectCheck, checkRate } from '../engine/architect-check';
 import { price } from '../engine/library';
 import type { Blocked, Needs } from '../engine/dscr';
@@ -90,7 +90,7 @@ describe('a new house: G+1, 2,000 sq ft built up, 3 BHK, in Pune at Basic, by ha
     expect(line(house({ floors: 1, area: 1000 }), 'flat:railing:stair-railing')).toBeUndefined();
   });
   it('the sections: the structure, waterproofing, the terrace and outside, and every finish and service inside; no civil repairs; new wiring and a board', () => {
-    expect(e.sections.map((x) => x.id)).toEqual(['structure', 'waterproofing', 'exterior', 'flooring', 'walls', 'ceiling', 'bathrooms', 'kitchen', 'wardrobes', 'doors', 'electrical', 'plumbing', 'appliances', 'smart']);
+    expect(e.sections.map((x) => x.id)).toEqual(['structure', 'waterproofing', 'exterior', 'flooring', 'walls', 'ceiling', 'bathrooms', 'kitchen', 'wardrobes', 'doors', 'electrical', 'plumbing', 'appliances', 'smart', 'furniture', 'furnishings']);
     expect(e.sections.filter((x) => x.on).length).toBe(11);
     expect(e.lines.filter((l) => l.family === 'wiring').length).toBeGreaterThan(0);
     expect(line(e, 'flat:db:one')).toBeDefined();
@@ -150,7 +150,7 @@ describe('the estimate', () => {
     const r = run(), i = run({ kind: 'interiors' });
     const on = (e: ArchitectEstimate) => e.sections.filter((s) => s.on).map((s) => s.id);
     expect(on(r)).toEqual(['civil', 'waterproofing', 'flooring', 'walls', 'ceiling', 'bathrooms', 'kitchen', 'doors', 'electrical', 'plumbing']);
-    expect(on(i)).toEqual(['civil', 'walls', 'ceiling', 'kitchen', 'wardrobes', 'electrical', 'appliances', 'smart']);
+    expect(on(i)).toEqual(['civil', 'walls', 'ceiling', 'kitchen', 'wardrobes', 'electrical', 'appliances', 'smart', 'furniture', 'furnishings']);
     expect(i.lines.some((l) => l.family === 'demolish-floor' || l.family === 'wiring')).toBe(false);
   });
   it('a slider moves one section and nothing else; an item of the user\'s own replaces the level\'s', () => {
@@ -198,7 +198,7 @@ describe('every flat, kind, level and city works out, and both computations agre
   it('sliders set at random never block', () => {
     let seed = 7;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    const sections = ['flooring', 'walls', 'ceiling', 'bathrooms', 'kitchen', 'wardrobes', 'doors', 'electrical', 'appliances', 'smart'];
+    const sections = ['flooring', 'walls', 'ceiling', 'bathrooms', 'kitchen', 'wardrobes', 'doors', 'electrical', 'appliances', 'smart', 'furniture', 'furnishings'];
     for (let n = 0; n < 60; n++) {
       const sliders = Object.fromEntries(sections.map((s) => [s, (1 + Math.floor(rnd() * 5)) as Level]));
       const onOff = Object.fromEntries(sections.map((s) => [s, rnd() > 0.2]));
@@ -247,5 +247,79 @@ describe('what the page shows beside the estimate', () => {
   it('the item drawer leaves out a rate the two computations disagree on', () => {
     const c = choicesFor(flat(), 'living:floor:floor-skirting', (id, city) => (checkRate(id, city) ?? 0) + 1);
     expect(c?.ladder.every((x) => x === null || x.rate === null)).toBe(true);
+  });
+});
+
+describe('E3: a room of your own size and level, the furniture and soft furnishings, Compare and What changed', () => {
+  const FT = 0.3048;
+  it('a room\'s own size: the living room as 16 × 20 ft is 6.096 × 4.8768 m (the longer side its length), 320 sq ft; its floor with skirting along 21.9456 m less the 0.9 m kitchen opening and the 1.5 m balcony door, 1.95456 sq m: 31.6835 sq m = 341.04 sq ft; a tenth of its 29.73 sq m is more than two windows\' 2.9719 sq m, so three; the other rooms keep their sizes', () => {
+    const e = run({ rooms: { living: { l: 16 * FT, b: 20 * FT } } });
+    const living = e.rooms.find((r) => r.id === 'living');
+    expect([living?.l.toFixed(4), living?.b.toFixed(4), living?.typed]).toEqual(['6.0960', '4.8768', true]);
+    expect(line(e, 'living:floor:floor-skirting')?.qty).toBe(341.04);
+    expect(e.openings.filter((o) => o.room === 'living' && o.type === 'window').length).toBe(3);
+    expect(+((e.rooms.find((r) => r.id === 'bedroom-1')?.sqm ?? 0) / SQ).toFixed(2)).toBe(205.42);
+    expect(e.flags).toContain('With your sizes the rooms and the passage come to 987 sq ft, against the 950 sq ft the carpet area leaves for them after the inside walls: check the sizes, or the carpet area.');
+    expect(e.assumptions.find((a) => a.what === 'Rooms')?.shown).toMatch(/^Living and dining 320 sq ft \(20 × 16 ft, your size\); Main bedroom 205 sq ft/);
+  });
+  it('a room\'s own level stands above the section\'s slider and below an item\'s own choice (A4): the first bathroom at Luxury tiles to the ceiling, 2.9 m less the door, while the second keeps 8 ft; the waterproofing does not move', () => {
+    const e = run({ roomLevels: { 'bath-1': 4 } }), base = run();
+    const b = planRooms('2', 1000 * SQ).find((r) => r.id === 'bath-1');
+    const hand = 2 * ((b?.l ?? 0) + (b?.b ?? 0)) * 2.9 - 0.75 * 2.1;
+    expect(line(e, 'bath-1:wall-tile:bath-tiles')).toMatchObject({ level: 4, qty: +(hand / SQ).toFixed(2) });
+    expect(line(e, 'bath-2:wall-tile:bath-tiles')).toEqual(line(base, 'bath-2:wall-tile:bath-tiles'));
+    expect(line(e, 'bath-1:waterproofing:wp-bath')).toEqual(line(base, 'bath-1:waterproofing:wp-bath'));
+    expect(line(e, 'bath-1:sanitary:one')?.level).toBe(4);
+    const slid = run({ sliders: { bathrooms: 1 }, roomLevels: { 'bath-1': 4 } });
+    expect([line(slid, 'bath-1:sanitary:one')?.level, line(slid, 'bath-2:sanitary:one')?.level]).toEqual([4, 1]);
+    const own = run({ roomLevels: { 'bath-1': 4 }, items: { 'bath-1:sanitary:one': line(base, 'bath-1:sanitary:one')?.entry as string } });
+    expect(line(own, 'bath-1:sanitary:one')).toMatchObject({ entry: line(base, 'bath-1:sanitary:one')?.entry, chosen: true });
+  });
+  it('a bedroom of its own level: the second bedroom at Luxury gets its own AC with Appliances on, the first stays at the package', () => {
+    const e = run({ kind: 'interiors', roomLevels: { 'bedroom-2': 4 } });
+    expect(line(e, 'bedroom-2:ac:ac')).toMatchObject({ qty: 1, level: 4 });
+    expect(line(run({ kind: 'interiors' }), 'bedroom-2:ac:ac')).toBeUndefined();
+    expect(e.assumptions.find((a) => a.what === 'Rooms')?.shown).toMatch(/; Bedroom 2 170 sq ft, at Luxury;/);
+  });
+  it('the furniture and soft furnishings for interiors at Standard, by hand: a sofa 70,000, a dining set 48,000, a bed 25,234.50 and a mattress 17,500 in each bedroom, 2,03,469; curtains for 6 windows at 5,000 + 1.5 m of rod at 850 + fitting 325 × Pune\'s 0.969072 = 6,589.95 each, 39,539.70; all movable', () => {
+    const e = run({ kind: 'interiors' });
+    const at = (id: string) => e.sections.find((s) => s.id === id)?.amount;
+    expect(line(e, 'living:sofa:one')).toMatchObject({ entry: 'sf-mid', qty: 1, rate: 70000, kind: 'movable' });
+    expect(line(e, 'bedroom-1:bed:one')?.rate).toBe(25234.5);
+    expect(line(e, 'living:curtains:window-count')).toMatchObject({ entry: 'crt-set-mid', qty: 2, rate: 6589.95, amount: 13179.9 });
+    expect([at('furniture'), at('furnishings')]).toEqual([203469, 39539.7]);
+    expect(e.split.movable).toBe(243008.7);
+    expect(run().sections.find((s) => s.id === 'furniture')).toMatchObject({ on: false, amount: 0 });
+  });
+  it('the split is worked twice: a second computation that disagrees on it shows nothing', () => {
+    const wrong = (input: ArchitectInput) => { const c = architectCheck(input); c.split.movable += 100; return c; };
+    expect((architect(flat({ kind: 'interiors' }), wrong) as Blocked).blocked).toMatch(/disagree on the movable items/);
+    const wrongRoom = (input: ArchitectInput) => { const c = architectCheck(input); const r = c.rooms.get('living'); if (r) c.rooms.set('living', { ...r, sqm: r.sqm + 0.01 }); return c; };
+    expect((architect(flat(), wrongRoom) as Blocked).blocked).toMatch(/size of Living and dining/);
+  });
+  it('a room\'s size and level must be ones the engine takes', () => {
+    expect(architectNeeds(flat({ rooms: { living: { l: 0.1, b: 5 } } }))).toEqual(['Each side of a room from 0.3 to 30 m']);
+    expect(architectNeeds(flat({ roomLevels: { living: 7 as Level } }))).toEqual(['A room\'s level from 1 to 5']);
+  });
+  it('Compare: each section and the total at each of the five levels as a package, the sizes kept and the sliders, room levels and own items set aside', () => {
+    const runs = levelRuns(flat()) as LevelRuns, l4 = run({ level: 4 });
+    expect(runs.totals).toEqual(strip(flat()));
+    expect(runs.sections.flooring[3]).toBe(l4.sections.find((s) => s.id === 'flooring')?.amount);
+    expect(levelRuns(flat({ sliders: { flooring: 5 }, roomLevels: { 'bath-1': 5 }, items: { 'living:floor:floor-skirting': 'fl-kota' } }))).toEqual(runs);
+    expect((levelRuns(flat({ rooms: { living: { l: 6, b: 5 } } })) as LevelRuns).totals[1]).toBe(run({ rooms: { living: { l: 6, b: 5 } } }).total);
+  });
+  it('What changed: the new total less the old, worked twice, and the items that changed, came or went', () => {
+    const base = run(), up = run({ sliders: { bathrooms: 4 } });
+    const c = changeOf(flat(), flat({ sliders: { bathrooms: 4 } })) as Change;
+    expect(c.by).toBe(Math.round((up.total - base.total) * 100) / 100);
+    expect(c.swaps.length).toBeGreaterThan(0);
+    expect(c.swaps.every((x) => x.roomName.startsWith('Bathroom'))).toBe(true);
+    const on = changeOf(flat(), flat({ sections: { furniture: true } })) as Change;
+    expect(on.swaps.find((x) => x.name === 'Sofa')).toEqual({ roomName: 'Living and dining', name: 'Sofa', from: null, to: '3-seater sofa, mid-range' });
+    expect(on.by).toBe(203469);
+    const sized = changeOf(flat(), flat({ rooms: { living: { l: 16 * FT, b: 20 * FT } } })) as Change;
+    expect(sized.swaps).toEqual([]);
+    const wrong = (input: ArchitectInput) => { const k = architectCheck(input); if (input.sliders?.bathrooms) k.total += 100; return k; };
+    expect('blocked' in (changeOf(flat(), flat({ sliders: { bathrooms: 4 } }), wrong) as Blocked)).toBe(true);
   });
 });

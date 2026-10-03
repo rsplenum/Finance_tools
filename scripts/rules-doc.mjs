@@ -95,7 +95,7 @@ out.push('**Sections on for each kind of work**', '', ...Object.values(A.kinds).
 out.push('**The rooms for each BHK** (reference sizes in sq ft; only their proportions are used, scaled to your carpet area)', '', '| BHK | Rooms | Balcony | Usual carpet area | Why |', '|---|---|---|---|---|');
 for (const [id, p] of Object.entries(A.programmes))
   out.push(`| ${id === '1RK' ? '1 RK' : `${id} BHK`} | ${p.rooms.map((r) => `${r.name} ${r.ref}`).join('; ')} | ${p.balcony || 'none'} | ${p.typical ? `${p.typical[0]}–${p.typical[1]}` : '—'} | ${p.why}${cite(p.src)} |`);
-out.push('');
+out.push('', '**A room of your own size or level** (E3): a size you give a room replaces the planned one, its longer side the length, and the other rooms keep theirs; the page flags when the rooms no longer fit the carpet area. A room\'s own level stands above the section\'s slider and below an item of your own (A4), and moves only the sections with a slider: the structure, waterproofing and plumbing stay as they are.', '');
 const rule = (label, text, x) => `- **${label}**: ${text} ${x.why}${cite(x.src)}`;
 out.push('**How the rooms are drawn and measured**', '',
   rule('Bathrooms', A.bathrooms.rule, A.bathrooms),

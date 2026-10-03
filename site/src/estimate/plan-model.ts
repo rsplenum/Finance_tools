@@ -1,14 +1,15 @@
 /**
- * The planning estimate's page (E1), apart from the page (as dscr/model.ts): the six answers to the engine's input
+ * The planning estimate's page (E1, E3), apart from the page (as dscr/model.ts): the six answers to the engine's input
  * (engine/architect.ts), and its answer to words, with the engine's exact figures beside them for the Excel copy. Pure,
- * no DOM. Every figure comes from the engine: the estimate, the five-level strip, the change from the package and the
- * drawer's rates are each worked out twice there; this file only words, groups and orders them.
+ * no DOM. Every figure comes from the engine: the estimate, the five levels (the strip and Compare), the change from the
+ * package, what the last change did and the drawer's rates are each worked out twice there; this file only words, groups
+ * and orders them. The rooms' own sizes are typed in the page's unit and passed on in metres.
  */
 import {
-  BHKS, CITIES, FLOORS, LEVELS, R, WORK_KINDS, architect, architectNeeds, choicesFor, levelName, overPackage, strip,
-  type ArchitectEstimate, type ArchitectInput, type Bhk, type Choice, type Level, type Line, type WorkKind,
+  BHKS, CITIES, FLOORS, LEVELS, R, ROOM_SIDE, WORK_KINDS, architect, architectNeeds, changeOf, choicesFor, levelName, levelRuns, overPackage, planRooms,
+  type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choice, type Level, type LevelRuns, type Line, type WorkKind,
 } from '../../../engine/architect';
-import { CLASSES, LIBRARY_DATE, PER, SOURCE, SQFT_PER_SQM, type ItemKind, type Unit } from '../../../engine/library';
+import { CLASSES, FT_PER_M, LIBRARY_DATE, PER, SOURCE, SQFT_PER_SQM, type ItemKind, type Unit } from '../../../engine/library';
 import { parseAmount } from '../../../engine/parse';
 import { inr, rupeesWords } from '../../../engine/util';
 
@@ -31,11 +32,18 @@ export interface PlanState {
   brands: Record<string, string>;
   /** The ceiling height in metres as typed; empty for the rule's. */
   height: string;
+  /** A room's own size by its id, its two sides as typed in the page's unit: feet for sq ft, metres for sq m (E3). */
+  rooms: Record<string, { l: string; b: string }>;
+  /** A room's own level by its id (A4, A8). */
+  roomLevels: Record<string, Level>;
+  /** The last change to the estimate, for What changed: its words, and the engine's input before and after it. */
+  change?: Made;
   doc: PlanFacts;
 }
+export interface Made { what: string; before: ArchitectInput; after: ArchitectInput }
 
 export const EMPTY_PLAN: PlanState = {
-  area: '', unit: 'sqft', sections: {}, sliders: {}, items: {}, brands: {}, height: '', doc: { owner: '', property: '', lender: '', preparedBy: '' },
+  area: '', unit: 'sqft', sections: {}, sliders: {}, items: {}, brands: {}, height: '', rooms: {}, roomLevels: {}, doc: { owner: '', property: '', lender: '', preparedBy: '' },
 };
 
 // ---- The six questions (A3) ----
@@ -59,7 +67,7 @@ export const LEVEL_NAMES = LEVELS.map((l) => l.name);
 /** A number as typed: 850 or 1,150.5; null when not understood, undefined when empty. */
 export function plainOf(t: string): number | null | undefined {
   if (!t.trim()) return undefined;
-  const n = parseAmount(t.replace(/\s*(sq\.?\s*ft|sq\.?\s*m|sqft|sqm|m)\s*$/i, ''), false);
+  const n = parseAmount(t.replace(/\s*(sq\.?\s*ft|sq\.?\s*m|sqft|sqm|ft|feet|m)\s*$/i, ''), false);
   return n === undefined || !(n > 0) ? null : n;
 }
 
@@ -69,13 +77,41 @@ export function heightOf(t: string): number | null | undefined {
   return h === undefined ? undefined : h !== null && h >= 2 && h <= 6 ? h : null;
 }
 
-/** The engine's input from the answers. A height not understood is not passed on: the rule's stays until it is typed again. */
+/** Metres in one of the page's length units. */
+const METRES: Record<AreaUnit, number> = { sqft: 0.3048, sqm: 1 };
+/** The length unit that goes with the area's: ft with sq ft, m with sq m. */
+export const sideUnit = (u: AreaUnit) => (u === 'sqm' ? 'm' : 'ft');
+/** The sides a room can take, in the page's unit, for the field's message: 1 to 98 ft, or 0.3 to 30 m. */
+export const sideRange = (u: AreaUnit) => (u === 'sqm' ? [ROOM_SIDE.min, ROOM_SIDE.max] : [Math.ceil(ROOM_SIDE.min / 0.3048), Math.floor(ROOM_SIDE.max / 0.3048)]);
+
+/** A room's side as typed, in metres, when it is one the engine takes; null when typed but not such a side. */
+export function sideOf(t: string, u: AreaUnit): number | null | undefined {
+  const n = plainOf(t);
+  if (typeof n !== 'number') return n;
+  const m = n * METRES[u];
+  return m >= ROOM_SIDE.min - 1e-9 && m <= ROOM_SIDE.max + 1e-9 ? m : null;
+}
+/** The rooms' own sizes in metres: only those with both sides typed and understood. */
+function roomSizes(s: PlanState): Record<string, { l: number; b: number }> {
+  const out: Record<string, { l: number; b: number }> = {};
+  for (const [id, x] of Object.entries(s.rooms)) {
+    const l = sideOf(x.l, s.unit), b = sideOf(x.b, s.unit);
+    if (typeof l === 'number' && typeof b === 'number') out[id] = { l, b };
+  }
+  return out;
+}
+
+/**
+ * The engine's input from the answers. A height or a room's size not understood is not passed on: the rule's, or the
+ * planned size, stays until it is typed again.
+ */
 export function inputOf(s: PlanState): ArchitectInput {
-  const area = plainOf(s.area), h = heightOf(s.height);
+  const area = plainOf(s.area), h = heightOf(s.height), rooms = roomSizes(s);
   return {
     kind: s.kind, property: s.kind === 'build' ? 'house' : s.home, ...(s.kind === 'build' && s.floors ? { floors: s.floors } : {}),
     city: s.city, ...(typeof area === 'number' ? { area } : {}), areaUnit: s.unit, bhk: s.bhk, level: s.level,
     sections: s.sections, sliders: s.sliders, items: s.items, ...(typeof h === 'number' ? { heightM: h } : {}),
+    ...(Object.keys(rooms).length ? { rooms } : {}), ...(Object.keys(s.roomLevels).length ? { roomLevels: s.roomLevels } : {}),
   };
 }
 
@@ -90,25 +126,59 @@ export const areaLabel = (kind?: WorkKind) => (kind === 'build' ? 'Built-up area
 
 // ---- Changes, as the page makes them ----
 
+const same = (a: ArchitectInput, b: ArchitectInput) => JSON.stringify(a) === JSON.stringify(b);
+/** The state after a change to the estimate, the change noted for What changed; one that leaves the input as it was keeps the last. */
+function noted(s: PlanState, next: PlanState, what: string): PlanState {
+  const before = inputOf(s), after = inputOf(next);
+  return { ...next, change: same(before, after) ? s.change : { what, before, after } };
+}
+const sectionName = (id: string) => R.sections.find((x) => x.id === id)?.name ?? id;
+
 /** A new kind: its own sections on (D-UX-19); the sliders and items stay. */
 export const withKind = (s: PlanState, kind: WorkKind): PlanState => ({ ...s, kind, sections: {} });
-/** A new package, from question 6 or the strip: every section at that level again. */
-export const withLevel = (s: PlanState, level: Level): PlanState => ({ ...s, level, sliders: {}, items: {}, brands: {} });
+/** A new package, from question 6 or the strip: every section and room at that level again. */
+export const withLevel = (s: PlanState, level: Level): PlanState =>
+  noted(s, { ...s, level, sliders: {}, items: {}, brands: {}, roomLevels: {} }, `Every section to ${LEVEL_NAMES[level - 1]}`);
 /** A section's slider moved: its lines all follow it, so the items chosen in it are set aside (A4). */
 export function withSlider(s: PlanState, section: string, level: Level, keysIn: string[]): PlanState {
   const items = { ...s.items }, brands = { ...s.brands };
   for (const k of keysIn) { delete items[k]; delete brands[k]; }
   const sliders = { ...s.sliders };
   if (level === s.level) delete sliders[section]; else sliders[section] = level;
-  return { ...s, sliders, items, brands };
+  return noted(s, { ...s, sliders, items, brands }, `${sectionName(section)} to ${LEVEL_NAMES[level - 1]}`);
 }
-export const withSection = (s: PlanState, section: string, on: boolean): PlanState => ({ ...s, sections: { ...s.sections, [section]: on } });
-/** A line's own item (null: back to the level's), and a brand of it or none. */
-export function withItem(s: PlanState, key: string, entry: string | null, brand?: string): PlanState {
+export const withSection = (s: PlanState, section: string, on: boolean): PlanState =>
+  noted(s, { ...s, sections: { ...s.sections, [section]: on } }, `${sectionName(section)} switched ${on ? 'on' : 'off'}`);
+/** A line's own item (null: back to the level's), and a brand of it or none; `what` names the change for What changed. */
+export function withItem(s: PlanState, key: string, entry: string | null, brand?: string, what = 'An item of your own'): PlanState {
   const items = { ...s.items }, brands = { ...s.brands };
   if (entry === null) delete items[key]; else items[key] = entry;
   if (brand) brands[key] = brand; else delete brands[key];
-  return { ...s, items, brands };
+  return noted(s, { ...s, items, brands }, what);
+}
+/** A new unit for the area: the rooms' sides typed so far are turned into it. */
+export function withUnit(s: PlanState, unit: AreaUnit): PlanState {
+  if (unit === s.unit) return s;
+  const turn = (t: string) => { const n = plainOf(t); return typeof n === 'number' ? qtyText((n * METRES[s.unit]) / METRES[unit]) : t; };
+  const rooms = Object.fromEntries(Object.entries(s.rooms).map(([id, x]) => [id, { l: turn(x.l), b: turn(x.b) }]));
+  return { ...s, unit, rooms };
+}
+/** A side of a room's own size as typed (`name` for What changed); both sides empty: back to the planned size. */
+export function withRoomSide(s: PlanState, id: string, side: 'l' | 'b', text: string, name: string): PlanState {
+  const x = { ...(s.rooms[id] ?? { l: '', b: '' }), [side]: text }, rooms = { ...s.rooms, [id]: x };
+  if (!x.l.trim() && !x.b.trim()) delete rooms[id];
+  return noted(s, { ...s, rooms }, rooms[id] ? `${name} to ${x.l.trim()} × ${x.b.trim()} ${sideUnit(s.unit)}` : `${name} back to its planned size`);
+}
+export function withRoomReset(s: PlanState, id: string, name: string): PlanState {
+  const rooms = { ...s.rooms };
+  delete rooms[id];
+  return noted(s, { ...s, rooms }, `${name} back to its planned size`);
+}
+/** A room's own level, or null for the sections' levels again. */
+export function withRoomLevel(s: PlanState, id: string, level: Level | null, name: string): PlanState {
+  const roomLevels = { ...s.roomLevels };
+  if (level === null) delete roomLevels[id]; else roomLevels[id] = level;
+  return noted(s, { ...s, roomLevels }, level === null ? `${name} back to the sections' levels` : `${name} at ${LEVEL_NAMES[level - 1]}`);
 }
 
 // ---- Words ----
@@ -149,18 +219,33 @@ export interface SectionView {
   amount: string; n: number; over?: { text: string; n: number };
   /** The section's main items at this level, in one line, and where they go. */
   spec: string; where: string;
-  /** Lines with an item of the user's own. */
-  mixed: number; lines: LineView[];
+  /** Lines with an item of the user's own, and lines at a room's own level; "Mixed (…)" when either is not nil. */
+  mixed: number; mixedText: string; lines: LineView[];
 }
 export interface StripView { level: Level; name: string; total: string; full: string; n: number; current: boolean }
 export interface BarView { id: string; name: string; amount: string; n: number; width: number }
 export interface AssumedView { what: string; shown: string; why: string; sources: SourceView[] }
+/** A room in the list (A8): its size and area now, its sides as typed and as planned, its own level. */
+export interface RoomView {
+  id: string; name: string; size: string; area: string; typed: boolean; level: Level | null;
+  /** The sides as typed (empty when not), and the planned ones for the fields' placeholders, in the page's unit. */
+  l: string; b: string; planned: { l: string; b: string };
+  /** Why a typed size is not used yet, or nothing. */
+  bad?: string;
+}
+/** One amount in Compare: in lakhs for the table, in full for its label; `mine` marks the level the estimate is at. */
+export interface CompareCell { text: string; full: string; n: number; mine: boolean }
+/** Compare (A8): each section on and the total, at the five levels as a package; "Yours" where the estimate differs. */
+export interface CompareView { rows: { id: string; name: string; cells: CompareCell[]; yours?: string }[]; totals: CompareCell[]; yours?: string }
+/** What changed (A8): the last change and what it did to the total, and the items it brought in. */
+export interface ChangeView { text: string; n: number; items: string }
 export interface PlanView {
   summary: string; title: string; kind: string; home: string; city: string; area: string; bhk: string; level: string;
   /** "Carpet area", or "Built-up area" for a new house: the area typed and the one the cost a sq ft is of. */
   areaName: string;
   total: string; perSqft: string; words: string; n: { total: number; perSqft: number };
   strip: StripView[]; bar: BarView[]; sections: SectionView[];
+  rooms: RoomView[]; roomsNote?: string; compare: CompareView; change?: ChangeView;
   /** Fixed works, movable items and appliances, when there is more than fixed works. */
   split?: { label: string; amount: string; n: number }[];
   assumed: AssumedView[]; flags: string[]; unpriced: string[];
@@ -176,17 +261,21 @@ export function planPreview(s: PlanState): PlanPreview {
   if (needs.length) return { needs };
   const input = inputOf(s), e = architect(input);
   if (!('total' in e)) return stopped(e);
-  const levels = strip(input);
-  if (!Array.isArray(levels)) return stopped(levels);
+  const runs = levelRuns(input);
+  if (isStop(runs)) return stopped(runs);
   const over = overPackage(input);
   if (isStop(over)) return stopped(over);
-  return { needs: [], view: viewOf(s, e, levels, over) };
+  // What the last change did, while the estimate is still the one it made; a change from no estimate says nothing.
+  const c = s.change && same(s.change.after, input) ? changeOf(s.change.before, s.change.after) : undefined;
+  if (c && 'blocked' in c) return stopped(c);
+  return { needs: [], view: viewOf(s, e, runs, over, c && 'by' in c ? { what: (s.change as Made).what, ...c } : undefined) };
 }
 type Stop = { needs: string[] } | { blocked: string };
 const isStop = (x: object): x is Stop => Array.isArray((x as { needs?: unknown }).needs) || typeof (x as { blocked?: unknown }).blocked === 'string';
 const stopped = (x: Stop): PlanPreview => ('blocked' in x ? { needs: [], blocked: x.blocked } : { needs: x.needs });
 
-function viewOf(s: PlanState, e: ArchitectEstimate, levels: number[], over: Record<string, number>): PlanView {
+function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Record<string, number>, change?: Change & { what: string }): PlanView {
+  const levels = runs.totals;
   const numbered = new Map<string, SourceView>();
   const sourceOf = (id: string): SourceView => {
     let v = numbered.get(id);
@@ -204,11 +293,16 @@ function viewOf(s: PlanState, e: ArchitectEstimate, levels: number[], over: Reco
     const sectionNo = t.on && ls.length ? ++no : 0;
     const lines = ls.map((l, i) => lineView(s, l, `${sectionNo}.${i + 1}`, sourceOf));
     const d = over[t.id] ?? 0;
+    // Rooms at a level of their own, other than the section's, with a line in it that follows that level.
+    const ownLevel = (room: string | null) => e.rooms.find((r) => r.id === room)?.level ?? null;
+    const chosen = ls.filter((l) => l.chosen).length;
+    const roomLevel = new Set(ls.filter((l) => !l.chosen && l.level !== null && ownLevel(l.room) !== null && ownLevel(l.room) !== t.level).map((l) => l.room)).size;
+    const mixedText = [chosen ? `${chosen} chosen` : '', roomLevel ? `${roomLevel} room${roomLevel > 1 ? 's' : ''} at ${roomLevel > 1 ? 'their' : 'its'} own level` : ''].filter(Boolean).join(', ');
     return {
       id: t.id, no: sectionNo, name: t.name, on: t.on, slider: t.slider, level: t.level, levelName: t.level ? levelName(t.level) : '',
       amount: rupees(t.amount), n: t.amount,
       ...(Math.round(d) !== 0 ? { over: { text: `Rs. ${rupees(Math.abs(d))} ${d > 0 ? 'more' : 'less'} than ${pkg}`, n: d } } : {}),
-      spec: specOf(ls), where: whereOf(ls, e), mixed: ls.filter((l) => l.chosen).length, lines,
+      spec: specOf(ls), where: whereOf(ls, e), mixed: chosen + roomLevel, mixedText: mixedText ? `Mixed (${mixedText})` : '', lines,
     };
   });
   const shown = sections.filter((x) => x.on && x.n > 0), most = Math.max(1, ...shown.map((x) => x.n));
@@ -223,7 +317,9 @@ function viewOf(s: PlanState, e: ArchitectEstimate, levels: number[], over: Reco
   const area = s.unit === 'sqm' ? `${qtyText(sqm)} sq m (${qtyText(sqft)} sq ft)` : `${qtyText(sqft)} sq ft (${qtyText(sqm)} sq m)`;
   const kind = WORK_KINDS[e.kind].label, bhk = BHK_CHOICES.find((b) => b.value === e.bhk)?.label ?? e.bhk;
   const home = e.house ? FLOORS[e.house.floors - 1].label : e.property === 'house' ? 'House' : 'Flat';
+  const roomsNote = e.flags.find((f) => f.startsWith('With your sizes'));
   return {
+    rooms: roomsOf(s, e), ...(roomsNote ? { roomsNote } : {}), compare: compareOf(e, runs, sections), ...(change ? { change: changeText(change) } : {}),
     // Each answer kept on one line (no-break spaces inside it), so a phone wraps only between answers.
     summary: [kind, home, city, s.unit === 'sqm' ? `${qtyText(sqm)} sq m` : `${qtyText(sqft)} sq ft`, bhk, pkg].map((x) => x.replace(/ /g, '\u00a0')).join(' · '),
     title: TITLE[e.kind], kind, home, city, area, bhk, level: pkg, areaName: e.per === 'built-up' ? 'Built-up area' : 'Carpet area',
@@ -235,6 +331,40 @@ function viewOf(s: PlanState, e: ArchitectEstimate, levels: number[], over: Reco
     ratesDate: dmy(LIBRARY_DATE), sources: [...numbered.values()],
     classes: Object.entries(CLASSES).filter(([id]) => [...numbered.values()].some((x) => x.cls === id)).map(([id, means]) => ({ id, means })),
   };
+}
+
+/** The rooms as planned or sized, in the page's unit, each with its own level. */
+function roomsOf(s: PlanState, e: ArchitectEstimate): RoomView[] {
+  const ft = s.unit !== 'sqm', side = (m: number) => qtyText(ft ? m * FT_PER_M : m), unit = sideUnit(s.unit);
+  const planned = new Map(planRooms(e.bhk, e.carpetSqm).map((r) => [r.id, r]));
+  const [lo, hi] = sideRange(s.unit);
+  return e.rooms.map((r) => {
+    const typed = s.rooms[r.id] ?? { l: '', b: '' }, p = planned.get(r.id) ?? r;
+    const l = sideOf(typed.l, s.unit), b = sideOf(typed.b, s.unit), any = !!(typed.l.trim() || typed.b.trim());
+    const bad = !any ? undefined : l === null || b === null ? `Type each side from ${lo} to ${hi} ${unit}.` : l === undefined || b === undefined ? 'Type both sides.' : undefined;
+    return {
+      id: r.id, name: r.name, size: `${side(r.l)} × ${side(r.b)} ${unit}`, area: ft ? `${inr(Math.round(r.sqm * SQFT_PER_SQM))} sq ft` : `${qtyText(r.sqm)} sq m`,
+      typed: r.typed, level: r.level, l: typed.l, b: typed.b, planned: { l: side(p.l), b: side(p.b) }, ...(bad ? { bad } : {}),
+    };
+  });
+}
+
+/** Compare: each section that is on, and the total, at the five levels; the estimate's own level marked, and its own amount where it differs. */
+function compareOf(e: ArchitectEstimate, runs: LevelRuns, sections: SectionView[]): CompareView {
+  const cells = (ns: number[], at: number): CompareCell[] => ns.map((n, i) => ({ text: shortRupees(n), full: rupees(n), n, mine: i + 1 === at }));
+  const differs = (now: number, ns: number[], at: number) => Math.abs(now - ns[at - 1]) >= 0.005;
+  const rows = sections.filter((x) => x.on && (runs.sections[x.id] ?? []).some((n) => n > 0)).map((x) => {
+    const ns = runs.sections[x.id], at = x.level ?? e.level;
+    return { id: x.id, name: x.name, cells: cells(ns, at), ...(differs(x.n, ns, at) ? { yours: `Yours: Rs. ${x.amount}` } : {}) };
+  });
+  return { rows, totals: cells(runs.totals, e.level), ...(differs(e.total, runs.totals, e.level) ? { yours: `Yours: Rs. ${rupees(e.total)}` } : {}) };
+}
+
+/** "Bathrooms to Luxury: Rs. 6,71,648 more", and the items it brought in, up to three. */
+function changeText(c: Change & { what: string }): ChangeView {
+  const names = [...new Set(c.swaps.flatMap((x) => (x.to ? [x.to] : [])))];
+  const by = Math.round(c.by) === 0 ? 'no change in the total' : `Rs. ${rupees(Math.abs(c.by))} ${c.by > 0 ? 'more' : 'less'}`;
+  return { text: `${c.what}: ${by}`, n: c.by, items: names.length ? `${names.slice(0, 3).join(' · ')}${names.length > 3 ? ` · and ${names.length - 3} more` : ''}` : '' };
 }
 
 function lineView(s: PlanState, l: Line, no: string, sourceOf: (id: string) => SourceView): LineView {

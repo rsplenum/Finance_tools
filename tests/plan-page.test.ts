@@ -5,13 +5,15 @@
  * word them faithfully, and the files are read back by readers written by others (scripts/read-doc.mjs).
  */
 import { describe, it, expect } from 'vitest';
-import { architect, strip, type ArchitectEstimate } from '../engine/architect';
+import { architect, levelRuns, strip, type ArchitectEstimate, type LevelRuns } from '../engine/architect';
 import { inr } from '../engine/util';
 import { docText } from '../site/src/doc/doc';
 import { docxOf } from '../site/src/doc/docx';
 import { pdfOf, printable } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
-import { EMPTY_PLAN, areaLabel, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withSlider, type PlanState } from '../site/src/estimate/plan-model';
+import {
+  EMPTY_PLAN, areaLabel, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withRoomLevel, withRoomReset, withRoomSide, withSection, withSlider, withUnit, type PlanState,
+} from '../site/src/estimate/plan-model';
 import { planDoc, planDocStatus, planFileName } from '../site/src/estimate/plan-document';
 import { SITE_NAME } from '../site/src/site';
 import { docxLines, pdfPages, workbook } from '../scripts/read-doc.mjs';
@@ -54,12 +56,12 @@ describe('the answer, worded from the engine', () => {
     ]);
     expect(v.strip[1].n).toBe(e.total);
   });
-  it('a card for every section; a renovation has ten on and interiors eight, Appliances and Smart home among them (D-UX-19)', () => {
-    expect(v.sections.length).toBe(13);
+  it('a card for every section; a renovation has ten on and interiors ten, Appliances, Smart home, Furniture and Soft furnishings among them (D-UX-19)', () => {
+    expect(v.sections.length).toBe(15);
     expect(v.sections.filter((x) => x.on).length).toBe(10);
     const i = view(withKind(FLAT, 'interiors'));
-    expect(i.sections.filter((x) => x.on).map((x) => x.name)).toEqual(['Civil and repairs', 'Walls and paint', 'Ceiling', 'Kitchen', 'Wardrobes and storage', 'Electrical and lights', 'Appliances', 'Smart home and security']);
-    expect(i.split?.map((x) => x.label)).toEqual(['Fixed works', 'Appliances']);
+    expect(i.sections.filter((x) => x.on).map((x) => x.name)).toEqual(['Civil and repairs', 'Walls and paint', 'Ceiling', 'Kitchen', 'Wardrobes and storage', 'Electrical and lights', 'Appliances', 'Smart home and security', 'Furniture', 'Soft furnishings']);
+    expect(i.split?.map((x) => x.label)).toEqual(['Fixed works', 'Movable items', 'Appliances']);
   });
   it('the bar holds each section with an amount, the largest the full width', () => {
     expect(v.bar.map((x) => x.id)).toEqual(v.sections.filter((x) => x.on && x.n > 0).map((x) => x.id));
@@ -122,13 +124,13 @@ describe('a new house on the page (D-UX-23)', () => {
     expect(areaLabel('build')).toBe('Built-up area of all floors');
     expect(inputOf(HOUSE)).toMatchObject({ kind: 'build', property: 'house', floors: 2, area: 2000 });
   });
-  it('the summary, the area typed and the cost a sq ft of it; fourteen sections, the structure first and eleven on', () => {
+  it('the summary, the area typed and the cost a sq ft of it; sixteen sections, the structure first and eleven on', () => {
     const v = view(HOUSE);
     expect(v.summary.replace(/ /g, ' ')).toBe('Build a new house · G+1 · Pune · 2,000 sq ft · 3 BHK · Basic');
     expect([v.area, v.areaName, v.title]).toEqual(['2,000 sq ft (185.81 sq m)', 'Built-up area', 'Estimate of cost of construction']);
     expect(v.sections.map((x) => x.id)[0]).toBe('structure');
-    expect([v.sections.length, v.sections.filter((x) => x.on).length]).toEqual([14, 11]);
-    expect(view(FLAT).sections.length).toBe(13);
+    expect([v.sections.length, v.sections.filter((x) => x.on).length]).toEqual([16, 11]);
+    expect(view(FLAT).sections.length).toBe(15);
   });
   it('the document: titled for construction, the floors in the work, the built-up area, the cost a sq ft of it, the cement by hand, and the house in Annex 2', () => {
     const p = planPreview(HOUSE), lines = docText(planDoc(HOUSE, p, TODAY)!).split('\n');
@@ -198,5 +200,61 @@ describe('the planning estimate to download', () => {
     const t = { ...s, doc: { ...s.doc, owner: '' } }, d = planDoc(t, planPreview(t), TODAY)!;
     expect(planDocStatus(t, planPreview(t))).toBe('Provisional: 1 still needed');
     for (const page of await pdfPages(pdfOf(d, MADE))) expect(page.split('\n')[0]).toBe('Planning estimate Provisional');
+  });
+});
+
+describe('E3 on the page: the rooms, What changed, Compare and the movable sections', () => {
+  const e = architect(inputOf(FLAT)) as ArchitectEstimate;
+  const total = (s: PlanState) => (architect(inputOf(s)) as ArchitectEstimate).total;
+  const more = (s: PlanState) => { const by = Math.round((total(s) - e.total) * 100) / 100; return `Rs. ${inr(Math.abs(by))} ${by > 0 ? 'more' : 'less'}`; };
+  it('the rooms with their planned sizes in feet; a size typed in feet reaches the engine in metres, the longer side its length, and What changed says what it did', () => {
+    const v = view(FLAT);
+    expect(v.rooms.map((r) => r.id)).toEqual(['living', 'bedroom-1', 'bedroom-2', 'kitchen', 'bath-1', 'bath-2', 'passage', 'balcony']);
+    expect(v.rooms[0]).toMatchObject({ name: 'Living and dining', size: '19.19 × 14.76 ft', area: '283 sq ft', typed: false, level: null, l: '', b: '', planned: { l: '19.19', b: '14.76' } });
+    const half = withRoomSide(FLAT, 'living', 'l', '16', 'Living and dining'), sized = withRoomSide(half, 'living', 'b', '20', 'Living and dining');
+    expect([inputOf(half).rooms, view(half).rooms[0].bad, view(half).change]).toEqual([undefined, 'Type both sides.', undefined]);
+    expect(inputOf(sized).rooms).toEqual({ living: { l: 16 * 0.3048, b: 20 * 0.3048 } });
+    const sv = view(sized);
+    expect(sv.rooms[0]).toMatchObject({ size: '20 × 16 ft', area: '320 sq ft', typed: true, l: '16', b: '20' });
+    expect(sv.roomsNote).toBe('With your sizes the rooms and the passage come to 987 sq ft, against the 950 sq ft the carpet area leaves for them after the inside walls: check the sizes, or the carpet area.');
+    expect(sv.change).toEqual({ text: `Living and dining to 16 × 20 ft: ${more(sized)}`, n: Math.round((total(sized) - e.total) * 100) / 100, items: '' });
+    expect(view(withRoomReset(sized, 'living', 'Living and dining')).rooms[0].typed).toBe(false);
+  });
+  it('a side out of range is not passed on and the field says why; a new unit turns the sides typed into it', () => {
+    const tiny = withRoomSide(withRoomSide(FLAT, 'living', 'l', '0.5', 'L'), 'living', 'b', '12', 'L');
+    expect([inputOf(tiny).rooms, view(tiny).rooms[0].bad]).toEqual([undefined, 'Type each side from 1 to 98 ft.']);
+    const sized = withRoomSide(withRoomSide(FLAT, 'living', 'l', '16', 'L'), 'living', 'b', '20', 'L');
+    expect(withUnit(sized, 'sqm').rooms.living).toEqual({ l: '4.88', b: '6.1' });
+    expect(view({ ...withUnit(sized, 'sqm'), area: '92.9' }).rooms[0].size).toBe('6.1 × 4.88 m');
+  });
+  it('a room\'s own level: the first bathroom at Luxury; its sections read Mixed; What changed names the items it brought in; a new package sets it aside', () => {
+    const s = withRoomLevel(FLAT, 'bath-1', 4, 'Bathroom 1 (attached)'), v = view(s);
+    expect(v.rooms.find((r) => r.id === 'bath-1')?.level).toBe(4);
+    expect(v.sections.find((x) => x.id === 'bathrooms')?.mixedText).toBe('Mixed (1 room at its own level)');
+    expect(view(withSlider(FLAT, 'electrical', 4, [])).sections.find((x) => x.id === 'electrical')?.mixed).toBe(0);
+    expect(v.change?.text).toBe(`Bathroom 1 (attached) at Luxury: ${more(s)}`);
+    expect(v.change?.items).toMatch(/^Matt porcelain slabs, 800 × 1600 mm · Porcelain slabs on the walls, 800 × 1600 mm · Imported sanitaryware · and \d+ more$/);
+    expect(view(withLevel(s, 3)).rooms.find((r) => r.id === 'bath-1')?.level).toBeNull();
+  });
+  it('Compare: the sections that are on, the five levels across, the estimate\'s own level marked; Yours where the estimate differs from the package', () => {
+    const v = view(FLAT), runs = levelRuns(inputOf(FLAT)) as LevelRuns;
+    expect(v.compare.rows.find((r) => r.id === 'flooring')?.cells.map((c) => [c.n, c.mine])).toEqual(runs.sections.flooring.map((n, i) => [n, i === 1]));
+    expect(v.compare.rows.some((r) => r.id === 'furniture')).toBe(false);
+    expect([v.compare.totals.map((c) => c.n), v.compare.yours]).toEqual([runs.totals, undefined]);
+    const up = withSlider(FLAT, 'flooring', 4, []), uv = view(up), floor = uv.compare.rows.find((r) => r.id === 'flooring');
+    expect([floor?.cells.findIndex((c) => c.mine), floor?.yours, uv.compare.yours]).toEqual([3, undefined, `Yours: Rs. ${uv.total}`]);
+    expect(uv.change?.text).toBe(`Flooring to Luxury: ${more(up)}`);
+  });
+  it('Furniture switched on for a renovation: What changed names the pieces; the line goes when the answers change', () => {
+    const s = withSection(FLAT, 'furniture', true), v = view(s);
+    expect(v.change).toEqual({ text: 'Furniture switched on: Rs. 2,03,469 more', n: 203469, items: '3-seater sofa, mid-range · 6-seater dining set · Queen bed with hydraulic storage · and 1 more' });
+    expect(view({ ...s, city: 'mumbai' }).change).toBeUndefined();
+  });
+  it('interiors: the movable items apart on the page and in the abstract (D-UX-19)', () => {
+    const i = withKind(FLAT, 'interiors'), p = planPreview(i), lines = docText(planDoc(i, p, TODAY)!).split('\n');
+    expect(p.view?.split?.find((x) => x.label === 'Movable items')?.n).toBe(243008.7);
+    expect(lines).toContain('Movable items | 2,43,009');
+    expect(lines).toContain('8. Furniture | 2,03,469');
+    expect(lines).toContain('9. Soft furnishings | 39,540');
   });
 });
