@@ -11,7 +11,10 @@
  * is drawn side by side, its stairs part by part (the landings as the well less the flights and their gap), its tanks
  * filled a step at a time, and its stages taken from the sections and the rows as this computation adds them up. The
  * user's bathrooms (R2) are put after the programme's other rooms with the range of its last bathroom, each door opening
- * into the bedroom named or the passage.
+ * into the bedroom named or the passage. The range by the choices at a level (L1) walks the library afresh for each line:
+ * every item of the family (its own, or one a level names) that the family names at the line's level or that is usually at
+ * it, of the same kind of unit as the item named, priced on the quantity in its own unit; the cheapest and the dearest
+ * after sorting the amounts.
  * architect.ts shows no figure unless both agree.
  */
 import RULES from './data/architect.json';
@@ -26,6 +29,8 @@ export interface ArchitectCheck {
   stages: Map<string, number>;
   /** Each room's share of the carpet area, the passage's and the inside walls' (id walls), by id; not the balcony's (R1). */
   shares: Map<string, number>;
+  /** The range by the choices at each line's level (L1), when asked for. */
+  range?: { low: number; high: number; lines: number; of: number };
 }
 
 const Q = RULES as unknown as Rules;
@@ -36,7 +41,7 @@ const round2 = (x: number) => Math.round(x * 100 + 1e-6) / 100;
 interface Space { id: string; kind: RoomKind; master: boolean; of: string | null; sqm: number; len: number; wide: number }
 interface Hole { w: number; h: number; sill: number; door: boolean; owner: string; other: string | null; kind: string }
 
-export function architectCheck(input: ArchitectInput): ArchitectCheck {
+export function architectCheck(input: ArchitectInput, banded = false): ArchitectCheck {
   const kind = input.kind as WorkKind, level = input.level as number;
   const typed = input.areaUnit === 'sqm' ? (input.area as number) : (input.area as number) * SQ_FOOT;
   const H = input.heightM ?? Q.height.m;
@@ -269,6 +274,13 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
   const priced = (id: string) => checkRate(id, input.city);
 
   const lines = new Map<string, CheckLine>(), bySpace = new Map<string, { section: string; amount: number; kind: ItemKind }[]>();
+  // An area or a length in a unit of its kind: square feet and feet by dividing; litres, counts and materials as they are.
+  const unitKind = (u: Unit) => (u === 'sqft' || u === 'sqm' ? 'area' : u === 'rft' || u === 'm' ? 'length' : u);
+  const inUnitOf = (base: number, u: Unit) => (u === 'sqft' ? base / SQ_FOOT : u === 'rft' ? base / FOOT : base);
+  let low = 0, high = 0, offering = 0;
+  // The items at a level for a family and a kind of unit, found once a run; and each rate once a run.
+  const found = new Map<string, string[]>(), rates = new Map<string, number | null>();
+  const rateFor = (x: string) => { if (!rates.has(x)) rates.set(x, priced(x)); return rates.get(x) as number | null; };
   const visit = (slot: Rules['templates']['flat'][number], s: Space | null) => {
     if (!sectionOn(slot.section)) return;
     if (slot.kinds && !slot.kinds.includes(kind)) return;
@@ -281,13 +293,29 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
     const base = qty(slot.qty, s, lv);
     if (!(base > 0)) return;
     const e = ENTRIES.get(id) as Entry;
-    const isArea = ['sqft', 'sqm'].includes(e.unit), isLength = ['rft', 'm'].includes(e.unit);  // litres, counts and materials pass as they are
-    const inUnit = isArea ? (e.unit === 'sqft' ? base / SQ_FOOT : base) : isLength ? (e.unit === 'rft' ? base / FOOT : base) : base;
     const rate = priced(id);
     if (rate === null) return;
-    const q = round2(inUnit);
+    const q = round2(inUnitOf(base, e.unit));
     const amount = round2(q * rate);
     lines.set(key, { qty: q, rate, amount });
+    if (banded) {
+      // The choices at the level: an item of the user's own stands alone; else the family's items named here or usually here.
+      const amounts: number[] = [];
+      if (chosen && ENTRIES.has(chosen)) amounts.push(amount);
+      else {
+        const at = `${slot.family}:${lv}:${unitKind(e.unit)}`;
+        if (!found.has(at)) {
+          const f = FAMILIES.get(slot.family), names = new Set([f?.fixed, ...(f?.levels ?? [])]);
+          found.set(at, [...ENTRIES.values()].filter((x) => (x.family === slot.family || names.has(x.id)) && (x.id === id || x.level === lv) && unitKind(x.unit) === unitKind(e.unit)).map((x) => x.id));
+        }
+        for (const x of found.get(at) as string[]) {
+          const r = rateFor(x);
+          if (r !== null) amounts.push(round2(round2(inUnitOf(base, (ENTRIES.get(x) as Entry).unit)) * r));
+        }
+      }
+      amounts.sort((a, b) => a - b);
+      low += amounts[0]; high += amounts[amounts.length - 1]; if (amounts.length > 1) offering++;
+    }
     const where = s ? s.id : 'flat';
     bySpace.set(where, [...(bySpace.get(where) ?? []), { section: slot.section, amount, kind: FAMILIES.get(slot.family)?.kind ?? 'fixed' }]);
   };
@@ -325,7 +353,10 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
     put('outside', outside);
     put('movable', split.movable);
   }
-  return { lines, sections, total, split, rooms, roomsSqm, plannedSqm: carpet - carpet * Q.shares.walls.value, stages, shares };
+  return {
+    lines, sections, total, split, rooms, roomsSqm, plannedSqm: carpet - carpet * Q.shares.walls.value, stages, shares,
+    ...(banded ? { range: { low, high, lines: offering, of: lines.size } } : {}),
+  };
 }
 
 /** The city's factor the check's way: the sum of its range against the average of every listed city's sum; 1 for a place not listed. */

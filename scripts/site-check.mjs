@@ -620,6 +620,8 @@ for (const scheme of ['light', 'dark']) {
   const total = ((await page.getByTestId('pl-total').textContent()) ?? '').trim();
   if (!/^Rs\. [\d,]+$/.test(total)) v(`the estimate's total reads "${total}"`);
   await expectText(page, v, 'pl-sticky-total', total, 'the total in the bar at the bottom');
+  // L1: the level's range by its choices, in one line under the total.
+  await expectText(page, v, 'pl-range', /^At Basic, the choices run from Rs\. [\d,]+ to Rs\. [\d,]+: the cheapest in each item to the dearest\. \d+ of the \d+ items offer a choice\.$/, 'the level\'s range under the total');
   if ((await page.getByTestId('pl-strip-1').getAttribute('aria-label')) !== `Basic: ${total}` || (await page.getByTestId('pl-strip-1').getAttribute('aria-pressed')) !== 'true')
     v('the strip does not mark Basic at the total');
   const cards = await page.locator('[data-testid^="pl-card-"]').count(), on = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
@@ -631,7 +633,10 @@ for (const scheme of ['light', 'dark']) {
   const living = page.getByTestId('pl-line-living:floor:floor-skirting');
   await expectText(page, v, living.locator('p').nth(1), '303.03 sq ft × Rs. 114.09 = Rs. 34,573', 'the living room floor, by hand');
   await page.getByTestId('pl-open-living:floor:floor-skirting').click();
-  if ((await page.getByTestId('pl-drawer').locator('input[type="radio"]').count()) < 6) v('the item drawer offers fewer than the five levels and other choices');
+  // L1: the choices at the line's level first, under its name; each other level one tap away, closed.
+  await expectText(page, v, page.getByTestId('pl-choices-1').locator('p').first(), 'At Basic: 5 choices', 'the choices at the line\'s level first');
+  const levels = await page.getByTestId('pl-drawer').locator('details[data-testid^="pl-choices-"]').evaluateAll((ds) => ds.map((d) => `${d.querySelector('summary')?.textContent}${d.open ? ' (open)' : ''}`));
+  if (JSON.stringify(levels) !== JSON.stringify(['At Standard: 8 choices', 'At Premium: 8 choices', 'At Luxury: 6 choices', 'At Bespoke: 4 choices'])) v(`the drawer's other levels read ${JSON.stringify(levels)}`);
   await layout(page, v, `the estimate with the drawer open, 390 px, ${scheme}`);
   if (scheme === 'dark') { await ctx.close(); continue; }
   await expectText(page, v, page.getByTestId('pl-assumed').locator(':scope > summary'), /^What the estimate assumes \(\d+\)$/, 'the assumptions behind one line with their count');
@@ -665,8 +670,7 @@ for (const scheme of ['light', 'dark']) {
     v(`the planning estimate's Word copy reads back ${JSON.stringify(word.lines.slice(0, 4))} ${JSON.stringify(word.messages).slice(0, 120)}`);
 
   // An item of one's own makes the section Mixed; a brand chip names it; the slider moves the whole section again.
-  await page.getByTestId('pl-drawer').locator('details summary', { hasText: 'Other choices' }).click();
-  await page.getByTestId('pl-drawer').locator('label', { hasText: 'Kota stone' }).first().click();
+  await page.getByTestId('pl-choices-1').locator('label', { hasText: 'Kota stone' }).click();
   await expectText(page, v, 'pl-level-flooring', 'Mixed (1 chosen)', 'an item of one\'s own');
   const slider = page.locator('#fld-slider-flooring');
   await slider.focus();
@@ -814,6 +818,7 @@ for (const scheme of ['light', 'dark']) {
     const { ctx, page, v } = await open('/estimate/', { scheme: 'light' });
     await answer(page);
     await expectText(page, v, 'pl-total', /^Rs\. [\d,]+$/, label);
+    await expectText(page, v, 'pl-range', /^At (Standard|Luxury), the choices run from Rs\. [\d,]+ to Rs\. [\d,]+: /, `${label}: the level's range`);
     const words = await page.locator('main').evaluate((m) => (m.innerText.match(/\S+/g) ?? []).length);
     if (words > BUDGET) v(`${label}: ${words} words shown with the answer (budget ${BUDGET})`);
     const shown = await page.locator('[data-testid="pl-flags"] li').count();

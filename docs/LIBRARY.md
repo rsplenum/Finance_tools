@@ -4,7 +4,7 @@ Generated from `engine/data/library/` by `npm run rules-doc`; edit the data file
 
 Dated 03-10-2026. Read through web-search summaries on 02-10-2026. The pages themselves could not be opened from the session, so every value is as reported and not yet checked against its page (D-UX-18). A value is checked when someone opens the page, reads the figure and sets checked on the source.
 
-362 items in 97 families, from 226 sources. The estimate uses the middle of each range. A family's five levels name one item each (Basic, Standard, Premium, Luxury, Bespoke); every other item in the family is an alternative you can choose instead.
+362 items in 97 families, from 226 sources. The estimate uses the middle of each range. A family's five levels name one item each (Basic, Standard, Premium, Luxury, Bespoke); every other item in the family is an alternative you can choose instead. A level is a band of choices (L1): the item it names and every other item usually at it; the estimate's range at a level runs from the cheapest priced choice at it in every line to the dearest. 10 of the 81 families with levels offer more than one choice at a level.
 
 ## Civil and repairs
 
@@ -69,6 +69,8 @@ In the library:
 |---|---|---|---|---|---|
 | Every level | Flexible cementitious waterproofing | Two-component flexible cementitious waterproofing in two coats, on the floor, 300 mm up the walls and to 1.8 m in the shower, before tiling | Dr. Fixit, STP, Fosroc, MYK Laticrete | Rs. 80–120 a sq ft, supplied and fixed | [9] |
 
+Choices at each level: Basic 2, Standard 1, Premium 2, Luxury 2, Bespoke 1.
+
 Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
@@ -82,6 +84,8 @@ Also in the library:
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
 | Every level | APP membrane | Torch-applied APP bitumen membrane on a terrace or shower floor |  | Rs. 140–260 a sq ft, supplied and fixed | [10] |
+
+Choices at each level: Basic 2, Standard 2, Premium 1, Luxury 1, Bespoke 1.
 
 Also in the library:
 
@@ -101,6 +105,8 @@ Also in the library:
 | Premium | Large vitrified slabs, 800 × 1600 mm | Large glazed vitrified slabs 800 × 1600 mm on tile adhesive, levelled with clips, grouted, with matching skirting | Kajaria Eternity, Simpolo, Somany | Rs. 2,000–3,600 for a box of 2 slabs of 2.56 sq m, material, 12% wastage; plus laying large-format tiles and slabs (1200 × 600 mm and up) Rs. 60–120 and tile adhesive and grout Rs. 8–18 | [13][14] |
 | Luxury | Indian white marble (Ambaji) | Ambaji white marble 18 mm laid in mortar, machine-polished, with marble skirting |  | Rs. 200–400 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70 | [15] our rule |
 | Bespoke | Italian marble (Statuario) | Statuario Italian marble 18–20 mm laid in mortar, filled and mirror-polished, with marble skirting |  | Rs. 750–1,400 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70 | [16][17] our rule |
+
+Choices at each level: Basic 5, Standard 8, Premium 8, Luxury 6, Bespoke 4.
 
 Also in the library:
 
@@ -143,6 +149,8 @@ Also in the library:
 | Luxury | Matt porcelain slabs, 800 × 1600 mm | Large matt porcelain slabs 800 × 1600 mm on adhesive, laid to fall, grouted | Simpolo, Kajaria Eternity | Rs. 2,000–3,600 for a box of 2 slabs of 2.56 sq m, material, 12% wastage; plus laying large-format tiles and slabs (1200 × 600 mm and up) Rs. 60–120 and tile adhesive and grout Rs. 8–18 | [13][14] |
 | Bespoke | Italian marble (Botticino), honed | Botticino Italian marble with a honed anti-skid finish, laid to fall |  | Rs. 280–700 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70 | [16] |
 
+Choices at each level: Basic 2, Standard 1, Premium 1, Luxury 1, Bespoke 1.
+
 Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
@@ -170,6 +178,8 @@ Also in the library:
 | Premium | None at this level | | | | |
 | Luxury | Designer texture paint | Designer texture paint on a feature wall | Asian Paints Royale Play, Berger Illusions | Rs. 80–200 a sq ft, supplied and fixed | [31] |
 | Bespoke | Venetian plaster | Venetian plaster on a feature wall by a master applicator |  | Rs. 450–800 a sq ft, supplied and fixed | [27] |
+
+Choices at each level: Basic 0, Standard 0, Premium 0, Luxury 3, Bespoke 4.
 
 Also in the library:
 
@@ -230,6 +240,8 @@ In the library:
 | Premium | Gypsum board false ceiling | Gypsum board false ceiling on a GI frame, jointed and finished, with a cove | Saint-Gobain Gyproc, USG Boral | Rs. 75–110 a sq ft, supplied and fixed | [38] |
 | Luxury | Gypsum false ceiling, designer multi-level | Gypsum board false ceiling on a GI frame with multi-level and profile work, and coves |  | Gypsum board false ceiling + Designer multi-level work, extra over a plain ceiling | [38][39] |
 | Bespoke | Wooden false ceiling | Wooden slat or panel false ceiling on a frame, with linear lights |  | Rs. 150–400 a sq ft, supplied and fixed | [38] |
+
+Choices at each level: Basic 0, Standard 2, Premium 1, Luxury 4, Bespoke 3.
 
 Also in the library:
 
@@ -395,6 +407,8 @@ In the library:
 | Luxury | Sintered stone counter | Sintered stone counter, fabricated and fixed |  | Rs. 1,600 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300 | [65] our rule |
 | Bespoke | Italian marble counter (Calacatta) | Calacatta Italian marble counter, fabricated, sealed and fixed |  | Rs. 800–1,850 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300 | [16] our rule |
 
+Choices at each level: Basic 1, Standard 2, Premium 1, Luxury 1, Bespoke 2.
+
 Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
@@ -540,6 +554,8 @@ In the library:
 | Luxury | uPVC window, double glazed | uPVC window with double-glazed units, fixed | Fenesta | Rs. 950–1,400 a sq ft, supplied and fixed | [84] |
 | Bespoke | System aluminium window, double glazed | Certified system aluminium window with double glazing and branded hardware, fixed | Schüco, Tostem | Rs. 1,180–2,680 a sq ft, supplied and fixed; plus GST | [85] |
 
+Choices at each level: Basic 1, Standard 1, Premium 3, Luxury 1, Bespoke 2.
+
 Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
@@ -603,6 +619,8 @@ In the library:
 | Luxury | Frameless glass railing on spigots | Frameless glass railing on spigots |  | Rs. 1,400–2,500 a running ft, supplied and fixed | [91] |
 | Bespoke | Frameless staircase glass railing | Frameless staircase glass railing |  | Rs. 2,450–3,350 a running ft, supplied and fixed | [92] |
 
+Choices at each level: Basic 1, Standard 1, Premium 1, Luxury 2, Bespoke 2.
+
 Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
@@ -637,6 +655,8 @@ Also in the library:
 | Premium | COB swivel downlight | Premium COB swivel downlight, fixed | Polycab Pearl | Rs. 2,250–4,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [100] |
 | Luxury | COB downlight with a metre of profile light | Premium COB downlight and one metre of LED profile light, fixed |  | COB swivel downlight + LED profile light, a metre | [100][101] |
 | Bespoke | COB downlight with a metre of profile light | Premium COB downlight and one metre of LED profile light, fixed |  | COB swivel downlight + LED profile light, a metre | [100][101] |
+
+Choices at each level: Basic 1, Standard 1, Premium 1, Luxury 2, Bespoke 1.
 
 Also in the library:
 

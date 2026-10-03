@@ -8,13 +8,15 @@
  * into the stages a construction loan pays by (E5). A room can take the user's own size and its own level (E3): the size
  * replaces the planned one, and the level stands above the section's slider for every line in the room. A room's size word
  * (R1) moves it along its reported range, and the planned rooms share the area by those sizes. The bathrooms can be more or
- * fewer than the programme's, each common or attached to a bedroom, and the balcony can be taken out (R2).
+ * fewer than the programme's, each common or attached to a bedroom, and the balcony can be taken out (R2). A level is a band
+ * of choices (L1): a line can take the item its family names at that level or any other the library puts there, and the
+ * package's range runs from the cheapest priced choice at the level in every line to the dearest.
  * Pure, no DOM. Every rule is in engine/data/architect.json with its source or reason, and every rate in
  * engine/data/library/ with its source. architect-check.ts works every figure a second way; nothing is returned unless
  * both agree.
  */
 import RULES from './data/architect.json';
-import { CFT_PER_CUM, choices, ENTRIES, FAMILIES, FT_PER_M, LIBRARY_DATE, LIBRARY_STATUS, ladder, per, price, SQFT_PER_SQM, type Entry, type ItemKind, type Unit } from './library';
+import { CFT_PER_CUM, choices, ENTRIES, FAMILIES, FT_PER_M, LIBRARY_DATE, LIBRARY_STATUS, ladder, per, price, SQFT_PER_SQM, type Entry, type Family, type ItemKind, type Unit } from './library';
 import { inr } from './util';
 import { architectCheck, checkRate, type ArchitectCheck } from './architect-check';
 import type { Blocked, Needs } from './dscr';
@@ -152,6 +154,8 @@ export interface Opening { id: string; type: OpeningType; room: string; other: s
 export interface Line {
   key: string; room: string | null; roomName: string; section: string; family: string; name: string;
   entry: string; entryName: string; spec: string; brands: string[]; level: Level | null; chosen: boolean;
+  /** The level whose item the line takes: its room's, its section's or the package's, no higher than the slot allows (L1). */
+  at: Level;
   qty: number; unit: Unit; rate: number; amount: number; kind: ItemKind; how: string; rateHow: string[]; sources: string[]; note?: string;
 }
 export interface Unpriced { key: string; roomName: string; name: string; entryName: string; qty: number; unit: Unit }
@@ -189,7 +193,15 @@ export interface ArchitectEstimate {
   below: Record<string, number>;
   /** Largest first; the page shows those that decide with the answer and the rest one tap away (V1). */
   assumptions: Assumption[]; flags: Flag[]; ratesDate: string;
+  /** The range by the choices at each line's level (L1), when asked for: the package's, in `levelRuns`. */
+  range?: LevelRange;
 }
+/**
+ * A level as a band of choices (L1): the estimate with the cheapest priced choice at each line's level in every line, and
+ * with the dearest, each at the middle of its rate on the line's quantity; `lines` of the `of` lines priced offer more than
+ * one. A line with an item of the user's own counts at that item; the items with no rate yet are left out, as from the total.
+ */
+export interface LevelRange { low: number; high: number; lines: number; of: number }
 
 const LEVEL_NAMES = R.levels.map((l) => l.name);
 // To the paisa, half up, an exact half kept from floating point (as library.ts).
@@ -346,34 +358,43 @@ export function architectNeeds(input: ArchitectInput): string[] {
   return needs;
 }
 
-/** The estimate, or what is needed, or blocked when the two computations disagree. `check` is for tests only. */
-export function architect(input: ArchitectInput, check: typeof architectCheck = architectCheck): ArchitectEstimate | Needs | Blocked {
+/**
+ * The estimate, or what is needed, or blocked when the two computations disagree. With `banded`, also its range by the
+ * choices at each line's level (L1), worked twice too. `check` is for tests only.
+ */
+export function architect(input: ArchitectInput, check: typeof architectCheck = architectCheck, banded = false): ArchitectEstimate | Needs | Blocked {
   const needs = architectNeeds(input);
   if (needs.length) return { needs };
-  const e = work(input);
-  const where = disagreement(e, check(input));
+  const e = work(input, banded);
+  const where = disagreement(e, check(input, banded));
   return where ? { blocked: `The two computations disagree on ${where}, so no figures are shown. Please report this.` } : e;
 }
 
 /** The package at a level: every slider, room level and own item set aside; the sizes and the sections on stay. */
 const packageAt = (input: ArchitectInput, level: Level): ArchitectInput => ({ ...input, level, sliders: {}, items: {}, roomLevels: {} });
 
-/** The total and each section's amount with the whole estimate at each of the five levels (the strip and Compare). */
-export interface LevelRuns { totals: number[]; sections: Record<string, number[]> }
+/**
+ * The total and each section's amount with the whole estimate at each of the five levels (the strip and Compare), and the
+ * chosen level's range by its choices (L1).
+ */
+export interface LevelRuns { totals: number[]; sections: Record<string, number[]>; range: LevelRange }
 
 /**
- * The estimate as a package at each of the five levels: its total and each section's amount, for the strip and Compare.
- * Each run is worked twice, as every estimate is (its lines, sections and total against the second computation).
+ * The estimate as a package at each of the five levels: its total and each section's amount, for the strip and Compare;
+ * and at the chosen level, its range from the cheapest priced choice at the level in every line to the dearest (L1).
+ * Each run is worked twice, as every estimate is (its lines, sections, total and range against the second computation).
  */
 export function levelRuns(input: ArchitectInput, check: typeof architectCheck = architectCheck): LevelRuns | Needs | Blocked {
   const totals: number[] = [], sections: Record<string, number[]> = {};
+  let range: LevelRange | undefined;
   for (const level of [1, 2, 3, 4, 5] as Level[]) {
-    const e = architect(packageAt(input, level), check);
+    const e = architect(packageAt(input, level), check, level === input.level);
     if (!('total' in e)) return e;
     totals.push(e.total);
     for (const s of e.sections) (sections[s.id] ??= []).push(s.amount);
+    range ??= e.range;
   }
-  return { totals, sections };
+  return { totals, sections, range: range as LevelRange };
 }
 
 /** The total at each of the five levels, the sliders, room levels and own items set aside; or what blocks it. */
@@ -390,7 +411,7 @@ interface Ctx {
 /** Whether a section is shown for a kind of work. */
 export const sectionFor = (section: string, kind: WorkKind) => { const k = R.sections.find((x) => x.id === section)?.kinds; return !k || k.includes(kind); };
 
-function work(input: ArchitectInput): ArchitectEstimate {
+function work(input: ArchitectInput, banded = false): ArchitectEstimate {
   const kind = input.kind as WorkKind, bhk = input.bhk as Bhk, level = input.level as Level;
   const home = kind === 'build' || input.property === 'house' ? 'house' : 'flat', whole = `Whole ${home}`;
   const typedSqm = input.areaUnit === 'sqm' ? (input.area as number) : (input.area as number) / SQFT_PER_SQM;
@@ -405,7 +426,9 @@ function work(input: ArchitectInput): ArchitectEstimate {
   const levelOf = (s: string, r?: Room | null): Level => (slider(s) ? r?.level ?? input.sliders?.[s] ?? level : level);
   const ctx: Ctx = { input, kind, home, H, carpetSqm, rooms, openings, on, levelOf, house, bhk };
 
-  const lines: Line[] = [], unpriced: Unpriced[] = [];
+  const lines: Line[] = [], unpriced: Unpriced[] = [], band = { low: 0, high: 0, lines: 0 };
+  // Each choice's rate once a run (L1): the rooms share their families.
+  const rates = new Map<string, number | null>(), rateOf = (id: string) => { if (!rates.has(id)) rates.set(id, price(id, city, R.gst.pct)?.rate ?? null); return rates.get(id) as number | null; };
   const place = (slot: Slot, r: Room | null) => {
     if (!on(slot.section) || (slot.kinds && !slot.kinds.includes(kind)) || (slot.needs && !on(slot.needs))) return;
     const fam = FAMILIES.get(slot.family);
@@ -421,16 +444,31 @@ function work(input: ArchitectInput): ArchitectEstimate {
     const ent = ENTRIES.get(id) as Entry;
     const dim = dimensionOf(slot.qty);
     if (!UNIT_OF[dim].includes(ent.unit)) throw new Error(`${id} is priced by ${ent.unit}, but ${slot.qty} gives ${dim}`);
-    const qty = r2(dim === 'count' || dim === 'material' || dim === 'volume' ? m.base : m.base * per(dim === 'area' ? 'sqm' : 'm', ent.unit));
+    const qtyIn = (u: Unit) => r2(dim === 'count' || dim === 'material' || dim === 'volume' ? m.base : m.base * per(dim === 'area' ? 'sqm' : 'm', u));
+    const qty = qtyIn(ent.unit);
     const roomName = r?.name ?? whole;
     const name = slot.name ?? fam.name;
     const p = price(id, city, R.gst.pct);
     if (!p) { unpriced.push({ key, roomName, name, entryName: ent.name, qty, unit: ent.unit }); return; }
+    const chosen = !!own && ENTRIES.has(own), amount = r2(qty * p.rate);
     lines.push({
       key, room: r?.id ?? null, roomName, section: slot.section, family: slot.family, name, entry: id, entryName: ent.name, spec: ent.spec,
-      brands: ent.brands ?? [], level: isSlider ? lv : null, chosen: !!own && ENTRIES.has(own), qty, unit: ent.unit, rate: p.rate, amount: r2(qty * p.rate),
+      brands: ent.brands ?? [], level: isSlider ? lv : null, chosen, at: lv, qty, unit: ent.unit, rate: p.rate, amount,
       kind: fam.kind ?? 'fixed', how: m.how, rateHow: p.how, sources: [...new Set([...ent.src, ...partSources(ent)])], ...(ent.note ? { note: ent.note } : {}),
     });
+    if (!banded) return;
+    // The choices at the line's level (L1), each at the middle of its rate on the line's quantity in its own unit.
+    let low = amount, high = amount, n = 1;
+    if (!chosen) {
+      [low, high, n] = [Infinity, -Infinity, 0];
+      for (const b of bandOf(fam, lv, UNIT_OF[dim])) {
+        const rate = rateOf(b);
+        if (rate === null) continue;
+        const x = r2(qtyIn((ENTRIES.get(b) as Entry).unit) * rate);
+        [low, high, n] = [Math.min(low, x), Math.max(high, x), n + 1];
+      }
+    }
+    band.low += low; band.high += high; band.lines += n > 1 ? 1 : 0;
   };
   for (const r of rooms) for (const slot of R.templates[r.kind]) place(slot, r);
   for (const slot of R.templates.flat) place(slot, null);
@@ -460,8 +498,26 @@ function work(input: ArchitectInput): ArchitectEstimate {
     house, per: house ? 'built-up' : 'carpet',
     rooms, openings, lines, unpriced, roomsSqm, plannedSqm, sections, byRoom, total, perSqft, split, stages, shares, below,
     assumptions: assumptions(ctx, bhk, cityName, factor), flags: flags(ctx, bhk, carpetSqft, lines, unpriced, factor, perSqft, roomsSqm, plannedSqm, below), ratesDate: LIBRARY_DATE,
+    ...(banded ? { range: { low: r2(band.low), high: r2(band.high), lines: band.lines, of: lines.length } } : {}),
   };
 }
+
+/**
+ * The choices at a level (L1): the item the family names at that level, then its other items usually at that level, each
+ * priced by a unit the line's quantity can take. Ids, the level's item first.
+ */
+export function bandOf(fam: Family, level: Level, units: Unit[]): string[] {
+  const key = `${fam.id}:${level}:${units.join(',')}`;
+  let ids = BANDS.get(key);
+  if (!ids) {
+    const named = ladder(fam, level);
+    ids = [...(named ? [named] : []), ...choices(fam.id).filter((e) => e.level === level && e.id !== named).map((e) => e.id)].filter((id) => units.includes((ENTRIES.get(id) as Entry).unit));
+    BANDS.set(key, ids);
+  }
+  return ids;
+}
+// The library does not change while the page runs, so each family's choices at a level are found once.
+const BANDS = new Map<string, string[]>();
 
 /** A size word's name: "Above medium". */
 export const wordName = (w: SizeWord) => R.sizes.words.find((x) => x.id === w)?.name ?? '';
@@ -863,6 +919,11 @@ function disagreement(e: ArchitectEstimate, c: ArchitectCheck): string {
   const stages = e.stages ?? [];
   if (stages.length !== c.stages.size) return 'the stages';
   for (const st of stages) if (!money(st.amount, c.stages.get(st.id) ?? NaN, 0.01 * (e.lines.length + 1) + 1e-6 * Math.abs(st.amount))) return `the stage ${st.name}`;
+  if (e.range) {
+    const r = c.range, tol = 0.01 * (e.range.of + 1) + 1e-6 * e.range.high;
+    if (!r || r.lines !== e.range.lines || r.of !== e.range.of) return 'the items that offer a choice';
+    if (!money(e.range.low, r.low, tol) || !money(e.range.high, r.high, tol)) return 'the range by the choices at the level';
+  }
   return '';
 }
 
@@ -946,13 +1007,18 @@ function knockOn(was: ArchitectEstimate, now: ArchitectEstimate): number | undef
 
 /** An item the drawer offers: its specification, brands and unit, and its rate for the city (null: no rate yet). */
 export interface Choice { id: string; name: string; spec: string; brands: string[]; unit: Unit; level: number | null; rate: number | null; how: string[] }
-/** What a line can be: the family's item at each of the five levels (null where it has none), and its other items. */
-export interface Choices { key: string; family: string; fixed: boolean; ladder: (Choice | null)[]; others: Choice[] }
+/**
+ * What a line can be (L1): the family's item at each of the five levels (null where it has none); the choices at each level,
+ * the level's item first and then the family's other items usually at that level; and the family's items at no level that
+ * no level names.
+ */
+export interface Choices { key: string; family: string; fixed: boolean; ladder: (Choice | null)[]; levels: Choice[][]; others: Choice[] }
 
 /**
- * The item drawer for a line of the estimate: the family's five-level ladder and every other item of the family that is
- * priced by a unit the line's quantity can take, each with its rate for the city. Each rate is worked twice (library.ts
- * and architect-check.ts); a rate the two disagree on is left out as if it had none. Null for a key not in the estimate.
+ * The item drawer for a line of the estimate: the family's five-level ladder, the choices at each level and every other
+ * item of the family, each priced by a unit the line's quantity can take, with its rate for the city. Each rate is worked
+ * twice (library.ts and architect-check.ts); a rate the two disagree on is left out as if it had none. Null for a key not
+ * in the estimate.
  */
 export function choicesFor(input: ArchitectInput, key: string, rate2: typeof checkRate = checkRate): Choices | null {
   const parts = key.split(':'), rule = parts.slice(2).join(':'), fam = FAMILIES.get(parts[1]);
@@ -966,7 +1032,8 @@ export function choicesFor(input: ArchitectInput, key: string, rate2: typeof che
     return { id, name: e.name, spec: e.spec, brands: e.brands ?? [], unit: e.unit, level: e.level ?? null, rate: ok ? (p as { rate: number }).rate : null, how: ok ? (p as { how: string[] }).how : [] };
   };
   const ladderIds = fam.fixed ? [fam.fixed] : [1, 2, 3, 4, 5].map((lv) => ladder(fam, lv));
-  const named = new Set(ladderIds.filter((x): x is string => !!x));
-  const others = choices(fam.id).filter((e) => !named.has(e.id)).map((e) => choice(e.id)).filter((c): c is Choice => !!c);
-  return { key, family: fam.id, fixed: !!fam.fixed, ladder: ladderIds.map((id) => (id ? choice(id) : null)), others };
+  const levels = ([1, 2, 3, 4, 5] as Level[]).map((lv) => bandOf(fam, lv, units).map(choice).filter((c): c is Choice => !!c));
+  const banded = new Set(levels.flat().map((c) => c.id));
+  const others = choices(fam.id).filter((e) => !banded.has(e.id)).map((e) => choice(e.id)).filter((c): c is Choice => !!c);
+  return { key, family: fam.id, fixed: !!fam.fixed, ladder: ladderIds.map((id) => (id ? choice(id) : null)), levels, others };
 }

@@ -5,7 +5,7 @@
  * employer (D-BIZ-02). The owner's own fictional flat, worked at home, is still to come (HANDOFF).
  */
 import { describe, it, expect } from 'vitest';
-import { architect, architectNeeds, changeOf, choicesFor, cityFactor, levelRuns, overPackage, planOpenings, planRooms, strip, type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Level, type LevelRuns, type Stage } from '../engine/architect';
+import { architect, architectNeeds, changeOf, choicesFor, cityFactor, levelRuns, overPackage, planOpenings, planRooms, strip, type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choices, type Level, type LevelRuns, type Stage } from '../engine/architect';
 import { architectCheck, checkRate } from '../engine/architect-check';
 import { price } from '../engine/library';
 import { inr } from '../engine/util';
@@ -332,26 +332,31 @@ describe('what the page shows beside the estimate', () => {
     expect('blocked' in (overPackage(flat({ sliders: { flooring: 4 } }), wrong) as Blocked)).toBe(true);
     expect((overPackage({}) as Needs).needs.length).toBe(5);
   });
-  it('the item drawer: the family\'s five levels, the line\'s own item among them at its rate, and the other items priced by a unit the line can take', () => {
+  it('the item drawer: the family\'s five levels, the choices at each level led by its item, the line\'s own item among them at its rate, and the other items priced by a unit the line can take', () => {
     const e = run(), key = 'living:floor:floor-skirting', l = line(e, key);
     const c = choicesFor(flat(), key);
     expect(c?.ladder.length).toBe(5);
     expect(c?.ladder[1]?.id).toBe(l?.entry);
     expect(c?.ladder[1]?.rate).toBe(l?.rate);
-    for (const x of [...(c?.ladder ?? []), ...(c?.others ?? [])]) {
+    expect(c?.levels.map((xs, i) => xs[0]?.id === c.ladder[i]?.id)).toEqual([true, true, true, true, true]);
+    expect(c?.levels.map((xs) => xs.length)).toEqual([5, 8, 8, 6, 4]);
+    for (const x of [...(c?.ladder ?? []), ...(c?.levels.flat() ?? []), ...(c?.others ?? [])]) {
       if (!x) continue;
       expect(['sqft', 'sqm'], x.id).toContain(x.unit);
       if (x.rate !== null) expect(x.rate, x.id).toBe(price(x.id, cityFactor('pune') as number, 18)?.rate);
       if (x.rate !== null) expect(x.rate, x.id).toBe(checkRate(x.id, 'pune'));
     }
-    expect(c?.others.some((x) => x.id === 'fl-kota')).toBe(true);
-    expect(c?.others.find((x) => x.id === 'fl-granite')?.rate).toBeNull();
-    expect(c?.others.some((x) => c.ladder.some((y) => y?.id === x.id))).toBe(false);
+    expect(c?.levels[0].some((x) => x.id === 'fl-kota')).toBe(true);
+    expect(c?.levels[2].find((x) => x.id === 'fl-granite')?.rate).toBeNull();
+    const ids = c?.levels.flat().map((x) => x.id) ?? [];
+    expect(ids.length).toBe(new Set(ids).size);
+    expect(c?.others).toEqual([]);
     expect(choicesFor(flat(), 'living:nothing:floor')).toBeNull();
   });
   it('the item drawer leaves out a rate the two computations disagree on', () => {
     const c = choicesFor(flat(), 'living:floor:floor-skirting', (id, city) => (checkRate(id, city) ?? 0) + 1);
     expect(c?.ladder.every((x) => x === null || x.rate === null)).toBe(true);
+    expect(c?.levels.flat().every((x) => x.rate === null)).toBe(true);
   });
 });
 
@@ -406,7 +411,7 @@ describe('E3: a room of your own size and level, the furniture and soft furnishi
     expect(architectNeeds(flat({ rooms: { living: { l: 0.1, b: 5 } } }))).toEqual(['Each side of a room from 0.3 to 30 m']);
     expect(architectNeeds(flat({ roomLevels: { living: 7 as Level } }))).toEqual(['A room\'s level from 1 to 5']);
   });
-  it('Compare: each section and the total at each of the five levels as a package, the sizes kept and the sliders, room levels and own items set aside', () => {
+  it('Compare and the level\'s range: each section and the total at each of the five levels as a package, the sizes kept and the sliders, room levels and own items set aside', () => {
     const runs = levelRuns(flat()) as LevelRuns, l4 = run({ level: 4 });
     expect(runs.totals).toEqual(strip(flat()));
     expect(runs.sections.flooring[3]).toBe(l4.sections.find((s) => s.id === 'flooring')?.amount);
@@ -616,5 +621,64 @@ describe('V1: the flags that can change the decision, largest first', () => {
     expect(run({ city: 'other' }).flags.find((f) => f.text.startsWith('No city figure'))?.decides).toBe(true);
     const granite = run({ items: { 'living:floor:floor-skirting': 'fl-granite' } }).flags.find((f) => f.text.includes('has no rate yet'));
     expect([granite?.decides, granite?.n]).toEqual([true, 0]);
+  });
+});
+
+describe('L1: a level is a band of choices; its range runs from the cheapest priced choice at it in every line to the dearest', () => {
+  const key = 'living:floor:floor-skirting', r2 = (x: number) => Math.round(x * 100 + 1e-6) / 100;
+  it('the living room floor at Basic in Pune, by hand: five choices on 303.03 sq ft. Sheet vinyl, 110 × 0.96907 = Rs. 106.60 a sq ft, Rs. 32,303.00; glazed vitrified 600 mm, 57.50 + 12% + 45.50 × 0.96907 = 108.49; ceramic, 60 + 10% + 44.09 = 110.09; the level\'s tile 114.09, Rs. 34,572.69; Kota stone, 135 × 0.96907 = 130.82, Rs. 39,642.38', () => {
+    const basic = (choicesFor(flat({ level: 1 }), key) as Choices).levels[0];
+    expect(basic[0].id).toBe('fl-vit-dc-600');
+    expect(Object.fromEntries(basic.map((x) => [x.id, x.rate]))).toEqual({ 'fl-vit-dc-600': 114.09, 'fl-ceramic': 110.09, 'fl-gvt-600': 108.49, 'fl-kota': 130.82, 'fl-vinyl-sheet': 106.6 });
+    expect(line(run({ level: 1 }), key)?.amount).toBe(34572.69);
+    const amounts = basic.map((x) => r2(303.03 * (x.rate as number))).sort((a, b) => a - b);
+    expect([amounts[0], amounts[4]]).toEqual([32303, 39642.38]);
+  });
+  it('the range is the package at the chosen level with the cheapest priced choice at each line\'s level in every line, and with the dearest, as the drawer offers them; the total between', () => {
+    const cases: ArchitectInput[] = [
+      flat({ level: 1 }), flat({ kind: 'interiors' }), flat({ kind: 'interiors', level: 4, sections: { furniture: true, furnishings: true } }),
+      { kind: 'build', floors: 2, city: 'pune', area: 2000, bhk: '3', level: 4 },
+    ];
+    for (const input of cases) {
+      const runs = levelRuns(input) as LevelRuns, e = architect(input) as ArchitectEstimate;
+      let low = 0, high = 0, lines = 0;
+      for (const l of e.lines) {
+        const at = (choicesFor(input, l.key) as Choices).levels[l.at - 1].filter((x) => x.rate !== null);
+        for (const x of at) expect(x.unit, x.id).toBe(l.unit);
+        const amounts = at.map((x) => r2(l.qty * (x.rate as number)));
+        low += Math.min(...amounts); high += Math.max(...amounts); lines += amounts.length > 1 ? 1 : 0;
+      }
+      expect([runs.range.of, runs.range.lines], input.kind).toEqual([e.lines.length, lines]);
+      expect(runs.range.low).toBeCloseTo(low, 1);
+      expect(runs.range.high).toBeCloseTo(high, 1);
+      expect(runs.range.low <= e.total && e.total <= runs.range.high).toBe(true);
+    }
+  });
+  it('an item of your own counts at that item, so its line no longer offers a choice; both computations alike', () => {
+    const base = architect(flat(), architectCheck, true) as ArchitectEstimate, own = architect(flat({ items: { [key]: 'fl-kota' } }), architectCheck, true) as ArchitectEstimate;
+    expect(own.range?.lines).toBe((base.range?.lines ?? 0) - 1);
+    expect((own.range?.low ?? Infinity) <= own.total && own.total <= (own.range?.high ?? -Infinity)).toBe(true);
+    expect(architect(flat()) as ArchitectEstimate).not.toHaveProperty('range');
+  });
+  it('shows nothing when the second computation disagrees on the range or on how many items offer a choice', () => {
+    const wrong = (input: ArchitectInput, banded?: boolean) => { const c = architectCheck(input, banded); if (c.range) c.range.high += 100; return c; };
+    expect((levelRuns(flat(), wrong) as Blocked).blocked).toMatch(/disagree on the range by the choices at the level/);
+    const fewer = (input: ArchitectInput, banded?: boolean) => { const c = architectCheck(input, banded); if (c.range) c.range.lines -= 1; return c; };
+    expect((levelRuns(flat(), fewer) as Blocked).blocked).toMatch(/disagree on the items that offer a choice/);
+  });
+  it('random flats and houses at every level and city: never blocked, and the package\'s total between the two ends', () => {
+    let seed = 11;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const cities = ['mumbai', 'pune', 'delhi', 'bengaluru', 'chennai', 'hyderabad', 'other'], bhks: Bhk[] = ['1RK', '1', '2', '3', '4', '5'];
+    for (let n = 0; n < 24; n++) {
+      const level = (1 + (n % 5)) as Level, city = cities[n % 7];
+      const input: ArchitectInput = n % 3 === 2
+        ? { kind: 'build', floors: 1 + (n % 3), city, area: 1500 + 900 * (n % 3) + rnd() * 1500, bhk: (['2', '3', '4'] as Bhk[])[n % 3], level }
+        : flat({ kind: n % 2 ? 'renovate' : 'interiors', bhk: bhks[n % 6], area: [350, 520, 850, 1150, 1600, 2200][n % 6] * (0.9 + rnd() * 0.3), city, level });
+      const runs = levelRuns(input) as LevelRuns;
+      expect('totals' in runs, JSON.stringify(runs).slice(0, 200)).toBe(true);
+      const t = runs.totals[level - 1];
+      expect(runs.range.low <= t + 1e-6 && t <= runs.range.high + 1e-6, JSON.stringify(input)).toBe(true);
+    }
   });
 });

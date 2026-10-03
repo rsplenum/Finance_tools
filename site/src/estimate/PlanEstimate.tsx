@@ -1,11 +1,13 @@
 /**
- * The planning estimate (E1, E3, V1): six questions, then the estimate worked out as an architect would, short by default
- * and deeper by tapping. The answer: the total, the cost a sq ft with the rates' line, the five levels (Compare and a new
+ * The planning estimate (E1, E3, V1, L1): six questions, then the estimate worked out as an architect would, short by default
+ * and deeper by tapping. The answer: the total and the level's range by its choices under it, the cost a sq ft with the
+ * rates' line, the five levels (Compare and a new
  * house's stages closed under them), each section as one line with its amount, and the flags that can change the
  * decision, largest first. One tap away, each with its count: a section's switch, slider and items; the other things to
  * check; what the estimate assumes; the rooms (the bar of shares; rooms added or taken out; each one's size by a word or
- * typed, and its own level). Two taps: an item's drawer (the family's five levels and its other items, brands, and how
- * the line was worked out, with its sources). Then the planning estimate to download; the bar at the bottom says what the
+ * typed, and its own level). Two taps: an item's drawer (the choices at the line's level, then each other level's and the
+ * family's items at no level, each one tap away; brands, and how the line was worked out, with its sources). Then the
+ * planning estimate to download; the bar at the bottom says what the
  * last change did. Figures: engine/architect.ts only, via plan-model.ts.
  */
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
@@ -131,11 +133,12 @@ function Questions({ s, update, p, done }: { s: PlanState; update: Update; p: Pl
   </div>;
 }
 
-/** The answer (A8, V1): the total, the cost a sq ft and the rates' line by it, the five levels, Compare and a new house's stages. */
+/** The answer (A8, V1, L1): the total and the level's range, the cost a sq ft and the rates' line, the five levels, Compare and a new house's stages. */
 function Answer({ v, update, heading }: { v: PlanView; update: Update; heading: { current: HTMLHeadingElement | null } }) {
   return <section id="pl-result" aria-labelledby="pl-result-h" class="mt-6">
     <h2 id="pl-result-h" ref={heading} tabIndex={-1} class="sr-only">The estimate</h2>
     <p data-testid="pl-total" class={`text-3xl font-semibold tabular-nums ${INK}`}>Rs. {v.total}</p>
+    {v.range.text && <p data-testid="pl-range" class={`mt-1 text-sm ${INK}`}>{v.range.text}</p>}
     <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="tabular-nums">Rs. {v.perSqft}</span> a sq ft of {v.areaName.toLowerCase()}</p>
     <p data-testid="pl-rates" class={`mt-1 text-sm ${MUTED}`}>{v.ratesLine}</p>
     <div role="group" aria-label="The total at each level; choose one to switch the package" class="mt-4 grid grid-cols-5 gap-1.5">
@@ -245,15 +248,19 @@ function Item({ s, v, l, open, toggle, update }: { s: PlanState; v: PlanView; l:
   </li>;
 }
 
-/** The item drawer (A8): the family's five levels, its other items, brands as chips, and how the line was worked out. */
+/**
+ * The item drawer (A8, L1): the choices at the line's level first, under the level's name with their count; each other level's
+ * and the family's items at no level one tap away, open when they hold the line's item; brands as chips; how the line was
+ * worked out.
+ */
 function Drawer({ s, l, d, update }: { s: PlanState; l: LineView; d: DrawerView; update: Update }) {
   const name = `fld-item-${l.key}`;
   const choose = (x: RungView, brand?: string) => update((st) => withItem(st, l.key, x.id, brand, `${l.room}, ${l.name.toLowerCase()}: ${x.name}`));
-  const rung = (x: RungView, label: string, i: string) => <li key={x.id + i} class="py-2">
+  const rung = (x: RungView, i: string) => <li key={x.id} class="py-2">
     <label for={`${name}-${i}`} class={`flex items-start gap-3 ${x.usable ? 'cursor-pointer' : 'opacity-70'}`}>
       <input type="radio" id={`${name}-${i}`} name={name} checked={x.current} disabled={!x.usable} onChange={() => { if (!x.current) choose(x); }} class={`mt-1 ${RADIO}`} />
       <span class="min-w-0">
-        <span class={`block text-sm ${INK}`}><span class="font-medium">{label}</span>: {x.name} · <span class="tabular-nums">{x.rate}</span></span>
+        <span class={`block text-sm ${INK}`}>{x.name} · <span class="tabular-nums">{x.rate}</span>{x.mark && <span class={MUTED}> ({x.mark})</span>}</span>
         <span class={`block text-xs ${MUTED}`}>{x.spec}</span>
       </span>
     </label>
@@ -269,11 +276,14 @@ function Drawer({ s, l, d, update }: { s: PlanState; l: LineView; d: DrawerView;
     <p class={`text-sm ${INK}`}><span class="font-medium">{l.name}</span> · {l.kind}{l.brands ? ` · ${l.brands}` : ''}</p>
     <fieldset class="mt-1 min-w-0">
       <legend class="sr-only">The item for {l.room.toLowerCase()}, {l.name.toLowerCase()}</legend>
-      <ol class="divide-y divide-slate-200 dark:divide-slate-700">{d.rungs.map((x) => rung(x, d.fixed ? 'Every level' : `${x.label}${x.pkg ? ' (package)' : ''}`, String(x.level)))}</ol>
-      {d.others.length > 0 && <details class="mt-1">
-        <summary class={`cursor-pointer text-sm text-teal-800 dark:text-teal-300`}>Other choices ({d.others.length})</summary>
-        <ol class="divide-y divide-slate-200 dark:divide-slate-700">{d.others.map((x, i) => rung(x, x.label, `o${i}`))}</ol>
-      </details>}
+      {d.groups.map((g, gi) => {
+        const list = <ol class="divide-y divide-slate-200 dark:divide-slate-700">{g.choices.map((x, i) => rung(x, `${gi}-${i}`))}</ol>;
+        return gi === 0
+          ? <div key={g.title} data-testid={`pl-choices-${g.level ?? 'other'}`}><p class={`mt-1 text-sm font-medium ${INK}`}>{g.title}</p>{list}</div>
+          : <details key={g.title} data-testid={`pl-choices-${g.level ?? 'other'}`} class="mt-1" open={g.open}>
+            <summary class={`cursor-pointer text-sm text-teal-800 dark:text-teal-300`}>{g.title}</summary>{list}
+          </details>;
+      })}
     </fieldset>
     {l.chosen && <button type="button" data-testid="pl-item-reset" class={`mt-2 ${BUTTON}`} onClick={() => update((st) => withItem(st, l.key, null, undefined, `${l.room}, ${l.name.toLowerCase()}: back to the level’s item`))}>Back to the level’s item</button>}
     <details class="mt-2" open>
