@@ -1,6 +1,6 @@
 {
   "title": "Labour, fixing and sundries",
-  "date": "2026-10-02",
+  "date": "2026-10-03",
   "status": "Labour added to a material's price by the items that name it. The city's factor applies to labour, not to the material.",
   "labour": [
     { "id": "lay-tile-600", "name": "Laying 600 × 600 mm tiles", "unit": "sqft", "rate": [25, 40], "src": ["gharkabudget-tiling", "houseyog-tiling"] },
@@ -19,6 +19,7 @@
     { "id": "fix-electrical", "name": "Electrician, fixing a light, fan or fitting", "unit": "nos", "rate": [25, 70], "src": ["clyfthome-wiring"] },
     { "id": "fix-ac", "name": "Installing a split AC with up to 3 m of pipe", "unit": "nos", "rate": [1500, 3500], "src": ["solve24-ac"] },
     { "id": "fix-cctv", "name": "Installing a 4-camera CCTV set", "unit": "set", "rate": [2000, 4000], "src": ["aliftech-cctv"] },
-    { "id": "fix-grill", "name": "Installing an invisible grill", "unit": "sqft", "rate": [50, 150], "src": ["invisiblegrill-guide"] }
+    { "id": "fix-grill", "name": "Installing an invisible grill", "unit": "sqft", "rate": [50, 150], "src": ["invisiblegrill-guide"] },
+    { "id": "lay-paver", "name": "Laying paver blocks on sand, with compaction", "unit": "sqft", "rate": [10, 16], "src": ["paramvisions-pavers"] }
   ]
 }

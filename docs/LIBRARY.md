@@ -4,7 +4,7 @@ Generated from `engine/data/library/` by `npm run rules-doc`; edit the data file
 
 Dated 03-10-2026. Read through web-search summaries on 02-10-2026. The pages themselves could not be opened from the session, so every value is as reported and not yet checked against its page (D-UX-18). A value is checked when someone opens the page, reads the figure and sets checked on the source.
 
-338 items in 87 families, from 203 sources. The estimate uses the middle of each range. A family's five levels name one item each (Basic, Standard, Premium, Luxury, Bespoke); every other item in the family is an alternative you can choose instead.
+362 items in 97 families, from 225 sources. The estimate uses the middle of each range. A family's five levels name one item each (Basic, Standard, Premium, Luxury, Bespoke); every other item in the family is an alternative you can choose instead.
 
 ## Civil and repairs
 
@@ -984,17 +984,98 @@ Also in the library:
 |---|---|---|---|---|---|
 | Every level | Plaster, labour only | Plaster inside and outside, by the sq ft of built-up area |  | Rs. 40–70 a sq ft, supplied and fixed | [146] |
 
+## Building a house: outside works, water and stairs
+
+For building a house (E5): the compound wall, gate and paving round the plot; the sump, overhead tank, septic tank or sewer connection and rainwater harvesting; the stairs' finish. Quantities by the house rules in engine/data/architect.json (plot, outside, water, stair, cabin).
+
+### Compound wall (running ft)
+
+| Level | Item | Specification | Brands, as examples | Rate | Sources |
+|---|---|---|---|---|---|
+| Every level | Brick compound wall, 230 mm, plastered | A 230 mm (9-inch) brick wall about 1.5 m (5 ft) high on a footing with a plinth beam, plastered both sides |  | Rs. 1,200–1,500 a running ft, supplied and fixed | [147] |
+
+### Main gate (sq ft)
+
+| Level | Item | Specification | Brands, as examples | Rate | Sources |
+|---|---|---|---|---|---|
+| Basic | MS gate, fabricated | A mild steel gate of two leaves, fabricated, primed and painted, fixed to its posts |  | Rs. 135–450 a sq ft, supplied and fixed | [148] |
+| Standard | MS main gate, designed | A mild steel main gate with a designed panel (laser-cut or framed sheet), painted |  | Rs. 550–700 a sq ft, supplied and fixed | [148] |
+| Premium | SS 304 sliding gate | A stainless steel (SS 304) sliding gate on a track |  | Rs. 1,200–1,400 a sq ft, supplied and fixed | [149] |
+| Luxury | SS 304 sliding gate with a motor | A stainless steel (SS 304) sliding gate with a motor and remote |  | Rs. 1,750–2,000 a sq ft, supplied and fixed | [149] |
+| Bespoke | Automatic sliding gate, designer | An automatic motorised sliding gate, made to a design |  | Rs. 2,800 a sq ft, supplied and fixed | [149] |
+
+### Paving round the house (sq ft)
+
+| Level | Item | Specification | Brands, as examples | Rate | Sources |
+|---|---|---|---|---|---|
+| Basic | Concrete paver blocks, 60 mm | Interlocking concrete paver blocks 60 mm thick, laid on sand and compacted |  | Rs. 40–80 a sq ft, material; plus laying paver blocks on sand, with compaction Rs. 10–16 | [150] |
+| Standard | Exposed aggregate concrete | Concrete cast with decorative aggregate and washed to show the stones: seamless and anti-skid |  | Rs. 60–180 a sq ft, supplied and fixed | [151] |
+| Premium | Sandstone pavers | Natural sandstone pavers laid in mortar |  | Rs. 60–140 a sq ft, material; plus laying marble or stone in mortar Rs. 100–200 | [152] |
+| Luxury | Granite pavers, flamed | Flamed granite pavers laid in mortar |  | Rs. 120–250 a sq ft, material; plus laying marble or stone in mortar Rs. 100–200 | [152] |
+| Bespoke | Granite pavers, flamed | Flamed granite pavers laid in mortar |  | Rs. 120–250 a sq ft, material; plus laying marble or stone in mortar Rs. 100–200 | [152] |
+
+### Sump (underground tank) (litre)
+
+| Level | Item | Specification | Brands, as examples | Rate | Sources |
+|---|---|---|---|---|---|
+| Every level | RCC sump | An underground RCC water tank: excavation, concrete, plaster and waterproofing, with a manhole cover |  | Rs. 20–25 a litre, supplied and fixed | [153][154] |
+
+### Overhead tank (litre)
+
+| Level | Item | Specification | Brands, as examples | Rate | Sources |
+|---|---|---|---|---|---|
+| Every level | Overhead tank, three-layer plastic | A three-layer plastic water tank on the stair cabin's roof | Sintex, Supreme, Vectus | Rs. 7–12 a litre | [155] |
+
+### Septic tank and soak pit (litre)
+
+| Level | Item | Specification | Brands, as examples | Rate | Sources |
+|---|---|---|---|---|---|
+| Every level | RCC septic tank with a soak pit | An RCC septic tank with its inlet, outlet and vent pipes and covers, and a soak pit |  | Rs. 75,000–1,10,000 for a 3BHK's tank of 6,500–8,000 litres of 7250 litre, supplied and fixed | [156] |
+
+### Sewer connection (each)
+
+| Level | Item | Specification | Brands, as examples | Rate | Sources |
+|---|---|---|---|---|---|
+| Every level | Sewer connection | The house's drain to the road's manhole, and the city's charges for joining it |  | Rate to be found | [157][158] |
+
+### Rainwater harvesting (each)
+
+| Level | Item | Specification | Brands, as examples | Rate | Sources |
+|---|---|---|---|---|---|
+| Every level | Rainwater recharge pit with a filter | The roof's downpipes led through a mesh filter to a recharge pit |  | Recharge pit, 4–5 ft + Mesh filter + Pipes and fittings + Labour | [155] |
+
+### Rainwater harvesting, part by part (each)
+
+In the library:
+
+| Item | Usual level | Specification | Rate | Sources |
+|---|---|---|---|---|
+| Recharge pit, 4–5 ft | — | A recharge pit 4–5 ft deep with its filter media | Rs. 8,000–15,000 a each, supplied and fixed | [155] |
+| Mesh filter | — | A basic mesh filter for the roof's water | Rs. 2,000–5,000 a each | [155] |
+| Pipes and fittings | — | Downpipes and fittings from the roof to the pit | Rs. 2,000–10,000 a each | [155] |
+| Labour | — | Labour to lay the pipes and build the pit, a small home | Rs. 8,000–15,000 a each, supplied and fixed | [155] |
+
+### Stair treads, risers and landings (sq ft)
+
+| Level | Item | Specification | Brands, as examples | Rate | Sources |
+|---|---|---|---|---|---|
+| Basic | Kota stone steps | Kota stone on the treads, risers and landings, laid and polished |  | Kota stone |  |
+| Standard | Granite steps | Polished granite treads and risers, and granite on the landings, laid in mortar |  | Rs. 140–250 a sq ft, material; plus laying marble or stone in mortar Rs. 100–200 | [159] |
+| Premium | Indian marble steps | Indian white marble on the treads, risers and landings, laid and polished |  | Indian white marble (Ambaji) |  |
+| Luxury | Italian marble steps (Botticino) | Italian Botticino marble on the treads, risers and landings, laid and polished |  | Italian marble (Botticino) |  |
+| Bespoke | Italian marble steps (Statuario) | Italian Statuario marble on the treads, risers and landings, laid and polished |  | Italian marble (Statuario) |  |
+
 ## Labour
 
 | Labour | Rate | Sources |
 |---|---|---|
-| Laying 600 × 600 mm tiles | Rs. 25–40 a sq ft | [147][148] |
-| Laying 800 × 800 mm tiles | Rs. 30–50 a sq ft | [147] |
-| Laying large-format tiles and slabs (1200 × 600 mm and up) | Rs. 60–120 a sq ft | [147] |
-| Fixing wall tiles (walls are slower than floors) | Rs. 35–60 a sq ft | [147] |
-| Tile adhesive and grout | Rs. 8–18 a sq ft | [147] |
-| Laying marble or stone in mortar | Rs. 100–200 a sq ft | [149][16] |
-| Machine-polishing marble after laying | Rs. 30–70 a sq ft | [149][150] |
+| Laying 600 × 600 mm tiles | Rs. 25–40 a sq ft | [160][161] |
+| Laying 800 × 800 mm tiles | Rs. 30–50 a sq ft | [160] |
+| Laying large-format tiles and slabs (1200 × 600 mm and up) | Rs. 60–120 a sq ft | [160] |
+| Fixing wall tiles (walls are slower than floors) | Rs. 35–60 a sq ft | [160] |
+| Tile adhesive and grout | Rs. 8–18 a sq ft | [160] |
+| Laying marble or stone in mortar | Rs. 100–200 a sq ft | [162][16] |
+| Machine-polishing marble after laying | Rs. 30–70 a sq ft | [162][163] |
 | Installing SPC flooring | Rs. 35–55 a sq ft | [26] |
 | Fabricating and fixing a stone or quartz counter | Rs. 200–300 a sq ft | [63] |
 | Fixing a sanitary fixture or fitting (plumber) | Rs. 360–600 a each | [113] |
@@ -1005,6 +1086,7 @@ Also in the library:
 | Installing a split AC with up to 3 m of pipe | Rs. 1,500–3,500 a each | [120] |
 | Installing a 4-camera CCTV set | Rs. 2,000–4,000 a set | [123] |
 | Installing an invisible grill | Rs. 50–150 a sq ft | [87] |
+| Laying paver blocks on sand, with compaction | Rs. 10–16 a sq ft | [164] |
 
 ## Sources
 
@@ -1154,7 +1236,21 @@ Also in the library:
 144. [Brick&Bolt: construction material quantity estimation for a 1000 sq ft house (rules of thumb a sq ft, wastage)](https://www.bricknbolt.com/blogs-and-articles/construction-guide/construction-material-quantity-estimation-for-1000-sqft-of-house-construction) (class 4: A cost guide's range: a blog, a calculator or a guide)
 145. [Steel and cement rates in India, 2026](https://www.comaron.com/blog/steel-and-cement-rates-today-india-2026-complete-price-guide) (class 4: A cost guide's range: a blog, a calculator or a guide)
 146. [HouseYog: house construction labour rate a sq ft in India, by stage](https://www.houseyog.com/blog/house-construction-labour-rate-per-sq-ft/) (class 4: A cost guide's range: a blog, a calculator or a guide)
-147. [Tile laying cost per sq ft, India 2026](https://gharkabudget.com/articles/tile-laying-cost-per-sqft-2026/) (class 4: A cost guide's range: a blog, a calculator or a guide)
-148. [Floor tiling cost in India, 2026](https://www.houseyog.com/blog/floor-tiling-cost-per-sqft-india/) (class 4: A cost guide's range: a blog, a calculator or a guide)
-149. [Marble flooring cost in India, price guide](https://omkarmarble.com/blog/marble-flooring-cost-guide) (class 4: A cost guide's range: a blog, a calculator or a guide)
-150. [SR Marble Polishing: polishing rates for newly laid marble](https://www.srmarblepolishing.in/new-laid-marble-silicate-polishing-rate) (class 3: A firm's published package, allowance or rate card)
+147. [HouseYog: boundary wall construction cost in India (2026), a 4.5-inch brick wall Rs. 800–1,100 and a 9-inch Rs. 1,200–1,500 a running foot, with excavation, footing, plinth beam, brickwork and plaster](https://www.houseyog.com/blog/boundary-wall-construction-cost-india/) (class 4: A cost guide's range: a blog, a calculator or a guide)
+148. [IndiaMART listings: MS gates fabricated and fixed, Rs. 135–450 a sq ft (Rs. 450 in Bengaluru); main gates Rs. 550–700 a sq ft](https://dir.indiamart.com/bengaluru/ms-gate-fabrication-service.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+149. [IndiaMART listings: SS 304 sliding gates Rs. 1,200–1,400 a sq ft; automatic SS sliding gates Rs. 1,750–2,000; an automatic motorised sliding gate Rs. 2,800 a sq ft](https://dir.indiamart.com/impcat/stainless-steel-sliding-gate.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+150. [JK Cement: paver blocks, Rs. 40–80 a sq ft; 60 mm for walkways, 80–100 mm for parking](https://www.jkcement.com/blog/home-design/paver-block-design-types-price-guide/) (class 4: A cost guide's range: a blog, a calculator or a guide)
+151. [Studio Matrx: exposed aggregate flooring for driveways and paths, Rs. 60–180 a sq ft](https://www.studiomatrx.org/guides/exposed-aggregate-flooring-india) (class 4: A cost guide's range: a blog, a calculator or a guide)
+152. [Studio Matrx: natural stone pavers in India, sandstone Rs. 60–140, granite Rs. 120–250 a sq ft; laid Rs. 120–380 a sq ft](https://www.studiomatrx.org/guides/natural-stone-pavers-india) (class 4: A cost guide's range: a blog, a calculator or a guide)
+153. [Home Building Smart: underground water tank construction cost a litre (2026), 1,000 litres Rs. 28–35, 5,000 litres Rs. 20–25 a litre](https://homebuildingsmart.com/underground-water-tank-construction-cost-per-litre/) (class 4: A cost guide's range: a blog, a calculator or a guide)
+154. [Studio Matrx: water tank cost in India (2026), RCC sumps Rs. 8–20 a litre with excavation and waterproofing](https://www.studiomatrx.org/guides/water-tank-cost-india) (class 4: A cost guide's range: a blog, a calculator or a guide)
+155. [HouseYog: rainwater harvesting cost in India (2025), a recharge pit Rs. 8,000–15,000, a mesh filter Rs. 2,000–5,000, pipes Rs. 2,000–10,000, labour Rs. 8,000–15,000](https://www.houseyog.com/blog/rainwater-harvesting-cost-india/) (class 4: A cost guide's range: a blog, a calculator or a guide)
+156. [HouseYog: septic tank construction cost in India (2026), 1BHK 4,000–5,000 litres Rs. 50,000–70,000; 2BHK 5,000–6,500 litres Rs. 60,000–85,000; 3BHK 6,500–8,000 litres Rs. 75,000–1,10,000; 4BHK 8,000–10,000 litres Rs. 1,00,000–1,40,000, with the soak pit](https://www.houseyog.com/blog/septic-tank-construction-cost-india/) (class 4: A cost guide's range: a blog, a calculator or a guide)
+157. [HMWSSB, Hyderabad: guidelines for new connections, supervision charges for joining the sewer Rs. 1,500–5,000](https://www.hyderabadwater.gov.in/en/index.php/services/information-services/guidelines-new-connections) (class R: A standard, a code or a law, for a rule rather than a rate)
+158. [Kolkata Municipal Corporation: fees and charges 2025-26, house drainage connection, a 225 mm stoneware pipe laid Rs. 2,079 a metre](https://www.kmcgov.in/KMCPortal/downloads/ChiefEngFees_RatesCharges_2025_2026.pdf) (class R: A standard, a code or a law, for a rule rather than a rate)
+159. [Stone Galleria: granite stair treads from Rs. 140–250 a sq ft ex-factory](https://stonegalleria.in/granite-treads/) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+160. [Tile laying cost per sq ft, India 2026](https://gharkabudget.com/articles/tile-laying-cost-per-sqft-2026/) (class 4: A cost guide's range: a blog, a calculator or a guide)
+161. [Floor tiling cost in India, 2026](https://www.houseyog.com/blog/floor-tiling-cost-per-sqft-india/) (class 4: A cost guide's range: a blog, a calculator or a guide)
+162. [Marble flooring cost in India, price guide](https://omkarmarble.com/blog/marble-flooring-cost-guide) (class 4: A cost guide's range: a blog, a calculator or a guide)
+163. [SR Marble Polishing: polishing rates for newly laid marble](https://www.srmarblepolishing.in/new-laid-marble-silicate-polishing-rate) (class 3: A firm's published package, allowance or rate card)
+164. [Param Visions: rate analysis of interlocking paver flooring (2021), labour with mechanical compaction Rs. 10–16 a sq ft](https://www.paramvisions.com/2021/06/the-cost-of-fixing-interlocking-paver.html) (class 4: A cost guide's range: a blog, a calculator or a guide)

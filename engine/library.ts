@@ -23,8 +23,9 @@ import APPLIANCES from './data/library/appliances.json';
 import SMART from './data/library/smart.json';
 import FURNITURE from './data/library/furniture.json';
 import STRUCTURE from './data/library/structure.json';
+import OUTSIDE from './data/library/outside.json';
 
-export type Unit = 'sqft' | 'sqm' | 'rft' | 'm' | 'nos' | 'set' | 'lot' | 'kg' | 'cum' | 'bag';
+export type Unit = 'sqft' | 'sqm' | 'rft' | 'm' | 'nos' | 'set' | 'lot' | 'kg' | 'cum' | 'bag' | 'litre';
 export type Basis = 'installed' | 'supply' | 'product' | 'set';
 export type ItemKind = 'fixed' | 'movable' | 'appliance';
 export type Band = [number, number];
@@ -47,7 +48,7 @@ export interface Source { what: string; url: string; class: string }
 interface RawFile { title: string; date: string; families: Omit<Family, 'file'>[]; entries: (Omit<Entry, 'file' | 'fix'> & { fix?: (string | Count)[] })[] }
 
 /** The library's files, in the order of the estimate's sections. */
-export const FILES = [CIVIL, WATERPROOFING, FLOORING, WALLS, CEILING, BATHROOMS, KITCHEN, WARDROBES, DOORS, ELECTRICAL, PLUMBING, APPLIANCES, SMART, FURNITURE, STRUCTURE] as unknown as RawFile[];
+export const FILES = [CIVIL, WATERPROOFING, FLOORING, WALLS, CEILING, BATHROOMS, KITCHEN, WARDROBES, DOORS, ELECTRICAL, PLUMBING, APPLIANCES, SMART, FURNITURE, STRUCTURE, OUTSIDE] as unknown as RawFile[];
 export const SOURCE: Record<string, Source> = SOURCES.sources;
 export const CLASSES: Record<string, string> = SOURCES.classes;
 export const LIBRARY_DATE = SOURCES.date;
@@ -91,8 +92,8 @@ const r2 = (x: number) => Math.round(x * 100 + 1e-6) / 100;
 const INR = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
 const inr = (x: number) => INR.format(x);
 /** A unit as the working says it: Rs. 75 a sq ft, Rs. 500 each. */
-export const PER: Record<Unit, string> = { sqft: 'a sq ft', sqm: 'a sq m', rft: 'a running ft', m: 'a metre', nos: 'each', set: 'a set', lot: 'a lot', kg: 'a kg', cum: 'a cu m', bag: 'a bag' };
-const UNIT_WORD: Record<Unit, string> = { sqft: 'sq ft', sqm: 'sq m', rft: 'running ft', m: 'm', nos: 'nos', set: 'sets', lot: 'lots', kg: 'kg', cum: 'cu m', bag: 'bags' };
+export const PER: Record<Unit, string> = { sqft: 'a sq ft', sqm: 'a sq m', rft: 'a running ft', m: 'a metre', nos: 'each', set: 'a set', lot: 'a lot', kg: 'a kg', cum: 'a cu m', bag: 'a bag', litre: 'a litre' };
+const UNIT_WORD: Record<Unit, string> = { sqft: 'sq ft', sqm: 'sq m', rft: 'running ft', m: 'm', nos: 'nos', set: 'sets', lot: 'lots', kg: 'kg', cum: 'cu m', bag: 'bags', litre: 'litres' };
 
 /** An item's rate and how it was worked out. `rate` is in rupees per unit, to the paisa. */
 export interface Price { rate: number; how: string[] }
@@ -129,8 +130,11 @@ function rawPrice(id: string, city: number): { rate: number; how: string[] } | n
     if (!e.rate) return null;
     const m = mid(e.rate);
     if (e.basis === 'installed') {
-      base = m * city;
-      how.push(`Rs. ${inr(m)}, the middle of Rs. ${inr(e.rate[0])}–${inr(e.rate[1])} ${PER[e.unit]}, supplied and fixed${city !== 1 ? `, × ${city.toFixed(3)} for the city` : ''}`);
+      const each = e.pack ? m / (e.pack.qty * per(e.pack.unit, e.unit)) : m;
+      base = each * city;
+      how.push(e.pack
+        ? `Rs. ${inr(m)}, the middle of Rs. ${inr(e.rate[0])}–${inr(e.rate[1])} for ${e.pack.what ?? 'a pack'} covering ${e.pack.qty} ${UNIT_WORD[e.pack.unit]}, supplied and fixed: Rs. ${inr(r2(each))} ${PER[e.unit]}${city !== 1 ? `, × ${city.toFixed(3)} for the city` : ''}`
+        : `Rs. ${inr(m)}, the middle of Rs. ${inr(e.rate[0])}–${inr(e.rate[1])} ${PER[e.unit]}, supplied and fixed${city !== 1 ? `, × ${city.toFixed(3)} for the city` : ''}`);
     } else {
       const each = e.pack ? m / (e.pack.qty * per(e.pack.unit, e.unit)) : m;
       const w = e.basis === 'supply' ? e.wastage ?? 0 : 0;

@@ -415,7 +415,7 @@ The specification comes from the schedule of rates (A7), to be checked against C
 
 They are on for Interiors and off for Repair (decision 4).
 
-**For a house, added:**
+**For a house, added** (built in E5, except the drainage and the borewell):
 - Terrace and exterior: the roof's waterproofing (fixed), exterior paint by level, railings;
 - External works: compound wall, gate, paving, drainage;
 - Water: sump, tank, borewell, rainwater harvesting.
@@ -823,7 +823,7 @@ The sources stay in the data and on the page.
 | E2 | The library checked against its sources, page by page, once the network allows; the owner's fictional flat, worked at home, as a test | Every level's item checked, or marked as not |
 | E3 | Built on 03-10-2026 (D-UX-25, D-TECH-18, D-DATA-05). Rooms (sizes, a room's own level, for any room), What changed and Compare; the movable sections (Furniture, Soft furnishings, Appliances, Smart home) with the split | As above |
 | E4 | A quotation in hand, and the bill of quantities for quotes (A9) | As above |
-| E5 | A house. **Built thin on 03-10-2026 (D-UX-23):** Build a new house, with the floors and the built-up area, the structure at one specification, the terrace, the outside walls and the stair railing. **Still to come:** the structure by stages, External works, Water, Add a floor, a renovated house's own works, CPWD's plinth-area range as a check | The owner has checked `cost-index.json` and the plinth-area rates against the official texts |
+| E5 | A house. **Built on 03-10-2026 (D-UX-23 thin, then D-UX-27 and D-POL-11):** Build a new house, with the floors and the built-up area, the structure at one specification, the terrace, the outside walls, the stairs with their finish and a cabin over the stair to the terrace, the outside works round the plot (the plot an assumption the user can change), the water (the sewer as a switch) and the stages for a construction loan. **Still to come:** Add a floor, a renovated house's own works, a borewell and the drainage, CPWD's plinth-area range as a check | The owner has checked `cost-index.json` and the plinth-area rates against the official texts |
 | E6 | More options (A10); the terms and measurements annexes | As above |
 | E7 | The professional page (A11) | A professional the owner trusts uses it for one real estimate of their own |
 | E8 | Later, only if wanted: Fit my budget (A8) | As above |

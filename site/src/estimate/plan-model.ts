@@ -3,11 +3,11 @@
  * (engine/architect.ts), and its answer to words, with the engine's exact figures beside them for the Excel copy. Pure,
  * no DOM. Every figure comes from the engine: the estimate, the five levels (the strip and Compare), the change from the
  * package, what the last change did and the drawer's rates are each worked out twice there; this file only words, groups
- * and orders them. The rooms' own sizes are typed in the page's unit and passed on in metres.
+ * and orders them. The rooms' own sizes, and a new house's plot (E5), are typed in the page's unit and passed on in metres.
  */
 import {
-  BHKS, CITIES, FLOORS, LEVELS, R, ROOM_SIDE, WORK_KINDS, architect, architectNeeds, changeOf, choicesFor, levelName, levelRuns, overPackage, planRooms,
-  type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choice, type Level, type LevelRuns, type Line, type WorkKind,
+  BHKS, CITIES, FLOORS, LEVELS, PLOT_SIDE, R, ROOM_SIDE, WORK_KINDS, architect, architectNeeds, changeOf, choicesFor, levelName, levelRuns, overPackage, planRooms,
+  type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choice, type House, type Level, type LevelRuns, type Line, type Stage, type WorkKind,
 } from '../../../engine/architect';
 import { CLASSES, FT_PER_M, LIBRARY_DATE, PER, SOURCE, SQFT_PER_SQM, type ItemKind, type Unit } from '../../../engine/library';
 import { parseAmount } from '../../../engine/parse';
@@ -36,6 +36,10 @@ export interface PlanState {
   rooms: Record<string, { l: string; b: string }>;
   /** A room's own level by its id (A4, A8). */
   roomLevels: Record<string, Level>;
+  /** A new house's plot, its two sides as typed in the page's unit; empty for the rule's plot round the outline (E5). */
+  plot: { l: string; b: string };
+  /** A new house: the city's sewer reaches the plot, so it takes the septic tank's place (E5). */
+  sewer: boolean;
   /** The last change to the estimate, for What changed: its words, and the engine's input before and after it. */
   change?: Made;
   doc: PlanFacts;
@@ -43,7 +47,8 @@ export interface PlanState {
 export interface Made { what: string; before: ArchitectInput; after: ArchitectInput }
 
 export const EMPTY_PLAN: PlanState = {
-  area: '', unit: 'sqft', sections: {}, sliders: {}, items: {}, brands: {}, height: '', rooms: {}, roomLevels: {}, doc: { owner: '', property: '', lender: '', preparedBy: '' },
+  area: '', unit: 'sqft', sections: {}, sliders: {}, items: {}, brands: {}, height: '', rooms: {}, roomLevels: {}, plot: { l: '', b: '' }, sewer: false,
+  doc: { owner: '', property: '', lender: '', preparedBy: '' },
 };
 
 // ---- The six questions (A3) ----
@@ -91,6 +96,20 @@ export function sideOf(t: string, u: AreaUnit): number | null | undefined {
   const m = n * METRES[u];
   return m >= ROOM_SIDE.min - 1e-9 && m <= ROOM_SIDE.max + 1e-9 ? m : null;
 }
+/** The sides a plot can take, in the page's unit, for the field's message: 10 to 984 ft, or 3 to 300 m. */
+export const plotRange = (u: AreaUnit) => (u === 'sqm' ? [PLOT_SIDE.min, PLOT_SIDE.max] : [Math.ceil(PLOT_SIDE.min / 0.3048), Math.floor(PLOT_SIDE.max / 0.3048)]);
+/** A plot's side as typed, in metres, when it is one the engine takes; null when typed but not such a side. */
+export function plotSideOf(t: string, u: AreaUnit): number | null | undefined {
+  const n = plainOf(t);
+  if (typeof n !== 'number') return n;
+  const m = n * METRES[u];
+  return m >= PLOT_SIDE.min - 1e-9 && m <= PLOT_SIDE.max + 1e-9 ? m : null;
+}
+/** The plot in metres, when both sides are typed and understood. */
+function plotOf(s: PlanState): { l: number; b: number } | undefined {
+  const l = plotSideOf(s.plot.l, s.unit), b = plotSideOf(s.plot.b, s.unit);
+  return typeof l === 'number' && typeof b === 'number' ? { l, b } : undefined;
+}
 /** The rooms' own sizes in metres: only those with both sides typed and understood. */
 function roomSizes(s: PlanState): Record<string, { l: number; b: number }> {
   const out: Record<string, { l: number; b: number }> = {};
@@ -106,12 +125,13 @@ function roomSizes(s: PlanState): Record<string, { l: number; b: number }> {
  * planned size, stays until it is typed again.
  */
 export function inputOf(s: PlanState): ArchitectInput {
-  const area = plainOf(s.area), h = heightOf(s.height), rooms = roomSizes(s);
+  const area = plainOf(s.area), h = heightOf(s.height), rooms = roomSizes(s), plot = s.kind === 'build' ? plotOf(s) : undefined;
   return {
     kind: s.kind, property: s.kind === 'build' ? 'house' : s.home, ...(s.kind === 'build' && s.floors ? { floors: s.floors } : {}),
     city: s.city, ...(typeof area === 'number' ? { area } : {}), areaUnit: s.unit, bhk: s.bhk, level: s.level,
     sections: s.sections, sliders: s.sliders, items: s.items, ...(typeof h === 'number' ? { heightM: h } : {}),
     ...(Object.keys(rooms).length ? { rooms } : {}), ...(Object.keys(s.roomLevels).length ? { roomLevels: s.roomLevels } : {}),
+    ...(plot ? { plot } : {}), ...(s.kind === 'build' && s.sewer ? { sewer: true } : {}),
   };
 }
 
@@ -161,8 +181,17 @@ export function withUnit(s: PlanState, unit: AreaUnit): PlanState {
   if (unit === s.unit) return s;
   const turn = (t: string) => { const n = plainOf(t); return typeof n === 'number' ? qtyText((n * METRES[s.unit]) / METRES[unit]) : t; };
   const rooms = Object.fromEntries(Object.entries(s.rooms).map(([id, x]) => [id, { l: turn(x.l), b: turn(x.b) }]));
-  return { ...s, unit, rooms };
+  return { ...s, unit, rooms, plot: { l: turn(s.plot.l), b: turn(s.plot.b) } };
 }
+/** A side of a new house's plot as typed; both sides empty: back to the rule's plot round the outline (E5). */
+export function withPlotSide(s: PlanState, side: 'l' | 'b', text: string): PlanState {
+  const plot = { ...s.plot, [side]: text };
+  return noted(s, { ...s, plot }, plot.l.trim() || plot.b.trim() ? `The plot to ${plot.l.trim()} × ${plot.b.trim()} ${sideUnit(s.unit)}` : 'The plot back to the planned one');
+}
+export const withPlotReset = (s: PlanState): PlanState => noted(s, { ...s, plot: { l: '', b: '' } }, 'The plot back to the planned one');
+/** Whether the city's sewer reaches a new house's plot: then a sewer connection takes the septic tank's place. */
+export const withSewer = (s: PlanState, on: boolean): PlanState =>
+  noted(s, { ...s, sewer: on }, on ? 'The sewer in place of a septic tank' : 'A septic tank in place of the sewer');
 /** A side of a room's own size as typed (`name` for What changed); both sides empty: back to the planned size. */
 export function withRoomSide(s: PlanState, id: string, side: 'l' | 'b', text: string, name: string): PlanState {
   const x = { ...(s.rooms[id] ?? { l: '', b: '' }), [side]: text }, rooms = { ...s.rooms, [id]: x };
@@ -183,7 +212,7 @@ export function withRoomLevel(s: PlanState, id: string, level: Level | null, nam
 
 // ---- Words ----
 
-const UNIT_SHORT: Record<Unit, string> = { sqft: 'sq ft', sqm: 'sq m', rft: 'rft', m: 'm', nos: 'nos', set: 'set', lot: 'lot', kg: 'kg', cum: 'cum', bag: 'bag' };
+const UNIT_SHORT: Record<Unit, string> = { sqft: 'sq ft', sqm: 'sq m', rft: 'rft', m: 'm', nos: 'nos', set: 'set', lot: 'lot', kg: 'kg', cum: 'cum', bag: 'bag', litre: 'litres' };
 const UNIT_RATE = PER;
 export const unitText = (u: Unit) => UNIT_SHORT[u];
 /** Whole rupees, grouped the Indian way. */
@@ -193,7 +222,7 @@ const rateText = (n: number) => inr(n, Number.isInteger(n) ? 0 : 2);
 /** A quantity to two places, without trailing zeros: 12.5, 40. */
 export const qtyText = (n: number) => inr(n, 2).replace(/\.?0+$/, '');
 /** A line's quantity as estimates show it: areas and lengths to two places, counts whole. */
-const lineQty = (n: number, u: Unit) => (['nos', 'set', 'lot', 'bag', 'kg'].includes(u) && Number.isInteger(n) ? inr(n) : inr(n, 2));
+const lineQty = (n: number, u: Unit) => (['nos', 'set', 'lot', 'bag', 'kg', 'litre'].includes(u) && Number.isInteger(n) ? inr(n) : inr(n, 2));
 export const rateWords = (n: number, u: Unit) => `Rs. ${rateText(n)} ${UNIT_RATE[u]}`;
 /** A total in lakhs or crores for the strip, where five must fit across a phone: 8.46 L, 1.23 Cr. */
 export function shortRupees(n: number): string {
@@ -239,6 +268,10 @@ export interface CompareCell { text: string; full: string; n: number; mine: bool
 export interface CompareView { rows: { id: string; name: string; cells: CompareCell[]; yours?: string }[]; totals: CompareCell[]; yours?: string }
 /** What changed (A8): the last change and what it did to the total, and the items it brought in. */
 export interface ChangeView { text: string; n: number; items: string }
+/** A new house's stage for a construction loan (E5): its amount, its share of the total and the share paid by its end. */
+export interface StageView { id: string; name: string; what: string; amount: string; n: number; share: string; upTo: string }
+/** A new house's plot for its fields (E5): the sides as typed and the planned ones, in the page's unit; why a typed size is not used yet. */
+export interface PlotView { l: string; b: string; planned: { l: string; b: string }; own: boolean; bad?: string }
 export interface PlanView {
   summary: string; title: string; kind: string; home: string; city: string; area: string; bhk: string; level: string;
   /** "Carpet area", or "Built-up area" for a new house: the area typed and the one the cost a sq ft is of. */
@@ -246,6 +279,8 @@ export interface PlanView {
   total: string; perSqft: string; words: string; n: { total: number; perSqft: number };
   strip: StripView[]; bar: BarView[]; sections: SectionView[];
   rooms: RoomView[]; roomsNote?: string; compare: CompareView; change?: ChangeView;
+  /** A new house's stages, adding up to the total, and its plot. */
+  stages?: StageView[]; plot?: PlotView;
   /** Fixed works, movable items and appliances, when there is more than fixed works. */
   split?: { label: string; amount: string; n: number }[];
   assumed: AssumedView[]; flags: string[]; unpriced: string[];
@@ -320,6 +355,7 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
   const roomsNote = e.flags.find((f) => f.startsWith('With your sizes'));
   return {
     rooms: roomsOf(s, e), ...(roomsNote ? { roomsNote } : {}), compare: compareOf(e, runs, sections), ...(change ? { change: changeText(change) } : {}),
+    ...(e.stages ? { stages: stageViews(e.stages) } : {}), ...(e.house ? { plot: plotView(s, e.house) } : {}),
     // Each answer kept on one line (no-break spaces inside it), so a phone wraps only between answers.
     summary: [kind, home, city, s.unit === 'sqm' ? `${qtyText(sqm)} sq m` : `${qtyText(sqft)} sq ft`, bhk, pkg].map((x) => x.replace(/ /g, '\u00a0')).join(' · '),
     title: TITLE[e.kind], kind, home, city, area, bhk, level: pkg, areaName: e.per === 'built-up' ? 'Built-up area' : 'Carpet area',
@@ -347,6 +383,20 @@ function roomsOf(s: PlanState, e: ArchitectEstimate): RoomView[] {
       typed: r.typed, level: r.level, l: typed.l, b: typed.b, planned: { l: side(p.l), b: side(p.b) }, ...(bad ? { bad } : {}),
     };
   });
+}
+
+const pct = (x: number) => `${(x * 100).toFixed(1)}%`;
+/** The stages in words: each one's share of the total, and the share paid by its end. */
+function stageViews(st: Stage[]): StageView[] {
+  let upTo = 0;
+  return st.map((x) => { upTo += x.share; return { id: x.id, name: x.name, what: x.what, amount: rupees(x.amount), n: x.amount, share: pct(x.share), upTo: pct(upTo) }; });
+}
+/** The plot's fields: as typed, the planned sides for the placeholders, and why a typed size is not used yet. */
+function plotView(s: PlanState, h: House): PlotView {
+  const ft = s.unit !== 'sqm', side = (m: number) => qtyText(ft ? m * FT_PER_M : m), m = R.house.plot, unit = sideUnit(s.unit);
+  const [lo, hi] = plotRange(s.unit), l = plotSideOf(s.plot.l, s.unit), b = plotSideOf(s.plot.b, s.unit), any = !!(s.plot.l.trim() || s.plot.b.trim());
+  const bad = !any ? undefined : l === null || b === null ? `Type each side from ${lo} to ${hi} ${unit}.` : l === undefined || b === undefined ? 'Type both sides.' : undefined;
+  return { l: s.plot.l, b: s.plot.b, planned: { l: side(h.l + m.front + m.rear), b: side(h.b + 2 * m.side) }, own: h.plot.own, ...(bad ? { bad } : {}) };
 }
 
 /** Compare: each section that is on, and the total, at the five levels; the estimate's own level marked, and its own amount where it differs. */

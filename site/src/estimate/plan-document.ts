@@ -1,9 +1,9 @@
 /**
  * The planning estimate as a document to download (A15), written three times (site/src/doc/): page 1 the facts, the
  * abstract of cost by section, the total in figures and words and the cost a sq ft, signed; Annex 1 every item under its
- * section with its quantity, rate and amount; Annex 2 what the estimate assumes, one line each. Annexes are numbered in
- * order with no gap (D-DOC-09). Built from the page's state and preview only: every figure is the engine's, and none is
- * computed here. The flags, the five-level strip, the change from the package and the sources stay on the page.
+ * section with its quantity, rate and amount; for a new house, Annex 2 its stages for a construction loan (E5); then what
+ * the estimate assumes, one line each. Annexes are numbered in order with no gap (D-DOC-09). Built from the page's state and preview only: every figure
+ * is the engine's, and none is computed here. The flags, the five-level strip, the change from the package and the sources stay on the page.
  */
 import type { Block, Cell, Doc, Figure, Table } from '../doc/doc';
 import { printable } from '../doc/pdf';
@@ -74,6 +74,8 @@ export function planDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
     { label: 'Cost per sq ft', value: `Rs. ${v.perSqft}`, note: `of ${v.areaName.toLowerCase()}` },
   ] });
   if (v.split) blocks.push({ kind: 'table', table: { columns: [{ label: 'Of the total' }, { label: 'Rupees' }], rows: v.split.map((x) => ({ cells: [{ text: x.label }, cell(x.amount, x.n)] })) } });
+  // A new house: its stages for a construction loan are an annex of their own, so page 1 stays the signed abstract.
+  if (v.stages) blocks.push({ kind: 'text', text: 'The stages of construction, for a construction loan\'s payments, are in Annex 2.' });
   blocks.push({ kind: 'signature', lines: [`For ${by || 'the engineer or architect who adopts this estimate'}`, '', 'Signature and seal', 'Name and registration number:', 'Date:', 'Place:'] });
 
   const detail: Table = {
@@ -92,6 +94,16 @@ export function planDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
     size: 'small',
   };
 
+  // A new house's stages (E5): what each covers, its amount, its share of the total and the share by its end.
+  const stages: Table | undefined = v.stages && {
+    columns: [{ label: 'Stage' }, { label: 'Rupees' }, { label: 'Share' }, { label: 'By then' }],
+    rows: [
+      ...v.stages.map((x) => ({ cells: [{ text: x.name }, cell(x.amount, x.n), { text: x.share }, { text: x.upTo }] })),
+      { kind: 'total' as const, cells: [{ text: 'Total estimated cost' }, cell(v.total, v.n.total), { text: '100%' }, { text: '' }] },
+    ],
+  };
+  const assumedNo = stages ? 3 : 2;
+
   return {
     title: `${v.title}${owner ? `, ${owner}` : ''}`,
     header: `Planning estimate${owner ? ` · ${owner}` : ''}`,
@@ -107,8 +119,14 @@ export function planDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
         { kind: 'text', text: 'In rupees; amounts rounded to the rupee, totals from the exact figures. Each rate includes fixing, wastage and the city’s labour; brands are examples at the level, and "or equivalent" means any brand of the same level.', small: true },
         { kind: 'table', table: detail },
       ] },
+      ...(stages ? [{ name: 'Stages', blocks: [
+        { kind: 'title' as const, text: 'Annex 2. Stages of construction', small: true },
+        { kind: 'text' as const, text: 'For planning a construction loan\'s payments: the structure split by published shares of a house\'s cost (foundation and plinth, the frame and slabs alike for each floor, the walls and plaster); the finishing, the outside works and the water from the estimate\'s own items. Not a lender\'s own schedule.', small: true },
+        { kind: 'table' as const, table: stages },
+        { kind: 'list' as const, items: (v.stages ?? []).map((x) => `${x.name}: ${x.what}.`), small: true },
+      ] }] : []),
       { name: 'Assumptions', blocks: [
-        { kind: 'title', text: 'Annex 2. What the estimate assumes', small: true },
+        { kind: 'title', text: `Annex ${assumedNo}. What the estimate assumes`, small: true },
         { kind: 'pairs', pairs: v.assumed.filter((a) => !ON_PAGE_1.includes(a.what)).map((a): [string, string] => [a.what, a.shown]) },
       ] },
     ],

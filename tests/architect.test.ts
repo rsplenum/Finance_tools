@@ -5,7 +5,7 @@
  * employer (D-BIZ-02). The owner's own fictional flat, worked at home, is still to come (HANDOFF).
  */
 import { describe, it, expect } from 'vitest';
-import { architect, architectNeeds, changeOf, choicesFor, cityFactor, levelRuns, overPackage, planOpenings, planRooms, strip, type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Level, type LevelRuns } from '../engine/architect';
+import { architect, architectNeeds, changeOf, choicesFor, cityFactor, levelRuns, overPackage, planOpenings, planRooms, strip, type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Level, type LevelRuns, type Stage } from '../engine/architect';
 import { architectCheck, checkRate } from '../engine/architect-check';
 import { price } from '../engine/library';
 import type { Blocked, Needs } from '../engine/dscr';
@@ -65,33 +65,38 @@ describe('a new house: G+1, 2,000 sq ft built up, 3 BHK, in Pune at Basic, by ha
   it('the outline: 1,000 sq ft (92.9030 sq m) a floor, 1.25 times as long as wide, is 10.7763 × 8.6210 m; its 230 mm outer walls take 2 × 0.23 × 19.3973 − 4 × 0.23² = 8.7112 sq m and the stair 2.5 × 4.5 = 11.25 sq m a floor, so 185.8061 − 2 × 19.9612 = 145.8837 sq m (1,570.28 sq ft) is left for the rooms', () => {
     expect([e.house?.l.toFixed(4), e.house?.b.toFixed(4), e.house?.wall.toFixed(4)]).toEqual(['10.7763', '8.6210', '8.7112']);
     expect(e.carpetSqft.toFixed(2)).toBe('1570.28');
-    expect(house({ floors: 1, area: 1000 }).house?.stair).toBe(0);
+    // A house of the ground floor only has its stair to the terrace too: 92.9030 − 8.7112 − 11.25 = 72.9419 sq m (785.14 sq ft).
+    expect(house({ floors: 1, area: 1000 }).house?.stair).toBe(11.25);
+    expect(house({ floors: 1, area: 1000 }).carpetSqft.toFixed(2)).toBe('785.14');
   });
-  it('the structure, against Brick&Bolt\'s worked 1,000 sq ft house (350–450 bags of cement, 3–4 t of steel, 1,200–1,600 cft of sand, 1,500–2,000 cft of aggregate, 8,000–10,000 bricks): the middle of each, 1,400 cft = 39.64 cu m and 1,750 cft = 49.55 cu m', () => {
+  it('the structure, against Brick&Bolt\'s worked 1,000 sq ft house (350–450 bags of cement, 3–4 t of steel, 1,200–1,600 cft of sand, 1,500–2,000 cft of aggregate, 8,000–10,000 bricks): the middle of each a sq ft, on the 1,000 sq ft and the stair cabin\'s 11.25 sq m = 121.0940 sq ft, so 1,121.0940 sq ft: 448.44 bags, 3,923.83 kg, 1,569.53 cft = 44.44 cu m, 1,961.91 cft = 55.56 cu m and 10,089.85 bricks', () => {
     const g = house({ floors: 1, area: 1000 });
-    expect(['cement:struct:cement', 'steel:struct:steel', 'sand:struct:sand', 'coarse-aggregate:struct:aggregate', 'brick:struct:bricks'].map((k) => line(g, `flat:${k}`)?.qty)).toEqual([400, 3500, 39.64, 49.55, 9000]);
+    const qty = ['cement:struct:cement', 'steel:struct:steel', 'sand:struct:sand', 'coarse-aggregate:struct:aggregate', 'brick:struct:bricks'].map((k) => line(g, `flat:${k}`)?.qty);
+    expect(qty).toEqual([448.44, 3923.83, 44.44, 55.56, 10089.85]);
+    // A sq ft, each is still Brick&Bolt's middle.
+    expect([qty[0] as number / 1121.094, qty[1] as number / 1121.094, qty[4] as number / 1121.094].map((x) => x.toFixed(3))).toEqual(['0.400', '3.500', '9.000']);
   });
-  it('the rates: cement Rs. 387.50 + 3.5% wastage = 401.06 a bag; steel 57 + 4% = 59.28 a kg; a brick 9 + 6.5% = 9.585, half up 9.59; RCC labour 180 × Pune\'s 0.969072 = 174.43 a sq ft', () => {
-    expect(line(e, 'flat:cement:struct:cement')).toMatchObject({ qty: 800, rate: 401.06, amount: 320848 });
-    expect(line(e, 'flat:steel:struct:steel')).toMatchObject({ qty: 7000, rate: 59.28, amount: 414960 });
-    expect(line(e, 'flat:brick:struct:bricks')).toMatchObject({ qty: 18000, rate: 9.59, amount: 172620 });
-    expect(line(e, 'flat:labour-rcc:built-up')).toMatchObject({ qty: 2000, rate: 174.43, amount: 348860 });
+  it('the rates: cement Rs. 387.50 + 3.5% wastage = 401.06 a bag; steel 57 + 4% = 59.28 a kg; a brick 9 + 6.5% = 9.585, half up 9.59; RCC labour 180 × Pune\'s 0.969072 = 174.43 a sq ft; on 2,000 + 121.0940 = 2,121.0940 sq ft', () => {
+    expect(line(e, 'flat:cement:struct:cement')).toMatchObject({ qty: 848.44, rate: 401.06, amount: 340275.35 });
+    expect(line(e, 'flat:steel:struct:steel')).toMatchObject({ qty: 7423.83, rate: 59.28, amount: 440084.64 });
+    expect(line(e, 'flat:brick:struct:bricks')).toMatchObject({ qty: 19089.85, rate: 9.59, amount: 183071.66 });
+    expect(line(e, 'flat:labour-rcc:built-up')).toMatchObject({ qty: 2121.09, rate: 174.43, amount: 369981.73 });
     expect(checkRate('mu-brick', 'pune')).toBe(9.59);
   });
   it('the terrace: inside the parapet 10.3163 × 8.1610 = 84.19 sq m, and 36.9547 m × 0.3 m up it = 11.09 sq m: 95.28 sq m = 1,025.57 sq ft, an APP membrane at every level', () => {
     expect(line(e, 'flat:roof-waterproofing:terrace')).toMatchObject({ qty: 1025.57, entry: 'wp-app', level: null });
     expect(line(house({ level: 5 }), 'flat:roof-waterproofing:terrace')?.entry).toBe('wp-app');
   });
-  it('the outside walls: 38.7947 m × (2 × 3.05 + 1.0 m of parapet) = 275.44 sq m, and the parapet\'s inside 36.9547 × 1.0 = 36.95 sq m: 312.40 sq m = 3,362.61 sq ft of economy emulsion at Basic', () => {
-    expect(line(e, 'flat:exterior-paint:exterior-walls')).toMatchObject({ qty: 3362.61, entry: 'ex-ace' });
+  it('the outside walls: 38.7947 m × (2 × 3.05 + 1.0 m of parapet) = 275.44 sq m, the parapet\'s inside 36.9547 × 1.0 = 36.95 sq m, and the stair cabin\'s outside 14 m × 2.7 m = 37.80 sq m: 350.20 sq m = 3,769.49 sq ft of economy emulsion at Basic', () => {
+    expect(line(e, 'flat:exterior-paint:exterior-walls')).toMatchObject({ qty: 3769.49, entry: 'ex-ace' });
   });
-  it('the stair railing: one stair of two flights of √(2.2² + 1.525²) = 2.6769 m and 0.3 m at the landing, 5.6538 m = 18.55 rft; none in a house of one floor', () => {
-    expect(line(e, 'flat:railing:stair-railing')).toMatchObject({ qty: 18.55, entry: 'rl-ms' });
-    expect(line(house({ floors: 1, area: 1000 }), 'flat:railing:stair-railing')).toBeUndefined();
+  it('the stair railing: a stair on each floor, the top one to the terrace, each two flights of √(2.2² + 1.525²) = 2.6769 m and 0.3 m at the landing: 2 × 5.6538 = 11.3075 m = 37.10 rft; a house of one floor has one, 18.55 rft', () => {
+    expect(line(e, 'flat:railing:stair-railing')).toMatchObject({ qty: 37.1, entry: 'rl-ms' });
+    expect(line(house({ floors: 1, area: 1000 }), 'flat:railing:stair-railing')?.qty).toBe(18.55);
   });
   it('the sections: the structure, waterproofing, the terrace and outside, and every finish and service inside; no civil repairs; new wiring and a board', () => {
-    expect(e.sections.map((x) => x.id)).toEqual(['structure', 'waterproofing', 'exterior', 'flooring', 'walls', 'ceiling', 'bathrooms', 'kitchen', 'wardrobes', 'doors', 'electrical', 'plumbing', 'appliances', 'smart', 'furniture', 'furnishings']);
-    expect(e.sections.filter((x) => x.on).length).toBe(11);
+    expect(e.sections.map((x) => x.id)).toEqual(['structure', 'waterproofing', 'exterior', 'flooring', 'walls', 'ceiling', 'bathrooms', 'kitchen', 'wardrobes', 'doors', 'electrical', 'plumbing', 'outside', 'water', 'appliances', 'smart', 'furniture', 'furnishings']);
+    expect(e.sections.filter((x) => x.on).length).toBe(13);
     expect(e.lines.filter((l) => l.family === 'wiring').length).toBeGreaterThan(0);
     expect(line(e, 'flat:db:one')).toBeDefined();
     expect(run().sections.map((x) => x.id)).not.toContain('structure');
@@ -106,8 +111,13 @@ describe('a new house: G+1, 2,000 sq ft built up, 3 BHK, in Pune at Basic, by ha
   it('the cost a sq ft is of the built-up area; the flags say the structure is by rules of thumb, how the rooms are planned, what is not in yet and the city\'s reported range', () => {
     expect(e.per).toBe('built-up');
     expect(e.perSqft).toBeCloseTo(e.total / 2000, 2);
-    for (const start of ['The structure\'s materials and labour are rules of thumb', 'The rooms are planned as one home of 1570 sq ft', 'Not in this estimate yet: the compound wall', `This estimate comes to Rs. ${Math.round(e.perSqft).toLocaleString('en-IN')} a sq ft of built-up area; houses in Pune are reported at Rs. 1,800–2,900`])
+    for (const start of ['The structure\'s materials and labour are rules of thumb', 'The rooms are planned as one home of 1570 sq ft', 'Not in this estimate yet: a borewell', 'The compound wall runs round all four sides'])
       expect(e.flags.some((f) => f.startsWith(start)), start).toBe(true);
+    // With the outside works and the water in (E5), Basic comes inside Pune's reported Rs. 1,800–2,900 a sq ft, so no range flag; Bespoke goes above it.
+    expect(e.perSqft > 1800 && e.perSqft < 2900).toBe(true);
+    expect(e.flags.some((f) => f.startsWith('This estimate comes to'))).toBe(false);
+    const top = house({ level: 5 });
+    expect(top.flags.some((f) => f.startsWith(`This estimate comes to Rs. ${Math.round(top.perSqft).toLocaleString('en-IN')} a sq ft of built-up area; houses in Pune are reported at Rs. 1,800–2,900`))).toBe(true);
     expect(e.flags.some((f) => f.startsWith('A house: its rooms inside'))).toBe(false);
   });
   it('the second computation draws the house its own way and agrees line by line', () => {
@@ -116,6 +126,99 @@ describe('a new house: G+1, 2,000 sq ft built up, 3 BHK, in Pune at Basic, by ha
   });
   it('a built-up area too small for its floors is asked for again', () => {
     expect(architect({ kind: 'build', floors: 4, city: 'pune', area: 600, bhk: '2', level: 1 })).toEqual({ needs: ['A larger built-up area: the outer walls and stairs of 4 floors take more than half of it'] });
+  });
+});
+
+describe('E5: a new house\'s plot, outside works, water, stairs and stages, by hand (G+1, 2,000 sq ft, 3 BHK, Pune, Basic)', () => {
+  const input: ArchitectInput = { kind: 'build', floors: 2, city: 'pune', area: 2000, bhk: '3', level: 1 };
+  const house = (x: Partial<ArchitectInput> = {}) => architect({ ...input, ...x }) as ArchitectEstimate;
+  const e = house();
+  it('the plot: the outline 10.7763 × 8.6210 m with 3 m in front, 1.5 m behind and 1 m each side, 15.2763 × 10.6210 m = 162.2504 sq m (50.12 × 34.85 ft, 1,746 sq ft)', () => {
+    expect([e.house?.plot.l.toFixed(4), e.house?.plot.b.toFixed(4), e.house?.plot.sqm.toFixed(4), e.house?.plot.own, e.house?.plot.fits]).toEqual(['15.2763', '10.6210', '162.2504', false, true]);
+    expect(e.assumptions.find((a) => a.what === 'The plot')?.shown).toBe('50.12 × 34.85 ft, 1,746 sq ft: the house\'s outline with 3 m in front, 1.5 m behind and 1 m on each side');
+  });
+  it('the compound wall: round the plot 2 × (15.2763 + 10.6210) = 51.7947 m less the 3 m gate, 48.7947 m = 160.09 rft at Rs. 1,350 × 0.969072 = 1,308.25: Rs. 2,09,437.74; its paint on both faces 2 × 48.7947 × 1.5 = 146.3841 sq m = 1,575.67 sq ft', () => {
+    expect(line(e, 'flat:compound-wall:compound-wall')).toMatchObject({ qty: 160.09, rate: 1308.25, amount: 209437.74, section: 'outside' });
+    expect(line(e, 'flat:exterior-paint:compound-paint')).toMatchObject({ qty: 1575.67, entry: 'ex-ace', section: 'outside' });
+  });
+  it('the gate 3 × 1.5 m = 48.44 sq ft of MS at Rs. 292.50 × 0.969072 = 283.45: Rs. 13,730.32; the paving 162.2504 − 92.9030 = 69.3473 sq m = 746.45 sq ft of 60 mm pavers at Rs. 60 + 13 × 0.969072 = 72.60: Rs. 54,192.27', () => {
+    expect(line(e, 'flat:gate:gate')).toMatchObject({ qty: 48.44, rate: 283.45, amount: 13730.32, entry: 'gt-ms' });
+    expect(line(e, 'flat:paving:paving')).toMatchObject({ qty: 746.45, rate: 72.6, amount: 54192.27, entry: 'pv-concrete-60' });
+    expect(line(house({ level: 3 }), 'flat:gate:gate')?.entry).toBe('gt-ss');
+  });
+  it('the water for 5 people at 135 litres a day: a sump of 3 days, 2,025 litres up to 3,000 at Rs. 22.50 × 0.969072 = 21.80 a litre (Rs. 65,400); a tank of a day, 675 litres, the next size 750 at Rs. 9.50 (Rs. 7,125); a 3BHK\'s septic tank of 7,250 litres at Rs. 92,500 ÷ 7,250 × 0.969072 = 12.36 (Rs. 89,610); a recharge pit 11,500 × 0.969072 + 3,500 + 6,000 + 11,500 × 0.969072 = Rs. 31,788.66', () => {
+    expect(line(e, 'flat:sump:sump')).toMatchObject({ qty: 3000, unit: 'litre', rate: 21.8, amount: 65400 });
+    expect(line(e, 'flat:overhead-tank:tank')).toMatchObject({ qty: 750, rate: 9.5, amount: 7125 });
+    expect(line(e, 'flat:septic:septic')).toMatchObject({ qty: 7250, rate: 12.36, amount: 89610 });
+    expect(line(e, 'flat:rwh:rwh')).toMatchObject({ qty: 1, rate: 31788.66, amount: 31788.66 });
+    expect(line(e, 'flat:sewer:sewer')).toBeUndefined();
+    expect(e.sections.find((x) => x.id === 'water')?.amount).toBe(193923.66);
+  });
+  it('a 1BHK takes 3 people: a sump of 1,215 litres up to 2,000, a tank of 405 up to 500 and a 4,500-litre septic tank', () => {
+    const one = house({ bhk: '1' });
+    expect([line(one, 'flat:sump:sump')?.qty, line(one, 'flat:overhead-tank:tank')?.qty, line(one, 'flat:septic:septic')?.qty]).toEqual([2000, 500, 4500]);
+  });
+  it('where the sewer reaches the plot, a sewer connection takes the septic tank\'s place, without a rate yet, and is flagged', () => {
+    const w = house({ sewer: true });
+    expect(line(w, 'flat:septic:septic')).toBeUndefined();
+    expect(w.unpriced.map((u) => u.key)).toContain('flat:sewer:sewer');
+    expect(w.flags.some((f) => f.includes('Sewer connection has no rate yet'))).toBe(true);
+    expect(w.total).toBeCloseTo(e.total - 89610, 2);
+    expect(w.assumptions.find((a) => a.what === 'Water')?.shown).toContain('the city\'s sewer in place of a septic tank');
+  });
+  it('the stairs: two, each treads 2 × 1.1 × 2.2 = 4.84, risers 1.1 × 3.05 = 3.355, the landing 1.2 × 2.5 = 3 and the floor\'s landing 1.1 × 2.5 = 2.75 sq m: 13.945; 27.89 sq m = 300.21 sq ft of Kota stone at Rs. 135 × 0.969072 = 130.82: Rs. 39,273.47; the well\'s walls 14 m × (2 × 3.05 + 2.7) = 123.2 sq m = 1,326.11 sq ft; a WPC door to the terrace', () => {
+    expect(line(e, 'flat:stair-finish:stair-finish')).toMatchObject({ qty: 300.21, rate: 130.82, amount: 39273.47, entry: 'stf-kota', section: 'exterior' });
+    expect(line(e, 'flat:paint:stair-walls')).toMatchObject({ qty: 1326.11, section: 'exterior' });
+    expect(line(e, 'flat:bath-door:terrace-door')).toMatchObject({ qty: 1, entry: 'bd-wpc' });
+    expect(line(house({ level: 2 }), 'flat:stair-finish:stair-finish')?.entry).toBe('stf-granite');
+  });
+  it('the stages add up to the total: the structure split 12.5 : 22.5 : 17.5 (Brick&Bolt\'s middles), each floor\'s slab alike, the walls taking what is left; the finishes, the outside works and the water from the lines', () => {
+    const st = e.stages as Stage[], S = e.sections.find((x) => x.id === 'structure')?.amount as number;
+    expect(st.map((x) => x.id)).toEqual(['foundation', 'slab-1', 'slab-2', 'walls', 'finishing', 'outside']);
+    expect(st.map((x) => x.name)).toEqual(['Foundation and plinth', 'Ground floor roof slab', 'First floor roof slab', 'Walls and plaster', 'Finishing', 'Outside works and water']);
+    const f = Math.round((S * 12.5 / 52.5) * 100) / 100, slab = Math.round((S * 22.5 / 52.5 / 2) * 100) / 100;
+    expect(st[0].amount).toBe(f);
+    expect(st[1].amount).toBe(slab);
+    expect(st[2].amount).toBe(slab);
+    expect(st[3].amount).toBeCloseTo(S - f - 2 * slab, 2);
+    const outside = e.sections.filter((x) => x.id === 'outside' || x.id === 'water').reduce((t, x) => t + x.amount, 0);
+    expect(st[5].amount).toBeCloseTo(outside, 2);
+    expect(st.reduce((t, x) => t + x.amount, 0)).toBeCloseTo(e.total, 2);
+    expect(st.reduce((t, x) => t + x.share, 0)).toBeCloseTo(1, 9);
+    const top = house({ level: 5 }).stages as Stage[];
+    expect(top.slice(0, 4).map((x) => x.amount)).toEqual(st.slice(0, 4).map((x) => x.amount));
+    expect(top[4].amount).toBeGreaterThan(st[4].amount);
+  });
+  it('a house of one floor has one roof slab; movable items switched on are a stage of their own', () => {
+    expect((house({ floors: 1, area: 1000 }).stages as Stage[]).map((x) => x.name)).toEqual(['Foundation and plinth', 'Roof slab', 'Walls and plaster', 'Finishing', 'Outside works and water']);
+    const m = house({ sections: { furniture: true } });
+    expect((m.stages as Stage[]).at(-1)).toMatchObject({ id: 'movable', amount: m.split.movable });
+  });
+  it('your own plot, 30 × 40 ft (9.144 × 12.192 m): the compound wall 2 × 21.336 − 3 = 39.672 m = 130.16 rft, the paving 111.4836 − 92.9030 = 18.5806 sq m = 200 sq ft; a plot smaller than the outline is flagged, and a side out of range asked again', () => {
+    const own = house({ plot: { l: 12.192, b: 9.144 } });
+    expect(line(own, 'flat:compound-wall:compound-wall')?.qty).toBe(130.16);
+    expect(line(own, 'flat:paving:paving')?.qty).toBe(200);
+    expect(own.house?.plot).toMatchObject({ own: true, fits: true });
+    const small = house({ plot: { l: 10, b: 8 } });
+    expect(small.house?.plot.fits).toBe(false);
+    expect(small.flags.some((f) => f.startsWith('Your plot, 32.81 × 26.25 ft, is smaller than the house\'s outline, 35.36 × 28.28 ft'))).toBe(true);
+    expect(line(small, 'flat:paving:paving')).toBeUndefined();
+    expect(architectNeeds({ ...input, plot: { l: 2, b: 9 } })).toEqual(['Each side of the plot from 3 to 300 m']);
+  });
+  it('the second computation agrees on every new line and every stage, and a stage that differs blocks the estimate', () => {
+    const c = architectCheck(input);
+    for (const k of ['flat:compound-wall:compound-wall', 'flat:paving:paving', 'flat:sump:sump', 'flat:overhead-tank:tank', 'flat:septic:septic', 'flat:stair-finish:stair-finish', 'flat:paint:stair-walls', 'flat:exterior-paint:compound-paint'])
+      expect(c.lines.get(k)?.qty, k).toBeCloseTo(line(e, k)?.qty as number, 2);
+    for (const st of e.stages as Stage[]) expect(c.stages.get(st.id), st.id).toBeCloseTo(st.amount, 1);
+    const wrong = (i: ArchitectInput) => { const x = architectCheck(i); x.stages.set('walls', (x.stages.get('walls') ?? 0) + 5); return x; };
+    expect(architect(input, wrong)).toEqual({ blocked: 'The two computations disagree on the stage Walls and plaster, so no figures are shown. Please report this.' });
+  });
+  it('the flags: the compound wall and the water are no longer among what is left out; the rainwater pit and the margins to check; risers above 190 mm', () => {
+    expect(e.flags.some((f) => f.startsWith('Not in this estimate yet: a borewell; the plan\'s approval fees'))).toBe(true);
+    expect(e.flags.some((f) => f.includes('the compound wall, gate and paving;'))).toBe(false);
+    expect(e.flags.some((f) => f.startsWith('Rainwater harvesting is one recharge pit'))).toBe(true);
+    expect(e.flags.some((f) => f.startsWith('The stairs\' risers'))).toBe(false);
+    expect(house({ heightM: 3.5 }).flags.some((f) => f.startsWith('The stairs\' risers come to 203 mm'))).toBe(true);
   });
 });
 

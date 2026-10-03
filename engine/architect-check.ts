@@ -6,7 +6,9 @@
  * room by room before the sections. A new house's outline is drawn breadth first, its outer walls as the outline less the
  * rectangle inside them, cubic feet turned to cubic metres by multiplying by a foot cubed, and its sides added one by one.
  * A room's own size is put in after the plan, its breadth the shorter side; a room's own level is looked up before the
- * section's slider. The split into fixed works, movable items and appliances is added up row by row.
+ * section's slider. The split into fixed works, movable items and appliances is added up row by row. A new house's plot
+ * is drawn side by side, its stairs part by part (the landings as the well less the flights and their gap), its tanks
+ * filled a step at a time, and its stages taken from the sections and the rows as this computation adds them up.
  * architect.ts shows no figure unless both agree.
  */
 import RULES from './data/architect.json';
@@ -17,6 +19,8 @@ export interface CheckLine { qty: number; rate: number; amount: number }
 export interface ArchitectCheck {
   lines: Map<string, CheckLine>; sections: Map<string, number>; total: number; split: Record<ItemKind, number>;
   rooms: Map<string, { sqm: number; len: number; wide: number }>; roomsSqm: number; plannedSqm: number;
+  /** A new house's stages by id; empty for other work. */
+  stages: Map<string, number>;
 }
 
 const Q = RULES as unknown as Rules;
@@ -34,15 +38,18 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
 
   // A new house: the outline breadth first, the outer walls as the outline less the rectangle inside them, the stair wells.
   const thick = Q.openings.walls.external / 1000;
-  let shell: { floors: number; built: number; foot: number; len: number; wide: number; storey: number } | null = null;
+  let shell: { floors: number; built: number; foot: number; len: number; wide: number; storey: number; well: number; plotLen: number; plotWide: number } | null = null;
   let carpet = typed;
   if (kind === 'build') {
     const floors = input.floors as number, foot = typed / floors;
     const wide = Math.sqrt(foot / Q.house.shape.aspect), len = foot / wide;
     const ring = len * wide - (len - thick * 2) * (wide - thick * 2);
-    const well = floors > 1 ? Q.house.stair.l * Q.house.stair.w : 0;
+    const well = Q.house.stair.l * Q.house.stair.w, m = Q.house.plot;
     carpet = typed - floors * ring - floors * well;
-    shell = { floors, built: typed, foot, len, wide, storey: Q.house.slab.m + H };
+    // The plot side by side: the user's two sides sorted, or the outline's breadth and length with the margins added.
+    const own = input.plot ? [input.plot.l, input.plot.b].sort((a, b) => a - b) : null;
+    const plotWide = own ? own[0] : m.side + wide + m.side, plotLen = own ? own[1] : m.front + len + m.rear;
+    shell = { floors, built: typed, foot, len, wide, storey: Q.house.slab.m + H, well, plotLen, plotWide };
   }
 
   // The rooms: one scale factor on the reference areas; the breadth first, then the length.
@@ -118,9 +125,13 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
   const qty = (rule: string, s: Space | null, lv: number): number => {
     if (!s) {
       if (shell) {
-        const builtFeet = shell.built / SQ_FOOT, hs = Q.house;
+        const hs = Q.house, st = hs.stair, builtFeet = (shell.built + shell.well) / SQ_FOOT;
         const li = shell.len - thick * 2, bi = shell.wide - thick * 2, insideRun = [li, bi, li, bi].reduce((a, b) => a + b, 0);
-        if (rule === 'built-up') return shell.built;
+        const wellRun = [st.w, st.l, st.w, st.l].reduce((a, b) => a + b, 0);
+        const outsideRun = [shell.len, shell.wide, shell.len, shell.wide].reduce((a, b) => a + b, 0);
+        const plotRun = [shell.plotLen, shell.plotWide, shell.plotLen, shell.plotWide].reduce((a, b) => a + b, 0) - hs.outside.gate.w;
+        const water = hs.water, people = water.persons.by[input.bhk as keyof typeof water.persons.by], perDay = water.persons.lpcd * people;
+        if (rule === 'built-up') return shell.built + shell.well;
         if (rule === 'plinth') return shell.foot;
         if (rule.startsWith('struct:')) {
           const k = rule.replace('struct:', '') as keyof Rules['house']['thumb'];
@@ -128,11 +139,26 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
           return k === 'sand' || k === 'aggregate' ? n * FOOT * FOOT * FOOT : n;
         }
         if (rule === 'terrace') return li * bi + insideRun * hs.terraceUpturn.m;
-        if (rule === 'exterior-walls') {
-          const outsideRun = [shell.len, shell.wide, shell.len, shell.wide].reduce((a, b) => a + b, 0);
-          return outsideRun * shell.storey * shell.floors + outsideRun * hs.parapet.m + insideRun * hs.parapet.m;
+        if (rule === 'exterior-walls') return outsideRun * shell.storey * shell.floors + outsideRun * hs.parapet.m + insideRun * hs.parapet.m + wellRun * hs.cabin.h;
+        if (rule === 'stair-railing') return shell.floors * (Math.hypot(st.going, shell.storey / 2) * 2 + st.gap);
+        if (rule === 'stair-finish') {
+          // Tread by tread and riser by riser; the landings as the well less the two flights and the gap between them.
+          const tread = st.going / st.treads, riser = shell.storey / (2 * (st.treads + 1));
+          const steps = 2 * st.treads * tread * st.flight + 2 * (st.treads + 1) * riser * st.flight;
+          const landings = st.w * st.l - 2 * st.flight * st.going - st.gap * st.going;
+          return (steps + landings) * shell.floors;
         }
-        if (rule === 'stair-railing') return shell.floors < 2 ? 0 : (shell.floors - 1) * (Math.hypot(hs.stair.going, shell.storey / 2) * 2 + hs.stair.gap);
+        if (rule === 'stair-walls') return wellRun * shell.storey * shell.floors + wellRun * hs.cabin.h;
+        if (rule === 'terrace-door') return 1;
+        if (rule === 'compound-wall') return Math.max(0, plotRun);
+        if (rule === 'compound-paint') return Math.max(0, plotRun) * hs.outside.wall + Math.max(0, plotRun) * hs.outside.wall;
+        if (rule === 'gate') return hs.outside.gate.h * hs.outside.gate.w;
+        if (rule === 'paving') return Math.max(0, shell.plotLen * shell.plotWide - shell.foot);
+        if (rule === 'sump') { let v = 0; while (v < perDay * water.sump.days - 1e-9) v += water.sump.step; return v; }
+        if (rule === 'tank') { const fit = water.tank.sizes.filter((x) => x >= perDay * water.tank.days - 1e-9); return fit.length ? Math.min(...fit) : Math.max(...water.tank.sizes); }
+        if (rule === 'septic') return input.sewer ? 0 : water.septic.litres[input.bhk as keyof typeof water.septic.litres];
+        if (rule === 'sewer') return input.sewer ? 1 : 0;
+        if (rule === 'rwh') return 1;
       }
       if (rule === 'one') return 1;
       if (rule === 'carpet') return carpet;
@@ -230,7 +256,7 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
     const base = qty(slot.qty, s, lv);
     if (!(base > 0)) return;
     const e = ENTRIES.get(id) as Entry;
-    const isArea = ['sqft', 'sqm'].includes(e.unit), isLength = ['rft', 'm'].includes(e.unit);
+    const isArea = ['sqft', 'sqm'].includes(e.unit), isLength = ['rft', 'm'].includes(e.unit);  // litres, counts and materials pass as they are
     const inUnit = isArea ? (e.unit === 'sqft' ? base / SQ_FOOT : base) : isLength ? (e.unit === 'rft' ? base / FOOT : base) : base;
     const rate = priced(id);
     if (rate === null) return;
@@ -254,7 +280,27 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
   const rooms = new Map(spaces.map((s) => [s.id, { sqm: s.sqm, len: s.len, wide: s.wide }]));
   let roomsSqm = 0;
   for (const s of spaces) if (s.kind !== 'balcony') roomsSqm += s.wide * s.len;
-  return { lines, sections, total, split, rooms, roomsSqm, plannedSqm: carpet - carpet * Q.shares.walls.value };
+
+  // A new house's stages: the structure by the published shares (each the low end plus half the width of its range, over
+  // their sum), each floor's slab alike; the finishing as its own rows added up; the outside works and water; movable items.
+  const stages = new Map<string, number>();
+  if (shell) {
+    const sh = Q.house.stages.shares, half = (b: [number, number]) => b[0] + (b[1] - b[0]) / 2;
+    const whole = half(sh.foundation) + half(sh.frame) + half(sh.walls), structure = sections.get('structure') ?? 0;
+    let finishing = 0, outside = 0;
+    for (const rows of bySpace.values()) for (const row of rows) {
+      if (row.section === 'outside' || row.section === 'water') outside += row.amount;
+      else if (row.section !== 'structure' && row.kind !== 'movable') finishing += row.amount;
+    }
+    const put = (id: string, x: number) => { if (Math.abs(x) >= 0.005) stages.set(id, x); };
+    put('foundation', (structure * half(sh.foundation)) / whole);
+    for (let i = 1; i <= shell.floors; i++) put(`slab-${i}`, (structure * half(sh.frame)) / whole / shell.floors);
+    put('walls', (structure * half(sh.walls)) / whole);
+    put('finishing', finishing);
+    put('outside', outside);
+    put('movable', split.movable);
+  }
+  return { lines, sections, total, split, rooms, roomsSqm, plannedSqm: carpet - carpet * Q.shares.walls.value, stages };
 }
 
 /** The city's factor the check's way: the sum of its range against the average of every listed city's sum; 1 for a place not listed. */
@@ -282,7 +328,7 @@ export function checkRate(id: string, cityId: string | undefined): number | null
       own = 0;
       for (const p of e.parts ?? []) { const r = rateOf(p.id); if (r === null) return null; own += r * p.n; }
     } else if (!e.rate) return null;
-    else if (e.basis === 'installed') own = middle(e.rate) * city;
+    else if (e.basis === 'installed') own = (e.pack ? middle(e.rate) / unitsIn(e.pack.qty, e.pack.unit, e.unit) : middle(e.rate)) * city;
     else {
       const each = e.pack ? middle(e.rate) / unitsIn(e.pack.qty, e.pack.unit, e.unit) : middle(e.rate);
       own = e.basis === 'supply' ? each + each * (e.wastage ?? 0) : each;

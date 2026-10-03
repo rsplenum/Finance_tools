@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest';
 import { CLASSES, ENTRIES, FAMILIES, FILES, LABOUR_ITEMS, SOURCE, choices, ladder, price } from '../engine/library';
 import { R, dimensionOf } from '../engine/architect';
 
-const UNITS = ['sqft', 'sqm', 'rft', 'm', 'nos', 'set', 'lot', 'kg', 'cum', 'bag'];
+const UNITS = ['sqft', 'sqm', 'rft', 'm', 'nos', 'set', 'lot', 'kg', 'cum', 'bag', 'litre'];
 
 describe('the library: every value has a source', () => {
   it('ids are unique across the files', () => {
@@ -64,7 +64,9 @@ describe('the five levels of every family', () => {
     for (const fam of FAMILIES.values()) {
       if (fam.fixed) {
         expect(ENTRIES.has(fam.fixed), fam.id).toBe(true);
-        expect(price(fam.fixed, 1, 18), `${fam.id}: ${fam.fixed} has no rate`).not.toBeNull();
+        // A fixed item without a rate says why in its note (the sewer connection: each city's own charges).
+        if (ENTRIES.get(fam.fixed)?.note && !ENTRIES.get(fam.fixed)?.rate && ENTRIES.get(fam.fixed)?.basis !== 'set') expect(price(fam.fixed, 1, 18)).toBeNull();
+        else expect(price(fam.fixed, 1, 18), `${fam.id}: ${fam.fixed} has no rate`).not.toBeNull();
         expect((ENTRIES.get(fam.fixed) as { unit: string }).unit, fam.id).toBe(fam.unit);
       }
       if (!fam.levels) continue;
@@ -90,7 +92,7 @@ describe('the five levels of every family', () => {
 describe('the rules: every slot fits its family', () => {
   it('every slot names a family in the library and a section, and its quantity fits the family\'s unit', () => {
     const sections = new Set(R.sections.map((s) => s.id));
-    const kind = { area: ['sqft', 'sqm'], length: ['rft', 'm'], count: ['nos', 'set', 'lot'], material: ['bag', 'kg', 'cum', 'nos'] };
+    const kind = { area: ['sqft', 'sqm'], length: ['rft', 'm'], count: ['nos', 'set', 'lot'], material: ['bag', 'kg', 'cum', 'nos'], volume: ['litre'] };
     for (const [room, slots] of Object.entries(R.templates)) for (const s of slots) {
       const fam = FAMILIES.get(s.family);
       expect(fam, `${room}: ${s.family}`).toBeDefined();

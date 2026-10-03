@@ -23,6 +23,8 @@
     { "id": "doors", "name": "Doors and windows", "slider": true },
     { "id": "electrical", "name": "Electrical and lights", "slider": true },
     { "id": "plumbing", "name": "Plumbing", "slider": false },
+    { "id": "outside", "name": "Outside works", "slider": true, "kinds": ["build"] },
+    { "id": "water", "name": "Water", "slider": false, "kinds": ["build"] },
     { "id": "appliances", "name": "Appliances", "slider": true },
     { "id": "smart", "name": "Smart home and security", "slider": true },
     { "id": "furniture", "name": "Furniture", "slider": true },
@@ -31,8 +33,8 @@
   "kinds": {
     "build": {
       "label": "Build a new house",
-      "on": ["structure", "waterproofing", "exterior", "flooring", "walls", "ceiling", "bathrooms", "kitchen", "doors", "electrical", "plumbing"],
-      "why": "A new house: its structure, the terrace and the outside walls, and every finish and service inside. Wardrobes, appliances, smart controls, furniture and soft furnishings are often bought later, so they start off and can be switched on."
+      "on": ["structure", "waterproofing", "exterior", "flooring", "walls", "ceiling", "bathrooms", "kitchen", "doors", "electrical", "plumbing", "outside", "water"],
+      "why": "A new house: its structure, the terrace, the outside walls and the stairs, every finish and service inside, the outside works round the plot and the water. Wardrobes, appliances, smart controls, furniture and soft furnishings are often bought later, so they start off and can be switched on."
     },
     "renovate": {
       "label": "Repair or renovate",
@@ -239,8 +241,30 @@
     "slab": { "m": 0.15, "src": ["own"], "why": "Each floor's slab 150 mm thick, usual for a house's spans, so a floor is the ceiling height plus 150 mm." },
     "parapet": { "m": 1.0, "src": ["own", "jivial-parapet"], "why": "A 1.0 m parapet round the terrace, painted on both faces; minimums of 1.0 to 1.2 m are reported." },
     "terraceUpturn": { "m": 0.3, "src": ["own"], "why": "The terrace's waterproofing turned 300 mm up the parapet, as up a bathroom's walls." },
-    "stair": { "w": 2.5, "l": 4.5, "going": 2.2, "gap": 0.3, "src": ["infralens-stairs", "infralens-nbc"], "why": "A dog-legged stair in a 2.5 × 4.5 m well on each floor of a house of two floors or more: two flights 1.1 m wide, each of 8 treads of 275 mm (2.2 m), a 1.2 m landing and 0.3 m between the flights (InfraLens's worked example, as reported); the Code's limits for a house are a 190 mm riser and a 250 mm tread (as reported). Its railing runs along both flights and the landing's edge." },
-    "thumb": { "cement": 0.4, "steel": 3.5, "sand": 1.4, "aggregate": 1.75, "bricks": 9, "src": ["bricknbolt-1000", "infralens-materials"], "why": "The middle of Brick&Bolt's rules of thumb for an RCC house, for each sq ft of built-up area: cement 0.35–0.45 bags, steel 3–4 kg, sand 1.2–1.6 cft, aggregate 1.5–2 cft and 8–10 bricks (as reported), for the foundation, the frame, the slabs, the walls and the plaster. InfraLens reports 15–25% more steel in seismic zones IV and V. A structural engineer's design and quantities replace them." }
+    "stair": { "w": 2.5, "l": 4.5, "going": 2.2, "gap": 0.3, "flight": 1.1, "treads": 8, "landing": 1.2, "src": ["infralens-stairs", "infralens-nbc"], "why": "A dog-legged stair in a 2.5 × 4.5 m well on each floor, the top one rising to the terrace: two flights 1.1 m wide, each of 8 treads of 275 mm (2.2 m), a 1.2 m landing and 0.3 m between the flights (InfraLens's worked example, as reported); the Code's limits for a house are a 190 mm riser and a 250 mm tread (as reported). Its railing runs along both flights and the landing's edge; its treads, risers and landings take the stairs' finish, and the walls of its well are painted from the ground floor to the cabin's roof." },
+    "cabin": { "h": 2.7, "src": ["studiomatrx-mumty", "infralens-stairs"], "why": "A cabin (mumty) over the stair to the terrace, on the stair well's outline and 2.7 m high: room for 2.1 m of headroom over the top step and its slab, under the 3 m that bye-laws such as Delhi's allow outside the FAR (as reported). Its area is added to the structure's rules of thumb, its walls are painted inside and out, its door is a WPC door that stands the rain, and its roof is waterproofed in place of the terrace under it; the overhead tank stands on it." },
+    "thumb": { "cement": 0.4, "steel": 3.5, "sand": 1.4, "aggregate": 1.75, "bricks": 9, "src": ["bricknbolt-1000", "infralens-materials"], "why": "The middle of Brick&Bolt's rules of thumb for an RCC house, for each sq ft of built-up area: cement 0.35–0.45 bags, steel 3–4 kg, sand 1.2–1.6 cft, aggregate 1.5–2 cft and 8–10 bricks (as reported), for the foundation, the frame, the slabs, the walls and the plaster. InfraLens reports 15–25% more steel in seismic zones IV and V. A structural engineer's design and quantities replace them." },
+    "plot": { "front": 3.0, "rear": 1.5, "side": 1.0, "src": ["talkinglands-setbacks"], "why": "The plot is the house's outline with margins round it: 3 m in front for the gate and a car, 1.5 m behind and 1 m on each side, within the setbacks reported for a 30 × 40 ft plot (front 1.5–3 m, rear 1–1.5 m, sides 0.5–1.5 m). Cities differ, and Bengaluru's 2026 rules allow less for small plots, so type your plot's size if you know it." },
+    "outside": { "wall": 1.5, "gate": { "w": 3.0, "h": 1.5 }, "src": ["houseyog-boundary", "civilsir-gate"], "why": "A brick compound wall about 1.5 m (5 ft) high round all four sides of the plot, painted on both faces, less a gate 3.0 m (10 ft) wide and 1.5 m high for a car: HouseYog's wall rates are for walls 4.5–6 ft high, and Civil Sir gives a car's gate 10–12 ft by 5–6 ft. All the open ground round the house is paved." },
+    "water": {
+      "persons": { "by": { "1RK": 2, "1": 3, "2": 4, "3": 5, "4": 6, "5": 7 }, "lpcd": 135, "src": ["infralens-nbc-part9", "houseyog-septic"], "why": "A household of the bedrooms and two more (a 3BHK five), within the households HouseYog gives for each BHK (a 1BHK 2–4 people, a 2BHK 4–6, a 3BHK 5–8), each using 135 litres a day (NBC 2016 Part 9, as reported)." },
+      "sump": { "days": 3, "step": 1000, "src": ["bricknbolt-sump"], "why": "A sump of three days' water, as Brick&Bolt recommends, rounded up to the next 1,000 litres; many houses build more, to take a whole tanker." },
+      "tank": { "days": 1, "sizes": [500, 750, 1000, 1500, 2000, 3000, 5000], "src": ["sintex-tank-capacity", "infralens-nbc-part9"], "why": "An overhead tank of a day's water, the next size sold above it (Sintex: a family of four uses 540 litres a day and takes a 750-litre tank); NBC 2016 asks a third to a half of a day where a pump fills it (as reported)." },
+      "septic": { "litres": { "1RK": 4000, "1": 4500, "2": 5750, "3": 7250, "4": 9000, "5": 10000 }, "src": ["houseyog-septic"], "why": "The middle of HouseYog's tank for each BHK (a 1BHK 4,000–5,000 litres, a 2BHK 5,000–6,500, a 3BHK 6,500–8,000, a 4BHK 8,000–10,000), with a soak pit; a 1 RK takes 4,000 litres and a 5BHK 10,000, the ends of those ranges. Where the city's sewer reaches the plot, a sewer connection takes the tank's place." },
+      "rwh": { "src": ["houseyog-rwh"], "why": "One recharge pit with a mesh filter, fed by the roof's downpipes, as HouseYog prices for a small house. Many cities require rainwater harvesting on a new house, and some size it by the roof." }
+    },
+    "stages": {
+      "shares": { "foundation": [10, 15], "frame": [20, 25], "walls": [15, 20] },
+      "list": [
+        { "id": "foundation", "name": "Foundation and plinth", "what": "Excavation, footings and columns to the plinth, the plinth beam and filling, and the anti-termite treatment" },
+        { "id": "slab", "name": "roof slab", "what": "The floor's columns, beams and roof slab" },
+        { "id": "walls", "name": "Walls and plaster", "what": "The brick walls of every floor, and the plaster inside and out" },
+        { "id": "finishing", "name": "Finishing", "what": "Floors, tiles, doors and windows, wiring, plumbing, the bathrooms and the kitchen, paint, the terrace's waterproofing and the stairs' finish" },
+        { "id": "outside", "name": "Outside works and water", "what": "The compound wall, gate and paving; the sump, overhead tank, septic tank or sewer connection, and rainwater harvesting" },
+        { "id": "movable", "name": "Furniture and other movable items", "what": "Movable items, which a construction loan usually leaves out" }
+      ],
+      "src": ["bricknbolt-stages", "designbuilt-stages"], "why": "The structure is split by stage as Brick&Bolt splits a house's cost: foundation and plinth 10–15%, the RCC frame and slabs 20–25%, brickwork and plaster 15–20%. Taken over the three, the middles give 23.81%, 42.86% and 33.33% of the structure; Design Built's breakdown is much the same (the RCC frame 24–26%, brickwork 10–11%, plaster 6–7%). The frame and slabs are alike for each floor. The finishes, the outside works and the water come from the estimate's own lines, so a higher level moves only the later stages."
+    }
   },
   "templates": {
     "flat": [
@@ -262,6 +286,18 @@
       { "family": "roof-waterproofing", "section": "exterior", "qty": "terrace", "kinds": ["build"] },
       { "family": "exterior-paint", "section": "exterior", "qty": "exterior-walls", "kinds": ["build"] },
       { "family": "railing", "section": "exterior", "qty": "stair-railing", "kinds": ["build"], "name": "Stair railing" },
+      { "family": "stair-finish", "section": "exterior", "qty": "stair-finish", "kinds": ["build"], "name": "Stairs' finish" },
+      { "family": "paint", "section": "exterior", "qty": "stair-walls", "kinds": ["build"], "name": "Stair well and cabin walls, paint" },
+      { "family": "bath-door", "section": "exterior", "qty": "terrace-door", "kinds": ["build"], "name": "Door to the terrace" },
+      { "family": "compound-wall", "section": "outside", "qty": "compound-wall", "kinds": ["build"] },
+      { "family": "exterior-paint", "section": "outside", "qty": "compound-paint", "kinds": ["build"], "name": "Compound wall paint" },
+      { "family": "gate", "section": "outside", "qty": "gate", "kinds": ["build"] },
+      { "family": "paving", "section": "outside", "qty": "paving", "kinds": ["build"] },
+      { "family": "sump", "section": "water", "qty": "sump", "kinds": ["build"] },
+      { "family": "overhead-tank", "section": "water", "qty": "tank", "kinds": ["build"] },
+      { "family": "septic", "section": "water", "qty": "septic", "kinds": ["build"] },
+      { "family": "sewer", "section": "water", "qty": "sewer", "kinds": ["build"] },
+      { "family": "rwh", "section": "water", "qty": "rwh", "kinds": ["build"] },
       { "family": "video-door-phone", "section": "smart", "qty": "one" },
       { "family": "cctv", "section": "smart", "qty": "one" }
     ],

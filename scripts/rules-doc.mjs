@@ -125,13 +125,24 @@ out.push('**How the rooms are drawn and measured**', '',
   rule('Check', `paint ${A.checks.paintRatio[0]}–${A.checks.paintRatio[1]} × the carpet area.`, A.checks),
   '');
 const H = A.house;
-out.push('**A new house** (D-UX-23): the outline from the built-up area and the floors, the rooms from what is left, the structure by rules of thumb', '',
+const W = H.water, sh = H.stages.shares, mid = (r) => (r[0] + r[1]) / 2, whole = mid(sh.foundation) + mid(sh.frame) + mid(sh.walls);
+const pct = (r) => `${((mid(r) / whole) * 100).toFixed(2)}%`, byBhk = (o) => Object.entries(o).map(([k, n]) => `${k === '1RK' ? '1 RK' : `${k}BHK`} ${n.toLocaleString('en-IN')}`).join(', ');
+out.push('**A new house** (D-UX-23, E5): the outline from the built-up area and the floors, the rooms from what is left, the structure by rules of thumb; the plot round it, the outside works, the water, and the stages a construction loan pays by', '',
   rule('Outline', `each floor ${H.shape.aspect} times as long as it is wide, the outer walls ${A.openings.walls.external} mm.`, H.shape),
   rule('Floor to floor', `the ceiling height plus a ${H.slab.m * 1000} mm slab.`, H.slab),
   rule('Parapet', `${H.parapet.m} m, painted on both faces.`, H.parapet),
   rule('Terrace', `waterproofed inside the parapet and ${H.terraceUpturn.m * 1000} mm up it.`, H.terraceUpturn),
-  rule('Stairs', `from two floors up, a ${H.stair.w} × ${H.stair.l} m well on each floor; flights ${H.stair.going} m along; ${H.stair.gap} m between them.`, H.stair),
-  rule('Structure', `for each sq ft of built-up area: ${H.thumb.cement} bags of cement, ${H.thumb.steel} kg of steel, ${H.thumb.sand} cft of sand, ${H.thumb.aggregate} cft of aggregate, ${H.thumb.bricks} bricks.`, H.thumb),
+  rule('Stairs', `a ${H.stair.w} × ${H.stair.l} m well on each floor, the top one rising to the terrace; two flights ${H.stair.flight} m wide of ${H.stair.treads} treads, ${H.stair.going} m along; a ${H.stair.landing} m landing; ${H.stair.gap} m between the flights.`, H.stair),
+  rule('Stair cabin', `on the well's outline, ${H.cabin.h} m high, its area added to the structure's.`, H.cabin),
+  rule('Structure', `for each sq ft of built-up area and of the stair cabin: ${H.thumb.cement} bags of cement, ${H.thumb.steel} kg of steel, ${H.thumb.sand} cft of sand, ${H.thumb.aggregate} cft of aggregate, ${H.thumb.bricks} bricks.`, H.thumb),
+  rule('Plot', `the outline with ${H.plot.front} m in front, ${H.plot.rear} m behind and ${H.plot.side} m on each side, until you type your plot's size.`, H.plot),
+  rule('Outside works', `a compound wall ${H.outside.wall} m high round the plot less a ${H.outside.gate.w} m gate ${H.outside.gate.h} m high, painted on both faces; the open ground round the house paved.`, H.outside),
+  rule('Household', `${byBhk(W.persons.by)} people, ${W.persons.lpcd} litres a day each.`, W.persons),
+  rule('Sump', `${W.sump.days} days' water, rounded up to the next ${W.sump.step.toLocaleString('en-IN')} litres.`, W.sump),
+  rule('Overhead tank', `${W.tank.days === 1 ? 'a day\'s' : `${W.tank.days} days'`} water, the next size of ${W.tank.sizes.map((x) => x.toLocaleString('en-IN')).join(', ')} litres.`, W.tank),
+  rule('Septic tank', `${byBhk(W.septic.litres)} litres, with a soak pit; the sewer connection in its place where the sewer reaches the plot.`, W.septic),
+  rule('Rainwater harvesting', 'one recharge pit with a filter.', W.rwh),
+  rule('Stages', `the structure ${pct(sh.foundation)} to the foundation and plinth, ${pct(sh.frame)} to the frame and slabs (alike for each floor), ${pct(sh.walls)} to the walls and plaster; the finishing, the outside works and water, and any movable items from the estimate's own lines.`, H.stages),
   '');
 out.push('**What each room gets** (the library\'s family, its section, and how it is measured)', '');
 for (const [room, slots] of Object.entries(A.templates))
@@ -142,12 +153,12 @@ const text = out.join('\n');
 
 // The library (engine/library.ts): every item, its levels, its rate and its source.
 const dir = new URL('../engine/data/library/', import.meta.url);
-const order = ['civil', 'waterproofing', 'flooring', 'walls', 'ceiling', 'bathrooms', 'kitchen', 'wardrobes', 'doors', 'electrical', 'plumbing', 'appliances', 'smart', 'furniture', 'structure'];
+const order = ['civil', 'waterproofing', 'flooring', 'walls', 'ceiling', 'bathrooms', 'kitchen', 'wardrobes', 'doors', 'electrical', 'plumbing', 'appliances', 'smart', 'furniture', 'structure', 'outside'];
 const files = order.map((n) => JSON.parse(readFileSync(new URL(`${n}.json`, dir), 'utf8')));
 if (readdirSync(dir).filter((f) => f.endsWith('.json') && f !== 'labour.json').length !== order.length) throw new Error('A library file is missing from rules-doc');
 const entries = new Map(files.flatMap((f) => f.entries.map((e) => [e.id, e])));
 const labourById = new Map(labour.labour.map((l) => [l.id, l]));
-const UNIT = { sqft: 'sq ft', sqm: 'sq m', rft: 'running ft', m: 'm', nos: 'each', set: 'set', lot: 'lot', kg: 'kg', cum: 'cu m', bag: 'bag' };
+const UNIT = { sqft: 'sq ft', sqm: 'sq m', rft: 'running ft', m: 'm', nos: 'each', set: 'set', lot: 'lot', kg: 'kg', cum: 'cu m', bag: 'bag', litre: 'litre' };
 const money = (x) => x.toLocaleString('en-IN');
 const range = (r) => (r[0] === r[1] ? `Rs. ${money(r[0])}` : `Rs. ${money(r[0])}–${money(r[1])}`);
 const numbered = [];

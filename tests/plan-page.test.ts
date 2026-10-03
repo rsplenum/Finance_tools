@@ -12,7 +12,7 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf, printable } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import {
-  EMPTY_PLAN, areaLabel, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withRoomLevel, withRoomReset, withRoomSide, withSection, withSlider, withUnit, type PlanState,
+  EMPTY_PLAN, areaLabel, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withPlotReset, withPlotSide, withRoomLevel, withRoomReset, withRoomSide, withSection, withSewer, withSlider, withUnit, type PlanState,
 } from '../site/src/estimate/plan-model';
 import { planDoc, planDocStatus, planFileName } from '../site/src/estimate/plan-document';
 import { SITE_NAME } from '../site/src/site';
@@ -124,21 +124,57 @@ describe('a new house on the page (D-UX-23)', () => {
     expect(areaLabel('build')).toBe('Built-up area of all floors');
     expect(inputOf(HOUSE)).toMatchObject({ kind: 'build', property: 'house', floors: 2, area: 2000 });
   });
-  it('the summary, the area typed and the cost a sq ft of it; sixteen sections, the structure first and eleven on', () => {
+  it('the summary, the area typed and the cost a sq ft of it; eighteen sections, the structure first and thirteen on', () => {
     const v = view(HOUSE);
     expect(v.summary.replace(/ /g, ' ')).toBe('Build a new house · G+1 · Pune · 2,000 sq ft · 3 BHK · Basic');
     expect([v.area, v.areaName, v.title]).toEqual(['2,000 sq ft (185.81 sq m)', 'Built-up area', 'Estimate of cost of construction']);
     expect(v.sections.map((x) => x.id)[0]).toBe('structure');
-    expect([v.sections.length, v.sections.filter((x) => x.on).length]).toEqual([16, 11]);
+    expect([v.sections.length, v.sections.filter((x) => x.on).length]).toEqual([18, 13]);
     expect(view(FLAT).sections.length).toBe(15);
   });
   it('the document: titled for construction, the floors in the work, the built-up area, the cost a sq ft of it, the cement by hand, and the house in Annex 2', () => {
     const p = planPreview(HOUSE), lines = docText(planDoc(HOUSE, p, TODAY)!).split('\n');
     for (const want of ['Estimate of cost of construction', 'Work: Build a new house, G+1, 3 BHK', 'Built-up area: 2,000 sq ft (185.81 sq m)', `Cost per sq ft: Rs. ${p.view!.perSqft} of built-up area`])
       expect(lines, want).toContain(want);
-    expect(lines.find((l) => l.includes('Whole house: OPC 53-grade cement'))).toMatch(/\| All \| 800 \| bag \| 401\.06 \| 3,20,848$/);
-    const at = lines.indexOf('Annex 2. What the estimate assumes');
-    expect(lines.slice(at + 1).map((l) => l.split(':')[0])).toEqual(['The house', 'Floor to floor', 'Structure', 'Rooms', 'Bathrooms', 'Ceiling height', 'Doors and windows', 'Electrical points']);
+    // 0.4 bags a sq ft × 2,121.0940 sq ft (the built-up area and the stair cabin) = 848.44 bags × Rs. 401.06 = 3,40,275.35 (architect.test.ts).
+    expect(lines.find((l) => l.includes('Whole house: OPC 53-grade cement'))).toMatch(/\| All \| 848\.44 \| bag \| 401\.06 \| 3,40,275$/);
+    const at = lines.indexOf('Annex 3. What the estimate assumes');
+    expect(lines.slice(at + 1).map((l) => l.split(':')[0])).toEqual(['The house', 'Floor to floor', 'The plot', 'Structure', 'Outside works', 'Water', 'Stages', 'Rooms', 'Bathrooms', 'Ceiling height', 'Doors and windows', 'Electrical points']);
+  });
+  it('E5: the stages on the page, each with its share and the share by its end, adding up to the total; in the document as Annex 2, pointed to from page 1', () => {
+    const v = view(HOUSE), st = v.stages!;
+    expect(st.map((x) => x.name)).toEqual(['Foundation and plinth', 'Ground floor roof slab', 'First floor roof slab', 'Walls and plaster', 'Finishing', 'Outside works and water']);
+    expect(st.at(-1)?.upTo).toBe('100.0%');
+    expect(st.reduce((t, x) => t + x.n, 0)).toBeCloseTo(v.n.total, 2);
+    for (const x of st) expect(x.amount).toBe(inr(Math.round(x.n)));
+    const lines = docText(planDoc(HOUSE, planPreview(HOUSE), TODAY)!).split('\n');
+    for (const x of st) expect(lines, x.name).toContain(`${x.name} | ${x.amount} | ${x.share} | ${x.upTo}`);
+    expect(lines).toContain(`Total estimated cost | ${v.total} | 100% | `);
+    expect(lines).toContain('The stages of construction, for a construction loan\'s payments, are in Annex 2.');
+    const annex = lines.indexOf('Annex 2. Stages of construction');
+    expect(annex).toBeGreaterThan(lines.indexOf('Annex 1. Detailed estimate'));
+    expect(lines.indexOf('Foundation and plinth | ' + st[0].amount + ' | ' + st[0].share + ' | ' + st[0].upTo)).toBeGreaterThan(annex);
+    expect(lines).toContain(`${st[0].name}: ${st[0].what}.`);
+    expect(view(FLAT).stages).toBeUndefined();
+  });
+  it('E5: the plot typed in ft, in the page\'s unit; one side alone or out of range is not passed on, and says why; back to the planned plot', () => {
+    expect(view(HOUSE).plot).toEqual({ l: '', b: '', planned: { l: '50.12', b: '34.85' }, own: false });
+    const half = withPlotSide(HOUSE, 'l', '40'), both = withPlotSide(half, 'b', '30');
+    expect(inputOf(half).plot).toBeUndefined();
+    expect(view(half).plot?.bad).toBe('Type both sides.');
+    expect(inputOf(both).plot).toEqual({ l: 12.192, b: 9.144 });
+    expect(view(both).plot?.own).toBe(true);
+    expect(view(both).change?.text).toMatch(/^The plot to 40 × 30 ft: Rs\. [\d,]+ less$/);
+    expect(view(withPlotSide(both, 'b', '5')).plot?.bad).toBe('Type each side from 10 to 984 ft.');
+    expect(withUnit(both, 'sqm').plot).toEqual({ l: '12.19', b: '9.14' });
+    expect(inputOf(withPlotReset(both)).plot).toBeUndefined();
+    expect(inputOf({ ...FLAT, plot: { l: '40', b: '30' } }).plot).toBeUndefined();
+  });
+  it('E5: the sewer in place of the septic tank, noted in What changed; only for a new house', () => {
+    const w = withSewer(HOUSE, true);
+    expect(inputOf(w).sewer).toBe(true);
+    expect(view(w).change?.text).toBe('The sewer in place of a septic tank: Rs. 89,610 less');
+    expect(inputOf({ ...FLAT, sewer: true }).sewer).toBeUndefined();
   });
 });
 

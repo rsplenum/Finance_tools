@@ -1025,6 +1025,116 @@
       "what": "Urban Decor Curtains: curtain installation cost in Bangalore (rods, tracks, motorised)",
       "url": "https://urbandecorcurtains.com/blog/curtain-installation-cost-bangalore/",
       "class": "4"
+    },
+    "houseyog-boundary": {
+      "what": "HouseYog: boundary wall construction cost in India (2026), a 4.5-inch brick wall Rs. 800–1,100 and a 9-inch Rs. 1,200–1,500 a running foot, with excavation, footing, plinth beam, brickwork and plaster",
+      "url": "https://www.houseyog.com/blog/boundary-wall-construction-cost-india/",
+      "class": "4"
+    },
+    "civilsir-gate": {
+      "what": "Civil Sir: standard size of a main gate in India, 10–12 ft wide and 5–6 ft high for a car",
+      "url": "https://civilsir.com/standard-size-of-main-gate-in-india/",
+      "class": "4"
+    },
+    "indiamart-ms-gate": {
+      "what": "IndiaMART listings: MS gates fabricated and fixed, Rs. 135–450 a sq ft (Rs. 450 in Bengaluru); main gates Rs. 550–700 a sq ft",
+      "url": "https://dir.indiamart.com/bengaluru/ms-gate-fabrication-service.html",
+      "class": "2"
+    },
+    "indiamart-ss-gate": {
+      "what": "IndiaMART listings: SS 304 sliding gates Rs. 1,200–1,400 a sq ft; automatic SS sliding gates Rs. 1,750–2,000; an automatic motorised sliding gate Rs. 2,800 a sq ft",
+      "url": "https://dir.indiamart.com/impcat/stainless-steel-sliding-gate.html",
+      "class": "2"
+    },
+    "jkcement-pavers": {
+      "what": "JK Cement: paver blocks, Rs. 40–80 a sq ft; 60 mm for walkways, 80–100 mm for parking",
+      "url": "https://www.jkcement.com/blog/home-design/paver-block-design-types-price-guide/",
+      "class": "4"
+    },
+    "paramvisions-pavers": {
+      "what": "Param Visions: rate analysis of interlocking paver flooring (2021), labour with mechanical compaction Rs. 10–16 a sq ft",
+      "url": "https://www.paramvisions.com/2021/06/the-cost-of-fixing-interlocking-paver.html",
+      "class": "4"
+    },
+    "studiomatrx-exposed-aggregate": {
+      "what": "Studio Matrx: exposed aggregate flooring for driveways and paths, Rs. 60–180 a sq ft",
+      "url": "https://www.studiomatrx.org/guides/exposed-aggregate-flooring-india",
+      "class": "4"
+    },
+    "studiomatrx-stone-pavers": {
+      "what": "Studio Matrx: natural stone pavers in India, sandstone Rs. 60–140, granite Rs. 120–250 a sq ft; laid Rs. 120–380 a sq ft",
+      "url": "https://www.studiomatrx.org/guides/natural-stone-pavers-india",
+      "class": "4"
+    },
+    "homebuildingsmart-sump": {
+      "what": "Home Building Smart: underground water tank construction cost a litre (2026), 1,000 litres Rs. 28–35, 5,000 litres Rs. 20–25 a litre",
+      "url": "https://homebuildingsmart.com/underground-water-tank-construction-cost-per-litre/",
+      "class": "4"
+    },
+    "studiomatrx-water-tanks": {
+      "what": "Studio Matrx: water tank cost in India (2026), RCC sumps Rs. 8–20 a litre with excavation and waterproofing",
+      "url": "https://www.studiomatrx.org/guides/water-tank-cost-india",
+      "class": "4"
+    },
+    "bricknbolt-sump": {
+      "what": "Brick&Bolt: sump size for homes, 135 litres a person a day and three days' storage",
+      "url": "https://www.bricknbolt.com/blogs-and-articles/construction-guide/sump-construction-size-requirement",
+      "class": "4"
+    },
+    "sintex-tank-capacity": {
+      "what": "Sintex: choosing a water tank by the family, 135 litres a person a day; a family of four needs 540 litres and a 750-litre tank",
+      "url": "https://www.sintexonline.com/blog/how-to-choose-the-right-water-tank-based-on-your-familys-water-consumption/",
+      "class": "2"
+    },
+    "infralens-nbc-part9": {
+      "what": "InfraLens: NBC 2016 Part 9, 135 litres a person a day; an underground tank of a day's demand, an overhead tank of a third to a half",
+      "url": "https://infralens.in/knowledge/nbc-2016-part-9-plumbing-fixtures",
+      "class": "R"
+    },
+    "houseyog-septic": {
+      "what": "HouseYog: septic tank construction cost in India (2026), 1BHK 4,000–5,000 litres Rs. 50,000–70,000; 2BHK 5,000–6,500 litres Rs. 60,000–85,000; 3BHK 6,500–8,000 litres Rs. 75,000–1,10,000; 4BHK 8,000–10,000 litres Rs. 1,00,000–1,40,000, with the soak pit",
+      "url": "https://www.houseyog.com/blog/septic-tank-construction-cost-india/",
+      "class": "4"
+    },
+    "houseyog-rwh": {
+      "what": "HouseYog: rainwater harvesting cost in India (2025), a recharge pit Rs. 8,000–15,000, a mesh filter Rs. 2,000–5,000, pipes Rs. 2,000–10,000, labour Rs. 8,000–15,000",
+      "url": "https://www.houseyog.com/blog/rainwater-harvesting-cost-india/",
+      "class": "4"
+    },
+    "hmwssb-connection": {
+      "what": "HMWSSB, Hyderabad: guidelines for new connections, supervision charges for joining the sewer Rs. 1,500–5,000",
+      "url": "https://www.hyderabadwater.gov.in/en/index.php/services/information-services/guidelines-new-connections",
+      "class": "R"
+    },
+    "kmc-drainage-fees": {
+      "what": "Kolkata Municipal Corporation: fees and charges 2025-26, house drainage connection, a 225 mm stoneware pipe laid Rs. 2,079 a metre",
+      "url": "https://www.kmcgov.in/KMCPortal/downloads/ChiefEngFees_RatesCharges_2025_2026.pdf",
+      "class": "R"
+    },
+    "bricknbolt-stages": {
+      "what": "Brick&Bolt: house construction cost breakdown, foundation and plinth 10–15%, RCC structure 20–25%, brickwork and plastering 15–20% of the cost",
+      "url": "https://www.bricknbolt.com/blogs-and-articles/construction-guide/1-bhk-home-construction-cost-in-india",
+      "class": "4"
+    },
+    "designbuilt-stages": {
+      "what": "Design Built Studio: 1,000 sq ft house construction cost breakdown (2026), foundation 12–15%, RCC structure 24–26%, brickwork 10–11%, plastering 6–7% of the cost",
+      "url": "https://www.designbuilt.in/1000-sq-ft-house-construction-cost-breakdown-2026-a-complete-budget-guide-for-indian-homeowners/",
+      "class": "4"
+    },
+    "stonegalleria-treads": {
+      "what": "Stone Galleria: granite stair treads from Rs. 140–250 a sq ft ex-factory",
+      "url": "https://stonegalleria.in/granite-treads/",
+      "class": "2"
+    },
+    "talkinglands-setbacks": {
+      "what": "TalkingLands: building setback rules in India (2026), a 30 × 40 ft plot's front 1.5–3 m, rear 1–1.5 m, sides 0.5–1.5 m",
+      "url": "https://www.talkinglands.com/blogs/building-setback-rules-india",
+      "class": "4"
+    },
+    "studiomatrx-mumty": {
+      "what": "Studio Matrx: building by-laws and the roof, the mumty (stair cabin) over the stair; Delhi's bye-laws allow one up to 3 m high outside the FAR",
+      "url": "https://www.studiomatrx.org/guides/roof-building-bylaws-india",
+      "class": "R"
     }
   }
 }
