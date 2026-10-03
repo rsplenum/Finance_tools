@@ -155,7 +155,7 @@ export interface PlanView {
   split?: { label: string; amount: string; n: number }[];
   assumed: AssumedView[]; flags: string[]; unpriced: string[];
   ratesLine: string; ratesDate: string;
-  /** Every source the lines and the assumptions use, numbered in order of first use (Annex 3), and what each class means. */
+  /** Every source the lines and the assumptions use, numbered in order of first use, and what each class means; on the page only. */
   sources: SourceView[]; classes: { id: string; means: string }[];
 }
 export interface PlanPreview { needs: string[]; blocked?: string; view?: PlanView }

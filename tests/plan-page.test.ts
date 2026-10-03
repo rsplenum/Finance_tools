@@ -122,7 +122,7 @@ describe('the planning estimate to download', () => {
   const p = planPreview(s), doc = planDoc(s, p, TODAY)!, lines = docText(doc).split('\n');
   it('page 1: the title by the kind, the facts, the abstract by section and the total in figures and words, signed', () => {
     expect(lines.slice(3, 11)).toEqual([
-      'Estimate of cost of renovation', `Planning estimate prepared with ${SITE_NAME} on 03-10-2026; rates from the sources in Annex 3.`,
+      'Estimate of cost of renovation', `Planning estimate prepared with ${SITE_NAME} on 03-10-2026.`,
       'Owner: Asha Rao', 'Property: Flat 4, Example Towers, Pune', 'Work: Repair or renovate, flat, 2 BHK', 'Carpet area: 1,000 sq ft (92.9 sq m)', 'City: Pune', 'Level: Basic',
     ]);
     expect(lines).toContain(`Total estimated cost | ${p.view!.total}`);
@@ -137,11 +137,13 @@ describe('the planning estimate to download', () => {
     expect(floor).toContain('Kajaria, Somany, Johnson, Nitco, Orientbell or equivalent');
     expect(lines.filter((l) => /^\d+\.\d+ /.test(l)).length).toBe(p.view!.sections.reduce((t, x) => t + x.lines.length, 0));
   });
-  it('Annex 3: what the estimate assumes and every source, numbered with its class', () => {
-    expect(lines).toContain('Annex 3. Assumptions and sources');
-    expect(lines.some((l) => l.startsWith('Rooms: Living and dining'))).toBe(true);
-    expect(lines.some((l) => /^\[1\] .+ \(class [1-4RO]\)/.test(l))).toBe(true);
-    expect(lines).toContain('Class 2: A maker\'s or seller\'s price for a named product: a price list, an MRP, a listing');
+  it('Annex 2: what the estimate assumes, one line each, with no reasons and no sources (owner, 03-10-2026)', () => {
+    const at = lines.indexOf('Annex 2. What the estimate assumes');
+    expect(at).toBeGreaterThan(0);
+    expect(lines.slice(at + 1).map((l) => l.split(':')[0])).toEqual(['Rooms', 'Bathrooms', 'Ceiling height', 'Doors and windows', 'Electrical points']);
+    expect(lines).toContain('Ceiling height: 2.90 m');
+    const text = docText(doc);
+    for (const x of ['Annex 3', 'Class 2', 'http', '[1]', 'sources', 'the middle of each room']) expect(text).not.toContain(x);
   });
   it('leaves out the flags, the five levels and the change from the package (A15)', () => {
     const text = docText(doc);
@@ -157,9 +159,9 @@ describe('the planning estimate to download', () => {
     const pages = await pdfPages(pdfOf(doc, MADE));
     expect(pages[0]).toContain(`Total estimated cost ${p.view!.total}`);
     expect(pages.some((x) => x.includes('Annex 1. Detailed estimate'))).toBe(true);
-    expect(pages.some((x) => x.includes('Annex 3. Assumptions and sources'))).toBe(true);
+    expect(pages.some((x) => x.includes('Annex 2. What the estimate assumes'))).toBe(true);
     const book = await workbook(xlsxOf(doc, MADE));
-    expect(book.map((x) => x.sheet)).toEqual(['Estimate', 'Detailed estimate', 'Assumptions and sources']);
+    expect(book.map((x) => x.sheet)).toEqual(['Estimate', 'Detailed estimate', 'Assumptions']);
     expect(book[0].data.find((r) => r[0] === 'Total estimated cost')?.filter((c) => c !== null)).toEqual(['Total estimated cost', p.view!.n.total]);
     const row = book[1].data.find((r) => typeof r[0] === 'string' && r[0].includes('Living and dining: Double-charge vitrified tiles'))?.filter((c) => c !== null);
     expect(row?.slice(1)).toEqual(['Basic', 303.03, 'sq ft', 114.09, 34572.69]);

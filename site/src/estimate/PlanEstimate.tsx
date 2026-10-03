@@ -285,7 +285,7 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
   const field = (id: keyof PlanFacts, label: string, hint?: string) =>
     <TextField id={`fld-pl-${id}`} label={label} hint={hint} value={f[id]} said={english(f[id])} invalid={!!english(f[id])} onCommit={(t) => set({ [id]: t })} />;
   return <Section id="pl-download" title="Download the planning estimate">
-    <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy and a Word copy to edit, made in your browser from the figures above: the abstract by section, every item (Annex 1), and the assumptions and sources (Annex 3).</p>
+    <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy and a Word copy to edit, made in your browser from the figures above: the abstract by section, every item (Annex 1) and what the estimate assumes (Annex 2).</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       {field('owner', 'Owner’s name')}
       {field('property', 'Property’s address')}
