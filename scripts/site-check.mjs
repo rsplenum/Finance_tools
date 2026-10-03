@@ -593,8 +593,9 @@ async function layout(page, v, step) {
   await ctx.close();
 }
 
-// The planning estimate (E1, A3, A8): six questions and no other field, then the answer first; a card for every section,
-// ten on for a renovation and eight for interiors (D-UX-19); a slider, the strip and the item drawer; the downloads read
+// The planning estimate (E1, E3, A3, A8): six questions and no other field, then the answer first; a card for every
+// section, ten on for a renovation and ten for interiors with Furniture and Soft furnishings (D-UX-19); a slider and what
+// it changed, the strip, Compare, the rooms (a size and a level of one's own) and the item drawer; the downloads read
 // back. A 2BHK of 1,000 sq ft in Pune at Basic, worked by hand in tests/architect.test.ts and tests/library.test.ts: the
 // living room's floor is 303.03 sq ft of tiles at Rs. 114.09 = Rs. 34,573.
 for (const scheme of ['light', 'dark']) {
@@ -617,7 +618,7 @@ for (const scheme of ['light', 'dark']) {
   if ((await page.getByTestId('pl-strip-1').getAttribute('aria-label')) !== `Basic: ${total}` || (await page.getByTestId('pl-strip-1').getAttribute('aria-pressed')) !== 'true')
     v('the strip does not mark Basic at the total');
   const cards = await page.locator('[data-testid^="pl-card-"]').count(), on = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
-  if (cards !== 13 || on !== 10) v(`a renovation shows ${cards} sections with ${on} on (want 13 and 10)`);
+  if (cards !== 15 || on !== 10) v(`a renovation shows ${cards} sections with ${on} on (want 15 and 10)`);
   await page.getByTestId('pl-items-flooring').click();
   const living = page.getByTestId('pl-line-living:floor:floor-skirting');
   await expectText(page, v, living.locator('p').nth(1), '303.03 sq ft × Rs. 114.09 = Rs. 34,573', 'the living room floor, by hand');
@@ -664,18 +665,42 @@ for (const scheme of ['light', 'dark']) {
   await page.keyboard.press('ArrowRight');
   await expectText(page, v, 'pl-level-flooring', 'Luxury', 'the slider moved three stops');
   await expectText(page, v, page.getByTestId('pl-over-flooring'), /^Rs\. [\d,]+ more than Basic$/, 'the change from the package');
+  await expectText(page, v, 'pl-what-changed', /^Flooring to Luxury: Rs\. [\d,]+ more · /, 'what the slider changed, in the bar at the bottom');
   await page.getByTestId('pl-strip-3').click();
   await expectText(page, v, 'pl-level-flooring', 'Premium', 'the strip switches the package and every slider with it');
   if ((await page.getByTestId('pl-strip-3').getAttribute('aria-pressed')) !== 'true') v('the strip does not mark the package chosen on it');
-  // Interiors: eight sections on, with Appliances and Smart home (D-UX-19).
+  await expectText(page, v, 'pl-what-changed', /^Every section to Premium: Rs\. [\d,]+ more/, 'what the new package changed');
+  // Compare (A8): closed under the strip; each section on and the total at the five levels, the package's level marked.
+  if (await page.getByTestId('pl-compare').evaluate((d) => d.open)) v('Compare is open on load');
+  await page.getByTestId('pl-compare').locator('summary').click();
+  const compared = await page.locator('[data-testid^="pl-compare-"] td').count(), marked = await page.locator('[data-testid="pl-compare-total"] td[aria-label$="your level"]').count();
+  if (compared < 40 || marked !== 1 || !((await page.locator('[data-testid="pl-compare-total"] td').nth(2).getAttribute('aria-label')) ?? '').startsWith('Total, Premium: Rs. '))
+    v(`Compare shows ${compared} amounts with ${marked} total marked`);
+  await layout(page, v, 'Compare open, 390 px');
+  // The rooms (A8): closed until opened; a size of one's own in feet, and a bathroom at its own level (A4).
+  if (await page.getByTestId('pl-rooms').evaluate((d) => d.open)) v('the rooms are open on load');
+  await page.getByTestId('pl-rooms').locator('summary').click();
+  await leave(page, '#fld-room-living-l', '16');
+  await expectText(page, v, 'pl-room-bad-living', 'Type both sides. Until then the planned size is used.', 'one side of a room typed');
+  await leave(page, '#fld-room-living-b', '20');
+  await expectText(page, v, 'pl-room-size-living', '20 × 16 ft · 320 sq ft · your size', 'the living room at its own size');
+  await expectText(page, v, 'pl-what-changed', /^Living and dining to 16 × 20 ft: Rs\. [\d,]+ more$/, 'what the size changed');
+  await expectText(page, v, 'pl-rooms-note', /^With your sizes the rooms and the passage come to [\d,]+ sq ft/, 'the rooms against the carpet area');
+  await page.selectOption('#fld-roomlevel-bath-1', '4');
+  await expectText(page, v, 'pl-level-bathrooms', 'Mixed (1 room at its own level)', 'a bathroom at its own level');
+  await expectText(page, v, 'pl-what-changed', /^Bathroom 1 \(attached\) at Luxury: Rs\. [\d,]+ more · /, 'what the room\'s level changed');
+  await layout(page, v, 'the rooms open, 390 px');
+  // Interiors: ten sections on, with Appliances, Smart home, Furniture and Soft furnishings, the movable items apart (D-UX-19).
   await page.getByTestId('pl-change').click();
   await page.check('#fld-work-interiors');
   await page.getByTestId('pl-done').click();
   const onI = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
-  if (onI !== 8 || !(await page.isChecked('#fld-on-appliances')) || !(await page.isChecked('#fld-on-smart'))) v(`interiors show ${onI} sections on, Appliances and Smart home ${await page.isChecked('#fld-on-appliances')}/${await page.isChecked('#fld-on-smart')}`);
+  const movable = await Promise.all(['appliances', 'smart', 'furniture', 'furnishings'].map((x) => page.isChecked(`#fld-on-${x}`)));
+  if (onI !== 10 || movable.includes(false)) v(`interiors show ${onI} sections on, Appliances, Smart home, Furniture and Soft furnishings ${movable.join('/')}`);
+  await expectText(page, v, 'pl-split', /^Fixed works Rs\. [\d,]+ · Movable items Rs\. [\d,]+ · Appliances Rs\. [\d,]+$/, 'the movable items apart');
   await layout(page, v, 'the estimate as interiors, 390 px');
   // A new house (A3, D-UX-23): the second question asks the floors and the area is the built-up area, still six
-  // questions; fourteen sections with eleven on, the structure the same at every level; the PDF titled for construction.
+  // questions; sixteen sections with eleven on, the structure the same at every level; the PDF titled for construction.
   await page.getByTestId('pl-change').click();
   await page.check('#fld-work-build');
   const asked = await page.locator('#six-questions [data-question]').count(), floorsAsked = await page.locator('#fld-floors-2').count();
@@ -686,7 +711,7 @@ for (const scheme of ['light', 'dark']) {
   await page.getByTestId('pl-done').click();
   await expectText(page, v, 'pl-summary', /^Build a new house · G\+1 · Pune · 2,000 sq ft · 3 BHK · \w+$/, 'a new house, folded');
   const cardsB = await page.locator('[data-testid^="pl-card-"]').count(), onB = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
-  if (cardsB !== 14 || onB !== 11) v(`a new house shows ${cardsB} sections with ${onB} on (want 14 and 11)`);
+  if (cardsB !== 16 || onB !== 11) v(`a new house shows ${cardsB} sections with ${onB} on (want 16 and 11)`);
   if (!((await page.getByTestId('pl-card-structure').textContent()) ?? '').includes('The same at every level')) v('the structure is not the same at every level');
   if (!((await page.locator('#pl-result').textContent()) ?? '').includes('a sq ft of built-up area')) v('a new house\'s cost a sq ft is not of the built-up area');
   const pdfB = await pdfPages((await save('pl-download-pdf')).bytes).catch((e) => [`(not read: ${e.message})`]);

@@ -1,8 +1,10 @@
 /**
- * The planning estimate (E1): six questions, then the estimate worked out as an architect would. The total, the cost a
- * sq ft and the five levels come first; then the total by section, a card for each section with its slider, the items
- * with their drawer (the family's five levels and its other items, brands, and how each line was worked out), what the
- * estimate assumes, what to check, and the planning estimate to download. Figures: engine/architect.ts only, via plan-model.ts.
+ * The planning estimate (E1, E3): six questions, then the estimate worked out as an architect would. The total, the cost
+ * a sq ft and the five levels come first, with Compare (each section at each level) closed under them; then the total by
+ * section, a card for each section with its slider, the items with their drawer (the family's five levels and its other
+ * items, brands, and how each line was worked out), the rooms (each one's size and own level, closed until opened), what
+ * the estimate assumes, what to check, and the planning estimate to download. The bar at the bottom says what the last
+ * change did. Figures: engine/architect.ts only, via plan-model.ts.
  */
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { BUTTON, Choice, HINT, LABEL, Section, SelectField, SourceNote, TextField } from '../fields';
@@ -10,9 +12,9 @@ import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { planDoc, planDocNeeds, planDocStatus, planFileName } from './plan-document';
 import {
-  BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, FLOOR_CHOICES, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORK_CHOICES, areaLabel, drawerView, heightOf, plainOf, planPreview,
-  withItem, withKind, withLevel, withSection, withSlider,
-  type AreaUnit, type DrawerView, type LineView, type PlanFacts, type PlanPreview, type PlanState, type PlanView, type RungView, type SectionView,
+  BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, FLOOR_CHOICES, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORK_CHOICES, areaLabel, drawerView, heightOf, plainOf, planPreview, sideUnit,
+  withItem, withKind, withLevel, withRoomLevel, withRoomReset, withRoomSide, withSection, withSlider, withUnit,
+  type AreaUnit, type DrawerView, type LineView, type PlanFacts, type PlanPreview, type PlanState, type PlanView, type RoomView, type RungView, type SectionView,
 } from './plan-model';
 import type { Bhk, Level } from '../../../engine/architect';
 
@@ -47,12 +49,19 @@ export function PlanEstimate() {
     {v && <>
       <Answer v={v} update={update} heading={result} />
       <Cards s={s} v={v} update={update} />
+      <Rooms s={s} v={v} update={update} />
       <Assumed s={s} v={v} update={update} />
       <Flags v={v} />
       <Download s={s} p={p} update={update} />
-      <div data-testid="pl-sticky" class="sticky bottom-0 z-10 -mx-4 mt-8 flex items-center justify-between gap-3 border-t border-slate-300 bg-white/95 px-4 py-3 backdrop-blur dark:border-slate-700 dark:bg-slate-950/95">
-        <p class={INK}>Total <span data-testid="pl-sticky-total" class="font-semibold tabular-nums">Rs. {v.total}</span></p>
-        <a href="#pl-download" class={BUTTON}>Download</a>
+      <div data-testid="pl-sticky" class="sticky bottom-0 z-10 -mx-4 mt-8 border-t border-slate-300 bg-white/95 px-4 py-3 backdrop-blur dark:border-slate-700 dark:bg-slate-950/95">
+        {/* What changed (A8): one line after a change, said aloud as it comes. */}
+        <p data-testid="pl-what-changed" aria-live="polite" class={`mb-2 line-clamp-2 text-sm empty:hidden ${INK}`}>{v.change && <>
+          <span class="font-medium">{v.change.text}</span>{v.change.items && <span class={MUTED}> · {v.change.items}</span>}
+        </>}</p>
+        <div class="flex items-center justify-between gap-3">
+          <p class={INK}>Total <span data-testid="pl-sticky-total" class="font-semibold tabular-nums">Rs. {v.total}</span></p>
+          <a href="#pl-download" class={BUTTON}>Download</a>
+        </div>
       </div>
     </>}
   </div>;
@@ -82,7 +91,7 @@ function Questions({ s, update, p, done }: { s: PlanState; update: Update; p: Pl
         <fieldset class="mt-2 flex gap-2">
           <legend class="sr-only">Unit of the area</legend>
           {(['sqft', 'sqm'] as AreaUnit[]).map((u) => <label key={u} for={`fld-carpetUnit-${u}`} class={CHIP}>
-            <input type="radio" id={`fld-carpetUnit-${u}`} name="fld-carpetUnit" checked={s.unit === u} onChange={() => update((x) => ({ ...x, unit: u }))} class={RADIO} />
+            <input type="radio" id={`fld-carpetUnit-${u}`} name="fld-carpetUnit" checked={s.unit === u} onChange={() => update((x) => withUnit(x, u))} class={RADIO} />
             {u === 'sqft' ? 'sq ft' : 'sq m'}
           </label>)}
         </fieldset>
@@ -123,6 +132,7 @@ function Answer({ v, update, heading }: { v: PlanView; update: Update; heading: 
       </button>)}
     </div>
     <p class={`mt-1 text-xs ${MUTED}`}>Each level as a package; tap one to switch.</p>
+    <Compare v={v} />
     <h3 class={`mt-5 text-sm font-medium ${INK}`}>By section</h3>
     <ul data-testid="pl-bar" class="mt-1 space-y-1">
       {[...v.bar].sort((a, b) => b.n - a.n).map((x) => <li key={x.id}>
@@ -178,7 +188,7 @@ function Slider({ s, x, update }: { s: PlanState; x: SectionView; update: Update
   const level = (x.level ?? s.level ?? 2) as Level;
   return <div class="mt-2">
     <label for={`fld-slider-${x.id}`} class={`text-sm ${INK}`}>
-      Level: <span data-testid={`pl-level-${x.id}`} class="font-medium">{x.mixed ? `Mixed (${x.mixed} chosen)` : x.levelName}</span>
+      Level: <span data-testid={`pl-level-${x.id}`} class="font-medium">{x.mixed ? x.mixedText : x.levelName}</span>
       {!x.mixed && level === s.level && <span class={MUTED}> (the package)</span>}
     </label>
     <input type="range" id={`fld-slider-${x.id}`} min={1} max={5} step={1} value={level} aria-valuetext={x.mixed ? `Mixed, around ${x.levelName}` : x.levelName}
@@ -208,7 +218,7 @@ function Item({ s, v, l, open, toggle, update }: { s: PlanState; v: PlanView; l:
 /** The item drawer (A8): the family's five levels, its other items, brands as chips, and how the line was worked out. */
 function Drawer({ s, l, d, update }: { s: PlanState; l: LineView; d: DrawerView; update: Update }) {
   const name = `fld-item-${l.key}`;
-  const choose = (x: RungView, brand?: string) => update((st) => withItem(st, l.key, x.id, brand));
+  const choose = (x: RungView, brand?: string) => update((st) => withItem(st, l.key, x.id, brand, `${l.room}, ${l.name.toLowerCase()}: ${x.name}`));
   const rung = (x: RungView, label: string, i: string) => <li key={x.id + i} class="py-2">
     <label for={`${name}-${i}`} class={`flex items-start gap-3 ${x.usable ? 'cursor-pointer' : 'opacity-70'}`}>
       <input type="radio" id={`${name}-${i}`} name={name} checked={x.current} disabled={!x.usable} onChange={() => { if (!x.current) choose(x); }} class={`mt-1 ${RADIO}`} />
@@ -235,7 +245,7 @@ function Drawer({ s, l, d, update }: { s: PlanState; l: LineView; d: DrawerView;
         <ol class="divide-y divide-slate-200 dark:divide-slate-700">{d.others.map((x, i) => rung(x, x.label, `o${i}`))}</ol>
       </details>}
     </fieldset>
-    {l.chosen && <button type="button" data-testid="pl-item-reset" class={`mt-2 ${BUTTON}`} onClick={() => update((st) => withItem(st, l.key, null))}>Back to the level’s item</button>}
+    {l.chosen && <button type="button" data-testid="pl-item-reset" class={`mt-2 ${BUTTON}`} onClick={() => update((st) => withItem(st, l.key, null, undefined, `${l.room}, ${l.name.toLowerCase()}: back to the level’s item`))}>Back to the level’s item</button>}
     <details class="mt-2" open>
       <summary class={`cursor-pointer text-sm font-medium ${INK}`}>How we worked this out</summary>
       <ul data-testid="pl-how" class={`mt-1 list-disc space-y-0.5 pl-5 text-xs ${INK}`}>
@@ -248,6 +258,62 @@ function Drawer({ s, l, d, update }: { s: PlanState; l: LineView; d: DrawerView;
       {l.note && <p class={`mt-1 text-xs ${MUTED}`}>{l.note}</p>}
     </details>
   </div>;
+}
+
+/** Compare (A8): each section that is on, and the total, at the five levels as a package; the estimate's own level marked. */
+function Compare({ v }: { v: PlanView }) {
+  const cell = (c: PlanView['compare']['totals'][number], name: string, i: number) => <td key={i} aria-label={`${name}, ${LEVEL_NAMES[i]}: Rs. ${c.full}${c.mine ? ', your level' : ''}`} title={`Rs. ${c.full}`}
+    class={`px-1 py-1 text-right ${c.mine ? 'rounded bg-teal-50 font-semibold text-teal-900 ring-1 ring-teal-700 dark:bg-teal-950 dark:text-teal-100 dark:ring-teal-500' : ''}`}>{c.text}</td>;
+  return <details data-testid="pl-compare" class="mt-3">
+    <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">Compare the five levels, section by section</summary>
+    <div class="mt-2 overflow-x-auto">
+      <table class={`w-full text-xs tabular-nums ${INK}`}>
+        <caption class={`text-left text-xs ${MUTED}`}>Each section at each level as a package, in lakhs where large; yours marked.</caption>
+        <thead><tr class={MUTED}><th scope="col" class="py-1 pr-1 text-left font-normal">Section</th>{LEVEL_NAMES.map((n) => <th key={n} scope="col" class="px-1 py-1 text-right font-normal">{n}</th>)}</tr></thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+          {v.compare.rows.map((r) => <tr key={r.id} data-testid={`pl-compare-${r.id}`}>
+            <th scope="row" class="py-1 pr-1 text-left font-normal">{r.name}{r.yours && <span class={`block text-[11px] ${MUTED}`}>{r.yours}</span>}</th>
+            {r.cells.map((c, i) => cell(c, r.name, i))}
+          </tr>)}
+          <tr data-testid="pl-compare-total" class="font-semibold">
+            <th scope="row" class="py-1 pr-1 text-left">Total{v.compare.yours && <span class={`block text-[11px] font-normal ${MUTED}`}>{v.compare.yours}</span>}</th>
+            {v.compare.totals.map((c, i) => cell(c, 'Total', i))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>;
+}
+
+/** The rooms (A8): each one's size, which can be changed, and its own level. Closed until opened: not on the default path. */
+function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) {
+  const unit = sideUnit(s.unit);
+  const levels = [{ value: '', label: 'As the sections' }, ...LEVEL_CHOICES.map((l) => ({ value: l.value, label: l.label }))];
+  // Each field is named by its room for a screen reader; on screen the room's name is the heading above.
+  const named = (r: RoomView, what: string) => <><span class="sr-only">{r.name}, </span>{what}</>;
+  const side = (r: RoomView, which: 'l' | 'b') => <TextField id={`fld-room-${r.id}-${which}`} class="w-24" label={named(r, `${which === 'l' ? 'Length' : 'Breadth'}, ${unit}`)} inputMode="decimal"
+    value={r[which]} placeholder={r.planned[which]} invalid={!!r.bad} onCommit={(t) => update((x) => withRoomSide(x, r.id, which, t, r.name))} />;
+  return <Section id="pl-rooms" title="Rooms">
+    <details data-testid="pl-rooms" class="mt-2">
+      <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">{v.rooms.length} rooms, from your {v.bhk}: change a size, or give a room its own level</summary>
+      {v.roomsNote && <p data-testid="pl-rooms-note" class="mt-3 text-sm text-amber-900 dark:text-amber-200">{v.roomsNote}</p>}
+      <ul class="mt-2 divide-y divide-slate-200 dark:divide-slate-800">
+        {v.rooms.map((r) => <li key={r.id} data-testid={`pl-room-${r.id}`} class="py-3">
+          <div class="flex flex-wrap items-baseline justify-between gap-x-3">
+            <h3 class={`font-medium ${INK}`}>{r.name}</h3>
+            <p data-testid={`pl-room-size-${r.id}`} class={`text-sm tabular-nums ${MUTED}`}>{r.size} · {r.area}{r.typed ? ' · your size' : ''}{r.level ? ` · ${LEVEL_NAMES[r.level - 1]}` : ''}</p>
+          </div>
+          <div class="mt-1 flex flex-wrap items-end gap-x-3 gap-y-2">
+            {side(r, 'l')}{side(r, 'b')}
+            <SelectField id={`fld-roomlevel-${r.id}`} class="w-40" label={named(r, 'Level')} value={r.level ? String(r.level) : ''} options={levels}
+              onChange={(lv) => update((x) => withRoomLevel(x, r.id, lv ? (Number(lv) as Level) : null, r.name))} />
+            {r.typed && <button type="button" data-testid={`pl-room-reset-${r.id}`} class={BUTTON} onClick={() => update((x) => withRoomReset(x, r.id, r.name))}>Planned size</button>}
+          </div>
+          {r.bad && <p data-testid={`pl-room-bad-${r.id}`} class="mt-1 text-sm text-red-700 dark:text-red-300">{r.bad} Until then the planned size is used.</p>}
+        </li>)}
+      </ul>
+    </details>
+  </Section>;
 }
 
 /** What the estimate assumes, each with its reason (D-UX-08, D-UX-18); the ceiling height can be changed here. */

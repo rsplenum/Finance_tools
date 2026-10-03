@@ -1,6 +1,6 @@
 {
   "title": "The architect's rules",
-  "date": "2026-10-02",
+  "date": "2026-10-03",
   "status": "What an architect would decide from six answers: the rooms and their sizes, the doors and windows, how each surface is measured, what each room needs at each level, and how many points the wiring and plumbing need (D-UX-18). Each rule names its source, or says it is our own rule and why. A rule is an assumption until the user changes it, and the page and the document list it (D-UX-08). The sources were read through search summaries and are not yet checked against their pages.",
   "levels": [
     { "n": 1, "name": "Basic", "owner": "Modest", "means": "Sound and simple: ISI-marked materials, the economy ranges of known brands, nothing decorative" },
@@ -24,13 +24,15 @@
     { "id": "electrical", "name": "Electrical and lights", "slider": true },
     { "id": "plumbing", "name": "Plumbing", "slider": false },
     { "id": "appliances", "name": "Appliances", "slider": true },
-    { "id": "smart", "name": "Smart home and security", "slider": true }
+    { "id": "smart", "name": "Smart home and security", "slider": true },
+    { "id": "furniture", "name": "Furniture", "slider": true },
+    { "id": "furnishings", "name": "Soft furnishings", "slider": true }
   ],
   "kinds": {
     "build": {
       "label": "Build a new house",
       "on": ["structure", "waterproofing", "exterior", "flooring", "walls", "ceiling", "bathrooms", "kitchen", "doors", "electrical", "plumbing"],
-      "why": "A new house: its structure, the terrace and the outside walls, and every finish and service inside. Wardrobes, appliances and smart controls are often bought later, so they start off and can be switched on."
+      "why": "A new house: its structure, the terrace and the outside walls, and every finish and service inside. Wardrobes, appliances, smart controls, furniture and soft furnishings are often bought later, so they start off and can be switched on."
     },
     "renovate": {
       "label": "Repair or renovate",
@@ -39,8 +41,8 @@
     },
     "interiors": {
       "label": "Interiors",
-      "on": ["civil", "walls", "ceiling", "kitchen", "wardrobes", "electrical", "appliances", "smart"],
-      "why": "Interiors fit out a flat whose floors, bathrooms, doors and services are already done; those sections start off and can be switched on."
+      "on": ["civil", "walls", "ceiling", "kitchen", "wardrobes", "electrical", "appliances", "smart", "furniture", "furnishings"],
+      "why": "Interiors fit out and furnish a flat whose floors, bathrooms, doors and services are already done; those sections start off and can be switched on. The furniture and soft furnishings are movable, so they are shown apart from the fixed works (the owner, D-UX-19)."
     }
   },
   "programmes": {
@@ -279,7 +281,10 @@
       { "family": "windows", "section": "doors", "qty": "windows" },
       { "family": "mesh", "section": "doors", "qty": "windows" },
       { "family": "smart-switch", "section": "smart", "qty": "light-points" },
-      { "family": "ac", "section": "appliances", "qty": "ac" }
+      { "family": "ac", "section": "appliances", "qty": "ac" },
+      { "family": "sofa", "section": "furniture", "qty": "one" },
+      { "family": "dining", "section": "furniture", "qty": "one" },
+      { "family": "curtains", "section": "furnishings", "qty": "window-count" }
     ],
     "bedroom": [
       { "family": "demolish-floor", "section": "civil", "qty": "floor", "kinds": ["renovate"], "needs": "flooring" },
@@ -297,7 +302,10 @@
       { "family": "windows", "section": "doors", "qty": "windows" },
       { "family": "mesh", "section": "doors", "qty": "windows" },
       { "family": "smart-switch", "section": "smart", "qty": "light-points" },
-      { "family": "ac", "section": "appliances", "qty": "ac" }
+      { "family": "ac", "section": "appliances", "qty": "ac" },
+      { "family": "bed", "section": "furniture", "qty": "one" },
+      { "family": "mattress", "section": "furniture", "qty": "one" },
+      { "family": "curtains", "section": "furnishings", "qty": "window-count" }
     ],
     "kitchen": [
       { "family": "demolish-floor", "section": "civil", "qty": "floor", "kinds": ["renovate"], "needs": "flooring" },
