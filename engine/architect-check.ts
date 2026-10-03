@@ -23,8 +23,6 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
   const kind = input.kind as 'renovate' | 'interiors', level = input.level as number;
   const carpet = input.areaUnit === 'sqm' ? (input.area as number) : (input.area as number) * SQ_FOOT;
   const H = input.heightM ?? Q.height.m;
-  const cityList = Q.cities.list, cityAt = cityList.find((c) => c.id === input.city);
-  const city = cityAt ? ((cityAt.cost[0] + cityAt.cost[1]) * cityList.length) / cityList.reduce((s, c) => s + c.cost[0] + c.cost[1], 0) : 1;
 
   // The rooms: one scale factor on the reference areas; the breadth first, then the length.
   const prog = Q.programmes[input.bhk as keyof Rules['programmes']];
@@ -168,27 +166,7 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
     }
   };
 
-  // The library priced afresh.
-  const middle = (b: [number, number]) => b[0] + (b[1] - b[0]) / 2;
-  const unitsIn = (qtyIn: number, from: Unit, to: Unit) => (from === to ? qtyIn : from === 'sqm' && to === 'sqft' ? qtyIn / SQ_FOOT : from === 'sqft' && to === 'sqm' ? qtyIn * SQ_FOOT : NaN);
-  const rateOf = (id: string): number | null => {
-    const e = ENTRIES.get(id) as Entry;
-    let labour = 0;
-    for (const f of e.fix ?? []) labour += f.n * middle((LABOUR_ITEMS.get(f.id) as { rate: [number, number] }).rate);
-    labour *= city;
-    let own: number;
-    if (e.basis === 'set') {
-      own = 0;
-      for (const p of e.parts ?? []) { const r = rateOf(p.id); if (r === null) return null; own += r * p.n; }
-    } else if (!e.rate) return null;
-    else if (e.basis === 'installed') own = middle(e.rate) * city;
-    else {
-      const each = e.pack ? middle(e.rate) / unitsIn(e.pack.qty, e.pack.unit, e.unit) : middle(e.rate);
-      own = e.basis === 'supply' ? each + each * (e.wastage ?? 0) : each;
-    }
-    return own + labour;
-  };
-  const priced = (id: string) => { const r = rateOf(id); return r === null ? null : round2(ENTRIES.get(id)?.gst === 'extra' ? r + (r * Q.gst.pct) / 100 : r); };
+  const priced = (id: string) => checkRate(id, input.city);
 
   const lines = new Map<string, CheckLine>(), bySpace = new Map<string, { section: string; amount: number }[]>();
   const visit = (slot: Rules['templates']['flat'][number], s: Space | null) => {
@@ -225,4 +203,41 @@ export function architectCheck(input: ArchitectInput): ArchitectCheck {
     total += roomTotal;
   }
   return { lines, sections, total };
+}
+
+/** The city's factor the check's way: the sum of its range against the average of every listed city's sum; 1 for a place not listed. */
+function cityOf(id: string | undefined): number {
+  const cityList = Q.cities.list, cityAt = cityList.find((c) => c.id === id);
+  return cityAt ? ((cityAt.cost[0] + cityAt.cost[1]) * cityList.length) / cityList.reduce((s, c) => s + c.cost[0] + c.cost[1], 0) : 1;
+}
+
+/**
+ * An item's rate for a city, priced afresh by walking the library (the middle of a range as its low end plus half its
+ * width, labour before the material, GST added as a share of the rate): the second computation of every rate the
+ * estimate and the item drawer show. Null when the item, or a part of it, has no rate yet.
+ */
+export function checkRate(id: string, cityId: string | undefined): number | null {
+  const city = cityOf(cityId);
+  const middle = (b: [number, number]) => b[0] + (b[1] - b[0]) / 2;
+  const unitsIn = (qtyIn: number, from: Unit, to: Unit) => (from === to ? qtyIn : from === 'sqm' && to === 'sqft' ? qtyIn / SQ_FOOT : from === 'sqft' && to === 'sqm' ? qtyIn * SQ_FOOT : NaN);
+  const rateOf = (id: string): number | null => {
+    const e = ENTRIES.get(id) as Entry;
+    let labour = 0;
+    for (const f of e.fix ?? []) labour += f.n * middle((LABOUR_ITEMS.get(f.id) as { rate: [number, number] }).rate);
+    labour *= city;
+    let own: number;
+    if (e.basis === 'set') {
+      own = 0;
+      for (const p of e.parts ?? []) { const r = rateOf(p.id); if (r === null) return null; own += r * p.n; }
+    } else if (!e.rate) return null;
+    else if (e.basis === 'installed') own = middle(e.rate) * city;
+    else {
+      const each = e.pack ? middle(e.rate) / unitsIn(e.pack.qty, e.pack.unit, e.unit) : middle(e.rate);
+      own = e.basis === 'supply' ? each + each * (e.wastage ?? 0) : each;
+    }
+    return own + labour;
+  };
+  if (!ENTRIES.has(id)) return null;
+  const r = rateOf(id);
+  return r === null ? null : round2(ENTRIES.get(id)?.gst === 'extra' ? r + (r * Q.gst.pct) / 100 : r);
 }

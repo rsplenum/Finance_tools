@@ -7,8 +7,8 @@
  * both agree.
  */
 import RULES from './data/architect.json';
-import { ENTRIES, FAMILIES, LIBRARY_DATE, LIBRARY_STATUS, ladder, per, price, SQFT_PER_SQM, type Entry, type ItemKind, type Unit } from './library';
-import { architectCheck, type ArchitectCheck } from './architect-check';
+import { choices, ENTRIES, FAMILIES, LIBRARY_DATE, LIBRARY_STATUS, ladder, per, price, SQFT_PER_SQM, type Entry, type ItemKind, type Unit } from './library';
+import { architectCheck, checkRate, type ArchitectCheck } from './architect-check';
 import type { Blocked, Needs } from './dscr';
 
 export type WorkKind = 'renovate' | 'interiors';
@@ -94,7 +94,7 @@ export interface Unpriced { key: string; roomName: string; name: string; entryNa
 export interface SectionTotal { id: string; name: string; on: boolean; slider: boolean; level: Level | null; amount: number; lines: number }
 export interface Assumption { what: string; shown: string; why: string; src: string[] }
 export interface ArchitectEstimate {
-  kind: WorkKind; city: string; cityName: string; cityFactor: number; bhk: Bhk; level: Level; heightM: number;
+  kind: WorkKind; property: 'flat' | 'house'; city: string; cityName: string; cityFactor: number; bhk: Bhk; level: Level; heightM: number;
   carpetSqm: number; carpetSqft: number;
   rooms: Room[]; openings: Opening[]; lines: Line[]; unpriced: Unpriced[];
   sections: SectionTotal[]; byRoom: { room: string | null; name: string; amount: number }[];
@@ -166,7 +166,6 @@ export function planOpenings(rooms: Room[]): Opening[] {
 export function architectNeeds(input: ArchitectInput): string[] {
   const needs: string[] = [];
   if (!input.kind || !(input.kind in R.kinds)) needs.push('What the work is: repair or renovate, or interiors');
-  if (input.property === 'house') needs.push('A house comes later (E5): for now the estimate is for a flat');
   if (!input.city) needs.push('Which city');
   if (!(isNum(input.area) && input.area > 0)) needs.push('The carpet area');
   if (!input.bhk || !(input.bhk in R.programmes)) needs.push('How many bedrooms');
@@ -196,12 +195,13 @@ export function strip(input: ArchitectInput, check: typeof architectCheck = arch
 }
 
 interface Ctx {
-  input: ArchitectInput; kind: WorkKind; H: number; carpetSqm: number; rooms: Room[]; openings: Opening[];
+  input: ArchitectInput; kind: WorkKind; home: 'flat' | 'house'; H: number; carpetSqm: number; rooms: Room[]; openings: Opening[];
   on: (section: string) => boolean; levelOf: (section: string) => Level;
 }
 
 function work(input: ArchitectInput): ArchitectEstimate {
   const kind = input.kind as WorkKind, bhk = input.bhk as Bhk, level = input.level as Level;
+  const home = input.property === 'house' ? 'house' : 'flat', whole = `Whole ${home}`;
   const carpetSqm = input.areaUnit === 'sqm' ? (input.area as number) : (input.area as number) / SQFT_PER_SQM;
   const factor = cityFactor(input.city as string);
   const city = factor ?? 1;
@@ -210,7 +210,7 @@ function work(input: ArchitectInput): ArchitectEstimate {
   const on = (s: string) => input.sections?.[s] ?? R.kinds[kind].on.includes(s);
   const slider = (s: string) => R.sections.find((x) => x.id === s)?.slider ?? false;
   const levelOf = (s: string): Level => (slider(s) ? input.sliders?.[s] ?? level : level);
-  const ctx: Ctx = { input, kind, H, carpetSqm, rooms, openings, on, levelOf };
+  const ctx: Ctx = { input, kind, home, H, carpetSqm, rooms, openings, on, levelOf };
 
   const lines: Line[] = [], unpriced: Unpriced[] = [];
   const place = (slot: Slot, r: Room | null) => {
@@ -229,7 +229,7 @@ function work(input: ArchitectInput): ArchitectEstimate {
     const dim = dimensionOf(slot.qty);
     if (!UNIT_OF[dim].includes(ent.unit)) throw new Error(`${id} is priced by ${ent.unit}, but ${slot.qty} gives ${dim}`);
     const qty = r2(dim === 'count' ? m.base : m.base * per(dim === 'area' ? 'sqm' : 'm', ent.unit));
-    const roomName = r?.name ?? 'Whole flat';
+    const roomName = r?.name ?? whole;
     const name = slot.name ?? fam.name;
     const p = price(id, city, R.gst.pct);
     if (!p) { unpriced.push({ key, roomName, name, entryName: ent.name, qty, unit: ent.unit }); return; }
@@ -246,7 +246,7 @@ function work(input: ArchitectInput): ArchitectEstimate {
     const ls = lines.filter((l) => l.section === s.id);
     return { id: s.id, name: s.name, on: on(s.id), slider: s.slider, level: s.slider ? levelOf(s.id) : null, amount: r2(ls.reduce((t, l) => t + l.amount, 0)), lines: ls.length };
   });
-  const byRoom = [...rooms.map((r) => ({ room: r.id as string | null, name: r.name })), { room: null, name: 'Whole flat' }]
+  const byRoom = [...rooms.map((r) => ({ room: r.id as string | null, name: r.name })), { room: null, name: whole }]
     .map((x) => ({ ...x, amount: r2(lines.filter((l) => l.room === x.room).reduce((t, l) => t + l.amount, 0)) }));
   const total = r2(sections.reduce((t, s) => t + s.amount, 0));
   const carpetSqft = carpetSqm * SQFT_PER_SQM;
@@ -254,7 +254,7 @@ function work(input: ArchitectInput): ArchitectEstimate {
   for (const l of lines) split[l.kind] = r2(split[l.kind] + l.amount);
   const cityName = R.cities.list.find((c) => c.id === input.city)?.name ?? 'Other';
   return {
-    kind, city: input.city as string, cityName, cityFactor: city, bhk, level, heightM: H, carpetSqm, carpetSqft,
+    kind, property: home, city: input.city as string, cityName, cityFactor: city, bhk, level, heightM: H, carpetSqm, carpetSqft,
     rooms, openings, lines, unpriced, sections, byRoom, total, perSqft: r2(total / carpetSqft), split,
     assumptions: assumptions(ctx, bhk, cityName, factor), flags: flags(ctx, bhk, carpetSqft, lines, unpriced, factor), ratesDate: LIBRARY_DATE,
   };
@@ -303,7 +303,7 @@ function wardrobeWidth(r: Room): number {
 function measure(rule: string, r: Room | null, lv: Level, ctx: Ctx): { base: number; how: string } {
   const H = ctx.H, t = (x: number) => f2(x);
   if (r === null) {
-    if (rule === 'one') return { base: 1, how: 'One for the flat' };
+    if (rule === 'one') return { base: 1, how: `One for the ${ctx.home}` };
     if (rule === 'carpet') return { base: ctx.carpetSqm, how: `The carpet area: ${t(ctx.carpetSqm)} sq m` };
     if (rule === 'protect') {
       const a = ctx.rooms.filter((x) => x.kind !== 'bath' && x.kind !== 'balcony').reduce((s, x) => s + x.sqm, 0);
@@ -392,7 +392,7 @@ function measure(rule: string, r: Room | null, lv: Level, ctx: Ctx): { base: num
     }
     case 'shower-screen': { const s = R.showerScreen; return { base: s.w * s.h, how: `${s.w} × ${s.h} m across the shower` }; }
     case 'door': { const n = ctx.openings.filter((o) => o.room === r.id && o.type === r.kind).length; return { base: n, how: `${n} door` }; }
-    case 'main-door': return { base: r.kind === 'passage' ? 1 : 0, how: 'The flat\'s main door' };
+    case 'main-door': return { base: r.kind === 'passage' ? 1 : 0, how: `The ${ctx.home}'s main door` };
     case 'one': return { base: 1, how: `One in ${r.name.toLowerCase()}` };
     case 'ac': {
       const n = r.kind === 'living' || r.master ? (lv >= R.ac.from ? 1 : 0) : r.kind === 'bedroom' && lv >= R.ac.allBedroomsFrom ? 1 : 0;
@@ -445,6 +445,7 @@ function flags(ctx: Ctx, bhk: Bhk, carpetSqft: number, lines: Line[], unpriced: 
     const want = r.kind === 'living' || r.kind === 'bedroom' ? min.habitable : r.kind === 'kitchen' ? min.kitchen : r.kind === 'bath' ? min.bath : 0;
     if (want && r.sqm < want - 1e-9) out.push(`${r.name} works out at ${f2(r.sqm)} sq m, below the Code's ${want} sq m: is the carpet area right for ${BHKS.find((b) => b.id === bhk)?.label}?`);
   }
+  if (ctx.home === 'house') out.push('A house: its rooms inside are worked out as a flat\'s of the same carpet area and bedrooms. The terrace, the outside walls, the compound and the water tank are not in this estimate yet.');
   const typical = R.programmes[bhk].typical;
   if (typical && (carpetSqft < typical[0] || carpetSqft > typical[1])) out.push(`A ${BHKS.find((b) => b.id === bhk)?.label} is usually ${typical[0]}–${typical[1]} sq ft of carpet area; yours is ${Math.round(carpetSqft)}.`);
   const paint = lines.filter((l) => l.family === 'paint').reduce((s, l) => s + l.qty, 0);
@@ -472,3 +473,52 @@ function disagreement(e: ArchitectEstimate, c: ArchitectCheck): string {
 }
 
 export const levelName = (n: number) => LEVEL_NAMES[n - 1] ?? '';
+
+/**
+ * Each section's amount less the same section in the package (every slider and own item set aside), for "Rs. X more
+ * than the package". Worked twice: from the two estimates, and from the second computation's sections of the same two
+ * inputs; blocked when they disagree.
+ */
+export function overPackage(input: ArchitectInput, check: typeof architectCheck = architectCheck): Record<string, number> | Needs | Blocked {
+  const now = architect(input, check);
+  if (!('total' in now)) return now;
+  const pkgInput: ArchitectInput = { ...input, sliders: {}, items: {} };
+  const pkg = architect(pkgInput, check);
+  if (!('total' in pkg)) return pkg;
+  const c1 = check(input), c0 = check(pkgInput);
+  const out: Record<string, number> = {};
+  for (const s of now.sections) {
+    const was = pkg.sections.find((x) => x.id === s.id) as SectionTotal;
+    const over = r2(s.amount - was.amount), again = (c1.sections.get(s.id) ?? 0) - (c0.sections.get(s.id) ?? 0);
+    if (!money(over, again, 0.01 * (s.lines + was.lines + 2) + 1e-6 * (s.amount + was.amount))) return { blocked: `The two computations disagree on the change in ${s.name}, so no figures are shown. Please report this.` };
+    out[s.id] = over;
+  }
+  return out;
+}
+
+/** An item the drawer offers: its specification, brands and unit, and its rate for the city (null: no rate yet). */
+export interface Choice { id: string; name: string; spec: string; brands: string[]; unit: Unit; level: number | null; rate: number | null; how: string[] }
+/** What a line can be: the family's item at each of the five levels (null where it has none), and its other items. */
+export interface Choices { key: string; family: string; fixed: boolean; ladder: (Choice | null)[]; others: Choice[] }
+
+/**
+ * The item drawer for a line of the estimate: the family's five-level ladder and every other item of the family that is
+ * priced by a unit the line's quantity can take, each with its rate for the city. Each rate is worked twice (library.ts
+ * and architect-check.ts); a rate the two disagree on is left out as if it had none. Null for a key not in the estimate.
+ */
+export function choicesFor(input: ArchitectInput, key: string, rate2: typeof checkRate = checkRate): Choices | null {
+  const parts = key.split(':'), rule = parts.slice(2).join(':'), fam = FAMILIES.get(parts[1]);
+  if (!fam || parts.length < 3) return null;
+  const units = UNIT_OF[dimensionOf(rule)], city = cityFactor(input.city ?? '') ?? 1;
+  const choice = (id: string): Choice | null => {
+    const e = ENTRIES.get(id);
+    if (!e || !units.includes(e.unit)) return null;
+    const p = price(id, city, R.gst.pct), again = rate2(id, input.city);
+    const ok = !!p && again !== null && Math.abs(p.rate - again) <= 0.011;
+    return { id, name: e.name, spec: e.spec, brands: e.brands ?? [], unit: e.unit, level: e.level ?? null, rate: ok ? (p as { rate: number }).rate : null, how: ok ? (p as { how: string[] }).how : [] };
+  };
+  const ladderIds = fam.fixed ? [fam.fixed] : [1, 2, 3, 4, 5].map((lv) => ladder(fam, lv));
+  const named = new Set(ladderIds.filter((x): x is string => !!x));
+  const others = choices(fam.id).filter((e) => !named.has(e.id)).map((e) => choice(e.id)).filter((c): c is Choice => !!c);
+  return { key, family: fam.id, fixed: !!fam.fixed, ladder: ladderIds.map((id) => (id ? choice(id) : null)), others };
+}

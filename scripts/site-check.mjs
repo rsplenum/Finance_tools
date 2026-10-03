@@ -140,13 +140,14 @@ for (const [scheme, stored, want] of [['dark', undefined, true], ['light', 'dark
 // DSCR calculator. Expected figures: fictional case A (docs/GOLDEN-CASES.md), worked by hand in tests/dscr.test.ts.
 const YEARS_A = ['2026-27', '2027-28', '2028-29', '2029-30'];
 
-/** Reads a test id's (or a locator's) text once it settles on `want` (or after 3 s); a violation when it differs. */
+/** Reads a test id's (or a locator's) text once it settles on `want`, a text or a pattern (or after 3 s); a violation when it differs. */
 async function expectText(page, v, what, want, step) {
   const at = typeof what === 'string' ? page.getByTestId(what).first() : what, name = typeof what === 'string' ? what : String(what);
   const read = () => at.textContent({ timeout: 3000 }).then((t) => (t ?? '').replace(/\s+/g, ' ').trim(), () => '(missing)');
+  const fits = (t) => (want instanceof RegExp ? want.test(t) : t === want);
   let got = await read();
-  for (let i = 0; got !== want && i < 30; i++) { await page.waitForTimeout(100); got = await read(); }
-  if (got !== want) v(`${step}: ${name} says "${got}", want "${want}"`);
+  for (let i = 0; !fits(got) && i < 30; i++) { await page.waitForTimeout(100); got = await read(); }
+  if (!fits(got)) v(`${step}: ${name} says "${got}", want "${want}"`);
 }
 /** The same for what a field holds. */
 async function expectValue(page, v, sel, want, step) {
@@ -592,10 +593,96 @@ async function layout(page, v, step) {
   await ctx.close();
 }
 
-// The construction estimate (P2), by hand: excavation 45 cum × 350 = 15,750 and RCC 28 cum × 9,500 = 2,66,000; works
-// 2,81,750; GST at 18% 50,715; no contingency; total 3,32,465; per sq ft 3,32,465 ÷ 1,200 = 277.05.
+// The planning estimate (E1, A3, A8): six questions and no other field, then the answer first; a card for every section,
+// ten on for a renovation and eight for interiors (D-UX-19); a slider, the strip and the item drawer; the downloads read
+// back. A 2BHK of 1,000 sq ft in Pune at Basic, worked by hand in tests/architect.test.ts and tests/library.test.ts: the
+// living room's floor is 303.03 sq ft of tiles at Rs. 114.09 = Rs. 34,573.
+for (const scheme of ['light', 'dark']) {
+  const { ctx, page, v } = await open('/estimate/', { scheme });
+  if (await page.locator('#typed-path').evaluate((d) => d.open)) v('the typed quotation is open on load');
+  const questions = await page.locator('#six-questions [data-question]').count();
+  const loose = await page.locator('#six-questions input, #six-questions select').evaluateAll((els) => els.filter((e) => !e.closest('[data-question]')).length);
+  if (questions !== 6 || loose) v(`the estimate asks ${questions} questions (want 6)${loose ? ` and ${loose} fields outside them` : ''}`);
+  await page.check('#fld-work-renovate');
+  await page.check('#fld-home-flat');
+  await page.selectOption('#fld-city', 'pune');
+  await leave(page, '#fld-carpet', '1,000');
+  await page.check('#fld-bhk-2');
+  // The questions fold into one line as the sixth is answered, so the last is clicked rather than checked.
+  await page.click('#fld-level-1');
+  await expectText(page, v, 'pl-summary', 'Repair or renovate · Flat · Pune · 1,000 sq ft · 2 BHK · Basic', 'the answers folded');
+  const total = ((await page.getByTestId('pl-total').textContent()) ?? '').trim();
+  if (!/^Rs\. [\d,]+$/.test(total)) v(`the estimate's total reads "${total}"`);
+  await expectText(page, v, 'pl-sticky-total', total, 'the total in the bar at the bottom');
+  if ((await page.getByTestId('pl-strip-1').getAttribute('aria-label')) !== `Basic: ${total}` || (await page.getByTestId('pl-strip-1').getAttribute('aria-pressed')) !== 'true')
+    v('the strip does not mark Basic at the total');
+  const cards = await page.locator('[data-testid^="pl-card-"]').count(), on = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
+  if (cards !== 13 || on !== 10) v(`a renovation shows ${cards} sections with ${on} on (want 13 and 10)`);
+  await page.getByTestId('pl-items-flooring').click();
+  const living = page.getByTestId('pl-line-living:floor:floor-skirting');
+  await expectText(page, v, living.locator('p').nth(1), '303.03 sq ft × Rs. 114.09 = Rs. 34,573', 'the living room floor, by hand');
+  await page.getByTestId('pl-open-living:floor:floor-skirting').click();
+  if ((await page.getByTestId('pl-drawer').locator('input[type="radio"]').count()) < 6) v('the item drawer offers fewer than the five levels and other choices');
+  await layout(page, v, `the estimate with the drawer open, 390 px, ${scheme}`);
+  if (scheme === 'dark') { await ctx.close(); continue; }
+  await expectText(page, v, 'pl-assumed-0', /^Rooms: Living and dining/, 'the assumptions');
+  if (!((await page.getByTestId('pl-flags').textContent()) ?? '').includes('Rates are as reported')) v('the flags do not say the rates are as reported');
+
+  // The downloads, at the package as answered.
+  await expectText(page, v, 'pl-doc-status', 'Provisional: 2 still needed', 'the planning estimate before its facts');
+  await leave(page, '#fld-pl-owner', 'Asha Rao');
+  await leave(page, '#fld-pl-property', 'Flat 4, Example Towers, Pune');
+  await expectText(page, v, 'pl-doc-status', 'Complete', 'the planning estimate with its facts');
+  const save = async (id) => {
+    const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.getByTestId(id).click()]);
+    const path = await file.path();
+    return { name: file.suggestedFilename(), bytes: path ? await readFile(path) : Buffer.alloc(0) };
+  };
+  const pdf = await save('pl-download-pdf');
+  if (pdf.name !== 'Planning estimate - Asha Rao.pdf') v(`the planning estimate PDF is named "${pdf.name}"`);
+  const pdfText = (await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]));
+  const figure = total.replace('Rs. ', '');
+  if (!pdfText[0].includes('Estimate of cost of renovation') || !pdfText[0].split('\n').includes(`Total estimated cost ${figure}`)
+    || !pdfText.some((x) => x.includes('Annex 1. Detailed estimate')) || !pdfText.some((x) => x.includes('Annex 3. Assumptions and sources')) || !pdfText.join('\n').includes('303.03'))
+    v('the planning estimate PDF does not read back its title, total, annexes and the living room floor');
+  const book = await workbook((await save('pl-download-xlsx')).bytes).catch((e) => v(`the planning estimate's Excel copy is not read: ${e.message}`)) ?? [];
+  const floor = book[1]?.data.find((r) => typeof r[0] === 'string' && r[0].includes('Living and dining: Double-charge vitrified tiles'))?.filter((c) => c !== null);
+  if (book.map((x) => x.sheet).join('|') !== 'Estimate|Detailed estimate|Assumptions and sources' || JSON.stringify(floor?.slice(1)) !== JSON.stringify(['Basic', 303.03, 'sq ft', 114.09, 34572.69]))
+    v(`the planning estimate's Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))} and the floor ${JSON.stringify(floor)}`);
+  const word = await docxLines((await save('pl-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
+  if (word.messages.length || !word.lines.includes(`Total estimated cost | ${figure}`) || !word.lines.some((l) => l.endsWith('| Basic | 303.03 | sq ft | 114.09 | 34,573')))
+    v(`the planning estimate's Word copy reads back ${JSON.stringify(word.lines.slice(0, 4))} ${JSON.stringify(word.messages).slice(0, 120)}`);
+
+  // An item of one's own makes the section Mixed; a brand chip names it; the slider moves the whole section again.
+  await page.getByTestId('pl-drawer').locator('details summary', { hasText: 'Other choices' }).click();
+  await page.getByTestId('pl-drawer').locator('label', { hasText: 'Kota stone' }).first().click();
+  await expectText(page, v, 'pl-level-flooring', 'Mixed (1 chosen)', 'an item of one\'s own');
+  const slider = page.locator('#fld-slider-flooring');
+  await slider.focus();
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowRight');
+  await expectText(page, v, 'pl-level-flooring', 'Luxury', 'the slider moved three stops');
+  await expectText(page, v, page.getByTestId('pl-over-flooring'), /^Rs\. [\d,]+ more than Basic$/, 'the change from the package');
+  await page.getByTestId('pl-strip-3').click();
+  await expectText(page, v, 'pl-level-flooring', 'Premium', 'the strip switches the package and every slider with it');
+  if ((await page.getByTestId('pl-strip-3').getAttribute('aria-pressed')) !== 'true') v('the strip does not mark the package chosen on it');
+  // Interiors: eight sections on, with Appliances and Smart home (D-UX-19).
+  await page.getByTestId('pl-change').click();
+  await page.check('#fld-work-interiors');
+  await page.getByTestId('pl-done').click();
+  const onI = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
+  if (onI !== 8 || !(await page.isChecked('#fld-on-appliances')) || !(await page.isChecked('#fld-on-smart'))) v(`interiors show ${onI} sections on, Appliances and Smart home ${await page.isChecked('#fld-on-appliances')}/${await page.isChecked('#fld-on-smart')}`);
+  await layout(page, v, 'the estimate as interiors, 390 px');
+  await ctx.close();
+}
+
+// The construction estimate typed from a quotation (P2), the second path, by hand: excavation 45 cum × 350 = 15,750 and
+// RCC 28 cum × 9,500 = 2,66,000; works 2,81,750; GST at 18% 50,715; no contingency; total 3,32,465; per sq ft 3,32,465 ÷
+// 1,200 = 277.05.
 {
   const { ctx, page, v } = await open('/estimate/', { scheme: 'light' });
+  await page.locator('#typed-path > summary').click();
   await page.check('#fld-kind-construction');
   await leave(page, '#fld-area', '1,200');
   await page.selectOption('#fld-item-1-head', 'earthwork');

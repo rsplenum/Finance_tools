@@ -85,7 +85,12 @@ export const sameKind = (a: Unit, b: Unit) => a === b || (AREA.includes(a) && AR
 
 export const mid = (b: Band) => (b[0] + b[1]) / 2;
 const r2 = (x: number) => Math.round(x * 100) / 100;
-const inr = (x: number) => x.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+// One formatter for every call: toLocaleString builds a new one each time, which made pricing slow on a phone.
+const INR = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+const inr = (x: number) => INR.format(x);
+/** A unit as the working says it: Rs. 75 a sq ft, Rs. 500 each. */
+export const PER: Record<Unit, string> = { sqft: 'a sq ft', sqm: 'a sq m', rft: 'a running ft', m: 'a metre', nos: 'each', set: 'a set', lot: 'a lot', kg: 'a kg', cum: 'a cu m', bag: 'a bag' };
+const UNIT_WORD: Record<Unit, string> = { sqft: 'sq ft', sqm: 'sq m', rft: 'running ft', m: 'm', nos: 'nos', set: 'sets', lot: 'lots', kg: 'kg', cum: 'cu m', bag: 'bags' };
 
 /** An item's rate and how it was worked out. `rate` is in rupees per unit, to the paisa. */
 export interface Price { rate: number; how: string[] }
@@ -123,14 +128,14 @@ function rawPrice(id: string, city: number): { rate: number; how: string[] } | n
     const m = mid(e.rate);
     if (e.basis === 'installed') {
       base = m * city;
-      how.push(`Rs. ${inr(m)}, the middle of Rs. ${inr(e.rate[0])}–${inr(e.rate[1])} a ${e.unit}, supplied and fixed${city !== 1 ? `, × ${city.toFixed(3)} for the city` : ''}`);
+      how.push(`Rs. ${inr(m)}, the middle of Rs. ${inr(e.rate[0])}–${inr(e.rate[1])} ${PER[e.unit]}, supplied and fixed${city !== 1 ? `, × ${city.toFixed(3)} for the city` : ''}`);
     } else {
       const each = e.pack ? m / (e.pack.qty * per(e.pack.unit, e.unit)) : m;
       const w = e.basis === 'supply' ? e.wastage ?? 0 : 0;
       base = each * (1 + w);
       how.push(e.pack
-        ? `Rs. ${inr(m)} for ${e.pack.what ?? 'a pack'} covering ${e.pack.qty} ${e.pack.unit}: Rs. ${inr(r2(each))} a ${e.unit}`
-        : `Rs. ${inr(m)}, the middle of Rs. ${inr(e.rate[0])}–${inr(e.rate[1])} a ${e.unit}`);
+        ? `Rs. ${inr(m)} for ${e.pack.what ?? 'a pack'} covering ${e.pack.qty} ${UNIT_WORD[e.pack.unit]}: Rs. ${inr(r2(each))} ${PER[e.unit]}`
+        : `Rs. ${inr(m)}, the middle of Rs. ${inr(e.rate[0])}–${inr(e.rate[1])} ${PER[e.unit]}`);
       if (w) how.push(`${+(w * 100).toFixed(2)}% wastage`);
     }
   }

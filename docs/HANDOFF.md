@@ -1,5 +1,5 @@
 # Handoff — start here in a new session
-State at 02-10-2026: P0 to P1g are on `main` (PRs #2 to #6), which Cloudflare Pages builds: the DSCR engine, the calculator at `/dscr/`, the statement to download (D-DOC-01, D-DOC-02, D-TECH-13), free for now, and P1e: existing EMIs as debt service, the tax by who the borrower is (a proprietor's slab rates), and the new asset's income, each worked out twice and shown on the current page in the smallest way (D-POL-07 to 09, D-UX-11, D-TECH-15). The interest rule is in the owner's words (D-POL-10).
+State at 03-10-2026: P0 to P1g are on `main` (PRs #2 to #6), which Cloudflare Pages builds: the DSCR engine, the calculator at `/dscr/`, the statement to download (D-DOC-01, D-DOC-02, D-TECH-13), free for now, and P1e: existing EMIs as debt service, the tax by who the borrower is (a proprietor's slab rates), and the new asset's income, each worked out twice and shown on the current page in the smallest way (D-POL-07 to 09, D-UX-11, D-TECH-15). The interest rule is in the owner's words (D-POL-10).
 - **P1g, merged in PR #6 on 02-10-2026:**
   - the downloads laid out as a CA's DSCR statement: page 1 has the whole working, every line, then the average and the lowest year, signed; Annex 1 is the basis, Annex 2 the repayment schedule (D-DOC-04);
   - a Word copy as the third download (D-DOC-06);
@@ -10,13 +10,23 @@ State at 02-10-2026: P0 to P1g are on `main` (PRs #2 to #6), which Cloudflare Pa
   - the project report at `/project-report/` (D-UX-14);
   - the DSCR front door (P1f, D-UX-15): eight fields, everything else under a closed More options, results first, Print.
   Each tool has its own engine, worked out twice, and downloads in PDF, Excel and Word. PR #6 is merged, so all of it is on the live site.
+- **E1, the planning estimate's page at `/estimate/`** (D-UX-21, D-DOC-08), on a draft PR for the owner to try:
+  - six questions and no other field, folding into one line as the sixth is answered;
+  - the answer first: the total, the cost a sq ft, the five-level strip (a tap switches the package) and the total by section;
+  - a card for each of the 13 sections, with its slider of five stops, its main items, its amount and the change from the package;
+  - the item drawer: the family's five levels and other items, brands as chips, how the line was worked out, its sources;
+  - what the estimate assumes (the ceiling height changeable there) and what to check;
+  - the planning estimate as PDF, Excel and Word: page 1 the abstract and the total in words, Annex 1 every line, Annex 3 the assumptions and the numbered sources.
+  - The typed quotation is the second path, under a closed "Building a house, or have a contractor's quotation?".
+  - Level 5 is "Bespoke" on screen (D-UX-20). A house's rooms inside are estimated as a flat's, flagged (D-UX-22).
+  - Done when the owner tries it on a phone and a desktop and says it feels simple.
 - **The estimate's engine, as the architect, and its library** (D-UX-18, blueprint version 3 A0), merged in PR #8 on 02-10-2026. Version 2 of the blueprint (D-UX-17) is merged (PR #7).
   - `engine/architect.ts` works the estimate out from six answers (the work, flat, city, carpet area, bedrooms, level). It plans the rooms, places doors and windows, measures by IS 1200, puts in what each room needs at each section's level, prices it for the city and adds it up by section and room and at all five levels. `engine/architect-check.ts` works it all a second way.
   - The rules are in `engine/data/architect.json` (in plain words in `docs/RULES.md`). The library has 312 items in 79 families, 17 kinds of labour and 183 sources, in `engine/data/library/` (in plain words in `docs/LIBRARY.md`).
   - Every rate is "as reported" through search summaries, not yet checked (the network blocks the pages). So the estimate is a planning estimate (A7, A18).
-  - A flat only, for repair or renovation and for interiors. Movable furniture is in the library but not yet in the estimate (E3); a house comes in E5.
-  - **The owner's answers (D-UX-19):** the levels are Basic, Standard, Premium, Luxury and Ultra luxury on screen; movable items are sections of their own, on for Interiors and off for Repair (Appliances and Smart home already are; Furniture and Soft furnishings join in E3).
-  - **No page yet:** E1 builds it on this engine.
+  - A flat, or a house's rooms inside, for repair or renovation and for interiors. Movable furniture is in the library but not yet in the estimate (E3); a house's own works come in E5.
+  - **The owner's answers (D-UX-19, D-UX-20):** the levels are Basic, Standard, Premium, Luxury and Bespoke on screen; movable items are sections of their own, on for Interiors and off for Repair (Appliances and Smart home already are; Furniture and Soft furnishings join in E3).
+  - For the page (D-TECH-16): `overPackage` (each section against the package) and `choicesFor` (the drawer's items), with every rate worked twice through `checkRate`.
   - The tool never calls itself an architect (Architects Act s. 37; CLAUDE.md).
   - B12 critiques Gemini's second note.
 - **The owner is not satisfied with the page.** An outside review (Gemini, reading `main` before PR #2 was merged) and the owner's own words: it should ask seven inputs, not ten plus method choices. The engine's maths stands; the review's own formula taxes profit before interest. **Next:** the owner tries the three tools on the live site, then payment (P1d) once the business entity, GST and Razorpay account exist. The front door is done when the owner says it feels simple (D-UX-15).
@@ -60,7 +70,10 @@ The test figures are model-worked until the owner confirms fictional cases A and
     - statement lines shown only when not nil: `asset-<year>`, `emis-<year>`;
     - buttons: `clear-all`;
     - download: fields `fld-borrower`, `fld-lender`, `fld-preparedBy`; `doc-status`, `doc-needs`, `doc-wait`, `download-pdf`, `download-xlsx`, `download-docx`.
-- Estimate: `engine/estimate.ts` (+ `estimate-check.ts`, `data/estimate.json`); page `site/src/estimate/` (`model.ts`, `Estimate.tsx`, `document.ts`); tests `tests/estimate*.test.ts` (fictional case E).
+- The planning estimate (E1): `engine/architect.ts` (+ `architect-check.ts`, `library.ts`, `data/architect.json`, `data/library/`); page `site/src/estimate/plan-model.ts` (pure: answers to the engine's input, its answer to words, the drawer), `PlanEstimate.tsx` (the island) and `plan-document.ts` (the three files); tests `tests/architect.test.ts`, `tests/library.test.ts` and `tests/plan-page.test.ts` (a 2BHK of 1,000 sq ft in Pune; the living room's floor at Basic worked by hand, 303.03 sq ft × Rs. 114.09).
+  - Fields: `fld-work-<renovate|interiors>`, `fld-home-<flat|house>`, `fld-city`, `fld-carpet`, `fld-carpetUnit-<sqft|sqm>`, `fld-bhk-<1RK…5>`, `fld-level-<1…5>`, each question in a `[data-question]` block inside `#six-questions`; `fld-on-<section>`, `fld-slider-<section>`, `fld-height`, `fld-pl-<owner|property|lender|preparedBy>`.
+  - Answers: `pl-summary`, `pl-change`, `pl-done`, `pl-total`, `pl-per-sqft`, `pl-strip-<1…5>`, `pl-bar-<section>`, `pl-rates`, `pl-split`, `pl-card-<section>`, `pl-level-<section>`, `pl-spec-<section>`, `pl-amount-<section>`, `pl-over-<section>`, `pl-items-<section>`, `pl-line-<key>`, `pl-open-<key>`, `pl-drawer`, `pl-brand-<brand>`, `pl-how`, `pl-assumed-<i>`, `pl-flags`, `pl-doc-status`, `pl-download-<pdf|xlsx|docx>`, `pl-sticky-total`. A line's key is `<room>:<family>:<rule>`.
+- The typed quotation (the second path): `engine/estimate.ts` (+ `estimate-check.ts`, `data/estimate.json`); page `site/src/estimate/` (`model.ts`, `Estimate.tsx`, `document.ts`), under `#typed-path`; tests `tests/estimate*.test.ts` (fictional case E).
 - Project report: `engine/report.ts` (+ `report-check.ts`, `data/report.json`; it calls `planStatement`); page `site/src/report/` (the page's tables in `model.ts` `viewOf` are the document's); tests `tests/report*.test.ts` (fictional case R, year 1 worked by hand). Shared: `site/src/download.ts` (the three files), `SelectField` in `site/src/fields.tsx`.
 - The document (P1c, laid out in P1g):
   - `site/src/dscr/document.ts`: `statementDoc` builds it from the state and the preview: page 1, then `basisPart` (Annex 1) and `schedulePart` (Annex 2); `docNeeds`, `allNeeds` (not the target), `docStatus`, `fileName`, `sourceForLender`.
@@ -68,18 +81,18 @@ The test figures are model-worked until the owner confirms fictional cases A and
   - `scripts/read-doc.mjs`: reads the files back with pdf.js, read-excel-file, mammoth and JSZip, for the tests and the site check.
 - `site/`: home, `/dscr/`, 404; dark mode without a flash. `worker/`: `GET /health`.
 - Checks, all in CI:
-  - `npm test` (204, including the simulation and the documents read back by pdf.js, read-excel-file and mammoth);
+  - `npm test` (229, including the simulation and the documents read back by pdf.js, read-excel-file and mammoth);
   - `npm run typecheck`;
   - `npm run rules-doc -- --check`;
   - `npm run build`;
   - `npm run worker:build`;
-  - `npm run check:site`: 0 violations. It drives the calculator with case A, the quick path, a proprietor with EMIs and the new asset, and own figures, downloads the PDF, the Excel copy and the Word copy at 390 px (provisional, then complete) and reads them back, failing on anything kept to the page (the target, the verdict, the assumptions); about 20 s.
+  - `npm run check:site`: 0 violations. It drives the planning estimate (six questions counted, the answer, a slider, the strip, the drawer, interiors, the three files read back, in light and dark), the typed quotation, and the calculator with case A, the quick path, a proprietor with EMIs and the new asset, and own figures, downloads the PDF, the Excel copy and the Word copy at 390 px (provisional, then complete) and reads them back, failing on anything kept to the page (the target, the verdict, the assumptions); about 20 s.
 
 ## Next — one fresh session per item
 | # | Session | Starter prompt (paste as the first message) |
 |---|---|---|
 | P1d | Payment for the download (after P1f, and after the owner's Phase 0 items: business entity, GST, Razorpay account) | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md, docs/DECISIONS.md (D-TECH-01, D-TECH-06, D-DOC-01) and docs/CLOUDFLARE.md. P1d: payment for the DSCR statement download, through Razorpay and the Worker. Ask me first, in one message: the price; whether the Worker stays separate or moves beside the site as Pages Functions; and, since the document is made in the browser, whether payment only unlocks the two buttons (anyone reading the page's code could still make the file) or the file must come from the server. Then build it: the order made in the Worker, the payment verified by its signature, and the buttons unlocked for that statement only. Test with Razorpay's test keys, set only in the environment settings, never in the repo. The preview stays free. Finish per HANDOFF." |
-| E1 | The estimate's page and documents on the architect engine (the engine is on `main`; A18 3 and 4 answered, D-UX-19) | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md, docs/ESTIMATE-BLUEPRINT.md (A0, A3, A4, A8, A15, A17, A18) and the brief-first and lender-documents skills. Build E1 per A17 on `engine/architect.ts`: the six questions on `/estimate/` (the typed quotation stays as the second path); results first, with the total, the cost per sq ft and the five-level strip; the section bar; a card per section with its slider (five stops) and its line of specification; the item drawer with the family's level items and alternatives from the library, brands as chips, and each line's 'how we worked this out'; the assumptions and flags; the planning estimate as PDF, Excel and Word, with Annex 1 (every line) and Annex 3 (assumptions and sources). Level names on screen: Basic, Standard, Premium, Luxury, Ultra luxury; movable sections on for Interiors and off for Repair, as the engine has them (D-UX-19). Assert the field count (six) in the site check. My fictional flat, with the room sizes and quantities I worked at home: [yours, or none yet]. Finish per HANDOFF." |
+| E3 | Rooms, What changed, Compare and the movable sections (A17) | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md, docs/ESTIMATE-BLUEPRINT.md (A4, A8, A17) and the brief-first skill. E3 on the planning estimate's page: the rooms as a list with their sizes, each changeable, and a bathroom's or bedroom's own level; What changed (one line after a slider moves, with by how much); Compare (the sections down the side, the five levels across, the user's choices marked); and the movable sections, Furniture and Soft furnishings, on for Interiors and off for Repair, with the split on the page and in the abstract (D-UX-19). Every new figure worked out twice in the engine. The six questions stay the only fields on the default path. Finish per HANDOFF." |
 | E2 | Check the library against its sources (needs the network hosts below) | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md and docs/LIBRARY.md. Open each source in engine/data/sources.json, check each level item's figure against its page, fix any that differ, and mark the source checked; replace a rate with CPWD's DSR 2023 item where one fits, with the city's index. Report what changed. Finish per HANDOFF." |
 
 ## End of every session
@@ -87,7 +100,9 @@ The test figures are model-worked until the owner confirms fictional cases A and
 2. Update this file (state + next), commit, draft PR. The branch preview builds itself (link on the PR); open it and say so.
 
 ## Waiting on the owner
-- **Start E1, the estimate's page:** paste its starter prompt (above) into a new session. A18's decision 1 was taken on your "create a vast library": rates as reported until E2 checks them. Say if you would rather wait.
+- **Try E1, the planning estimate, on a phone and a desktop** (the PR's preview): the six questions, a slider, the strip, an item's drawer, and the three downloads. It is done when you say it feels simple. Rates stay as reported until E2 checks them (A18 decision 1).
+- **Your fictional flat for E1's test:** the prompt gave a house's address without room sizes or quantities, so it could not be a test. The address is kept out of the repo; the page asks for the property's address at download. For a test, send a flat's carpet area, bedrooms, level and city, with the room sizes and a few quantities and amounts you worked at home.
+- **Cities:** a place outside the six cities uses their average, likely high for a smaller city. Adding smaller cities needs a sourced cost a sq ft for each (E2, once the network allows).
 - **Try the three downloads on the live site.** Open the Word copy in Word itself and the Excel copy in Excel: they were checked with mammoth, read-excel-file and LibreOffice, not with Microsoft Office.
 - **Try P1e on the live site**: who the borrower is, EMIs a month, the new asset's income.
 - **Try the front door (P1f)** on the live site, on a phone and a desktop: it is done when you say it feels simple. Then the estimate and the project report, with your own fictional cases.
@@ -126,6 +141,9 @@ The test figures are model-worked until the owner confirms fictional cases A and
 - `new Blob([bytes])` needs `Uint8Array<ArrayBuffer>` in TypeScript 7: the writers return that type.
 - pdf.js in Node: `getDocument(...)` returns a task; call `task.destroy()`, not the document's.
 - A field's `change` event (a month picker, or Playwright's `fill`) can arrive before Preact re-renders the draft: commit from the input's own value, as `useDraft` in `site/src/fields.tsx` does. Preact runs `useEffect` only after the next frame (or 35 ms): use `useLayoutEffect` where a field must show a change at once, and make checks wait for what they read (`expectText`, `expectValue`).
+- No two files whose names differ only in case (`plan.ts` beside `Plan.tsx`): esbuild fails on them, and macOS and Windows cannot hold both.
+- `toLocaleString` with options builds a formatter each call and made the estimate ten times slower: share one `Intl.NumberFormat` (`engine/library.ts`).
+- The estimate's questions fold as the sixth is answered, so a check clicks the last radio (`page.click`): `page.check` waits for a radio that is gone.
 - Scratch scripts outside the repo cannot import `playwright` by name; import `node_modules/playwright/index.mjs` by path.
 - WebFetch goes through the same network policy: rbi.org.in, bcasonline.org and srbatliboi.in were refused, while WebSearch works. Mark anything read only through search results as secondary.
 - A row's answers are radios `fld-<key>-<answer>`: a field of that row must not reuse one (the new asset's month is `fld-assetIncome-start`, since `fld-assetIncome-from` is the radio).

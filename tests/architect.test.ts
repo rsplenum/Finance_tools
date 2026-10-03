@@ -5,8 +5,9 @@
  * employer (D-BIZ-02). The owner's own fictional flat, worked at home, is still to come (HANDOFF).
  */
 import { describe, it, expect } from 'vitest';
-import { architect, architectNeeds, cityFactor, planOpenings, planRooms, strip, type ArchitectEstimate, type ArchitectInput, type Bhk, type Level } from '../engine/architect';
-import { architectCheck } from '../engine/architect-check';
+import { architect, architectNeeds, choicesFor, cityFactor, overPackage, planOpenings, planRooms, strip, type ArchitectEstimate, type ArchitectInput, type Bhk, type Level } from '../engine/architect';
+import { architectCheck, checkRate } from '../engine/architect-check';
+import { price } from '../engine/library';
 import type { Blocked, Needs } from '../engine/dscr';
 
 const SQ = 0.3048 * 0.3048;
@@ -61,7 +62,14 @@ describe('measuring by IS 1200, by hand (the living room above, ceiling 2.9 m)',
 describe('the estimate', () => {
   it('asks for what it needs, in order', () => {
     expect(architectNeeds({})).toEqual(['What the work is: repair or renovate, or interiors', 'Which city', 'The carpet area', 'How many bedrooms', 'Which level']);
-    expect((architect({ ...flat(), property: 'house' }) as Needs).needs).toEqual(['A house comes later (E5): for now the estimate is for a flat']);
+  });
+  it('a house: its rooms inside, worked out as a flat\'s and flagged, with the lines for the whole of it named so', () => {
+    const h = run({ property: 'house' }), f = run();
+    expect(h.total).toBe(f.total);
+    expect(h.property).toBe('house');
+    expect(h.flags.some((x) => x.startsWith('A house: its rooms inside are worked out as a flat\'s'))).toBe(true);
+    expect(f.flags.some((x) => x.startsWith('A house'))).toBe(false);
+    expect(h.lines.filter((l) => l.room === null).map((l) => l.roomName)).toEqual(f.lines.filter((l) => l.room === null).map(() => 'Whole house'));
   });
   it('adds up: each line is its quantity × its rate, the sections are the lines, the total is the sections, the cost per sq ft is the total ÷ the carpet area', () => {
     const e = run();
@@ -119,7 +127,7 @@ describe('the estimate', () => {
 describe('every flat, kind, level and city works out, and both computations agree', () => {
   const bhks: Bhk[] = ['1RK', '1', '2', '3', '4', '5'];
   const areas: Record<Bhk, number> = { '1RK': 350, '1': 520, '2': 850, '3': 1150, '4': 1600, '5': 2200 };
-  it('the five-level strip rises from Basic to Ultra luxury', () => {
+  it('the five-level strip rises from Basic to Bespoke', () => {
     for (const bhk of bhks) for (const kind of ['renovate', 'interiors'] as const) for (const city of ['mumbai', 'pune', 'other']) {
       const s = strip(flat({ bhk, kind, city, area: areas[bhk] })) as number[];
       expect(Array.isArray(s), `${bhk} ${kind} ${city}: ${JSON.stringify(s)}`).toBe(true);
@@ -136,5 +144,47 @@ describe('every flat, kind, level and city works out, and both computations agre
       const e = architect(flat({ bhk: bhks[n % 6], area: areas[bhks[n % 6]] * (0.8 + rnd() * 0.5), level: (1 + (n % 5)) as Level, sliders, sections: onOff, kind: n % 2 ? 'renovate' : 'interiors', heightM: 2.75 + rnd() * 0.5 }));
       expect('total' in e, JSON.stringify(e).slice(0, 200)).toBe(true);
     }
+  });
+});
+
+describe('what the page shows beside the estimate', () => {
+  it('the change from the package: nil with no slider; with Flooring at Luxury, Flooring\'s amount less its amount at Standard, and nothing else', () => {
+    const none = overPackage(flat()) as Record<string, number>;
+    expect(Object.values(none).every((x) => x === 0)).toBe(true);
+    const base = run(), up = run({ sliders: { flooring: 4 } });
+    const over = overPackage(flat({ sliders: { flooring: 4 } })) as Record<string, number>;
+    const at = (e: ArchitectEstimate, id: string) => e.sections.find((s) => s.id === id)?.amount as number;
+    expect(over.flooring).toBeCloseTo(at(up, 'flooring') - at(base, 'flooring'), 2);
+    expect(over.flooring).toBeGreaterThan(0);
+    for (const [id, x] of Object.entries(over)) if (id !== 'flooring') expect(x, id).toBe(0);
+    // An item of the user's own counts as a change from the package too.
+    const kota = overPackage(flat({ items: { 'living:floor:floor-skirting': 'fl-kota' } })) as Record<string, number>;
+    expect(kota.flooring).toBeCloseTo(at(run({ items: { 'living:floor:floor-skirting': 'fl-kota' } }), 'flooring') - at(base, 'flooring'), 2);
+  });
+  it('the change from the package shows nothing when the second computation disagrees', () => {
+    const wrong = (input: ArchitectInput) => { const c = architectCheck(input); if (input.sliders?.flooring) c.sections.set('flooring', (c.sections.get('flooring') ?? 0) + 100); return c; };
+    expect('blocked' in (overPackage(flat({ sliders: { flooring: 4 } }), wrong) as Blocked)).toBe(true);
+    expect((overPackage({}) as Needs).needs.length).toBe(5);
+  });
+  it('the item drawer: the family\'s five levels, the line\'s own item among them at its rate, and the other items priced by a unit the line can take', () => {
+    const e = run(), key = 'living:floor:floor-skirting', l = line(e, key);
+    const c = choicesFor(flat(), key);
+    expect(c?.ladder.length).toBe(5);
+    expect(c?.ladder[1]?.id).toBe(l?.entry);
+    expect(c?.ladder[1]?.rate).toBe(l?.rate);
+    for (const x of [...(c?.ladder ?? []), ...(c?.others ?? [])]) {
+      if (!x) continue;
+      expect(['sqft', 'sqm'], x.id).toContain(x.unit);
+      if (x.rate !== null) expect(x.rate, x.id).toBe(price(x.id, cityFactor('pune') as number, 18)?.rate);
+      if (x.rate !== null) expect(x.rate, x.id).toBe(checkRate(x.id, 'pune'));
+    }
+    expect(c?.others.some((x) => x.id === 'fl-kota')).toBe(true);
+    expect(c?.others.find((x) => x.id === 'fl-granite')?.rate).toBeNull();
+    expect(c?.others.some((x) => c.ladder.some((y) => y?.id === x.id))).toBe(false);
+    expect(choicesFor(flat(), 'living:nothing:floor')).toBeNull();
+  });
+  it('the item drawer leaves out a rate the two computations disagree on', () => {
+    const c = choicesFor(flat(), 'living:floor:floor-skirting', (id, city) => (checkRate(id, city) ?? 0) + 1);
+    expect(c?.ladder.every((x) => x === null || x.rate === null)).toBe(true);
   });
 });
