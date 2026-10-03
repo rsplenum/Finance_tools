@@ -83,7 +83,7 @@ The owner also downloaded three documents from the internet, each said to have b
 
 ### A0. The engine is the architect (version 3, built)
 
-The owner's insight: the engine, not the user, carries what an architect knows. Version 3 builds it and the library it draws on. No page shows it yet (E1).
+The owner's insight: the engine, not the user, carries what an architect knows. Version 3 builds it and the library it draws on. E1 shows it at `/estimate/` (D-UX-21), with the planning estimate to download (D-DOC-08).
 
 **What it does with the six answers** (`engine/architect.ts`):
 1. **Plans the rooms.** Each BHK has a programme of rooms whose reported sizes are used as proportions. The rooms share 85% of the carpet area, the passage and foyer 10% and the internal walls 5%; a balcony is added at its own size. Each room gets a usual length-to-breadth ratio. A room below the Code's minimum is flagged, never changed.
@@ -102,7 +102,7 @@ The owner's insight: the engine, not the user, carries what an architect knows. 
 - Its **five levels** name one item each. Every other item of the family is an alternative for the item drawer: about 30 floor finishes from sheet vinyl to Calacatta marble, 25 wall finishes from economy emulsion to tadelakt, 12 ceilings, 9 windows, 8 railings, and so on.
 - **Items still without a rate** (granite flooring, epoxy, Athangudi and encaustic tiles, carpet) are listed, and cannot be a level's item.
 
-**Not yet:** a house (E5); furniture and furnishings in the estimate (E3; they are in the library); room sizes typed by the user (More options, E6); the page and the documents (E1).
+**Not yet:** a house's own works, the terrace, the outside, the compound and the water (E5; its rooms inside are worked out as a flat's, flagged, D-UX-22); furniture and furnishings in the estimate (E3; they are in the library); room sizes typed by the user (More options, E6).
 
 **Never "architect" on screen.** The Architects Act 1972, s. 37, keeps the title to registered architects (as reported; the Supreme Court has held that it bars the title, not the work). The page says "worked out as an architect would", and the document is a planning estimate that an architect or engineer may adopt and sign.
 
@@ -184,7 +184,7 @@ Jobs mix: the sample renovation quotation combined civil work and interiors (B2)
 
    A sq ft / sq m switch goes with it.
 5. **How many bedrooms?** 1 RK, then 1, 2, 3, 4 or 5+ BHK. For an extension, the rooms being added.
-6. **Which level?** Five cards, Basic, Standard, Premium, Luxury and Ultra luxury, each with one line on what it means (A4).
+6. **Which level?** Five cards, Basic, Standard, Premium, Luxury and Bespoke, each with one line on what it means (A4).
 
 **Assumed and shown, one line each with a way to change it.** These come from the data files and are listed on the page (D-UX-08):
 - the number of bathrooms, from the BHK, by a rule in the data file with its source (B10 has layouts for a 2BHK only);
@@ -210,7 +210,7 @@ The section cards follow (A8).
 
 ### A4. Five levels, a slider for each section, and brands
 
-**The levels** (on screen, the market's words: the owner's choice on 02-10-2026, A18 decision 3, D-UX-19):
+**The levels** (on screen, the market's words: the owner's choice on 02-10-2026, A18 decision 3, D-UX-19; level 5 renamed Bespoke by the owner on 03-10-2026, D-UX-20):
 
 | Your word | On screen | What it means |
 |---|---|---|
@@ -218,7 +218,7 @@ The section cards follow (A8).
 | Upper (middle) class | Standard | What most new flats are sold with: branded mid-range materials and a few comforts |
 | High | Premium | Premium Indian and mainstream international brands, better finishes, more lighting |
 | Luxury | Luxury | International premium brands, natural stone, designer finishes, tiles to the ceiling |
-| Ultra luxury | Ultra luxury | Imported designer brands, bespoke joinery, Italian marble, home automation |
+| Ultra luxury | Bespoke | Imported designer brands, bespoke joinery, Italian marble, home automation |
 
 The market already sells levels this way. House builders sell three or four packages by the sq ft, one of them up to "Ultra-Luxury", and interior firms sell three (B10).
 
@@ -328,27 +328,27 @@ These ladders are a proposal drawn from the packages and comparisons in B10:
 
 **Flooring** (sq ft; fixed):
 
-| | Basic | Standard | Premium | Luxury | Ultra luxury |
+| | Basic | Standard | Premium | Luxury | Bespoke |
 |---|---|---|---|---|---|
 | Floor | Vitrified tiles, 600 × 600 | Vitrified tiles, 800 × 800 or 600 × 1200 | Large glazed vitrified tiles (800 × 1600), or engineered wood in the bedrooms | Indian marble, large slabs or engineered hardwood | Italian marble, or solid hardwood |
 | Skirting | Tile | Tile | Tile or wood | Matching stone or wood | Stone or wood, flush with the wall |
 
 **Walls and paint** (sq ft of wall and ceiling; fixed):
 
-| | Basic | Standard | Premium | Luxury | Ultra luxury |
+| | Basic | Standard | Premium | Luxury | Bespoke |
 |---|---|---|---|---|---|
 | Walls and ceilings | Putty, primer and two coats of an economy emulsion (e.g. Asian Paints Tractor) | A premium emulsion (e.g. Apcolite Premium) | A luxury emulsion (e.g. Royale Luxury) | The top emulsions (e.g. Royale Aspira), and a feature wall in texture or wallpaper | Designer finishes: lime or Venetian plaster, imported wallpaper, panelling |
 | Doors and grills | Enamel | Enamel | PU or melamine on wood | PU | PU or lacquer |
 
 **Ceiling** (sq ft; cove by rft; fixed):
 
-| | Basic | Standard | Premium | Luxury | Ultra luxury |
+| | Basic | Standard | Premium | Luxury | Bespoke |
 |---|---|---|---|---|---|
 | False ceiling | None: paint only | A POP or gypsum border in the living room and main bedroom, with a cove | Gypsum board in the living and dining rooms and all bedrooms, with coves | Gypsum with wood or veneer accents and profile lights | Designer: wood slats, stretch or acoustic ceilings with built-in linear lights |
 
 **Bathrooms** (per bathroom; fixed):
 
-| | Basic | Standard | Premium | Luxury | Ultra luxury |
+| | Basic | Standard | Premium | Luxury | Bespoke |
 |---|---|---|---|---|---|
 | Wall tiles | 7 ft, ceramic | 8 ft, vitrified | To the ceiling, glazed vitrified | To the ceiling, large slabs and a feature wall | To the ceiling, natural stone |
 | WC | Floor-mounted (Parryware, Hindware, Cera) | Floor-mounted or wall-hung (Cera, Hindware, Jaquar) | Wall-hung with a concealed cistern (Jaquar, Kohler) | Kohler, Duravit, Toto, Villeroy & Boch | Smart WC; the top ranges of the same |
@@ -358,7 +358,7 @@ These ladders are a proposal drawn from the packages and comparisons in B10:
 
 **Kitchen** (cabinets by sq ft of face or rft; counter by rft; fixed. The chimney and hob are appliances):
 
-| | Basic | Standard | Premium | Luxury | Ultra luxury |
+| | Basic | Standard | Premium | Luxury | Bespoke |
 |---|---|---|---|---|---|
 | Cabinets | BWR ply base units, MR ply or MDF wall units, laminate | BWR ply throughout, laminate | BWP ply, acrylic shutters | BWP ply, PU lacquer or glass shutters | Imported or bespoke systems: veneer, lacquer |
 | Hardware | Ebco | Hettich or Hafele hinges and channels | Hettich or Hafele, with tandem drawers | Blum | Blum, with powered and imported fittings |
@@ -366,7 +366,7 @@ These ladders are a proposal drawn from the packages and comparisons in B10:
 
 **Wardrobes and storage** (sq ft of shutter face; fixed):
 
-| | Basic | Standard | Premium | Luxury | Ultra luxury |
+| | Basic | Standard | Premium | Luxury | Bespoke |
 |---|---|---|---|---|---|
 | Wardrobe | Hinged; MR or BWR ply; laminate | Hinged, with a loft; BWR ply; laminate | Sliding, with a loft; acrylic or laminate | Floor to ceiling, sliding; PU or veneer | Walk-in; glass, veneer or leather, with lighting |
 | Hardware | Ebco | Hettich | Hettich or Hafele | Hafele or Blum | Blum |
@@ -375,7 +375,7 @@ The TV unit, shoe rack, crockery unit and study take the same board and finish a
 
 **Doors and windows** (doors by number; windows by sq ft; fixed):
 
-| | Basic | Standard | Premium | Luxury | Ultra luxury |
+| | Basic | Standard | Premium | Luxury | Bespoke |
 |---|---|---|---|---|---|
 | Main door | Flush door, teak frame, veneer | Solid teak | 8 ft teak, with a digital or biometric lock | Designer veneer or pivot door, smart lock | Bespoke pivot door |
 | Room doors | Flush, laminate | Flush, laminate both sides, hardwood frame | Membrane or veneer | Veneer or PU, concealed hinges | Full height, flush with the wall |
@@ -384,7 +384,7 @@ The TV unit, shoe rack, crockery unit and study take the same board and finish a
 
 **Electrical and lights** (points and numbers; fixed, with light fittings as appliances as in version 1):
 
-| | Basic | Standard | Premium | Luxury | Ultra luxury |
+| | Basic | Standard | Premium | Luxury | Bespoke |
 |---|---|---|---|---|---|
 | Switches and sockets | Anchor Roma or GM | Legrand Mylinc or Schneider | Legrand Arteor or Schneider Zencelo | Glass or metal plates in the premium ranges | Imported ranges, or smart (KNX) controls |
 | Points | By room (A5) | By room | More, for coves and accents | More, for profile lights | More, with smart circuits |
@@ -799,16 +799,16 @@ The documents follow the DSCR statement's rules (D-DOC-04 to 06): facts and work
 - `tests/library.test.ts` and `tests/architect.test.ts`.
 - `scripts/rules-doc.mjs` writes `docs/RULES.md` and `docs/LIBRARY.md` from the data; CI fails when either is stale.
 
-**Still to come:**
-- the planning estimate's document from the architect's lines (E1), on `engine/estimate.ts` and the `lender-documents` pipeline;
-- `engine/areas.ts` as in version 1; the total in words is `rupeesWords` in `engine/util.ts`.
+**Built in E1 (03-10-2026):** `overPackage` and `choicesFor` in `engine/architect.ts`, `checkRate` in `engine/architect-check.ts` (D-TECH-16); the page in `site/src/estimate/plan-model.ts` and `PlanEstimate.tsx`; the document in `plan-document.ts` on the `lender-documents` pipeline (D-DOC-08); tests in `tests/plan-page.test.ts`.
+
+**Still to come:** `engine/areas.ts` as in version 1; the total in words is `rupeesWords` in `engine/util.ts`.
 
 ### A17. Build order: thin versions, one session each, merged by the owner
 
 | Step | Delivers | Done when |
 |---|---|---|
 | E0 | Done in version 3: the architect engine and the library, worked twice and tested (A0) | Merged by the owner |
-| E1 | The page on the engine, for a flat, every section: the six questions; the five-level strip, the section bar, the sliders, and the item drawer with the library's alternatives; the assumptions and flags; the planning-estimate PDF, Excel and Word with Annexes 1 and 3; the field count asserted | The owner tries it on a phone and a desktop and says it feels simple |
+| E1 | Built on 03-10-2026 (D-UX-21, D-DOC-08). The page on the engine, for a flat, every section: the six questions; the five-level strip, the section bar, the sliders, and the item drawer with the library's alternatives; the assumptions and flags; the planning-estimate PDF, Excel and Word with Annexes 1 and 3; the field count asserted | The owner tries it on a phone and a desktop and says it feels simple |
 | E2 | The library checked against its sources, page by page, once the network allows; the owner's fictional flat, worked at home, as a test | Every level's item checked, or marked as not |
 | E3 | Rooms (sizes, a room's own level), What changed and Compare; the movable sections (Furniture, Soft furnishings, Appliances, Smart home) with the split | As above |
 | E4 | A quotation in hand, and the bill of quantities for quotes (A9) | As above |
@@ -824,7 +824,7 @@ The documents follow the DSCR statement's rules (D-DOC-04 to 06): facts and work
 **Version 3 (02-10-2026):**
 - **Decision 1 is taken on the owner's "create a vast library":** the rates are classes 2 to 4 as reported, marked, until each is checked (A7). Say if you would rather wait for the primary texts.
 - **Decision 5 changes:** the engine and the library are built for every section of a flat (A0), so E1 is the page and the documents on them.
-- **Decisions 3 and 4 answered by the owner on 02-10-2026, as recommended (D-UX-19):** Basic to Ultra luxury on screen, with your words kept beside them in the data; movable items in sections of their own, on for Interiors and off for Repair. Appliances and Smart home already work this way; Furniture and Soft furnishings join on the same rule in E3.
+- **Decisions 3 and 4 answered by the owner on 02-10-2026, as recommended (D-UX-19):** Basic to Ultra luxury on screen (level 5 renamed Bespoke on 03-10-2026, D-UX-20), with your words kept beside them in the data; movable items in sections of their own, on for Interiors and off for Repair. Appliances and Smart home already work this way; Furniture and Soft furnishings join on the same rule in E3.
 - **Decision 2 stands as recommended below.**
 
 

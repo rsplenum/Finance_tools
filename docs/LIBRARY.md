@@ -4,7 +4,7 @@ Generated from `engine/data/library/` by `npm run rules-doc`; edit the data file
 
 Dated 02-10-2026. Read through web-search summaries on 02-10-2026. The pages themselves could not be opened from the session, so every value is as reported and not yet checked against its page (D-UX-18). A value is checked when someone opens the page, reads the figure and sets checked on the source.
 
-312 items in 79 families, from 183 sources. The estimate uses the middle of each range. A family's five levels name one item each (Basic, Standard, Premium, Luxury, Ultra luxury); every other item in the family is an alternative you can choose instead.
+312 items in 79 families, from 183 sources. The estimate uses the middle of each range. A family's five levels name one item each (Basic, Standard, Premium, Luxury, Bespoke); every other item in the family is an alternative you can choose instead.
 
 ## Civil and repairs
 
@@ -97,7 +97,7 @@ In the library:
 | Standard | Glazed vitrified tiles, 800 × 800 mm | Glazed vitrified tiles 800 × 800 mm on tile adhesive, grouted, with matching skirting | Kajaria, Somany, Simpolo, Johnson | Rs. 52–130 a sq ft, material, 12% wastage; plus laying 800 × 800 mm tiles Rs. 30–50 and tile adhesive and grout Rs. 8–18 | [13][14] |
 | Premium | Large vitrified slabs, 800 × 1600 mm | Large glazed vitrified slabs 800 × 1600 mm on tile adhesive, levelled with clips, grouted, with matching skirting | Kajaria Eternity, Simpolo, Somany | Rs. 2,000–3,600 for a box of 2 slabs of 2.56 sq m, material, 12% wastage; plus laying large-format tiles and slabs (1200 × 600 mm and up) Rs. 60–120 and tile adhesive and grout Rs. 8–18 | [13][14] |
 | Luxury | Indian white marble (Ambaji) | Ambaji white marble 18 mm laid in mortar, machine-polished, with marble skirting |  | Rs. 200–400 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70 | [15] our rule |
-| Ultra luxury | Italian marble (Statuario) | Statuario Italian marble 18–20 mm laid in mortar, filled and mirror-polished, with marble skirting |  | Rs. 750–1,400 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70 | [16][17] our rule |
+| Bespoke | Italian marble (Statuario) | Statuario Italian marble 18–20 mm laid in mortar, filled and mirror-polished, with marble skirting |  | Rs. 750–1,400 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70 | [16][17] our rule |
 
 Also in the library:
 
@@ -114,16 +114,16 @@ Also in the library:
 | Makrana white marble | Luxury | Makrana white marble laid in mortar and polished | Rs. 350 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70 | [23] |
 | Italian marble (Carrara) | Luxury | Carrara Italian marble laid, filled and polished | Rs. 250–700 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70 | [16] |
 | Italian marble (Botticino) | Luxury | Botticino Italian marble laid, filled and polished | Rs. 280–700 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70 | [16] |
-| Italian marble (Calacatta) | Ultra luxury | Calacatta Italian marble laid, filled and mirror-polished | Rs. 800–1,850 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70 | [16] |
+| Italian marble (Calacatta) | Bespoke | Calacatta Italian marble laid, filled and mirror-polished | Rs. 800–1,850 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70 | [16] |
 | Laminate wood flooring | Standard | Laminate wood flooring on an underlay, with skirting | Rs. 120–300 a sq ft, supplied and fixed | [24] |
 | Engineered wood flooring | Luxury | Engineered wood flooring with a real-wood top layer, with skirting | Rs. 250–700 a sq ft, supplied and fixed | [24] |
-| Solid hardwood flooring | Ultra luxury | Solid hardwood flooring, sanded and finished (Delhi NCR range) | Rs. 550–1,600 a sq ft, supplied and fixed | [25] |
+| Solid hardwood flooring | Bespoke | Solid hardwood flooring, sanded and finished (Delhi NCR range) | Rs. 550–1,600 a sq ft, supplied and fixed | [25] |
 | SPC click flooring | Standard | SPC (stone plastic composite) click flooring, waterproof, with skirting | Rs. 110–165 a sq ft, material, 10% wastage; plus installing spc flooring Rs. 35–55 | [26] |
 | Premium SPC flooring | Premium | Premium SPC flooring with a thicker wear layer | Rs. 165–240 a sq ft, material, 10% wastage; plus installing spc flooring Rs. 35–55 | [26] |
 | Sheet vinyl | Basic | Sheet vinyl flooring, glued down | Rs. 55–165 a sq ft, supplied and fixed | [26] |
 | Vinyl planks (LVT) | Standard | Luxury vinyl planks | Rs. 85–395 a sq ft, supplied and fixed | [26] |
 | WPC flooring | Premium | Wood plastic composite flooring | Rs. 130–400 a sq ft, supplied and fixed | [26] |
-| Microcement | Ultra luxury | Seamless microcement floor laid by a specialist | Rs. 300–450 a sq ft, supplied and fixed | [27] |
+| Microcement | Bespoke | Seamless microcement floor laid by a specialist | Rs. 300–450 a sq ft, supplied and fixed | [27] |
 | Granite flooring | Premium | Polished granite slabs laid in mortar Rate to be found: only US prices were reported. | Rate to be found |  |
 | Epoxy floor coating | Standard | Self-levelling epoxy floor coating Rate to be found: only US prices were reported. | Rate to be found |  |
 | Athangudi tiles | Premium | Handmade Athangudi cement tiles from Chettinad Rate to be found. | Rate to be found |  |
@@ -138,7 +138,7 @@ Also in the library:
 | Standard | Matt vitrified tiles, 600 × 600 mm | Matt (anti-skid) vitrified tiles 600 × 600 mm on adhesive, laid to fall, grouted | Kajaria, Somany, Nitco | Rs. 40–75 a sq ft, material, 12% wastage; plus laying 600 × 600 mm tiles Rs. 25–40 and tile adhesive and grout Rs. 8–18 | [12][14] |
 | Premium | Matt glazed vitrified tiles, 600 × 1200 mm | Matt glazed vitrified tiles 600 × 1200 mm on adhesive, laid to fall, grouted | Kajaria, Simpolo, Somany | Rs. 48–130 a sq ft, material, 12% wastage; plus laying large-format tiles and slabs (1200 × 600 mm and up) Rs. 60–120 and tile adhesive and grout Rs. 8–18 | [13][14] |
 | Luxury | Matt porcelain slabs, 800 × 1600 mm | Large matt porcelain slabs 800 × 1600 mm on adhesive, laid to fall, grouted | Simpolo, Kajaria Eternity | Rs. 2,000–3,600 for a box of 2 slabs of 2.56 sq m, material, 12% wastage; plus laying large-format tiles and slabs (1200 × 600 mm and up) Rs. 60–120 and tile adhesive and grout Rs. 8–18 | [13][14] |
-| Ultra luxury | Italian marble (Botticino), honed | Botticino Italian marble with a honed anti-skid finish, laid to fall |  | Rs. 280–700 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70 | [16] |
+| Bespoke | Italian marble (Botticino), honed | Botticino Italian marble with a honed anti-skid finish, laid to fall |  | Rs. 280–700 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70 | [16] |
 
 Also in the library:
 
@@ -156,7 +156,7 @@ Also in the library:
 | Standard | Premium emulsion | Putty, primer and two coats of a premium emulsion | Asian Paints Apcolite Premium, Berger Silk | Rs. 18–28 a sq ft, supplied and fixed | [28] |
 | Premium | Luxury emulsion | Putty, primer and two coats of a luxury emulsion | Asian Paints Royale Luxury, Berger Silk Glamor, Dulux Velvet Touch | Rs. 38–58 a sq ft, supplied and fixed | [30] |
 | Luxury | Top-of-range emulsion | Putty, primer and two coats of a top-of-range emulsion | Asian Paints Royale Aspira | Rs. 60–85 a sq ft, supplied and fixed | [30] |
-| Ultra luxury | Top-of-range emulsion | Putty, primer and two coats of a top-of-range emulsion | Asian Paints Royale Aspira | Rs. 60–85 a sq ft, supplied and fixed | [30] |
+| Bespoke | Top-of-range emulsion | Putty, primer and two coats of a top-of-range emulsion | Asian Paints Royale Aspira | Rs. 60–85 a sq ft, supplied and fixed | [30] |
 
 ### Feature wall (sq ft)
 
@@ -166,7 +166,7 @@ Also in the library:
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
 | Luxury | Designer texture paint | Designer texture paint on a feature wall | Asian Paints Royale Play, Berger Illusions | Rs. 80–200 a sq ft, supplied and fixed | [31] |
-| Ultra luxury | Venetian plaster | Venetian plaster on a feature wall by a master applicator |  | Rs. 450–800 a sq ft, supplied and fixed | [27] |
+| Bespoke | Venetian plaster | Venetian plaster on a feature wall by a master applicator |  | Rs. 450–800 a sq ft, supplied and fixed | [27] |
 
 Also in the library:
 
@@ -174,9 +174,9 @@ Also in the library:
 |---|---|---|---|---|
 | Premium texture (metallic, stone, pebble) | Luxury | Premium metallic, stone or pebble texture on a feature wall | Rs. 170–330 a sq ft, supplied and fixed | [31] |
 | Lime wash | Luxury | Lime wash in layers by hand | Rs. 90–180 a sq ft, supplied and fixed | [27] |
-| Microcement | Ultra luxury | Microcement on a wall, by a specialist | Rs. 300–450 a sq ft, supplied and fixed | [27] |
-| Polished stucco | Ultra luxury | Polished stucco by hand | Rs. 300–500 a sq ft, supplied and fixed | [27] |
-| Tadelakt | Ultra luxury | Tadelakt lime plaster, waterproof, by a rare artisan | Rs. 400–650 a sq ft, supplied and fixed | [27] |
+| Microcement | Bespoke | Microcement on a wall, by a specialist | Rs. 300–450 a sq ft, supplied and fixed | [27] |
+| Polished stucco | Bespoke | Polished stucco by hand | Rs. 300–500 a sq ft, supplied and fixed | [27] |
+| Tadelakt | Bespoke | Tadelakt lime plaster, waterproof, by a rare artisan | Rs. 400–650 a sq ft, supplied and fixed | [27] |
 
 ### Wallpaper (sq ft)
 
@@ -188,7 +188,7 @@ In the library:
 | Non-woven wallpaper | Premium | Non-woven wallpaper, hung | Rs. 75–250 a sq ft, material, 10% wastage; plus hanging wallpaper Rs. 30 | [32] our rule |
 | Fabric wallpaper | Luxury | Fabric-backed wallpaper, hung | Rs. 100–300 a sq ft, material, 10% wastage; plus hanging wallpaper Rs. 30 | [32] our rule |
 | Foil wallpaper | Luxury | Metallic foil wallpaper, hung | Rs. 150–400 a sq ft, material, 10% wastage; plus hanging wallpaper Rs. 30 | [32] our rule |
-| 3D wallpaper | Ultra luxury | 3D wallpaper, hung | Rs. 200–500 a sq ft, material, 10% wastage; plus hanging wallpaper Rs. 30 | [32] our rule |
+| 3D wallpaper | Bespoke | 3D wallpaper, hung | Rs. 200–500 a sq ft, material, 10% wastage; plus hanging wallpaper Rs. 30 | [32] our rule |
 
 ### Wall panelling (sq ft)
 
@@ -203,8 +203,8 @@ In the library:
 | Fluted MDF panels | Premium | Fluted MDF panels, painted or laminated, fixed | Rs. 150–350 a sq ft, supplied and fixed | [34] |
 | WPC wall panels | Premium | WPC wall panels, fixed | Rs. 200–600 a sq ft, supplied and fixed | [33] |
 | Veneer panelling | Luxury | Natural wood veneer panelling, polished | Rs. 350–900 a sq ft, supplied and fixed | [33] |
-| Fabric or leatherette panels | Ultra luxury | Upholstered fabric or leatherette panels, sound-absorbing | Rs. 500–1,500 a sq ft, supplied and fixed | [33] |
-| Solid wood or designer panelling | Ultra luxury | Solid wood or designer panelling | Rs. 600–2,500 a sq ft, supplied and fixed | [33] |
+| Fabric or leatherette panels | Bespoke | Upholstered fabric or leatherette panels, sound-absorbing | Rs. 500–1,500 a sq ft, supplied and fixed | [33] |
+| Solid wood or designer panelling | Bespoke | Solid wood or designer panelling | Rs. 600–2,500 a sq ft, supplied and fixed | [33] |
 
 ### Exterior paint (a house) (sq ft)
 
@@ -226,7 +226,7 @@ In the library:
 | Standard | POP false ceiling | Plaster of Paris false ceiling on a GI frame, with a cove for lights |  | Rs. 55–85 a sq ft, supplied and fixed | [37][38] |
 | Premium | Gypsum board false ceiling | Gypsum board false ceiling on a GI frame, jointed and finished, with a cove | Saint-Gobain Gyproc, USG Boral | Rs. 75–110 a sq ft, supplied and fixed | [37] |
 | Luxury | Gypsum false ceiling, designer multi-level | Gypsum board false ceiling on a GI frame with multi-level and profile work, and coves |  | Gypsum board false ceiling + Designer multi-level work, extra over a plain ceiling | [37][38] |
-| Ultra luxury | Wooden false ceiling | Wooden slat or panel false ceiling on a frame, with linear lights |  | Rs. 150–400 a sq ft, supplied and fixed | [37] |
+| Bespoke | Wooden false ceiling | Wooden slat or panel false ceiling on a frame, with linear lights |  | Rs. 150–400 a sq ft, supplied and fixed | [37] |
 
 Also in the library:
 
@@ -234,10 +234,10 @@ Also in the library:
 |---|---|---|---|---|
 | Designer multi-level work, extra over a plain ceiling | Luxury | Multi-level and profile work in the false ceiling, extra over a plain ceiling | Rs. 55–110 a sq ft, supplied and fixed | [38] |
 | Metal grid ceiling | Standard | Exposed metal grid with mineral fibre tiles | Rs. 85–130 a sq ft, supplied and fixed | [38] |
-| Stretch ceiling | Ultra luxury | PVC stretch membrane ceiling, with lights behind | Rs. 200–400 a sq ft, supplied and fixed | [39] |
+| Stretch ceiling | Bespoke | PVC stretch membrane ceiling, with lights behind | Rs. 200–400 a sq ft, supplied and fixed | [39] |
 | GI baffle ceiling | Luxury | GI baffle ceiling | Rs. 150–250 a sq ft, supplied and fixed | [40] |
 | Aluminium baffle ceiling | Luxury | Aluminium baffle ceiling | Rs. 220–350 a sq ft, supplied and fixed | [40] |
-| Acoustic polyester baffles | Ultra luxury | Acoustic polyester fibre baffles | Rs. 850–1,200 a sq ft, supplied and fixed | [40] |
+| Acoustic polyester baffles | Bespoke | Acoustic polyester fibre baffles | Rs. 850–1,200 a sq ft, supplied and fixed | [40] |
 
 ### Cove lighting (running ft)
 
@@ -247,7 +247,7 @@ Also in the library:
 | Standard | Cove lighting | LED strip in an aluminium profile with its driver, along the cove |  | Rs. 80–150 a running ft, supplied and fixed | [37][39] |
 | Premium | Cove lighting | LED strip in an aluminium profile with its driver, along the cove |  | Rs. 80–150 a running ft, supplied and fixed | [37][39] |
 | Luxury | Cove lighting | LED strip in an aluminium profile with its driver, along the cove |  | Rs. 80–150 a running ft, supplied and fixed | [37][39] |
-| Ultra luxury | Cove lighting | LED strip in an aluminium profile with its driver, along the cove |  | Rs. 80–150 a running ft, supplied and fixed | [37][39] |
+| Bespoke | Cove lighting | LED strip in an aluminium profile with its driver, along the cove |  | Rs. 80–150 a running ft, supplied and fixed | [37][39] |
 
 ### Bathroom ceiling (sq ft)
 
@@ -257,7 +257,7 @@ Also in the library:
 | Standard | None at this level | | | | |
 | Premium | PVC ceiling panels | PVC ceiling panels on a frame, moisture-proof |  | Rs. 60–110 a sq ft, supplied and fixed | [37] |
 | Luxury | Aluminium ceiling | Aluminium clip-in or linear metal ceiling, moisture-proof |  | Rs. 120–300 a sq ft, supplied and fixed | [37] |
-| Ultra luxury | Aluminium ceiling | Aluminium clip-in or linear metal ceiling, moisture-proof |  | Rs. 120–300 a sq ft, supplied and fixed | [37] |
+| Bespoke | Aluminium ceiling | Aluminium clip-in or linear metal ceiling, moisture-proof |  | Rs. 120–300 a sq ft, supplied and fixed | [37] |
 
 ## Bathrooms
 
@@ -269,7 +269,7 @@ Also in the library:
 | Standard | Vitrified wall tiles | Vitrified wall tiles on adhesive, grouted (a Rs. 85 a sq ft tile allowance) | Kajaria, Somany, Nitco | Rs. 85 a sq ft, material, 10% wastage; plus fixing wall tiles (walls are slower than floors) Rs. 35–60 and tile adhesive and grout Rs. 8–18 | [41][19] |
 | Premium | Glazed vitrified wall tiles | Glazed vitrified wall tiles on adhesive, grouted (a Rs. 130 a sq ft tile allowance) | Kajaria, Simpolo, Somany | Rs. 130 a sq ft, material, 12% wastage; plus fixing wall tiles (walls are slower than floors) Rs. 35–60 and tile adhesive and grout Rs. 8–18 | [41][14] |
 | Luxury | Porcelain slabs on the walls, 800 × 1600 mm | Large porcelain slabs 800 × 1600 mm on adhesive, grouted | Simpolo, Kajaria Eternity | Rs. 2,000–3,600 for a box of 2 slabs of 2.56 sq m, material, 12% wastage; plus laying large-format tiles and slabs (1200 × 600 mm and up) Rs. 60–120 and tile adhesive and grout Rs. 8–18 | [13][14] |
-| Ultra luxury | Italian marble on the walls (Botticino) | Botticino Italian marble cladding, fixed and polished |  | Rs. 280–700 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70 | [16] our rule |
+| Bespoke | Italian marble on the walls (Botticino) | Botticino Italian marble cladding, fixed and polished |  | Rs. 280–700 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70 | [16] our rule |
 
 ### WC and basin (set)
 
@@ -279,7 +279,7 @@ Also in the library:
 | Standard | Wall-hung WC with cistern, and a wall-hung basin | Extended wall-hung WC with a ceramic cistern, and a wall-hung basin, fixed | Jaquar Continental, Hindware Etios, Cera | Wall-hung WC with ceramic cistern + Wall-hung basin, fixed by 2 × fixing a sanitary fixture or fitting (plumber) | [43][44] |
 | Premium | Wall-hung WC with a concealed cistern, and a table-top basin | Wall-hung rimless WC with a concealed cistern, frame and flush plate, and a table-top basin, fixed | Jaquar, Geberit, Hindware, Cera | Wall-hung WC with ceramic cistern + Concealed cistern with frame and flush plate + Table-top basin, fixed by 2 × fixing a sanitary fixture or fitting (plumber) | [43][45][44] |
 | Luxury | Imported sanitaryware | Imported wall-hung WC with a concealed cistern, and a designer basin, fixed | Kohler, Duravit, Villeroy & Boch, Toto | Rs. 50,000–1,00,000 a set; plus 2 × fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [18][3] |
-| Ultra luxury | Smart WC and a designer stone basin | Smart WC with an integrated bidet seat, and a designer stone basin, fixed | Kohler, Toto | Rs. 1,00,000–1,50,000 a set; plus 2 × fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [46][18] |
+| Bespoke | Smart WC and a designer stone basin | Smart WC with an integrated bidet seat, and a designer stone basin, fixed | Kohler, Toto | Rs. 1,00,000–1,50,000 a set; plus 2 × fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [46][18] |
 
 ### Taps, mixers and shower (set)
 
@@ -289,7 +289,7 @@ Also in the library:
 | Standard | Branded mid-range fittings | Single-lever basin mixer, wall mixer with an overhead shower, health faucet and four angle valves, fixed | Jaquar Florentine | Single-lever basin mixer (Jaquar Florentine) + Wall mixer (Jaquar Florentine) + Overhead shower (Jaquar) + Health faucet (Jaquar) + 4 × Angle valve (Jaquar), fixed by 3 × fixing a sanitary fixture or fitting (plumber) | [49][50][51][48] |
 | Premium | Premium fittings with a concealed diverter | Premium basin mixer, concealed diverter with overhead and hand showers, health faucet and angle valves, fixed | Jaquar Alive, Kohler | Rs. 25,000–1,00,000 a set; plus 3 × fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [18] |
 | Luxury | Luxury fittings with a thermostatic shower | Luxury basin mixer, thermostatic shower system with rain and hand showers, health faucet and valves, fixed | Kohler, Grohe, Hansgrohe | Rs. 1,00,000–2,50,000 a set; plus 3 × fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [18] |
-| Ultra luxury | Designer fittings | Designer basin mixer, thermostatic rain shower system, health faucet and valves, fixed | Axor, Gessi, Dornbracht | Rs. 2,50,000 a set; plus 3 × fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [18] |
+| Bespoke | Designer fittings | Designer basin mixer, thermostatic rain shower system, health faucet and valves, fixed | Axor, Gessi, Dornbracht | Rs. 2,50,000 a set; plus 3 × fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [18] |
 
 ### Shower glass (sq ft)
 
@@ -299,7 +299,7 @@ Also in the library:
 | Standard | 8 mm fixed glass partition | 8 mm toughened glass fixed partition with fittings |  | Rs. 440–660 a sq ft, supplied and fixed; plus GST | [52] |
 | Premium | 10 mm glass with a hinged door | 10 mm toughened glass partition with a hinged door |  | Rs. 660–990 a sq ft, supplied and fixed; plus GST | [52] |
 | Luxury | 10 mm glass sliding enclosure | 10 mm toughened glass sliding enclosure |  | Rs. 990–1,320 a sq ft, supplied and fixed; plus GST | [52] |
-| Ultra luxury | Frameless enclosure, imported hardware | Frameless glass enclosure in thicker glass with imported hardware |  | Rs. 1,200–2,000 a sq ft, supplied and fixed; plus GST | [52] |
+| Bespoke | Frameless enclosure, imported hardware | Frameless glass enclosure in thicker glass with imported hardware |  | Rs. 1,200–2,000 a sq ft, supplied and fixed; plus GST | [52] |
 
 ### Vanity unit (each)
 
@@ -309,7 +309,7 @@ Also in the library:
 | Standard | None at this level | | | | |
 | Premium | Vanity unit with a counter | Vanity unit with a counter and basin, fixed |  | Rs. 15,000–30,000 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [53][54] |
 | Luxury | Designer vanity with a quartz top | Designer vanity with a quartz top and basin, fixed |  | Rs. 30,000–60,000 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [53] |
-| Ultra luxury | Bespoke stone vanity | Bespoke stone vanity, fixed |  | Rs. 60,000 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [53] |
+| Bespoke | Bespoke stone vanity | Bespoke stone vanity, fixed |  | Rs. 60,000 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [53] |
 
 ### Mirror (each)
 
@@ -319,7 +319,7 @@ Also in the library:
 | Standard | LED mirror | Mirror with LED lights, fixed |  | Rs. 2,400–3,500 a each | [56] |
 | Premium | Backlit LED mirror, 18 × 24 in | Backlit LED mirror 450 × 600 mm, fixed |  | Rs. 3,500–5,500 a each | [56] |
 | Luxury | Touch-sensor LED mirror, 24 × 36 in | Touch-sensor LED mirror in three light colours, 600 × 900 mm, fixed |  | Rs. 8,000–12,000 a each | [56] |
-| Ultra luxury | Smart mirror cabinet | Mirror cabinet with LED lights, anti-fog and touch controls, fixed |  | Rs. 25,000 a each | [56] |
+| Bespoke | Smart mirror cabinet | Mirror cabinet with LED lights, anti-fog and touch controls, fixed |  | Rs. 25,000 a each | [56] |
 
 ### Accessories (set)
 
@@ -329,7 +329,7 @@ Also in the library:
 | Standard | Accessories set | Towel rail, toilet-roll holder and double robe hook | Jaquar Continental | Towel rail, 600 mm + Toilet-roll holder + Double robe hook | [57] |
 | Premium | Accessories set | Towel rail, toilet-roll holder and double robe hook | Jaquar Continental | Towel rail, 600 mm + Toilet-roll holder + Double robe hook | [57] |
 | Luxury | Premium accessories set | Premium towel rail, toilet-roll holder and robe hook | Jaquar | Towel rail, premium + Toilet-roll holder, premium + Robe hook, premium | [57] |
-| Ultra luxury | Premium accessories set | Premium towel rail, toilet-roll holder and robe hook | Jaquar | Towel rail, premium + Toilet-roll holder, premium + Robe hook, premium | [57] |
+| Bespoke | Premium accessories set | Premium towel rail, toilet-roll holder and robe hook | Jaquar | Towel rail, premium + Toilet-roll holder, premium + Robe hook, premium | [57] |
 
 ### Geyser (each, appliance)
 
@@ -380,7 +380,7 @@ In the library:
 | Standard | Membrane modular kitchen | Base and wall units: BWR plywood carcass, membrane (PVC) shutters, branded hardware | Hettich, Hafele | Rs. 11,000–15,500 a running ft, supplied and fixed | [61] |
 | Premium | Acrylic modular kitchen | Base and wall units: BWP plywood carcass, high-gloss acrylic shutters, branded hardware with tandem drawers | Hettich, Hafele | Rs. 15,000–22,000 a running ft, supplied and fixed | [61] |
 | Luxury | PU lacquer modular kitchen | Base and wall units: BWP plywood carcass, PU lacquer shutters, premium hardware | Hafele, Blum | Rs. 18,000–28,000 a running ft, supplied and fixed | [61] |
-| Ultra luxury | Lacquered glass modular kitchen | Base and wall units: BWP plywood carcass, lacquered glass shutters, premium hardware | Blum | Rs. 22,000–32,000 a running ft, supplied and fixed | [61] |
+| Bespoke | Lacquered glass modular kitchen | Base and wall units: BWP plywood carcass, lacquered glass shutters, premium hardware | Blum | Rs. 22,000–32,000 a running ft, supplied and fixed | [61] |
 
 ### Kitchen counter (sq ft)
 
@@ -390,13 +390,13 @@ In the library:
 | Standard | Quartz counter | Quartz (engineered stone) counter, fabricated and fixed |  | Rs. 400–800 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300 | [62] our rule |
 | Premium | Solid-surface counter | Solid-surface (Corian) counter with seamless joints, fabricated and fixed | Corian | Rs. 700–1,500 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300 | [62][63] our rule |
 | Luxury | Sintered stone counter | Sintered stone counter, fabricated and fixed |  | Rs. 1,600 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300 | [64] our rule |
-| Ultra luxury | Italian marble counter (Calacatta) | Calacatta Italian marble counter, fabricated, sealed and fixed |  | Rs. 800–1,850 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300 | [16] our rule |
+| Bespoke | Italian marble counter (Calacatta) | Calacatta Italian marble counter, fabricated, sealed and fixed |  | Rs. 800–1,850 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300 | [16] our rule |
 
 Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Premium solid surface | Ultra luxury | Premium solid-surface counter (DuPont and high-end finishes) | Rs. 1,500–4,000 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300 | [63] |
+| Premium solid surface | Bespoke | Premium solid-surface counter (DuPont and high-end finishes) | Rs. 1,500–4,000 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300 | [63] |
 | Indian marble counter | Standard | Indian marble counter, fabricated and fixed | Rs. 300–700 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300 | [62] |
 
 ### Kitchen sink (each)
@@ -407,7 +407,7 @@ Also in the library:
 | Standard | Stainless steel 304 sink | Grade 304 stainless steel sink, fixed | Glen, Franke | Rs. 5,836–20,796 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [66] |
 | Premium | Quartz sink | Quartz composite sink, fixed | Carysil | Rs. 5,500–13,500 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [65] |
 | Luxury | Granite double-bowl sink with drainboard | Granite composite double-bowl sink with a drainboard, fixed | Franke | Rs. 20,792–21,192 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [65] |
-| Ultra luxury | Premium quartz sink, 39 × 19.5 in | Premium large quartz sink, fixed | Nirali Granio | Rs. 31,314 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [67] |
+| Bespoke | Premium quartz sink, 39 × 19.5 in | Premium large quartz sink, fixed | Nirali Granio | Rs. 31,314 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [67] |
 
 ### Sink mixer (each)
 
@@ -417,7 +417,7 @@ Also in the library:
 | Standard | Wall-mounted sink mixer | Wall-mounted sink mixer with a swinging spout, fixed |  | Rs. 700–4,910 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [68] |
 | Premium | Single-lever sink mixer (Jaquar) | Single-lever sink mixer, fixed | Jaquar | Rs. 6,720–9,800 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [68] |
 | Luxury | Single-lever sink mixer (Jaquar) | Single-lever sink mixer, fixed | Jaquar | Rs. 6,720–9,800 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [68] |
-| Ultra luxury | Single-lever sink mixer (Jaquar) | Single-lever sink mixer, fixed | Jaquar | Rs. 6,720–9,800 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [68] |
+| Bespoke | Single-lever sink mixer (Jaquar) | Single-lever sink mixer, fixed | Jaquar | Rs. 6,720–9,800 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600 | [68] |
 
 ### Cabinet hardware upgrade (set)
 
@@ -427,7 +427,7 @@ Also in the library:
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
 | Luxury | None at this level | | | | |
-| Ultra luxury | Blum hardware throughout | Blum hinges, tandem boxes and lift-ups throughout, extra over standard hardware | Blum | Rs. 40,000–1,00,000 a set | [69] |
+| Bespoke | Blum hardware throughout | Blum hinges, tandem boxes and lift-ups throughout, extra over standard hardware | Blum | Rs. 40,000–1,00,000 a set | [69] |
 
 ### Cabinet hardware, piece by piece (each)
 
@@ -440,9 +440,9 @@ In the library:
 | Soft-close drawer channel, a pair (Hettich, Hafele) | Standard | Soft-close drawer channels | Rs. 700–2,500 a each | [69] |
 | Soft-close drawer channel, a pair (Blum) | Luxury | Soft-close drawer channels | Rs. 1,800–4,500 a each | [69] |
 | Tandem drawer system (Hettich, Hafele) | Premium | Tandem or box drawer system | Rs. 2,500–7,000 a each | [69] |
-| Tandem drawer system (Blum) | Ultra luxury | Tandem or box drawer system | Rs. 5,000–12,000 a each | [69] |
+| Tandem drawer system (Blum) | Bespoke | Tandem or box drawer system | Rs. 5,000–12,000 a each | [69] |
 | Lift-up fitting (Hettich, Hafele) | Premium | Lift-up fitting for a wall unit | Rs. 1,500–6,000 a each | [69] |
-| Lift-up fitting (Blum Aventos) | Ultra luxury | Lift-up fitting for a wall unit | Rs. 3,500–10,000 a each | [69] |
+| Lift-up fitting (Blum Aventos) | Bespoke | Lift-up fitting for a wall unit | Rs. 3,500–10,000 a each | [69] |
 
 ## Wardrobes and storage
 
@@ -454,7 +454,7 @@ In the library:
 | Standard | Hinged wardrobe, BWP plywood | Hinged wardrobe: BWP plywood or HDHMR carcass, laminate shutters, soft-close hinges | Hettich, Hafele | Rs. 1,800–2,600 a sq ft, supplied and fixed | [71] |
 | Premium | Sliding wardrobe | Sliding wardrobe: BWP plywood carcass, laminate or acrylic shutters, branded sliding gear | Hettich, Hafele | Rs. 2,200–3,200 a sq ft, supplied and fixed | [71] |
 | Luxury | Floor-to-ceiling wardrobe, acrylic, PU or veneer | Floor-to-ceiling wardrobe: BWP plywood carcass, acrylic, PU or veneer shutters, premium hardware | Hafele, Blum | Rs. 2,600–4,500 a sq ft, supplied and fixed | [71] |
-| Ultra luxury | Floor-to-ceiling sliding wardrobe, glass or acrylic | Floor-to-ceiling sliding wardrobe in glass or acrylic, with internal lights and premium hardware | Blum, Hafele | Rs. 3,200–5,500 a sq ft, supplied and fixed | [71] |
+| Bespoke | Floor-to-ceiling sliding wardrobe, glass or acrylic | Floor-to-ceiling sliding wardrobe in glass or acrylic, with internal lights and premium hardware | Blum, Hafele | Rs. 3,200–5,500 a sq ft, supplied and fixed | [71] |
 
 ### Loft above the wardrobe (sq ft)
 
@@ -464,7 +464,7 @@ In the library:
 | Standard | Loft units | Loft units above the wardrobe, matching shutters |  | Rs. 900 a sq ft, supplied and fixed | [71] |
 | Premium | Loft units | Loft units above the wardrobe, matching shutters |  | Rs. 900 a sq ft, supplied and fixed | [71] |
 | Luxury | None at this level | | | | |
-| Ultra luxury | None at this level | | | | |
+| Bespoke | None at this level | | | | |
 
 ### Fixed storage units (sq ft)
 
@@ -474,7 +474,7 @@ In the library:
 | Standard | Storage unit, BWP plywood | Fixed storage unit: BWP plywood or HDHMR carcass, laminate shutters, soft-close hardware |  | Rs. 1,800–2,600 a sq ft, supplied and fixed | [71] our rule |
 | Premium | Storage unit, acrylic | Fixed storage unit: BWP plywood carcass, acrylic shutters |  | Rs. 2,200–3,200 a sq ft, supplied and fixed | [71] our rule |
 | Luxury | Storage unit, PU or veneer | Fixed storage unit: BWP plywood carcass, PU or veneer shutters, premium hardware |  | Rs. 2,600–4,500 a sq ft, supplied and fixed | [71] our rule |
-| Ultra luxury | Storage unit, glass or lacquer | Fixed storage unit in glass or lacquer, with lights |  | Rs. 3,200–5,500 a sq ft, supplied and fixed | [71] our rule |
+| Bespoke | Storage unit, glass or lacquer | Fixed storage unit in glass or lacquer, with lights |  | Rs. 3,200–5,500 a sq ft, supplied and fixed | [71] our rule |
 
 ### Shutter finishes (part of the rate above) (sq ft)
 
@@ -487,7 +487,7 @@ In the library:
 | Veneer shutters | Premium | Veneer shutter finish | Rs. 600–1,100 a sq ft, supplied and fixed | [71] |
 | Glass or mirror shutters | Luxury | Glass or mirror shutter finish | Rs. 700–1,400 a sq ft, supplied and fixed | [71] |
 | Acrylic shutters | Luxury | Acrylic shutter finish | Rs. 900–1,500 a sq ft, supplied and fixed | [71] |
-| PU paint shutters | Ultra luxury | PU paint shutter finish | Rs. 1,000–1,800 a sq ft, supplied and fixed | [71] |
+| PU paint shutters | Bespoke | PU paint shutter finish | Rs. 1,000–1,800 a sq ft, supplied and fixed | [71] |
 
 ## Doors and windows
 
@@ -499,7 +499,7 @@ In the library:
 | Standard | Solid teak main door | Solid teak main door with frame and hardware, fixed |  | Rs. 18,000–28,000 a each, supplied and fixed | [73] |
 | Premium | Branded steel safety door | Branded steel safety door: frame, shutter, lock and installation | Godrej, Tata Pravesh | Rs. 25,000–45,000 a each, supplied and fixed | [73] |
 | Luxury | Designer main door | Designer main door package: shutter, frame, hardware and installation |  | Rs. 35,000–80,000 a each, supplied and fixed | [73] |
-| Ultra luxury | Bespoke solid teak main door | Bespoke solid teak main door, carved or pivot-hung, with frame and hardware |  | Rs. 35,000–2,00,000 a each, supplied and fixed | [73] |
+| Bespoke | Bespoke solid teak main door | Bespoke solid teak main door, carved or pivot-hung, with frame and hardware |  | Rs. 35,000–2,00,000 a each, supplied and fixed | [73] |
 
 ### Digital lock on the main door (each)
 
@@ -509,7 +509,7 @@ In the library:
 | Standard | None at this level | | | | |
 | Premium | Digital lock | Digital lock with PIN and card | Godrej | Rs. 10,000–25,000 a each | [74] |
 | Luxury | Digital lock with fingerprint | Digital lock with fingerprint, PIN and app | Yale | Rs. 15,000–35,000 a each | [74] |
-| Ultra luxury | Five-way digital lock | Five-way digital lock for the front door | Hafele | Rs. 57,819 a each | [75] |
+| Bespoke | Five-way digital lock | Five-way digital lock for the front door | Hafele | Rs. 57,819 a each | [75] |
 
 ### Room door (each)
 
@@ -519,7 +519,7 @@ In the library:
 | Standard | Laminated door with a hardwood frame | Flush door laminated both sides, hardwood frame, hinges, lock and handle, fitted |  | Rs. 7,000–8,000 a each, supplied and fixed | [76] |
 | Premium | Membrane door | Membrane-pressed door with a WPC frame, hinges, lock and handle, fitted |  | Membrane door shutter + WPC door frame, ready-made + Door hardware set, fixed by fitting a door: frame, shutter and hardware | [77][78][76] |
 | Luxury | Veneered door | Veneered and polished door with a WPC frame, hinges, lock and handle, fitted |  | Veneered door shutter, polished + WPC door frame, ready-made + Door hardware set, fixed by fitting a door: frame, shutter and hardware | [79][78][76] |
-| Ultra luxury | Veneered door with concealed hinges | Veneered and polished door on three concealed hinges, with a WPC frame, lock and handle, fitted |  | Veneered door shutter, polished + WPC door frame, ready-made + Door hardware set + 3 × Concealed hinge, fixed by fitting a door: frame, shutter and hardware | [79][80][76] |
+| Bespoke | Veneered door with concealed hinges | Veneered and polished door on three concealed hinges, with a WPC frame, lock and handle, fitted |  | Veneered door shutter, polished + WPC door frame, ready-made + Door hardware set + 3 × Concealed hinge, fixed by fitting a door: frame, shutter and hardware | [79][80][76] |
 
 ### Bathroom door (each)
 
@@ -535,14 +535,14 @@ In the library:
 | Standard | uPVC sliding window | uPVC sliding window with glass, fixed |  | Rs. 450–1,200 a sq ft, supplied and fixed | [82] |
 | Premium | uPVC sliding window, premium brand | Premium-brand uPVC sliding window with toughened glass, fixed | Fenesta | Rs. 700–1,200 a sq ft, supplied and fixed | [83] |
 | Luxury | uPVC window, double glazed | uPVC window with double-glazed units, fixed | Fenesta | Rs. 950–1,400 a sq ft, supplied and fixed | [83] |
-| Ultra luxury | System aluminium window, double glazed | Certified system aluminium window with double glazing and branded hardware, fixed | Schüco, Tostem | Rs. 1,180–2,680 a sq ft, supplied and fixed; plus GST | [84] |
+| Bespoke | System aluminium window, double glazed | Certified system aluminium window with double glazing and branded hardware, fixed | Schüco, Tostem | Rs. 1,180–2,680 a sq ft, supplied and fixed; plus GST | [84] |
 
 Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
 | Aluminium 2-track sliding window, premium 29 mm | Premium | Premium 29 mm aluminium 2-track sliding window | Rs. 1,200–1,400 a sq ft, supplied and fixed; plus GST | [84] |
-| System casement window | Ultra luxury | System aluminium casement window | Rs. 1,280–2,920 a sq ft, supplied and fixed; plus GST | [84] |
+| System casement window | Bespoke | System aluminium casement window | Rs. 1,280–2,920 a sq ft, supplied and fixed; plus GST | [84] |
 | Aluminium 2-track sliding door | Premium | Aluminium 2-track sliding door to a balcony | Rs. 1,850–2,250 a sq ft, supplied and fixed; plus GST | [84] |
 
 ### Mosquito mesh (sq ft)
@@ -553,7 +553,7 @@ Also in the library:
 | Standard | Pleated mosquito mesh | Pleated mosquito mesh on the windows |  | Rs. 200 a sq ft, supplied and fixed | [85] |
 | Premium | Pleated mosquito mesh | Pleated mosquito mesh on the windows |  | Rs. 200 a sq ft, supplied and fixed | [85] |
 | Luxury | Pleated mosquito mesh | Pleated mosquito mesh on the windows |  | Rs. 200 a sq ft, supplied and fixed | [85] |
-| Ultra luxury | Pleated mosquito mesh | Pleated mosquito mesh on the windows |  | Rs. 200 a sq ft, supplied and fixed | [85] |
+| Bespoke | Pleated mosquito mesh | Pleated mosquito mesh on the windows |  | Rs. 200 a sq ft, supplied and fixed | [85] |
 
 ### Door shutters, frames and hardware, one by one (each)
 
@@ -568,7 +568,7 @@ In the library:
 | Flush door shutter, BWP or laminated | Standard | BWP or laminated flush door shutter | Rs. 2,000–4,000 a each | [76] |
 | WPC door frame, ready-made | Standard | Ready-made WPC door frame | Rs. 1,500–3,500 a each | [78] |
 | Door hardware set | Basic | Hinges, lock or latch, handle and stopper | Rs. 800–3,000 a each | [76] |
-| Concealed hinge | Ultra luxury | Concealed door hinge | Rs. 65–848 a each | [80] |
+| Concealed hinge | Bespoke | Concealed door hinge | Rs. 65–848 a each | [80] |
 
 ### Grills (sq ft)
 
@@ -601,8 +601,8 @@ In the library:
 | SS railing with glass on brackets | Premium | SS railing with glass panels on brackets | Rs. 900–1,600 a running ft, supplied and fixed | [90] |
 | Glass railing in a channel | Luxury | Glass railing in a continuous channel | Rs. 1,200–2,200 a running ft, supplied and fixed | [90] |
 | Frameless glass railing on spigots | Luxury | Frameless glass railing on spigots | Rs. 1,400–2,500 a running ft, supplied and fixed | [90] |
-| Frameless balcony glass railing | Ultra luxury | Frameless balcony glass railing, 12 mm toughened or laminated glass | Rs. 1,850–2,850 a running ft, supplied and fixed | [91] |
-| Frameless staircase glass railing | Ultra luxury | Frameless staircase glass railing | Rs. 2,450–3,350 a running ft, supplied and fixed | [91] |
+| Frameless balcony glass railing | Bespoke | Frameless balcony glass railing, 12 mm toughened or laminated glass | Rs. 1,850–2,850 a running ft, supplied and fixed | [91] |
+| Frameless staircase glass railing | Bespoke | Frameless staircase glass railing | Rs. 2,450–3,350 a running ft, supplied and fixed | [91] |
 
 ## Electrical and lights
 
@@ -614,7 +614,7 @@ In the library:
 | Standard | Concealed wiring, branded wire and plates | One point: branded FR copper wire in concealed conduit, with branded modular switches and plates | Polycab, Havells, Legrand Mylinc, Schneider Livia | Rs. 1,400–2,200 a each, supplied and fixed | [92][93] |
 | Premium | Concealed wiring, premium switches | One point: branded FR copper wire, premium modular switches and plates, extra dedicated circuits | Legrand Arteor, Schneider Zencelo, Legrand Myrius | Rs. 2,300–3,800 a each, supplied and fixed | [92][93] |
 | Luxury | Concealed wiring, premium switches | One point: branded FR copper wire, premium modular switches and plates, extra dedicated circuits | Legrand Arteor, Schneider Zencelo, Legrand Myrius | Rs. 2,300–3,800 a each, supplied and fixed | [92][93] |
-| Ultra luxury | KNX wired automation | One point on a KNX wired automation system: lights, scenes, curtains and climate | Schneider KNX, ABB KNX, Lutron | Rs. 8,000–18,000 a each, supplied and fixed | [94] |
+| Bespoke | KNX wired automation | One point on a KNX wired automation system: lights, scenes, curtains and climate | Schneider KNX, ABB KNX, Lutron | Rs. 8,000–18,000 a each, supplied and fixed | [94] |
 
 ### Distribution board (set)
 
@@ -630,7 +630,7 @@ In the library:
 | Standard | COB LED downlight | COB LED downlight or spot, fixed |  | Rs. 450–652 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [99] |
 | Premium | COB swivel downlight | Premium COB swivel downlight, fixed | Polycab Pearl | Rs. 2,250–4,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [99] |
 | Luxury | COB downlight with a metre of profile light | Premium COB downlight and one metre of LED profile light, fixed |  | COB swivel downlight + LED profile light, a metre | [99][100] |
-| Ultra luxury | COB downlight with a metre of profile light | Premium COB downlight and one metre of LED profile light, fixed |  | COB swivel downlight + LED profile light, a metre | [99][100] |
+| Bespoke | COB downlight with a metre of profile light | Premium COB downlight and one metre of LED profile light, fixed |  | COB swivel downlight + LED profile light, a metre | [99][100] |
 
 Also in the library:
 
@@ -646,7 +646,7 @@ Also in the library:
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
 | Luxury | None at this level | | | | |
-| Ultra luxury | Decorative LED chandelier | Decorative LED chandelier over the dining table, fixed |  | Rs. 9,700–76,100 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [102] |
+| Bespoke | Decorative LED chandelier | Decorative LED chandelier over the dining table, fixed |  | Rs. 9,700–76,100 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [102] |
 
 ### Ceiling fans (each)
 
@@ -656,7 +656,7 @@ Also in the library:
 | Standard | BLDC fan with remote | 1200 mm energy-saving BLDC fan with remote, fixed | Orient Zeno, Havells Ambrose, Atomberg Renesa | Rs. 2,999–3,690 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [104] |
 | Premium | Premium BLDC fan | Premium BLDC fan with remote and app, fixed | Atomberg | Rs. 3,500–10,500 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [105] |
 | Luxury | Designer fan | Designer ceiling fan, fixed | Polycab Superia | Rs. 10,850–15,999 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [106] |
-| Ultra luxury | Premium designer fan | Premium designer ceiling fan, fixed |  | Rs. 23,900 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [106] |
+| Bespoke | Premium designer fan | Premium designer ceiling fan, fixed |  | Rs. 23,900 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [106] |
 
 ### Exhaust fans (each)
 
@@ -666,7 +666,7 @@ Also in the library:
 | Standard | Exhaust fan, 150 mm, copper winding | 150 mm exhaust fan with copper winding, fixed | Crompton Ventair | Rs. 1,000–1,500 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [107] |
 | Premium | Exhaust fan, 150 mm, premium | 150 mm exhaust fan, 110 CFM, copper winding, fixed | Havells VentilAir DX | Rs. 1,200–1,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [107][108] |
 | Luxury | Exhaust fan, 150 mm, premium | 150 mm exhaust fan, 110 CFM, copper winding, fixed | Havells VentilAir DX | Rs. 1,200–1,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [107][108] |
-| Ultra luxury | Exhaust fan, 150 mm, premium | 150 mm exhaust fan, 110 CFM, copper winding, fixed | Havells VentilAir DX | Rs. 1,200–1,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [107][108] |
+| Bespoke | Exhaust fan, 150 mm, premium | 150 mm exhaust fan, 110 CFM, copper winding, fixed | Havells VentilAir DX | Rs. 1,200–1,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [107][108] |
 
 ### Electrical parts, one by one (each)
 
@@ -720,7 +720,7 @@ In the library:
 | Standard | Auto-clean chimney, 60 cm | 60 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Glen, Elica | Rs. 9,000–20,000 a each | [113] |
 | Premium | Auto-clean chimney, 90 cm | 90 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Elica | Rs. 13,000–32,000 a each | [113] |
 | Luxury | Auto-clean chimney, 90 cm | 90 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Elica | Rs. 13,000–32,000 a each | [113] |
-| Ultra luxury | Auto-clean chimney, 90 cm | 90 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Elica | Rs. 13,000–32,000 a each | [113] |
+| Bespoke | Auto-clean chimney, 90 cm | 90 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Elica | Rs. 13,000–32,000 a each | [113] |
 
 ### Built-in hob (each, appliance)
 
@@ -730,7 +730,7 @@ In the library:
 | Standard | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | Rs. 13,000–33,000 a each | [114] |
 | Premium | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | Rs. 13,000–33,000 a each | [114] |
 | Luxury | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | Rs. 13,000–33,000 a each | [114] |
-| Ultra luxury | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | Rs. 13,000–33,000 a each | [114] |
+| Bespoke | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | Rs. 13,000–33,000 a each | [114] |
 
 ### Built-in oven (each, appliance)
 
@@ -740,7 +740,7 @@ In the library:
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
 | Luxury | Built-in oven | Built-in electric oven in a tall unit | Faber, IFB, Kaff | Rs. 27,257–79,667 a each | [115] |
-| Ultra luxury | Premium built-in oven | Premium high-capacity built-in oven | Bosch, Siemens, Hafele | Rs. 38,000–1,90,000 a each | [115] |
+| Bespoke | Premium built-in oven | Premium high-capacity built-in oven | Bosch, Siemens, Hafele | Rs. 38,000–1,90,000 a each | [115] |
 
 ### Dishwasher (each, appliance)
 
@@ -750,7 +750,7 @@ In the library:
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
 | Luxury | Dishwasher | Dishwasher, connected | Bosch, IFB, LG | Rs. 16,990–54,990 a each | [116] |
-| Ultra luxury | Dishwasher | Dishwasher, connected | Bosch, IFB, LG | Rs. 16,990–54,990 a each | [116] |
+| Bespoke | Dishwasher | Dishwasher, connected | Bosch, IFB, LG | Rs. 16,990–54,990 a each | [116] |
 
 ### Water purifier (each, appliance)
 
@@ -760,7 +760,7 @@ In the library:
 | Standard | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | Rs. 10,000–22,000 a each | [117] |
 | Premium | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | Rs. 10,000–22,000 a each | [117] |
 | Luxury | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | Rs. 10,000–22,000 a each | [117] |
-| Ultra luxury | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | Rs. 10,000–22,000 a each | [117] |
+| Bespoke | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | Rs. 10,000–22,000 a each | [117] |
 
 ### Air conditioners (each, appliance)
 
@@ -770,7 +770,7 @@ In the library:
 | Standard | None at this level | | | | |
 | Premium | Split AC, 1.5 ton, 5-star inverter | 1.5-ton 5-star inverter split AC, installed with 3 m of copper pipe | Voltas, Daikin, Godrej, LG | Rs. 31,290–51,663 a each; plus installing a split ac with up to 3 m of pipe Rs. 1,500–3,500 | [118][119] |
 | Luxury | Split AC, 1.5 ton, 5-star inverter | 1.5-ton 5-star inverter split AC, installed with 3 m of copper pipe | Voltas, Daikin, Godrej, LG | Rs. 31,290–51,663 a each; plus installing a split ac with up to 3 m of pipe Rs. 1,500–3,500 | [118][119] |
-| Ultra luxury | Split AC, 1.5 ton, 5-star inverter | 1.5-ton 5-star inverter split AC, installed with 3 m of copper pipe | Voltas, Daikin, Godrej, LG | Rs. 31,290–51,663 a each; plus installing a split ac with up to 3 m of pipe Rs. 1,500–3,500 | [118][119] |
+| Bespoke | Split AC, 1.5 ton, 5-star inverter | 1.5-ton 5-star inverter split AC, installed with 3 m of copper pipe | Voltas, Daikin, Godrej, LG | Rs. 31,290–51,663 a each; plus installing a split ac with up to 3 m of pipe Rs. 1,500–3,500 | [118][119] |
 
 ## Smart home and security
 
@@ -782,7 +782,7 @@ In the library:
 | Standard | None at this level | | | | |
 | Premium | Video door phone | Video door phone with an indoor screen, fixed | Godrej, Hikvision | Rs. 5,919–19,299 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [120] |
 | Luxury | Video door phone | Video door phone with an indoor screen, fixed | Godrej, Hikvision | Rs. 5,919–19,299 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [120] |
-| Ultra luxury | Video door phone | Video door phone with an indoor screen, fixed | Godrej, Hikvision | Rs. 5,919–19,299 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [120] |
+| Bespoke | Video door phone | Video door phone with an indoor screen, fixed | Godrej, Hikvision | Rs. 5,919–19,299 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70 | [120] |
 
 ### Smart switches (each)
 
@@ -792,7 +792,7 @@ In the library:
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
 | Luxury | Wi-Fi smart switch, per light point | Wi-Fi smart switch module for one light point, app and voice control |  | Rs. 800–1,500 a each | [121] |
-| Ultra luxury | None at this level | | | | |
+| Bespoke | None at this level | | | | |
 
 ### CCTV (set)
 
@@ -802,7 +802,7 @@ In the library:
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
 | Luxury | CCTV, 4 cameras | Four cameras with a recorder, a hard disk and cabling | Hikvision, CP Plus | Rs. 8,000–18,000 a set; plus installing a 4-camera cctv set Rs. 2,000–4,000 | [122] |
-| Ultra luxury | CCTV, 4 cameras | Four cameras with a recorder, a hard disk and cabling | Hikvision, CP Plus | Rs. 8,000–18,000 a set; plus installing a 4-camera cctv set Rs. 2,000–4,000 | [122] |
+| Bespoke | CCTV, 4 cameras | Four cameras with a recorder, a hard disk and cabling | Hikvision, CP Plus | Rs. 8,000–18,000 a set; plus installing a 4-camera cctv set Rs. 2,000–4,000 | [122] |
 
 ### Smart-home parts and packages (each)
 
@@ -810,10 +810,10 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Wi-Fi smart switch, premium, 1 gang | Ultra luxury | Premium Wi-Fi smart switch, one gang | Rs. 4,000–8,000 a each | [121] |
+| Wi-Fi smart switch, premium, 1 gang | Bespoke | Premium Wi-Fi smart switch, one gang | Rs. 4,000–8,000 a each | [121] |
 | Smart home, 2BHK, basic | Premium | Smart switches, a door lock, curtains and a video door phone for a 2BHK, basic | Rs. 50,000–1,00,000 a set, supplied and fixed | [121] |
 | Smart home, 3BHK, basic | Premium | Smart home for a 3BHK, basic | Rs. 1,00,000–2,00,000 a set, supplied and fixed | [121] |
-| KNX automation, a 3BHK | Ultra luxury | KNX wired automation for a 3BHK, basic From Rs. 8 lakh, as reported. | Rs. 8,00,000 a set, supplied and fixed | [94] |
+| KNX automation, a 3BHK | Bespoke | KNX wired automation for a 3BHK, basic From Rs. 8 lakh, as reported. | Rs. 8,00,000 a set, supplied and fixed | [94] |
 
 ## Furniture and furnishings (movable)
 

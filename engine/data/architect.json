@@ -7,7 +7,7 @@
     { "n": 2, "name": "Standard", "owner": "Upper class", "means": "What most new flats are sold with: branded mid-range materials and a few comforts" },
     { "n": 3, "name": "Premium", "owner": "High", "means": "Premium Indian and mainstream international brands, better finishes, more lighting" },
     { "n": 4, "name": "Luxury", "owner": "Luxury", "means": "International premium brands, natural stone, designer finishes, tiles to the ceiling" },
-    { "n": 5, "name": "Ultra luxury", "owner": "Ultra luxury", "means": "Imported designer brands, bespoke joinery, Italian marble, home automation" }
+    { "n": 5, "name": "Bespoke", "owner": "Ultra luxury", "means": "Imported designer brands, bespoke joinery, Italian marble, home automation" }
   ],
   "sections": [
     { "id": "civil", "name": "Civil and repairs", "slider": false },
@@ -187,7 +187,7 @@
   },
   "feature": {
     "living": 4, "master": 5,
-    "src": ["own"], "why": "A feature wall from Luxury: the living room's longer wall; at Ultra luxury also the wall behind the main bed (the bedroom's shorter wall)."
+    "src": ["own"], "why": "A feature wall from Luxury: the living room's longer wall; at Bespoke also the wall behind the main bed (the bedroom's shorter wall)."
   },
   "points": {
     "living": { "lights": 3, "fans": 2, "sockets": 3, "ac": 1, "tv": 1 },

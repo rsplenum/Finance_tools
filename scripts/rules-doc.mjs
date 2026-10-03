@@ -156,7 +156,7 @@ function rateText(e) {
 const cell = (x) => String(x ?? '').replace(/\|/g, '/');
 const lib = ['# The library', '', 'Generated from `engine/data/library/` by `npm run rules-doc`; edit the data files, not this page.', '',
   `Dated ${date(sources.date)}. ${sources.status}`, '',
-  `${entries.size} items in ${files.reduce((t, f) => t + f.families.length, 0)} families, from ${Object.keys(sources.sources).length} sources. The estimate uses the middle of each range. A family's five levels name one item each (Basic, Standard, Premium, Luxury, Ultra luxury); every other item in the family is an alternative you can choose instead.`, ''];
+  `${entries.size} items in ${files.reduce((t, f) => t + f.families.length, 0)} families, from ${Object.keys(sources.sources).length} sources. The estimate uses the middle of each range. A family's five levels name one item each (${A.levels.map((l) => l.name).join(', ')}); every other item in the family is an alternative you can choose instead.`, ''];
 for (const f of files) {
   lib.push(`## ${f.title}`, '');
   if (f.status) lib.push(f.status, '');
