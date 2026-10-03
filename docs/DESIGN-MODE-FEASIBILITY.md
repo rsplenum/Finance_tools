@@ -83,7 +83,7 @@ Your list, plus what an architect would add. "Fixed" means the same at every lev
 | Element | In the library now | Fixed or choice | When |
 |---|---|---|---|
 | Walls (masonry) | Bricks, AAC blocks; plaster | Fixed (the engineer's specification) | E5, thin in this PR |
-| Roof and floor slabs, columns, beams, foundation | Cement, steel, sand, aggregate | Fixed, by an engineer's design | E5 |
+| Roof and floor slabs, columns, beams, foundation | Cement, steel, sand, aggregate; labour by stage | Fixed, by an engineer's design | E5, thin in this PR |
 | Flooring and tiles | 37 items, five levels | Choice; anti-skid in wet areas fixed | Now |
 | Plumbing | Supply and drain points | Pipes fixed; fittings a choice | Now |
 | Electrical wiring | ISI copper wire at Basic; board with RCCB fixed | Safe minimum fixed; brands and automation a choice | Now |
@@ -92,7 +92,7 @@ Your list, plus what an architect would add. "Fixed" means the same at every lev
 | Wall paint | Inside and outside families | Choice, separately inside and out | Now, outside with E5 |
 | Doors | 44 items | Choice; bathroom door water-resistant, fixed | Now |
 | Kitchen cabinets | 29 items | Choice; carcass at least water-resistant | Now |
-| Stairs | Railings | Structure fixed; railing and finish a choice | E5 (railing); 2D plan (geometry) |
+| Stairs | Railings, five levels | Structure fixed; railing and finish a choice | Railing in this PR; finish in E5; geometry with the 2D plan |
 | Ceilings, false ceilings | 13 items | Choice | Now |
 | Decoration | Feature walls, wallpaper, panelling | Choice | Now; décor items with the bigger library |
 | Appliances | 8 items | Choice, movable | Now |
@@ -101,8 +101,8 @@ Your list, plus what an architect would add. "Fixed" means the same at every lev
 | Waterproofing | 7 items | Fixed | Now |
 | Heating and cooling | Air conditioners, fans | Choice; their wiring fixed | Now; heat pumps and ducted systems with the bigger library |
 | Solar | None | Choice, with its payback | Value layer |
-| Anti-termite, damp-proof course | None | Fixed | E5 |
-| Terrace, parapet, exterior | Roof waterproofing, exterior paint | Waterproofing fixed; paint a choice | E5 |
+| Anti-termite, damp-proof course | Anti-termite treatment (this PR) | Fixed | This PR; the damp-proof course with E5 |
+| Terrace, parapet, exterior | Terrace waterproofing, exterior paint with five levels | Waterproofing fixed; paint a choice | This PR |
 | Compound wall, gate, paving, drainage | None | Choice of finish | E5, later part |
 | Sump, tank, borewell, septic tank, rainwater harvesting | None | Fixed where the city requires it | E5, later part |
 | Earthing, lightning protection, gas pipeline | Earthing inside the board | Fixed | Bigger library |

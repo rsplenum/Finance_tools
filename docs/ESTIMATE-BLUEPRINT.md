@@ -102,7 +102,11 @@ The owner's insight: the engine, not the user, carries what an architect knows. 
 - Its **five levels** name one item each. Every other item of the family is an alternative for the item drawer: about 30 floor finishes from sheet vinyl to Calacatta marble, 25 wall finishes from economy emulsion to tadelakt, 12 ceilings, 9 windows, 8 railings, and so on.
 - **Items still without a rate** (granite flooring, epoxy, Athangudi and encaustic tiles, carpet) are listed, and cannot be a level's item.
 
-**Not yet:** a house's own works, the terrace, the outside, the compound and the water (E5; its rooms inside are worked out as a flat's, flagged, D-UX-22); furniture and furnishings in the estimate (E3; they are in the library); room sizes typed by the user (More options, E6).
+**Not yet:**
+- for a new house (built thin, D-UX-23): the compound, the water, the structure by stages and CPWD's check (E5);
+- for a house being renovated: its own works, the terrace and the outside (E5; its rooms inside are worked out as a flat's, flagged, D-UX-22);
+- furniture and furnishings in the estimate (E3; they are in the library);
+- room sizes typed by the user (More options, E6).
 
 **Never "architect" on screen.** The Architects Act 1972, s. 37, keeps the title to registered architects (as reported; the Supreme Court has held that it bars the title, not the work). The page says "worked out as an architect would", and the document is a planning estimate that an architect or engineer may adopt and sign.
 
@@ -172,7 +176,7 @@ Jobs mix: the sample renovation quotation combined civil work and interiors (B2)
 
 ### A3. The default path: six questions, then the estimate
 
-1. **What is the work?** Build a house · Add a floor or rooms · Repair or renovate · Interiors.
+1. **What is the work?** Build a house · Add a floor or rooms · Repair or renovate · Interiors. Build a house has been on the page since 03-10-2026 as "Build a new house" (D-UX-23); Add a floor or rooms is still to come.
 2. **Flat or house?** This is asked for repairs and interiors. For building and for extensions it asks instead **How many floors?**:
    - Ground, G+1, G+2 or G+3;
    - for an extension, the floors being added.
@@ -745,7 +749,7 @@ The documents follow the DSCR statement's rules (D-DOC-04 to 06): facts and work
 
 **Page 1, the estimate of cost:**
 - **The title** follows the kind: "Estimate of cost of construction", "of an extension", "of renovation" or "of interiors and furnishing".
-- **Under the title:** "Planning estimate prepared with [the site] on [date]; rates from the sources in Annex 3".
+- **Under the title:** "Planning estimate prepared with [the site] on [date]". The sources are not in the documents (D-DOC-09).
   - When a contractor, architect or engineer adopts it on the professional page and signs it, their name, registration and signature replace this line.
 - **The facts:**
   - the owners;
@@ -767,18 +771,23 @@ The documents follow the DSCR statement's rules (D-DOC-04 to 06): facts and work
 - quantity, unit, rate and amount;
 - section totals.
 
-**Annex 2, terms,** when given:
+**The annexes** are numbered in the order the document holds them, with no gap (D-DOC-09): Annex 1, the detailed estimate; then, when given, the terms and the measurements; then what the estimate assumes. A planning estimate has Annex 1 and Annex 2 (what it assumes).
+
+**The terms,** when given:
 - the payment stages with amounts;
 - the time to finish and the date the quote is valid till;
 - what is not included;
 - the contractor's name, address, GSTIN and PAN;
 - the bank account for payment.
 
-**Annex 3, assumptions and sources:**
-- the rooms and sizes used, the heights and the rules;
-- each rate's source, class and date.
+**What the estimate assumes,** one line each, without reasons or sources (the owner, 03-10-2026):
+- the rooms and sizes used, the bathrooms, the heights, the doors and windows, the electrical points;
+- for a new house, its outline, its floors and the structure's rules of thumb;
+- not what page 1 already says (the city, the date of the rates, the sections).
 
-**Annex 4, measurements,** when the rooms were measured.
+The sources stay in the data and on the page.
+
+**The measurements,** when the rooms were measured.
 
 **Never in it:**
 - a valuer's or panel engineer's certificate or opinion. That is their own document, after their inspection (B11);
@@ -801,6 +810,8 @@ The documents follow the DSCR statement's rules (D-DOC-04 to 06): facts and work
 
 **Built in E1 (03-10-2026):** `overPackage` and `choicesFor` in `engine/architect.ts`, `checkRate` in `engine/architect-check.ts` (D-TECH-16); the page in `site/src/estimate/plan-model.ts` and `PlanEstimate.tsx`; the document in `plan-document.ts` on the `lender-documents` pipeline (D-DOC-08); tests in `tests/plan-page.test.ts`.
 
+**Built for a new house (03-10-2026, D-UX-23, D-DATA-04):** `houseOf` and `measureHouse` in `engine/architect.ts`, drawn again its own way in `architect-check.ts`; the `house` rules in `architect.json`; the structure's materials, labour and treatment in `structure.json`.
+
 **Still to come:** `engine/areas.ts` as in version 1; the total in words is `rupeesWords` in `engine/util.ts`.
 
 ### A17. Build order: thin versions, one session each, merged by the owner
@@ -812,8 +823,8 @@ The documents follow the DSCR statement's rules (D-DOC-04 to 06): facts and work
 | E2 | The library checked against its sources, page by page, once the network allows; the owner's fictional flat, worked at home, as a test | Every level's item checked, or marked as not |
 | E3 | Rooms (sizes, a room's own level), What changed and Compare; the movable sections (Furniture, Soft furnishings, Appliances, Smart home) with the split | As above |
 | E4 | A quotation in hand, and the bill of quantities for quotes (A9) | As above |
-| E5 | A house: Terrace and exterior, External works, Water; Build a house and Add a floor, with the structure by stages; CPWD's plinth-area range as a check | The owner has checked `cost-index.json` and the plinth-area rates against the official texts |
-| E6 | More options (A10); Annexes 2 and 4 | As above |
+| E5 | A house. **Built thin on 03-10-2026 (D-UX-23):** Build a new house, with the floors and the built-up area, the structure at one specification, the terrace, the outside walls and the stair railing. **Still to come:** the structure by stages, External works, Water, Add a floor, a renovated house's own works, CPWD's plinth-area range as a check | The owner has checked `cost-index.json` and the plinth-area rates against the official texts |
+| E6 | More options (A10); the terms and measurements annexes | As above |
 | E7 | The professional page (A11) | A professional the owner trusts uses it for one real estimate of their own |
 | E8 | Later, only if wanted: Fit my budget (A8) | As above |
 
@@ -855,7 +866,7 @@ That settles version 1's decisions 1 and 4. Its decisions 3 and 5 are now in A1 
 - brands are priced by level, not by product (A4);
 - the sliders snap to the five stops (A4);
 - one estimate can mix renovation and interiors sections (A2);
-- the contractor's bank account appears only when entered, and only in Annex 2.
+- the contractor's bank account appears only when entered, and only in the terms' annex.
 
 ---
 
@@ -1364,7 +1375,7 @@ The owner forwarded a second note from Gemini with "take what is useful". It cri
 - Ratios of the carpet area as the method (paint 3.2 times, false ceiling 0.75 times): the engine measures room by room, and a ratio stays a check.
 - "Bank status: 100% immovable real estate work (certified loan-eligible)": eligibility is the lender's call, and no tool certifies it.
 - A "bank valuer vetting report" download: a valuer's report is the valuer's own document (A15).
-- Documents with "zero unverified flags": the document stays a planning estimate with its sources (Annex 3), and the flags stay on the page.
+- Documents with "zero unverified flags": the document stays a planning estimate, and the flags stay on the page. Its sources were in Annex 3 then; they are on the page since D-DOC-09.
 - Rates in TypeScript (`library.ts` with 2026 rates): rates live in dated data files with their sources (CLAUDE.md).
 - A valuer and a bank named from the sample documents: no name or figure from the samples enters the repo.
 - Its check, "all lines sum = all trades sum", adds the same numbers twice; the engine's second computation takes another route.

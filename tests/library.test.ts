@@ -90,7 +90,7 @@ describe('the five levels of every family', () => {
 describe('the rules: every slot fits its family', () => {
   it('every slot names a family in the library and a section, and its quantity fits the family\'s unit', () => {
     const sections = new Set(R.sections.map((s) => s.id));
-    const kind = { area: ['sqft', 'sqm'], length: ['rft', 'm'], count: ['nos', 'set', 'lot'] };
+    const kind = { area: ['sqft', 'sqm'], length: ['rft', 'm'], count: ['nos', 'set', 'lot'], material: ['bag', 'kg', 'cum', 'nos'] };
     for (const [room, slots] of Object.entries(R.templates)) for (const s of slots) {
       const fam = FAMILIES.get(s.family);
       expect(fam, `${room}: ${s.family}`).toBeDefined();

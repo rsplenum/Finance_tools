@@ -11,7 +11,7 @@
     { "id": "door-part", "name": "Door shutters, frames and hardware, one by one", "unit": "nos" },
     { "id": "grill", "name": "Grills", "unit": "sqft" },
     { "id": "sill", "name": "Sills and frames, by the running foot", "unit": "rft" },
-    { "id": "railing", "name": "Railings", "unit": "rft" }
+    { "id": "railing", "name": "Railings", "unit": "rft", "levels": ["rl-ms", "rl-ss", "rl-ss-glass", "rl-spigot", "rl-stair-glass"] }
   ],
   "entries": [
     { "id": "md-laminated", "family": "main-door", "name": "Laminated flush main door", "spec": "Laminated flush main door with frame, lock and hardware, fixed", "level": 1, "unit": "nos", "basis": "installed", "rate": [8000, 18000], "src": ["houseyog-maindoor"] },

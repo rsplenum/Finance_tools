@@ -71,6 +71,7 @@ export function ladder(family: Family, level: number): string | null {
 /** Exact conversions from 1 ft = 0.3048 m. */
 export const SQFT_PER_SQM = 1 / (0.3048 * 0.3048);
 export const FT_PER_M = 1 / 0.3048;
+export const CFT_PER_CUM = 1 / (0.3048 * 0.3048 * 0.3048);
 const AREA: Unit[] = ['sqft', 'sqm'], LENGTH: Unit[] = ['rft', 'm'];
 /** How many of `to` make one `from`; only between units of the same kind. */
 export function per(from: Unit, to: Unit): number {
@@ -84,7 +85,8 @@ export function per(from: Unit, to: Unit): number {
 export const sameKind = (a: Unit, b: Unit) => a === b || (AREA.includes(a) && AREA.includes(b)) || (LENGTH.includes(a) && LENGTH.includes(b));
 
 export const mid = (b: Band) => (b[0] + b[1]) / 2;
-const r2 = (x: number) => Math.round(x * 100) / 100;
+// To the paisa, half up: a millionth of a paisa added so that an exact half (9 × 1.065 = 9.585) is not lost to floating point.
+const r2 = (x: number) => Math.round(x * 100 + 1e-6) / 100;
 // One formatter for every call: toLocaleString builds a new one each time, which made pricing slow on a phone.
 const INR = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
 const inr = (x: number) => INR.format(x);

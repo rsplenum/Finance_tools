@@ -674,6 +674,24 @@ for (const scheme of ['light', 'dark']) {
   const onI = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
   if (onI !== 8 || !(await page.isChecked('#fld-on-appliances')) || !(await page.isChecked('#fld-on-smart'))) v(`interiors show ${onI} sections on, Appliances and Smart home ${await page.isChecked('#fld-on-appliances')}/${await page.isChecked('#fld-on-smart')}`);
   await layout(page, v, 'the estimate as interiors, 390 px');
+  // A new house (A3, D-UX-23): the second question asks the floors and the area is the built-up area, still six
+  // questions; fourteen sections with eleven on, the structure the same at every level; the PDF titled for construction.
+  await page.getByTestId('pl-change').click();
+  await page.check('#fld-work-build');
+  const asked = await page.locator('#six-questions [data-question]').count(), floorsAsked = await page.locator('#fld-floors-2').count();
+  if (asked !== 6 || floorsAsked !== 1 || (await page.locator('#fld-home-flat').count())) v(`a new house asks ${asked} questions (want 6), the floors ${floorsAsked ? '' : 'not '}among them`);
+  await page.check('#fld-floors-2');
+  await leave(page, '#fld-carpet', '2,000');
+  await page.check('#fld-bhk-3');
+  await page.getByTestId('pl-done').click();
+  await expectText(page, v, 'pl-summary', /^Build a new house · G\+1 · Pune · 2,000 sq ft · 3 BHK · \w+$/, 'a new house, folded');
+  const cardsB = await page.locator('[data-testid^="pl-card-"]').count(), onB = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
+  if (cardsB !== 14 || onB !== 11) v(`a new house shows ${cardsB} sections with ${onB} on (want 14 and 11)`);
+  if (!((await page.getByTestId('pl-card-structure').textContent()) ?? '').includes('The same at every level')) v('the structure is not the same at every level');
+  if (!((await page.locator('#pl-result').textContent()) ?? '').includes('a sq ft of built-up area')) v('a new house\'s cost a sq ft is not of the built-up area');
+  const pdfB = await pdfPages((await save('pl-download-pdf')).bytes).catch((e) => [`(not read: ${e.message})`]);
+  if (!pdfB[0].includes('Estimate of cost of construction') || !pdfB[0].includes('Built-up area 2,000 sq ft')) v(`a new house's PDF reads "${pdfB[0].slice(0, 160)}"`);
+  await layout(page, v, 'the estimate as a new house, 390 px');
   await ctx.close();
 }
 

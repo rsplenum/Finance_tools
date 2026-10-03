@@ -59,9 +59,70 @@ describe('measuring by IS 1200, by hand (the living room above, ceiling 2.9 m)',
   });
 });
 
+describe('a new house: G+1, 2,000 sq ft built up, 3 BHK, in Pune at Basic, by hand (D-UX-23)', () => {
+  const house = (x: Partial<ArchitectInput> = {}) => architect({ kind: 'build', floors: 2, city: 'pune', area: 2000, bhk: '3', level: 1, ...x }) as ArchitectEstimate;
+  const e = house();
+  it('the outline: 1,000 sq ft (92.9030 sq m) a floor, 1.25 times as long as wide, is 10.7763 × 8.6210 m; its 230 mm outer walls take 2 × 0.23 × 19.3973 − 4 × 0.23² = 8.7112 sq m and the stair 2.5 × 4.5 = 11.25 sq m a floor, so 185.8061 − 2 × 19.9612 = 145.8837 sq m (1,570.28 sq ft) is left for the rooms', () => {
+    expect([e.house?.l.toFixed(4), e.house?.b.toFixed(4), e.house?.wall.toFixed(4)]).toEqual(['10.7763', '8.6210', '8.7112']);
+    expect(e.carpetSqft.toFixed(2)).toBe('1570.28');
+    expect(house({ floors: 1, area: 1000 }).house?.stair).toBe(0);
+  });
+  it('the structure, against Brick&Bolt\'s worked 1,000 sq ft house (350–450 bags of cement, 3–4 t of steel, 1,200–1,600 cft of sand, 1,500–2,000 cft of aggregate, 8,000–10,000 bricks): the middle of each, 1,400 cft = 39.64 cu m and 1,750 cft = 49.55 cu m', () => {
+    const g = house({ floors: 1, area: 1000 });
+    expect(['cement:struct:cement', 'steel:struct:steel', 'sand:struct:sand', 'coarse-aggregate:struct:aggregate', 'brick:struct:bricks'].map((k) => line(g, `flat:${k}`)?.qty)).toEqual([400, 3500, 39.64, 49.55, 9000]);
+  });
+  it('the rates: cement Rs. 387.50 + 3.5% wastage = 401.06 a bag; steel 57 + 4% = 59.28 a kg; a brick 9 + 6.5% = 9.585, half up 9.59; RCC labour 180 × Pune\'s 0.969072 = 174.43 a sq ft', () => {
+    expect(line(e, 'flat:cement:struct:cement')).toMatchObject({ qty: 800, rate: 401.06, amount: 320848 });
+    expect(line(e, 'flat:steel:struct:steel')).toMatchObject({ qty: 7000, rate: 59.28, amount: 414960 });
+    expect(line(e, 'flat:brick:struct:bricks')).toMatchObject({ qty: 18000, rate: 9.59, amount: 172620 });
+    expect(line(e, 'flat:labour-rcc:built-up')).toMatchObject({ qty: 2000, rate: 174.43, amount: 348860 });
+    expect(checkRate('mu-brick', 'pune')).toBe(9.59);
+  });
+  it('the terrace: inside the parapet 10.3163 × 8.1610 = 84.19 sq m, and 36.9547 m × 0.3 m up it = 11.09 sq m: 95.28 sq m = 1,025.57 sq ft, an APP membrane at every level', () => {
+    expect(line(e, 'flat:roof-waterproofing:terrace')).toMatchObject({ qty: 1025.57, entry: 'wp-app', level: null });
+    expect(line(house({ level: 5 }), 'flat:roof-waterproofing:terrace')?.entry).toBe('wp-app');
+  });
+  it('the outside walls: 38.7947 m × (2 × 3.05 + 1.0 m of parapet) = 275.44 sq m, and the parapet\'s inside 36.9547 × 1.0 = 36.95 sq m: 312.40 sq m = 3,362.61 sq ft of economy emulsion at Basic', () => {
+    expect(line(e, 'flat:exterior-paint:exterior-walls')).toMatchObject({ qty: 3362.61, entry: 'ex-ace' });
+  });
+  it('the stair railing: one stair of two flights of √(2.2² + 1.525²) = 2.6769 m and 0.3 m at the landing, 5.6538 m = 18.55 rft; none in a house of one floor', () => {
+    expect(line(e, 'flat:railing:stair-railing')).toMatchObject({ qty: 18.55, entry: 'rl-ms' });
+    expect(line(house({ floors: 1, area: 1000 }), 'flat:railing:stair-railing')).toBeUndefined();
+  });
+  it('the sections: the structure, waterproofing, the terrace and outside, and every finish and service inside; no civil repairs; new wiring and a board', () => {
+    expect(e.sections.map((x) => x.id)).toEqual(['structure', 'waterproofing', 'exterior', 'flooring', 'walls', 'ceiling', 'bathrooms', 'kitchen', 'wardrobes', 'doors', 'electrical', 'plumbing', 'appliances', 'smart']);
+    expect(e.sections.filter((x) => x.on).length).toBe(11);
+    expect(e.lines.filter((l) => l.family === 'wiring').length).toBeGreaterThan(0);
+    expect(line(e, 'flat:db:one')).toBeDefined();
+    expect(run().sections.map((x) => x.id)).not.toContain('structure');
+  });
+  it('the structure is the same at every level; the strip moves only what is above it', () => {
+    const lv = (n: Level) => house({ level: n }).sections.find((x) => x.id === 'structure')?.amount;
+    expect(new Set([1, 2, 3, 4, 5].map((n) => lv(n as Level))).size).toBe(1);
+    const s = strip({ kind: 'build', floors: 2, city: 'pune', area: 2000, bhk: '3', level: 1 }) as number[];
+    expect(s[0]).toBe(e.total);
+    expect(s.every((x, i) => i === 0 || x > s[i - 1])).toBe(true);
+  });
+  it('the cost a sq ft is of the built-up area; the flags say the structure is by rules of thumb, how the rooms are planned, what is not in yet and the city\'s reported range', () => {
+    expect(e.per).toBe('built-up');
+    expect(e.perSqft).toBeCloseTo(e.total / 2000, 2);
+    for (const start of ['The structure\'s materials and labour are rules of thumb', 'The rooms are planned as one home of 1570 sq ft', 'Not in this estimate yet: the compound wall', `This estimate comes to Rs. ${Math.round(e.perSqft).toLocaleString('en-IN')} a sq ft of built-up area; houses in Pune are reported at Rs. 1,800–2,900`])
+      expect(e.flags.some((f) => f.startsWith(start)), start).toBe(true);
+    expect(e.flags.some((f) => f.startsWith('A house: its rooms inside'))).toBe(false);
+  });
+  it('the second computation draws the house its own way and agrees line by line', () => {
+    const c = architectCheck({ kind: 'build', floors: 2, city: 'pune', area: 2000, bhk: '3', level: 1 });
+    for (const l of e.lines) expect(c.lines.get(l.key)?.qty, l.key).toBeCloseTo(l.qty, 2);
+  });
+  it('a built-up area too small for its floors is asked for again', () => {
+    expect(architect({ kind: 'build', floors: 4, city: 'pune', area: 600, bhk: '2', level: 1 })).toEqual({ needs: ['A larger built-up area: the outer walls and stairs of 4 floors take more than half of it'] });
+  });
+});
+
 describe('the estimate', () => {
   it('asks for what it needs, in order', () => {
-    expect(architectNeeds({})).toEqual(['What the work is: repair or renovate, or interiors', 'Which city', 'The carpet area', 'How many bedrooms', 'Which level']);
+    expect(architectNeeds({})).toEqual(['What the work is: build a new house, repair or renovate, or interiors', 'Which city', 'The carpet area', 'How many bedrooms', 'Which level']);
+    expect(architectNeeds({ kind: 'build' })).toEqual(['How many floors', 'Which city', 'The built-up area of all floors', 'How many bedrooms', 'Which level']);
   });
   it('a house: its rooms inside, worked out as a flat\'s and flagged, with the lines for the whole of it named so', () => {
     const h = run({ property: 'house' }), f = run();

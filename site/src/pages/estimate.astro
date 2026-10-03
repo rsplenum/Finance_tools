@@ -3,12 +3,12 @@ import Base from '../Base.astro';
 import { EstimateCalculator } from '../estimate/Estimate';
 import { PlanEstimate } from '../estimate/PlanEstimate';
 ---
-<Base name="Renovation or interiors estimate" description="Six questions about your home, then every room, item and rate worked out as an architect would, at five levels, with a planning estimate to download for a lender.">
-  <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Renovation or interiors estimate</h1>
+<Base name="Construction, renovation or interiors estimate" description="A new house, a renovation or interiors: six questions about your home, then every room, item and rate worked out as an architect would, at five levels, with a planning estimate to download for a lender.">
+  <h1 class="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">Construction, renovation or interiors estimate</h1>
   <p class="mt-3 text-slate-600 dark:text-slate-300">Six questions. Every room, item and rate worked out as an architect would, at five levels.</p>
   <div class="mt-2"><PlanEstimate client:load /></div>
   <details id="typed-path" class="mt-12 border-t border-slate-200 pt-6 dark:border-slate-800">
-    <summary class="cursor-pointer font-medium text-teal-800 underline-offset-4 hover:underline dark:text-teal-300">Building a house, or have a contractor’s quotation? Type its items instead</summary>
+    <summary class="cursor-pointer font-medium text-teal-800 underline-offset-4 hover:underline dark:text-teal-300">Have a contractor’s quotation? Type its items instead</summary>
     <div class="mt-2"><EstimateCalculator client:load /></div>
   </details>
 </Base>

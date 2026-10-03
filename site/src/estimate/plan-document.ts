@@ -49,7 +49,7 @@ export function planDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
   const facts: [string, string][][] = [
     [['Owner', owner || 'Still needed']],
     [['Property', ok(f.property) || 'Still needed']],
-    [['Work', `${v.kind}, ${v.home.toLowerCase()}, ${v.bhk}`], ['Carpet area', v.area]],
+    [['Work', `${v.kind}, ${['Flat', 'House'].includes(v.home) ? v.home.toLowerCase() : v.home}, ${v.bhk}`], [v.areaName, v.area]],
     [['City', v.city], ['Level', v.level]],
     [['Lender', ok(f.lender) || 'Not given'], ['Rates as of', v.ratesDate]],
   ];
@@ -71,7 +71,7 @@ export function planDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
   blocks.push({ kind: 'text', text: `In words: ${v.words}` });
   blocks.push({ kind: 'figures', items: [
     { label: 'Total estimated cost', value: `Rs. ${v.total}` },
-    { label: 'Cost per sq ft', value: `Rs. ${v.perSqft}`, note: 'of carpet area' },
+    { label: 'Cost per sq ft', value: `Rs. ${v.perSqft}`, note: `of ${v.areaName.toLowerCase()}` },
   ] });
   if (v.split) blocks.push({ kind: 'table', table: { columns: [{ label: 'Of the total' }, { label: 'Rupees' }], rows: v.split.map((x) => ({ cells: [{ text: x.label }, cell(x.amount, x.n)] })) } });
   blocks.push({ kind: 'signature', lines: [`For ${by || 'the engineer or architect who adopts this estimate'}`, '', 'Signature and seal', 'Name and registration number:', 'Date:', 'Place:'] });

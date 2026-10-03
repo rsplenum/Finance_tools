@@ -925,6 +925,51 @@
       "what": "Architect fees in India: the COA scale of charges",
       "url": "https://www.archiease.com/articles/architect-fees-india/",
       "class": "4"
+    },
+    "bricknbolt-1000": {
+      "what": "Brick&Bolt: construction material quantity estimation for a 1000 sq ft house (rules of thumb a sq ft, wastage)",
+      "url": "https://www.bricknbolt.com/blogs-and-articles/construction-guide/construction-material-quantity-estimation-for-1000-sqft-of-house-construction",
+      "class": "4"
+    },
+    "infralens-materials": {
+      "what": "InfraLens: cement, sand and steel for a 1000 sq ft house (more steel in seismic zones IV and V)",
+      "url": "https://infralens.in/knowledge/cement-sand-steel-for-1000-sqft-house",
+      "class": "4"
+    },
+    "houseyog-labour": {
+      "what": "HouseYog: house construction labour rate a sq ft in India, by stage",
+      "url": "https://www.houseyog.com/blog/house-construction-labour-rate-per-sq-ft/",
+      "class": "4"
+    },
+    "houseyog-rcc": {
+      "what": "HouseYog: RCC work labour cost in India, 2026 (shuttering usually included)",
+      "url": "https://www.houseyog.com/blog/rcc-work-labour-cost-india/",
+      "class": "4"
+    },
+    "99acres-termite": {
+      "what": "99acres: anti-termite treatment, technique and price in India",
+      "url": "https://www.99acres.com/articles/anti-termite-treatment.html",
+      "class": "4"
+    },
+    "comaron-termite": {
+      "what": "Comaron: termite treatment for new construction in India, 2026",
+      "url": "https://www.comaron.com/blog/termite-treatment-new-construction-india-2026-complete-prevention-guide",
+      "class": "4"
+    },
+    "infralens-stairs": {
+      "what": "InfraLens: staircase design (IS 456, NBC 2016), a dog-legged stair in a 2.5 × 4.5 m well",
+      "url": "https://infralens.in/knowledge/staircase-design-calculation",
+      "class": "R"
+    },
+    "jivial-parapet": {
+      "what": "Jivial Railings: parapet railing design for terraces in India, heights",
+      "url": "https://www.jivialrailings.com/blog/parapet-railing-design-terrace-india",
+      "class": "4"
+    },
+    "aapka-hyderabad": {
+      "what": "AapkaPainter: painting cost in Hyderabad (Ace exterior emulsion, all in)",
+      "url": "https://aapkapainter.com/blog/painting-cost-in-hyderabad/",
+      "class": "4"
     }
   }
 }

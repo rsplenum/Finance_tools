@@ -5,10 +5,10 @@
  * drawer's rates are each worked out twice there; this file only words, groups and orders them.
  */
 import {
-  BHKS, CITIES, LEVELS, R, SECTIONS, WORK_KINDS, architect, architectNeeds, choicesFor, levelName, overPackage, strip,
+  BHKS, CITIES, FLOORS, LEVELS, R, WORK_KINDS, architect, architectNeeds, choicesFor, levelName, overPackage, strip,
   type ArchitectEstimate, type ArchitectInput, type Bhk, type Choice, type Level, type Line, type WorkKind,
 } from '../../../engine/architect';
-import { CLASSES, LIBRARY_DATE, PER, SOURCE, type ItemKind, type Unit } from '../../../engine/library';
+import { CLASSES, LIBRARY_DATE, PER, SOURCE, SQFT_PER_SQM, type ItemKind, type Unit } from '../../../engine/library';
 import { parseAmount } from '../../../engine/parse';
 import { inr, rupeesWords } from '../../../engine/util';
 
@@ -17,8 +17,11 @@ export type AreaUnit = 'sqft' | 'sqm';
 /** What only the document needs, asked beside the download. */
 export interface PlanFacts { owner: string; property: string; lender: string; preparedBy: string }
 export interface PlanState {
-  kind?: WorkKind; home?: Home; city?: string;
-  /** The carpet area as typed, in `unit`. */
+  kind?: WorkKind; home?: Home;
+  /** A new house's floors, asked instead of flat or house (A3). */
+  floors?: number;
+  city?: string;
+  /** The carpet area as typed, or a new house's built-up area of all floors, in `unit`. */
   area: string; unit: AreaUnit; bhk?: Bhk;
   /** The package: the level chosen in question 6, or on the strip. */
   level?: Level;
@@ -38,6 +41,7 @@ export const EMPTY_PLAN: PlanState = {
 // ---- The six questions (A3) ----
 
 export const WORK_CHOICES: { value: WorkKind; label: string; hint: string }[] = [
+  { value: 'build', label: WORK_KINDS.build.label, hint: 'On your plot: the structure, the terrace and outside walls, and every finish inside' },
   { value: 'renovate', label: WORK_KINDS.renovate.label, hint: 'Floors, walls, bathrooms, kitchen, doors, wiring and plumbing renewed' },
   { value: 'interiors', label: WORK_KINDS.interiors.label, hint: 'Wardrobes, kitchen, ceilings, lights, paint and appliances in a finished home' },
 ];
@@ -45,6 +49,7 @@ export const HOME_CHOICES: { value: Home; label: string; hint?: string }[] = [
   { value: 'flat', label: 'Flat' },
   { value: 'house', label: 'House', hint: 'The rooms inside, worked out as for a flat' },
 ];
+export const FLOOR_CHOICES = FLOORS.map((f) => ({ value: String(f.n), label: f.label, hint: f.n === 1 ? 'One storey' : `${f.n} storeys` }));
 export const OTHER_CITY = 'other';
 export const CITY_CHOICES = [...CITIES.map((c) => ({ value: c.id, label: c.name })), { value: OTHER_CITY, label: 'Another place (the six cities’ average)' }];
 export const BHK_CHOICES = BHKS.map((b) => ({ value: b.id, label: b.id === '5' ? '5+ BHK' : b.label }));
@@ -68,17 +73,20 @@ export function heightOf(t: string): number | null | undefined {
 export function inputOf(s: PlanState): ArchitectInput {
   const area = plainOf(s.area), h = heightOf(s.height);
   return {
-    kind: s.kind, property: s.home, city: s.city, ...(typeof area === 'number' ? { area } : {}), areaUnit: s.unit, bhk: s.bhk, level: s.level,
+    kind: s.kind, property: s.kind === 'build' ? 'house' : s.home, ...(s.kind === 'build' && s.floors ? { floors: s.floors } : {}),
+    city: s.city, ...(typeof area === 'number' ? { area } : {}), areaUnit: s.unit, bhk: s.bhk, level: s.level,
     sections: s.sections, sliders: s.sliders, items: s.items, ...(typeof h === 'number' ? { heightM: h } : {}),
   };
 }
 
-/** What is still needed, in the order asked. */
+/** What is still needed, in the order asked. A new house's floors come from the engine; the others ask flat or house. */
 export function planNeeds(s: PlanState): string[] {
   const needs = architectNeeds(inputOf(s));
-  if (!s.home) needs.splice(s.kind ? 0 : 1, 0, 'Flat or house');
+  if (!s.home && s.kind !== 'build') needs.splice(s.kind ? 0 : 1, 0, 'Flat or house');
   return needs;
 }
+/** The area question's words, by the kind (A3). */
+export const areaLabel = (kind?: WorkKind) => (kind === 'build' ? 'Built-up area of all floors' : 'Carpet area, as in your agreement');
 
 // ---- Changes, as the page makes them ----
 
@@ -115,7 +123,7 @@ const rateText = (n: number) => inr(n, Number.isInteger(n) ? 0 : 2);
 /** A quantity to two places, without trailing zeros: 12.5, 40. */
 export const qtyText = (n: number) => inr(n, 2).replace(/\.?0+$/, '');
 /** A line's quantity as estimates show it: areas and lengths to two places, counts whole. */
-const lineQty = (n: number, u: Unit) => (['nos', 'set', 'lot', 'bag'].includes(u) && Number.isInteger(n) ? inr(n) : inr(n, 2));
+const lineQty = (n: number, u: Unit) => (['nos', 'set', 'lot', 'bag', 'kg'].includes(u) && Number.isInteger(n) ? inr(n) : inr(n, 2));
 export const rateWords = (n: number, u: Unit) => `Rs. ${rateText(n)} ${UNIT_RATE[u]}`;
 /** A total in lakhs or crores for the strip, where five must fit across a phone: 8.46 L, 1.23 Cr. */
 export function shortRupees(n: number): string {
@@ -125,7 +133,7 @@ export function shortRupees(n: number): string {
 }
 const dmy = (iso: string) => iso.split('-').reverse().join('-');
 const KIND_WORD: Record<ItemKind, string> = { fixed: 'Fixed works', movable: 'Movable items', appliance: 'Appliances' };
-export const TITLE: Record<WorkKind, string> = { renovate: 'Estimate of cost of renovation', interiors: 'Estimate of cost of interiors and furnishing' };
+export const TITLE: Record<WorkKind, string> = { build: 'Estimate of cost of construction', renovate: 'Estimate of cost of renovation', interiors: 'Estimate of cost of interiors and furnishing' };
 
 /** A source, numbered in order of first use; `cls` is its class (1 to 4, R or O) in sources.json. */
 export interface SourceView { id: string; no: number; what: string; url: string; cls: string }
@@ -149,6 +157,8 @@ export interface BarView { id: string; name: string; amount: string; n: number; 
 export interface AssumedView { what: string; shown: string; why: string; sources: SourceView[] }
 export interface PlanView {
   summary: string; title: string; kind: string; home: string; city: string; area: string; bhk: string; level: string;
+  /** "Carpet area", or "Built-up area" for a new house: the area typed and the one the cost a sq ft is of. */
+  areaName: string;
   total: string; perSqft: string; words: string; n: { total: number; perSqft: number };
   strip: StripView[]; bar: BarView[]; sections: SectionView[];
   /** Fixed works, movable items and appliances, when there is more than fixed works. */
@@ -189,14 +199,13 @@ function viewOf(s: PlanState, e: ArchitectEstimate, levels: number[], over: Reco
   };
   const pkg = levelName(e.level);
   let no = 0;
-  const sections: SectionView[] = SECTIONS.map((meta) => {
-    const t = e.sections.find((x) => x.id === meta.id) as ArchitectEstimate['sections'][number];
-    const ls = e.lines.filter((l) => l.section === meta.id);
+  const sections: SectionView[] = e.sections.map((t) => {
+    const ls = e.lines.filter((l) => l.section === t.id);
     const sectionNo = t.on && ls.length ? ++no : 0;
     const lines = ls.map((l, i) => lineView(s, l, `${sectionNo}.${i + 1}`, sourceOf));
-    const d = over[meta.id] ?? 0;
+    const d = over[t.id] ?? 0;
     return {
-      id: meta.id, no: sectionNo, name: meta.name, on: t.on, slider: t.slider, level: t.level, levelName: t.level ? levelName(t.level) : '',
+      id: t.id, no: sectionNo, name: t.name, on: t.on, slider: t.slider, level: t.level, levelName: t.level ? levelName(t.level) : '',
       amount: rupees(t.amount), n: t.amount,
       ...(Math.round(d) !== 0 ? { over: { text: `Rs. ${rupees(Math.abs(d))} ${d > 0 ? 'more' : 'less'} than ${pkg}`, n: d } } : {}),
       spec: specOf(ls), where: whereOf(ls, e), mixed: ls.filter((l) => l.chosen).length, lines,
@@ -209,12 +218,15 @@ function viewOf(s: PlanState, e: ArchitectEstimate, levels: number[], over: Reco
     : undefined;
   const assumed = e.assumptions.map((a) => ({ what: a.what, shown: a.shown, why: a.why, sources: a.src.filter((x) => x !== 'own').map(sourceOf) }));
   const listed = CITIES.some((c) => c.id === e.city), city = listed ? e.cityName : 'Another place';
-  const area = s.unit === 'sqm' ? `${qtyText(e.carpetSqm)} sq m (${qtyText(e.carpetSqft)} sq ft)` : `${qtyText(e.carpetSqft)} sq ft (${qtyText(e.carpetSqm)} sq m)`;
-  const kind = WORK_KINDS[e.kind].label, home = e.property === 'house' ? 'House' : 'Flat', bhk = BHK_CHOICES.find((b) => b.value === e.bhk)?.label ?? e.bhk;
+  // The area as typed: the carpet area, or a new house's built-up area.
+  const sqm = e.house ? e.house.builtSqm : e.carpetSqm, sqft = e.house ? e.house.builtSqm * SQFT_PER_SQM : e.carpetSqft;
+  const area = s.unit === 'sqm' ? `${qtyText(sqm)} sq m (${qtyText(sqft)} sq ft)` : `${qtyText(sqft)} sq ft (${qtyText(sqm)} sq m)`;
+  const kind = WORK_KINDS[e.kind].label, bhk = BHK_CHOICES.find((b) => b.value === e.bhk)?.label ?? e.bhk;
+  const home = e.house ? FLOORS[e.house.floors - 1].label : e.property === 'house' ? 'House' : 'Flat';
   return {
     // Each answer kept on one line (no-break spaces inside it), so a phone wraps only between answers.
-    summary: [kind, home, city, s.unit === 'sqm' ? `${qtyText(e.carpetSqm)} sq m` : `${qtyText(e.carpetSqft)} sq ft`, bhk, pkg].map((x) => x.replace(/ /g, '\u00a0')).join(' · '),
-    title: TITLE[e.kind], kind, home, city, area, bhk, level: pkg,
+    summary: [kind, home, city, s.unit === 'sqm' ? `${qtyText(sqm)} sq m` : `${qtyText(sqft)} sq ft`, bhk, pkg].map((x) => x.replace(/ /g, '\u00a0')).join(' · '),
+    title: TITLE[e.kind], kind, home, city, area, bhk, level: pkg, areaName: e.per === 'built-up' ? 'Built-up area' : 'Carpet area',
     total: rupees(e.total), perSqft: rupees(e.perSqft), words: rupeesWords(e.total), n: { total: e.total, perSqft: e.perSqft },
     strip: levels.map((n, i) => ({ level: (i + 1) as Level, name: LEVEL_NAMES[i], total: shortRupees(n), full: rupees(n), n, current: i + 1 === e.level })),
     bar, sections, ...(split ? { split } : {}), assumed, flags: e.flags,

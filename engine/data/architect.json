@@ -10,8 +10,10 @@
     { "n": 5, "name": "Bespoke", "owner": "Ultra luxury", "means": "Imported designer brands, bespoke joinery, Italian marble, home automation" }
   ],
   "sections": [
-    { "id": "civil", "name": "Civil and repairs", "slider": false },
+    { "id": "structure", "name": "Structure", "slider": false, "kinds": ["build"] },
+    { "id": "civil", "name": "Civil and repairs", "slider": false, "kinds": ["renovate", "interiors"] },
     { "id": "waterproofing", "name": "Waterproofing", "slider": false },
+    { "id": "exterior", "name": "Terrace, exterior and stairs", "slider": true, "kinds": ["build"] },
     { "id": "flooring", "name": "Flooring", "slider": true },
     { "id": "walls", "name": "Walls and paint", "slider": true },
     { "id": "ceiling", "name": "Ceiling", "slider": true },
@@ -25,6 +27,11 @@
     { "id": "smart", "name": "Smart home and security", "slider": true }
   ],
   "kinds": {
+    "build": {
+      "label": "Build a new house",
+      "on": ["structure", "waterproofing", "exterior", "flooring", "walls", "ceiling", "bathrooms", "kitchen", "doors", "electrical", "plumbing"],
+      "why": "A new house: its structure, the terrace and the outside walls, and every finish and service inside. Wardrobes, appliances and smart controls are often bought later, so they start off and can be switched on."
+    },
     "renovate": {
       "label": "Repair or renovate",
       "on": ["civil", "waterproofing", "flooring", "walls", "ceiling", "bathrooms", "kitchen", "doors", "electrical", "plumbing"],
@@ -225,13 +232,34 @@
     "paintRatio": [2.5, 3.5],
     "src": ["own"], "why": "Walls and ceilings to paint usually come to 2.5–3.5 times the carpet area; outside that, check the room sizes."
   },
+  "house": {
+    "shape": { "aspect": 1.25, "src": ["own"], "why": "A new house's outline about 1.25 times as long as it is wide, as on a 30 × 40 ft plot after its setbacks; its outer walls one brick (230 mm) thick, as for the reveals." },
+    "slab": { "m": 0.15, "src": ["own"], "why": "Each floor's slab 150 mm thick, usual for a house's spans, so a floor is the ceiling height plus 150 mm." },
+    "parapet": { "m": 1.0, "src": ["own", "jivial-parapet"], "why": "A 1.0 m parapet round the terrace, painted on both faces; minimums of 1.0 to 1.2 m are reported." },
+    "terraceUpturn": { "m": 0.3, "src": ["own"], "why": "The terrace's waterproofing turned 300 mm up the parapet, as up a bathroom's walls." },
+    "stair": { "w": 2.5, "l": 4.5, "going": 2.2, "gap": 0.3, "src": ["infralens-stairs", "infralens-nbc"], "why": "A dog-legged stair in a 2.5 × 4.5 m well on each floor of a house of two floors or more: two flights 1.1 m wide, each of 8 treads of 275 mm (2.2 m), a 1.2 m landing and 0.3 m between the flights (InfraLens's worked example, as reported); the Code's limits for a house are a 190 mm riser and a 250 mm tread (as reported). Its railing runs along both flights and the landing's edge." },
+    "thumb": { "cement": 0.4, "steel": 3.5, "sand": 1.4, "aggregate": 1.75, "bricks": 9, "src": ["bricknbolt-1000", "infralens-materials"], "why": "The middle of Brick&Bolt's rules of thumb for an RCC house, for each sq ft of built-up area: cement 0.35–0.45 bags, steel 3–4 kg, sand 1.2–1.6 cft, aggregate 1.5–2 cft and 8–10 bricks (as reported), for the foundation, the frame, the slabs, the walls and the plaster. InfraLens reports 15–25% more steel in seismic zones IV and V. A structural engineer's design and quantities replace them." }
+  },
   "templates": {
     "flat": [
       { "family": "protection", "section": "civil", "qty": "protect" },
       { "family": "cleaning", "section": "civil", "qty": "carpet" },
       { "family": "debris", "section": "civil", "qty": "debris", "kinds": ["renovate"] },
       { "family": "making-good", "section": "civil", "qty": "making-good", "kinds": ["renovate"] },
-      { "family": "db", "section": "electrical", "qty": "one", "kinds": ["renovate"] },
+      { "family": "db", "section": "electrical", "qty": "one", "kinds": ["renovate", "build"] },
+      { "family": "anti-termite", "section": "structure", "qty": "plinth", "kinds": ["build"] },
+      { "family": "cement", "section": "structure", "qty": "struct:cement", "kinds": ["build"] },
+      { "family": "steel", "section": "structure", "qty": "struct:steel", "kinds": ["build"] },
+      { "family": "sand", "section": "structure", "qty": "struct:sand", "kinds": ["build"] },
+      { "family": "coarse-aggregate", "section": "structure", "qty": "struct:aggregate", "kinds": ["build"] },
+      { "family": "brick", "section": "structure", "qty": "struct:bricks", "kinds": ["build"] },
+      { "family": "labour-foundation", "section": "structure", "qty": "built-up", "kinds": ["build"] },
+      { "family": "labour-rcc", "section": "structure", "qty": "built-up", "kinds": ["build"] },
+      { "family": "labour-masonry", "section": "structure", "qty": "built-up", "kinds": ["build"] },
+      { "family": "labour-plaster", "section": "structure", "qty": "built-up", "kinds": ["build"] },
+      { "family": "roof-waterproofing", "section": "exterior", "qty": "terrace", "kinds": ["build"] },
+      { "family": "exterior-paint", "section": "exterior", "qty": "exterior-walls", "kinds": ["build"] },
+      { "family": "railing", "section": "exterior", "qty": "stair-railing", "kinds": ["build"], "name": "Stair railing" },
       { "family": "video-door-phone", "section": "smart", "qty": "one" },
       { "family": "cctv", "section": "smart", "qty": "one" }
     ],
@@ -242,7 +270,7 @@
       { "family": "feature-wall", "section": "walls", "qty": "feature" },
       { "family": "false-ceiling", "section": "ceiling", "qty": "false-ceiling" },
       { "family": "cove", "section": "ceiling", "qty": "cove" },
-      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate"] },
+      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate", "build"] },
       { "family": "lights", "section": "electrical", "qty": "light-points" },
       { "family": "fans", "section": "electrical", "qty": "fan-points" },
       { "family": "chandelier", "section": "electrical", "qty": "one" },
@@ -260,7 +288,7 @@
       { "family": "feature-wall", "section": "walls", "qty": "feature" },
       { "family": "false-ceiling", "section": "ceiling", "qty": "false-ceiling" },
       { "family": "cove", "section": "ceiling", "qty": "cove" },
-      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate"] },
+      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate", "build"] },
       { "family": "lights", "section": "electrical", "qty": "light-points" },
       { "family": "fans", "section": "electrical", "qty": "fan-points" },
       { "family": "wardrobe", "section": "wardrobes", "qty": "wardrobe" },
@@ -281,7 +309,7 @@
       { "family": "sink", "section": "kitchen", "qty": "one" },
       { "family": "sink-mixer", "section": "kitchen", "qty": "one" },
       { "family": "hardware-upgrade", "section": "kitchen", "qty": "one" },
-      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate"] },
+      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate", "build"] },
       { "family": "lights", "section": "electrical", "qty": "light-points", "maxLevel": 3 },
       { "family": "exhaust", "section": "electrical", "qty": "exhaust-points" },
       { "family": "supply-point", "section": "plumbing", "qty": "supply-points" },
@@ -308,7 +336,7 @@
       { "family": "bath-ceiling", "section": "bathrooms", "qty": "floor" },
       { "family": "geyser", "section": "bathrooms", "qty": "one" },
       { "family": "paint", "section": "walls", "qty": "paint" },
-      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate"] },
+      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate", "build"] },
       { "family": "lights", "section": "electrical", "qty": "light-points", "maxLevel": 3 },
       { "family": "exhaust", "section": "electrical", "qty": "exhaust-points" },
       { "family": "supply-point", "section": "plumbing", "qty": "supply-points" },
@@ -321,7 +349,7 @@
       { "family": "paint", "section": "walls", "qty": "paint" },
       { "family": "false-ceiling", "section": "ceiling", "qty": "false-ceiling" },
       { "family": "cove", "section": "ceiling", "qty": "cove" },
-      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate"] },
+      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate", "build"] },
       { "family": "lights", "section": "electrical", "qty": "light-points" },
       { "family": "carpentry", "section": "wardrobes", "qty": "unit:shoes", "name": "Shoe rack" },
       { "family": "main-door", "section": "doors", "qty": "main-door" },
@@ -332,7 +360,7 @@
       { "family": "demolish-floor", "section": "civil", "qty": "floor", "kinds": ["renovate"], "needs": "flooring" },
       { "family": "waterproofing", "section": "waterproofing", "qty": "wp-balcony" },
       { "family": "floor-wet", "section": "flooring", "qty": "floor-skirting", "name": "Floor tiles, anti-skid" },
-      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate"] },
+      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate", "build"] },
       { "family": "lights", "section": "electrical", "qty": "light-points", "maxLevel": 3 },
       { "family": "drain-point", "section": "plumbing", "qty": "drain-points" }
     ]
