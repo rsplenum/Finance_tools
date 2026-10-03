@@ -346,6 +346,8 @@ export interface LineView {
 export interface SectionView {
   id: string; no: number; name: string; on: boolean; slider: boolean; level: Level | null; levelName: string;
   amount: string; n: number; over?: { text: string; n: number };
+  /** The section's amount in the package at the estimate's level: the list's order, steady while a slider moves (V1). */
+  pkg: number;
   /** The section's main items at this level, in one line, and where they go. */
   spec: string; where: string;
   /** Lines with an item of the user's own, and lines at a room's own level; "Mixed (…)" when either is not nil. */
@@ -397,7 +399,9 @@ export interface PlanView {
   stages?: StageView[]; plot?: PlotView;
   /** Fixed works, movable items and appliances, when there is more than fixed works. */
   split?: { label: string; amount: string; n: number }[];
-  assumed: AssumedView[]; flags: string[]; unpriced: string[];
+  /** What to check (V1): the flags that can change the decision, shown with the answer, and the rest, one tap away; each largest first. */
+  assumed: AssumedView[]; flags: string[]; notes: string[]; unpriced: string[];
+  /** One line by the total: a planning estimate, its rates as reported on their date for the city, not yet checked. */
   ratesLine: string; ratesDate: string;
   /** Every source the lines and the assumptions use, numbered in order of first use, and what each class means; on the page only. */
   sources: SourceView[]; classes: { id: string; means: string }[];
@@ -449,7 +453,7 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
     const mixedText = [chosen ? `${chosen} chosen` : '', roomLevel ? `${roomLevel} room${roomLevel > 1 ? 's' : ''} at ${roomLevel > 1 ? 'their' : 'its'} own level` : ''].filter(Boolean).join(', ');
     return {
       id: t.id, no: sectionNo, name: t.name, on: t.on, slider: t.slider, level: t.level, levelName: t.level ? levelName(t.level) : '',
-      amount: rupees(t.amount), n: t.amount,
+      amount: rupees(t.amount), n: t.amount, pkg: runs.sections[t.id]?.[e.level - 1] ?? t.amount,
       ...(Math.round(d) !== 0 ? { over: { text: `Rs. ${rupees(Math.abs(d))} ${d > 0 ? 'more' : 'less'} than ${pkg}`, n: d } } : {}),
       spec: specOf(ls), where: whereOf(ls, e), mixed: chosen + roomLevel, mixedText: mixedText ? `Mixed (${mixedText})` : '', lines,
     };
@@ -466,7 +470,7 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
   const area = s.unit === 'sqm' ? `${qtyText(sqm)} sq m (${qtyText(sqft)} sq ft)` : `${qtyText(sqft)} sq ft (${qtyText(sqm)} sq m)`;
   const kind = WORK_KINDS[e.kind].label, bhk = BHK_CHOICES.find((b) => b.value === e.bhk)?.label ?? e.bhk;
   const home = e.house ? FLOORS[e.house.floors - 1].label : e.property === 'house' ? 'House' : 'Flat';
-  const roomsNote = e.flags.find((f) => f.startsWith('With your sizes'));
+  const roomsNote = e.flags.find((f) => f.text.startsWith('With your sizes'))?.text;
   return {
     rooms: roomsOf(s, e), ...(roomsNote ? { roomsNote } : {}), shares: sharesOf(e),
     add: { bedroom: e.bhk !== '5', bath: e.rooms.filter((r) => r.kind === 'bath').length < BATHS.max, balcony: R.programmes[e.bhk].balcony > 0 && s.balcony === false }, compare: compareOf(e, runs, sections), ...(change ? { change: changeText(change) } : {}),
@@ -476,9 +480,9 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
     title: TITLE[e.kind], kind, home, city, area, bhk, level: pkg, areaName: e.per === 'built-up' ? 'Built-up area' : 'Carpet area',
     total: rupees(e.total), perSqft: rupees(e.perSqft), words: rupeesWords(e.total), n: { total: e.total, perSqft: e.perSqft },
     strip: levels.map((n, i) => ({ level: (i + 1) as Level, name: LEVEL_NAMES[i], total: shortRupees(n), full: rupees(n), n, current: i + 1 === e.level })),
-    bar, sections, ...(split ? { split } : {}), assumed, flags: e.flags,
+    bar, sections, ...(split ? { split } : {}), assumed, flags: e.flags.filter((f) => f.decides).map((f) => f.text), notes: e.flags.filter((f) => !f.decides).map((f) => f.text),
     unpriced: e.unpriced.map((u) => `${u.roomName}, ${u.name.toLowerCase()}: ${u.entryName}`),
-    ratesLine: `Planning estimate · rates as of ${dmy(e.ratesDate)} for ${listed ? city : 'another place, at the six cities’ average'}`,
+    ratesLine: `A planning estimate: rates as reported on ${dmy(e.ratesDate)} for ${listed ? city : 'another place, at the six cities’ average'}, not yet checked`,
     ratesDate: dmy(LIBRARY_DATE), sources: [...numbered.values()],
     classes: Object.entries(CLASSES).filter(([id]) => [...numbered.values()].some((x) => x.cls === id)).map(([id, means]) => ({ id, means })),
   };

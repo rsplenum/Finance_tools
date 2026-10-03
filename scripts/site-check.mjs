@@ -161,6 +161,11 @@ const openMore = async (page) => {
   const more = page.locator('#more-options');
   if (!(await more.evaluate((d) => d.open))) await more.locator(':scope > summary').click();
 };
+/** A closed line on the planning estimate opened by a tap, as a user would (V1): a section, the other things to check, what the estimate assumes. */
+const tap = async (page, id) => {
+  const d = page.getByTestId(id);
+  if (!(await d.evaluate((x) => x.open))) await d.locator(':scope > summary').click();
+};
 
 /** Case A from the loan terms, typed the way a user would, with a None or one figure for every year where that is the answer. */
 async function enterCaseA(page) {
@@ -593,7 +598,7 @@ async function layout(page, v, step) {
   await ctx.close();
 }
 
-// The planning estimate (E1, E3, A3, A8): six questions and no other field, then the answer first; a card for every
+// The planning estimate (E1, E3, A3, A8, V1): six questions and no other field, then the answer first; a line for every
 // section, ten on for a renovation and ten for interiors with Furniture and Soft furnishings (D-UX-19); a slider and what
 // it changed, the strip, Compare, the rooms (a size and a level of one's own) and the item drawer; the downloads read
 // back. A 2BHK of 1,000 sq ft in Pune at Basic, worked by hand in tests/architect.test.ts and tests/library.test.ts: the
@@ -619,15 +624,20 @@ for (const scheme of ['light', 'dark']) {
     v('the strip does not mark Basic at the total');
   const cards = await page.locator('[data-testid^="pl-card-"]').count(), on = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
   if (cards !== 15 || on !== 10) v(`a renovation shows ${cards} sections with ${on} on (want 15 and 10)`);
-  await page.getByTestId('pl-items-flooring').click();
+  // V1: short by default. Every section is one line, closed, and so are the other things to check and the assumptions.
+  const opened = await page.locator('main details[open]').count();
+  if (opened) v(`${opened} closed lines are open with the answer`);
+  await tap(page, 'pl-card-flooring');
   const living = page.getByTestId('pl-line-living:floor:floor-skirting');
   await expectText(page, v, living.locator('p').nth(1), '303.03 sq ft × Rs. 114.09 = Rs. 34,573', 'the living room floor, by hand');
   await page.getByTestId('pl-open-living:floor:floor-skirting').click();
   if ((await page.getByTestId('pl-drawer').locator('input[type="radio"]').count()) < 6) v('the item drawer offers fewer than the five levels and other choices');
   await layout(page, v, `the estimate with the drawer open, 390 px, ${scheme}`);
   if (scheme === 'dark') { await ctx.close(); continue; }
+  await expectText(page, v, page.getByTestId('pl-assumed').locator(':scope > summary'), /^What the estimate assumes \(\d+\)$/, 'the assumptions behind one line with their count');
+  await tap(page, 'pl-assumed');
   await expectText(page, v, 'pl-assumed-0', /^Rooms: Living and dining/, 'the assumptions');
-  if (!((await page.getByTestId('pl-flags').textContent()) ?? '').includes('Rates are as reported')) v('the flags do not say the rates are as reported');
+  await expectText(page, v, 'pl-rates', /^A planning estimate: rates as reported on \d\d-\d\d-\d{4} for Pune, not yet checked$/, 'the rates as reported, in one line by the total');
 
   // The downloads, at the package as answered.
   await expectText(page, v, 'pl-doc-status', 'Provisional: 2 still needed', 'the planning estimate before its facts');
@@ -771,6 +781,7 @@ for (const scheme of ['light', 'dark']) {
   const slab2 = await cells('pl-stage-slab-2'), last = await cells('pl-stage-outside');
   if (!slab2[0].startsWith('First floor roof slab') || !/^[\d,]+$/.test(slab2[1]) || !/^\d+\.\d%$/.test(slab2[2]) || !/^\d+\.\d%$/.test(slab2[3])) v(`the second slab's stage reads ${slab2.join(' | ')}`);
   if (!last[0].startsWith('Outside works and water') || last[3] !== '100.0%') v(`the last stage reads ${last.join(' | ')} (want the outside works and water, 100.0% by then)`);
+  await tap(page, 'pl-assumed');
   await page.getByTestId('pl-plot-change').click();
   await leave(page, '#fld-plot-l', '40');
   await leave(page, '#fld-plot-b', '30');
@@ -780,6 +791,38 @@ for (const scheme of ['light', 'dark']) {
   await expectText(page, v, 'pl-what-changed', /^The sewer in place of a septic tank: Rs\. 89,610 less$/, 'what the sewer changed');
   await layout(page, v, 'the estimate as a new house, 390 px');
   await ctx.close();
+}
+
+// V1 (D-UX-32): short by default. Before any tap, the words shown with the answer stay within a budget of 400 for a flat's
+// interiors and a new G+1 house (before V1, about 810 and 1,360); only the flags that can change the decision show, and
+// no field but the document's own facts.
+{
+  const BUDGET = 400;
+  const cases = [
+    ['a 2 BHK flat\'s interiors', async (page) => {
+      await page.check('#fld-work-interiors'); await page.check('#fld-home-flat');
+      await page.selectOption('#fld-city', 'pune'); await leave(page, '#fld-carpet', '1,000');
+      await page.check('#fld-bhk-2'); await page.click('#fld-level-2');
+    }, 1],
+    ['a new G+1 house at Luxury', async (page) => {
+      await page.check('#fld-work-build'); await page.check('#fld-floors-2');
+      await page.selectOption('#fld-city', 'pune'); await leave(page, '#fld-carpet', '2,000');
+      await page.check('#fld-bhk-3'); await page.click('#fld-level-4');
+    }, 0],
+  ];
+  for (const [label, answer, flags] of cases) {
+    const { ctx, page, v } = await open('/estimate/', { scheme: 'light' });
+    await answer(page);
+    await expectText(page, v, 'pl-total', /^Rs\. [\d,]+$/, label);
+    const words = await page.locator('main').evaluate((m) => (m.innerText.match(/\S+/g) ?? []).length);
+    if (words > BUDGET) v(`${label}: ${words} words shown with the answer (budget ${BUDGET})`);
+    const shown = await page.locator('[data-testid="pl-flags"] li').count();
+    if (shown !== flags) v(`${label}: ${shown} flags with the answer (want ${flags})`);
+    const fields = await page.locator('main').evaluate((m) => [...m.querySelectorAll('input, select, textarea')].filter((e) => e.checkVisibility() && !e.closest('#pl-download')).length);
+    if (fields) v(`${label}: ${fields} fields shown with the answer besides the document's facts`);
+    console.log(`V1: ${label}: ${words} words shown with the answer (budget ${BUDGET})`);
+    await ctx.close();
+  }
 }
 
 // The construction estimate typed from a quotation (P2), the second path, by hand: excavation 45 cum × 350 = 15,750 and
