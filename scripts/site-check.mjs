@@ -700,7 +700,8 @@ for (const scheme of ['light', 'dark']) {
   await expectText(page, v, 'pl-split', /^Fixed works Rs\. [\d,]+ · Movable items Rs\. [\d,]+ · Appliances Rs\. [\d,]+$/, 'the movable items apart');
   await layout(page, v, 'the estimate as interiors, 390 px');
   // A new house (A3, D-UX-23): the second question asks the floors and the area is the built-up area, still six
-  // questions; sixteen sections with eleven on, the structure the same at every level; the PDF titled for construction.
+  // questions; eighteen sections with thirteen on (E5: Outside works and Water), the structure the same at every level;
+  // the PDF titled for construction, with its stages.
   await page.getByTestId('pl-change').click();
   await page.check('#fld-work-build');
   const asked = await page.locator('#six-questions [data-question]').count(), floorsAsked = await page.locator('#fld-floors-2').count();
@@ -711,11 +712,29 @@ for (const scheme of ['light', 'dark']) {
   await page.getByTestId('pl-done').click();
   await expectText(page, v, 'pl-summary', /^Build a new house · G\+1 · Pune · 2,000 sq ft · 3 BHK · \w+$/, 'a new house, folded');
   const cardsB = await page.locator('[data-testid^="pl-card-"]').count(), onB = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
-  if (cardsB !== 16 || onB !== 11) v(`a new house shows ${cardsB} sections with ${onB} on (want 16 and 11)`);
+  if (cardsB !== 18 || onB !== 13) v(`a new house shows ${cardsB} sections with ${onB} on (want 18 and 13)`);
   if (!((await page.getByTestId('pl-card-structure').textContent()) ?? '').includes('The same at every level')) v('the structure is not the same at every level');
   if (!((await page.locator('#pl-result').textContent()) ?? '').includes('a sq ft of built-up area')) v('a new house\'s cost a sq ft is not of the built-up area');
   const pdfB = await pdfPages((await save('pl-download-pdf')).bytes).catch((e) => [`(not read: ${e.message})`]);
   if (!pdfB[0].includes('Estimate of cost of construction') || !pdfB[0].includes('Built-up area 2,000 sq ft')) v(`a new house's PDF reads "${pdfB[0].slice(0, 160)}"`);
+  if (!pdfB.join(' ').includes('Stages of construction')) v('a new house\'s PDF has no stages');
+  // E5: the stages for a construction loan, closed under the strip, adding up to the total; the plot changed in the
+  // assumptions, and the sewer in place of the septic tank, each read in What changed.
+  if (await page.getByTestId('pl-stages').evaluate((d) => d.open)) v('the stages are open on load');
+  await page.getByTestId('pl-stages').locator('summary').click();
+  const stageRows = await page.locator('[data-testid^="pl-stage-"]').count();
+  if (stageRows !== 6) v(`a G+1 house shows ${stageRows} stages (want 6)`);
+  const cells = async (id) => (await page.getByTestId(id).locator('th, td').allTextContents()).map((t) => t.replace(/\s+/g, ' ').trim());
+  const slab2 = await cells('pl-stage-slab-2'), last = await cells('pl-stage-outside');
+  if (!slab2[0].startsWith('First floor roof slab') || !/^[\d,]+$/.test(slab2[1]) || !/^\d+\.\d%$/.test(slab2[2]) || !/^\d+\.\d%$/.test(slab2[3])) v(`the second slab's stage reads ${slab2.join(' | ')}`);
+  if (!last[0].startsWith('Outside works and water') || last[3] !== '100.0%') v(`the last stage reads ${last.join(' | ')} (want the outside works and water, 100.0% by then)`);
+  await page.getByTestId('pl-plot-change').click();
+  await leave(page, '#fld-plot-l', '40');
+  await leave(page, '#fld-plot-b', '30');
+  await expectText(page, v, 'pl-what-changed', /^The plot to 40 × 30 ft: Rs\. [\d,]+ less$/, 'what the plot changed');
+  await expectText(page, v, page.locator('[data-testid^="pl-assumed-"]', { hasText: 'The plot:' }), /^The plot: 40 × 30 ft, 1,200 sq ft, your size/, 'the plot of your own');
+  await page.check('#fld-sewer');
+  await expectText(page, v, 'pl-what-changed', /^The sewer in place of a septic tank: Rs\. 89,610 less$/, 'what the sewer changed');
   await layout(page, v, 'the estimate as a new house, 390 px');
   await ctx.close();
 }

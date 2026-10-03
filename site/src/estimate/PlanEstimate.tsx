@@ -13,7 +13,7 @@ import { isoDate, save, type FileKind } from '../download';
 import { planDoc, planDocNeeds, planDocStatus, planFileName } from './plan-document';
 import {
   BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, FLOOR_CHOICES, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORK_CHOICES, areaLabel, drawerView, heightOf, plainOf, planPreview, sideUnit,
-  withItem, withKind, withLevel, withRoomLevel, withRoomReset, withRoomSide, withSection, withSlider, withUnit,
+  withItem, withKind, withLevel, withPlotReset, withPlotSide, withRoomLevel, withRoomReset, withRoomSide, withSection, withSewer, withSlider, withUnit,
   type AreaUnit, type DrawerView, type LineView, type PlanFacts, type PlanPreview, type PlanState, type PlanView, type RoomView, type RungView, type SectionView,
 } from './plan-model';
 import type { Bhk, Level } from '../../../engine/architect';
@@ -133,6 +133,7 @@ function Answer({ v, update, heading }: { v: PlanView; update: Update; heading: 
     </div>
     <p class={`mt-1 text-xs ${MUTED}`}>Each level as a package; tap one to switch.</p>
     <Compare v={v} />
+    {v.stages && <Stages v={v} />}
     <h3 class={`mt-5 text-sm font-medium ${INK}`}>By section</h3>
     <ul data-testid="pl-bar" class="mt-1 space-y-1">
       {[...v.bar].sort((a, b) => b.n - a.n).map((x) => <li key={x.id}>
@@ -285,6 +286,30 @@ function Compare({ v }: { v: PlanView }) {
   </details>;
 }
 
+/** A new house's stages for a construction loan (E5): what each stage covers, its amount, its share and the share by its end. */
+function Stages({ v }: { v: PlanView }) {
+  const st = v.stages ?? [];
+  return <details data-testid="pl-stages" class="mt-2">
+    <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">Stages for a construction loan: what each one costs</summary>
+    <div class="mt-2 overflow-x-auto">
+      <table class={`w-full text-xs tabular-nums ${INK}`}>
+        <caption class={`text-left text-xs ${MUTED}`}>The structure split by published shares; the rest from the estimate's own items. For planning a loan's payments, not a lender's own schedule.</caption>
+        <thead><tr class={MUTED}><th scope="col" class="py-1 pr-1 text-left font-normal">Stage</th><th scope="col" class="px-1 py-1 text-right font-normal">Rupees</th>
+          <th scope="col" class="px-1 py-1 text-right font-normal">Share</th><th scope="col" class="px-1 py-1 text-right font-normal">By then</th></tr></thead>
+        <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+          {st.map((x) => <tr key={x.id} data-testid={`pl-stage-${x.id}`}>
+            <th scope="row" class="py-1 pr-1 text-left font-normal">{x.name}<span class={`block text-[11px] ${MUTED}`}>{x.what}</span></th>
+            <td class="px-1 py-1 text-right">{x.amount}</td><td class="px-1 py-1 text-right">{x.share}</td><td class="px-1 py-1 text-right">{x.upTo}</td>
+          </tr>)}
+          <tr data-testid="pl-stages-total" class="font-semibold">
+            <th scope="row" class="py-1 pr-1 text-left">Total</th><td class="px-1 py-1 text-right">{v.total}</td><td class="px-1 py-1 text-right">100%</td><td />
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>;
+}
+
 /** The rooms (A8): each one's size, which can be changed, and its own level. Closed until opened: not on the default path. */
 function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) {
   const unit = sideUnit(s.unit);
@@ -316,10 +341,12 @@ function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) 
   </Section>;
 }
 
-/** What the estimate assumes, each with its reason (D-UX-08, D-UX-18); the ceiling height can be changed here. */
+/** What the estimate assumes, each with its reason (D-UX-08, D-UX-18); the ceiling height, a new house's plot and its sewer can be changed here. */
 function Assumed({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) {
-  const [height, setHeight] = useState(false);
-  const bad = heightOf(s.height) === null;
+  const [height, setHeight] = useState(false), [plotOpen, setPlot] = useState(false);
+  const bad = heightOf(s.height) === null, unit = sideUnit(s.unit), plot = v.plot;
+  const plotSide = (which: 'l' | 'b') => plot && <TextField id={`fld-plot-${which}`} class="w-28" label={`Plot ${which === 'l' ? 'length' : 'width'}, ${unit}`} inputMode="decimal"
+    value={plot[which]} placeholder={plot.planned[which]} invalid={!!plot.bad} onCommit={(t) => update((x) => withPlotSide(x, which, t))} />;
   return <Section id="pl-assumed" title="What the estimate assumes">
     <ul class="mt-3 space-y-2">
       {v.assumed.map((a, i) => <li key={a.what} data-testid={`pl-assumed-${i}`} class={`text-sm ${INK}`}>
@@ -327,6 +354,16 @@ function Assumed({ s, v, update }: { s: PlanState; v: PlanView; update: Update }
         {a.what === 'Ceiling height' && !height && <> <button type="button" data-testid="pl-height-change" class="text-teal-800 underline dark:text-teal-300" onClick={() => setHeight(true)}>Change</button></>}
         {a.what === 'Ceiling height' && height && <TextField id="fld-height" class="mt-2 max-w-xs" label="Ceiling height, in metres" inputMode="decimal" value={s.height}
           placeholder={`like ${RULE_HEIGHT}`} invalid={bad} said={bad ? `Type a height from 2 to 6 metres, like 3. Until then the estimate uses ${RULE_HEIGHT} m.` : undefined} onCommit={(t) => update((x) => ({ ...x, height: t }))} />}
+        {a.what === 'The plot' && plot && !plotOpen && !plot.own && !plot.bad && <> <button type="button" data-testid="pl-plot-change" class="text-teal-800 underline dark:text-teal-300" onClick={() => setPlot(true)}>Change</button></>}
+        {a.what === 'The plot' && plot && (plotOpen || plot.own || plot.bad) && <div class="mt-2 flex flex-wrap items-end gap-x-3 gap-y-2">
+          {plotSide('l')}{plotSide('b')}
+          {plot.own && <button type="button" data-testid="pl-plot-reset" class={BUTTON} onClick={() => update(withPlotReset)}>Planned plot</button>}
+        </div>}
+        {a.what === 'The plot' && plot?.bad && <p data-testid="pl-plot-bad" class="mt-1 text-sm text-red-700 dark:text-red-300">{plot.bad} Until then the planned plot is used.</p>}
+        {a.what === 'Water' && <label for="fld-sewer" class="mt-2 flex items-center gap-2 text-sm">
+          <input type="checkbox" id="fld-sewer" checked={s.sewer} onChange={(e) => update((x) => withSewer(x, (e.currentTarget as HTMLInputElement).checked))} class="h-4 w-4 accent-teal-700" />
+          The city's sewer reaches my plot
+        </label>}
         <SourceNote what="Why">{a.why}{a.sources.length ? ` Sources: ${a.sources.map((x) => x.what).join('; ')}.` : ''}</SourceNote>
       </li>)}
     </ul>
