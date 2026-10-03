@@ -10,11 +10,12 @@ State at 02-10-2026: P0 to P1g are on `main` (PRs #2 to #6), which Cloudflare Pa
   - the project report at `/project-report/` (D-UX-14);
   - the DSCR front door (P1f, D-UX-15): eight fields, everything else under a closed More options, results first, Print.
   Each tool has its own engine, worked out twice, and downloads in PDF, Excel and Word. PR #6 is merged, so all of it is on the live site.
-- **The estimate's engine, as the architect, and its library** (D-UX-18, blueprint version 3 A0; on this branch, not yet merged). Version 2 of the blueprint (D-UX-17) is merged (PR #7).
+- **The estimate's engine, as the architect, and its library** (D-UX-18, blueprint version 3 A0), merged in PR #8 on 02-10-2026. Version 2 of the blueprint (D-UX-17) is merged (PR #7).
   - `engine/architect.ts` works the estimate out from six answers (the work, flat, city, carpet area, bedrooms, level). It plans the rooms, places doors and windows, measures by IS 1200, puts in what each room needs at each section's level, prices it for the city and adds it up by section and room and at all five levels. `engine/architect-check.ts` works it all a second way.
   - The rules are in `engine/data/architect.json` (in plain words in `docs/RULES.md`). The library has 312 items in 79 families, 17 kinds of labour and 183 sources, in `engine/data/library/` (in plain words in `docs/LIBRARY.md`).
   - Every rate is "as reported" through search summaries, not yet checked (the network blocks the pages). So the estimate is a planning estimate (A7, A18).
   - A flat only, for repair or renovation and for interiors. Movable furniture is in the library but not yet in the estimate (E3); a house comes in E5.
+  - **The owner's answers (D-UX-19):** the levels are Basic, Standard, Premium, Luxury and Ultra luxury on screen; movable items are sections of their own, on for Interiors and off for Repair (Appliances and Smart home already are; Furniture and Soft furnishings join in E3).
   - **No page yet:** E1 builds it on this engine.
   - The tool never calls itself an architect (Architects Act s. 37; CLAUDE.md).
   - B12 critiques Gemini's second note.
@@ -67,7 +68,7 @@ The test figures are model-worked until the owner confirms fictional cases A and
   - `scripts/read-doc.mjs`: reads the files back with pdf.js, read-excel-file, mammoth and JSZip, for the tests and the site check.
 - `site/`: home, `/dscr/`, 404; dark mode without a flash. `worker/`: `GET /health`.
 - Checks, all in CI:
-  - `npm test` (136, including the simulation and the documents read back by pdf.js, read-excel-file and mammoth);
+  - `npm test` (204, including the simulation and the documents read back by pdf.js, read-excel-file and mammoth);
   - `npm run typecheck`;
   - `npm run rules-doc -- --check`;
   - `npm run build`;
@@ -78,7 +79,7 @@ The test figures are model-worked until the owner confirms fictional cases A and
 | # | Session | Starter prompt (paste as the first message) |
 |---|---|---|
 | P1d | Payment for the download (after P1f, and after the owner's Phase 0 items: business entity, GST, Razorpay account) | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md, docs/DECISIONS.md (D-TECH-01, D-TECH-06, D-DOC-01) and docs/CLOUDFLARE.md. P1d: payment for the DSCR statement download, through Razorpay and the Worker. Ask me first, in one message: the price; whether the Worker stays separate or moves beside the site as Pages Functions; and, since the document is made in the browser, whether payment only unlocks the two buttons (anyone reading the page's code could still make the file) or the file must come from the server. Then build it: the order made in the Worker, the payment verified by its signature, and the buttons unlocked for that statement only. Test with Razorpay's test keys, set only in the environment settings, never in the repo. The preview stays free. Finish per HANDOFF." |
-| E1 | The estimate's page and documents on the architect engine (after "merge" of the engine's PR, and the owner's word on A18 3 and 4) | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md, docs/ESTIMATE-BLUEPRINT.md (A0, A3, A4, A8, A15, A17, A18) and the brief-first and lender-documents skills. Build E1 per A17 on `engine/architect.ts`: the six questions on `/estimate/` (the typed quotation stays as the second path); results first, with the total, the cost per sq ft and the five-level strip; the section bar; a card per section with its slider (five stops) and its line of specification; the item drawer with the family's level items and alternatives from the library, brands as chips, and each line's 'how we worked this out'; the assumptions and flags; the planning estimate as PDF, Excel and Word, with Annex 1 (every line) and Annex 3 (assumptions and sources). Level names on screen: [Basic to Ultra luxury, or my words Modest to Ultra luxury]. Movable items: [as recommended]. Assert the field count (six) in the site check. My fictional flat, with the room sizes and quantities I worked at home: [yours, or none yet]. Finish per HANDOFF." |
+| E1 | The estimate's page and documents on the architect engine (the engine is on `main`; A18 3 and 4 answered, D-UX-19) | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md, docs/ESTIMATE-BLUEPRINT.md (A0, A3, A4, A8, A15, A17, A18) and the brief-first and lender-documents skills. Build E1 per A17 on `engine/architect.ts`: the six questions on `/estimate/` (the typed quotation stays as the second path); results first, with the total, the cost per sq ft and the five-level strip; the section bar; a card per section with its slider (five stops) and its line of specification; the item drawer with the family's level items and alternatives from the library, brands as chips, and each line's 'how we worked this out'; the assumptions and flags; the planning estimate as PDF, Excel and Word, with Annex 1 (every line) and Annex 3 (assumptions and sources). Level names on screen: Basic, Standard, Premium, Luxury, Ultra luxury; movable sections on for Interiors and off for Repair, as the engine has them (D-UX-19). Assert the field count (six) in the site check. My fictional flat, with the room sizes and quantities I worked at home: [yours, or none yet]. Finish per HANDOFF." |
 | E2 | Check the library against its sources (needs the network hosts below) | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md and docs/LIBRARY.md. Open each source in engine/data/sources.json, check each level item's figure against its page, fix any that differ, and mark the source checked; replace a rate with CPWD's DSR 2023 item where one fits, with the city's index. Report what changed. Finish per HANDOFF." |
 
 ## End of every session
@@ -86,7 +87,7 @@ The test figures are model-worked until the owner confirms fictional cases A and
 2. Update this file (state + next), commit, draft PR. The branch preview builds itself (link on the PR); open it and say so.
 
 ## Waiting on the owner
-- **Look over `docs/LIBRARY.md` and `docs/RULES.md` (the architect's rules)** and say "merge" for the engine's PR. Then decide A18's remaining choices: the level names on screen (Basic to Ultra luxury, or your Modest to Ultra luxury) and movable items (recommended: on for Interiors, off for Repair). Decision 1 was taken on your "create a vast library": rates as reported until checked. Say if you would rather wait. Then the next session builds E1, the page.
+- **Start E1, the estimate's page:** paste its starter prompt (above) into a new session. A18's decision 1 was taken on your "create a vast library": rates as reported until E2 checks them. Say if you would rather wait.
 - **Try the three downloads on the live site.** Open the Word copy in Word itself and the Excel copy in Excel: they were checked with mammoth, read-excel-file and LibreOffice, not with Microsoft Office.
 - **Try P1e on the live site**: who the borrower is, EMIs a month, the new asset's income.
 - **Try the front door (P1f)** on the live site, on a phone and a desktop: it is done when you say it feels simple. Then the estimate and the project report, with your own fictional cases.

@@ -1,7 +1,7 @@
 {
   "title": "Furniture and furnishings (movable)",
   "date": "2026-10-02",
-  "status": "Movable items: in the library now, in the estimate when the movable sections come (E3). Lenders treat them apart from fixed works.",
+  "status": "Movable items: in the library now, in the estimate when the movable sections come (E3), on for Interiors and off for Repair, as Appliances and Smart home are (the owner, D-UX-19). Lenders treat them apart from fixed works.",
   "families": [
     { "id": "sofa", "name": "Sofa", "unit": "nos", "kind": "movable" },
     { "id": "bed", "name": "Bed", "unit": "nos", "kind": "movable" },

@@ -166,7 +166,7 @@ Dated 02-10-2026. What an architect would decide from six answers: the rooms and
 
 **The five levels**
 
-| Level | Your word | What it means |
+| On screen | Your word | What it means |
 |---|---|---|
 | Basic | Modest | Sound and simple: ISI-marked materials, the economy ranges of known brands, nothing decorative |
 | Standard | Upper class | What most new flats are sold with: branded mid-range materials and a few comforts |

@@ -89,7 +89,7 @@ out.push('**How the figures are worked out**', '', ...report.method.map((m) => `
 const A = architect;
 const cite = (ids) => (ids?.length ? ` (${ids.map((i) => (i === 'own' ? 'our rule' : sources.sources[i]?.what ?? i)).join('; ')})` : '');
 const levelName = (n) => A.levels[n - 1].name;
-out.push(`## ${A.title}`, '', `Dated ${date(A.date)}. ${A.status}`, '', '**The five levels**', '', '| Level | Your word | What it means |', '|---|---|---|',
+out.push(`## ${A.title}`, '', `Dated ${date(A.date)}. ${A.status}`, '', '**The five levels**', '', '| On screen | Your word | What it means |', '|---|---|---|',
   ...A.levels.map((l) => `| ${l.name} | ${l.owner} | ${l.means} |`), '');
 out.push('**Sections on for each kind of work**', '', ...Object.values(A.kinds).map((k) => `- **${k.label}**: ${k.on.map((id) => A.sections.find((x) => x.id === id).name).join(', ')}. ${k.why}`), '');
 out.push('**The rooms for each BHK** (reference sizes in sq ft; only their proportions are used, scaled to your carpet area)', '', '| BHK | Rooms | Balcony | Usual carpet area | Why |', '|---|---|---|---|---|');
