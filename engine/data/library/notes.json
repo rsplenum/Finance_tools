@@ -1,0 +1,64 @@
+{
+  "title": "Notes: what an item is, why it costs what it does and what to check; where to spend, where to save",
+  "date": "2026-10-04",
+  "status": "Read through web-search summaries on 04-10-2026: the pages could not be opened from the session. A note stays reported until someone reads its sources' pages and sets it to checked; own marks our own rule, its reason given in the note (T1, D-UX-34).",
+  "families": {
+    "floor": {
+      "what": { "text": "The finish on the floor, with its skirting: vitrified tiles or large slabs fixed on adhesive, or natural stone such as marble, laid in mortar and polished on site.", "src": ["studiomatrx-flooring-spec", "studiomatrx-flooring-guide"], "status": "reported" },
+      "cost": { "text": "Tiles cost more as they grow larger and their finish richer, and large slabs take more skilled laying. Marble's price follows its grade, the slab's size and thickness, the waste in cutting, and the laying and machine polishing; it needs polishing again every few years.", "src": ["studiomatrx-flooring-guide", "gharkabudget-tiling", "studiomatrx-marble", "studiomatrx-marble-care"], "status": "reported" },
+      "check": { "text": "Vitrified tiles: IS 15622, water absorption 0.5% or less, and the same batch and shade code on every box. Marble: look at the back of each slab and under the polish for resin-filled cracks, tap it for a dull or hollow sound, and tap the laid floor again.", "src": ["studiomatrx-tile-standards", "stoneexpert-marble-defects", "vardhman-marble-check"], "status": "reported" }
+    },
+    "paint": {
+      "what": { "text": "The finish on inside walls and ceilings: wall putty to smooth the plaster, a primer, and two coats of emulsion paint.", "src": ["asianpaints-painting-cost"], "status": "reported" },
+      "cost": { "text": "On an economy emulsion the labour costs about as much as the paint; on a luxury one the paint costs most. Dearer emulsions stand more scrubbing and are reported to last longer between repaints.", "src": ["asianpaints-painting-cost", "homerun-royale-premium"], "status": "reported" },
+      "check": { "text": "Ask for the whole system on the quote: two coats of putty, a primer, and two coats of the named emulsion. The can's label gives its VOC content; low-VOC paints give off fewer fumes indoors.", "src": ["asianpaints-painting-cost", "jkcement-low-voc"], "status": "reported" }
+    },
+    "exterior-paint": {
+      "what": { "text": "The outside walls of a house: cracks filled, an exterior primer that resists the alkali in plaster, then two coats of a weatherproof emulsion, or a texture finish with a top coat.", "src": ["asianpaints-trucare-primer"], "status": "reported" },
+      "cost": { "text": "Outside work needs scaffolding and more preparation than inside walls. A texture finish costs more than an emulsion: more material, a special base, tools and skilled hands. It is reported to last longer before it needs redoing.", "src": ["aapkapainter-texture", "nobroker-texture"], "status": "reported" },
+      "check": { "text": "Cracks filled before the primer: a crack filler seals fine cracks up to about 3 mm, ask the engineer to look at any wider or growing crack first. Ask for the paint's name and the number of coats on the quote.", "src": ["asianpaints-trucare-primer", "own"], "status": "reported" }
+    },
+    "cp": {
+      "what": { "text": "The bathroom's taps and mixers, the shower and the health faucet, with the angle valves that feed them. A concealed diverter or thermostatic valve sits inside the wall; only its plate shows.", "src": ["buildingaaya-taps"], "status": "reported" },
+      "cost": { "text": "The body and the valve inside it: solid brass with a ceramic-disc cartridge costs more than cheaper metals and washers; then the finish (chrome, or a PVD colour) and the brand. A thermostatic valve, which holds the water at the temperature set, costs more than a plain mixer.", "src": ["buildingaaya-taps", "houseyog-bath-fittings"], "status": "reported" },
+      "check": { "text": "The ISI mark: IS 8931 for mixers and fancy taps, IS 781 for bib taps. Before a concealed valve or pipe is tiled over, ask for a pressure test at one and a half times the working pressure, held 30 minutes or more without a drop.", "src": ["buildingaaya-taps", "manovsis-pressure-test", "skipper-cpvc-testing"], "status": "reported" }
+    },
+    "cabinets": {
+      "what": { "text": "The kitchen's base and wall units: boxes (carcasses) of plywood or engineered board with shutters, drawers and fittings, priced by the running foot of base and wall units together.", "src": ["gharkabudget-kitchen"], "status": "reported" },
+      "cost": { "text": "The shutters' finish leads: laminate and membrane (PVC foil) cost least, then high-gloss acrylic, then PU lacquer and lacquered glass. Then the board (BWP plywood costs more than BWR) and the fittings: soft-close hinges, tandem drawers, pull-outs and corner units.", "src": ["gharkabudget-kitchen", "gharkabudget-kitchen-calc", "reroom-kitchen"], "status": "reported" },
+      "check": { "text": "BWP plywood (IS 710 on its edge) under the sink and beside the hob, and every edge sealed with ABS or PVC banding, as even BWP takes in water through a bare edge. No membrane shutter next to the hob: its foil peels with heat.", "src": ["plyprice-kitchen-ply", "studiomatrx-plywood-grades", "reroom-kitchen"], "status": "reported" }
+    },
+    "wardrobe": {
+      "what": { "text": "A built-in wardrobe: a box (the carcass) of plywood or engineered board, with hinged or sliding shutters and the hardware that moves them: hinges, channels, handles and soft-close fittings.", "src": ["studiomatrx-wardrobe", "aecord-wardrobe"], "status": "reported" },
+      "cost": { "text": "The shutters' finish sets most of the price: laminate costs least, acrylic or veneer more, and PU lacquer most, as it takes the most labour. Then the board (BWP plywood costs more than MR), branded soft-close hardware, and sliding doors over hinged ones.", "src": ["studiomatrx-wardrobe", "aecord-wardrobe"], "status": "reported" },
+      "check": { "text": "Read the standard printed on the board's edge: IS 303 for MR or BWR plywood, IS 710 for BWP; 'BWR 710' is a warning sign. At a cut edge the layers should be tightly packed, without gaps, and every edge sealed with banding.", "src": ["studiomatrx-plywood-grades", "duroboil-is303-is710", "greenply-plywood-quality", "plyprice-kitchen-ply"], "status": "reported" }
+    },
+    "carpentry": {
+      "what": { "text": "Storage built in for good: a TV unit, a crockery unit, a shoe rack. It is made as a wardrobe is: a box of plywood or engineered board, with shutters and hardware.", "src": ["studiomatrx-wardrobe", "houseyog-finishing"], "status": "reported" },
+      "cost": { "text": "As with a wardrobe, the shutters' finish sets most of the price: laminate costs least, then acrylic, and PU, veneer or glass most; then the board and the hardware.", "src": ["studiomatrx-wardrobe", "houseyog-finishing"], "status": "reported" },
+      "check": { "text": "Read the standard on the board's edge (IS 303 for MR or BWR, IS 710 for BWP) and ask for BWP near water. Every cut edge should be sealed with banding, and the layers at an edge tightly packed, without gaps.", "src": ["studiomatrx-plywood-grades", "duroboil-is303-is710", "plyprice-kitchen-ply", "greenply-plywood-quality"], "status": "reported" }
+    },
+    "sofa": {
+      "what": { "text": "A three-seater sofa, ready-made or made to order, built in four layers: a frame, a suspension of springs or webbing, foam cushions, and a cover of fabric or leather.", "src": ["studiomatrx-upholstery"], "status": "reported" },
+      "cost": { "text": "The frame and the cover set most of the price: seasoned (kiln-dried) hardwood such as sheesham, sal or teak costs more than plywood, MDF or particle board; then the foam's density and the fabric or leather.", "src": ["studiomatrx-upholstery", "uberdecor-foam"], "status": "reported" },
+      "check": { "text": "Ask what the frame is made of and whether the wood is kiln-dried. Seat foam: 32 kg a cubic metre or denser, 35 for daily use. Fabric: rated for 25,000 rubs (Martindale) or more, 40,000 with children or pets.", "src": ["studiomatrx-upholstery", "uberdecor-foam"], "status": "reported" }
+    },
+    "steel": {
+      "what": { "text": "The bars inside the concrete of the columns, beams and slabs. TMT means thermo-mechanically treated; Fe 500D, a yield strength of at least 500 MPa, the D marking bars that stretch further before they break (16% or more, against 12% for Fe 500).", "src": ["corejoint-tmt-grades"], "status": "reported" },
+      "cost": { "text": "Steel is bought by the kg at a market rate that moves often. How much a house takes follows its structural design: spans, floors, foundation, soil and seismic zone. A rule of thumb stands in until the engineer's bar schedule.", "src": ["comaron-steel-cement", "kairali-steel-quantity", "infralens-materials"], "status": "reported" },
+      "check": { "text": "The ISI mark and licence number (CM/L) on the bundle's tag, the grade rolled on the bar, a mill test certificate for each load. A 12 mm bar weighs about 0.89 kg a metre, within 5%. Ask the structural engineer to check the bars against the drawings before each pour.", "src": ["bis-is1786-manual", "tusker-bis-care", "metalweightpro-tmt", "own"], "status": "reported" }
+    }
+  },
+  "spendSave": [
+    { "section": "structure", "way": "spend", "text": "The foundation, the frame and the slabs cannot be redone once the house stands. Ask the structural engineer for the drawings, the bar schedule and the concrete grade, and to inspect the steel before each pour.", "src": ["kairali-steel-quantity", "aecord-old-house", "own"], "status": "reported" },
+    { "section": "waterproofing", "way": "spend", "text": "A leak under finished tiles means breaking the tiles, the screed and the plaster to redo it. Ask for a flood test of 24 to 48 hours on each bathroom floor and the terrace before the tiles go down.", "src": ["ongrid-waterproofing", "hometriangle-bath-wp"], "status": "reported" },
+    { "section": "walls", "way": "save", "text": "Paint is the easiest finish to change: it can be redone room by room, and walls are repainted every few years anyway, so a premium emulsion now can become a luxury one at the next repaint.", "src": ["homerun-royale-premium", "aecord-old-house"], "status": "reported" },
+    { "section": "bathrooms", "way": "spend", "on": "what is tiled over", "text": "A concealed diverter or thermostatic valve sits behind the tiles, so changing it later means breaking them. Taps, showers and basins on the surface can be upgraded later.", "src": ["own"], "status": "own" },
+    { "section": "doors", "way": "spend", "on": "the window frames", "text": "Replacing a frame later means cutting the wall round it and redoing the plaster; fitting new shutters in an old frame is easier but changes less.", "src": ["studiomatrx-window-replacement"], "status": "reported" },
+    { "section": "electrical", "way": "spend", "on": "the wiring", "text": "It runs in pipes under the plaster, so adding a point or a circuit later means cutting the walls. Mark where the furniture goes before the walls are cut, and ask for ISI-marked FR or FRLS copper wire (IS 694).", "src": ["trity-concealed-wiring", "rajdhani-fr-frls"], "status": "reported" },
+    { "section": "electrical", "way": "save", "on": "the light fittings", "text": "They fit on points already wired, so they can be changed or upgraded later without touching the walls.", "src": ["own"], "status": "own" },
+    { "section": "plumbing", "way": "spend", "text": "The pipes run inside the walls and under the floors, so a leak found later means breaking tiles. Ask for a pressure test of every line, held 30 minutes or more without a drop, before the walls are closed and tiled.", "src": ["manovsis-pressure-test", "skipper-cpvc-testing", "aecord-old-house"], "status": "reported" },
+    { "section": "furniture", "way": "save", "text": "Furniture moves in and out without work on the house, so it can be bought in stages or upgraded later as money allows.", "src": ["own"], "status": "own" },
+    { "section": "furnishings", "way": "save", "text": "Curtains and other soft furnishings can be changed at any time without work on the house.", "src": ["own"], "status": "own" }
+  ]
+}

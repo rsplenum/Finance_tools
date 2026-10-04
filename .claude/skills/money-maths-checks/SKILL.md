@@ -1,6 +1,7 @@
 ---
 name: money-maths-checks
 description: Rules and a checklist for any calculation of money in this repo - DSCR, EMI and repayment schedules, interest, tax, projections, FOIR, LTV, eligibility, the largest loan or the shortest tenure - when writing it, changing it, testing it, quoting a computed figure to the owner, or judging someone else's formula (another AI's, a spreadsheet's, a reviewer's). Use it before touching engine/ or any test of figures, and before stating a computed number in chat, even for a quick check.
+effort: max
 ---
 
 # Money maths checks
