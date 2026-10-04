@@ -47,7 +47,7 @@
     { "id": "rft", "what": "running foot" },
     { "id": "kg", "what": "kilogram" },
     { "id": "MT", "what": "tonne" },
-    { "id": "nos", "what": "number" },
+    { "id": "nos", "what": "number" }, { "id": "set", "what": "set" }, { "id": "bag", "what": "bag" }, { "id": "litre", "what": "litre of a tank" },
     { "id": "LS", "what": "lump sum" }
   ],
   "method": [

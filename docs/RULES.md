@@ -116,7 +116,7 @@ Dated 02-10-2026. The heads follow the usual order of a building estimate, as in
 
 **Renovation or repair**: Dismantling and removal (LS); Masonry and plaster repairs (sqm); Flooring and tiling (sqft); Doors and windows (nos); Kitchen (LS); Toilets and bathrooms (LS); Plumbing and sanitary (LS); Electrical (LS); Waterproofing (sqm); Painting (sqm); Other works (LS).
 
-Units: cum (cubic metre), sqm (square metre), rmt (running metre), sqft (square foot), cft (cubic foot), rft (running foot), kg (kilogram), MT (tonne), nos (number), LS (lump sum).
+Units: cum (cubic metre), sqm (square metre), rmt (running metre), sqft (square foot), cft (cubic foot), rft (running foot), kg (kilogram), MT (tonne), nos (number), set (set), bag (bag), litre (litre of a tank), LS (lump sum).
 
 - Each item's amount is its quantity × its rate.
 - The abstract of cost adds up the items under each head; the total of the works is the sum of the heads.

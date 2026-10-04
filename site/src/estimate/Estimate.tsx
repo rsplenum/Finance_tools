@@ -10,9 +10,10 @@ import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { docNeeds, docStatus, estimateDoc, fileName } from './document';
 import {
-  EMPTY, KIND_CHOICES, UNIT_CHOICES, blankItem, headsOf, plainOf, preview, rateOf, statusText, tidyRate, withHead,
-  type EstimateFacts, type EstimatePreview, type EstimateState, type ItemText,
+  EMPTY, FAMILY_CHOICES, KIND_CHOICES, QUOTE_GST, QUOTE_RULE, QUOTE_WHY, UNIT_CHOICES, blankItem, fromBill, headsOf, plainOf, preview, quoteView, rateOf, statusText, tidyRate, withHead,
+  type EstimateFacts, type EstimatePreview, type EstimateState, type ItemText, type QuoteView,
 } from './model';
+import { sharedPlan } from './shared';
 
 type Update = (f: (s: EstimateState) => EstimateState) => void;
 const MUTED = 'text-slate-600 dark:text-slate-300';
@@ -22,7 +23,9 @@ export function EstimateCalculator() {
   const [s, setS] = useState<EstimateState>(EMPTY);
   const update: Update = (f) => setS(f);
   const p = useMemo(() => preview(s), [s]);
+  const q = useMemo(() => quoteView(s), [s]);
   return <div>
+    <FromBill s={s} update={update} />
     <Choice name="fld-kind" legend="What is the estimate for?" options={KIND_CHOICES} value={s.kind}
       onChange={(kind) => update((x) => ({ ...x, kind, items: x.items.map((it) => ({ ...it, head: headsOf(kind).some((h) => h.id === it.head) ? it.head : '' })) }))} />
     {s.kind && <>
@@ -31,7 +34,8 @@ export function EstimateCalculator() {
           inputMode="decimal" value={s.area} placeholder="like 1,200" invalid={bad(s.area, plainOf)} said={bad(s.area, plainOf) ? 'Not understood. Type a number, like 1,200.' : undefined}
           onCommit={(area) => update((x) => ({ ...x, area }))} />
       </Section>
-      <Items s={s} update={update} p={p} />
+      <Items s={s} update={update} p={p} q={q} />
+      {q && <Against q={q} />}
       <Section id="rates" title="Rates, GST and contingency">
         <TextField id="fld-basis" class="mt-4" label="Where the rates come from" hint="Lenders ask for it. Like “Contractor’s quotation of 25-09-2026” or “PWD schedule of rates 2025-26”."
           value={s.basis} onCommit={(basis) => update((x) => ({ ...x, basis }))} />
@@ -51,7 +55,7 @@ export function EstimateCalculator() {
 }
 
 /** The items, each a card: its head, what it is, the quantity and unit, the rate; its amount once the estimate works out. */
-function Items({ s, update, p }: { s: EstimateState; update: Update; p: EstimatePreview }) {
+function Items({ s, update, p, q }: { s: EstimateState; update: Update; p: EstimatePreview; q?: QuoteView }) {
   const heads = headsOf(s.kind), set = (i: number, patch: Partial<ItemText>) => update((x) => ({ ...x, items: x.items.map((it, k) => (k === i ? { ...it, ...patch } : it)) }));
   return <Section id="items" title="Items">
     <p class={`mt-2 ${HINT}`}>One card per item. The amount is the quantity × the rate.</p>
@@ -60,7 +64,7 @@ function Items({ s, update, p }: { s: EstimateState; update: Update; p: Estimate
         const head = heads.find((h) => h.id === it.head), n = i + 1;
         return <li key={i} data-testid={`item-${n}`} class="rounded-lg border border-slate-300 p-4 dark:border-slate-700">
           <div class="flex items-center justify-between gap-2">
-            <p class="font-medium text-slate-900 dark:text-slate-100">Item {n}</p>
+            <p class="font-medium text-slate-900 dark:text-slate-100">Item {n}{it.no && <span class={`font-normal ${MUTED}`}> · No. {it.no} on the bill</span>}</p>
             {s.items.length > 1 && <button type="button" data-testid={`remove-item-${n}`} class={BUTTON}
               onClick={() => update((x) => ({ ...x, items: x.items.filter((_, k) => k !== i) }))}>Remove</button>}
           </div>
@@ -77,10 +81,51 @@ function Items({ s, update, p }: { s: EstimateState; update: Update; p: Estimate
             <p class="self-end text-sm text-slate-700 dark:text-slate-300">Amount: <span data-testid={`item-${n}-amount`} class="font-medium tabular-nums">
               {p.amounts[i] ? `Rs. ${p.amounts[i]}` : '—'}</span></p>
           </div>
+          {q?.lines[i] && <p data-testid={`item-${n}-check`} class={`mt-3 text-sm ${q.lines[i].flagged ? 'font-medium text-amber-800 dark:text-amber-300' : MUTED}`}>{q.lines[i].text}</p>}
+          {q && !it.from && (q.lines[i]?.where === 'not-matched' || it.pick) && <SelectField id={`fld-item-${n}-pick`} class="mt-2 max-w-sm" label="What it is in the library"
+            value={it.pick ?? ''} placeholder="Choose one" options={FAMILY_CHOICES} onChange={(pick) => set(i, { pick: pick || undefined })} />}
         </li>;
       })}
     </ol>
     <button type="button" data-testid="add-item" class={`mt-4 ${BUTTON}`} onClick={() => update((x) => ({ ...x, items: [...x.items, blankItem()] }))}>Add an item</button>
+  </Section>;
+}
+
+/**
+ * Start from the bill (E4b): the planning estimate's bill of quantities as the items, for the contractor's rates. It
+ * replaces the items typed so far, after asking.
+ */
+function FromBill({ s, update }: { s: EstimateState; update: Update }) {
+  const [said, setSaid] = useState('');
+  const go = () => {
+    const typed = s.items.some((it) => it.description.trim() || it.quantity.trim() || it.rate.trim());
+    if (typed && !window.confirm('Replace the items typed so far with the bill’s lines?')) return;
+    const next = fromBill(s, sharedPlan());
+    if (typeof next === 'string') { setSaid(next); return; }
+    setSaid('');
+    update(() => next);
+  };
+  return <div class="mb-6">
+    <p class={HINT}>Asked contractors to quote on the bill of quantities above? Start from it: its lines filled in, for you to type one contractor’s rates and see each against the library.</p>
+    <button type="button" data-testid="from-bill" class={`mt-2 ${BUTTON}`} onClick={go}>Start from the bill</button>
+    {said && <p data-testid="from-bill-said" class="mt-2 text-sm text-amber-800 dark:text-amber-300">{said}</p>}
+  </div>;
+}
+
+/** Each rate against the library's band at its line's level (E4b): the lines to check, those left out and those not matched; the rule and the GST line. */
+function Against({ q }: { q: QuoteView }) {
+  const list = (id: string, title: string, xs: string[]) => xs.length > 0 && <div class="mt-3">
+    <p class="text-sm font-medium text-slate-900 dark:text-slate-100">{title}: {xs.length}</p>
+    <ul data-testid={id} class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{xs.map((x, k) => <li key={k}>{x}</li>)}</ul>
+  </div>;
+  return <Section id="against" title="Against the library">
+    <p data-testid="quote-gst" class="mt-2 text-sm text-slate-800 dark:text-slate-200">{QUOTE_GST}</p>
+    <p data-testid="quote-rule" class={`mt-2 text-sm ${MUTED}`}>{QUOTE_RULE} {QUOTE_WHY}</p>
+    {q.blocked && <p class="mt-2 text-sm text-red-700 dark:text-red-300">{q.blocked}</p>}
+    {!q.blocked && !q.flagged.length && !q.leftOut.length && !q.unmatched.length && <p data-testid="quote-clear" class="mt-3 text-sm text-slate-800 dark:text-slate-200">No rate to check, and nothing left out.</p>}
+    {list('quote-flagged', 'Rates to check', q.flagged)}
+    {list('quote-left-out', 'Left out of the quotation (no rate)', q.leftOut)}
+    {list('quote-unmatched', 'Not matched to the library', q.unmatched)}
   </Section>;
 }
 

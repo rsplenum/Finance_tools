@@ -36,3 +36,4 @@ Traps met in earlier sessions, moved out of `docs/HANDOFF.md` on 04-10-2026 so t
 - A row's answers are radios `fld-<key>-<answer>`: a field of that row must not reuse one (the new asset's month is `fld-assetIncome-start`, since `fld-assetIncome-from` is the radio).
 - Expected figures in tests: round the exact value once. 6,15,500 ÷ 2,09,000 is 2.94498, which shows as 2.94; rounding 2.9450 again gives a wrong 2.95.
 - **A table's columns of words share what the other columns leave** (`wrap` on a `Column`, `site/src/doc/pdf.ts`), at least 40 pt each: give a blank column (Make offered) no `wrap`, or the columns overflow A4 and `measure` moves the last into a second table pages later. A PDF read back wraps a sentence across lines, so a check normalises the spaces before it looks for one.
+- The planning estimate's six questions fold into one line once the sixth is answered: count `[data-question]` before answering, and check `pl-summary` after.
