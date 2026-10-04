@@ -177,9 +177,11 @@ function rateText(e) {
   return `${base}${kind}${e.wastage ? `, ${+(e.wastage * 100).toFixed(2)}% wastage` : ''}${lab.length ? `; plus ${lab.join(' and ')}` : ''}${e.gst === 'extra' ? '; plus GST' : ''}`;
 }
 const cell = (x) => String(x ?? '').replace(/\|/g, '/');
+let banded = 0, leveled = 0;
 const lib = ['# The library', '', 'Generated from `engine/data/library/` by `npm run rules-doc`; edit the data files, not this page.', '',
   `Dated ${date(sources.date)}. ${sources.status}`, '',
-  `${entries.size} items in ${files.reduce((t, f) => t + f.families.length, 0)} families, from ${Object.keys(sources.sources).length} sources. The estimate uses the middle of each range. A family's five levels name one item each (${A.levels.map((l) => l.name).join(', ')}); every other item in the family is an alternative you can choose instead.`, ''];
+  `${entries.size} items in ${files.reduce((t, f) => t + f.families.length, 0)} families, from ${Object.keys(sources.sources).length} sources. The estimate uses the middle of each range. A family's five levels name one item each (${A.levels.map((l) => l.name).join(', ')}); every other item in the family is an alternative you can choose instead. A level is a band of choices (L1): the item it names and every other item usually at it; the estimate's range at a level runs from the cheapest priced choice at it in every line to the dearest.`, ''];
+const introAt = lib.length - 2;
 for (const f of files) {
   lib.push(`## ${f.title}`, '');
   if (f.status) lib.push(f.status, '');
@@ -192,6 +194,11 @@ for (const f of files) {
       if (fam.fixed) { const e = entries.get(fam.fixed); lib.push(`| Every level | ${cell(e.name)} | ${cell(e.spec)} | ${cell((e.brands ?? []).join(', '))} | ${cell(rateText(e))} | ${ref(e.src)} |`); }
       else fam.levels.forEach((id, i) => { const e = id && entries.get(id); lib.push(e ? `| ${A.levels[i].name} | ${cell(e.name)} | ${cell(e.spec)} | ${cell((e.brands ?? []).join(', '))} | ${cell(rateText(e))} | ${ref(e.src)} |` : `| ${A.levels[i].name} | None at this level | | | | |`); });
       lib.push('');
+      // The choices at each level (L1): the item the level names and the family's other items usually at it.
+      const named = new Set(ladderIds.filter(Boolean)), mine = [...entries.values()].filter((e) => e.family === fam.id || named.has(e.id));
+      const band = A.levels.map((l, i) => { const at = fam.fixed ?? fam.levels[i]; return new Set([...(at ? [at] : []), ...mine.filter((e) => e.level === i + 1).map((e) => e.id)]).size; });
+      if (Math.max(...band) > 1) { banded++; lib.push(`Choices at each level: ${A.levels.map((l, i) => `${l.name} ${band[i]}`).join(', ')}.`, ''); }
+      leveled++;
     }
     const others = own.filter((e) => !ladderIds.includes(e.id));
     if (others.length) {
@@ -201,6 +208,7 @@ for (const f of files) {
     }
   }
 }
+lib[introAt] += ` ${banded} of the ${leveled} families with levels offer more than one choice at a level.`;
 lib.push('## Labour', '', '| Labour | Rate | Sources |', '|---|---|---|', ...labour.labour.map((l) => `| ${l.name} | ${range(l.rate)} a ${UNIT[l.unit]} | ${ref(l.src)} |`), '');
 lib.push('## Sources', '', ...numbered.map((id, i) => { const s = sources.sources[id]; return `${i + 1}. [${s.what}](${s.url}) (class ${s.class}: ${sources.classes[s.class]})`; }), '');
 const libText = lib.join('\n');

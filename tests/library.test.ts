@@ -100,6 +100,22 @@ describe('the rules: every slot fits its family', () => {
       expect(kind[dimensionOf(s.qty)], `${room}: ${s.family} by ${s.qty}`).toContain(fam?.unit);
     }
   });
+  it('every choice at a level (L1) is priced by a unit its slot takes, of the same unit as the level\'s item (or its pair: sq ft and sq m, ft and m), as both computations require', () => {
+    const kind = { area: ['sqft', 'sqm'], length: ['rft', 'm'], count: ['nos', 'set', 'lot'], material: ['bag', 'kg', 'cum', 'nos'], volume: ['litre'] };
+    const pair = (u: string) => (u === 'sqft' || u === 'sqm' ? 'area' : u === 'rft' || u === 'm' ? 'length' : u);
+    for (const [room, slots] of Object.entries(R.templates)) for (const s of slots) {
+      const fam = FAMILIES.get(s.family);
+      if (!fam) continue;
+      for (const level of [1, 2, 3, 4, 5] as const) {
+        const named = ladder(fam, level);
+        if (!named) continue;
+        for (const e of choices(fam.id).filter((x) => x.id === named || x.level === level)) {
+          expect(kind[dimensionOf(s.qty)], `${room}: ${s.family} at ${level}, ${e.id}`).toContain(e.unit);
+          expect(pair(e.unit), `${room}: ${s.family} at ${level}, ${e.id}`).toBe(pair((ENTRIES.get(named) as { unit: string }).unit));
+        }
+      }
+    }
+  });
   it('every rule names its sources and its reason, and every source exists', () => {
     const found: string[] = [];
     const walk = (v: unknown, path: string) => {
