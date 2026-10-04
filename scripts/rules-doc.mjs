@@ -174,8 +174,10 @@ function rateText(e) {
   const base = e.pack ? `${range(e.rate)} for ${e.pack.what ?? 'a pack'} of ${e.pack.qty} ${UNIT[e.pack.unit]}` : `${range(e.rate)} a ${u}`;
   const lab = fixes(e.fix).map((f) => `${f.n > 1 ? `${f.n} × ` : ''}${labourById.get(f.id).name.toLowerCase()} ${range(labourById.get(f.id).rate)}`);
   const kind = e.basis === 'installed' ? ', supplied and fixed' : e.basis === 'product' ? '' : ', material';
-  return `${base}${kind}${e.wastage ? `, ${+(e.wastage * 100).toFixed(2)}% wastage` : ''}${lab.length ? `; plus ${lab.join(' and ')}` : ''}${e.gst === 'extra' ? '; plus GST' : ''}`;
+  return `${base}${kind}${e.wastage ? `, ${+(e.wastage * 100).toFixed(2)}% wastage` : ''}${lab.length ? `; plus ${lab.join(' and ')}` : ''}${GST[e.gst] ?? ''}${e.date ? `; read ${date(e.date)}` : ''}`;
 }
+// The tax basis as the source states it; the engine adds GST only to a rate quoted before it.
+const GST = { extra: '; plus GST', incl: '; incl. GST', unstated: '; GST not stated: taken as the price paid' };
 const cell = (x) => String(x ?? '').replace(/\|/g, '/');
 let banded = 0, leveled = 0;
 const lib = ['# The library', '', 'Generated from `engine/data/library/` by `npm run rules-doc`; edit the data files, not this page.', '',
@@ -183,7 +185,7 @@ const lib = ['# The library', '', 'Generated from `engine/data/library/` by `npm
   `${entries.size} items in ${files.reduce((t, f) => t + f.families.length, 0)} families, from ${Object.keys(sources.sources).length} sources. The estimate uses the middle of each range. A family's five levels name one item each (${A.levels.map((l) => l.name).join(', ')}); every other item in the family is an alternative you can choose instead. A level is a band of choices (L1): the item it names and every other item usually at it; the estimate's range at a level runs from the cheapest priced choice at it in every line to the dearest.`, ''];
 const introAt = lib.length - 2;
 for (const f of files) {
-  lib.push(`## ${f.title}`, '');
+  lib.push(`## ${f.title}`, '', `Dated ${date(f.date)}; an item read on another day says so.`, '');
   if (f.status) lib.push(f.status, '');
   for (const fam of f.families) {
     const own = f.entries.filter((e) => e.family === fam.id);
@@ -209,7 +211,7 @@ for (const f of files) {
   }
 }
 lib[introAt] += ` ${banded} of the ${leveled} families with levels offer more than one choice at a level.`;
-lib.push('## Labour', '', '| Labour | Rate | Sources |', '|---|---|---|', ...labour.labour.map((l) => `| ${l.name} | ${range(l.rate)} a ${UNIT[l.unit]} | ${ref(l.src)} |`), '');
+lib.push('## Labour', '', '| Labour | Rate | Sources |', '|---|---|---|', ...labour.labour.map((l) => `| ${l.name} | ${range(l.rate)} a ${UNIT[l.unit]}${l.date ? `; read ${date(l.date)}` : ''} | ${ref(l.src)} |`), '');
 lib.push('## Sources', '', ...numbered.map((id, i) => { const s = sources.sources[id]; return `${i + 1}. [${s.what}](${s.url}) (class ${s.class}: ${sources.classes[s.class]})`; }), '');
 const libText = lib.join('\n');
 

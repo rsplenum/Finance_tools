@@ -792,7 +792,8 @@ for (const scheme of ['light', 'dark']) {
   await expectText(page, v, 'pl-what-changed', /^The plot to 40 × 30 ft: Rs\. [\d,]+ less$/, 'what the plot changed');
   await expectText(page, v, page.locator('[data-testid^="pl-assumed-"]', { hasText: 'The plot:' }), /^The plot: 40 × 30 ft, 1,200 sq ft, your size/, 'the plot of your own');
   await page.check('#fld-sewer');
-  await expectText(page, v, 'pl-what-changed', /^The sewer in place of a septic tank: Rs\. 89,610 less$/, 'what the sewer changed');
+  // The septic tank's 89,610 out and the sewer connection's 24,711.34 in (tests/architect.test.ts): 64,898.66, shown as 64,899.
+  await expectText(page, v, 'pl-what-changed', /^The sewer in place of a septic tank: Rs\. 64,899 less · Sewer connection$/, 'what the sewer changed');
   await layout(page, v, 'the estimate as a new house, 390 px');
   await ctx.close();
 }

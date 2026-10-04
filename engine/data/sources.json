@@ -1,7 +1,7 @@
 {
   "title": "Sources of the library and of the architect's rules",
-  "date": "2026-10-03",
-  "status": "Read through web-search summaries on 02-10-2026. The pages themselves could not be opened from the session, so every value is as reported and not yet checked against its page (D-UX-18). A value is checked when someone opens the page, reads the figure and sets checked on the source.",
+  "date": "2026-10-04",
+  "status": "Read through web-search summaries from 02-10-2026 to 04-10-2026. The pages themselves could not be opened from the session, so every value is as reported and not yet checked against its page (D-UX-18). A value is checked when someone opens the page, reads the figure and sets checked on the source.",
   "classes": {
     "1": "An official schedule of rates (CPWD), scaled by the city's index",
     "2": "A maker's or seller's price for a named product: a price list, an MRP, a listing",
@@ -1140,6 +1140,506 @@
       "what": "Studio Matrx: building by-laws and the roof, the mumty (stair cabin) over the stair; Delhi's bye-laws allow one up to 3 m high outside the FAR",
       "url": "https://www.studiomatrx.org/guides/roof-building-bylaws-india",
       "class": "R"
+    },
+    "ghartv-kitchen": {
+      "what": "ghar.tv: modular kitchen cost in India 2026, per running foot by tier",
+      "url": "https://www.ghar.tv/design/modular-kitchen-cost-india-2026/artgi14",
+      "class": "4"
+    },
+    "gharkabudget-kitchen-calc": {
+      "what": "Ghar Ka Budget: modular kitchen cost calculator, Q3 2026 rates per running foot by board and shutter",
+      "url": "https://gharkabudget.com/modular-kitchen/",
+      "class": "4"
+    },
+    "aecord-kitchen": {
+      "what": "Aecord: kitchen renovation cost in India 2026, cabinets per running metre, counters per sq ft",
+      "url": "https://aecord.com/blog/kitchen-renovation-cost-india-2026",
+      "class": "4"
+    },
+    "nobroker-kitchen-hyd": {
+      "what": "NoBroker: modular kitchen cost in Hyderabad, base and wall units per running foot",
+      "url": "https://www.nobroker.in/interiors/design-guides/modular-kitchen-cost-in-hyderabad/",
+      "class": "4"
+    },
+    "zenterior-kitchen": {
+      "what": "Zenterior: kitchen cabinet cost in India, per running foot by tier",
+      "url": "https://zenterior.in/kitchen-cabinet-cost-in-india-what-you-actually-pay-for-a-modular-kitchen/",
+      "class": "4"
+    },
+    "aecord-counter": {
+      "what": "Aecord: countertop renovation cost, per sq ft installed",
+      "url": "https://aecord.com/blog/countertop-renovation-cost",
+      "class": "4"
+    },
+    "kotastone-platform": {
+      "what": "Kota stone kitchen platform price, per sq ft by finish, and fixing (a 2025 page)",
+      "url": "https://kotastone.online/kota-stone-kitchen-platform-price/",
+      "class": "4"
+    },
+    "gn-quartz": {
+      "what": "GN Granite and Tiles: quartz countertop prices in Delhi, per sq ft by range",
+      "url": "https://www.gngraniteandtiles.com/blog/estimated-price-of-quartz-countertops-for-a-kitchen-in-delhi.htm",
+      "class": "4"
+    },
+    "indiamart-black-galaxy": {
+      "what": "IndiaMART: Black Galaxy granite, 15–20 mm, a listing",
+      "url": "https://www.indiamart.com/proddetail/black-galaxy-premium-granite-stone-13785556597.html",
+      "class": "2"
+    },
+    "indiamart-nano-white": {
+      "what": "IndiaMART: nano white granite, a listing",
+      "url": "https://www.indiamart.com/proddetail/nano-white-granite-15666632030.html",
+      "class": "2"
+    },
+    "aecord-wardrobe": {
+      "what": "Aecord: modular wardrobe cost in India 2026, per sq ft by board and finish",
+      "url": "https://aecord.com/blog/modular-wardrobe-cost-india-2026-designs",
+      "class": "4"
+    },
+    "houseyog-finishing": {
+      "what": "HouseYog: interior finishing cost in India 2026, wardrobes and modular finishes per sq ft",
+      "url": "https://www.houseyog.com/blog/interior-finishing-cost-per-sq-ft-india/",
+      "class": "4"
+    },
+    "nobroker-pvc": {
+      "what": "NoBroker: PVC cupboards, price per sq ft",
+      "url": "https://www.nobroker.in/forum/what-is-pvc-cupboards-price-per-square-feet/",
+      "class": "4"
+    },
+    "nobroker-wardrobe": {
+      "what": "NoBroker: wardrobe cost, per sq ft by type",
+      "url": "https://www.nobroker.in/forum/what-is-wardrobe-interior-design-cost/",
+      "class": "4"
+    },
+    "wakefit-solatio": {
+      "what": "Wakefit: Solatio 3-seater sofa, listed prices",
+      "url": "https://www.wakefit.co/sofa-set/solatio-sofa/WSFASLTN3FJDB",
+      "class": "2"
+    },
+    "wakefit-napper-mini": {
+      "what": "Wakefit: Napper Mini 3-seater sofa, listed prices",
+      "url": "https://www.wakefit.co/sofa-set/napper-mini-sofa/WSFANPRMN3FOPL",
+      "class": "2"
+    },
+    "wakefit-napper-plus": {
+      "what": "Wakefit: Napper Plus 3-seater sofa, listed prices",
+      "url": "https://www.wakefit.co/sofa-set/napper-plus-sofa/WSFANPRPN3FRGN",
+      "class": "2"
+    },
+    "ikea-sofas": {
+      "what": "IKEA India: three-seat sofas, listed prices",
+      "url": "https://www.ikea.com/in/en/cat/three-seat-sofas-10670/",
+      "class": "2"
+    },
+    "soisu-sofa-price": {
+      "what": "SOISU: luxury sofa price range in India, 2026, by tier",
+      "url": "https://soisu.com/knowledge/luxury-sofa-price-india-2026",
+      "class": "4"
+    },
+    "soisu-italian": {
+      "what": "SOISU: is Italian furniture worth the price in India (imported pieces through authorised dealers)",
+      "url": "https://soisu.com/knowledge/is-italian-furniture-worth-it-india",
+      "class": "4"
+    },
+    "stanley-ar-2024": {
+      "what": "Stanley Lifestyles, annual report 2023-24: ticket size of a 3+2 sofa set by store format",
+      "url": "https://www.stanleylifestyles.com/storage/Investor/September2024/1XGS7-Stanley%20Lifestyles%20Ltd__AR%2023-24.pdf",
+      "class": "3"
+    },
+    "ikea-beds": {
+      "what": "IKEA India: queen-size bed frames, 160 × 200 cm, listed prices",
+      "url": "https://www.ikea.com/in/en/cat/beds-bm003/f/queen-size-beds-f-typed-reference-measurement--160x200-bed-frames/",
+      "class": "2"
+    },
+    "woodenstreet-brixton": {
+      "what": "Wooden Street: Brixton sheesham queen bed with hydraulic storage, walnut",
+      "url": "https://www.woodenstreet.com/product/brixton-sheesham-wood-hydraulic-bed-with-storage-queen-size-walnut-finish",
+      "class": "2"
+    },
+    "woodenstreet-adolph": {
+      "what": "Wooden Street: Adolph queen bed with hydraulic storage, honey",
+      "url": "https://www.woodenstreet.com/product/adolph-hydraulic-bed-queen-size-honey-finish",
+      "class": "2"
+    },
+    "woodenstreet-drewno": {
+      "what": "Wooden Street: Drewno sheesham upholstered queen bed with hydraulic storage",
+      "url": "https://www.woodenstreet.com/product/drewno-sheesham-ood-upholstered-bed-with-hydraulic-storage-queen-size-graphite-grey",
+      "class": "2"
+    },
+    "woodenstreet-ferguson": {
+      "what": "Wooden Street: Ferguson sheesham queen bed with hydraulic storage and cane",
+      "url": "https://www.woodenstreet.com/product/ferguson-sheesham-wood-bed-with-hydraulic-storage-and-cane-detailing-queen-size-honey-finish",
+      "class": "2"
+    },
+    "cc-beds": {
+      "what": "Curves & Carvings: handcrafted teak king beds (BED0171, BED0104, BED0150, BED0188), prices inclusive of taxes and delivery",
+      "url": "https://www.curvesandcarvings.com/beds-bedsides/beds/curves-carvings-signature-collection-bed-c-c-bed0188",
+      "class": "2"
+    },
+    "cc-beds-entry": {
+      "what": "Curves & Carvings: teak king beds BED0709 and BED0115, prices inclusive of taxes and delivery",
+      "url": "https://www.curvesandcarvings.com/beds-bedsides/beds",
+      "class": "2"
+    },
+    "soisu-beds": {
+      "what": "SOISU: Italian-design leather beds, queen and king, made in India to order, indicative prices",
+      "url": "https://www.soisu.com/beds",
+      "class": "2"
+    },
+    "nilkamal-stratus": {
+      "what": "Nilkamal: Stratus 6-seater dining table set",
+      "url": "https://www.nilkamalfurniture.com/products/nilkamal-stratus-6-seater-dining-table-set",
+      "class": "2"
+    },
+    "wakefit-alcano": {
+      "what": "Wakefit: Alcano 6-seater solid wood dining set",
+      "url": "https://www.wakefit.co/dining-furniture/alcano-solid-wood-6-seater-dining-set/WDINEACNOS6COPIW",
+      "class": "2"
+    },
+    "wakefit-soomari": {
+      "what": "Wakefit: Soomari sheesham 6-seater dining set",
+      "url": "https://www.wakefit.co/dining-furniture/soomari-dining-table/WDINESOMARIS6",
+      "class": "2"
+    },
+    "woodenstreet-janet": {
+      "what": "Wooden Street: Janet sheesham 6-seater dining set, cushioned chairs, honey",
+      "url": "https://www.woodenstreet.com/product/janet-cushioned-6-seater-dining-set-honey-finish",
+      "class": "2"
+    },
+    "ikea-dining": {
+      "what": "IKEA India: dining sets, a table and 4 chairs, listed prices",
+      "url": "https://www.ikea.com/in/en/cat/dining-sets-19145/",
+      "class": "2"
+    },
+    "woodenstreet-hazel": {
+      "what": "Wooden Street: Hazel sheesham 6-seater dining set with a marble top, teak",
+      "url": "https://www.woodenstreet.com/product/hazel-6-seater-sheesham-wood-dining-table-set-with-marble-top-teak-finish",
+      "class": "2"
+    },
+    "royaloak-rome": {
+      "what": "Royaloak: Rome Italian marble 6-seater dining set",
+      "url": "https://www.royaloakindia.com/royaloak-rome-italian-marble-dining-set-six-seater.html",
+      "class": "2"
+    },
+    "woodenstreet-shriyam": {
+      "what": "Wooden Street: Shriyam sheesham 6-seater dining set, quartz top, cane and brass",
+      "url": "https://www.woodenstreet.com/product/shriyam-modern-6-seater-sheesham-wood-dining-table-set-with-quartz-table-top-cane-brass-accents-teak-finish",
+      "class": "2"
+    },
+    "durian-tuscany": {
+      "what": "Durian: Tuscany 6-seater dining set, composite marble top on solid wood",
+      "url": "https://www.durian.in/product/tuscany-raven-black-composite-marble-solid-wood-6-seater-dining-set",
+      "class": "2"
+    },
+    "cc-dining-0056": {
+      "what": "Curves & Carvings: DTC0056 classic Italian teak 6-seater dining set, made to order, inclusive of taxes and delivery",
+      "url": "https://www.curvesandcarvings.com/dining-sets/curves-carvings-signature-collection-dining-table-set-c-c-dtc0056",
+      "class": "2"
+    },
+    "cc-dining-0804": {
+      "what": "Curves & Carvings: DTC0804 antique French teak 6-seater dining set, inclusive of taxes and delivery",
+      "url": "https://www.curvesandcarvings.com/dining-sets/antique/6-seater/curves-carvings-classic-collection-dining-table-set-c-c-dtc0804",
+      "class": "2"
+    },
+    "cc-dining-0050": {
+      "what": "Curves & Carvings: DTC0050 vintage Indian teak dining set, inclusive of taxes and delivery",
+      "url": "https://www.curvesandcarvings.com/dining-sets/antique/curves-carvings-signature-collection-dining-table-set-c-c-dtc0050",
+      "class": "2"
+    },
+    "houseyog-doors-windows": {
+      "what": "Doors and windows cost in India, 2026: windows per sq ft; quotes usually include fabrication, supply and installation",
+      "url": "https://www.houseyog.com/blog/doors-and-windows-cost-india/",
+      "class": "4"
+    },
+    "woodenmax-domal": {
+      "what": "WoodenMax: aluminium window prices, 27 mm domal 2-track (before GST)",
+      "url": "https://woodenmax.in/products/aluminium-windows",
+      "class": "3"
+    },
+    "woodenmax-casement": {
+      "what": "WoodenMax: aluminium casement window prices, without and with mesh or grill (before GST)",
+      "url": "https://woodenmax.in/products/aluminium-windows/aluminium-casement-window-price",
+      "class": "3"
+    },
+    "woodenmax-slim": {
+      "what": "WoodenMax: slim aluminium window, luxury series, installed (before GST)",
+      "url": "https://woodenmax.in/products/aluminium-windows/slim-aluminium-window-price-luxury",
+      "class": "3"
+    },
+    "studiomatrx-bedroom-door": {
+      "what": "Bedroom door design in India, 2026: three tiers costed by shutter, frame, hardware and labour",
+      "url": "https://www.studiomatrx.org/guides/bedroom-door-design-india",
+      "class": "4"
+    },
+    "studiomatrx-door-types": {
+      "what": "Types of doors in India, 2026: cost by type",
+      "url": "https://www.studiomatrx.org/guides/types-of-doors-india",
+      "class": "4"
+    },
+    "studiomatrx-door-trends": {
+      "what": "Door design trends in India, 2026: concealed-frame and pivot doors, costs",
+      "url": "https://www.studiomatrx.org/guides/door-design-trends-2026-india",
+      "class": "4"
+    },
+    "studiomatrx-pocket": {
+      "what": "Pocket doors in India, 2026: installed cost plus 18% GST, and its parts",
+      "url": "https://www.studiomatrx.org/guides/pocket-doors-india",
+      "class": "4"
+    },
+    "studiomatrx-door-materials": {
+      "what": "Door materials compared, India 2026: cost by material",
+      "url": "https://www.studiomatrx.org/guides/door-materials-comparison-india",
+      "class": "4"
+    },
+    "apter-pravesh-plain": {
+      "what": "Apter: Tata Pravesh plain steel door (Oyester), price and MRP",
+      "url": "https://apter.in/product/tata-pravesh-plain-steel-doors-oyester-doors/",
+      "class": "2"
+    },
+    "apter-pravesh-embossed": {
+      "what": "Apter: Tata Pravesh embossed wood-finish steel door (Pearl), price and MRP",
+      "url": "https://apter.in/product/embossed-wood-finish-doors-pearl-door-coast-design/",
+      "class": "2"
+    },
+    "apter-pravesh-reflection": {
+      "what": "Apter: Tata Pravesh Natural Series steel door (Reflection)",
+      "url": "https://apter.in/product/reflection-doors/",
+      "class": "2"
+    },
+    "apter-pravesh-double": {
+      "what": "Apter: Tata Pravesh double-leaf steel door",
+      "url": "https://apter.in/product/double-door/",
+      "class": "2"
+    },
+    "indiamart-teak-carved": {
+      "what": "IndiaMART: polished, carved Burma teak door, a piece",
+      "url": "https://www.indiamart.com/proddetail/polished-burma-carved-teak-wood-doors-2853907836388.html",
+      "class": "2"
+    },
+    "indiamart-teak-frame": {
+      "what": "IndiaMART: Burma teak door frame, a piece",
+      "url": "https://www.indiamart.com/proddetail/burma-teak-door-frame-22361772748.html",
+      "class": "2"
+    },
+    "indiamart-indian-pan": {
+      "what": "IndiaMART: Hindware squatting pans (Orissa, Eco)",
+      "url": "https://www.indiamart.com/proddetail/hindware-orissa-popular-squatting-pan-11047913730.html",
+      "class": "2"
+    },
+    "indiamart-pvc-cistern": {
+      "what": "IndiaMART: PVC flushing cisterns (Hindware, Parryware, Cera)",
+      "url": "https://www.indiamart.com/aanshi-enterprise/pvc-flushing-cistern.html",
+      "class": "2"
+    },
+    "indiamart-slick": {
+      "what": "IndiaMART: Hindware Slick floor-mounted EWC with a Sleek Smart cistern",
+      "url": "https://www.indiamart.com/shri-balaji-distributors/flushing-cistern.html",
+      "class": "2"
+    },
+    "indiamart-onepiece": {
+      "what": "IndiaMART: Parryware one-piece toilet",
+      "url": "https://www.indiamart.com/proddetail/parryware-one-piece-toilet-14713672012.html",
+      "class": "2"
+    },
+    "indiamart-imported-wc": {
+      "what": "IndiaMART: TOTO wall-hung WCs (CW580M, CW822MNW1)",
+      "url": "https://www.indiamart.com/bathnbeyond-bengaluru/toto-sanitary-ware.html",
+      "class": "2"
+    },
+    "kohler-span": {
+      "what": "Kohler India: Span Round complete wall-hung toilet bundle; prices include all taxes",
+      "url": "https://www.kohler.co.in/p/shop-toilet-area-combos/span-round-complete-wall-hung-toilet-bundle-in-white-1",
+      "class": "2"
+    },
+    "kohler-vive": {
+      "what": "Kohler India: Vive wall-hung toilet bundle; prices include all taxes",
+      "url": "https://www.kohler.co.in/p/shop-toilet-area-combos/vive-wall-hung-toilet-bundle-in-white-1",
+      "class": "2"
+    },
+    "kohler-modernlife": {
+      "what": "Kohler India: ModernLife wall-hung toilet bundle; prices include all taxes",
+      "url": "https://www.kohler.co.in/p/shop-toilet-area-combos/modern-life-wall-hung-toilet-bundle-in-white-1",
+      "class": "2"
+    },
+    "kohler-vox": {
+      "what": "Kohler India: Vox square vessel basin without a faucet hole (2661IN)",
+      "url": "https://www.kohler.co.in/p/washbasins/vox-square-vessel-lavatory-without-faucet-hole-2661in",
+      "class": "2"
+    },
+    "kohler-innate": {
+      "what": "Kohler India: Innate one-piece elongated smart toilet, dual flush (29777IN)",
+      "url": "https://www.kohler.co.in/p/toilets/innate-one-piece-elongated-smart-toilet-dual-flush-29777in",
+      "class": "2"
+    },
+    "kohler-veil-basin": {
+      "what": "Kohler India: Veil vessel basin (20704)",
+      "url": "https://www.kohler.co.in/p/washbasins/veil-vessel-bathroom-sink-20704",
+      "class": "2"
+    },
+    "kohler-veil-smart": {
+      "what": "Kohler India: Veil smart one-piece toilet (5401IN)",
+      "url": "https://www.kohler.co.in/p/toilets/veil-smart-one-piece-toilet-5401in",
+      "class": "2"
+    },
+    "kohler-july-basin": {
+      "what": "Kohler India: July single-control basin mixer (29928IN-4ND)",
+      "url": "https://www.kohler.co.in/p/washbasins/july-comfort-height-single-control-lav-without-drain-29928in-4nd",
+      "class": "2"
+    },
+    "kohler-july-diverter": {
+      "what": "Kohler India: July 4-way bath and shower with a diverter for a hand shower (98754IN-4)",
+      "url": "https://www.kohler.co.in/p/diverters-trims/july-4-way-bath-and-shower-with-diverter-for-handshower-98754in-4",
+      "class": "2"
+    },
+    "kohler-c90": {
+      "what": "Kohler India: round rain shower with a ceiling-mount arm, polished chrome (K-C90)",
+      "url": "https://www.kohler.co.in/p/shop-showering-area-combos/combo-rain-shower-round-with-ceiling-mount-shower-arm-in-polished-chrome-1",
+      "class": "2"
+    },
+    "kohler-c87": {
+      "what": "Kohler India: square rain shower with a wall-mount arm, polished chrome (K-C87)",
+      "url": "https://www.kohler.co.in/p/shop-showering-area-combos/combo-rain-square-shower-with-complementary-wall-mount-square-shower-arm-in-polished-chrome-1",
+      "class": "2"
+    },
+    "kohler-c22": {
+      "what": "Kohler India: square shower and bathroom combo (K-C22)",
+      "url": "https://www.kohler.co.in/p/shop-showering-area-combos/square-shower-bathroom-combo-1",
+      "class": "2"
+    },
+    "kohler-aleo-plus": {
+      "what": "Kohler India: Aleo+ tall single-handle basin mixer, 14 lpm (72337IN-4ND)",
+      "url": "https://www.kohler.co.in/p/washbasins/aleo-tall-single-handle-bathroom-sink-faucet-14-0-lpm-72337in-4nd",
+      "class": "2"
+    },
+    "kohler-aleo-rgd": {
+      "what": "Kohler India: Aleo tall basin mixer without drain, rose gold (72298IN-4ND)",
+      "url": "https://www.kohler.co.in/p/washbasins/aleo-tall-lavatory-faucet-without-drain-72298in-4nd",
+      "class": "2"
+    },
+    "kohler-composed": {
+      "what": "Kohler India: Composed single-handle basin mixer with a knob handle, BV finish (73050T-7)",
+      "url": "https://www.kohler.co.in/p/washbasins/composed-single-handle-bathroom-sink-faucet-with-knob-handle-73050t-7",
+      "class": "2"
+    },
+    "kohler-fluence": {
+      "what": "Kohler India: Fluence recessed thermostatic bath and shower valve and trim, BV finish (34168IN-4-BV)",
+      "url": "https://www.kohler.co.in/p/diverters-trims/fluence-aqua-turbo-360-recessed-thermostatic-bath-and-shower-valve-and-trim-34168in-4",
+      "class": "2"
+    },
+    "kohler-statement": {
+      "what": "Kohler India: Statement oblong 453 mm two-function rainhead, chrome (26297IN)",
+      "url": "https://www.kohler.co.in/p/showers/statement-oblong-453-mm-two-function-rainhead-9-5-lpm-26297in",
+      "class": "2"
+    },
+    "kohler-statement-gold": {
+      "what": "Kohler India: Statement oblong 353 mm two-function rainhead, AF finish (26296IN)",
+      "url": "https://www.kohler.co.in/p/showers/statement-oblong-353-mm-two-function-rainhead-9-5-lpm-26296in",
+      "class": "2"
+    },
+    "kohler-anthem": {
+      "what": "Kohler India: Anthem four-way thermostatic valve and bath-shower column with rainhead and hand shower (26334IN-9)",
+      "url": "https://www.kohler.co.in/p/diverters-trims/anthem-four-way-thermostatic-valve-and-bath-shower-column-with-multifunction-rainhead-and-handshower-26334in-9",
+      "class": "2"
+    },
+    "amazon-grohe-hand": {
+      "what": "Amazon India: GROHE Rainshower SmartActive 130 hand shower (26574000)",
+      "url": "https://www.amazon.in/GROHE-Rainshower-SmartActive-Shower-26574000/dp/B07V7HS952",
+      "class": "2"
+    },
+    "amazon-grohe-head": {
+      "what": "Amazon India: GROHE Rainshower SmartActive 310 Cube head shower set (26479000)",
+      "url": "https://www.amazon.in/GROHE-Rainshower-Smartactive-Shower-26479000/dp/B075QMDFB8",
+      "class": "2"
+    },
+    "amazon-wipro-batten": {
+      "what": "Amazon India: Wipro Garnet 20 W LED batten",
+      "url": "https://www.amazon.in/Wipro-Garnet-20-Watt-Batten-Rectangular/dp/B0788C3CJR",
+      "class": "2"
+    },
+    "amazon-havells-batten": {
+      "what": "Amazon India: Havells 20 W LED battens, search listing (Triyca 3-in-1)",
+      "url": "https://www.amazon.in/havells-tube-light-20-watt/s?k=havells+tube+light+20+watt",
+      "class": "2"
+    },
+    "amazon-philips-batten": {
+      "what": "Amazon India: Philips 20 W smart Wi-Fi tunable-white batten",
+      "url": "https://www.amazon.in/Philips-Tunable-Control-Assistant-Efficient/dp/B0G7ZNP78C",
+      "class": "2"
+    },
+    "amazon-wipro-smart-batten": {
+      "what": "Amazon India: Wipro 20 W smart Wi-Fi CCT batten",
+      "url": "https://www.amazon.in/Batten-Compatible-Amazon-Google-Assistant/dp/B07P7JNQ56",
+      "class": "2"
+    },
+    "amazon-wipro-rgb-batten": {
+      "what": "Amazon India: Wipro Next 20 W smart CCT and RGB batten",
+      "url": "https://www.amazon.in/wipro-Million-Compatible-Assistant-DS22000/dp/B08D19X3LS",
+      "class": "2"
+    },
+    "amazon-wipro-cct-panel": {
+      "what": "Amazon India: Wipro Garnet Wave 10 W 130 x 130 mm colour-changing recessed panel",
+      "url": "https://www.amazon.in/wipro-Changing-Recessed-Downlighter-130x130mm/dp/B0C1YP5SG4",
+      "class": "2"
+    },
+    "amazon-hue-garnea": {
+      "what": "Amazon India: Philips Hue Garnea white ambiance downlight",
+      "url": "https://www.amazon.in/Philips-Garnea-White-Ambience-Downlight/dp/B07RDJJCMN",
+      "class": "2"
+    },
+    "amazon-hue-centura": {
+      "what": "Amazon India: Philips Hue Centura recessed spotlights, white and colour ambiance",
+      "url": "https://www.amazon.in/Philips-Hue-Ambiance-Spotlights-Generation/dp/B0DDCMB2YY",
+      "class": "2"
+    },
+    "amazon-hue-semeru": {
+      "what": "Amazon India: Philips Hue Semeru ceiling light, white ambiance",
+      "url": "https://www.amazon.in/Philips-Ceiling-Ambiance-Compatible-Assistant/dp/B07RFKTW52",
+      "class": "2"
+    },
+    "amazon-hue-adore": {
+      "what": "Amazon India: Philips Hue Adore bathroom ceiling light, white ambiance",
+      "url": "https://www.amazon.in/Philips-Bathroom-Ambiance-Compatible-Assistant/dp/B07DX7QR81",
+      "class": "2"
+    },
+    "quickboq-dsr-wiring": {
+      "what": "CPWD DSR 2025, electrical: light point wiring, Groups A to C, as quoted by QuickBOQ",
+      "url": "https://quickboq.in/dsr/electrical/2025/",
+      "class": "1"
+    },
+    "dial4trade-points": {
+      "what": "Dial4Trade: electrician charges per point in India, 2026",
+      "url": "https://www.dial4trade.com/knowledgebase/electrician-charges-per-point-in-india-2026-|-wiring-and-labour-cost-guide.htm",
+      "class": "4"
+    },
+    "houseyog-granite-marble": {
+      "what": "Granite vs marble flooring cost in India: material and laying charges",
+      "url": "https://www.houseyog.com/blog/granite-vs-marble-flooring-cost/",
+      "class": "4"
+    },
+    "nobroker-epoxy": {
+      "what": "NoBroker forum: the average price of epoxy flooring per sq ft in India",
+      "url": "https://www.nobroker.in/forum/what-does-epoxy-flooring-cost/",
+      "class": "4"
+    },
+    "studiomatrx-flooring-guide": {
+      "what": "Complete home flooring guide for Indian homes, 2026: material rates before laying, all attracting 18% GST",
+      "url": "https://www.studiomatrx.org/guides/complete-home-flooring-guide-india",
+      "class": "4"
+    },
+    "studiomatrx-flooring-trends": {
+      "what": "Flooring trends 2026 for Indian homes, with Athangudi and encaustic cement tiles",
+      "url": "https://www.studiomatrx.org/guides/flooring-trends-india-2026",
+      "class": "4"
+    },
+    "studiomatrx-home-theatre": {
+      "what": "Home theatre flooring in India: carpet tiles and acoustic underlay",
+      "url": "https://www.studiomatrx.org/guides/home-theatre-flooring-india",
+      "class": "4"
+    },
+    "nobroker-cmwssb": {
+      "what": "NoBroker forum: CMWSSB (Chennai) new connection charges, a house's sewer connection Rs. 24,500 (110 mm pipe) or Rs. 26,500 (140 mm)",
+      "url": "https://www.nobroker.in/forum/what-is-the-cmwssb-new-connection-charges/",
+      "class": "4"
     }
   }
 }

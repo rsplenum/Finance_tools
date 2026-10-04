@@ -160,12 +160,12 @@ describe('E5: a new house\'s plot, outside works, water, stairs and stages, by h
     const one = house({ bhk: '1' });
     expect([line(one, 'flat:sump:sump')?.qty, line(one, 'flat:overhead-tank:tank')?.qty, line(one, 'flat:septic:septic')?.qty]).toEqual([2000, 500, 4500]);
   });
-  it('where the sewer reaches the plot, a sewer connection takes the septic tank\'s place, without a rate yet, and is flagged', () => {
+  it('where the sewer reaches the plot, a sewer connection takes the septic tank\'s place: Chennai\'s charge, Rs. 25,500 (the middle of 24,500–26,500) × 0.969072 for Pune = 24,711.34, against the tank\'s 89,610', () => {
     const w = house({ sewer: true });
     expect(line(w, 'flat:septic:septic')).toBeUndefined();
-    expect(w.unpriced.map((u) => u.key)).toContain('flat:sewer:sewer');
-    expect(w.flags.some((f) => f.text.includes('Sewer connection has no rate yet'))).toBe(true);
-    expect(w.total).toBeCloseTo(e.total - 89610, 2);
+    expect(line(w, 'flat:sewer:sewer')).toMatchObject({ qty: 1, rate: 24711.34, amount: 24711.34, entry: 'sewer-connection', section: 'water' });
+    expect(w.unpriced.map((u) => u.key)).not.toContain('flat:sewer:sewer');
+    expect(w.total).toBeCloseTo(e.total - 89610 + 24711.34, 2);
     expect(w.assumptions.find((a) => a.what === 'Water')?.shown).toContain('the city\'s sewer in place of a septic tank');
   });
   it('the stairs: two, each treads 2 × 1.1 × 2.2 = 4.84, risers 1.1 × 3.05 = 3.355, the landing 1.2 × 2.5 = 3 and the floor\'s landing 1.1 × 2.5 = 2.75 sq m: 13.945; 27.89 sq m = 300.21 sq ft of Kota stone at Rs. 135 × 0.969072 = 130.82: Rs. 39,273.47; the well\'s walls 14 m × (2 × 3.05 + 2.7) = 123.2 sq m = 1,326.11 sq ft; a WPC door to the terrace', () => {
@@ -271,10 +271,10 @@ describe('the estimate', () => {
     expect(e.lines.some((l) => l.section === 'kitchen')).toBe(false);
   });
   it('a chosen item with no rate yet is left out and named', () => {
-    const e = run({ items: { 'living:floor:floor-skirting': 'fl-granite' } });
+    const e = run({ items: { 'living:floor:floor-skirting': 'fl-encaustic' } });
     expect(line(e, 'living:floor:floor-skirting')).toBeUndefined();
-    expect(e.unpriced.map((u) => u.entryName)).toEqual(['Granite flooring']);
-    expect(e.flags.some((f) => f.text.includes('Granite flooring has no rate yet'))).toBe(true);
+    expect(e.unpriced.map((u) => u.entryName)).toEqual(['Encaustic cement tiles']);
+    expect(e.flags.some((f) => f.text.includes('Encaustic cement tiles has no rate yet'))).toBe(true);
   });
   it('flags a room below the Code\'s minimum, and a place with no city figure', () => {
     const tiny = run({ area: 450, bhk: '3' });
@@ -347,7 +347,7 @@ describe('what the page shows beside the estimate', () => {
       if (x.rate !== null) expect(x.rate, x.id).toBe(checkRate(x.id, 'pune'));
     }
     expect(c?.levels[0].some((x) => x.id === 'fl-kota')).toBe(true);
-    expect(c?.levels[2].find((x) => x.id === 'fl-granite')?.rate).toBeNull();
+    expect(c?.levels[2].find((x) => x.id === 'fl-encaustic')?.rate).toBeNull();
     const ids = c?.levels.flat().map((x) => x.id) ?? [];
     expect(ids.length).toBe(new Set(ids).size);
     expect(c?.others).toEqual([]);
@@ -619,8 +619,8 @@ describe('V1: the flags that can change the decision, largest first', () => {
     expect(build({ heightM: 3.5 }).flags.find((f) => f.text.startsWith('The stairs\' risers'))?.decides).toBe(true);
     expect(run({ rooms: { living: { l: 16 * FT, b: 20 * FT } } }).flags.find((f) => f.text.startsWith('With your sizes'))?.decides).toBe(true);
     expect(run({ city: 'other' }).flags.find((f) => f.text.startsWith('No city figure'))?.decides).toBe(true);
-    const granite = run({ items: { 'living:floor:floor-skirting': 'fl-granite' } }).flags.find((f) => f.text.includes('has no rate yet'));
-    expect([granite?.decides, granite?.n]).toEqual([true, 0]);
+    const unpriced = run({ items: { 'living:floor:floor-skirting': 'fl-encaustic' } }).flags.find((f) => f.text.includes('has no rate yet'));
+    expect([unpriced?.decides, unpriced?.n]).toEqual([true, 0]);
   });
 });
 
@@ -644,8 +644,10 @@ describe('L1: a level is a band of choices; its range runs from the cheapest pri
       let low = 0, high = 0, lines = 0;
       for (const l of e.lines) {
         const at = (choicesFor(input, l.key) as Choices).levels[l.at - 1].filter((x) => x.rate !== null);
-        for (const x of at) expect(x.unit, x.id).toBe(l.unit);
-        const amounts = at.map((x) => r2(l.qty * (x.rate as number)));
+        // A choice priced by the pair of the line's unit (a metre for a running foot) takes the quantity in its own unit: 1 ft = 0.3048 m.
+        const inUnit = (u: string) => (u === l.unit ? l.qty : l.unit === 'rft' && u === 'm' ? l.qty * 0.3048 : l.unit === 'sqft' && u === 'sqm' ? l.qty * 0.3048 ** 2 : NaN);
+        for (const x of at) expect(inUnit(x.unit), `${x.id} in ${x.unit} on a line in ${l.unit}`).not.toBeNaN();
+        const amounts = at.map((x) => r2(r2(inUnit(x.unit)) * (x.rate as number)));
         low += Math.min(...amounts); high += Math.max(...amounts); lines += amounts.length > 1 ? 1 : 0;
       }
       expect([runs.range.of, runs.range.lines], input.kind).toEqual([e.lines.length, lines]);

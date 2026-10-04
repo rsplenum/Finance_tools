@@ -861,7 +861,7 @@ function flags(ctx: Ctx, bhk: Bhk, carpetSqft: number, lines: Line[], unpriced: 
   if (ctx.house) {
     const h = ctx.house, riser = h.floorToFloor / (2 * (R.house.stair.treads + 1)), unit = ctx.input.areaUnit === 'sqm' ? 'm' : 'ft';
     const side = (x: number) => (unit === 'm' ? f2(x) : f2(x * FT_PER_M));
-    note('The structure\'s materials and labour are rules of thumb for each sq ft of built-up area (as reported). A structural engineer\'s design and quantities replace them; more floors, poor soil or seismic zone IV or V usually need more steel.', section('structure'));
+    note('The structure\'s materials and labour are rules of thumb for each sq ft of built-up area (as reported). A structural engineer\'s design and quantities replace them; more floors, poor soil or seismic zone IV or V usually need more steel. IS 456\'s lowest grade of reinforced concrete is M25 in the ground and the rain, and M30 in coastal air, as in Mumbai and Chennai (as reported).', section('structure'));
     note(`The rooms are planned as one home of ${Math.round(carpetSqft)} sq ft of carpet area, the built-up area less the outer walls and the stairs; how they sit on each floor is not drawn yet.`, inRooms);
     if (!h.plot.fits) check(`Your plot, ${side(h.plot.l)} × ${side(h.plot.b)} ${unit}, is smaller than the house's outline, ${side(h.l)} × ${side(h.b)} ${unit}: check the plot's size, or the built-up area and the floors.`, section('outside'));
     note('The compound wall runs round all four sides of the plot and the paving covers all the open ground round the house: take off a side that a neighbour\'s wall already closes, or a garden left unpaved.', section('outside'));
