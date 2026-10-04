@@ -42,6 +42,7 @@ What the owner taught across projects, so a new project starts where the last on
 
 - `docs/DECISIONS.md`: one line per decision, with an ID by area (such as POL, UX, TECH, DOC, DATA, AI, BIZ), the date, what and where, why, and who decided, so later sessions do not decide it again.
 - `docs/HANDOFF.md`, short and current: the state, the next rows each with its plan and the effort to start at, gotchas, and what waits on the owner. End each session with a starter prompt the owner can paste into a new one.
+- Recount a figure from the data just before writing it into a doc, by a script that says what it counts; where a generated doc can print it, print it there and cite that.
 - The `lessons` skill at the end of each session.
 - Draft PRs; the owner says "merge" once they have tried it. No hourly PR check-ins unless asked.
 

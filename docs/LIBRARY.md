@@ -8,6 +8,8 @@ Dated 04-10-2026. Read through web-search summaries from 02-10-2026 to 04-10-202
 
 Checked against their pages: 333 of 518 items, 234 sources; 49 sources could not be opened. 20 of the 81 families with levels offer more than one choice at a level. 9 families carry notes (T1): what each is, why it costs what it does and what to check, shown behind a line's Why? on the planning estimate.
 
+Not checked: 185 items. 139 are single items: 91 cite a page that prices another thing or basis, and 48 cite a page that could not be opened. 46 are sets priced from their parts, so only their parts are checked: 23 read as checked on the page, since every part is, and 4 cite no page of their own and take their parts' (stf-kota, stf-marble, stf-italian, stf-statuario). So a line says "As reported" for 162 items.
+
 ## Civil and repairs
 
 Dated 02-10-2026; an item read on another day says so.

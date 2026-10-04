@@ -183,12 +183,24 @@ const GST = { extra: '; plus GST', incl: '; incl. GST', unstated: '; GST not sta
 const cell = (x) => String(x ?? '').replace(/\|/g, '/');
 const noteText = (x) => { const r = ref(x.src).trim(); return `${x.text} ${r === 'our rule' ? '(our rule)' : r}${x.status === 'reported' ? ' (as reported)' : ''}`; };
 let banded = 0, leveled = 0;
+/** The items with no check of their own. A set has no rate of its own, so only its parts are checked against their pages, and the page reads it as checked when every part is (`checkedOn` in engine/architect.ts). */
+function unchecked() {
+  const un = [...entries.values()].filter((e) => !e.checked);
+  const unread = (e) => e.src.some((id) => sources.sources[id]?.unread);
+  const shown = (e) => { const d = [e.rate ? e.checked : '', ...(e.parts ?? []).map((p) => shown(entries.get(p.id)))]; return d.includes(undefined) ? undefined : d.filter(Boolean).sort().at(-1); };
+  const sets = un.filter((e) => e.parts), single = un.filter((e) => !e.parts);
+  if (sets.some((e) => e.rate) || single.some((e) => !e.src.length)) throw new Error('rules-doc: a set has a rate of its own or a single item cites no page; reword "Not checked"');
+  const none = sets.filter((e) => !e.src.length);
+  return `Not checked: ${un.length} items. ${single.length} are single items: ${single.filter((e) => !unread(e)).length} cite a page that prices another thing or basis, and ${single.filter(unread).length} cite a page that could not be opened. ${sets.length} are sets priced from their parts, so only their parts are checked: ${sets.filter(shown).length} read as checked on the page, since every part is, and ${none.length} cite no page of their own and take their parts' (${none.map((e) => e.id).join(', ')}). So a line says "As reported" for ${[...entries.values()].filter((e) => !shown(e)).length} items.`;
+}
 const lib = ['# The library', '', 'Generated from `engine/data/library/` by `npm run rules-doc`; edit the data files, not this page.', '',
   `Dated ${date(sources.date)}. ${sources.status}`, '',
   `${entries.size} items in ${files.reduce((t, f) => t + f.families.length, 0)} families, from ${Object.keys(sources.sources).length} sources. The estimate uses the middle of each range. A family's five levels name one item each (${A.levels.map((l) => l.name).join(', ')}); every other item in the family is an alternative you can choose instead. A level is a band of choices (L1): the item it names and every other item usually at it; the estimate's range at a level runs from the cheapest priced choice at it in every line to the dearest.`, '',
   // E2: how much was read on its page, as counts; each source below says which.
-  `Checked against their pages: ${[...entries.values()].filter((e) => e.checked).length} of ${entries.size} items, ${Object.values(sources.sources).filter((s) => s.checked).length} sources; ${Object.values(sources.sources).filter((s) => s.unread).length} sources could not be opened.`, ''];
-const introAt = lib.length - 2;
+  `Checked against their pages: ${[...entries.values()].filter((e) => e.checked).length} of ${entries.size} items, ${Object.values(sources.sources).filter((s) => s.checked).length} sources; ${Object.values(sources.sources).filter((s) => s.unread).length} sources could not be opened.`, '',
+  // E4: the items with no check of their own, counted here so a doc quoting them can copy the count (docs/LESSONS.md).
+  unchecked(), ''];
+const introAt = lib.length - 4;
 for (const f of files) {
   lib.push(`## ${f.title}`, '', `Dated ${date(f.date)}; an item read on another day says so.`, '');
   if (f.status) lib.push(f.status, '');
