@@ -2,7 +2,7 @@
  * The architect (engine/architect.ts) on fictional flats. The rooms, openings and measurements of a 2BHK of 1,000 sq ft
  * are worked by hand below; every estimate is also worked a second way (architect-check.ts) and shows nothing when the
  * two disagree. Rates come from the library (tests/library.test.ts); no figure here comes from the owner's office or
- * employer (D-BIZ-02). The owner's own fictional flat, worked at home, is still to come (HANDOFF).
+ * employer (D-BIZ-02). The owner's own fictional flat, worked at home, is still to come (docs/OWNER.md).
  */
 import { describe, it, expect } from 'vitest';
 import { architect, architectNeeds, changeOf, choicesFor, cityFactor, levelRuns, overPackage, planOpenings, planRooms, strip, type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choices, type Level, type LevelRuns, type Stage } from '../engine/architect';

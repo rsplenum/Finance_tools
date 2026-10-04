@@ -9,7 +9,7 @@ What the owner taught across projects, so a new project starts where the last on
 
 ## Tokens: every step re-reads the whole context
 
-- One feature per session, each in a new session, ended by the handoff below.
+- One deliverable per session, each in a new session, with a budget set before it starts (S about 60 steps, M about 120, L about 200; stop at the budget plus a quarter) and ended by the handoff below; preparing the next session's row is part of the one that ends. Measure each session's actual and keep it next to its budget. When new work is asked in an old conversation, say once that a new session costs less.
 - Grep before reading; never read a large file, PDF or source text whole. Check a page with text assertions, and take a screenshot only for a layout question.
 - Put independent commands together in one step, and fetch many pages through one script that prints only what is needed.
 - Compact at about 192k tokens: set `CLAUDE_CODE_AUTO_COMPACT_WINDOW` to `"260000"` under `env` in the repo's `.claude/settings.json` (a 1M-token window otherwise never compacts), and give CLAUDE.md a "Compact Instructions" section naming what a summary must keep.
@@ -41,7 +41,7 @@ What the owner taught across projects, so a new project starts where the last on
 ## Records
 
 - `docs/DECISIONS.md`: one line per decision, with an ID by area (such as POL, UX, TECH, DOC, DATA, AI, BIZ), the date, what and where, why, and who decided, so later sessions do not decide it again.
-- `docs/HANDOFF.md`, short and current: the state, the next rows each with its plan and the effort to start at, gotchas, and what waits on the owner. End each session with a starter prompt the owner can paste into a new one.
+- `docs/HANDOFF.md`, short and current, its size capped by a check (about 10 KB): the state and the next rows, each with its deliverable, budget, plan and the effort to start at. History, traps and what waits on the owner go to files read only by grep. End each session with a starter prompt the owner can paste into a new one.
 - Recount a figure from the data just before writing it into a doc, by a script that says what it counts; where a generated doc can print it, print it there and cite that.
 - The `lessons` skill at the end of each session.
 - Draft PRs; the owner says "merge" once they have tried it. No hourly PR check-ins unless asked.

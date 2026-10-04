@@ -12,6 +12,7 @@
     "sim": "vitest run tests/dscr.sim.test.ts --silent=false",
     "rules-doc": "node scripts/rules-doc.mjs",
     "pack-skills": "node portable/pack.mjs",
+    "cost": "node .claude/skills/lessons/scripts/session-cost.mjs",
     "verify": "node scripts/verify.mjs",
     "worker:dev": "wrangler dev -c worker/wrangler.jsonc",
     "worker:types": "wrangler types -c worker/wrangler.jsonc worker/worker-configuration.d.ts",
