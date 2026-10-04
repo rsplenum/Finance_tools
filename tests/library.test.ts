@@ -4,8 +4,8 @@
  * unit. A rate is the middle of its reported range, worked by hand below.
  */
 import { describe, it, expect } from 'vitest';
-import { CLASSES, ENTRIES, FAMILIES, FILES, LABOUR_ITEMS, SOURCE, choices, ladder, price } from '../engine/library';
-import { R, dimensionOf } from '../engine/architect';
+import { CLASSES, ENTRIES, FAMILIES, FILES, LABOUR_ITEMS, NOTES, NOTES_DATE, SOURCE, SPEND_SAVE, choices, ladder, price, type Note } from '../engine/library';
+import { R, architect, dimensionOf, type ArchitectEstimate, type ArchitectInput } from '../engine/architect';
 
 const UNITS = ['sqft', 'sqm', 'rft', 'm', 'nos', 'set', 'lot', 'kg', 'cum', 'bag', 'litre'];
 
@@ -165,5 +165,65 @@ describe('rates, worked by hand', () => {
   });
   it('an item still to be found has no rate', () => {
     expect(price('fl-encaustic', 1, 18)).toBeNull();
+  });
+});
+
+// T1 (D-UX-34): words for the page's Why?, never an amount; each note with its sources, reported until its pages are read.
+describe('T1: what it is, why it costs what it does, what to check; where to spend, where to save', () => {
+  const words = (x: string) => x.split(/\s+/).filter(Boolean).length;
+  const fair = (n: Note, where: string) => {
+    expect(n.text.length, where).toBeGreaterThan(0);
+    expect(words(n.text), `${where}: short`).toBeLessThanOrEqual(50);
+    expect(n.src.length, where).toBeGreaterThan(0);
+    for (const s of n.src) expect(SOURCE[s], `${where}: source ${s}`).toBeDefined();
+    // Our own rule alone is 'own'; a note with an outside source is reported until someone reads its pages.
+    expect(n.status, where).toBe(n.src.every((s) => s === 'own') ? 'own' : 'reported');
+    expect(n.text, `${where}: no amount: the line's figures are the engine's`).not.toMatch(/\bRs\.?\s*\d|₹|\b(lakh|crore)s?\b|\d\/-/i);
+    expect(n.text, `${where}: no verdict on safety`).not.toMatch(/\b(safe|safer|safely|safety|unsafe|guarantee)/i);
+    expect(n.text, `${where}: never "architect" (D-UX-18)`).not.toMatch(/architect/i);
+  };
+  it('dated; every note names a family in the library, and has the three notes, each short, sourced and marked', () => {
+    expect(NOTES_DATE).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    for (const [id, n] of NOTES) {
+      expect(FAMILIES.has(id), id).toBe(true);
+      expect(Object.keys(n).sort(), id).toEqual(['check', 'cost', 'what']);
+      for (const k of ['what', 'cost', 'check'] as const) fair(n[k], `${id}.${k}`);
+    }
+  });
+  it('the five families that cost the most in each of V1\'s two cases, as the engine works them out, all have notes', () => {
+    const cases: ArchitectInput[] = [
+      { kind: 'interiors', property: 'flat', city: 'pune', area: 1000, bhk: '2', level: 2 },
+      { kind: 'build', floors: 2, city: 'pune', area: 2000, bhk: '3', level: 4 },
+    ];
+    const top = cases.map((input) => {
+      const e = architect(input) as ArchitectEstimate, by = new Map<string, number>();
+      for (const l of e.lines) by.set(l.family, (by.get(l.family) ?? 0) + l.amount);
+      return [...by].sort((a, b) => b[1] - a[1]).slice(0, 5).map(([f]) => f);
+    });
+    // On 04-10-2026, largest first: wardrobe, cabinets, paint, sofa, carpentry; floor, exterior paint, CP fittings, cabinets, steel.
+    // A rate change may reorder them; a family new to a top five fails here, and below until it has notes.
+    expect(top.map((x) => [...x].sort())).toEqual([['cabinets', 'carpentry', 'paint', 'sofa', 'wardrobe'], ['cabinets', 'cp', 'exterior-paint', 'floor', 'steel']]);
+    for (const f of top.flat()) expect(NOTES.has(f), f).toBe(true);
+  });
+  it('a 12 mm bar\'s weight in the steel note, worked two ways: 12² ÷ 162 = 0.8889 and π/4 × 0.012² m² × 7,850 kg a cu m = 0.8878, both 0.89 kg a metre', () => {
+    const rule = (12 * 12) / 162, density = (Math.PI / 4) * 0.012 * 0.012 * 7850;
+    expect(rule).toBeCloseTo(0.8889, 4);
+    expect(density).toBeCloseTo(0.8878, 4);
+    expect(rule.toFixed(2)).toBe('0.89');
+    expect(density.toFixed(2)).toBe('0.89');
+    expect(NOTES.get('steel')?.check.text).toContain('A 12 mm bar weighs about 0.89 kg a metre, within 5%');
+  });
+  it('where to spend, where to save: each rule names a section, short, sourced and marked; the owner\'s examples are all there', () => {
+    const sections = new Set(R.sections.map((x) => x.id));
+    for (const r of SPEND_SAVE) {
+      const where = `${r.section} ${r.way}${r.on ? ` on ${r.on}` : ''}`;
+      expect(sections.has(r.section), where).toBe(true);
+      expect(['spend', 'save'], where).toContain(r.way);
+      fair(r, where);
+    }
+    const said = (way: string) => SPEND_SAVE.filter((r) => r.way === way).map((r) => `${r.section}${r.on ? `: ${r.on}` : ''}`);
+    // The owner, 04-10-2026: hard to change later, the structure, waterproofing, wiring and plumbing; easy to upgrade later, paint, lights and furniture.
+    expect(said('spend')).toEqual(expect.arrayContaining(['structure', 'waterproofing', 'electrical: the wiring', 'plumbing']));
+    expect(said('save')).toEqual(expect.arrayContaining(['walls', 'electrical: the light fittings', 'furniture']));
   });
 });

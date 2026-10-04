@@ -4,7 +4,8 @@
  * a slot an architect fills (a floor finish, a WC and basin, a wardrobe); its five levels name one item each, and every
  * other item of the family is an alternative the user can pick. Pure, no DOM. A rate is the middle of the range its
  * sources report; every source is in engine/data/sources.json, read through search summaries and not yet checked.
- * architect-check.ts prices every item a second way.
+ * architect-check.ts prices every item a second way. Some families carry teaching notes, and the sections where to spend
+ * and where to save (T1, notes.json): words for the page's Why?, never an amount.
  */
 import SOURCES from './data/sources.json';
 import LABOUR from './data/library/labour.json';
@@ -24,6 +25,7 @@ import SMART from './data/library/smart.json';
 import FURNITURE from './data/library/furniture.json';
 import STRUCTURE from './data/library/structure.json';
 import OUTSIDE from './data/library/outside.json';
+import NOTES_FILE from './data/library/notes.json';
 
 export type Unit = 'sqft' | 'sqm' | 'rft' | 'm' | 'nos' | 'set' | 'lot' | 'kg' | 'cum' | 'bag' | 'litre';
 export type Basis = 'installed' | 'supply' | 'product' | 'set';
@@ -50,6 +52,15 @@ export interface Entry {
 export interface Family { id: string; name: string; unit: Unit; levels?: (string | null)[]; fixed?: string; kind?: ItemKind; file: string }
 export interface Labour { id: string; name: string; unit: Unit; rate: Band; src: string[]; note?: string; /** The day the rate was read, when it differs from its file's date. */ date?: string }
 export interface Source { what: string; url: string; class: string }
+/**
+ * A teaching note (T1, D-UX-34): plain words with their sources, 'reported' until someone reads the pages and sets it
+ * 'checked'; 'own' for our own rule, its reason given in the note. It holds no amount: the engine's figures are on the line.
+ */
+export interface Note { text: string; src: string[]; status: 'reported' | 'checked' | 'own' }
+/** What a family's item is, why it costs what it does, and what to check when buying it or on site (T1). */
+export interface FamilyNotes { what: Note; cost: Note; check: Note }
+/** Where to spend, where to save (T1): what is hard to change later against what is easy to upgrade later, and why. */
+export interface SpendSave extends Note { section: string; way: 'spend' | 'save'; /** The part of the section it is about, when not all of it. */ on?: string }
 interface RawFile { title: string; date: string; families: Omit<Family, 'file'>[]; entries: (Omit<Entry, 'file' | 'fix'> & { fix?: (string | Count)[] })[] }
 
 /** The library's files, in the order of the estimate's sections. */
@@ -58,6 +69,10 @@ export const SOURCE: Record<string, Source> = SOURCES.sources;
 export const CLASSES: Record<string, string> = SOURCES.classes;
 export const LIBRARY_DATE = SOURCES.date;
 export const LIBRARY_STATUS = SOURCES.status;
+/** The teaching notes by family, and where to spend and where to save by section, in the estimate's order (T1). */
+export const NOTES = new Map<string, FamilyNotes>(Object.entries(NOTES_FILE.families as Record<string, FamilyNotes>));
+export const SPEND_SAVE = NOTES_FILE.spendSave as SpendSave[];
+export const NOTES_DATE = NOTES_FILE.date;
 
 const counts = (xs?: (string | Count)[]): Count[] | undefined => xs?.map((x) => (typeof x === 'string' ? { id: x, n: 1 } : x));
 export const FAMILIES = new Map<string, Family>();

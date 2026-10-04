@@ -1640,6 +1640,161 @@
       "what": "NoBroker forum: CMWSSB (Chennai) new connection charges, a house's sewer connection Rs. 24,500 (110 mm pipe) or Rs. 26,500 (140 mm)",
       "url": "https://www.nobroker.in/forum/what-is-the-cmwssb-new-connection-charges/",
       "class": "4"
+    },
+    "bis-is1786-manual": {
+      "what": "BIS: product manual for IS 1786, high-strength deformed steel bars (the ISI mark, the licence number and the markings rolled on a bar)",
+      "url": "https://bis.gov.in/wp-content/uploads/2019/08/IS-1786-Product-Manual-Revision-3.pdf",
+      "class": "R"
+    },
+    "tusker-bis-care": {
+      "what": "Tusker TMT: checking TMT bars with the BIS Care app and the bundle’s tag",
+      "url": "https://www.tuskertmt.com/blog-bis-care-app-verify-tmt.html",
+      "class": "4"
+    },
+    "corejoint-tmt-grades": {
+      "what": "Corejoint: TMT grades explained, Fe 500 and Fe 500D (yield strength, elongation)",
+      "url": "https://www.corejoint.com/guides/tmt-grades-explained",
+      "class": "4"
+    },
+    "metalweightpro-tmt": {
+      "what": "MetalWeightPro: TMT bar weight a metre (D²/162) and the IS 1786 tolerances",
+      "url": "https://www.metalweightpro.com/articles/tmt-bar-weight-per-meter-chart.html",
+      "class": "4"
+    },
+    "kairali-steel-quantity": {
+      "what": "Kairali TMT: steel for a residential building, and what decides the quantity (the structural drawings)",
+      "url": "https://kairalitmt.com/calculate-steel-requirement-for-residential-building/",
+      "class": "4"
+    },
+    "studiomatrx-tile-standards": {
+      "what": "Tile standards in India: IS 15622 groups, water absorption, PEI ratings",
+      "url": "https://www.studiomatrx.org/guides/bathroom-tile-is-standards-india",
+      "class": "4"
+    },
+    "studiomatrx-flooring-spec": {
+      "what": "Flooring finishes specification for Indian homes",
+      "url": "https://www.studiomatrx.org/guides/flooring-finishes-specification-india",
+      "class": "4"
+    },
+    "studiomatrx-marble": {
+      "what": "Marble flooring in India: grades, slab sizes and thickness, laying and polishing",
+      "url": "https://www.studiomatrx.org/guides/marble-flooring-india",
+      "class": "4"
+    },
+    "studiomatrx-marble-care": {
+      "what": "Marble polishing and care in India: etching, re-polishing every few years",
+      "url": "https://www.studiomatrx.org/guides/marble-polishing-and-care-india",
+      "class": "4"
+    },
+    "stoneexpert-marble-defects": {
+      "what": "Stone Expert: showroom tricks that hide defects in marble, and how to see them",
+      "url": "https://www.stoneexpert.in/marble-showroom-tricks-that-hide-stone-defects-a-complete-guide/",
+      "class": "4"
+    },
+    "vardhman-marble-check": {
+      "what": "Vardhman Sagar Marbles: how to check Indian marble before buying (the tap test)",
+      "url": "https://vardhmansagarmarbles.com/how-to-check-indian-marble-quality-simple-test-before-buying-indian-marble/",
+      "class": "4"
+    },
+    "aapkapainter-texture": {
+      "what": "Aapka Painter: texture paint, what it takes and how long it lasts",
+      "url": "https://aapkapainter.com/blog/texture-paint-everything-you-need-to-know/",
+      "class": "4"
+    },
+    "asianpaints-trucare-primer": {
+      "what": "Asian Paints: Trucare exterior wall primer, with crack filling before it",
+      "url": "https://www.asianpaints.com/paint-products/exterior-wall-paints/trucare-exterior-wall-primer.html",
+      "class": "2"
+    },
+    "homerun-royale-premium": {
+      "what": "HomeRun: Royale against Premium Emulsion, washability and life",
+      "url": "https://home-run.co/blogs/homerun-knowledge-base/asian-paints-royale-vs-premium-emulsion",
+      "class": "4"
+    },
+    "asianpaints-painting-cost": {
+      "what": "Asian Paints: painting cost a sq ft in India, putty, primer and coats",
+      "url": "https://www.asianpaints.com/blogs/painting-cost-per-sq-ft-india.html",
+      "class": "4"
+    },
+    "jkcement-low-voc": {
+      "what": "JK Cement: low-VOC paints and materials for interiors",
+      "url": "https://www.jkcement.com/blog/home-design/best-materials-and-paints-for-low-voc-pollution-free-interiors/",
+      "class": "4"
+    },
+    "studiomatrx-plywood-grades": {
+      "what": "Plywood grades in India: MR, BWR and BWP, IS 303 and IS 710",
+      "url": "https://www.studiomatrx.org/guides/complete-guide-plywood-grades-india",
+      "class": "4"
+    },
+    "duroboil-is303-is710": {
+      "what": "Duroboil: IS 303 against IS 710 plywood, and reading the board’s marking",
+      "url": "https://www.duroboil.com/blog/is-303-vs-is-710-plywood-standards",
+      "class": "4"
+    },
+    "greenply-plywood-quality": {
+      "what": "Greenply: how to tell good plywood before you buy (the core layers at the edge)",
+      "url": "https://www.greenply.com/blogs/how-to-identify-high-quality-plywood-before-you-buy",
+      "class": "4"
+    },
+    "plyprice-kitchen-ply": {
+      "what": "Plyprice: plywood for a modular kitchen, BWP in wet zones and edge banding",
+      "url": "https://www.plyprice.com/blog/best-plywood-for-modular-kitchen",
+      "class": "4"
+    },
+    "reroom-kitchen": {
+      "what": "Re:Room: modular kitchen buying guide, shutter finishes compared",
+      "url": "https://reroom.in/pages/blog/modular-kitchen-buying-guide.html",
+      "class": "4"
+    },
+    "buildingaaya-taps": {
+      "what": "Building Aaya: taps, mixers and showers, IS 8931, brass bodies and ceramic-disc cartridges",
+      "url": "https://www.buildingaaya.com/materials/faucets-taps-showers.html",
+      "class": "4"
+    },
+    "manovsis-pressure-test": {
+      "what": "Manovsis: pressure testing concealed plumbing before the walls are closed",
+      "url": "https://manovsis.in/?p=2195",
+      "class": "4"
+    },
+    "skipper-cpvc-testing": {
+      "what": "Skipper Pipes: quality testing of CPVC pipes, the pressure test",
+      "url": "https://skipperpipes.in/blogs/complete-guide-to-cpvc-pipe-quality-testing",
+      "class": "4"
+    },
+    "studiomatrx-upholstery": {
+      "what": "Upholstered furniture in India: frame, suspension, foam and fabric",
+      "url": "https://www.studiomatrx.org/guides/upholstered-furniture-india",
+      "class": "4"
+    },
+    "uberdecor-foam": {
+      "what": "Uberdecor: foam density for a sofa in India, 28 against 32 against 40",
+      "url": "https://uberdecor.in/blogs/sofa-buying-guide/what-is-the-best-foam-density-for-sofa-in-india-28-vs-32-vs-40-explained",
+      "class": "4"
+    },
+    "ongrid-waterproofing": {
+      "what": "Ongrid: waterproofing a home in India, what a failure costs and the flood test",
+      "url": "https://ongrid.design/blogs/home-building-guide/home-waterproofing-india",
+      "class": "4"
+    },
+    "trity-concealed-wiring": {
+      "what": "Trity Pipes: concealed against surface wiring in India",
+      "url": "https://www.tritypipes.com/blogs/concealed-wiring-vs-surface-wiring-india/",
+      "class": "4"
+    },
+    "rajdhani-fr-frls": {
+      "what": "Rajdhani Cables: FR and FRLS wires for a home",
+      "url": "https://www.rajdhanicable.com/blog/fr-vs-frls-wire-whats-the-difference-which-is-safer-for-your-home/",
+      "class": "4"
+    },
+    "aecord-old-house": {
+      "what": "Aecord: renovating an old house in India on a budget, what to do first",
+      "url": "https://aecord.com/blog/old-house-renovation-tips-india-budget",
+      "class": "4"
+    },
+    "studiomatrx-window-replacement": {
+      "what": "Window replacement cost in India: a new frame against a retrofit",
+      "url": "https://www.studiomatrx.org/guides/window-replacement-cost-india",
+      "class": "4"
     }
   }
 }

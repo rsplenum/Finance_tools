@@ -158,7 +158,9 @@ const text = out.join('\n');
 const dir = new URL('../engine/data/library/', import.meta.url);
 const order = ['civil', 'waterproofing', 'flooring', 'walls', 'ceiling', 'bathrooms', 'kitchen', 'wardrobes', 'doors', 'electrical', 'plumbing', 'appliances', 'smart', 'furniture', 'structure', 'outside'];
 const files = order.map((n) => JSON.parse(readFileSync(new URL(`${n}.json`, dir), 'utf8')));
-if (readdirSync(dir).filter((f) => f.endsWith('.json') && f !== 'labour.json').length !== order.length) throw new Error('A library file is missing from rules-doc');
+if (readdirSync(dir).filter((f) => f.endsWith('.json') && f !== 'labour.json' && f !== 'notes.json').length !== order.length) throw new Error('A library file is missing from rules-doc');
+// T1's notes (D-UX-34): what a family is, why it costs what it does and what to check; where to spend, where to save.
+const notes = JSON.parse(readFileSync(new URL('notes.json', dir), 'utf8'));
 const entries = new Map(files.flatMap((f) => f.entries.map((e) => [e.id, e])));
 const labourById = new Map(labour.labour.map((l) => [l.id, l]));
 const UNIT = { sqft: 'sq ft', sqm: 'sq m', rft: 'running ft', m: 'm', nos: 'each', set: 'set', lot: 'lot', kg: 'kg', cum: 'cu m', bag: 'bag', litre: 'litre' };
@@ -179,6 +181,7 @@ function rateText(e) {
 // The tax basis as the source states it; the engine adds GST only to a rate quoted before it.
 const GST = { extra: '; plus GST', incl: '; incl. GST', unstated: '; GST not stated: taken as the price paid' };
 const cell = (x) => String(x ?? '').replace(/\|/g, '/');
+const noteText = (x) => { const r = ref(x.src).trim(); return `${x.text} ${r === 'our rule' ? '(our rule)' : r}${x.status === 'reported' ? ' (as reported)' : ''}`; };
 let banded = 0, leveled = 0;
 const lib = ['# The library', '', 'Generated from `engine/data/library/` by `npm run rules-doc`; edit the data files, not this page.', '',
   `Dated ${date(sources.date)}. ${sources.status}`, '',
@@ -191,6 +194,8 @@ for (const f of files) {
     const own = f.entries.filter((e) => e.family === fam.id);
     const ladderIds = fam.fixed ? [fam.fixed] : fam.levels ?? [];
     lib.push(`### ${fam.name} (${UNIT[fam.unit]}${fam.kind && fam.kind !== 'fixed' ? `, ${fam.kind}` : ''})`, '');
+    const n = notes.families[fam.id];
+    if (n) lib.push(...[['What it is', n.what], ['Why it costs what it does', n.cost], ['What to check', n.check]].map(([k, x]) => `- **${k}**: ${noteText(x)}`), '');
     if (fam.fixed || fam.levels) {
       lib.push('| Level | Item | Specification | Brands, as examples | Rate | Sources |', '|---|---|---|---|---|---|');
       if (fam.fixed) { const e = entries.get(fam.fixed); lib.push(`| Every level | ${cell(e.name)} | ${cell(e.spec)} | ${cell((e.brands ?? []).join(', '))} | ${cell(rateText(e))} | ${ref(e.src)} |`); }
@@ -210,7 +215,9 @@ for (const f of files) {
     }
   }
 }
-lib[introAt] += ` ${banded} of the ${leveled} families with levels offer more than one choice at a level.`;
+lib[introAt] += ` ${banded} of the ${leveled} families with levels offer more than one choice at a level. ${Object.keys(notes.families).length} families carry notes (T1): what each is, why it costs what it does and what to check, shown behind a line's Why? on the planning estimate.`;
+lib.push('## Where to spend, where to save', '', `Dated ${date(notes.date)}. ${notes.status} The planning estimate shows each under its section's Why?.`, '',
+  ...notes.spendSave.map((r) => `- **${A.sections.find((x) => x.id === r.section).name}: ${r.way} ${r.on ? `on ${r.on}` : 'here'}.** ${noteText(r)}`), '');
 lib.push('## Labour', '', '| Labour | Rate | Sources |', '|---|---|---|', ...labour.labour.map((l) => `| ${l.name} | ${range(l.rate)} a ${UNIT[l.unit]}${l.date ? `; read ${date(l.date)}` : ''} | ${ref(l.src)} |`), '');
 lib.push('## Sources', '', ...numbered.map((id, i) => { const s = sources.sources[id]; return `${i + 1}. [${s.what}](${s.url}) (class ${s.class}: ${sources.classes[s.class]})`; }), '');
 const libText = lib.join('\n');

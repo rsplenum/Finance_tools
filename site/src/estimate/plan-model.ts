@@ -11,7 +11,7 @@ import {
   BATHS, BHKS, CITIES, FLOORS, LEVELS, PLOT_SIDE, R, ROOM_SIDE, SIZE_WORDS, bathsOf, bedroomsOf, WORK_KINDS, architect, architectNeeds, changeOf, choicesFor, levelName, levelRuns, overPackage, planRooms, wordName,
   type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choice, type House, type Level, type LevelRuns, type Line, type RoomKind, type SizeWord, type Stage, type WorkKind,
 } from '../../../engine/architect';
-import { CLASSES, FT_PER_M, LIBRARY_DATE, PER, SOURCE, SQFT_PER_SQM, type ItemKind, type Unit } from '../../../engine/library';
+import { CLASSES, FT_PER_M, LIBRARY_DATE, NOTES, PER, SOURCE, SPEND_SAVE, SQFT_PER_SQM, type ItemKind, type Note, type Unit } from '../../../engine/library';
 import { parseAmount } from '../../../engine/parse';
 import { inr, rupeesWords } from '../../../engine/util';
 
@@ -344,7 +344,14 @@ export interface LineView {
   at: Level;
   qty: string; unit: string; rate: string; amount: string; n: { qty: number; rate: number; amount: number };
   kind: string; how: string; rateHow: string[]; sources: SourceView[]; note?: string;
+  /** What the item is, why it costs what it does and what to check (T1), when its family has notes. */
+  why?: WhyView;
 }
+/**
+ * A line's or a section's Why? (T1, D-UX-34): notes in plain words, each under its label, shown only when tapped; their
+ * sources in order of first use, our own rule said apart, and whether a note is still as reported.
+ */
+export interface WhyView { items: { label: string; text: string }[]; sources: { id: string; what: string; url: string }[]; own: boolean; reported: boolean }
 export interface SectionView {
   id: string; no: number; name: string; on: boolean; slider: boolean; level: Level | null; levelName: string;
   amount: string; n: number; over?: { text: string; n: number };
@@ -354,6 +361,8 @@ export interface SectionView {
   spec: string; where: string;
   /** Lines with an item of the user's own, and lines at a room's own level; "Mixed (…)" when either is not nil. */
   mixed: number; mixedText: string; lines: LineView[];
+  /** Where to spend, where to save (T1), when the section has a rule, on or off. */
+  why?: WhyView;
 }
 export interface StripView { level: Level; name: string; total: string; full: string; n: number; current: boolean }
 export interface BarView { id: string; name: string; amount: string; n: number; width: number }
@@ -460,6 +469,7 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
       amount: rupees(t.amount), n: t.amount, pkg: runs.sections[t.id]?.[e.level - 1] ?? t.amount,
       ...(Math.round(d) !== 0 ? { over: { text: `Rs. ${rupees(Math.abs(d))} ${d > 0 ? 'more' : 'less'} than ${pkg}`, n: d } } : {}),
       spec: specOf(ls), where: whereOf(ls, e), mixed: chosen + roomLevel, mixedText: mixedText ? `Mixed (${mixedText})` : '', lines,
+      ...(SECTION_WHY.has(t.id) ? { why: SECTION_WHY.get(t.id) } : {}),
     };
   });
   const shown = sections.filter((x) => x.on && x.n > 0), most = Math.max(1, ...shown.map((x) => x.n));
@@ -574,8 +584,23 @@ function lineView(s: PlanState, l: Line, no: string, sourceOf: (id: string) => S
     level: l.level ? levelName(l.level) : '', chosen: l.chosen, at: l.at,
     qty: lineQty(l.qty, l.unit), unit: unitText(l.unit), rate: rateText(l.rate), amount: rupees(l.amount), n: { qty: l.qty, rate: l.rate, amount: l.amount },
     kind: KIND_WORD[l.kind], how: l.how, rateHow: l.rateHow, sources: l.sources.filter((x) => x !== 'own').map(sourceOf), ...(l.note ? { note: l.note } : {}),
+    ...(FAMILY_WHY.has(l.family) ? { why: FAMILY_WHY.get(l.family) } : {}),
   };
 }
+
+/** The notes behind a Why?, each under its label (T1); their sources apart from our own rule, in order of first use. */
+function whyOf(items: { label: string; note: Note }[]): WhyView {
+  const ids = [...new Set(items.flatMap((x) => x.note.src))];
+  return {
+    items: items.map((x) => ({ label: x.label, text: x.note.text })),
+    sources: ids.filter((id) => id !== 'own').map((id) => ({ id, what: SOURCE[id]?.what ?? id, url: SOURCE[id]?.url ?? '' })),
+    own: ids.includes('own'), reported: items.some((x) => x.note.status === 'reported'),
+  };
+}
+const NOTE_LABELS = [['what', 'What it is'], ['cost', 'Why it costs what it does'], ['check', 'What to check']] as const;
+const FAMILY_WHY = new Map([...NOTES].map(([id, n]) => [id, whyOf(NOTE_LABELS.map(([k, label]) => ({ label, note: n[k] })))]));
+const SECTION_WHY = new Map([...new Set(SPEND_SAVE.map((r) => r.section))].map((id) => [id, whyOf(SPEND_SAVE.filter((r) => r.section === id)
+  .map((r) => ({ label: `${r.way === 'spend' ? 'Spend' : 'Save'} ${r.on ? `on ${r.on}` : 'here'}`, note: r })))]));
 
 /** The section's main items, the largest first, in one line. */
 function specOf(ls: Line[]): string {

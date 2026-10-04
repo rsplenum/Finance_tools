@@ -140,7 +140,11 @@ for (const [scheme, stored, want] of [['dark', undefined, true], ['light', 'dark
 // DSCR calculator. Expected figures: fictional case A (docs/GOLDEN-CASES.md), worked by hand in tests/dscr.test.ts.
 const YEARS_A = ['2026-27', '2027-28', '2028-29', '2029-30'];
 
-/** Reads a test id's (or a locator's) text once it settles on `want`, a text or a pattern (or after 3 s); a violation when it differs. */
+/**
+ * Reads a test id's (or a locator's) text once it settles on `want`, a text or a pattern (or after 3 s); a violation when it differs.
+ * It reads `textContent`, which joins paragraphs with no space ("…wardrobeWhat it is:"): a pattern puts none before a label that
+ * starts one (T1, `docs/LESSONS.md`).
+ */
 async function expectText(page, v, what, want, step) {
   const at = typeof what === 'string' ? page.getByTestId(what).first() : what, name = typeof what === 'string' ? what : String(what);
   const read = () => at.textContent({ timeout: 3000 }).then((t) => (t ?? '').replace(/\s+/g, ' ').trim(), () => '(missing)');
@@ -800,7 +804,8 @@ for (const scheme of ['light', 'dark']) {
 
 // V1 (D-UX-32): short by default. Before any tap, the words shown with the answer stay within a budget of 400 for a flat's
 // interiors and a new G+1 house (before V1, about 810 and 1,360); only the flags that can change the decision show, and
-// no field but the document's own facts.
+// no field but the document's own facts. T1 (D-UX-34): a line's and a section's Why?, closed, drawn only once its section is
+// opened, so none before any tap: what it is, why it costs what it does, what to check, with sources still as reported.
 {
   const BUDGET = 400;
   const cases = [
@@ -808,14 +813,14 @@ for (const scheme of ['light', 'dark']) {
       await page.check('#fld-work-interiors'); await page.check('#fld-home-flat');
       await page.selectOption('#fld-city', 'pune'); await leave(page, '#fld-carpet', '1,000');
       await page.check('#fld-bhk-2'); await page.click('#fld-level-2');
-    }, 1],
+    }, 1, { cards: ['wardrobes', 'walls'], line: 'pl-why-bedroom-1:wardrobe:wardrobe', section: ['pl-why-section-walls', 'Save here'] }],
     ['a new G+1 house at Luxury', async (page) => {
       await page.check('#fld-work-build'); await page.check('#fld-floors-2');
       await page.selectOption('#fld-city', 'pune'); await leave(page, '#fld-carpet', '2,000');
       await page.check('#fld-bhk-3'); await page.click('#fld-level-4');
-    }, 0],
+    }, 0, { cards: ['structure'], line: 'pl-why-flat:steel:struct:steel', own: true, section: ['pl-why-section-structure', 'Spend here'] }],
   ];
-  for (const [label, answer, flags] of cases) {
+  for (const [label, answer, flags, why] of cases) {
     const { ctx, page, v } = await open('/estimate/', { scheme: 'light' });
     await answer(page);
     await expectText(page, v, 'pl-total', /^Rs\. [\d,]+$/, label);
@@ -827,6 +832,18 @@ for (const scheme of ['light', 'dark']) {
     const fields = await page.locator('main').evaluate((m) => [...m.querySelectorAll('input, select, textarea')].filter((e) => e.checkVisibility() && !e.closest('#pl-download')).length);
     if (fields) v(`${label}: ${fields} fields shown with the answer besides the document's facts`);
     console.log(`V1: ${label}: ${words} words shown with the answer (budget ${BUDGET})`);
+    const whys = await page.locator('[data-testid^="pl-why-"]').count();
+    if (whys) v(`${label}: ${whys} Why? shown before any tap (want none)`);
+    for (const c of why.cards) await tap(page, `pl-card-${c}`);
+    // textContent runs the paragraphs together ("…wardrobeWhat it is: …"); on screen each is a line of its own.
+    const reported = `Sources: .+${why.own ? '; and our own rule' : ''}\\. As reported, not yet checked\\.$`;
+    for (const [id, want] of [[why.line, new RegExp(`^ⓘ Why\\? .+What it is: .+Why it costs what it does: .+What to check: .+${reported}`)],
+      [why.section[0], new RegExp(`^ⓘ Why\\? .+Where to spend, where to save${why.section[1]}: .+${reported}`)]]) {
+      if (await page.getByTestId(id).evaluate((d) => d.open, null, { timeout: 3000 }).catch(() => true)) v(`${label}: ${id} missing, or open before a tap`);
+      await tap(page, id).catch(() => {});
+      await expectText(page, v, id, want, `${label}: T1's Why?`);
+    }
+    await layout(page, v, `${label}: T1's Why? open, 390 px`);
     await ctx.close();
   }
 }

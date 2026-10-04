@@ -18,7 +18,7 @@ import { planDoc, planDocNeeds, planDocStatus, planFileName } from './plan-docum
 import {
   BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, FLOOR_CHOICES, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORD_CHOICES, WORK_CHOICES, areaLabel, drawerView, heightOf, plainOf, planPreview, sideUnit,
   withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit,
-  type AreaUnit, type DrawerView, type LineView, type PlanFacts, type PlanPreview, type PlanState, type PlanView, type RoomView, type RungView, type SectionView,
+  type AreaUnit, type DrawerView, type LineView, type PlanFacts, type PlanPreview, type PlanState, type PlanView, type RoomView, type RungView, type SectionView, type WhyView,
 } from './plan-model';
 import type { Bhk, Level } from '../../../engine/architect';
 
@@ -163,7 +163,7 @@ const CHEVRON = <svg aria-hidden="true" viewBox="0 0 20 20" class="size-4 shrink
 /**
  * The sections (V1): one line each with its count of items and its amount, the largest in the package first and those
  * off last, so a slider moves no line. A tap opens the section: its switch, its slider and its items, each with Change
- * for its drawer. The items are drawn only while the section is open.
+ * for its drawer. The items, and the section's Why? (T1), are drawn only while the section is open.
  */
 function Sections({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) {
   const [opened, setOpened] = useState<Record<string, boolean>>({});
@@ -203,10 +203,11 @@ function Sections({ s, v, update }: { s: PlanState; v: PlanView; update: Update 
                 {x.slider ? <Slider s={s} x={x} update={update} /> : <p class={`mt-1 text-sm ${MUTED}`}>The same at every level</p>}
                 {x.over && <p data-testid={`pl-over-${x.id}`} class={`mt-2 text-sm tabular-nums ${MUTED}`}>{x.over.text}</p>}
                 {x.lines.length === 0 && <p data-testid={`pl-spec-${x.id}`} class={`mt-2 text-sm ${INK}`}>Nothing at this level</p>}
-                {opened[x.id] && x.lines.length > 0 && <ol data-testid={`pl-items-${x.id}`} class="mt-2 divide-y divide-slate-200 dark:divide-slate-700">
-                  {x.lines.map((l) => <Item key={l.key} s={s} v={v} l={l} open={open === l.key} toggle={() => setOpen((k) => (k === l.key ? null : l.key))} update={update} />)}
-                </ol>}
               </>}
+              {opened[x.id] && x.why && <Why id={`pl-why-section-${x.id}`} about={x.name} title="Where to spend, where to save" w={x.why} />}
+              {x.on && opened[x.id] && x.lines.length > 0 && <ol data-testid={`pl-items-${x.id}`} class="mt-2 divide-y divide-slate-200 dark:divide-slate-700">
+                {x.lines.map((l) => <Item key={l.key} s={s} v={v} l={l} open={open === l.key} toggle={() => setOpen((k) => (k === l.key ? null : l.key))} update={update} />)}
+              </ol>}
             </div>
           </details>
         </li>;
@@ -244,8 +245,30 @@ function Item({ s, v, l, open, toggle, update }: { s: PlanState; v: PlanView; l:
       </div>
       <button type="button" data-testid={`pl-open-${l.key}`} aria-expanded={open} class={`shrink-0 ${BUTTON}`} onClick={toggle}>{open ? 'Close' : 'Change'}</button>
     </div>
+    {l.why && <Why id={`pl-why-${l.key}`} about={`${l.room}, ${l.name.toLowerCase()}`} w={l.why} />}
     {open && d && <Drawer s={s} l={l} d={d} update={update} />}
   </li>;
+}
+
+/**
+ * A line's or a section's Why? (T1, D-UX-34): closed until tapped, never in the answer. The notes, each under its label, then
+ * their sources, linked, and whether they are still as reported. No amount: the line's figures are the engine's.
+ */
+function Why({ id, about, title, w }: { id: string; about: string; title?: string; w: WhyView }) {
+  return <details data-testid={id} class="mt-1 text-xs">
+    <summary class="inline-flex cursor-pointer items-center gap-1 text-teal-800 underline-offset-4 hover:underline dark:text-teal-300">
+      <span aria-hidden="true">ⓘ</span> Why?<span class="sr-only"> {about}</span>
+    </summary>
+    <div class={`mt-1 space-y-1 ${INK}`}>
+      {title && <p class="font-medium">{title}</p>}
+      {w.items.map((x, i) => <p key={i}><span class="font-medium">{x.label}:</span> {x.text}</p>)}
+      <p class={MUTED}>{w.sources.length
+        ? <>Sources: {w.sources.map((x, i) => <span key={x.id}>{i ? '; ' : ''}{x.url
+          ? <a href={x.url} target="_blank" rel="noopener noreferrer" class="text-teal-800 underline dark:text-teal-300">{x.what}</a> : x.what}</span>)}
+          {w.own ? '; and our own rule' : ''}.{w.reported ? ' As reported, not yet checked.' : ''}</>
+        : 'Our own rule, with its reason given.'}</p>
+    </div>
+  </details>;
 }
 
 /**

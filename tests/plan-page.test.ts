@@ -6,6 +6,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { architect, levelRuns, strip, type ArchitectEstimate, type LevelRuns } from '../engine/architect';
+import { NOTES, SPEND_SAVE } from '../engine/library';
 import { inr } from '../engine/util';
 import { docText } from '../site/src/doc/doc';
 import { docxOf } from '../site/src/doc/docx';
@@ -439,5 +440,48 @@ describe('V1 on the page: short by default', () => {
     const floor = v.sections.find((x) => x.id === 'flooring')!;
     const moved = view(withSlider(FLAT, 'flooring', 4, floor.lines.map((l) => l.key))).sections.find((x) => x.id === 'flooring')!;
     expect([moved.n > floor.n, moved.pkg]).toEqual([true, floor.pkg]);
+  });
+});
+
+describe('T1 on the page: a line\'s and a section\'s Why?, never in the answer or the documents (D-UX-34)', () => {
+  // V1's two cases: a 2 BHK flat's interiors of 1,000 sq ft at Standard, and a G+1 3 BHK house of 2,000 sq ft at Luxury, in Pune.
+  const FLAT_IN: PlanState = { ...EMPTY_PLAN, kind: 'interiors', home: 'flat', city: 'pune', area: '1,000', bhk: '2', level: 2 };
+  const HOUSE: PlanState = { ...EMPTY_PLAN, kind: 'build', floors: 2, city: 'pune', area: '2,000', bhk: '3', level: 4, doc: { owner: 'Asha Rao', property: 'Plot 12, Example Layout, Pune', lender: '', preparedBy: '' } };
+  const v = view(FLAT_IN), h = view(HOUSE);
+  const section = (x: typeof v, id: string) => x.sections.find((y) => y.id === id)!;
+  const notesOf = (family: string) => (['what', 'cost', 'check'] as const).map((k) => NOTES.get(family)![k]);
+  it('a line whose family has notes: what it is, why it costs what it does, what to check, then their sources, linked and still as reported', () => {
+    const l = section(v, 'wardrobes').lines.find((x) => x.key === 'bedroom-1:wardrobe:wardrobe')!;
+    expect(l.why!.items).toEqual(notesOf('wardrobe').map((n, i) => ({ label: ['What it is', 'Why it costs what it does', 'What to check'][i], text: n.text })));
+    expect(l.why!.sources.map((x) => x.id)).toEqual([...new Set(notesOf('wardrobe').flatMap((n) => n.src))]);
+    expect(l.why!.sources.every((x) => x.url.startsWith('https://') && x.what.length > 0)).toBe(true);
+    expect(l.why).toMatchObject({ own: false, reported: true });
+    // The steel's check cites our own rule (ask the structural engineer), said apart from the sources.
+    const steel = section(h, 'structure').lines.find((x) => x.key === 'flat:steel:struct:steel')!;
+    expect(steel.why).toMatchObject({ own: true, reported: true });
+    expect(steel.why!.sources.map((x) => x.id)).not.toContain('own');
+  });
+  it('every line of the top five families in both cases has a Why?; a line of a family with no notes yet has none', () => {
+    for (const [x, input] of [[v, FLAT_IN], [h, HOUSE]] as const) {
+      const family = new Map((architect(inputOf(input)) as ArchitectEstimate).lines.map((l) => [l.key, l.family]));
+      for (const l of x.sections.flatMap((y) => y.lines)) expect(!!l.why, l.key).toBe(NOTES.has(family.get(l.key)!));
+    }
+    const counter = section(v, 'kitchen').lines.find((x) => x.key === 'kitchen:counter:counter-top')!;
+    expect([counter.name.length > 0, NOTES.has('counter'), counter.why]).toEqual([true, false, undefined]);
+  });
+  it('a section with a rule says where to spend and where to save, on or off; one with none has no Why?', () => {
+    const rule = (id: string) => SPEND_SAVE.filter((r) => r.section === id).map((r) => r.text);
+    expect(section(v, 'walls').why!.items).toEqual([{ label: 'Save here', text: rule('walls')[0] }]);
+    expect(section(v, 'electrical').why!.items.map((x) => x.label)).toEqual(['Spend on the wiring', 'Save on the light fittings']);
+    expect(section(v, 'waterproofing')).toMatchObject({ on: false, why: { items: [{ label: 'Spend here', text: rule('waterproofing')[0] }], reported: true } });
+    expect(section(h, 'structure').why!.items[0]).toEqual({ label: 'Spend here', text: rule('structure')[0] });
+    // Our own rule alone: no source to list, and nothing as reported.
+    expect(section(v, 'furniture').why).toMatchObject({ sources: [], own: true, reported: false });
+    expect(section(v, 'kitchen').why).toBeUndefined();
+  });
+  it('the documents stay as they are: no note, label or rule in the PDF, the Excel or the Word', () => {
+    const text = docText(planDoc(HOUSE, planPreview(HOUSE), TODAY)!);
+    for (const n of [...NOTES.values()].flatMap((x) => [x.what, x.cost, x.check]).concat(SPEND_SAVE)) expect(text).not.toContain(n.text);
+    expect(text).not.toMatch(/What it is|Why it costs|What to check|Where to spend/);
   });
 });
