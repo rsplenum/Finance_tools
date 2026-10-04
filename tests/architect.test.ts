@@ -77,11 +77,11 @@ describe('a new house: G+1, 2,000 sq ft built up, 3 BHK, in Pune at Basic, by ha
     // A sq ft, each is still Brick&Bolt's middle.
     expect([qty[0] as number / 1121.094, qty[1] as number / 1121.094, qty[4] as number / 1121.094].map((x) => x.toFixed(3))).toEqual(['0.400', '3.500', '9.000']);
   });
-  it('the rates: cement Rs. 387.50 + 3.5% wastage = 401.06 a bag; steel 57 + 4% = 59.28 a kg; a brick 9 + 6.5% = 9.585, half up 9.59; RCC labour 180 × Pune\'s 0.969072 = 174.43 a sq ft; on 2,000 + 121.0940 = 2,121.0940 sq ft', () => {
-    expect(line(e, 'flat:cement:struct:cement')).toMatchObject({ qty: 848.44, rate: 401.06, amount: 340275.35 });
-    expect(line(e, 'flat:steel:struct:steel')).toMatchObject({ qty: 7423.83, rate: 59.28, amount: 440084.64 });
+  it('the rates: cement Rs. 360 + 3.5% wastage = 372.60 a bag; steel 50 + 4% = 52.00 a kg; a brick 9 + 6.5% = 9.585, half up 9.59; RCC labour 180 × Pune\'s 0.915427 = 164.78 a sq ft; on 2,000 + 121.0940 = 2,121.0940 sq ft', () => {
+    expect(line(e, 'flat:cement:struct:cement')).toMatchObject({ qty: 848.44, rate: 372.6, amount: 316128.74 });
+    expect(line(e, 'flat:steel:struct:steel')).toMatchObject({ qty: 7423.83, rate: 52, amount: 386039.16 });
     expect(line(e, 'flat:brick:struct:bricks')).toMatchObject({ qty: 19089.85, rate: 9.59, amount: 183071.66 });
-    expect(line(e, 'flat:labour-rcc:built-up')).toMatchObject({ qty: 2121.09, rate: 174.43, amount: 369981.73 });
+    expect(line(e, 'flat:labour-rcc:built-up')).toMatchObject({ qty: 2121.09, rate: 164.78, amount: 349513.21 });
     expect(checkRate('mu-brick', 'pune')).toBe(9.59);
   });
   it('the terrace: inside the parapet 10.3163 × 8.1610 = 84.19 sq m, and 36.9547 m × 0.3 m up it = 11.09 sq m: 95.28 sq m = 1,025.57 sq ft, an APP membrane at every level', () => {
@@ -114,12 +114,12 @@ describe('a new house: G+1, 2,000 sq ft built up, 3 BHK, in Pune at Basic, by ha
     expect(e.perSqft).toBeCloseTo(e.total / 2000, 2);
     for (const start of ['The structure\'s materials and labour are rules of thumb', 'The rooms are planned as one home of 1570 sq ft', 'Not in this estimate yet: a borewell', 'The compound wall runs round all four sides'])
       expect(e.flags.some((f) => f.text.startsWith(start)), start).toBe(true);
-    // With the outside works and the water in (E5), Basic comes inside Pune's reported Rs. 1,800–2,900 a sq ft, so no range flag; Bespoke goes above it.
-    expect(e.perSqft > 1800 && e.perSqft < 2900).toBe(true);
+    // With the outside works and the water in (E5), Basic comes inside Pune's Rs. 1,550–2,040 a sq ft (checked in E2), so no range flag; Bespoke goes above it.
+    expect(e.perSqft > 1550 && e.perSqft < 2040).toBe(true);
     expect(e.flags.some((f) => f.text.startsWith('This estimate comes to'))).toBe(false);
     // V1: the range is read as a standard finish's, so above it at Bespoke is a note, not a flag with the answer.
     const top = house({ level: 5 }), range = top.flags.find((f) => f.text.includes('houses in Pune'));
-    expect(range).toEqual({ text: `At Bespoke this estimate comes to Rs. ${Math.round(top.perSqft).toLocaleString('en-IN')} a sq ft of built-up area; houses in Pune built to a standard finish are reported at Rs. 1,800–2,900 a sq ft (as reported), and dearer finishes cost more.`, decides: false, n: top.total });
+    expect(range).toEqual({ text: `At Bespoke this estimate comes to Rs. ${Math.round(top.perSqft).toLocaleString('en-IN')} a sq ft of built-up area; houses in Pune built to a standard finish are reported at Rs. 1,550–2,040 a sq ft (as reported), and dearer finishes cost more.`, decides: false, n: top.total });
     expect(e.flags.some((f) => f.text.startsWith('A house: its rooms inside'))).toBe(false);
   });
   it('the second computation draws the house its own way and agrees line by line', () => {
@@ -139,37 +139,37 @@ describe('E5: a new house\'s plot, outside works, water, stairs and stages, by h
     expect([e.house?.plot.l.toFixed(4), e.house?.plot.b.toFixed(4), e.house?.plot.sqm.toFixed(4), e.house?.plot.own, e.house?.plot.fits]).toEqual(['15.2763', '10.6210', '162.2504', false, true]);
     expect(e.assumptions.find((a) => a.what === 'The plot')?.shown).toBe('50.12 × 34.85 ft, 1,746 sq ft: the house\'s outline with 3 m in front, 1.5 m behind and 1 m on each side');
   });
-  it('the compound wall: round the plot 2 × (15.2763 + 10.6210) = 51.7947 m less the 3 m gate, 48.7947 m = 160.09 rft at Rs. 1,350 × 0.969072 = 1,308.25: Rs. 2,09,437.74; its paint on both faces 2 × 48.7947 × 1.5 = 146.3841 sq m = 1,575.67 sq ft', () => {
-    expect(line(e, 'flat:compound-wall:compound-wall')).toMatchObject({ qty: 160.09, rate: 1308.25, amount: 209437.74, section: 'outside' });
+  it('the compound wall: round the plot 2 × (15.2763 + 10.6210) = 51.7947 m less the 3 m gate, 48.7947 m = 160.09 rft at Rs. 1,350 × 0.915427 = 1,235.83: Rs. 1,97,844.02; its paint on both faces 2 × 48.7947 × 1.5 = 146.3841 sq m = 1,575.67 sq ft', () => {
+    expect(line(e, 'flat:compound-wall:compound-wall')).toMatchObject({ qty: 160.09, rate: 1235.83, amount: 197844.02, section: 'outside' });
     expect(line(e, 'flat:exterior-paint:compound-paint')).toMatchObject({ qty: 1575.67, entry: 'ex-ace', section: 'outside' });
   });
-  it('the gate 3 × 1.5 m = 48.44 sq ft of MS at Rs. 292.50 × 0.969072 = 283.45: Rs. 13,730.32; the paving 162.2504 − 92.9030 = 69.3473 sq m = 746.45 sq ft of 60 mm pavers at Rs. 60 + 13 × 0.969072 = 72.60: Rs. 54,192.27', () => {
-    expect(line(e, 'flat:gate:gate')).toMatchObject({ qty: 48.44, rate: 283.45, amount: 13730.32, entry: 'gt-ms' });
-    expect(line(e, 'flat:paving:paving')).toMatchObject({ qty: 746.45, rate: 72.6, amount: 54192.27, entry: 'pv-concrete-60' });
+  it('the gate 3 × 1.5 m = 48.44 sq ft of MS at Rs. 300 × 0.915427 = 274.63: Rs. 13,303.08; the paving 162.2504 − 92.9030 = 69.3473 sq m = 746.45 sq ft of 60 mm pavers at Rs. 60 + 13 × 0.915427 = 71.90: Rs. 53,669.76', () => {
+    expect(line(e, 'flat:gate:gate')).toMatchObject({ qty: 48.44, rate: 274.63, amount: 13303.08, entry: 'gt-ms' });
+    expect(line(e, 'flat:paving:paving')).toMatchObject({ qty: 746.45, rate: 71.9, amount: 53669.76, entry: 'pv-concrete-60' });
     expect(line(house({ level: 3 }), 'flat:gate:gate')?.entry).toBe('gt-ss');
   });
-  it('the water for 5 people at 135 litres a day: a sump of 3 days, 2,025 litres up to 3,000 at Rs. 22.50 × 0.969072 = 21.80 a litre (Rs. 65,400); a tank of a day, 675 litres, the next size 750 at Rs. 9.50 (Rs. 7,125); a 3BHK\'s septic tank of 7,250 litres at Rs. 92,500 ÷ 7,250 × 0.969072 = 12.36 (Rs. 89,610); a recharge pit 11,500 × 0.969072 + 3,500 + 6,000 + 11,500 × 0.969072 = Rs. 31,788.66', () => {
-    expect(line(e, 'flat:sump:sump')).toMatchObject({ qty: 3000, unit: 'litre', rate: 21.8, amount: 65400 });
+  it('the water for 5 people at 135 litres a day: a sump of 3 days, 2,025 litres up to 3,000 at Rs. 22.50 × 0.915427 = 20.60 a litre (Rs. 61,800); a tank of a day, 675 litres, the next size 750 at Rs. 9.50 (Rs. 7,125); a 3BHK\'s septic tank of 7,250 litres at Rs. 92,500 ÷ 7,250 × 0.915427 = 11.68 (Rs. 84,680); a recharge pit 11,500 × 0.915427 + 3,500 + 6,000 + 11,500 × 0.915427 = Rs. 30,554.82', () => {
+    expect(line(e, 'flat:sump:sump')).toMatchObject({ qty: 3000, unit: 'litre', rate: 20.6, amount: 61800 });
     expect(line(e, 'flat:overhead-tank:tank')).toMatchObject({ qty: 750, rate: 9.5, amount: 7125 });
-    expect(line(e, 'flat:septic:septic')).toMatchObject({ qty: 7250, rate: 12.36, amount: 89610 });
-    expect(line(e, 'flat:rwh:rwh')).toMatchObject({ qty: 1, rate: 31788.66, amount: 31788.66 });
+    expect(line(e, 'flat:septic:septic')).toMatchObject({ qty: 7250, rate: 11.68, amount: 84680 });
+    expect(line(e, 'flat:rwh:rwh')).toMatchObject({ qty: 1, rate: 30554.82, amount: 30554.82 });
     expect(line(e, 'flat:sewer:sewer')).toBeUndefined();
-    expect(e.sections.find((x) => x.id === 'water')?.amount).toBe(193923.66);
+    expect(e.sections.find((x) => x.id === 'water')?.amount).toBe(184159.82);
   });
   it('a 1BHK takes 3 people: a sump of 1,215 litres up to 2,000, a tank of 405 up to 500 and a 4,500-litre septic tank', () => {
     const one = house({ bhk: '1' });
     expect([line(one, 'flat:sump:sump')?.qty, line(one, 'flat:overhead-tank:tank')?.qty, line(one, 'flat:septic:septic')?.qty]).toEqual([2000, 500, 4500]);
   });
-  it('where the sewer reaches the plot, a sewer connection takes the septic tank\'s place: Chennai\'s charge, Rs. 25,500 (the middle of 24,500–26,500) × 0.969072 for Pune = 24,711.34, against the tank\'s 89,610', () => {
+  it('where the sewer reaches the plot, a sewer connection takes the septic tank\'s place: Chennai\'s charge, Rs. 25,500 (the middle of 24,500–26,500) × 0.915427 for Pune = 23,343.39, against the tank\'s 84,680', () => {
     const w = house({ sewer: true });
     expect(line(w, 'flat:septic:septic')).toBeUndefined();
-    expect(line(w, 'flat:sewer:sewer')).toMatchObject({ qty: 1, rate: 24711.34, amount: 24711.34, entry: 'sewer-connection', section: 'water' });
+    expect(line(w, 'flat:sewer:sewer')).toMatchObject({ qty: 1, rate: 23343.39, amount: 23343.39, entry: 'sewer-connection', section: 'water' });
     expect(w.unpriced.map((u) => u.key)).not.toContain('flat:sewer:sewer');
-    expect(w.total).toBeCloseTo(e.total - 89610 + 24711.34, 2);
+    expect(w.total).toBeCloseTo(e.total - 84680 + 23343.39, 2);
     expect(w.assumptions.find((a) => a.what === 'Water')?.shown).toContain('the city\'s sewer in place of a septic tank');
   });
-  it('the stairs: two, each treads 2 × 1.1 × 2.2 = 4.84, risers 1.1 × 3.05 = 3.355, the landing 1.2 × 2.5 = 3 and the floor\'s landing 1.1 × 2.5 = 2.75 sq m: 13.945; 27.89 sq m = 300.21 sq ft of Kota stone at Rs. 135 × 0.969072 = 130.82: Rs. 39,273.47; the well\'s walls 14 m × (2 × 3.05 + 2.7) = 123.2 sq m = 1,326.11 sq ft; a WPC door to the terrace', () => {
-    expect(line(e, 'flat:stair-finish:stair-finish')).toMatchObject({ qty: 300.21, rate: 130.82, amount: 39273.47, entry: 'stf-kota', section: 'exterior' });
+  it('the stairs: two, each treads 2 × 1.1 × 2.2 = 4.84, risers 1.1 × 3.05 = 3.355, the landing 1.2 × 2.5 = 3 and the floor\'s landing 1.1 × 2.5 = 2.75 sq m: 13.945; 27.89 sq m = 300.21 sq ft of Kota stone at Rs. 125 × 0.915427 = 114.43: Rs. 34,353.03; the well\'s walls 14 m × (2 × 3.05 + 2.7) = 123.2 sq m = 1,326.11 sq ft; a WPC door to the terrace', () => {
+    expect(line(e, 'flat:stair-finish:stair-finish')).toMatchObject({ qty: 300.21, rate: 114.43, amount: 34353.03, entry: 'stf-kota', section: 'exterior' });
     expect(line(e, 'flat:paint:stair-walls')).toMatchObject({ qty: 1326.11, section: 'exterior' });
     expect(line(e, 'flat:bath-door:terrace-door')).toMatchObject({ qty: 1, entry: 'bd-wpc' });
     expect(line(house({ level: 2 }), 'flat:stair-finish:stair-finish')?.entry).toBe('stf-granite');
@@ -283,9 +283,9 @@ describe('the estimate', () => {
     expect(other.cityFactor).toBe(1);
     expect(other.flags.map((f) => f.text)).toContain('No city figure for your city: the rates are used as they are.');
   });
-  it('the city factor: Mumbai\'s middle 2,850 against the average 2,425 is 1.1753; Pune\'s 2,350 is 0.9691', () => {
-    expect(cityFactor('mumbai')?.toFixed(4)).toBe('1.1753');
-    expect(cityFactor('pune')?.toFixed(4)).toBe('0.9691');
+  it('the city factor: Mumbai\'s middle 2,500 against the average 1,960.83 is 1.2750; Pune\'s 1,795 is 0.9154', () => {
+    expect(cityFactor('mumbai')?.toFixed(4)).toBe('1.2750');
+    expect(cityFactor('pune')?.toFixed(4)).toBe('0.9154');
     expect(cityFactor('nowhere')).toBeNull();
   });
 });
@@ -391,14 +391,14 @@ describe('E3: a room of your own size and level, the furniture and soft furnishi
     expect(line(run({ kind: 'interiors' }), 'bedroom-2:ac:ac')).toBeUndefined();
     expect(e.assumptions.find((a) => a.what === 'Rooms')?.shown).toMatch(/; Bedroom 2 170 sq ft, at Luxury;/);
   });
-  it('the furniture and soft furnishings for interiors at Standard, by hand: a sofa 70,000, a dining set 48,000, a bed 25,234.50 and a mattress 17,500 in each bedroom, 2,03,469; curtains for 6 windows at 5,000 + 1.5 m of rod at 850 + fitting 325 × Pune\'s 0.969072 = 6,589.95 each, 39,539.70; all movable', () => {
+  it('the furniture and soft furnishings for interiors at Standard, by hand: a sofa 70,000, a dining set 43,994, a bed 19,990 and a mattress 17,500 in each bedroom, 1,88,974; curtains for 6 windows at 5,000 + 1.5 m of rod at 850 + fitting 325 × Pune\'s 0.915427 = 6,572.51 each, 39,435.06; all movable', () => {
     const e = run({ kind: 'interiors' });
     const at = (id: string) => e.sections.find((s) => s.id === id)?.amount;
     expect(line(e, 'living:sofa:one')).toMatchObject({ entry: 'sf-mid', qty: 1, rate: 70000, kind: 'movable' });
-    expect(line(e, 'bedroom-1:bed:one')?.rate).toBe(25234.5);
-    expect(line(e, 'living:curtains:window-count')).toMatchObject({ entry: 'crt-set-mid', qty: 2, rate: 6589.95, amount: 13179.9 });
-    expect([at('furniture'), at('furnishings')]).toEqual([203469, 39539.7]);
-    expect(e.split.movable).toBe(243008.7);
+    expect(line(e, 'bedroom-1:bed:one')?.rate).toBe(19990);
+    expect(line(e, 'living:curtains:window-count')).toMatchObject({ entry: 'crt-set-mid', qty: 2, rate: 6572.51, amount: 13145.02 });
+    expect([at('furniture'), at('furnishings')]).toEqual([188974, 39435.06]);
+    expect(e.split.movable).toBe(228409.06);
     expect(run().sections.find((s) => s.id === 'furniture')).toMatchObject({ on: false, amount: 0 });
   });
   it('the split is worked twice: a second computation that disagrees on it shows nothing', () => {
@@ -426,7 +426,7 @@ describe('E3: a room of your own size and level, the furniture and soft furnishi
     expect(c.swaps.every((x) => x.roomName.startsWith('Bathroom'))).toBe(true);
     const on = changeOf(flat(), flat({ sections: { furniture: true } })) as Change;
     expect(on.swaps.find((x) => x.name === 'Sofa')).toEqual({ roomName: 'Living and dining', name: 'Sofa', from: null, to: '3-seater sofa, mid-range' });
-    expect(on.by).toBe(203469);
+    expect(on.by).toBe(188974);
     const sized = changeOf(flat(), flat({ rooms: { living: { l: 16 * FT, b: 20 * FT } } })) as Change;
     expect(sized.swaps).toEqual([]);
     const wrong = (input: ArchitectInput) => { const k = architectCheck(input); if (input.sliders?.bathrooms) k.total += 100; return k; };
@@ -605,12 +605,12 @@ describe('V1: the flags that can change the decision, largest first', () => {
       expect(e.flags.find((f) => f.text.startsWith(start))?.decides, start).toBe(false);
   });
   it('the city\'s range decides outside it at Basic or Standard and below it at any level; above it at Premium and up it is a note', () => {
-    // A G+0 of 900 sq ft, 2 BHK, comes to Rs. 3,180 a sq ft at Standard, above Pune's Rs. 1,800–2,900; a G+2 of 4,000 sq ft
-    // at Basic to Rs. 1,751, below it.
-    const small = build({ floors: 1, area: 900, bhk: '2', level: 2 }), big = build({ floors: 3, area: 4000, bhk: '4', level: 1 }), prem = build({ floors: 1, area: 900, bhk: '2', level: 3 });
-    expect(decides(small)).toEqual([`This estimate comes to Rs. ${inr(Math.round(small.perSqft))} a sq ft of built-up area; houses in Pune built to a standard finish are reported at Rs. 1,800–2,900 a sq ft (as reported).`]);
-    expect(small.perSqft > 2900 && big.perSqft < 1800 && prem.perSqft > 2900).toBe(true);
-    expect(decides(big)).toEqual([`This estimate comes to Rs. ${inr(Math.round(big.perSqft))} a sq ft of built-up area; houses in Pune built to a standard finish are reported at Rs. 1,800–2,900 a sq ft (as reported).`]);
+    // A G+0 of 900 sq ft, 2 BHK, comes to Rs. 3,160 a sq ft at Standard, above Pune's Rs. 1,550–2,040 (E2); a G+2 of 8,000 sq ft
+    // at Basic to Rs. 1,484, below it.
+    const small = build({ floors: 1, area: 900, bhk: '2', level: 2 }), big = build({ floors: 3, area: 8000, bhk: '4', level: 1 }), prem = build({ floors: 1, area: 900, bhk: '2', level: 3 });
+    expect(decides(small)).toEqual([`This estimate comes to Rs. ${inr(Math.round(small.perSqft))} a sq ft of built-up area; houses in Pune built to a standard finish are reported at Rs. 1,550–2,040 a sq ft (as reported).`]);
+    expect(small.perSqft > 2040 && big.perSqft < 1550 && prem.perSqft > 2040).toBe(true);
+    expect(decides(big)).toEqual([`This estimate comes to Rs. ${inr(Math.round(big.perSqft))} a sq ft of built-up area; houses in Pune built to a standard finish are reported at Rs. 1,550–2,040 a sq ft (as reported).`]);
     expect(decides(prem)).toEqual([]);
     expect(prem.flags.find((f) => f.text.startsWith('At Premium this estimate comes to'))?.decides).toBe(false);
   });
@@ -626,13 +626,13 @@ describe('V1: the flags that can change the decision, largest first', () => {
 
 describe('L1: a level is a band of choices; its range runs from the cheapest priced choice at it in every line to the dearest', () => {
   const key = 'living:floor:floor-skirting', r2 = (x: number) => Math.round(x * 100 + 1e-6) / 100;
-  it('the living room floor at Basic in Pune, by hand: five choices on 303.03 sq ft. Sheet vinyl, 110 × 0.96907 = Rs. 106.60 a sq ft, Rs. 32,303.00; glazed vitrified 600 mm, 57.50 + 12% + 45.50 × 0.96907 = 108.49; ceramic, 60 + 10% + 44.09 = 110.09; the level\'s tile 114.09, Rs. 34,572.69; Kota stone, 135 × 0.96907 = 130.82, Rs. 39,642.38', () => {
+  it('the living room floor at Basic in Pune, by hand: five choices on 303.03 sq ft. Sheet vinyl, 110 × 0.915427 = Rs. 100.70 a sq ft, Rs. 30,515.12; ceramic, 60 + 10% + 45.50 × 0.915427 = 107.65; the level\'s tile, 62.50 + 12% + 41.65 = 111.65, Rs. 33,833.30; Kota stone, 125 × 0.915427 = 114.43; glazed vitrified 600 mm, 57.50 + 12% + 18% GST on the tile + 41.65 = 117.64, Rs. 35,648.45', () => {
     const basic = (choicesFor(flat({ level: 1 }), key) as Choices).levels[0];
     expect(basic[0].id).toBe('fl-vit-dc-600');
-    expect(Object.fromEntries(basic.map((x) => [x.id, x.rate]))).toEqual({ 'fl-vit-dc-600': 114.09, 'fl-ceramic': 110.09, 'fl-gvt-600': 108.49, 'fl-kota': 130.82, 'fl-vinyl-sheet': 106.6 });
-    expect(line(run({ level: 1 }), key)?.amount).toBe(34572.69);
+    expect(Object.fromEntries(basic.map((x) => [x.id, x.rate]))).toEqual({ 'fl-vit-dc-600': 111.65, 'fl-ceramic': 107.65, 'fl-gvt-600': 117.64, 'fl-kota': 114.43, 'fl-vinyl-sheet': 100.7 });
+    expect(line(run({ level: 1 }), key)?.amount).toBe(33833.3);
     const amounts = basic.map((x) => r2(303.03 * (x.rate as number))).sort((a, b) => a - b);
-    expect([amounts[0], amounts[4]]).toEqual([32303, 39642.38]);
+    expect([amounts[0], amounts[4]]).toEqual([30515.12, 35648.45]);
   });
   it('the range is the package at the chosen level with the cheapest priced choice at each line\'s level in every line, and with the dearest, as the drawer offers them; the total between', () => {
     const cases: ArchitectInput[] = [

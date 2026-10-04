@@ -367,14 +367,15 @@ function cityOf(id: string | undefined): number {
 
 /**
  * An item's rate for a city, priced afresh by walking the library (the middle of a range as its low end plus half its
- * width, labour before the material, GST added as a share of the rate): the second computation of every rate the
+ * width, labour before the material, GST added as a share of the material alone, never of its fixing labour): the second computation of every rate the
  * estimate and the item drawer show. Null when the item, or a part of it, has no rate yet.
  */
 export function checkRate(id: string, cityId: string | undefined): number | null {
   const city = cityOf(cityId);
   const middle = (b: [number, number]) => b[0] + (b[1] - b[0]) / 2;
   const unitsIn = (qtyIn: number, from: Unit, to: Unit) => (from === to ? qtyIn : from === 'sqm' && to === 'sqft' ? qtyIn / SQ_FOOT : from === 'sqft' && to === 'sqm' ? qtyIn * SQ_FOOT : NaN);
-  const rateOf = (id: string): number | null => {
+  // [the material, the labour that fixes it], kept apart so that GST falls on the material only.
+  const rateOf = (id: string): [number, number] | null => {
     const e = ENTRIES.get(id) as Entry;
     let labour = 0;
     for (const f of e.fix ?? []) labour += f.n * middle((LABOUR_ITEMS.get(f.id) as { rate: [number, number] }).rate);
@@ -382,16 +383,16 @@ export function checkRate(id: string, cityId: string | undefined): number | null
     let own: number;
     if (e.basis === 'set') {
       own = 0;
-      for (const p of e.parts ?? []) { const r = rateOf(p.id); if (r === null) return null; own += r * p.n; }
+      for (const p of e.parts ?? []) { const r = rateOf(p.id); if (r === null) return null; own += r[0] * p.n; labour += r[1] * p.n; }
     } else if (!e.rate) return null;
     else if (e.basis === 'installed') own = (e.pack ? middle(e.rate) / unitsIn(e.pack.qty, e.pack.unit, e.unit) : middle(e.rate)) * city;
     else {
       const each = e.pack ? middle(e.rate) / unitsIn(e.pack.qty, e.pack.unit, e.unit) : middle(e.rate);
       own = e.basis === 'supply' ? each + each * (e.wastage ?? 0) : each;
     }
-    return own + labour;
+    return [own, labour];
   };
   if (!ENTRIES.has(id)) return null;
   const r = rateOf(id);
-  return r === null ? null : round2(ENTRIES.get(id)?.gst === 'extra' ? r + (r * Q.gst.pct) / 100 : r);
+  return r === null ? null : round2((ENTRIES.get(id)?.gst === 'extra' ? r[0] + (r[0] * Q.gst.pct) / 100 : r[0]) + r[1]);
 }

@@ -112,7 +112,7 @@ describe('sliders, items and brands', () => {
     expect(d.groups.map((g) => g.open)).toEqual([true, false, false, false, false]);
     expect(d.groups[0].choices[0]).toMatchObject({ id: 'fl-gvt-800', mark: 'the level’s item', current: true });
     expect(d.groups[0].choices.slice(1).every((x) => x.mark === '' && !x.current)).toBe(true);
-    expect(d.groups[1].choices[0]).toMatchObject({ id: 'fl-vit-dc-600', rate: 'Rs. 114.09 a sq ft', mark: 'the level’s item', current: false });
+    expect(d.groups[1].choices[0]).toMatchObject({ id: 'fl-vit-dc-600', rate: 'Rs. 111.65 a sq ft', mark: 'the level’s item', current: false });
     expect(d.groups[2].choices.find((x) => x.id === 'fl-encaustic')).toMatchObject({ rate: 'No rate yet', usable: false });
     const ids = d.groups.flatMap((g) => g.choices.map((x) => x.id));
     expect(ids.length).toBe(new Set(ids).size);
@@ -167,8 +167,8 @@ describe('a new house on the page (D-UX-23)', () => {
     const p = planPreview(HOUSE), lines = docText(planDoc(HOUSE, p, TODAY)!).split('\n');
     for (const want of ['Estimate of cost of construction', 'Work: Build a new house, G+1, 3 BHK', 'Built-up area: 2,000 sq ft (185.81 sq m)', `Cost per sq ft: Rs. ${p.view!.perSqft} of built-up area`])
       expect(lines, want).toContain(want);
-    // 0.4 bags a sq ft × 2,121.0940 sq ft (the built-up area and the stair cabin) = 848.44 bags × Rs. 401.06 = 3,40,275.35 (architect.test.ts).
-    expect(lines.find((l) => l.includes('Whole house: OPC 53-grade cement'))).toMatch(/\| All \| 848\.44 \| bag \| 401\.06 \| 3,40,275$/);
+    // 0.4 bags a sq ft × 2,121.0940 sq ft (the built-up area and the stair cabin) = 848.44 bags × Rs. 372.60 = 3,16,128.74 (architect.test.ts).
+    expect(lines.find((l) => l.includes('Whole house: OPC 53-grade cement'))).toMatch(/\| All \| 848\.44 \| bag \| 372\.60 \| 3,16,129$/);
     const at = lines.indexOf('Annex 3. What the estimate assumes');
     expect(lines.slice(at + 1).map((l) => l.split(':')[0])).toEqual(['The house', 'Floor to floor', 'The plot', 'Structure', 'Outside works', 'Water', 'Stages', 'Rooms', 'Bathrooms', 'Ceiling height', 'Doors and windows', 'Electrical points']);
   });
@@ -204,15 +204,15 @@ describe('a new house on the page (D-UX-23)', () => {
   it('E5: the sewer in place of the septic tank, noted in What changed; only for a new house', () => {
     const w = withSewer(HOUSE, true);
     expect(inputOf(w).sewer).toBe(true);
-    // The septic tank's 89,610 out, the sewer connection's 24,711.34 in (architect.test.ts): 64,898.66, shown as 64,899.
-    expect(view(w).change?.text).toBe('The sewer in place of a septic tank: Rs. 64,899 less');
+    // The septic tank's 84,680 out, the sewer connection's 23,343.39 in (architect.test.ts): 61,336.61, shown as 61,337.
+    expect(view(w).change?.text).toBe('The sewer in place of a septic tank: Rs. 61,337 less');
     expect(inputOf({ ...FLAT, sewer: true }).sewer).toBeUndefined();
   });
 });
 
 describe('the planning estimate to download', () => {
-  // At Basic, the living room's floor is 303.03 sq ft (architect.test.ts) of the tile priced at Rs. 114.09 in Pune
-  // (library.test.ts): 303.03 × 114.09 = 34,572.69, shown as 34,573.
+  // At Basic, the living room's floor is 303.03 sq ft (architect.test.ts) of the tile priced at Rs. 111.65 in Pune
+  // (library.test.ts): 303.03 × 111.65 = 33,833.30, shown as 33,833.
   const s: PlanState = { ...FLAT, level: 1, doc: { owner: 'Asha Rao', property: 'Flat 4, Example Towers, Pune', lender: '', preparedBy: '' } };
   const p = planPreview(s), doc = planDoc(s, p, TODAY)!, lines = docText(doc).split('\n');
   it('page 1: the title by the kind, the facts, the abstract by section and the total in figures and words, signed', () => {
@@ -228,7 +228,7 @@ describe('the planning estimate to download', () => {
   });
   it('Annex 1: every line under its section, with its level, quantity, unit, rate and amount; the living room\'s floor as worked by hand', () => {
     const floor = lines.find((l) => l.includes('Living and dining: Double-charge vitrified tiles'))!;
-    expect(floor).toMatch(/\| Basic \| 303\.03 \| sq ft \| 114\.09 \| 34,573$/);
+    expect(floor).toMatch(/\| Basic \| 303\.03 \| sq ft \| 111\.65 \| 33,833$/);
     expect(floor).toContain('Kajaria, Somany, Johnson, Nitco, Orientbell or equivalent');
     expect(lines.filter((l) => /^\d+\.\d+ /.test(l)).length).toBe(p.view!.sections.reduce((t, x) => t + x.lines.length, 0));
   });
@@ -259,7 +259,7 @@ describe('the planning estimate to download', () => {
     expect(book.map((x) => x.sheet)).toEqual(['Estimate', 'Detailed estimate', 'Assumptions']);
     expect(book[0].data.find((r) => r[0] === 'Total estimated cost')?.filter((c) => c !== null)).toEqual(['Total estimated cost', p.view!.n.total]);
     const row = book[1].data.find((r) => typeof r[0] === 'string' && r[0].includes('Living and dining: Double-charge vitrified tiles'))?.filter((c) => c !== null);
-    expect(row?.slice(1)).toEqual(['Basic', 303.03, 'sq ft', 114.09, 34572.69]);
+    expect(row?.slice(1)).toEqual(['Basic', 303.03, 'sq ft', 111.65, 33833.3]);
     const { lines: word, messages } = await docxLines(docxOf(doc, MADE));
     expect(messages).toEqual([]);
     expect(word).toContain(`Total estimated cost | ${p.view!.total}`);
@@ -315,15 +315,15 @@ describe('E3 on the page: the rooms, What changed, Compare and the movable secti
   });
   it('Furniture switched on for a renovation: What changed names the pieces; the line goes when the answers change', () => {
     const s = withSection(FLAT, 'furniture', true), v = view(s);
-    expect(v.change).toEqual({ text: 'Furniture switched on: Rs. 2,03,469 more', n: 203469, items: '3-seater sofa, mid-range · 6-seater dining set · Queen bed with hydraulic storage · and 1 more' });
+    expect(v.change).toEqual({ text: 'Furniture switched on: Rs. 1,88,974 more', n: 188974, items: '3-seater sofa, mid-range · 6-seater dining set · Queen bed with hydraulic storage · and 1 more' });
     expect(view({ ...s, city: 'mumbai' }).change).toBeUndefined();
   });
   it('interiors: the movable items apart on the page and in the abstract (D-UX-19)', () => {
     const i = withKind(FLAT, 'interiors'), p = planPreview(i), lines = docText(planDoc(i, p, TODAY)!).split('\n');
-    expect(p.view?.split?.find((x) => x.label === 'Movable items')?.n).toBe(243008.7);
-    expect(lines).toContain('Movable items | 2,43,009');
-    expect(lines).toContain('8. Furniture | 2,03,469');
-    expect(lines).toContain('9. Soft furnishings | 39,540');
+    expect(p.view?.split?.find((x) => x.label === 'Movable items')?.n).toBe(228409.06);
+    expect(lines).toContain('Movable items | 2,28,409');
+    expect(lines).toContain('8. Furniture | 1,88,974');
+    expect(lines).toContain('9. Soft furnishings | 39,435');
   });
 });
 
@@ -430,8 +430,8 @@ describe('V1 on the page: short by default', () => {
     expect(interiors.notes.map((f) => f.slice(0, 26))).toEqual(['The furniture is a sofa an', 'The soft furnishings are c']);
   });
   it('the rates as reported in one line by the total, for the city or another place', () => {
-    expect(interiors.ratesLine).toMatch(/^A planning estimate: rates as reported on \d\d-\d\d-\d{4} for Pune, not yet checked$/);
-    expect(view({ ...FLAT, city: 'other' }).ratesLine).toMatch(/for another place, at the six cities’ average, not yet checked$/);
+    expect(interiors.ratesLine).toMatch(/^A planning estimate: rates as reported on \d\d-\d\d-\d{4} for Pune; \d+ of \d+ lines checked against their pages$/);
+    expect(view({ ...FLAT, city: 'other' }).ratesLine).toMatch(/for another place, at the six cities’ average; \d+ of \d+ lines checked against their pages$/);
     expect([...interiors.flags, ...interiors.notes].some((f) => f.startsWith('Rates are as reported'))).toBe(false);
   });
   it('each section\'s amount in the package orders the list, steady while its slider moves', () => {
@@ -450,15 +450,15 @@ describe('T1 on the page: a line\'s and a section\'s Why?, never in the answer o
   const v = view(FLAT_IN), h = view(HOUSE);
   const section = (x: typeof v, id: string) => x.sections.find((y) => y.id === id)!;
   const notesOf = (family: string) => (['what', 'cost', 'check'] as const).map((k) => NOTES.get(family)![k]);
-  it('a line whose family has notes: what it is, why it costs what it does, what to check, then their sources, linked and still as reported', () => {
+  it('a line whose family has notes: what it is, why it costs what it does, what to check, then their sources, linked and checked against them (E2)', () => {
     const l = section(v, 'wardrobes').lines.find((x) => x.key === 'bedroom-1:wardrobe:wardrobe')!;
     expect(l.why!.items).toEqual(notesOf('wardrobe').map((n, i) => ({ label: ['What it is', 'Why it costs what it does', 'What to check'][i], text: n.text })));
-    expect(l.why!.sources.map((x) => x.id)).toEqual([...new Set(notesOf('wardrobe').flatMap((n) => n.src))]);
+    expect(l.why!.sources.map((x) => x.id)).toEqual([...new Set(notesOf('wardrobe').flatMap((n) => n.src))].filter((x) => x !== 'own'));
     expect(l.why!.sources.every((x) => x.url.startsWith('https://') && x.what.length > 0)).toBe(true);
-    expect(l.why).toMatchObject({ own: false, reported: true });
+    expect(l.why).toMatchObject({ own: true, reported: false });
     // The steel's check cites our own rule (ask the structural engineer), said apart from the sources.
     const steel = section(h, 'structure').lines.find((x) => x.key === 'flat:steel:struct:steel')!;
-    expect(steel.why).toMatchObject({ own: true, reported: true });
+    expect(steel.why).toMatchObject({ own: true, reported: false });
     expect(steel.why!.sources.map((x) => x.id)).not.toContain('own');
   });
   it('every line of the top five families in both cases has a Why?; a line of a family with no notes yet has none', () => {
@@ -473,7 +473,7 @@ describe('T1 on the page: a line\'s and a section\'s Why?, never in the answer o
     const rule = (id: string) => SPEND_SAVE.filter((r) => r.section === id).map((r) => r.text);
     expect(section(v, 'walls').why!.items).toEqual([{ label: 'Save here', text: rule('walls')[0] }]);
     expect(section(v, 'electrical').why!.items.map((x) => x.label)).toEqual(['Spend on the wiring', 'Save on the light fittings']);
-    expect(section(v, 'waterproofing')).toMatchObject({ on: false, why: { items: [{ label: 'Spend here', text: rule('waterproofing')[0] }], reported: true } });
+    expect(section(v, 'waterproofing')).toMatchObject({ on: false, why: { items: [{ label: 'Spend here', text: rule('waterproofing')[0] }], reported: false } });
     expect(section(h, 'structure').why!.items[0]).toEqual({ label: 'Spend here', text: rule('structure')[0] });
     // Our own rule alone: no source to list, and nothing as reported.
     expect(section(v, 'furniture').why).toMatchObject({ sources: [], own: true, reported: false });

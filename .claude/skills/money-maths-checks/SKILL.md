@@ -1,7 +1,6 @@
 ---
 name: money-maths-checks
 description: Rules and a checklist for any calculation of money in this repo - DSCR, EMI and repayment schedules, interest, tax, projections, FOIR, LTV, eligibility, the largest loan or the shortest tenure - when writing it, changing it, testing it, quoting a computed figure to the owner, or judging someone else's formula (another AI's, a spreadsheet's, a reviewer's). Use it before touching engine/ or any test of figures, and before stating a computed number in chat, even for a quick check.
-effort: max
 ---
 
 # Money maths checks
@@ -20,6 +19,9 @@ Two projects taught this the hard way. In the home-loan appraisal tool, every te
 - A listing with a plural title ("ceiling lights", "robe hooks") may price a pack: read how many it holds before taking its price as one item's.
 - Read a source's note on GST once, and tag every item that cites it alone the same way: before GST adds 18%, an MRP or retail price already includes it.
 - Before bundling one item into another's set (a lock with a door, a mesh with a window), look in `engine/data/architect.json` for another family priced on the same quantity. A line cannot be switched off by itself, only its section, so the user cannot take out a double count.
+- A search summary is a lead, not a source: open the page and read the figure before taking it.
+- A script that fills missing values touches only missing values: it prints each value it changes, old and new, and stops on one already set.
+- Add a tax or a factor only to the part of a rate that its source quotes; keep parts from other sources apart in both computations.
 
 ## Where test figures come from
 

@@ -185,7 +185,9 @@ const noteText = (x) => { const r = ref(x.src).trim(); return `${x.text} ${r ===
 let banded = 0, leveled = 0;
 const lib = ['# The library', '', 'Generated from `engine/data/library/` by `npm run rules-doc`; edit the data files, not this page.', '',
   `Dated ${date(sources.date)}. ${sources.status}`, '',
-  `${entries.size} items in ${files.reduce((t, f) => t + f.families.length, 0)} families, from ${Object.keys(sources.sources).length} sources. The estimate uses the middle of each range. A family's five levels name one item each (${A.levels.map((l) => l.name).join(', ')}); every other item in the family is an alternative you can choose instead. A level is a band of choices (L1): the item it names and every other item usually at it; the estimate's range at a level runs from the cheapest priced choice at it in every line to the dearest.`, ''];
+  `${entries.size} items in ${files.reduce((t, f) => t + f.families.length, 0)} families, from ${Object.keys(sources.sources).length} sources. The estimate uses the middle of each range. A family's five levels name one item each (${A.levels.map((l) => l.name).join(', ')}); every other item in the family is an alternative you can choose instead. A level is a band of choices (L1): the item it names and every other item usually at it; the estimate's range at a level runs from the cheapest priced choice at it in every line to the dearest.`, '',
+  // E2: how much was read on its page, as counts; each source below says which.
+  `Checked against their pages: ${[...entries.values()].filter((e) => e.checked).length} of ${entries.size} items, ${Object.values(sources.sources).filter((s) => s.checked).length} sources; ${Object.values(sources.sources).filter((s) => s.unread).length} sources could not be opened.`, ''];
 const introAt = lib.length - 2;
 for (const f of files) {
   lib.push(`## ${f.title}`, '', `Dated ${date(f.date)}; an item read on another day says so.`, '');
@@ -219,7 +221,7 @@ lib[introAt] += ` ${banded} of the ${leveled} families with levels offer more th
 lib.push('## Where to spend, where to save', '', `Dated ${date(notes.date)}. ${notes.status} The planning estimate shows each under its section's Why?.`, '',
   ...notes.spendSave.map((r) => `- **${A.sections.find((x) => x.id === r.section).name}: ${r.way} ${r.on ? `on ${r.on}` : 'here'}.** ${noteText(r)}`), '');
 lib.push('## Labour', '', '| Labour | Rate | Sources |', '|---|---|---|', ...labour.labour.map((l) => `| ${l.name} | ${range(l.rate)} a ${UNIT[l.unit]}${l.date ? `; read ${date(l.date)}` : ''} | ${ref(l.src)} |`), '');
-lib.push('## Sources', '', ...numbered.map((id, i) => { const s = sources.sources[id]; return `${i + 1}. [${s.what}](${s.url}) (class ${s.class}: ${sources.classes[s.class]})`; }), '');
+lib.push('## Sources', '', ...numbered.map((id, i) => { const s = sources.sources[id]; return `${i + 1}. [${s.what}](${s.url}) (class ${s.class}: ${sources.classes[s.class]})${s.checked ? `. Read on ${date(s.checked)}` : s.unread ? `. Not opened: ${s.unread.replace(/\.$/, '')}` : ''}`; }), '');
 const libText = lib.join('\n');
 
 const docs = [[new URL('../docs/RULES.md', import.meta.url), text, 'docs/RULES.md'], [new URL('../docs/LIBRARY.md', import.meta.url), libText, 'docs/LIBRARY.md']];

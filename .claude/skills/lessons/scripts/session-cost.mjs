@@ -2,7 +2,7 @@
 // Usage: node session-cost.mjs [transcript.jsonl]
 // Without a path it reads the newest transcript of the current folder's project (~/.claude/projects/<folder>/).
 // Costs are in units of one fresh input token at the usual price ratios: cache read 0.1, 5-minute cache write 1.25,
-// 1-hour cache write 2, output 5. Main conversation only (no subagents). An estimate to compare sizes, not a bill.
+// 1-hour cache write 2, output 5. The main conversation, then its agents apart (their logs beside it). An estimate to compare sizes, not a bill.
 // Where compaction fires (Claude Code 2.1, read from its code and confirmed in a session's log): it starts the summary
 // once the context reaches 80% of (window - 20k), and the work waits for it; it never lets the context pass window - 33k.
 // So a window of 200000 compacts at about 144k. The 80% can change with Claude Code's version or remote settings,
@@ -107,3 +107,24 @@ for (const win of [145000, 170000, 200000, 230000, 260000, 290000, 340000]) {
   console.log(`  ${win}: compacts at about ${k(cap)}, one every ${range(b.every, a.every)} steps; ${word(a.change)} to ${word(b.change)}; pauses about ${range(mins(a), mins(b))} min per working hour`);
 }
 console.log('A replay cannot undo a real compaction, so settings above where this session compacted show no change.');
+
+// The session's agents: their logs sit beside the transcript in <session>/subagents/. Each is priced the same way;
+// their share is of the session's whole cost, main conversation and agents together.
+async function usages(f) {
+  const seen = new Map();
+  for await (const line of readline.createInterface({ input: fs.createReadStream(f), crlfDelay: Infinity })) {
+    let o;
+    try { o = JSON.parse(line); } catch { continue; }
+    if (o.type === 'assistant' && o.message?.usage) seen.set(o.message.id || o.uuid, o.message.usage);
+  }
+  return [...seen.values()].filter((u) => ctx(u) > 0);
+}
+const priced = (us) => sum(us.map((u) => cost(u, n(u.cache_read_input_tokens))));
+const outPerStep = avg(steps.map((x) => n(x.u.output_tokens)));
+console.log(`Output a step: ${Math.round(outPerStep)} tokens on average`);
+const agentDir = path.join(file.replace(/\.jsonl$/, ''), 'subagents');
+const agentFiles = fs.existsSync(agentDir) ? fs.readdirSync(agentDir).filter((f) => f.endsWith('.jsonl')).map((f) => path.join(agentDir, f)) : [];
+if (agentFiles.length) {
+  const runs = await Promise.all(agentFiles.map(usages)), agentCost = sum(runs.map(priced)), agentSteps = sum(runs.map((r) => r.length));
+  console.log(`Agents: ${agentFiles.length}, ${agentSteps} steps, ${pc(agentCost / (agentCost + total))} of the session's cost; one agent costs about ${pc(agentCost / agentFiles.length / total)} of the main conversation's`);
+}
