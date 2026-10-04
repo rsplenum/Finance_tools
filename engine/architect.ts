@@ -160,7 +160,7 @@ export interface Line {
   /** The day its rate, and each part's, was last read on its page (E2); none while any is as reported. */
   checked?: string;
 }
-export interface Unpriced { key: string; roomName: string; name: string; entryName: string; qty: number; unit: Unit }
+export interface Unpriced { key: string; roomName: string; section: string; name: string; entry: string; entryName: string; spec: string; brands: string[]; qty: number; unit: Unit }
 export interface SectionTotal { id: string; name: string; on: boolean; slider: boolean; level: Level | null; amount: number; lines: number }
 export interface Assumption { what: string; shown: string; why: string; src: string[] }
 /**
@@ -451,7 +451,7 @@ function work(input: ArchitectInput, banded = false): ArchitectEstimate {
     const roomName = r?.name ?? whole;
     const name = slot.name ?? fam.name;
     const p = price(id, city, R.gst.pct);
-    if (!p) { unpriced.push({ key, roomName, name, entryName: ent.name, qty, unit: ent.unit }); return; }
+    if (!p) { unpriced.push({ key, roomName, section: slot.section, name, entry: id, entryName: ent.name, spec: ent.spec, brands: ent.brands ?? [], qty, unit: ent.unit }); return; }
     const chosen = !!own && ENTRIES.has(own), amount = r2(qty * p.rate);
     lines.push({
       key, room: r?.id ?? null, roomName, section: slot.section, family: slot.family, name, entry: id, entryName: ent.name, spec: ent.spec,
@@ -1043,4 +1043,31 @@ export function choicesFor(input: ArchitectInput, key: string, rate2: typeof che
   const banded = new Set(levels.flat().map((c) => c.id));
   const others = choices(fam.id).filter((e) => !banded.has(e.id)).map((e) => choice(e.id)).filter((c): c is Choice => !!c);
   return { key, family: fam.id, fixed: !!fam.fixed, ladder: ladderIds.map((id) => (id ? choice(id) : null)), levels, others };
+}
+
+/**
+ * A line of the bill of quantities for contractors to quote (E4a, D-UX-36): one item, its rooms and its quantity summed
+ * over them. `brand` when the user chose one: rooms with another brand, or none, are a line of their own. The items with no rate yet are in it too, since a
+ * contractor prices them all. No rate and no amount: the bill carries no figure of ours but the quantities.
+ */
+export interface BillLine { entry: string; item: string; spec: string; brands: string[]; brand?: string; rooms: string[]; qty: number; unit: Unit; keys: string[] }
+export interface BillSection { id: string; name: string; lines: BillLine[] }
+
+/** The bill of quantities: the estimate's sections in order, each item once in the order first met, the priced before those with no rate yet. */
+export function billOf(e: ArchitectEstimate, brands: Record<string, string> = {}): BillSection[] {
+  type Part = { key: string; roomName: string; section: string; entry: string; entryName: string; spec: string; brands: string[]; qty: number; unit: Unit };
+  const parts: Part[] = [...e.lines, ...e.unpriced];
+  return e.sections.filter((t) => t.on).map((t) => {
+    const by = new Map<string, BillLine>();
+    for (const p of parts.filter((x) => x.section === t.id)) {
+      const brand = brands[p.key] && p.brands.includes(brands[p.key]) ? brands[p.key] : '';
+      const id = `${p.entry}|${p.unit}|${brand}`;
+      const b = by.get(id) ?? { entry: p.entry, item: p.entryName, spec: p.spec, brands: p.brands, ...(brand ? { brand } : {}), rooms: [], qty: 0, unit: p.unit, keys: [] };
+      if (!b.rooms.includes(p.roomName)) b.rooms.push(p.roomName);
+      b.qty = r2(b.qty + p.qty);
+      b.keys.push(p.key);
+      by.set(id, b);
+    }
+    return { id: t.id, name: t.name, lines: [...by.values()] };
+  }).filter((x) => x.lines.length);
 }

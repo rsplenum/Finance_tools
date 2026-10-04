@@ -15,7 +15,7 @@ import { xlsxOf } from '../site/src/doc/xlsx';
 import {
   EMPTY_PLAN, areaLabel, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit, type PlanState,
 } from '../site/src/estimate/plan-model';
-import { planDoc, planDocStatus, planFileName } from '../site/src/estimate/plan-document';
+import { billDoc, billFileName, planDoc, planDocStatus, planFileName } from '../site/src/estimate/plan-document';
 import { SITE_NAME } from '../site/src/site';
 import { docxLines, pdfPages, workbook } from '../scripts/read-doc.mjs';
 
@@ -268,6 +268,48 @@ describe('the planning estimate to download', () => {
     const t = { ...s, doc: { ...s.doc, owner: '' } }, d = planDoc(t, planPreview(t), TODAY)!;
     expect(planDocStatus(t, planPreview(t))).toBe('Provisional: 1 still needed');
     for (const page of await pdfPages(pdfOf(d, MADE))) expect(page.split('\n')[0]).toBe('Planning estimate Provisional');
+  });
+});
+
+describe('the bill of quantities to download (E4a, D-UX-36)', () => {
+  // The same flat at Basic: the living room's floor is 303.03 sq ft of double-charge vitrified tiles (architect.test.ts);
+  // the bill's line for that tile is every room's quantity of it, added again here from the detailed estimate's lines.
+  const s: PlanState = { ...FLAT, level: 1, doc: { owner: 'Asha Rao', property: 'Flat 4, Example Towers, Pune', lender: '', preparedBy: '' } };
+  const p = planPreview(s), v = p.view!, doc = billDoc(s, p, TODAY)!, text = docText(doc), lines = text.split('\n');
+  const tiles = v.sections.flatMap((x) => x.lines).filter((l) => l.item.startsWith('Double-charge vitrified tiles') && l.key.endsWith(':floor:floor-skirting'));
+  const floor = lines.find((l) => l.includes('Double-charge vitrified tiles') && l.includes('Living and dining'))!;
+  it('a line at the top asks for supply and fixing with wastage and whether GST is included; the eight columns', () => {
+    expect(text).toContain('Please quote a rate for supplying and fixing each item, with its wastage');
+    expect(text).toContain('say whether your rates include GST');
+    expect(lines).toContain('No. | Item and specification | Where | Quantity | Unit | Rate | Amount | Make offered');
+    expect(billFileName(s, 'xlsx')).toBe('Bill of quantities - Asha Rao.xlsx');
+  });
+  it('one line for the floor tiles of the rooms that have them, its quantity their sum, with brands "or equivalent"; rate and amount blank', () => {
+    expect(tiles.length).toBeGreaterThan(1);
+    expect(tiles[0].n.qty).toBe(303.03);
+    const sum = tiles.reduce((t, l) => t + Math.round(l.n.qty * 100), 0) / 100;
+    expect(floor).toContain(`| ${tiles.map((l) => l.room).join(', ')} | ${inr(sum, 2)} | sq ft |  |  | `);
+    expect(floor).toContain('Kajaria, Somany, Johnson, Nitco, Orientbell or equivalent');
+    expect(lines.filter((l) => l.includes('Double-charge vitrified tiles') && l.includes('Living and dining'))).toHaveLength(1);
+  });
+  it('none of our levels, rates or totals; section totals blank; only figures the page shows', () => {
+    for (const x of ['| Basic |', 'Level', '111.65', '33,833', v.total]) expect(text).not.toContain(x);
+    expect(lines.filter((l) => l.includes('| Total of ') && l.endsWith('|  |  |  |  |  | '))).toHaveLength(v.bill.length + 1);
+    const sources = [JSON.stringify(p), JSON.stringify(s), '03-10-2026', SITE_NAME].join('\n'), figures = text.match(/\d+(?:,\d+)*(?:\.\d+)?/g) ?? [];
+    expect(figures.filter((f) => !sources.includes(f))).toEqual([]);
+    expect(lines.filter((l) => !printable(l))).toEqual([]);
+  });
+  it('the PDF, the Excel copy and the Word copy read back the same', async () => {
+    const pages = (await pdfPages(pdfOf(doc, MADE))).join('\n');
+    expect(pages).toContain('Bill of quantities');
+    expect(pages).toContain('Make offered');
+    const book = await workbook(xlsxOf(doc, MADE));
+    expect(book.map((x) => x.sheet)).toEqual(['Bill of quantities']);
+    const row = book[0].data.find((r) => typeof r[1] === 'string' && r[1].startsWith('Double-charge vitrified tiles') && String(r[2]).startsWith('Living and dining'));
+    expect(row?.[3]).toBe(tiles.reduce((t, l) => t + Math.round(l.n.qty * 100), 0) / 100);
+    const { lines: word, messages } = await docxLines(docxOf(doc, MADE));
+    expect(messages).toEqual([]);
+    expect(word.some((l) => l.includes('Double-charge vitrified tiles') && l.includes('Living and dining'))).toBe(true);
   });
 });
 

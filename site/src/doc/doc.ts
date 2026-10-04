@@ -10,7 +10,8 @@ export interface Cell { text: string; figure?: Figure }
 /** `head` names a group of rows, on a shaded band; `total` rows are in bold under a rule, and a `ratio` row between two. */
 export type RowKind = 'head' | 'total' | 'ratio';
 export interface Row { cells: Cell[]; kind?: RowKind }
-export interface Column { label: string; sub?: string }
+/** `wrap`: a column of words, left-aligned and wrapped, taking this share of the width the other columns leave. */
+export interface Column { label: string; sub?: string; wrap?: number }
 /** The first column names each row, and is repeated when the other columns are split across pages. */
 export interface Table { columns: Column[]; rows: Row[]; size?: 'small' }
 

@@ -132,3 +132,57 @@ export function planDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
     ],
   };
 }
+
+export function billFileName(s: PlanState, ext: string): string {
+  const name = s.doc.owner.replace(/[\\/:*?"<>|\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60).trim();
+  return `Bill of quantities${name ? ` - ${name}` : ''}.${ext}`;
+}
+
+/**
+ * The bill of quantities for contractors to quote like for like (E4a, D-UX-36): each item once, with its specification,
+ * its rooms and its quantity from the engine; the rate, the amount, the make offered and every total left blank. None of
+ * our levels, rates or totals, so a contractor is not anchored to them. Undefined while the page shows no estimate.
+ */
+export function billDoc(s: PlanState, p: PlanPreview, today: string): Doc | undefined {
+  const v = p.view;
+  if (!v || p.blocked) return undefined;
+  const owner = ok(s.doc.owner), property = ok(s.doc.property);
+  const facts: [string, string][][] = [
+    ...(owner ? [[['Owner', owner] as [string, string]]] : []),
+    ...(property ? [[['Property', property] as [string, string]]] : []),
+    [['Work', `${v.kind}, ${['Flat', 'House'].includes(v.home) ? v.home.toLowerCase() : v.home}, ${v.bhk}`], [v.areaName, v.area]],
+    [['City', v.city]],
+  ];
+  const blank = (n: number) => Array.from({ length: n }, () => ({ text: '' }));
+  const bill: Table = {
+    columns: [{ label: 'No.' }, { label: 'Item and specification', wrap: 3 }, { label: 'Where', wrap: 2 }, { label: 'Quantity' }, { label: 'Unit' },
+      { label: 'Rate' }, { label: 'Amount' }, { label: 'Make offered' }],
+    rows: [
+      ...v.bill.flatMap((x) => [
+        { kind: 'head' as const, cells: [{ text: `${x.no}. ${x.name}` }] },
+        ...x.lines.map((l) => ({ cells: [{ text: l.no }, { text: l.item }, { text: l.where }, cell(l.qty, l.n.qty, 'quantity'), { text: l.unit }, ...blank(3)] })),
+        { kind: 'total' as const, cells: [{ text: '' }, { text: `Total of ${x.name.toLowerCase()}` }, ...blank(6)] },
+      ]),
+      { kind: 'total' as const, cells: [{ text: '' }, { text: 'Total of all sections' }, ...blank(6)] },
+      { cells: [{ text: '' }, { text: 'GST, if not included in the rates' }, ...blank(6)] },
+      { kind: 'ratio' as const, cells: [{ text: '' }, { text: 'Total quoted, with GST' }, ...blank(6)] },
+    ],
+    size: 'small',
+  };
+  return {
+    title: `Bill of quantities${owner ? `, ${owner}` : ''}`,
+    header: `Bill of quantities${owner ? ` · ${owner}` : ''}`,
+    footer: `Made with ${SITE_NAME} on ${dmy(today)}: the quantities worked out from the answers given; the rates and amounts are the contractor's.`,
+    workbookNote: 'The quantities are the exact figures worked out on the page; Rate, Amount and Make offered are for the contractor to fill in.',
+    ...(owner ? { author: owner } : {}),
+    creator: SITE_NAME,
+    parts: [{ name: 'Bill of quantities', blocks: [
+      { kind: 'title', text: 'Bill of quantities', sub: `For quotations: ${v.title.toLowerCase()}. Prepared with ${SITE_NAME} on ${dmy(today)}.` },
+      { kind: 'facts', lines: facts },
+      { kind: 'text', text: 'Please quote a rate for supplying and fixing each item, with its wastage, and the amount for its quantity, and say whether your rates include GST. Where brands are named, any make of the same quality will do: write the make you offer. Leave a line blank if you do not quote for it.' },
+      { kind: 'text', text: 'The quantities are planned from the floor area and the rooms, not measured on site: check them when you visit.', small: true },
+      { kind: 'table', table: bill },
+      { kind: 'signature', lines: ['Quoted by', '', 'Name of the contractor or firm:', 'GSTIN, if registered:', 'Signature and date:', 'Rates valid until:'] },
+    ] }],
+  };
+}
