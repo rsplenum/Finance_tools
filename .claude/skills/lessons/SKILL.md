@@ -1,6 +1,6 @@
 ---
 name: lessons
-description: Keep what a session learns, with the context it arose in, so later sessions in this project or another do not pay for it again. Use it at the end of every working session, before the handoff and the commit; whenever the owner corrects course or says something is not what they asked for; when work had to be redone; when a check, test or CI run failed for a reason that could happen again; when something cost far more time or tokens than it should have; and when starting a new project, to bring the general lessons along. Use it even if no one says "lesson".
+description: Keep what a session learns, with the context it arose in, so later sessions in this project or another do not pay for it again. Use it at the end of every working session, before the handoff and the commit; whenever the owner corrects course or says something is not what they asked for; when work had to be redone; when a check, test or CI run failed for a reason that could happen again; when something cost far more time or tokens than it should have; when starting a new project, to bring the general lessons along; and to measure what a session cost or check where it compacts. Use it even if no one says "lesson".
 ---
 
 # Lessons
@@ -10,6 +10,8 @@ A session's code survives in the repo. What it learned survives only if it is wr
 ## 1. Spot them: none to three a session
 
 At the end of a session, and at the moment one of the triggers above happens, ask: what would I do differently if I started this session again? Keep only lessons that would change what a future session does. "Be careful with tests" is not one; "a test asserts that its fixture exists" is. Most sessions have none or one; more than three usually means they are not yet sorted by what matters.
+
+A lesson stops repeated work or a repeated mistake. It is never a rule about how to design, what to try or what to leave out: such rules narrow the next session's thinking and save nothing. Prefer a check, which says nothing until something breaks, and delete a rule that gets in the way more than it saves.
 
 ## 2. Write the row
 
@@ -50,3 +52,7 @@ Template for a new log:
 
     | Date | Context | What happened | Rule | Kept in | Reach |
     | --- | --- | --- | --- | --- | --- |
+
+## 7. Measure a session
+
+`scripts/session-cost.mjs`, in this skill's folder, reads a Claude Code session log (the newest for the current folder, or the path given) and prints its steps and working hours, its context sizes, where compactions fired and how long each paused the work, where the cost went, and a replay at other compaction sizes: cost, how often, and minutes of pause an hour. Run it when a session felt slow or costly, and after a few sessions to check the compaction size (`CLAUDE_CODE_AUTO_COMPACT_WINDOW`). Compaction fired at about 0.8 × (window − 20k) in Claude Code 2.1, a share it can change, so trust the log over the setting's name.
