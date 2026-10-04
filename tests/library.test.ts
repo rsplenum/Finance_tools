@@ -31,6 +31,8 @@ describe('the library: every value has a source', () => {
       expect(['installed', 'supply', 'product', 'set'], where).toContain(e.basis);
       if (e.level !== undefined) expect(e.level >= 1 && e.level <= 5, where).toBe(true);
       for (const s of e.src) expect(SOURCE[s], `${where} cites ${s}`).toBeDefined();
+      // E2: an item checked against its pages cites only pages that were read.
+      if (e.checked) for (const s of e.src) if (s !== 'own') expect(SOURCE[s].checked, `${where}: ${s} read`).toBeDefined();
       if (e.basis === 'set') {
         expect(e.parts?.length, where).toBeGreaterThan(0);
         for (const p of e.parts ?? []) { expect(ENTRIES.has(p.id), `${where} part ${p.id}`).toBe(true); expect(p.n, where).toBeGreaterThan(0); }
@@ -153,22 +155,25 @@ describe('rates, worked by hand', () => {
   it('a box price: Rs. 2,800 (the middle of 2,000–3,600) for 2.56 sq m = 27.5556 sq ft is 101.61 a sq ft; with 12% wastage 113.81, plus 90 and 13 = 216.81', () => {
     expect(price('fl-slab-800x1600', 1, 18)?.rate).toBe(216.81);
   });
-  it('the city scales labour, not the product: the same tile in Pune (× 0.96907) is 70.00 + 45.50 × 0.96907 = 114.09', () => {
-    // Pune's middle 2,350 against the six cities' average middle 2,425: 0.969072. 45.50 × 0.969072 = 44.0928.
-    expect(price('fl-vit-dc-600', 2350 / 2425, 18)?.rate).toBe(114.09);
+  it('the city scales labour, not the product: the same tile in Pune (× 0.915427) is 70.00 + 45.50 × 0.915427 = 111.65', () => {
+    // Pune's middle 1,795 against the six cities' average middle 11,765 ÷ 6 = 1,960.83: 0.915427. 45.50 × 0.915427 = 41.6519.
+    expect(price('fl-vit-dc-600', 1795 / (11765 / 6), 18)?.rate).toBe(111.65);
+  });
+  it('GST is added to the material its source quotes before GST, not to the labour that fixes it (E2): glazed vitrified 600 mm, 57.50 + 12% = 64.40, + 18% = 75.992, + laying 32.50 + adhesive 13 = 121.49', () => {
+    expect(price('fl-gvt-600', 1, 18)?.rate).toBe(121.49);
   });
   it('a rate quoted before GST has 18% added: 8 mm shower glass, the middle of Rs. 440–660 is 550, with GST 649.00', () => {
     expect(price('ss-8-fixed', 1, 18)?.rate).toBe(649);
   });
-  it('a set adds its parts: Jaquar Continental accessories 1,397 + 699 + 600 = 2,696', () => {
-    expect(price('acc-continental', 1, 18)?.rate).toBe(2696);
+  it('a set adds its parts: Jaquar Continental accessories, towel rail 1,513 (1,450–1,576) + 699 + robe hook 530 (380–680) = 2,742', () => {
+    expect(price('acc-continental', 1, 18)?.rate).toBe(2742);
   });
   it('an item still to be found has no rate', () => {
     expect(price('fl-encaustic', 1, 18)).toBeNull();
   });
 });
 
-// T1 (D-UX-34): words for the page's Why?, never an amount; each note with its sources, reported until its pages are read.
+// T1 (D-UX-34): words for the page's Why?, never an amount; each note with its sources, reported until its pages are read (E2).
 describe('T1: what it is, why it costs what it does, what to check; where to spend, where to save', () => {
   const words = (x: string) => x.split(/\s+/).filter(Boolean).length;
   const fair = (n: Note, where: string) => {
@@ -176,8 +181,10 @@ describe('T1: what it is, why it costs what it does, what to check; where to spe
     expect(words(n.text), `${where}: short`).toBeLessThanOrEqual(50);
     expect(n.src.length, where).toBeGreaterThan(0);
     for (const s of n.src) expect(SOURCE[s], `${where}: source ${s}`).toBeDefined();
-    // Our own rule alone is 'own'; a note with an outside source is reported until someone reads its pages.
-    expect(n.status, where).toBe(n.src.every((s) => s === 'own') ? 'own' : 'reported');
+    // Our own rule alone is 'own'; a note with an outside source is reported until its pages are read, then checked (E2).
+    if (n.src.every((s) => s === 'own')) expect(n.status, where).toBe('own');
+    else expect(['reported', 'checked'], where).toContain(n.status);
+    if (n.status === 'checked') for (const s of n.src) if (s !== 'own') expect(SOURCE[s].checked, `${where}: ${s} read`).toBeDefined();
     expect(n.text, `${where}: no amount: the line's figures are the engine's`).not.toMatch(/\bRs\.?\s*\d|₹|\b(lakh|crore)s?\b|\d\/-/i);
     expect(n.text, `${where}: no verdict on safety`).not.toMatch(/\b(safe|safer|safely|safety|unsafe|guarantee)/i);
     expect(n.text, `${where}: never "architect" (D-UX-18)`).not.toMatch(/architect/i);
@@ -211,7 +218,7 @@ describe('T1: what it is, why it costs what it does, what to check; where to spe
     expect(density).toBeCloseTo(0.8878, 4);
     expect(rule.toFixed(2)).toBe('0.89');
     expect(density.toFixed(2)).toBe('0.89');
-    expect(NOTES.get('steel')?.check.text).toContain('A 12 mm bar weighs about 0.89 kg a metre, within 5%');
+    expect(NOTES.get('steel')?.check.text).toContain('A 12 mm bar weighs about 0.89 kg a metre');
   });
   it('where to spend, where to save: each rule names a section, short, sourced and marked; the owner\'s examples are all there', () => {
     const sections = new Set(R.sections.map((x) => x.id));

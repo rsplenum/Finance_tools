@@ -3,7 +3,7 @@
  * specification, brands, unit and reported rate (engine/data/library/*.json), and the labour that fixes them. A family is
  * a slot an architect fills (a floor finish, a WC and basin, a wardrobe); its five levels name one item each, and every
  * other item of the family is an alternative the user can pick. Pure, no DOM. A rate is the middle of the range its
- * sources report; every source is in engine/data/sources.json, read through search summaries and not yet checked.
+ * sources report; every source is in engine/data/sources.json, with the day its page was read (E2) or why it was not.
  * architect-check.ts prices every item a second way. Some families carry teaching notes, and the sections where to spend
  * and where to save (T1, notes.json): words for the page's Why?, never an amount.
  */
@@ -47,11 +47,18 @@ export interface Entry {
   gst?: 'extra' | 'incl' | 'unstated';
   /** The day the rate was read, when it differs from its file's date. */
   date?: string;
+  /** The day its rate was read on its source's page and found the same, or corrected to it (E2). */
+  checked?: string;
   src: string[]; note?: string; file: string;
 }
 export interface Family { id: string; name: string; unit: Unit; levels?: (string | null)[]; fixed?: string; kind?: ItemKind; file: string }
-export interface Labour { id: string; name: string; unit: Unit; rate: Band; src: string[]; note?: string; /** The day the rate was read, when it differs from its file's date. */ date?: string }
-export interface Source { what: string; url: string; class: string }
+export interface Labour { id: string; name: string; unit: Unit; rate: Band; src: string[]; note?: string; /** The day the rate was read, when it differs from its file's date. */ date?: string; /** The day it was read on its page (E2). */ checked?: string }
+/**
+ * A source: what it is, its address and its class. `checked` is the day its page was opened and read (E2); each item
+ * citing it says for itself whether its figure matched, since a page can price a different thing. `unread` says why the
+ * page could not be opened (a refused visit, a page gone), so the figures citing it stay as a search summary reported them.
+ */
+export interface Source { what: string; url: string; class: string; checked?: string; unread?: string }
 /**
  * A teaching note (T1, D-UX-34): plain words with their sources, 'reported' until someone reads the pages and sets it
  * 'checked'; 'own' for our own rule, its reason given in the note. It holds no amount: the engine's figures are on the line.
@@ -122,7 +129,8 @@ export interface Price { rate: number; how: string[] }
  * The rate of an item for a city: the middle of its reported range; for a material, per unit (a pack's price divided by
  * what the pack covers), plus its wastage, plus the labour that fixes it; for a set, its parts added up. The city's
  * factor scales labour and rates that include labour, never the price of a product, which is the same across India.
- * GST is added only to a rate quoted before it. Null when the item, or a part of it, has no rate yet.
+ * GST is added only to a rate quoted before it, and only to what that source quotes: never to the labour that fixes a
+ * material, which has its own source (E2). Null when the item, or a part of it, has no rate yet.
  */
 export function price(id: string, city: number, gstPct: number): Price | null {
   const raw = rawPrice(id, city);
@@ -130,22 +138,27 @@ export function price(id: string, city: number, gstPct: number): Price | null {
   const e = ENTRIES.get(id) as Entry;
   let rate = raw.rate;
   const how = [...raw.how];
-  if (e.gst === 'extra') { rate *= 1 + gstPct / 100; how.push(`GST ${gstPct}% added: the source quotes before GST`); }
+  if (e.gst === 'extra') {
+    rate = (rate - raw.labour) * (1 + gstPct / 100) + raw.labour;
+    how.push(raw.labour ? `GST ${gstPct}% added to the material, not the labour: the source quotes before GST` : `GST ${gstPct}% added: the source quotes before GST`);
+  }
   else if (e.gst === 'incl') how.push('GST included in the price, as listed');
   else if (e.gst === 'unstated') how.push('GST not stated by the source: taken as the price paid');
   return { rate: r2(rate), how };
 }
 
-function rawPrice(id: string, city: number): { rate: number; how: string[] } | null {
+/** The rate before GST, and the part of it that is labour fixing a material (from its own source). */
+function rawPrice(id: string, city: number): { rate: number; labour: number; how: string[] } | null {
   const e = ENTRIES.get(id);
   if (!e) throw new Error(`No item ${id} in the library`);
   const how: string[] = [];
-  let base = 0;
+  let base = 0, labour = 0;
   if (e.basis === 'set') {
     for (const p of e.parts ?? []) {
       const part = rawPrice(p.id, city);
       if (!part) return null;
       base += p.n * part.rate;
+      labour += p.n * part.labour;
       how.push(`${p.n} × ${(ENTRIES.get(p.id) as Entry).name} at Rs. ${inr(r2(part.rate))}`);
     }
   } else {
@@ -171,9 +184,10 @@ function rawPrice(id: string, city: number): { rate: number; how: string[] } | n
     const l = LABOUR_ITEMS.get(f.id);
     if (!l) throw new Error(`No labour ${f.id} for ${id}`);
     base += f.n * mid(l.rate) * city;
+    labour += f.n * mid(l.rate) * city;
     how.push(`${f.n > 1 ? `${f.n} × ` : ''}${l.name.charAt(0).toLowerCase() + l.name.slice(1)} at Rs. ${inr(mid(l.rate))}${city !== 1 ? ` × ${city.toFixed(3)}` : ''}`);
   }
-  return { rate: base, how };
+  return { rate: base, labour, how };
 }
 
 /** The items a family can take: its own and any item a level names, the level's item first. */

@@ -606,7 +606,7 @@ async function layout(page, v, step) {
 // section, ten on for a renovation and ten for interiors with Furniture and Soft furnishings (D-UX-19); a slider and what
 // it changed, the strip, Compare, the rooms (a size and a level of one's own) and the item drawer; the downloads read
 // back. A 2BHK of 1,000 sq ft in Pune at Basic, worked by hand in tests/architect.test.ts and tests/library.test.ts: the
-// living room's floor is 303.03 sq ft of tiles at Rs. 114.09 = Rs. 34,573.
+// living room's floor is 303.03 sq ft of tiles at Rs. 111.65 = Rs. 33,833.
 for (const scheme of ['light', 'dark']) {
   const { ctx, page, v } = await open('/estimate/', { scheme });
   if (await page.locator('#typed-path').evaluate((d) => d.open)) v('the typed quotation is open on load');
@@ -635,7 +635,7 @@ for (const scheme of ['light', 'dark']) {
   if (opened) v(`${opened} closed lines are open with the answer`);
   await tap(page, 'pl-card-flooring');
   const living = page.getByTestId('pl-line-living:floor:floor-skirting');
-  await expectText(page, v, living.locator('p').nth(1), '303.03 sq ft × Rs. 114.09 = Rs. 34,573', 'the living room floor, by hand');
+  await expectText(page, v, living.locator('p').nth(1), '303.03 sq ft × Rs. 111.65 = Rs. 33,833', 'the living room floor, by hand');
   await page.getByTestId('pl-open-living:floor:floor-skirting').click();
   // L1: the choices at the line's level first, under its name; each other level one tap away, closed.
   await expectText(page, v, page.getByTestId('pl-choices-1').locator('p').first(), 'At Basic: 5 choices', 'the choices at the line\'s level first');
@@ -646,7 +646,7 @@ for (const scheme of ['light', 'dark']) {
   await expectText(page, v, page.getByTestId('pl-assumed').locator(':scope > summary'), /^What the estimate assumes \(\d+\)$/, 'the assumptions behind one line with their count');
   await tap(page, 'pl-assumed');
   await expectText(page, v, 'pl-assumed-0', /^Rooms: Living and dining/, 'the assumptions');
-  await expectText(page, v, 'pl-rates', /^A planning estimate: rates as reported on \d\d-\d\d-\d{4} for Pune, not yet checked$/, 'the rates as reported, in one line by the total');
+  await expectText(page, v, 'pl-rates', /^A planning estimate: rates as reported on \d\d-\d\d-\d{4} for Pune; \d+ of \d+ lines checked against their pages$/, 'the rates as reported, in one line by the total');
 
   // The downloads, at the package as answered.
   await expectText(page, v, 'pl-doc-status', 'Provisional: 2 still needed', 'the planning estimate before its facts');
@@ -667,10 +667,10 @@ for (const scheme of ['light', 'dark']) {
     v('the planning estimate PDF does not read back its title, total, annexes and the living room floor');
   const book = await workbook((await save('pl-download-xlsx')).bytes).catch((e) => v(`the planning estimate's Excel copy is not read: ${e.message}`)) ?? [];
   const floor = book[1]?.data.find((r) => typeof r[0] === 'string' && r[0].includes('Living and dining: Double-charge vitrified tiles'))?.filter((c) => c !== null);
-  if (book.map((x) => x.sheet).join('|') !== 'Estimate|Detailed estimate|Assumptions' || JSON.stringify(floor?.slice(1)) !== JSON.stringify(['Basic', 303.03, 'sq ft', 114.09, 34572.69]))
+  if (book.map((x) => x.sheet).join('|') !== 'Estimate|Detailed estimate|Assumptions' || JSON.stringify(floor?.slice(1)) !== JSON.stringify(['Basic', 303.03, 'sq ft', 111.65, 33833.3]))
     v(`the planning estimate's Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))} and the floor ${JSON.stringify(floor)}`);
   const word = await docxLines((await save('pl-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
-  if (word.messages.length || !word.lines.includes(`Total estimated cost | ${figure}`) || !word.lines.some((l) => l.endsWith('| Basic | 303.03 | sq ft | 114.09 | 34,573')))
+  if (word.messages.length || !word.lines.includes(`Total estimated cost | ${figure}`) || !word.lines.some((l) => l.endsWith('| Basic | 303.03 | sq ft | 111.65 | 33,833')))
     v(`the planning estimate's Word copy reads back ${JSON.stringify(word.lines.slice(0, 4))} ${JSON.stringify(word.messages).slice(0, 120)}`);
 
   // An item of one's own makes the section Mixed; a brand chip names it; the slider moves the whole section again.
@@ -796,8 +796,8 @@ for (const scheme of ['light', 'dark']) {
   await expectText(page, v, 'pl-what-changed', /^The plot to 40 × 30 ft: Rs\. [\d,]+ less$/, 'what the plot changed');
   await expectText(page, v, page.locator('[data-testid^="pl-assumed-"]', { hasText: 'The plot:' }), /^The plot: 40 × 30 ft, 1,200 sq ft, your size/, 'the plot of your own');
   await page.check('#fld-sewer');
-  // The septic tank's 89,610 out and the sewer connection's 24,711.34 in (tests/architect.test.ts): 64,898.66, shown as 64,899.
-  await expectText(page, v, 'pl-what-changed', /^The sewer in place of a septic tank: Rs\. 64,899 less · Sewer connection$/, 'what the sewer changed');
+  // The septic tank's 84,680 out and the sewer connection's 23,343.39 in (tests/architect.test.ts): 61,336.61, shown as 61,337.
+  await expectText(page, v, 'pl-what-changed', /^The sewer in place of a septic tank: Rs\. 61,337 less · Sewer connection$/, 'what the sewer changed');
   await layout(page, v, 'the estimate as a new house, 390 px');
   await ctx.close();
 }
@@ -836,7 +836,7 @@ for (const scheme of ['light', 'dark']) {
     if (whys) v(`${label}: ${whys} Why? shown before any tap (want none)`);
     for (const c of why.cards) await tap(page, `pl-card-${c}`);
     // textContent runs the paragraphs together ("…wardrobeWhat it is: …"); on screen each is a line of its own.
-    const reported = `Sources: .+${why.own ? '; and our own rule' : ''}\\. As reported, not yet checked\\.$`;
+    const reported = `Sources: .+${why.own ? '; and our own rule' : ''}\\. (As reported, not yet checked|Checked against (its page|their pages))\\.$`;
     for (const [id, want] of [[why.line, new RegExp(`^ⓘ Why\\? .+What it is: .+Why it costs what it does: .+What to check: .+${reported}`)],
       [why.section[0], new RegExp(`^ⓘ Why\\? .+Where to spend, where to save${why.section[1]}: .+${reported}`)]]) {
       if (await page.getByTestId(id).evaluate((d) => d.open, null, { timeout: 3000 }).catch(() => true)) v(`${label}: ${id} missing, or open before a tap`);

@@ -157,6 +157,8 @@ export interface Line {
   /** The level whose item the line takes: its room's, its section's or the package's, no higher than the slot allows (L1). */
   at: Level;
   qty: number; unit: Unit; rate: number; amount: number; kind: ItemKind; how: string; rateHow: string[]; sources: string[]; note?: string;
+  /** The day its rate, and each part's, was last read on its page (E2); none while any is as reported. */
+  checked?: string;
 }
 export interface Unpriced { key: string; roomName: string; name: string; entryName: string; qty: number; unit: Unit }
 export interface SectionTotal { id: string; name: string; on: boolean; slider: boolean; level: Level | null; amount: number; lines: number }
@@ -454,7 +456,7 @@ function work(input: ArchitectInput, banded = false): ArchitectEstimate {
     lines.push({
       key, room: r?.id ?? null, roomName, section: slot.section, family: slot.family, name, entry: id, entryName: ent.name, spec: ent.spec,
       brands: ent.brands ?? [], level: isSlider ? lv : null, chosen, at: lv, qty, unit: ent.unit, rate: p.rate, amount,
-      kind: fam.kind ?? 'fixed', how: m.how, rateHow: p.how, sources: [...new Set([...ent.src, ...partSources(ent)])], ...(ent.note ? { note: ent.note } : {}),
+      kind: fam.kind ?? 'fixed', how: m.how, rateHow: p.how, sources: [...new Set([...ent.src, ...partSources(ent)])], ...(ent.note ? { note: ent.note } : {}), ...(checkedOn(ent) ? { checked: checkedOn(ent) } : {}),
     });
     if (!banded) return;
     // The choices at the line's level (L1), each at the middle of its rate on the line's quantity in its own unit.
@@ -558,6 +560,11 @@ function stagesOf(h: House, sections: SectionTotal[], split: Record<ItemKind, nu
   return rows.filter((x) => Math.abs(x.amount) >= 0.005).map((x) => ({ ...x, share: total > 0 ? x.amount / total : 0 }));
 }
 
+/** The day an item's rate was read on its page, with its parts' (E2): the latest, or none while any is unread. */
+const checkedOn = (e: Entry): string | undefined => {
+  const days = [e.rate ? e.checked : '', ...(e.parts ?? []).map((p) => checkedOn(ENTRIES.get(p.id) as Entry))];
+  return days.includes(undefined) ? undefined : days.filter(Boolean).sort().at(-1);
+};
 const partSources = (e: Entry): string[] => (e.parts ?? []).flatMap((p) => { const x = ENTRIES.get(p.id) as Entry; return [...x.src, ...partSources(x)]; });
 
 // ---- Measuring, by the rules in engine/data/architect.json. Lengths in metres, areas in square metres. ----

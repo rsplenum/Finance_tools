@@ -1,7 +1,7 @@
 {
   "title": "The architect's rules",
   "date": "2026-10-03",
-  "status": "What an architect would decide from six answers: the rooms and their sizes, the doors and windows, how each surface is measured, what each room needs at each level, and how many points the wiring and plumbing need (D-UX-18). Each rule names its source, or says it is our own rule and why. A rule is an assumption until the user changes it, and the page and the document list it (D-UX-08). The sources were read through search summaries and are not yet checked against their pages.",
+  "status": "What an architect would decide from six answers: the rooms and their sizes, the doors and windows, how each surface is measured, what each room needs at each level, and how many points the wiring and plumbing need (D-UX-18). Each rule names its source, or says it is our own rule and why. A rule is an assumption until the user changes it, and the page and the document list it (D-UX-08). The sources were read through search summaries; the city costs were checked against their page on 04-10-2026 (E2), the other rules not yet.",
   "levels": [
     { "n": 1, "name": "Basic", "owner": "Modest", "means": "Sound and simple: ISI-marked materials, the economy ranges of known brands, nothing decorative" },
     { "n": 2, "name": "Standard", "owner": "Upper class", "means": "What most new flats are sold with: branded mid-range materials and a few comforts" },
@@ -230,15 +230,15 @@
   "debris": { "sqftPerLot": 500, "src": ["own"], "why": "One lot (a tempo load to an approved dump) for each bathroom stripped, and one for each 500 sq ft of floor taken up, rounded up." },
   "makingGood": { "share": 0.10, "src": ["own"], "why": "Making good the plaster after chasing walls for new pipes and wiring: a tenth of the walls." },
   "cities": {
-    "src": ["homecostcalc-cities", "aecord-cci"],
+    "src": ["homecostcalc-cities"], "checked": "2026-10-04",
     "why": "The middle of each city's reported construction cost per sq ft, against the average of the six cities' middles. It scales labour and rates that include labour, not the price of a product, which is the same across India. A place not in the list uses the rates as they are, and the page says so.",
     "list": [
-      { "id": "bengaluru", "name": "Bengaluru", "cost": [1900, 3000] },
-      { "id": "chennai", "name": "Chennai", "cost": [1800, 2700] },
-      { "id": "delhi", "name": "Delhi NCR", "cost": [1900, 3000] },
-      { "id": "hyderabad", "name": "Hyderabad", "cost": [1700, 2700] },
-      { "id": "mumbai", "name": "Mumbai", "cost": [2200, 3500] },
-      { "id": "pune", "name": "Pune", "cost": [1800, 2900] }
+      { "id": "bengaluru", "name": "Bengaluru", "cost": [1650, 2180] },
+      { "id": "chennai", "name": "Chennai", "cost": [1580, 2080] },
+      { "id": "delhi", "name": "Delhi NCR", "cost": [1720, 2260] },
+      { "id": "hyderabad", "name": "Hyderabad", "cost": [1500, 1970] },
+      { "id": "mumbai", "name": "Mumbai", "cost": [2160, 2840] },
+      { "id": "pune", "name": "Pune", "cost": [1550, 2040] }
     ],
     "range": {
       "for": "built to a standard finish", "upTo": 2, "src": ["bricknbolt-cost-2026"],

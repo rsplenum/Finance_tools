@@ -32,6 +32,9 @@ Most rework came from misreading how practitioners work a calculation, so find a
 
 - Read how many a listing with a plural title holds before taking its price as one item's.
 - Read a source's note on GST once and tag every item that cites it alone the same way. An MRP or retail price already includes GST; a price quoted before GST does not.
+- A search summary is a lead, not a source: open the page and read the figure before taking it.
+- A script that fills missing values touches only missing values: it prints each value it changes, old and new, and stops on one already set.
+- Add a tax or a factor only to the part of a rate that its source quotes; keep parts from other sources apart in both computations.
 
 ## Traps in Indian lending maths
 

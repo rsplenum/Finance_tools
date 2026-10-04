@@ -16,7 +16,7 @@ import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { planDoc, planDocNeeds, planDocStatus, planFileName } from './plan-document';
 import {
-  BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, FLOOR_CHOICES, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORD_CHOICES, WORK_CHOICES, areaLabel, drawerView, heightOf, plainOf, planPreview, sideUnit,
+  BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, FLOOR_CHOICES, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORD_CHOICES, WORK_CHOICES, areaLabel, checkedLine, drawerView, heightOf, plainOf, planPreview, sideUnit,
   withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit,
   type AreaUnit, type DrawerView, type LineView, type PlanFacts, type PlanPreview, type PlanState, type PlanView, type RoomView, type RungView, type SectionView, type WhyView,
 } from './plan-model';
@@ -265,7 +265,7 @@ function Why({ id, about, title, w }: { id: string; about: string; title?: strin
       <p class={MUTED}>{w.sources.length
         ? <>Sources: {w.sources.map((x, i) => <span key={x.id}>{i ? '; ' : ''}{x.url
           ? <a href={x.url} target="_blank" rel="noopener noreferrer" class="text-teal-800 underline dark:text-teal-300">{x.what}</a> : x.what}</span>)}
-          {w.own ? '; and our own rule' : ''}.{w.reported ? ' As reported, not yet checked.' : ''}</>
+          {w.own ? '; and our own rule' : ''}.{w.reported ? ' As reported, not yet checked.' : ` Checked against ${w.sources.length === 1 ? 'its page' : 'their pages'}.`}</>
         : 'Our own rule, with its reason given.'}</p>
     </div>
   </details>;
@@ -317,7 +317,7 @@ function Drawer({ s, l, d, update }: { s: PlanState; l: LineView; d: DrawerView;
         <li>Amount: {d.how.amount}</li>
       </ul>
       {l.sources.length > 0 && <p class={`mt-1 text-xs ${MUTED}`}>Sources: {l.sources.map((x, i) => <span key={x.id}>{i ? '; ' : ''}{x.url
-        ? <a href={x.url} target="_blank" rel="noopener noreferrer" class="text-teal-800 underline dark:text-teal-300">{x.what}</a> : x.what}</span>)}. As reported, not yet checked.</p>}
+        ? <a href={x.url} target="_blank" rel="noopener noreferrer" class="text-teal-800 underline dark:text-teal-300">{x.what}</a> : x.what}</span>)}. {checkedLine(l)}</p>}
       {l.note && <p class={`mt-1 text-xs ${MUTED}`}>{l.note}</p>}
     </details>
   </div>;

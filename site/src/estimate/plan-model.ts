@@ -343,7 +343,7 @@ export interface LineView {
   /** The level whose item the line takes, for the drawer's first choices (L1). */
   at: Level;
   qty: string; unit: string; rate: string; amount: string; n: { qty: number; rate: number; amount: number };
-  kind: string; how: string; rateHow: string[]; sources: SourceView[]; note?: string;
+  kind: string; how: string; rateHow: string[]; sources: SourceView[]; note?: string; /** The day its rate was read on its page (E2). */ checked?: string;
   /** What the item is, why it costs what it does and what to check (T1), when its family has notes. */
   why?: WhyView;
 }
@@ -412,7 +412,7 @@ export interface PlanView {
   split?: { label: string; amount: string; n: number }[];
   /** What to check (V1): the flags that can change the decision, shown with the answer, and the rest, one tap away; each largest first. */
   assumed: AssumedView[]; flags: string[]; notes: string[]; unpriced: string[];
-  /** One line by the total: a planning estimate, its rates as reported on their date for the city, not yet checked. */
+  /** One line by the total: a planning estimate, its rates as reported on their date for the city, and how many lines were checked against their pages (E2). */
   ratesLine: string; ratesDate: string;
   /** One line under the total (L1): the chosen level's range, from the cheapest priced choice at it in every item to the dearest; empty with no items. */
   range: { text: string; low: number; high: number; lines: number; of: number };
@@ -496,7 +496,7 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
     strip: levels.map((n, i) => ({ level: (i + 1) as Level, name: LEVEL_NAMES[i], total: shortRupees(n), full: rupees(n), n, current: i + 1 === e.level })),
     bar, sections, ...(split ? { split } : {}), assumed, flags: e.flags.filter((f) => f.decides).map((f) => f.text), notes: e.flags.filter((f) => !f.decides).map((f) => f.text),
     unpriced: e.unpriced.map((u) => `${u.roomName}, ${u.name.toLowerCase()}: ${u.entryName}`),
-    ratesLine: `A planning estimate: rates as reported on ${dmy(e.ratesDate)} for ${listed ? city : 'another place, at the six cities’ average'}, not yet checked`,
+    ratesLine: `A planning estimate: rates as reported on ${dmy(e.ratesDate)} for ${listed ? city : 'another place, at the six cities’ average'}; ${e.lines.filter((l) => l.checked).length} of ${e.lines.length} lines checked against their pages`,
     range: rangeOf(e, runs),
     ratesDate: dmy(LIBRARY_DATE), sources: [...numbered.values()],
     classes: Object.entries(CLASSES).filter(([id]) => [...numbered.values()].some((x) => x.cls === id)).map(([id, means]) => ({ id, means })),
@@ -583,9 +583,14 @@ function lineView(s: PlanState, l: Line, no: string, sourceOf: (id: string) => S
     key: l.key, no, room: l.roomName, name: l.name, entry: l.entry, item: l.entryName, spec: l.spec, brands, ...(chosen ? { brand: chosen } : {}),
     level: l.level ? levelName(l.level) : '', chosen: l.chosen, at: l.at,
     qty: lineQty(l.qty, l.unit), unit: unitText(l.unit), rate: rateText(l.rate), amount: rupees(l.amount), n: { qty: l.qty, rate: l.rate, amount: l.amount },
-    kind: KIND_WORD[l.kind], how: l.how, rateHow: l.rateHow, sources: l.sources.filter((x) => x !== 'own').map(sourceOf), ...(l.note ? { note: l.note } : {}),
+    kind: KIND_WORD[l.kind], how: l.how, rateHow: l.rateHow, sources: l.sources.filter((x) => x !== 'own').map(sourceOf), ...(l.note ? { note: l.note } : {}), ...(l.checked ? { checked: l.checked } : {}),
     ...(FAMILY_WHY.has(l.family) ? { why: FAMILY_WHY.get(l.family) } : {}),
   };
+}
+
+/** Whether a line's rate was read on its pages (E2), with the day. */
+export function checkedLine(l: LineView): string {
+  return l.checked ? `Checked against ${l.sources.length === 1 ? 'its page' : 'their pages'} on ${dmy(l.checked)}.` : 'As reported, not yet checked.';
 }
 
 /** The notes behind a Why?, each under its label (T1); their sources apart from our own rule, in order of first use. */
