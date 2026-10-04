@@ -12,6 +12,7 @@ const checks = [
   ['build', 'npm run build'],
   ['site check', 'npm run check:site'],
   ['simulation', 'npm run sim'],
+  ['skill pack', 'node portable/pack.mjs --check'],
   ['rules doc', 'npm run rules-doc'],
 ];
 

@@ -1,6 +1,6 @@
 ---
 name: lessons
-description: Keep what a session learns, with the context it arose in, so later sessions in this project or another do not pay for it again. Use it at the end of every working session, before the handoff and the commit; whenever the owner corrects course or says something is not what they asked for; when work had to be redone; when a check, test or CI run failed for a reason that could happen again; when something cost far more time or tokens than it should have; when starting a new project, to bring the general lessons along; and to measure what a session cost or check where it compacts. Use it even if no one says "lesson".
+description: Keep what a session learns where later sessions will meet it. Use at the end of each session, on a correction, after redone work or a failure that could recur, or to measure a session's cost.
 ---
 
 # Lessons
@@ -34,16 +34,18 @@ Write the rule with its reason, in the plain style of its neighbours.
 
 ## 4. Before adding
 
-Search the log and the skills for the same rule (grep a key word). If it is there, sharpen it or add the new context to its row rather than a second row. If a rule proved wrong, correct it in place and date the change; never leave two rules that disagree.
+Search the log, the skills and the pack's `carried.md` (§6) for the same rule (grep a key word). If it is there, sharpen it or add the new context to its row rather than a second row. If a rule proved wrong, correct it in place and date the change; never leave two rules that disagree.
 
 ## 5. Tell the owner
 
 One line per lesson: the rule and where it is kept, or "no new lessons". The owner can overrule a rule only if they see it.
 
-## 6. Carry them to another project
+## 6. Carry them to every project
 
-- **Skills:** a skill with no project names in it (this one, and any made from `any` rows) can be saved to the owner's claude.ai account, from where it loads in every Claude Code session of every project. Keep the master copy in a repo and save it again after a change; or copy the folder into the new repo's `.claude/skills/`.
-- **The log:** copy its `any` rows into the new project's log or carried lessons; leave the `here` rows behind.
+The owner's general skills (this one, `working-practice`, `brief-first`, `money-maths-checks` and `lender-documents`) are kept as a pack: master copies in the `portable/` folder of the repo that keeps it, uploaded to the owner's claude.ai account, from where they load in the sessions of every project. Where a project has a skill of the same name, the project's copy runs.
+
+- **A lesson with reach `any`** also goes into the pack: its row, with the rule word for word, in `carried.md` (in `working-practice`), and the rule itself in the pack's skill for that task. In the repo that keeps the pack, its check fails until then, and `npm run pack-skills` makes the zips to send the owner; in another project, give the row in the handoff for the owner to bring there. Either way, tell the owner which skills to upload again.
+- **A new project:** start its log from the template below, and read `carried.md` once.
 
 Template for a new log:
 
