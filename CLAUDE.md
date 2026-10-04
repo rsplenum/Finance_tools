@@ -1,9 +1,9 @@
 # Working on this repo (for AI agents and developers)
 
 - Start with `docs/HANDOFF.md` (current state, next work, gotchas), then only the parts of `docs/DECISIONS.md` you need (indexed). `docs/PROJECT.md` has the what/why. `docs/LESSONS-CARRIED.md` holds the lessons from the owner's earlier project: read §1 and §8 once per session.
-- Keep token use low (owner's request): grep before reading, text assertions over screenshots, one feature per session; update `docs/HANDOFF.md` at the end of each session and give the owner a starter prompt for the next one.
+- Keep token use low (owner's request): grep before reading, text assertions over screenshots, one feature per session, each in a new session, since every step re-reads the whole context (D-TECH-23); at the end of each session record its lessons (the `lessons` skill), update `docs/HANDOFF.md` and give the owner a starter prompt for the next one.
 - Whenever the owner asks for something, give the tradeoffs they may not have considered: the three to five that could change the decision, each with a recommendation (owner, 30-09-2026).
-- Skills in `.claude/skills/` load when relevant: `brief-first` (anything the owner asks to build or change), `money-maths-checks` (any figure), `lender-documents` (downloads and printouts). The rules here stay here because they always apply.
+- Skills in `.claude/skills/` load when relevant: `brief-first` (anything the owner asks to build or change), `money-maths-checks` (any figure), `lender-documents` (downloads and printouts), `lessons` (the end of each session, a correction, redone work, a failure that could recur). The rules here stay here because they always apply.
 - Numbers come only from the deterministic engine (`engine/`, pure TypeScript, no DOM). Never let an AI compute amounts, ratios, eligibility or prices shown to users. AI may draft narrative text from the user's own inputs, marked as a draft.
 - Rules, benchmarks and rates live only in dated data files under `engine/data/`, each value with its source and date; lender-specific values are marked unverified until confirmed.
 - Never default a missing fact: show what is needed and keep the result provisional. The only exceptions are the assumptions in `engine/data/defaults.json` (owner's request, D-UX-08) and the architect's rules in `engine/data/architect.json` (owner's request, D-UX-18), each listed on the page with its reason until changed (on the planning estimate, behind one line with their count: the owner's answer, D-UX-32).
@@ -15,3 +15,6 @@
 - Legal condition (D-BIZ-01): market across India on the internet, but never sell directly to the customers of the owner's employer bank. No pages, campaigns or outreach aimed at them, and none of that bank's material.
 - The estimate works "as an architect would", but never calls the tool, a page or a document an architect: the Architects Act 1972, s. 37, keeps the title to registered architects (D-UX-18).
 - Build for Cloudflare Pages + Workers from day one (D-TECH-02); every branch gets a preview deploy.
+
+## Compact Instructions
+When compacting, keep: the owner's latest request in their words; the branch, the PR's number and state, and what is committed, pushed or only on disk; decisions, figures and errors met this session that are not yet in `docs/`; the next step. Leave out what a new session reads anyway: CLAUDE.md, the skills and `docs/` (name the file), file contents and tool output (name the path), and finished work (give the commit).
