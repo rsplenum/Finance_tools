@@ -28,7 +28,7 @@ In the project's lessons log (`docs/LESSONS.md`; start it from the template in Â
 1. **A check, test, lint rule or hook.** It cannot be forgotten and costs no tokens to remember. Prefer it whenever a machine can tell right from wrong.
 2. **A line in the skill for that kind of task.** It loads only when that task comes up. Make a new skill only when about three rules about the same kind of task have gathered, or the owner asks: a skill of one rule is noise in every session's list.
 3. **The always-read instructions (CLAUDE.md or its like).** Only for rules that apply at every step, since every line there is paid for at every step.
-4. **The handoff's gotchas.** For facts about this project that will likely expire: a tool's version, a workaround.
+4. **`docs/GOTCHAS.md`**, grepped by the files a session touches. For facts about this project that will likely expire: a tool's version, a workaround.
 
 Write the rule with its reason, in the plain style of its neighbours.
 

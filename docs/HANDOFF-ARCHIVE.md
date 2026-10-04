@@ -1,0 +1,165 @@
+# Handoff archive
+
+Past state and each session's results, moved out of `docs/HANDOFF.md` on 04-10-2026 so that what every session reads stays short (D-TECH-29). Never read it whole: grep it.
+
+## The state and each session's results, to 04-10-2026
+State at 04-10-2026: P0 to P1g are on `main` (PRs #2 to #6), which Cloudflare Pages builds: the DSCR engine, the calculator at `/dscr/`, the statement to download (D-DOC-01, D-DOC-02, D-TECH-13), free for now, and P1e: existing EMIs as debt service, the tax by who the borrower is (a proprietor's slab rates), and the new asset's income, each worked out twice and shown on the current page in the smallest way (D-POL-07 to 09, D-UX-11, D-TECH-15). The interest rule is in the owner's words (D-POL-10).
+- **E2, merged in PR #22 on 04-10-2026: the library checked against its pages** (D-DATA-09, D-UX-35, D-TECH-28):
+  - **Items:** 333 of 518 items are checked against their pages: 82 corrected, 251 read the same. 139 single items stay as reported: 91 whose page prices another thing or basis, and 48 whose page could not be opened. The 46 sets carry no check of their own, since they are priced from their parts: 23 read as checked since every part is, and 4, the stair finishes, cite no page of their own and take their floor's sources. So a line says "As reported" for 162 items, 139 single items and 23 sets (corrected in E4: "139 stay as reported" left the sets out; `docs/LIBRARY.md` prints the counts). Examples: ct-granite and ct-quartz quote installed; rd-flush and rd-laminated split shutter and fitting; sh-* gives finish contributions only; wn-al-casement includes mesh; wd-*. The two Elvenwood items are gone, since Elvenwood publishes no per-sq-ft rates.
+  - **Sources:** 234 checked; 49 marked `unread` with the reason (403, 429, 404, a parked domain). `docs/LIBRARY.md` says which for each.
+  - **Cities:** from homecostcalc, checked. Pune's factor falls from 0.9691 to 0.9154, so the worked figures moved: the living room floor is now Rs. 111.65 a sq ft. Mumbai's factor is 1.2750. The range flag now reads each city's own band, Pune Rs. 1,550–2,040.
+  - **GST:** GST on a rate quoted before it now falls on the material only, never on its fixing labour (glazed vitrified tiles, Athangudi). Bases were set only where missing; the 14 L2 had set are unchanged.
+  - **Notes:** 24 checked, 3 our own. The steel note keeps 0.89 kg a metre and drops the 5% tolerance.
+  - **On the page:** each line says "Checked against its page on 04-10-2026." or "As reported, not yet checked."; the line by the total gives "N of M lines checked"; a Why? says "Checked against their pages."
+  - **Deferred, with a recommendation each (E2b):**
+    - The DSR swap: needs a per-city CPWD index; cpwd.gov.in is unreachable, but quickboq is reachable.
+    - Each city's own sewer charge: only Chennai's is taken.
+    - Rates a point by switch range.
+    - Merging pt-royale and pt-aspira, which now read the same band.
+    - Pack sizes still unconfirmed.
+  - **Gears:** a skill's effort line does not take hold, so the gear skills only guide thinking. The fetcher agents read about 280 pages for 28% of this part's cost; there is no reviewer agent.
+- **P1g, merged in PR #6 on 02-10-2026:**
+  - the downloads laid out as a CA's DSCR statement: page 1 has the whole working, every line, then the average and the lowest year, signed; Annex 1 is the basis, Annex 2 the repayment schedule (D-DOC-04);
+  - a Word copy as the third download (D-DOC-06);
+  - the lender's target, how far the method was checked and the planning rules left out of the documents, kept on the page (D-DOC-05).
+  - a Total column in the statement, on the page and in the downloads: the engine adds each line over the years counted, checked twice (D-DOC-07).
+- **Also in PR #6 (02-10-2026), the owner's "finish the project today":**
+  - the construction or renovation estimate at `/estimate/` (D-UX-13);
+  - the project report at `/project-report/` (D-UX-14);
+  - the DSCR front door (P1f, D-UX-15): eight fields, everything else under a closed More options, results first, Print.
+  Each tool has its own engine, worked out twice, and downloads in PDF, Excel and Word. PR #6 is merged, so all of it is on the live site.
+- **T1, merged in PR #20 on 04-10-2026: what an item is, why it costs what it does and what to check, behind a "Why?"** (D-UX-34):
+  - **The families:** the five that cost the most in each of V1's two cases, as the engine works them out. A 2 BHK flat's interiors of 1,000 sq ft at Standard in Pune: wardrobe, kitchen cabinets, paint, sofa and carpentry, about 65% of Rs. 10,65,273. A G+1 3 BHK house of 2,000 sq ft at Luxury: floor, exterior paint, CP fittings, kitchen cabinets and steel, about 35% of Rs. 83,39,574. Nine families, each with three notes of 50 words or fewer in `engine/data/library/notes.json`, with their sources: what it is, why it costs what it does, and what to check (a mark, a grade, a test). No amount and no verdict on safety: a note says what to ask the engineer.
+  - **Where to spend, where to save:** ten rules by section, each with its reason. Spend on the structure, the waterproofing, what is tiled over in a bathroom, the window frames, the wiring and the plumbing; save on the paint, the light fittings, the furniture and the furnishings.
+  - **On the page:** a closed "ⓘ Why?" under each line of those families (in a section opened) and under a section with a rule (its card opened), its sources linked and "As reported, not yet checked." Words shown with the answer stay 317 and 322 (budget 400). The PDF, Excel and Word are unchanged; `docs/LIBRARY.md` prints the notes under each family and the rules before Labour.
+  - **The 31 new sources (357 in all)** were read through search summaries, so every note stays "reported" for E2. The least certain is the kitchen cabinets' note that a membrane shutter's foil peels next to the hob (reroom).
+- **The skill pack for every project (D-TECH-27), in PR #21 on 04-10-2026:** the owner's general skills in `portable/` (`working-practice`, new; general copies of `brief-first`, `money-maths-checks` and `lender-documents`; `lessons`, shared), zipped by `npm run pack-skills` for the owner's claude.ai account. `npm run verify` fails if a rule `docs/LESSONS.md` marks `any` is missing from the pack or the pack names this project; after changing the pack, run `npm run pack-skills`, send the changed zips and ask the owner to upload them again.
+- **L2, merged in PR #19 on 04-10-2026: more priced choices where the money is** (D-DATA-08, D-TECH-24):
+  - **Choices at each level, Basic to Bespoke, before → after:** kitchen cabinets 1 1 1 1 1 → 4 3 3 3 3; counter 1 2 1 1 2 → 4 3 3 3 3; wardrobes → 3 3 4 3 3; sofa → 4 4 3 3 3; bed → 3 3 3 3 3; dining set → 3 4 4 3 3; WC and basin, taps and showers, main door and room doors → 3 3 3 3 3; windows 1 1 3 1 2 → 3 3 3 3 3; lights 1 1 1 2 1 → 3 3 3 3 4; wiring and switches → 2 2 1 1 1, as no rate a point by switch range was found. New: kitchen units priced apart by the running foot.
+  - **Each choice** has its specification, brands as examples, source, the day it was read and its tax basis, shown in `docs/LIBRARY.md`: 'extra' adds 18% (Studio Matrx's wardrobes, so an interiors estimate rises 3–5%), 'incl' for a retail listing or MRP, 'unstated' taken as the price paid.
+  - **Rates found** for 5 of the 6 items without one (not 29): granite, epoxy and carpet floors, Athangudi tiles and the sewer connection (Chennai's charge for every city, × its factor). Encaustic cement tiles stay without a rate, their note says why.
+  - **The library:** 520 items in 98 families from 326 sources (was 362, 97 and 226), all read through search summaries: the environment's network policy denies opening a page (E2).
+  - **D-UX-30's correction:** the typed-items form's example says RCC M25 (M30 by the sea), and the structure's note gives IS 456's lowest grades by exposure.
+- **L1, merged in PR #18 on 04-10-2026: a level is a band of choices** (D-UX-33, D-TECH-22):
+  - **The item drawer** starts with the choices at the line's level, under the level's name with their count ("At Standard: 8 choices"), the level's item marked. Each other level's choices follow, Basic first, closed with their count, then the family's items at no level. Each item shows once, and a level holding the line's item opens by itself. A level's choices are the item it names and the family's other items usually at it.
+  - **Under the total, one line:** the chosen level's range as a package, from the cheapest priced choice at the level in every item to the dearest, each at the middle of its rate, with how many items offer a choice. Worked twice in the engine (`levelRuns` asks the package run at the chosen level for it). The documents are unchanged.
+  - **What it shows today:** the bands are narrow, because the library is thin. A 2 BHK flat's interiors at Standard run from Rs. 10,08,996 to Rs. 10,20,758, with 3 of 50 items offering a choice. A G+1 house at Luxury runs from Rs. 80,98,285 to Rs. 88,36,350 (22 of 143). Only 10 of the 81 families with levels offer more than one choice at a level (`docs/LIBRARY.md` counts them). L2 fills the bands.
+  - **Words shown with the answer:** 317 and 322 (budget 400).
+- **The session process, merged in PR #18 on 04-10-2026: compaction at about 192k tokens, and lessons kept** (D-TECH-23):
+  - `.claude/settings.json` sets `CLAUDE_CODE_AUTO_COMPACT_WINDOW` to 260000, so a session compacts at about 192k tokens instead of never (this model's window is 1M). CLAUDE.md's "Compact Instructions" say what the summary keeps. A new session checks that `echo $CLAUDE_CODE_AUTO_COMPACT_WINDOW` prints 260000: the file loads from the branch a session starts on, so from `main` once PR #18 is merged. `node .claude/skills/lessons/scripts/session-cost.mjs` prints where a session's compactions really fired, how long each paused the work, and a replay at other sizes.
+  - The `lessons` skill: at the end of each session, and when the owner corrects course or work is redone, none to three lessons, each a row in `docs/LESSONS.md` (context, cost, rule, where kept, reach), its rule kept at the strongest place that fits: a check, a skill, CLAUDE.md, a gotcha. The skill and the `any` rows carry to the next project (the skill's §6).
+- **V1, merged in PR #17 on 03-10-2026, the owner's "merge and proceed": the planning estimate short by default, deeper by tapping** (D-UX-32):
+  - **The answer:** the total, the cost a sq ft with one line by it (rates as reported on their date for the city, not yet checked), the five levels, each section as one line with its count of items and its amount (the largest in the package first; those off last), and only the flags your answers raised, largest first.
+  - **One tap, each with its count:** a section's switch, slider and items; Other things to check; What the estimate assumes (your answer: behind a count line); Rooms. **Two taps:** an item's drawer, with its working and sources. The documents are unchanged (D-DOC-04).
+  - **The flags** carry whether they can change the decision and the rupees they are about (`Flag` in `engine/architect.ts`). The city's range now says it is for a house built to a standard finish (`cities.range`, Brick&Bolt's 2026 bands), so at Premium and above an estimate over it is a note.
+  - **Measured before any tap:** 290 words for a 2 BHK flat's interiors in Pune at Standard (814 before), 295 for a G+1 house of 2,000 sq ft at Luxury (1,357). The site check fails above 400, on a closed line open with the answer, or on a field shown besides the document's own facts.
+- **The direction from 03-10-2026 (D-UX-31): 3D paused, the estimate first.** Design mode stops after phase 2; `docs/DESIGN-MODE-FEASIBILITY.md` stays as the plan. The estimate's next work, in order: V1, short by default (merged); L1, a level as a band of choices (merged); L2, more choices where the money is (merged); T1, teaching notes (merged); E2, the library checked against its pages (merged). Then E4 (the Next table). Measured on `main`, before any tap: about 810 words for a 2 BHK flat's interiors and 1,360 for a G+1 house. 69 of the 97 families offer only their named items.
+- **R2a, merged in PR #15 on 03-10-2026, the owner's "merge everything":** rooms by buttons of the kinds the library has (D-UX-29, D-TECH-21):
+  - **+ Bedroom and a bedroom's ×** change the bedrooms answer; the later bedrooms move up with their sizes, words, levels, items and brands. A 1 BHK's × makes a 1 RK.
+  - **+ Bathroom and a bathroom's ×** (1 to 8), each a common bathroom of the programme's range; the rooms share the area with it. **Attached bathroom** on a bedroom opens the first common bathroom into it, or adds one.
+  - **The balcony's ×** and + Balcony (outside the shared area, so no room moves).
+  - Your example builds in a few taps: a 1 BHK with the bathroom attached to the bedroom and no balcony. The new kinds (Study, Pooja room, Utility, Store) are R2b, after your answer to the plan's §6 question 3.
+- **R1, merged in PR #14 on 03-10-2026, the owner's "merge and proceed with the next":** the planning estimate's Rooms by size words (D-UX-28, D-TECH-20, D-DATA-07):
+  - **Four buttons on each room** (Compact, Medium, Above medium, Spacious) put it at the bottom, middle, three quarters or top of its reported range; the planned rooms share the area by those sizes, so a word sets the room's share and the others take up the difference. The passage and the balcony keep the rules' sizes.
+  - **A typed size keeps E3's rule**: it moves no other room; a word on a typed room puts the size aside. Each room's own size and level now sit behind one line under its buttons, open when set.
+  - **The bar of shares** above the rooms, with the same as a list; **What changed** names the knock-on ("Living and dining to Spacious: the other rooms 3.2% smaller · Rs. … more"); a room below the Code's minimum is flagged under its buttons and in what to check, never changed.
+  - **Each room's range** in `architect.json` (`programmes` `range`, `sizes`), from the sources already cited, Medium its middle, so no estimate moved. The 1 RK's ranges are our own: no source gave its rooms.
+  - Every new figure worked twice: the sizes, the shares (in closed form in the check) and the knock-on. The plan's 1BHK of 600 sq ft by hand: living 221.20, bedroom 159.76, kitchen 79.88, bathroom 49.16 sq ft; shares 37, 27, 13, 8, 10 and 5%.
+- **E5, merged in PR #13 on 03-10-2026, the owner's "merge and proceed":** the rest of a new house on the planning estimate (D-UX-27, D-POL-11, D-TECH-19, D-DATA-06):
+  - **Outside works**, a section with a slider: the compound wall round the plot, painted on both faces, the gate and the paving by level.
+  - **Water**: a sump of three days, an overhead tank of a day, a septic tank by the BHK with a soak pit, a rainwater recharge pit; a switch for the city's sewer, whose connection has no rate yet (flagged, left out of the total).
+  - **The plot**, under What the estimate assumes: the outline with 3 m in front, 1.5 m behind and 1 m each side, its two sides changeable; never a seventh question.
+  - **The stairs**: a well on every floor (the ground floor alone too), the top one rising to a cabin on the terrace that joins the structure; the railing on every stair, the treads, risers and landings finished by level, the well's walls painted, a door to the terrace.
+  - **Stages for a construction loan**, closed under the strip, and in the documents as Annex 2, pointed to from page 1 (the assumptions become Annex 3 for a new house): the structure by Brick&Bolt's published shares, each floor's slab alike, the rest from the estimate's own lines; never a lender's norms.
+  - Every new figure worked twice. A G+1 of 2,000 sq ft, 3 BHK, in Pune at Basic now comes to about Rs. 2,072 a sq ft, inside Pune's reported Rs. 1,800–2,900.
+- **E3, merged in PR #12 on 03-10-2026, the owner's "merge and proceed":** on the planning estimate's page (D-UX-25, D-TECH-18, D-DATA-05):
+  - **Rooms**, closed under the cards: each room's size and area; its sides changeable (ft, or m with sq m) and a level of its own, for any room. A size replaces the planned one and the others keep theirs, flagged when they no longer fit the carpet area; a room's level stands above the slider and below an item of one's own (A4).
+  - **What changed**, in the bar at the bottom: the last change and what it did to the total, with the items it brought in.
+  - **Compare**, closed under the strip: each section that is on and the total at the five levels, the estimate's own level marked, "Yours" where it differs.
+  - **Furniture and Soft furnishings**, on for Interiors (ten sections on now) and off for Repair and a new house: a sofa and a dining set, a bed and a mattress in each bedroom, curtains for each window; the movable items apart on the page and in the abstract.
+  - Every new figure worked twice: the rooms' sizes, the split, Compare's runs and What changed. The six questions stay the only fields on the default path.
+  - A 2BHK of 1,000 sq ft in Pune as interiors at Standard: furniture Rs. 2,03,469, soft furnishings Rs. 39,539.70, worked by hand in the tests.
+- **Rooms by buttons, a plan (D-UX-26, `docs/ROOM-PICKER-PLAN.md`), R1 built (above), R2 and R3 not:** the user who knows the floor area picks the rooms by buttons and a size for each (Compact, Medium, Above medium, Spacious); the rooms share the area; sizing on a 2D plan and seeing in 3D come with the design mode. Phases R1 to R3.
+- **PR #11, merged on 03-10-2026, the owner's follow-ups to E1:**
+  - **Build a new house** (D-UX-23, E5 brought forward, thin): a third answer to the first question; the second asks How many floors? (Ground only to G+3); the area is the built-up area of all floors. Still six questions.
+    - The engine draws the outline and takes the outer walls and stairs off it for the rooms.
+    - It adds the Structure, the same at every level: anti-termite treatment; cement, steel, sand, aggregate and bricks by rules of thumb a sq ft; labour by stage.
+    - It adds Terrace, exterior and stairs: an APP membrane at every level, the outside paint and the stair railing by level.
+    - The cost a sq ft is of the built-up area. What is not in yet is flagged.
+    - A G+1 of 2,000 sq ft, 3 BHK, in Pune: Rs. 34.4 lakh at Basic, Rs. 39.4 lakh at Standard.
+  - **The documents** (D-DOC-09): no sources annex and no [n] marks; Annex 1 the detailed estimate, Annex 2 what the estimate assumes, one line each. The sources stay on the page.
+  - **Money to the paisa, half up, in both computations** (D-TECH-17); the house's library (D-DATA-04): 318 items, 86 families, 192 sources.
+  - **`docs/DESIGN-MODE-FEASIBILITY.md`** (D-UX-24): the plan for the owner's design mode (library at scale, value of upgrades, the basics locked, choice by element, 2D plans, 3D in the browser, legal and business challenges, phases), with six decisions for the owner. Its §14 (D-UX-30) takes what was useful from Antigravity's studio plan and says what was left and why. Paused after phase 2 (D-UX-31): phases 3 to 7 wait as a plan.
+- **E1, the planning estimate's page at `/estimate/`** (D-UX-21, D-DOC-08), merged in PR #10 on 03-10-2026:
+  - six questions and no other field, folding into one line as the sixth is answered;
+  - the answer first: the total, the cost a sq ft, the five-level strip (a tap switches the package) and the total by section;
+  - a card for each of the 13 sections, with its slider of five stops, its main items, its amount and the change from the package;
+  - the item drawer: the family's five levels and other items, brands as chips, how the line was worked out, its sources;
+  - what the estimate assumes (the ceiling height changeable there) and what to check;
+  - the planning estimate as PDF, Excel and Word: page 1 the abstract and the total in words, Annex 1 every line, Annex 2 what it assumes (D-DOC-09).
+  - The typed quotation is the second path, under a closed "Have a contractor's quotation?".
+  - Level 5 is "Bespoke" on screen (D-UX-20). A house's rooms inside are estimated as a flat's, flagged (D-UX-22).
+  - Done when the owner tries it on a phone and a desktop and says it feels simple.
+- **The estimate's engine, as the architect, and its library** (D-UX-18, blueprint version 3 A0), merged in PR #8 on 02-10-2026. Version 2 of the blueprint (D-UX-17) is merged (PR #7).
+  - `engine/architect.ts` works the estimate out from six answers (the work, flat, city, carpet area, bedrooms, level). It plans the rooms, places doors and windows, measures by IS 1200, puts in what each room needs at each section's level, prices it for the city and adds it up by section and room and at all five levels. `engine/architect-check.ts` works it all a second way.
+  - The rules are in `engine/data/architect.json` (in plain words in `docs/RULES.md`). The library has 312 items in 79 families, 17 kinds of labour and 183 sources, in `engine/data/library/` (in plain words in `docs/LIBRARY.md`).
+  - Every rate is "as reported" through search summaries, not yet checked (the network blocks the pages). So the estimate is a planning estimate (A7, A18).
+  - A flat, or a house's rooms inside, for repair or renovation and for interiors; a new house (D-UX-23, and since E5 its plot, outside works, water, stairs and stages, D-UX-27). Furniture and soft furnishings are in the estimate since E3. Adding a floor, a renovated house's own works, a borewell and CPWD's plinth-area check are still to come (A17).
+  - **The owner's answers (D-UX-19, D-UX-20):** the levels are Basic, Standard, Premium, Luxury and Bespoke on screen; movable items are sections of their own, on for Interiors and off for Repair (Appliances, Smart home, and since E3 Furniture and Soft furnishings).
+  - For the page (D-TECH-16): `overPackage` (each section against the package) and `choicesFor` (the drawer's items), with every rate worked twice through `checkRate`.
+  - The tool never calls itself an architect (Architects Act s. 37; CLAUDE.md).
+  - B12 critiques Gemini's second note.
+- **The owner is not satisfied with the page.** An outside review (Gemini, reading `main` before PR #2 was merged) and the owner's own words: it should ask seven inputs, not ten plus method choices. The engine's maths stands; the review's own formula taxes profit before interest. **Next:** the owner tries the three tools on the live site, then payment (P1d) once the business entity, GST and Razorpay account exist. The front door is done when the owner says it feels simple (D-UX-15).
+- **Skills** in `.claude/skills/` (D-TECH-14): `brief-first` (now with the finish line, the owner saying it feels simple, and what to refuse; D-UX-12), `money-maths-checks`, `lender-documents`, and since D-TECH-23 `lessons`. The owner's rule, now in CLAUDE.md: give the tradeoffs of every request.
+
+The test figures are model-worked until the owner confirms fictional cases A and A′ (`docs/GOLDEN-CASES.md`); nothing from the owner's office, ever (D-BIZ-02). Keep this file short and current.
+
+## What works now
+- `engine/util.ts` (EMI, formats, words) and `engine/parse.ts` (amounts, dates, months), tested against textbook figures.
+- DSCR engine:
+  - `engine/loan.ts`: the loan month by month (`months`), and by financial year (`schedule`).
+  - `engine/dscr.ts`:
+    - `dscrStatement` from the borrower's own figures;
+    - `planStatement` from projections and loan terms, with the profit build-up and tax; per year it also takes the new asset's income (`assetIncome`, added to profit), existing EMIs (`existingEmis`, debt service in full under every method, `PLAN_SERVICE`) and, in place of a rate, who the borrower is (`taxBy`);
+    - `amortization`, `maxLoanAmount`, `shortestRepayment` and `loanTimeline`;
+    - an optional first year of figures (`start`) that leaves out an interest-only first year by the user's choice (D-POL-04);
+  - `engine/project.ts`: yearly figures from one or two answers (the same, grows by %, falls by %), checked in closed form (D-TECH-12). The page asks a few answers per line, not every year (D-UX-07). Also `emisByYear` (EMIs a month to each year, up to each loan's last EMI) and `fromMonth` (a yearly figure from the month it starts running);
+    - a list of facts needed instead of figures.
+  - `engine/tax.ts`: `taxOn` by borrower (slabs, rebate and marginal relief, surcharge and marginal relief, cess), `taxSummary`, `BORROWERS`.
+  - `engine/dscr-check.ts`: the second computation, closed-form month by month; `taxCheck`, `emisCheck`, `fromMonthCheck`. Figures are withheld if it disagrees.
+  - Data: the method, three presets and which existing EMIs count by borrower (`existingEmis`) in `engine/data/dscr.json`; the tax by borrower (proprietor, firm or LLP, company; secondary sources) in `engine/data/tax.json`.
+- DSCR page (D-UX-03 to 06, D-TECH-09 and 11):
+  - Files:
+    - `site/src/dscr/model.ts`: pure; typed text to engine to words, with the statement and schedule views; unit-tested.
+    - `Calculator.tsx`: the island.
+    - `site/src/fields.tsx`: fields that keep a draft until left.
+    - In `model.ts`: `ASSUMED` (the starting state, from `engine/data/defaults.json`), `assumedIn` and `withSource`. The statement and schedule views carry the engine's exact figures (`n`) beside the words, for the Excel copy.
+  - Fields are `fld-…`; answers have `data-testid`:
+    - assumptions: `dscr-assumed`, `assumed-<id>`;
+    - summary: `dscr-status`, `dscr-needs`, `dscr-average`, `dscr-lowest`, `dscr-verdict`, `dscr-largest`, `dscr-fewest`, `answer-bar`;
+    - statement: `dscr-<year>`, `available-<year>`, `service-<year>`, `pbt-<year>`, `tax-<year>`, `card-<year>`;
+    - schedule: `schedule-<year>`, `month-<YYYY-MM>`;
+    - loan read-back: `loan-level`, `loan-dates`, `amount-read`;
+    - who the borrower is: `fld-borrowerType-<proprietor|firm|company>`; `tax-by` (the tax line's words);
+    - loans already running: the mode `fld-otherLoansInterest-emi`, then `fld-emi-<n>`, `fld-emiLast-<n>`, `add-loan`, `remove-loan`, `emis-ask`, `readback-existingEmis`;
+    - the new asset: the mode `fld-assetIncome-from`, then `fld-assetIncome-yearly`, `fld-assetIncome-start`, `readback-assetIncome`;
+    - statement lines shown only when not nil: `asset-<year>`, `emis-<year>`;
+    - buttons: `clear-all`;
+    - download: fields `fld-borrower`, `fld-lender`, `fld-preparedBy`; `doc-status`, `doc-needs`, `doc-wait`, `download-pdf`, `download-xlsx`, `download-docx`.
+- The planning estimate (E1, a new house, E3 and E5): `engine/architect.ts` (+ `architect-check.ts`, `library.ts`, `data/architect.json` with `house` (plot, outside, water, cabin, stages), `data/library/` with `structure.json`, `furniture.json`, `outside.json` and `notes.json` (T1's notes and where to spend, where to save: `NOTES` and `SPEND_SAVE` in `library.ts`); `planRooms` (the rooms by their size words, R1, and the user's bathrooms and balcony, R2a; `wordOf`, `sizeAt`, `SIZE_WORDS`, `bathsOf`, `bedroomsOf`, `BATHS`), `houseOf` (the outline and the plot), `measureHouse`, `stagesOf` and `stageShare` (the stages), `sectionFor`, `ownRooms`, `levelRuns` (the strip and Compare, and the chosen level's `range`, L1), `bandOf` (a level's choices) and `choicesFor` (the drawer's choices by level), `changeOf` (What changed, with the knock-on of a word as `others`); the estimate's `shares` (the bar) and `below` (the rooms under the Code's minimum)); page `site/src/estimate/plan-model.ts` (pure: answers to the engine's input, its answer to words, the drawer), `PlanEstimate.tsx` (the island) and `plan-document.ts` (the three files); tests `tests/architect.test.ts`, `tests/library.test.ts` and `tests/plan-page.test.ts` (a 2BHK of 1,000 sq ft in Pune; the living room's floor at Basic worked by hand, 303.03 sq ft × Rs. 114.09; a new G+1 house of 2,000 sq ft, its outline, structure, terrace, outside walls and railing by hand, and Brick&Bolt's worked 1,000 sq ft house; E5's plot, compound wall, gate, paving, sump, tank, septic tank, rainwater pit, stairs and stages by hand; R1's 1BHK of 600 sq ft with the living room Spacious and the bedroom Above medium, its shares and knock-ons, and R2a's same flat with the bathroom attached and no balcony, its skirting, by hand).
+  - Fields: `fld-work-<build|renovate|interiors>`, `fld-home-<flat|house>` (or `fld-floors-<1…4>` for a new house), `fld-city`, `fld-carpet`, `fld-carpetUnit-<sqft|sqm>`, `fld-bhk-<1RK…5>`, `fld-level-<1…5>`, each question in a `[data-question]` block inside `#six-questions`; `fld-on-<section>`, `fld-slider-<section>`, `fld-height`, `fld-plot-<l|b>` and `fld-sewer` (a new house), `fld-roomword-<room>-<compact|medium|above|spacious>`, `fld-attached-<bedroom>`, `fld-room-<room>-<l|b>`, `fld-roomlevel-<room>`, `fld-pl-<owner|property|lender|preparedBy>`.
+  - Answers: `pl-summary`, `pl-change`, `pl-done`, `pl-total`, `pl-per-sqft`, `pl-strip-<1…5>`, `pl-compare` (`pl-compare-<section>`, `pl-compare-total`), `pl-stages` (`pl-stage-<id>`: `foundation`, `slab-<n>`, `walls`, `finishing`, `outside`, `movable`; `pl-stages-total`), `pl-plot-change`, `pl-plot-reset`, `pl-plot-bad`, `pl-bar-<section>`, `pl-rates`, `pl-range` (L1), `pl-split`, `pl-card-<section>`, `pl-level-<section>`, `pl-spec-<section>`, `pl-amount-<section>`, `pl-over-<section>`, `pl-items-<section>`, `pl-line-<key>`, `pl-open-<key>`, `pl-why-<key>` and `pl-why-section-<section>` (T1's Why?, drawn once the section is opened), `pl-drawer` (`pl-choices-<1…5|other>`, the line's level first), `pl-brand-<brand>`, `pl-how`, `pl-rooms` (`pl-shares` with `pl-share-<room|walls>`, `pl-room-<room>`, `pl-room-size-<room>`, `pl-room-words-<room>`, `pl-room-below-<room>`, `pl-room-more-<room>`, `pl-room-out-<room>`, `pl-room-add` with `pl-room-add-<bedroom|bath|balcony>`, `pl-room-bad-<room>`, `pl-room-reset-<room>`, `pl-rooms-note`), `pl-assumed-<i>`, `pl-flags`, `pl-doc-status`, `pl-download-<pdf|xlsx|docx>`, `pl-what-changed`, `pl-sticky-total`. A line's key is `<room>:<family>:<rule>`; a room's id is `living`, `bedroom-<n>`, `kitchen`, `bath-<n>`, `passage` or `balcony`.
+- The typed quotation (the second path): `engine/estimate.ts` (+ `estimate-check.ts`, `data/estimate.json`); page `site/src/estimate/` (`model.ts`, `Estimate.tsx`, `document.ts`), under `#typed-path`; tests `tests/estimate*.test.ts` (fictional case E).
+- Project report: `engine/report.ts` (+ `report-check.ts`, `data/report.json`; it calls `planStatement`); page `site/src/report/` (the page's tables in `model.ts` `viewOf` are the document's); tests `tests/report*.test.ts` (fictional case R, year 1 worked by hand). Shared: `site/src/download.ts` (the three files), `SelectField` in `site/src/fields.tsx`.
+- The document (P1c, laid out in P1g):
+  - `site/src/dscr/document.ts`: `statementDoc` builds it from the state and the preview: page 1, then `basisPart` (Annex 1) and `schedulePart` (Annex 2); `docNeeds`, `allNeeds` (not the target), `docStatus`, `fileName`, `sourceForLender`.
+  - `site/src/doc/`: `doc.ts` (blocks, `docText` for tests), `pdf.ts` (PDF writer, `printable`, `measure`), `xlsx.ts` (Excel writer), `docx.ts` (Word writer), `zip.ts` (the stored zip of both). Pure, no DOM.
+  - `scripts/read-doc.mjs`: reads the files back with pdf.js, read-excel-file, mammoth and JSZip, for the tests and the site check.
+- `site/`: home, `/dscr/`, 404; dark mode without a flash. `worker/`: `GET /health`.
+- Checks, all in CI:
+  - `npm test` (321, including the simulation and the documents read back by pdf.js, read-excel-file and mammoth);
+  - `npm run typecheck`;
+  - `npm run rules-doc -- --check`;
+  - `npm run build`;
+  - `npm run worker:build`;
+  - `npm run check:site`: 0 violations. It drives the planning estimate (six questions counted, the answer with the level's range under the total, a slider and what it changed, the strip, Compare, the rooms by size words (the bar of shares, Spacious and its knock-on, the arrow keys, a word in place of a typed size) and by buttons (a bathroom attached, added and taken out, the balcony out and back, a bedroom added and taken out), with a size and a level of their own, the drawer with the choices at the line's level first and the other levels closed, a line's and a section's Why? (T1), interiors with the movable items apart, a new house with its six questions and eighteen sections, its stages, a plot of its own and the sewer, the three files read back, in light and dark), the typed quotation, and the calculator with case A, the quick path, a proprietor with EMIs and the new asset, and own figures, downloads the PDF, the Excel copy and the Word copy at 390 px (provisional, then complete) and reads them back, failing on anything kept to the page (the target, the verdict, the assumptions); about 20 s.
