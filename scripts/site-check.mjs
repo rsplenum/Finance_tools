@@ -672,6 +672,19 @@ for (const scheme of ['light', 'dark']) {
   const word = await docxLines((await save('pl-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
   if (word.messages.length || !word.lines.includes(`Total estimated cost | ${figure}`) || !word.lines.some((l) => l.endsWith('| Basic | 303.03 | sq ft | 111.65 | 33,833')))
     v(`the planning estimate's Word copy reads back ${JSON.stringify(word.lines.slice(0, 4))} ${JSON.stringify(word.messages).slice(0, 120)}`);
+  // E4a: the bill of quantities, its floor tiles one line whose quantity is the detailed estimate's lines of that tile added up.
+  const billPdf = await save('pl-bill-pdf');
+  const billText = (await pdfPages(billPdf.bytes).catch((e) => [`(not read: ${e.message})`])).join('\n').replace(/\s+/g, ' ');
+  if (billPdf.name !== 'Bill of quantities - Asha Rao.pdf' || !billText.includes('Make offered') || !billText.includes('say whether your rates include GST') || billText.includes('111.65') || billText.includes(figure))
+    v(`the bill of quantities PDF, "${billPdf.name}", does not read back its columns and top line, or shows a rate or the total`);
+  const billBook = await workbook((await save('pl-bill-xlsx')).bytes).catch((e) => v(`the bill's Excel copy is not read: ${e.message}`)) ?? [];
+  const tiles = billBook[0]?.data.filter((r) => typeof r[1] === 'string' && r[1].startsWith('Double-charge vitrified tiles') && String(r[2]).startsWith('Living and dining')) ?? [];
+  const added = Math.round((book[1]?.data ?? []).filter((r) => typeof r[0] === 'string' && r[0].includes(': Double-charge vitrified tiles')).reduce((t, r) => t + Math.round(r[2] * 100), 0)) / 100;
+  if (billBook.map((x) => x.sheet).join('|') !== 'Bill of quantities' || tiles.length !== 1 || tiles[0][3] !== added || tiles[0][5] !== null)
+    v(`the bill's Excel copy holds ${JSON.stringify(billBook.map((x) => x.sheet))}, its floor tiles ${JSON.stringify(tiles)} (want one line of ${added}, the rate blank)`);
+  const billWord = await docxLines((await save('pl-bill-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
+  if (billWord.messages.length || !billWord.lines.some((l) => l.startsWith('No. | Item and specification | Where | Quantity | Unit | Rate | Amount | Make offered')))
+    v(`the bill's Word copy reads back ${JSON.stringify(billWord.lines.slice(0, 4))} ${JSON.stringify(billWord.messages).slice(0, 120)}`);
 
   // An item of one's own makes the section Mixed; a brand chip names it; the slider moves the whole section again.
   await page.getByTestId('pl-choices-1').locator('label', { hasText: 'Kota stone' }).click();

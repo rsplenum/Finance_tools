@@ -5,7 +5,7 @@
  * employer (D-BIZ-02). The owner's own fictional flat, worked at home, is still to come (docs/OWNER.md).
  */
 import { describe, it, expect } from 'vitest';
-import { architect, architectNeeds, changeOf, choicesFor, cityFactor, levelRuns, overPackage, planOpenings, planRooms, strip, type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choices, type Level, type LevelRuns, type Stage } from '../engine/architect';
+import { architect, architectNeeds, billOf, changeOf, choicesFor, cityFactor, levelRuns, overPackage, planOpenings, planRooms, strip, type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choices, type Level, type LevelRuns, type Stage } from '../engine/architect';
 import { architectCheck, checkRate } from '../engine/architect-check';
 import { price } from '../engine/library';
 import { inr } from '../engine/util';
@@ -57,6 +57,37 @@ describe('measuring by IS 1200, by hand (the living room above, ceiling 2.9 m)',
   });
   it('points by the room: a 2BHK has 10 + 7 + 6 + 7 + 3 + 3 + 2 + 2 = 40', () => {
     expect(e.lines.filter((l) => l.family === 'wiring').reduce((s, l) => s + l.qty, 0)).toBe(40);
+  });
+});
+
+describe('the bill of quantities for quotes (E4a), on the 2BHK of 1,000 sq ft above', () => {
+  const e = run(), bill = billOf(e), all = bill.flatMap((x) => x.lines);
+  const of = (item: string) => all.filter((l) => l.item === item);
+  it('the points: one line for the eight places that have them, 10 + 7 + 6 + 7 + 3 + 3 + 2 + 2 = 40 nos', () => {
+    const [w, ...more] = of('Concealed wiring, branded wire and plates');
+    expect(more).toEqual([]);
+    expect([w.qty, w.unit, w.rooms.length]).toEqual([40, 'nos', 8]);
+    expect(w.rooms).toEqual(['Living and dining', 'Main bedroom', 'Bedroom 2', 'Kitchen', 'Bathroom 1 (attached)', 'Bathroom 2', 'Passage and foyer', 'Balcony']);
+  });
+  it('the floor tiles of the five rooms, one line: the living room\'s 303.03 sq ft (by hand above) and the other four\'s, added again here line by line', () => {
+    const [t] = of('Glazed vitrified tiles, 800 × 800 mm');
+    expect(t.rooms).toEqual(['Living and dining', 'Main bedroom', 'Bedroom 2', 'Kitchen', 'Passage and foyer']);
+    expect(line(e, 'living:floor:floor-skirting')?.qty).toBe(303.03);
+    let sum = 0;
+    for (const l of e.lines) if (l.entry === t.entry && l.section === 'flooring') sum += Math.round(l.qty * 100);
+    expect(t.qty).toBe(sum / 100);
+    expect(t.qty).toBe(934.45);
+  });
+  it('every line of the estimate is in the bill once, in its own section; 96 lines make 37', () => {
+    expect(all.flatMap((l) => l.keys).sort()).toEqual(e.lines.map((l) => l.key).sort());
+    expect([e.lines.length, all.length]).toEqual([96, 37]);
+    for (const x of bill) for (const l of x.lines) for (const k of l.keys) expect(e.lines.find((m) => m.key === k)?.section).toBe(x.id);
+  });
+  it('a brand chosen in one room makes that room a line of its own; an item with no rate yet is in the bill', () => {
+    const b = billOf(run({ items: { 'living:floor:floor-skirting': 'fl-encaustic' } }), { 'bedroom-1:wiring:points': 'Havells' }).flatMap((x) => x.lines);
+    const w = b.filter((l) => l.item === 'Concealed wiring, branded wire and plates');
+    expect(w.map((l) => [l.brand ?? '', l.rooms.length, l.qty])).toEqual([['', 7, 33], ['Havells', 1, 7]]);
+    expect(b.find((l) => l.item === 'Encaustic cement tiles')?.rooms).toEqual(['Living and dining']);
   });
 });
 

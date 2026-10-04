@@ -270,8 +270,14 @@ export function measure(t: Table) {
   const body = t.rows.filter((r) => r.kind !== 'head');
   // The first column as wide as its longest name, within limits (a longer one wraps); a head row runs across the table.
   const keyW = Math.min(190, Math.max(52, textWidth(t.columns[0].label, 'B', size), ...body.map((r) => textWidth(r.cells[0]?.text ?? '', bold(r), size)))) + pad;
-  const colW = t.columns.slice(1).map((c, j) => Math.max(40, textWidth(c.label, 'B', size), c.sub ? textWidth(c.sub, 'R', size - 1) : 0,
-    ...body.map((r) => textWidth(r.cells[j + 1]?.text ?? '', bold(r), size))) + 2 * pad);
+  const colW = t.columns.slice(1).map((c, j) => (c.wrap ? 0 : Math.max(40, textWidth(c.label, 'B', size), c.sub ? textWidth(c.sub, 'R', size - 1) : 0,
+    ...body.map((r) => textWidth(r.cells[j + 1]?.text ?? '', bold(r), size))) + 2 * pad));
+  // Columns of words share what the others leave, so the table fits the width.
+  const shares = t.columns.slice(1).reduce((a, c) => a + (c.wrap ?? 0), 0);
+  if (shares) {
+    const left = WIDTH - keyW - colW.reduce((a, w) => a + w, 0);
+    t.columns.slice(1).forEach((c, j) => { if (c.wrap) colW[j] = Math.max(40, Math.floor((left * c.wrap) / shares)); });
+  }
   // Columns in groups that fit the width, each group a table of its own with the first column repeated.
   const groups: number[][] = [];
   let used = WIDTH;
@@ -284,10 +290,13 @@ export function measure(t: Table) {
   return { size, lh, pad, keyW, colW, groups, hasSub, headerH };
 }
 
-/** Rows as tall as their first cell's lines; a head row a line more. */
+/** A row's lines: its first cell's, and each column of words'. */
+const rowLines = (t: Table, r: Row, m: ReturnType<typeof measure>) => Math.max(wrap(r.cells[0]?.text ?? '', bold(r), m.size, m.keyW - m.pad).length,
+  ...t.columns.slice(1).map((c, j) => (c.wrap ? wrap(r.cells[j + 1]?.text ?? '', bold(r), m.size, m.colW[j] - 2 * m.pad).length : 1)));
+/** Rows as tall as their lines; a head row a line more. */
 const rowHeight = (t: Table, r: Row, m: ReturnType<typeof measure>, width: number) => r.kind === 'head'
   ? wrap(r.cells[0]?.text ?? '', 'B', m.size, width - 6).length * m.lh + 6
-  : wrap(r.cells[0]?.text ?? '', bold(r), m.size, m.keyW - m.pad).length * m.lh + (r.kind === 'ratio' ? 6 : r.kind ? 2 : 0);
+  : rowLines(t, r, m) * m.lh + (r.kind === 'ratio' ? 6 : r.kind ? 2 : 0);
 
 /** The height of one group of columns: the header and every row. */
 function groupHeight(t: Table): number {
@@ -310,7 +319,8 @@ function table(L: Layout, t: Table) {
       L.text(LEFT, L.y - size, t.columns[0].label, 'B', size);
       g.forEach((j, k) => {
         const c = t.columns[j + 1];
-        L.right(rights[k] - pad, L.y - size, c.label, 'B', size);
+        if (c.wrap) L.text(rights[k] - colW[j] - extra + pad, L.y - size, c.label, 'B', size);
+        else L.right(rights[k] - pad, L.y - size, c.label, 'B', size);
         if (c.sub) L.right(rights[k] - pad, L.y - size - lh, c.sub, 'R', size - 1, MUTED);
       });
       L.y -= h;
@@ -335,8 +345,12 @@ function table(L: Layout, t: Table) {
       if (r.kind === 'ratio') { L.rule(LEFT, end, L.y, 0.8, 0.3); L.y -= 3; }
       else if (r.kind) { L.rule(LEFT + keyW, end, L.y, 0.5, 0.55); L.y -= 2; }
       lines.forEach((line, i) => L.text(LEFT, L.y - size - i * lh, line, f, size));
-      g.forEach((j, k) => L.right(rights[k] - pad, L.y - size, r.cells[j + 1]?.text ?? '', f, size));
-      L.y -= lines.length * lh;
+      g.forEach((j, k) => {
+        const text = r.cells[j + 1]?.text ?? '';
+        if (!t.columns[j + 1].wrap) return L.right(rights[k] - pad, L.y - size, text, f, size);
+        wrap(text, f, size, colW[j] - 2 * pad).forEach((line, i) => L.text(rights[k] - colW[j] - extra + pad, L.y - size - i * lh, line, f, size));
+      });
+      L.y -= rowLines(t, r, m) * lh;
       if (r.kind === 'ratio') { L.y -= 1; L.rule(LEFT, end, L.y, 0.8, 0.3); L.y -= 2; }
     }
     L.y -= 8;

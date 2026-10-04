@@ -8,7 +8,7 @@
  * words, levels and items with them.
  */
 import {
-  BATHS, BHKS, CITIES, FLOORS, LEVELS, PLOT_SIDE, R, ROOM_SIDE, SIZE_WORDS, bathsOf, bedroomsOf, WORK_KINDS, architect, architectNeeds, changeOf, choicesFor, levelName, levelRuns, overPackage, planRooms, wordName,
+  BATHS, BHKS, CITIES, FLOORS, LEVELS, PLOT_SIDE, R, ROOM_SIDE, SIZE_WORDS, bathsOf, bedroomsOf, billOf, WORK_KINDS, architect, architectNeeds, changeOf, choicesFor, levelName, levelRuns, overPackage, planRooms, wordName,
   type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choice, type House, type Level, type LevelRuns, type Line, type RoomKind, type SizeWord, type Stage, type WorkKind,
 } from '../../../engine/architect';
 import { CLASSES, FT_PER_M, LIBRARY_DATE, NOTES, PER, SOURCE, SPEND_SAVE, SQFT_PER_SQM, type ItemKind, type Note, type Unit } from '../../../engine/library';
@@ -418,7 +418,10 @@ export interface PlanView {
   range: { text: string; low: number; high: number; lines: number; of: number };
   /** Every source the lines and the assumptions use, numbered in order of first use, and what each class means; on the page only. */
   sources: SourceView[]; classes: { id: string; means: string }[];
+  /** The bill of quantities for quotes (E4a): each item once with its rooms and summed quantity; no rate or amount of ours. */
+  bill: BillView[];
 }
+export interface BillView { no: number; name: string; lines: { no: string; item: string; where: string; qty: string; unit: string; n: { qty: number } }[] }
 export interface PlanPreview { needs: string[]; blocked?: string; view?: PlanView }
 
 /** The estimate so far: what is still needed, or the estimate in words. */
@@ -497,7 +500,7 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
     bar, sections, ...(split ? { split } : {}), assumed, flags: e.flags.filter((f) => f.decides).map((f) => f.text), notes: e.flags.filter((f) => !f.decides).map((f) => f.text),
     unpriced: e.unpriced.map((u) => `${u.roomName}, ${u.name.toLowerCase()}: ${u.entryName}`),
     ratesLine: `A planning estimate: rates as reported on ${dmy(e.ratesDate)} for ${listed ? city : 'another place, at the six cities’ average'}; ${e.lines.filter((l) => l.checked).length} of ${e.lines.length} lines checked against their pages`,
-    range: rangeOf(e, runs),
+    range: rangeOf(e, runs), bill: billView(s, e),
     ratesDate: dmy(LIBRARY_DATE), sources: [...numbered.values()],
     classes: Object.entries(CLASSES).filter(([id]) => [...numbered.values()].some((x) => x.cls === id)).map(([id, means]) => ({ id, means })),
   };
@@ -574,6 +577,18 @@ function changeText(c: Change & { what: string }): ChangeView {
   const by = Math.round(c.by) === 0 ? 'no change in the total' : `Rs. ${rupees(Math.abs(c.by))} ${c.by > 0 ? 'more' : 'less'}`;
   const others = c.others === undefined ? '' : `the other rooms ${+(Math.abs(c.others) * 100).toFixed(1)}% ${c.others < 0 ? 'smaller' : 'larger'} · `;
   return { text: `${c.what}: ${others}${by}`, n: c.by, items: names.length ? `${names.slice(0, 3).join(' · ')}${names.length > 3 ? ` · and ${names.length - 3} more` : ''}` : '' };
+}
+
+/** The bill's lines in words (E4a): the item and its specification, its brands or the one chosen, then where it goes. */
+function billView(s: PlanState, e: ArchitectEstimate): BillView[] {
+  return billOf(e, s.brands).map((x, i) => ({
+    no: i + 1, name: x.name,
+    lines: x.lines.map((l, j) => ({
+      // The specification alone where it starts by naming the item ("Deep cleaning. Deep cleaning of the whole home …").
+      no: `${i + 1}.${j + 1}`, item: [l.spec.toLowerCase().startsWith(l.item.split(',')[0].toLowerCase()) ? '' : l.item, l.spec, l.brand ? `Brand: ${l.brand}` : l.brands.length ? `${l.brands.join(', ')} or equivalent` : ''].filter(Boolean).join('. '),
+      where: l.rooms.join(', '), qty: lineQty(l.qty, l.unit), unit: unitText(l.unit), n: { qty: l.qty },
+    })),
+  }));
 }
 
 function lineView(s: PlanState, l: Line, no: string, sourceOf: (id: string) => SourceView): LineView {

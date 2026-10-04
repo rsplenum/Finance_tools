@@ -69,14 +69,14 @@ function figuresTable(t: Table): string {
     const head = row(cell(text(t.columns[0].label, { bold: true }), { width: widths[0], bottom: UNDER })
       + g.map((j, k) => {
         const c = t.columns[j + 1];
-        return cell(text(c.label, { bold: true }, true) + (c.sub ? text(c.sub, { color: MUTED, size: size - 2 }, true) : ''), { width: widths[k + 1], bottom: UNDER });
+        return cell(text(c.label, { bold: true }, !c.wrap) + (c.sub ? text(c.sub, { color: MUTED, size: size - 2 }, !c.wrap) : ''), { width: widths[k + 1], bottom: UNDER });
       }).join(''), { header: true });
     const body = t.rows.map((r: Row) => {
       if (r.kind === 'head') return row(cell(text(r.cells[0]?.text ?? '', { bold: true }), { width: all, span: g.length + 1, fill: SHADE }));
       const strong = !!r.kind, ratio = r.kind === 'ratio';
       const edge = (num: boolean) => (ratio ? { top: HEAVY, bottom: HEAVY } : r.kind && num ? { top: RULE } : {});
       return row(cell(text(r.cells[0]?.text ?? '', { bold: strong }), { width: widths[0], ...edge(false) })
-        + g.map((j, k) => cell(text(r.cells[j + 1]?.text ?? '', { bold: strong }, true), { width: widths[k + 1], ...edge(true) })).join(''));
+        + g.map((j, k) => cell(text(r.cells[j + 1]?.text ?? '', { bold: strong }, !t.columns[j + 1].wrap), { width: widths[k + 1], ...edge(true) })).join(''));
     });
     if (gi) out.push(spacer(160));
     out.push(table(widths, [head, ...body]));

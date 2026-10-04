@@ -4,7 +4,7 @@
  * with lakh and crore grouping. No formulas, so every figure in the file is the engine's. A stored zip (zip.ts); no
  * library. Pure: bytes in memory, no DOM.
  */
-import type { Block, Cell, Doc, Row } from './doc';
+import type { Block, Cell, Column, Doc, Row } from './doc';
 import { zip } from './zip';
 
 const MAIN = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
@@ -106,17 +106,17 @@ function sheetRows(blocks: Block[], notes: string[] = []): XRow[] {
     else {
       const t = b.table, width = t.columns.length;
       blank();
-      rows.push({ cells: t.columns.map((c, i) => ({ text: c.sub ? `${c.label} (${c.sub})` : c.label, style: i ? S.headRight : S.headLeft })), table: true });
-      for (const r of t.rows) rows.push({ cells: tableRow(r, width), table: r.kind !== 'head' });
+      rows.push({ cells: t.columns.map((c, i) => ({ text: c.sub ? `${c.label} (${c.sub})` : c.label, style: i && !c.wrap ? S.headRight : S.headLeft })), table: true });
+      for (const r of t.rows) rows.push({ cells: tableRow(r, width, t.columns), table: r.kind !== 'head' });
     }
   }
   return rows;
 }
 
 /** A group's name shaded across the table; a ratio between rules; totals in bold under a rule. */
-const tableRow = (r: Row, width: number): XCell[] => r.kind === 'head'
+const tableRow = (r: Row, width: number, columns: Column[]): XCell[] => r.kind === 'head'
   ? [{ text: r.cells[0]?.text ?? '', style: S.group }, ...Array.from({ length: width - 1 }, () => ({ style: S.group }))]
-  : r.cells.map((c, i) => (i ? numberCell(c, r.kind) : { text: c.text, style: r.kind === 'ratio' ? S.ratioLabel : r.kind ? S.boldWrap : S.wrap }));
+  : r.cells.map((c, i) => (i && !columns[i]?.wrap ? numberCell(c, r.kind) : { text: c.text, style: r.kind === 'ratio' ? S.ratioLabel : r.kind ? S.boldWrap : S.wrap }));
 
 /**
  * Widths in characters: the first column as wide as the names in it (within limits; a longer one wraps), the others as
@@ -127,7 +127,9 @@ function widths(rows: XRow[]): number[] {
   const first = Math.min(46, Math.max(18, ...rows.filter((r) => r.table || r.span !== undefined).map((r) => len(r.cells[0]) + 2)));
   if (!table.length) return [first, 70];
   const cols = Math.max(...table.map((r) => r.cells.length));
-  return [first, ...Array.from({ length: cols - 1 }, (_, j) => Math.min(21, Math.max(11, ...table.map((r) => len(r.cells[j + 1]) + 3))))];
+  // A column of words (its header on the left) is wider, and wraps.
+  const words = (j: number) => table.some((r) => r.cells[j]?.style === S.headLeft);
+  return [first, ...Array.from({ length: cols - 1 }, (_, j) => Math.min(words(j + 1) ? 40 : 21, Math.max(11, ...table.map((r) => len(r.cells[j + 1]) + 3))))];
 }
 
 /** One sheet: no gridlines, A4 one page wide (landscape when its table is wide), the document's header and footer. */

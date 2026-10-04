@@ -14,7 +14,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { BUTTON, Choice, HINT, LABEL, Section, SelectField, SourceNote, TextField } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
-import { planDoc, planDocNeeds, planDocStatus, planFileName } from './plan-document';
+import { billDoc, billFileName, planDoc, planDocNeeds, planDocStatus, planFileName } from './plan-document';
 import {
   BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, FLOOR_CHOICES, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORD_CHOICES, WORK_CHOICES, areaLabel, checkedLine, drawerView, heightOf, plainOf, planPreview, sideUnit,
   withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit,
@@ -514,6 +514,10 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
     const now = new Date();
     save(planDoc(s, p, isoDate(now)), kind, planFileName(s, p, kind), now);
   };
+  const bill = (kind: FileKind) => {
+    const now = new Date();
+    save(billDoc(s, p, isoDate(now)), kind, billFileName(s, kind), now);
+  };
   const field = (id: keyof PlanFacts, label: string, hint?: string) =>
     <TextField id={`fld-pl-${id}`} label={label} hint={hint} value={f[id]} said={english(f[id])} invalid={!!english(f[id])} onCommit={(t) => set({ [id]: t })} />;
   return <Section id="pl-download" title="Download the planning estimate">
@@ -532,6 +536,14 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
         <button type="button" data-testid="pl-download-pdf" class={BUTTON} onClick={() => go('pdf')}>Download PDF</button>
         <button type="button" data-testid="pl-download-xlsx" class={BUTTON} onClick={() => go('xlsx')}>Download Excel</button>
         <button type="button" data-testid="pl-download-docx" class={BUTTON} onClick={() => go('docx')}>Download Word</button>
+      </div>
+    </div>
+    <div class="mt-5">
+      <p class={HINT}>A bill of quantities for two or three contractors to quote like for like: each item, where it goes and how much, with the rates left blank.</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button type="button" data-testid="pl-bill-pdf" class={BUTTON} onClick={() => bill('pdf')}>Bill as PDF</button>
+        <button type="button" data-testid="pl-bill-xlsx" class={BUTTON} onClick={() => bill('xlsx')}>Bill as Excel</button>
+        <button type="button" data-testid="pl-bill-docx" class={BUTTON} onClick={() => bill('docx')}>Bill as Word</button>
       </div>
     </div>
   </Section>;
