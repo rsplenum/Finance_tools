@@ -14,6 +14,12 @@ Two projects taught this the hard way. In the home-loan appraisal tool, every te
 - Rules, benchmarks and rates live in dated data files under `engine/data/`, each with its source and date, marked unverified until confirmed. Never hardcode a lender's norm (a "bank target of 1.25"): lenders differ.
 - A missing or unreadable input is never taken as 0. List what is needed and keep the result provisional; only the assumptions in `engine/data/defaults.json` may stand in, each shown with its reason.
 
+## Rates read from a source
+
+- A listing with a plural title ("ceiling lights", "robe hooks") may price a pack: read how many it holds before taking its price as one item's.
+- Read a source's note on GST once, and tag every item that cites it alone the same way: before GST adds 18%, an MRP or retail price already includes it.
+- Before bundling one item into another's set (a lock with a door, a mesh with a window), look in `engine/data/architect.json` for another family priced on the same quantity. A line cannot be switched off by itself, only its section, so the user cannot take out a double count.
+
 ## Where test figures come from
 
 - From the owner's fictional cases worked at home, or a public worked example with its source. Never from the owner's office or employer, not even anonymised (D-BIZ-02). Until the owner confirms, call them model-worked.

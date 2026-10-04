@@ -8,7 +8,7 @@
       "heads": [
         { "id": "earthwork", "label": "Earthwork", "unit": "cum", "example": "Excavation for foundations" },
         { "id": "pcc", "label": "Plain concrete", "unit": "cum", "example": "PCC 1:4:8 under footings" },
-        { "id": "rcc", "label": "Reinforced concrete", "unit": "cum", "example": "RCC M20 in footings, columns, beams and slabs" },
+        { "id": "rcc", "label": "Reinforced concrete", "unit": "cum", "example": "RCC M25 in footings, columns, beams and slabs (M30 by the sea)" },
         { "id": "steel", "label": "Reinforcement steel", "unit": "kg", "example": "Steel bars Fe 500" },
         { "id": "masonry", "label": "Masonry", "unit": "cum", "example": "Brickwork in cement mortar 1:6" },
         { "id": "plaster", "label": "Plastering", "unit": "sqm", "example": "Cement plaster 12 mm" },

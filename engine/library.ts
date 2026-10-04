@@ -38,12 +38,17 @@ export interface Entry {
   fix?: Count[];
   /** For a set: the items it is made of, each priced on its own. */
   parts?: Count[];
-  /** 'extra' when the source quotes the rate before GST. */
-  gst?: 'extra';
+  /**
+   * The tax basis, as the source states it: 'extra' when it quotes the rate before GST (the engine adds GST), 'incl' when
+   * the price includes it (a retail listing), 'unstated' when the source does not say (taken as the price paid).
+   */
+  gst?: 'extra' | 'incl' | 'unstated';
+  /** The day the rate was read, when it differs from its file's date. */
+  date?: string;
   src: string[]; note?: string; file: string;
 }
 export interface Family { id: string; name: string; unit: Unit; levels?: (string | null)[]; fixed?: string; kind?: ItemKind; file: string }
-export interface Labour { id: string; name: string; unit: Unit; rate: Band; src: string[]; note?: string }
+export interface Labour { id: string; name: string; unit: Unit; rate: Band; src: string[]; note?: string; /** The day the rate was read, when it differs from its file's date. */ date?: string }
 export interface Source { what: string; url: string; class: string }
 interface RawFile { title: string; date: string; families: Omit<Family, 'file'>[]; entries: (Omit<Entry, 'file' | 'fix'> & { fix?: (string | Count)[] })[] }
 
@@ -111,6 +116,8 @@ export function price(id: string, city: number, gstPct: number): Price | null {
   let rate = raw.rate;
   const how = [...raw.how];
   if (e.gst === 'extra') { rate *= 1 + gstPct / 100; how.push(`GST ${gstPct}% added: the source quotes before GST`); }
+  else if (e.gst === 'incl') how.push('GST included in the price, as listed');
+  else if (e.gst === 'unstated') how.push('GST not stated by the source: taken as the price paid');
   return { rate: r2(rate), how };
 }
 

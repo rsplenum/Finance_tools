@@ -57,6 +57,17 @@ describe('the library: every value has a source', () => {
       if (s.class !== 'O') expect(s.url, id).toMatch(/^https:\/\//);
     }
   });
+  it('every choice in the families grown in L2, and every part of their sets, states its tax basis; no part says GST is extra, since only a set\'s own basis adds GST (D-DATA-08)', () => {
+    const grown = ['cabinets', 'counter', 'wardrobe', 'sofa', 'bed', 'dining', 'kitchen-unit', 'sanitary', 'cp', 'main-door', 'room-door', 'windows', 'lights', 'wiring'];
+    for (const f of grown) {
+      expect(choices(f).length, f).toBeGreaterThan(0);
+      for (const e of choices(f)) {
+        expect(e.gst, e.id).toMatch(/^(extra|incl|unstated)$/);
+        for (const p of e.parts ?? []) expect(ENTRIES.get(p.id)?.gst, `${e.id}: ${p.id}`).toMatch(/^(incl|unstated)$/);
+      }
+    }
+    for (const e of ENTRIES.values()) for (const p of e.parts ?? []) expect(ENTRIES.get(p.id)?.gst, `${e.id}: ${p.id}`).not.toBe('extra');
+  });
 });
 
 describe('the five levels of every family', () => {
@@ -153,6 +164,6 @@ describe('rates, worked by hand', () => {
     expect(price('acc-continental', 1, 18)?.rate).toBe(2696);
   });
   it('an item still to be found has no rate', () => {
-    expect(price('fl-granite', 1, 18)).toBeNull();
+    expect(price('fl-encaustic', 1, 18)).toBeNull();
   });
 });

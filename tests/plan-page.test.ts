@@ -112,7 +112,7 @@ describe('sliders, items and brands', () => {
     expect(d.groups[0].choices[0]).toMatchObject({ id: 'fl-gvt-800', mark: 'the level’s item', current: true });
     expect(d.groups[0].choices.slice(1).every((x) => x.mark === '' && !x.current)).toBe(true);
     expect(d.groups[1].choices[0]).toMatchObject({ id: 'fl-vit-dc-600', rate: 'Rs. 114.09 a sq ft', mark: 'the level’s item', current: false });
-    expect(d.groups[2].choices.find((x) => x.id === 'fl-granite')).toMatchObject({ rate: 'No rate yet', usable: false });
+    expect(d.groups[2].choices.find((x) => x.id === 'fl-encaustic')).toMatchObject({ rate: 'No rate yet', usable: false });
     const ids = d.groups.flatMap((g) => g.choices.map((x) => x.id));
     expect(ids.length).toBe(new Set(ids).size);
     expect(d.how.quantity).toMatch(/floor .* sq m, and skirting/);
@@ -142,7 +142,7 @@ describe('L1 on the page: the level\'s range under the total', () => {
   });
   it('says so when no item offers a choice at the level', () => {
     const all = view(FLAT).sections.map((x) => x.id), only = (id: string) => ({ ...FLAT, sections: Object.fromEntries(all.map((x) => [x, x === id])) });
-    expect(view(only('wardrobes')).range.text).toBe('At Standard, each of the 6 items has one choice.');
+    expect(view(only('plumbing')).range.text).toBe('At Standard, each of the 7 items has one choice.');
     expect(view(only('nothing')).range.text).toBe('');
   });
 });
@@ -203,7 +203,8 @@ describe('a new house on the page (D-UX-23)', () => {
   it('E5: the sewer in place of the septic tank, noted in What changed; only for a new house', () => {
     const w = withSewer(HOUSE, true);
     expect(inputOf(w).sewer).toBe(true);
-    expect(view(w).change?.text).toBe('The sewer in place of a septic tank: Rs. 89,610 less');
+    // The septic tank's 89,610 out, the sewer connection's 24,711.34 in (architect.test.ts): 64,898.66, shown as 64,899.
+    expect(view(w).change?.text).toBe('The sewer in place of a septic tank: Rs. 64,899 less');
     expect(inputOf({ ...FLAT, sewer: true }).sewer).toBeUndefined();
   });
 });
