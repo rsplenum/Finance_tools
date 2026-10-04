@@ -685,6 +685,35 @@ for (const scheme of ['light', 'dark']) {
   const billWord = await docxLines((await save('pl-bill-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
   if (billWord.messages.length || !billWord.lines.some((l) => l.startsWith('No. | Item and specification | Where | Quantity | Unit | Rate | Amount | Make offered')))
     v(`the bill's Word copy reads back ${JSON.stringify(billWord.lines.slice(0, 4))} ${JSON.stringify(billWord.messages).slice(0, 120)}`);
+  // E4b: the bill taken into the typed path, a card for each of its lines, every one left out until a rate is typed. The
+  // floor tiles' band at Basic in Pune, worked again in python from the library's files: the lowest low end is vinyl
+  // sheet's Rs. 50.35 and the highest high end Kota stone's Rs. 164.78 a sq ft; Rs. 210 is (210 − 164.78) ÷ 164.78 = 27%
+  // above it, past the 20% allowed. "Door" fits more than one family, so it is not matched until the main door is picked;
+  // its band at Basic, laminated, Rs. 5,830.85–32,323.42 each.
+  await page.locator('#typed-path > summary').click();
+  await page.getByTestId('from-bill').click();
+  const billLines = billBook[0]?.data.filter((r) => typeof r[0] === 'string' && /^\d+\.\d+$/.test(r[0])).length ?? 0;
+  const checks = await page.locator('[data-testid^="item-"][data-testid$="-check"]').allTextContents();
+  if (!billLines || checks.length !== billLines || checks.some((x) => x !== 'Left out of the quotation: no rate.'))
+    v(`the bill taken in shows ${checks.length} lines (want ${billLines}), ${checks.filter((x) => x !== 'Left out of the quotation: no rate.').length} not left out`);
+  const tileCard = await page.locator('[id$="-description"]').evaluateAll((els) => els.findIndex((e) => e.value.startsWith('Double-charge vitrified tiles, 600 × 600 mm (')) + 1);
+  await leave(page, `#fld-item-${tileCard}-rate`, '210');
+  await expectText(page, v, `item-${tileCard}-check`, 'Check this rate: 27% above the band at Basic (Rs. 50.35–164.78 a sq ft).', 'the floor tiles\' rate against the band');
+  await expectText(page, v, page.getByTestId('quote-flagged').locator('li'), /^Double-charge vitrified tiles, 600 × 600 mm \(/, 'the rate to check, listed');
+  await expectText(page, v, 'quote-gst', 'Each rate is taken as the price you pay. Where a quotation adds GST on top, add it to each rate before you type it.', 'the one line on GST');
+  await expectText(page, v, 'quote-rule', /^A rate is flagged to check when it is more than 20% below the low end/, 'the 20% on the page');
+  await leave(page, `#fld-item-${tileCard}-rate`, '150');
+  await expectText(page, v, `item-${tileCard}-check`, 'Within the band at Basic: Rs. 50.35–164.78 a sq ft.', 'the floor tiles\' rate within the band');
+  await page.getByTestId('add-item').click();
+  const door = billLines + 1;
+  await leave(page, `#fld-item-${door}-description`, 'Door');
+  await expectText(page, v, `item-${door}-check`, 'Not matched to the library: pick what it is to compare its rate.', 'a line typed by hand that fits more than one family');
+  await page.selectOption(`#fld-item-${door}-pick`, 'main-door');
+  await page.selectOption(`#fld-item-${door}-unit`, 'nos');
+  await leave(page, `#fld-item-${door}-rate`, '30,000');
+  await expectText(page, v, `item-${door}-check`, 'Taken as Main door. Within the band at Basic: Rs. 5,830.85–32,323.42 each.', 'the door picked and compared');
+  await expectText(page, v, 'pl-summary', 'Repair or renovate · Flat · Pune · 1,000 sq ft · 2 BHK · Basic', 'the six answers after the bill is taken in');
+  await layout(page, v, 'the quotation against the library, 390 px');
 
   // An item of one's own makes the section Mixed; a brand chip names it; the slider moves the whole section again.
   await page.getByTestId('pl-choices-1').locator('label', { hasText: 'Kota stone' }).click();

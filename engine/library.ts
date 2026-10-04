@@ -132,8 +132,8 @@ export interface Price { rate: number; how: string[] }
  * GST is added only to a rate quoted before it, and only to what that source quotes: never to the labour that fixes a
  * material, which has its own source (E2). Null when the item, or a part of it, has no rate yet.
  */
-export function price(id: string, city: number, gstPct: number): Price | null {
-  const raw = rawPrice(id, city);
+export function price(id: string, city: number, gstPct: number, end?: 0 | 1): Price | null {
+  const raw = rawPrice(id, city, end);
   if (!raw) return null;
   const e = ENTRIES.get(id) as Entry;
   let rate = raw.rate;
@@ -148,14 +148,16 @@ export function price(id: string, city: number, gstPct: number): Price | null {
 }
 
 /** The rate before GST, and the part of it that is labour fixing a material (from its own source). */
-function rawPrice(id: string, city: number): { rate: number; labour: number; how: string[] } | null {
+function rawPrice(id: string, city: number, end?: 0 | 1): { rate: number; labour: number; how: string[] } | null {
+  // The middle of each range, or its low (0) or high (1) end for a level's band (E4b); the working's words say the middle.
+  const mid = (b: Band) => (end === undefined ? (b[0] + b[1]) / 2 : b[end]);
   const e = ENTRIES.get(id);
   if (!e) throw new Error(`No item ${id} in the library`);
   const how: string[] = [];
   let base = 0, labour = 0;
   if (e.basis === 'set') {
     for (const p of e.parts ?? []) {
-      const part = rawPrice(p.id, city);
+      const part = rawPrice(p.id, city, end);
       if (!part) return null;
       base += p.n * part.rate;
       labour += p.n * part.labour;

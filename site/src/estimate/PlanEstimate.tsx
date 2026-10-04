@@ -14,6 +14,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { BUTTON, Choice, HINT, LABEL, Section, SelectField, SourceNote, TextField } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
+import { sharePlan } from './shared';
 import { billDoc, billFileName, planDoc, planDocNeeds, planDocStatus, planFileName } from './plan-document';
 import {
   BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, FLOOR_CHOICES, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORD_CHOICES, WORK_CHOICES, areaLabel, checkedLine, drawerView, heightOf, plainOf, planPreview, sideUnit,
@@ -46,6 +47,7 @@ export function PlanEstimate() {
   const [s, setS] = useState<PlanState>(EMPTY_PLAN);
   const update: Update = (f) => setS(f);
   const p = useMemo(() => planPreview(s), [s]);
+  sharePlan(s);
   const [editing, setEditing] = useState(true);
   const folded = useRef(false), result = useRef<HTMLHeadingElement>(null);
   // The questions fold into one line the first time the estimate works out (A8), and the answer takes the focus.

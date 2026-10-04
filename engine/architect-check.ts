@@ -14,12 +14,15 @@
  * into the bedroom named or the passage. The range by the choices at a level (L1) walks the library afresh for each line:
  * every item of the family (its own, or one a level names) that the family names at the line's level or that is usually at
  * it, of the same kind of unit as the item named, priced on the quantity in its own unit; the cheapest and the dearest
- * after sorting the amounts.
+ * after sorting the amounts. A quotation's lines (E4b, `quoteAgain`) are matched by a score over the family's words, banded
+ * by walking the library for every item at each level and pricing each at the ends of its ranges, units turned by their
+ * sizes in metres and kilograms, and flagged by the shortfall or excess over the band in paise.
  * architect.ts shows no figure unless both agree.
  */
 import RULES from './data/architect.json';
 import { ENTRIES, FAMILIES, LABOUR_ITEMS, type Entry, type ItemKind, type Unit } from './library';
-import type { ArchitectInput, Rules, RoomKind, WorkKind } from './architect';
+import type { ArchitectInput, Level, Rules, RoomKind, WorkKind } from './architect';
+import type { QuoteContext, QuoteLine, Where } from './quote';
 
 export interface CheckLine { qty: number; rate: number; amount: number }
 export interface ArchitectCheck {
@@ -368,11 +371,12 @@ function cityOf(id: string | undefined): number {
 /**
  * An item's rate for a city, priced afresh by walking the library (the middle of a range as its low end plus half its
  * width, labour before the material, GST added as a share of the material alone, never of its fixing labour): the second computation of every rate the
- * estimate and the item drawer show. Null when the item, or a part of it, has no rate yet.
+ * estimate and the item drawer show, and with `end` of each end of a quotation check's band. Null when the item, or a part of it, has no rate yet.
  */
-export function checkRate(id: string, cityId: string | undefined): number | null {
+export function checkRate(id: string, cityId: string | undefined, end?: 0 | 1): number | null {
   const city = cityOf(cityId);
-  const middle = (b: [number, number]) => b[0] + (b[1] - b[0]) / 2;
+  // A level's band (E4b) takes each range at its low (0) or high (1) end, labour's too, instead of its middle.
+  const middle = (b: [number, number]) => (end === 0 ? b[0] : end === 1 ? b[1] : b[0] + (b[1] - b[0]) / 2);
   const unitsIn = (qtyIn: number, from: Unit, to: Unit) => (from === to ? qtyIn : from === 'sqm' && to === 'sqft' ? qtyIn / SQ_FOOT : from === 'sqft' && to === 'sqm' ? qtyIn * SQ_FOOT : NaN);
   // [the material, the labour that fixes it], kept apart so that GST falls on the material only.
   const rateOf = (id: string): [number, number] | null => {
@@ -395,4 +399,62 @@ export function checkRate(id: string, cityId: string | undefined): number | null
   if (!ENTRIES.has(id)) return null;
   const r = rateOf(id);
   return r === null ? null : round2((ENTRIES.get(id)?.gst === 'extra' ? r[0] + (r[0] * Q.gst.pct) / 100 : r[0]) + r[1]);
+}
+
+export interface QuoteAgain { family: string | null; band: [number, number] | null; where: Where; off: number; flagged: boolean }
+// Each typed unit's and library unit's kind and size, in metres, cubic metres or kilograms; a count is its own kind.
+const SIZE: Record<string, [string, number]> = {
+  sqft: ['area', FOOT * FOOT], sqm: ['area', 1], rft: ['length', FOOT], rmt: ['length', 1], m: ['length', 1], cum: ['volume', 1], cft: ['volume', FOOT * FOOT * FOOT],
+  kg: ['mass', 1], MT: ['mass', 1000], nos: ['nos', 1], set: ['set', 1], LS: ['lot', 1], lot: ['lot', 1], bag: ['bag', 1], litre: ['litre', 1],
+};
+const singular = (w: string) => w.replace(/ies$/, 'y').replace(/(ch|sh|x|ss)es$/, '$1').replace(/([^s])s$/, '$1');
+const wordSet = (t: string) => new Set((t.toLowerCase().replace(/\([^)]*\)/g, ' ').match(/[a-z]+/g) ?? [])
+  .filter((w) => !['a', 'an', 'and', 'the', 'of', 'by', 'one', 'for', 'on', 'in', 'to', 'with', 'or', 'finish'].includes(w)).map(singular));
+
+/** The quotation check's second computation (E4b): each line's family, its band in its own unit, where it sits and whether it is flagged. */
+export function quoteAgain(lines: QuoteLine[], ctx: QuoteContext): QuoteAgain[] {
+  const pct = Q.quote.farOut;
+  const byWords = (t: string): string | null => {
+    const have = wordSet(t), scores: [string, number][] = [];
+    for (const f of FAMILIES.values()) {
+      const ws = [...wordSet(f.name)], hit = ws.filter((w) => have.has(w)).length;
+      if (hit) scores.push([f.id, (hit === ws.length ? 1000 : 0) + hit]);
+    }
+    scores.sort((a, b) => b[1] - a[1]);
+    return scores.length && (scores.length === 1 || scores[0][1] > scores[1][1]) ? scores[0][0] : null;
+  };
+  return lines.map((q): QuoteAgain => {
+    const family = q.from && FAMILIES.has(q.from.family) ? q.from.family : q.pick && FAMILIES.has(q.pick) ? q.pick : byWords(q.words);
+    const empty = (where: Where): QuoteAgain => ({ family, band: null, where, off: 0, flagged: false });
+    if (family === null) return empty('not-matched');
+    if (q.rate === undefined) return empty('left-out');
+    const fam = FAMILIES.get(family) as NonNullable<ReturnType<typeof FAMILIES.get>>, size = SIZE[q.unit];
+    if (!size) return empty('other-unit');
+    const levels: Level[] = q.from && FAMILIES.has(q.from.family) ? q.from.levels : ctx.families[family] ?? [ctx.level];
+    const ids = new Set<string>();
+    if (!levels.length && q.from) ids.add(q.from.entry);
+    for (const lv of levels) {
+      const named = fam.fixed ?? fam.levels?.[lv - 1] ?? null;
+      for (const e of ENTRIES.values()) {
+        const ofFamily = e.family === family || e.id === fam.fixed || (fam.levels ?? []).includes(e.id);
+        if (e.id === named || (ofFamily && e.level === lv)) ids.add(e.id);
+      }
+    }
+    const lows: number[] = [], highs: number[] = [];
+    let priced = 0;
+    for (const id of ids) {
+      const lo = checkRate(id, ctx.city, 0), hi = checkRate(id, ctx.city, 1), own = SIZE[(ENTRIES.get(id) as Entry).unit];
+      if (lo === null || hi === null) continue;
+      priced++;
+      if (own[0] !== size[0]) continue;
+      lows.push((lo * size[1]) / own[1]); highs.push((hi * size[1]) / own[1]);
+    }
+    if (!lows.length) return empty(priced ? 'other-unit' : 'no-band');
+    lows.sort((a, b) => a - b); highs.sort((a, b) => b - a);
+    const band: [number, number] = [round2(lows[0]), round2(highs[0])];
+    const paise = Math.round(q.rate * 100), lowP = Math.round(band[0] * 100), highP = Math.round(band[1] * 100);
+    if (paise < lowP) return { family, band, where: 'below', off: ((lowP - paise) * 100) / lowP, flagged: lowP * (100 - pct) - paise * 100 > 0 };
+    if (paise > highP) return { family, band, where: 'above', off: ((paise - highP) * 100) / highP, flagged: paise * 100 - highP * (100 + pct) > 0 };
+    return { family, band, where: 'within', off: 0, flagged: false };
+  });
 }

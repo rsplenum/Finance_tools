@@ -250,6 +250,10 @@
     "paintRatio": [2.5, 3.5],
     "src": ["own"], "why": "Walls and ceilings to paint usually come to 2.5–3.5 times the carpet area; outside that, check the room sizes."
   },
+  "quote": {
+    "farOut": 20,
+    "src": ["own"], "why": "A contractor's rate is flagged to check when it is more than 20% below the low end, or above the high end, of the band at its line's level: the lowest to the highest reported price of the level's choices, with wastage, fixing and your city. The bands rest on reported ranges and many items are still as reported, so a strict edge would flag ordinary differences between cities and shops."
+  },
   "house": {
     "shape": { "aspect": 1.25, "src": ["own"], "why": "A new house's outline about 1.25 times as long as it is wide, as on a 30 × 40 ft plot after its setbacks; its outer walls one brick (230 mm) thick, as for the reveals." },
     "slab": { "m": 0.15, "src": ["own"], "why": "Each floor's slab 150 mm thick, usual for a house's spans, so a floor is the ceiling height plus 150 mm." },

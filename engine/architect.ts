@@ -68,6 +68,7 @@ export interface Rules {
   cities: { list: { id: string; name: string; cost: [number, number] }[]; range: { for: string; upTo: number } & Sourced } & Sourced;
   gst: { pct: number } & Sourced;
   checks: { paintRatio: [number, number] } & Sourced;
+  quote: { farOut: number } & Sourced;
   house: {
     shape: { aspect: number } & Sourced; slab: { m: number } & Sourced; parapet: { m: number } & Sourced; terraceUpturn: { m: number } & Sourced;
     stair: { w: number; l: number; going: number; gap: number; flight: number; treads: number; landing: number } & Sourced;
@@ -160,7 +161,7 @@ export interface Line {
   /** The day its rate, and each part's, was last read on its page (E2); none while any is as reported. */
   checked?: string;
 }
-export interface Unpriced { key: string; roomName: string; section: string; name: string; entry: string; entryName: string; spec: string; brands: string[]; qty: number; unit: Unit }
+export interface Unpriced { key: string; roomName: string; section: string; name: string; entry: string; entryName: string; spec: string; brands: string[]; qty: number; unit: Unit; at: Level; chosen: boolean }
 export interface SectionTotal { id: string; name: string; on: boolean; slider: boolean; level: Level | null; amount: number; lines: number }
 export interface Assumption { what: string; shown: string; why: string; src: string[] }
 /**
@@ -451,7 +452,7 @@ function work(input: ArchitectInput, banded = false): ArchitectEstimate {
     const roomName = r?.name ?? whole;
     const name = slot.name ?? fam.name;
     const p = price(id, city, R.gst.pct);
-    if (!p) { unpriced.push({ key, roomName, section: slot.section, name, entry: id, entryName: ent.name, spec: ent.spec, brands: ent.brands ?? [], qty, unit: ent.unit }); return; }
+    if (!p) { unpriced.push({ key, roomName, section: slot.section, name, entry: id, entryName: ent.name, spec: ent.spec, brands: ent.brands ?? [], qty, unit: ent.unit, at: lv, chosen: !!own && ENTRIES.has(own) }); return; }
     const chosen = !!own && ENTRIES.has(own), amount = r2(qty * p.rate);
     lines.push({
       key, room: r?.id ?? null, roomName, section: slot.section, family: slot.family, name, entry: id, entryName: ent.name, spec: ent.spec,
@@ -561,7 +562,7 @@ function stagesOf(h: House, sections: SectionTotal[], split: Record<ItemKind, nu
 }
 
 /** The day an item's rate was read on its page, with its parts' (E2): the latest, or none while any is unread. */
-const checkedOn = (e: Entry): string | undefined => {
+export const checkedOn = (e: Entry): string | undefined => {
   const days = [e.rate ? e.checked : '', ...(e.parts ?? []).map((p) => checkedOn(ENTRIES.get(p.id) as Entry))];
   return days.includes(undefined) ? undefined : days.filter(Boolean).sort().at(-1);
 };
