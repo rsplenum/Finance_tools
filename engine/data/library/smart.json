@@ -8,7 +8,7 @@
     { "id": "smart-part", "name": "Smart-home parts and packages", "unit": "nos" }
   ],
   "entries": [
-    { "id": "vdp-unit", "family": "video-door-phone", "name": "Video door phone", "spec": "Video door phone with an indoor screen, fixed", "level": 3, "brands": ["Godrej", "Hikvision"], "unit": "nos", "basis": "product", "rate": [5919, 19299], "fix": ["fix-electrical"], "src": ["housegyan-vdp"], "gst": "unstated" },
+    { "id": "vdp-unit", "family": "video-door-phone", "name": "Video door phone", "spec": "Video door phone with an indoor screen, fixed", "level": 3, "brands": ["Godrej", "Hikvision"], "unit": "nos", "basis": "product", "rate": [5919, 19299], "fix": ["fix-electrical"], "gst": "unstated", "src": ["moglix-vdp"], "checked": "2026-10-04" },
     { "id": "sw-wifi", "family": "smart-switch", "name": "Wi-Fi smart switch, per light point", "spec": "Wi-Fi smart switch module for one light point, app and voice control", "level": 4, "unit": "nos", "basis": "product", "rate": [800, 1500], "src": ["smartify-automation"], "checked": "2026-10-04", "gst": "unstated" },
     { "id": "cctv-4", "family": "cctv", "name": "CCTV, 4 cameras", "spec": "Four cameras with a recorder, a hard disk and cabling", "level": 4, "brands": ["Hikvision", "CP Plus"], "unit": "set", "basis": "product", "rate": [8000, 18000], "fix": ["fix-cctv"], "src": ["aliftech-cctv"], "checked": "2026-10-04", "gst": "unstated" },
     { "id": "sp-wifi-premium", "family": "smart-part", "name": "Wi-Fi smart switch, premium, 1 gang", "spec": "Premium Wi-Fi smart switch, one gang", "level": 5, "unit": "nos", "basis": "product", "rate": [4000, 8000], "src": ["smartify-automation"], "checked": "2026-10-04", "gst": "unstated" },

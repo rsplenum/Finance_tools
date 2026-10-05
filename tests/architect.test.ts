@@ -191,13 +191,18 @@ describe('E5: a new house\'s plot, outside works, water, stairs and stages, by h
     const one = house({ bhk: '1' });
     expect([line(one, 'flat:sump:sump')?.qty, line(one, 'flat:overhead-tank:tank')?.qty, line(one, 'flat:septic:septic')?.qty]).toEqual([2000, 500, 4500]);
   });
-  it('where the sewer reaches the plot, a sewer connection takes the septic tank\'s place: Chennai\'s charge, Rs. 25,500 (the middle of 24,500–26,500) × 0.915427 for Pune = 23,343.39, against the tank\'s 84,680', () => {
+  it('where the sewer reaches the plot, a sewer connection takes the septic tank\'s place: Pune\'s own charge is still to be found, so the connection is left out and the tank\'s 84,680 goes', () => {
     const w = house({ sewer: true });
     expect(line(w, 'flat:septic:septic')).toBeUndefined();
-    expect(line(w, 'flat:sewer:sewer')).toMatchObject({ qty: 1, rate: 23343.39, amount: 23343.39, entry: 'sewer-connection', section: 'water' });
-    expect(w.unpriced.map((u) => u.key)).not.toContain('flat:sewer:sewer');
-    expect(w.total).toBeCloseTo(e.total - 84680 + 23343.39, 2);
+    expect(line(w, 'flat:sewer:sewer')).toBeUndefined();
+    expect(w.unpriced.map((u) => u.key)).toContain('flat:sewer:sewer');
+    expect(w.total).toBeCloseTo(e.total - 84680, 2);
     expect(w.assumptions.find((a) => a.what === 'Water')?.shown).toContain('the city\'s sewer in place of a septic tank');
+  });
+  it('in Chennai, the city\'s own charge as it is: Rs. 25,500, the middle of 24,500–26,500, with no factor for the city', () => {
+    const w = house({ sewer: true, city: 'chennai' });
+    expect(line(w, 'flat:sewer:sewer')).toMatchObject({ qty: 1, rate: 25500, amount: 25500, entry: 'sewer-connection', section: 'water' });
+    expect(w.unpriced.map((u) => u.key)).not.toContain('flat:sewer:sewer');
   });
   it('the stairs: two, each treads 2 × 1.1 × 2.2 = 4.84, risers 1.1 × 3.05 = 3.355, the landing 1.2 × 2.5 = 3 and the floor\'s landing 1.1 × 2.5 = 2.75 sq m: 13.945; 27.89 sq m = 300.21 sq ft of Kota stone at Rs. 125 × 0.915427 = 114.43: Rs. 34,353.03; the well\'s walls 14 m × (2 × 3.05 + 2.7) = 123.2 sq m = 1,326.11 sq ft; a WPC door to the terrace', () => {
     expect(line(e, 'flat:stair-finish:stair-finish')).toMatchObject({ qty: 300.21, rate: 114.43, amount: 34353.03, entry: 'stf-kota', section: 'exterior' });

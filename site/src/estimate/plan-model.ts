@@ -571,12 +571,13 @@ function compareOf(e: ArchitectEstimate, runs: LevelRuns, sections: SectionView[
   return { rows, totals: cells(runs.totals, e.level), ...(differs(e.total, runs.totals, e.level) ? { yours: `Yours: Rs. ${rupees(e.total)}` } : {}) };
 }
 
-/** "Bathrooms to Luxury: Rs. 6,71,648 more", and the items it brought in, up to three. */
+/** "Bathrooms to Luxury: Rs. 6,71,648 more", and the items it brought in, up to three; any it brought in without a rate yet. */
 function changeText(c: Change & { what: string }): ChangeView {
   const names = [...new Set(c.swaps.flatMap((x) => (x.to ? [x.to] : [])))];
   const by = Math.round(c.by) === 0 ? 'no change in the total' : `Rs. ${rupees(Math.abs(c.by))} ${c.by > 0 ? 'more' : 'less'}`;
   const others = c.others === undefined ? '' : `the other rooms ${+(Math.abs(c.others) * 100).toFixed(1)}% ${c.others < 0 ? 'smaller' : 'larger'} · `;
-  return { text: `${c.what}: ${others}${by}`, n: c.by, items: names.length ? `${names.slice(0, 3).join(' · ')}${names.length > 3 ? ` · and ${names.length - 3} more` : ''}` : '' };
+  const still = !c.unpriced?.length ? '' : c.unpriced.length === 1 ? `; the ${c.unpriced[0].toLowerCase()} is still to be priced` : `; ${c.unpriced.length} lines are still to be priced`;
+  return { text: `${c.what}: ${others}${by}${still}`, n: c.by, items: names.length ? `${names.slice(0, 3).join(' · ')}${names.length > 3 ? ` · and ${names.length - 3} more` : ''}` : '' };
 }
 
 /** The bill's lines in words (E4a): the item and its specification, its brands or the one chosen, then where it goes. */

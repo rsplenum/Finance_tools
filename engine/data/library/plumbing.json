@@ -11,7 +11,7 @@
     { "id": "pl-drain", "family": "drain-point", "name": "Drainage point", "spec": "One drainage point: UPVC/SWR pipes and fittings to the stack, with labour", "brands": ["Supreme", "Prince", "Finolex"], "unit": "nos", "basis": "installed", "rate": [700, 2600], "src": ["studiomatrx-plumbing"], "date": "2026-10-04", "checked": "2026-10-04", "gst": "unstated" },
     { "id": "pp-cpvc-15", "family": "plumbing-part", "name": "CPVC pipe, 15 mm, a metre", "spec": "CPVC pipe ½ in", "unit": "m", "basis": "product", "rate": [70, 130], "src": ["studiomatrx-plumbing"], "checked": "2026-10-04", "gst": "unstated" },
     { "id": "pp-cpvc-25", "family": "plumbing-part", "name": "CPVC pipe, 20–25 mm, a metre", "spec": "CPVC pipe ¾–1 in", "unit": "m", "basis": "product", "rate": [120, 230], "src": ["studiomatrx-plumbing"], "checked": "2026-10-04", "gst": "unstated" },
-    { "id": "pp-swr-110", "family": "plumbing-part", "name": "SWR pipe, 110 mm, a metre", "spec": "SWR drainage pipe 110 mm (Hyderabad price)", "unit": "m", "basis": "product", "rate": [67, 67], "src": ["infralens-plumbing"] },
-    { "id": "pp-plumber-day", "family": "plumbing-part", "name": "Plumber, a day", "spec": "Skilled plumber, one day of 8–10 hours", "unit": "nos", "basis": "installed", "rate": [500, 1000], "src": ["infralens-plumbing"] }
+    { "id": "pp-swr-110", "family": "plumbing-part", "name": "SWR pipe, 110 mm, a metre", "spec": "SWR drainage pipe 110 mm, in 3 m lengths", "brands": ["Finolex"], "unit": "m", "basis": "product", "rate": [490, 490], "pack": { "qty": 3, "unit": "m", "what": "a pipe" }, "date": "2026-10-04", "src": ["indiamart-finolex-swr"], "checked": "2026-10-04" },
+    { "id": "pp-plumber-day", "family": "plumbing-part", "name": "Plumber, a day", "spec": "Skilled plumber, one day of 8–10 hours", "unit": "nos", "basis": "installed", "rate": [500, 2200], "date": "2026-10-04", "src": ["solve24-plumber"], "checked": "2026-10-04" }
   ]
 }

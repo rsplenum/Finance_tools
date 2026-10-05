@@ -463,7 +463,8 @@
     "moglix-jaquar": {
       "what": "Jaquar overhead showers and angle valves, listings",
       "url": "https://www.moglix.com/brands/jaquar/plumbing/showers/overhead-showers/119201200",
-      "class": "2"
+      "class": "2",
+      "checked": "2026-10-04"
     },
     "woodenmax-shower": {
       "what": "WoodenMax: glass shower partition price per sq ft, 2026 (GST extra)",
@@ -516,7 +517,8 @@
     "amazon-mirror": {
       "what": "Plain bathroom mirror 18 × 24 in, listings",
       "url": "https://www.amazon.in/SDG-18-24-Mirror-Bathroom/dp/B08KR7G82C",
-      "class": "2"
+      "class": "2",
+      "checked": "2026-10-04"
     },
     "housegyan-exhaust": {
       "what": "Exhaust fan brands in India with prices, 2026",
@@ -634,13 +636,13 @@
       "what": "Membrane doors, listings",
       "url": "https://dir.indiamart.com/impcat/membrane-doors.html",
       "class": "2",
-      "unread": "The site refused the visit (403)."
+      "checked": "2026-10-04"
     },
     "indiamart-hinges": {
       "what": "Concealed hinges, listings",
       "url": "https://dir.indiamart.com/impcat/concealed-hinges.html",
       "class": "2",
-      "unread": "The site refused the visit (403)."
+      "checked": "2026-10-04"
     },
     "houseyog-maindoor": {
       "what": "Main door cost in India, 2026: wooden, steel and teak",
@@ -770,7 +772,8 @@
     "housegyan-fans": {
       "what": "Ceiling fan brands in India with price ranges, 2026",
       "url": "https://www.housegyan.com/blog/budget-friendly-best-ceiling-fan-brands-in-india",
-      "class": "4"
+      "class": "4",
+      "checked": "2026-10-04"
     },
     "smarthouse-bldc": {
       "what": "Best BLDC ceiling fans in India, 2026",
@@ -799,7 +802,7 @@
       "what": "Wipro LED panel lights, listings",
       "url": "https://dir.indiamart.com/impcat/wipro-panel-light.html",
       "class": "2",
-      "unread": "The site refused the visit (403)."
+      "checked": "2026-10-04"
     },
     "indiamart-profiles": {
       "what": "LED profile lights, listings",
@@ -811,12 +814,13 @@
       "what": "Chandelier and pendant lights, listings",
       "url": "https://dir.indiamart.com/impcat/chandelier-pendant-light.html",
       "class": "2",
-      "unread": "The site refused the visit (403)."
+      "checked": "2026-10-04"
     },
     "jainsons-track": {
       "what": "Magnetic track lights, listings",
       "url": "https://jainsonslightsonline.com/collections/magnetic-track-lights",
-      "class": "2"
+      "class": "2",
+      "checked": "2026-10-04"
     },
     "studiomatrx-plumbing": {
       "what": "Bathroom plumbing cost in India, 2026: per-point rates",
@@ -955,12 +959,14 @@
     "pricee-ro": {
       "what": "RO water purifier prices in India",
       "url": "https://pricee.com/water-purifiers/ro-water-purifiers-products-price-in-india",
-      "class": "4"
+      "class": "4",
+      "checked": "2026-10-04"
     },
     "smartprix-ac": {
       "what": "1.5 ton 5-star AC prices in India",
       "url": "https://www.smartprix.com/air_conditioners/5-star-1-5-ton-ac-list",
-      "class": "4"
+      "class": "4",
+      "checked": "2026-10-04"
     },
     "solve24-ac": {
       "what": "AC installation cost in India, 2026",
@@ -1167,7 +1173,8 @@
     "tradeindia-somfy-track": {
       "what": "TradeIndia: Somfy motorised curtain track, a listing",
       "url": "https://www.tradeindia.com/products/somfy-motorized-curtain-track-c10140640.html",
-      "class": "2"
+      "class": "2",
+      "checked": "2026-10-04"
     },
     "urbandecor-install": {
       "what": "Urban Decor Curtains: curtain installation cost in Bangalore (rods, tracks, motorised)",
@@ -1226,7 +1233,7 @@
       "what": "Home Building Smart: underground water tank construction cost a litre (2026), 1,000 litres Rs. 28–35, 5,000 litres Rs. 20–25 a litre",
       "url": "https://homebuildingsmart.com/underground-water-tank-construction-cost-per-litre/",
       "class": "4",
-      "unread": "The page could not be opened from the session."
+      "checked": "2026-10-04"
     },
     "studiomatrx-water-tanks": {
       "what": "Studio Matrx: water tank cost in India (2026), RCC sumps Rs. 8–20 a litre with excavation and waterproofing",
@@ -1779,7 +1786,7 @@
       "what": "Amazon India: GROHE Rainshower SmartActive 130 hand shower (26574000)",
       "url": "https://www.amazon.in/GROHE-Rainshower-SmartActive-Shower-26574000/dp/B07V7HS952",
       "class": "2",
-      "unread": "The page could not be opened from the session."
+      "checked": "2026-10-04"
     },
     "amazon-grohe-head": {
       "what": "Amazon India: GROHE Rainshower SmartActive 310 Cube head shower set (26479000)",
@@ -2077,6 +2084,306 @@
       "what": "Window replacement cost in India: a new frame against a retrofit",
       "url": "https://www.studiomatrx.org/guides/window-replacement-cost-india",
       "class": "4",
+      "checked": "2026-10-04"
+    },
+    "indiamart-botticino": {
+      "what": "IndiaMART: Botticino Italian marble slabs, suppliers' prices a sq ft",
+      "url": "https://dir.indiamart.com/impcat/botticino-marble.html",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "woodenmax-frameless": {
+      "what": "WoodenMax: frameless shower partitions, supplied and fixed, a sq ft",
+      "url": "https://woodenmax.in/products/shower-partitions/frameless-shower-partition",
+      "class": "3",
+      "checked": "2026-10-04"
+    },
+    "moglix-jaquar-angle": {
+      "what": "Moglix: Jaquar angle valves, prices each",
+      "url": "https://www.moglix.com/brands/jaquar/plumbing/faucets/angle-valve/119191920",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "moglix-jaquar-hooks": {
+      "what": "Moglix: Jaquar cloth and robe hooks, prices each",
+      "url": "https://www.moglix.com/brands/jaquar/plumbing/bathroom-fixtures/cloth-robe-hooks/119211500",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "indiamart-hindware-pans": {
+      "what": "IndiaMART: Hindware Indian toilet pans, suppliers' prices each",
+      "url": "https://dir.indiamart.com/impcat/hindware-toilet-seats.html",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "moglix-hindware-wall-mixer": {
+      "what": "Moglix: Hindware wall mixers, prices each",
+      "url": "https://www.moglix.com/brands/hindware/plumbing/faucets/wall-mixer/119191910",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "flipkart-hindware-shower": {
+      "what": "Flipkart: Hindware 100 mm ABS rain shower with a 225 mm arm",
+      "url": "https://www.flipkart.com/hindware-100mm-abs-easy-clean-rain-shower-225mm-arm-square-grey-finish-head/p/itm69e8f91c63bb8",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "moglix-jaquar-basin-mixers": {
+      "what": "Moglix: Jaquar basin mixers, prices each",
+      "url": "https://www.moglix.com/brands/jaquar/plumbing/faucets/basin-mixer/119191300",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "moglix-jaquar-alive": {
+      "what": "Moglix: Jaquar Alive basin mixers, prices each",
+      "url": "https://www.moglix.com/alp/jaquar-alive-basin-mixer",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "moglix-hindware-stop-cocks": {
+      "what": "Moglix: Hindware stop cocks, prices each or a pack",
+      "url": "https://www.moglix.com/brands/hindware/plumbing/faucets/stop-cocks-angles/119191800",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "moglix-cera-showers": {
+      "what": "Moglix: Cera showers, prices each",
+      "url": "https://www.moglix.com/brands/cera/plumbing/showers/119200000",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "moglix-cera-wall-mixers": {
+      "what": "Moglix: Cera wall mixers, prices each",
+      "url": "https://www.moglix.com/brands/cera/plumbing/faucets/wall-mixer/119191910",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "flipkart-cera-angle-4": {
+      "what": "Flipkart: Cera quarter-turn angle valves with wall flanges, a set of four",
+      "url": "https://www.flipkart.com/cera-angle-valve-quarter-turn-wall-flange-set-4-pcs-cock-faucet/p/itmfhfvvfans3fxa",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "woodenmax-stair-railing": {
+      "what": "WoodenMax: staircase glass railing, supplied and fixed, a running foot",
+      "url": "https://woodenmax.in/products/glass-railing/staircase-glass-railing",
+      "class": "3",
+      "checked": "2026-10-04"
+    },
+    "woodenmax-domal-price": {
+      "what": "WoodenMax: Domal aluminium windows, supplied and fixed, a sq ft",
+      "url": "https://woodenmax.in/products/aluminium-windows/domal-window-price",
+      "class": "3",
+      "checked": "2026-10-04"
+    },
+    "indiamart-teak-frames": {
+      "what": "IndiaMART: teak wood door frames, suppliers' prices each",
+      "url": "https://dir.indiamart.com/impcat/teak-wood-door-frame.html",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "indiamart-teak-doors-blr": {
+      "what": "IndiaMART: Burma teak wood doors, Bengaluru suppliers' prices each",
+      "url": "https://dir.indiamart.com/bengaluru/burma-teak-wood-doors.html",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "indiamart-cob-downlights": {
+      "what": "IndiaMART: COB LED downlights, suppliers' prices each",
+      "url": "https://dir.indiamart.com/impcat/cob-led-downlight.html",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "moglix-havells-db": {
+      "what": "Moglix: Havells 12-way SPN double-door distribution board, selling price and MRP",
+      "url": "https://www.moglix.com/havells-spn-double-door-distribution-box-dhdpshodpw12/mp/msn2qgrwjpzrrf",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "tradeindia-gvt-1200": {
+      "what": "TradeIndia: 600 × 1200 mm GVT and PGVT tiles, Delhi suppliers' prices a sq ft",
+      "url": "https://www.tradeindia.com/delhi/600x1200-vitrified-tiles-city-228067.html",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "infinitymarble-carrara": {
+      "what": "The Infinity Marble: Italian Carrara marble slabs, a sq ft",
+      "url": "https://www.theinfinitymarble.com/product/italian-carrara-marble/",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "infinitymarble-calacatta": {
+      "what": "The Infinity Marble: Calacatta Gold marble slabs, a sq ft",
+      "url": "https://www.theinfinitymarble.com/product/calacatta-gold-marble/",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "amazon-wakefit-memory": {
+      "what": "Amazon.in: Wakefit queen memory-foam mattresses, 78 × 60 in",
+      "url": "https://www.amazon.in/s?k=wakefit+queen+size+memory+foam+mattress+78x60",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "amazon-wakefit-latex": {
+      "what": "Amazon.in: Wakefit queen latex mattresses",
+      "url": "https://www.amazon.in/s?k=wakefit+queen+latex+mattress",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "amazon-wakefit-solatio": {
+      "what": "Amazon.in: Wakefit Solatio three-seater sofa",
+      "url": "https://www.amazon.in/s?k=Wakefit+Solatio+3+Seater+Sofa+Set+for+Living+Room",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "amazon-wakefit-napper-mini": {
+      "what": "Amazon.in: Wakefit Napper Mini three-seater sofa",
+      "url": "https://www.amazon.in/s?k=wakefit+napper+mini+3+seater+sofa",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "amazon-wakefit-napper-plus": {
+      "what": "Amazon.in: Wakefit Napper Plus three-seater sofa",
+      "url": "https://www.amazon.in/s?k=wakefit+napper+plus+3+seater+sofa",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "indiamart-granite-counters": {
+      "what": "IndiaMART: granite kitchen counters, suppliers' prices a sq ft",
+      "url": "https://dir.indiamart.com/impcat/granite-kitchen-countertop.html",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "durian-marble-dining": {
+      "what": "Durian: marble-finish dining sets",
+      "url": "https://www.durian.in/buy-furniture/marble-dining-sets",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "ikea-lisabo": {
+      "what": "IKEA India: LISABO series",
+      "url": "https://www.ikea.com/in/en/cat/lisabo-series-30662/",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "indiamart-stone-counters": {
+      "what": "IndiaMART: stone kitchen counters, suppliers' prices a sq ft",
+      "url": "https://dir.indiamart.com/impcat/stone-countertops.html",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "indiamart-calacatta": {
+      "what": "IndiaMART: Calacatta marble, suppliers' prices a sq ft",
+      "url": "https://dir.indiamart.com/impcat/calacatta-marble.html",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "indiamart-quartz-sinks": {
+      "what": "IndiaMART: quartz kitchen sinks, suppliers' prices each",
+      "url": "https://dir.indiamart.com/impcat/quartz-kitchen-sink.html",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "decure-jaquar-sink": {
+      "what": "Decure: Jaquar kitchen sink taps and mixers",
+      "url": "https://decure.in/collections/jaquar-kitchen-faucets",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "indiamart-hettich-channels": {
+      "what": "IndiaMART: Hettich drawer channels, suppliers' prices a set",
+      "url": "https://dir.indiamart.com/impcat/hettich-drawer-hardware.html",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "indiamart-blum-runners": {
+      "what": "IndiaMART: drawer slides, Kolkata suppliers' prices a set",
+      "url": "https://dir.indiamart.com/kolkata/drawer-slides.html",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "indiamart-marble-counters": {
+      "what": "IndiaMART: marble counters, suppliers' prices a sq ft",
+      "url": "https://dir.indiamart.com/impcat/marble-countertops.html",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "padmavati-jaquar-sink-mixer": {
+      "what": "Padmavati Ceramics: Jaquar Florentine Prime sink mixer FLP-CHR-5179BPM, price and MRP",
+      "url": "https://www.padmavaticeramics.com/jaquar/kitchen-faucets/jaquar-table-mounted-regular-kitchen-sink-mixer-florentine-prime-with-swinging-spout-in-chrome-finish-flp-chr-5179bpm",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "indiamart-black-galaxy-list": {
+      "what": "IndiaMART: Black Galaxy granite slabs, suppliers' prices a sq ft",
+      "url": "https://dir.indiamart.com/impcat/black-galaxy-granite-slab.html",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "indiamart-nano-white-list": {
+      "what": "IndiaMART: Nano White slabs, suppliers' prices a sq ft",
+      "url": "https://dir.indiamart.com/impcat/nano-white-granite.html",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "solve24-plumber": {
+      "what": "Solve24: a plumber's pay a day in India, 2026",
+      "url": "https://solve24.in/answers/plumber-salary-per-day",
+      "class": "4",
+      "checked": "2026-10-04"
+    },
+    "moglix-vdp": {
+      "what": "Moglix: video door phones, prices each",
+      "url": "https://www.moglix.com/security/access-control-systems/video-door-phone/116141602",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "comaron-materials": {
+      "what": "Comaron: building materials price list, India 2026",
+      "url": "https://www.comaron.com/blog/building-materials-price-list-india-2026-complete-guide",
+      "class": "4",
+      "checked": "2026-10-04"
+    },
+    "asianpaints-wallpaper": {
+      "what": "Asian Paints: wallpaper cost by material, a sq ft",
+      "url": "https://www.asianpaints.com/blogs/wallpaper-cost.html",
+      "class": "4",
+      "checked": "2026-10-04"
+    },
+    "nobroker-wardrobe-price": {
+      "what": "NoBroker: modular wardrobe prices by material and finish, a sq ft, 2026",
+      "url": "https://www.nobroker.in/interiors/design-guides/modular-wardrobe-price/",
+      "class": "4",
+      "checked": "2026-10-04"
+    },
+    "houseyog-cement": {
+      "what": "HouseYog: cement price today, India",
+      "url": "https://www.houseyog.com/blog/cement-price-today-india-cost-per-sq-ft/",
+      "class": "4",
+      "checked": "2026-10-04"
+    },
+    "woodage-panelling": {
+      "what": "Woodage: wall panelling cost, India 2026",
+      "url": "https://www.woodage.in/blogs/posts/2026/wall-paneling-cost-india-2026-wpc-pvc-mdf-cnc/",
+      "class": "4",
+      "checked": "2026-10-04"
+    },
+    "indiamart-finolex-swr": {
+      "what": "IndiaMART: Finolex SWR pipes, suppliers' prices a 3 m pipe",
+      "url": "https://dir.indiamart.com/impcat/finolex-swr-pipe.html",
+      "class": "2",
+      "checked": "2026-10-04"
+    },
+    "aapka-pune": {
+      "what": "AapkaPainter: interior and exterior painting rates, Pune 2026",
+      "url": "https://aapkapainter.com/blog/painting-cost-in-pune/",
+      "class": "4",
+      "checked": "2026-10-04"
+    },
+    "indiamart-parryware-onepiece": {
+      "what": "IndiaMART: Parryware one-piece toilets, suppliers' prices each",
+      "url": "https://dir.indiamart.com/impcat/parryware-one-piece-toilet-seat.html",
+      "class": "2",
       "checked": "2026-10-04"
     }
   }

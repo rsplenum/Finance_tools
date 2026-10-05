@@ -6,7 +6,7 @@
 import { describe, it, expect } from 'vitest';
 import { architect, billOf, cityFactor, type ArchitectEstimate, type ArchitectInput } from '../engine/architect';
 import { checkRate } from '../engine/architect-check';
-import { price } from '../engine/library';
+import { ENTRIES, price } from '../engine/library';
 import { FAR_OUT, billFroms, matchWords, quoteCheck, quoteContext, TYPED_UNIT, type QuoteLine, type QuoteResult } from '../engine/quote';
 import { R } from '../engine/architect';
 
@@ -52,10 +52,17 @@ describe('the quotation check', () => {
     expect([at(undefined).where, at(undefined).band]).toEqual(['left-out', null]);
   });
 
-  it('turns metres into running feet: kitchen units at Rs. 25,000–45,000 a metre come to Rs. 9,715.26 a running ft at the low end', () => {
+  it('takes the cheapest choice at the level: mid-range kitchen units at Rs. 6,000 a running ft plus GST come to Rs. 9,026.77', () => {
     const k = lines.find((x) => x.b.entry === 'kc-acrylic') as (typeof lines)[number];
-    // 25,000 × 1.2749681 = 31,874.20 a metre × 0.3048 = 9,715.26; the high end Rs. 22,000 × 1.2749681 = 28,049.30 a running ft.
-    expect(one([{ words: 'x', unit: TYPED_UNIT[k.b.unit], rate: 20000, from: k.from }], ctx)[0].band).toEqual({ low: 9715.26, high: 28049.3 });
+    // 6,000 × 1.18 = 7,080 × 1.2749681 = 9,026.77; the high end Rs. 22,000 × 1.2749681 = 28,049.30 a running ft.
+    expect(one([{ words: 'x', unit: TYPED_UNIT[k.b.unit], rate: 20000, from: k.from }], ctx)[0].band).toEqual({ low: 9026.77, high: 28049.3 });
+    expect(checkRate('kc-mid-zen', 'mumbai', 0)).toBe(9026.77);
+  });
+
+  it('turns metres into running feet: kitchen units at Rs. 25,000–45,000 a metre come to Rs. 9,715.26–17,487.46 a running ft', () => {
+    // 25,000 × 1.2749681 = 31,874.20 a metre × 0.3048 = 9,715.26; 45,000 × 0.3048 = 13,716 a running ft × 1.2749681 = 17,487.46.
+    const from = { entry: 'kc-mid-m', family: 'cabinets', levels: [] };
+    expect(one([{ words: 'x', unit: 'rft', rate: 12000, from }], ctx)[0].band).toEqual({ low: 9715.26, high: 17487.46 });
   });
 
   it('adds GST to the material of a rate quoted before it, never to its fixing labour, at either end', () => {
@@ -67,7 +74,8 @@ describe('the quotation check', () => {
   });
 
   it('says when the item is still as reported', () => {
-    const w = lines.find((x) => x.b.entry === 'fw-gvt-1200') as (typeof lines)[number];
+    expect(ENTRIES.get('wt-gvt')?.checked).toBeUndefined();
+    const w = lines.find((x) => x.b.entry === 'wt-gvt') as (typeof lines)[number];
     expect(one([{ words: 'x', unit: 'sqft', rate: 200, from: w.from }], ctx)[0].reported).toBe(true);
   });
 
