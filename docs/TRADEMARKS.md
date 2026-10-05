@@ -19,7 +19,8 @@ Everywhere brands show (the estimate, its downloads, the pSEO pages):
 2. The generic item name first; the brand after it, as an example, or in brackets when the line is that product.
 3. A price beside a brand comes from its source and date; an item named after one product is checked against a page, not "as reported".
 4. This notice, word for word, wherever brands show, in the same type as the rest:
-   > Brand names belong to their owners and are used here only to name their products. We are not linked to, paid by or endorsed by any of them. Each price comes from the source and date shown; where brands are listed as examples, the price is for the grade, not a quote for any one brand. Prices change: check with a dealer before you buy.
+   > Brand names belong to their owners and are used here only to name their products. We are not linked to, paid by or endorsed by any of them. Each price comes from the source and date shown; where brands are listed as examples, the price is for the level, not a quote for any one brand. Prices change: check with a seller before you buy.
+   Only where a brand shows (owner, 05-10-2026, D-BIZ-05): a line or an open drawer that names one, or a download that prints one. Where brands show without our prices, as on the bill of quantities, its first two sentences only.
 5. Never "official", "authorised", "dealer", "partner" or "offer" beside a brand.
 6. If a brand ever pays for a placement, or a link earns a commission, the page says so.
 
@@ -37,7 +38,8 @@ On the pSEO pages, also:
 ## Where the tool stands (05-10-2026)
 - 231 of the library's items show brands as plain-text examples (210 brand names). 41 items carry a brand in their name, such as "Single-lever basin mixer (Jaquar Florentine)", each checked against a page; a test fails on one that is not. The three that were only as reported are generic now, the brand an example (TM1): p-head-grohe "Head shower set, 310 mm square", cp-cera "Basic fittings, another make", hw-blum "Top-grade hardware throughout".
 - No logos or product images (`site/public` holds only the favicon); every price shows its source and date; the brand a user picks is printed in their downloads as their own record.
-- The notice (rule 4) shows word for word under the items of each opened section of the planning estimate where a brand can show, in the items' own type, and in Annex 1 of the estimate's PDF, Excel and Word copies and in the bill of quantities, in the body's type (TM1, D-BIZ-04). The site check reads it in all of them, and fails on any image besides the favicon in `site/public` or the built site. The typed quotation's downloads print only what the user typed, at their own rates, so they carry none: its price sentences would not hold there.
+- The notice (rule 4) shows word for word under the items of each opened section of the planning estimate where a brand shows (a line's item names one, or the open drawer shows one), in the items' own type, and in Annex 1 of the estimate's PDF, Excel and Word copies where a line names a brand; the bill of quantities, which names brands but shows none of our prices, carries its first two sentences; both in the body's type (TM1, D-BIZ-04, D-BIZ-05). The site check reads it in all of them, and fails on any image besides the favicon in `site/public` or the built site. The typed quotation's downloads print only what the user typed, at their own rates, so they carry none: its price sentences would not hold there.
+- No item or source beside a brand says "official", "authorised", "dealer", "partner" or "offer" (rule 5); a test fails on one (D-BIZ-05).
 - Every page is noindex until launch (D-TECH-07), so none of this is public yet.
 
 ## Sources (read 05-10-2026)

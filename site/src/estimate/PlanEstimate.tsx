@@ -21,6 +21,7 @@ import {
   BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, FLOOR_CHOICES, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORD_CHOICES, WORK_CHOICES, areaLabel, checkedLine, drawerView, heightOf, plainOf, planPreview, sideUnit,
   withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit,
   type AreaUnit, type DrawerView, type LineView, type PlanFacts, type PlanPreview, type PlanState, type PlanView, type RoomView, type RungView, type SectionView, type WhyView,
+  drawerBrands, groupKey,
 } from './plan-model';
 import type { Bhk, Level } from '../../../engine/architect';
 
@@ -171,6 +172,10 @@ const CHEVRON = <svg aria-hidden="true" viewBox="0 0 20 20" class="size-4 shrink
 function Sections({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) {
   const [opened, setOpened] = useState<Record<string, boolean>>({});
   const [open, setOpen] = useState<string | null>(null);
+  // The open drawer, and its other levels opened or closed by a tap: the brand notice follows what they show (D-BIZ-05).
+  const [groups, setGroups] = useState<Record<string, boolean>>({});
+  const setGroup = (k: string, o: boolean) => setGroups((m) => (m[k] === o ? m : { ...m, [k]: o }));
+  const d = useMemo(() => (open ? drawerView(s, v, open) : undefined), [open, s, v]);
   const width = new Map(v.bar.map((b) => [b.id, b.width]));
   const list = [...v.sections.filter((x) => x.on).sort((a, b) => b.pkg - a.pkg), ...v.sections.filter((x) => !x.on)];
   return <section id="pl-sections" aria-labelledby="pl-sections-h" class="mt-6">
@@ -209,10 +214,10 @@ function Sections({ s, v, update }: { s: PlanState; v: PlanView; update: Update 
               </>}
               {opened[x.id] && x.why && <Why id={`pl-why-section-${x.id}`} about={x.name} title="Where to spend, where to save" w={x.why} />}
               {x.on && opened[x.id] && x.lines.length > 0 && <ol data-testid={`pl-items-${x.id}`} class="mt-2 divide-y divide-slate-200 dark:divide-slate-700">
-                {x.lines.map((l) => <Item key={l.key} s={s} v={v} l={l} open={open === l.key} toggle={() => setOpen((k) => (k === l.key ? null : l.key))} update={update} />)}
+                {x.lines.map((l) => <Item key={l.key} s={s} l={l} open={open === l.key} d={open === l.key ? d : undefined} groups={groups} setGroup={setGroup} toggle={() => setOpen((k) => (k === l.key ? null : l.key))} update={update} />)}
               </ol>}
-              {/* The brand notice where the section's brands show, in the items' own type (D-BIZ-03); closed with the answer, so V1's count is unchanged. */}
-              {x.on && opened[x.id] && x.lines.length > 0 && x.brands && <p data-testid={`pl-brand-notice-${x.id}`} class={`mt-2 text-sm ${INK}`}>{BRAND_NOTICE}</p>}
+              {/* The brand notice where a brand shows in the section, in the items' own type (D-BIZ-03): a line's item names one, or the open drawer shows one (D-BIZ-05). Closed with the answer, so V1's count is unchanged. */}
+              {x.on && opened[x.id] && x.lines.length > 0 && (x.brands || (!!d && drawerBrands(x.lines.find((l) => l.key === d.key), d, groups))) && <p data-testid={`pl-brand-notice-${x.id}`} class={`mt-2 text-sm ${INK}`}>{BRAND_NOTICE}</p>}
             </div>
           </details>
         </li>;
@@ -240,8 +245,7 @@ function Slider({ s, x, update }: { s: PlanState; x: SectionView; update: Update
 }
 
 /** One line of a section, and its drawer when opened. */
-function Item({ s, v, l, open, toggle, update }: { s: PlanState; v: PlanView; l: LineView; open: boolean; toggle: () => void; update: Update }) {
-  const d = useMemo(() => (open ? drawerView(s, v, l.key) : undefined), [open, s, v, l.key]);
+function Item({ s, l, open, d, groups, setGroup, toggle, update }: { s: PlanState; l: LineView; open: boolean; d?: DrawerView; groups: Record<string, boolean>; setGroup: (k: string, o: boolean) => void; toggle: () => void; update: Update }) {
   return <li data-testid={`pl-line-${l.key}`} class="py-2">
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0">
@@ -251,7 +255,7 @@ function Item({ s, v, l, open, toggle, update }: { s: PlanState; v: PlanView; l:
       <button type="button" data-testid={`pl-open-${l.key}`} aria-expanded={open} class={`shrink-0 ${BUTTON}`} onClick={toggle}>{open ? 'Close' : 'Change'}</button>
     </div>
     {l.why && <Why id={`pl-why-${l.key}`} about={`${l.room}, ${l.name.toLowerCase()}`} w={l.why} />}
-    {open && d && <Drawer s={s} l={l} d={d} update={update} />}
+    {open && d && <Drawer s={s} l={l} d={d} groups={groups} setGroup={setGroup} update={update} />}
   </li>;
 }
 
@@ -281,7 +285,7 @@ function Why({ id, about, title, w }: { id: string; about: string; title?: strin
  * and the family's items at no level one tap away, open when they hold the line's item; brands as chips; how the line was
  * worked out.
  */
-function Drawer({ s, l, d, update }: { s: PlanState; l: LineView; d: DrawerView; update: Update }) {
+function Drawer({ s, l, d, groups, setGroup, update }: { s: PlanState; l: LineView; d: DrawerView; groups: Record<string, boolean>; setGroup: (k: string, o: boolean) => void; update: Update }) {
   const name = `fld-item-${l.key}`;
   const choose = (x: RungView, brand?: string) => update((st) => withItem(st, l.key, x.id, brand, `${l.room}, ${l.name.toLowerCase()}: ${x.name}`));
   const rung = (x: RungView, i: string) => <li key={x.id} class="py-2">
@@ -308,7 +312,7 @@ function Drawer({ s, l, d, update }: { s: PlanState; l: LineView; d: DrawerView;
         const list = <ol class="divide-y divide-slate-200 dark:divide-slate-700">{g.choices.map((x, i) => rung(x, `${gi}-${i}`))}</ol>;
         return gi === 0
           ? <div key={g.title} data-testid={`pl-choices-${g.level ?? 'other'}`}><p class={`mt-1 text-sm font-medium ${INK}`}>{g.title}</p>{list}</div>
-          : <details key={g.title} data-testid={`pl-choices-${g.level ?? 'other'}`} class="mt-1" open={g.open}>
+          : <details key={g.title} data-testid={`pl-choices-${g.level ?? 'other'}`} class="mt-1" open={groups[groupKey(d.key, g)] ?? g.open} onToggle={(ev) => setGroup(groupKey(d.key, g), (ev.currentTarget as HTMLDetailsElement).open)}>
             <summary class={`cursor-pointer text-sm text-teal-800 dark:text-teal-300`}>{g.title}</summary>{list}
           </details>;
       })}

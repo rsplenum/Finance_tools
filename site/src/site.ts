@@ -2,11 +2,13 @@
 export const SITE_NAME = 'Loan document tools';
 
 /**
- * The notice wherever brand names show (D-BIZ-03, rule 4 of docs/TRADEMARKS.md, word for word): on the planning estimate
- * where its brand examples show, and in each download that names a brand, in the same type as the rest. The site check
- * holds it to the rule's text, on the page and in the six downloads.
+ * The notice wherever brand names show (D-BIZ-03, rule 4 of docs/TRADEMARKS.md, word for word), in the same type as the
+ * rest, and only where a brand shows (D-BIZ-05): on the planning estimate where a line or an open drawer names one, and in
+ * each download that names one. The site check holds both to the rule's text, on the page and in the six downloads.
  */
-export const BRAND_NOTICE = 'Brand names belong to their owners and are used here only to name their products. We are not linked to, paid by or endorsed by any of them. Each price comes from the source and date shown; where brands are listed as examples, the price is for the grade, not a quote for any one brand. Prices change: check with a dealer before you buy.';
+/** Its first two sentences: where brands show without our prices, as on the bill of quantities (D-BIZ-05). */
+export const BRAND_NOTICE_SHORT = 'Brand names belong to their owners and are used here only to name their products. We are not linked to, paid by or endorsed by any of them.';
+export const BRAND_NOTICE = `${BRAND_NOTICE_SHORT} Each price comes from the source and date shown; where brands are listed as examples, the price is for the level, not a quote for any one brand. Prices change: check with a seller before you buy.`;
 
 export interface Tool { name: string; what: string; status: 'Being built' | 'Later'; href?: string }
 

@@ -4,7 +4,8 @@
  * unit. A rate is the middle of its reported range, worked by hand below.
  */
 import { describe, it, expect } from 'vitest';
-import { CLASSES, ENTRIES, FAMILIES, FILES, LABOUR_ITEMS, NOTES, NOTES_DATE, SOURCE, SPEND_SAVE, choices, ladder, price, type Note } from '../engine/library';
+import { CLASSES, ENTRIES, FAMILIES, FILES, LABOUR_ITEMS, NOTES, NOTES_DATE, SOURCE, SPEND_SAVE, choices, ladder, price, type Note, namesBrand } from '../engine/library';
+import SOURCES from '../engine/data/sources.json';
 import { R, architect, dimensionOf, type ArchitectEstimate, type ArchitectInput } from '../engine/architect';
 import { checkRate } from '../engine/architect-check';
 
@@ -81,10 +82,22 @@ describe('the library: every value has a source', () => {
 
 describe('brand names (D-BIZ-03, docs/TRADEMARKS.md)', () => {
   it('an item named after a brand is checked against its page, never as reported (rule 3); else its name is generic and the brand an example', () => {
-    const word = (b: string) => new RegExp(`\\b${b.split(/\s+/)[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
-    const named = [...ENTRIES.values()].filter((x) => (x.brands ?? []).some((b) => word(b).test(x.name)));
+    const named = [...ENTRIES.values()].filter((x) => namesBrand(x.name, x.brands));
     expect(named.length).toBeGreaterThan(30);
     expect(named.filter((x) => !x.checked).map((x) => `${x.id}: ${x.name}`)).toEqual([]);
+  });
+  it('never "official", "authorised", "dealer", "partner" or "offer" beside a brand: in a branded item\'s words or its sources (rule 5, D-BIZ-05)', () => {
+    const bad = /\b(official|authori[sz]ed|dealers?|partners?|offers?)\b/i, what = new Map<string, string>();
+    const walk = (o: unknown): void => {
+      if (!o || typeof o !== 'object') return;
+      for (const [k, x] of Object.entries(o)) {
+        if (x && typeof x === 'object' && typeof (x as { what?: unknown }).what === 'string') what.set(k, (x as { what: string }).what);
+        walk(x);
+      }
+    };
+    walk(SOURCES);
+    expect([...ENTRIES.values()].filter((x) => x.brands?.length).flatMap((x) => [x.name, x.spec, x.note ?? '', ...(x.src ?? []).map((id) => what.get(id) ?? '')]
+      .filter((t) => bad.test(t)).map((t) => `${x.id}: ${t}`))).toEqual([]);
   });
 });
 
