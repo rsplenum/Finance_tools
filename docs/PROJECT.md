@@ -13,7 +13,7 @@ Free: a home-loan project-cost calculator, used to bring in visitors.
 DSAs and accountants who prepare many files (monthly plan), and borrowers preparing one (pay per document). Bank staff are not customers.
 
 ## How
-Static Astro site on Cloudflare Pages, with the calculations running in the browser. Programmatic SEO pages each carry a working calculator. Razorpay unlocks the download through one Cloudflare Worker, with D1 and KV behind it. Documents are generated in the browser (DOCX, Excel, print to PDF). Numbers come from a deterministic engine; AI only drafts narrative text, marked as a draft.
+Static Astro site on Cloudflare Pages, with the calculations running in the browser. Programmatic SEO pages each carry a working calculator, and name brands only as `docs/TRADEMARKS.md` allows (D-BIZ-03). Razorpay unlocks the download through one Cloudflare Worker, with D1 and KV behind it. Documents are generated in the browser (DOCX, Excel, print to PDF). Numbers come from a deterministic engine; AI only drafts narrative text, marked as a draft.
 
 ## Order
 Phase 0 clearances (permission settled 30-09-2026, D-BIZ-01; entity, GST, Razorpay still to do) → Phase 1 DSCR (weeks 1–4) → Phase 2 estimate (weeks 5–8) → Phase 3 project report (weeks 9–18). Gates between phases: written go-ahead, 20 paid reports, 10 DSA plans.

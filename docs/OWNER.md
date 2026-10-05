@@ -41,5 +41,6 @@ What only the owner can do or answer, moved out of `docs/HANDOFF.md` on 04-10-20
 - Business entity, GST registration and Razorpay account (Phase 0).
 - Before payments: keep the separate Worker (D-TECH-01) or move the API beside the site as Pages Functions (same address, separate preview data per branch)? Branch previews of a separate Worker share the live D1 and KV. Decide with the Cloudflare docs open.
 - A product name and domain (the site says "Loan document tools" for now); at launch remove the `noindex` in `site/public/_headers`.
+- Before the pSEO pages are indexed (D-BIZ-03, `docs/TRADEMARKS.md`): an address for brand owners and the days within which a mention is corrected or removed, for the pages' brand-owner line; and a one-time review by an Indian IP lawyer of `docs/TRADEMARKS.md`, the page templates and the brand notice.
 - First region and cities for construction rates (Phase 2): now the cities the estimate's library is checked for first (A7).
 - Main customer first, for the price (P1d): DSAs (plans) or borrowers (one-off). The page is built for a borrower first (D-UX-10).
