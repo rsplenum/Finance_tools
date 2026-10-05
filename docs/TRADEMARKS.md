@@ -35,9 +35,9 @@ On the pSEO pages, also:
 14. Pages naming lenders' products follow the same rules, and none is aimed at the customers of the owner's employer bank (D-BIZ-01).
 
 ## Where the tool stands (05-10-2026)
-- 231 of the library's items show brands as plain-text examples (210 brand names). 44 items carry a brand in their name, such as "Single-lever basin mixer (Jaquar Florentine)", 41 of them checked against a page; three are only as reported: p-head-grohe, cp-cera and hw-blum.
+- 231 of the library's items show brands as plain-text examples (210 brand names). 41 items carry a brand in their name, such as "Single-lever basin mixer (Jaquar Florentine)", each checked against a page; a test fails on one that is not. The three that were only as reported are generic now, the brand an example (TM1): p-head-grohe "Head shower set, 310 mm square", cp-cera "Basic fittings, another make", hw-blum "Top-grade hardware throughout".
 - No logos or product images (`site/public` holds only the favicon); every price shows its source and date; the brand a user picks is printed in their downloads as their own record.
-- No notice yet, and nothing says a grade's price is not a quote for each brand shown. TM1 in `docs/HANDOFF.md` adds the notice, settles the three items and adds a site check.
+- The notice (rule 4) shows word for word under the items of each opened section of the planning estimate where a brand can show, in the items' own type, and in Annex 1 of the estimate's PDF, Excel and Word copies and in the bill of quantities, in the body's type (TM1, D-BIZ-04). The site check reads it in all of them, and fails on any image besides the favicon in `site/public` or the built site. The typed quotation's downloads print only what the user typed, at their own rates, so they carry none: its price sentences would not hold there.
 - Every page is noindex until launch (D-TECH-07), so none of this is public yet.
 
 ## Sources (read 05-10-2026)

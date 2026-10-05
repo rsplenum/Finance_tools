@@ -13,6 +13,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { BUTTON, Choice, HINT, LABEL, Section, SelectField, SourceNote, TextField } from '../fields';
 import { printable } from '../doc/pdf';
+import { BRAND_NOTICE } from '../site';
 import { isoDate, save, type FileKind } from '../download';
 import { sharePlan } from './shared';
 import { billDoc, billFileName, planDoc, planDocNeeds, planDocStatus, planFileName } from './plan-document';
@@ -210,6 +211,8 @@ function Sections({ s, v, update }: { s: PlanState; v: PlanView; update: Update 
               {x.on && opened[x.id] && x.lines.length > 0 && <ol data-testid={`pl-items-${x.id}`} class="mt-2 divide-y divide-slate-200 dark:divide-slate-700">
                 {x.lines.map((l) => <Item key={l.key} s={s} v={v} l={l} open={open === l.key} toggle={() => setOpen((k) => (k === l.key ? null : l.key))} update={update} />)}
               </ol>}
+              {/* The brand notice where the section's brands show, in the items' own type (D-BIZ-03); closed with the answer, so V1's count is unchanged. */}
+              {x.on && opened[x.id] && x.lines.length > 0 && x.brands && <p data-testid={`pl-brand-notice-${x.id}`} class={`mt-2 text-sm ${INK}`}>{BRAND_NOTICE}</p>}
             </div>
           </details>
         </li>;

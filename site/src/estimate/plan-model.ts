@@ -11,7 +11,7 @@ import {
   BATHS, BHKS, CITIES, FLOORS, LEVELS, PLOT_SIDE, R, ROOM_SIDE, SIZE_WORDS, bathsOf, bedroomsOf, billOf, WORK_KINDS, architect, architectNeeds, changeOf, choicesFor, levelName, levelRuns, overPackage, planRooms, wordName,
   type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choice, type House, type Level, type LevelRuns, type Line, type RoomKind, type SizeWord, type Stage, type WorkKind,
 } from '../../../engine/architect';
-import { CLASSES, FT_PER_M, LIBRARY_DATE, NOTES, PER, SOURCE, SPEND_SAVE, SQFT_PER_SQM, type ItemKind, type Note, type Unit } from '../../../engine/library';
+import { CLASSES, ENTRIES, FT_PER_M, LIBRARY_DATE, NOTES, PER, SOURCE, SPEND_SAVE, SQFT_PER_SQM, type ItemKind, type Note, type Unit } from '../../../engine/library';
 import { parseAmount } from '../../../engine/parse';
 import { inr, rupeesWords } from '../../../engine/util';
 
@@ -363,6 +363,8 @@ export interface SectionView {
   mixed: number; mixedText: string; lines: LineView[];
   /** Where to spend, where to save (T1), when the section has a rule, on or off. */
   why?: WhyView;
+  /** A brand can show in it, on a line or among the choices in its drawers: the brand notice goes with its items (D-BIZ-03). */
+  brands: boolean;
 }
 export interface StripView { level: Level; name: string; total: string; full: string; n: number; current: boolean }
 export interface BarView { id: string; name: string; amount: string; n: number; width: number }
@@ -473,6 +475,7 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
       ...(Math.round(d) !== 0 ? { over: { text: `Rs. ${rupees(Math.abs(d))} ${d > 0 ? 'more' : 'less'} than ${pkg}`, n: d } } : {}),
       spec: specOf(ls), where: whereOf(ls, e), mixed: chosen + roomLevel, mixedText: mixedText ? `Mixed (${mixedText})` : '', lines,
       ...(SECTION_WHY.has(t.id) ? { why: SECTION_WHY.get(t.id) } : {}),
+      brands: ls.some((l) => l.brands.length > 0 || BRANDED.has(l.family)),
     };
   });
   const shown = sections.filter((x) => x.on && x.n > 0), most = Math.max(1, ...shown.map((x) => x.n));
@@ -591,6 +594,9 @@ function billView(s: PlanState, e: ArchitectEstimate): BillView[] {
     })),
   }));
 }
+
+/** The families with an item that names a brand: their drawers show brands, whatever the line's own item (D-BIZ-03). */
+const BRANDED = new Set([...ENTRIES.values()].filter((x) => x.brands?.length).map((x) => x.family));
 
 function lineView(s: PlanState, l: Line, no: string, sourceOf: (id: string) => SourceView): LineView {
   const chosen = s.brands[l.key] && l.brands.includes(s.brands[l.key]) ? s.brands[l.key] : undefined;

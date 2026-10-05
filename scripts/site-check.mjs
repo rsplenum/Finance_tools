@@ -44,6 +44,15 @@ const pages = (await readdir(DIST, { recursive: true }))
   .sort();
 
 const violations = [];
+
+// D-BIZ-03: the brand notice, word for word as rule 4 of docs/TRADEMARKS.md gives it, read below on the planning estimate
+// and in its six downloads; and, by rule 1, no logo or product image: site/public and the built site hold no image but the favicon.
+const TM = await readFile(fileURLToPath(new URL('../docs/TRADEMARKS.md', import.meta.url)), 'utf8');
+const NOTICE = TM.slice(TM.indexOf('4. This notice')).split('\n').find((l) => l.trim().startsWith('> '))?.trim().slice(2) ?? '(rule 4 not found)';
+for (const [dir, label] of [[fileURLToPath(new URL('../site/public/', import.meta.url)), 'site/public'], [DIST, 'the built site']]) {
+  const images = (await readdir(dir, { recursive: true })).filter((f) => /\.(png|jpe?g|gif|webp|avif|svg|ico|bmp|tiff?)$/i.test(f) && f !== 'favicon.svg');
+  if (images.length) violations.push(`${label} holds an image besides the favicon (docs/TRADEMARKS.md, rule 1: no logos or product photos): ${images.join(', ')}`);
+}
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 
 /** Opens a page at 390 px. `stored` is a saved theme choice; `blockScripts` loads the page without its script files. */
@@ -634,6 +643,7 @@ for (const scheme of ['light', 'dark']) {
   const opened = await page.locator('main details[open]').count();
   if (opened) v(`${opened} closed lines are open with the answer`);
   await tap(page, 'pl-card-flooring');
+  await expectText(page, v, 'pl-brand-notice-flooring', NOTICE, 'the brand notice with the floors\' items, word for word (D-BIZ-03)');
   const living = page.getByTestId('pl-line-living:floor:floor-skirting');
   await expectText(page, v, living.locator('p').nth(1), '303.03 sq ft × Rs. 111.65 = Rs. 33,833', 'the living room floor, by hand');
   await page.getByTestId('pl-open-living:floor:floor-skirting').click();
@@ -685,6 +695,13 @@ for (const scheme of ['light', 'dark']) {
   const billWord = await docxLines((await save('pl-bill-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
   if (billWord.messages.length || !billWord.lines.some((l) => l.startsWith('No. | Item and specification | Where | Quantity | Unit | Rate | Amount | Make offered')))
     v(`the bill's Word copy reads back ${JSON.stringify(billWord.lines.slice(0, 4))} ${JSON.stringify(billWord.messages).slice(0, 120)}`);
+  // D-BIZ-03: the brand notice, word for word, in each download that names a brand.
+  const noticed = {
+    'the planning estimate PDF': pdfText.join('\n').replace(/\s+/g, ' ').includes(NOTICE), "the planning estimate's Excel copy": book.some((x) => x.data.some((r) => r.includes(NOTICE))),
+    "the planning estimate's Word copy": word.lines.includes(NOTICE), 'the bill PDF': billText.includes(NOTICE),
+    "the bill's Excel copy": billBook.some((x) => x.data.some((r) => r.includes(NOTICE))), "the bill's Word copy": billWord.lines.includes(NOTICE),
+  };
+  for (const [what, ok] of Object.entries(noticed)) if (!ok) v(`${what} does not hold the brand notice of docs/TRADEMARKS.md, rule 4, word for word`);
   // E4b: the bill taken into the typed path, a card for each of its lines, every one left out until a rate is typed. The
   // floor tiles' band at Basic in Pune, worked again in python from the library's files: the lowest low end is vinyl
   // sheet's Rs. 50.35 and the highest high end Kota stone's Rs. 164.78 a sq ft; Rs. 210 is (210 − 164.78) ÷ 164.78 = 27%

@@ -79,6 +79,15 @@ describe('the library: every value has a source', () => {
   });
 });
 
+describe('brand names (D-BIZ-03, docs/TRADEMARKS.md)', () => {
+  it('an item named after a brand is checked against its page, never as reported (rule 3); else its name is generic and the brand an example', () => {
+    const word = (b: string) => new RegExp(`\\b${b.split(/\s+/)[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    const named = [...ENTRIES.values()].filter((x) => (x.brands ?? []).some((b) => word(b).test(x.name)));
+    expect(named.length).toBeGreaterThan(30);
+    expect(named.filter((x) => !x.checked).map((x) => `${x.id}: ${x.name}`)).toEqual([]);
+  });
+});
+
 describe('the five levels of every family', () => {
   it('name five places, each an item with a rate, in the family\'s own unit', () => {
     for (const fam of FAMILIES.values()) {

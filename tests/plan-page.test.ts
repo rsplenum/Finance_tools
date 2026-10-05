@@ -16,7 +16,7 @@ import {
   EMPTY_PLAN, areaLabel, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit, type PlanState,
 } from '../site/src/estimate/plan-model';
 import { billDoc, billFileName, planDoc, planDocStatus, planFileName } from '../site/src/estimate/plan-document';
-import { SITE_NAME } from '../site/src/site';
+import { BRAND_NOTICE, SITE_NAME } from '../site/src/site';
 import { docxLines, pdfPages, workbook } from '../scripts/read-doc.mjs';
 
 const TODAY = '2026-10-03', MADE = new Date('2026-10-03T10:00:00Z');
@@ -265,6 +265,13 @@ describe('the planning estimate to download', () => {
     expect(messages).toEqual([]);
     expect(word).toContain(`Total estimated cost | ${p.view!.total}`);
   });
+  it('the brand notice word for word in Annex 1, where the brands show, and in each copy (D-BIZ-03)', async () => {
+    expect(doc.parts[1].blocks).toContainEqual({ kind: 'text', text: BRAND_NOTICE });
+    expect(doc.parts.filter((x) => x.blocks.some((b) => b.kind === 'text' && b.text === BRAND_NOTICE)).map((x) => x.name)).toEqual(['Detailed estimate']);
+    expect((await pdfPages(pdfOf(doc, MADE))).join('\n').replace(/\s+/g, ' ')).toContain(BRAND_NOTICE);
+    expect((await workbook(xlsxOf(doc, MADE))).some((x) => x.data.some((r) => r.includes(BRAND_NOTICE)))).toBe(true);
+    expect((await docxLines(docxOf(doc, MADE))).lines).toContain(BRAND_NOTICE);
+  });
   it('provisional while the owner\'s name is missing, and said on every page', async () => {
     const t = { ...s, doc: { ...s.doc, owner: '' } }, d = planDoc(t, planPreview(t), TODAY)!;
     expect(planDocStatus(t, planPreview(t))).toBe('Provisional: 1 still needed');
@@ -311,6 +318,12 @@ describe('the bill of quantities to download (E4a, D-UX-36)', () => {
     const { lines: word, messages } = await docxLines(docxOf(doc, MADE));
     expect(messages).toEqual([]);
     expect(word.some((l) => l.includes('Double-charge vitrified tiles') && l.includes('Living and dining'))).toBe(true);
+  });
+  it('the brand notice word for word, as the bill names brands, in each copy (D-BIZ-03)', async () => {
+    expect(text).toContain(BRAND_NOTICE);
+    expect((await pdfPages(pdfOf(doc, MADE))).join('\n').replace(/\s+/g, ' ')).toContain(BRAND_NOTICE);
+    expect((await workbook(xlsxOf(doc, MADE))).some((x) => x.data.some((r) => r.includes(BRAND_NOTICE)))).toBe(true);
+    expect((await docxLines(docxOf(doc, MADE))).lines).toContain(BRAND_NOTICE);
   });
 });
 
