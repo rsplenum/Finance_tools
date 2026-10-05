@@ -7,7 +7,7 @@
  */
 import type { Block, Cell, Doc, Figure, Table } from '../doc/doc';
 import { printable } from '../doc/pdf';
-import { SITE_NAME } from '../site';
+import { BRAND_NOTICE, BRAND_NOTICE_SHORT, SITE_NAME } from '../site';
 import { statusText, type PlanFacts, type PlanPreview, type PlanState } from './plan-model';
 
 /** What the document needs that the page does not ask: the owner's name and the property, in letters the PDF prints. */
@@ -36,6 +36,10 @@ const dmy = (iso: string) => iso.split('-').reverse().join('-');
 /** Assumptions page 1 already shows: the city and the rates' date in the facts, the sections in the abstract. */
 const ON_PAGE_1 = ['City', 'Rates', 'Sections'];
 const ok = (t: string) => (t.trim() && printable(t) ? t.trim() : '');
+/** Whether the estimate's lines name a brand: only then the brand notice and the words on brands (D-BIZ-05). */
+const branded = (v: NonNullable<PlanPreview['view']>) => v.sections.some((x) => x.no > 0 && x.lines.some((l) => l.brands));
+/** The brand notice (D-BIZ-03) where a line names a brand: in the body's type, never smaller or lighter than the brands. */
+const brandNotice = (v: NonNullable<PlanPreview['view']>, text = BRAND_NOTICE): Block[] => (branded(v) ? [{ kind: 'text', text }] : []);
 const cell = (text: string, value: number, kind: Figure['kind'] = 'amount'): Cell =>
   ({ text, figure: { value, kind, decimals: (text.split('.')[1] ?? '').length } });
 
@@ -116,7 +120,8 @@ export function planDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
       { name: 'Estimate', blocks },
       { name: 'Detailed estimate', blocks: [
         { kind: 'title', text: 'Annex 1. Detailed estimate', small: true },
-        { kind: 'text', text: 'In rupees; amounts rounded to the rupee, totals from the exact figures. Each rate includes fixing, wastage and the city’s labour; brands are examples at the level, and "or equivalent" means any brand of the same level.', small: true },
+        { kind: 'text', text: `In rupees; amounts rounded to the rupee, totals from the exact figures. Each rate includes fixing, wastage and the city’s labour.${branded(v) ? ' "Or equivalent" means any brand of the same level.' : ''}`, small: true },
+        ...brandNotice(v),
         { kind: 'table', table: detail },
       ] },
       ...(stages ? [{ name: 'Stages', blocks: [
@@ -179,7 +184,8 @@ export function billDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
     parts: [{ name: 'Bill of quantities', blocks: [
       { kind: 'title', text: 'Bill of quantities', sub: `For quotations: ${v.title.toLowerCase()}. Prepared with ${SITE_NAME} on ${dmy(today)}.` },
       { kind: 'facts', lines: facts },
-      { kind: 'text', text: 'Please quote a rate for supplying and fixing each item, with its wastage, and the amount for its quantity, and say whether your rates include GST. Where brands are named, any make of the same quality will do: write the make you offer. Leave a line blank if you do not quote for it.' },
+      { kind: 'text', text: `Please quote a rate for supplying and fixing each item, with its wastage, and the amount for its quantity, and say whether your rates include GST. ${branded(v) ? 'Where brands are named, any make of the same quality will do: write the make you offer.' : 'Write the make you offer.'} Leave a line blank if you do not quote for it.` },
+      ...brandNotice(v, BRAND_NOTICE_SHORT),
       { kind: 'text', text: 'The quantities are planned from the floor area and the rooms, not measured on site: check them when you visit.', small: true },
       { kind: 'table', table: bill },
       { kind: 'signature', lines: ['Quoted by', '', 'Name of the contractor or firm:', 'GSTIN, if registered:', 'Signature and date:', 'Rates valid until:'] },

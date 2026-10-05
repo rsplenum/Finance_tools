@@ -11,7 +11,7 @@ import {
   BATHS, BHKS, CITIES, FLOORS, LEVELS, PLOT_SIDE, R, ROOM_SIDE, SIZE_WORDS, bathsOf, bedroomsOf, billOf, WORK_KINDS, architect, architectNeeds, changeOf, choicesFor, levelName, levelRuns, overPackage, planRooms, wordName,
   type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choice, type House, type Level, type LevelRuns, type Line, type RoomKind, type SizeWord, type Stage, type WorkKind,
 } from '../../../engine/architect';
-import { CLASSES, FT_PER_M, LIBRARY_DATE, NOTES, PER, SOURCE, SPEND_SAVE, SQFT_PER_SQM, type ItemKind, type Note, type Unit } from '../../../engine/library';
+import { CLASSES, FT_PER_M, LIBRARY_DATE, NOTES, PER, SOURCE, SPEND_SAVE, SQFT_PER_SQM, namesBrand, type ItemKind, type Note, type Unit } from '../../../engine/library';
 import { parseAmount } from '../../../engine/parse';
 import { inr, rupeesWords } from '../../../engine/util';
 
@@ -363,6 +363,8 @@ export interface SectionView {
   mixed: number; mixedText: string; lines: LineView[];
   /** Where to spend, where to save (T1), when the section has a rule, on or off. */
   why?: WhyView;
+  /** A line's item names a brand, so the brand notice goes with its items (D-BIZ-05); an open drawer's brands: `drawerBrands`. */
+  brands: boolean;
 }
 export interface StripView { level: Level; name: string; total: string; full: string; n: number; current: boolean }
 export interface BarView { id: string; name: string; amount: string; n: number; width: number }
@@ -473,6 +475,7 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
       ...(Math.round(d) !== 0 ? { over: { text: `Rs. ${rupees(Math.abs(d))} ${d > 0 ? 'more' : 'less'} than ${pkg}`, n: d } } : {}),
       spec: specOf(ls), where: whereOf(ls, e), mixed: chosen + roomLevel, mixedText: mixedText ? `Mixed (${mixedText})` : '', lines,
       ...(SECTION_WHY.has(t.id) ? { why: SECTION_WHY.get(t.id) } : {}),
+      brands: ls.some((l) => namesBrand(l.entryName, l.brands)),
     };
   });
   const shown = sections.filter((x) => x.on && x.n > 0), most = Math.max(1, ...shown.map((x) => x.n));
@@ -660,6 +663,16 @@ export interface DrawerView {
   groups: ChoiceGroup[];
   how: { quantity: string; rate: string[]; amount: string };
 }
+
+/** A drawer group's key in the page's record of the groups opened or closed by a tap. */
+export const groupKey = (key: string, g: ChoiceGroup) => `${key}:${g.level ?? 'other'}`;
+/**
+ * Whether an open drawer shows a brand (D-BIZ-05): the line's brands at its top, or a choice's chips or name in a group on
+ * show (the first always; another while open, as it opened or as tapped). Only then does its section show the brand notice.
+ */
+export const drawerBrands = (l: LineView | undefined, d: DrawerView, open: Record<string, boolean>) =>
+  !!l && (!!l.brands || d.groups.some((g) => (open[groupKey(d.key, g)] ?? g.open)
+    && g.choices.some((x) => (x.usable && x.brands.length > 0) || namesBrand(x.name, x.brands))));
 
 /** The drawer for one line of the estimate: the choices at its level and at the others (L1), and how it was worked out. */
 export function drawerView(s: PlanState, v: PlanView, key: string): DrawerView | undefined {

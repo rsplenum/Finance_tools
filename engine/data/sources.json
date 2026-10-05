@@ -426,13 +426,13 @@
       "unread": "The site refused the visit (403)."
     },
     "bharat-jaquar": {
-      "what": "Jaquar faucets, a dealer's listing (Florentine and Alive basin mixers)",
+      "what": "Jaquar faucets, a seller's listing (Florentine and Alive basin mixers)",
       "url": "https://www.bharatironworks.com/jaquar-faucets.html",
       "class": "2",
       "unread": "The site refused the visit (403)."
     },
     "homedurables-florentine": {
-      "what": "Jaquar Florentine series, a dealer's listing",
+      "what": "Jaquar Florentine series, a seller's listing",
       "url": "https://homedurables.com/product-category/shop-by-brands/jaquar/jaquar-florentine-series/?layout=list",
       "class": "2",
       "checked": "2026-10-04"
@@ -1420,7 +1420,7 @@
       "checked": "2026-10-04"
     },
     "soisu-italian": {
-      "what": "SOISU: is Italian furniture worth the price in India (imported pieces through authorised dealers)",
+      "what": "SOISU: is Italian furniture worth the price in India (imported pieces)",
       "url": "https://soisu.com/knowledge/is-italian-furniture-worth-it-india",
       "class": "4",
       "checked": "2026-10-04"

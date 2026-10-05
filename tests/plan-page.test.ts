@@ -13,10 +13,10 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf, printable } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import {
-  EMPTY_PLAN, areaLabel, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit, type PlanState,
+  EMPTY_PLAN, areaLabel, drawerBrands, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit, type PlanState,
 } from '../site/src/estimate/plan-model';
 import { billDoc, billFileName, planDoc, planDocStatus, planFileName } from '../site/src/estimate/plan-document';
-import { SITE_NAME } from '../site/src/site';
+import { BRAND_NOTICE, BRAND_NOTICE_SHORT, SITE_NAME } from '../site/src/site';
 import { docxLines, pdfPages, workbook } from '../scripts/read-doc.mjs';
 
 const TODAY = '2026-10-03', MADE = new Date('2026-10-03T10:00:00Z');
@@ -105,6 +105,13 @@ describe('sliders, items and brands', () => {
     expect(line(FLAT).brands).toBe('Kajaria, Somany, Simpolo, Johnson or equivalent');
     expect(line({ ...FLAT, brands: { [key]: 'Somany' } }).brands).toBe('Brand: Somany');
     expect(line({ ...FLAT, brands: { [key]: 'Nobody' } }).brands).toBe('Kajaria, Somany, Simpolo, Johnson or equivalent');
+  });
+  it('the brand notice only where a brand shows: no floor item names one, the open drawer does (D-BIZ-05)', () => {
+    const v = view(FLAT), floors = v.sections.find((x) => x.id === 'flooring')!, d = drawerView(FLAT, v, 'living:floor:floor-skirting')!;
+    expect(floors.brands).toBe(false);
+    expect(drawerBrands(floors.lines.find((l) => l.key === d.key), d, {})).toBe(true);
+    const debris = drawerView(FLAT, v, 'flat:debris:debris')!;
+    expect(drawerBrands(v.sections.flatMap((x) => x.lines).find((l) => l.key === debris.key), debris, {})).toBe(false);
   });
   it('the drawer (L1): the choices at the line\'s level first under its name, its item marked and current; each other level\'s after, the cheapest level first, closed, each item once; how it was worked out', () => {
     const v = view(FLAT), d = drawerView(FLAT, v, 'living:floor:floor-skirting')!;
@@ -265,6 +272,13 @@ describe('the planning estimate to download', () => {
     expect(messages).toEqual([]);
     expect(word).toContain(`Total estimated cost | ${p.view!.total}`);
   });
+  it('the brand notice word for word in Annex 1, where the brands show, and in each copy (D-BIZ-03)', async () => {
+    expect(doc.parts[1].blocks).toContainEqual({ kind: 'text', text: BRAND_NOTICE });
+    expect(doc.parts.filter((x) => x.blocks.some((b) => b.kind === 'text' && b.text === BRAND_NOTICE)).map((x) => x.name)).toEqual(['Detailed estimate']);
+    expect((await pdfPages(pdfOf(doc, MADE))).join('\n').replace(/\s+/g, ' ')).toContain(BRAND_NOTICE);
+    expect((await workbook(xlsxOf(doc, MADE))).some((x) => x.data.some((r) => r.includes(BRAND_NOTICE)))).toBe(true);
+    expect((await docxLines(docxOf(doc, MADE))).lines).toContain(BRAND_NOTICE);
+  });
   it('provisional while the owner\'s name is missing, and said on every page', async () => {
     const t = { ...s, doc: { ...s.doc, owner: '' } }, d = planDoc(t, planPreview(t), TODAY)!;
     expect(planDocStatus(t, planPreview(t))).toBe('Provisional: 1 still needed');
@@ -311,6 +325,13 @@ describe('the bill of quantities to download (E4a, D-UX-36)', () => {
     const { lines: word, messages } = await docxLines(docxOf(doc, MADE));
     expect(messages).toEqual([]);
     expect(word.some((l) => l.includes('Double-charge vitrified tiles') && l.includes('Living and dining'))).toBe(true);
+  });
+  it('the brand notice\'s first two sentences, as the bill names brands but none of our prices, in each copy (D-BIZ-05)', async () => {
+    expect(text).toContain(BRAND_NOTICE_SHORT);
+    expect(text).not.toContain(BRAND_NOTICE);
+    expect((await pdfPages(pdfOf(doc, MADE))).join('\n').replace(/\s+/g, ' ')).toContain(BRAND_NOTICE_SHORT);
+    expect((await workbook(xlsxOf(doc, MADE))).some((x) => x.data.some((r) => r.includes(BRAND_NOTICE_SHORT)))).toBe(true);
+    expect((await docxLines(docxOf(doc, MADE))).lines).toContain(BRAND_NOTICE_SHORT);
   });
 });
 

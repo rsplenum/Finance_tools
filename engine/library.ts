@@ -206,3 +206,7 @@ export function choices(familyId: string): Entry[] {
   const named = new Set([...(fam.levels ?? []), fam.fixed].filter((x): x is string => !!x));
   return [...ENTRIES.values()].filter((e) => e.family === familyId || named.has(e.id)).sort((a, b) => (a.level ?? 0) - (b.level ?? 0));
 }
+
+/** Whether an item's name names one of its brands, by the brand's first word (D-BIZ-03, D-BIZ-05): such an item is checked against its page, and its line carries the brand notice. */
+export const namesBrand = (name: string, brands: readonly string[] = []) =>
+  brands.some((b) => new RegExp(`\\b${b.split(/\s+/)[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(name));
