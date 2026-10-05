@@ -22,6 +22,7 @@
     { "id": "fix-ac", "name": "Installing a split AC with up to 3 m of pipe", "unit": "nos", "rate": [1500, 3500], "src": ["solve24-ac"], "checked": "2026-10-04" },
     { "id": "fix-cctv", "name": "Installing a 4-camera CCTV set", "unit": "set", "rate": [2000, 4000], "src": ["aliftech-cctv"], "checked": "2026-10-04" },
     { "id": "fix-grill", "name": "Installing an invisible grill", "unit": "sqft", "rate": [50, 150], "src": ["invisiblegrill-guide"], "checked": "2026-10-04" },
-    { "id": "lay-paver", "name": "Laying paver blocks on sand, with compaction", "unit": "sqft", "rate": [10, 16], "src": ["paramvisions-pavers"], "checked": "2026-10-04" }
+    { "id": "lay-paver", "name": "Laying paver blocks on sand, with compaction", "unit": "sqft", "rate": [10, 16], "src": ["paramvisions-pavers"], "checked": "2026-10-04" },
+    { "id": "wire-point", "name": "Electrician's labour, wiring a point and fitting its switch", "unit": "nos", "rate": [180, 350], "date": "2026-10-05", "src": ["clyfthome-wiring"], "checked": "2026-10-05" }
   ]
 }

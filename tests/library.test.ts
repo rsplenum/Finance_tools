@@ -197,6 +197,9 @@ describe('rates, worked by hand', () => {
   it('a set adds its parts: Jaquar Continental accessories, towel rail 1,513 (1,450–1,576) + 699 + robe hook 530 (380–680) = 2,742', () => {
     expect(price('acc-continental', 1, 18)?.rate).toBe(2742);
   });
+  it('a wiring point is a set (W1): Anchor Roma, 7 m of 1.5 sq mm wire at 32.50 (25–40) = 227.50, 7 m of 2.5 sq mm at 50 (40–60) = 350, 5 m of conduit at 100 ÷ 3 = 166.67, half a box 54.50, a switch 71 (62–80), half a socket 83.25 (145–188), half a plate 71.75 (125–162) and the labour 265 (180–350) = 1,289.67', () => {
+    expect(price('wr-roma', 1, 18)?.rate).toBe(1289.67);
+  });
   it('an item still to be found has no rate', () => {
     expect(price('fl-encaustic', 1, 18)).toBeNull();
   });
