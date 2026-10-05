@@ -50,7 +50,7 @@ Kitchen                                      10.0 × 8.0 ft · 80 sq ft
 Bathroom (attached)                            8.9 × 5.5 ft · 49 sq ft
 ( Compact )( ● Medium )( Above medium )( Spacious )
 
-[+ Bedroom] [+ Bathroom] [+ Study] [+ Pooja room] [+ Utility] [+ Store]
+[+ Bedroom] [+ Bathroom] [+ Pooja room] [+ Study] [+ Utility] [+ Store]
 ```
 
 The bar at the bottom of the screen then reads: "Living and dining to Spacious: the other rooms 7% smaller · Rs. … more".
@@ -130,7 +130,7 @@ Each item needs its sources, so R2 is mostly research and data.
 |---|---|---|---|
 | R1 | Size buttons on each room; the bar of shares; the knock-on in What changed; flags below the Code's minimums. Worked out twice. **Built 03-10-2026** | 1 | You make the living room Spacious on a phone and the sizes make sense |
 | R2a | Rooms by buttons of the kinds the library has: + Bedroom (the bedrooms answer), + Bathroom, attached or common, a room's ×, the balcony out. **Built 03-10-2026** | 1 | You build "one living room, one main bedroom with attached bathroom, one kitchen" in a few taps |
-| R2b | The new kinds: + Study, + Pooja room, + Utility, + Store (your order, §6 question 3). Each new room's range and its items at five levels, with sources | 1–2 | You add a study or a pooja room and its items make sense |
+| R2b | The new kinds: + Pooja room, + Study, + Utility, + Store (D-UX-39). Each new room's range and its items at five levels, with sources | 1–2 | You add a study or a pooja room and its items make sense |
 | R3 | For a new house only, and optional: the area follows the rooms, and the structure follows the area | 1 | You decide it is wanted |
 | Design mode, phases 3 and 4 | The 2D plan from checked templates (drag a wall), then the 3D view of the same rooms | See `docs/DESIGN-MODE-FEASIBILITY.md` §10 | As there |
 
@@ -140,6 +140,8 @@ Each item needs its sources, so R2 is mostly research and data.
 2. **The area:** keep it fixed (recommended), or let it follow the rooms for a new house?
 3. **The extra rooms first:** Study, Pooja room, Utility, Store, a separate dining room, a servant's room?
 4. **Typed sizes and words:** typed sizes keep the other rooms as they are (E3), and the words share what is left. Agreed?
+
+Answered on 05-10-2026, on the recommendations (D-UX-39): the four words and typed sizes as R1 built them; the area fixed, R3 later; R2b in the order + Pooja room, + Study, + Utility, + Store.
 
 ## 7. Starter prompt for R1
 

@@ -459,8 +459,8 @@ Each phase is a few thin versions, each one a session and a pull request you try
 1. **Who first:** a lay person or an architect? *Recommended:* the lay person. The architect gets the professional page later.
 2. **How the plan is entered:** templates and a simple editor, or uploads traced by AI? *Recommended:* templates first, then the editor. AI tracing comes later, if at all, as a draft the user confirms, since it turns a picture into the sizes the quantities use.
 3. **3D:** a viewer first, or choosing in 3D at once? *Recommended:* the viewer first, with our own simple furniture. Branded models come later.
-4. **The library:** a curator with spreadsheets, scraping shops, or brands' feeds? *Recommended:* a curator with spreadsheets, every figure checked. No scraping. Brands' feeds only with neutral levels.
-5. **How it pays:** documents and professional plans, or brand placements? *Recommended:* documents and plans, with no paid places in the levels.
+4. **The library:** a curator with spreadsheets, scraping shops, or brands' feeds? *Recommended:* a curator with spreadsheets, every figure checked. No scraping. Brands' feeds only with neutral levels. *Answered 05-10-2026:* as recommended (D-UX-40).
+5. **How it pays:** documents and professional plans, or brand placements? *Recommended:* documents and plans, with no paid places in the levels. *Answered 05-10-2026:* as recommended (D-UX-40).
 6. **A name for the mode:** without "architect". For example, "Design mode", "Plan and see" or "Home planner".
 
 ## 13. What this PR does now
