@@ -8,6 +8,11 @@
       "cost": { "text": "Tiles cost more as they grow larger, and large slabs need adhesive on a flat base. Marble is polished after laying, and again every five to ten years in a home.", "src": ["gharkabudget-tiling", "studiomatrx-marble-care"], "status": "checked" },
       "check": { "text": "Vitrified tiles: IS 15622, water absorption 0.5% or less. Marble: look at the back of each slab and for resin-filled lines, and tap it: a dull or hollow sound means gaps or cracks.", "src": ["studiomatrx-tile-standards", "stoneexpert-marble-defects", "vardhman-marble-check"], "status": "checked" }
     },
+    "wiring": {
+      "what": { "text": "A point is one light, fan, switch-controlled socket or AC outlet: the wire from the distribution board, the conduit it runs in, the box in the wall, the switch or socket, and the labour to fit and connect it.", "src": ["clyfthome-wiring"], "status": "checked" },
+      "cost": { "text": "The switch range is the largest swing: premium ranges can cost several times a basic one for the same switching. Cable and conduit are about a third of the bill, switches, sockets and plates a fifth to a quarter, labour 30 to 40 percent.", "src": ["clyfthome-wiring"], "status": "checked" },
+      "check": { "text": "Ask whether a point rate is labour only or with material, which brand and grade of cable and which switch range it includes. FR cable is the sensible default for a home; FRLSH where smoke matters, in enclosed spaces and stairwells.", "src": ["clyfthome-wiring"], "status": "checked" }
+    },
     "paint": {
       "what": { "text": "The finish on inside walls and ceilings: wall putty to smooth the plaster, a primer, and two coats of emulsion paint.", "src": ["asianpaints-painting-cost"], "status": "checked" },
       "cost": { "text": "On an economy emulsion the labour costs about as much as the paint; on a luxury one the paint costs most. Dearer emulsions stand more scrubbing and are reported to last longer between repaints.", "src": ["asianpaints-painting-cost", "homerun-royale-premium"], "status": "checked" },

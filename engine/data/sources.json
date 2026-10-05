@@ -2385,6 +2385,54 @@
       "url": "https://dir.indiamart.com/impcat/parryware-one-piece-toilet-seat.html",
       "class": "2",
       "checked": "2026-10-04"
+    },
+    "boe-britzy": {
+      "what": "Best of Electricals: Legrand Britzy switches, sockets and plates, MRP and price",
+      "url": "https://www.bestofelectricals.com/search?q=britzy",
+      "class": "2",
+      "checked": "2026-10-05"
+    },
+    "boe-roma": {
+      "what": "Best of Electricals: Anchor Roma switches, sockets and plates, MRP and price",
+      "url": "https://www.bestofelectricals.com/search?q=roma",
+      "class": "2",
+      "checked": "2026-10-05"
+    },
+    "boe-mylinc": {
+      "what": "Best of Electricals: Legrand Mylinc switches, sockets and plates, MRP and price",
+      "url": "https://www.bestofelectricals.com/search?q=mylinc",
+      "class": "2",
+      "checked": "2026-10-05"
+    },
+    "boe-myrius": {
+      "what": "Best of Electricals: Legrand Myrius and Myrius Nextgen switches, sockets and plates, MRP and price",
+      "url": "https://www.bestofelectricals.com/search?q=legrand+myrius",
+      "class": "2",
+      "checked": "2026-10-05"
+    },
+    "boe-arteor": {
+      "what": "Best of Electricals: Legrand Arteor switches, sockets and plates, MRP and price",
+      "url": "https://www.bestofelectricals.com/search?q=arteor",
+      "class": "2",
+      "checked": "2026-10-05"
+    },
+    "moglix-legrand-switches": {
+      "what": "Moglix: Legrand switches and sockets, a listing (a 6A socket takes two modules)",
+      "url": "https://www.moglix.com/brands/legrand/electricals/switches-sockets/switches/211111100?page=2",
+      "class": "2",
+      "checked": "2026-10-05"
+    },
+    "indiamart-conduit": {
+      "what": "IndiaMART: PVC conduit pipe, 20 mm, listings",
+      "url": "https://dir.indiamart.com/search.mp?ss=pvc+conduit+pipe+20mm",
+      "class": "2",
+      "checked": "2026-10-05"
+    },
+    "industrybuying-box": {
+      "what": "Industrybuying: 4-module concealed boxes, listings",
+      "url": "https://www.industrybuying.com/search/?q=4+module+concealed+box",
+      "class": "2",
+      "checked": "2026-10-05"
     }
   }
 }
