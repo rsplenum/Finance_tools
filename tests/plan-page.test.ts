@@ -204,8 +204,9 @@ describe('a new house on the page (D-UX-23)', () => {
   it('E5: the sewer in place of the septic tank, noted in What changed; only for a new house', () => {
     const w = withSewer(HOUSE, true);
     expect(inputOf(w).sewer).toBe(true);
-    // The septic tank's 84,680 out, the sewer connection's 23,343.39 in (architect.test.ts): 61,336.61, shown as 61,337.
-    expect(view(w).change?.text).toBe('The sewer in place of a septic tank: Rs. 61,337 less');
+    // The septic tank's 84,680 out (architect.test.ts); Pune's own sewer charge is still to be found, so it is said.
+    expect(view(w).change?.text).toBe('The sewer in place of a septic tank: Rs. 84,680 less; the sewer connection is still to be priced');
+    expect(view(withSewer({ ...HOUSE, city: 'chennai' }, true)).change?.text).toMatch(/^The sewer in place of a septic tank: Rs\. [\d,]+ less$/);
     expect(inputOf({ ...FLAT, sewer: true }).sewer).toBeUndefined();
   });
 });

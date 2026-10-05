@@ -36,6 +36,11 @@ export interface Entry {
   id: string; family: string; name: string; spec: string; level?: number; brands?: string[]; unit: Unit; basis: Basis;
   /** The reported range, per unit, or per pack when `pack` is given. Missing: the rate is still to be found. */
   rate?: Band; pack?: { qty: number; unit: Unit; what?: string }; wastage?: number;
+  /**
+   * A city's own charge, by city id, in place of `rate` there: used as it is, never scaled by the city's factor (a
+   * municipal charge differs by city, not by the cost of work). A city it does not name takes `rate`, or none.
+   */
+  byCity?: Record<string, Band>;
   /** Labour added per unit, by id in labour.json. */
   fix?: Count[];
   /** For a set: the items it is made of, each priced on its own. */
@@ -132,8 +137,8 @@ export interface Price { rate: number; how: string[] }
  * GST is added only to a rate quoted before it, and only to what that source quotes: never to the labour that fixes a
  * material, which has its own source (E2). Null when the item, or a part of it, has no rate yet.
  */
-export function price(id: string, city: number, gstPct: number, end?: 0 | 1): Price | null {
-  const raw = rawPrice(id, city, end);
+export function price(id: string, city: number, gstPct: number, end?: 0 | 1, cityId?: string): Price | null {
+  const raw = rawPrice(id, city, end, cityId);
   if (!raw) return null;
   const e = ENTRIES.get(id) as Entry;
   let rate = raw.rate;
@@ -148,7 +153,7 @@ export function price(id: string, city: number, gstPct: number, end?: 0 | 1): Pr
 }
 
 /** The rate before GST, and the part of it that is labour fixing a material (from its own source). */
-function rawPrice(id: string, city: number, end?: 0 | 1): { rate: number; labour: number; how: string[] } | null {
+function rawPrice(id: string, city: number, end?: 0 | 1, cityId?: string): { rate: number; labour: number; how: string[] } | null {
   // The middle of each range, or its low (0) or high (1) end for a level's band (E4b); the working's words say the middle.
   const mid = (b: Band) => (end === undefined ? (b[0] + b[1]) / 2 : b[end]);
   const e = ENTRIES.get(id);
@@ -157,28 +162,30 @@ function rawPrice(id: string, city: number, end?: 0 | 1): { rate: number; labour
   let base = 0, labour = 0;
   if (e.basis === 'set') {
     for (const p of e.parts ?? []) {
-      const part = rawPrice(p.id, city, end);
+      const part = rawPrice(p.id, city, end, cityId);
       if (!part) return null;
       base += p.n * part.rate;
       labour += p.n * part.labour;
       how.push(`${p.n} × ${(ENTRIES.get(p.id) as Entry).name} at Rs. ${inr(r2(part.rate))}`);
     }
   } else {
-    if (!e.rate) return null;
-    const m = mid(e.rate);
+    // A city's own charge stands as it is; any other rate is scaled by the city's factor.
+    const own = cityId === undefined ? undefined : e.byCity?.[cityId], band = own ?? e.rate;
+    if (!band) return null;
+    const m = mid(band), k = own ? 1 : city, scaled = own ? ', the city\'s own charge' : k !== 1 ? `, × ${k.toFixed(3)} for the city` : '';
     if (e.basis === 'installed') {
       const each = e.pack ? m / (e.pack.qty * per(e.pack.unit, e.unit)) : m;
-      base = each * city;
+      base = each * k;
       how.push(e.pack
-        ? `Rs. ${inr(m)}, the middle of Rs. ${inr(e.rate[0])}–${inr(e.rate[1])} for ${e.pack.what ?? 'a pack'} covering ${e.pack.qty} ${UNIT_WORD[e.pack.unit]}, supplied and fixed: Rs. ${inr(r2(each))} ${PER[e.unit]}${city !== 1 ? `, × ${city.toFixed(3)} for the city` : ''}`
-        : `Rs. ${inr(m)}, the middle of Rs. ${inr(e.rate[0])}–${inr(e.rate[1])} ${PER[e.unit]}, supplied and fixed${city !== 1 ? `, × ${city.toFixed(3)} for the city` : ''}`);
+        ? `Rs. ${inr(m)}, the middle of Rs. ${inr(band[0])}–${inr(band[1])} for ${e.pack.what ?? 'a pack'} covering ${e.pack.qty} ${UNIT_WORD[e.pack.unit]}, supplied and fixed: Rs. ${inr(r2(each))} ${PER[e.unit]}${scaled}`
+        : `Rs. ${inr(m)}, the middle of Rs. ${inr(band[0])}–${inr(band[1])} ${PER[e.unit]}, supplied and fixed${scaled}`);
     } else {
       const each = e.pack ? m / (e.pack.qty * per(e.pack.unit, e.unit)) : m;
       const w = e.basis === 'supply' ? e.wastage ?? 0 : 0;
       base = each * (1 + w);
       how.push(e.pack
         ? `Rs. ${inr(m)} for ${e.pack.what ?? 'a pack'} covering ${e.pack.qty} ${UNIT_WORD[e.pack.unit]}: Rs. ${inr(r2(each))} ${PER[e.unit]}`
-        : `Rs. ${inr(m)}, the middle of Rs. ${inr(e.rate[0])}–${inr(e.rate[1])} ${PER[e.unit]}`);
+        : `Rs. ${inr(m)}, the middle of Rs. ${inr(band[0])}–${inr(band[1])} ${PER[e.unit]}`);
       if (w) how.push(`${+(w * 100).toFixed(2)}% wastage`);
     }
   }

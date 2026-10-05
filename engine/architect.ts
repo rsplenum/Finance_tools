@@ -431,7 +431,7 @@ function work(input: ArchitectInput, banded = false): ArchitectEstimate {
 
   const lines: Line[] = [], unpriced: Unpriced[] = [], band = { low: 0, high: 0, lines: 0 };
   // Each choice's rate once a run (L1): the rooms share their families.
-  const rates = new Map<string, number | null>(), rateOf = (id: string) => { if (!rates.has(id)) rates.set(id, price(id, city, R.gst.pct)?.rate ?? null); return rates.get(id) as number | null; };
+  const rates = new Map<string, number | null>(), rateOf = (id: string) => { if (!rates.has(id)) rates.set(id, price(id, city, R.gst.pct, undefined, input.city)?.rate ?? null); return rates.get(id) as number | null; };
   const place = (slot: Slot, r: Room | null) => {
     if (!on(slot.section) || (slot.kinds && !slot.kinds.includes(kind)) || (slot.needs && !on(slot.needs))) return;
     const fam = FAMILIES.get(slot.family);
@@ -451,7 +451,7 @@ function work(input: ArchitectInput, banded = false): ArchitectEstimate {
     const qty = qtyIn(ent.unit);
     const roomName = r?.name ?? whole;
     const name = slot.name ?? fam.name;
-    const p = price(id, city, R.gst.pct);
+    const p = price(id, city, R.gst.pct, undefined, input.city);
     if (!p) { unpriced.push({ key, roomName, section: slot.section, name, entry: id, entryName: ent.name, spec: ent.spec, brands: ent.brands ?? [], qty, unit: ent.unit, at: lv, chosen: !!own && ENTRIES.has(own) }); return; }
     const chosen = !!own && ENTRIES.has(own), amount = r2(qty * p.rate);
     lines.push({
@@ -963,9 +963,10 @@ export function overPackage(input: ArchitectInput, check: typeof architectCheck 
 export interface Swap { roomName: string; name: string; from: string | null; to: string | null }
 /**
  * What a change did (A8, "What changed"): the new total less the old, and the lines whose item changed, came or went;
- * and when a size word moved one room's share (R1), how much the other planned rooms changed: -0.074 for 7.4% smaller.
+ * and when a size word moved one room's share (R1), how much the other planned rooms changed: -0.074 for 7.4% smaller;
+ * and the lines it brought in that have no rate yet, by name, left out of `by` (a city without its own sewer charge).
  */
-export interface Change { by: number; swaps: Swap[]; others?: number }
+export interface Change { by: number; swaps: Swap[]; others?: number; unpriced?: string[] }
 
 /**
  * What a change did, from the estimate before it to the estimate after: the change in the total, worked twice (from the
@@ -991,7 +992,8 @@ export function changeOf(before: ArchitectInput, after: ArchitectInput, check: t
   const others = knockOn(was, now);
   if (others !== undefined && othersOf(was, now).some((id) => !(Math.abs((c1.rooms.get(id)?.sqm ?? NaN) / (c0.rooms.get(id)?.sqm ?? NaN) - 1 - others) <= 1e-9)))
     return { blocked: 'The two computations disagree on how the other rooms changed, so no figures are shown. Please report this.' };
-  return { by, swaps, ...(others !== undefined ? { others } : {}) };
+  const out = new Set(was.unpriced.map((u) => u.key)), unpriced = [...new Set(now.unpriced.filter((u) => !out.has(u.key)).map((u) => u.name))];
+  return { by, swaps, ...(others !== undefined ? { others } : {}), ...(unpriced.length ? { unpriced } : {}) };
 }
 
 /** The planned rooms a change left alone: in both estimates, of the same size word, and not of the user's own size in either. */
@@ -1035,7 +1037,7 @@ export function choicesFor(input: ArchitectInput, key: string, rate2: typeof che
   const choice = (id: string): Choice | null => {
     const e = ENTRIES.get(id);
     if (!e || !units.includes(e.unit)) return null;
-    const p = price(id, city, R.gst.pct), again = rate2(id, input.city);
+    const p = price(id, city, R.gst.pct, undefined, input.city), again = rate2(id, input.city);
     const ok = !!p && again !== null && Math.abs(p.rate - again) <= 0.011;
     return { id, name: e.name, spec: e.spec, brands: e.brands ?? [], unit: e.unit, level: e.level ?? null, rate: ok ? (p as { rate: number }).rate : null, how: ok ? (p as { how: string[] }).how : [] };
   };

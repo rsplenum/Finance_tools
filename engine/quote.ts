@@ -121,11 +121,11 @@ export function matchWords(text: string): string | null {
  * levels (an item at no level, its own) priced in a unit of the same kind. 'none' when no choice has a rate yet; 'unit'
  * when every priced choice is in another kind of unit.
  */
-function bandIn(fam: Family, levels: Level[], entry: string | null, city: number, typed: [Unit, number]): { low: number; high: number } | 'none' | 'unit' {
+function bandIn(fam: Family, levels: Level[], entry: string | null, city: number, cityId: string, typed: [Unit, number]): { low: number; high: number } | 'none' | 'unit' {
   const ids = levels.length ? [...new Set(levels.flatMap((lv) => bandOf(fam, lv, ALL_UNITS)))] : entry ? [entry] : [];
   let low = Infinity, high = -Infinity, priced = false;
   for (const id of ids) {
-    const lo = price(id, city, R.gst.pct, 0), hi = price(id, city, R.gst.pct, 1), u = (ENTRIES.get(id) as Entry).unit;
+    const lo = price(id, city, R.gst.pct, 0, cityId), hi = price(id, city, R.gst.pct, 1, cityId), u = (ENTRIES.get(id) as Entry).unit;
     if (!lo || !hi) continue;
     priced = true;
     if (!sameKind(u, typed[0])) continue;
@@ -150,7 +150,7 @@ export function quoteCheck(lines: QuoteLine[], ctx: QuoteContext, check: typeof 
     const base = { family, how: how ?? 'words', levels, item: items[0] ?? null, reported: items.some((id) => !checkedOn(ENTRIES.get(id) as Entry)) } as const;
     if (q.rate === undefined) return { ...base, where: 'left-out', ...none };
     const typed = TYPED[q.unit];
-    const band = typed ? bandIn(fam, levels, how === 'bill' ? (q.from as BillFrom).entry : null, city, typed) : 'unit';
+    const band = typed ? bandIn(fam, levels, how === 'bill' ? (q.from as BillFrom).entry : null, city, ctx.city, typed) : 'unit';
     if (band === 'unit') return { ...base, where: 'other-unit', ...none };
     if (band === 'none') return { ...base, where: 'no-band', ...none };
     // In whole paise, so that a rate exactly 20% out is not flagged by a rounding.

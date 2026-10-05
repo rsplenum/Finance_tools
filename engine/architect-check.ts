@@ -388,11 +388,15 @@ export function checkRate(id: string, cityId: string | undefined, end?: 0 | 1): 
     if (e.basis === 'set') {
       own = 0;
       for (const p of e.parts ?? []) { const r = rateOf(p.id); if (r === null) return null; own += r[0] * p.n; labour += r[1] * p.n; }
-    } else if (!e.rate) return null;
-    else if (e.basis === 'installed') own = (e.pack ? middle(e.rate) / unitsIn(e.pack.qty, e.pack.unit, e.unit) : middle(e.rate)) * city;
-    else {
-      const each = e.pack ? middle(e.rate) / unitsIn(e.pack.qty, e.pack.unit, e.unit) : middle(e.rate);
-      own = e.basis === 'supply' ? each + each * (e.wastage ?? 0) : each;
+    } else {
+      // A city's own charge as it is (byCity); any other rate times the city's factor.
+      const mine = cityId ? e.byCity?.[cityId] : undefined, band = mine ?? e.rate;
+      if (!band) return null;
+      if (e.basis === 'installed') own = (e.pack ? middle(band) / unitsIn(e.pack.qty, e.pack.unit, e.unit) : middle(band)) * (mine ? 1 : city);
+      else {
+        const each = e.pack ? middle(band) / unitsIn(e.pack.qty, e.pack.unit, e.unit) : middle(band);
+        own = e.basis === 'supply' ? each + each * (e.wastage ?? 0) : each;
+      }
     }
     return [own, labour];
   };

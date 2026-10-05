@@ -172,7 +172,11 @@ const fixes = (fx) => (fx ?? []).map((f) => (typeof f === 'string' ? { id: f, n:
 function rateText(e) {
   const u = UNIT[e.unit];
   if (e.basis === 'set') return `${e.parts.map((p) => `${p.n > 1 ? `${p.n} × ` : ''}${entries.get(p.id).name}`).join(' + ')}${fixes(e.fix).length ? `, fixed by ${fixes(e.fix).map((f) => `${f.n > 1 ? `${f.n} × ` : ''}${labourById.get(f.id).name.toLowerCase()}`).join(' and ')}` : ''}`;
+  // A city's own charge stands as it is (byCity); the cities it does not name take the rate, or none yet.
+  const own = Object.entries(e.byCity ?? {}).map(([c, r]) => `${A.cities.list.find((x) => x.id === c)?.name ?? c} ${range(r)}`);
+  if (own.length && !e.rate) return `${own.join('; ')} a ${u}, each city's own charge; other cities to be found${GST[e.gst] ?? ''}${e.date ? `; read ${date(e.date)}` : ''}`;
   if (!e.rate) return 'Rate to be found';
+  if (own.length) throw new Error(`rules-doc: ${e.id} has both a rate and cities' own charges; word them`);
   const base = e.pack ? `${range(e.rate)} for ${e.pack.what ?? 'a pack'} of ${e.pack.qty} ${UNIT[e.pack.unit]}` : `${range(e.rate)} a ${u}`;
   const lab = fixes(e.fix).map((f) => `${f.n > 1 ? `${f.n} × ` : ''}${labourById.get(f.id).name.toLowerCase()} ${range(labourById.get(f.id).rate)}`);
   const kind = e.basis === 'installed' ? ', supplied and fixed' : e.basis === 'product' ? '' : ', material';
@@ -187,7 +191,7 @@ let banded = 0, leveled = 0;
 function unchecked() {
   const un = [...entries.values()].filter((e) => !e.checked);
   const unread = (e) => e.src.some((id) => sources.sources[id]?.unread);
-  const shown = (e) => { const d = [e.rate ? e.checked : '', ...(e.parts ?? []).map((p) => shown(entries.get(p.id)))]; return d.includes(undefined) ? undefined : d.filter(Boolean).sort().at(-1); };
+  const shown = (e) => { const d = [e.rate || e.byCity ? e.checked : '', ...(e.parts ?? []).map((p) => shown(entries.get(p.id)))]; return d.includes(undefined) ? undefined : d.filter(Boolean).sort().at(-1); };
   const sets = un.filter((e) => e.parts), single = un.filter((e) => !e.parts);
   if (sets.some((e) => e.rate) || single.some((e) => !e.src.length)) throw new Error('rules-doc: a set has a rate of its own or a single item cites no page; reword "Not checked"');
   const none = sets.filter((e) => !e.src.length);

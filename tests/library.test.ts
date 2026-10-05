@@ -6,6 +6,7 @@
 import { describe, it, expect } from 'vitest';
 import { CLASSES, ENTRIES, FAMILIES, FILES, LABOUR_ITEMS, NOTES, NOTES_DATE, SOURCE, SPEND_SAVE, choices, ladder, price, type Note } from '../engine/library';
 import { R, architect, dimensionOf, type ArchitectEstimate, type ArchitectInput } from '../engine/architect';
+import { checkRate } from '../engine/architect-check';
 
 const UNITS = ['sqft', 'sqm', 'rft', 'm', 'nos', 'set', 'lot', 'kg', 'cum', 'bag', 'litre'];
 
@@ -31,8 +32,6 @@ describe('the library: every value has a source', () => {
       expect(['installed', 'supply', 'product', 'set'], where).toContain(e.basis);
       if (e.level !== undefined) expect(e.level >= 1 && e.level <= 5, where).toBe(true);
       for (const s of e.src) expect(SOURCE[s], `${where} cites ${s}`).toBeDefined();
-      // E2: an item checked against its pages cites only pages that were read.
-      if (e.checked) for (const s of e.src) if (s !== 'own') expect(SOURCE[s].checked, `${where}: ${s} read`).toBeDefined();
       if (e.basis === 'set') {
         expect(e.parts?.length, where).toBeGreaterThan(0);
         for (const p of e.parts ?? []) { expect(ENTRIES.has(p.id), `${where} part ${p.id}`).toBe(true); expect(p.n, where).toBeGreaterThan(0); }
@@ -41,10 +40,18 @@ describe('the library: every value has a source', () => {
         expect(e.rate[1], where).toBeGreaterThanOrEqual(e.rate[0]);
         expect(e.src.length, where).toBeGreaterThan(0);
       } else expect(e.note, `${where} has no rate and no note`).toBeTruthy();
+      for (const [c, b] of Object.entries(e.byCity ?? {})) {
+        expect(R.cities.list.some((x) => x.id === c), `${where}: no city ${c}`).toBe(true);
+        expect(b[0] > 0 && b[1] >= b[0] && e.src.length > 0, `${where}: ${c}'s own charge`).toBe(true);
+      }
       if (e.wastage !== undefined) expect(e.wastage >= 0 && e.wastage < 0.5, where).toBe(true);
       if (e.pack) expect(e.pack.qty > 0 && UNITS.includes(e.pack.unit), where).toBe(true);
       for (const f of e.fix ?? []) expect(LABOUR_ITEMS.has(f.id), `${where} labour ${f.id}`).toBe(true);
     }
+  });
+  it('an item checked against its pages cites only pages that were read (E2), every one named in one run', () => {
+    const unread = [...ENTRIES.values()].filter((e) => e.checked).flatMap((e) => e.src.filter((s) => s !== 'own' && !SOURCE[s]?.checked).map((s) => `${e.id} cites ${s}`));
+    expect(unread).toEqual([]);
   });
   it('every labour rate runs from low to high and has its sources', () => {
     for (const l of LABOUR_ITEMS.values()) {
@@ -170,6 +177,12 @@ describe('rates, worked by hand', () => {
   });
   it('an item still to be found has no rate', () => {
     expect(price('fl-encaustic', 1, 18)).toBeNull();
+  });
+  it('a city\'s own charge stands as it is: the sewer connection in Chennai (× 1,830 ÷ 1,960.83 = 0.933277 for other rates) is the middle of Rs. 24,500–26,500, 25,500; none yet in Mumbai', () => {
+    const chennai = 1830 / (11765 / 6), at = (end?: 0 | 1) => price('sewer-connection', chennai, 18, end, 'chennai')?.rate;
+    expect([at(), at(0), at(1)]).toEqual([25500, 24500, 26500]);
+    expect([checkRate('sewer-connection', 'chennai'), checkRate('sewer-connection', 'chennai', 0), checkRate('sewer-connection', 'chennai', 1)]).toEqual([25500, 24500, 26500]);
+    expect([price('sewer-connection', 1.2749681, 18, undefined, 'mumbai'), checkRate('sewer-connection', 'mumbai'), price('sewer-connection', 1, 18)]).toEqual([null, null, null]);
   });
 });
 
