@@ -27,7 +27,7 @@ Two projects taught this the hard way. In the home-loan appraisal tool, every te
 
 - From the owner's fictional cases worked at home, or a public worked example with its source. Never from the owner's office or employer, not even anonymised (D-BIZ-02). Until the owner confirms, call them model-worked.
 - Never type an expected figure from memory: copy it from the hand-worked comment in the tests, or work it out a second way first. In September 2026, case A's yearly DSCRs typed from memory were wrong; the test caught it.
-- Before quoting a figure to the owner in chat, compute it a second way (a short script or a hand check) and say how.
+- Before quoting a figure to the owner in chat, compute it a second way (a short script or a hand check) and say how. A price derived from another (a cache read from an input price) is quoted with its ratio and source, and worked twice like any figure.
 
 ## Traps in Indian lending maths
 

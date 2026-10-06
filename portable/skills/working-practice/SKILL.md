@@ -13,6 +13,8 @@ What the owner taught across projects, so a new project starts where the last on
 - Grep before reading; never read a large file, PDF or source text whole. Check a page with text assertions, and take a screenshot only for a layout question.
 - Put independent commands together in one step, and fetch many pages through one script that prints only what is needed.
 - Compact at about 192k tokens: set `CLAUDE_CODE_AUTO_COMPACT_WINDOW` to `"260000"` under `env` in the repo's `.claude/settings.json` (a 1M-token window otherwise never compacts), and give CLAUDE.md a "Compact Instructions" section naming what a summary must keep.
+- New work longer than a new session's break-even, 2 × its start ÷ (0.1 × (the context − its start)) steps, starts a new session, and so does anything after a break of over an hour, when the cache has lapsed; a quick ask stays while the cache is warm. Where hooks run, a hook says so at the moment it matters. (A new session writes its start to the cache at twice the input price; each later step re-reads a tenth of the difference less.)
+- Tokens are estimated from characters by a ratio measured on the model's own log (2.3 characters a token here, from 251 tool results), not the usual 4, which understated them by about 40%; where the log is at hand, its real counts are used instead.
 
 ## Effort and thinking
 
@@ -56,5 +58,6 @@ What the owner taught across projects, so a new project starts where the last on
 ## Claude Code on the web
 
 - One session at a time per checkout. Before a `git reset` or `checkout -B`, read `git status` and `git log origin/<branch>`: one reset dropped another session's commit.
+- WebFetch answers from a small model's summary, never the page's words: take no figure from it; read pages with a script, or an agent that quotes them.
 - A host the proxy blocks (403) is opened in the environment's settings, not worked round in code.
 - A shell safety-check failure is transient: retry once, then carry on with the file tools.

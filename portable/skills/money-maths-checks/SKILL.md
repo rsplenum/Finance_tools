@@ -22,7 +22,7 @@ Two projects taught this the hard way. In a home-loan appraisal tool, every test
 - Property tests: the result moves the right way with income, tenure and rate; the balance reaches 0; every monthly constraint holds.
 - A simulation over thousands of generated cases checks the invariants with a random fact dropped each time. Run every seed, not one: a bug once showed only on seed 4.
 - Keep solvers monotone: when the maximum is the least of per-constraint bisections, every constraint must be monotone in the principal.
-- Before quoting a figure to the owner in chat, compute it a second way (a short script or a hand check) and say how.
+- Before quoting a figure to the owner in chat, compute it a second way (a short script or a hand check) and say how. A price derived from another (a cache read from an input price) is quoted with its ratio and source, and worked twice like any figure.
 
 ## Understand the method before coding it
 
