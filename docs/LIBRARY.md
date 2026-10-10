@@ -4,9 +4,9 @@ Generated from `engine/data/library/` by `npm run rules-doc`; edit the data file
 
 Dated 04-10-2026. Read through web-search summaries from 02-10-2026 to 04-10-2026, then each level item's page opened and read on 04-10-2026 (E2, D-DATA-09). A source with checked had its page read; each item and note says for itself whether its figure was checked (an item can cite a page that prices a different thing or basis, and stays as reported). A source with unread says why its page could not be opened. The rest, mostly the architect's rules, are as reported and not yet checked.
 
-548 items in 98 families, from 415 sources. The estimate uses the middle of each range. A family's five levels name one item each (Basic, Standard, Premium, Luxury, Bespoke); every other item in the family is an alternative you can choose instead. A level is a band of choices (L1): the item it names and every other item usually at it; the estimate's range at a level runs from the cheapest priced choice at it in every line to the dearest.
+573 items in 98 families, from 433 sources. The estimate uses the middle of each range. A family's five levels name one item each (Basic, Standard, Premium, Luxury, Bespoke); every other item in the family is an alternative you can choose instead. A level is a band of choices (L1): the item it names and every other item usually at it; the estimate's range at a level runs from the cheapest priced choice at it in every line to the dearest.
 
-Checked against their pages: 447 of 548 items, 305 sources; 43 sources could not be opened. 20 of the 81 families with levels offer more than one choice at a level. 10 families carry notes (T1): what each is, why it costs what it does and what to check, shown behind a line's Why? on the planning estimate.
+Checked against their pages: 472 of 573 items, 323 sources; 43 sources could not be opened. 20 of the 81 families with levels offer more than one choice at a level. 10 families carry notes (T1): what each is, why it costs what it does and what to check, shown behind a line's Why? on the planning estimate.
 
 Not checked: 101 items. 55 are single items: 34 cite a page that prices another thing or basis, and 21 cite a page that could not be opened. 46 are sets priced from their parts, so only their parts are checked: 40 read as checked on the page, since every part is, and 4 cite no page of their own and take their parts' (stf-kota, stf-marble, stf-italian, stf-statuario). So a line says "As reported" for 61 items.
 
@@ -852,7 +852,7 @@ Dated 02-10-2026; an item read on another day says so.
 | Luxury | Concealed wiring, premium switches | One point: branded FR copper wire, premium modular switches and plates, extra dedicated circuits | Legrand Arteor, Schneider Zencelo, Legrand Myrius | Rs. 2,300–3,800 a each, supplied and fixed; GST not stated: taken as the price paid | [200][199] |
 | Bespoke | KNX wired automation | One point on a KNX wired automation system: lights, scenes, curtains and climate | Schneider KNX, ABB KNX, Lutron | Rs. 8,000–18,000 a each, supplied and fixed; GST not stated: taken as the price paid | [201] |
 
-Choices at each level: Basic 4, Standard 4, Premium 3, Luxury 2, Bespoke 1.
+Choices at each level: Basic 5, Standard 5, Premium 4, Luxury 4, Bespoke 3.
 
 Also in the library:
 
@@ -867,22 +867,29 @@ Also in the library:
 | Wiring a point, Legrand Myrius Nextgen switches | Premium | One point: 7 m each of 1.5 and 2.5 sq mm copper wire, 5 m of 20 mm PVC conduit, half a 4-module box, a Legrand Myrius Nextgen 6A switch, half a 6A socket and half a 4-module plate, and the electrician's labour Quantities are our own rule from clyfthome's figures: 700 to 1,100 m of wire for a 2BHK of 50 to 75 points is about 14 m a point, split evenly between 1.5 and 2.5 sq mm; conduit is about a third of the wire, as a circuit's wires share one pipe. Half the points carry a 6A socket, which takes two modules (moglix's Arteor listing), so a light point and a socket point share one 4-module box and plate. Not included: the distribution board, the mains to it, earthing and a fan's regulator; a 16A or AC point is priced as a 6A one. Each switch, socket and plate runs from the seller's price to its MRP. | 7 × Copper house wire, 1.5 sq mm + 7 × Copper house wire, 2.5 sq mm + 5 × PVC conduit, 20 mm + Concealed metal box, 4 modules + Legrand Myrius Nextgen 6A switch + Legrand Myrius Nextgen 6A socket + Legrand Myrius Nextgen 4-module plate, fixed by electrician's labour, wiring a point and fitting its switch | [202][204][205][210][207][199] our rule |
 | Wiring a point, Legrand Myrius switches | Premium | One point: 7 m each of 1.5 and 2.5 sq mm copper wire, 5 m of 20 mm PVC conduit, half a 4-module box, a Legrand Myrius 6A switch, half a 6A socket and half a 4-module plate, and the electrician's labour Quantities are our own rule from clyfthome's figures: 700 to 1,100 m of wire for a 2BHK of 50 to 75 points is about 14 m a point, split evenly between 1.5 and 2.5 sq mm; conduit is about a third of the wire, as a circuit's wires share one pipe. Half the points carry a 6A socket, which takes two modules (moglix's Arteor listing), so a light point and a socket point share one 4-module box and plate. Not included: the distribution board, the mains to it, earthing and a fan's regulator; a 16A or AC point is priced as a 6A one. Each switch, socket and plate runs from the seller's price to its MRP. | 7 × Copper house wire, 1.5 sq mm + 7 × Copper house wire, 2.5 sq mm + 5 × PVC conduit, 20 mm + Concealed metal box, 4 modules + Legrand Myrius 6A one-way switch + Legrand Myrius 6A socket with shutter + Legrand Myrius 4-module plate, fixed by electrician's labour, wiring a point and fitting its switch | [202][204][205][210][207][199] our rule |
 | Wiring a point, Legrand Arteor switches | Luxury | One point: 7 m each of 1.5 and 2.5 sq mm copper wire, 5 m of 20 mm PVC conduit, half a 4-module box, a Legrand Arteor 6A switch, half a 6A socket and half a 4-module plate, and the electrician's labour Quantities are our own rule from clyfthome's figures: 700 to 1,100 m of wire for a 2BHK of 50 to 75 points is about 14 m a point, split evenly between 1.5 and 2.5 sq mm; conduit is about a third of the wire, as a circuit's wires share one pipe. Half the points carry a 6A socket, which takes two modules (moglix's Arteor listing), so a light point and a socket point share one 4-module box and plate. Not included: the distribution board, the mains to it, earthing and a fan's regulator; a 16A or AC point is priced as a 6A one. Each switch, socket and plate runs from the seller's price to its MRP. | 7 × Copper house wire, 1.5 sq mm + 7 × Copper house wire, 2.5 sq mm + 5 × PVC conduit, 20 mm + Concealed metal box, 4 modules + Legrand Arteor 6A one-way switch + Legrand Arteor 6A 3-pin socket + Legrand Arteor 4-module plate, fixed by electrician's labour, wiring a point and fitting its switch | [202][204][205][211][207][199] our rule |
+| Wiring a point, Havells Reo Elegant switches | Basic | One point: 7 m each of 1.5 and 2.5 sq mm copper wire, 5 m of 20 mm PVC conduit, half a 4-module box, a Havells Reo Elegant 6A switch, half a 6A socket and half a 4-module plate, and the electrician's labour Quantities are our own rule from clyfthome's figures: 700 to 1,100 m of wire for a 2BHK of 50 to 75 points is about 14 m a point, split evenly between 1.5 and 2.5 sq mm; conduit is about a third of the wire, as a circuit's wires share one pipe. Half the points carry a 6A socket, which takes two modules (moglix's Arteor listing), so a light point and a socket point share one 4-module box and plate. Not included: the distribution board, the mains to it, earthing and a fan's regulator; a 16A or AC point is priced as a 6A one. Each switch, socket and plate runs from the seller's price to its MRP. | 7 × Copper house wire, 1.5 sq mm + 7 × Copper house wire, 2.5 sq mm + 5 × PVC conduit, 20 mm + Concealed metal box, 4 modules + Havells Reo Elegant 6A one-way switch + Havells Reo Elegant 6A 3-pin socket + Havells Reo Elegant 4-module plate, fixed by electrician's labour, wiring a point and fitting its switch | [202][204][205][212][213][214][207][199] our rule |
+| Wiring a point, Schneider Livia switches | Standard | One point: 7 m each of 1.5 and 2.5 sq mm copper wire, 5 m of 20 mm PVC conduit, half a 4-module box, a Schneider Livia 10A switch, half a 6A socket and half a 4-module frame, and the electrician's labour Quantities are our own rule from clyfthome's figures: 700 to 1,100 m of wire for a 2BHK of 50 to 75 points is about 14 m a point, split evenly between 1.5 and 2.5 sq mm; conduit is about a third of the wire, as a circuit's wires share one pipe. Half the points carry a 6A socket, which takes two modules (moglix's Arteor listing), so a light point and a socket point share one 4-module box and plate. Not included: the distribution board, the mains to it, earthing and a fan's regulator; a 16A or AC point is priced as a 6A one. Each switch, socket and plate runs from the seller's price to its MRP. The seller lists the 10A switch, not a 6A one. | 7 × Copper house wire, 1.5 sq mm + 7 × Copper house wire, 2.5 sq mm + 5 × PVC conduit, 20 mm + Concealed metal box, 4 modules + Schneider Livia 10A one-way switch + Schneider Livia 6A 3-pin socket + Schneider Livia 4-module frame, fixed by electrician's labour, wiring a point and fitting its switch | [202][204][205][215][216][217][207][199] our rule |
+| Wiring a point, Schneider Zencelo switches | Premium | One point: 7 m each of 1.5 and 2.5 sq mm copper wire, 5 m of 20 mm PVC conduit, half a 4-module box, a Schneider Zencelo 6A switch with an on-indicator, half a 6A socket and half a 4-module frame, and the electrician's labour Quantities are our own rule from clyfthome's figures: 700 to 1,100 m of wire for a 2BHK of 50 to 75 points is about 14 m a point, split evenly between 1.5 and 2.5 sq mm; conduit is about a third of the wire, as a circuit's wires share one pipe. Half the points carry a 6A socket, which takes two modules (moglix's Arteor listing), so a light point and a socket point share one 4-module box and plate. Not included: the distribution board, the mains to it, earthing and a fan's regulator; a 16A or AC point is priced as a 6A one. Each switch, socket and plate runs from the seller's price to its MRP. The seller lists the 6A one-way switch with an on-indicator only, in bronze, so the socket and frame are the bronze ones. The MRPs run about twice the seller's prices, so the range is wide. | 7 × Copper house wire, 1.5 sq mm + 7 × Copper house wire, 2.5 sq mm + 5 × PVC conduit, 20 mm + Concealed metal box, 4 modules + Schneider Zencelo 6A one-way switch + Schneider Zencelo 6A 3-pin socket + Schneider Zencelo 4-module frame, fixed by electrician's labour, wiring a point and fitting its switch | [202][204][205][218][219][220][207][199] our rule |
+| Wiring a point, Crabtree Murano switches | Luxury | One point: 7 m each of 1.5 and 2.5 sq mm copper wire, 5 m of 20 mm PVC conduit, half a 4-module box, a Crabtree Murano 10A switch, half a 6A socket and half a 4-module plate, and the electrician's labour Quantities are our own rule from clyfthome's figures: 700 to 1,100 m of wire for a 2BHK of 50 to 75 points is about 14 m a point, split evenly between 1.5 and 2.5 sq mm; conduit is about a third of the wire, as a circuit's wires share one pipe. Half the points carry a 6A socket, which takes two modules (moglix's Arteor listing), so a light point and a socket point share one 4-module box and plate. Not included: the distribution board, the mains to it, earthing and a fan's regulator; a 16A or AC point is priced as a 6A one. Each switch, socket and plate runs from the seller's price to its MRP. The seller lists the 10A switch, not a 6A one; the switch, socket and plate are priced from packs of 20, 10 and 5. | 7 × Copper house wire, 1.5 sq mm + 7 × Copper house wire, 2.5 sq mm + 5 × PVC conduit, 20 mm + Concealed metal box, 4 modules + Crabtree Murano 10A one-way switch + Crabtree Murano 6A 3-pin socket + Crabtree Murano 4-module plate, fixed by electrician's labour, wiring a point and fitting its switch | [202][204][205][221][222][223][207][199] our rule |
+| Wiring a point, Schneider Unica Pure switches | Luxury | One point: 7 m each of 1.5 and 2.5 sq mm copper wire, 5 m of 20 mm PVC conduit, half a 4-module box, a Schneider Unica Pure 6A switch, half a 6A socket and half a 4-module frame, and the electrician's labour Quantities are our own rule from clyfthome's figures: 700 to 1,100 m of wire for a 2BHK of 50 to 75 points is about 14 m a point, split evenly between 1.5 and 2.5 sq mm; conduit is about a third of the wire, as a circuit's wires share one pipe. Half the points carry a 6A socket, which takes two modules (moglix's Arteor listing), so a light point and a socket point share one 4-module box and plate. Not included: the distribution board, the mains to it, earthing and a fan's regulator; a 16A or AC point is priced as a 6A one. Each switch, socket and plate runs from the seller's price to its MRP. | 7 × Copper house wire, 1.5 sq mm + 7 × Copper house wire, 2.5 sq mm + 5 × PVC conduit, 20 mm + Concealed metal box, 4 modules + Schneider Unica Pure 6A one-way switch + Schneider Unica Pure 6A 3-pin socket + Schneider Unica Pure 4-module frame, fixed by electrician's labour, wiring a point and fitting its switch | [202][204][205][224][225][226][207][199] our rule |
+| Wiring a point, Schneider Unica Pure switches with aluminium plates | Bespoke | One point: 7 m each of 1.5 and 2.5 sq mm copper wire, 5 m of 20 mm PVC conduit, half a 4-module box, a Schneider Unica Pure 6A switch, half a 6A socket and half a 4-module aluminium alloy plate, and the electrician's labour Quantities are our own rule from clyfthome's figures: 700 to 1,100 m of wire for a 2BHK of 50 to 75 points is about 14 m a point, split evenly between 1.5 and 2.5 sq mm; conduit is about a third of the wire, as a circuit's wires share one pipe. Half the points carry a 6A socket, which takes two modules (moglix's Arteor listing), so a light point and a socket point share one 4-module box and plate. Not included: the distribution board, the mains to it, earthing and a fan's regulator; a 16A or AC point is priced as a 6A one. Each switch, socket and plate runs from the seller's price to its MRP. A metal plate is the look a Bespoke buyer chooses; the switch and socket are the range's own. | 7 × Copper house wire, 1.5 sq mm + 7 × Copper house wire, 2.5 sq mm + 5 × PVC conduit, 20 mm + Concealed metal box, 4 modules + Schneider Unica Pure 6A one-way switch + Schneider Unica Pure 6A 3-pin socket + Schneider Unica Pure 4-module aluminium plate, fixed by electrician's labour, wiring a point and fitting its switch | [202][204][205][224][225][227][207][199] our rule |
+| Wiring a point, Crabtree Murano touch switches behind glass | Bespoke | One point: 7 m each of 1.5 and 2.5 sq mm copper wire, 5 m of 20 mm PVC conduit, half a 4-module box, a quarter of a Crabtree Murano 4-channel touch switch, half a 6A socket and half a 4-module glass plate, and the electrician's labour Quantities are our own rule from clyfthome's figures: 700 to 1,100 m of wire for a 2BHK of 50 to 75 points is about 14 m a point, split evenly between 1.5 and 2.5 sq mm; conduit is about a third of the wire, as a circuit's wires share one pipe. Half the points carry a 6A socket, which takes two modules (moglix's Arteor listing), so a light point and a socket point share one 4-module box and plate. Not included: the distribution board, the mains to it, earthing and a fan's regulator; a 16A or AC point is priced as a 6A one. Each switch, socket and plate runs from the seller's price to its MRP. A 4-channel touch switch works four points, so a point takes a quarter of it, as it takes half a plate; it also answers a remote. The socket is the range's 6A one, from a pack of 10. | 7 × Copper house wire, 1.5 sq mm + 7 × Copper house wire, 2.5 sq mm + 5 × PVC conduit, 20 mm + Concealed metal box, 4 modules + Crabtree Murano 4-channel touch switch + Crabtree Murano 6A 3-pin socket + Crabtree Murano 4-module glass plate, fixed by electrician's labour, wiring a point and fitting its switch | [202][204][205][228][222][229][207][199] our rule |
 
 ### Distribution board (set)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Distribution board with MCBs and an RCCB | 12-way double-door distribution board with ten single-pole MCBs and a 4-pole 30 mA RCCB | Havells, Legrand, Schneider | 12-way double-door distribution board + 10 × Single-pole MCB + 4-pole RCCB, 63 A, 30 mA | [212][213][214] |
+| Every level | Distribution board with MCBs and an RCCB | 12-way double-door distribution board with ten single-pole MCBs and a 4-pole 30 mA RCCB | Havells, Legrand, Schneider | 12-way double-door distribution board + 10 × Single-pole MCB + 4-pole RCCB, 63 A, 30 mA | [230][231][232] |
 
 ### Light fittings (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | LED panel light | LED panel light, 15–18 W, fixed | Wipro Garnet, Philips, Syska | Rs. 300–790 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [215] |
-| Standard | COB LED downlight | COB LED downlight or spot, fixed |  | Rs. 405–650 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [216] |
-| Premium | COB swivel downlight | Premium COB swivel downlight, fixed | Polycab Pearl | Rs. 2,250–4,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST | [217] |
-| Luxury | COB downlight with a metre of profile light | Premium COB downlight and one metre of LED profile light, fixed |  | COB swivel downlight + LED profile light, a metre | [217][218] |
-| Bespoke | COB downlight with a metre of profile light | Premium COB downlight and one metre of LED profile light, fixed |  | COB swivel downlight + LED profile light, a metre | [217][218] |
+| Basic | LED panel light | LED panel light, 15–18 W, fixed | Wipro Garnet, Philips, Syska | Rs. 300–790 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [233] |
+| Standard | COB LED downlight | COB LED downlight or spot, fixed |  | Rs. 405–650 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [234] |
+| Premium | COB swivel downlight | Premium COB swivel downlight, fixed | Polycab Pearl | Rs. 2,250–4,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST | [235] |
+| Luxury | COB downlight with a metre of profile light | Premium COB downlight and one metre of LED profile light, fixed |  | COB swivel downlight + LED profile light, a metre | [235][236] |
+| Bespoke | COB downlight with a metre of profile light | Premium COB downlight and one metre of LED profile light, fixed |  | COB swivel downlight + LED profile light, a metre | [235][236] |
 
 Choices at each level: Basic 3, Standard 3, Premium 3, Luxury 3, Bespoke 4.
 
@@ -890,17 +897,17 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Magnetic track, a metre | Luxury | Magnetic track channel, one metre (spots extra) | Rs. 400–770 a each; incl. GST | [219] |
-| LED batten, 20 W | Basic | 20 W LED batten (tube light), fixed | Rs. 359 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [220] |
-| LED batten, three colour settings, 20 W | Basic | 20 W LED batten with three colour settings (3-in-1), fixed | Rs. 299–699 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [221] |
-| Recessed colour-changing panel, 10 W | Standard | 10 W recessed LED panel, 130 × 130 mm, colour-changing (CCT), fixed | Rs. 1,849 for a pack of four of 4 each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [222] |
-| Smart LED batten, tunable white, 20 W | Standard | 20 W Wi-Fi LED batten, tunable white, app and voice control, fixed Philips 749 (MRP 2,299) and Wipro 729 (MRP 2,480), as listed. | Rs. 729–2,480 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [223][224] |
-| Smart downlight, white ambiance (Philips Hue Garnea) | Premium | 7 W smart recessed downlight, white ambiance, fixed A Hue Bridge, for control of the whole house, is not priced. | Rs. 1,699–1,950 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [225] |
-| Smart LED batten, white and colour, 20 W | Premium | 20 W Wi-Fi LED batten, tunable white and RGB colour, fixed The 24 W was seen at 1,664–2,999. | Rs. 1,299–2,690 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [226] |
-| COB downlight with two metres of profile light | Luxury | Premium COB downlight and two metres of LED profile light, fixed | COB swivel downlight + 2 × LED profile light, a metre | [217][218] |
-| Smart recessed spotlight, white and colour (Philips Hue Centura) | Bespoke | Smart round recessed spotlight, white and colour ambiance, fixed A pack of one; the Hue Bridge is sold separately. | Rs. 13,482 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [227] |
-| Smart ceiling light, 52 W (Philips Hue Semeru) | Bespoke | 52 W smart ceiling light, white ambiance, fixed A Hue Bridge, for control of the whole house, is not priced. | Rs. 37,490 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [228] |
-| Smart bathroom ceiling light, 40 W (Philips Hue Adore) | Bespoke | 40 W smart bathroom ceiling light, white ambiance, fixed A Hue Bridge, for control of the whole house, is not priced. | Rs. 18,436–28,990 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [229] |
+| Magnetic track, a metre | Luxury | Magnetic track channel, one metre (spots extra) | Rs. 400–770 a each; incl. GST | [237] |
+| LED batten, 20 W | Basic | 20 W LED batten (tube light), fixed | Rs. 359 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [238] |
+| LED batten, three colour settings, 20 W | Basic | 20 W LED batten with three colour settings (3-in-1), fixed | Rs. 299–699 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [239] |
+| Recessed colour-changing panel, 10 W | Standard | 10 W recessed LED panel, 130 × 130 mm, colour-changing (CCT), fixed | Rs. 1,849 for a pack of four of 4 each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [240] |
+| Smart LED batten, tunable white, 20 W | Standard | 20 W Wi-Fi LED batten, tunable white, app and voice control, fixed Philips 749 (MRP 2,299) and Wipro 729 (MRP 2,480), as listed. | Rs. 729–2,480 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [241][242] |
+| Smart downlight, white ambiance (Philips Hue Garnea) | Premium | 7 W smart recessed downlight, white ambiance, fixed A Hue Bridge, for control of the whole house, is not priced. | Rs. 1,699–1,950 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [243] |
+| Smart LED batten, white and colour, 20 W | Premium | 20 W Wi-Fi LED batten, tunable white and RGB colour, fixed The 24 W was seen at 1,664–2,999. | Rs. 1,299–2,690 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [244] |
+| COB downlight with two metres of profile light | Luxury | Premium COB downlight and two metres of LED profile light, fixed | COB swivel downlight + 2 × LED profile light, a metre | [235][236] |
+| Smart recessed spotlight, white and colour (Philips Hue Centura) | Bespoke | Smart round recessed spotlight, white and colour ambiance, fixed A pack of one; the Hue Bridge is sold separately. | Rs. 13,482 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [245] |
+| Smart ceiling light, 52 W (Philips Hue Semeru) | Bespoke | 52 W smart ceiling light, white ambiance, fixed A Hue Bridge, for control of the whole house, is not priced. | Rs. 37,490 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [246] |
+| Smart bathroom ceiling light, 40 W (Philips Hue Adore) | Bespoke | 40 W smart bathroom ceiling light, white ambiance, fixed A Hue Bridge, for control of the whole house, is not priced. | Rs. 18,436–28,990 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [247] |
 
 ### Chandelier (each)
 
@@ -910,27 +917,27 @@ Also in the library:
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
 | Luxury | None at this level | | | | |
-| Bespoke | Decorative LED chandelier | Decorative LED chandelier over the dining table, fixed |  | Rs. 9,700–76,100 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [230] |
+| Bespoke | Decorative LED chandelier | Decorative LED chandelier over the dining table, fixed |  | Rs. 9,700–76,100 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [248] |
 
 ### Ceiling fans (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Ceiling fan, 1200 mm | 1200 mm ceiling fan, fixed | Crompton, Usha, Orient | Rs. 1,200–2,200 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [231] |
-| Standard | BLDC fan with remote | 1200 mm energy-saving BLDC fan with remote, fixed | Orient Zeno, Havells Ambrose, Atomberg Renesa | Rs. 2,498–3,499 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid; read 04-10-2026 | [232] |
-| Premium | Premium BLDC fan | Premium BLDC fan with remote and app, fixed | Atomberg | Rs. 3,500–10,500 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [233] |
-| Luxury | Designer fan | Designer ceiling fan, fixed | Polycab Superia | Rs. 10,850–15,999 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [234] |
-| Bespoke | Premium designer fan | Premium designer ceiling fan, fixed |  | Rs. 23,900 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [234] |
+| Basic | Ceiling fan, 1200 mm | 1200 mm ceiling fan, fixed | Crompton, Usha, Orient | Rs. 1,200–2,200 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [249] |
+| Standard | BLDC fan with remote | 1200 mm energy-saving BLDC fan with remote, fixed | Orient Zeno, Havells Ambrose, Atomberg Renesa | Rs. 2,498–3,499 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid; read 04-10-2026 | [250] |
+| Premium | Premium BLDC fan | Premium BLDC fan with remote and app, fixed | Atomberg | Rs. 3,500–10,500 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [251] |
+| Luxury | Designer fan | Designer ceiling fan, fixed | Polycab Superia | Rs. 10,850–15,999 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [252] |
+| Bespoke | Premium designer fan | Premium designer ceiling fan, fixed |  | Rs. 23,900 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [252] |
 
 ### Exhaust fans (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Exhaust fan, 150 mm | 150 mm exhaust fan, fixed | Usha Technix | Rs. 700–1,000 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [235] |
-| Standard | Exhaust fan, 150 mm, copper winding | 150 mm exhaust fan with copper winding, fixed | Crompton Ventair | Rs. 1,000–1,500 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [235] |
-| Premium | Exhaust fan, 150 mm, premium | 150 mm exhaust fan, 110 CFM, copper winding, fixed | Havells VentilAir DX | Rs. 1,200–1,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [235][236] |
-| Luxury | Exhaust fan, 150 mm, premium | 150 mm exhaust fan, 110 CFM, copper winding, fixed | Havells VentilAir DX | Rs. 1,200–1,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [235][236] |
-| Bespoke | Exhaust fan, 150 mm, premium | 150 mm exhaust fan, 110 CFM, copper winding, fixed | Havells VentilAir DX | Rs. 1,200–1,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [235][236] |
+| Basic | Exhaust fan, 150 mm | 150 mm exhaust fan, fixed | Usha Technix | Rs. 700–1,000 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [253] |
+| Standard | Exhaust fan, 150 mm, copper winding | 150 mm exhaust fan with copper winding, fixed | Crompton Ventair | Rs. 1,000–1,500 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [253] |
+| Premium | Exhaust fan, 150 mm, premium | 150 mm exhaust fan, 110 CFM, copper winding, fixed | Havells VentilAir DX | Rs. 1,200–1,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [253][254] |
+| Luxury | Exhaust fan, 150 mm, premium | 150 mm exhaust fan, 110 CFM, copper winding, fixed | Havells VentilAir DX | Rs. 1,200–1,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [253][254] |
+| Bespoke | Exhaust fan, 150 mm, premium | 150 mm exhaust fan, 110 CFM, copper winding, fixed | Havells VentilAir DX | Rs. 1,200–1,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [253][254] |
 
 ### Electrical parts, one by one (each)
 
@@ -938,16 +945,16 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| 12-way double-door distribution board | — | 12-way double-door SPN distribution board | Rs. 1,931–3,372 a each; incl. GST; read 04-10-2026 | [237] |
-| Single-pole MCB | — | Single-pole MCB | Rs. 109–259 a each; GST not stated: taken as the price paid | [213] |
-| 4-pole RCCB, 63 A, 30 mA | — | 4-pole RCCB, 63 A, 30 mA Havells, ABB and Legrand selling prices, as listed. | Rs. 3,931–5,027 a each; GST not stated: taken as the price paid; read 04-10-2026 | [214] |
-| LED profile light, a metre | — | LED profile light, one metre | Rs. 100–1,000 a each; GST not stated: taken as the price paid | [218] |
-| Earthing pit, GI pipe | — | GI pipe earthing pit | Rs. 3,000–4,500 a each, supplied and fixed; GST not stated: taken as the price paid | [238] |
-| Earthing pit, copper plate | — | Copper plate earthing pit | Rs. 6,000–9,000 a each, supplied and fixed; GST not stated: taken as the price paid | [238] |
-| Modular switch, budget range | Basic | Modular switch, budget range | Rs. 25–50 a each; GST not stated: taken as the price paid | [239] |
-| Modular switch, mid range (per module) | Standard | Modular switch, mid range, per module | Rs. 200–400 a each; GST not stated: taken as the price paid | [239] |
-| Modular switch, premium range (per module) | Luxury | Modular switch, premium range, per module | Rs. 400–1,000 a each; GST not stated: taken as the price paid | [239] |
-| Switch plate, 4 modules | — | 4-module switchboard plate | Rs. 300–700 a each; GST not stated: taken as the price paid | [239] |
+| 12-way double-door distribution board | — | 12-way double-door SPN distribution board | Rs. 1,931–3,372 a each; incl. GST; read 04-10-2026 | [255] |
+| Single-pole MCB | — | Single-pole MCB | Rs. 109–259 a each; GST not stated: taken as the price paid | [231] |
+| 4-pole RCCB, 63 A, 30 mA | — | 4-pole RCCB, 63 A, 30 mA Havells, ABB and Legrand selling prices, as listed. | Rs. 3,931–5,027 a each; GST not stated: taken as the price paid; read 04-10-2026 | [232] |
+| LED profile light, a metre | — | LED profile light, one metre | Rs. 100–1,000 a each; GST not stated: taken as the price paid | [236] |
+| Earthing pit, GI pipe | — | GI pipe earthing pit | Rs. 3,000–4,500 a each, supplied and fixed; GST not stated: taken as the price paid | [256] |
+| Earthing pit, copper plate | — | Copper plate earthing pit | Rs. 6,000–9,000 a each, supplied and fixed; GST not stated: taken as the price paid | [256] |
+| Modular switch, budget range | Basic | Modular switch, budget range | Rs. 25–50 a each; GST not stated: taken as the price paid | [257] |
+| Modular switch, mid range (per module) | Standard | Modular switch, mid range, per module | Rs. 200–400 a each; GST not stated: taken as the price paid | [257] |
+| Modular switch, premium range (per module) | Luxury | Modular switch, premium range, per module | Rs. 400–1,000 a each; GST not stated: taken as the price paid | [257] |
+| Switch plate, 4 modules | — | 4-module switchboard plate | Rs. 300–700 a each; GST not stated: taken as the price paid | [257] |
 | Copper house wire, 1.5 sq mm | — | Copper house wire, 1.5 sq mm, by the metre The page's range a metre; it names no make or grade. | Rs. 25–40 a m; GST not stated: taken as the price paid; read 05-10-2026 | [202] |
 | Copper house wire, 2.5 sq mm | — | Copper house wire, 2.5 sq mm, by the metre The page's range a metre; it names no make or grade. | Rs. 40–60 a m; GST not stated: taken as the price paid; read 05-10-2026 | [202] |
 | PVC conduit, 20 mm | — | PVC conduit pipe, 20 mm, in 3 m lengths One seller's price for a 3 m pipe; the gauge is not stated. | Rs. 100 for a 3 m pipe of 3 m; GST not stated: taken as the price paid; read 05-10-2026 | [204] |
@@ -971,6 +978,24 @@ In the library:
 | Legrand Arteor 6A one-way switch | — | Legrand Arteor 573400, 6A one-way white switch The page's price and its MRP. | Rs. 112–238 a each; incl. GST; read 05-10-2026 | [211] |
 | Legrand Arteor 6A 3-pin socket | — | Legrand Arteor 573424, 6A 3-pin white socket The page's price and its MRP. | Rs. 190–380 a each; incl. GST; read 05-10-2026 | [211] |
 | Legrand Arteor 4-module plate | — | Legrand Arteor 575730, 4-module white cover plate with frame The page's price and its MRP. | Rs. 218–436 a each; incl. GST; read 05-10-2026 | [211] |
+| Havells Reo Elegant 6A one-way switch | — | Havells Reo Elegant AHRSXXW061, 6A one-way white switch The page's price and its MRP. | Rs. 22–39 a each; incl. GST; read 10-10-2026 | [212] |
+| Havells Reo Elegant 6A 3-pin socket | — | Havells Reo Elegant AHRKPXW063, 6A 3-pin white socket The page's price and its MRP. | Rs. 69–114 a each; incl. GST; read 10-10-2026 | [213] |
+| Havells Reo Elegant 4-module plate | — | Havells Reo Elegant AHRPLCWV04, 4-module white glossy cover plate The page's price and its MRP. | Rs. 83–133 a each; incl. GST; read 10-10-2026 | [214] |
+| Schneider Livia 10A one-way switch | — | Schneider Livia P1001, 10A one-way white switch The page's price and its MRP. | Rs. 89–162 a each; incl. GST; read 10-10-2026 | [215] |
+| Schneider Livia 6A 3-pin socket | — | Schneider Livia P2005NS, 6A 3-pin 2-module white socket with shutter The page's price and its MRP. | Rs. 186–309 a each; incl. GST; read 10-10-2026 | [216] |
+| Schneider Livia 4-module frame | — | Schneider Livia P0704, 4-module white grid and cover frame The page's price and its MRP. | Rs. 147–265 a each; incl. GST; read 10-10-2026 | [217] |
+| Schneider Zencelo 6A one-way switch | — | Schneider Zencelo IN8401(BZ), 6A one-way bronze full-flat switch with an on-indicator The page's price and its MRP. | Rs. 229–565 a each; incl. GST; read 10-10-2026 | [218] |
+| Schneider Zencelo 6A 3-pin socket | — | Schneider Zencelo IN8426UNS_BZ, 6A 3-pin 2-module bronze socket with shutter The page's price and its MRP. | Rs. 549–992 a each; incl. GST; read 10-10-2026 | [219] |
+| Schneider Zencelo 4-module frame | — | Schneider Zencelo IN8404C(BZ), 4-module dark grey grid and cover frame The page's price and its MRP, for a pack of 10. | Rs. 3,040–7,730 for a pack of 10 each; incl. GST; read 10-10-2026 | [220] |
+| Crabtree Murano 10A one-way switch | — | Crabtree Murano ACMSXXW101, 10A one-way white switch The page's price and its MRP, for a pack of 20. | Rs. 2,359–2,800 for a pack of 20 each; incl. GST; read 10-10-2026 | [221] |
+| Crabtree Murano 6A 3-pin socket | — | Crabtree Murano ACMKPXW063, 6A 3-pin white shuttered socket The page's price and its MRP, for a pack of 10. | Rs. 2,309–2,750 for a pack of 10 each; incl. GST; read 10-10-2026 | [222] |
+| Crabtree Murano 4-module plate | — | Crabtree Murano ACMPLCWV04, 4-module pearl white combined plate The page's price and its MRP, for a pack of 5. | Rs. 1,799–2,145 for a pack of 5 each; incl. GST; read 10-10-2026 | [223] |
+| Schneider Unica Pure 6A one-way switch | — | Schneider Unica Pure UNS61SW1M_GY, 6A one-way volcanic grey switch The page's price and its MRP. | Rs. 183–273 a each; incl. GST; read 10-10-2026 | [224] |
+| Schneider Unica Pure 6A 3-pin socket | — | Schneider Unica Pure UNS6SK3P2MNS_GY, 6A 3-pin 2-module grey socket with shutter The page's price and its MRP. | Rs. 339–590 a each; incl. GST; read 10-10-2026 | [225] |
+| Schneider Unica Pure 4-module frame | — | Schneider Unica Pure UNSCP4M_GY, 4-module volcanic grey cover frame The page's price and its MRP. | Rs. 329–566 a each; incl. GST; read 10-10-2026 | [226] |
+| Schneider Unica Pure 4-module aluminium plate | — | Schneider Unica Pure UNPCP4M_ML, 4-module aluminium alloy pewter grey cover plate The page's price and its MRP. | Rs. 1,883–3,954 a each; incl. GST; read 10-10-2026 | [227] |
+| Crabtree Murano 4-channel touch switch | — | Crabtree Murano ACMSEIW064, 4-channel touch and IR controlled white switch The page's price and its MRP. | Rs. 4,069–4,834 a each; incl. GST; read 10-10-2026 | [228] |
+| Crabtree Murano 4-module glass plate | — | Crabtree Murano ACMPGCWV04, 4-module arctic white Glassique combined plate The page's price and its MRP, for a pack of 5. | Rs. 6,119–7,280 for a pack of 5 each; incl. GST; read 10-10-2026 | [229] |
 
 ## Plumbing
 
@@ -980,13 +1005,13 @@ Dated 02-10-2026; an item read on another day says so.
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Water supply point | One water point: concealed CPVC pipes and fittings to the outlet, tested, with labour | Astral, Ashirvad, Supreme | Rs. 1,200–3,500 a each, supplied and fixed; GST not stated: taken as the price paid | [240] |
+| Every level | Water supply point | One water point: concealed CPVC pipes and fittings to the outlet, tested, with labour | Astral, Ashirvad, Supreme | Rs. 1,200–3,500 a each, supplied and fixed; GST not stated: taken as the price paid | [258] |
 
 ### Drainage points (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Drainage point | One drainage point: UPVC/SWR pipes and fittings to the stack, with labour | Supreme, Prince, Finolex | Rs. 700–2,600 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [240] |
+| Every level | Drainage point | One drainage point: UPVC/SWR pipes and fittings to the stack, with labour | Supreme, Prince, Finolex | Rs. 700–2,600 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [258] |
 
 ### Pipes and labour, one by one (each)
 
@@ -994,10 +1019,10 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| CPVC pipe, 15 mm, a metre | — | CPVC pipe ½ in | Rs. 70–130 a m; GST not stated: taken as the price paid | [240] |
-| CPVC pipe, 20–25 mm, a metre | — | CPVC pipe ¾–1 in | Rs. 120–230 a m; GST not stated: taken as the price paid | [240] |
-| SWR pipe, 110 mm, a metre | — | SWR drainage pipe 110 mm, in 3 m lengths | Rs. 490 for a pipe of 3 m; read 04-10-2026 | [241] |
-| Plumber, a day | — | Skilled plumber, one day of 8–10 hours | Rs. 500–2,200 a each, supplied and fixed; read 04-10-2026 | [242] |
+| CPVC pipe, 15 mm, a metre | — | CPVC pipe ½ in | Rs. 70–130 a m; GST not stated: taken as the price paid | [258] |
+| CPVC pipe, 20–25 mm, a metre | — | CPVC pipe ¾–1 in | Rs. 120–230 a m; GST not stated: taken as the price paid | [258] |
+| SWR pipe, 110 mm, a metre | — | SWR drainage pipe 110 mm, in 3 m lengths | Rs. 490 for a pipe of 3 m; read 04-10-2026 | [259] |
+| Plumber, a day | — | Skilled plumber, one day of 8–10 hours | Rs. 500–2,200 a each, supplied and fixed; read 04-10-2026 | [260] |
 
 ## Appliances
 
@@ -1007,21 +1032,21 @@ Dated 02-10-2026; an item read on another day says so.
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Auto-clean chimney, 60 cm | 60 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Glen, Elica | Rs. 11,000–18,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [243] |
-| Standard | Auto-clean chimney, 60 cm | 60 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Glen, Elica | Rs. 11,000–18,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [243] |
-| Premium | Auto-clean chimney, 90 cm | 90 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Elica | Rs. 18,000–30,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [243] |
-| Luxury | Auto-clean chimney, 90 cm | 90 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Elica | Rs. 18,000–30,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [243] |
-| Bespoke | Auto-clean chimney, 90 cm | 90 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Elica | Rs. 18,000–30,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [243] |
+| Basic | Auto-clean chimney, 60 cm | 60 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Glen, Elica | Rs. 11,000–18,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [261] |
+| Standard | Auto-clean chimney, 60 cm | 60 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Glen, Elica | Rs. 11,000–18,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [261] |
+| Premium | Auto-clean chimney, 90 cm | 90 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Elica | Rs. 18,000–30,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [261] |
+| Luxury | Auto-clean chimney, 90 cm | 90 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Elica | Rs. 18,000–30,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [261] |
+| Bespoke | Auto-clean chimney, 90 cm | 90 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Elica | Rs. 18,000–30,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [261] |
 
 ### Built-in hob (each, appliance)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
 | Basic | None at this level | | | | |
-| Standard | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | Rs. 13,000–33,000 a each; incl. GST | [244] |
-| Premium | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | Rs. 13,000–33,000 a each; incl. GST | [244] |
-| Luxury | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | Rs. 13,000–33,000 a each; incl. GST | [244] |
-| Bespoke | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | Rs. 13,000–33,000 a each; incl. GST | [244] |
+| Standard | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | Rs. 13,000–33,000 a each; incl. GST | [262] |
+| Premium | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | Rs. 13,000–33,000 a each; incl. GST | [262] |
+| Luxury | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | Rs. 13,000–33,000 a each; incl. GST | [262] |
+| Bespoke | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | Rs. 13,000–33,000 a each; incl. GST | [262] |
 
 ### Built-in oven (each, appliance)
 
@@ -1030,8 +1055,8 @@ Dated 02-10-2026; an item read on another day says so.
 | Basic | None at this level | | | | |
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
-| Luxury | Built-in oven | Built-in electric oven in a tall unit | Faber, IFB, Kaff | Rs. 27,257–79,667 a each; incl. GST | [245] |
-| Bespoke | Premium built-in oven | Premium high-capacity built-in oven | Bosch, Siemens, Hafele | Rs. 38,363–1,12,990 a each; incl. GST; read 04-10-2026 | [245] |
+| Luxury | Built-in oven | Built-in electric oven in a tall unit | Faber, IFB, Kaff | Rs. 27,257–79,667 a each; incl. GST | [263] |
+| Bespoke | Premium built-in oven | Premium high-capacity built-in oven | Bosch, Siemens, Hafele | Rs. 38,363–1,12,990 a each; incl. GST; read 04-10-2026 | [263] |
 
 ### Dishwasher (each, appliance)
 
@@ -1040,18 +1065,18 @@ Dated 02-10-2026; an item read on another day says so.
 | Basic | None at this level | | | | |
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
-| Luxury | Dishwasher | Dishwasher, connected | Bosch, IFB, LG | Rs. 18,490–54,990 a each; GST not stated: taken as the price paid; read 04-10-2026 | [246] |
-| Bespoke | Dishwasher | Dishwasher, connected | Bosch, IFB, LG | Rs. 18,490–54,990 a each; GST not stated: taken as the price paid; read 04-10-2026 | [246] |
+| Luxury | Dishwasher | Dishwasher, connected | Bosch, IFB, LG | Rs. 18,490–54,990 a each; GST not stated: taken as the price paid; read 04-10-2026 | [264] |
+| Bespoke | Dishwasher | Dishwasher, connected | Bosch, IFB, LG | Rs. 18,490–54,990 a each; GST not stated: taken as the price paid; read 04-10-2026 | [264] |
 
 ### Water purifier (each, appliance)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
 | Basic | None at this level | | | | |
-| Standard | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | Rs. 10,000–22,000 a each; GST not stated: taken as the price paid | [247] |
-| Premium | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | Rs. 10,000–22,000 a each; GST not stated: taken as the price paid | [247] |
-| Luxury | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | Rs. 10,000–22,000 a each; GST not stated: taken as the price paid | [247] |
-| Bespoke | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | Rs. 10,000–22,000 a each; GST not stated: taken as the price paid | [247] |
+| Standard | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | Rs. 10,000–22,000 a each; GST not stated: taken as the price paid | [265] |
+| Premium | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | Rs. 10,000–22,000 a each; GST not stated: taken as the price paid | [265] |
+| Luxury | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | Rs. 10,000–22,000 a each; GST not stated: taken as the price paid | [265] |
+| Bespoke | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | Rs. 10,000–22,000 a each; GST not stated: taken as the price paid | [265] |
 
 ### Air conditioners (each, appliance)
 
@@ -1059,9 +1084,9 @@ Dated 02-10-2026; an item read on another day says so.
 |---|---|---|---|---|---|
 | Basic | None at this level | | | | |
 | Standard | None at this level | | | | |
-| Premium | Split AC, 1.5 ton, 5-star inverter | 1.5-ton 5-star inverter split AC, installed with 3 m of copper pipe | Voltas, Daikin, Godrej, LG | Rs. 31,290–51,663 a each; plus installing a split ac with up to 3 m of pipe Rs. 1,500–3,500; GST not stated: taken as the price paid | [248][249] |
-| Luxury | Split AC, 1.5 ton, 5-star inverter | 1.5-ton 5-star inverter split AC, installed with 3 m of copper pipe | Voltas, Daikin, Godrej, LG | Rs. 31,290–51,663 a each; plus installing a split ac with up to 3 m of pipe Rs. 1,500–3,500; GST not stated: taken as the price paid | [248][249] |
-| Bespoke | Split AC, 1.5 ton, 5-star inverter | 1.5-ton 5-star inverter split AC, installed with 3 m of copper pipe | Voltas, Daikin, Godrej, LG | Rs. 31,290–51,663 a each; plus installing a split ac with up to 3 m of pipe Rs. 1,500–3,500; GST not stated: taken as the price paid | [248][249] |
+| Premium | Split AC, 1.5 ton, 5-star inverter | 1.5-ton 5-star inverter split AC, installed with 3 m of copper pipe | Voltas, Daikin, Godrej, LG | Rs. 31,290–51,663 a each; plus installing a split ac with up to 3 m of pipe Rs. 1,500–3,500; GST not stated: taken as the price paid | [266][267] |
+| Luxury | Split AC, 1.5 ton, 5-star inverter | 1.5-ton 5-star inverter split AC, installed with 3 m of copper pipe | Voltas, Daikin, Godrej, LG | Rs. 31,290–51,663 a each; plus installing a split ac with up to 3 m of pipe Rs. 1,500–3,500; GST not stated: taken as the price paid | [266][267] |
+| Bespoke | Split AC, 1.5 ton, 5-star inverter | 1.5-ton 5-star inverter split AC, installed with 3 m of copper pipe | Voltas, Daikin, Godrej, LG | Rs. 31,290–51,663 a each; plus installing a split ac with up to 3 m of pipe Rs. 1,500–3,500; GST not stated: taken as the price paid | [266][267] |
 
 ## Smart home and security
 
@@ -1073,9 +1098,9 @@ Dated 02-10-2026; an item read on another day says so.
 |---|---|---|---|---|---|
 | Basic | None at this level | | | | |
 | Standard | None at this level | | | | |
-| Premium | Video door phone | Video door phone with an indoor screen, fixed | Godrej, Hikvision | Rs. 5,919–19,299 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [250] |
-| Luxury | Video door phone | Video door phone with an indoor screen, fixed | Godrej, Hikvision | Rs. 5,919–19,299 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [250] |
-| Bespoke | Video door phone | Video door phone with an indoor screen, fixed | Godrej, Hikvision | Rs. 5,919–19,299 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [250] |
+| Premium | Video door phone | Video door phone with an indoor screen, fixed | Godrej, Hikvision | Rs. 5,919–19,299 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [268] |
+| Luxury | Video door phone | Video door phone with an indoor screen, fixed | Godrej, Hikvision | Rs. 5,919–19,299 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [268] |
+| Bespoke | Video door phone | Video door phone with an indoor screen, fixed | Godrej, Hikvision | Rs. 5,919–19,299 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [268] |
 
 ### Smart switches (each)
 
@@ -1084,7 +1109,7 @@ Dated 02-10-2026; an item read on another day says so.
 | Basic | None at this level | | | | |
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
-| Luxury | Wi-Fi smart switch, per light point | Wi-Fi smart switch module for one light point, app and voice control |  | Rs. 800–1,500 a each; GST not stated: taken as the price paid | [251] |
+| Luxury | Wi-Fi smart switch, per light point | Wi-Fi smart switch module for one light point, app and voice control |  | Rs. 800–1,500 a each; GST not stated: taken as the price paid | [269] |
 | Bespoke | None at this level | | | | |
 
 ### CCTV (set)
@@ -1094,8 +1119,8 @@ Dated 02-10-2026; an item read on another day says so.
 | Basic | None at this level | | | | |
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
-| Luxury | CCTV, 4 cameras | Four cameras with a recorder, a hard disk and cabling | Hikvision, CP Plus | Rs. 8,000–18,000 a set; plus installing a 4-camera cctv set Rs. 2,000–4,000; GST not stated: taken as the price paid | [252] |
-| Bespoke | CCTV, 4 cameras | Four cameras with a recorder, a hard disk and cabling | Hikvision, CP Plus | Rs. 8,000–18,000 a set; plus installing a 4-camera cctv set Rs. 2,000–4,000; GST not stated: taken as the price paid | [252] |
+| Luxury | CCTV, 4 cameras | Four cameras with a recorder, a hard disk and cabling | Hikvision, CP Plus | Rs. 8,000–18,000 a set; plus installing a 4-camera cctv set Rs. 2,000–4,000; GST not stated: taken as the price paid | [270] |
+| Bespoke | CCTV, 4 cameras | Four cameras with a recorder, a hard disk and cabling | Hikvision, CP Plus | Rs. 8,000–18,000 a set; plus installing a 4-camera cctv set Rs. 2,000–4,000; GST not stated: taken as the price paid | [270] |
 
 ### Smart-home parts and packages (each)
 
@@ -1103,9 +1128,9 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Wi-Fi smart switch, premium, 1 gang | Bespoke | Premium Wi-Fi smart switch, one gang | Rs. 4,000–8,000 a each; GST not stated: taken as the price paid | [251] |
-| Smart home, 2BHK, basic | Premium | Smart switches, a door lock, curtains and a video door phone for a 2BHK, basic | Rs. 50,000–1,00,000 a set, supplied and fixed; GST not stated: taken as the price paid | [251] |
-| Smart home, 3BHK, basic | Premium | Smart home for a 3BHK, basic | Rs. 1,00,000–2,00,000 a set, supplied and fixed; GST not stated: taken as the price paid | [251] |
+| Wi-Fi smart switch, premium, 1 gang | Bespoke | Premium Wi-Fi smart switch, one gang | Rs. 4,000–8,000 a each; GST not stated: taken as the price paid | [269] |
+| Smart home, 2BHK, basic | Premium | Smart switches, a door lock, curtains and a video door phone for a 2BHK, basic | Rs. 50,000–1,00,000 a set, supplied and fixed; GST not stated: taken as the price paid | [269] |
+| Smart home, 3BHK, basic | Premium | Smart home for a 3BHK, basic | Rs. 1,00,000–2,00,000 a set, supplied and fixed; GST not stated: taken as the price paid | [269] |
 | KNX automation, a 3BHK | Bespoke | KNX wired automation for a 3BHK, basic Rs. 4–8.5 lakh for a 2–3 BHK flat, as listed. | Rs. 4,00,000–8,50,000 a set, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [201] |
 
 ## Furniture and furnishings (movable)
@@ -1116,17 +1141,17 @@ Movable items, in sections of their own: Furniture and Soft furnishings, on for 
 
 ### Sofa (each, movable)
 
-- **What it is**: A three-seater sofa, built in four layers: a frame, a suspension, foam cushions, and a cover of fabric or leather. [253] our rule
-- **Why it costs what it does**: The frame, the foam and the cover set the price. A frame of seasoned (kiln-dried) hardwood such as sheesham, sal or teak lasts; avoid one of thin particle board or MDF. Denser foam costs more to make but lasts three to four times longer. [253][254]
-- **What to check**: Ask what the frame is made of and whether the wood is kiln-dried. Seat foam: 32 kg a cubic metre or denser. Fabric for daily use: rated for tens of thousands of rubs (Martindale). [253][254]
+- **What it is**: A three-seater sofa, built in four layers: a frame, a suspension, foam cushions, and a cover of fabric or leather. [271] our rule
+- **Why it costs what it does**: The frame, the foam and the cover set the price. A frame of seasoned (kiln-dried) hardwood such as sheesham, sal or teak lasts; avoid one of thin particle board or MDF. Denser foam costs more to make but lasts three to four times longer. [271][272]
+- **What to check**: Ask what the frame is made of and whether the wood is kiln-dried. Seat foam: 32 kg a cubic metre or denser. Fabric for daily use: rated for tens of thousands of rubs (Martindale). [271][272]
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | 3-seater sofa, entry | 3-seater sofa: plywood or engineered frame, polyester upholstery |  | Rs. 25,000–45,000 a each; GST not stated: taken as the price paid | [255] |
-| Standard | 3-seater sofa, mid-range | 3-seater sofa: part-hardwood frame, better weave or leatherette |  | Rs. 50,000–90,000 a each; GST not stated: taken as the price paid | [255] |
-| Premium | 3-seater sofa, leather or suede | 3-seater sofa in leather, nubuck or suede, with lumbar cushions | Durian Cardiff, Durian Veronica, Durian Hensley | Rs. 1,26,720–1,59,940 a each; incl. GST; read 04-10-2026 | [256] |
-| Luxury | 3-seater leather sofa, powered recliners | 3-seater leather sofa with dual-motor recliners | Durian Splendor | Rs. 2,24,100 a each; incl. GST | [256] |
-| Bespoke | Sofa, imported Italian or made to order | Sofa fully imported from Italy, or made to order to a high degree of customisation |  | Rs. 5,00,000–15,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [257] |
+| Basic | 3-seater sofa, entry | 3-seater sofa: plywood or engineered frame, polyester upholstery |  | Rs. 25,000–45,000 a each; GST not stated: taken as the price paid | [273] |
+| Standard | 3-seater sofa, mid-range | 3-seater sofa: part-hardwood frame, better weave or leatherette |  | Rs. 50,000–90,000 a each; GST not stated: taken as the price paid | [273] |
+| Premium | 3-seater sofa, leather or suede | 3-seater sofa in leather, nubuck or suede, with lumbar cushions | Durian Cardiff, Durian Veronica, Durian Hensley | Rs. 1,26,720–1,59,940 a each; incl. GST; read 04-10-2026 | [274] |
+| Luxury | 3-seater leather sofa, powered recliners | 3-seater leather sofa with dual-motor recliners | Durian Splendor | Rs. 2,24,100 a each; incl. GST | [274] |
+| Bespoke | Sofa, imported Italian or made to order | Sofa fully imported from Italy, or made to order to a high degree of customisation |  | Rs. 5,00,000–15,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [275] |
 
 Choices at each level: Basic 4, Standard 4, Premium 3, Luxury 3, Bespoke 3.
 
@@ -1134,28 +1159,28 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| 3-seater sofa, hardwood frame | Basic | 3-seater sofa: hardwood frame, high-density foam | Rs. 14,554–18,289 a each; incl. GST; read 04-10-2026 | [258] |
-| 3-seater sofa, neem wood frame | Basic | 3-seater sofa: neem wood frame, removable cushions | Rs. 21,157–26,311 a each; incl. GST; read 04-10-2026 | [259] |
-| 3-seater sofa, removable covers | Basic | 3-seater sofa with a washable cover (Hakebo grey-green) | Rs. 38,990 a each; incl. GST; read 04-10-2026 | [260] |
-| 3-seater sofa, larger cushions | Standard | 3-seater sofa, plus range | Rs. 43,529–74,882 a each; incl. GST; read 04-10-2026 | [261] |
-| 3-seater sofa, deep seat | Standard | 3-seater sofa (Kelinge cover) | Rs. 50,990 a each; incl. GST; read 04-10-2026 | [260] |
-| 3-seater sofa, wide armrests | Standard | 3-seater sofa with wide armrests (Gunnared cover) | Rs. 58,990 a each; incl. GST; read 04-10-2026 | [260] |
-| 3-seater sofa, Indian premium | Premium | Sofa by an Indian brand: quality foam, imported fabric | Rs. 80,000–1,50,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [257] |
-| 3-seater sofa, wooden legs | Premium | 3-seater sofa, Gunnared cover on wooden legs | Rs. 75,490 a each; incl. GST; read 04-10-2026 | [260] |
-| Sofa, Italian design made in India | Luxury | Sofa of Italian design, made in India in Italian materials | Rs. 1,50,000–5,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [257] |
-| Sofa set 3 + 2, premium store | Luxury | A 3-seater and a 2-seater sofa, a premium store's typical set The maker's ticket size for a 3 + 2 set, reported in 2024. | Rs. 1,50,000–3,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [262] |
-| Sofa, imported from an Italian maker | Bespoke | An Italian maker's sofa, imported and bought in India, per piece | Rs. 5,00,000–50,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [263] |
-| Sofa set 3 + 2, luxury store | Bespoke | A 3-seater and a 2-seater sofa, a luxury store's typical set The maker's ticket size for a 3 + 2 set, reported in 2024. | Rs. 5,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [262] |
+| 3-seater sofa, hardwood frame | Basic | 3-seater sofa: hardwood frame, high-density foam | Rs. 14,554–18,289 a each; incl. GST; read 04-10-2026 | [276] |
+| 3-seater sofa, neem wood frame | Basic | 3-seater sofa: neem wood frame, removable cushions | Rs. 21,157–26,311 a each; incl. GST; read 04-10-2026 | [277] |
+| 3-seater sofa, removable covers | Basic | 3-seater sofa with a washable cover (Hakebo grey-green) | Rs. 38,990 a each; incl. GST; read 04-10-2026 | [278] |
+| 3-seater sofa, larger cushions | Standard | 3-seater sofa, plus range | Rs. 43,529–74,882 a each; incl. GST; read 04-10-2026 | [279] |
+| 3-seater sofa, deep seat | Standard | 3-seater sofa (Kelinge cover) | Rs. 50,990 a each; incl. GST; read 04-10-2026 | [278] |
+| 3-seater sofa, wide armrests | Standard | 3-seater sofa with wide armrests (Gunnared cover) | Rs. 58,990 a each; incl. GST; read 04-10-2026 | [278] |
+| 3-seater sofa, Indian premium | Premium | Sofa by an Indian brand: quality foam, imported fabric | Rs. 80,000–1,50,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [275] |
+| 3-seater sofa, wooden legs | Premium | 3-seater sofa, Gunnared cover on wooden legs | Rs. 75,490 a each; incl. GST; read 04-10-2026 | [278] |
+| Sofa, Italian design made in India | Luxury | Sofa of Italian design, made in India in Italian materials | Rs. 1,50,000–5,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [275] |
+| Sofa set 3 + 2, premium store | Luxury | A 3-seater and a 2-seater sofa, a premium store's typical set The maker's ticket size for a 3 + 2 set, reported in 2024. | Rs. 1,50,000–3,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [280] |
+| Sofa, imported from an Italian maker | Bespoke | An Italian maker's sofa, imported and bought in India, per piece | Rs. 5,00,000–50,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [281] |
+| Sofa set 3 + 2, luxury store | Bespoke | A 3-seater and a 2-seater sofa, a luxury store's typical set The maker's ticket size for a 3 + 2 set, reported in 2024. | Rs. 5,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [280] |
 
 ### Dining set (set, movable)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | 6-seater dining set, wooden, economy | 6-seater wooden dining table and chairs |  | Rs. 15,000 a set; GST not stated: taken as the price paid | [264] |
-| Standard | 6-seater dining set | 6-seater dining table and chairs |  | Rs. 12,999–74,989 a set; incl. GST; read 04-10-2026 | [265] |
-| Premium | 6-seater dining set, marble top | Sheesham wood table with a marble top, six upholstered chairs | Wooden Street Vivara | Rs. 98,999 a set; incl. GST | [266] |
-| Luxury | 6-seater dining set, designer, marble-finished top | Marble-finished table on a veneer base, six chairs | Durian Cardinal | Rs. 1,86,450 a set; incl. GST; read 04-10-2026 | [267] |
-| Bespoke | 6-seater dining set, teak, made to order | Teak wood table (teak-ply top) and six teak chairs, lacquer polish with copper and gold accents, sizes made to order | Curves & Carvings DTC0056 | Rs. 3,24,995 a set; incl. GST; read 04-10-2026 | [268] |
+| Basic | 6-seater dining set, wooden, economy | 6-seater wooden dining table and chairs |  | Rs. 15,000 a set; GST not stated: taken as the price paid | [282] |
+| Standard | 6-seater dining set | 6-seater dining table and chairs |  | Rs. 12,999–74,989 a set; incl. GST; read 04-10-2026 | [283] |
+| Premium | 6-seater dining set, marble top | Sheesham wood table with a marble top, six upholstered chairs | Wooden Street Vivara | Rs. 98,999 a set; incl. GST | [284] |
+| Luxury | 6-seater dining set, designer, marble-finished top | Marble-finished table on a veneer base, six chairs | Durian Cardinal | Rs. 1,86,450 a set; incl. GST; read 04-10-2026 | [285] |
+| Bespoke | 6-seater dining set, teak, made to order | Teak wood table (teak-ply top) and six teak chairs, lacquer polish with copper and gold accents, sizes made to order | Curves & Carvings DTC0056 | Rs. 3,24,995 a set; incl. GST; read 04-10-2026 | [286] |
 
 Choices at each level: Basic 3, Standard 4, Premium 4, Luxury 3, Bespoke 3.
 
@@ -1163,28 +1188,28 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| 6-seater dining set, MDF top on steel | Basic | Table and six chairs: 18 mm MDF top with marble-finish PVC lamination, 0.8 mm powder-coated mild steel frame | Rs. 16,900 a set; incl. GST; read 04-10-2026 | [269] |
-| 6-seater dining set, solid wood | Basic | Solid wood table and six chairs | Rs. 35,260 a set; incl. GST; read 04-10-2026 | [270] |
-| 6-seater dining set, sheesham | Standard | Sheesham wood table and six chairs | Rs. 51,398 a set; incl. GST; read 04-10-2026 | [271] |
-| 6-seater dining set, sheesham, cushioned chairs | Standard | Sheesham wood table and six cushioned chairs, honey finish Sale price as listed. | Rs. 49,989 a set; incl. GST; read 04-10-2026 | [272] |
-| 4-seater dining set, ash veneer | Standard | Ash veneer table, 140 × 78 cm, and four birch chairs A table and four chairs. | Rs. 60,790 a set; incl. GST; read 04-10-2026 | [273] |
-| 6-seater dining set, sheesham, marble top | Premium | Sheesham wood table with a marble top and six chairs, teak finish Sale price as listed. | Rs. 99,989 a set; incl. GST; read 04-10-2026 | [274] |
-| 6-seater dining set, Italian marble top | Premium | Italian marble table and six chairs Sale price as listed. | Rs. 1,30,000 a set; incl. GST; read 04-10-2026 | [275] |
-| 4-seater dining set, oak veneer | Premium | Oak veneer table, 140 × 85 cm, brown stained, and four upholstered chairs A table and four chairs. | Rs. 85,790 a set; incl. GST; read 04-10-2026 | [276] |
-| 6-seater dining set, quartz top, cane and brass | Luxury | Sheesham wood table with a quartz top, six chairs with cane and brass accents Sale price as listed. | Rs. 1,59,999 a set; incl. GST; read 04-10-2026 | [277] |
-| 6-seater dining set, composite marble top | Luxury | Composite marble top on a solid wood base, six chairs Sale price as listed. | Rs. 1,36,400 a set; incl. GST; read 04-10-2026 | [278] |
-| 6-seater dining set, teak, antique French style | Bespoke | Teak wood table and six chairs, antique French style | Rs. 2,98,995 a set; incl. GST; read 04-10-2026 | [279] |
-| Dining set, teak, vintage Indian style | Bespoke | Teak wood dining table set, vintage Indian style The number of chairs was not in the report. | Rs. 3,54,995 a set; incl. GST; read 04-10-2026 | [280] |
+| 6-seater dining set, MDF top on steel | Basic | Table and six chairs: 18 mm MDF top with marble-finish PVC lamination, 0.8 mm powder-coated mild steel frame | Rs. 16,900 a set; incl. GST; read 04-10-2026 | [287] |
+| 6-seater dining set, solid wood | Basic | Solid wood table and six chairs | Rs. 35,260 a set; incl. GST; read 04-10-2026 | [288] |
+| 6-seater dining set, sheesham | Standard | Sheesham wood table and six chairs | Rs. 51,398 a set; incl. GST; read 04-10-2026 | [289] |
+| 6-seater dining set, sheesham, cushioned chairs | Standard | Sheesham wood table and six cushioned chairs, honey finish Sale price as listed. | Rs. 49,989 a set; incl. GST; read 04-10-2026 | [290] |
+| 4-seater dining set, ash veneer | Standard | Ash veneer table, 140 × 78 cm, and four birch chairs A table and four chairs. | Rs. 60,790 a set; incl. GST; read 04-10-2026 | [291] |
+| 6-seater dining set, sheesham, marble top | Premium | Sheesham wood table with a marble top and six chairs, teak finish Sale price as listed. | Rs. 99,989 a set; incl. GST; read 04-10-2026 | [292] |
+| 6-seater dining set, Italian marble top | Premium | Italian marble table and six chairs Sale price as listed. | Rs. 1,30,000 a set; incl. GST; read 04-10-2026 | [293] |
+| 4-seater dining set, oak veneer | Premium | Oak veneer table, 140 × 85 cm, brown stained, and four upholstered chairs A table and four chairs. | Rs. 85,790 a set; incl. GST; read 04-10-2026 | [294] |
+| 6-seater dining set, quartz top, cane and brass | Luxury | Sheesham wood table with a quartz top, six chairs with cane and brass accents Sale price as listed. | Rs. 1,59,999 a set; incl. GST; read 04-10-2026 | [295] |
+| 6-seater dining set, composite marble top | Luxury | Composite marble top on a solid wood base, six chairs Sale price as listed. | Rs. 1,36,400 a set; incl. GST; read 04-10-2026 | [296] |
+| 6-seater dining set, teak, antique French style | Bespoke | Teak wood table and six chairs, antique French style | Rs. 2,98,995 a set; incl. GST; read 04-10-2026 | [297] |
+| Dining set, teak, vintage Indian style | Bespoke | Teak wood dining table set, vintage Indian style The number of chairs was not in the report. | Rs. 3,54,995 a set; incl. GST; read 04-10-2026 | [298] |
 
 ### Bed (each, movable)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Queen bed with box storage | Queen bed with box storage |  | Rs. 11,600 a each; incl. GST; read 04-10-2026 | [281] |
-| Standard | Queen bed with hydraulic storage | Engineered-wood queen bed with hydraulic storage | Royaloak Baleno, Wakefit Leo | Rs. 19,990 a each; incl. GST; read 04-10-2026 | [281] |
-| Premium | Solid wood queen bed | Solid wood queen bed with an upholstered headboard | Durian Leeds, Durian York, Durian Cayman | Rs. 43,200–48,330 a each; incl. GST; read 04-10-2026 | [282] |
-| Luxury | Premium queen bed with hydraulic storage | Premium queen bed with hydraulic storage | HomeCentre Elysium | Rs. 74,996 a each; incl. GST | [283] |
-| Bespoke | King bed, handcrafted teak | Handcrafted teak wood king bed | Curves & Carvings | Rs. 1,34,995–1,74,995 a each; incl. GST; read 04-10-2026 | [284][285] |
+| Basic | Queen bed with box storage | Queen bed with box storage |  | Rs. 11,600 a each; incl. GST; read 04-10-2026 | [299] |
+| Standard | Queen bed with hydraulic storage | Engineered-wood queen bed with hydraulic storage | Royaloak Baleno, Wakefit Leo | Rs. 19,990 a each; incl. GST; read 04-10-2026 | [299] |
+| Premium | Solid wood queen bed | Solid wood queen bed with an upholstered headboard | Durian Leeds, Durian York, Durian Cayman | Rs. 43,200–48,330 a each; incl. GST; read 04-10-2026 | [300] |
+| Luxury | Premium queen bed with hydraulic storage | Premium queen bed with hydraulic storage | HomeCentre Elysium | Rs. 74,996 a each; incl. GST | [301] |
+| Bespoke | King bed, handcrafted teak | Handcrafted teak wood king bed | Curves & Carvings | Rs. 1,34,995–1,74,995 a each; incl. GST; read 04-10-2026 | [302][303] |
 
 Choices at each level: Basic 3, Standard 3, Premium 3, Luxury 3, Bespoke 3.
 
@@ -1192,36 +1217,36 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Queen bed frame, upholstered | Basic | Upholstered queen bed frame, 160 × 200 cm (Vissle dark grey) | Rs. 14,490 a each; incl. GST; read 04-10-2026 | [286] |
-| Queen bed frame with storage | Basic | Queen bed frame with storage, 160 × 200 cm (white, Luröy slats) | Rs. 24,990 a each; incl. GST; read 04-10-2026 | [286] |
-| Queen bed frame, high | Standard | High queen bed frame, 160 × 200 cm (white, Lönset slats) | Rs. 26,990 a each; incl. GST; read 04-10-2026 | [286] |
-| Queen bed frame, stained wood | Standard | Queen bed frame, 160 × 200 cm, dark brown stained | Rs. 28,990 a each; incl. GST; read 04-10-2026 | [286] |
-| Sheesham queen bed, hydraulic storage | Premium | Sheesham wood queen bed with hydraulic storage, walnut finish Sale price as listed. | Rs. 48,999 a each; incl. GST; read 04-10-2026 | [287] |
-| Queen bed, hydraulic storage, honey finish | Premium | Queen bed with hydraulic storage, honey finish Sale price as listed. | Rs. 59,999 a each; incl. GST; read 04-10-2026 | [288] |
-| Sheesham queen bed, upholstered, hydraulic storage | Luxury | Sheesham wood upholstered queen bed with hydraulic storage Sale price as listed. | Rs. 68,149 a each; incl. GST; read 04-10-2026 | [289] |
-| Sheesham queen bed with cane, hydraulic storage | Luxury | Sheesham wood queen bed with cane detailing and hydraulic storage Sale price as listed. | Rs. 63,499 a each; incl. GST; read 04-10-2026 | [290] |
-| King bed, teak | Bespoke | Teak wood king bed | Rs. 1,24,995 a each; incl. GST; read 04-10-2026 | [285] |
-| Leather bed, Italian design, made to order | Bespoke | Italian leather bed, queen or king, made in India to order in bespoke sizes | Rs. 1,20,000–3,50,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [291] |
+| Queen bed frame, upholstered | Basic | Upholstered queen bed frame, 160 × 200 cm (Vissle dark grey) | Rs. 14,490 a each; incl. GST; read 04-10-2026 | [304] |
+| Queen bed frame with storage | Basic | Queen bed frame with storage, 160 × 200 cm (white, Luröy slats) | Rs. 24,990 a each; incl. GST; read 04-10-2026 | [304] |
+| Queen bed frame, high | Standard | High queen bed frame, 160 × 200 cm (white, Lönset slats) | Rs. 26,990 a each; incl. GST; read 04-10-2026 | [304] |
+| Queen bed frame, stained wood | Standard | Queen bed frame, 160 × 200 cm, dark brown stained | Rs. 28,990 a each; incl. GST; read 04-10-2026 | [304] |
+| Sheesham queen bed, hydraulic storage | Premium | Sheesham wood queen bed with hydraulic storage, walnut finish Sale price as listed. | Rs. 48,999 a each; incl. GST; read 04-10-2026 | [305] |
+| Queen bed, hydraulic storage, honey finish | Premium | Queen bed with hydraulic storage, honey finish Sale price as listed. | Rs. 59,999 a each; incl. GST; read 04-10-2026 | [306] |
+| Sheesham queen bed, upholstered, hydraulic storage | Luxury | Sheesham wood upholstered queen bed with hydraulic storage Sale price as listed. | Rs. 68,149 a each; incl. GST; read 04-10-2026 | [307] |
+| Sheesham queen bed with cane, hydraulic storage | Luxury | Sheesham wood queen bed with cane detailing and hydraulic storage Sale price as listed. | Rs. 63,499 a each; incl. GST; read 04-10-2026 | [308] |
+| King bed, teak | Bespoke | Teak wood king bed | Rs. 1,24,995 a each; incl. GST; read 04-10-2026 | [303] |
+| Leather bed, Italian design, made to order | Bespoke | Italian leather bed, queen or king, made in India to order in bespoke sizes | Rs. 1,20,000–3,50,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [309] |
 
 ### Mattress (each, movable)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Foam mattress, queen | Queen foam mattress |  | Rs. 4,499–6,499 a each; GST not stated: taken as the price paid | [292] |
-| Standard | Mattress, queen | Queen mattress: memory foam or pocket spring |  | Rs. 10,000–25,000 a each | [293] |
-| Premium | Latex mattress, queen | Queen latex mattress |  | Rs. 17,090–24,490 a each; GST not stated: taken as the price paid | [294] |
-| Luxury | Premium mattress, queen | Queen mattress: natural latex, advanced memory foam or hybrid |  | Rs. 25,000 a each | [295] |
-| Bespoke | Imported memory-foam mattress | Imported pressure-relieving memory-foam mattress | Tempur | Rs. 1,76,388 a each; GST not stated: taken as the price paid | [296] |
+| Basic | Foam mattress, queen | Queen foam mattress |  | Rs. 4,499–6,499 a each; GST not stated: taken as the price paid | [310] |
+| Standard | Mattress, queen | Queen mattress: memory foam or pocket spring |  | Rs. 10,000–25,000 a each | [311] |
+| Premium | Latex mattress, queen | Queen latex mattress |  | Rs. 17,090–24,490 a each; GST not stated: taken as the price paid | [312] |
+| Luxury | Premium mattress, queen | Queen mattress: natural latex, advanced memory foam or hybrid |  | Rs. 25,000 a each | [313] |
+| Bespoke | Imported memory-foam mattress | Imported pressure-relieving memory-foam mattress | Tempur | Rs. 1,76,388 a each; GST not stated: taken as the price paid | [314] |
 
 ### Curtains (set, movable)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Curtains for a window, one layer, economy | One layer of polyester or a blend, stitched, on a 1.5 m rod, fitted |  | Curtains, one layer, economy, a window + 1.5 × Curtain rod or track, a metre + Curtain installation, a window | [297] |
-| Standard | Curtains for a window, one layer, mid-range | One layer of cotton or cotton-poly, stitched, on a 1.5 m rod or track, fitted |  | Curtains, one layer, mid-range, a window + 1.5 × Curtain rod or track, a metre + Curtain installation, a window | [297] |
-| Premium | Curtains for a window, sheer and blackout | A sheer and a blackout layer of mid-range fabric, on two 1.5 m tracks, fitted |  | Curtains, sheer and blackout, mid-range, a window + 3 × Curtain rod or track, a metre + Curtain installation, a window | [297] |
-| Luxury | Curtains for a window, two layers, premium fabric | A sheer and a blackout layer in linen, velvet or a heavy weave, lined, on two tracks, fitted |  | Curtains, two layers, premium, a window + 3 × Curtain rod or track, a metre + Curtain installation, a window | [297] |
-| Bespoke | Curtains for a window, two layers, motorised | Two layers of premium fabric, the main one on a motorised track, the sheer on a 1.5 m track | Somfy | Curtains, two layers, premium, a window + Motorised curtain track with its motor + 1.5 × Curtain rod or track, a metre + Fitting a motorised curtain | [297][298][299] |
+| Basic | Curtains for a window, one layer, economy | One layer of polyester or a blend, stitched, on a 1.5 m rod, fitted |  | Curtains, one layer, economy, a window + 1.5 × Curtain rod or track, a metre + Curtain installation, a window | [315] |
+| Standard | Curtains for a window, one layer, mid-range | One layer of cotton or cotton-poly, stitched, on a 1.5 m rod or track, fitted |  | Curtains, one layer, mid-range, a window + 1.5 × Curtain rod or track, a metre + Curtain installation, a window | [315] |
+| Premium | Curtains for a window, sheer and blackout | A sheer and a blackout layer of mid-range fabric, on two 1.5 m tracks, fitted |  | Curtains, sheer and blackout, mid-range, a window + 3 × Curtain rod or track, a metre + Curtain installation, a window | [315] |
+| Luxury | Curtains for a window, two layers, premium fabric | A sheer and a blackout layer in linen, velvet or a heavy weave, lined, on two tracks, fitted |  | Curtains, two layers, premium, a window + 3 × Curtain rod or track, a metre + Curtain installation, a window | [315] |
+| Bespoke | Curtains for a window, two layers, motorised | Two layers of premium fabric, the main one on a motorised track, the sheer on a 1.5 m track | Somfy | Curtains, two layers, premium, a window + Motorised curtain track with its motor + 1.5 × Curtain rod or track, a metre + Fitting a motorised curtain | [315][316][317] |
 
 ### Curtain parts (each, movable)
 
@@ -1229,16 +1254,16 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Curtains, one layer, economy, a window | — | Polyester or a cheap blend, stitched, for a window of about 4 × 7 ft | Rs. 800–2,500 a each; GST not stated: taken as the price paid | [297] |
-| Curtains, one layer, mid-range, a window | — | Cotton or cotton-poly, stitched, for a window of about 4 × 7 ft | Rs. 3,000–7,000 a each; GST not stated: taken as the price paid | [297] |
-| Curtains, sheer and blackout, mid-range, a window | — | Two layers, a sheer and a blackout, stitched, for a window of about 4 × 7 ft | Rs. 6,000–12,000 a each; GST not stated: taken as the price paid | [297] |
-| Curtains, two layers, premium, a window | — | Two layers in linen, velvet or a heavy weave, lined, for a window of about 4 × 7 ft Rs. 35,000 and up at the top, as reported. | Rs. 15,000–35,000 a each; GST not stated: taken as the price paid | [297] |
-| Motorised curtain track with its motor | — | Aluminium motorised curtain track with a motor and remote TradeIndia lists it at Rs. 12,500; the top of the band, Rs. 15,000, was reported from an IndiaMART listing that could not be opened. | Rs. 12,500–15,000 a each | [298] |
-| Fitting a motorised curtain | — | Fitting and setting up a motorised curtain track | Rs. 2,000–4,000 a each, supplied and fixed; GST not stated: taken as the price paid | [299] |
-| Curtain stitching, a panel | — | Stitching one curtain panel | Rs. 150–600 a each, supplied and fixed; GST not stated: taken as the price paid | [297] |
-| Curtain fabric, a metre | — | Curtain fabric, one metre | Rs. 150–2,500 a m; GST not stated: taken as the price paid | [297] |
-| Curtain rod or track, a metre | — | Rod or track with brackets and rings, one metre | Rs. 200–1,500 a m; GST not stated: taken as the price paid | [297] |
-| Curtain installation, a window | — | Installing the curtains of one window | Rs. 150–500 a each, supplied and fixed; GST not stated: taken as the price paid | [297] |
+| Curtains, one layer, economy, a window | — | Polyester or a cheap blend, stitched, for a window of about 4 × 7 ft | Rs. 800–2,500 a each; GST not stated: taken as the price paid | [315] |
+| Curtains, one layer, mid-range, a window | — | Cotton or cotton-poly, stitched, for a window of about 4 × 7 ft | Rs. 3,000–7,000 a each; GST not stated: taken as the price paid | [315] |
+| Curtains, sheer and blackout, mid-range, a window | — | Two layers, a sheer and a blackout, stitched, for a window of about 4 × 7 ft | Rs. 6,000–12,000 a each; GST not stated: taken as the price paid | [315] |
+| Curtains, two layers, premium, a window | — | Two layers in linen, velvet or a heavy weave, lined, for a window of about 4 × 7 ft Rs. 35,000 and up at the top, as reported. | Rs. 15,000–35,000 a each; GST not stated: taken as the price paid | [315] |
+| Motorised curtain track with its motor | — | Aluminium motorised curtain track with a motor and remote TradeIndia lists it at Rs. 12,500; the top of the band, Rs. 15,000, was reported from an IndiaMART listing that could not be opened. | Rs. 12,500–15,000 a each | [316] |
+| Fitting a motorised curtain | — | Fitting and setting up a motorised curtain track | Rs. 2,000–4,000 a each, supplied and fixed; GST not stated: taken as the price paid | [317] |
+| Curtain stitching, a panel | — | Stitching one curtain panel | Rs. 150–600 a each, supplied and fixed; GST not stated: taken as the price paid | [315] |
+| Curtain fabric, a metre | — | Curtain fabric, one metre | Rs. 150–2,500 a m; GST not stated: taken as the price paid | [315] |
+| Curtain rod or track, a metre | — | Rod or track with brackets and rings, one metre | Rs. 200–1,500 a m; GST not stated: taken as the price paid | [315] |
+| Curtain installation, a window | — | Installing the curtains of one window | Rs. 150–500 a each, supplied and fixed; GST not stated: taken as the price paid | [315] |
 
 ### Blinds (sq ft, movable)
 
@@ -1246,9 +1271,9 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Custom blinds | Basic | Custom roller or venetian blinds | Rs. 100 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [300] |
-| Zebra blinds | Standard | Zebra (day and night) blinds | Rs. 185 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [300] |
-| Horizontal blinds | Premium | Horizontal blinds | Rs. 350 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [300] |
+| Custom blinds | Basic | Custom roller or venetian blinds | Rs. 100 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [318] |
+| Zebra blinds | Standard | Zebra (day and night) blinds | Rs. 185 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [318] |
+| Horizontal blinds | Premium | Horizontal blinds | Rs. 350 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [318] |
 
 ## Building a house: materials, labour and treatment
 
@@ -1260,83 +1285,83 @@ For building a house (E5, thin): the structure costed at one specification from 
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Soil treatment against termites (IS 6313 Part 2) | Chemical treatment of the foundation trenches, the plinth fill and the ground round the house before the floor is laid |  | Rs. 8–10 a sq ft, supplied and fixed | [301] |
+| Every level | Soil treatment against termites (IS 6313 Part 2) | Chemical treatment of the foundation trenches, the plinth fill and the ground round the house before the floor is laid |  | Rs. 8–10 a sq ft, supplied and fixed | [319] |
 
 ### Cement (bag)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | OPC 53-grade cement, 50 kg | Ordinary Portland cement, 53 grade, a 50 kg bag (city range) | UltraTech, ACC, Ambuja | Rs. 320–400 a bag, material, 3.5% wastage; GST not stated: taken as the price paid; read 04-10-2026 | [302] |
+| Every level | OPC 53-grade cement, 50 kg | Ordinary Portland cement, 53 grade, a 50 kg bag (city range) | UltraTech, ACC, Ambuja | Rs. 320–400 a bag, material, 3.5% wastage; GST not stated: taken as the price paid; read 04-10-2026 | [320] |
 
 Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| PPC cement, 50 kg | — | Portland pozzolana cement, a 50 kg bag | Rs. 340–410 a bag, material, 3.5% wastage; GST not stated: taken as the price paid; read 04-10-2026 | [303][304] |
+| PPC cement, 50 kg | — | Portland pozzolana cement, a 50 kg bag | Rs. 340–410 a bag, material, 3.5% wastage; GST not stated: taken as the price paid; read 04-10-2026 | [321][322] |
 
 ### Reinforcement steel (kg)
 
-- **What it is**: The bars inside the concrete of the columns, beams and slabs. TMT means thermo-mechanically treated; Fe 500D, a yield strength of at least 500 MPa, the D marking bars that stretch further before they break (16% or more, against 12% for Fe 500). [305]
-- **Why it costs what it does**: Steel's price moves often. How much a house takes follows its structural design: spans, foundation, soil and seismic zone. A rule of thumb is only a first estimate until the engineer's design. [306][307]
-- **What to check**: The licence number (CM/L) on the bundle's tag, the grade on the bar, and a mill test certificate for each load. A 12 mm bar weighs about 0.89 kg a metre; one well short is thinner than its size. Have the structural engineer check the bars before each pour. [308][309][310] our rule
+- **What it is**: The bars inside the concrete of the columns, beams and slabs. TMT means thermo-mechanically treated; Fe 500D, a yield strength of at least 500 MPa, the D marking bars that stretch further before they break (16% or more, against 12% for Fe 500). [323]
+- **Why it costs what it does**: Steel's price moves often. How much a house takes follows its structural design: spans, foundation, soil and seismic zone. A rule of thumb is only a first estimate until the engineer's design. [324][325]
+- **What to check**: The licence number (CM/L) on the bundle's tag, the grade on the bar, and a mill test certificate for each load. A 12 mm bar weighs about 0.89 kg a metre; one well short is thinner than its size. Have the structural engineer check the bars before each pour. [326][327][328] our rule
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | TMT bars Fe 500D, 12 mm | TMT reinforcement bars Fe 500D, 12 mm | Tata Tiscon, JSW Neosteel, SAIL | Rs. 42–58 a kg, material, 4% wastage; GST not stated: taken as the price paid; read 04-10-2026 | [302][306] |
+| Every level | TMT bars Fe 500D, 12 mm | TMT reinforcement bars Fe 500D, 12 mm | Tata Tiscon, JSW Neosteel, SAIL | Rs. 42–58 a kg, material, 4% wastage; GST not stated: taken as the price paid; read 04-10-2026 | [320][324] |
 
 ### Sand (cu m)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | M-sand | Manufactured sand |  | Rs. 1,600–2,100 a cu m, material, 7.5% wastage; GST not stated: taken as the price paid | [311][304] |
+| Every level | M-sand | Manufactured sand |  | Rs. 1,600–2,100 a cu m, material, 7.5% wastage; GST not stated: taken as the price paid | [329][322] |
 
 Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| River sand | — | River sand | Rs. 1,700 a cu m, material, 7.5% wastage; GST not stated: taken as the price paid; read 04-10-2026 | [311][304] |
+| River sand | — | River sand | Rs. 1,700 a cu m, material, 7.5% wastage; GST not stated: taken as the price paid; read 04-10-2026 | [329][322] |
 
 ### Coarse aggregate (cu m)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Coarse aggregate, 20 mm | 20 mm crushed stone aggregate |  | Rs. 1,800–2,300 a cu m, material, 7.5% wastage; GST not stated: taken as the price paid | [302][304] |
+| Every level | Coarse aggregate, 20 mm | 20 mm crushed stone aggregate |  | Rs. 1,800–2,300 a cu m, material, 7.5% wastage; GST not stated: taken as the price paid | [320][322] |
 
 ### Bricks (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Red brick | Standard red clay brick |  | Rs. 8–10 a each, material, 6.5% wastage; GST not stated: taken as the price paid | [302][304] |
+| Every level | Red brick | Standard red clay brick |  | Rs. 8–10 a each, material, 6.5% wastage; GST not stated: taken as the price paid | [320][322] |
 
 ### AAC blocks (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | AAC block, 200 mm | AAC block 200 mm thick |  | Rs. 61–78 a each, material, 6.5% wastage; GST not stated: taken as the price paid | [302][304] |
+| Every level | AAC block, 200 mm | AAC block 200 mm thick |  | Rs. 61–78 a each, material, 6.5% wastage; GST not stated: taken as the price paid | [320][322] |
 
 ### Labour: excavation and foundation (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Excavation and foundation, labour only | Excavation, footings, the plinth beam and backfilling, by the sq ft of built-up area |  | Rs. 60–90 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [312] |
+| Every level | Excavation and foundation, labour only | Excavation, footings, the plinth beam and backfilling, by the sq ft of built-up area |  | Rs. 60–90 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [330] |
 
 ### Labour: RCC frame and slabs (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | RCC frame and slabs, labour only | Columns, beams and slabs: bar bending, shuttering, concreting and curing, by the sq ft of built-up area |  | Rs. 140–220 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [312] |
+| Every level | RCC frame and slabs, labour only | Columns, beams and slabs: bar bending, shuttering, concreting and curing, by the sq ft of built-up area |  | Rs. 140–220 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [330] |
 
 ### Labour: brick walls (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Brick walls, labour only | Brick or block walls, by the sq ft of built-up area |  | Rs. 70–120 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [312] |
+| Every level | Brick walls, labour only | Brick or block walls, by the sq ft of built-up area |  | Rs. 70–120 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [330] |
 
 ### Labour: plaster (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Plaster, labour only | Plaster inside and outside, by the sq ft of built-up area |  | Rs. 40–70 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [312] |
+| Every level | Plaster, labour only | Plaster inside and outside, by the sq ft of built-up area |  | Rs. 40–70 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [330] |
 
 ## Building a house: outside works, water and stairs
 
@@ -1348,57 +1373,57 @@ For building a house (E5): the compound wall, gate and paving round the plot; th
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Brick compound wall, 230 mm, plastered | A 230 mm (9-inch) brick wall about 1.5 m (5 ft) high on a footing with a plinth beam, plastered both sides |  | Rs. 1,200–1,500 a running ft, supplied and fixed; GST not stated: taken as the price paid | [313] |
+| Every level | Brick compound wall, 230 mm, plastered | A 230 mm (9-inch) brick wall about 1.5 m (5 ft) high on a footing with a plinth beam, plastered both sides |  | Rs. 1,200–1,500 a running ft, supplied and fixed; GST not stated: taken as the price paid | [331] |
 
 ### Main gate (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | MS gate, fabricated | A mild steel gate of two leaves, fabricated, primed and painted, fixed to its posts |  | Rs. 150–450 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [314] |
-| Standard | MS main gate, designed | A mild steel main gate with a designed panel (laser-cut or framed sheet), painted |  | Rs. 550–700 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [314] |
-| Premium | SS 304 sliding gate | A stainless steel (SS 304) sliding gate on a track |  | Rs. 1,200–1,400 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [315] |
-| Luxury | SS 304 sliding gate with a motor | A stainless steel (SS 304) sliding gate with a motor and remote |  | Rs. 1,750–2,000 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [315] |
-| Bespoke | Automatic sliding gate, designer | An automatic motorised sliding gate, made to a design |  | Rs. 2,800 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [315] |
+| Basic | MS gate, fabricated | A mild steel gate of two leaves, fabricated, primed and painted, fixed to its posts |  | Rs. 150–450 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [332] |
+| Standard | MS main gate, designed | A mild steel main gate with a designed panel (laser-cut or framed sheet), painted |  | Rs. 550–700 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [332] |
+| Premium | SS 304 sliding gate | A stainless steel (SS 304) sliding gate on a track |  | Rs. 1,200–1,400 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [333] |
+| Luxury | SS 304 sliding gate with a motor | A stainless steel (SS 304) sliding gate with a motor and remote |  | Rs. 1,750–2,000 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [333] |
+| Bespoke | Automatic sliding gate, designer | An automatic motorised sliding gate, made to a design |  | Rs. 2,800 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [333] |
 
 ### Paving round the house (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Concrete paver blocks, 60 mm | Interlocking concrete paver blocks 60 mm thick, laid on sand and compacted |  | Rs. 40–80 a sq ft, material; plus laying paver blocks on sand, with compaction Rs. 10–16; GST not stated: taken as the price paid | [316] |
-| Standard | Exposed aggregate concrete | Concrete cast with decorative aggregate and washed to show the stones: seamless and anti-skid |  | Rs. 60–180 a sq ft, supplied and fixed; plus GST | [317] |
-| Premium | Sandstone pavers | Natural sandstone pavers laid in mortar |  | Rs. 60–140 a sq ft, material; plus laying marble or stone in mortar Rs. 100–200; GST not stated: taken as the price paid | [318] |
-| Luxury | Granite pavers, flamed | Flamed granite pavers laid in mortar |  | Rs. 120–250 a sq ft, material; plus laying marble or stone in mortar Rs. 100–200; GST not stated: taken as the price paid | [318] |
-| Bespoke | Granite pavers, flamed | Flamed granite pavers laid in mortar |  | Rs. 120–250 a sq ft, material; plus laying marble or stone in mortar Rs. 100–200; GST not stated: taken as the price paid | [318] |
+| Basic | Concrete paver blocks, 60 mm | Interlocking concrete paver blocks 60 mm thick, laid on sand and compacted |  | Rs. 40–80 a sq ft, material; plus laying paver blocks on sand, with compaction Rs. 10–16; GST not stated: taken as the price paid | [334] |
+| Standard | Exposed aggregate concrete | Concrete cast with decorative aggregate and washed to show the stones: seamless and anti-skid |  | Rs. 60–180 a sq ft, supplied and fixed; plus GST | [335] |
+| Premium | Sandstone pavers | Natural sandstone pavers laid in mortar |  | Rs. 60–140 a sq ft, material; plus laying marble or stone in mortar Rs. 100–200; GST not stated: taken as the price paid | [336] |
+| Luxury | Granite pavers, flamed | Flamed granite pavers laid in mortar |  | Rs. 120–250 a sq ft, material; plus laying marble or stone in mortar Rs. 100–200; GST not stated: taken as the price paid | [336] |
+| Bespoke | Granite pavers, flamed | Flamed granite pavers laid in mortar |  | Rs. 120–250 a sq ft, material; plus laying marble or stone in mortar Rs. 100–200; GST not stated: taken as the price paid | [336] |
 
 ### Sump (underground tank) (litre)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | RCC sump | An underground RCC water tank: excavation, concrete, plaster and waterproofing, with a manhole cover |  | Rs. 20–25 a litre, supplied and fixed | [319] |
+| Every level | RCC sump | An underground RCC water tank: excavation, concrete, plaster and waterproofing, with a manhole cover |  | Rs. 20–25 a litre, supplied and fixed | [337] |
 
 ### Overhead tank (litre)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Overhead tank, three-layer plastic | A three-layer plastic water tank on the stair cabin's roof | Sintex, Supreme, Vectus | Rs. 7–12 a litre; GST not stated: taken as the price paid | [320] |
+| Every level | Overhead tank, three-layer plastic | A three-layer plastic water tank on the stair cabin's roof | Sintex, Supreme, Vectus | Rs. 7–12 a litre; GST not stated: taken as the price paid | [338] |
 
 ### Septic tank and soak pit (litre)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | RCC septic tank with a soak pit | An RCC septic tank with its inlet, outlet and vent pipes and covers, and a soak pit |  | Rs. 75,000–1,10,000 for a 3BHK's tank of 6,500–8,000 litres of 7250 litre, supplied and fixed; GST not stated: taken as the price paid | [321] |
+| Every level | RCC septic tank with a soak pit | An RCC septic tank with its inlet, outlet and vent pipes and covers, and a soak pit |  | Rs. 75,000–1,10,000 for a 3BHK's tank of 6,500–8,000 litres of 7250 litre, supplied and fixed; GST not stated: taken as the price paid | [339] |
 
 ### Sewer connection (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Sewer connection | The house's drain to the road's manhole, and the city's charges for joining it |  | Chennai Rs. 24,500–26,500 a each, each city's own charge; other cities to be found; GST not stated: taken as the price paid; read 04-10-2026 | [322][323][324] |
+| Every level | Sewer connection | The house's drain to the road's manhole, and the city's charges for joining it |  | Chennai Rs. 24,500–26,500 a each, each city's own charge; other cities to be found; GST not stated: taken as the price paid; read 04-10-2026 | [340][341][342] |
 
 ### Rainwater harvesting (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Rainwater recharge pit with a filter | The roof's downpipes led through a mesh filter to a recharge pit |  | Recharge pit, 4–5 ft + Mesh filter + Pipes and fittings + Labour | [320] |
+| Every level | Rainwater recharge pit with a filter | The roof's downpipes led through a mesh filter to a recharge pit |  | Recharge pit, 4–5 ft + Mesh filter + Pipes and fittings + Labour | [338] |
 
 ### Rainwater harvesting, part by part (each)
 
@@ -1406,17 +1431,17 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Recharge pit, 4–5 ft | — | A recharge pit 4–5 ft deep with its filter media | Rs. 8,000–15,000 a each, supplied and fixed; GST not stated: taken as the price paid | [320] |
-| Mesh filter | — | A basic mesh filter for the roof's water | Rs. 2,000–5,000 a each; GST not stated: taken as the price paid | [320] |
-| Pipes and fittings | — | Downpipes and fittings from the roof to the pit | Rs. 2,000–10,000 a each; GST not stated: taken as the price paid | [320] |
-| Labour | — | Labour to lay the pipes and build the pit, a small home | Rs. 8,000–15,000 a each, supplied and fixed; GST not stated: taken as the price paid | [320] |
+| Recharge pit, 4–5 ft | — | A recharge pit 4–5 ft deep with its filter media | Rs. 8,000–15,000 a each, supplied and fixed; GST not stated: taken as the price paid | [338] |
+| Mesh filter | — | A basic mesh filter for the roof's water | Rs. 2,000–5,000 a each; GST not stated: taken as the price paid | [338] |
+| Pipes and fittings | — | Downpipes and fittings from the roof to the pit | Rs. 2,000–10,000 a each; GST not stated: taken as the price paid | [338] |
+| Labour | — | Labour to lay the pipes and build the pit, a small home | Rs. 8,000–15,000 a each, supplied and fixed; GST not stated: taken as the price paid | [338] |
 
 ### Stair treads, risers and landings (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
 | Basic | Kota stone steps | Kota stone on the treads, risers and landings, laid and polished |  | Kota stone |  |
-| Standard | Granite steps | Polished granite treads and risers, and granite on the landings, laid in mortar |  | Rs. 140–250 a sq ft, material; plus laying marble or stone in mortar Rs. 100–200; GST not stated: taken as the price paid | [325] |
+| Standard | Granite steps | Polished granite treads and risers, and granite on the landings, laid in mortar |  | Rs. 140–250 a sq ft, material; plus laying marble or stone in mortar Rs. 100–200; GST not stated: taken as the price paid | [343] |
 | Premium | Indian marble steps | Indian white marble on the treads, risers and landings, laid and polished |  | Indian white marble (Ambaji) |  |
 | Luxury | Italian marble steps (Botticino) | Italian Botticino marble on the treads, risers and landings, laid and polished |  | Italian marble (Botticino) |  |
 | Bespoke | Italian marble steps (Statuario) | Italian Statuario marble on the treads, risers and landings, laid and polished |  | Italian marble (Statuario) |  |
@@ -1425,12 +1450,12 @@ In the library:
 
 Dated 04-10-2026. Each note's sources were read on their pages on 04-10-2026 (E2) and the note cut to what they say: checked marks a note whose every fact is on its sources' pages, with any reasoning of our own cited as own; own marks a note that is our own rule, its reason given in it (T1, D-UX-34). The planning estimate shows each under its section's Why?.
 
-- **Structure: spend here.** The foundation, the frame and the slabs cannot be redone once the house stands. The steel in them should follow the structural engineer's drawings; a rule of thumb is only a first estimate. [307] our rule
+- **Structure: spend here.** The foundation, the frame and the slabs cannot be redone once the house stands. The steel in them should follow the structural engineer's drawings; a rule of thumb is only a first estimate. [325] our rule
 - **Waterproofing: spend here.** A leak under finished tiles means breaking the tiles and plaster and redoing the floor. Ask for a flood test of 24 to 48 hours on each bathroom floor before the tiles go down. [9]
 - **Walls and paint: save here.** Paint is the easiest finish to change: walls are repainted every few years anyway, so a premium emulsion now can become a luxury one at the next repaint. [44] our rule
 - **Bathrooms: spend on what is tiled over.** A concealed diverter or thermostatic valve sits behind the tiles, so changing it later means breaking them. Taps, showers and basins on the surface can be upgraded later. (our rule)
-- **Doors and windows: spend on the window frames.** Replacing a window frame later means making good the wall, plaster and finishes round it. [326]
-- **Electrical and lights: spend on the wiring.** It runs in pipes under the plaster, and adding a circuit to a plastered house later is costly and messy. Mark where the furniture goes before the walls are cut, and ask for ISI-marked FRLS copper wire (IS 694). [327][328] our rule
+- **Doors and windows: spend on the window frames.** Replacing a window frame later means making good the wall, plaster and finishes round it. [344]
+- **Electrical and lights: spend on the wiring.** It runs in pipes under the plaster, and adding a circuit to a plastered house later is costly and messy. Mark where the furniture goes before the walls are cut, and ask for ISI-marked FRLS copper wire (IS 694). [345][346] our rule
 - **Electrical and lights: save on the light fittings.** They fit on points already wired, so they can be changed or upgraded later without touching the walls. (our rule)
 - **Plumbing: spend here.** The pipes run inside the walls and under the floors, so a leak found later means breaking tiles. Ask for a pressure test of every line, held 30 minutes without a leak or a drop, before the walls are closed and tiled. [81] our rule
 - **Furniture: save here.** Furniture moves in and out without work on the house, so it can be bought in stages or upgraded later as money allows. (our rule)
@@ -1440,26 +1465,26 @@ Dated 04-10-2026. Each note's sources were read on their pages on 04-10-2026 (E2
 
 | Labour | Rate | Sources |
 |---|---|---|
-| Laying 600 × 600 mm tiles | Rs. 25–40 a sq ft | [15][329] |
+| Laying 600 × 600 mm tiles | Rs. 25–40 a sq ft | [15][347] |
 | Laying 800 × 800 mm tiles | Rs. 30–50 a sq ft | [15] |
 | Laying large-format tiles and slabs (1200 × 600 mm and up) | Rs. 60–120 a sq ft | [15] |
 | Fixing wall tiles (walls are slower than floors) | Rs. 35–60 a sq ft | [15] |
 | Tile adhesive and grout | Rs. 8–18 a sq ft | [15] |
-| Laying marble or stone in mortar | Rs. 100–200 a sq ft | [330][42] |
-| Machine-polishing marble after laying | Rs. 30–70 a sq ft | [330][331] |
+| Laying marble or stone in mortar | Rs. 100–200 a sq ft | [348][42] |
+| Machine-polishing marble after laying | Rs. 30–70 a sq ft | [348][349] |
 | Installing SPC flooring | Rs. 35–55 a sq ft | [36] |
 | Fabricating and fixing a stone or quartz counter | Rs. 200–300 a sq ft | [134] |
 | Fixing a Kota stone kitchen platform | Rs. 50–80 a sq ft; read 04-10-2026 | [139] |
-| Fixing a sanitary fixture or fitting (plumber) | Rs. 360–600 a each | [332] |
-| Hanging wallpaper | Rs. 30 a sq ft | [333] |
+| Fixing a sanitary fixture or fitting (plumber) | Rs. 360–600 a each | [350] |
+| Hanging wallpaper | Rs. 30 a sq ft | [351] |
 | Installing wall panels | Rs. 20–50 a sq ft; read 04-10-2026 | [54] |
 | Fitting a door: frame, shutter and hardware | Rs. 800–3,000 a each; read 04-10-2026 | [167] |
 | Fitting a main door: frame, shutter and hardware | Rs. 2,000–8,000 a each; read 04-10-2026 | [161] |
 | Electrician, fixing a light, fan or fitting | Rs. 25–70 a each | [199] |
-| Installing a split AC with up to 3 m of pipe | Rs. 1,500–3,500 a each | [249] |
-| Installing a 4-camera CCTV set | Rs. 2,000–4,000 a set | [252] |
+| Installing a split AC with up to 3 m of pipe | Rs. 1,500–3,500 a each | [267] |
+| Installing a 4-camera CCTV set | Rs. 2,000–4,000 a set | [270] |
 | Installing an invisible grill | Rs. 50–150 a sq ft | [192] |
-| Laying paver blocks on sand, with compaction | Rs. 10–16 a sq ft | [334] |
+| Laying paver blocks on sand, with compaction | Rs. 10–16 a sq ft | [352] |
 | Electrician's labour, wiring a point and fitting its switch | Rs. 180–350 a each; read 05-10-2026 | [199] |
 
 ## Sources
@@ -1675,126 +1700,144 @@ Dated 04-10-2026. Each note's sources were read on their pages on 04-10-2026 (E2
 209. [Best of Electricals: Legrand Mylinc switches, sockets and plates, MRP and price](https://www.bestofelectricals.com/search?q=mylinc) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 05-10-2026
 210. [Best of Electricals: Legrand Myrius and Myrius Nextgen switches, sockets and plates, MRP and price](https://www.bestofelectricals.com/search?q=legrand+myrius) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 05-10-2026
 211. [Best of Electricals: Legrand Arteor switches, sockets and plates, MRP and price](https://www.bestofelectricals.com/search?q=arteor) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 05-10-2026
-212. [Havells 12-way double-door distribution board](https://www.amazon.in/Havells-DB-SPN-QVE-Distribution/dp/B07BH62B8Q) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
-213. [Single-pole MCBs, listings](https://www.moglix.com/alp/single-pole-mcb) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-214. [4-pole 63 A 30 mA RCCBs (Havells, Legrand, L&T)](https://www.bestofelectricals.com/havells-63a-30ma-four-pole-rccb) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-215. [Wipro LED panel lights, listings](https://dir.indiamart.com/impcat/wipro-panel-light.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-216. [IndiaMART: COB LED downlights, suppliers' prices each](https://dir.indiamart.com/impcat/cob-led-downlight.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-217. [Polycab downlights](https://polycab.com/lighting/downlight/c) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-218. [LED profile lights, listings](https://dir.indiamart.com/impcat/led-profiles.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-219. [Magnetic track lights, listings](https://jainsonslightsonline.com/collections/magnetic-track-lights) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-220. [Amazon India: Wipro Garnet 20 W LED batten](https://www.amazon.in/Wipro-Garnet-20-Watt-Batten-Rectangular/dp/B0788C3CJR) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-221. [Amazon India: Havells 20 W LED battens, search listing (Triyca 3-in-1)](https://www.amazon.in/havells-tube-light-20-watt/s?k=havells+tube+light+20+watt) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-222. [Amazon India: Wipro Garnet Wave 10 W 130 x 130 mm colour-changing recessed panel](https://www.amazon.in/wipro-Changing-Recessed-Downlighter-130x130mm/dp/B0C1YP5SG4) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-223. [Amazon India: Philips 20 W smart Wi-Fi tunable-white batten](https://www.amazon.in/Philips-Tunable-Control-Assistant-Efficient/dp/B0G7ZNP78C) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-224. [Amazon India: Wipro 20 W smart Wi-Fi CCT batten](https://www.amazon.in/Batten-Compatible-Amazon-Google-Assistant/dp/B07P7JNQ56) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-225. [Amazon India: Philips Hue Garnea white ambiance downlight](https://www.amazon.in/Philips-Garnea-White-Ambience-Downlight/dp/B07RDJJCMN) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-226. [Amazon India: Wipro Next 20 W smart CCT and RGB batten](https://www.amazon.in/wipro-Million-Compatible-Assistant-DS22000/dp/B08D19X3LS) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-227. [Amazon India: Philips Hue Centura recessed spotlights, white and colour ambiance](https://www.amazon.in/Philips-Hue-Ambiance-Spotlights-Generation/dp/B0DDCMB2YY) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-228. [Amazon India: Philips Hue Semeru ceiling light, white ambiance](https://www.amazon.in/Philips-Ceiling-Ambiance-Compatible-Assistant/dp/B07RFKTW52) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-229. [Amazon India: Philips Hue Adore bathroom ceiling light, white ambiance](https://www.amazon.in/Philips-Bathroom-Ambiance-Compatible-Assistant/dp/B07DX7QR81) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-230. [Chandelier and pendant lights, listings](https://dir.indiamart.com/impcat/chandelier-pendant-light.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-231. [Crompton 1200 mm ceiling fans](https://www.crompton.co.in/collections/1200-mm-ceiling-fan) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
-232. [Best BLDC ceiling fans in India, 2026](https://smarthousegears.com/articles/best-bldc-ceiling-fans-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-233. [Ceiling fan brands in India with price ranges, 2026](https://www.housegyan.com/blog/budget-friendly-best-ceiling-fan-brands-in-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-234. [Polycab designer fans](https://polycab.com/fans/ceiling-fan/designer-fan/c) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-235. [Exhaust fan buying guide 2026: 15 models compared](https://www.mrhomes.in/blogs/guide/ultimate-exhaust-fan-buying-guide-2026) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-236. [Exhaust fan brands in India with prices, 2026](https://www.housegyan.com/blog/top-exhaust-fan-brands-in-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-237. [Moglix: Havells 12-way SPN double-door distribution board, selling price and MRP](https://www.moglix.com/havells-spn-double-door-distribution-box-dhdpshodpw12/mp/msn2qgrwjpzrrf) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-238. [Earthing system cost in India](https://www.houseyog.com/blog/earthing-system-cost-in-india/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-239. [Modular switches cost in India, 2026](https://www.houseyog.com/blog/modular-switches-cost-in-india/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-240. [Bathroom plumbing cost in India, 2026: per-point rates](https://www.studiomatrx.org/guides/bathroom-plumbing-cost-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-241. [IndiaMART: Finolex SWR pipes, suppliers' prices a 3 m pipe](https://dir.indiamart.com/impcat/finolex-swr-pipe.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-242. [Solve24: a plumber's pay a day in India, 2026](https://solve24.in/answers/plumber-salary-per-day) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-243. [Kitchen chimney price guide, 2026](https://kaff.in/articles/best-kitchen-chimney-in-india-price-guide-2026-edition) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-244. [IFB built-in hobs](https://www.ifbappliances.com/products/kitchen/built-in-hobs) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-245. [Faber built-in ovens](https://faberindia.com/collections/built-in-ovens-built-in-appliances) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-246. [Dishwasher prices in India, 2026](https://www.pricedekho.com/dishwashers/dishwashers-price-list.html) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-247. [RO water purifier prices in India](https://pricee.com/water-purifiers/ro-water-purifiers-products-price-in-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-248. [1.5 ton 5-star AC prices in India](https://www.smartprix.com/air_conditioners/5-star-1-5-ton-ac-list) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-249. [AC installation cost in India, 2026](https://solve24.in/blog/ac-installation-cost-india-2026-split-window-rates) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-250. [Moglix: video door phones, prices each](https://www.moglix.com/security/access-control-systems/video-door-phone/116141602) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-251. [Home automation cost in India, 2026](https://smartify.in/blog/home-automation-cost-india-2026-guide/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-252. [CCTV camera set price in India, 2026](https://aliftechsecure.in/cctv-camera-set-price-in-india-2026-complete-kit-cost-for-home-shop-office/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-253. [Upholstered furniture in India: frame, suspension, foam and fabric](https://www.studiomatrx.org/guides/upholstered-furniture-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-254. [Uberdecor: foam density for a sofa in India, 28 against 32 against 40](https://uberdecor.in/blogs/sofa-buying-guide/what-is-the-best-foam-density-for-sofa-in-india-28-vs-32-vs-40-explained) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-255. [Couch price in India, 2026: budget and premium](https://www.cherrypickindia.in/couch-price-in-india-guide/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-256. [Durian: premium 3-seater sofas (Cardiff, Veronica, Hensley, Splendor), listed prices](https://www.durian.in/buy-furniture/premium-sofas) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-257. [SOISU: luxury sofa price range in India, 2026, by tier](https://soisu.com/knowledge/luxury-sofa-price-india-2026) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-258. [Amazon.in: Wakefit Solatio three-seater sofa](https://www.amazon.in/s?k=Wakefit+Solatio+3+Seater+Sofa+Set+for+Living+Room) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-259. [Amazon.in: Wakefit Napper Mini three-seater sofa](https://www.amazon.in/s?k=wakefit+napper+mini+3+seater+sofa) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-260. [IKEA India: three-seat sofas, listed prices](https://www.ikea.com/in/en/cat/three-seat-sofas-10670/) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-261. [Amazon.in: Wakefit Napper Plus three-seater sofa](https://www.amazon.in/s?k=wakefit+napper+plus+3+seater+sofa) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-262. [Stanley Lifestyles, annual report 2023-24: ticket size of a 3+2 sofa set by store format](https://www.stanleylifestyles.com/storage/Investor/September2024/1XGS7-Stanley%20Lifestyles%20Ltd__AR%2023-24.pdf) (class 3: A firm's published package, allowance or rate card). Read on 04-10-2026
-263. [SOISU: is Italian furniture worth the price in India (imported pieces)](https://soisu.com/knowledge/is-italian-furniture-worth-it-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-264. [IndiaMART: 6-seater wooden dining table set, a listing](https://www.indiamart.com/proddetail/6-seater-wooden-dining-table-set-22519351812.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Not opened: The site refused the visit (403)
-265. [6-seater dining tables, listings](https://www.woodenstreet.com/6-seater-dining-tables) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-266. [Wooden Street: Vivara 6-seater dining set, sheesham with a marble top](https://www.woodenstreet.com/product/vivara-6-seater-dinining-set-with-valence-marble-top-table-and-vinara-upholstered-chair-sage-green) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-267. [Durian: marble-finish dining sets](https://www.durian.in/buy-furniture/marble-dining-sets) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-268. [Curves & Carvings: DTC0056 classic Italian teak 6-seater dining set, made to order, inclusive of taxes and delivery](https://www.curvesandcarvings.com/dining-sets/curves-carvings-signature-collection-dining-table-set-c-c-dtc0056) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-269. [Nilkamal: Stratus 6-seater dining table set](https://www.nilkamalfurniture.com/products/nilkamal-stratus-6-seater-dining-table-set) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-270. [Wakefit: Alcano 6-seater solid wood dining set](https://www.wakefit.co/dining-furniture/alcano-solid-wood-6-seater-dining-set/WDINEACNOS6COPIW) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Not opened: The site refused the visit (403)
-271. [Wakefit: Soomari sheesham 6-seater dining set](https://www.wakefit.co/dining-furniture/soomari-dining-table/WDINESOMARIS6) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Not opened: The site refused the visit (403)
-272. [Wooden Street: Janet sheesham 6-seater dining set, cushioned chairs, honey](https://www.woodenstreet.com/product/janet-cushioned-6-seater-dining-set-honey-finish) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-273. [IKEA India: LISABO series](https://www.ikea.com/in/en/cat/lisabo-series-30662/) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-274. [Wooden Street: Hazel sheesham 6-seater dining set with a marble top, teak](https://www.woodenstreet.com/product/hazel-6-seater-sheesham-wood-dining-table-set-with-marble-top-teak-finish) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-275. [Royaloak: Rome Italian marble 6-seater dining set](https://www.royaloakindia.com/royaloak-rome-italian-marble-dining-set-six-seater.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
-276. [IKEA India: dining sets, a table and 4 chairs, listed prices](https://www.ikea.com/in/en/cat/dining-sets-19145/) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-277. [Wooden Street: Shriyam sheesham 6-seater dining set, quartz top, cane and brass](https://www.woodenstreet.com/product/shriyam-modern-6-seater-sheesham-wood-dining-table-set-with-quartz-table-top-cane-brass-accents-teak-finish) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-278. [Durian: Tuscany 6-seater dining set, composite marble top on solid wood](https://www.durian.in/product/tuscany-raven-black-composite-marble-solid-wood-6-seater-dining-set) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-279. [Curves & Carvings: DTC0804 antique French teak 6-seater dining set, inclusive of taxes and delivery](https://www.curvesandcarvings.com/dining-sets/antique/6-seater/curves-carvings-classic-collection-dining-table-set-c-c-dtc0804) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-280. [Curves & Carvings: DTC0050 vintage Indian teak dining set, inclusive of taxes and delivery](https://www.curvesandcarvings.com/dining-sets/antique/curves-carvings-signature-collection-dining-table-set-c-c-dtc0050) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-281. [Queen beds with storage, listings](https://www.royaloakindia.com/bedroom/beds/queen-bed-with-storage.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-282. [Durian: solid wood queen beds (Leeds, York, Cayman), listed prices](https://www.durian.in/buy-furniture/solid-wood-beds-2) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-283. [Elysium queen bed with hydraulic storage](https://www.homecentre.in/in/en/Bed-Room/Beds/Queen-Beds/HOMECENTRE-Elysium-Queen-Bed-with-Hydraulic-Storage--Brown/p/1000014219797) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Not opened: The site refused the visit (403)
-284. [Curves & Carvings: handcrafted teak king beds (BED0171, BED0104, BED0150, BED0188), prices inclusive of taxes and delivery](https://www.curvesandcarvings.com/beds-bedsides/beds/curves-carvings-signature-collection-bed-c-c-bed0188) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-285. [Curves & Carvings: teak king beds BED0709 and BED0115, prices inclusive of taxes and delivery](https://www.curvesandcarvings.com/beds-bedsides/beds) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-286. [IKEA India: queen-size bed frames, 160 × 200 cm, listed prices](https://www.ikea.com/in/en/cat/beds-bm003/f/queen-size-beds-f-typed-reference-measurement--160x200-bed-frames/) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-287. [Wooden Street: Brixton sheesham queen bed with hydraulic storage, walnut](https://www.woodenstreet.com/product/brixton-sheesham-wood-hydraulic-bed-with-storage-queen-size-walnut-finish) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-288. [Wooden Street: Adolph queen bed with hydraulic storage, honey](https://www.woodenstreet.com/product/adolph-hydraulic-bed-queen-size-honey-finish) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-289. [Wooden Street: Drewno sheesham upholstered queen bed with hydraulic storage](https://www.woodenstreet.com/product/drewno-sheesham-ood-upholstered-bed-with-hydraulic-storage-queen-size-graphite-grey) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-290. [Wooden Street: Ferguson sheesham queen bed with hydraulic storage and cane](https://www.woodenstreet.com/product/ferguson-sheesham-wood-bed-with-hydraulic-storage-and-cane-detailing-queen-size-honey-finish) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-291. [SOISU: Italian-design leather beds, queen and king, made in India to order, indicative prices](https://www.soisu.com/beds) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
-292. [Urban Ladder: foam mattresses, listings](https://www.urbanladder.com/collection/foam-mattress) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-293. [Amazon.in: Wakefit queen memory-foam mattresses, 78 × 60 in](https://www.amazon.in/s?k=wakefit+queen+size+memory+foam+mattress+78x60) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-294. [Amazon.in: Wakefit queen latex mattresses](https://www.amazon.in/s?k=wakefit+queen+latex+mattress) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-295. [Mattresses, listings](https://www.wakefit.co/mattress) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Not opened: The site refused the visit (403)
-296. [Amazon.in: Tempur mattresses, listings](https://www.amazon.in/tempur-mattress/s?k=tempur+mattress) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Not opened: The site returned an error (503)
-297. [Curtain cost in India, 2026](https://www.studiomatrx.org/guides/curtain-cost-guide-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-298. [TradeIndia: Somfy motorised curtain track, a listing](https://www.tradeindia.com/products/somfy-motorized-curtain-track-c10140640.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-299. [Urban Decor Curtains: curtain installation cost in Bangalore (rods, tracks, motorised)](https://urbandecorcurtains.com/blog/curtain-installation-cost-bangalore/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-300. [Window blinds, listings](https://dir.indiamart.com/impcat/window-blinds.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-301. [99acres: anti-termite treatment, technique and price in India](https://www.99acres.com/articles/anti-termite-treatment.html) (class 4: A cost guide's range: a blog, a calculator or a guide). Not opened: The site refused the visit (403)
-302. [Building construction materials price list, 2026](https://civiconcepts.com/blog/construction-and-building-materials-market-price) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-303. [HouseYog: cement price today, India](https://www.houseyog.com/blog/cement-price-today-india-cost-per-sq-ft/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-304. [Brick&Bolt: construction material quantity estimation for a 1000 sq ft house (rules of thumb a sq ft, wastage)](https://www.bricknbolt.com/blogs-and-articles/construction-guide/construction-material-quantity-estimation-for-1000-sqft-of-house-construction) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-305. [Corejoint: TMT grades explained, Fe 500 and Fe 500D (yield strength, elongation)](https://www.corejoint.com/guides/tmt-grades-explained) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-306. [Steel and cement rates in India, 2026](https://www.comaron.com/blog/steel-and-cement-rates-today-india-2026-complete-price-guide) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-307. [Kairali TMT: steel for a residential building, and what decides the quantity (the structural drawings)](https://kairalitmt.com/calculate-steel-requirement-for-residential-building/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-308. [Tusker TMT: checking TMT bars with the BIS Care app and the bundle’s tag](https://www.tuskertmt.com/blog-bis-care-app-verify-tmt.html) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-309. [BIS: product manual for IS 1786, high-strength deformed steel bars (the ISI mark, the licence number and the markings rolled on a bar)](https://bis.gov.in/wp-content/uploads/2019/08/IS-1786-Product-Manual-Revision-3.pdf) (class R: A standard, a code or a law, for a rule rather than a rate). Read on 04-10-2026
-310. [MetalWeightPro: TMT bar weight a metre (D²/162) and the IS 1786 tolerances](https://www.metalweightpro.com/articles/tmt-bar-weight-per-meter-chart.html) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-311. [Comaron: building materials price list, India 2026](https://www.comaron.com/blog/building-materials-price-list-india-2026-complete-guide) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-312. [HouseYog: house construction labour rate a sq ft in India, by stage](https://www.houseyog.com/blog/house-construction-labour-rate-per-sq-ft/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-313. [HouseYog: boundary wall construction cost in India (2026), a 4.5-inch brick wall Rs. 800–1,100 and a 9-inch Rs. 1,200–1,500 a running foot, with excavation, footing, plinth beam, brickwork and plaster](https://www.houseyog.com/blog/boundary-wall-construction-cost-india/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-314. [IndiaMART listings: MS gates fabricated and fixed, Rs. 135–450 a sq ft (Rs. 450 in Bengaluru); main gates Rs. 550–700 a sq ft](https://dir.indiamart.com/bengaluru/ms-gate-fabrication-service.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-315. [IndiaMART listings: SS 304 sliding gates Rs. 1,200–1,400 a sq ft; automatic SS sliding gates Rs. 1,750–2,000; an automatic motorised sliding gate Rs. 2,800 a sq ft](https://dir.indiamart.com/impcat/stainless-steel-sliding-gate.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-316. [JK Cement: paver blocks, Rs. 40–80 a sq ft; 60 mm for walkways, 80–100 mm for parking](https://www.jkcement.com/blog/home-design/paver-block-design-types-price-guide/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-317. [Studio Matrx: exposed aggregate flooring for driveways and paths, Rs. 60–180 a sq ft](https://www.studiomatrx.org/guides/exposed-aggregate-flooring-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-318. [Studio Matrx: natural stone pavers in India, sandstone Rs. 60–140, granite Rs. 120–250 a sq ft; laid Rs. 120–380 a sq ft](https://www.studiomatrx.org/guides/natural-stone-pavers-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-319. [Home Building Smart: underground water tank construction cost a litre (2026), 1,000 litres Rs. 28–35, 5,000 litres Rs. 20–25 a litre](https://homebuildingsmart.com/underground-water-tank-construction-cost-per-litre/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-320. [HouseYog: rainwater harvesting cost in India (2025), a recharge pit Rs. 8,000–15,000, a mesh filter Rs. 2,000–5,000, pipes Rs. 2,000–10,000, labour Rs. 8,000–15,000](https://www.houseyog.com/blog/rainwater-harvesting-cost-india/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-321. [HouseYog: septic tank construction cost in India (2026), 1BHK 4,000–5,000 litres Rs. 50,000–70,000; 2BHK 5,000–6,500 litres Rs. 60,000–85,000; 3BHK 6,500–8,000 litres Rs. 75,000–1,10,000; 4BHK 8,000–10,000 litres Rs. 1,00,000–1,40,000, with the soak pit](https://www.houseyog.com/blog/septic-tank-construction-cost-india/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-322. [NoBroker forum: CMWSSB (Chennai) new connection charges, a house's sewer connection Rs. 24,500 (110 mm pipe) or Rs. 26,500 (140 mm)](https://www.nobroker.in/forum/what-is-the-cmwssb-new-connection-charges/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-323. [HMWSSB, Hyderabad: guidelines for new connections, supervision charges for joining the sewer Rs. 1,500–5,000](https://www.hyderabadwater.gov.in/en/index.php/services/information-services/guidelines-new-connections) (class R: A standard, a code or a law, for a rule rather than a rate). Read on 04-10-2026
-324. [Kolkata Municipal Corporation: fees and charges 2025-26, house drainage connection, a 225 mm stoneware pipe laid Rs. 2,079 a metre](https://www.kmcgov.in/KMCPortal/downloads/ChiefEngFees_RatesCharges_2025_2026.pdf) (class R: A standard, a code or a law, for a rule rather than a rate). Read on 04-10-2026
-325. [Stone Galleria: granite stair treads from Rs. 140–250 a sq ft ex-factory](https://stonegalleria.in/granite-treads/) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
-326. [Window replacement cost in India: a new frame against a retrofit](https://www.studiomatrx.org/guides/window-replacement-cost-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-327. [Trity Pipes: concealed against surface wiring in India](https://www.tritypipes.com/blogs/concealed-wiring-vs-surface-wiring-india/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-328. [Rajdhani Cables: FR and FRLS wires for a home](https://www.rajdhanicable.com/blog/fr-vs-frls-wire-whats-the-difference-which-is-safer-for-your-home/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-329. [Floor tiling cost in India, 2026](https://www.houseyog.com/blog/floor-tiling-cost-per-sqft-india/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-330. [Marble flooring cost in India, price guide](https://omkarmarble.com/blog/marble-flooring-cost-guide) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-331. [SR Marble Polishing: polishing rates for newly laid marble](https://www.srmarblepolishing.in/new-laid-marble-silicate-polishing-rate) (class 3: A firm's published package, allowance or rate card). Read on 04-10-2026
-332. [Plumbing prices in India, 2026, 50 cities](https://infralens.in/prices/plumbing) (class 4: A cost guide's range: a blog, a calculator or a guide). Not opened: The site refused the visit (403)
-333. [Livspace: wallpaper price list and installation](https://www.livspace.com/in/magazine/wallpaper-price-and-its-installation) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
-334. [Param Visions: rate analysis of interlocking paver flooring (2021), labour with mechanical compaction Rs. 10–16 a sq ft](https://www.paramvisions.com/2021/06/the-cost-of-fixing-interlocking-paver.html) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+212. [Moglix: Havells Reo Elegant 6A one-way switch, AHRSXXW061, price and MRP](https://www.moglix.com/havells-reo-elegant-6a-white-1-way-switch-ahrsxxw061/mp/msnrkre2ogm89n) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+213. [Moglix: Havells Reo Elegant 6A 3-pin socket, AHRKPXW063, price and MRP](https://www.moglix.com/havells-reo-elegant-6a-3-pin-socket-ahrkpxw063/mp/msnl5gl7ne0yk4) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+214. [Moglix: Havells Reo Elegant 4-module cover plate, AHRPLCWV04, price and MRP](https://www.moglix.com/havells-reo-elegant-4-module-polycarbonate-glossy-finish-cover-plate-ahrplcwv04/mp/msno5wnq1xnw51) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+215. [Moglix: Schneider Livia 10A one-way switch, P1001, price and MRP](https://www.moglix.com/schneider-livia-10a-flush-mounted-one-way-switch-p1001/mp/msn39yrm27nn5q) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+216. [Moglix: Schneider Livia 6A 3-pin socket, P2005NS, price and MRP](https://www.moglix.com/schneider-electric-livia-6a-3-pin-2-module-white-socket-outlet-with-shutter-p2005ns/mp/msne9jply3e09d) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+217. [Moglix: Schneider Livia 4-module grid and cover frame, P0704, price and MRP](https://www.moglix.com/schneider-electric-livia-4-module-white-grid-cover-frame-p0704/mp/msn85801ee0492) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+218. [Moglix: Schneider Zencelo 6A one-way bronze switch with on-indicator, IN8401(BZ), price and MRP](https://www.moglix.com/schneider-electric-zencelo-6a-1-way-bronze-full-flat-module-switch-with-on-indicator-in8401bz/mp/msnl5gl4n21yk4) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+219. [Moglix: Schneider Zencelo 6A 3-pin bronze socket, IN8426UNS_BZ, price and MRP](https://www.moglix.com/schneider-electric-zencelo-6a-2pe-3-pin-2-module-bronze-socket-outlet-with-shutter-in8426uns-bz/mp/msn39yjm2y629q) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+220. [Moglix: Schneider Zencelo 4-module grid and cover frame, IN8404C(BZ), a pack of 10, price and MRP](https://www.moglix.com/schneider-zencelo-4-module-dark-grey-grid-cover-frame-in8404cbz-pack-of-10/mp/msnl5gl127zyk4) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+221. [Moglix: Crabtree Murano 10A one-way switch, ACMSXXW101, a pack of 20, price and MRP](https://www.moglix.com/crabtree-murano-10a-1-way-white-switch-acmsxxw101-pack-of-20/mp/msno5wnyx2or51) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+222. [Moglix: Crabtree Murano 6A 3-pin socket, ACMKPXW063, a pack of 10, price and MRP](https://www.moglix.com/crabtree-murano-6a-3-pin-white-shuttered-socket-with-isi-marking-acmkpxw063-pack-of-10/mp/msnv5oo47n8v56) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+223. [Moglix: Crabtree Murano 4-module combined plate, ACMPLCWV04, a pack of 5, price and MRP](https://www.moglix.com/crabtree-murano-4-module-pearl-white-pc-modular-combined-plate-acmplcwv04-pack-of-5/mp/msn8klpqwxwn5v) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+224. [Moglix: Schneider Unica Pure 6A one-way switch, UNS61SW1M_GY, price and MRP](https://www.moglix.com/schneider-electric-unica-pure-6a-1-module-1-way-volcanic-grey-switch-uns61sw1m-gy/mp/msnz5262pnzm9x) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+225. [Moglix: Schneider Unica Pure 6A 3-pin socket, UNS6SK3P2MNS_GY, price and MRP](https://www.moglix.com/schneider-electric-unica-pure-6a-3-pin-2-module-polycarbonate-grey-socket-outlet-with-shutter-uns6sk3p2mns-gy/mp/msnq946n3xve50) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+226. [Moglix: Schneider Unica Pure 4-module cover frame, UNSCP4M_GY, price and MRP](https://www.moglix.com/schneider-electric-unica-pure-4-module-polycarbonate-volcanic-grey-fixing-cover-frame-unscp4m-gy/mp/msn8kl2wyjyn5v) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+227. [Moglix: Schneider Unica Pure 4-module aluminium alloy cover plate, UNPCP4M_ML, price and MRP](https://www.moglix.com/schneider-electric-unica-pure-4-module-aluminium-alloy-pewter-grey-cover-plate-unpcp4m-ml/mp/msn457mjjg3n9j) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+228. [Moglix: Crabtree Murano 4-channel touch and IR controlled switch, ACMSEIW064, price and MRP](https://www.moglix.com/crabtree-murano-white-4-channel-touch-ir-controlled-switch-acmseiw064/mp/msnv5oo47vx056) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+229. [Moglix: Crabtree Murano 4-module Glassique glass plate, ACMPGCWV04, a pack of 5, price and MRP](https://www.moglix.com/crabtree-murano-4-module-artic-white-glassique-modular-combined-plate-acmpgcwv04-pack-of-5/mp/msne5n8dego0kl) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 10-10-2026
+230. [Havells 12-way double-door distribution board](https://www.amazon.in/Havells-DB-SPN-QVE-Distribution/dp/B07BH62B8Q) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+231. [Single-pole MCBs, listings](https://www.moglix.com/alp/single-pole-mcb) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+232. [4-pole 63 A 30 mA RCCBs (Havells, Legrand, L&T)](https://www.bestofelectricals.com/havells-63a-30ma-four-pole-rccb) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+233. [Wipro LED panel lights, listings](https://dir.indiamart.com/impcat/wipro-panel-light.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+234. [IndiaMART: COB LED downlights, suppliers' prices each](https://dir.indiamart.com/impcat/cob-led-downlight.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+235. [Polycab downlights](https://polycab.com/lighting/downlight/c) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+236. [LED profile lights, listings](https://dir.indiamart.com/impcat/led-profiles.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+237. [Magnetic track lights, listings](https://jainsonslightsonline.com/collections/magnetic-track-lights) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+238. [Amazon India: Wipro Garnet 20 W LED batten](https://www.amazon.in/Wipro-Garnet-20-Watt-Batten-Rectangular/dp/B0788C3CJR) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+239. [Amazon India: Havells 20 W LED battens, search listing (Triyca 3-in-1)](https://www.amazon.in/havells-tube-light-20-watt/s?k=havells+tube+light+20+watt) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+240. [Amazon India: Wipro Garnet Wave 10 W 130 x 130 mm colour-changing recessed panel](https://www.amazon.in/wipro-Changing-Recessed-Downlighter-130x130mm/dp/B0C1YP5SG4) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+241. [Amazon India: Philips 20 W smart Wi-Fi tunable-white batten](https://www.amazon.in/Philips-Tunable-Control-Assistant-Efficient/dp/B0G7ZNP78C) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+242. [Amazon India: Wipro 20 W smart Wi-Fi CCT batten](https://www.amazon.in/Batten-Compatible-Amazon-Google-Assistant/dp/B07P7JNQ56) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+243. [Amazon India: Philips Hue Garnea white ambiance downlight](https://www.amazon.in/Philips-Garnea-White-Ambience-Downlight/dp/B07RDJJCMN) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+244. [Amazon India: Wipro Next 20 W smart CCT and RGB batten](https://www.amazon.in/wipro-Million-Compatible-Assistant-DS22000/dp/B08D19X3LS) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+245. [Amazon India: Philips Hue Centura recessed spotlights, white and colour ambiance](https://www.amazon.in/Philips-Hue-Ambiance-Spotlights-Generation/dp/B0DDCMB2YY) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+246. [Amazon India: Philips Hue Semeru ceiling light, white ambiance](https://www.amazon.in/Philips-Ceiling-Ambiance-Compatible-Assistant/dp/B07RFKTW52) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+247. [Amazon India: Philips Hue Adore bathroom ceiling light, white ambiance](https://www.amazon.in/Philips-Bathroom-Ambiance-Compatible-Assistant/dp/B07DX7QR81) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+248. [Chandelier and pendant lights, listings](https://dir.indiamart.com/impcat/chandelier-pendant-light.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+249. [Crompton 1200 mm ceiling fans](https://www.crompton.co.in/collections/1200-mm-ceiling-fan) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+250. [Best BLDC ceiling fans in India, 2026](https://smarthousegears.com/articles/best-bldc-ceiling-fans-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+251. [Ceiling fan brands in India with price ranges, 2026](https://www.housegyan.com/blog/budget-friendly-best-ceiling-fan-brands-in-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+252. [Polycab designer fans](https://polycab.com/fans/ceiling-fan/designer-fan/c) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+253. [Exhaust fan buying guide 2026: 15 models compared](https://www.mrhomes.in/blogs/guide/ultimate-exhaust-fan-buying-guide-2026) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+254. [Exhaust fan brands in India with prices, 2026](https://www.housegyan.com/blog/top-exhaust-fan-brands-in-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+255. [Moglix: Havells 12-way SPN double-door distribution board, selling price and MRP](https://www.moglix.com/havells-spn-double-door-distribution-box-dhdpshodpw12/mp/msn2qgrwjpzrrf) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+256. [Earthing system cost in India](https://www.houseyog.com/blog/earthing-system-cost-in-india/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+257. [Modular switches cost in India, 2026](https://www.houseyog.com/blog/modular-switches-cost-in-india/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+258. [Bathroom plumbing cost in India, 2026: per-point rates](https://www.studiomatrx.org/guides/bathroom-plumbing-cost-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+259. [IndiaMART: Finolex SWR pipes, suppliers' prices a 3 m pipe](https://dir.indiamart.com/impcat/finolex-swr-pipe.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+260. [Solve24: a plumber's pay a day in India, 2026](https://solve24.in/answers/plumber-salary-per-day) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+261. [Kitchen chimney price guide, 2026](https://kaff.in/articles/best-kitchen-chimney-in-india-price-guide-2026-edition) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+262. [IFB built-in hobs](https://www.ifbappliances.com/products/kitchen/built-in-hobs) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+263. [Faber built-in ovens](https://faberindia.com/collections/built-in-ovens-built-in-appliances) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+264. [Dishwasher prices in India, 2026](https://www.pricedekho.com/dishwashers/dishwashers-price-list.html) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+265. [RO water purifier prices in India](https://pricee.com/water-purifiers/ro-water-purifiers-products-price-in-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+266. [1.5 ton 5-star AC prices in India](https://www.smartprix.com/air_conditioners/5-star-1-5-ton-ac-list) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+267. [AC installation cost in India, 2026](https://solve24.in/blog/ac-installation-cost-india-2026-split-window-rates) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+268. [Moglix: video door phones, prices each](https://www.moglix.com/security/access-control-systems/video-door-phone/116141602) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+269. [Home automation cost in India, 2026](https://smartify.in/blog/home-automation-cost-india-2026-guide/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+270. [CCTV camera set price in India, 2026](https://aliftechsecure.in/cctv-camera-set-price-in-india-2026-complete-kit-cost-for-home-shop-office/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+271. [Upholstered furniture in India: frame, suspension, foam and fabric](https://www.studiomatrx.org/guides/upholstered-furniture-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+272. [Uberdecor: foam density for a sofa in India, 28 against 32 against 40](https://uberdecor.in/blogs/sofa-buying-guide/what-is-the-best-foam-density-for-sofa-in-india-28-vs-32-vs-40-explained) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+273. [Couch price in India, 2026: budget and premium](https://www.cherrypickindia.in/couch-price-in-india-guide/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+274. [Durian: premium 3-seater sofas (Cardiff, Veronica, Hensley, Splendor), listed prices](https://www.durian.in/buy-furniture/premium-sofas) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+275. [SOISU: luxury sofa price range in India, 2026, by tier](https://soisu.com/knowledge/luxury-sofa-price-india-2026) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+276. [Amazon.in: Wakefit Solatio three-seater sofa](https://www.amazon.in/s?k=Wakefit+Solatio+3+Seater+Sofa+Set+for+Living+Room) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+277. [Amazon.in: Wakefit Napper Mini three-seater sofa](https://www.amazon.in/s?k=wakefit+napper+mini+3+seater+sofa) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+278. [IKEA India: three-seat sofas, listed prices](https://www.ikea.com/in/en/cat/three-seat-sofas-10670/) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+279. [Amazon.in: Wakefit Napper Plus three-seater sofa](https://www.amazon.in/s?k=wakefit+napper+plus+3+seater+sofa) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+280. [Stanley Lifestyles, annual report 2023-24: ticket size of a 3+2 sofa set by store format](https://www.stanleylifestyles.com/storage/Investor/September2024/1XGS7-Stanley%20Lifestyles%20Ltd__AR%2023-24.pdf) (class 3: A firm's published package, allowance or rate card). Read on 04-10-2026
+281. [SOISU: is Italian furniture worth the price in India (imported pieces)](https://soisu.com/knowledge/is-italian-furniture-worth-it-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+282. [IndiaMART: 6-seater wooden dining table set, a listing](https://www.indiamart.com/proddetail/6-seater-wooden-dining-table-set-22519351812.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Not opened: The site refused the visit (403)
+283. [6-seater dining tables, listings](https://www.woodenstreet.com/6-seater-dining-tables) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+284. [Wooden Street: Vivara 6-seater dining set, sheesham with a marble top](https://www.woodenstreet.com/product/vivara-6-seater-dinining-set-with-valence-marble-top-table-and-vinara-upholstered-chair-sage-green) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+285. [Durian: marble-finish dining sets](https://www.durian.in/buy-furniture/marble-dining-sets) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+286. [Curves & Carvings: DTC0056 classic Italian teak 6-seater dining set, made to order, inclusive of taxes and delivery](https://www.curvesandcarvings.com/dining-sets/curves-carvings-signature-collection-dining-table-set-c-c-dtc0056) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+287. [Nilkamal: Stratus 6-seater dining table set](https://www.nilkamalfurniture.com/products/nilkamal-stratus-6-seater-dining-table-set) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+288. [Wakefit: Alcano 6-seater solid wood dining set](https://www.wakefit.co/dining-furniture/alcano-solid-wood-6-seater-dining-set/WDINEACNOS6COPIW) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Not opened: The site refused the visit (403)
+289. [Wakefit: Soomari sheesham 6-seater dining set](https://www.wakefit.co/dining-furniture/soomari-dining-table/WDINESOMARIS6) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Not opened: The site refused the visit (403)
+290. [Wooden Street: Janet sheesham 6-seater dining set, cushioned chairs, honey](https://www.woodenstreet.com/product/janet-cushioned-6-seater-dining-set-honey-finish) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+291. [IKEA India: LISABO series](https://www.ikea.com/in/en/cat/lisabo-series-30662/) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+292. [Wooden Street: Hazel sheesham 6-seater dining set with a marble top, teak](https://www.woodenstreet.com/product/hazel-6-seater-sheesham-wood-dining-table-set-with-marble-top-teak-finish) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+293. [Royaloak: Rome Italian marble 6-seater dining set](https://www.royaloakindia.com/royaloak-rome-italian-marble-dining-set-six-seater.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+294. [IKEA India: dining sets, a table and 4 chairs, listed prices](https://www.ikea.com/in/en/cat/dining-sets-19145/) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+295. [Wooden Street: Shriyam sheesham 6-seater dining set, quartz top, cane and brass](https://www.woodenstreet.com/product/shriyam-modern-6-seater-sheesham-wood-dining-table-set-with-quartz-table-top-cane-brass-accents-teak-finish) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+296. [Durian: Tuscany 6-seater dining set, composite marble top on solid wood](https://www.durian.in/product/tuscany-raven-black-composite-marble-solid-wood-6-seater-dining-set) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+297. [Curves & Carvings: DTC0804 antique French teak 6-seater dining set, inclusive of taxes and delivery](https://www.curvesandcarvings.com/dining-sets/antique/6-seater/curves-carvings-classic-collection-dining-table-set-c-c-dtc0804) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+298. [Curves & Carvings: DTC0050 vintage Indian teak dining set, inclusive of taxes and delivery](https://www.curvesandcarvings.com/dining-sets/antique/curves-carvings-signature-collection-dining-table-set-c-c-dtc0050) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+299. [Queen beds with storage, listings](https://www.royaloakindia.com/bedroom/beds/queen-bed-with-storage.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+300. [Durian: solid wood queen beds (Leeds, York, Cayman), listed prices](https://www.durian.in/buy-furniture/solid-wood-beds-2) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+301. [Elysium queen bed with hydraulic storage](https://www.homecentre.in/in/en/Bed-Room/Beds/Queen-Beds/HOMECENTRE-Elysium-Queen-Bed-with-Hydraulic-Storage--Brown/p/1000014219797) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Not opened: The site refused the visit (403)
+302. [Curves & Carvings: handcrafted teak king beds (BED0171, BED0104, BED0150, BED0188), prices inclusive of taxes and delivery](https://www.curvesandcarvings.com/beds-bedsides/beds/curves-carvings-signature-collection-bed-c-c-bed0188) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+303. [Curves & Carvings: teak king beds BED0709 and BED0115, prices inclusive of taxes and delivery](https://www.curvesandcarvings.com/beds-bedsides/beds) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+304. [IKEA India: queen-size bed frames, 160 × 200 cm, listed prices](https://www.ikea.com/in/en/cat/beds-bm003/f/queen-size-beds-f-typed-reference-measurement--160x200-bed-frames/) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+305. [Wooden Street: Brixton sheesham queen bed with hydraulic storage, walnut](https://www.woodenstreet.com/product/brixton-sheesham-wood-hydraulic-bed-with-storage-queen-size-walnut-finish) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+306. [Wooden Street: Adolph queen bed with hydraulic storage, honey](https://www.woodenstreet.com/product/adolph-hydraulic-bed-queen-size-honey-finish) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+307. [Wooden Street: Drewno sheesham upholstered queen bed with hydraulic storage](https://www.woodenstreet.com/product/drewno-sheesham-ood-upholstered-bed-with-hydraulic-storage-queen-size-graphite-grey) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+308. [Wooden Street: Ferguson sheesham queen bed with hydraulic storage and cane](https://www.woodenstreet.com/product/ferguson-sheesham-wood-bed-with-hydraulic-storage-and-cane-detailing-queen-size-honey-finish) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+309. [SOISU: Italian-design leather beds, queen and king, made in India to order, indicative prices](https://www.soisu.com/beds) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing)
+310. [Urban Ladder: foam mattresses, listings](https://www.urbanladder.com/collection/foam-mattress) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+311. [Amazon.in: Wakefit queen memory-foam mattresses, 78 × 60 in](https://www.amazon.in/s?k=wakefit+queen+size+memory+foam+mattress+78x60) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+312. [Amazon.in: Wakefit queen latex mattresses](https://www.amazon.in/s?k=wakefit+queen+latex+mattress) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+313. [Mattresses, listings](https://www.wakefit.co/mattress) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Not opened: The site refused the visit (403)
+314. [Amazon.in: Tempur mattresses, listings](https://www.amazon.in/tempur-mattress/s?k=tempur+mattress) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Not opened: The site returned an error (503)
+315. [Curtain cost in India, 2026](https://www.studiomatrx.org/guides/curtain-cost-guide-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+316. [TradeIndia: Somfy motorised curtain track, a listing](https://www.tradeindia.com/products/somfy-motorized-curtain-track-c10140640.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+317. [Urban Decor Curtains: curtain installation cost in Bangalore (rods, tracks, motorised)](https://urbandecorcurtains.com/blog/curtain-installation-cost-bangalore/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+318. [Window blinds, listings](https://dir.indiamart.com/impcat/window-blinds.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+319. [99acres: anti-termite treatment, technique and price in India](https://www.99acres.com/articles/anti-termite-treatment.html) (class 4: A cost guide's range: a blog, a calculator or a guide). Not opened: The site refused the visit (403)
+320. [Building construction materials price list, 2026](https://civiconcepts.com/blog/construction-and-building-materials-market-price) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+321. [HouseYog: cement price today, India](https://www.houseyog.com/blog/cement-price-today-india-cost-per-sq-ft/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+322. [Brick&Bolt: construction material quantity estimation for a 1000 sq ft house (rules of thumb a sq ft, wastage)](https://www.bricknbolt.com/blogs-and-articles/construction-guide/construction-material-quantity-estimation-for-1000-sqft-of-house-construction) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+323. [Corejoint: TMT grades explained, Fe 500 and Fe 500D (yield strength, elongation)](https://www.corejoint.com/guides/tmt-grades-explained) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+324. [Steel and cement rates in India, 2026](https://www.comaron.com/blog/steel-and-cement-rates-today-india-2026-complete-price-guide) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+325. [Kairali TMT: steel for a residential building, and what decides the quantity (the structural drawings)](https://kairalitmt.com/calculate-steel-requirement-for-residential-building/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+326. [Tusker TMT: checking TMT bars with the BIS Care app and the bundle’s tag](https://www.tuskertmt.com/blog-bis-care-app-verify-tmt.html) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+327. [BIS: product manual for IS 1786, high-strength deformed steel bars (the ISI mark, the licence number and the markings rolled on a bar)](https://bis.gov.in/wp-content/uploads/2019/08/IS-1786-Product-Manual-Revision-3.pdf) (class R: A standard, a code or a law, for a rule rather than a rate). Read on 04-10-2026
+328. [MetalWeightPro: TMT bar weight a metre (D²/162) and the IS 1786 tolerances](https://www.metalweightpro.com/articles/tmt-bar-weight-per-meter-chart.html) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+329. [Comaron: building materials price list, India 2026](https://www.comaron.com/blog/building-materials-price-list-india-2026-complete-guide) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+330. [HouseYog: house construction labour rate a sq ft in India, by stage](https://www.houseyog.com/blog/house-construction-labour-rate-per-sq-ft/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+331. [HouseYog: boundary wall construction cost in India (2026), a 4.5-inch brick wall Rs. 800–1,100 and a 9-inch Rs. 1,200–1,500 a running foot, with excavation, footing, plinth beam, brickwork and plaster](https://www.houseyog.com/blog/boundary-wall-construction-cost-india/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+332. [IndiaMART listings: MS gates fabricated and fixed, Rs. 135–450 a sq ft (Rs. 450 in Bengaluru); main gates Rs. 550–700 a sq ft](https://dir.indiamart.com/bengaluru/ms-gate-fabrication-service.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+333. [IndiaMART listings: SS 304 sliding gates Rs. 1,200–1,400 a sq ft; automatic SS sliding gates Rs. 1,750–2,000; an automatic motorised sliding gate Rs. 2,800 a sq ft](https://dir.indiamart.com/impcat/stainless-steel-sliding-gate.html) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+334. [JK Cement: paver blocks, Rs. 40–80 a sq ft; 60 mm for walkways, 80–100 mm for parking](https://www.jkcement.com/blog/home-design/paver-block-design-types-price-guide/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+335. [Studio Matrx: exposed aggregate flooring for driveways and paths, Rs. 60–180 a sq ft](https://www.studiomatrx.org/guides/exposed-aggregate-flooring-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+336. [Studio Matrx: natural stone pavers in India, sandstone Rs. 60–140, granite Rs. 120–250 a sq ft; laid Rs. 120–380 a sq ft](https://www.studiomatrx.org/guides/natural-stone-pavers-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+337. [Home Building Smart: underground water tank construction cost a litre (2026), 1,000 litres Rs. 28–35, 5,000 litres Rs. 20–25 a litre](https://homebuildingsmart.com/underground-water-tank-construction-cost-per-litre/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+338. [HouseYog: rainwater harvesting cost in India (2025), a recharge pit Rs. 8,000–15,000, a mesh filter Rs. 2,000–5,000, pipes Rs. 2,000–10,000, labour Rs. 8,000–15,000](https://www.houseyog.com/blog/rainwater-harvesting-cost-india/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+339. [HouseYog: septic tank construction cost in India (2026), 1BHK 4,000–5,000 litres Rs. 50,000–70,000; 2BHK 5,000–6,500 litres Rs. 60,000–85,000; 3BHK 6,500–8,000 litres Rs. 75,000–1,10,000; 4BHK 8,000–10,000 litres Rs. 1,00,000–1,40,000, with the soak pit](https://www.houseyog.com/blog/septic-tank-construction-cost-india/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+340. [NoBroker forum: CMWSSB (Chennai) new connection charges, a house's sewer connection Rs. 24,500 (110 mm pipe) or Rs. 26,500 (140 mm)](https://www.nobroker.in/forum/what-is-the-cmwssb-new-connection-charges/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+341. [HMWSSB, Hyderabad: guidelines for new connections, supervision charges for joining the sewer Rs. 1,500–5,000](https://www.hyderabadwater.gov.in/en/index.php/services/information-services/guidelines-new-connections) (class R: A standard, a code or a law, for a rule rather than a rate). Read on 04-10-2026
+342. [Kolkata Municipal Corporation: fees and charges 2025-26, house drainage connection, a 225 mm stoneware pipe laid Rs. 2,079 a metre](https://www.kmcgov.in/KMCPortal/downloads/ChiefEngFees_RatesCharges_2025_2026.pdf) (class R: A standard, a code or a law, for a rule rather than a rate). Read on 04-10-2026
+343. [Stone Galleria: granite stair treads from Rs. 140–250 a sq ft ex-factory](https://stonegalleria.in/granite-treads/) (class 2: A maker's or seller's price for a named product: a price list, an MRP, a listing). Read on 04-10-2026
+344. [Window replacement cost in India: a new frame against a retrofit](https://www.studiomatrx.org/guides/window-replacement-cost-india) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+345. [Trity Pipes: concealed against surface wiring in India](https://www.tritypipes.com/blogs/concealed-wiring-vs-surface-wiring-india/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+346. [Rajdhani Cables: FR and FRLS wires for a home](https://www.rajdhanicable.com/blog/fr-vs-frls-wire-whats-the-difference-which-is-safer-for-your-home/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+347. [Floor tiling cost in India, 2026](https://www.houseyog.com/blog/floor-tiling-cost-per-sqft-india/) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+348. [Marble flooring cost in India, price guide](https://omkarmarble.com/blog/marble-flooring-cost-guide) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+349. [SR Marble Polishing: polishing rates for newly laid marble](https://www.srmarblepolishing.in/new-laid-marble-silicate-polishing-rate) (class 3: A firm's published package, allowance or rate card). Read on 04-10-2026
+350. [Plumbing prices in India, 2026, 50 cities](https://infralens.in/prices/plumbing) (class 4: A cost guide's range: a blog, a calculator or a guide). Not opened: The site refused the visit (403)
+351. [Livspace: wallpaper price list and installation](https://www.livspace.com/in/magazine/wallpaper-price-and-its-installation) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026
+352. [Param Visions: rate analysis of interlocking paver flooring (2021), labour with mechanical compaction Rs. 10–16 a sq ft](https://www.paramvisions.com/2021/06/the-cost-of-fixing-interlocking-paver.html) (class 4: A cost guide's range: a blog, a calculator or a guide). Read on 04-10-2026

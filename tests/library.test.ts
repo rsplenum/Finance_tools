@@ -200,6 +200,14 @@ describe('rates, worked by hand', () => {
   it('a wiring point is a set (W1): Anchor Roma, 7 m of 1.5 sq mm wire at 32.50 (25–40) = 227.50, 7 m of 2.5 sq mm at 50 (40–60) = 350, 5 m of conduit at 100 ÷ 3 = 166.67, half a box 54.50, a switch 71 (62–80), half a socket 83.25 (145–188), half a plate 71.75 (125–162) and the labour 265 (180–350) = 1,289.67', () => {
     expect(price('wr-roma', 1, 18)?.rate).toBe(1289.67);
   });
+  it('W1b\'s seven sets share the same wire, conduit, box and labour, 1,063.67 a point, and add a switch, half a socket and half a plate (packs divided out), worked by exact fractions in a separate script', () => {
+    // Reo Elegant 30.50 + 45.75 + 54; Livia 125.50 + 123.75 + 103; Zencelo 397 + 385.25 + 269.25 (a pack of 10 frames, 3,040–7,730);
+    // Murano 128.975 (20 switches, 2,359–2,800) + 126.475 (10 sockets, 2,309–2,750) + 197.20 (5 plates, 1,799–2,145);
+    // Unica Pure 228 + 232.25 + 223.75; with the aluminium plate 1,459.25 (1,883–3,954); touch: a quarter of 4,451.50 = 1,112.875 + 126.475 + 669.95 (5 glass plates, 6,119–7,280)
+    const at = (id: string) => price(id, 1, 18)?.rate;
+    expect(['wr-reo', 'wr-livia', 'wr-zencelo', 'wr-murano', 'wr-unica', 'wr-unica-metal', 'wr-murano-touch'].map(at))
+      .toEqual([1193.92, 1415.92, 2115.17, 1516.32, 1747.67, 2983.17, 2972.97]);
+  });
   it('an item still to be found has no rate', () => {
     expect(price('fl-encaustic', 1, 18)).toBeNull();
   });
