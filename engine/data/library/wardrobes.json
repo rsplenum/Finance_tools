@@ -5,7 +5,8 @@
     { "id": "wardrobe", "name": "Wardrobe", "unit": "sqft", "levels": ["wd-hinged-laminate", "wd-hinged-bwp", "wd-sliding", "wd-full-height", "wd-full-sliding"] },
     { "id": "loft", "name": "Loft above the wardrobe", "unit": "sqft", "levels": ["lf-unit", "lf-unit", "lf-unit", null, null] },
     { "id": "carpentry", "name": "Fixed storage units", "unit": "sqft", "levels": ["cu-laminate", "cu-bwp", "cu-acrylic", "cu-premium", "cu-luxury"] },
-    { "id": "shutter-finish", "name": "Shutter finishes (part of the rate above)", "unit": "sqft" }
+    { "id": "shutter-finish", "name": "Shutter finishes (part of the rate above)", "unit": "sqft" },
+    {"id": "shelves", "name": "Store rack", "unit": "nos", "kind": "movable", "levels": ["sh-slotted", "sh-slotted-ms", "sh-slotted-ss", "sh-slotted-ss", "sh-slotted-ss"]}
   ],
   "entries": [
     { "id": "wd-hinged-laminate", "family": "wardrobe", "name": "Hinged wardrobe, laminate", "spec": "Hinged wardrobe: plywood carcass, laminate shutters, standard hinges and handles", "level": 1, "brands": ["Ebco", "Hettich"], "unit": "sqft", "basis": "installed", "rate": [1300, 1800], "gst": "extra", "src": ["studiomatrx-wardrobe", "elvenwood-wardrobe"], "checked": "2026-10-04" },
@@ -33,6 +34,10 @@
     { "id": "wd-premium-mix", "family": "wardrobe", "name": "Wardrobe, acrylic, glass or veneer", "spec": "Wardrobe with acrylic, glass or veneer shutters", "level": 3, "unit": "sqft", "basis": "installed", "rate": [1900, 2500], "gst": "unstated", "date": "2026-10-04", "src": ["nobroker-wardrobe-price"], "checked": "2026-10-04" },
     { "id": "wd-pu", "family": "wardrobe", "name": "Modular wardrobe, PU finish", "spec": "Modular wardrobe with PU (polyurethane) shutters", "level": 4, "unit": "sqft", "basis": "installed", "rate": [2500, 3200], "gst": "unstated", "date": "2026-10-04", "src": ["houseyog-finishing"] },
     { "id": "wd-walkin", "family": "wardrobe", "name": "Walk-in wardrobe, custom carpentry", "spec": "Walk-in wardrobe in custom carpentry", "level": 5, "unit": "sqft", "basis": "installed", "rate": [3200, 8000], "gst": "extra", "date": "2026-10-04", "src": ["studiomatrx-wardrobe"], "note": "Metro labour; the guide says GST is additional." },
-    { "id": "wd-hardwood", "family": "wardrobe", "name": "Wardrobe in hardwood, or a walk-in, high end", "spec": "High-end wardrobe in hardwood, or a walk-in", "level": 5, "unit": "sqft", "basis": "installed", "rate": [2000, 3500], "gst": "unstated", "date": "2026-10-04", "src": ["nobroker-wardrobe"], "checked": "2026-10-04" }
+    { "id": "wd-hardwood", "family": "wardrobe", "name": "Wardrobe in hardwood, or a walk-in, high end", "spec": "High-end wardrobe in hardwood, or a walk-in", "level": 5, "unit": "sqft", "basis": "installed", "rate": [2000, 3500], "gst": "unstated", "date": "2026-10-04", "src": ["nobroker-wardrobe"], "checked": "2026-10-04" },
+
+    {"id": "sh-slotted", "family": "shelves", "name": "Slotted angle steel rack, 5 shelves", "spec": "Slotted angle steel rack with five shelves about 18 in deep, bolted together", "level": 1, "unit": "nos", "basis": "product", "rate": [2200, 3500], "gst": "unstated", "src": ["indiamart-slotted-rack"], "note": "Rs. 2,200 for a five-shelf rack 457 mm deep and Rs. 3,500 for a 6 ft galvanised rack, as listed.", "checked": "2026-10-10"},
+    {"id": "sh-slotted-ms", "family": "shelves", "name": "Mild steel slotted angle rack, 7 ft", "spec": "Mild steel slotted angle storage rack about 7 ft high and 900 mm long", "level": 2, "unit": "nos", "basis": "product", "rate": [4500, 4500], "gst": "unstated", "src": ["indiamart-slotted-rack"], "checked": "2026-10-10"},
+    {"id": "sh-slotted-ss", "family": "shelves", "name": "Stainless steel slotted angle rack, 6 ft, 5 shelves", "spec": "Stainless steel slotted angle rack 6 ft high with five shelves", "level": 3, "unit": "nos", "basis": "product", "rate": [7950, 7950], "gst": "unstated", "src": ["indiamart-slotted-rack"], "checked": "2026-10-10"}
   ]
 }

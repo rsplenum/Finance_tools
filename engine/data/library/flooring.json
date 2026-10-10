@@ -3,7 +3,8 @@
   "date": "2026-10-02",
   "families": [
     { "id": "floor", "name": "Floor finish", "unit": "sqft", "levels": ["fl-vit-dc-600", "fl-gvt-800", "fl-slab-800x1600", "fl-marble-ambaji", "fl-marble-statuario"] },
-    { "id": "floor-wet", "name": "Floor finish, anti-skid (bathrooms and balconies)", "unit": "sqft", "levels": ["fw-ceramic", "fw-vit-matt", "fw-gvt-1200", "fw-slab", "fw-marble-botticino"] }
+    { "id": "floor-wet", "name": "Floor finish, anti-skid (bathrooms and balconies)", "unit": "sqft", "levels": ["fw-ceramic", "fw-vit-matt", "fw-gvt-1200", "fw-slab", "fw-marble-botticino"] },
+    {"id": "stone-floor", "name": "Stone floor (pooja room)", "unit": "sqft", "levels": ["fl-kota", "fl-granite", "fl-marble-rajnagar", "fl-marble-makrana", "fl-marble-statuario"]}
   ],
   "entries": [
     { "id": "fl-vit-dc-600", "family": "floor", "name": "Double-charge vitrified tiles, 600 × 600 mm", "spec": "Double-charge vitrified tiles 600 × 600 mm on tile adhesive, 2–3 mm joints, grouted, with 100 mm skirting of the same tiles", "level": 1, "brands": ["Kajaria", "Somany", "Johnson", "Nitco", "Orientbell"], "unit": "sqft", "basis": "supply", "rate": [30, 95], "wastage": 0.12, "fix": ["lay-tile-600", "adhesive-grout"], "src": ["aparna-vitrified", "orientbell-tiles", "makecalcs-waste"], "checked": "2026-10-04", "gst": "unstated" },

@@ -24,16 +24,20 @@ import type { Blocked, Needs } from './dscr';
 export type WorkKind = 'build' | 'renovate' | 'interiors';
 export type Bhk = '1RK' | '1' | '2' | '3' | '4' | '5';
 export type Level = 1 | 2 | 3 | 4 | 5;
-export type RoomKind = 'living' | 'bedroom' | 'kitchen' | 'bath' | 'passage' | 'balcony';
+export type RoomKind = 'living' | 'bedroom' | 'kitchen' | 'bath' | 'passage' | 'balcony' | ExtraKind;
+/** The rooms a home may add to its programme (R2b): one of each, planned in this order after the bathrooms. */
+export type ExtraKind = 'pooja' | 'study' | 'utility' | 'store';
 /** A room's size by a word (R1): where it sits on the room's reported range. */
 export type SizeWord = 'compact' | 'medium' | 'above' | 'spacious';
-export type OpeningType = 'main' | 'bedroom' | 'bath' | 'kitchen' | 'balcony' | 'window' | 'kitchenWindow' | 'ventilator';
+export type OpeningType = 'main' | 'bedroom' | 'bath' | 'kitchen' | 'balcony' | 'window' | 'kitchenWindow' | 'ventilator' | 'pooja' | 'study' | 'utility' | 'store';
 
 interface Sourced { src: string[]; why: string }
 interface Valued extends Sourced { value: number }
 export interface Slot { family: string; section: string; qty: string; kinds?: WorkKind[]; needs?: string; name?: string; maxLevel?: number }
 /** A room of a programme, with its reported range of sizes in sq ft: its size word puts it along the range (R1). */
 interface ProgrammeRoom { kind: RoomKind; name: string; range: [number, number]; master?: boolean; attached?: boolean }
+/** A room a home may add (R2b): its kind, name and reported range in sq ft, with the range's source. */
+interface ExtraRoom { kind: ExtraKind; name: string; range: [number, number]; src: string[]; why: string }
 export interface Programme extends Sourced { rooms: ProgrammeRoom[]; balcony: number; typical: [number, number] | null }
 type Size = { w: number; h: number; sill?: number } & Sourced;
 export interface Rules {
@@ -44,6 +48,7 @@ export interface Rules {
   kinds: Record<WorkKind, { label: string; on: string[]; why: string }>;
   programmes: Record<Bhk, Programme>;
   bathrooms: { rule: string } & Sourced;
+  extras: ExtraRoom[];
   shares: { passage: Valued; walls: Valued };
   /** The size words, each a point along a room's range: 0 its bottom, 1 its top (R1). */
   sizes: { words: { id: SizeWord; name: string; at: number }[] } & Sourced;
@@ -61,7 +66,8 @@ export interface Rules {
   falseCeiling: { byLevel: { rooms: string[]; cover: 'none' | 'border' | 'full' }[]; border: number; coveInset: number } & Sourced;
   feature: { living: number; master: number } & Sourced;
   points: Record<RoomKind, Partial<Record<'lights' | 'fans' | 'sockets' | 'power' | 'ac' | 'tv' | 'exhaust' | 'masterExtra', number>>> & Sourced;
-  plumbing: Record<'bath' | 'kitchen' | 'balcony', { supply: number; drain: number }> & Sourced;
+  plumbing: Record<'bath' | 'kitchen' | 'balcony' | 'utility' | 'washer', { supply: number; drain: number }> & Sourced;
+  cladding: Sourced;
   ac: { from: number; allBedroomsFrom: number } & Sourced;
   debris: { sqftPerLot: number } & Sourced;
   makingGood: { share: number } & Sourced;
@@ -128,6 +134,8 @@ export interface ArchitectInput {
   baths?: (string | null)[];
   /** The balcony (R2): false takes it out; absent or true, the programme's, if it has one. */
   balcony?: boolean;
+  /** The rooms added to the programme (R2b), each at most once: a pooja room, a study, a utility, a store; absent, none. */
+  extras?: ExtraKind[];
   /** For a new house: the plot's two sides in metres, the longer one its length; else the plot is the outline with the rule's margins. */
   plot?: { l: number; b: number };
   /** For a new house: the city's sewer reaches the plot, so a sewer connection takes the septic tank's place. */
@@ -135,6 +143,8 @@ export interface ArchitectInput {
 }
 /** The sides a room's own size can take, in metres. */
 export const ROOM_SIDE = { min: 0.3, max: 30 };
+/** The rooms a home may add (R2b), in the order they are planned and offered. */
+export const EXTRAS: ExtraKind[] = R.extras.map((x) => x.kind);
 /** How many bathrooms a home can take (R2). */
 export const BATHS = { min: 1, max: 8 };
 /** The sides a plot can take, in metres. */
@@ -211,7 +221,7 @@ const LEVEL_NAMES = R.levels.map((l) => l.name);
 const r2 = (x: number) => Math.round(x * 100 + 1e-6) / 100;
 const f2 = (x: number) => x.toFixed(2);
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
-const AREA_RULES = ['floor', 'floor-skirting', 'paint', 'feature', 'false-ceiling', 'bath-tiles', 'dado', 'wp-bath', 'wp-balcony', 'counter-top', 'wardrobe', 'loft', 'windows', 'shower-screen', 'protect', 'carpet', 'making-good', 'built-up', 'plinth', 'terrace', 'exterior-walls', 'stair-finish', 'stair-walls', 'compound-paint', 'gate', 'paving'];
+const AREA_RULES = ['floor', 'floor-skirting', 'paint', 'feature', 'cladding', 'false-ceiling', 'bath-tiles', 'dado', 'wp-bath', 'wp-balcony', 'counter-top', 'wardrobe', 'loft', 'windows', 'shower-screen', 'protect', 'carpet', 'making-good', 'built-up', 'plinth', 'terrace', 'exterior-walls', 'stair-finish', 'stair-walls', 'compound-paint', 'gate', 'paving'];
 const LENGTH_RULES = ['cove', 'counter-run', 'stair-railing', 'compound-wall'];
 const VOLUME_RULES = ['sump', 'tank', 'septic'];
 /** 'material': a structure's rule of thumb, in the material's own unit (bags, kg, cu m, bricks). 'volume': a tank's litres. */
@@ -246,9 +256,13 @@ export function bathsOf(bhk: Bhk): (string | null)[] {
 /**
  * A BHK's rooms before their sizes (R2): the living room, the bedrooms and the kitchen as the programme has them, then the
  * programme's bathrooms, or the user's: each of the programme's bathroom range, common or attached to a bedroom, and named
- * by its place ("Bathroom 2 (attached to Bedroom 2)").
+ * by its place ("Bathroom 2 (attached to Bedroom 2)"); then the rooms the user added, in their order (R2b).
  */
-function programmeOf(bhk: Bhk, baths?: (string | null)[]): Planned[] {
+function programmeOf(bhk: Bhk, baths?: (string | null)[], extras?: ExtraKind[]): Planned[] {
+  const added = R.extras.filter((x) => extras?.includes(x.kind)).map((x): Planned => ({ id: x.kind, kind: x.kind, name: x.name, range: x.range, master: false, of: null }));
+  return [...programmeBaths(bhk, baths), ...added];
+}
+function programmeBaths(bhk: Bhk, baths?: (string | null)[]): Planned[] {
   const p = R.programmes[bhk], own = p.rooms.filter((r) => r.kind === 'bath');
   let bed = 0;
   const out: Planned[] = p.rooms.filter((r) => r.kind !== 'bath')
@@ -262,12 +276,12 @@ function programmeOf(bhk: Bhk, baths?: (string | null)[]): Planned[] {
 }
 
 /**
- * The rooms of a flat: its programme's rooms, with the user's bathrooms if given (R2), sharing the carpet area left after
+ * The rooms of a flat: its programme's rooms, with the user's bathrooms if given (R2) and the rooms they added (R2b), sharing the carpet area left after
  * the passage and the walls in proportion to their sizes at their words (Medium, the middle of each reported range, unless a
  * word is given: R1); the passage its share of the carpet area; a balcony at its own size, unless taken out (R2).
  */
-export function planRooms(bhk: Bhk, carpetSqm: number, words: Record<string, SizeWord> = {}, layout: Pick<ArchitectInput, 'baths' | 'balcony'> = {}): Room[] {
-  const p = R.programmes[bhk], list = programmeOf(bhk, layout.baths);
+export function planRooms(bhk: Bhk, carpetSqm: number, words: Record<string, SizeWord> = {}, layout: Pick<ArchitectInput, 'baths' | 'balcony' | 'extras'> = {}): Room[] {
+  const p = R.programmes[bhk], list = programmeOf(bhk, layout.baths, layout.extras);
   const share = 1 - R.shares.passage.value - R.shares.walls.value;
   const sizes = list.map((r) => sizeAt(r.range, wordOf(words[r.id])));
   const sum = sizes.reduce((t, x) => t + x, 0);
@@ -306,7 +320,10 @@ export function houseOf(builtSqm: number, floors: number, H: number, own?: { l: 
   return { floors, builtSqm, footprint, l, b, wall, stair, carpetSqm: builtSqm - floors * (wall + stair), floorToFloor: H + s.slab.m, cabin: stair, plot };
 }
 
-/** Doors and windows: each in its own room's wall, a door's other side named; enough windows for a tenth of a habitable room's floor. */
+/**
+ * Doors and windows: each in its own room's wall, a door's other side named; enough windows for a tenth of a habitable room's
+ * floor. A study opens to the passage, a pooja room to the living room, a utility to the kitchen, a store to the passage (R2b).
+ */
 export function planOpenings(rooms: Room[]): Opening[] {
   const out: Opening[] = [];
   const has = (id: string) => rooms.some((r) => r.id === id);
@@ -323,6 +340,10 @@ export function planOpenings(rooms: Room[]): Opening[] {
     if (r.kind === 'living') { add('window', r.id, null, windows(r)); if (has('balcony')) add('balcony', r.id, 'balcony'); }
     if (r.kind === 'kitchen') { add('kitchen', r.id, has('living') ? 'living' : 'passage'); add('kitchenWindow', r.id, null); }
     if (r.kind === 'bath') { add('bath', r.id, r.of ?? 'passage'); add('ventilator', r.id, null); }
+    if (r.kind === 'study') { add('study', r.id, has('passage') ? 'passage' : null); add('window', r.id, null, windows(r)); }
+    if (r.kind === 'pooja') add('pooja', r.id, has('living') ? 'living' : 'passage');
+    if (r.kind === 'utility') { add('utility', r.id, has('kitchen') ? 'kitchen' : 'passage'); add('ventilator', r.id, null); }
+    if (r.kind === 'store') add('store', r.id, has('passage') ? 'passage' : null);
   }
   return out;
 }
@@ -351,6 +372,8 @@ export function architectNeeds(input: ArchitectInput): string[] {
     if (!ok) needs.push(`Bathrooms from ${BATHS.min} to ${BATHS.max}, each common or attached to one of the home\'s bedrooms, one to a bedroom`);
   }
   if (input.balcony !== undefined && typeof input.balcony !== 'boolean') needs.push('The balcony: in or out');
+  if (input.extras !== undefined && !(Array.isArray(input.extras) && input.extras.every((x) => EXTRAS.includes(x)) && new Set(input.extras).size === input.extras.length))
+    needs.push(`The added rooms: ${R.extras.map((x) => x.name.toLowerCase()).join(', ')}, each at most once`);
   const plotSide = (x: unknown) => isNum(x) && x >= PLOT_SIDE.min && x <= PLOT_SIDE.max;
   if (input.plot && (!plotSide(input.plot.l) || !plotSide(input.plot.b))) needs.push(`Each side of the plot from ${PLOT_SIDE.min} to ${PLOT_SIDE.max} m`);
   if (build && floorsOk && areaOk && heightOk) {
@@ -526,8 +549,8 @@ const BANDS = new Map<string, string[]>();
 export const wordName = (w: SizeWord) => R.sizes.words.find((x) => x.id === w)?.name ?? '';
 /** Whether any room has a size word other than Medium. */
 const worded = (rooms: Room[]) => rooms.some((r) => r.word !== null && r.word !== 'medium');
-/** The Code's minimum for a kind of room in sq m, or 0 where it sets none (the passage and the balcony). */
-const codeMinimum = (kind: RoomKind) => (kind === 'living' || kind === 'bedroom' ? R.minimums.habitable : kind === 'kitchen' ? R.minimums.kitchen : kind === 'bath' ? R.minimums.bath : 0);
+/** The Code's minimum for a kind of room in sq m, or 0 where it sets none (the passage, the balcony, a pooja room, a utility, a store); a study is habitable. */
+const codeMinimum = (kind: RoomKind) => (kind === 'living' || kind === 'bedroom' || kind === 'study' ? R.minimums.habitable : kind === 'kitchen' ? R.minimums.kitchen : kind === 'bath' ? R.minimums.bath : 0);
 /** The rooms below the Code's minimum, by id: the minimum in sq m. */
 function belowCode(rooms: Room[]): Record<string, number> {
   const out: Record<string, number> = {};
@@ -571,6 +594,8 @@ const partSources = (e: Entry): string[] => (e.parts ?? []).flatMap((p) => { con
 // ---- Measuring, by the rules in engine/data/architect.json. Lengths in metres, areas in square metres. ----
 
 const perimeter = (r: Room) => 2 * (r.l + r.b);
+/** A kind of room in words, where its id is not one: "bathroom", "pooja room", "store room". */
+const KIND_WORD: Partial<Record<RoomKind, string>> = { bath: 'bathroom', pooja: 'pooja room', utility: 'utility room', store: 'store room' };
 const area = (o: Opening) => o.w * o.h;
 const external = (o: Opening) => o.other === null || o.other === 'balcony';
 /** IS 1200: the area an opening takes off its own room's face. */
@@ -593,6 +618,8 @@ const featureArea = (r: Room, ctx: Ctx) => {
   if (r.kind === 'bedroom' && r.master && lv >= R.feature.master) return r.b * ctx.H;
   return 0;
 };
+/** A pooja room's stone on the walls: the back wall, the longer one, floor to ceiling (R2b). */
+const claddingArea = (r: Room, ctx: Ctx) => (r.kind === 'pooja' && ctx.on('walls') ? r.l * ctx.H : 0);
 const bathHasCeiling = (ctx: Ctx, r: Room) => { const f = FAMILIES.get('bath-ceiling'); return ctx.on('bathrooms') && !!f && !!ladder(f, ctx.levelOf('bathrooms', r)); };
 const doorsOf = (r: Room, ctx: Ctx) => ctx.openings.filter((o) => o.door && (o.room === r.id || o.other === r.id));
 function ceilingCover(r: Room, lv: Level): 'none' | 'border' | 'full' {
@@ -650,13 +677,14 @@ function measure(rule: string, r: Room | null, lv: Level, ctx: Ctx): { base: num
         for (const o of ctx.openings) {
           if (o.room === r.id) { ded += ownDeduction(o); rev += reveals(o); } else if (o.other === r.id) ded += otherDeduction(o);
         }
-        const dado = r.kind === 'kitchen' ? counterRun(r) * R.kitchen.dado : 0, feat = featureArea(r, ctx);
-        walls = Math.max(0, gross - ded + rev - dado - feat);
-        how = `walls ${t(P)} m × ${t(H)} m = ${t(gross)} sq m, less ${t(ded)} sq m of openings (IS 1200)${rev ? `, plus ${t(rev)} sq m of reveals` : ''}${dado ? `, less ${t(dado)} sq m of tiles above the counter` : ''}${feat ? `, less the ${t(feat)} sq m feature wall` : ''}`;
+        const dado = r.kind === 'kitchen' ? counterRun(r) * R.kitchen.dado : 0, feat = featureArea(r, ctx), clad = claddingArea(r, ctx);
+        walls = Math.max(0, gross - ded + rev - dado - feat - clad);
+        how = `walls ${t(P)} m × ${t(H)} m = ${t(gross)} sq m, less ${t(ded)} sq m of openings (IS 1200)${rev ? `, plus ${t(rev)} sq m of reveals` : ''}${dado ? `, less ${t(dado)} sq m of tiles above the counter` : ''}${feat ? `, less the ${t(feat)} sq m feature wall` : ''}${clad ? `, less the ${t(clad)} sq m of stone on the back wall` : ''}`;
       }
       const ceiling = r.kind === 'bath' && bathHasCeiling(ctx, r) ? 0 : r.sqm;
       return { base: walls + ceiling, how: `${how}; ceiling ${t(ceiling)} sq m` };
     }
+    case 'cladding': { const a = claddingArea(r, ctx); return { base: a, how: `The back wall, the longer one, floor to ceiling: ${t(r.l)} × ${t(H)} m = ${t(a)} sq m` }; }
     case 'feature': { const a = featureArea(r, ctx); return { base: a, how: `${r.kind === 'living' ? 'The longer wall' : 'The wall behind the bed'}: ${t(r.kind === 'living' ? r.l : r.b)} × ${t(H)} m` }; }
     case 'false-ceiling': {
       const c = ceilingCover(r, lv), bd = R.falseCeiling.border;
@@ -713,12 +741,14 @@ function measure(rule: string, r: Room | null, lv: Level, ctx: Ctx): { base: num
       const p = R.points[r.kind];
       const n = rule === 'light-points' ? p.lights ?? 0 : rule === 'fan-points' ? p.fans ?? 0 : rule === 'exhaust-points' ? p.exhaust ?? 0
         : Object.entries(p).reduce((s, [k, v]) => s + (k === 'masterExtra' ? (r.master ? v ?? 0 : 0) : v ?? 0), 0);
-      return { base: n, how: `${n} ${rule === 'points' ? '' : `${rule.split('-')[0]} `}point${n === 1 ? '' : 's'}, by the rule for a ${r.kind === 'bath' ? 'bathroom' : r.kind}` };
+      return { base: n, how: `${n} ${rule === 'points' ? '' : `${rule.split('-')[0]} `}point${n === 1 ? '' : 's'}, by the rule for a ${KIND_WORD[r.kind] ?? r.kind}` };
     }
     case 'supply-points': case 'drain-points': {
+      // A utility takes the washing machine's points from the kitchen (R2b).
       const p = (R.plumbing as Record<string, { supply: number; drain: number } | undefined>)[r.kind];
-      const n = p ? (rule === 'supply-points' ? p.supply : p.drain) : 0;
-      return { base: n, how: `${n} ${rule === 'supply-points' ? 'water' : 'drainage'} points` };
+      const w = r.kind === 'kitchen' && ctx.rooms.some((x) => x.kind === 'utility') ? R.plumbing.washer : null;
+      const n = p ? (rule === 'supply-points' ? p.supply - (w?.supply ?? 0) : p.drain - (w?.drain ?? 0)) : 0;
+      return { base: n, how: `${n} ${rule === 'supply-points' ? 'water' : 'drainage'} point${n === 1 ? '' : 's'}${w ? ', the washing machine\'s in the utility' : ''}` };
     }
     default:
       if (rule.startsWith('unit:')) {
@@ -811,18 +841,19 @@ function assumptions(ctx: Ctx, bhk: Bhk, cityName: string, factor: number | null
   const rooms = ctx.rooms.map((r) => `${r.name} ${sqft(r.sqm)} sq ft${r.typed ? ` (${side(r.l)} × ${side(r.b)} ${m ? 'm' : 'ft'}, your size)` : ''}${word(r)}${r.level ? `, at ${levelName(r.level)}` : ''}`).join('; ') + noBalcony;
   const own = ctx.rooms.some((r) => r.typed) ? ' A size you typed is used as it is, and the other rooms keep their planned sizes.' : '';
   const words = worded(ctx.rooms) ? ` ${R.sizes.why}` : '';
+  const added = R.extras.filter((x) => ctx.rooms.some((r) => r.kind === x.kind)), addedWhy = added.map((x) => ` ${x.why}`).join('');
   const baths = ctx.rooms.filter((r) => r.kind === 'bath').length;
   const on = R.sections.filter((s) => ctx.on(s.id)).map((s) => s.name).join(', ');
   const h = ctx.house;
   return [
     ...(h ? houseAssumed(ctx, h, side, m) : []),
-    { what: 'Rooms', shown: rooms, why: `${p.why}${words} ${R.shares.passage.why} ${R.shares.walls.why}${own}`, src: [...new Set([...p.src, ...R.shares.passage.src, ...(words ? R.sizes.src : [])])] },
+    { what: 'Rooms', shown: rooms, why: `${p.why}${addedWhy}${words} ${R.shares.passage.why} ${R.shares.walls.why}${own}`, src: [...new Set([...p.src, ...added.flatMap((x) => x.src), ...R.shares.passage.src, ...(words ? R.sizes.src : [])])] },
     { what: 'Bathrooms', shown: `${baths}${ctx.input.baths ? ', as you chose' : ''}`, why: R.bathrooms.why, src: R.bathrooms.src },
     { what: 'Ceiling height', shown: `${f2(ctx.H)} m`, why: R.height.why, src: R.height.src },
     { what: 'Sections', shown: on, why: R.kinds[ctx.kind].why, src: ['own'] },
     { what: 'City', shown: factor === null ? `${cityName}: no city figure, so the rates are used as they are` : `${cityName}: labour and fitted rates × ${factor.toFixed(3)}`, why: R.cities.why, src: R.cities.src },
     { what: 'Rates', shown: `As reported on ${LIBRARY_DATE.split('-').reverse().join('-')}, the middle of each range`, why: LIBRARY_STATUS, src: [] },
-    { what: 'Doors and windows', shown: 'Main door 1000 mm, bedroom doors 900 mm, bathroom doors 750 mm, all 2100 mm high; 4 × 4 ft windows, at least a tenth of each room\'s floor', why: `${R.openings.windowShare.why}`, src: [...R.openings.main.src, ...R.openings.windowShare.src] },
+    { what: 'Doors and windows', shown: `Main door 1000 mm, bedroom doors 900 mm, bathroom doors 750 mm${added.map((x) => `, ${x.kind === 'utility' ? 'the utility\'s opening' : `the ${x.name.toLowerCase()}'s door`} ${R.openings[x.kind].w} mm`).join('')}, all 2100 mm high; 4 × 4 ft windows, at least a tenth of each room's floor`, why: `${R.openings.windowShare.why}`, src: [...new Set([...R.openings.main.src, ...added.flatMap((x) => R.openings[x.kind].src), ...R.openings.windowShare.src])] },
     { what: 'Electrical points', shown: 'By the room: a 2BHK about 40, a 3BHK about 50', why: R.points.why, src: R.points.src },
   ];
 }
@@ -863,8 +894,8 @@ function flags(ctx: Ctx, bhk: Bhk, carpetSqft: number, lines: Line[], unpriced: 
         : `${r.name} works out at ${f2(r.sqm)} sq m, below the Code's ${want} sq m: is the carpet area right for ${BHKS.find((b) => b.id === bhk)?.label}?`, sum((l) => l.room === r.id));
   }
   if (ctx.rooms.some((r) => r.typed) && sqft(roomsSqm) !== sqft(plannedSqm)) check(`With your sizes the rooms and the passage come to ${sqft(roomsSqm)} sq ft, against the ${sqft(plannedSqm)} sq ft the carpet area leaves for them after the inside walls: check the sizes, or the carpet area.`, inRooms);
-  if (ctx.on('furniture')) note(`The furniture is ${ctx.rooms.some((r) => r.kind === 'living') ? 'a sofa and a dining set for the living room, and ' : ''}a bed and a mattress for each bedroom; side tables, a study desk, rugs and bed linen are not in yet.`, section('furniture'));
-  if (ctx.on('furnishings')) note(`The soft furnishings are curtains for each window of ${ctx.rooms.some((r) => r.kind === 'living') ? 'the living room and ' : ''}the bedrooms; blinds and cushions are not in yet.`, section('furnishings'));
+  if (ctx.on('furniture')) note(`The furniture is ${ctx.rooms.some((r) => r.kind === 'living') ? 'a sofa and a dining set for the living room, and ' : ''}a bed and a mattress for each bedroom; side tables, ${ctx.rooms.some((r) => r.kind === 'study') ? 'a chair for the study\'s desk' : 'a study desk'}, rugs and bed linen are not in yet.`, section('furniture'));
+  if (ctx.on('furnishings')) note(`The soft furnishings are curtains for each window of ${ctx.rooms.some((r) => r.kind === 'living') ? 'the living room and ' : ''}the bedrooms${ctx.rooms.some((r) => r.kind === 'study') ? ' and the study' : ''}; blinds and cushions are not in yet.`, section('furnishings'));
   if (ctx.home === 'house' && !ctx.house) note('A house: its rooms inside are worked out as a flat\'s of the same carpet area and bedrooms. The terrace, the outside walls, the compound and the water tank are not in this estimate yet.', total);
   if (ctx.house) {
     const h = ctx.house, riser = h.floorToFloor / (2 * (R.house.stair.treads + 1)), unit = ctx.input.areaUnit === 'sqm' ? 'm' : 'ft';

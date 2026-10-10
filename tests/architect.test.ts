@@ -616,6 +616,72 @@ describe('R2: rooms by buttons; bathrooms added, taken out or attached to a bedr
   });
 });
 
+describe('R2b: a pooja room, a study, a utility and a store room added; each takes its share of the area', () => {
+  // A 1BHK of 600 sq ft renovated at Standard in Pune, every room at Medium, with all four added. The four are at the middle
+  // of their reported ranges: pooja room 40, study (96.88 + 118.4) / 2 = 107.64, utility 42 and store room 32 sq ft; with the
+  // programme's 150 + 120 + 65 + 40 = 375 they make 596.64, and the 510 sq ft left after the passage and the walls is shared
+  // in that proportion: the living room 510 × 150 / 596.64 = 128.2180, the study 510 × 107.64 / 596.64 = 92.0093 sq ft
+  // (8.5479 sq m, below the Code's 9.5). The pooja room, 34.1915 sq ft = 3.17648 sq m at 1.2 to 1, is 1.95238 × 1.62698 m;
+  // its back wall in stone 1.95238 × 2.9 = 5.66190 sq m = 60.94 sq ft, at Standard Indian white marble 140 × 1.1 + 200 ×
+  // 0.915427 = Rs. 337.09; its paint the walls 7.15873 × 2.9 less the 1.89 sq m door and the stone, and the ceiling: 176.37
+  // sq ft. Its door at Standard a veneered door 12,000 + hardware 4,750 = 16,750 with GST 18% = 19,765, fitted at 1,900 ×
+  // 0.915427: Rs. 21,504.31. The utility's tap 2,042.5 + 480 × 0.9154271 = 2,481.905: Rs. 2,481.91.
+  const four = (x: Partial<ArchitectInput> = {}) => flat({ bhk: '1', area: 600, extras: ['pooja', 'study', 'utility', 'store'], ...x });
+  it('by hand: the rooms share the area, the study is flagged below the Code\'s minimum, and the pooja room has its stone, paint and door', () => {
+    const e = architect(four()) as ArchitectEstimate;
+    expect(e.rooms.map((r) => [r.id, r.name, (r.sqm / SQ).toFixed(4)])).toEqual([
+      ['living', 'Living and dining', '128.2180'], ['bedroom-1', 'Bedroom', '102.5744'], ['kitchen', 'Kitchen', '55.5611'], ['bath-1', 'Bathroom', '34.1915'],
+      ['pooja', 'Pooja room', '34.1915'], ['study', 'Study', '92.0093'], ['utility', 'Utility', '35.9010'], ['store', 'Store room', '27.3532'],
+      ['passage', 'Passage and foyer', '60.0000'], ['balcony', 'Balcony', expect.any(String)],
+    ]);
+    expect(e.flags.some((f) => f.text === 'Study works out at 8.55 sq m, below the Code\'s 9.5 sq m: is the carpet area right for 1 BHK?')).toBe(true);
+    expect(line(e, 'pooja:cladding:cladding')).toMatchObject({ qty: 60.94, rate: 337.09, amount: 20542.26, section: 'walls' });
+    expect(line(e, 'pooja:paint:paint')?.qty).toBe(176.37);
+    expect(line(e, 'pooja:pooja-door:door')).toMatchObject({ qty: 1, rate: 21504.31 });
+    expect(line(e, 'utility:utility-tap:one')).toMatchObject({ qty: 1, rate: 2481.91 });
+    expect(e.assumptions.find((a) => a.what === 'Rooms')?.shown).toContain('Pooja room 34 sq ft; Study 92 sq ft; Utility 36 sq ft; Store room 27 sq ft');
+  });
+  it('the utility takes the washing machine\'s water and drain from the kitchen: kitchen 3 − 1 = 2 and 2 − 1 = 1, the utility 1 and 2', () => {
+    const e = architect(four()) as ArchitectEstimate, plain = run({ bhk: '1', area: 600 });
+    const pts = (x: ArchitectEstimate, room: string) => [line(x, `${room}:supply-point:supply-points`)?.qty, line(x, `${room}:drain-point:drain-points`)?.qty];
+    expect([pts(e, 'kitchen'), pts(e, 'utility'), pts(plain, 'kitchen')]).toEqual([[2, 1], [1, 2], [3, 2]]);
+    expect(line(e, 'kitchen:drain-point:drain-points')?.how).toBe('1 drainage point, the washing machine\'s in the utility');
+  });
+  it('the doors: the pooja room\'s from the living room, the study\'s and the store room\'s from the passage, the utility open to the kitchen; the study has its window', () => {
+    const o = (architect(four()) as ArchitectEstimate).openings;
+    expect(['pooja', 'study', 'utility', 'store'].map((k) => o.filter((x) => x.room === k && x.type === k).map((x) => [x.other, x.w]))).toEqual([[['living', 0.9]], [['passage', 0.9]], [['kitchen', 0.75]], [['passage', 0.75]]]);
+    expect(o.some((x) => x.room === 'study' && x.type === 'window')).toBe(true);
+  });
+  it('fitted in the interiors: a study\'s desk unit 1.2192 × 0.762 m of front = 10.00 sq ft, and the store room\'s rack', () => {
+    const e = architect(four({ kind: 'interiors', level: 1 })) as ArchitectEstimate;
+    expect([line(e, 'study:carpentry:unit:desk')?.qty, line(e, 'store:shelves:one')?.rate]).toEqual([10, 2850]);
+  });
+  it('an added room takes its share from the others: the pooja room alone, 375 + 40 = 415, the others 375 / 415 of their size; the order given changes nothing', () => {
+    const plain = flat({ bhk: '1', area: 600 });
+    expect((changeOf(plain, { ...plain, extras: ['pooja'] }) as Change).others).toBeCloseTo(375 / 415 - 1, 12);
+    const a = run({ extras: ['store', 'study'] }), b = run({ extras: ['study', 'store'] });
+    expect([a.rooms.map((r) => r.id), a.total]).toEqual([b.rooms.map((r) => r.id), b.total]);
+    expect(planRooms('1', 600 * SQ, {}, { extras: ['study'] }).find((r) => r.id === 'study')?.sqm).toBeCloseTo(510 * 107.64 / 482.64 * SQ, 9);
+  });
+  it('a size typed for an added room keeps E3\'s rule: it replaces the planned one and moves no other room', () => {
+    const e = architect(four({ rooms: { study: { l: 3.5, b: 3 } } })) as ArchitectEstimate, plan = architect(four()) as ArchitectEstimate;
+    expect(e.rooms.find((r) => r.id === 'study')?.sqm).toBeCloseTo(10.5, 9);
+    expect(e.rooms.filter((r) => r.id !== 'study').map((r) => r.sqm)).toEqual(plan.rooms.filter((r) => r.id !== 'study').map((r) => r.sqm));
+  });
+  it('the second computation agrees line by line, with every room added, at each level and kind', () => {
+    for (const kind of ['interiors', 'renovate', 'build'] as const) for (const level of [1, 3, 5] as Level[]) {
+      const input = four({ kind, level, ...(kind === 'build' ? { floors: 2, area: 2000, bhk: '3' as Bhk, property: 'house' as const } : {}) });
+      const e = architect(input) as ArchitectEstimate, c = architectCheck(input);
+      expect(e.lines.length, `${kind} ${level}`).toBeGreaterThan(0);
+      for (const l of e.lines.filter((x) => ['pooja', 'study', 'utility', 'store', 'kitchen'].includes(x.room ?? ''))) expect(c.lines.get(l.key)?.qty, l.key).toBeCloseTo(l.qty, 2);
+    }
+  });
+  it('each added room at most once, and only the four', () => {
+    const need = ['The added rooms: pooja room, study, utility, store room, each at most once'];
+    expect([architectNeeds(flat({ extras: ['pooja', 'pooja'] })), architectNeeds(flat({ extras: ['garage' as never] })), architectNeeds(flat({ extras: 'study' as never }))]).toEqual([need, need, need]);
+  });
+});
+
 describe('V1: the flags that can change the decision, largest first', () => {
   const FT = 0.3048;
   const build = (x: Partial<ArchitectInput>) => architect({ kind: 'build', floors: 2, city: 'pune', area: 2000, bhk: '3', level: 1, ...x }) as ArchitectEstimate;
