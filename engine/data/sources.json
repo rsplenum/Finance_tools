@@ -1270,10 +1270,10 @@
       "checked": "2026-10-04"
     },
     "hmwssb-connection": {
-      "what": "HMWSSB, Hyderabad: guidelines for new connections, supervision charges for joining the sewer Rs. 1,500–5,000",
+      "what": "HMWSSB, Hyderabad: guidelines for new connections, the sewer connection fee by plot area and the supervision charges",
       "url": "https://www.hyderabadwater.gov.in/en/index.php/services/information-services/guidelines-new-connections",
       "class": "R",
-      "checked": "2026-10-04"
+      "checked": "2026-10-10"
     },
     "kmc-drainage-fees": {
       "what": "Kolkata Municipal Corporation: fees and charges 2025-26, house drainage connection, a 225 mm stoneware pipe laid Rs. 2,079 a metre",
@@ -2667,6 +2667,66 @@
       "what": "NoBroker: study table design, a study table's height",
       "url": "https://www.nobroker.in/blog/study-table-design/",
       "class": "4",
+      "checked": "2026-10-10"
+    },
+    "woodenstreet-bacon": {
+      "what": "Wooden Street: Bacon sheesham hydraulic storage bed, queen, honey, price incl. of all taxes",
+      "url": "https://www.woodenstreet.com/product/bacon-hydraulic-bed-with-storage-queen-size-honey-finish",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "industrybuying-zencelo-switch": {
+      "what": "Industrybuying: Schneider Zencelo IN8401(BZ) switch, a pack of 10, price incl. of all taxes",
+      "url": "https://www.industrybuying.com/adaptors-plugs-socket-schneider-electric-ELE.DOM.95363845",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "industrybuying-unica-switch": {
+      "what": "Industrybuying: Schneider Unica Pure UNS61SW1M_GY switch, a pack of 20, price incl. of all taxes",
+      "url": "https://www.industrybuying.com/adaptors-plugs-socket-schneider-electric-ELE.DOM.95320401",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "industrybuying-unica-frame": {
+      "what": "Industrybuying: Schneider Unica Pure UNSCP4M_GY frame, a pack of 14, price incl. of all taxes and MRP",
+      "url": "https://www.industrybuying.com/adaptors-plugs-socket-schneider-electric-ELE.MOD.105319146",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "infralens-termite": {
+      "what": "InfraLens: termite zones of India, pre-construction soil treatment a sq ft by zone (IS 6313)",
+      "url": "https://infralens.in/maps/termite",
+      "class": "4",
+      "checked": "2026-10-10"
+    },
+    "indiamart-antitermite": {
+      "what": "IndiaMART: pre-construction anti-termite treatment, sellers' prices a sq ft",
+      "url": "https://dir.indiamart.com/impcat/pre-construction-anti-termite-treatment.html",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "indiamart-hettich-hinges": {
+      "what": "IndiaMART: Hettich hinges, sellers' prices a piece",
+      "url": "https://dir.indiamart.com/impcat/hettich-hinges.html",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "indiamart-tandem-box": {
+      "what": "IndiaMART: tandem boxes, sellers' prices a set",
+      "url": "https://dir.indiamart.com/impcat/tandem-box.html",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "indiamart-coating": {
+      "what": "IndiaMART: waterproof coating services, sellers' prices a sq ft",
+      "url": "https://m.indiamart.com/impcat/water-proof-coating-services.html",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "indiamart-makrana": {
+      "what": "IndiaMART: Makrana white marble, sellers' prices a sq ft",
+      "url": "https://dir.indiamart.com/impcat/makrana-white-marble.html",
+      "class": "2",
       "checked": "2026-10-10"
     }
   }
