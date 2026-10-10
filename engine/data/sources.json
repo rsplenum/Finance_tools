@@ -1565,7 +1565,32 @@
     "woodenmax-casement": {
       "what": "WoodenMax: aluminium casement window prices, without and with mesh or grill (before GST)",
       "url": "https://woodenmax.in/products/aluminium-windows/aluminium-casement-window-price",
-      "class": "3"
+      "class": "3",
+      "checked": "2026-10-10"
+    },
+    "comaron-windows": {
+      "what": "Comaron: aluminium window prices a sq ft, 2026, with hardware and glass, and installation",
+      "url": "https://www.comaron.com/blog/aluminium-window-price-per-sq-ft-india-2026-complete-guide",
+      "class": "3",
+      "checked": "2026-10-10"
+    },
+    "flipkart-jaquar-roll-holder": {
+      "what": "Flipkart: Jaquar Continental brass toilet-roll holder, price and MRP",
+      "url": "https://www.flipkart.com/jaquar-continental-brass-kitchen-bathroom-toilet-roll-holder-paper/p/itm57d7f4489681d",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "decure-jaquar-roll-holder": {
+      "what": "Decure: Jaquar Hotelier toilet-roll holder AHS-CHR-1551, regular and sale price, tax included",
+      "url": "https://decure.in/products/jaquar-toilet-roll-holder-hotelier-series-ahs-chr-1551-chrome-finish",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "crompton-fans": {
+      "what": "Crompton's fan shop: Luxian Statement Senze ceiling fan, MRP and sale price",
+      "url": "https://www.crompton.co.in/pages/fans",
+      "class": "2",
+      "checked": "2026-10-10"
     },
     "woodenmax-slim": {
       "what": "WoodenMax: slim aluminium window, luxury series, installed (before GST)",
