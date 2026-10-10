@@ -8,6 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { architect, levelRuns, strip, type ArchitectEstimate, type LevelRuns } from '../engine/architect';
 import { NOTES, SPEND_SAVE } from '../engine/library';
 import { inr } from '../engine/util';
+import { unpriced } from './unpriced';
 import { docText } from '../site/src/doc/doc';
 import { docxOf } from '../site/src/doc/docx';
 import { pdfOf, printable } from '../site/src/doc/pdf';
@@ -120,7 +121,7 @@ describe('sliders, items and brands', () => {
     expect(d.groups[0].choices[0]).toMatchObject({ id: 'fl-gvt-800', mark: 'the level’s item', current: true });
     expect(d.groups[0].choices.slice(1).every((x) => x.mark === '' && !x.current)).toBe(true);
     expect(d.groups[1].choices[0]).toMatchObject({ id: 'fl-vit-dc-600', rate: 'Rs. 111.65 a sq ft', mark: 'the level’s item', current: false });
-    expect(d.groups[2].choices.find((x) => x.id === 'fl-encaustic')).toMatchObject({ rate: 'No rate yet', usable: false });
+    expect(unpriced('fl-encaustic', () => drawerView(FLAT, view(FLAT), 'living:floor:floor-skirting'))?.groups[2].choices.find((x) => x.id === 'fl-encaustic')).toMatchObject({ rate: 'No rate yet', usable: false });
     const ids = d.groups.flatMap((g) => g.choices.map((x) => x.id));
     expect(ids.length).toBe(new Set(ids).size);
     expect(d.how.quantity).toMatch(/floor .* sq m, and skirting/);

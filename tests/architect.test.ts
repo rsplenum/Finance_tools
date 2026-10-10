@@ -8,6 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { architect, architectNeeds, billOf, changeOf, choicesFor, cityFactor, levelRuns, overPackage, planOpenings, planRooms, strip, type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choices, type Level, type LevelRuns, type Stage } from '../engine/architect';
 import { architectCheck, checkRate } from '../engine/architect-check';
 import { price } from '../engine/library';
+import { unpriced } from './unpriced';
 import { inr } from '../engine/util';
 import type { Blocked, Needs } from '../engine/dscr';
 
@@ -84,7 +85,7 @@ describe('the bill of quantities for quotes (E4a), on the 2BHK of 1,000 sq ft ab
     for (const x of bill) for (const l of x.lines) for (const k of l.keys) expect(e.lines.find((m) => m.key === k)?.section).toBe(x.id);
   });
   it('a brand chosen in one room makes that room a line of its own; an item with no rate yet is in the bill', () => {
-    const b = billOf(run({ items: { 'living:floor:floor-skirting': 'fl-encaustic' } }), { 'bedroom-1:wiring:points': 'Havells' }).flatMap((x) => x.lines);
+    const b = unpriced('fl-encaustic', () => billOf(run({ items: { 'living:floor:floor-skirting': 'fl-encaustic' } }), { 'bedroom-1:wiring:points': 'Havells' })).flatMap((x) => x.lines);
     const w = b.filter((l) => l.item === 'Concealed wiring, branded wire and plates');
     expect(w.map((l) => [l.brand ?? '', l.rooms.length, l.qty])).toEqual([['', 7, 33], ['Havells', 1, 7]]);
     expect(b.find((l) => l.item === 'Encaustic cement tiles')?.rooms).toEqual(['Living and dining']);
@@ -307,7 +308,7 @@ describe('the estimate', () => {
     expect(e.lines.some((l) => l.section === 'kitchen')).toBe(false);
   });
   it('a chosen item with no rate yet is left out and named', () => {
-    const e = run({ items: { 'living:floor:floor-skirting': 'fl-encaustic' } });
+    const e = unpriced('fl-encaustic', () => run({ items: { 'living:floor:floor-skirting': 'fl-encaustic' } }));
     expect(line(e, 'living:floor:floor-skirting')).toBeUndefined();
     expect(e.unpriced.map((u) => u.entryName)).toEqual(['Encaustic cement tiles']);
     expect(e.flags.some((f) => f.text.includes('Encaustic cement tiles has no rate yet'))).toBe(true);
@@ -383,7 +384,7 @@ describe('what the page shows beside the estimate', () => {
       if (x.rate !== null) expect(x.rate, x.id).toBe(checkRate(x.id, 'pune'));
     }
     expect(c?.levels[0].some((x) => x.id === 'fl-kota')).toBe(true);
-    expect(c?.levels[2].find((x) => x.id === 'fl-encaustic')?.rate).toBeNull();
+    expect(unpriced('fl-encaustic', () => choicesFor(flat(), key))?.levels[2].find((x) => x.id === 'fl-encaustic')?.rate).toBeNull();
     const ids = c?.levels.flat().map((x) => x.id) ?? [];
     expect(ids.length).toBe(new Set(ids).size);
     expect(c?.others).toEqual([]);
@@ -655,8 +656,8 @@ describe('V1: the flags that can change the decision, largest first', () => {
     expect(build({ heightM: 3.5 }).flags.find((f) => f.text.startsWith('The stairs\' risers'))?.decides).toBe(true);
     expect(run({ rooms: { living: { l: 16 * FT, b: 20 * FT } } }).flags.find((f) => f.text.startsWith('With your sizes'))?.decides).toBe(true);
     expect(run({ city: 'other' }).flags.find((f) => f.text.startsWith('No city figure'))?.decides).toBe(true);
-    const unpriced = run({ items: { 'living:floor:floor-skirting': 'fl-encaustic' } }).flags.find((f) => f.text.includes('has no rate yet'));
-    expect([unpriced?.decides, unpriced?.n]).toEqual([true, 0]);
+    const none = unpriced('fl-encaustic', () => run({ items: { 'living:floor:floor-skirting': 'fl-encaustic' } })).flags.find((f) => f.text.includes('has no rate yet'));
+    expect([none?.decides, none?.n]).toEqual([true, 0]);
   });
 });
 
