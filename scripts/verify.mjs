@@ -13,6 +13,7 @@ const checks = [
   ['site check', 'npm run check:site'],
   ['simulation', 'npm run sim'],
   ['skill pack', 'node portable/pack.mjs --check'],
+  ['cost guard', 'node .claude/hooks/cost-guard.mjs --self-test'],
   ['doc sizes', 'node scripts/doc-sizes.mjs'],
   ['rules doc', 'npm run rules-doc'],
 ];

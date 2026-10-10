@@ -1,4 +1,4 @@
-// What a Claude Code session cost, and what compacting at other sizes would have changed.
+// What a Claude Code session cost, what compacting at other sizes would have changed, and where re-reading went beyond the plan.
 // Usage: node session-cost.mjs [transcript.jsonl]
 // Without a path it reads the newest transcript of the current folder's project (~/.claude/projects/<folder>/).
 // Costs are in units of one fresh input token at the usual price ratios: cache read 0.1, 5-minute cache write 1.25,
@@ -20,23 +20,39 @@ function newestTranscript() {
 }
 
 const file = process.argv[2] || newestTranscript();
-const seq = [], byId = new Map(), summaries = [];
-let last = null, active = 0;
+const seq = [], byId = new Map(), summaries = [], uses = new Map();
+let last = null, active = 0, merged = -1, gap = [];
+// What came into the context between two steps (tool results, a message, a file it named, Claude Code's notes), in
+// characters, to name what a step added; an image counts as about 1,600 tokens (3,700 characters), not its data.
+const chars = (c) => (Array.isArray(c) ? c : [c ?? '']).reduce((t, b) => t + (typeof b === 'string' ? b.length
+  : b?.type === 'image' ? 3700 : b?.type === 'text' ? (b.text || '').length : JSON.stringify(b ?? '').length), 0);
 for await (const line of readline.createInterface({ input: fs.createReadStream(file), crlfDelay: Infinity })) {
   let o;
   try { o = JSON.parse(line); } catch { continue; }
   if (o.isSidechain) continue;
   const ts = Date.parse(o.timestamp) || null;
+  const content = Array.isArray(o.message?.content) ? o.message.content : [];
   if (o.type === 'system' && o.subtype === 'compact_boundary') {
     const m = o.compactMetadata || {};
     seq.push({ compact: true, auto: m.trigger === 'auto', at: m.preTokens, pause: m.durationMs ? m.durationMs / 1000 : last && ts ? (ts - last) / 1000 : null });
+    gap = [];
   } else if (o.isCompactSummary) {
     const c = o.message?.content;
     summaries.push((typeof c === 'string' ? c : JSON.stringify(c ?? '')).length / 4);
   } else if (o.type === 'assistant' && o.message?.usage) {
     const id = o.message.id || o.uuid;
-    if (!byId.has(id)) { byId.set(id, {}); seq.push(byId.get(id)); }
+    if (!byId.has(id)) { byId.set(id, { ts, added: gap }); seq.push(byId.get(id)); gap = []; }
     byId.get(id).u = o.message.usage;
+    for (const c of content) if (c.type === 'tool_use') uses.set(c.id, { name: c.name, what: c.input?.file_path || c.input?.description || '' });
+  } else if (o.type === 'user') {
+    for (const c of typeof o.message?.content === 'string' ? [o.message.content] : content) {
+      const use = c?.type === 'tool_result' && uses.get(c.tool_use_id);
+      if (use) gap.push({ chars: chars(c.content), name: use.name, what: use.what });
+      else if (c?.type !== 'tool_result') gap.push({ chars: chars(c), name: o.isMeta ? 'a skill or a note from Claude Code' : 'a message typed or pasted' });
+      if (use && /merge_pull_request$/.test(use.name) && !c.is_error) merged = seq.length;
+    }
+  } else if (o.type === 'attachment' && o.attachment) {
+    gap.push({ chars: JSON.stringify(o.attachment).length, name: o.attachment.type === 'file' ? 'a file named in a message' : 'a note from Claude Code' });
   }
   if (ts) { if (last && ts - last > 0 && ts - last < 600e3) active += (ts - last) / 1000; last = ts; }
 }
@@ -107,6 +123,44 @@ for (const win of [145000, 170000, 200000, 230000, 260000, 290000, 340000]) {
   console.log(`  ${win}: compacts at about ${k(cap)}, one every ${range(b.every, a.every)} steps; ${word(a.change)} to ${word(b.change)}; pauses about ${range(mins(a), mins(b))} min per working hour`);
 }
 console.log('A replay cannot undo a real compaction, so settings above where this session compacted show no change.');
+
+// Where re-reading went beyond the plan: cache misses (the context written again, not after a compaction), what was
+// added to the context and re-read most (each until the next compaction), and the steps after the last merge.
+const stepCost = (x) => cost(x.u, n(x.u.cache_read_input_tokens));
+const misses = [];
+let prior = null, compacted = false;
+for (const x of seq) {
+  if (x.compact) { compacted = true; continue; }
+  if (!isStep.has(x)) continue;
+  const w = n(x.u.cache_creation_input_tokens);
+  if (prior && !compacted && ctx(x.u) >= 20000 && w >= 0.5 * ctx(x.u)) misses.push({ idle: x.ts && prior.ts ? x.ts - prior.ts : 0, extra: writeCost(x.u) - 0.1 * w });
+  prior = x; compacted = false;
+}
+if (misses.length) console.log(`Cache misses: ${misses.length}, ${misses.filter((m) => m.idle >= 3600e3).length} after a break of over an hour (the cache lives an hour); ${pc(sum(misses.map((m) => m.extra)) / total)} of the cost`);
+// What came in before a step is that step's context less the one before it and that one's output, counted in the
+// model's own tokens; it is re-read at each later step until a compaction. The label names its biggest parts.
+const until = new Array(seq.length + 1).fill(0);
+for (let i = seq.length - 1; i >= 0; i--) until[i] = seq[i].compact ? 0 : until[i + 1] + (isStep.has(seq[i]) ? 1 : 0);
+const added = [];
+let before = null;
+seq.forEach((x, i) => {
+  if (x.compact) { before = null; return; }
+  if (!isStep.has(x)) return;
+  const tokens = before ? ctx(x.u) - ctx(before.u) - n(before.u.output_tokens) : 0, reads = until[i] - 1;
+  if (tokens > 0) added.push({ parts: x.added, tokens, reads, units: 0.1 * tokens * reads });
+  before = x;
+});
+const label = ({ parts }) => {
+  const big = [...parts].sort((a, b) => b.chars - a.chars).filter((p, i) => i === 0 || p.chars >= 1000);
+  const name = (p) => `${p.name.replace(/^mcp__\w+?__/, '')}${p.what ? ` (${String(p.what).split('/').pop().slice(0, 30)})` : ''}`;
+  return big.length ? `${big.slice(0, 2).map(name).join(' with ')}${big.length > 2 ? ` and ${big.length - 2} more` : ''}` : 'notes';
+};
+const heavy = added.sort((a, b) => b.units - a.units).slice(0, 3);
+if (heavy.length) console.log(`Added and re-read most: ${heavy.map((r) => `${label(r)} ${k(r.tokens)} tokens, re-read ${r.reads} times, ${((100 * r.units) / total).toFixed(1)}% of the cost`).join('; ')}`);
+if (merged >= 0) {
+  const after = seq.slice(merged).filter((x) => isStep.has(x));
+  console.log(`After the last merge: ${after.length} steps, ${pc(sum(after.map(stepCost)) / total)} of the cost (work there longer than a new session's break-even belongs in a new session)`);
+}
 
 // The session's agents: their logs sit beside the transcript in <session>/subagents/. Each is priced the same way;
 // their share is of the session's whole cost, main conversation and agents together.

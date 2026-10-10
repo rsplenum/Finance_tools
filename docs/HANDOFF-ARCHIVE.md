@@ -163,3 +163,8 @@ The test figures are model-worked until the owner confirms fictional cases A and
   - `npm run build`;
   - `npm run worker:build`;
   - `npm run check:site`: 0 violations. It drives the planning estimate (six questions counted, the answer with the level's range under the total, a slider and what it changed, the strip, Compare, the rooms by size words (the bar of shares, Spacious and its knock-on, the arrow keys, a word in place of a typed size) and by buttons (a bathroom attached, added and taken out, the balcony out and back, a bedroom added and taken out), with a size and a level of their own, the drawer with the choices at the line's level first and the other levels closed, a line's and a section's Why? (T1), interiors with the movable items apart, a new house with its six questions and eighteen sections, its stages, a plot of its own and the sewer, the three files read back, in light and dark), the typed quotation, and the calculator with case A, the quick path, a proprietor with EMIs and the new asset, and own figures, downloads the PDF, the Excel copy and the Word copy at 390 px (provisional, then complete) and reads them back, failing on anything kept to the page (the target, the verdict, the assumptions); about 20 s.
+
+## Budgets and actuals, rows moved from HANDOFF
+| Date | Row | Budget | Actual |
+|---|---|---|---|
+| 04-10-2026 | D-TECH-29: this rule, HANDOFF trimmed | S, about 15 steps | 17 steps to the commit (1.9M tokens re-read), about 23 with the PR: over by half, since the compaction cost 3 steps of re-reading and measuring 2 |
