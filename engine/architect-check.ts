@@ -79,7 +79,13 @@ export function architectCheck(input: ArchitectInput, banded = false): Architect
   const programmeBaths = prog.rooms.filter((r) => r.kind === 'bath'), mainBedroom = others.find((x) => x.master)?.id ?? null;
   const bathList = input.baths ?? programmeBaths.map((r) => (r.attached ? mainBedroom : null));
   const lastRange = programmeBaths[programmeBaths.length - 1].range;
-  const listed = [...others, ...bathList.map((of, i) => ({ kind: 'bath' as RoomKind, master: false, of, range: lastRange, id: `bath-${i + 1}` }))].map((x) => {
+  // Then the rooms the user added (R2b), in the list's order whatever order they came in, each its own id.
+  const rank = (k: string) => Q.extras.findIndex((e) => e.kind === k);
+  const added = [...(input.extras ?? [])].sort((a, b) => rank(a) - rank(b)).map((k) => {
+    const e = Q.extras[rank(k)];
+    return { kind: e.kind as RoomKind, master: false, of: null as string | null, range: e.range, id: e.kind as string };
+  });
+  const listed = [...others, ...bathList.map((of, i) => ({ kind: 'bath' as RoomKind, master: false, of, range: lastRange, id: `bath-${i + 1}` })), ...added].map((x) => {
     const w = Q.sizes.words.find((y) => y.id === input.roomWords?.[x.id]) ?? medium;
     return { ...x, size: x.range[1] * w.at + x.range[0] * (1 - w.at) };
   });
@@ -111,7 +117,7 @@ export function architectCheck(input: ArchitectInput, banded = false): Architect
   // Openings, listed by the room whose wall they are in.
   const holes: Hole[] = [];
   const size = (t: keyof Rules['openings']) => Q.openings[t] as { w: number; h: number; sill?: number };
-  const put = (t: 'main' | 'bedroom' | 'bath' | 'kitchen' | 'balcony' | 'window' | 'kitchenWindow' | 'ventilator', owner: string, other: string | null) => {
+  const put = (t: Exclude<keyof Rules['openings'], 'windowShare' | 'walls'>, owner: string, other: string | null) => {
     const s = size(t);
     holes.push({ w: s.w / 1000, h: s.h / 1000, sill: (s.sill ?? 0) / 1000, door: t !== 'window' && t !== 'kitchenWindow' && t !== 'ventilator', owner, other, kind: t });
   };
@@ -123,6 +129,12 @@ export function architectCheck(input: ArchitectInput, banded = false): Architect
     if (s.kind === 'living') { for (let i = 0; i < nWin; i++) put('window', s.id, null); if (exists('balcony')) put('balcony', s.id, 'balcony'); }
     if (s.kind === 'kitchen') { put('kitchen', s.id, exists('living') ? 'living' : 'passage'); put('kitchenWindow', s.id, null); }
     if (s.kind === 'bath') { put('bath', s.id, s.of ?? 'passage'); put('ventilator', s.id, null); }
+    // The added rooms (R2b): a study's door to the passage and its windows; a pooja room's door to the living room (the
+    // passage in a 1 RK); a utility's opening to the kitchen and a ventilator; a store's door to the passage.
+    if (s.kind === 'study') { put('study', s.id, exists('passage') ? 'passage' : null); for (let i = 0; i < nWin; i++) put('window', s.id, null); }
+    if (s.kind === 'pooja') put('pooja', s.id, exists('living') ? 'living' : 'passage');
+    if (s.kind === 'utility') { put('utility', s.id, exists('kitchen') ? 'kitchen' : 'passage'); put('ventilator', s.id, null); }
+    if (s.kind === 'store') put('store', s.id, exists('passage') ? 'passage' : null);
   }
 
   const shown = (sec: string) => { const only = Q.sections.find((x) => x.id === sec)?.kinds; return only === undefined || only.includes(kind); };
@@ -146,6 +158,8 @@ export function architectCheck(input: ArchitectInput, banded = false): Architect
     const lv = levelAt('walls', s);
     return s.kind === 'living' && lv >= Q.feature.living ? s.len * H : s.kind === 'bedroom' && s.master && lv >= Q.feature.master ? s.wide * H : 0;
   };
+  // A pooja room's stone: its length (the longer wall) by the height, while the walls are done.
+  const stone = (s: Space) => (s.kind === 'pooja' && sectionOn('walls') ? s.len * H : 0);
   const familyAt = (fam: string, lv: number) => { const f = FAMILIES.get(fam); return f ? (f.fixed ?? f.levels?.[lv - 1] ?? null) : null; };
   const cover = (s: Space, lv: number) => {
     const spec = Q.falseCeiling.byLevel[lv - 1];
@@ -226,9 +240,10 @@ export function architectCheck(input: ArchitectInput, banded = false): Architect
           if (o.other === s.id && a > big) net -= a;
         }
         if (s.kind === 'kitchen') net -= run(s) * Q.kitchen.dado;
-        return Math.max(0, net - feature(s)) + roof;
+        return Math.max(0, net - feature(s) - stone(s)) + roof;
       }
       case 'feature': return feature(s);
+      case 'cladding': return stone(s);
       case 'false-ceiling': {
         const c = cover(s, lv);
         if (c === 'none') return 0;
@@ -265,8 +280,13 @@ export function architectCheck(input: ArchitectInput, banded = false): Architect
       case 'light-points': return (Q.points[s.kind] as Record<string, number>).lights ?? 0;
       case 'fan-points': return (Q.points[s.kind] as Record<string, number>).fans ?? 0;
       case 'exhaust-points': return (Q.points[s.kind] as Record<string, number>).exhaust ?? 0;
-      case 'supply-points': return (Q.plumbing as Record<string, { supply: number }>)[s.kind]?.supply ?? 0;
-      case 'drain-points': return (Q.plumbing as Record<string, { drain: number }>)[s.kind]?.drain ?? 0;
+      case 'supply-points': case 'drain-points': {
+        // The washing machine's points go with it to the utility, if there is one (R2b).
+        const which = rule === 'supply-points' ? 'supply' : 'drain';
+        const pts = (Q.plumbing as Record<string, { supply: number; drain: number }>)[s.kind]?.[which] ?? 0;
+        const moved = s.kind === 'kitchen' && spaces.some((x) => x.kind === 'utility') ? Q.plumbing.washer[which] : 0;
+        return pts - moved;
+      }
       default: {
         const u = Q.wardrobes.units[rule.replace('unit:', '')];
         return u && s.kind === u.room && lv >= u.from ? (u.w * u.h) / 1e6 : 0;

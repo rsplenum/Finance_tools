@@ -19,11 +19,11 @@ import { sharePlan } from './shared';
 import { billDoc, billFileName, planDoc, planDocNeeds, planDocStatus, planFileName } from './plan-document';
 import {
   BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, FLOOR_CHOICES, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORD_CHOICES, WORK_CHOICES, areaLabel, checkedLine, drawerView, heightOf, plainOf, planPreview, sideUnit,
-  withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit,
+  withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withExtra, withBathAdded, withBathTakenOut, withBedroomAdded, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit,
   type AreaUnit, type DrawerView, type LineView, type PlanFacts, type PlanPreview, type PlanState, type PlanView, type RoomView, type RungView, type SectionView, type WhyView,
   drawerBrands, groupKey,
 } from './plan-model';
-import type { Bhk, Level } from '../../../engine/architect';
+import type { Bhk, ExtraKind, Level } from '../../../engine/architect';
 
 type Update = (f: (s: PlanState) => PlanState) => void;
 const MUTED = 'text-slate-600 dark:text-slate-300';
@@ -42,6 +42,7 @@ const SEG = 'flex min-h-11 cursor-pointer items-center justify-center rounded-md
  */
 const SHARE_COLOR: Record<string, string> = {
   living: 'bg-[#2a78d6] dark:bg-[#3987e5]', bedroom: 'bg-[#eb6834] dark:bg-[#d95926]', kitchen: 'bg-[#1baf7a] dark:bg-[#199e70]', bath: 'bg-[#eda100] dark:bg-[#c98500]',
+  pooja: 'bg-[#7a1f4f] dark:bg-[#c06090]', study: 'bg-[#5b2a86] dark:bg-[#7444a8]', utility: 'bg-[#8a6440] dark:bg-[#6e4a2a]', store: 'bg-[#e8d27a] dark:bg-[#d4bd5f]',
   passage: 'bg-slate-300 dark:bg-slate-600', walls: 'bg-slate-500 dark:bg-slate-400',
 };
 
@@ -398,7 +399,7 @@ function Shares({ v }: { v: PlanView }) {
 }
 
 /**
- * The rooms (A8, R1, R2): how the carpet area is shared; a bedroom, a bathroom or the balcony added or taken out, a bathroom
+ * The rooms (A8, R1, R2, R2b): how the carpet area is shared; a bedroom, a bathroom, the balcony, a pooja room, a study, a utility or a store room added or taken out, a bathroom
  * attached to a bedroom; each room's size by four buttons (Compact, Medium, Above medium, Spacious) or typed, and its own
  * level. Closed until opened: not on the default path.
  */
@@ -439,7 +440,7 @@ function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) 
               <span><span class="sr-only">{r.name}: </span>Attached bathroom</span>
             </label> : <span />}
             {r.out && <button type="button" data-testid={`pl-room-out-${r.id}`} class={OUT} aria-label={`Take out ${r.name}`}
-              onClick={() => update((x) => (r.id.startsWith('bedroom-') ? withBedroomTakenOut(x, r.id, r.name) : r.id.startsWith('bath-') ? withBathTakenOut(x, r.id, r.name) : withBalcony(x, false)))}>× Take out</button>}
+              onClick={() => update((x) => (r.id.startsWith('bedroom-') ? withBedroomTakenOut(x, r.id, r.name) : r.id.startsWith('bath-') ? withBathTakenOut(x, r.id, r.name) : r.id === 'balcony' ? withBalcony(x, false) : withExtra(x, r.id as ExtraKind, false)))}>× Take out</button>}
           </div>}
           {/* A size typed and a level of the room's own, behind one line (R1): open when either is set. */}
           <details data-testid={`pl-room-more-${r.id}`} class="mt-2" open={r.typed || !!r.bad || r.level !== null}>
@@ -454,10 +455,11 @@ function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) 
           </details>
         </li>)}
       </ul>
-      {(v.add.bedroom || v.add.bath || v.add.balcony) && <div data-testid="pl-room-add" class="mt-2 flex flex-wrap gap-2">
+      {(v.add.bedroom || v.add.bath || v.add.balcony || v.add.extras.length > 0) && <div data-testid="pl-room-add" class="mt-2 flex flex-wrap gap-2">
         {v.add.bedroom && <button type="button" data-testid="pl-room-add-bedroom" class={BUTTON} onClick={() => update(withBedroomAdded)}>+ Bedroom</button>}
         {v.add.bath && <button type="button" data-testid="pl-room-add-bath" class={BUTTON} onClick={() => update(withBathAdded)}>+ Bathroom</button>}
         {v.add.balcony && <button type="button" data-testid="pl-room-add-balcony" class={BUTTON} onClick={() => update((x) => withBalcony(x, true))}>+ Balcony</button>}
+        {v.add.extras.map((x) => <button key={x.kind} type="button" data-testid={`pl-room-add-${x.kind}`} class={BUTTON} onClick={() => update((y) => withExtra(y, x.kind, true))}>+ {x.name}</button>)}
       </div>}
     </details>
   </section>;

@@ -4,7 +4,8 @@
   "families": [
     { "id": "supply-point", "name": "Water supply points", "unit": "nos", "fixed": "pl-supply" },
     { "id": "drain-point", "name": "Drainage points", "unit": "nos", "fixed": "pl-drain" },
-    { "id": "plumbing-part", "name": "Pipes and labour, one by one", "unit": "nos" }
+    { "id": "plumbing-part", "name": "Pipes and labour, one by one", "unit": "nos" },
+    {"id": "utility-tap", "name": "Two-way tap for the washing machine", "unit": "nos", "levels": ["ut-plantex", "ut-essco", "ut-hindware-fluid", "ut-hindware-starc", "ut-hindware-starc"]}
   ],
   "entries": [
     { "id": "pl-supply", "family": "supply-point", "name": "Water supply point", "spec": "One water point: concealed CPVC pipes and fittings to the outlet, tested, with labour", "brands": ["Astral", "Ashirvad", "Supreme"], "unit": "nos", "basis": "installed", "rate": [1200, 3500], "src": ["studiomatrx-plumbing"], "checked": "2026-10-04", "gst": "unstated" },
@@ -12,6 +13,11 @@
     { "id": "pp-cpvc-15", "family": "plumbing-part", "name": "CPVC pipe, 15 mm, a metre", "spec": "CPVC pipe ½ in", "unit": "m", "basis": "product", "rate": [70, 130], "src": ["studiomatrx-plumbing"], "checked": "2026-10-04", "gst": "unstated" },
     { "id": "pp-cpvc-25", "family": "plumbing-part", "name": "CPVC pipe, 20–25 mm, a metre", "spec": "CPVC pipe ¾–1 in", "unit": "m", "basis": "product", "rate": [120, 230], "src": ["studiomatrx-plumbing"], "checked": "2026-10-04", "gst": "unstated" },
     { "id": "pp-swr-110", "family": "plumbing-part", "name": "SWR pipe, 110 mm, a metre", "spec": "SWR drainage pipe 110 mm, in 3 m lengths", "brands": ["Finolex"], "unit": "m", "basis": "product", "rate": [490, 490], "pack": { "qty": 3, "unit": "m", "what": "a pipe" }, "date": "2026-10-04", "src": ["indiamart-finolex-swr"], "checked": "2026-10-04" },
-    { "id": "pp-plumber-day", "family": "plumbing-part", "name": "Plumber, a day", "spec": "Skilled plumber, one day of 8–10 hours", "unit": "nos", "basis": "installed", "rate": [500, 2200], "date": "2026-10-04", "src": ["solve24-plumber"], "checked": "2026-10-04" }
+    { "id": "pp-plumber-day", "family": "plumbing-part", "name": "Plumber, a day", "spec": "Skilled plumber, one day of 8–10 hours", "unit": "nos", "basis": "installed", "rate": [500, 2200], "date": "2026-10-04", "src": ["solve24-plumber"], "checked": "2026-10-04" },
+
+    {"id": "ut-plantex", "family": "utility-tap", "name": "Two-way brass bib cock, chrome (Plantex)", "spec": "Brass two-way bib cock with a wall flange, for a washing machine and a bucket, fixed", "level": 1, "brands": ["Plantex"], "unit": "nos", "basis": "product", "rate": [1403, 1403], "fix": ["fix-fixture"], "gst": "incl", "src": ["moglix-plantex-bibcock"], "note": "Rs. 1,403 including taxes, as listed (its MRP Rs. 4,070).", "checked": "2026-10-10"},
+    {"id": "ut-essco", "family": "utility-tap", "name": "Two-way bib cock with a wall flange, chrome (Essco DLX-CHR-512ANKN)", "spec": "Two-way bib cock with a wall flange and two outlets, chrome, fixed", "level": 2, "brands": ["Essco by Jaquar"], "unit": "nos", "basis": "product", "rate": [1935, 2150], "fix": ["fix-fixture"], "gst": "unstated", "src": ["amazon-essco-bibcock"], "note": "Rs. 1,935 as listed, Rs. 2,150 its MRP.", "checked": "2026-10-10"},
+    {"id": "ut-hindware-fluid", "family": "utility-tap", "name": "Two-way bib cock with a wall flange, brass, chrome (Hindware Fluid F400003CP)", "spec": "Brass two-way bib cock with a wall flange, chrome, fixed", "level": 3, "brands": ["Hindware"], "unit": "nos", "basis": "product", "rate": [2151, 2850], "fix": ["fix-fixture"], "gst": "unstated", "src": ["amazon-hindware-bibcock"], "note": "Rs. 2,151 as listed, Rs. 2,850 its MRP.", "checked": "2026-10-10"},
+    {"id": "ut-hindware-starc", "family": "utility-tap", "name": "Two-way bib cock with a wall flange, brass, chrome (Hindware Starc F530004CP)", "spec": "Brass two-way bib cock with a wall flange, chrome, fixed", "level": 4, "brands": ["Hindware"], "unit": "nos", "basis": "product", "rate": [2548, 2850], "fix": ["fix-fixture"], "gst": "unstated", "src": ["amazon-hindware-bibcock"], "note": "Rs. 2,548 as listed, Rs. 2,850 its MRP.", "checked": "2026-10-10"}
   ]
 }

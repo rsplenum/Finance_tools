@@ -129,6 +129,12 @@
     }
   },
   "bathrooms": { "rule": "One bathroom for a 1 RK and a 1BHK; one for each bedroom from a 2BHK, the first attached to the main bedroom.", "src": ["civilsir-bhk", "own"], "why": "Reported layouts give a 1BHK one toilet and a 2BHK two; one for each bedroom above that is our rule. Change the number if yours differs." },
+  "extras": [
+    { "kind": "pooja", "name": "Pooja room", "range": [30, 50], "src": ["studiomatrx-pooja"], "why": "A pooja room 30–50 sq ft, the range reported for a dedicated room (less than 25 sq ft is a niche with a door)." },
+    { "kind": "study", "name": "Study", "range": [96.88, 118.4], "src": ["studiomatrx-study"], "why": "A study 9–11 sq m (97–118 sq ft), the range reported for a room of its own; the Code counts a study as a habitable room, so one below 9.5 sq m is flagged." },
+    { "kind": "utility", "name": "Utility", "range": [24, 60], "src": ["bricknbolt-utility"], "why": "A utility 4–6 ft wide and 6–10 ft long (24–60 sq ft), as reported for flats; the washing machine's water and drain move to it from the kitchen." },
+    { "kind": "store", "name": "Store room", "range": [24, 40], "src": ["own"], "why": "No source gave a store room's size, so the range is our own: 4 × 6 ft to 5 × 8 ft (24–40 sq ft)." }
+  ],
   "shares": {
     "passage": { "value": 0.10, "src": ["own"], "why": "The passage and foyer: about a tenth of a flat's carpet area, from the gap between the rooms' reported sizes and the flats' reported carpet areas." },
     "walls": { "value": 0.05, "src": ["own"], "why": "RERA carpet area includes the internal partition walls; 115 mm walls take about a twentieth of it." }
@@ -144,8 +150,8 @@
     "why": "A room's size word puts it along the room's reported range: Compact at the bottom, Medium in the middle (the plan's own), Above medium three quarters of the way up, Spacious at the top. The rooms share the area left after the passage and the walls in proportion to these sizes, so a word sets a room's share of your area, and a room made larger takes its extra from the other rooms in proportion. A size you type is used as it is and moves no other room."
   },
   "aspect": {
-    "living": 1.3, "bedroom": 1.2, "kitchen": 1.25, "bath": 1.6, "passage": 3.0, "balcony": 3.0,
-    "src": ["own"], "why": "Length ÷ breadth of usual rooms: a 10 × 12 ft bedroom, a 14 × 18 ft living room, an 8 × 10 ft kitchen, a 5 × 8 ft bathroom; passages and balconies are long and narrow."
+    "living": 1.3, "bedroom": 1.2, "kitchen": 1.25, "bath": 1.6, "passage": 3.0, "balcony": 3.0, "pooja": 1.2, "study": 1.2, "utility": 1.6, "store": 1.25,
+    "src": ["own"], "why": "Length ÷ breadth of usual rooms: a 10 × 12 ft bedroom, a 14 × 18 ft living room, an 8 × 10 ft kitchen, a 5 × 8 ft bathroom; passages and balconies are long and narrow. A pooja room 5 × 6 ft, a study as a bedroom, a utility 6 × 10 ft, a store 4 × 5 ft."
   },
   "height": { "m": 2.9, "src": ["own", "infralens-nbc"], "why": "The Code's minimum for a habitable room is 2.75 m and flats are usually built higher, so 2.9 m (9 ft 6 in) until you change it." },
   "minimums": {
@@ -158,6 +164,10 @@
     "bath": { "w": 750, "h": 2100, "src": ["studiomatrx-doors"], "why": "A bathroom door 750 mm wide (700 mm the minimum)." },
     "kitchen": { "w": 900, "h": 2100, "src": ["studiomatrx-doors"], "why": "A kitchen opening 800–900 mm wide; many new flats leave it without a shutter, so no door is priced." },
     "balcony": { "w": 1500, "h": 2100, "src": ["own"], "why": "A two-panel sliding door from the living room to the balcony." },
+    "pooja": { "w": 900, "h": 2100, "src": ["own"], "why": "A pooja room's door 900 mm wide, from the living room (our rule)." },
+    "study": { "w": 900, "h": 2100, "src": ["studiomatrx-doors"], "why": "A study's door as a bedroom's, 900 mm wide, from the passage." },
+    "utility": { "w": 750, "h": 2100, "src": ["own"], "why": "An opening 750 mm wide from the kitchen to the utility; no door is priced (our rule)." },
+    "store": { "w": 750, "h": 2100, "src": ["own"], "why": "A store room's door 750 mm wide, from the passage (our rule)." },
     "window": { "w": 1219, "h": 1219, "sill": 750, "src": ["houseyog-door-window", "civilguide-window"], "why": "A 4 × 4 ft window in a bedroom or the living room, its sill 750 mm above the floor." },
     "kitchenWindow": { "w": 1219, "h": 914, "sill": 1050, "src": ["houseyog-door-window"], "why": "A 4 × 3 ft kitchen window, its sill 1050 mm above the floor." },
     "ventilator": { "w": 610, "h": 457, "sill": 1500, "src": ["houseyog-door-window"], "why": "A 2 × 1.5 ft bathroom ventilator, its sill 1500 mm above the floor; the exhaust fan meets the Code's ventilation rule." },
@@ -190,10 +200,11 @@
     "units": {
       "tv": { "w": 1828.8, "h": 762, "from": 2, "room": "living" },
       "crockery": { "w": 1219.2, "h": 2133.6, "from": 3, "room": "living" },
-      "shoes": { "w": 1219.2, "h": 914.4, "from": 2, "room": "passage" }
+      "shoes": { "w": 1219.2, "h": 914.4, "from": 2, "room": "passage" },
+      "desk": { "w": 1219.2, "h": 762, "from": 1, "room": "study" }
     },
-    "src": ["woodenstreet-wardrobe", "own"],
-    "why": "An 8 ft wardrobe in the main bedroom and 6 ft in the others, never wider than the longer wall less 2 ft; 7 ft high with a 2 ft loft up to Premium, floor to ceiling from Luxury. A TV unit 6 × 2.5 ft and a shoe rack 4 × 3 ft from Standard, a crockery unit 4 × 7 ft from Premium (our rule; reported wardrobes are 7–8 ft high and 6–12 ft wide with 450–750 mm lofts)."
+    "src": ["woodenstreet-wardrobe", "nobroker-study", "own"],
+    "why": "An 8 ft wardrobe in the main bedroom and 6 ft in the others, never wider than the longer wall less 2 ft; 7 ft high with a 2 ft loft up to Premium, floor to ceiling from Luxury. A TV unit 6 × 2.5 ft and a shoe rack 4 × 3 ft from Standard, a crockery unit 4 × 7 ft from Premium, a study's desk unit 4 × 2.5 ft from Basic (our rule; a study table is reported about 26–30 in high; reported wardrobes are 7–8 ft high and 6–12 ft wide with 450–750 mm lofts)."
   },
   "falseCeiling": {
     "byLevel": [
@@ -210,6 +221,7 @@
     "living": 4, "master": 5,
     "src": ["own"], "why": "A feature wall from Luxury: the living room's longer wall; at Bespoke also the wall behind the main bed (the bedroom's shorter wall)."
   },
+  "cladding": { "src": ["own"], "why": "A pooja room's stone on the walls: the back wall, taken as the longer one, floor to ceiling, at every level; the other walls and the ceiling are painted (our rule)." },
   "points": {
     "living": { "lights": 3, "fans": 2, "sockets": 3, "ac": 1, "tv": 1 },
     "bedroom": { "lights": 2, "fans": 1, "sockets": 2, "ac": 1, "masterExtra": 1 },
@@ -217,14 +229,20 @@
     "bath": { "lights": 1, "exhaust": 1, "power": 1 },
     "passage": { "lights": 2 },
     "balcony": { "lights": 1, "sockets": 1 },
-    "src": ["own", "goldmedal-points", "greatwhite-sockets", "is4648"],
-    "why": "Our rule for each room, set so that a 2BHK comes to about 40 points and a 3BHK to about 50, inside the 32–42 and 45–58 points reported for them. A point is one light, fan, socket or power outlet with its wiring and switch."
+    "pooja": { "lights": 1, "sockets": 1 },
+    "study": { "lights": 2, "fans": 1, "sockets": 3 },
+    "utility": { "lights": 1, "power": 1 },
+    "store": { "lights": 1 },
+    "src": ["own", "goldmedal-points", "greatwhite-sockets", "is4648", "studiomatrx-utility"],
+    "why": "Our rule for each room, set so that a 2BHK comes to about 40 points and a 3BHK to about 50, inside the 32–42 and 45–58 points reported for them. A point is one light, fan, socket or power outlet with its wiring and switch. A pooja room: a light and a socket; a study: two lights, a fan and three sockets; a utility: a light and the washing machine's power point (a 16 A socket, as reported); a store room: a light."
   },
   "plumbing": {
     "bath": { "supply": 5, "drain": 3 },
     "kitchen": { "supply": 3, "drain": 2 },
     "balcony": { "supply": 0, "drain": 1 },
-    "src": ["own"], "why": "A bathroom: water to the WC, the basin, the mixer (hot and cold) and the health faucet; drains from the WC, the basin and a floor trap. A kitchen: water to the sink, the purifier and the washing machine; drains from the sink and the washing machine. A balcony: one floor trap."
+    "utility": { "supply": 1, "drain": 2 },
+    "washer": { "supply": 1, "drain": 1 },
+    "src": ["own", "studiomatrx-utility"], "why": "A bathroom: water to the WC, the basin, the mixer (hot and cold) and the health faucet; drains from the WC, the basin and a floor trap. A kitchen: water to the sink, the purifier and the washing machine; drains from the sink and the washing machine. A balcony: one floor trap. A utility: water to a two-way tap for the washing machine and a bucket, and drains from the washing machine and a floor trap (as reported, a water inlet and a drain for the machine); with a utility, the washing machine's water and drain leave the kitchen."
   },
   "ac": { "from": 3, "allBedroomsFrom": 4, "src": ["own"], "why": "Split ACs in the living room and main bedroom from Premium, and in every bedroom from Luxury, when Appliances is on." },
   "debris": { "sqftPerLot": 500, "src": ["own"], "why": "One lot (a tempo load to an approved dump) for each bathroom stripped, and one for each 500 sq ft of floor taken up, rounded up." },
@@ -425,6 +443,49 @@
       { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate", "build"] },
       { "family": "lights", "section": "electrical", "qty": "light-points", "maxLevel": 3 },
       { "family": "drain-point", "section": "plumbing", "qty": "drain-points" }
+    ],
+    "pooja": [
+      { "family": "demolish-floor", "section": "civil", "qty": "floor", "kinds": ["renovate"], "needs": "flooring" },
+      { "family": "stone-floor", "section": "flooring", "qty": "floor-skirting" },
+      { "family": "cladding", "section": "walls", "qty": "cladding" },
+      { "family": "paint", "section": "walls", "qty": "paint" },
+      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate", "build"] },
+      { "family": "lights", "section": "electrical", "qty": "light-points" },
+      { "family": "pooja-door", "section": "doors", "qty": "door" }
+    ],
+    "study": [
+      { "family": "demolish-floor", "section": "civil", "qty": "floor", "kinds": ["renovate"], "needs": "flooring" },
+      { "family": "floor", "section": "flooring", "qty": "floor-skirting" },
+      { "family": "paint", "section": "walls", "qty": "paint" },
+      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate", "build"] },
+      { "family": "lights", "section": "electrical", "qty": "light-points" },
+      { "family": "fans", "section": "electrical", "qty": "fan-points" },
+      { "family": "carpentry", "section": "wardrobes", "qty": "unit:desk", "name": "Study desk unit" },
+      { "family": "room-door", "section": "doors", "qty": "door" },
+      { "family": "windows", "section": "doors", "qty": "windows" },
+      { "family": "mesh", "section": "doors", "qty": "windows" },
+      { "family": "smart-switch", "section": "smart", "qty": "light-points" },
+      { "family": "curtains", "section": "furnishings", "qty": "window-count" }
+    ],
+    "utility": [
+      { "family": "demolish-floor", "section": "civil", "qty": "floor", "kinds": ["renovate"], "needs": "flooring" },
+      { "family": "waterproofing", "section": "waterproofing", "qty": "wp-balcony" },
+      { "family": "floor-wet", "section": "flooring", "qty": "floor-skirting", "name": "Floor tiles, anti-skid" },
+      { "family": "paint", "section": "walls", "qty": "paint" },
+      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate", "build"] },
+      { "family": "lights", "section": "electrical", "qty": "light-points", "maxLevel": 3 },
+      { "family": "supply-point", "section": "plumbing", "qty": "supply-points" },
+      { "family": "drain-point", "section": "plumbing", "qty": "drain-points" },
+      { "family": "utility-tap", "section": "plumbing", "qty": "one" }
+    ],
+    "store": [
+      { "family": "demolish-floor", "section": "civil", "qty": "floor", "kinds": ["renovate"], "needs": "flooring" },
+      { "family": "floor", "section": "flooring", "qty": "floor-skirting" },
+      { "family": "paint", "section": "walls", "qty": "paint" },
+      { "family": "wiring", "section": "electrical", "qty": "points", "kinds": ["renovate", "build"] },
+      { "family": "lights", "section": "electrical", "qty": "light-points", "maxLevel": 3 },
+      { "family": "shelves", "section": "wardrobes", "qty": "one" },
+      { "family": "room-door", "section": "doors", "qty": "door" }
     ]
   }
 }

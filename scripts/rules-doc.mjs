@@ -98,15 +98,19 @@ for (const [id, p] of Object.entries(A.programmes))
 out.push('', `**A room\'s size by a word** (R1): ${A.sizes.words.map((w) => `${w.name} ${w.at}`).join(', ')} of the way up the range. ${A.sizes.why}${cite(A.sizes.src)}`);
 out.push('', '**A room of your own size or level** (E3): a size you give a room replaces the planned one, its longer side the length, and the other rooms keep theirs; the page flags when the rooms no longer fit the carpet area. A room\'s own level stands above the section\'s slider and below an item of your own (A4), and moves only the sections with a slider: the structure, waterproofing and plumbing stay as they are.', '');
 out.push(`**Rooms by buttons** (R2): + Bedroom and a bedroom's × change the bedrooms answer, the later bedrooms moving up with what is theirs. + Bathroom adds a common bathroom of the programme's bathroom range, from 1 to 8, and the rooms share the area with it; a bathroom attached to a bedroom opens into it, so its door comes off that bedroom's skirting instead of the passage's. The balcony can be taken out; it is outside the area the rooms share, so no room moves.`, '');
+out.push(`**Added rooms** (R2b): ${A.extras.map((x) => `+ ${x.name}`).join(', ')}, each at most once and taken out by its ×; an added room takes its share of the area like the others.`, '', '| Room | Reported range, sq ft | Why |', '|---|---|---|');
+for (const x of A.extras) out.push(`| ${x.name} | ${x.range[0]}–${x.range[1]} | ${x.why}${cite(x.src)} |`);
+out.push('');
+const KIND = { bath: 'bathroom', pooja: 'pooja room', utility: 'utility room', store: 'store room' };
 const rule = (label, text, x) => `- **${label}**: ${text} ${x.why}${cite(x.src)}`;
 out.push('**How the rooms are drawn and measured**', '',
   rule('Bathrooms', A.bathrooms.rule, A.bathrooms),
   rule('Passage and foyer', `${A.shares.passage.value * 100}% of the carpet area.`, A.shares.passage),
   rule('Internal walls', `${A.shares.walls.value * 100}% of the carpet area.`, A.shares.walls),
-  rule('Proportions', `length ÷ breadth: ${['living', 'bedroom', 'kitchen', 'bath', 'passage', 'balcony'].map((k) => `${k === 'bath' ? 'bathroom' : k} ${A.aspect[k]}`).join(', ')}.`, A.aspect),
+  rule('Proportions', `length ÷ breadth: ${['living', 'bedroom', 'kitchen', 'bath', 'passage', 'balcony', ...A.extras.map((x) => x.kind)].map((k) => `${KIND[k] ?? k} ${A.aspect[k]}`).join(', ')}.`, A.aspect),
   rule('Ceiling height', `${A.height.m} m.`, A.height),
-  rule('The Code\'s minimums', `habitable room ${A.minimums.habitable} sq m, kitchen ${A.minimums.kitchen} sq m, bath and WC ${A.minimums.bath} sq m.`, A.minimums),
-  ...['main', 'bedroom', 'bath', 'kitchen', 'balcony', 'window', 'kitchenWindow', 'ventilator'].map((k) => rule(`Opening: ${k === 'kitchenWindow' ? 'kitchen window' : k === 'main' ? 'main door' : k === 'window' || k === 'ventilator' ? k : `${k} door`}`, `${A.openings[k].w} × ${A.openings[k].h} mm${A.openings[k].sill ? `, sill ${A.openings[k].sill} mm` : ''}.`, A.openings[k])),
+  rule('The Code\'s minimums', `habitable room (a study among them) ${A.minimums.habitable} sq m, kitchen ${A.minimums.kitchen} sq m, bath and WC ${A.minimums.bath} sq m.`, A.minimums),
+  ...['main', 'bedroom', 'bath', 'kitchen', 'balcony', ...A.extras.map((x) => x.kind), 'window', 'kitchenWindow', 'ventilator'].map((k) => rule(`Opening: ${k === 'kitchenWindow' ? 'kitchen window' : k === 'main' ? 'main door' : k === 'window' || k === 'ventilator' ? k : `${KIND[k] ?? k} door`}`, `${A.openings[k].w} × ${A.openings[k].h} mm${A.openings[k].sill ? `, sill ${A.openings[k].sill} mm` : ''}.`, A.openings[k])),
   rule('Windows', `at least ${A.openings.windowShare.value * 100}% of a habitable room's floor.`, A.openings.windowShare),
   rule('IS 1200 deductions', `none up to ${A.is1200.noDeduction} sq m; one face up to ${A.is1200.oneFace} sq m; both faces and the reveals above.`, A.is1200),
   rule('Skirting', `${A.skirting.m * 1000} mm high.`, A.skirting),
@@ -114,11 +118,12 @@ out.push('**How the rooms are drawn and measured**', '',
   rule('Waterproofing', `${A.waterproofing.upturn * 1000} mm up the walls; the shower ${A.waterproofing.showerWidth} m wide to ${A.waterproofing.showerHeight} m; a balcony ${A.waterproofing.balconyUpturn * 1000} mm.`, A.waterproofing),
   rule('Shower glass', `${A.showerScreen.w} × ${A.showerScreen.h} m.`, A.showerScreen),
   rule('Kitchen', `an ${A.kitchen.layout}-shaped counter ${A.kitchen.depth * 1000} mm deep; tiles ${A.kitchen.dado * 1000} mm above it.`, A.kitchen),
-  rule('Wardrobes and storage', `main bedroom ${A.wardrobes.mainWidth} mm wide, others ${A.wardrobes.otherWidth} mm; ${A.wardrobes.height} mm high with a ${A.wardrobes.loft} mm loft, floor to ceiling from ${levelName(A.wardrobes.fullHeightFrom)}.`, A.wardrobes),
+  rule('Wardrobes and storage', `main bedroom ${A.wardrobes.mainWidth} mm wide, others ${A.wardrobes.otherWidth} mm; ${A.wardrobes.height} mm high with a ${A.wardrobes.loft} mm loft, floor to ceiling from ${levelName(A.wardrobes.fullHeightFrom)}; a study's desk unit ${A.wardrobes.units.desk.w} × ${A.wardrobes.units.desk.h} mm of front.`, A.wardrobes),
+  rule('Stone on the pooja room\'s back wall', 'the longer wall, floor to ceiling, taken off its paint.', A.cladding),
   rule('False ceiling', `${A.falseCeiling.byLevel.map((x, i) => `${levelName(i + 1)}: ${x.cover === 'none' ? 'none' : `${x.cover === 'border' ? `a ${A.falseCeiling.border} m border` : 'the whole ceiling'} in ${x.rooms.join(', ')}`}`).join('; ')}.`, A.falseCeiling),
   rule('Feature wall', `the living room from ${levelName(A.feature.living)}, the main bedroom from ${levelName(A.feature.master)}.`, A.feature),
-  rule('Electrical points', ['living', 'bedroom', 'kitchen', 'bath', 'passage', 'balcony'].map((k) => `${k === 'bath' ? 'bathroom' : k}: ${Object.entries(A.points[k]).map(([n, v]) => `${n === 'masterExtra' ? 'main bedroom +' : `${n} `}${v}`).join(', ')}`).join('; ') + '.', A.points),
-  rule('Plumbing points', ['bath', 'kitchen', 'balcony'].map((k) => `${k === 'bath' ? 'bathroom' : k}: ${A.plumbing[k].supply} water, ${A.plumbing[k].drain} drainage`).join('; ') + '.', A.plumbing),
+  rule('Electrical points', ['living', 'bedroom', 'kitchen', 'bath', 'passage', 'balcony', ...A.extras.map((x) => x.kind)].map((k) => `${KIND[k] ?? k}: ${Object.entries(A.points[k]).map(([n, v]) => `${n === 'masterExtra' ? 'main bedroom +' : `${n} `}${v}`).join(', ')}`).join('; ') + '.', A.points),
+  rule('Plumbing points', ['bath', 'kitchen', 'balcony', 'utility'].map((k) => `${KIND[k] ?? k}: ${A.plumbing[k].supply} water, ${A.plumbing[k].drain} drainage`).join('; ') + `; with a utility, the washing machine's ${A.plumbing.washer.supply} water and ${A.plumbing.washer.drain} drainage move to it from the kitchen.`, A.plumbing),
   rule('Air conditioners', `from ${levelName(A.ac.from)} in the living room and main bedroom, from ${levelName(A.ac.allBedroomsFrom)} in every bedroom.`, A.ac),
   rule('Debris', `one lot per bathroom and per ${A.debris.sqftPerLot} sq ft of floor taken up.`, A.debris),
   rule('Making good', `${A.makingGood.share * 100}% of the walls.`, A.makingGood),
@@ -149,7 +154,7 @@ out.push('**A new house** (D-UX-23, E5): the outline from the built-up area and 
   '');
 out.push('**What each room gets** (the library\'s family, its section, and how it is measured)', '');
 for (const [room, slots] of Object.entries(A.templates))
-  out.push(`- **${room === 'flat' ? 'The whole flat or house' : room === 'bath' ? 'Each bathroom' : `Each ${room}`}**: ${slots.map((x) => `${x.name ?? x.family} (${A.sections.find((s) => s.id === x.section).name.toLowerCase()}, by ${x.qty}${x.kinds ? `, ${x.kinds.join(' and ')} only` : ''})`).join('; ')}.`);
+  out.push(`- **${room === 'flat' ? 'The whole flat or house' : `Each ${KIND[room] ?? room}`}**: ${slots.map((x) => `${x.name ?? x.family} (${A.sections.find((s) => s.id === x.section).name.toLowerCase()}, by ${x.qty}${x.kinds ? `, ${x.kinds.join(' and ')} only` : ''})`).join('; ')}.`);
 out.push('', 'The library of materials, finishes and fittings, with every rate and its source, is in `docs/LIBRARY.md`.', '');
 
 const text = out.join('\n');

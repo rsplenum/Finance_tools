@@ -14,7 +14,7 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf, printable } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import {
-  EMPTY_PLAN, areaLabel, drawerBrands, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit, type PlanState,
+  EMPTY_PLAN, areaLabel, drawerBrands, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withExtra, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit, type PlanState,
 } from '../site/src/estimate/plan-model';
 import { billDoc, billFileName, planDoc, planDocStatus, planFileName } from '../site/src/estimate/plan-document';
 import { BRAND_NOTICE, BRAND_NOTICE_SHORT, SITE_NAME } from '../site/src/site';
@@ -438,6 +438,7 @@ describe('R1 on the page: four size buttons on each room, the bar of shares and 
   });
 });
 
+const ADDED = [{ kind: 'pooja', name: 'Pooja room' }, { kind: 'study', name: 'Study' }, { kind: 'utility', name: 'Utility' }, { kind: 'store', name: 'Store room' }];
 describe('R2 on the page: rooms by buttons', () => {
   const total = (s: PlanState) => (architect(inputOf(s)) as ArchitectEstimate).total;
   const by = (s: PlanState, from: PlanState) => { const x = Math.round((total(s) - total(from)) * 100) / 100; return `Rs. ${inr(Math.abs(x))} ${x > 0 ? 'more' : 'less'}`; };
@@ -449,7 +450,7 @@ describe('R2 on the page: rooms by buttons', () => {
     expect(v.rooms.find((r) => r.id === 'bedroom-1')).toMatchObject({ bedroom: true, attached: true, out: true });
     expect(v.rooms.find((r) => r.id === 'bath-1')).toMatchObject({ name: 'Bathroom (attached)', out: false });
     const none = withBalcony(s, false);
-    expect([inputOf(none).balcony, view(none).rooms.some((r) => r.id === 'balcony'), view(none).add]).toEqual([false, false, { bedroom: true, bath: true, balcony: true }]);
+    expect([inputOf(none).balcony, view(none).rooms.some((r) => r.id === 'balcony'), view(none).add]).toEqual([false, false, { bedroom: true, bath: true, balcony: true, extras: ADDED }]);
     expect(view(none).change?.text).toBe(`The balcony taken out: ${by(none, s)}`);
     const back = withAttached(withBalcony(none, true), 'bedroom-1', false, 'Bedroom');
     expect([back.baths, back.balcony, view(back).change?.text]).toEqual([undefined, undefined, `Bedroom's bathroom made common: ${by(back, withBalcony(none, true))}`]);
@@ -485,6 +486,33 @@ describe('R2 on the page: rooms by buttons', () => {
   it('a new count of bedrooms from the question keeps the bathrooms of one\'s own, made common where their bedroom is gone, and brings the plan\'s own when they were the plan\'s', () => {
     expect(withBhk({ ...FLAT, bhk: '3', baths: ['bedroom-3', null] }, '2').baths).toEqual([null, null]);
     expect(withBhk({ ...FLAT, baths: ['bedroom-1', null] }, '3').baths).toBeUndefined();
+  });
+});
+
+describe('R2b on the page: + Pooja room, + Study, + Utility and + Store room, each with its ×', () => {
+  const total = (s: PlanState) => (architect(inputOf(s)) as ArchitectEstimate).total;
+  const by = (s: PlanState, from: PlanState) => { const x = Math.round((total(s) - total(from)) * 100) / 100; return `Rs. ${inr(Math.abs(x))} ${x > 0 ? 'more' : 'less'}`; };
+  it('the four buttons beside R2a\'s, in order; one added leaves the others, and its room can be taken out', () => {
+    expect(view(FLAT).add.extras).toEqual(ADDED);
+    // A 2BHK of 1,000 sq ft at Medium: 200 + 145 + 120 + 70 + 32.5 + 32.5 = 600, and a pooja room at 40 makes 640: the
+    // others 600 / 640 of their size, 6.25% smaller, shown 6.2% as the shares are worked in sq m a hair below the half.
+    const s = withExtra(FLAT, 'pooja', true);
+    expect([s.extras, inputOf(s).extras, view(s).add.extras.map((x) => x.kind)]).toEqual([['pooja'], ['pooja'], ['study', 'utility', 'store']]);
+    expect(view(s).change?.text).toBe(`Pooja room added: the other rooms 6.2% smaller · ${by(s, FLAT)}`);
+    expect(view(s).rooms.find((r) => r.id === 'pooja')).toMatchObject({ name: 'Pooja room', out: true, bedroom: false });
+    expect(view(s).shares.find((x) => x.id === 'pooja')?.kind).toBe('pooja');
+  });
+  it('added in any order, kept in the buttons\' order; the same room twice changes nothing', () => {
+    const s = withExtra(withExtra(FLAT, 'store', true), 'study', true);
+    expect([s.extras, withExtra(s, 'study', true)]).toEqual([['study', 'store'], s]);
+  });
+  it('× on an added room takes out what was kept by its id, and the last one out leaves no list', () => {
+    // The pooja room Spacious at 50 and the utility at Medium 42: 600 + 50 + 42 = 692, and 642 without the pooja room, the
+    // others 692 / 642 of their size, 7.8% larger.
+    const s: PlanState = { ...withExtra(withExtra(FLAT, 'pooja', true), 'utility', true), roomWords: { pooja: 'spacious' }, roomLevels: { pooja: 4 }, items: { 'pooja:cladding:cladding': 'x', 'utility:utility-tap:one': 'y' } };
+    const out = withExtra(s, 'pooja', false);
+    expect([out.extras, out.roomWords, out.roomLevels, out.items, view(out).change?.text]).toEqual([['utility'], {}, {}, { 'utility:utility-tap:one': 'y' }, `Pooja room taken out: the other rooms 7.8% larger · ${by(out, s)}`]);
+    expect('extras' in withExtra(out, 'utility', false)).toBe(false);
   });
 });
 
