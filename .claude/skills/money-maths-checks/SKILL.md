@@ -20,6 +20,7 @@ Two projects taught this the hard way. In the home-loan appraisal tool, every te
 - Read a source's note on GST once, and tag every item that cites it alone the same way: before GST adds 18%, an MRP or retail price already includes it.
 - Before bundling one item into another's set (a lock with a door, a mesh with a window), look in `engine/data/architect.json` for another family priced on the same quantity. A line cannot be switched off by itself, only its section, so the user cannot take out a double count.
 - A search summary is a lead, not a source: open the page and read the figure before taking it.
+- Read a page's notes and footnotes before checking a figure against it: a page that calls its prices illustrative, indicative or examples is a lead, not a check.
 - A script that fills missing values touches only missing values: it prints each value it changes, old and new, and stops on one already set.
 - Add a tax or a factor only to the part of a rate that its source quotes; keep parts from other sources apart in both computations.
 

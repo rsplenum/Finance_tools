@@ -8,6 +8,7 @@ import { CLASSES, ENTRIES, FAMILIES, FILES, LABOUR_ITEMS, NOTES, NOTES_DATE, SOU
 import SOURCES from '../engine/data/sources.json';
 import { R, architect, dimensionOf, type ArchitectEstimate, type ArchitectInput } from '../engine/architect';
 import { checkRate } from '../engine/architect-check';
+import { unpriced } from './unpriced';
 
 const UNITS = ['sqft', 'sqm', 'rft', 'm', 'nos', 'set', 'lot', 'kg', 'cum', 'bag', 'litre'];
 
@@ -209,7 +210,7 @@ describe('rates, worked by hand', () => {
       .toEqual([1193.92, 1415.92, 2115.17, 1516.32, 1747.67, 2983.17, 2972.97]);
   });
   it('an item still to be found has no rate', () => {
-    expect(price('fl-encaustic', 1, 18)).toBeNull();
+    expect(unpriced('fl-encaustic', () => price('fl-encaustic', 1, 18))).toBeNull();
   });
   it('a city\'s own charge stands as it is: the sewer connection in Chennai (× 1,830 ÷ 1,960.83 = 0.933277 for other rates) is the middle of Rs. 24,500–26,500, 25,500; none yet in Mumbai', () => {
     const chennai = 1830 / (11765 / 6), at = (end?: 0 | 1) => price('sewer-connection', chennai, 18, end, 'chennai')?.rate;

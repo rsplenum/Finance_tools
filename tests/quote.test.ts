@@ -96,12 +96,12 @@ describe('a line typed by hand', () => {
     expect(['Door', 'Kitchen sink mixer', 'Miscellaneous'].map(matchWords)).toEqual([null, null, null]);
   });
   it('takes the level the estimate puts its family at, and says not matched otherwise until one is picked', () => {
-    // The floor at Premium in Mumbai: granite Rs. 110 fitted × 1.2749681 = 140.25 the lowest, terrazzo Rs. 450 = 573.74 the dearest.
-    // Rs. 600 is 26.26 over 573.74: 4.58%, within the 20%.
+    // The floor at Premium in Mumbai: granite Rs. 110 fitted × 1.2749681 = 140.25 the lowest, encaustic tiles Rs. 500 = 637.48 the dearest.
+    // Rs. 670 is 32.52 over 637.48: 5.10%, within the 20%.
     const [floor, door, picked] = one([
-      { words: 'Vitrified floor tiles', unit: 'sqft', rate: 600 }, { words: 'Door', unit: 'nos', rate: 9000 }, { words: 'Door', unit: 'nos', rate: 9000, pick: 'main-door' },
+      { words: 'Vitrified floor tiles', unit: 'sqft', rate: 670 }, { words: 'Door', unit: 'nos', rate: 9000 }, { words: 'Door', unit: 'nos', rate: 9000, pick: 'main-door' },
     ], ctx);
-    expect([floor.family, floor.how, floor.levels, floor.band, floor.where, floor.off, floor.flagged]).toEqual(['floor', 'words', [3], { low: 140.25, high: 573.74 }, 'above', 5, false]);
+    expect([floor.family, floor.how, floor.levels, floor.band, floor.where, floor.off, floor.flagged]).toEqual(['floor', 'words', [3], { low: 140.25, high: 637.48 }, 'above', 5, false]);
     expect([door.family, door.where]).toEqual([null, 'not-matched']);
     expect([picked.family, picked.how]).toEqual(['main-door', 'picked']);
   });

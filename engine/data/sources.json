@@ -399,7 +399,7 @@
       "what": "Baffle ceilings, listings",
       "url": "https://dir.indiamart.com/impcat/baffle-ceilings.html",
       "class": "2",
-      "unread": "The site refused the visit (403)."
+      "checked": "2026-10-10"
     },
     "housegyan-sanitary": {
       "what": "Best sanitaryware brands in India with price ranges, 2026",
@@ -542,7 +542,7 @@
       "what": "Hettich, Häfele and Blum kitchen hardware: prices, 2026",
       "url": "https://www.woodage.in/blogs/posts/2026/hettich-vs-hafele-vs-blum-kitchen-hardware-india-2026/",
       "class": "4",
-      "checked": "2026-10-04"
+      "checked": "2026-10-10"
     },
     "homeli-hardware": {
       "what": "Hettich, Hafele and Blum hardware compared, 2026",
@@ -559,7 +559,8 @@
     "houseyog-kitchen": {
       "what": "Kitchen construction cost in India: countertop, cabinets, sink",
       "url": "https://www.houseyog.com/blog/kitchen-construction-cost-india/",
-      "class": "4"
+      "class": "4",
+      "checked": "2026-10-10"
     },
     "indiamart-sintered": {
       "what": "Sintered stone kitchen countertop, a listing",
@@ -790,7 +791,7 @@
       "what": "Polycab designer fans",
       "url": "https://polycab.com/fans/ceiling-fan/designer-fan/c",
       "class": "2",
-      "checked": "2026-10-04"
+      "checked": "2026-10-10"
     },
     "polycab-downlights": {
       "what": "Polycab downlights",
@@ -1672,19 +1673,19 @@
       "what": "Kohler India: Span Round complete wall-hung toilet bundle; prices include all taxes",
       "url": "https://www.kohler.co.in/p/shop-toilet-area-combos/span-round-complete-wall-hung-toilet-bundle-in-white-1",
       "class": "2",
-      "checked": "2026-10-04"
+      "checked": "2026-10-10"
     },
     "kohler-vive": {
       "what": "Kohler India: Vive wall-hung toilet bundle; prices include all taxes",
       "url": "https://www.kohler.co.in/p/shop-toilet-area-combos/vive-wall-hung-toilet-bundle-in-white-1",
       "class": "2",
-      "checked": "2026-10-04"
+      "checked": "2026-10-10"
     },
     "kohler-modernlife": {
       "what": "Kohler India: ModernLife wall-hung toilet bundle; prices include all taxes",
       "url": "https://www.kohler.co.in/p/shop-toilet-area-combos/modern-life-wall-hung-toilet-bundle-in-white-1",
       "class": "2",
-      "checked": "2026-10-04"
+      "checked": "2026-10-10"
     },
     "kohler-vox": {
       "what": "Kohler India: Vox square vessel basin without a faucet hole (2661IN)",
@@ -1828,7 +1829,7 @@
       "what": "Amazon India: Wipro Garnet Wave 10 W 130 x 130 mm colour-changing recessed panel",
       "url": "https://www.amazon.in/wipro-Changing-Recessed-Downlighter-130x130mm/dp/B0C1YP5SG4",
       "class": "2",
-      "checked": "2026-10-04"
+      "checked": "2026-10-10"
     },
     "amazon-hue-garnea": {
       "what": "Amazon India: Philips Hue Garnea white ambiance downlight",
@@ -2541,6 +2542,66 @@
       "url": "https://www.industrybuying.com/search/?q=4+module+concealed+box",
       "class": "2",
       "checked": "2026-10-05"
+    },
+    "studiomatrx-bathshop": {
+      "what": "Studio Matrx: bathroom shopping guide, vitrified tiles Rs. 70–140 a sq ft (mainstream brands)",
+      "url": "https://www.studiomatrx.org/guides/bathroom-shopping-guide-india",
+      "class": "4",
+      "checked": "2026-10-10"
+    },
+    "studiomatrx-mirrorcabinet": {
+      "what": "Studio Matrx: mirror cabinets, LED with demister and sensor Rs. 18,000–45,000+",
+      "url": "https://www.studiomatrx.org/guides/mirror-cabinet-india",
+      "class": "4",
+      "checked": "2026-10-10"
+    },
+    "indiamart-orient-fans": {
+      "what": "Orient ceiling fans, listings",
+      "url": "https://m.indiamart.com/impcat/orient-ceiling-fans.html",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "indiamart-havells-fans": {
+      "what": "Havells ceiling fans, listings",
+      "url": "https://m.indiamart.com/impcat/havells-ceiling-fans.html",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "studiomatrx-terrazzo": {
+      "what": "Studio Matrx: precast terrazzo tiles Rs. 60–200 a sq ft",
+      "url": "https://www.studiomatrx.org/guides/terrazzo-tiles-india",
+      "class": "4",
+      "checked": "2026-10-10"
+    },
+    "studiomatrx-cementtiles": {
+      "what": "Studio Matrx: encaustic cement tiles, an installed sealed floor Rs. 250–500 a sq ft all in",
+      "url": "https://www.studiomatrx.org/guides/cement-tiles-india",
+      "class": "4",
+      "checked": "2026-10-10"
+    },
+    "rk-italian-withprice": {
+      "what": "RK Marbles: Italian marble with price, Botticino Rs. 250–700 a sq ft",
+      "url": "https://www.rkmarblesindia.com/italian-marble-with-price/",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "indiamart-quartz": {
+      "what": "Quartz countertops, listings",
+      "url": "https://m.indiamart.com/impcat/quartz-countertop.html",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "infralens-aac": {
+      "what": "Infralens: rate analysis of AAC block masonry, Delhi, a block Rs. 63–100",
+      "url": "https://infralens.in/rate-analysis/aac-block-masonry",
+      "class": "4",
+      "checked": "2026-10-10"
+    },
+    "nobroker-countertops": {
+      "what": "NoBroker: countertop materials 2026, material a sq ft plus Rs. 150–400 to fabricate and fix",
+      "url": "https://www.nobroker.in/interiors/design-guides/best-countertop-materials-for-kitchen-and-bathroom/",
+      "class": "4",
+      "checked": "2026-10-10"
     }
   }
 }
