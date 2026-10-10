@@ -2416,6 +2416,114 @@
       "class": "2",
       "checked": "2026-10-05"
     },
+    "moglix-reo-switch": {
+      "what": "Moglix: Havells Reo Elegant 6A one-way switch, AHRSXXW061, price and MRP",
+      "url": "https://www.moglix.com/havells-reo-elegant-6a-white-1-way-switch-ahrsxxw061/mp/msnrkre2ogm89n",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "moglix-reo-socket": {
+      "what": "Moglix: Havells Reo Elegant 6A 3-pin socket, AHRKPXW063, price and MRP",
+      "url": "https://www.moglix.com/havells-reo-elegant-6a-3-pin-socket-ahrkpxw063/mp/msnl5gl7ne0yk4",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "moglix-reo-plate": {
+      "what": "Moglix: Havells Reo Elegant 4-module cover plate, AHRPLCWV04, price and MRP",
+      "url": "https://www.moglix.com/havells-reo-elegant-4-module-polycarbonate-glossy-finish-cover-plate-ahrplcwv04/mp/msno5wnq1xnw51",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "moglix-livia-switch": {
+      "what": "Moglix: Schneider Livia 10A one-way switch, P1001, price and MRP",
+      "url": "https://www.moglix.com/schneider-livia-10a-flush-mounted-one-way-switch-p1001/mp/msn39yrm27nn5q",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "moglix-livia-socket": {
+      "what": "Moglix: Schneider Livia 6A 3-pin socket, P2005NS, price and MRP",
+      "url": "https://www.moglix.com/schneider-electric-livia-6a-3-pin-2-module-white-socket-outlet-with-shutter-p2005ns/mp/msne9jply3e09d",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "moglix-livia-frame": {
+      "what": "Moglix: Schneider Livia 4-module grid and cover frame, P0704, price and MRP",
+      "url": "https://www.moglix.com/schneider-electric-livia-4-module-white-grid-cover-frame-p0704/mp/msn85801ee0492",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "moglix-zencelo-switch": {
+      "what": "Moglix: Schneider Zencelo 6A one-way bronze switch with on-indicator, IN8401(BZ), price and MRP",
+      "url": "https://www.moglix.com/schneider-electric-zencelo-6a-1-way-bronze-full-flat-module-switch-with-on-indicator-in8401bz/mp/msnl5gl4n21yk4",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "moglix-zencelo-socket": {
+      "what": "Moglix: Schneider Zencelo 6A 3-pin bronze socket, IN8426UNS_BZ, price and MRP",
+      "url": "https://www.moglix.com/schneider-electric-zencelo-6a-2pe-3-pin-2-module-bronze-socket-outlet-with-shutter-in8426uns-bz/mp/msn39yjm2y629q",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "moglix-zencelo-frame": {
+      "what": "Moglix: Schneider Zencelo 4-module grid and cover frame, IN8404C(BZ), a pack of 10, price and MRP",
+      "url": "https://www.moglix.com/schneider-zencelo-4-module-dark-grey-grid-cover-frame-in8404cbz-pack-of-10/mp/msnl5gl127zyk4",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "moglix-murano-switch": {
+      "what": "Moglix: Crabtree Murano 10A one-way switch, ACMSXXW101, a pack of 20, price and MRP",
+      "url": "https://www.moglix.com/crabtree-murano-10a-1-way-white-switch-acmsxxw101-pack-of-20/mp/msno5wnyx2or51",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "moglix-murano-socket": {
+      "what": "Moglix: Crabtree Murano 6A 3-pin socket, ACMKPXW063, a pack of 10, price and MRP",
+      "url": "https://www.moglix.com/crabtree-murano-6a-3-pin-white-shuttered-socket-with-isi-marking-acmkpxw063-pack-of-10/mp/msnv5oo47n8v56",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "moglix-murano-plate": {
+      "what": "Moglix: Crabtree Murano 4-module combined plate, ACMPLCWV04, a pack of 5, price and MRP",
+      "url": "https://www.moglix.com/crabtree-murano-4-module-pearl-white-pc-modular-combined-plate-acmplcwv04-pack-of-5/mp/msn8klpqwxwn5v",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "moglix-unica-switch": {
+      "what": "Moglix: Schneider Unica Pure 6A one-way switch, UNS61SW1M_GY, price and MRP",
+      "url": "https://www.moglix.com/schneider-electric-unica-pure-6a-1-module-1-way-volcanic-grey-switch-uns61sw1m-gy/mp/msnz5262pnzm9x",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "moglix-unica-socket": {
+      "what": "Moglix: Schneider Unica Pure 6A 3-pin socket, UNS6SK3P2MNS_GY, price and MRP",
+      "url": "https://www.moglix.com/schneider-electric-unica-pure-6a-3-pin-2-module-polycarbonate-grey-socket-outlet-with-shutter-uns6sk3p2mns-gy/mp/msnq946n3xve50",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "moglix-unica-frame": {
+      "what": "Moglix: Schneider Unica Pure 4-module cover frame, UNSCP4M_GY, price and MRP",
+      "url": "https://www.moglix.com/schneider-electric-unica-pure-4-module-polycarbonate-volcanic-grey-fixing-cover-frame-unscp4m-gy/mp/msn8kl2wyjyn5v",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "moglix-unica-metal": {
+      "what": "Moglix: Schneider Unica Pure 4-module aluminium alloy cover plate, UNPCP4M_ML, price and MRP",
+      "url": "https://www.moglix.com/schneider-electric-unica-pure-4-module-aluminium-alloy-pewter-grey-cover-plate-unpcp4m-ml/mp/msn457mjjg3n9j",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "moglix-murano-touch": {
+      "what": "Moglix: Crabtree Murano 4-channel touch and IR controlled switch, ACMSEIW064, price and MRP",
+      "url": "https://www.moglix.com/crabtree-murano-white-4-channel-touch-ir-controlled-switch-acmseiw064/mp/msnv5oo47vx056",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
+    "moglix-murano-glass": {
+      "what": "Moglix: Crabtree Murano 4-module Glassique glass plate, ACMPGCWV04, a pack of 5, price and MRP",
+      "url": "https://www.moglix.com/crabtree-murano-4-module-artic-white-glassique-modular-combined-plate-acmpgcwv04-pack-of-5/mp/msne5n8dego0kl",
+      "class": "2",
+      "checked": "2026-10-10"
+    },
     "moglix-legrand-switches": {
       "what": "Moglix: Legrand switches and sockets, a listing (a 6A socket takes two modules)",
       "url": "https://www.moglix.com/brands/legrand/electricals/switches-sockets/switches/211111100?page=2",
