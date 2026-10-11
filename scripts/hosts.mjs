@@ -12,4 +12,8 @@ const probe = (h) => new Promise((done) => execFile('curl', ['-sS', '-o', '/dev/
 const rows = (await Promise.all(hosts.map(probe))).sort((a, b) => (a[1] === 'BLOCKED' ? 0 : 1) - (b[1] === 'BLOCKED' ? 0 : 1));
 for (const [h, r] of rows) console.log(`${r.padEnd(8)} ${h}`);
 const blocked = rows.filter((r) => r[1] === 'BLOCKED').map((r) => r[0]);
-console.log(blocked.length ? `Ask the owner to allow: ${blocked.join(', ')}` : 'All open.');
+const unclear = rows.filter((r) => r[1].startsWith('unclear')).map((r) => r[0]);
+if (blocked.length) console.log(`Ask the owner to allow: ${blocked.join(', ')}`);
+// 502 or a reset is the site refusing this cloud's address (many Indian government sites do), not the allow list.
+if (unclear.length) console.log(`Allowed but not answering from here (the site's side, not the allow list): ${unclear.join(', ')}`);
+if (!blocked.length && !unclear.length) console.log('All open.');
