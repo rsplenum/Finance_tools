@@ -6,13 +6,13 @@
  * the tables are the page's (model.ts), every figure the engine's, none computed here.
  */
 import { parseMonth } from '../../../engine/parse';
-import { METHOD } from '../../../engine/report';
+import { METHOD, PMEGP } from '../../../engine/report';
 import { BORROWERS } from '../../../engine/tax';
 import type { Block, Cell, Doc, Table } from '../doc/doc';
 import { printable } from '../doc/pdf';
 import { monthText } from '../dscr/model';
 import { SITE_NAME } from '../site';
-import { HEADS, REPAYMENT_CHOICES, plainOf, statusText, tidyAmount, type ReportFacts, type ReportPreview, type ReportState, type ViewTable } from './model';
+import { ACTIVITY_CHOICES, AREA_CHOICES, CATEGORY_CHOICES, HEADS, REPAYMENT_CHOICES, plainOf, statusText, tidyAmount, type ReportFacts, type ReportPreview, type ReportState, type ViewTable } from './model';
 
 export function docNeeds(f: ReportFacts): string[] {
   const needs: string[] = [];
@@ -27,7 +27,7 @@ export function docNeeds(f: ReportFacts): string[] {
   ask(f.preparedBy, 'Prepared by', false);
   return needs;
 }
-export const allNeeds = (s: ReportState, p: ReportPreview) => [...p.needs, ...docNeeds(s.doc)];
+export const allNeeds = (s: ReportState, p: ReportPreview) => [...p.needs, ...(p.short ? [p.short] : []), ...docNeeds(s.doc)];
 export const docStatus = (s: ReportState, p: ReportPreview) => statusText(p, docNeeds(s.doc).length);
 export function fileName(s: ReportState, p: ReportPreview, ext: string): string {
   const name = s.doc.name.replace(/[\\/:*?"<>|\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60).trim();
@@ -60,12 +60,21 @@ function entered(s: ReportState): [string, string][] {
   for (const h of HEADS) if (s.cost[h.id].trim()) pairs.push([h.label, amount(s.cost[h.id])]);
   const l = s.loan, rep = REPAYMENT_CHOICES.find((r) => r.value === l.repayment)?.label ?? '';
   const month = parseMonth(l.disbursed), m = plainOf(l.moratoriumMonths);
-  pairs.push(['Term loan', `${amount(l.amount)} at ${plainOf(l.ratePct)}% a year, first drawn in ${month ? monthText(month) : l.disbursed}; ${m ? `${m} months' moratorium` : 'no moratorium'}; ${plainOf(l.instalments)} instalments, ${rep.toLowerCase()}`]);
+  if (s.scheme === 'pmegp') {
+    const label = <T,>(c: { value: T; label: string }[], v?: T) => c.find((o) => o.value === v)?.label ?? '';
+    pairs.push(['Scheme', `PMEGP; ${label(CATEGORY_CHOICES, s.category).split(':')[0].toLowerCase()} category; ${label(AREA_CHOICES, s.area).toLowerCase()}; ${label(ACTIVITY_CHOICES, s.activity).toLowerCase()}`]);
+  }
+  pairs.push([s.scheme ? 'Term loan sanctioned' : 'Term loan', `${amount(l.amount)} at ${plainOf(l.ratePct)}% a year, first drawn in ${month ? monthText(month) : l.disbursed}; ${m ? `${m} months' moratorium` : 'no moratorium'}; ${plainOf(l.instalments)} instalments, ${rep.toLowerCase()}`]);
   if (s.subsidy.trim()) pairs.push(['Capital subsidy', amount(s.subsidy)]);
   if (s.unsecured.trim()) pairs.push(['Unsecured loans', amount(s.unsecured)]);
-  pairs.push(['Sales in the first year', `${amount(s.sales)}, growing ${plainOf(s.salesGrowth)}% a year`]);
+  if (s.salesBy === 'typed') pairs.push(['Sales in a full first year', `${amount(s.sales)}, growing ${plainOf(s.salesGrowth)}% a year`]);
+  else {
+    pairs.push(['Capacity', `${s.capacity.trim()} units a year at Rs. ${tidyAmount(s.price)} a unit, the price growing ${plainOf(s.priceGrowth)}% a year`]);
+    pairs.push(['Use of the capacity', `${s.utilisation.split(/[,\s]+/).filter(Boolean).join('%, ')}% by year from the first sales`]);
+  }
+  pairs.push(['Months from the loan to the first sales', `${plainOf(s.monthsToStart)}`]);
   pairs.push(['Materials and other variable costs', `${plainOf(s.variablePct)}% of sales`]);
-  pairs.push(['Fixed costs in the first year', `${amount(s.fixed)}, growing ${plainOf(s.fixedGrowth)}% a year`]);
+  pairs.push(['Fixed costs in a full first year', `${amount(s.fixed)}, growing ${plainOf(s.fixedGrowth)}% a year`]);
   pairs.push(['Stock, debtors and creditors', `${plainOf(s.days.stock)}, ${plainOf(s.days.debtors)} and ${plainOf(s.days.creditors)} days`]);
   pairs.push(['Working-capital limit sought', `${amount(s.wcLimit)}${plainOf(s.wcLimit) ? ` at ${plainOf(s.wcRate)}% a year` : ''}`]);
   return pairs;
@@ -83,6 +92,7 @@ export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc 
     { kind: 'title', text: name || 'Project report', sub: `Project report${ok(f.activity) ? `: ${ok(f.activity)}` : ''}, ${v.years[0]} to ${v.years[v.years.length - 1]}` },
     { kind: 'facts', lines: facts },
     ...(needs.length ? [{ kind: 'box', title: `Provisional: ${needs.length} still needed`, items: needs } as Block] : []),
+    ...(p.flags.length ? [{ kind: 'box', title: 'PMEGP: to look at', items: p.flags } as Block] : []),
     { kind: 'figures', items: v.key },
     ...table('cost'), ...table('finance'),
     { kind: 'signature', lines: [`For ${name || 'the business'}`, '', 'Authorised signatory', 'Date:', 'Place:'] },
@@ -103,6 +113,8 @@ export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc 
         { kind: 'title', text: 'Annex. The term loan, and the basis', small: true }, ...table('schedule'),
         { kind: 'heading', text: 'The figures entered' }, { kind: 'pairs', pairs: entered(s) },
         { kind: 'heading', text: 'How the figures are worked out' }, { kind: 'list', items: METHOD },
+        ...(s.scheme === 'pmegp' ? [{ kind: 'heading', text: 'PMEGP: the rules used' } as Block, { kind: 'list', items: [...PMEGP.rules, PMEGP.ours,
+          `Source: ${PMEGP.source}. As read on ${dmy(PMEGP.date)}; not yet checked against KVIC's current guideline.`] } as Block] : []),
       ] },
     ],
   };
