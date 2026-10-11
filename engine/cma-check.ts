@@ -17,12 +17,16 @@ export interface CmaCheckYear {
   pbt: number; netProfit: number; pbdit: number; currentLiabilities: number; termLiabilities: number; netWorth: number; outside: number;
   currentAssets: number; assets: number; nwc: number; currentRatio?: number; tolTnw?: number; debtEquity?: number; interestCover?: number;
   netMarginPct?: number; stockDays?: number; debtorDays?: number; creditorDays?: number; growthPct?: number; limit: number; bankChange: number;
+  available: number; dscr?: number; facr?: number; security: number; secured: number; securityCover?: number;
 }
 
 const sum = (f: F, heads: string[]) => heads.reduce((a, h) => a + f[h], 0);
 const over = (a: number, b: number) => (b > 0 ? a / b : undefined);
 
-export function cmaCheck(years: F[], quasi: boolean, daysInYear: number, needPct: number, marginPct: number): CmaCheckYear[] {
+/** `rsv`: the collateral's realisable sale value. The lender's ratios (MV4) by other routes: the cash for the loan from this
+ * file's own net profit; what is secured as the outside liabilities less the creditors, the other current liabilities and
+ * the promoters' loans left in them; the security as the assets less those that are not (non-current, cash, other). */
+export function cmaCheck(years: F[], quasi: boolean, daysInYear: number, needPct: number, marginPct: number, rsv = 0): CmaCheckYear[] {
   return years.map((f, k) => {
     const pbt = sum(f, INCOME) - sum(f, COSTS), netProfit = pbt - f.tax;
     const pbdit = f.sales - f.materials - f.otherDirect - f.employees - f.sga, interest = f.wcInterest + f.tlInterest;
@@ -33,6 +37,8 @@ export function cmaCheck(years: F[], quasi: boolean, daysInYear: number, needPct
     const nwc = netWorth + termLiabilities - f.netBlock - f.nonCurrent;
     const cos = f.materials + f.otherDirect + f.depreciation, before = years[k - 1];
     const need = (f.sales * needPct) / 100, margin = (f.sales * marginPct) / 100;
+    const available = netProfit + f.depreciation + f.tlInterest, secured = outside - f.creditors - f.otherCl - (f.promoterLoans - promoterIn);
+    const security = assets - f.nonCurrent - f.cash - f.otherCa + rsv;
     return {
       pbt, netProfit, pbdit, currentLiabilities, termLiabilities, netWorth, outside, currentAssets, assets, nwc,
       currentRatio: over(currentAssets, currentLiabilities), tolTnw: over(outside, netWorth), debtEquity: over(termLiabilities, netWorth),
@@ -41,6 +47,8 @@ export function cmaCheck(years: F[], quasi: boolean, daysInYear: number, needPct
       creditorDays: f.materials > 0 ? (f.creditors * daysInYear) / f.materials : undefined,
       growthPct: before && before.sales > 0 ? (100 * (f.sales - before.sales)) / before.sales : undefined,
       limit: Math.max(0, need - Math.max(margin, nwc)), bankChange: before ? f.bankWc - before.bankWc : 0,
+      available, dscr: before ? over(available, f.tlInterest + before.tlDue12) : undefined, facr: over(f.netBlock, secured - f.bankWc),
+      security, secured, securityCover: over(security, secured),
     };
   });
 }

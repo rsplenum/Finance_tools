@@ -1125,16 +1125,19 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
   await ctx.close();
 }
 
-const CMA_FIELDS = 'main input:not(#more-options input):not(#download input):not(#read input)';
+const CMA_FIELDS = 'main input:not([type="radio"]):not(#more-options input):not(#download input):not(#read input)';
+// A choice counts as one field, whatever its options (MV4: fresh or renewal).
+const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await page.locator('main fieldset:not(#more-options fieldset):has(input[type="radio"])').count();
 // CMA data (C1, D-UX-46), fictional case K worked outside the engine in tests/cma.test.ts: sales 300 to 520 L over
 // 2023-24 to 2027-28. In 2027-28 the balance sheet totals 2,96,80,000 on both sides and the limit by the turnover method
 // is 1,04,00,000 (25% of 520 L less the 5% margin of 26 L, the net working capital of 23.8 L being less). The default
-// path is the owner's short CMA: 25 heads for each of five years and the limit now, 126 fields (D-UX-12's count).
+// path is the owner's short CMA: 25 heads for each of five years, the limit now and, from MV4 (D-UX-56), fresh or renewal:
+// 127 fields (D-UX-12's count).
 {
   const { ctx, page, v } = await open('/cma/', { scheme: 'light' });
   if (await page.locator('#more-options').evaluate((d) => d.open)) v('the CMA page opens with More options open');
-  const fields = await page.locator(CMA_FIELDS).count();
-  if (fields !== 126) v(`the CMA page asks ${fields} fields by default; the owner's short CMA is 126 (25 heads × 5 years and the limit now)`);
+  const fields = await cmaFields(page);
+  if (fields !== 127) v(`the CMA page asks ${fields} fields by default; the owner's short CMA is 127 (25 heads × 5 years, the limit now, fresh or renewal)`);
   await expectText(page, v, 'cma-years', /^Years: 2023-24 \(audited\), 2024-25 \(audited\), 2025-26 \(audited\), 2026-27 \(estimate\), 2027-28 \(projection\)\./, 'the CMA years');
   await expectText(page, v, 'cma-status', 'Provisional: 3 still needed', 'the empty CMA page');
   await page.getByTestId('cma-example').click();
@@ -1147,6 +1150,13 @@ const CMA_FIELDS = 'main input:not(#more-options input):not(#download input):not
     const got = await page.getByTestId('cma-form3').locator('tr', { has: page.locator('th', { hasText: label }) }).first().locator('td').allTextContents();
     if (got.at(-1) !== '2,96,80,000') v(`the CMA Form III "${label}" ends ${JSON.stringify(got.at(-1))}, want 2,96,80,000`);
   }
+  // MV4 (D-UX-56): case K is fresh and meets every level in its worse year; the room is how far its sales can fall.
+  const misses = await page.locator('[data-testid^="cma-check-"]', { hasText: 'Misses:' }).count();
+  if (misses || await page.getByTestId('cma-misses').count()) v(`the CMA example misses ${misses} of a lender's levels, want none`);
+  await expectText(page, v, 'cma-check-dscrAverage', /Meets: 5\.84 over 2026-27 and 2027-28/, 'case K\'s average DSCR');
+  await page.getByTestId('cma-viable').click();
+  await expectText(page, v, 'cma-move-sales', '8.4%', 'how far case K\'s sales can fall');
+  await expectText(page, v, 'cma-text-sales', /to Rs\. 4,76,32,000 \(from Rs\. 5,20,00,000\)/, 'case K\'s sales at the edge');
   await layout(page, v, 'the CMA example, 390 px');
   await expectText(page, v, 'cma-doc-status', 'Provisional: 1 still needed', 'the CMA document before its name');
   await leave(page, '#fld-cma-name', 'K Steel Furniture Pvt Ltd');
@@ -1160,11 +1170,50 @@ const CMA_FIELDS = 'main input:not(#more-options input):not(#download input):not
   if (pdf.name !== 'CMA data - K Steel Furniture Pvt Ltd.pdf') v(`the CMA PDF is named "${pdf.name}"`);
   const text = (await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`])).join('\n');
   if (!text.includes('1,04,00,000') || !text.includes('2,96,80,000')) v('the CMA PDF does not read back its limit and its balance sheet');
+  if (/DSCR|lender’s level|viable/i.test(text)) v('the CMA PDF carries the levels or the plan (MV4 keeps them on the page)');
   const xlsx = (await save('cma-download-xlsx')).bytes;
   const book = await workbook(xlsx).catch((e) => v(`the CMA Excel copy is not read: ${e.message}`)) ?? [];
   if (book.map((x) => x.sheet).join('|') !== 'Summary|Forms II and III|Forms IV to VI|Ratios|Check') v(`the CMA Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))}`);
   const formulas = ((await zipPart(xlsx, 'xl/worksheets/sheet5.xml')) ?? '').match(/<f>/g)?.length ?? 0;
   if (formulas !== 52) v(`the CMA Excel copy's Check sheet holds ${formulas} formulas, want 52`);
+  await ctx.close();
+}
+
+// Make it viable on the CMA (MV4, D-UX-56): fictional case M worked by hand in tests/cma-plan.test.ts, a fresh limit with
+// no collateral. It misses five levels; the plan counts the promoters' loans, raises 2027-28's sales 5.2% to 2,52,48,000
+// and asks collateral of 3,11,112, still short on the current ratio; with the promoters' most at 10 L it brings 5,45,455
+// of capital instead of the collateral and meets every level. "Use this plan" writes the cells; Undo puts them back.
+{
+  const { ctx, page, v } = await open('/cma/', { scheme: 'light' });
+  const M = { sales: [150, 165, 180, 200, 240], otherIncome: [0, 0, 0, 0, 0], materials: [103, 114, 126, 140, 170], otherDirect: [15, 17, 18, 20, 25],
+    employees: [9, 10, 11, 12, 14], sga: [6, 7, 7, 8, 10], depreciation: [5, 5, 5, 5, 5], wcInterest: [7.5, 8, 8.5, 9, 12.5], tlInterest: [4.5, 4, 3.5, 3, 2.5],
+    tax: [0, 0, 0.25, 0.75, 0.25], drawings: [0, 0, 0.75, 1.25, 0.75], capital: [20, 20, 20, 20, 20], reserves: [4, 4, 4, 5, 5], promoterLoans: [10, 10, 10, 10, 10],
+    termLoans: [36, 32, 28, 24, 20], tlDue12: [4, 4, 4, 4, 4], bankWc: [55, 60, 65, 70, 80], creditors: [24, 26, 28, 30, 34], otherCl: [2, 2, 2, 2, 2],
+    netBlock: [55, 50, 45, 40, 35], nonCurrent: [10, 10, 10, 10, 10], stock: [32, 35, 38, 40, 48], debtors: [24, 26, 28, 30, 36], cash: [3, 3, 3, 3, 2], otherCa: [27, 30, 33, 38, 40] };
+  for (const [h, xs] of Object.entries(M)) for (const [i, y] of ['a1', 'a2', 'a3', 'est', 'proj'].entries()) await leave(page, `#fld-cma-${y}-${h}`, `${xs[i]} L`);
+  await leave(page, '#fld-cma-existing', '60 L');
+  await expectText(page, v, 'cma-levels-ask', /whether the limit is fresh or enhanced, or a renewal/, 'case M before fresh or renewal');
+  await page.locator('#fld-cma-case-fresh').check();
+  await page.locator('#more-options').evaluate((d) => d.open = true);
+  await leave(page, '#fld-cma-collateral', '0');
+  await expectText(page, v, 'cma-misses', /^It misses 5 of a lender’s levels: current ratio, total outside liabilities ÷ net worth, average DSCR, interest cover and security cover\.$/, 'case M fresh');
+  await expectText(page, v, 'cma-short-currentRatio', /Short by Rs\. 5,60,000 of current assets/, 'case M\'s current ratio');
+  await page.getByTestId('cma-viable').click();
+  await expectText(page, v, 'cma-plan-steps', /Sales of Rs\. 2,52,48,000 in 2027-28 \(now Rs\. 2,40,00,000\), 5\.2% higher.*Collateral with a market value of Rs\. 3,11,112/, 'case M\'s plan');
+  await expectText(page, v, 'cma-plan-verdict', 'With these changes it still misses one of a lender’s levels.', 'case M\'s plan without the promoters\' most');
+  await leave(page, '#fld-cma-promotersMost', '10 L');
+  await expectText(page, v, 'cma-plan-steps', /Capital of Rs\. 5,45,455 more brought in by the end of 2026-27/, 'case M\'s plan with 10 L from the promoters');
+  await expectText(page, v, 'cma-plan-verdict', 'With these changes it meets every lender’s level.', 'case M\'s plan with 10 L from the promoters');
+  await layout(page, v, 'case M\'s plan, 390 px');
+  await page.getByTestId('cma-plan-use').click();
+  await expectValue(page, v, '#fld-cma-proj-sales', '2,52,48,000', 'case M\'s plan used');
+  await expectValue(page, v, '#fld-cma-est-capital', '25,45,455', 'case M\'s plan used');
+  const marked = await page.locator('[data-changed="plan"]').count();
+  if (marked !== 12) v(`the plan used marks ${marked} cells, want 12`);
+  if (await page.getByTestId('cma-misses').count()) v('case M still misses a level after its plan is used');
+  await page.getByTestId('cma-undo').click();
+  await expectValue(page, v, '#fld-cma-proj-sales', '2,40,00,000', 'case M\'s plan undone');
+  if (await page.getByTestId('cma-used').count()) v('Undo left the banner of the plan used');
   await ctx.close();
 }
 
@@ -1188,7 +1237,7 @@ const CMA_FIELDS = 'main input:not(#more-options input):not(#download input):not
     if (ties !== 8) v(`${ties} of statement K's 8 checks tie`);
     if (await filled()) v(`${await filled()} CMA cells were filled before any tick`);
     await expectText(page, v, 'cma-status', 'Provisional: 3 still needed', 'statement K read, nothing ticked');
-    if (await page.locator(CMA_FIELDS).count() !== 126) v('reading a statement changed the count of default fields');
+    if (await cmaFields(page) !== 127) v('reading a statement changed the count of default fields');
     await page.getByTestId('read-a3-sales').check();
     await expectValue(page, v, '#fld-cma-a3-sales', '3,90,00,000', 'one figure ticked');
     if (await filled() !== 1) v(`one tick filled ${await filled()} cells`);

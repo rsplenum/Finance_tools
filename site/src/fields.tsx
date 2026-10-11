@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 
 export const INPUT = 'block w-full rounded-md border bg-white px-3 py-2 text-base text-slate-900 placeholder:text-slate-500 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/30 focus:outline-none dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-400';
 const BORDER = 'border-slate-300 dark:border-slate-600', BAD = 'border-red-600 dark:border-red-400';
+const CHANGED = 'border-teal-600 ring-2 ring-teal-600/40 dark:border-teal-400 dark:ring-teal-400/40';
 export const LABEL = 'block font-medium text-slate-900 dark:text-slate-100';
 export const HINT = 'mt-1 text-sm text-slate-600 dark:text-slate-300';
 export const BUTTON = 'rounded-md border border-teal-700 bg-white px-3 py-1.5 text-sm font-medium text-teal-800 hover:bg-teal-50 dark:border-teal-500 dark:bg-slate-900 dark:text-teal-300 dark:hover:bg-slate-800';
@@ -62,12 +63,14 @@ export function TextField(p: TextProps) {
 }
 
 /** A figure in the yearly table: labelled by its year, named for screen readers by its row and year. `month`: a month, like 2028-03. */
-export function CellInput(p: { id: string; name: string; value: string; onCommit: (t: string) => void; tidy?: (t: string) => string; invalid?: boolean; decimal?: boolean; month?: boolean }) {
+/** A cell of a grid; `changed`, what the cell was before a plan wrote it, marks it until undone or kept. */
+export function CellInput(p: { id: string; name: string; value: string; onCommit: (t: string) => void; tidy?: (t: string) => string; invalid?: boolean; decimal?: boolean; month?: boolean; changed?: string }) {
   const d = useDraft(p.value, p.onCommit, p.tidy);
   return <input id={p.id} type={p.month ? 'month' : 'text'} inputMode={p.decimal ? 'decimal' : undefined} autocomplete="off" spellcheck={false} enterkeyhint="next"
     aria-label={p.name} aria-invalid={p.invalid || undefined} placeholder={p.month ? 'like 2028-03' : undefined}
-    title={p.invalid ? (p.month ? 'Not understood: type 2028-03 or Mar 2028' : 'Not understood: type 1,50,000 or 1.5 L') : undefined}
-    {...d} class={`${INPUT} ${p.invalid ? BAD : BORDER} px-2 ${p.month ? '' : 'text-right tabular-nums'} sm:min-w-28`} />;
+    title={p.invalid ? (p.month ? 'Not understood: type 2028-03 or Mar 2028' : 'Not understood: type 1,50,000 or 1.5 L') : p.changed}
+    data-changed={p.changed === undefined ? undefined : 'plan'}
+    {...d} class={`${INPUT} ${p.invalid ? BAD : p.changed !== undefined ? CHANGED : BORDER} px-2 ${p.month ? '' : 'text-right tabular-nums'} sm:min-w-28`} />;
 }
 
 /** A choice from a list, as a select; `placeholder` is the empty first option. */

@@ -7,6 +7,7 @@
  * not balance is never made to: it is listed as still needed.
  */
 import DATA from './data/cma.json';
+import LEVELS from './data/ratios.json';
 import { cmaCheck } from './cma-check';
 import type { Blocked, Needs } from './dscr';
 import { inr } from './util';
@@ -29,6 +30,8 @@ export interface CmaInput {
   existingLimit?: number;
   /** Promoters' loans that stay in the business till the bank is repaid count as the owners' funds. */
   quasiEquity?: boolean;
+  /** The collateral offered, at market value (D-UX-52): its realisable sale value counts in the security cover. */
+  collateral?: number;
 }
 
 export interface CmaYear {
@@ -41,6 +44,9 @@ export interface CmaYear {
   // Form IV and the ratios
   nwc: number; currentRatio?: number; tolTnw?: number; debtEquity?: number; interestCover?: number; netMarginPct?: number;
   stockDays?: number; debtorDays?: number; creditorDays?: number;
+  // The lender's ratios beside them (MV4, D-UX-56), off the forms: the DSCR on the year before's term loans due within 12
+  // months (none for the first year given), the fixed-asset cover, and the security cover with the collateral's RSV.
+  available: number; service?: number; dscr?: number; facr?: number; security: number; secured: number; securityCover?: number;
 }
 /** Form V by the turnover method, for the estimate and the projection. */
 export interface Turnover { fy: string; turnover: number; need: number; margin: number; nwc: number; onMargin: number; onNwc: number; limit: number; short: number }
@@ -82,6 +88,7 @@ export function cmaNeeds(x: CmaInput): string[] {
   if (!(isNum(x.startYear) && x.startYear > 1990)) needs.push('The year now running');
   const fy = fyLabels(isNum(x.startYear) ? x.startYear : 2000);
   if (!(isNum(x.existingLimit) && x.existingLimit >= 0)) needs.push('The working-capital limit you have now (0 if none)');
+  if (x.collateral !== undefined && !(isNum(x.collateral) && x.collateral >= 0)) needs.push('The collateral’s market value, as a figure of 0 or more');
   for (const id of yearsGiven(x)) {
     const y = YEARS.find((t) => t.id === id) as (typeof YEARS)[number], f = x.figures[id] ?? {}, name = yearName(fy[id], y.kind as YearKind);
     const missing = HEADS.filter((h) => f[h.id] === undefined).map((h) => h.label);
@@ -108,11 +115,13 @@ function totals(f: Figures, quasi: boolean) {
   return { currentLiabilities, termLiabilities, netWorth, outside, liabilities, currentAssets, assets };
 }
 
-function yearOf(id: YearId, fy: string, kind: YearKind, f: Figures, quasi: boolean, before?: Figures): CmaYear {
+function yearOf(id: YearId, fy: string, kind: YearKind, f: Figures, quasi: boolean, rsv: number, before?: Figures): CmaYear {
   const costOfSales = f.materials + f.otherDirect + f.depreciation, grossProfit = f.sales - costOfSales;
   const pbit = grossProfit - f.employees - f.sga, interest = f.wcInterest + f.tlInterest, opPbt = pbit - interest;
   const pbt = opPbt + f.otherIncome, netProfit = pbt - f.tax, t = totals(f, quasi), days = DATA.daysInYear;
   const days_ = (a: number, b: number) => (b > 0 ? (a / b) * days : undefined);
+  const available = netProfit + f.depreciation + f.tlInterest, service = before ? f.tlInterest + before.tlDue12 : undefined;
+  const security = f.netBlock + f.stock + f.debtors + rsv, secured = f.termLoans + f.bankWc;
   return {
     id, fy, kind, f, costOfSales, grossProfit, pbit, pbdit: pbit + f.depreciation, interest, opPbt, pbt, netProfit, retained: netProfit - f.drawings,
     ...(before && before.sales > 0 ? { growthPct: (f.sales / before.sales - 1) * 100 } : {}),
@@ -120,6 +129,8 @@ function yearOf(id: YearId, fy: string, kind: YearKind, f: Figures, quasi: boole
     currentRatio: ratio(t.currentAssets, t.currentLiabilities), tolTnw: ratio(t.outside, t.netWorth), debtEquity: ratio(t.termLiabilities, t.netWorth),
     interestCover: ratio(pbit + f.depreciation, interest), netMarginPct: f.sales > 0 ? (netProfit / f.sales) * 100 : undefined,
     stockDays: days_(f.stock, costOfSales), debtorDays: days_(f.debtors, f.sales), creditorDays: days_(f.creditors, f.materials),
+    available, ...(service !== undefined ? { service } : {}), dscr: service === undefined ? undefined : ratio(available, service),
+    facr: ratio(f.netBlock, f.termLoans), security, secured, securityCover: ratio(security, secured),
   };
 }
 
@@ -177,22 +188,22 @@ function flagsOf(years: CmaYear[], turnover: Turnover[], limit: number, proposed
 export function cma(x: CmaInput): Cma | Needs | Blocked {
   const needs = cmaNeeds(x);
   if (needs.length) return { needs };
-  const quasi = !!x.quasiEquity, fy = fyLabels(x.startYear), given = yearsGiven(x);
+  const quasi = !!x.quasiEquity, fy = fyLabels(x.startYear), given = yearsGiven(x), rsv = ((x.collateral ?? 0) * LEVELS.collateral.rsvPct) / 100;
   const years: CmaYear[] = [];
   for (const id of given) {
     const kind = (YEARS.find((t) => t.id === id) as { kind: string }).kind as YearKind;
-    years.push(yearOf(id, fy[id], kind, x.figures[id] as Figures, quasi, years.at(-1)?.f));
+    years.push(yearOf(id, fy[id], kind, x.figures[id] as Figures, quasi, rsv, years.at(-1)?.f));
   }
   const flow = years.slice(1).map((y, i) => flowOf(y, years[i]));
   const turnover = years.filter((y) => y.kind !== 'audited').map(turnoverOf);
   const limit = (turnover.at(-1) as Turnover).limit, proposed = (years.at(-1) as CmaYear).f.bankWc;
 
-  const check = cmaCheck(given.map((id) => x.figures[id] as Figures), quasi, DATA.daysInYear, TURNOVER.needPct, TURNOVER.marginPct);
+  const check = cmaCheck(given.map((id) => x.figures[id] as Figures), quasi, DATA.daysInYear, TURNOVER.needPct, TURNOVER.marginPct, rsv);
   for (const [i, y] of years.entries()) {
     const c = check[i];
-    for (const k of ['pbt', 'netProfit', 'pbdit', 'currentLiabilities', 'termLiabilities', 'netWorth', 'outside', 'currentAssets', 'assets', 'nwc'] as const)
+    for (const k of ['pbt', 'netProfit', 'pbdit', 'currentLiabilities', 'termLiabilities', 'netWorth', 'outside', 'currentAssets', 'assets', 'nwc', 'available', 'security', 'secured'] as const)
       if (!money(y[k], c[k])) return blocked(`${y.fy}: ${k}`);
-    for (const k of ['currentRatio', 'tolTnw', 'debtEquity', 'interestCover', 'netMarginPct', 'stockDays', 'debtorDays', 'creditorDays', 'growthPct'] as const)
+    for (const k of ['currentRatio', 'tolTnw', 'debtEquity', 'interestCover', 'netMarginPct', 'stockDays', 'debtorDays', 'creditorDays', 'growthPct', 'dscr', 'facr', 'securityCover'] as const)
       if (!same(y[k], c[k])) return blocked(`${y.fy}: ${k}`);
     // Form VI must close: what the flows leave over is what the bank borrowing fell by, from the balance sheets alone.
     if (i > 0 && !money(flow[i - 1].net, -c.bankChange)) return blocked(`${y.fy}: the funds flow`);
