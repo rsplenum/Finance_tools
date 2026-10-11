@@ -14,7 +14,7 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf, printable } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import {
-  EMPTY_PLAN, areaLabel, drawerBrands, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withExtra, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit, type PlanState,
+  EMPTY_PLAN, areaLabel, floorsQuestion, drawerBrands, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withExtra, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit, type PlanState,
 } from '../site/src/estimate/plan-model';
 import { billDoc, billFileName, planDoc, planDocStatus, planFileName } from '../site/src/estimate/plan-document';
 import { BRAND_NOTICE, BRAND_NOTICE_SHORT, SITE_NAME } from '../site/src/site';
@@ -26,7 +26,7 @@ const view = (s: PlanState) => planPreview(s).view!;
 
 describe('the six questions', () => {
   it('nothing answered: the six, in the order asked', () => {
-    expect(planNeeds(EMPTY_PLAN)).toEqual(['What the work is: build a new house, repair or renovate, or interiors', 'Flat or house', 'Which city', 'The carpet area', 'How many bedrooms', 'Which level']);
+    expect(planNeeds(EMPTY_PLAN)).toEqual(['What the work is: build a new house, add a floor or rooms, repair or renovate, or interiors', 'Flat or house', 'Which city', 'The carpet area', 'How many bedrooms', 'Which level']);
     expect(planPreview({ ...FLAT, home: undefined }).needs).toEqual(['Flat or house']);
   });
   it('a carpet area not understood is asked again; one in sq m is the engine\'s too', () => {
@@ -216,6 +216,34 @@ describe('a new house on the page (D-UX-23)', () => {
     expect(view(w).change?.text).toBe('The sewer in place of a septic tank: Rs. 84,680 less; the sewer connection is still to be priced');
     expect(view(withSewer({ ...HOUSE, city: 'chennai' }, true)).change?.text).toMatch(/^The sewer in place of a septic tank: Rs\. [\d,]+ less$/);
     expect(inputOf({ ...FLAT, sewer: true }).sewer).toBeUndefined();
+  });
+});
+
+describe('E5b on the page: a floor added on a house', () => {
+  const EXT: PlanState = { ...EMPTY_PLAN, kind: 'extend', floors: 1, city: 'pune', area: '1,000', bhk: '2', level: 1, doc: { owner: 'Asha Rao', property: 'House 7, Example Colony, Pune', lender: '', preparedBy: '' } };
+  it('asks how many floors are being added, one or two, and the built-up area being added: still six questions; a third floor from a new house is cleared', () => {
+    expect(planNeeds({ ...EMPTY_PLAN, kind: 'extend' })).toEqual(['How many floors are being added', 'Which city', 'The built-up area being added', 'How many bedrooms', 'Which level']);
+    expect([areaLabel('extend'), floorsQuestion('extend').legend, floorsQuestion('extend').options.map((o) => o.label)]).toEqual(['Built-up area being added', 'How many floors are you adding?', ['One floor', 'Two floors']]);
+    expect(inputOf(EXT)).toMatchObject({ kind: 'extend', property: 'house', floors: 1, area: 1000 });
+    expect([withKind({ ...EXT, kind: 'build', floors: 3 }, 'extend').floors, withKind({ ...EXT, kind: 'build', floors: 2 }, 'extend').floors]).toEqual([undefined, 2]);
+  });
+  it('the summary, the title and the sections: no outside works, the structure first and twelve on; no plot', () => {
+    const v = view(EXT);
+    expect(v.summary.replace(/\s/g, ' ')).toBe('Add a floor or rooms · One floor added · Pune · 1,000 sq ft · 2 BHK · Basic');
+    expect([v.areaName, v.title, v.loan]).toEqual(['Built-up area', 'Estimate of cost of an extension', 'extension']);
+    expect(v.sections.map((x) => x.id)[0]).toBe('structure');
+    expect(v.sections.some((x) => x.id === 'outside')).toBe(false);
+    expect([v.sections.length, v.sections.filter((x) => x.on).length]).toEqual([17, 12]);
+    expect(v.plot).toBeUndefined();
+  });
+  it('the stages, the old terrace first and the overhead tank last, adding up to the total; the document titled for an extension, with its Annex 2', () => {
+    const v = view(EXT), st = v.stages!;
+    expect(st.map((x) => x.name)).toEqual(['Old terrace taken up', 'The new floor\'s roof slab', 'Walls and plaster', 'Finishing', 'Overhead tank']);
+    expect(st.reduce((t, x) => t + x.n, 0)).toBeCloseTo(v.n.total, 2);
+    const lines = docText(planDoc(EXT, planPreview(EXT), TODAY)!).split('\n');
+    for (const want of ['Estimate of cost of an extension', 'The stages of construction, for an extension loan\'s payments, are in Annex 2.', 'Annex 2. Stages of construction'])
+      expect(lines, want).toContain(want);
+    expect(lines.some((l) => l.startsWith('For planning an extension loan\'s payments: the old terrace taken up first'))).toBe(true);
   });
 });
 

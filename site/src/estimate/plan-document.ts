@@ -79,7 +79,7 @@ export function planDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
   ] });
   if (v.split) blocks.push({ kind: 'table', table: { columns: [{ label: 'Of the total' }, { label: 'Rupees' }], rows: v.split.map((x) => ({ cells: [{ text: x.label }, cell(x.amount, x.n)] })) } });
   // A new house: its stages for a construction loan are an annex of their own, so page 1 stays the signed abstract.
-  if (v.stages) blocks.push({ kind: 'text', text: 'The stages of construction, for a construction loan\'s payments, are in Annex 2.' });
+  if (v.stages) blocks.push({ kind: 'text', text: `The stages of construction, for ${v.loan === 'extension' ? 'an extension' : 'a construction'} loan's payments, are in Annex 2.` });
   blocks.push({ kind: 'signature', lines: [`For ${by || 'the engineer or architect who adopts this estimate'}`, '', 'Signature and seal', 'Name and registration number:', 'Date:', 'Place:'] });
 
   const detail: Table = {
@@ -126,7 +126,9 @@ export function planDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
       ] },
       ...(stages ? [{ name: 'Stages', blocks: [
         { kind: 'title' as const, text: 'Annex 2. Stages of construction', small: true },
-        { kind: 'text' as const, text: 'For planning a construction loan\'s payments: the structure split by published shares of a house\'s cost (foundation and plinth, the frame and slabs alike for each floor, the walls and plaster); the finishing, the outside works and the water from the estimate\'s own items. Not a lender\'s own schedule.', small: true },
+        { kind: 'text' as const, text: v.loan === 'extension'
+          ? 'For planning an extension loan\'s payments: the old terrace taken up first, from the estimate\'s own items; then the structure split by published shares of a house\'s cost, without the foundation (the frame and slabs alike for each new floor, the walls and plaster); the finishing and the overhead tank from the estimate\'s own items. Not a lender\'s own schedule.'
+          : 'For planning a construction loan\'s payments: the structure split by published shares of a house\'s cost (foundation and plinth, the frame and slabs alike for each floor, the walls and plaster); the finishing, the outside works and the water from the estimate\'s own items. Not a lender\'s own schedule.', small: true },
         { kind: 'table' as const, table: stages },
         { kind: 'list' as const, items: (v.stages ?? []).map((x) => `${x.name}: ${x.what}.`), small: true },
       ] }] : []),

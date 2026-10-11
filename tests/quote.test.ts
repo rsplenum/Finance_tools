@@ -109,8 +109,8 @@ describe('a line typed by hand', () => {
 
 describe('the two computations', () => {
   it('agree on every bill line at every level, city and kind, at rates from far below to far above', () => {
-    for (const kind of ['renovate', 'interiors', 'build'] as const) for (const level of [1, 2, 3, 4, 5] as const) for (const city of ['pune', 'delhi', 'other']) {
-      const { ctx, lines } = billLines(home({ kind, level, city, ...(kind === 'build' ? { floors: 2 } : {}) }));
+    for (const kind of ['renovate', 'interiors', 'build', 'extend'] as const) for (const level of [1, 2, 3, 4, 5] as const) for (const city of ['pune', 'delhi', 'other']) {
+      const { ctx, lines } = billLines(home({ kind, level, city, ...(kind === 'build' ? { floors: 2 } : kind === 'extend' ? { floors: 1 } : {}) }));
       const q = lines.flatMap(({ b, from }, i) => [0.1, 0.79, 1, 1.21, 3].map((m) => ({ words: b.item, unit: TYPED_UNIT[b.unit], rate: (i + 1) * 97.13 * m, from })));
       expect('blocked' in quoteCheck(q, ctx)).toBe(false);
     }

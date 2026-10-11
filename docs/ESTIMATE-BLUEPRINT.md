@@ -176,7 +176,7 @@ Jobs mix: the sample renovation quotation combined civil work and interiors (B2)
 
 ### A3. The default path: six questions, then the estimate
 
-1. **What is the work?** Build a house · Add a floor or rooms · Repair or renovate · Interiors. Build a house has been on the page since 03-10-2026 as "Build a new house" (D-UX-23); Add a floor or rooms is still to come.
+1. **What is the work?** Build a house · Add a floor or rooms · Repair or renovate · Interiors. Build a house has been on the page since 03-10-2026 as "Build a new house" (D-UX-23); Add a floor or rooms since 11-10-2026, a floor on top only (D-UX-45), rooms beside still to come.
 2. **Flat or house?** This is asked for repairs and interiors. For building and for extensions it asks instead **How many floors?**:
    - Ground, G+1, G+2 or G+3;
    - for an extension, the floors being added.
@@ -823,7 +823,7 @@ The sources stay in the data and on the page.
 | E2 | The library checked against its sources, page by page, once the network allows; the owner's fictional flat, worked at home, as a test | Every level's item checked, or marked as not |
 | E3 | Built on 03-10-2026 (D-UX-25, D-TECH-18, D-DATA-05). Rooms (sizes, a room's own level, for any room), What changed and Compare; the movable sections (Furniture, Soft furnishings, Appliances, Smart home) with the split | As above |
 | E4 | A quotation in hand, and the bill of quantities for quotes (A9) | As above |
-| E5 | A house. **Built on 03-10-2026 (D-UX-23 thin, then D-UX-27 and D-POL-11):** Build a new house, with the floors and the built-up area, the structure at one specification, the terrace, the outside walls, the stairs with their finish and a cabin over the stair to the terrace, the outside works round the plot (the plot an assumption the user can change), the water (the sewer as a switch) and the stages for a construction loan. **Still to come:** Add a floor, a renovated house's own works, a borewell and the drainage, CPWD's plinth-area range as a check | The owner has checked `cost-index.json` and the plinth-area rates against the official texts |
+| E5 | A house. **Built on 03-10-2026 (D-UX-23 thin, then D-UX-27 and D-POL-11):** Build a new house, with the floors and the built-up area, the structure at one specification, the terrace, the outside walls, the stairs with their finish and a cabin over the stair to the terrace, the outside works round the plot (the plot an assumption the user can change), the water (the sewer as a switch) and the stages for a construction loan. **Add a floor on top built on 11-10-2026 (D-UX-45).** **Still to come:** rooms beside, a renovated house's own works, a borewell and the drainage, CPWD's plinth-area range as a check | The owner has checked `cost-index.json` and the plinth-area rates against the official texts |
 | E6 | More options (A10); the terms and measurements annexes | As above |
 | E7 | The professional page (A11) | A professional the owner trusts uses it for one real estimate of their own |
 | E8 | Later, only if wanted: Fit my budget (A8) | As above |
