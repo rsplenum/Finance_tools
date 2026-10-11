@@ -4,7 +4,7 @@
  * costs; working capital. Then the report as the engine works it out, provisional while anything is missing, table by
  * table; what it assumes until changed; and the three downloads. Figures: engine/report.ts only, via model.ts.
  */
-import { useMemo, useState } from 'preact/hooks';
+import { useEffect, useMemo, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
 import { BUTTON, Choice, HINT, Section, TextField } from '../fields';
 import { printable } from '../doc/pdf';
@@ -13,8 +13,8 @@ import { monthText } from '../dscr/model';
 import { docNeeds, docStatus, fileName, reportDoc } from './document';
 import {
   PMEGP, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, REPAYMENT_CHOICES, SCHEME_CHOICES,
-  amountOf, assumptionsOf, plainOf, preview, statusText, tidyAmount,
-  type ReportFacts, type ReportPreview, type ReportState, type ViewTable,
+  amountOf, assumptionsOf, plainOf, preview, statusText, tidyAmount, viableOf,
+  type ReportFacts, type ReportPreview, type ReportState, type ViableView, type ViewTable,
 } from './model';
 
 type Update = (f: (s: ReportState) => ReportState) => void;
@@ -113,7 +113,7 @@ export function ReportCalculator() {
         </div>)}
       </div>
     </Section>
-    <Result p={p} />
+    <Result s={s} p={p} />
     <Section id="assumed" title="Assumed until changed">
       <ul data-testid="rep-assumed" class="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700 dark:text-slate-300">
         {assumptionsOf(s).map((a) => <li key={a.id}><span class="font-medium text-slate-900 dark:text-slate-100">{a.what}:</span> {a.shown}. <span class={MUTED}>{a.why}.</span></li>)}
@@ -147,12 +147,31 @@ function ReportTable({ t }: { t: ViewTable }) {
   </details>;
 }
 
-function Result({ p }: { p: ReportPreview }) {
+/** "Make it viable" (D-UX-50): worked on a tap, since it runs the whole report many times; cleared when a figure changes. */
+function Viable({ s, p }: { s: ReportState; p: ReportPreview }) {
+  const [v, setV] = useState<ViableView | undefined>();
+  useEffect(() => setV(undefined), [s]);
+  return <div class="mt-2">
+    {p.misses && <p data-testid="rep-misses" class="text-sm text-red-700 dark:text-red-300">{p.misses}</p>}
+    {!v && <button type="button" data-testid="rep-viable" class={`mt-2 ${BUTTON}`} onClick={() => setV(viableOf(s))}>
+      {p.misses ? 'Make it viable' : 'How far can sales fall?'}</button>}
+    {v && <div data-testid="rep-viable-box" class="mt-2 rounded-lg border border-slate-300 p-3 dark:border-slate-600">
+      <p class="font-medium text-slate-900 dark:text-slate-100">{v.title}</p>
+      <ul class="mt-1 list-disc space-y-1 pl-5 text-sm text-slate-800 dark:text-slate-200">
+        {v.lines.map((l) => <li key={l.id} data-testid={`rep-viable-${l.id}`}>{l.text}{l.note && <span class={`block ${MUTED}`}>{l.note}</span>}</li>)}
+      </ul>
+      <p class={`mt-2 ${HINT}`}>{v.foot}</p>
+    </div>}
+  </div>;
+}
+
+function Result({ s, p }: { s: ReportState; p: ReportPreview }) {
   const v = p.view;
   return <Section id="report" title="The project report">
     <p data-testid="rep-status" class={`mt-3 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.needs.length || p.blocked || p.short
       ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200'}`}>{statusText(p)}</p>
     {p.blocked && <p class="mt-2 text-sm text-red-700 dark:text-red-300">{p.blocked}</p>}
+    {v && !p.blocked && <Viable s={s} p={p} />}
     {p.short && <p data-testid="rep-short" class="mt-2 text-sm text-red-700 dark:text-red-300">{p.short}</p>}
     {p.flags.length > 0 && <ul data-testid="rep-flags" class="mt-2 list-disc space-y-0.5 pl-5 text-sm text-amber-900 dark:text-amber-200">{p.flags.map((n) => <li key={n}>{n}</li>)}</ul>}
     {p.needs.length > 0 && <ul data-testid="rep-needs" class="mt-2 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>}
