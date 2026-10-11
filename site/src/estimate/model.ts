@@ -3,7 +3,7 @@
  * words, with the engine's exact figures beside them for the Excel copy. Pure, no DOM. Figures: engine/estimate.ts only.
  */
 import { KINDS, UNITS, estimate, type Estimate, type EstimateKind, type Item } from '../../../engine/estimate';
-import { R, architect, billOf, levelName } from '../../../engine/architect';
+import { R, architect, billOf, builds, levelName } from '../../../engine/architect';
 import { FAMILIES } from '../../../engine/library';
 import { FAR_OUT, TYPED_UNIT, billFroms, quoteCheck, quoteContext, type BillFrom, type QuoteContext, type QuoteResult } from '../../../engine/quote';
 import { inputOf as planInput, planNeeds, type PlanState } from './plan-model';
@@ -136,14 +136,14 @@ export function fromBill(s: EstimateState, plan: PlanState | null): EstimateStat
   if (!plan || planNeeds(plan).length) return 'Answer the six questions at the top of the page first: the bill is made from them.';
   const e = architect(planInput(plan));
   if (!('total' in e)) return 'The planning estimate shows no figures yet, so there is no bill to start from.';
-  const kind: EstimateKind = e.kind === 'build' ? 'construction' : 'renovation', map = HEAD[kind];
+  const kind: EstimateKind = builds(e.kind) ? 'construction' : 'renovation', map = HEAD[kind];
   const bill = billOf(e, plan.brands), froms = billFroms(e, bill);
   const items = bill.flatMap((sec, i) => sec.lines.map((b, j): ItemText => ({
     head: map.families[froms[i][j].family] ?? map.sections[sec.id] ?? 'other',
     description: `${b.item}${b.brand ? `, ${b.brand}` : ''} (${b.rooms.join(', ')})`,
     quantity: String(b.qty), unit: TYPED_UNIT[b.unit], rate: '', no: `${i + 1}.${j + 1}`, from: froms[i][j],
   })));
-  return { ...s, kind, items, gst: 'included', quote: quoteContext(e), area: e.kind === 'build' && plan.unit === 'sqft' ? plan.area : s.area };
+  return { ...s, kind, items, gst: 'included', quote: quoteContext(e), area: builds(e.kind) && plan.unit === 'sqft' ? plan.area : s.area };
 }
 
 const UNIT_PER: Record<string, string> = { sqft: 'a sq ft', sqm: 'a sq m', rmt: 'a running metre', rft: 'a running ft', cum: 'a cu m', cft: 'a cu ft', kg: 'a kg', MT: 'a tonne', nos: 'each', set: 'a set', LS: 'a lot', bag: 'a bag', litre: 'a litre' };

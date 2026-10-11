@@ -21,7 +21,7 @@ import { inr } from './util';
 import { architectCheck, checkRate, type ArchitectCheck } from './architect-check';
 import type { Blocked, Needs } from './dscr';
 
-export type WorkKind = 'build' | 'renovate' | 'interiors';
+export type WorkKind = 'build' | 'extend' | 'renovate' | 'interiors';
 export type Bhk = '1RK' | '1' | '2' | '3' | '4' | '5';
 export type Level = 1 | 2 | 3 | 4 | 5;
 export type RoomKind = 'living' | 'bedroom' | 'kitchen' | 'bath' | 'passage' | 'balcony' | ExtraKind;
@@ -86,6 +86,7 @@ export interface Rules {
       persons: { by: Record<Bhk, number>; lpcd: number } & Sourced; sump: { days: number; step: number } & Sourced;
       tank: { days: number; sizes: number[] } & Sourced; septic: { litres: Record<Bhk, number> } & Sourced; rwh: Sourced;
     };
+    extension: { floors: number[] } & Sourced;
     stages: { shares: Record<'foundation' | 'frame' | 'walls', [number, number]>; list: { id: string; name: string; what: string }[] } & Sourced;
   };
   templates: Record<'flat' | RoomKind, Slot[]>;
@@ -103,15 +104,19 @@ export const BHKS: { id: Bhk; label: string }[] = [
 ];
 /** A new house's floors (A3): the ground floor only, or up to three more. */
 export const FLOORS: { n: number; label: string }[] = [{ n: 1, label: 'Ground only' }, { n: 2, label: 'G+1' }, { n: 3, label: 'G+2' }, { n: 4, label: 'G+3' }];
+/** An extension's floors being added on top (E5b): one or two. */
+export const FLOORS_ADDED: { n: number; label: string }[] = R.house.extension.floors.map((n) => ({ n, label: n === 1 ? 'One floor' : 'Two floors' }));
+/** Whether a kind of work builds a house's floors: a new house, or an extension's floors on top. */
+export const builds = (kind?: WorkKind) => kind === 'build' || kind === 'extend';
 
 export interface ArchitectInput {
   kind?: WorkKind;
   property?: 'flat' | 'house';
-  /** For a new house: its floors, 1 (the ground floor only) to 4 (G+3). */
+  /** For a new house: its floors, 1 (the ground floor only) to 4 (G+3); for an extension, the floors being added on top, 1 or 2. */
   floors?: number;
   /** A city's id from the list, or 'other'. */
   city?: string;
-  /** The carpet area, or for a new house the built-up area of all floors, in `areaUnit` (sq ft unless said). */
+  /** The carpet area, or for a new house the built-up area of all floors (for an extension, of the floors added), in `areaUnit` (sq ft unless said). */
   area?: number;
   areaUnit?: 'sqft' | 'sqm';
   bhk?: Bhk;
@@ -183,7 +188,7 @@ export interface Flag { text: string; decides: boolean; n: number }
 /** A new house's plot: its sides in metres (the longer one its length), whether they are the user's, and whether the outline fits in it. */
 export interface Plot { l: number; b: number; sqm: number; own: boolean; fits: boolean }
 /** A new house's outline: lengths in metres, areas in sq m, each floor alike; a stair on each floor and a cabin over the top one. */
-export interface House { floors: number; builtSqm: number; footprint: number; l: number; b: number; wall: number; stair: number; carpetSqm: number; floorToFloor: number; cabin: number; plot: Plot }
+export interface House { floors: number; /** An extension's floors on top of a house (E5b), not a new house. */ added: boolean; builtSqm: number; footprint: number; l: number; b: number; wall: number; stair: number; carpetSqm: number; floorToFloor: number; cabin: number; plot: Plot }
 /** A stage of a new house for a construction loan's payments: what is done by then, and its amount (E5). */
 export interface Stage { id: string; name: string; what: string; amount: number; share: number }
 /** A part of the carpet area: a room, the passage, or the inside walls (id 'walls'); its share of the carpet area. */
@@ -221,7 +226,7 @@ const LEVEL_NAMES = R.levels.map((l) => l.name);
 const r2 = (x: number) => Math.round(x * 100 + 1e-6) / 100;
 const f2 = (x: number) => x.toFixed(2);
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
-const AREA_RULES = ['floor', 'floor-skirting', 'paint', 'feature', 'cladding', 'false-ceiling', 'bath-tiles', 'dado', 'wp-bath', 'wp-balcony', 'counter-top', 'wardrobe', 'loft', 'windows', 'shower-screen', 'protect', 'carpet', 'making-good', 'built-up', 'plinth', 'terrace', 'exterior-walls', 'stair-finish', 'stair-walls', 'compound-paint', 'gate', 'paving'];
+const AREA_RULES = ['floor', 'floor-skirting', 'paint', 'feature', 'cladding', 'false-ceiling', 'bath-tiles', 'dado', 'wp-bath', 'wp-balcony', 'counter-top', 'wardrobe', 'loft', 'windows', 'shower-screen', 'protect', 'carpet', 'making-good', 'old-terrace', 'built-up', 'plinth', 'terrace', 'exterior-walls', 'stair-finish', 'stair-walls', 'compound-paint', 'gate', 'paving'];
 const LENGTH_RULES = ['cove', 'counter-run', 'stair-railing', 'compound-wall'];
 const VOLUME_RULES = ['sump', 'tank', 'septic'];
 /** 'material': a structure's rule of thumb, in the material's own unit (bags, kg, cu m, bricks). 'volume': a tank's litres. */
@@ -311,13 +316,13 @@ export function ownRooms(rooms: Room[], input: Pick<ArchitectInput, 'rooms' | 'r
  * area left for the rooms is the built-up area less the outer walls' and the stairs' footprints (A5, A13). The plot is
  * the user's, or the outline with the rule's margins round it (E5).
  */
-export function houseOf(builtSqm: number, floors: number, H: number, own?: { l: number; b: number }): House {
+export function houseOf(builtSqm: number, floors: number, H: number, own?: { l: number; b: number }, added = false): House {
   const s = R.house, t = R.openings.walls.external / 1000, m = s.plot;
   const footprint = builtSqm / floors, l = Math.sqrt(footprint * s.shape.aspect), b = footprint / l;
   const wall = 2 * t * (l + b) - 4 * t * t, stair = s.stair.w * s.stair.l;
   const pl = own ? Math.max(own.l, own.b) : l + m.front + m.rear, pb = own ? Math.min(own.l, own.b) : b + 2 * m.side;
   const plot = { l: pl, b: pb, sqm: pl * pb, own: !!own, fits: l <= pl + 1e-9 && b <= pb + 1e-9 };
-  return { floors, builtSqm, footprint, l, b, wall, stair, carpetSqm: builtSqm - floors * (wall + stair), floorToFloor: H + s.slab.m, cabin: stair, plot };
+  return { floors, added, builtSqm, footprint, l, b, wall, stair, carpetSqm: builtSqm - floors * (wall + stair), floorToFloor: H + s.slab.m, cabin: stair, plot };
 }
 
 /**
@@ -351,12 +356,13 @@ export function planOpenings(rooms: Room[]): Opening[] {
 /** What the estimate needs before it can be worked out, in the order asked. */
 export function architectNeeds(input: ArchitectInput): string[] {
   const needs: string[] = [];
-  const build = input.kind === 'build', floorsOk = isNum(input.floors) && Number.isInteger(input.floors) && input.floors >= 1 && input.floors <= 4;
-  if (!input.kind || !(input.kind in R.kinds)) needs.push('What the work is: build a new house, repair or renovate, or interiors');
-  if (build && !floorsOk) needs.push('How many floors');
+  const build = builds(input.kind), extend = input.kind === 'extend', most = extend ? Math.max(...R.house.extension.floors) : FLOORS.length;
+  const floorsOk = isNum(input.floors) && Number.isInteger(input.floors) && input.floors >= 1 && input.floors <= most;
+  if (!input.kind || !(input.kind in R.kinds)) needs.push('What the work is: build a new house, add a floor or rooms, repair or renovate, or interiors');
+  if (build && !floorsOk) needs.push(extend ? 'How many floors are being added' : 'How many floors');
   if (!input.city) needs.push('Which city');
   const areaOk = isNum(input.area) && input.area > 0;
-  if (!areaOk) needs.push(build ? 'The built-up area of all floors' : 'The carpet area');
+  if (!areaOk) needs.push(extend ? 'The built-up area being added' : build ? 'The built-up area of all floors' : 'The carpet area');
   if (!input.bhk || !(input.bhk in R.programmes)) needs.push('How many bedrooms');
   if (!input.level || !(input.level >= 1 && input.level <= 5)) needs.push('Which level');
   const heightOk = input.heightM === undefined || (input.heightM >= 2 && input.heightM <= 6);
@@ -378,8 +384,8 @@ export function architectNeeds(input: ArchitectInput): string[] {
   if (input.plot && (!plotSide(input.plot.l) || !plotSide(input.plot.b))) needs.push(`Each side of the plot from ${PLOT_SIDE.min} to ${PLOT_SIDE.max} m`);
   if (build && floorsOk && areaOk && heightOk) {
     const sqm = input.areaUnit === 'sqm' ? (input.area as number) : (input.area as number) / SQFT_PER_SQM;
-    const h = houseOf(sqm, input.floors as number, input.heightM ?? R.height.m);
-    if (h.carpetSqm < sqm / 2) needs.push(`A larger built-up area: the outer walls and stairs of ${h.floors} floors take more than half of it`);
+    const h = houseOf(sqm, input.floors as number, input.heightM ?? R.height.m, undefined, extend);
+    if (h.carpetSqm < sqm / 2) needs.push(`A larger built-up area: the outer walls and stairs of ${h.floors} floor${h.floors > 1 ? 's' : ''} take more than half of it`);
   }
   return needs;
 }
@@ -439,12 +445,12 @@ export const sectionFor = (section: string, kind: WorkKind) => { const k = R.sec
 
 function work(input: ArchitectInput, banded = false): ArchitectEstimate {
   const kind = input.kind as WorkKind, bhk = input.bhk as Bhk, level = input.level as Level;
-  const home = kind === 'build' || input.property === 'house' ? 'house' : 'flat', whole = `Whole ${home}`;
+  const home = builds(kind) || input.property === 'house' ? 'house' : 'flat', whole = `Whole ${home}`;
   const typedSqm = input.areaUnit === 'sqm' ? (input.area as number) : (input.area as number) / SQFT_PER_SQM;
   const factor = cityFactor(input.city as string);
   const city = factor ?? 1;
   const H = input.heightM ?? R.height.m;
-  const house = kind === 'build' ? houseOf(typedSqm, input.floors as number, H, input.plot) : null;
+  const house = builds(kind) ? houseOf(typedSqm, input.floors as number, H, kind === 'build' ? input.plot : undefined, kind === 'extend') : null;
   const carpetSqm = house ? house.carpetSqm : typedSqm;
   const rooms = ownRooms(planRooms(bhk, carpetSqm, input.roomWords, input), input), openings = planOpenings(rooms);
   const on = (s: string) => sectionFor(s, kind) && (input.sections?.[s] ?? R.kinds[kind].on.includes(s));
@@ -512,7 +518,7 @@ function work(input: ArchitectInput, banded = false): ArchitectEstimate {
   const split = { fixed: 0, movable: 0, appliance: 0 } as Record<ItemKind, number>;
   for (const l of lines) split[l.kind] = r2(split[l.kind] + l.amount);
   const cityName = R.cities.list.find((c) => c.id === input.city)?.name ?? 'Other';
-  const stages = house ? stagesOf(house, sections, split, total) : null;
+  const stages = house ? stagesOf(house, sections, split, total, lines) : null;
   // The bar of shares: each room's share of the carpet area (the balcony is outside it), and the inside walls' (R1).
   const shares: RoomShare[] = [
     ...rooms.filter((r) => r.kind !== 'balcony').map((r) => ({ id: r.id, name: r.name, kind: r.kind, share: r.sqm / carpetSqm })),
@@ -566,21 +572,28 @@ export function stageShare(id: 'foundation' | 'frame' | 'walls'): number {
   return m(id) / (m('foundation') + m('frame') + m('walls'));
 }
 
+/** The keys of an extension's lines for the old terrace taken up (E5b), its first stage. */
+export const TAKE_UP = new Set(['flat:demolish-floor:old-terrace', 'flat:debris:debris']);
 /**
  * A new house's stages for a construction loan (E5): the structure split by the published shares (foundation and plinth,
  * each floor's frame and slab alike, the walls and plaster taking what is left so the three add up to the structure), then
- * the finishes, the outside works and water, and any movable items from the estimate's own lines. Stages of nil are left out.
+ * the finishes, the outside works and water, and any movable items from the estimate's own lines. An extension's (E5b):
+ * the old terrace taken up first, from its own lines; no foundation, so the rest of the structure goes to the frame and
+ * slabs and to the walls by their two shares; the overhead tank for the water. Stages of nil are left out.
  */
-function stagesOf(h: House, sections: SectionTotal[], split: Record<ItemKind, number>, total: number): Stage[] {
+function stagesOf(h: House, sections: SectionTotal[], split: Record<ItemKind, number>, total: number, lines: Line[]): Stage[] {
   const amt = (id: string) => sections.find((x) => x.id === id)?.amount ?? 0, list = R.house.stages.list;
   const named = (id: string) => list.find((x) => x.id === id) as { id: string; name: string; what: string };
-  const S = amt('structure'), foundation = r2(S * stageShare('foundation')), slab = r2((S * stageShare('frame')) / h.floors);
-  const walls = r2(S - foundation - slab * h.floors), outside = r2(amt('outside') + amt('water')), movable = split.movable;
+  const takeUp = h.added ? r2(lines.filter((l) => TAKE_UP.has(l.key)).reduce((t, l) => t + l.amount, 0)) : 0;
+  const S = amt('structure'), rest = r2(S - takeUp);
+  const frameShare = h.added ? stageShare('frame') / (stageShare('frame') + stageShare('walls')) : stageShare('frame');
+  const foundation = h.added ? 0 : r2(S * stageShare('foundation')), slab = r2((rest * frameShare) / h.floors);
+  const walls = r2(rest - foundation - slab * h.floors), outside = r2(amt('outside') + amt('water')), movable = split.movable;
   const finishing = r2(total - S - outside - movable);
-  const slabs = Array.from({ length: h.floors }, (_, i) => ({
-    id: `slab-${i + 1}`, name: h.floors === 1 ? 'Roof slab' : `${FLOOR_NAMES[i]} ${named('slab').name}`, what: named('slab').what, amount: slab,
-  }));
-  const rows = [{ ...named('foundation'), amount: foundation }, ...slabs, { ...named('walls'), amount: walls }, { ...named('finishing'), amount: finishing }, { ...named('outside'), amount: outside }, { ...named('movable'), amount: movable }];
+  const floorName = (i: number) => (h.added ? (h.floors === 1 ? 'The new floor\'s roof slab' : `${['First', 'Second'][i]} new floor's ${named('slab').name}`) : h.floors === 1 ? 'Roof slab' : `${FLOOR_NAMES[i]} ${named('slab').name}`);
+  const slabs = Array.from({ length: h.floors }, (_, i) => ({ id: `slab-${i + 1}`, name: floorName(i), what: named('slab').what, amount: slab }));
+  const first = h.added ? { ...named('terrace'), amount: takeUp } : { ...named('foundation'), amount: foundation };
+  const rows = [first, ...slabs, { ...named('walls'), amount: walls }, { ...named('finishing'), amount: finishing }, { ...named(h.added ? 'water' : 'outside'), amount: outside }, { ...named('movable'), amount: movable }];
   return rows.filter((x) => Math.abs(x.amount) >= 0.005).map((x) => ({ ...x, share: total > 0 ? x.amount / total : 0 }));
 }
 
@@ -767,8 +780,9 @@ function measure(rule: string, r: Room | null, lv: Level, ctx: Ctx): { base: num
  * cabin (in their own units), its labour on the same area and the anti-termite treatment on the plinth, the terrace inside
  * the parapet with the upturn, the outside walls of every floor, the parapet and the cabin, and each floor's stair (its
  * railing, finish and walls). Round the plot: the compound wall, its paint, the gate and the paving. The water: the sump,
- * the overhead tank, the septic tank or the sewer connection, and the rainwater recharge pit. Null for a rule that is not
- * the house's.
+ * the overhead tank, the septic tank or the sewer connection, and the rainwater recharge pit. For an extension's floors
+ * (E5b): the materials less the foundation's share, and the old terrace's finish taken up with its debris. Null for a rule
+ * that is not the house's.
  */
 function measureHouse(rule: string, h: House, ctx: Ctx): { base: number; how: string } | null {
   const s = R.house, t = R.openings.walls.external / 1000, built = h.builtSqm + h.cabin, sqft = built * SQFT_PER_SQM;
@@ -776,13 +790,22 @@ function measureHouse(rule: string, h: House, ctx: Ctx): { base: number; how: st
   if (rule === 'built-up') return { base: built, how: `The built-up area of ${floors}, ${f2(h.builtSqm)} sq m, and the stair cabin on the terrace, ${f2(h.cabin)} sq m: ${f2(built)} sq m` };
   if (rule === 'plinth') return { base: h.footprint, how: `The ground floor's outline, ${f2(h.l)} × ${f2(h.b)} m: ${f2(h.footprint)} sq m` };
   if (rule.startsWith('struct:')) {
-    const what = rule.slice(7) as 'cement' | 'steel' | 'sand' | 'aggregate' | 'bricks', each = s.thumb[what], n = each * sqft;
-    const on = `${f2(sqft)} sq ft of built-up area and stair cabin`;
+    // An extension's floors stand on the house's columns (E5b): the rules of thumb, a whole house's, less the foundation's share.
+    const keep = h.added ? 1 - stageShare('foundation') : 1, what = rule.slice(7) as 'cement' | 'steel' | 'sand' | 'aggregate' | 'bricks', each = s.thumb[what], n = each * sqft * keep;
+    const on = `${f2(sqft)} sq ft of built-up area and stair cabin${h.added ? ` × ${(keep * 100).toFixed(2)}%, less the foundation and plinth's share of the structure` : ''}`;
     if (what === 'sand' || what === 'aggregate') return { base: n / CFT_PER_CUM, how: `${each} cft a sq ft × ${on} = ${f2(n)} cft = ${f2(n / CFT_PER_CUM)} cu m` };
     const word = what === 'cement' ? 'bags' : what === 'steel' ? 'kg' : 'bricks';
     return { base: n, how: `${each} ${word} a sq ft × ${on} = ${f2(n)} ${word}` };
   }
   const li = h.l - 2 * t, bi = h.b - 2 * t, inner = 2 * (li + bi), well = 2 * (st.w + st.l);
+  if (rule === 'old-terrace') {
+    const roof = li * bi;
+    return { base: roof, how: `The old roof inside its parapet, the new floors' outline less the outer walls: ${f2(li)} × ${f2(bi)} m = ${f2(roof)} sq m` };
+  }
+  if (rule === 'debris' && h.added) {
+    const roof = li * bi * SQFT_PER_SQM, lots = Math.ceil(roof / R.debris.sqftPerLot - 1e-9);
+    return { base: lots, how: `${lots} for ${Math.round(roof)} sq ft of old terrace taken up, one for each ${R.debris.sqftPerLot} sq ft` };
+  }
   if (rule === 'terrace') {
     const roof = li * bi, edge = inner * s.terraceUpturn.m;
     return { base: roof + edge, how: `The roof inside the parapet, ${f2(li)} × ${f2(bi)} m = ${f2(roof)} sq m, and ${f2(inner)} m × ${s.terraceUpturn.m} m up the parapet = ${f2(edge)} sq m` };
@@ -803,7 +826,7 @@ function measureHouse(rule: string, h: House, ctx: Ctx): { base: number; how: st
   }
   if (rule === 'stair-walls') {
     const up = h.floors * h.floorToFloor + s.cabin.h, a = well * up;
-    return { base: a, how: `The stair well's walls, ${f2(well)} m round, from the ground floor to the cabin's roof (${floors} × ${f2(h.floorToFloor)} m + ${f2(s.cabin.h)} m = ${f2(up)} m): ${f2(a)} sq m, openings not taken off` };
+    return { base: a, how: `The stair well's walls, ${f2(well)} m round, from the ${h.added ? 'first new' : 'ground'} floor to the cabin's roof (${floors} × ${f2(h.floorToFloor)} m + ${f2(s.cabin.h)} m = ${f2(up)} m): ${f2(a)} sq m, openings not taken off` };
   }
   if (rule === 'terrace-door') return { base: 1, how: 'One, from the stair cabin to the terrace' };
   const o = s.outside, P = 2 * (h.plot.l + h.plot.b), wall = Math.max(0, P - o.gate.w);
@@ -866,6 +889,18 @@ function houseAssumed(ctx: Ctx, h: House, side: (x: number) => string, m: boolea
   const sump = Math.ceil((day * w.sump.days) / w.sump.step - 1e-9) * w.sump.step, tank = w.tank.sizes.find((x) => x >= day * w.tank.days - 1e-9) ?? w.tank.sizes[w.tank.sizes.length - 1];
   const pct = (x: number) => `${(x * 100).toFixed(2)}%`, P = 2 * (h.plot.l + h.plot.b), wall = Math.max(0, P - hs.outside.gate.w);
   const plot = `${side(h.plot.l)} × ${side(h.plot.b)} ${unit}, ${area(h.plot.sqm)}`;
+  if (h.added) {
+    // An extension (E5b): the new floors on the house, no plot, outside works, sump or septic tank of its own.
+    const keep = 1 - stageShare('foundation'), x = hs.extension, frame = stageShare('frame') / (stageShare('frame') + stageShare('walls'));
+    const n = (k: 'cement' | 'steel' | 'sand' | 'aggregate' | 'bricks') => String(+(th[k] * keep).toFixed(2));
+    return [
+      { what: 'The new floors', shown: `${FLOORS_ADDED[h.floors - 1].label} on the house: ${h.floors > 1 ? `${h.floors} floors, each ` : ''}${sqft(h.footprint)} sq ft, ${f2(h.l)} × ${f2(h.b)} m outside with ${R.openings.walls.external} mm outer walls, and a ${hs.stair.w} × ${hs.stair.l} m stair on each new floor, the top one rising to a ${f2(hs.cabin.h)} m cabin on the new terrace; ${sqft(h.carpetSqm)} sq ft of carpet area left for the rooms`, why: `${x.why} ${hs.stair.why} ${hs.cabin.why}`, src: [...new Set([...x.src, ...hs.stair.src, ...hs.cabin.src])] },
+      { what: 'Floor to floor', shown: `${f2(h.floorToFloor)} m: the ceiling and a ${hs.slab.m * 1000} mm slab; a ${f2(hs.parapet.m)} m parapet on the new terrace`, why: `${hs.slab.why} ${hs.parapet.why}`, src: [...hs.slab.src, ...hs.parapet.src] },
+      { what: 'Structure', shown: `For each sq ft of built-up area and of the stair cabin, a whole house's rules of thumb less the foundation and plinth's ${pct(stageShare('foundation'))}: ${n('cement')} bags of cement, ${n('steel')} kg of steel, ${n('sand')} cft of sand, ${n('aggregate')} cft of aggregate and ${n('bricks')} bricks, and the labour by stage without the foundation's`, why: `${th.why} ${x.why}`, src: [...new Set([...th.src, ...x.src])] },
+      { what: 'Water', shown: `${people} people at ${w.persons.lpcd} litres a day: an overhead tank of ${inr(tank)} litres (a day) for the new home on the new terrace; the sump, the septic tank or sewer and the rainwater pit are the house's own`, why: `${w.persons.why} ${w.tank.why}`, src: [...new Set([...w.persons.src, ...w.tank.src])] },
+      { what: 'Stages', shown: `The old terrace taken up first, from its own lines; no foundation, so the rest of the structure is split ${pct(frame)} to the frame and slabs, alike for each new floor, and ${pct(1 - frame)} to the walls and plaster; the finishes and the overhead tank from the estimate's own lines`, why: hs.stages.why, src: hs.stages.src },
+    ];
+  }
   return [
     { what: 'The house', shown: `${FLOORS[h.floors - 1].label}: ${h.floors} floor${h.floors > 1 ? 's' : ''} of ${sqft(h.footprint)} sq ft, ${f2(h.l)} × ${f2(h.b)} m outside with ${R.openings.walls.external} mm outer walls, and a ${hs.stair.w} × ${hs.stair.l} m stair on each floor, the top one rising to a ${f2(hs.cabin.h)} m cabin on the terrace; ${sqft(h.carpetSqm)} sq ft of carpet area left for the rooms`, why: `${hs.shape.why} ${hs.stair.why} ${hs.cabin.why}`, src: [...hs.shape.src, ...hs.stair.src, ...hs.cabin.src] },
     { what: 'Floor to floor', shown: `${f2(h.floorToFloor)} m: the ceiling and a ${hs.slab.m * 1000} mm slab; a ${f2(hs.parapet.m)} m parapet on the terrace`, why: `${hs.slab.why} ${hs.parapet.why}`, src: [...hs.slab.src, ...hs.parapet.src] },
@@ -902,18 +937,25 @@ function flags(ctx: Ctx, bhk: Bhk, carpetSqft: number, lines: Line[], unpriced: 
     const side = (x: number) => (unit === 'm' ? f2(x) : f2(x * FT_PER_M));
     note('The structure\'s materials and labour are rules of thumb for each sq ft of built-up area (as reported). A structural engineer\'s design and quantities replace them; more floors, poor soil or seismic zone IV or V usually need more steel. IS 456\'s lowest grade of reinforced concrete is M25 in the ground and the rain, and M30 in coastal air, as in Mumbai and Chennai (as reported).', section('structure'));
     note(`The rooms are planned as one home of ${Math.round(carpetSqft)} sq ft of carpet area, the built-up area less the outer walls and the stairs; how they sit on each floor is not drawn yet.`, inRooms);
-    if (!h.plot.fits) check(`Your plot, ${side(h.plot.l)} × ${side(h.plot.b)} ${unit}, is smaller than the house's outline, ${side(h.l)} × ${side(h.b)} ${unit}: check the plot's size, or the built-up area and the floors.`, section('outside'));
-    note('The compound wall runs round all four sides of the plot and the paving covers all the open ground round the house: take off a side that a neighbour\'s wall already closes, or a garden left unpaved.', section('outside'));
     if (riser > 0.19 + 1e-9) check(`The stairs' risers come to ${Math.round(riser * 1000)} mm, above the Code's 190 mm for a house: a floor this tall needs more steps than the rule's ${2 * (R.house.stair.treads + 1)}.`, section('exterior'));
-    note('Rainwater harvesting is one recharge pit with a filter: many cities require it on a new house and some size it by the roof, so check your city\'s rule.', section('water'));
-    note('Not in this estimate yet: a borewell; the plan\'s approval fees, the labour cess and the electricity and water connections.', total);
-    // The cities' range is read as a standard finish's (V1): outside it at Basic or Standard, or below it at any level,
-    // the estimate is out of line and the flag goes with the answer; above it at Premium and up is to be expected.
-    const c = R.cities.list.find((x) => x.id === ctx.input.city), range = R.cities.range, level = ctx.input.level as Level;
-    if (c && (perSqft < c.cost[0] || perSqft > c.cost[1])) {
-      const reported = `houses in ${c.name} ${range.for} are reported at Rs. ${inr(c.cost[0])}–${inr(c.cost[1])} a sq ft (as reported)`;
-      if (perSqft < c.cost[0] || level <= range.upTo) check(`This estimate comes to Rs. ${inr(perSqft)} a sq ft of built-up area; ${reported}.`, total);
-      else note(`At ${LEVEL_NAMES[level - 1]} this estimate comes to Rs. ${inr(perSqft)} a sq ft of built-up area; ${reported}, and dearer finishes cost more.`, total);
+    if (h.added) {
+      // An extension (E5b): what a lender asks besides the estimate, and what stays the house's own. The cities' range is a
+      // new house's, so it is not a check on the floors added.
+      check('A new floor needs a structural engineer\'s certificate that the house\'s foundation, columns and beams can carry it, and the approved plan for the extension; lenders ask for both. Strengthening the house, if the engineer calls for it, is not priced.', total);
+      note('Not in this estimate: the old stair cabin taken down and the old overhead tank moved; checking that the house\'s sump, septic tank or sewer, and its electricity and water connections, can serve the added home; the plan\'s approval fees, the stability certificate and the labour cess.', total);
+    } else {
+      if (!h.plot.fits) check(`Your plot, ${side(h.plot.l)} × ${side(h.plot.b)} ${unit}, is smaller than the house's outline, ${side(h.l)} × ${side(h.b)} ${unit}: check the plot's size, or the built-up area and the floors.`, section('outside'));
+      note('The compound wall runs round all four sides of the plot and the paving covers all the open ground round the house: take off a side that a neighbour\'s wall already closes, or a garden left unpaved.', section('outside'));
+      note('Rainwater harvesting is one recharge pit with a filter: many cities require it on a new house and some size it by the roof, so check your city\'s rule.', section('water'));
+      note('Not in this estimate yet: a borewell; the plan\'s approval fees, the labour cess and the electricity and water connections.', total);
+      // The cities' range is read as a standard finish's (V1): outside it at Basic or Standard, or below it at any level,
+      // the estimate is out of line and the flag goes with the answer; above it at Premium and up is to be expected.
+      const c = R.cities.list.find((x) => x.id === ctx.input.city), range = R.cities.range, level = ctx.input.level as Level;
+      if (c && (perSqft < c.cost[0] || perSqft > c.cost[1])) {
+        const reported = `houses in ${c.name} ${range.for} are reported at Rs. ${inr(c.cost[0])}–${inr(c.cost[1])} a sq ft (as reported)`;
+        if (perSqft < c.cost[0] || level <= range.upTo) check(`This estimate comes to Rs. ${inr(perSqft)} a sq ft of built-up area; ${reported}.`, total);
+        else note(`At ${LEVEL_NAMES[level - 1]} this estimate comes to Rs. ${inr(perSqft)} a sq ft of built-up area; ${reported}, and dearer finishes cost more.`, total);
+      }
     }
   }
   // A flat's usual carpet area for its bedrooms: off it, the area typed may be the wrong one (V1). A new house's rooms are

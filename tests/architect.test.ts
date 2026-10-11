@@ -261,9 +261,60 @@ describe('E5: a new house\'s plot, outside works, water, stairs and stages, by h
   });
 });
 
+describe('E5b: a floor added on a house, 1,000 sq ft, 2 BHK, Pune, Basic, by hand (model-worked)', () => {
+  const input: ArchitectInput = { kind: 'extend', floors: 1, city: 'pune', area: 1000, bhk: '2', level: 1 };
+  const ext = (x: Partial<ArchitectInput> = {}) => architect({ ...input, ...x }) as ArchitectEstimate;
+  const e = ext();
+  it('asks how many floors are added, one or two, and the built-up area being added; no plot and no flat or house', () => {
+    expect(architectNeeds({ kind: 'extend' } as ArchitectInput)).toEqual(['How many floors are being added', 'Which city', 'The built-up area being added', 'How many bedrooms', 'Which level']);
+    expect(architectNeeds({ ...input, floors: 3 })).toEqual(['How many floors are being added']);
+    expect(architectNeeds({ ...input, floors: 2 })).toEqual([]);
+  });
+  it('the structure: 1,000 sq ft and the cabin 2.5 × 4.5 m = 11.25 sq m = 121.0940 sq ft, 1,121.0940 sq ft at a whole house\'s rules of thumb × (1 − 23.8095%) = × 0.761905: cement 0.4 × 0.761905 × 1,121.0940 = 341.67 bags, steel 3.5 × 0.761905 × 1,121.0940 = 2,989.58 kg, bricks 9 × 0.761905 × 1,121.0940 = 7,687.50; the labour on the whole 1,121.09 sq ft, less the foundation\'s line', () => {
+    expect(line(e, 'flat:cement:struct:cement')).toMatchObject({ qty: 341.67, rate: 372.6, amount: 127306.24 });
+    expect(line(e, 'flat:steel:struct:steel')).toMatchObject({ qty: 2989.58, amount: 155458.16 });
+    expect(line(e, 'flat:brick:struct:bricks')?.qty).toBe(7687.5);
+    expect([line(e, 'flat:sand:struct:sand')?.qty, line(e, 'flat:coarse-aggregate:struct:aggregate')?.qty]).toEqual([33.86, 42.33]);
+    expect(line(e, 'flat:labour-rcc:built-up')).toMatchObject({ qty: 1121.09, amount: 184733.21 });
+  });
+  it('the old terrace taken up, inside the 230 mm outer walls, (10.7763 − 0.46) × (8.6210 − 0.46) = 84.19 sq m = 906.23 sq ft at Rs. 17.50 × 0.915427 = 16.02: Rs. 14,517.80; its debris in ceil(906.23 ÷ 500) = 2 lots at Rs. 8,000 × 0.915427 = 7,323.42: Rs. 14,646.84', () => {
+    expect(line(e, 'flat:demolish-floor:old-terrace')).toMatchObject({ qty: 906.23, unit: 'sqft', rate: 16.02, amount: 14517.8, section: 'structure' });
+    expect(line(e, 'flat:debris:debris')).toMatchObject({ qty: 2, rate: 7323.42, amount: 14646.84 });
+  });
+  it('no foundation, anti-termite, plot, compound, sump, septic tank or rainwater pit: the house has them; the new home\'s overhead tank of 750 litres at Rs. 9.50 (Rs. 7,125) is the water', () => {
+    for (const k of ['flat:labour-foundation:built-up', 'flat:anti-termite:plinth', 'flat:compound-wall:compound-wall', 'flat:paving:paving', 'flat:sump:sump', 'flat:septic:septic', 'flat:rwh:rwh'])
+      expect(e.lines.some((l) => l.key.startsWith(k.split(':').slice(0, 2).join(':'))), k).toBe(false);
+    expect(e.sections.some((s) => s.id === 'outside')).toBe(false);
+    expect(line(e, 'flat:overhead-tank:tank')).toMatchObject({ qty: 750, amount: 7125 });
+    expect(e.sections.find((s) => s.id === 'water')?.amount).toBe(7125);
+    expect([e.house?.added, e.total, e.sections.find((s) => s.id === 'structure')?.amount]).toEqual([true, 1844247.37, 884957.28]);
+  });
+  it('the stages: the old terrace taken up 14,517.80 + 14,646.84 = 29,164.64; the rest of the structure 884,957.28 − 29,164.64 = 855,792.64 split 42.86 : 33.33 = 56.25% : 43.75%, 481,383.36 to the slab and 374,409.28 to the walls; the finishes 18,44,247.37 − 884,957.28 − 7,125 = 952,165.09; the tank 7,125', () => {
+    const st = e.stages as Stage[];
+    expect(st.map((s) => [s.id, s.name, s.amount])).toEqual([['terrace', 'Old terrace taken up', 29164.64], ['slab-1', 'The new floor\'s roof slab', 481383.36], ['walls', 'Walls and plaster', 374409.28], ['finishing', 'Finishing', 952165.09], ['water', 'Overhead tank', 7125]]);
+    expect(st.reduce((a, s) => a + s.amount, 0)).toBeCloseTo(e.total, 2);
+  });
+  it('two floors of 2,000 sq ft: the same old terrace, two slabs alike, and both computations agree on every line and stage', () => {
+    const two = ext({ floors: 2, area: 2000 });
+    expect((two.stages as Stage[]).map((s) => [s.id, s.name, s.amount])).toEqual([['terrace', 'Old terrace taken up', 29164.64], ['slab-1', 'First new floor\'s roof slab', 455384.45], ['slab-2', 'Second new floor\'s roof slab', 455384.45], ['walls', 'Walls and plaster', 708375.82], ['finishing', 'Finishing', 1253274.49], ['water', 'Overhead tank', 7125]]);
+    expect(two.total).toBe(2908708.85);
+    for (const i of [input, { ...input, floors: 2, area: 2000 }, { ...input, level: 4 as Level, bhk: '3' as Bhk, area: 1400 }]) {
+      const x = architect(i) as ArchitectEstimate, c = architectCheck(i);
+      for (const l of x.lines) expect(c.lines.get(l.key)?.qty, l.key).toBeCloseTo(l.qty, 2);
+      for (const s of x.stages as Stage[]) expect(c.stages.get(s.id), s.id).toBeCloseTo(s.amount, 1);
+    }
+  });
+  it('the flags: the engineer\'s certificate and the extension\'s plan, lenders ask for both; the stair cabin, the old tank and the connections left out; no plot, compound or rainwater flag', () => {
+    const cert = e.flags.find((f) => f.text.startsWith('A new floor needs a structural engineer\'s certificate'));
+    expect(cert?.decides).toBe(true);
+    expect(e.flags.some((f) => f.text.startsWith('Not in this estimate: the old stair cabin taken down'))).toBe(true);
+    expect(e.flags.some((f) => /plot|compound|Rainwater/.test(f.text))).toBe(false);
+  });
+});
+
 describe('the estimate', () => {
   it('asks for what it needs, in order', () => {
-    expect(architectNeeds({})).toEqual(['What the work is: build a new house, repair or renovate, or interiors', 'Which city', 'The carpet area', 'How many bedrooms', 'Which level']);
+    expect(architectNeeds({})).toEqual(['What the work is: build a new house, add a floor or rooms, repair or renovate, or interiors', 'Which city', 'The carpet area', 'How many bedrooms', 'Which level']);
     expect(architectNeeds({ kind: 'build' })).toEqual(['How many floors', 'Which city', 'The built-up area of all floors', 'How many bedrooms', 'Which level']);
   });
   it('a house: its rooms inside, worked out as a flat\'s and flagged, with the lines for the whole of it named so', () => {
@@ -669,8 +720,8 @@ describe('R2b: a pooja room, a study, a utility and a store room added; each tak
     expect(e.rooms.filter((r) => r.id !== 'study').map((r) => r.sqm)).toEqual(plan.rooms.filter((r) => r.id !== 'study').map((r) => r.sqm));
   });
   it('the second computation agrees line by line, with every room added, at each level and kind', () => {
-    for (const kind of ['interiors', 'renovate', 'build'] as const) for (const level of [1, 3, 5] as Level[]) {
-      const input = four({ kind, level, ...(kind === 'build' ? { floors: 2, area: 2000, bhk: '3' as Bhk, property: 'house' as const } : {}) });
+    for (const kind of ['interiors', 'renovate', 'build', 'extend'] as const) for (const level of [1, 3, 5] as Level[]) {
+      const input = four({ kind, level, ...(kind === 'build' ? { floors: 2, area: 2000, bhk: '3' as Bhk, property: 'house' as const } : kind === 'extend' ? { floors: 1, area: 1100, property: undefined } : {}) });
       const e = architect(input) as ArchitectEstimate, c = architectCheck(input);
       expect(e.lines.length, `${kind} ${level}`).toBeGreaterThan(0);
       for (const l of e.lines.filter((x) => ['pooja', 'study', 'utility', 'store', 'kitchen'].includes(x.room ?? ''))) expect(c.lines.get(l.key)?.qty, l.key).toBeCloseTo(l.qty, 2);
@@ -778,7 +829,7 @@ describe('L1: a level is a band of choices; its range runs from the cheapest pri
     for (let n = 0; n < 24; n++) {
       const level = (1 + (n % 5)) as Level, city = cities[n % 7];
       const input: ArchitectInput = n % 3 === 2
-        ? { kind: 'build', floors: 1 + (n % 3), city, area: 1500 + 900 * (n % 3) + rnd() * 1500, bhk: (['2', '3', '4'] as Bhk[])[n % 3], level }
+        ? { kind: n % 6 === 5 ? 'extend' : 'build', floors: 1 + (n % 2), city, area: 1500 + 900 * (n % 3) + rnd() * 1500, bhk: (['2', '3', '4'] as Bhk[])[n % 3], level }
         : flat({ kind: n % 2 ? 'renovate' : 'interiors', bhk: bhks[n % 6], area: [350, 520, 850, 1150, 1600, 2200][n % 6] * (0.9 + rnd() * 0.3), city, level });
       const runs = levelRuns(input) as LevelRuns;
       expect('totals' in runs, JSON.stringify(runs).slice(0, 200)).toBe(true);

@@ -860,6 +860,26 @@ for (const scheme of ['light', 'dark']) {
   // The septic tank's 84,680 out (tests/architect.test.ts); Pune's own sewer charge is still to be found, so it is said.
   await expectText(page, v, 'pl-what-changed', /^The sewer in place of a septic tank: Rs\. 84,680 less; the sewer connection is still to be priced$/, 'what the sewer changed');
   await layout(page, v, 'the estimate as a new house, 390 px');
+  // E5b: a floor added on the house: the second question asks the floors being added, still six questions; seventeen
+  // sections with twelve on (no outside works); the PDF titled for an extension, its stages from the old terrace taken
+  // up to the overhead tank; no plot and no sewer to change.
+  await page.getByTestId('pl-change').click();
+  await page.check('#fld-work-extend');
+  const askedX = await page.locator('#six-questions [data-question]').count(), oneX = await page.locator('#fld-floors-1').count(), threeX = await page.locator('#fld-floors-3').count();
+  if (askedX !== 6 || oneX !== 1 || threeX !== 0) v(`an extension asks ${askedX} questions (want 6), one floor ${oneX ? '' : 'not '}offered, a third ${threeX ? '' : 'not '}offered`);
+  await page.check('#fld-floors-1');
+  await leave(page, '#fld-carpet', '1,000');
+  await page.check('#fld-bhk-2');
+  await page.getByTestId('pl-done').click();
+  await expectText(page, v, 'pl-summary', /^Add a floor or rooms · One floor added · Pune · 1,000 sq ft · 2 BHK · \w+$/, 'an extension, folded');
+  const cardsX = await page.locator('[data-testid^="pl-card-"]').count(), onX = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
+  if (cardsX !== 17 || onX !== 12) v(`an extension shows ${cardsX} sections with ${onX} on (want 17 and 12)`);
+  const pdfX = await pdfPages((await save('pl-download-pdf')).bytes).catch((e) => [`(not read: ${e.message})`]);
+  if (!pdfX[0].includes('Estimate of cost of an extension') || !pdfX.join(' ').includes('Stages of construction')) v(`an extension's PDF reads "${pdfX[0].slice(0, 160)}"`);
+  const stagesX = await page.locator('[data-testid^="pl-stage-"]').count(), firstX = await cells('pl-stage-terrace'), lastX = await cells('pl-stage-water');
+  if (stagesX !== 5 || !firstX[0]?.startsWith('Old terrace taken up') || !lastX[0]?.startsWith('Overhead tank') || lastX[3] !== '100.0%') v(`an extension shows ${stagesX} stages (want 5), the first ${firstX.join(' | ')}, the last ${lastX.join(' | ')}`);
+  if (await page.locator('#fld-sewer').count() || await page.getByTestId('pl-plot-change').count()) v('an extension offers the sewer or the plot');
+  await layout(page, v, 'the estimate as an extension, 390 px');
   await ctx.close();
 }
 

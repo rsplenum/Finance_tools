@@ -10,7 +10,9 @@
  * section's slider. The split into fixed works, movable items and appliances is added up row by row. A new house's plot
  * is drawn side by side, its stairs part by part (the landings as the well less the flights and their gap), its tanks
  * filled a step at a time, and its stages taken from the sections and the rows as this computation adds them up. The
- * user's bathrooms (R2) are put after the programme's other rooms with the range of its last bathroom, each door opening
+ * extension's floors (E5b) are drawn the same way, the foundation's part of the structure's materials taken away by the
+ * shares, the old roof inside the parapet taken up and its debris counted lot by lot, and the old terrace taken up as the
+ * first stage. The user's bathrooms (R2) are put after the programme's other rooms with the range of its last bathroom, each door opening
  * into the bedroom named or the passage. The range by the choices at a level (L1) walks the library afresh for each line:
  * every item of the family (its own, or one a level names) that the family names at the line's level or that is usually at
  * it, of the same kind of unit as the item named, priced on the quantity in its own unit; the cheapest and the dearest
@@ -51,9 +53,9 @@ export function architectCheck(input: ArchitectInput, banded = false): Architect
 
   // A new house: the outline breadth first, the outer walls as the outline less the rectangle inside them, the stair wells.
   const thick = Q.openings.walls.external / 1000;
-  let shell: { floors: number; built: number; foot: number; len: number; wide: number; storey: number; well: number; plotLen: number; plotWide: number } | null = null;
+  let shell: { floors: number; built: number; foot: number; len: number; wide: number; storey: number; well: number; plotLen: number; plotWide: number; onTop: boolean } | null = null;
   let carpet = typed;
-  if (kind === 'build') {
+  if (kind === 'build' || kind === 'extend') {
     const floors = input.floors as number, foot = typed / floors;
     const wide = Math.sqrt(foot / Q.house.shape.aspect), len = foot / wide;
     const ring = len * wide - (len - thick * 2) * (wide - thick * 2);
@@ -62,7 +64,7 @@ export function architectCheck(input: ArchitectInput, banded = false): Architect
     // The plot side by side: the user's two sides sorted, or the outline's breadth and length with the margins added.
     const own = input.plot ? [input.plot.l, input.plot.b].sort((a, b) => a - b) : null;
     const plotWide = own ? own[0] : m.side + wide + m.side, plotLen = own ? own[1] : m.front + len + m.rear;
-    shell = { floors, built: typed, foot, len, wide, storey: Q.house.slab.m + H, well, plotLen, plotWide };
+    shell = { floors, built: typed, foot, len, wide, storey: Q.house.slab.m + H, well, plotLen, plotWide, onTop: kind === 'extend' };
   }
 
   // The rooms: each one's size at its word along its range (Medium unless given), one scale factor on those sizes; the
@@ -182,9 +184,14 @@ export function architectCheck(input: ArchitectInput, banded = false): Architect
         if (rule === 'plinth') return shell.foot;
         if (rule.startsWith('struct:')) {
           const k = rule.replace('struct:', '') as keyof Rules['house']['thumb'];
-          const n = (hs.thumb[k] as number) * builtFeet;
+          // An extension's floors on the house's columns: the foundation's part of the structure taken away, the check's way.
+          const sh = hs.stages.shares, half = (b: [number, number]) => b[0] + (b[1] - b[0]) / 2;
+          const away = shell.onTop ? (builtFeet * (hs.thumb[k] as number) * half(sh.foundation)) / (half(sh.foundation) + half(sh.frame) + half(sh.walls)) : 0;
+          const n = (hs.thumb[k] as number) * builtFeet - away;
           return k === 'sand' || k === 'aggregate' ? n * FOOT * FOOT * FOOT : n;
         }
+        if (rule === 'old-terrace') return bi * li;
+        if (rule === 'debris' && shell.onTop) { let lots = 0; while (lots * Q.debris.sqftPerLot < (bi * li) / SQ_FOOT - 1e-9) lots++; return lots; }
         if (rule === 'terrace') return li * bi + insideRun * hs.terraceUpturn.m;
         if (rule === 'exterior-walls') return outsideRun * shell.storey * shell.floors + outsideRun * hs.parapet.m + insideRun * hs.parapet.m + wellRun * hs.cabin.h;
         if (rule === 'stair-railing') return shell.floors * (Math.hypot(st.going, shell.storey / 2) * 2 + st.gap);
@@ -296,7 +303,7 @@ export function architectCheck(input: ArchitectInput, banded = false): Architect
 
   const priced = (id: string) => checkRate(id, input.city);
 
-  const lines = new Map<string, CheckLine>(), bySpace = new Map<string, { section: string; amount: number; kind: ItemKind }[]>();
+  const lines = new Map<string, CheckLine>(), bySpace = new Map<string, { section: string; amount: number; kind: ItemKind; takeUp: boolean }[]>();
   // An area or a length in a unit of its kind: square feet and feet by dividing; litres, counts and materials as they are.
   const unitKind = (u: Unit) => (u === 'sqft' || u === 'sqm' ? 'area' : u === 'rft' || u === 'm' ? 'length' : u);
   const inUnitOf = (base: number, u: Unit) => (u === 'sqft' ? base / SQ_FOOT : u === 'rft' ? base / FOOT : base);
@@ -340,7 +347,7 @@ export function architectCheck(input: ArchitectInput, banded = false): Architect
       low += amounts[0]; high += amounts[amounts.length - 1]; if (amounts.length > 1) offering++;
     }
     const where = s ? s.id : 'flat';
-    bySpace.set(where, [...(bySpace.get(where) ?? []), { section: slot.section, amount, kind: FAMILIES.get(slot.family)?.kind ?? 'fixed' }]);
+    bySpace.set(where, [...(bySpace.get(where) ?? []), { section: slot.section, amount, kind: FAMILIES.get(slot.family)?.kind ?? 'fixed', takeUp: slot.qty === 'old-terrace' || slot.qty === 'debris' }]);
   };
   for (const s of spaces) for (const slot of Q.templates[s.kind]) visit(slot, s);
   for (const slot of Q.templates.flat) visit(slot, null);
@@ -363,17 +370,26 @@ export function architectCheck(input: ArchitectInput, banded = false): Architect
   if (shell) {
     const sh = Q.house.stages.shares, half = (b: [number, number]) => b[0] + (b[1] - b[0]) / 2;
     const whole = half(sh.foundation) + half(sh.frame) + half(sh.walls), structure = sections.get('structure') ?? 0;
-    let finishing = 0, outside = 0;
+    let finishing = 0, outside = 0, takenUp = 0;
     for (const rows of bySpace.values()) for (const row of rows) {
       if (row.section === 'outside' || row.section === 'water') outside += row.amount;
-      else if (row.section !== 'structure' && row.kind !== 'movable') finishing += row.amount;
+      else if (row.section === 'structure') { if (shell.onTop && row.takeUp) takenUp += row.amount; }
+      else if (row.kind !== 'movable') finishing += row.amount;
     }
     const put = (id: string, x: number) => { if (Math.abs(x) >= 0.005) stages.set(id, x); };
-    put('foundation', (structure * half(sh.foundation)) / whole);
-    for (let i = 1; i <= shell.floors; i++) put(`slab-${i}`, (structure * half(sh.frame)) / whole / shell.floors);
-    put('walls', (structure * half(sh.walls)) / whole);
+    if (shell.onTop) {
+      // An extension: the old terrace taken up first; no foundation, so the rest of the structure by the other two shares.
+      const rest = structure - takenUp, two = half(sh.frame) + half(sh.walls);
+      put('terrace', takenUp);
+      for (let i = 1; i <= shell.floors; i++) put(`slab-${i}`, (rest * half(sh.frame)) / two / shell.floors);
+      put('walls', (rest * half(sh.walls)) / two);
+    } else {
+      put('foundation', (structure * half(sh.foundation)) / whole);
+      for (let i = 1; i <= shell.floors; i++) put(`slab-${i}`, (structure * half(sh.frame)) / whole / shell.floors);
+      put('walls', (structure * half(sh.walls)) / whole);
+    }
     put('finishing', finishing);
-    put('outside', outside);
+    put(shell.onTop ? 'water' : 'outside', outside);
     put('movable', split.movable);
   }
   return {

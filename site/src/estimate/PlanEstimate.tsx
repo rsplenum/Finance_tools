@@ -18,7 +18,7 @@ import { isoDate, save, type FileKind } from '../download';
 import { sharePlan } from './shared';
 import { billDoc, billFileName, planDoc, planDocNeeds, planDocStatus, planFileName } from './plan-document';
 import {
-  BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, FLOOR_CHOICES, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORD_CHOICES, WORK_CHOICES, areaLabel, checkedLine, drawerView, heightOf, plainOf, planPreview, sideUnit,
+  BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORD_CHOICES, WORK_CHOICES, areaLabel, builds, checkedLine, floorsQuestion, drawerView, heightOf, plainOf, planPreview, sideUnit,
   withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withExtra, withBathAdded, withBathTakenOut, withBedroomAdded, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit,
   type AreaUnit, type DrawerView, type LineView, type PlanFacts, type PlanPreview, type PlanState, type PlanView, type RoomView, type RungView, type SectionView, type WhyView,
   drawerBrands, groupKey,
@@ -96,8 +96,8 @@ function Questions({ s, update, p, done }: { s: PlanState; update: Update; p: Pl
       <Choice name="fld-work" legend="What is the work?" options={WORK_CHOICES} value={s.kind} columns onChange={(k) => update((x) => withKind(x, k))} />
     </div>
     <div data-question>
-      {s.kind === 'build'
-        ? <Choice name="fld-floors" legend="How many floors?" options={FLOOR_CHOICES} value={s.floors ? String(s.floors) : undefined} columns onChange={(f) => update((x) => ({ ...x, floors: Number(f) }))} />
+      {builds(s.kind)
+        ? <Choice name="fld-floors" legend={floorsQuestion(s.kind).legend} options={floorsQuestion(s.kind).options} value={s.floors ? String(s.floors) : undefined} columns onChange={(f) => update((x) => ({ ...x, floors: Number(f) }))} />
         : <Choice name="fld-home" legend="Flat or house?" options={HOME_CHOICES} value={s.home} columns onChange={(home) => update((x) => ({ ...x, home }))} />}
     </div>
     <div data-question>
@@ -107,7 +107,7 @@ function Questions({ s, update, p, done }: { s: PlanState; update: Update; p: Pl
     <div data-question class="mt-6">
       <label for="fld-carpet" class={LABEL}>How big? {areaLabel(s.kind)}</label>
       <div class="mt-1 flex flex-wrap items-start gap-3">
-        <TextField id="fld-carpet" class="w-40 [&>label]:sr-only" label={s.kind === 'build' ? 'Built-up area' : 'Carpet area'} inputMode="decimal" value={s.area} placeholder={s.kind === 'build' ? 'like 2000' : 'like 850'}
+        <TextField id="fld-carpet" class="w-40 [&>label]:sr-only" label={builds(s.kind) ? 'Built-up area' : 'Carpet area'} inputMode="decimal" value={s.area} placeholder={s.kind === 'build' ? 'like 2000' : s.kind === 'extend' ? 'like 1000' : 'like 850'}
           invalid={badArea} said={badArea ? 'Not understood. Type a number, like 850.' : undefined} onCommit={(area) => update((x) => ({ ...x, area }))} />
         <fieldset class="mt-2 flex gap-2">
           <legend class="sr-only">Unit of the area</legend>
@@ -358,11 +358,11 @@ function Compare({ v }: { v: PlanView }) {
   </details>;
 }
 
-/** A new house's stages for a construction loan (E5): what each stage covers, its amount, its share and the share by its end. */
+/** A new house's stages for a construction loan (E5), or an extension's (E5b): what each stage covers, its amount, its share and the share by its end. */
 function Stages({ v }: { v: PlanView }) {
   const st = v.stages ?? [];
   return <details data-testid="pl-stages" class="mt-2">
-    <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">Stages for a construction loan</summary>
+    <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">Stages for {v.loan === 'extension' ? 'an extension' : 'a construction'} loan</summary>
     <div class="mt-2 overflow-x-auto">
       <table class={`w-full text-xs tabular-nums ${INK}`}>
         <caption class={`text-left text-xs ${MUTED}`}>The structure split by published shares; the rest from the estimate's own items. For planning a loan's payments, not a lender's own schedule.</caption>
@@ -488,7 +488,7 @@ function Assumed({ s, v, update }: { s: PlanState; v: PlanView; update: Update }
           {plot.own && <button type="button" data-testid="pl-plot-reset" class={BUTTON} onClick={() => update(withPlotReset)}>Planned plot</button>}
         </div>}
         {a.what === 'The plot' && plot?.bad && <p data-testid="pl-plot-bad" class="mt-1 text-sm text-red-700 dark:text-red-300">{plot.bad} Until then the planned plot is used.</p>}
-        {a.what === 'Water' && <label for="fld-sewer" class="mt-2 flex items-center gap-2 text-sm">
+        {a.what === 'Water' && s.kind === 'build' && <label for="fld-sewer" class="mt-2 flex items-center gap-2 text-sm">
           <input type="checkbox" id="fld-sewer" checked={s.sewer} onChange={(e) => update((x) => withSewer(x, (e.currentTarget as HTMLInputElement).checked))} class="h-4 w-4 accent-teal-700" />
           The city's sewer reaches my plot
         </label>}
