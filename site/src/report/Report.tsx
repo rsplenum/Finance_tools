@@ -13,7 +13,7 @@ import { monthText } from '../dscr/model';
 import { docNeeds, docStatus, fileName, reportDoc } from './document';
 import {
   PMEGP, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, REPAYMENT_CHOICES, SCHEME_CHOICES,
-  amountOf, assumptionsOf, plainOf, preview, statusText, tidyAmount, viableOf,
+  COLLATERAL_HINT, amountOf, assumptionsOf, plainOf, preview, statusText, tidyAmount, viableOf,
   type ReportFacts, type ReportPreview, type ReportState, type ViableView, type ViewTable,
 } from './model';
 
@@ -87,7 +87,7 @@ export function ReportCalculator() {
         {percent('fld-fixedGrowth', 'Fixed costs: growth a year (%)', s.fixedGrowth, (x, fixedGrowth) => ({ ...x, fixedGrowth }), 'like 5')}
       </div>
       <details id="more-options" class="mt-4 rounded-lg border border-slate-200 dark:border-slate-800">
-        <summary class="cursor-pointer px-4 py-3 font-medium text-teal-800 dark:text-teal-300">More options: the use of the capacity, the price, typed sales</summary>
+        <summary class="cursor-pointer px-4 py-3 font-medium text-teal-800 dark:text-teal-300">More options: the use of the capacity, the price, typed sales, collateral</summary>
         <div class="px-4 pb-4">
           <Choice name="fld-salesBy" legend="Sales come from" options={SALES_BY} value={s.salesBy} columns
             onChange={(salesBy) => update((x) => ({ ...x, salesBy }))} />
@@ -100,6 +100,7 @@ export function ReportCalculator() {
               {amount('fld-sales', 'Sales in a full first year', s.sales, (x, sales) => ({ ...x, sales }))}
               {percent('fld-salesGrowth', 'Sales: growth a year (%)', s.salesGrowth, (x, salesGrowth) => ({ ...x, salesGrowth }), 'like 10')}
             </>}
+            {amount('fld-collateral', 'Collateral: its market value', s.collateral, (x, collateral) => ({ ...x, collateral }), `Property offered beside the project's assets. ${COLLATERAL_HINT}`)}
           </div>
         </div>
       </details>
@@ -147,19 +148,44 @@ function ReportTable({ t }: { t: ViewTable }) {
   </details>;
 }
 
-/** "Make it viable" (D-UX-50): worked on a tap, since it runs the whole report many times; cleared when a figure changes. */
+/** Each lender's ratio against its level in its worst year (D-UX-51), then "Make it viable" (D-UX-50, D-UX-52): worked on
+ * a tap, since it runs the whole report many times; cleared when a figure changes. */
 function Viable({ s, p }: { s: ReportState; p: ReportPreview }) {
   const [v, setV] = useState<ViableView | undefined>();
   useEffect(() => setV(undefined), [s]);
-  return <div class="mt-2">
-    {p.misses && <p data-testid="rep-misses" class="text-sm text-red-700 dark:text-red-300">{p.misses}</p>}
+  const group = (by: 'borrower' | 'lender', title: string) => {
+    const ls = v?.lines.filter((l) => l.by === by) ?? [];
+    return ls.length > 0 && <>
+      <p class="mt-2 text-sm font-medium text-slate-800 dark:text-slate-200">{title}</p>
+      <ul class="mt-1 list-disc space-y-1 pl-5 text-sm text-slate-800 dark:text-slate-200">
+        {ls.map((l) => <li key={l.id} data-testid={`rep-viable-${l.id}`}>{l.text}{l.note && <span class={`block ${MUTED}`}>{l.note}</span>}</li>)}
+      </ul>
+    </>;
+  };
+  return <div class="mt-3">
+    {p.checks && <div class="overflow-x-auto">
+      <table data-testid="rep-checks" class="w-full text-sm">
+        <caption class="text-left font-medium text-slate-900 dark:text-slate-100">Against a lender’s levels, in the worst year</caption>
+        <thead><tr class="border-b border-slate-300 text-left dark:border-slate-600">
+          <th scope="col" class="py-1.5 pr-2 font-medium">Ratio</th><th scope="col" class="px-2 py-1.5 font-medium">Level</th><th scope="col" class="px-2 py-1.5 font-medium">This project</th>
+        </tr></thead>
+        <tbody>{p.checks.map((c) => <tr key={c.id} data-testid={`rep-check-${c.id}`} class="border-b border-slate-100 dark:border-slate-800">
+          <th scope="row" class="py-1.5 pr-2 text-left font-normal text-slate-800 dark:text-slate-200">{c.label}</th>
+          <td class="px-2 py-1.5 whitespace-nowrap tabular-nums">{c.level}</td>
+          <td class={`px-2 py-1.5 tabular-nums ${c.verdict === 'misses' ? 'text-red-700 dark:text-red-300' : c.verdict === 'meets' ? 'text-teal-800 dark:text-teal-300' : MUTED}`}>
+            {c.verdict === 'misses' ? 'Misses: ' : c.verdict === 'meets' ? 'Meets: ' : ''}{c.worst}</td>
+        </tr>)}</tbody>
+      </table>
+    </div>}
+    {p.collateralNote && <p data-testid="rep-collateral-note" class={`mt-1 ${HINT}`}>{p.collateralNote}</p>}
+    {p.longTerm && <p data-testid="rep-long-term" class="mt-2 text-sm text-red-700 dark:text-red-300">{p.longTerm}</p>}
+    {p.misses && <p data-testid="rep-misses" class="mt-2 text-sm text-red-700 dark:text-red-300">{p.misses}</p>}
     {!v && <button type="button" data-testid="rep-viable" class={`mt-2 ${BUTTON}`} onClick={() => setV(viableOf(s))}>
       {p.misses ? 'Make it viable' : 'How far can sales fall?'}</button>}
     {v && <div data-testid="rep-viable-box" class="mt-2 rounded-lg border border-slate-300 p-3 dark:border-slate-600">
       <p class="font-medium text-slate-900 dark:text-slate-100">{v.title}</p>
-      <ul class="mt-1 list-disc space-y-1 pl-5 text-sm text-slate-800 dark:text-slate-200">
-        {v.lines.map((l) => <li key={l.id} data-testid={`rep-viable-${l.id}`}>{l.text}{l.note && <span class={`block ${MUTED}`}>{l.note}</span>}</li>)}
-      </ul>
+      {group('borrower', v.meets ? 'The room' : 'Your changes')}
+      {group('lender', 'The lender’s, if it agrees')}
       <p class={`mt-2 ${HINT}`}>{v.foot}</p>
     </div>}
   </div>;

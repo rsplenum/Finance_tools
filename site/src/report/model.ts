@@ -5,8 +5,8 @@
  */
 import { ASSUMPTIONS, HEADS, PMEGP, projectReport, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
 import { parseAmount, parseMonth } from '../../../engine/parse';
-import { limitText, shortfall } from '../../../engine/dscr';
-import { TARGET, makeViable } from '../../../engine/viable';
+import { LEVELS, collateralNeeded, diagnose, type RatioCheck, type RatioId } from '../../../engine/ratios';
+import { makeViable, type Outcome } from '../../../engine/viable';
 import { BORROWERS } from '../../../engine/tax';
 import { inr } from '../../../engine/util';
 
@@ -17,6 +17,8 @@ export interface ReportState {
   cost: Record<HeadId, string>;
   loan: { amount: string; ratePct: string; disbursed: string; moratoriumMonths: string; instalments: string; repayment?: Repayment };
   subsidy: string; unsecured: string;
+  /** The collateral's market value, under More options (D-UX-52). */
+  collateral: string;
   /** Sales from the capacity, its use and the price (the default), or typed under More options. */
   salesBy: 'drivers' | 'typed'; capacity: string; price: string; utilisation: string; priceGrowth: string; monthsToStart: string;
   scheme: '' | 'pmegp'; category?: Category; area?: Area; activity?: Activity;
@@ -31,7 +33,7 @@ const assumed = (id: string) => ASSUMPTIONS.find((a) => a.id === id)?.value;
 export const EMPTY: ReportState = {
   cost: Object.fromEntries(HEADS.map((h) => [h.id, ''])) as Record<HeadId, string>,
   loan: { amount: '', ratePct: '', disbursed: '', moratoriumMonths: '', instalments: '' },
-  subsidy: '', unsecured: '', salesBy: 'drivers', capacity: '', price: '', monthsToStart: '', scheme: '',
+  subsidy: '', unsecured: '', collateral: '', salesBy: 'drivers', capacity: '', price: '', monthsToStart: '', scheme: '',
   utilisation: ((assumed('utilisation') ?? []) as number[]).join(', '), priceGrowth: String(assumed('price') ?? ''), sales: '', salesGrowth: '', variablePct: '', fixed: '', fixedGrowth: '',
   // Assumed until changed (engine/data/report.json), listed on the page.
   days: { stock: String(DAYS.stock ?? ''), debtors: String(DAYS.debtors ?? ''), creditors: String(DAYS.creditors ?? '') },
@@ -65,7 +67,7 @@ export function inputOf(s: ReportState): ReportInput {
       amount: amountOf(s.loan.amount), ratePct: plainOf(s.loan.ratePct), disbursed: parseMonth(s.loan.disbursed), moratoriumMonths: plainOf(s.loan.moratoriumMonths),
       instalments: plainOf(s.loan.instalments), ...(r ? { frequency: r === 'quarterly' ? 'quarterly' : 'monthly', style: r === 'emi' ? 'emi' : 'equal-principal' } : {}),
     },
-    subsidy: s.scheme ? undefined : opt(s.subsidy), unsecured: opt(s.unsecured),
+    subsidy: s.scheme ? undefined : opt(s.subsidy), unsecured: opt(s.unsecured), collateral: opt(s.collateral),
     salesBy: s.salesBy, monthsToStart: plainOf(s.monthsToStart),
     ...(s.salesBy === 'typed' ? { sales: amountOf(s.sales), salesGrowthPct: plainOf(s.salesGrowth) } : {
       capacity: plainOf(s.capacity), price: amountOf(s.price), priceGrowthPct: plainOf(s.priceGrowth),
@@ -185,6 +187,15 @@ export function viewOf(r: Report): ReportView {
       ratios(ys, 'Current ratio', (y) => y.currentRatio), ratios(ys, 'Term loan ÷ net worth', (y) => y.debtEquity),
       ratios(ys, 'Total outside liabilities ÷ net worth', (y) => y.tolTnw), ratios(ys, 'Interest cover', (y) => y.interestCover),
       ratios(ys, 'Net profit margin', (y) => y.netMarginPct, pct), ratios(ys, 'Net fixed assets ÷ term loan', (y) => y.facr), ratios(ys, 'DSCR', (y) => y.dscr),
+      ...(r.collateral ? [ratios(ys, 'Security cover, with the collateral at its realisable value', (y) => y.securityCover)] : []),
+    ],
+  };
+  const c = r.collateral, collateral: ViewTable | undefined = c && {
+    id: 'collateral', title: 'Collateral', first: 'Value', columns: ['Rupees'],
+    rows: [
+      { label: 'Market value', values: [rupees(c.market)], n: [c.market] },
+      { label: `Realisable sale value, ${LEVELS.collateral.rsvPct}% of it: counted in the security cover`, values: [rupees(c.rsv)], n: [c.rsv] },
+      { label: `Distress sale value, ${LEVELS.collateral.dsvPct}% of it`, values: [rupees(c.dsv)], n: [c.dsv] },
     ],
   };
   const wc: ViewTable = {
@@ -202,7 +213,7 @@ export function viewOf(r: Report): ReportView {
     rows: r.plan.schedule.map((d) => ({ label: d.fy, values: [rupees(d.interest), rupees(d.principal), rupees(d.closing)], n: [d.interest, d.principal, d.closing] })),
   };
   return {
-    years, tables: [cost, finance, pl, bs, cf, dscr, bep, keyRatios, wc, schedule],
+    years, tables: [cost, finance, ...(collateral ? [collateral] : []), pl, bs, cf, dscr, bep, keyRatios, wc, schedule],
     key: [
       { label: 'Cost of the project', value: `Rs. ${rupees(r.projectCost)}` },
       ...(sc ? [{ label: 'PMEGP margin money', value: `Rs. ${rupees(sc.subsidy)}`, note: `${sc.ratePct}% of Rs. ${rupees(sc.base)}, set off after ${PMEGP.lockInYears} years` }] : []),
@@ -212,27 +223,58 @@ export function viewOf(r: Report): ReportView {
   };
 }
 
+/** A ratio against its level (D-UX-51), in words: the level, its worst year, and whether it meets. */
+export interface CheckRow { id: RatioId; label: string; level: string; worst: string; verdict: 'meets' | 'misses' | 'wait' }
 /** `short`: cash below nil, which keeps the report provisional; `flags`: the scheme's rules to look at, never a decision;
- * `misses`: why the DSCR misses the lenders' common benchmarks (D-UX-50), with "Make it viable" beside it. */
-export interface ReportPreview { needs: string[]; blocked?: string; view?: ReportView; short?: string; flags: string[]; misses?: string }
+ * `checks`: each lender's ratio against its level, `misses` their summary when any misses, with "Make it viable" beside it
+ * (D-UX-50, D-UX-52); `collateralNote`: what the security cover needs; `longTerm`: a term past the longest. */
+export interface ReportPreview {
+  needs: string[]; blocked?: string; view?: ReportView; short?: string; flags: string[];
+  checks?: CheckRow[]; misses?: string; collateralNote?: string; longTerm?: string;
+}
+
+const levelText = (c: RatioCheck) => `${c.level.toFixed(2)} or ${c.at === 'least' ? 'more' : 'less'}`;
+/** A ratio to two places, or four when two would read as meeting a level it misses (1.0996 against 1.10). */
+const ratioAt = (x: number, c: RatioCheck) => {
+  const two = Number(x.toFixed(2)), reads = c.at === 'least' ? two >= c.level : two <= c.level;
+  return reads === !!c.meets ? x.toFixed(2) : x.toFixed(4);
+};
+/** A label inside a sentence: lower case, but DSCR stays DSCR. */
+export const inSentence = (label: string) => (/^[A-Z][A-Z]/.test(label) ? label : label[0].toLowerCase() + label.slice(1));
+const listed = (xs: string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+const labelOf = (id: RatioId) => inSentence(LEVELS.ratios.find((r) => r.id === id)?.label ?? id);
 
 export function preview(s: ReportState): ReportPreview {
-  const r = projectReport(inputOf(s));
+  const x = inputOf(s), r = projectReport(x);
   if ('blocked' in r) return { needs: [], blocked: r.blocked, flags: [] };
   if ('needs' in r) return { needs: r.needs, flags: [] };
-  const c = r.cashShort, miss = shortfall(r.plan.statement, TARGET);
+  const c = r.cashShort, d = diagnose(r, x);
+  const checks: CheckRow[] = d.checks.map((k) => ({
+    id: k.id, label: k.label, level: levelText(k),
+    worst: k.why ? `Net worth at or below nil in ${k.fy}` : k.worst === undefined ? (k.id === 'securityCover' ? 'Type the collateral’s value' : '—') : `${ratioAt(k.worst, k)}${k.fy ? ` in ${k.fy}` : ' over the loan'}`,
+    verdict: k.meets === undefined ? 'wait' : k.meets ? 'meets' : 'misses',
+  }));
+  const sc = d.checks.find((k) => k.id === 'securityCover') as RatioCheck, need = sc.meets ? undefined : collateralNeeded(r, x);
+  const collateralNote = need === undefined ? undefined : need === 0
+    ? `Security cover: the project’s own assets reach ${sc.level.toFixed(2)} without collateral.`
+    : `Security cover: collateral with a market value of Rs. ${rupees(need)} or more brings it to ${sc.level.toFixed(2)}.`;
   return {
-    needs: [], view: viewOf(r), flags: r.scheme?.flags ?? [], ...(miss ? { misses: `The DSCR misses ${targetText}: ${limitText(miss)}.` } : {}),
+    needs: [], view: viewOf(r), flags: r.scheme?.flags ?? [], checks,
+    ...(d.misses.length ? { misses: `It misses ${d.misses.length === 1 ? 'one' : d.misses.length} of a lender’s levels: ${listed(d.misses.map(labelOf))}.` } : {}),
+    ...(collateralNote ? { collateralNote } : {}),
+    ...(d.term.months > d.term.longest ? { longTerm: `The term loan runs ${d.term.months} months with its moratorium, beyond the ${d.term.longest} months an MSME term loan commonly runs at most.` } : {}),
     ...(c ? { short: `Cash goes below nil in ${c.fy}: Rs. ${rupees(c.need)} short at its lowest. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.` } : {}),
   };
 }
+
+/** The collateral field's hint: what its values are (engine/data/ratios.json, the owner's figures). */
+export const COLLATERAL_HINT = `Its realisable sale value, ${LEVELS.collateral.rsvPct}% of it, counts in the security cover; its distress sale value, ${LEVELS.collateral.dsvPct}%, is shown.`;
 
 export const statusText = (p: ReportPreview, more = 0) => {
   const n = p.needs.length + (p.short ? 1 : 0) + more;
   return p.blocked ? 'No figures' : n ? `Provisional: ${n} still needed` : 'Complete';
 };
 
-const targetText = `the level lenders commonly ask (an average of ${ratio(TARGET.average)} and ${ratio(TARGET.minimum)} in the lowest year)`;
 /** A figure the business must reach, shown rounded up so it never reads below what meets: rupees, or a percentage to 0.1. */
 const upRupees = (x: number) => rupees(Math.ceil(x - 1e-6));
 const upPct = (x: number) => (Math.ceil(x * 10 - 1e-6) / 10).toFixed(1);
@@ -241,32 +283,49 @@ const years = (n: number, perYear: number) => {
   return [y ? `${y} year${y > 1 ? 's' : ''}` : '', m ? `${m} month${m > 1 ? 's' : ''}` : ''].filter(Boolean).join(' ');
 };
 
-/** "Make it viable" (D-UX-50), in words: the engine's levers (engine/viable.ts), each alone, the rest as typed. */
-export interface ViableView { meets: boolean; title: string; lines: { id: string; text: string; note?: string }[]; foot: string }
+/** "Make it viable" (D-UX-50, D-UX-52), in words: the engine's changes (engine/viable.ts), each alone, the rest as typed;
+ * the borrower's first, then the lender's. */
+export interface ViableLine { id: string; by: 'borrower' | 'lender'; text: string; note?: string }
+export interface ViableView { meets: boolean; title: string; lines: ViableLine[]; foot: string }
+/** What a change leaves: the levels it meets and those still missed, and cash below nil. */
+const leaves = (o: Outcome) => [
+  o.still.length ? (o.fixes.length ? `It meets the ${listed(o.fixes.map(labelOf))}, but not the ${listed(o.still.map(labelOf))}.` : `It still misses the ${listed(o.still.map(labelOf))}.`) : '',
+  o.cashNeed ? `Cash still goes below nil: the promoters would need Rs. ${upRupees(o.cashNeed)} more.` : '',
+].filter(Boolean).join(' ') || undefined;
+
 export function viableOf(s: ReportState): ViableView | undefined {
   const v = makeViable(inputOf(s));
   if ('needs' in v || 'blocked' in v) return undefined;
-  const lines: ViableView['lines'] = [], sl = v.sales;
+  const lines: ViableLine[] = [], sl = v.sales, push = (l: Omit<ViableLine, 'by'>, by: ViableLine['by'] = 'borrower') => lines.push({ ...l, by });
   if (sl && v.meets) {
-    lines.push({ id: 'sales', text: sl.tenths < 0
-      ? `Sales can fall ${(-sl.tenths / 10).toFixed(1)}%, to Rs. ${upRupees(sl.needed)} in ${sl.fy} (from Rs. ${rupees(sl.now)}), and the DSCR still meets it.`
-      : `Sales cannot fall at all before the DSCR misses it.` });
+    push({ id: 'sales', text: sl.tenths < 0
+      ? `Sales can fall ${(-sl.tenths / 10).toFixed(1)}%, to Rs. ${upRupees(sl.needed)} in ${sl.fy} (from Rs. ${rupees(sl.now)}), and every ratio still meets its level.`
+      : 'Sales cannot fall at all before a ratio misses its level.' });
   } else if (sl) {
     const u = sl.use, distinct = u ? u.needed.filter((x, k) => k === 0 || Math.abs(x - u.needed[k - 1]) > 1e-9) : [];
-    lines.push({ id: 'sales', text: `Sales ${(sl.tenths / 10).toFixed(1)}% higher in every year: Rs. ${upRupees(sl.needed)} in ${sl.fy} instead of Rs. ${rupees(sl.now)}.`,
+    push({ id: 'sales', text: `Sales ${(sl.tenths / 10).toFixed(1)}% higher in every year: Rs. ${upRupees(sl.needed)} in ${sl.fy} instead of Rs. ${rupees(sl.now)}.`,
       note: [
-        sl.price && u ? `That is a price of Rs. ${(Math.ceil(sl.price.needed * 100 - 1e-6) / 100).toFixed(2)} a unit (now Rs. ${sl.price.now}) at the same use, or the use of the capacity at ${distinct.map((x) => `${upPct(x)}%`).join(', then ')} at the same price${u.overFull ? ': above full capacity, so the price, or a larger capacity, must carry it' : ''}.` : '',
-        sl.cashNeed ? `At those sales cash still goes below nil: the promoters would need Rs. ${upRupees(sl.cashNeed)} more.` : '',
+        sl.price && u ? `That is a price of Rs. ${(Math.ceil(sl.price.needed * 100 - 1e-6) / 100).toFixed(2)} a unit (now Rs. ${sl.price.now}) at the same use, or the use of the capacity at ${distinct.map((x) => `${upPct(x)}%`).join(', then ')} at the same price${u.overFull ? ': above full capacity, so the price, or a larger capacity, must carry it' : u.overMost ? `: above the ${LEVELS.capacity.mostUsePct}% use a plan takes at most` : ''}.` : '',
+        leaves(sl) ?? '',
       ].filter(Boolean).join(' ') || undefined });
-  } else if (v.salesNone) lines.push({ id: 'sales', text: `Sales: ${v.salesNone}` });
-  if (v.loan) lines.push({ id: 'loan', text: `Or a term loan of at most Rs. ${rupees(v.loan.largest)} (now Rs. ${rupees(v.loan.now)}), the promoters bringing Rs. ${upRupees(v.loan.more)} more.` });
-  else if (v.loanNone) lines.push({ id: 'loan', text: `A smaller loan: ${v.loanNone}` });
+  } else if (v.salesNone) push({ id: 'sales', text: `Higher sales: ${v.salesNone}` });
+  if (v.loan) push({ id: 'loan', text: `Or a term loan of at most Rs. ${rupees(v.loan.largest)} (now Rs. ${rupees(v.loan.now)}), the promoters bringing Rs. ${upRupees(v.loan.more)} more.`, note: leaves(v.loan) });
+  else if (v.loanNone) push({ id: 'loan', text: v.loanNone });
+  if (v.wc) push({ id: 'wc', text: `Or a working-capital limit of at most Rs. ${rupees(v.wc.largest)} (now Rs. ${rupees(v.wc.now)}), ${v.wc.more >= 0.5 ? `the promoters bringing Rs. ${upRupees(v.wc.more)} more as margin` : 'with no more margin from the promoters'}.`, note: leaves(v.wc) });
+  else if (v.wcNone) push({ id: 'wc', text: v.wcNone });
+  if (v.collateral && v.collateral.now !== undefined && v.collateral.needed > v.collateral.now) {
+    push({ id: 'collateral', text: `Or collateral with a market value of Rs. ${rupees(v.collateral.needed)} (now Rs. ${rupees(v.collateral.now)}), for the security cover.`,
+      note: leaves({ fixes: ['securityCover'], still: v.diagnosis.misses.filter((id) => id !== 'securityCover') }) });
+  }
+  const longest = LEVELS.term.longestMonths;
+  if (v.moratorium) push({ id: 'moratorium', text: `A moratorium of ${v.moratorium.needed} months (now ${v.moratorium.now}), the whole term within ${longest} months.`, note: leaves(v.moratorium) }, 'lender');
+  else if (v.moratoriumNone) push({ id: 'moratorium', text: v.moratoriumNone }, 'lender');
   if (v.instalments) {
     const i = v.instalments, every = i.perYear === 4 ? 'quarterly' : 'monthly';
-    lines.push({ id: 'repayment', text: `Or ${i.needed} ${every} instalments, ${years(i.needed, i.perYear)} (now ${i.now}), if the lender will lend that long.` });
-  } else if (v.instalmentsNone) lines.push({ id: 'repayment', text: `A longer repayment: ${v.instalmentsNone}` });
+    push({ id: 'repayment', text: `Or ${i.needed} ${every} instalments, ${years(i.needed, i.perYear)} (now ${i.now}), the whole term within ${longest} months.`, note: leaves(i) }, 'lender');
+  } else if (v.instalmentsNone) push({ id: 'repayment', text: v.instalmentsNone }, 'lender');
   return {
-    meets: v.meets, title: v.meets ? 'It meets the level lenders commonly ask' : 'Make it viable: any one of these', lines,
-    foot: `The level: an average DSCR of ${ratio(TARGET.average)} and ${ratio(TARGET.minimum)} in the lowest year, commonly quoted but not checked against a published source; each lender sets its own. Each change is worked alone by the engine, the rest as typed. Change the figures above only to what the business can really reach: a lender tests sales against the market and the capacity.`,
+    meets: v.meets, title: v.meets ? 'Every ratio meets a lender’s level' : 'Make it viable: any one of these', lines,
+    foot: `The levels: a fresh or enhanced loan’s benchmarks, said to follow RBI and not yet checked against an RBI publication; each lender sets its own. Each change is worked alone by the engine, the rest as typed. Change the figures above only to what the business can really reach: a lender tests sales against the market and the capacity.`,
   };
 }

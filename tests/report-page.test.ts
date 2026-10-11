@@ -124,16 +124,45 @@ describe('the PMEGP report to download', () => {
   });
 });
 
-// Make it viable (D-UX-50): case R with sales of 70 lakh misses; the figures are worked by hand in tests/viable.test.ts.
-describe('make it viable, in words', () => {
-  it('names why it misses, then each change alone', () => {
-    const weak = { ...R, sales: '70 L' }, v = viableOf(weak);
-    expect(preview(weak).misses).toBe('The DSCR misses the level lenders commonly ask (an average of 1.50 and 1.20 in the lowest year): the lowest year, 2026-27, is below the target.');
-    expect(v?.lines[0].text).toBe('Sales 15.2% higher in every year: Rs. 80,64,000 in 2026-27 instead of Rs. 70,00,000.');
-    expect(v?.lines.map((l) => l.id)).toEqual(['sales', 'loan', 'repayment']);
+// Make it viable (D-UX-50, D-UX-52): case R with sales of 70 lakh misses; the figures are worked by hand in
+// tests/viable.test.ts, with the 20 lakh limit's collateral.
+describe('the lender\'s levels and make it viable, in words', () => {
+  const weak = { ...R, sales: '70 L' };
+  it('each ratio against its level in its worst year, and what misses', () => {
+    const p = preview(weak);
+    expect(p.checks?.map((c) => `${c.label} | ${c.level} | ${c.verdict} ${c.worst}`)).toEqual([
+      'Current ratio | 1.10 or more | misses 0.94 in 2026-27', 'Total outside liabilities ÷ net worth | 5.00 or less | meets 3.58 in 2026-27',
+      'Term loan ÷ net worth (debt-equity) | 4.00 or less | meets 2.49 in 2026-27', 'Average DSCR | 1.50 or more | misses 1.26 over the loan',
+      'DSCR in the lowest year | 1.25 or more | misses 0.82 in 2026-27', 'Interest cover | 1.50 or more | misses 0.74 in 2026-27',
+      'Fixed-asset cover | 1.20 or more | meets 1.39 in 2026-27', 'Security cover | 1.20 or more | wait Type the collateral’s value',
+    ]);
+    expect([p.misses, p.collateralNote, p.longTerm]).toEqual(['It misses 4 of a lender’s levels: current ratio, average DSCR, DSCR in the lowest year and interest cover.',
+      'Security cover: the project’s own assets reach 1.20 without collateral.', undefined]);
+  });
+  it('the borrower\'s changes first, then the lender\'s, each with what it leaves', () => {
+    const v = viableOf(weak);
+    expect(v?.lines.map((l) => [l.by, l.text])).toEqual([
+      ['borrower', 'Sales 17.3% higher in every year: Rs. 82,11,000 in 2026-27 instead of Rs. 70,00,000.'],
+      ['borrower', 'Or a term loan of at most Rs. 9,35,779 (now Rs. 25,00,000), the promoters bringing Rs. 15,64,221 more.'],
+      ['borrower', 'Or a working-capital limit of at most Rs. 3,80,877 (now Rs. 5,00,000), the promoters bringing Rs. 1,19,123 more as margin.'],
+      ['lender', expect.stringMatching(/^A moratorium of \d+ months \(now 0\), the whole term within 180 months\.$/)],
+      ['lender', expect.stringMatching(/^Or \d+ monthly instalments, .+ \(now 60\), the whole term within 180 months\.$/)],
+    ]);
+    expect(v?.lines[2].note).toMatch(/^It meets the current ratio, but not the average DSCR, DSCR in the lowest year and interest cover\. Cash still goes below nil/);
+    expect(v?.lines[3].note).toBe('It meets the current ratio, average DSCR and DSCR in the lowest year, but not the interest cover and fixed-asset cover.');
   });
   it('as typed, it meets and says how far sales can fall', () => {
     expect(preview(R).misses).toBeUndefined();
-    expect(viableOf(R)?.lines.map((l) => l.text)).toEqual(['Sales can fall 32.8%, to Rs. 80,64,000 in 2026-27 (from Rs. 1,20,00,000), and the DSCR still meets it.']);
+    expect(viableOf(R)?.lines.map((l) => l.text)).toEqual(['Sales can fall 31.5%, to Rs. 82,20,000 in 2026-27 (from Rs. 1,20,00,000), and every ratio still meets its level.']);
+  });
+  it('the collateral typed: its values in the report, the security cover read, and the collateral it needs', () => {
+    const s = { ...R, wcLimit: '20 L', collateral: '3 L' }, p = preview(s), v = viableOf(s);
+    expect(p.checks?.at(-1)).toEqual({ id: 'securityCover', label: 'Security cover', level: '1.20 or more', worst: '1.17 in 2026-27', verdict: 'misses' });
+    expect(p.view?.tables.find((t) => t.id === 'collateral')?.rows.map((r) => r.values[0])).toEqual(['3,00,000', '2,70,000', '2,40,000']);
+    expect(v?.lines.find((l) => l.id === 'collateral')?.text).toBe('Or collateral with a market value of Rs. 4,36,226 (now Rs. 3,00,000), for the security cover.');
+    expect(v?.lines.find((l) => l.id === 'wc')?.text).toBe('Or a working-capital limit of at most Rs. 18,97,831 (now Rs. 20,00,000), with no more margin from the promoters.');
+  });
+  it('a term past 180 months is named', () => {
+    expect(preview({ ...R, loan: { ...R.loan, moratoriumMonths: '12', instalments: '170' } }).longTerm).toBe('The term loan runs 182 months with its moratorium, beyond the 180 months an MSME term loan commonly runs at most.');
   });
 });

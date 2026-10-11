@@ -12,6 +12,7 @@ import { monthsOf, series } from './project';
 import { pmegpCheck, reportCheck } from './report-check';
 import { borrowerOf } from './tax';
 import { inr } from './util';
+import RATIOS from './data/ratios.json';
 
 export const HEADS = DATA.heads;
 export const ASSUMPTIONS = DATA.assumptions;
@@ -49,6 +50,8 @@ export interface ReportInput {
   days?: { stock?: number; debtors?: number; creditors?: number };
   /** The working-capital limit sought, and its interest rate (%). */
   wcLimit?: number; wcRatePct?: number;
+  /** The collateral's market value (D-UX-52): its realisable sale value counts in the security cover. */
+  collateral?: number;
 }
 
 export interface CostLine { id: HeadId | 'margin' | 'idc'; label: string; amount: number }
@@ -68,6 +71,9 @@ export interface ReportYear {
   /** Sales less variable costs; fixed costs with depreciation, the write-off and all interest: break-even's two sides. */
   contribution: number; fixedAll: number; bepPct?: number; bepSales?: number; cashBepPct?: number;
   currentRatio?: number; debtEquity?: number; tolTnw?: number; interestCover?: number; netMarginPct: number; facr?: number;
+  /** The security for the loans (net fixed assets, stock and debtors), what it secures (the term loan and the limit
+   * outstanding) and the security cover with the collateral's realisable sale value, once the collateral is typed. */
+  security: number; secured: number; securityCover?: number;
   currentAssets: number; gap: number; mpbf: number; turnoverNeed: number; turnoverBank: number;
 }
 /** PMEGP's margin money on this project, and what the engine flags against the scheme's rules (never a decision). */
@@ -81,6 +87,8 @@ export interface Report {
   cashShort?: { fy: string; lowest: number; need: number };
   cost: CostLine[]; fixedAssets: number; marginMoney: number; projectCost: number;
   finance: { termLoan: number; subsidy: number; unsecured: number; promoter: number; total: number; promoterPct: number };
+  /** The collateral's market value, realisable sale value and distress sale value (engine/data/ratios.json). */
+  collateral?: { market: number; rsv: number; dsv: number };
   wcLimit: number; years: ReportYear[]; average?: number; lowest?: { dscr: number; fy: string }; plan: Plan;
 }
 
@@ -128,6 +136,7 @@ export function reportNeeds(x: ReportInput): string[] {
   for (const k of ['stock', 'debtors', 'creditors'] as const) if (!(isNum(d[k]) && (d[k] as number) >= 0 && (d[k] as number) <= 365)) needs.push(`Days of ${k}, 0 to 365`);
   if (!(isNum(x.wcLimit) && x.wcLimit >= 0)) needs.push('The working-capital limit sought (0 if none)');
   if (isNum(x.wcLimit) && x.wcLimit > 0 && !isNum(x.wcRatePct)) needs.push('The working-capital limit: its interest rate');
+  if (x.collateral !== undefined && !(isNum(x.collateral) && x.collateral >= 0)) needs.push('The collateral\'s market value: a figure of 0 or more');
   return needs;
 }
 
@@ -227,6 +236,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     if (sc.workingCapitalPct > sc.workingCapitalMaxPct + 1e-9) sc.flags.push(`Working capital is ${sc.workingCapitalPct.toFixed(2)}% of PMEGP's project cost; the scheme allows at most ${sc.workingCapitalMaxPct}%.`);
   }
 
+  const collateral = isNum(x.collateral) ? { market: x.collateral, rsv: (x.collateral * RATIOS.collateral.rsvPct) / 100, dsv: (x.collateral * RATIOS.collateral.dsvPct) / 100 } : undefined;
   const out: ReportYear[] = [];
   let cash = 0, retained = 0, accumulated = 0, written = 0, prev = { stock: 0, debtors: 0, creditors: 0 };
   rows.forEach((r, k) => {
@@ -248,6 +258,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     const liabilities = netWorth + unsecured + tlLeft + limit + lv.creditors, assets = netBlock + preliminaryLeft + lv.stock + lv.debtors + cash;
     const fixedAll = r.fixed + r.depreciation + r.preliminary + p.interestTL + r.wcInterest, contribution = r.sales - r.variable;
     const interest = p.interestTL + r.wcInterest, currentAssets = lv.stock + lv.debtors;
+    const security = netBlock + currentAssets, secured = tlLeft + limit;
     out.push({
       fy: r.fy, months: months[k], ...(drivers ? { utilisationPct: util[k] } : {}), sales: r.sales, variable: r.variable, fixed: r.fixed, pbdit: r.pbdit, depreciation: r.depreciation, preliminary: r.preliminary,
       tlInterest: p.interestTL, wcInterest: r.wcInterest, pbt: p.pbt, tax: p.tax, pat: p.pat,
@@ -260,6 +271,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
       ...(interest > 0 ? { interestCover: (p.pbt + interest) / interest } : {}),
       netMarginPct: r.sales ? (p.pat / r.sales) * 100 : 0,
       ...(tlLeft > 0 ? { facr: netBlock / tlLeft } : {}),
+      security, secured, ...(collateral && secured > 0 ? { securityCover: (security + collateral.rsv) / secured } : {}),
       currentAssets, gap: currentAssets - lv.creditors, mpbf: (currentAssets * DATA.workingCapital.mpbfSharePct) / 100 - lv.creditors,
       turnoverNeed: (r.sales * DATA.workingCapital.turnoverNeedPct) / 100, turnoverBank: (r.sales * DATA.workingCapital.turnoverBankPct) / 100,
     });
@@ -290,7 +302,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     cost: [...HEADS.filter((h) => cost[h.id] > 0).map((h) => ({ id: h.id, label: h.label, amount: cost[h.id] })),
       ...(interestBeforeStart > 0 ? [{ id: 'idc' as const, label: 'Interest on the term loan before sales start', amount: interestBeforeStart }] : []),
       ...(marginMoney > 0 ? [{ id: 'margin' as const, label: 'Margin for working capital', amount: marginMoney }] : [])],
-    fixedAssets, marginMoney, projectCost,
+    fixedAssets, marginMoney, projectCost, ...(collateral ? { collateral } : {}),
     finance: { termLoan, subsidy, unsecured, promoter, total: termLoan + subsidy + unsecured + promoter, promoterPct: (promoter / projectCost) * 100 },
     wcLimit: limit, years: out, ...(plan.statement.average !== undefined ? { average: plan.statement.average } : {}),
     ...(plan.statement.minimum ? { lowest: plan.statement.minimum } : {}), plan,

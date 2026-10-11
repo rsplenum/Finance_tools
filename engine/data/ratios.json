@@ -1,0 +1,37 @@
+{
+  "title": "The lender's benchmark ratios",
+  "date": "2026-10-11",
+  "status": "The levels a project's ratios are read against, each in its worst year (D-UX-51), and the values of the collateral (D-UX-52). The owner's figures (11-10-2026): only the benchmark level, no relaxation or deviation; each lender sets its own.",
+  "source": "The owner's benchmarks, said to follow RBI; not yet checked against an RBI publication",
+  "verified": false,
+  "cases": {
+    "fresh": "A fresh or enhanced loan",
+    "renewal": "An existing loan on review or renewal"
+  },
+  "ratios": [
+    { "id": "currentRatio", "label": "Current ratio", "at": "least", "fresh": 1.10, "renewal": 1.00, "how": "(stock + debtors + cash) ÷ (the working-capital limit + creditors), at each year's end" },
+    { "id": "tolTnw", "label": "Total outside liabilities ÷ net worth", "at": "most", "fresh": 5, "renewal": 6, "how": "(unsecured loans + the term loan + the working-capital limit + creditors) ÷ net worth" },
+    { "id": "debtEquity", "label": "Term loan ÷ net worth (debt-equity)", "at": "most", "fresh": 4, "renewal": 4, "how": "the term loan outstanding ÷ net worth" },
+    { "id": "dscrAverage", "label": "Average DSCR", "at": "least", "fresh": 1.50, "renewal": 1.50, "how": "total cash available ÷ total debt service, over the loan" },
+    { "id": "dscrLowest", "label": "DSCR in the lowest year", "at": "least", "fresh": 1.25, "renewal": 1.25, "how": "the year's cash available ÷ its debt service" },
+    { "id": "interestCover", "label": "Interest cover", "at": "least", "fresh": 1.50, "renewal": 1.25, "how": "(profit before tax + all interest) ÷ all interest" },
+    { "id": "facr", "label": "Fixed-asset cover", "at": "least", "fresh": 1.20, "renewal": 1.20, "how": "net fixed assets ÷ the term loan outstanding" },
+    { "id": "securityCover", "label": "Security cover", "at": "least", "fresh": 1.20, "renewal": 1.20, "how": "(net fixed assets + stock + debtors + the collateral's realisable sale value) ÷ (the term loan + the working-capital limit outstanding)" }
+  ],
+  "collateral": {
+    "rsvPct": 90,
+    "dsvPct": 80,
+    "source": "The owner's figures (11-10-2026): realisable sale value 90% of the market value, which MSME lenders use for security cover; distress sale value 80%, shown",
+    "verified": false
+  },
+  "term": {
+    "longestMonths": 180,
+    "source": "The owner's figure (11-10-2026): an MSME term loan's longest, the moratorium included",
+    "verified": false
+  },
+  "capacity": {
+    "mostUsePct": 85,
+    "source": "A placeholder (D-UX-52): the highest use of the capacity a plan assumes; type the business's own reason if higher",
+    "verified": false
+  }
+}
