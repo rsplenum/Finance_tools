@@ -326,6 +326,6 @@ export function viableOf(s: ReportState): ViableView | undefined {
   } else if (v.instalmentsNone) push({ id: 'repayment', text: v.instalmentsNone }, 'lender');
   return {
     meets: v.meets, title: v.meets ? 'Every ratio meets a lender’s level' : 'Make it viable: any one of these', lines,
-    foot: `The levels: a fresh or enhanced loan’s, ${LEVELS.source.toLowerCase()}; each lender sets its own. Each change is worked alone by the engine, the rest as typed. Change the figures above only to what the business can really reach: a lender tests sales against the market and the capacity.`,
+    foot: `The levels: a fresh or enhanced loan’s benchmarks, said to follow RBI and not yet checked against an RBI publication; each lender sets its own. Each change is worked alone by the engine, the rest as typed. Change the figures above only to what the business can really reach: a lender tests sales against the market and the capacity.`,
   };
 }
