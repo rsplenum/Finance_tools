@@ -13,12 +13,14 @@ import { monthText } from '../dscr/model';
 import { docNeeds, docStatus, fileName, reportDoc } from './document';
 import {
   PMEGP, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, REPAYMENT_CHOICES, SCHEME_CHOICES,
-  COLLATERAL_HINT, amountOf, assumptionsOf, plainOf, preview, statusText, tidyAmount, viableOf,
-  type CheckRow, type ReportFacts, type ReportPreview, type ReportState, type ViableLine, type ViableView, type ViewTable,
+  ALONE, AS_TYPED, COLLATERAL_HINT, amountOf, applyPlan, assumptionsOf, boardOf, plainOf, planOf, preview, sameLevers, statusText, tidyAmount, undoPlan, viableOf,
+  type BoardMove, type CheckRow, type LeverId, type Levers, type PlanCard, type PlanChange, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
+  type ViableLine, type ViableView, type ViewTable,
 } from './model';
 
 type Update = (f: (s: ReportState) => ReportState) => void;
 const MUTED = 'text-slate-600 dark:text-slate-300';
+const FILLED = 'rounded-md border border-teal-700 bg-teal-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-800 dark:border-teal-400 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300';
 const SALES_BY: { value: ReportState['salesBy']; label: string }[] = [
   { value: 'drivers', label: 'The capacity, its use and the price' }, { value: 'typed', label: 'Sales I type, with their growth' }];
 const bad = (t: string, read: (t: string) => unknown) => !!t.trim() && read(t) === undefined;
@@ -28,12 +30,17 @@ export function ReportCalculator() {
   const [s, setS] = useState<ReportState>(EMPTY);
   const update: Update = (f) => setS(f);
   const p = useMemo(() => preview(s), [s]);
+  // "Use this plan" (MV3): the fields it wrote, each marked with what it was, until undone or kept.
+  const [used, setUsed] = useState<PlanChange[]>([]);
+  const use = (l: Levers) => { const a = applyPlan(s, l); setS(a.s); setUsed(a.changes); };
+  const undo = () => { setS((x) => undoPlan(x, used)); setUsed([]); };
+  const mark = (id: string, hint?: string) => { const c = used.find((u) => u.field === id); return c ? `Changed by the plan; it was ${c.was || 'empty'}.${hint ? ` ${hint}` : ''}` : hint; };
   // Each setter builds on the latest state (x), never on the one this render saw.
   const amount = (id: string, label: string, value: string, set: (x: ReportState, t: string) => ReportState, hint?: string) =>
-    <TextField id={id} label={label} hint={hint} inputMode="decimal" value={value} tidy={tidyAmount} placeholder="like 10 L or 10,00,000"
+    <TextField id={id} label={label} hint={mark(id, hint)} inputMode="decimal" value={value} tidy={tidyAmount} placeholder="like 10 L or 10,00,000"
       invalid={bad(value, amountOf)} said={notUnderstood(value, amountOf, '10,00,000 or 10 L')} onCommit={(t) => update((x) => set(x, t))} />;
   const percent = (id: string, label: string, value: string, set: (x: ReportState, t: string) => ReportState, placeholder: string) =>
-    <TextField id={id} label={label} inputMode="decimal" value={value} placeholder={placeholder}
+    <TextField id={id} label={label} hint={mark(id)} inputMode="decimal" value={value} placeholder={placeholder}
       invalid={bad(value, plainOf)} said={notUnderstood(value, plainOf, 'a number, like 10')} onCommit={(t) => update((x) => set(x, t))} />;
   return <div>
     <Choice name="fld-borrower" legend="Who is the borrower? It sets the tax." options={BORROWER_CHOICES} value={s.borrower} columns
@@ -93,7 +100,7 @@ export function ReportCalculator() {
             onChange={(salesBy) => update((x) => ({ ...x, salesBy }))} />
           <div class="mt-4 grid gap-4 sm:grid-cols-2">
             {s.salesBy === 'drivers' ? <>
-              <TextField id="fld-utilisation" label="Use of the capacity by year (%)" hint="One a year from the first sales; the last holds after." value={s.utilisation} placeholder="like 60, 70, 80"
+              <TextField id="fld-utilisation" label="Use of the capacity by year (%)" hint={mark('fld-utilisation', 'One a year from the first sales; the last holds after.')} value={s.utilisation} placeholder="like 60, 70, 80"
                 onCommit={(utilisation) => update((x) => ({ ...x, utilisation }))} />
               {percent('fld-priceGrowth', 'The price: growth a year (%)', s.priceGrowth, (x, priceGrowth) => ({ ...x, priceGrowth }), 'like 0')}
             </> : <>
@@ -114,7 +121,7 @@ export function ReportCalculator() {
         </div>)}
       </div>
     </Section>
-    <Result s={s} p={p} />
+    <Result s={s} p={p} update={update} use={use} used={used} undo={undo} keep={() => setUsed([])} />
     <Section id="assumed" title="Assumed until changed">
       <ul data-testid="rep-assumed" class="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700 dark:text-slate-300">
         {assumptionsOf(s).map((a) => <li key={a.id}><span class="font-medium text-slate-900 dark:text-slate-100">{a.what}:</span> {a.shown}. <span class={MUTED}>{a.why}.</span></li>)}
@@ -153,8 +160,8 @@ const INK = { meets: 'text-teal-800 dark:text-teal-300', misses: 'text-red-700 d
 
 /** One ratio as a bar against its level (MV2b): the track runs from nil to twice the level, so the level is the line at the
  * middle; under it the rupees its worst year is short, from the engine. */
-function Bar({ c }: { c: CheckRow }) {
-  return <li data-testid={`rep-check-${c.id}`} class="py-1.5">
+function Bar({ c, pre = 'rep' }: { c: CheckRow; pre?: string }) {
+  return <li data-testid={`${pre}-check-${c.id}`} class="py-1.5">
     <p class="text-sm text-slate-800 dark:text-slate-200">{c.label}</p>
     <div aria-hidden="true" class="relative mt-1 h-3 rounded-full bg-slate-100 dark:bg-slate-800">
       <div class={`h-3 rounded-full ${TONE[c.verdict]}`} style={{ width: `${c.verdict === 'misses' ? Math.max(c.bar, 3) : c.bar}%` }} />
@@ -162,7 +169,7 @@ function Bar({ c }: { c: CheckRow }) {
     </div>
     <p class="mt-0.5 text-sm"><span class={`tabular-nums ${INK[c.verdict]}`}>{c.verdict === 'misses' ? 'Misses: ' : c.verdict === 'meets' ? 'Meets: ' : ''}{c.worst}</span>
       <span class={`text-xs ${MUTED}`}> · level {c.level}{c.at === 'most' ? ', a shorter bar is better' : ''}</span></p>
-    {c.short && <p data-testid={`rep-short-${c.id}`} class="text-sm font-medium text-red-700 dark:text-red-300">{c.short}</p>}
+    {c.short && <p data-testid={`${pre}-short-${c.id}`} class="text-sm font-medium text-red-700 dark:text-red-300">{c.short}</p>}
   </li>;
 }
 
@@ -182,22 +189,58 @@ function Lever({ l }: { l: ViableLine }) {
           <span class="w-24 shrink-0 text-right text-slate-800 dark:text-slate-200">{t}</span>
         </div>)}
     </div>}
+    <Said l={l} />
+  </li>;
+}
+
+/** What MV2b's board says of a lever worked alone: within reach or not, the ratios it meets and leaves, in words. */
+function Said({ l, alone }: { l: ViableLine; alone?: boolean }) {
+  return <>
     {l.reach && <p data-testid={`rep-reach-${l.id}`} class={`mt-1.5 text-sm font-medium ${l.reach.out ? 'text-red-700 dark:text-red-300' : 'text-amber-900 dark:text-amber-200'}`}>{l.reach.text}</p>}
     {(l.fixes.length > 0 || l.still.length > 0) && <ul class="mt-1.5 flex flex-wrap gap-1 text-xs">
+      {alone && <li class={`py-0.5 ${MUTED}`}>Alone:</li>}
       {l.fixes.map((f) => <li key={f} class="rounded-full bg-teal-100 px-2 py-0.5 text-teal-900 dark:bg-teal-950 dark:text-teal-200">✓ {f}</li>)}
       {l.still.map((f) => <li key={f} class="rounded-full bg-red-100 px-2 py-0.5 text-red-900 dark:bg-red-950 dark:text-red-200">✗ {f}</li>)}
     </ul>}
-    <p data-testid={`rep-text-${l.id}`} class="mt-1.5 text-sm text-slate-800 dark:text-slate-200">{l.text}</p>
+    <p class="mt-1.5 text-sm text-slate-800 dark:text-slate-200">{alone && <span class={MUTED}>Alone: </span>}<span data-testid={`rep-text-${l.id}`}>{l.text}</span></p>
     {l.note && <p class={`mt-0.5 text-sm ${MUTED}`}>{l.note}</p>}
+  </>;
+}
+
+/** A lever in the plan (MV3): its slider, set where the plan puts it; how far it moves and the figure it gives, live;
+ * and what it does alone (MV2b). */
+function PlanLever({ c, m, value, alone, set }: { c: PlanCard; m: BoardMove; value: number; alone?: ViableLine; set: (n: number) => void }) {
+  return <li data-testid={`rep-lever-${c.id}`} class={`rounded-lg border p-3 ${alone?.reach?.out ? 'border-red-300 dark:border-red-800' : 'border-slate-300 dark:border-slate-600'}`}>
+    <div class="flex items-baseline justify-between gap-2">
+      <label for={`rep-slider-${c.id}`} class="font-medium text-slate-900 dark:text-slate-100">{c.head}</label>
+      <span data-testid={`rep-move-${c.id}`} class="shrink-0 text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">{m.move}</span>
+    </div>
+    {m.max > 0 && <input id={`rep-slider-${c.id}`} type="range" min={0} max={m.max} step={1} value={value} aria-valuetext={`${m.move}: ${m.to}`}
+      onInput={(e) => set(Number((e.currentTarget as HTMLInputElement).value))} class="mt-2 h-6 w-full accent-teal-700 dark:accent-teal-400" />}
+    <p data-testid={`rep-to-${c.id}`} class="text-sm tabular-nums text-slate-800 dark:text-slate-200">{m.to}</p>
+    {alone && <Said l={alone} alone />}
   </li>;
 }
 
 /** Why it does not work yet: each lender's ratio as a bar against its level in its worst year (D-UX-51), then "Make it
- * viable" (D-UX-50, D-UX-52) as a board of levers: worked on a tap, since it runs the whole report many times; cleared when
- * a figure changes. */
-function Viable({ s, p }: { s: ReportState; p: ReportPreview }) {
+ * viable" (D-UX-50, D-UX-52), worked on a tap since it runs the whole report many times. When a level misses, the engine's
+ * plan (MV3): a slider for each lever, set where the plan puts it, the borrower's first; the sliders change nothing above
+ * until "Use this plan", while the bars, the verdict and the plan's words follow them (one run of the report each). Each
+ * card keeps what the lever does alone (MV2b). Any figure changed closes the board; the promoters' most works it again. */
+function Viable({ s, p, update, use }: { s: ReportState; p: ReportPreview; update: Update; use: (l: Levers) => void }) {
   const [v, setV] = useState<ViableView | undefined>();
-  useEffect(() => setV(undefined), [s]);
+  const [plan, setPlan] = useState<PlanView | undefined>();
+  const [lv, setLv] = useState<Levers>(AS_TYPED);
+  const [touched, setTouched] = useState<LeverId[]>([]);
+  const base = useMemo(() => JSON.stringify({ ...s, promotersMost: '' }), [s]);
+  useEffect(() => { setV(undefined); setPlan(undefined); setTouched([]); }, [base]);
+  const replan = (ids: LeverId[], at: Levers) => {
+    const q = planOf(s, Object.fromEntries(ids.map((id) => [id, at[id]])));
+    setPlan(q); setTouched(ids); if (q) setLv(q.levers);
+  };
+  useEffect(() => { if (plan) replan(touched, lv); }, [s.promotersMost]);
+  const b = useMemo(() => (plan ? boardOf(plan, lv) : undefined), [plan, lv]);
+  const move = (id: LeverId, n: number) => { setLv((l) => ({ ...l, [id]: n })); if (!touched.includes(id)) setTouched([...touched, id]); };
   const group = (by: 'borrower' | 'lender', title: string) => {
     const ls = v?.lines.filter((l) => l.by === by) ?? [];
     return ls.length > 0 && <>
@@ -205,6 +248,15 @@ function Viable({ s, p }: { s: ReportState; p: ReportPreview }) {
       <ul class="mt-1 space-y-2">{ls.map((l) => <Lever key={l.id} l={l} />)}</ul>
     </>;
   };
+  const cards = (by: 'borrower' | 'lender', title: string) => {
+    const cs = plan && b ? plan.cards.filter((c) => c.by === by) : [];
+    return cs.length > 0 && b && <>
+      <p class="mt-3 text-sm font-medium text-slate-800 dark:text-slate-200">{title}</p>
+      <ul class="mt-1 space-y-2">{cs.map((c) => <PlanLever key={c.id} c={c} m={b.moves[c.id]} value={lv[c.id]} set={(n) => move(c.id, n)}
+        alone={v?.lines.find((l) => l.id === ALONE[c.id])} />)}</ul>
+    </>;
+  };
+  const tone = (ok: boolean) => (ok ? 'text-teal-800 dark:text-teal-300' : 'text-red-700 dark:text-red-300');
   return <div class="mt-3">
     {p.checks && <div data-testid="rep-checks">
       <p class="font-medium text-slate-900 dark:text-slate-100">{p.misses ? 'Why it does not work yet' : 'Against a lender’s levels'}</p>
@@ -214,24 +266,59 @@ function Viable({ s, p }: { s: ReportState; p: ReportPreview }) {
     {p.collateralNote && <p data-testid="rep-collateral-note" class={`mt-1 ${HINT}`}>{p.collateralNote}</p>}
     {p.longTerm && <p data-testid="rep-long-term" class="mt-2 text-sm text-red-700 dark:text-red-300">{p.longTerm}</p>}
     {p.misses && <p data-testid="rep-misses" class="mt-2 text-sm text-red-700 dark:text-red-300">{p.misses}</p>}
-    {!v && <button type="button" data-testid="rep-viable" class={`mt-2 ${BUTTON}`} onClick={() => setV(viableOf(s))}>
+    {!v && <button type="button" data-testid="rep-viable" class={`mt-2 ${BUTTON}`} onClick={() => { setV(viableOf(s)); if (p.misses) replan([], AS_TYPED); }}>
       {p.misses ? 'Make it viable' : 'How far can sales fall?'}</button>}
-    {v && <div data-testid="rep-viable-box" class="mt-2">
+    {v && !plan && <div data-testid="rep-viable-box" class="mt-2">
       <p class="font-medium text-slate-900 dark:text-slate-100">{v.title}</p>
       {group('borrower', v.meets ? 'The room' : 'Your changes')}
       {group('lender', 'The lender’s, if it agrees')}
       <p class={`mt-2 ${HINT}`}>{v.foot}</p>
     </div>}
+    {v && plan && b && <div data-testid="rep-plan" class="mt-3 rounded-lg border border-slate-300 p-3 dark:border-slate-600">
+      <p class="font-medium text-slate-900 dark:text-slate-100">The plan: the levers together</p>
+      <p class={HINT}>The engine’s plan, your changes first and the lender’s last. The sliders change none of the figures above until you use the plan.</p>
+      <TextField id="fld-promotersMost" class="mt-3" label="The most the promoters can bring in all, if known" hint="Without it, no more of their money is assumed."
+        inputMode="decimal" value={s.promotersMost} tidy={tidyAmount} placeholder="like 12 L" invalid={bad(s.promotersMost, amountOf)}
+        said={notUnderstood(s.promotersMost, amountOf, '10,00,000 or 10 L')} onCommit={(promotersMost) => update((x) => ({ ...x, promotersMost }))} />
+      {b.steps.length
+        ? <ol data-testid="rep-plan-steps" class="mt-3 list-decimal space-y-0.5 pl-5 text-sm text-slate-800 dark:text-slate-200">{b.steps.map((t) => <li key={t}>{t}</li>)}</ol>
+        : <p data-testid="rep-plan-steps" class="mt-3 text-sm text-slate-800 dark:text-slate-200">No lever moves: nothing within its limit helps.</p>}
+      {b.promoters && <p data-testid="rep-plan-promoters" class={`mt-1 text-sm ${b.over ? 'font-medium text-red-700 dark:text-red-300' : 'text-slate-800 dark:text-slate-200'}`}>{b.promoters}</p>}
+      <p data-testid="rep-plan-verdict" class={`mt-2 text-sm font-medium ${tone(b.works)}`}>{b.verdict}</p>
+      {b.still.length > 0 && <ul data-testid="rep-plan-still" class="mt-0.5 list-disc space-y-0.5 pl-5 text-sm text-red-700 dark:text-red-300">{b.still.map((t) => <li key={t}>{t}</li>)}</ul>}
+      <p data-testid="rep-plan-limits" class={HINT}>{plan.limits}{plan.atLimit ? ` ${plan.atLimit}` : ''}</p>
+      <div class="mt-3 flex flex-wrap gap-2">
+        {b.steps.length > 0 && <button type="button" data-testid="rep-plan-use" class={FILLED} onClick={() => use(lv)}>Use this plan</button>}
+        {touched.length > 0 && <button type="button" data-testid="rep-plan-rest" class={BUTTON} onClick={() => replan(touched, lv)}>Work out the rest</button>}
+        {(touched.length > 0 || !sameLevers(lv, plan.levers)) && <button type="button" data-testid="rep-plan-back" class={BUTTON} onClick={() => replan([], AS_TYPED)}>Back to the engine’s plan</button>}
+      </div>
+      {b.checks && <div data-testid="rep-plan-checks" class="mt-3">
+        <p class="text-sm font-medium text-slate-900 dark:text-slate-100">With these changes</p>
+        <ul class="mt-1 divide-y divide-slate-100 dark:divide-slate-800">{b.checks.map((c) => <Bar key={c.id} c={c} pre="rep-plan" />)}</ul>
+      </div>}
+      {cards('borrower', 'Your changes')}
+      {cards('lender', 'The lender’s, if it agrees')}
+      <p data-testid="rep-plan-line" aria-live="polite" class={`sticky bottom-0 mt-2 border-t border-slate-200 bg-white py-2 text-sm font-medium dark:border-slate-700 dark:bg-slate-900 ${tone(b.works)}`}>With these changes: {b.line}</p>
+      <p class={HINT}>{v.foot}</p>
+    </div>}
   </div>;
 }
 
-function Result({ s, p }: { s: ReportState; p: ReportPreview }) {
+function Result({ s, p, update, use, used, undo, keep }: { s: ReportState; p: ReportPreview; update: Update; use: (l: Levers) => void; used: PlanChange[]; undo: () => void; keep: () => void }) {
   const v = p.view;
   return <Section id="report" title="The project report">
     <p data-testid="rep-status" class={`mt-3 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.needs.length || p.blocked || p.short
       ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200'}`}>{statusText(p)}</p>
     {p.blocked && <p class="mt-2 text-sm text-red-700 dark:text-red-300">{p.blocked}</p>}
-    {v && !p.blocked && <Viable s={s} p={p} />}
+    {used.length > 0 && <div data-testid="rep-used" role="status" class="mt-3 rounded-lg border border-teal-600 bg-teal-50 p-3 dark:border-teal-500 dark:bg-teal-950">
+      <p class="font-medium text-slate-900 dark:text-slate-100">The plan is used: these figures above changed.</p>
+      <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-800 tabular-nums dark:text-slate-200">{used.map((c) => <li key={c.key}>{c.label}: {c.was || 'none'} → {c.now}</li>)}</ul>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button type="button" data-testid="rep-undo" class={BUTTON} onClick={undo}>Undo</button>
+        <button type="button" data-testid="rep-keep" class={BUTTON} onClick={keep}>Keep these</button>
+      </div>
+    </div>}
+    {v && !p.blocked && <Viable s={s} p={p} update={update} use={use} />}
     {p.short && <p data-testid="rep-short" class="mt-2 text-sm text-red-700 dark:text-red-300">{p.short}</p>}
     {p.flags.length > 0 && <ul data-testid="rep-flags" class="mt-2 list-disc space-y-0.5 pl-5 text-sm text-amber-900 dark:text-amber-200">{p.flags.map((n) => <li key={n}>{n}</li>)}</ul>}
     {p.needs.length > 0 && <ul data-testid="rep-needs" class="mt-2 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>}

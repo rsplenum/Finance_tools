@@ -7,6 +7,7 @@ import { ASSUMPTIONS, HEADS, PMEGP, projectReport, type Activity, type Area, typ
 import { parseAmount, parseMonth } from '../../../engine/parse';
 import { LEVELS, collateralNeeded, diagnose, type RatioCheck, type RatioId, type Shortfall } from '../../../engine/ratios';
 import { makeViable, type Longer, type Outcome } from '../../../engine/viable';
+import { AS_TYPED, LEVER_IDS, makePlan, withLevers, type LeverId, type Levers } from '../../../engine/plan';
 import { BORROWERS } from '../../../engine/tax';
 import { inr } from '../../../engine/util';
 
@@ -25,6 +26,8 @@ export interface ReportState {
   sales: string; salesGrowth: string; variablePct: string; fixed: string; fixedGrowth: string;
   days: { stock: string; debtors: string; creditors: string };
   wcLimit: string; wcRate: string;
+  /** The most the promoters can bring in all, on the plan's board only (MV3): not an input of the report. */
+  promotersMost: string;
   doc: ReportFacts;
 }
 
@@ -37,7 +40,7 @@ export const EMPTY: ReportState = {
   utilisation: ((assumed('utilisation') ?? []) as number[]).join(', '), priceGrowth: String(assumed('price') ?? ''), sales: '', salesGrowth: '', variablePct: '', fixed: '', fixedGrowth: '',
   // Assumed until changed (engine/data/report.json), listed on the page.
   days: { stock: String(DAYS.stock ?? ''), debtors: String(DAYS.debtors ?? ''), creditors: String(DAYS.creditors ?? '') },
-  wcLimit: '', wcRate: '', doc: { name: '', activity: '', address: '', lender: '', preparedBy: '' },
+  wcLimit: '', wcRate: '', promotersMost: '', doc: { name: '', activity: '', address: '', lender: '', preparedBy: '' },
 };
 export const BORROWER_CHOICES = BORROWERS.map((b) => ({ value: b.id, label: b.label }));
 export const REPAYMENT_CHOICES: { value: Repayment; label: string }[] = [
@@ -259,17 +262,18 @@ const shortText = (k: RatioCheck) => k.short && k.short.amount > 0
 const barOf = (k: RatioCheck) => (k.why ? 100 : k.worst === undefined ? 0 : Math.max(0, Math.min(100, (k.worst / (2 * k.level)) * 100)));
 const labelOf = (id: RatioId) => inSentence(LEVELS.ratios.find((r) => r.id === id)?.label ?? id);
 
+const rowOf = (k: RatioCheck): CheckRow => ({
+  id: k.id, label: k.label, level: levelText(k),
+  worst: k.why ? `Net worth at or below nil in ${k.fy}` : k.worst === undefined ? (k.id === 'securityCover' ? 'Type the collateral’s value' : '—') : `${ratioAt(k.worst, k)}${k.fy ? ` in ${k.fy}` : ' over the loan'}`,
+  verdict: k.meets === undefined ? 'wait' : k.meets ? 'meets' : 'misses', bar: barOf(k), at: k.at,
+  ...(shortText(k) ? { short: shortText(k) } : {}),
+});
+
 export function preview(s: ReportState): ReportPreview {
   const x = inputOf(s), r = projectReport(x);
   if ('blocked' in r) return { needs: [], blocked: r.blocked, flags: [] };
   if ('needs' in r) return { needs: r.needs, flags: [] };
-  const c = r.cashShort, d = diagnose(r, x);
-  const checks: CheckRow[] = d.checks.map((k) => ({
-    id: k.id, label: k.label, level: levelText(k),
-    worst: k.why ? `Net worth at or below nil in ${k.fy}` : k.worst === undefined ? (k.id === 'securityCover' ? 'Type the collateral’s value' : '—') : `${ratioAt(k.worst, k)}${k.fy ? ` in ${k.fy}` : ' over the loan'}`,
-    verdict: k.meets === undefined ? 'wait' : k.meets ? 'meets' : 'misses', bar: barOf(k), at: k.at,
-    ...(shortText(k) ? { short: shortText(k) } : {}),
-  }));
+  const c = r.cashShort, d = diagnose(r, x), checks = d.checks.map(rowOf);
   const sc = d.checks.find((k) => k.id === 'securityCover') as RatioCheck, need = sc.meets ? undefined : collateralNeeded(r, x);
   const collateralNote = need === undefined ? undefined : need === 0
     ? `Security cover: the project’s own assets reach ${sc.level.toFixed(2)} without collateral.`
@@ -365,3 +369,133 @@ export function viableOf(s: ReportState): ViableView | undefined {
     foot: `The levels: a fresh or enhanced loan’s benchmarks, said to follow RBI and not yet checked against an RBI publication; each lender sets its own. Each change is worked alone by the engine, the rest as typed. Change the figures above only to what the business can really reach: a lender tests sales against the market and the capacity.`,
   };
 }
+
+// ---- The combined plan (MV3, D-UX-52): the levers together, as sliders on the board ----
+
+const HEAD: Record<LeverId, string> = {
+  wc: 'A smaller working-capital limit', promoters: 'A smaller term loan', unsecured: 'More unsecured loans', fixed: 'Lower fixed costs',
+  sales: 'Higher sales', collateral: 'More collateral', moratorium: 'A longer moratorium', instalments: 'A longer repayment',
+};
+/** Each lever's card worked alone on MV2b's board (viableOf), by its id there. */
+export const ALONE: Partial<Record<LeverId, string>> = { wc: 'wc', promoters: 'loan', sales: 'sales', collateral: 'collateral', moratorium: 'moratorium', instalments: 'repayment' };
+const LIMIT_OF: Record<LeverId, string> = {
+  wc: 'the promoters’ money', promoters: 'the promoters’ money', unsecured: '', fixed: '', sales: 'the use of the capacity', collateral: '', moratorium: 'the term', instalments: 'the term',
+};
+/** The slider for lower fixed costs runs to half: no limit is known, the borrower sets it. */
+const FIXED_MOST = 500;
+
+export interface PlanCard { id: LeverId; by: 'borrower' | 'lender'; head: string }
+/** The engine's plan (engine/plan.ts) for the board: the levers it sets, the cards in its order and the limits it kept. */
+export interface PlanView {
+  x: ReportInput; levers: Levers; cards: PlanCard[]; limits: string; atLimit?: string;
+  most?: number; promotersNow: number; leastLoan: number; termRoom: number; monthsEach: number; salesMost?: number;
+}
+
+/** The plan, with the levers in `held` kept as the borrower set them; none while the report has no figures. */
+export function planOf(s: ReportState, held: Partial<Levers> = {}): PlanView | undefined {
+  const x = inputOf(s), m = amountOf(s.promotersMost), most = m !== undefined && Number.isFinite(m) && m >= 0 ? m : undefined;
+  const q = makePlan(x, { ...(most !== undefined ? { promotersMost: most } : {}), held });
+  if ('needs' in q || 'blocked' in q) return undefined;
+  const L = q.limits, room = (x.loan.amount as number) - L.leastLoan;
+  const show: Record<LeverId, boolean> = {
+    wc: (x.wcLimit ?? 0) > 0, promoters: room >= 1, unsecured: room >= 1, fixed: (x.fixedCosts ?? 0) > 0, sales: L.sales !== 0,
+    collateral: x.collateral !== undefined || q.levers.collateral > 0, moratorium: L.termRoom >= 1, instalments: L.termRoom >= L.monthsEach,
+  };
+  const limited = [...new Set(q.atLimit.map((id) => LIMIT_OF[id]).filter(Boolean))];
+  return {
+    x, levers: q.levers, cards: LEVER_IDS.filter((id) => show[id]).map((id) => ({ id, by: id === 'moratorium' || id === 'instalments' ? 'lender' : 'borrower', head: HEAD[id] })),
+    limits: `The limits kept: ${most !== undefined ? `the promoters bring at most Rs. ${rupees(most)} in all` : 'no more of the promoters’ money, since the most they can bring is not typed'}; ${L.sales === undefined
+      ? 'sales with no limit known, so a lender will test them against the market' : `the use of the capacity at most ${LEVELS.capacity.mostUsePct}% in any year`}; the whole term within ${LEVELS.term.longestMonths} months; unsecured loans and fixed costs only as you set them.`,
+    ...(limited.length ? { atLimit: `At the limit: ${listed(limited)}.` } : {}),
+    ...(most !== undefined ? { most } : {}), promotersNow: q.promoters.now, leastLoan: L.leastLoan, termRoom: L.termRoom, monthsEach: L.monthsEach,
+    ...(L.sales !== undefined ? { salesMost: L.sales } : {}),
+  };
+}
+
+/** Each lever at the slider: how far it moves, the figure it gives, and the slider's end. */
+export interface BoardMove { move: string; to: string; max: number }
+/** The board at the sliders (one run of the report): the bars, the verdict, the plan in steps, the promoters' money. */
+export interface BoardView {
+  checks?: CheckRow[]; works: boolean; verdict: string; still: string[]; line: string;
+  steps: string[]; promoters?: string; over?: boolean; moves: Record<LeverId, BoardMove>;
+}
+
+export function boardOf(q: PlanView, l: Levers): BoardView {
+  const x = q.x, y = withLevers(x, l), rs = (n?: number) => `Rs. ${rupees(n ?? 0)}`, had = x.collateral ?? 0;
+  const room = (x.loan.amount as number) - q.leastLoan, typed = x.salesBy === 'typed', pct = (t: number) => `${(t / 10).toFixed(1)}%`;
+  const uses = (u?: number[]) => (u ?? []).map((p) => `${p}%`).join(', ');
+  const moves: Record<LeverId, BoardMove> = {
+    wc: { move: `${rs(l.wc)} less`, to: `A limit of ${rs(y.wcLimit)}`, max: x.wcLimit ?? 0 },
+    promoters: { move: `${rs(l.promoters)} less`, to: `A term loan of ${rs(y.loan.amount)}`, max: room - l.unsecured },
+    unsecured: { move: `${rs(l.unsecured)} more`, to: `Unsecured loans of ${rs(y.unsecured)}, a term loan of ${rs(y.loan.amount)}`, max: room - l.promoters },
+    fixed: { move: `${pct(l.fixed)} lower`, to: `${rs(y.fixedCosts)} in a full first year`, max: FIXED_MOST },
+    sales: { move: `+${pct(l.sales)}`, to: typed ? `${rs(y.sales)} in a full first year` : `The use of the capacity at ${uses(y.utilisationPct)}`, max: q.salesMost ?? Math.max(GRID_UP, q.levers.sales) },
+    collateral: { move: `${rs(l.collateral)} more`, to: `A market value of ${rs(had + l.collateral)}`, max: Math.max(1000000, 2 * q.levers.collateral, had) },
+    moratorium: { move: `+${l.moratorium} month${l.moratorium === 1 ? '' : 's'}`, to: `A moratorium of ${y.loan.moratoriumMonths} months`, max: q.termRoom - l.instalments * q.monthsEach },
+    instalments: { move: `+${l.instalments}`, to: `${y.loan.instalments} instalments`, max: Math.floor((q.termRoom - l.moratorium) / q.monthsEach) },
+  };
+  for (const id of LEVER_IDS) moves[id] = { ...moves[id], max: Math.max(0, moves[id].max, l[id]), ...(l[id] ? {} : { move: 'As typed' }) };
+  const step: Record<LeverId, () => string> = {
+    wc: () => `A working-capital limit of ${rs(y.wcLimit)} (now ${rs(x.wcLimit)}).`,
+    promoters: () => `A term loan of ${rs(y.loan.amount)} (now ${rs(x.loan.amount)}), the promoters bringing the rest.`,
+    unsecured: () => `Unsecured loans of ${rs(y.unsecured)} (now ${rs(x.unsecured)}), the term loan less by as much.`,
+    fixed: () => `Fixed costs of ${rs(y.fixedCosts)} in a full first year (now ${rs(x.fixedCosts)}), ${pct(l.fixed)} lower.`,
+    sales: () => (typed ? `Sales of ${rs(y.sales)} in a full first year (now ${rs(x.sales)}), ${pct(l.sales)} higher.` : `The use of the capacity at ${uses(y.utilisationPct)} (now ${uses(x.utilisationPct)}).`),
+    collateral: () => `Collateral with a market value of ${rs(had + l.collateral)} (now ${had ? rs(had) : 'none'}).`,
+    moratorium: () => `A moratorium of ${y.loan.moratoriumMonths} months (now ${x.loan.moratoriumMonths}), if the lender agrees.`,
+    instalments: () => `${y.loan.instalments} instalments (now ${x.loan.instalments}), if the lender agrees.`,
+  };
+  const steps = LEVER_IDS.filter((id) => l[id]).map((id) => step[id]()), r = projectReport(y);
+  if ('needs' in r || 'blocked' in r) {
+    const why = 'blocked' in r ? r.blocked : `No figures with these changes: ${r.needs.join('; ')}.`;
+    return { works: false, verdict: why, still: [], line: 'No figures', steps, moves };
+  }
+  const d = diagnose(r, y), checks = d.checks.map(rowOf), miss = checks.filter((c) => c.verdict === 'misses');
+  const p = r.finance.promoter, over = q.most !== undefined && p > q.most + 1e-6, cash = r.cashShort;
+  const still = [...miss.map((c) => `${c.label}: ${c.worst}, level ${c.level}.${c.short ? ` ${c.short}` : ''}`),
+    ...(cash ? [`Cash goes below nil in ${cash.fy}: Rs. ${upRupees(cash.need)} short at its lowest.`] : [])];
+  return {
+    checks, works: !miss.length, still, steps, moves, over,
+    verdict: miss.length ? `With these changes it still does not work as structured: it misses ${miss.length === 1 ? 'one' : miss.length} of a lender’s levels.`
+      : `With these changes it meets every lender’s level${checks.some((c) => c.verdict === 'wait') ? ' that can be read' : ''}.`,
+    line: miss.length ? `Misses ${miss.length}: ${listed(miss.map((c) => inSentence(c.label)))}` : 'Meets every level',
+    promoters: `The promoters bring ${rs(p)} in all (now ${rs(q.promotersNow)})${q.most === undefined ? '' : over
+      ? `: Rs. ${upRupees(p - q.most)} more than the ${rs(q.most)} they can` : `, within the ${rs(q.most)} they can`}.`,
+  };
+}
+/** Typed sales have no known limit: the slider runs to double, or the plan's if more. */
+const GRID_UP = 1000;
+
+/** A field "Use this plan" writes: its place in the state, its input on the page, its name in the banner (MV3). */
+type Key = 'loan.amount' | 'unsecured' | 'wcLimit' | 'fixed' | 'sales' | 'utilisation' | 'collateral' | 'loan.moratoriumMonths' | 'loan.instalments';
+export interface PlanChange { key: Key; field: string; label: string; was: string; now: string }
+const WRITES: { key: Key; field: string; label: string; by: LeverId[] }[] = [
+  { key: 'loan.amount', field: 'fld-tl-amount', label: 'Term loan', by: ['promoters', 'unsecured'] },
+  { key: 'unsecured', field: 'fld-unsecured', label: 'Unsecured loans', by: ['unsecured'] },
+  { key: 'wcLimit', field: 'fld-wcLimit', label: 'Working-capital limit', by: ['wc'] },
+  { key: 'fixed', field: 'fld-fixed', label: 'Fixed costs', by: ['fixed'] },
+  { key: 'sales', field: 'fld-sales', label: 'Sales', by: ['sales'] },
+  { key: 'utilisation', field: 'fld-utilisation', label: 'Use of the capacity', by: ['sales'] },
+  { key: 'collateral', field: 'fld-collateral', label: 'Collateral', by: ['collateral'] },
+  { key: 'loan.moratoriumMonths', field: 'fld-tl-moratorium', label: 'Moratorium', by: ['moratorium'] },
+  { key: 'loan.instalments', field: 'fld-tl-instalments', label: 'Instalments', by: ['instalments'] },
+];
+const get = (s: ReportState, k: Key) => (k.startsWith('loan.') ? s.loan[k.slice(5) as 'amount'] : s[k as 'sales']);
+const put = (s: ReportState, k: Key, t: string): ReportState => (k.startsWith('loan.') ? { ...s, loan: { ...s.loan, [k.slice(5)]: t } } : { ...s, [k]: t });
+
+/** "Use this plan": the plan's figures (engine/plan.ts's withLevers) written into the fields, and what each was. */
+export function applyPlan(s: ReportState, l: Levers): { s: ReportState; changes: PlanChange[] } {
+  const y = withLevers(inputOf(s), l), fig = (n?: number) => inr(n ?? 0, Number.isInteger(n) ? 0 : 2);
+  const text: Record<Key, () => string> = {
+    'loan.amount': () => fig(y.loan.amount), unsecured: () => fig(y.unsecured), wcLimit: () => fig(y.wcLimit), fixed: () => fig(y.fixedCosts),
+    sales: () => fig(y.sales), utilisation: () => (y.utilisationPct ?? []).join(', '), collateral: () => fig(y.collateral),
+    'loan.moratoriumMonths': () => String(y.loan.moratoriumMonths), 'loan.instalments': () => String(y.loan.instalments),
+  };
+  const changes = WRITES.filter((w) => w.by.some((id) => l[id]) && (w.key === 'sales' ? s.salesBy === 'typed' : w.key !== 'utilisation' || s.salesBy === 'drivers'))
+    .map((w) => ({ key: w.key, field: w.field, label: w.label, was: get(s, w.key), now: text[w.key]() })).filter((c) => c.was !== c.now);
+  return { s: changes.reduce((t, c) => put(t, c.key, c.now), s), changes };
+}
+/** Undo: each field the plan wrote back as it was, unless it has been changed since. */
+export const undoPlan = (s: ReportState, changes: PlanChange[]) => changes.reduce((t, c) => (get(t, c.key) === c.now ? put(t, c.key, c.was) : t), s);
+export const sameLevers = (a: Levers, b: Levers) => LEVER_IDS.every((id) => a[id] === b[id]);
+export { AS_TYPED, LEVER_IDS, type LeverId, type Levers };
