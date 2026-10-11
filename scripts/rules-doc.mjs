@@ -8,6 +8,7 @@ import tax from '../engine/data/tax.json' with { type: 'json' };
 import defaults from '../engine/data/defaults.json' with { type: 'json' };
 import estimate from '../engine/data/estimate.json' with { type: 'json' };
 import report from '../engine/data/report.json' with { type: 'json' };
+import ratios from '../engine/data/ratios.json' with { type: 'json' };
 import cma from '../engine/data/cma.json' with { type: 'json' };
 import architect from '../engine/data/architect.json' with { type: 'json' };
 import sources from '../engine/data/sources.json' with { type: 'json' };
@@ -85,6 +86,11 @@ out.push('| Head of the project | Depreciation a year |', '|---|---|', ...report
 out.push(report.depreciationSource, '', `Working capital: ${report.workingCapital.source}`, '');
 out.push('**What the page assumes until you change it**', '', ...report.assumptions.map((a) => `- **${a.what}**: ${a.shown}. ${a.why}.`), '');
 out.push('**How the figures are worked out**', '', ...report.method.map((m) => `- ${m}`), '');
+// The lender's levels the project report is read against (engine/ratios.ts, D-UX-51, D-UX-52).
+out.push(`## ${ratios.title}`, '', `Dated ${date(ratios.date)}. ${ratios.status} Source: ${ratios.source}${ratios.verified ? '' : ' (unverified)'}.`, '');
+out.push(`| Ratio | ${ratios.cases.fresh} | ${ratios.cases.renewal} | How |`, '|---|---|---|---|', ...ratios.ratios.map((r) => `| ${r.label} | ${r.at === 'least' ? 'at least' : 'at most'} ${r.fresh.toFixed(2)} | ${r.at === 'least' ? 'at least' : 'at most'} ${r.renewal.toFixed(2)} | ${r.how} |`), '');
+out.push(`- **Collateral**: realisable sale value ${ratios.collateral.rsvPct}% and distress sale value ${ratios.collateral.dsvPct}% of the market value. ${ratios.collateral.source}.`,
+  `- **The longest term**: ${ratios.term.longestMonths} months. ${ratios.term.source}.`, `- **Use of the capacity in a plan**: at most ${ratios.capacity.mostUsePct}%. ${ratios.capacity.source}.`, '');
 
 // CMA data (engine/cma.ts).
 out.push(`## ${cma.title}`, '', `Dated ${date(cma.date)}. ${cma.status}`, '');

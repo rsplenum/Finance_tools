@@ -67,6 +67,7 @@ function entered(s: ReportState): [string, string][] {
   pairs.push([s.scheme ? 'Term loan sanctioned' : 'Term loan', `${amount(l.amount)} at ${plainOf(l.ratePct)}% a year, first drawn in ${month ? monthText(month) : l.disbursed}; ${m ? `${m} months' moratorium` : 'no moratorium'}; ${plainOf(l.instalments)} instalments, ${rep.toLowerCase()}`]);
   if (s.subsidy.trim()) pairs.push(['Capital subsidy', amount(s.subsidy)]);
   if (s.unsecured.trim()) pairs.push(['Unsecured loans', amount(s.unsecured)]);
+  if (s.collateral.trim()) pairs.push(['Collateral: market value', amount(s.collateral)]);
   if (s.salesBy === 'typed') pairs.push(['Sales in a full first year', `${amount(s.sales)}, growing ${plainOf(s.salesGrowth)}% a year`]);
   else {
     pairs.push(['Capacity', `${s.capacity.trim()} units a year at Rs. ${tidyAmount(s.price)} a unit, the price growing ${plainOf(s.priceGrowth)}% a year`]);
@@ -94,7 +95,7 @@ export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc 
     ...(needs.length ? [{ kind: 'box', title: `Provisional: ${needs.length} still needed`, items: needs } as Block] : []),
     ...(p.flags.length ? [{ kind: 'box', title: 'PMEGP: to look at', items: p.flags } as Block] : []),
     { kind: 'figures', items: v.key },
-    ...table('cost'), ...table('finance'),
+    ...table('cost'), ...table('finance'), ...(v.tables.some((t) => t.id === 'collateral') ? table('collateral') : []),
     { kind: 'signature', lines: [`For ${name || 'the business'}`, '', 'Authorised signatory', 'Date:', 'Place:'] },
   ];
   return {

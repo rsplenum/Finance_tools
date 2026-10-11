@@ -1023,10 +1023,22 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
     const got = await cells(table, label);
     if (got[0] !== want) v(`the report's ${table} "${label}" shows ${JSON.stringify(got.slice(0, 2))}, want ${want} first`);
   }
-  // Make it viable (D-UX-50): case R meets, so the button asks how far sales can fall (tests/viable.test.ts by hand).
-  if (await page.getByTestId('rep-misses').count()) v('case R is said to miss the DSCR level');
+  // The lender's levels and Make it viable (D-UX-50 to D-UX-52): case R meets every level that can be read, so the button
+  // asks how far sales can fall (tests/viable.test.ts by hand); the security cover waits on the collateral.
+  if (await page.getByTestId('rep-misses').count()) v('case R is said to miss a lender\'s level');
+  await expectText(page, v, 'rep-check-dscrLowest', /1\.25 or more\s*Meets: 2\.51 in 2026-27/, 'the lowest DSCR against its level');
+  await expectText(page, v, 'rep-check-securityCover', /Type the collateral’s value/, 'the security cover before the collateral');
   await page.getByTestId('rep-viable').click();
-  await expectText(page, v, 'rep-viable-sales', /^Sales can fall 32\.8%, to Rs\. 80,64,000 in 2026-27/, 'how far sales can fall');
+  await expectText(page, v, 'rep-viable-sales', /^Sales can fall 31\.5%, to Rs\. 82,20,000 in 2026-27/, 'how far sales can fall');
+  // The collateral, under More options: 3 lakh with a 20 lakh limit misses the security cover (Rs. 4,36,226 needed).
+  await leave(page, '#fld-wcLimit', '20 L');
+  await leave(page, '#fld-collateral', '3 L');
+  await expectText(page, v, 'rep-check-securityCover', /Misses: 1\.17 in 2026-27/, 'the security cover with the collateral');
+  await page.getByTestId('rep-viable').click();
+  await expectText(page, v, 'rep-viable-collateral', /^Or collateral with a market value of Rs\. 4,36,226 \(now Rs\. 3,00,000\)/, 'the collateral that meets');
+  await layout(page, v, 'make it viable, 390 px');
+  await leave(page, '#fld-collateral', '');
+  await leave(page, '#fld-wcLimit', '5 L');
   await layout(page, v, 'the report filled, 390 px');
   await expectText(page, v, 'rep-doc-status', 'Provisional: 3 still needed', 'the report before its facts');
   await leave(page, '#fld-rep-name', 'Asha Packaging');
@@ -1073,7 +1085,7 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
   await leave(page, '#fld-fixed', '25 L');
   await expectText(page, v, 'rep-short', /^Cash goes below nil in 2030-31: Rs\. 45,18,203 short/, 'cash below nil');
   await expectText(page, v, 'rep-status', 'Provisional: 1 still needed', 'the report with cash below nil');
-  await expectText(page, v, 'rep-misses', /^The DSCR misses the level lenders commonly ask/, 'the DSCR below the level');
+  await expectText(page, v, 'rep-misses', /^It misses \S+ of a lender’s levels: .*DSCR/, 'the DSCR below the level');
   await page.getByTestId('rep-viable').click();
   await expectText(page, v, 'rep-viable-sales', /^Sales [\d.]+% higher in every year: Rs\. [\d,]+ in 20\d\d-\d\d instead of Rs\. [\d,]+\./, 'the sales that make it viable');
   if (!(await page.getByTestId('rep-viable-loan').count())) v('make it viable: no line for a smaller loan');

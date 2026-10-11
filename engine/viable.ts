@@ -1,130 +1,154 @@
 /**
- * Make it viable (D-UX-50): what the project report's own figures must become for its DSCR to meet the lenders' common
- * benchmarks (engine/data/dscr.json, unverified): the average and the lowest year. Each lever is worked alone, the rest
- * held as typed, by running the whole report again (engine/report.ts), so every figure comes from the same engine and its
- * second computation. Sales first (the owner's word: "mostly it will be adjusting sales"), then a smaller term loan with the
- * promoters bringing the rest, then a longer repayment.
+ * Make it viable (D-UX-50, D-UX-52): first the diagnosis, each of the lender's benchmark ratios against its level in its
+ * worst year (engine/ratios.ts, D-UX-51); then single changes, each worked alone with the rest as typed, against every
+ * ratio. The borrower's: sales, a smaller term loan or working-capital limit with the promoters bringing the rest, and
+ * collateral. The lender's, and only these: a longer moratorium or a longer repayment, the whole term at most 180 months
+ * with the moratorium. Each answer runs the whole report again (engine/report.ts), so every figure comes from the same
+ * engine and its second computation. A change aims at every ratio it can bring to its level; what it cannot is named.
  */
-import { BENCHMARKS, limitText, shortfall, type Blocked, type Limit, type Needs, type Target } from './dscr';
+import { collateralNeeded, diagnose, LEVELS, termMonths, type Diagnosis, type RatioId } from './ratios';
 import { projectReport, type Report, type ReportInput } from './report';
+import type { Blocked, Needs } from './dscr';
 
-/** The benchmarks the levers aim at, with their wording for the page. */
-export const TARGET: Target = {
-  average: BENCHMARKS.find((b) => b.target === 'average')?.value,
-  minimum: BENCHMARKS.find((b) => b.target === 'minimum')?.value,
-};
-
+/** What a change does: the levels missed as typed that it meets, and those still missed with it. */
+export interface Outcome { fixes: RatioId[]; still: RatioId[]; cashNeed?: number }
 /** Sales scaled by a factor, on the 0.1% grid: in every year, by the drivers (the price) or as typed. */
-export interface SalesLever {
+export interface SalesLever extends Outcome {
   /** The change in sales, in tenths of a per cent: +184 is 18.4% more; −120 is 12.0% less (the room to fall). */
   tenths: number; fy: string; now: number; needed: number;
   /** By the drivers: the price a unit that gives those sales at the same use, and the use in each year at the same price. */
   price?: { now: number; needed: number };
-  use?: { now: number[]; needed: number[]; overFull: boolean };
-  /** At those sales, cash still below nil: the promoters' money more that keeps it at nil or above. */
-  cashNeed?: number;
+  use?: { now: number[]; needed: number[]; overFull: boolean; overMost: boolean };
 }
+/** A loan made smaller, the promoters bringing `more`. */
+export interface Smaller extends Outcome { now: number; largest: number; more: number }
+export interface Longer extends Outcome { now: number; needed: number }
 export interface Viability {
-  target: Target;
-  /** True when the report as typed meets the targets. */
+  diagnosis: Diagnosis;
+  /** True when every ratio that can be read meets its level. */
   meets: boolean;
-  /** Why it misses, as the DSCR page says it. */
-  misses?: string;
-  /** Viable: how far sales may fall and still meet; not viable: how much more they must be. Absent when none works. */
   sales?: SalesLever; salesNone?: string;
-  /** Not viable only: the largest term loan that meets, the promoters bringing the rest. */
-  loan?: { now: number; largest: number; more: number }; loanNone?: string;
-  /** Not viable only: the fewest instalments, more than typed, that meet. */
-  instalments?: { now: number; needed: number; perYear: number }; instalmentsNone?: string;
+  loan?: Smaller; loanNone?: string;
+  wc?: Smaller; wcNone?: string;
+  /** The collateral's market value that brings the security cover to its level, and the value typed, if any. */
+  collateral?: { now?: number; needed: number };
+  moratorium?: Longer; moratoriumNone?: string;
+  instalments?: Longer & { perYear: number }; instalmentsNone?: string;
 }
 
-const GRID = 1000, MAX_FACTOR = 100, MAX_YEARS = 20;
+const GRID = 1000, MAX_FACTOR = 100;
 const isReport = (r: Report | Needs | Blocked): r is Report => !('needs' in r) && !('blocked' in r);
-
 /** The report with sales scaled by `f`: the price under the drivers (capacity × use × price), or the typed sales. */
 const scaled = (x: ReportInput, f: number): ReportInput =>
   x.salesBy === 'typed' ? { ...x, sales: (x.sales as number) * f } : { ...x, price: (x.price as number) * f };
-
 /** The first year with twelve months of sales, else the first: the year the page names. */
 const fullYear = (r: Report) => r.years.find((y) => y.months === 12) ?? r.years[0];
+
+/** A run of the report: the report and the levels it misses, or nothing when it cannot be worked. */
+interface Run { r: Report; misses: Set<RatioId>; known: Set<RatioId> }
+const run = (x: ReportInput): Run | undefined => {
+  const r = projectReport(x);
+  if (!isReport(r)) return undefined;
+  const d = diagnose(r, x);
+  return { r, misses: new Set(d.misses), known: new Set(d.checks.filter((c) => c.meets !== undefined).map((c) => c.id)) };
+};
+/** The levels a change can reach: those that meet at its farthest. */
+const reach = (far: Run | undefined) => (far ? [...far.known].filter((id) => !far.misses.has(id)) : []);
+const meetsAll = (t: RatioId[]) => (u: Run | undefined) => !!u && t.every((id) => !u.misses.has(id));
+const outcome = (missed: RatioId[], u: Run): Outcome => ({
+  fixes: missed.filter((id) => !u.misses.has(id)), still: [...u.misses], ...(u.r.cashShort ? { cashNeed: u.r.cashShort.need } : {}),
+});
 
 export function makeViable(x: ReportInput): Viability | Needs | Blocked {
   const base = projectReport(x);
   if (!isReport(base)) return base;
-  const miss = (r: Report | Needs | Blocked): Limit | 'none' | undefined => (isReport(r) ? shortfall(r.plan.statement, TARGET) : 'none');
-  const first = miss(base) as Limit | undefined;
-  const out: Viability = { target: TARGET, meets: !first, ...(first ? { misses: limitText(first) } : {}) };
+  const diagnosis = diagnose(base, x), missed = diagnosis.misses;
+  const out: Viability = { diagnosis, meets: !missed.length };
+  const cn = collateralNeeded(base, x);
+  if (cn !== undefined && (diagnosis.checks.find((c) => c.id === 'securityCover')?.meets !== true)) out.collateral = { ...(x.collateral !== undefined ? { now: x.collateral } : {}), needed: cn };
+  const none = (what: string) => `${what} alone meets none of the levels missed.`;
 
-  // Sales: on the 0.1% grid, the least that meets (k tenths of a per cent, the factor 1 + k/1000). The DSCR rises with
-  // sales while materials and other variable costs stay under 100% of them, so the meeting factors are one unbroken range
-  // upward; the answer is checked against points below it.
-  const at = (k: number) => projectReport(scaled(x, 1 + k / GRID));
-  const meetsAt = (k: number) => miss(at(k)) === undefined;
-  let lo: number, hi: number;
-  if (first) {
-    lo = 0; hi = 1;
-    while (!meetsAt(hi)) {
-      lo = hi; hi *= 2;
-      if (hi > (MAX_FACTOR - 1) * GRID) { hi = NaN; break; }
-    }
-  } else {
-    hi = 0; lo = -1;
-    while (meetsAt(lo)) {
-      hi = lo; lo *= 2;
-      if (lo <= -GRID) { lo = -GRID; break; }
-    }
-  }
-  if (Number.isNaN(hi)) out.salesNone = `Even ${MAX_FACTOR} times the sales typed, ${limitText(miss(at((MAX_FACTOR - 1) * GRID)) as Limit)}.`;
+  // Sales: on the 0.1% grid, the least that meets every level higher sales can reach (k tenths of a per cent, the factor
+  // 1 + k/1000); as typed and meeting, the most they can fall with every level still met. The ratios rise with sales while
+  // variable costs stay under 100% of them, so the meeting factors are one unbroken range; it is checked below and above.
+  const at = (k: number) => run(scaled(x, 1 + k / GRID));
+  const target = missed.length ? reach(at((MAX_FACTOR - 1) * GRID)) : [...(run(x) as Run).known];
+  const ok = meetsAll(target), okAt = (k: number) => ok(at(k));
+  if (missed.length && !missed.some((id) => target.includes(id))) out.salesNone = none('Higher sales');
   else {
+    let lo: number, hi: number;
+    if (missed.length) {
+      lo = 0; hi = 1;
+      while (!okAt(hi)) { lo = hi; hi = Math.min(hi * 2, (MAX_FACTOR - 1) * GRID); }
+    } else {
+      hi = 0; lo = -1;
+      while (okAt(lo)) {
+        hi = lo; lo *= 2;
+        if (lo <= -GRID) { lo = -GRID; break; }
+      }
+    }
     while (hi - lo > 1) {
       const mid = Math.floor((lo + hi) / 2);
-      if (meetsAt(mid)) hi = mid; else lo = mid;
+      if (okAt(mid)) hi = mid; else lo = mid;
     }
-    // The least on the grid must top an unbroken range: points below it miss, and points above it meet.
-    const broken = [1, 2, 5, 10, 50].some((d) => hi - d > -GRID && meetsAt(hi - d)) || [1, 10, 100].some((d) => !meetsAt(hi + d));
-    const r = at(hi);
-    if (broken || !isReport(r)) out.salesNone = 'No single answer: the DSCR does not rise steadily with sales here. Try the other changes below.';
+    const broken = [1, 2, 5, 10, 50].some((d) => hi - d > -GRID && okAt(hi - d)) || [1, 10, 100].some((d) => !okAt(hi + d));
+    const u = at(hi);
+    if (broken || !u) out.salesNone = 'No single answer: the ratios do not rise steadily with sales here. Try the other changes below.';
     else {
-      const y = fullYear(r), y0 = base.years.find((b) => b.fy === y.fy) as Report['years'][number];
-      const f = 1 + hi / GRID;
+      const y = fullYear(u.r), y0 = base.years.find((b) => b.fy === y.fy) as Report['years'][number], f = 1 + hi / GRID;
+      const most = LEVELS.capacity.mostUsePct, use = base.years.map((b) => (b.utilisationPct as number) * f);
       out.sales = {
-        tenths: hi, fy: y.fy, now: y0.sales, needed: y.sales,
+        tenths: hi, fy: y.fy, now: y0.sales, needed: y.sales, ...outcome(missed, u),
         ...(x.salesBy !== 'typed' ? {
           price: { now: x.price as number, needed: (x.price as number) * f },
-          use: { now: base.years.map((b) => b.utilisationPct as number), needed: base.years.map((b) => (b.utilisationPct as number) * f), overFull: base.years.some((b) => (b.utilisationPct as number) * f > 100 + 1e-9) },
+          use: { now: base.years.map((b) => b.utilisationPct as number), needed: use, overFull: use.some((p) => p > 100 + 1e-9), overMost: use.some((p) => p > most + 1e-9) },
         } : {}),
-        ...(r.cashShort ? { cashNeed: r.cashShort.need } : {}),
       };
     }
   }
-  if (!first) return out;
+  if (!missed.length) return out;
 
-  // A smaller term loan, the promoters bringing the rest: the largest, to the rupee, that meets. Less loan means less to
-  // repay and less interest, so the DSCR rises as the loan falls. Under PMEGP the loan must stay above the margin money.
-  const now = x.loan.amount as number, withLoan = (a: number) => projectReport({ ...x, loan: { ...x.loan, amount: a } });
-  const floor = base.scheme ? Math.floor(base.scheme.subsidy) + 1 : 1;
-  if (miss(withLoan(floor)) !== undefined) {
-    const why = miss(withLoan(floor));
-    out.loanNone = `No smaller loan meets the targets: even at Rs. ${floor.toLocaleString('en-IN')}, ${why === 'none' ? 'the report cannot be worked' : limitText(why as Limit)}.`;
-  } else {
+  // A smaller loan, the promoters bringing the rest: the largest, to the rupee, that meets every level it can reach. Less
+  // loan means less to repay and less interest, so the ratios rise as the loan falls; checked at points below.
+  const smaller = (now: number, floor: number, set: (a: number) => ReportInput, what: string): Smaller | string => {
+    const t = reach(run(set(floor)));
+    if (!missed.some((id) => t.includes(id))) return none(what);
+    const okA = (a: number) => meetsAll(t)(run(set(a)));
     let a = floor, b = now;
     while (b - a > 1) {
       const m = Math.floor((a + b) / 2);
-      if (miss(withLoan(m)) === undefined) a = m; else b = m;
+      if (okA(m)) a = m; else b = m;
     }
-    const broken = [0.75, 0.5, 0.25].some((p) => { const m = Math.max(floor, Math.floor(a * p)); return miss(withLoan(m)) !== undefined; });
-    if (broken) out.loanNone = 'No single answer: some smaller loans miss the targets, because a weak year pulls the average around.';
-    else out.loan = { now, largest: a, more: now - a };
+    if ([0.75, 0.5, 0.25].some((p) => !okA(Math.max(floor, Math.floor(a * p))))) return 'No single answer: some smaller amounts miss again, because a weak year pulls the ratios around.';
+    const u = run(set(a)) as Run;
+    return { now, largest: a, more: u.r.finance.promoter - base.finance.promoter, ...outcome(missed, u) };
+  };
+  const tl = x.loan.amount as number, floor = base.scheme ? Math.floor(base.scheme.subsidy) + 1 : 1;
+  const loan = smaller(tl, floor, (a) => ({ ...x, loan: { ...x.loan, amount: a } }), 'A smaller term loan');
+  if (typeof loan === 'string') out.loanNone = loan; else out.loan = loan;
+  const wc = x.wcLimit as number;
+  if (wc > 0) {
+    const w = smaller(wc, 0, (a) => ({ ...x, wcLimit: a }), 'A smaller working-capital limit');
+    if (typeof w === 'string') out.wcNone = w; else out.wc = w;
   }
 
-  // A longer repayment: the fewest instalments, more than typed, that meet, up to twenty years from the first draw.
-  const perYear = x.loan.frequency === 'quarterly' ? 4 : 12, n0 = x.loan.instalments as number;
-  const most = MAX_YEARS * perYear - Math.ceil(((x.loan.moratoriumMonths as number) * perYear) / 12);
-  let found: number | undefined;
-  for (let n = n0 + 1; n <= most; n++) {
-    if (miss(projectReport({ ...x, loan: { ...x.loan, instalments: n } })) === undefined) { found = n; break; }
-  }
-  if (found !== undefined) out.instalments = { now: n0, needed: found, perYear };
-  else out.instalmentsNone = `No repayment within ${MAX_YEARS} years meets the targets.`;
+  // The lender's: a longer moratorium, or more instalments, the whole term at most the longest (the moratorium in it).
+  // The fewest that meet every level the longest can reach, tried one by one.
+  const longest = LEVELS.term.longestMonths, n0 = x.loan.instalments as number, m0 = x.loan.moratoriumMonths as number;
+  const perYear = x.loan.frequency === 'quarterly' ? 4 : 12, step = 12 / perYear, room = longest - termMonths(x);
+  const longer = (now: number, most: number, set: (v: number) => ReportInput, what: string): Longer | string => {
+    if (room <= 0 || most <= now) return `The loan already runs ${termMonths(x)} months: none longer within ${longest}.`;
+    const t = reach(run(set(most)));
+    if (!missed.some((id) => t.includes(id))) return `${what} within ${longest} months meets none of the levels missed.`;
+    for (let v = now + 1; v <= most; v++) {
+      const u = run(set(v));
+      if (meetsAll(t)(u)) return { now, needed: v, ...outcome(missed, u as Run) };
+    }
+    return `${what} within ${longest} months meets none of the levels missed.`;
+  };
+  const mor = longer(m0, m0 + room, (v) => ({ ...x, loan: { ...x.loan, moratoriumMonths: v } }), 'A longer moratorium');
+  if (typeof mor === 'string') out.moratoriumNone = mor; else out.moratorium = mor;
+  const ins = longer(n0, n0 + Math.floor(room / step), (v) => ({ ...x, loan: { ...x.loan, instalments: v } }), 'A longer repayment');
+  if (typeof ins === 'string') out.instalmentsNone = ins; else out.instalments = { ...ins, perYear };
   return out;
 }

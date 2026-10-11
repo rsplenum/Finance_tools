@@ -163,6 +163,25 @@ Working capital: The second method of lending (Tandon Committee): the bank finan
 - DSCR is the common term-loan DSCR: (profit after tax + depreciation + preliminary expenses written off + interest on the term loan) ÷ (principal + interest on the term loan); the average is the totals' ratio.
 - Break-even: fixed costs (with depreciation, preliminary expenses written off and interest) ÷ the contribution (sales less variable costs), as a share of sales; the cash break-even leaves out depreciation and the write-off.
 
+## The lender's benchmark ratios
+
+Dated 11-10-2026. The levels a project's ratios are read against, each in its worst year (D-UX-51), and the values of the collateral (D-UX-52). The owner's figures (11-10-2026): only the benchmark level, no relaxation or deviation; each lender sets its own. Source: The owner's benchmarks, said to follow RBI; not yet checked against an RBI publication (unverified).
+
+| Ratio | A fresh or enhanced loan | An existing loan on review or renewal | How |
+|---|---|---|---|
+| Current ratio | at least 1.10 | at least 1.00 | (stock + debtors + cash) ÷ (the working-capital limit + creditors), at each year's end |
+| Total outside liabilities ÷ net worth | at most 5.00 | at most 6.00 | (unsecured loans + the term loan + the working-capital limit + creditors) ÷ net worth |
+| Term loan ÷ net worth (debt-equity) | at most 4.00 | at most 4.00 | the term loan outstanding ÷ net worth |
+| Average DSCR | at least 1.50 | at least 1.50 | total cash available ÷ total debt service, over the loan |
+| DSCR in the lowest year | at least 1.25 | at least 1.25 | the year's cash available ÷ its debt service |
+| Interest cover | at least 1.50 | at least 1.25 | (profit before tax + all interest) ÷ all interest |
+| Fixed-asset cover | at least 1.20 | at least 1.20 | net fixed assets ÷ the term loan outstanding |
+| Security cover | at least 1.20 | at least 1.20 | (net fixed assets + stock + debtors + the collateral's realisable sale value) ÷ (the term loan + the working-capital limit outstanding) |
+
+- **Collateral**: realisable sale value 90% and distress sale value 80% of the market value. The owner's figures (11-10-2026): realisable sale value 90% of the market value, which MSME lenders use for security cover; distress sale value 80%, shown.
+- **The longest term**: 180 months. The owner's figure (11-10-2026): an MSME term loan's longest, the moratorium included.
+- **Use of the capacity in a plan**: at most 85%. A placeholder (D-UX-52): the highest use of the capacity a plan assumes; type the business's own reason if higher.
+
 ## CMA data for a working-capital limit
 
 Dated 11-10-2026. Set by Claude at the owner's request (C1, D-UX-46): the borrower's own figures, typed, for three audited years, this year's estimate and next year's projection; the limit by the turnover method for limits up to Rs. 5 crore. The turnover method's shares were read through search results only, from two banks' published MSME policies; their pages were refused here, so they are as reported, not checked against the page. Lenders apply their own norms.
