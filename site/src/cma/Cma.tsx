@@ -2,6 +2,7 @@
  * CMA data (C1): the borrower's figures typed in, heads down and years across (three audited years, the estimate for the
  * year now running and the projection for the next), and the working-capital limit now. Then Forms I to VI and the
  * ratios as the engine works them out, provisional while anything is missing; what it assumes; and the downloads.
+ * Or the audited years read from the statement's PDF, each figure ticked by the borrower (Read.tsx, D-UX-48).
  * Promoters' loans as the owners' funds sit under one closed "More options". Figures: engine/cma.ts only, via model.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
@@ -9,6 +10,7 @@ import { BUTTON, CellInput, HINT, Section, TextField } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { cmaDoc, docNeeds, docStatus, fileName } from './document';
+import { ReadStatement } from './Read';
 import {
   ASSUMPTIONS, HEADS, amountOf, columnsOf, emptyState, exampleState, preview, startYearOf, statusText, tidyAmount,
   type CmaFacts, type CmaPreview, type CmaState, type ViewTable,
@@ -29,6 +31,7 @@ export function CmaCalculator() {
       Years: {cols.map((c) => `${c.fy} (${KIND[c.kind]})`).join(', ')}. Type in rupees, or like 12 L or 1.2 Cr. Leave the oldest years empty if the business is younger.
     </p>
     <div class="mt-3"><button type="button" data-testid="cma-example" class={BUTTON} onClick={() => update((x) => exampleState(x))}>Fill with the worked example</button></div>
+    <ReadStatement s={s} update={update} />
     <Section id="limit" title="The limit now">
       <div class="mt-4 max-w-sm">
         <TextField id="fld-cma-existing" label="Working-capital limit you have now, from all banks (0 if none)" inputMode="decimal" value={s.existingLimit}
