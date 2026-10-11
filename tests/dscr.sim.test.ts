@@ -9,6 +9,7 @@ import {
 } from '../engine/dscr';
 import { fyOf, type LoanTerms } from '../engine/loan';
 import { emisByYear } from '../engine/project';
+import { stressTests } from '../engine/lender';
 
 const SEEDS = [1, 2, 3, 4, 5, 6, 7, 8];
 const CASES = 250;
@@ -96,6 +97,17 @@ function runSeed(seed: number): { cases: number; violations: string[]; seen: Rec
     if (Math.abs(paid - loan.amount) > Math.max(0.01, loan.amount * 1e-9)) bad(`repaid ${paid} of ${loan.amount}`);
     if (p.schedule.some((y) => y.interest < -1e-9 || y.principal < -1e-9)) bad('negative interest or principal');
     if (Math.abs(p.schedule[p.schedule.length - 1].closing) > 0.01) bad('balance left at the end');
+
+    // D1: both computations agree on every stress line, and a lower price or higher costs never raise a year's cash by
+    // more than the cess on the cut: in a band of marginal relief the tax falls by the cut and its 4% cess (docs/GOTCHAS.md).
+    const extra = proj.map((y) => ({ fy: y.fy, sales: Math.max(y.pbdit ?? 0, 0) + Math.round(rnd() * 5e7) }));
+    const st = stressTests(proj, loan, def, extra);
+    if (!Array.isArray(st)) bad(`no stress lines for complete facts: ${JSON.stringify(st).slice(0, 160)}`);
+    else for (const line of st) line.rows.forEach((r, i) => {
+      const b0 = p.statement.rows[i], sales = extra[i].sales, pbdit = proj[i].pbdit ?? 0;
+      const cut = line.pct / 100 * (line.id === 'price' ? sales : sales - pbdit);
+      if (r.available - b0.available > 0.04 * cut + 0.01) bad(`${line.label} raised ${r.fy}'s cash by ${r.available - b0.available} on a cut of ${cut}`);
+    });
 
     // When the loan runs (the page's years and read-back): the schedule's years, the first instalment in the first year
     // that repays principal, the last in the last year.

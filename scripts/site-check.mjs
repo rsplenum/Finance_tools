@@ -17,7 +17,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-import { docxLines, docxPart, pdfPages, workbook } from './read-doc.mjs';
+import { docxLines, docxPart, pdfPages, workbook, zipPart } from './read-doc.mjs';
 
 const DIST = fileURLToPath(new URL('../site/dist/', import.meta.url));
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
@@ -279,12 +279,12 @@ async function layout(page, v, step) {
   await page.getByTestId('use-examples').click();
   // Six assumptions still hold: the method, the target, and the new asset, working-capital interest, loans already running
   // and other non-cash charges as answered by the assumptions (tax, profit and depreciation were typed).
-  await expectText(page, v, 'dscr-status', 'Complete, on 6 assumptions', 'case A with the examples');
+  await expectText(page, v, 'dscr-status', 'Complete, on 7 assumptions', 'case A with the examples');
   await expectText(page, v, 'dscr-verdict', 'Below the target: the lowest year, 2027-28, is 1.16 against 1.20; the average is 1.45 against 1.50.', 'case A with the examples');
   await expectText(page, v, 'dscr-largest', 'The largest loan on these terms is Rs. 11,59,646, limited by the lowest year, 2027-28.', 'case A with the examples');
   await expectText(page, v, 'use-amount', 'Use Rs. 11,59,646', 'case A with the examples');
   await expectText(page, v, 'dscr-fewest', 'Even 14 instalments, the most the projections cover (to 2029-30), miss the target: the average is below the target. Add later years to try a longer repayment.', 'case A with the examples');
-  await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · below the target · complete, on 6 assumptions ↓', 'case A with the examples');
+  await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · below the target · complete, on 7 assumptions ↓', 'case A with the examples');
 
   // Tables become cards on phones and stay tables on wider screens, without a sideways scroll either way.
   await layout(page, v, 'case A filled, a schedule year open, 390 px');
@@ -377,7 +377,7 @@ async function layout(page, v, step) {
   await expectText(page, v, 'assumed-start', 'The first year of the figures: The year the loan is first drawn', 'the start assumption listed');
   await expectText(page, v, page.getByTestId('start-question').locator('p').first(), 'No instalment falls in 2026-27, only interest of Rs. 72,000. If operations start later, start your figures there: the interest before then is taken as paid from the project cost, not from profits.', 'the question about the first year');
   await page.check('#fld-start-2027-28');
-  await expectText(page, v, 'dscr-status', 'Complete, on 6 assumptions', 'figures starting in 2027-28');
+  await expectText(page, v, 'dscr-status', 'Complete, on 7 assumptions', 'figures starting in 2027-28');
   if (await page.getByTestId('assumed-start').count()) v('the start assumption is still listed after choosing 2027-28');
   await expectText(page, v, 'dscr-before-start', 'Left out: 2026-27, before your figures start. Its interest (Rs. 72,000) is taken as paid from the project cost (capitalised), not from profits.', 'figures starting in 2027-28');
   await expectValue(page, v, '#fld-pbdit-2027-28', '7,50,000', 'each figure stays under its year');
@@ -415,7 +415,7 @@ async function layout(page, v, step) {
   await page.getByTestId('use-examples').click();
   // Eight assumptions hold: all but the tax rate (a company's tax is worked out); this year's depreciation typed once is
   // "as this year, every year".
-  await expectText(page, v, 'dscr-status', 'Complete, on 8 assumptions', 'a few answers');
+  await expectText(page, v, 'dscr-status', 'Complete, on 9 assumptions', 'a few answers');
   // Four fields for a five-year loan (profit and its rate, depreciation, working-capital interest; the tax from who the
   // borrower is), not five a line.
   const inputs = await page.locator('#figures input[type="text"]').count();
@@ -444,7 +444,7 @@ async function layout(page, v, step) {
   await leave(page, '#fld-depreciation-2026-27', '1.5 L');
   await page.check('#fld-interestOther-same');
   await leave(page, '#fld-interestOther-2026-27', '50,000');
-  await expectText(page, v, 'dscr-status', 'Complete, on 9 assumptions', 'the quick path');
+  await expectText(page, v, 'dscr-status', 'Complete, on 10 assumptions', 'the quick path');
   await expectText(page, v, 'dscr-average', '1.16', 'the quick path');
   await expectText(page, v, 'dscr-lowest', '0.84', 'the quick path');
   await expectText(page, v, 'assumed-tax', 'Tax rate: 31.2%', 'the quick path');
@@ -593,7 +593,7 @@ async function layout(page, v, step) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
   if (await page.locator('#more-options').evaluate((d) => d.open)) v('More options is open on load');
   const texts = await page.locator('#front-door input[type="text"]').count(), radios = await page.locator('#front-door fieldset').count();
-  if (texts + radios > 8) v(`the front door asks ${texts + radios} fields (${texts} typed, ${radios} choices); the owner's list is 8`);
+  if (texts + radios !== 8) v(`the front door asks ${texts + radios} fields (${texts} typed, ${radios} choices); the owner's list is 8`);
   await expectText(page, v, 'fd-loan-note', 'The loan is taken as drawn in October 2026 and repaid by EMI every month, with no moratorium. Change it under More options.', 'the front door');
   await page.check('#fld-fd-borrower-firm');
   await leave(page, '#fld-fd-profit', '5 L');
@@ -609,6 +609,18 @@ async function layout(page, v, step) {
   await expectText(page, v, 'assumed-method', 'How DSCR is worked out, and the target: Common term-loan DSCR; average 1.50, lowest year 1.20', 'the method and the target in one line');
   await expectText(page, v, 'part-2026-27', '6 of 12 instalments', 'the first part-year');
   await layout(page, v, 'the front door filled, 390 px');
+  // D1 (D-UX-47): the lenders' lines beside the DSCR, their inputs only under More options; the front door still asks 8.
+  if (!(await page.getByTestId('lender-ask').isVisible())) v('D1: no line asking for sales beside the DSCR');
+  await expectText(page, v, 'lender-promoters', "Promoters' loans are kept in the business until this loan is repaid (subordinated).", 'D1');
+  const avg = await page.getByTestId('dscr-average').textContent();
+  await page.getByTestId('lender-ask').locator('a').click();
+  await leave(page, '#fld-lender-sales', '50 L');
+  if (!/^Sales price 5% lower: average \d\.\d{2,4}, lowest /.test((await page.getByTestId('lender-price').textContent()) ?? '')) v('D1: no line for the sales price 5% lower');
+  if (!(await page.getByTestId('lender-costs').count())) v('D1: no line for costs 10% higher');
+  if ((await page.getByTestId('dscr-average').textContent()) !== avg) v('D1: the sales changed the borrower\'s DSCR');
+  const after = await page.locator('#front-door input[type="text"]').count() + await page.locator('#front-door fieldset').count();
+  if (after !== 8) v(`D1: the front door asks ${after} fields after the lenders' tests; want 8`);
+  await layout(page, v, 'the lenders\' tests open, 390 px');
   await ctx.close();
 }
 
@@ -1020,6 +1032,48 @@ for (const scheme of ['light', 'dark']) {
   if (book.map((x) => x.sheet).join('|') !== 'Summary|Projections|DSCR and ratios|Annex') v(`the report's Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))}`);
   const { lines, messages } = await docxLines((await save('rep-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
   if (messages.length || !lines.some((l) => l.startsWith('Total assets | 55,81,804'))) v(`the report's Word copy reads back ${JSON.stringify(lines.slice(0, 4))} ${JSON.stringify(messages).slice(0, 120)}`);
+  await ctx.close();
+}
+
+// CMA data (C1, D-UX-46), fictional case K worked outside the engine in tests/cma.test.ts: sales 300 to 520 L over
+// 2023-24 to 2027-28. In 2027-28 the balance sheet totals 2,96,80,000 on both sides and the limit by the turnover method
+// is 1,04,00,000 (25% of 520 L less the 5% margin of 26 L, the net working capital of 23.8 L being less). The default
+// path is the owner's short CMA: 25 heads for each of five years and the limit now, 126 fields (D-UX-12's count).
+{
+  const { ctx, page, v } = await open('/cma/', { scheme: 'light' });
+  if (await page.locator('#more-options').evaluate((d) => d.open)) v('the CMA page opens with More options open');
+  const fields = await page.locator('main input:not(#more-options input):not(#download input)').count();
+  if (fields !== 126) v(`the CMA page asks ${fields} fields by default; the owner's short CMA is 126 (25 heads × 5 years and the limit now)`);
+  await expectText(page, v, 'cma-years', /^Years: 2023-24 \(audited\), 2024-25 \(audited\), 2025-26 \(audited\), 2026-27 \(estimate\), 2027-28 \(projection\)\./, 'the CMA years');
+  await expectText(page, v, 'cma-status', 'Provisional: 3 still needed', 'the empty CMA page');
+  await page.getByTestId('cma-example').click();
+  await expectText(page, v, 'cma-status', 'Complete', 'the CMA example');
+  await expectText(page, v, 'cma-key-0', 'Rs. 1,04,00,000', 'the CMA limit');
+  const flags = await page.getByTestId('cma-flags').locator('li').count();
+  if (flags !== 3) v(`the CMA example shows ${flags} things to look at, want 3 (the growth and the two short margins)`);
+  await page.getByTestId('cma-form3').evaluate((t) => t.closest('details').open = true);
+  for (const label of ['Total liabilities', 'Total assets']) {
+    const got = await page.getByTestId('cma-form3').locator('tr', { has: page.locator('th', { hasText: label }) }).first().locator('td').allTextContents();
+    if (got.at(-1) !== '2,96,80,000') v(`the CMA Form III "${label}" ends ${JSON.stringify(got.at(-1))}, want 2,96,80,000`);
+  }
+  await layout(page, v, 'the CMA example, 390 px');
+  await expectText(page, v, 'cma-doc-status', 'Provisional: 1 still needed', 'the CMA document before its name');
+  await leave(page, '#fld-cma-name', 'K Steel Furniture Pvt Ltd');
+  await expectText(page, v, 'cma-doc-status', 'Complete', 'the CMA document');
+  const save = async (id) => {
+    const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.getByTestId(id).click()]);
+    const path = await file.path();
+    return { name: file.suggestedFilename(), bytes: path ? await readFile(path) : Buffer.alloc(0) };
+  };
+  const pdf = await save('cma-download-pdf');
+  if (pdf.name !== 'CMA data - K Steel Furniture Pvt Ltd.pdf') v(`the CMA PDF is named "${pdf.name}"`);
+  const text = (await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`])).join('\n');
+  if (!text.includes('1,04,00,000') || !text.includes('2,96,80,000')) v('the CMA PDF does not read back its limit and its balance sheet');
+  const xlsx = (await save('cma-download-xlsx')).bytes;
+  const book = await workbook(xlsx).catch((e) => v(`the CMA Excel copy is not read: ${e.message}`)) ?? [];
+  if (book.map((x) => x.sheet).join('|') !== 'Summary|Forms II and III|Forms IV to VI|Ratios|Check') v(`the CMA Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))}`);
+  const formulas = ((await zipPart(xlsx, 'xl/worksheets/sheet5.xml')) ?? '').match(/<f>/g)?.length ?? 0;
+  if (formulas !== 52) v(`the CMA Excel copy's Check sheet holds ${formulas} formulas, want 52`);
   await ctx.close();
 }
 

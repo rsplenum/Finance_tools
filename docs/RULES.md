@@ -107,6 +107,7 @@ Dated 02-10-2026. Set by Claude at the owner's request (30-09-2026: work everyth
 | Other non-cash charges and lease rentals | None | Few small businesses have them |
 | The first year of the figures | The year the loan is first drawn | The business is running: it has this year's figures |
 | The loan | Drawn this month, repaid by EMI every month, with no moratorium | Change any of it under More options |
+| Promoters' loans | Kept in the business until this loan is repaid (subordinated) | The owner's answer of 11-10-2026 (D-UX-47). If they are repaid sooner, give the repayments under More options: the page shows the DSCR with them counted |
 
 ## Construction and renovation estimates
 
@@ -159,6 +160,47 @@ Working capital: The second method of lending (Tandon Committee): the bank finan
 - Cash in hand is what the cash flow leaves; the balance sheet must balance with it, or no figures are shown.
 - DSCR is the common term-loan DSCR: (profit after tax + depreciation + preliminary expenses written off + interest on the term loan) ÷ (principal + interest on the term loan); the average is the totals' ratio.
 - Break-even: fixed costs (with depreciation, preliminary expenses written off and interest) ÷ the contribution (sales less variable costs), as a share of sales; the cash break-even leaves out depreciation and the write-off.
+
+## CMA data for a working-capital limit
+
+Dated 11-10-2026. Set by Claude at the owner's request (C1, D-UX-46): the borrower's own figures, typed, for three audited years, this year's estimate and next year's projection; the limit by the turnover method for limits up to Rs. 5 crore. The turnover method's shares were read through search results only, from two banks' published MSME policies; their pages were refused here, so they are as reported, not checked against the page. Lenders apply their own norms.
+
+**The turnover method**: working capital needed 25% of the turnover; the borrower's margin at least 5%; the limit the lower of the need less the margin and the need less the net working capital; flagged above Rs. 5 crore. (As reported, not checked against the page.) The turnover method for small enterprises (Nayak Committee, followed in RBI's guidance on MSE lending): working capital of 25% of the projected annual turnover, of which at least 5% comes from the borrower's own long-term funds and the bank finances the rest, at least 20%, for fund-based limits up to Rs. 5 crore; above that, the working-capital gap (second) method. As stated in Bandhan Bank's Policy for Lending to MSME (www.bandhan.bank.in, 2025-11) and Karnataka Bank's Financing MSME sector (karnatakabank.com, 2024-01), read through search results on 11-10-2026; both pages, and rbi.org.in, were refused from here.
+
+**The heads asked** (each year)
+
+- Form II: Net sales (without GST)
+- Form II: Other income
+- Form II: Raw materials and goods consumed (After the change in their stock)
+- Form II: Wages, power and other direct costs
+- Form II: Salaries and other staff costs
+- Form II: Selling, admin and other expenses
+- Form II: Depreciation
+- Form II: Interest on working capital
+- Form II: Interest on term loans
+- Form II: Tax
+- Form II: Drawings or dividend
+- Form III: Capital (Share capital, or the partners' or proprietor's capital)
+- Form III: Reserves and surplus
+- Form III: Unsecured loans from promoters
+- Form III: Term loans outstanding
+- Form III: of which due within 12 months
+- Form III: Bank borrowing for working capital
+- Form III: Creditors for goods
+- Form III: Other current liabilities and provisions
+- Form III: Fixed assets, net of depreciation
+- Form III: Investments and other non-current assets
+- Form III: Stock (Raw materials, work in progress and finished goods)
+- Form III: Debtors
+- Form III: Cash and bank balances
+- Form III: Other current assets (Advances to suppliers, deposits and the like due within 12 months)
+
+**What the page assumes until you change it**
+
+- **The years**: Financial years ending in March: the estimate is for the year now running, the projection for the next, and the three before the estimate are audited. Change the dates in the document if the figures are for other years.
+- **Unsecured loans from promoters**: Counted as borrowing, not as the owners' funds. On the careful side: a lender counts them as the owners' funds only when they stay in the business till the bank's loan is repaid. Change it under More options.
+- **Days of stock, debtors and creditors**: Stock in days of the cost of sales, debtors in days of net sales, creditors in days of the materials consumed, in a year of 365 days. The materials consumed stand in for purchases, which the figures do not ask.
+- **When the projection is flagged**: Sales growing faster than in any audited year, or stock, debtor or creditor days more than 15 days from their audited average. A flag for the lender to look at, never a limit; 15 days is our own choice, from no published source.
 
 ## The architect's rules
 

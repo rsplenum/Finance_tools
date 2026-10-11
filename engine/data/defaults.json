@@ -96,6 +96,13 @@
       "value": "this-month",
       "shown": "Drawn this month, repaid by EMI every month, with no moratorium",
       "why": "Change any of it under More options"
+    },
+    {
+      "id": "promoters",
+      "what": "Promoters' loans",
+      "value": "subordinated",
+      "shown": "Kept in the business until this loan is repaid (subordinated)",
+      "why": "The owner's answer of 11-10-2026 (D-UX-47). If they are repaid sooner, give the repayments under More options: the page shows the DSCR with them counted"
     }
   ]
 }

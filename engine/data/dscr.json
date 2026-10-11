@@ -118,5 +118,21 @@
     "unknown": "EMIs a month on loans already running: all of a proprietor's, business and personal; a firm's, LLP's or company's own loans only",
     "source": "The owner's decision of 01-10-2026, D-POL-06",
     "date": "2026-10-01"
+  },
+  "lender": {
+    "date": "2026-10-11",
+    "status": "Our own tests, set by Claude at the owner's request (D1, 11-10-2026), not a lender's norm: lenders set their own sensitivity cases. Shown beside the DSCR; they never change the verdict.",
+    "stress": [
+      { "id": "price", "pct": 5, "label": "Sales price 5% lower", "how": "Profit before interest, depreciation and tax less 5% of sales: the price falls and every cost stays as it was" },
+      { "id": "costs", "pct": 10, "label": "Costs 10% higher", "how": "Profit before interest, depreciation and tax less 10% of costs, where costs are sales less that profit" }
+    ],
+    "floor": { "value": 1, "why": "Below 1.00 the cash does not cover the debt service: arithmetic, not a norm" },
+    "notStressed": "The new asset's extra income is not stressed: its sales are not asked",
+    "promoters": {
+      "assumed": "Promoters' loans are kept in the business until this loan is repaid (subordinated)",
+      "repaid": "Promoters' loans repaid as given, counted in debt service as a lender would"
+    },
+    "cash": "Cash available less the growth in working capital (its % of the rise in sales) and replacement capex, against the debt service",
+    "audited": "The last audited year, the year before the first year of figures, beside the projections; a projected margin above it is flagged, never blocked"
   }
 }

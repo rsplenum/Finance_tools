@@ -8,6 +8,7 @@ import tax from '../engine/data/tax.json' with { type: 'json' };
 import defaults from '../engine/data/defaults.json' with { type: 'json' };
 import estimate from '../engine/data/estimate.json' with { type: 'json' };
 import report from '../engine/data/report.json' with { type: 'json' };
+import cma from '../engine/data/cma.json' with { type: 'json' };
 import architect from '../engine/data/architect.json' with { type: 'json' };
 import sources from '../engine/data/sources.json' with { type: 'json' };
 import labour from '../engine/data/library/labour.json' with { type: 'json' };
@@ -84,6 +85,12 @@ out.push('| Head of the project | Depreciation a year |', '|---|---|', ...report
 out.push(report.depreciationSource, '', `Working capital: ${report.workingCapital.source}`, '');
 out.push('**What the page assumes until you change it**', '', ...report.assumptions.map((a) => `- **${a.what}**: ${a.shown}. ${a.why}.`), '');
 out.push('**How the figures are worked out**', '', ...report.method.map((m) => `- ${m}`), '');
+
+// CMA data (engine/cma.ts).
+out.push(`## ${cma.title}`, '', `Dated ${date(cma.date)}. ${cma.status}`, '');
+out.push(`**The turnover method**: working capital needed ${cma.turnover.needPct}% of the turnover; the borrower's margin at least ${cma.turnover.marginPct}%; the limit the lower of the need less the margin and the need less the net working capital; flagged above Rs. ${(cma.turnover.maxLimit / 1e7).toFixed(0)} crore. ${cma.turnover.checked ? '' : '(As reported, not checked against the page.) '}${cma.turnover.source}.`, '');
+out.push('**The heads asked** (each year)', '', ...cma.heads.map((h) => `- Form ${h.form}: ${h.label}${h.hint ? ` (${h.hint})` : ''}`), '');
+out.push('**What the page assumes until you change it**', '', ...cma.assumptions.map((a) => `- **${a.what}**: ${a.shown}. ${a.why}.`), '');
 
 // The architect's rules (engine/architect.ts): what the estimate assumes from six answers.
 const A = architect;

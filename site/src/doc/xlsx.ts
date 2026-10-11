@@ -1,7 +1,8 @@
 /**
  * An Excel workbook (.xlsx) for documents made in the browser (doc.ts): one sheet per part, laid out like the PDF and set
  * up to print on A4, one page wide. Text as shared strings; figures as numbers exactly as the engine gave them, shown
- * with lakh and crore grouping. No formulas, so every figure in the file is the engine's. A stored zip (zip.ts); no
+ * with lakh and crore grouping. No formulas but those a document gives to redo its figures (a check sheet), each holding
+ * the engine's figure until the spreadsheet works it out. A stored zip (zip.ts); no
  * library. Pure: bytes in memory, no DOM.
  */
 import type { Block, Cell, Column, Doc, Row } from './doc';
@@ -65,12 +66,12 @@ const STYLES = () => `${HEAD}<styleSheet xmlns="${MAIN}">
 
 // ---- Sheets ----
 
-type XCell = { text: string; style: number } | { value: number; style: number } | { style: number };
+type XCell = { text: string; style: number } | { value: number; style: number; formula?: string } | { style: number };
 /**
  * A row of cells. `across`: its first cell runs across every column of the sheet, wrapped (its height estimated); `span`:
  * a fact, its value across the columns after its name; `table`: a table's row, which sets the columns' widths.
  */
-interface XRow { cells: XCell[]; across?: boolean; span?: number; size?: number; table?: boolean }
+interface XRow { cells: XCell[]; across?: boolean; span?: number; size?: number; table?: boolean; ref?: string }
 
 /** Column letters: 0 → A, 26 → AA. */
 const column = (i: number): string => (i < 26 ? String.fromCharCode(65 + i) : column(Math.floor(i / 26) - 1) + column(i % 26));
@@ -79,7 +80,7 @@ function numberCell(c: Cell, kind?: Row['kind']): XCell {
   const f = c.figure, k = kind === 'ratio' ? 2 : kind ? 1 : 0;
   if (!f || !Number.isFinite(f.value)) return { text: c.text, style: kind === 'ratio' ? S.ratioRight : S.right };
   const fmt = f.kind === 'quantity' ? 0 : f.kind === 'count' ? 1 : f.kind === 'ratio' ? (f.decimals > 2 ? 166 : 2) : f.decimals > 0 ? 165 : 164;
-  return { value: f.value === 0 ? 0 : f.value, style: NUMBER[NUMBER_FORMATS.indexOf(fmt)][k] };
+  return { value: f.value === 0 ? 0 : f.value, style: NUMBER[NUMBER_FORMATS.indexOf(fmt)][k], ...(f.formula ? { formula: f.formula } : {}) };
 }
 
 /** The rows of one sheet, from a part's blocks: text across the sheet, facts as name and value, tables across. */
@@ -107,7 +108,7 @@ function sheetRows(blocks: Block[], notes: string[] = []): XRow[] {
       const t = b.table, width = t.columns.length;
       blank();
       rows.push({ cells: t.columns.map((c, i) => ({ text: c.sub ? `${c.label} (${c.sub})` : c.label, style: i && !c.wrap ? S.headRight : S.headLeft })), table: true });
-      for (const r of t.rows) rows.push({ cells: tableRow(r, width, t.columns), table: r.kind !== 'head' });
+      for (const r of t.rows) rows.push({ cells: tableRow(r, width, t.columns), table: r.kind !== 'head', ...(r.ref ? { ref: r.ref } : {}) });
     }
   }
   return rows;
@@ -133,7 +134,7 @@ function widths(rows: XRow[]): number[] {
 }
 
 /** One sheet: no gridlines, A4 one page wide (landscape when its table is wide), the document's header and footer. */
-function sheetXml(doc: Doc, rows: XRow[], shared: (t: string) => number): string {
+function sheetXml(doc: Doc, rows: XRow[], shared: (t: string) => number, formula: (f: string, col: string) => string): string {
   const w = widths(rows), last = w.length - 1, merges: string[] = [];
   const total = w.reduce((a, x) => a + x, 0);
   const data = rows.map((r, i) => {
@@ -152,7 +153,7 @@ function sheetXml(doc: Doc, rows: XRow[], shared: (t: string) => number): string
     if (lines > 1) ht = ` ht="${(lines * (r.size === 10 && from >= 0 ? 13.2 : 14.6) + 1.2).toFixed(1)}" customHeight="1"`;
     const cells = r.cells.map((c, j) => {
       const ref = `${column(j)}${n}`;
-      if ('value' in c) return `<c r="${ref}" s="${c.style}"><v>${c.value}</v></c>`;
+      if ('value' in c) return `<c r="${ref}" s="${c.style}">${c.formula ? `<f>${xml(formula(c.formula, column(j)))}</f>` : ''}<v>${c.value}</v></c>`;
       if (!('text' in c) || !c.text) return `<c r="${ref}" s="${c.style}"/>`;
       return `<c r="${ref}" s="${c.style}" t="s"><v>${shared(c.text)}</v></c>`;
     }).join('');
@@ -181,8 +182,16 @@ export function xlsxOf(doc: Doc, made: Date): Uint8Array<ArrayBuffer> {
     return index.get(t)!;
   };
   // The footer the PDF prints on every page is also said once, under the first title, with the note about the cells.
-  const sheets = doc.parts.map((part, i) => sheetXml(doc, sheetRows(part.blocks, i ? [] : [doc.footer, doc.workbookNote ?? ''].filter(Boolean)), shared));
   const names = doc.parts.map((p) => p.name.replace(/[[\]:*?/\\]/g, ' ').slice(0, 31));
+  const all = doc.parts.map((part, i) => sheetRows(part.blocks, i ? [] : [doc.footer, doc.workbookNote ?? ''].filter(Boolean)));
+  // A formula's {ref} or {Part!ref} becomes the cell in this column of the row so named.
+  const rowOf = all.map((rows) => new Map(rows.flatMap((r, i) => (r.ref ? [[r.ref, i + 1] as const] : []))));
+  const resolve = (part: number) => (f: string, col: string) => f.replace(/\{(?:([^!}]+)!)?([^}]+)\}/g, (_, sheet: string | undefined, ref: string) => {
+    const k = sheet === undefined ? part : doc.parts.findIndex((p) => p.name === sheet), n = rowOf[k]?.get(ref);
+    if (n === undefined) throw new Error(`No row "${ref}" for a formula`);
+    return `${sheet === undefined ? '' : `'${names[k].replace(/'/g, "''")}'!`}${col}${n}`;
+  });
+  const sheets = all.map((rows, i) => sheetXml(doc, rows, shared, resolve(i)));
   const enc = (t: string) => new TextEncoder().encode(t);
   return zip([
     { name: '[Content_Types].xml', data: enc(`${HEAD}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">`
@@ -199,7 +208,7 @@ export function xlsxOf(doc: Doc, made: Date): Uint8Array<ArrayBuffer> {
       + `<dc:title>${xml(doc.title)}</dc:title><dc:creator>${xml(doc.author ?? doc.creator)}</dc:creator>`
       + `<dcterms:created xsi:type="dcterms:W3CDTF">${made.toISOString().slice(0, 19)}Z</dcterms:created></cp:coreProperties>`) },
     { name: 'xl/workbook.xml', data: enc(`${HEAD}<workbook xmlns="${MAIN}" xmlns:r="${REL}"><sheets>`
-      + names.map((n, i) => `<sheet name="${xml(n)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('') + '</sheets></workbook>') },
+      + names.map((n, i) => `<sheet name="${xml(n)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('') + '</sheets><calcPr fullCalcOnLoad="1"/></workbook>') },
     { name: 'xl/_rels/workbook.xml.rels', data: enc(`${HEAD}<Relationships xmlns="${PKG}">`
       + sheets.map((_, i) => `<Relationship Id="rId${i + 1}" Type="${REL}/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')
       + `<Relationship Id="rId${sheets.length + 1}" Type="${REL}/styles" Target="styles.xml"/>`

@@ -13,6 +13,7 @@
 import { useMemo, useState } from 'preact/hooks';
 import { AmountField } from '../AmountField';
 import { OPTIONS, PRESETS } from '../../../engine/dscr';
+import { LENDER } from '../../../engine/lender';
 import { parseMonth } from '../../../engine/parse';
 import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
@@ -21,9 +22,9 @@ import { printable } from '../doc/pdf';
 import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
 import { allNeeds, docNeeds, docStatus, fileName, statementDoc } from './document';
 import {
-  BORROWER_CHOICES, EXAMPLE_TARGETS, GROUP_TITLES, OPTION_KEYS, amountOf, barText, choicesOf, emisAsk, frontDoor, loanRead, modeOf, monthText, numberOf,
+  BORROWER_CHOICES, EXAMPLE_TARGETS, GROUP_TITLES, NO_LENDER, OPTION_KEYS, amountOf, barText, choicesOf, emisAsk, frontDoor, loanRead, modeOf, monthText, numberOf,
   parseFy, presetText, preview, rowValues, rowsOf, statusText, targetText, tidyAmount, withBorrower, withPlanStart, withSource, yearsOf,
-  type DocFacts, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type ScheduleView, type State, type StatementView, type Years,
+  type DocFacts, type LenderLine, type LenderText, type LenderView, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 
 type Update = (f: (s: State) => State) => void;
@@ -53,6 +54,7 @@ export function DscrCalculator() {
           {s.source === 'plan' ? <Loan s={s} update={update} y={y} p={p} /> : <YearsSection s={s} update={update} y={y} />}
           <Figures s={s} update={update} rows={rows} y={y} p={p} />
           <TargetSection s={s} update={update} />
+          {s.source === 'plan' && <LenderSection s={s} update={update} y={y} />}
         </>}
       </div>
     </details>
@@ -426,6 +428,7 @@ function PreviewSection({ p, update, openMore }: { p: Preview; update: Update; o
     {p.verdict && <p data-testid="dscr-verdict" class={`${box} ${p.verdict.meets
       ? 'border-teal-300 bg-teal-50 text-teal-900 dark:border-teal-800 dark:bg-teal-950 dark:text-teal-100'
       : 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100'}`}>{p.verdict.text}</p>}
+    {p.lender && <LenderLines v={p.lender} openMore={openMore} />}
     {p.largest && <div class="mt-3 text-sm text-slate-800 dark:text-slate-200">
       <p data-testid="dscr-largest">{p.largest.text}</p>
       {largest !== undefined && <button type="button" data-testid="use-amount" class={`mt-1 ${BUTTON}`}
@@ -455,6 +458,76 @@ function PreviewSection({ p, update, openMore }: { p: Preview; update: Update; o
     {p.notes.length > 0 && <ul data-testid="dscr-notes" class="mt-2 space-y-0.5 text-sm text-amber-900 dark:text-amber-200">{p.notes.map((n) => <li key={n}>{n}</li>)}</ul>}
     {p.schedule && <Schedule sch={p.schedule} />}
     <p class={`mt-6 ${HINT}`}>A free preview, worked out twice in your browser; figures are shown only when both agree.</p>
+  </Section>;
+}
+
+/** DSCR as lenders test it, beside the borrower's (D-UX-47): never part of the verdict. */
+function LenderLines({ v, openMore }: { v: LenderView; openMore: () => void }) {
+  const line = (l: LenderLine, id: string) => <li key={id} data-testid={`lender-${id}`} class={l.below ? 'text-red-800 dark:text-red-300' : ''}>
+    <b>{l.label}:</b> average {l.average}, lowest {l.lowest} in {l.lowestYear}{l.below ? ': the cash does not cover the debt service' : ''}
+    {l.meets !== undefined ? (l.meets ? '; meets the target' : '; below the target') : ''}.
+  </li>;
+  const c = v.cash, a = v.audited, td = 'px-2 py-1 text-right tabular-nums';
+  return <div data-testid="dscr-lender" class="mt-4 text-slate-900 dark:text-slate-100">
+    <p class="font-medium">As a lender tests it</p>
+    {v.blocked && <p role="alert" class="mt-1 text-sm text-red-900 dark:text-red-200">{v.blocked}</p>}
+    <ul class="mt-1 space-y-1 text-sm text-slate-700 dark:text-slate-300">
+      {v.stress.map((l, i) => line(l, LENDER.stress[i]?.id ?? String(i)))}
+      {v.ask && <li data-testid="lender-ask"><a href="#lender" onClick={openMore} class="text-teal-700 underline underline-offset-2 dark:text-teal-400">{v.ask}</a></li>}
+      {'line' in v.promoters ? line(v.promoters.line, 'promoters') : <li data-testid="lender-promoters">{v.promoters.assumed}.</li>}
+      {v.notStressed && <li>{v.notStressed}.</li>}
+    </ul>
+    {v.needs.length > 0 && <ul class="mt-1 list-disc pl-5 text-sm text-amber-900 dark:text-amber-200">{v.needs.map((n) => <li key={n}>{n}</li>)}</ul>}
+    {c && ('needs' in c
+      ? <div data-testid="lender-cash-needs" class="mt-3 text-sm"><p class="font-medium">The cash check still needs</p><ul class="list-disc pl-5">{c.needs.map((n) => <li key={n}>{n}</li>)}</ul></div>
+      : <div data-testid="lender-cash" class="mt-3 text-sm"><p class={c.rows.some((r) => r.short) ? 'text-red-800 dark:text-red-300' : ''}>{c.text}</p>
+        <div class="mt-1 overflow-x-auto"><table class="min-w-full text-xs"><thead><tr class="text-slate-600 dark:text-slate-400">
+          <th class="px-2 py-1 text-left">Year</th><th class={td}>Cash available</th><th class={td}>Working capital's growth</th><th class={td}>Replacement capex</th>
+          <th class={td}>Debt service</th><th class={td}>Cash left</th><th class={td}>Cover</th></tr></thead>
+          <tbody>{c.rows.map((r) => <tr key={r.fy} class={r.short ? 'text-red-800 dark:text-red-300' : ''}><td class="px-2 py-1">{r.fy}</td><td class={td}>{r.available}</td>
+            <td class={td}>{r.wc}</td><td class={td}>{r.capex}</td><td class={td}>{r.service}</td><td class={td}>{r.left}</td><td class={td}>{r.cover}</td></tr>)}</tbody></table></div>
+      </div>)}
+    {a && ('needs' in a
+      ? <div data-testid="lender-audited-needs" class="mt-3 text-sm"><p class="font-medium">The last audited year still needs</p><ul class="list-disc pl-5">{a.needs.map((n) => <li key={n}>{n}</li>)}</ul></div>
+      : <div data-testid="lender-audited" class="mt-3 text-sm"><div class="overflow-x-auto"><table class="min-w-full text-xs"><thead><tr class="text-slate-600 dark:text-slate-400">
+          <th class="px-2 py-1 text-left"></th><th class={td}>{a.fy} (audited)</th>{a.nextFy && <th class={td}>{a.nextFy} (projected)</th>}</tr></thead>
+          <tbody>{a.rows.map((r) => <tr key={r.label}><td class="px-2 py-1">{r.label}</td><td class={td}>{r.audited}</td>{a.nextFy && <td class={td}>{r.next ?? ''}</td>}</tr>)}</tbody></table></div>
+        {a.flags.map((f) => <p key={f} class="mt-1 text-amber-900 dark:text-amber-200">{f}.</p>)}
+      </div>)}
+    <SourceNote what="About these tests">{LENDER.status} {LENDER.stress.map((x) => `${x.label}: ${x.how}.`).join(' ')} {LENDER.floor.why}.</SourceNote>
+  </div>;
+}
+
+/** The lenders' tests' own inputs, under More options; none of them is asked on the front door. */
+function LenderSection({ s, update, y }: { s: State; update: Update; y: Years }) {
+  const l = s.lender ?? NO_LENDER, set = (f: (x: LenderText) => LenderText) => update((x) => ({ ...x, lender: f(x.lender ?? NO_LENDER) }));
+  const byYear = s.modes.pbdit === 'years', at = (xs: string[], i: number, t: string) => { const n = [...xs]; n[i] = t; return n; };
+  const cells = (key: 'sales' | 'promoters', name: string) => <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+    {y.years.map((fy, i) => <label key={fy} class="text-sm">{fy}<CellInput id={`fld-lender-${key}-${i}`} name={`${name} ${fy}`} decimal value={l[key][i] ?? ''} tidy={tidyAmount}
+      onCommit={(t) => set((x) => ({ ...x, [key]: at(x[key], i, t) }))} /></label>)}
+  </div>;
+  const aud = (k: keyof LenderText['audited'], label: string) => <TextField id={`fld-lender-audited-${k}`} label={label} inputMode="decimal" value={l.audited[k]} tidy={tidyAmount}
+    onCommit={(t) => set((x) => ({ ...x, audited: { ...x.audited, [k]: t } }))} />;
+  return <Section id="lender" title="As a lender tests it">
+    <p class={`mt-1 ${HINT}`}>Optional. Each adds a line beside your DSCR; none changes it.</p>
+    <h3 class="mt-4 font-medium text-slate-900 dark:text-slate-100">Sales, for the price and cost tests</h3>
+    {byYear ? cells('sales', 'Sales') : <TextField id="fld-lender-sales" label="This year’s sales" hint="They grow as the profit does." inputMode="decimal" value={l.sales[0] ?? ''}
+      tidy={tidyAmount} placeholder="like 50 L" said={notUnderstood(l.sales[0] ?? '', amountOf, '50,00,000 or 50 L')} onCommit={(t) => set((x) => ({ ...x, sales: [t] }))} />}
+    <h3 class="mt-6 font-medium text-slate-900 dark:text-slate-100">Promoters’ loans repaid</h3>
+    <p class={HINT}>Taken as kept in the business until this loan is repaid. If any is repaid sooner, type it by year; leave a year empty for none.</p>
+    {cells('promoters', "Promoters' loans repaid")}
+    <h3 class="mt-6 font-medium text-slate-900 dark:text-slate-100">The cash check</h3>
+    <div class="mt-2 grid gap-3 sm:grid-cols-2">
+      <TextField id="fld-lender-wc" label="Working capital needed, % of sales" hint="Stock and debtors less creditors, as a share of sales." inputMode="decimal" value={l.wcPct}
+        placeholder="like 20" onCommit={(t) => set((x) => ({ ...x, wcPct: t }))} />
+      <TextField id="fld-lender-capex" label="Replacement capex a year" hint="The same every year; 0 if none." inputMode="decimal" value={l.capex} tidy={tidyAmount}
+        onCommit={(t) => set((x) => ({ ...x, capex: t }))} />
+    </div>
+    <h3 class="mt-6 font-medium text-slate-900 dark:text-slate-100">The last audited year</h3>
+    <p class={HINT}>The year before your first year of figures. Its sales also start the cash check.</p>
+    <div class="mt-2 grid gap-3 sm:grid-cols-2">
+      {aud('sales', 'Sales')}{aud('pbdit', 'Profit before interest, depreciation and tax')}{aud('depreciation', 'Depreciation')}{aud('interest', 'Interest')}{aud('tax', 'Tax')}
+    </div>
   </Section>;
 }
 

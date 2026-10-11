@@ -59,3 +59,8 @@ export async function docxPart(bytes, name) {
   return [...x.matchAll(/<w:t(?: [^>]*)?>([^<]*)<\/w:t>|<w:instrText[^>]*>([^<]*)<\/w:instrText>|<w:tab\/>/g)]
     .map((m) => (m[1] ?? (m[2] !== undefined ? `{${m[2].trim()}}` : '\t'))).join('');
 }
+
+/** One part of a zipped file (an Excel or Word copy) as text, or undefined. */
+export async function zipPart(bytes, name) {
+  return (await JSZip.loadAsync(Buffer.from(bytes))).file(name)?.async('string');
+}
