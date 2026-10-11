@@ -57,7 +57,7 @@ describe('the project report page', () => {
   });
   it('case P as typed: the drivers, three months of sales and the PMEGP margin money', () => {
     const p = preview(P);
-    expect([p.needs, p.flags, p.short]).toEqual([[], [], undefined]);
+    expect([p.needs, p.flags, p.short]).toEqual([[], [DATA.schemes.pmegp.notice], undefined]);
     expect(p.view!.key.find((k) => k.label === 'PMEGP margin money')?.value).toBe('Rs. 7,85,788');
     expect(row(p, 'pl', 'Months of sales')?.values).toEqual(['3', '12', '12', '12', '12']);
     expect(row(p, 'pl', 'Use of the capacity')?.values).toEqual(['60%', '70%', '80%', '80%', '80%']);

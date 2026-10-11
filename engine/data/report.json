@@ -36,6 +36,7 @@
       "ceiling": { "manufacturing": 5000000, "service": 2000000 },
       "workingCapitalMaxPct": { "manufacturing": 40, "service": 60 },
       "lockInYears": 3,
+    "notice": "Fresh PMEGP applications are paused until the scheme is continued with revised guidelines (the PMEGP portal, October 2026); the figures here are the 2021-22 to 2025-26 guideline's and may change. The Rajya Sabha committee on industry recommended raising the Rs. 50 lakh manufacturing ceiling (report of 11-03-2026, pib.gov.in PRID 2238242).",
       "source": "PMEGP guidelines (KVIC, Ministry of MSME), as read 11-10-2026 in search results quoting them (myscheme.gov.in, tuensang.nic.in, sbi.co.in, dnsbank.in) and the owner's research (docs/SCHEMES-RESEARCH.md); the KVIC portal could not be opened from here",
       "date": "2026-10-11",
       "checked": false,

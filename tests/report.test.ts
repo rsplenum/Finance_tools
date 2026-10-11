@@ -6,7 +6,7 @@
  * 5 lakh at 11%.
  */
 import { describe, it, expect } from 'vitest';
-import { projectReport, reportNeeds, type Report, type ReportInput } from '../engine/report';
+import { PMEGP, projectReport, reportNeeds, type Report, type ReportInput } from '../engine/report';
 import type { Needs } from '../engine/dscr';
 
 export const CASE_R: ReportInput = {
@@ -114,7 +114,7 @@ describe('fictional case P: drivers, three months of sales in the first year, PM
     expect(p.years.map((y) => y.fy)).toEqual(['2026-27', '2027-28', '2028-29', '2029-30', '2030-31']);
     expect(two([p.marginMoney, sc?.cost, sc?.subsidy, p.finance.termLoan, p.projectCost, p.finance.promoter, sc?.ownPct, sc?.workingCapitalPct]))
       .toEqual(['193150.68', '3143150.68', '785787.67', '1614212.33', '3043150.68', '643150.68', '14.10', '15.69']);
-    expect([sc?.ratePct, sc?.flags, p.interestBeforeStart, p.cashShort]).toEqual([25, [], 0, undefined]);
+    expect([sc?.ratePct, sc?.flags, p.interestBeforeStart, p.cashShort]).toEqual([25, [PMEGP.notice], 0, undefined]);
   });
   // 2026-27, three months: sales 15,00,000, fixed 3,00,000, depreciation 3,60,000 (a full year), write-off 10,000; term
   // loan interest 16,14,212.33 × 10/1200 × 6 = 80,710.62; cash credit 33,000 × 3/12 = 8,250; a loss of 3,08,960.62, no
@@ -151,7 +151,7 @@ describe('fictional case Q: sales start in the next year, above the ceiling, cas
     expect(two([q.interestBeforeStart, q.scheme?.cost, q.scheme?.subsidy, q.finance.termLoan, q.projectCost, q.finance.promoter, q.scheme?.ownPct]))
       .toEqual(['105000.00', '3395890.41', '500000.00', '2100000.00', '3500890.41', '900890.41', '23.44']);
     expect(q.cost.find((c) => c.id === 'idc')?.amount).toBe(105000);
-    expect(q.scheme?.flags).toEqual(['The project cost of Rs. 33,95,890 is above PMEGP\'s Rs. 20,00,000 for a service: the margin money is worked on Rs. 20,00,000, and the bank may lend the rest without it.']);
+    expect(q.scheme?.flags).toEqual([PMEGP.notice, 'The project cost of Rs. 33,95,890 is above PMEGP\'s Rs. 20,00,000 for a service: the margin money is worked on Rs. 20,00,000, and the bank may lend the rest without it.']);
     const a = q.years[0];
     expect([a.months, ...two([a.sales, a.pat, a.cash, a.dscr])]).toEqual([11, '3300000.00', '15222.00', '62472.00', '1.11']);
     expect(q.cashShort).toBeUndefined();

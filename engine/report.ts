@@ -221,6 +221,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     // sales, which that cost leaves out.
     const own = promoter - cost.land - interestBeforeStart, sc = scheme;
     sc.ownPct = sc.cost > 0 ? (own / sc.cost) * 100 : 0;
+    sc.flags.push(PMEGP.notice);
     if (sc.cost > sc.ceiling) sc.flags.push(`The project cost of Rs. ${inr(sc.cost)} is above PMEGP's Rs. ${inr(sc.ceiling)} for ${x.scheme?.activity === 'service' ? 'a service' : 'manufacturing'}: the margin money is worked on Rs. ${inr(sc.ceiling)}, and the bank may lend the rest without it.`);
     if (sc.ownPct < sc.ownMinPct - 1e-9) sc.flags.push(`The promoters bring ${sc.ownPct.toFixed(2)}% of PMEGP's project cost; the scheme asks at least ${sc.ownMinPct}%.`);
     if (sc.workingCapitalPct > sc.workingCapitalMaxPct + 1e-9) sc.flags.push(`Working capital is ${sc.workingCapitalPct.toFixed(2)}% of PMEGP's project cost; the scheme allows at most ${sc.workingCapitalMaxPct}%.`);
