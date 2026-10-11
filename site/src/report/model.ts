@@ -5,8 +5,8 @@
  */
 import { ASSUMPTIONS, HEADS, PMEGP, projectReport, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
 import { parseAmount, parseMonth } from '../../../engine/parse';
-import { LEVELS, collateralNeeded, diagnose, type RatioCheck, type RatioId } from '../../../engine/ratios';
-import { makeViable, type Outcome } from '../../../engine/viable';
+import { LEVELS, collateralNeeded, diagnose, type RatioCheck, type RatioId, type Shortfall } from '../../../engine/ratios';
+import { makeViable, type Longer, type Outcome } from '../../../engine/viable';
 import { BORROWERS } from '../../../engine/tax';
 import { inr } from '../../../engine/util';
 
@@ -224,7 +224,13 @@ export function viewOf(r: Report): ReportView {
 }
 
 /** A ratio against its level (D-UX-51), in words: the level, its worst year, and whether it meets. */
-export interface CheckRow { id: RatioId; label: string; level: string; worst: string; verdict: 'meets' | 'misses' | 'wait' }
+export interface CheckRow {
+  id: RatioId; label: string; level: string; worst: string; verdict: 'meets' | 'misses' | 'wait';
+  /** The bar (MV2b): the ratio's length on a track from 0 to twice its level, so the level sits at the middle; 0 to 100. */
+  bar: number; at: 'least' | 'most';
+  /** When it misses: the rupees its worst year needs, in words (engine/ratios.ts). */
+  short?: string;
+}
 /** `short`: cash below nil, which keeps the report provisional; `flags`: the scheme's rules to look at, never a decision;
  * `checks`: each lender's ratio against its level, `misses` their summary when any misses, with "Make it viable" beside it
  * (D-UX-50, D-UX-52); `collateralNote`: what the security cover needs; `longTerm`: a term past the longest. */
@@ -242,6 +248,15 @@ const ratioAt = (x: number, c: RatioCheck) => {
 /** A label inside a sentence: lower case, but DSCR stays DSCR. */
 export const inSentence = (label: string) => (/^[A-Z][A-Z]/.test(label) ? label : label[0].toLowerCase() + label.slice(1));
 const listed = (xs: string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+/** What a ratio's shortfall is more of, in plain words (engine/ratios.ts's `short.of`). */
+const SHORT_OF: Record<Shortfall, string> = {
+  cash: 'cash to pay the loan', profit: 'profit before interest and tax', currentAssets: 'current assets (stock, debtors and cash)',
+  netWorth: 'net worth (the promoters’ money and the profit kept)', fixedAssets: 'net fixed assets', security: 'security',
+};
+const shortText = (k: RatioCheck) => k.short && k.short.amount > 0
+  ? `Short by Rs. ${upRupees(k.short.amount)} of ${SHORT_OF[k.short.of]}${k.fy ? ` in ${k.fy}` : ', in total over the loan'}.` : undefined;
+/** Where the bar ends: 0 at nil or below, the level at the middle, full past twice the level (or net worth at or below nil). */
+const barOf = (k: RatioCheck) => (k.why ? 100 : k.worst === undefined ? 0 : Math.max(0, Math.min(100, (k.worst / (2 * k.level)) * 100)));
 const labelOf = (id: RatioId) => inSentence(LEVELS.ratios.find((r) => r.id === id)?.label ?? id);
 
 export function preview(s: ReportState): ReportPreview {
@@ -252,7 +267,8 @@ export function preview(s: ReportState): ReportPreview {
   const checks: CheckRow[] = d.checks.map((k) => ({
     id: k.id, label: k.label, level: levelText(k),
     worst: k.why ? `Net worth at or below nil in ${k.fy}` : k.worst === undefined ? (k.id === 'securityCover' ? 'Type the collateral’s value' : '—') : `${ratioAt(k.worst, k)}${k.fy ? ` in ${k.fy}` : ' over the loan'}`,
-    verdict: k.meets === undefined ? 'wait' : k.meets ? 'meets' : 'misses',
+    verdict: k.meets === undefined ? 'wait' : k.meets ? 'meets' : 'misses', bar: barOf(k), at: k.at,
+    ...(shortText(k) ? { short: shortText(k) } : {}),
   }));
   const sc = d.checks.find((k) => k.id === 'securityCover') as RatioCheck, need = sc.meets ? undefined : collateralNeeded(r, x);
   const collateralNote = need === undefined ? undefined : need === 0
@@ -283,49 +299,69 @@ const years = (n: number, perYear: number) => {
   return [y ? `${y} year${y > 1 ? 's' : ''}` : '', m ? `${m} month${m > 1 ? 's' : ''}` : ''].filter(Boolean).join(' ');
 };
 
-/** "Make it viable" (D-UX-50, D-UX-52), in words: the engine's changes (engine/viable.ts), each alone, the rest as typed;
- * the borrower's first, then the lender's. */
-export interface ViableLine { id: string; by: 'borrower' | 'lender'; text: string; note?: string }
+/** "Make it viable" (D-UX-50, D-UX-52) as a board (MV2b): the engine's changes (engine/viable.ts), each alone, the rest as
+ * typed, the borrower's first, then the lender's. Each card: the lever, how far it moves (and a bar of now against needed),
+ * the ratios it brings to their level and those it leaves short, and whether it is within reach. */
+export interface ViableLine {
+  id: string; by: 'borrower' | 'lender'; head: string; text: string; note?: string;
+  /** How far it moves, in one figure ("+17.3%", "Rs. 15,64,221 less", "+6 months"); none when no answer. */
+  move?: string;
+  /** Now and needed, for two bars side by side; the longer is the full width. */
+  bars?: { now: number; to: number; nowText: string; toText: string };
+  fixes: string[]; still: string[];
+  /** Sales beyond full capacity are out of reach; beyond the most a plan takes, a warning. */
+  reach?: { out: boolean; text: string };
+}
 export interface ViableView { meets: boolean; title: string; lines: ViableLine[]; foot: string }
-/** What a change leaves: the levels it meets and those still missed, and cash below nil. */
-const leaves = (o: Outcome) => [
-  o.still.length ? (o.fixes.length ? `It meets the ${listed(o.fixes.map(labelOf))}, but not the ${listed(o.still.map(labelOf))}.` : `It still misses the ${listed(o.still.map(labelOf))}.`) : '',
-  o.cashNeed ? `Cash still goes below nil: the promoters would need Rs. ${upRupees(o.cashNeed)} more.` : '',
-].filter(Boolean).join(' ') || undefined;
+/** Cash below nil that a change leaves. */
+const cashLeft = (o: Outcome) => (o.cashNeed ? `Cash still goes below nil: the promoters would need Rs. ${upRupees(o.cashNeed)} more.` : undefined);
+const chips = (o: Outcome) => ({ fixes: o.fixes.map(labelOf), still: o.still.map(labelOf) });
 
 export function viableOf(s: ReportState): ViableView | undefined {
   const v = makeViable(inputOf(s));
   if ('needs' in v || 'blocked' in v) return undefined;
   const lines: ViableLine[] = [], sl = v.sales, push = (l: Omit<ViableLine, 'by'>, by: ViableLine['by'] = 'borrower') => lines.push({ ...l, by });
+  const none = { fixes: [], still: [] }, rs = (x: number) => `Rs. ${rupees(x)}`;
+  const smaller = (id: string, head: string, l: NonNullable<typeof v.loan>, text: string) =>
+    push({ id, head, text, move: `${rs(l.now - l.largest)} less`, bars: { now: l.now, to: l.largest, nowText: rs(l.now), toText: rs(l.largest) }, note: cashLeft(l), ...chips(l) });
   if (sl && v.meets) {
-    push({ id: 'sales', text: sl.tenths < 0
-      ? `Sales can fall ${(-sl.tenths / 10).toFixed(1)}%, to Rs. ${upRupees(sl.needed)} in ${sl.fy} (from Rs. ${rupees(sl.now)}), and every ratio still meets its level.`
-      : 'Sales cannot fall at all before a ratio misses its level.' });
+    push({ id: 'sales', head: 'Sales can fall', ...none, ...(sl.tenths < 0 ? {
+      move: `${(-sl.tenths / 10).toFixed(1)}%`, bars: { now: sl.now, to: sl.needed, nowText: rs(sl.now), toText: `Rs. ${upRupees(sl.needed)}` },
+      text: `Sales can fall ${(-sl.tenths / 10).toFixed(1)}%, to Rs. ${upRupees(sl.needed)} in ${sl.fy} (from Rs. ${rupees(sl.now)}), and every ratio still meets its level.`,
+    } : { text: 'Sales cannot fall at all before a ratio misses its level.' }) });
   } else if (sl) {
-    const u = sl.use, distinct = u ? u.needed.filter((x, k) => k === 0 || Math.abs(x - u.needed[k - 1]) > 1e-9) : [];
-    push({ id: 'sales', text: `Sales ${(sl.tenths / 10).toFixed(1)}% higher in every year: Rs. ${upRupees(sl.needed)} in ${sl.fy} instead of Rs. ${rupees(sl.now)}.`,
+    const u = sl.use, distinct = u ? u.needed.filter((x, k) => k === 0 || Math.abs(x - u.needed[k - 1]) > 1e-9) : [], top = u ? Math.max(...u.needed) : 0;
+    push({ id: 'sales', head: 'Higher sales', move: `+${(sl.tenths / 10).toFixed(1)}%`, ...chips(sl),
+      bars: { now: sl.now, to: sl.needed, nowText: rs(sl.now), toText: `Rs. ${upRupees(sl.needed)}` },
+      text: `Sales ${(sl.tenths / 10).toFixed(1)}% higher in every year: Rs. ${upRupees(sl.needed)} in ${sl.fy} instead of Rs. ${rupees(sl.now)}.`,
+      ...(u?.overFull ? { reach: { out: true, text: `Out of reach at this capacity: it needs ${upPct(top)}% of it. Only a higher price or a larger capacity can carry it.` } }
+        : u?.overMost ? { reach: { out: false, text: `Above the ${LEVELS.capacity.mostUsePct}% use of the capacity a plan takes at most: give the reason it can.` } } : {}),
       note: [
-        sl.price && u ? `That is a price of Rs. ${(Math.ceil(sl.price.needed * 100 - 1e-6) / 100).toFixed(2)} a unit (now Rs. ${sl.price.now}) at the same use, or the use of the capacity at ${distinct.map((x) => `${upPct(x)}%`).join(', then ')} at the same price${u.overFull ? ': above full capacity, so the price, or a larger capacity, must carry it' : u.overMost ? `: above the ${LEVELS.capacity.mostUsePct}% use a plan takes at most` : ''}.` : '',
-        leaves(sl) ?? '',
+        sl.price && u ? `That is a price of Rs. ${(Math.ceil(sl.price.needed * 100 - 1e-6) / 100).toFixed(2)} a unit (now Rs. ${sl.price.now}) at the same use, or the use of the capacity at ${distinct.map((x) => `${upPct(x)}%`).join(', then ')} at the same price.` : '',
+        cashLeft(sl) ?? '',
       ].filter(Boolean).join(' ') || undefined });
-  } else if (v.salesNone) push({ id: 'sales', text: `Higher sales: ${v.salesNone}` });
-  if (v.loan) push({ id: 'loan', text: `Or a term loan of at most Rs. ${rupees(v.loan.largest)} (now Rs. ${rupees(v.loan.now)}), the promoters bringing Rs. ${upRupees(v.loan.more)} more.`, note: leaves(v.loan) });
-  else if (v.loanNone) push({ id: 'loan', text: v.loanNone });
-  if (v.wc) push({ id: 'wc', text: `Or a working-capital limit of at most Rs. ${rupees(v.wc.largest)} (now Rs. ${rupees(v.wc.now)}), ${v.wc.more >= 0.5 ? `the promoters bringing Rs. ${upRupees(v.wc.more)} more as margin` : 'with no more margin from the promoters'}.`, note: leaves(v.wc) });
-  else if (v.wcNone) push({ id: 'wc', text: v.wcNone });
+  } else if (v.salesNone) push({ id: 'sales', head: 'Higher sales', text: v.salesNone, ...none });
+  if (v.loan) smaller('loan', 'A smaller term loan', v.loan, `A term loan of at most Rs. ${rupees(v.loan.largest)} (now Rs. ${rupees(v.loan.now)}), the promoters bringing Rs. ${upRupees(v.loan.more)} more.`);
+  else if (v.loanNone) push({ id: 'loan', head: 'A smaller term loan', text: v.loanNone, ...none });
+  if (v.wc) smaller('wc', 'A smaller working-capital limit', v.wc, `A working-capital limit of at most Rs. ${rupees(v.wc.largest)} (now Rs. ${rupees(v.wc.now)}), ${v.wc.more >= 0.5 ? `the promoters bringing Rs. ${upRupees(v.wc.more)} more as margin` : 'with no more margin from the promoters'}.`);
+  else if (v.wcNone) push({ id: 'wc', head: 'A smaller working-capital limit', text: v.wcNone, ...none });
   if (v.collateral && v.collateral.now !== undefined && v.collateral.needed > v.collateral.now) {
-    push({ id: 'collateral', text: `Or collateral with a market value of Rs. ${rupees(v.collateral.needed)} (now Rs. ${rupees(v.collateral.now)}), for the security cover.`,
-      note: leaves({ fixes: ['securityCover'], still: v.diagnosis.misses.filter((id) => id !== 'securityCover') }) });
+    const c = v.collateral as { now: number; needed: number };
+    push({ id: 'collateral', head: 'More collateral', move: `+${rs(c.needed - c.now)}`, bars: { now: c.now, to: c.needed, nowText: rs(c.now), toText: rs(c.needed) },
+      text: `Collateral with a market value of Rs. ${rupees(c.needed)} (now Rs. ${rupees(c.now)}), for the security cover.`,
+      fixes: [labelOf('securityCover')], still: v.diagnosis.misses.filter((id) => id !== 'securityCover').map(labelOf) });
   }
   const longest = LEVELS.term.longestMonths;
-  if (v.moratorium) push({ id: 'moratorium', text: `A moratorium of ${v.moratorium.needed} months (now ${v.moratorium.now}), the whole term within ${longest} months.`, note: leaves(v.moratorium) }, 'lender');
-  else if (v.moratoriumNone) push({ id: 'moratorium', text: v.moratoriumNone }, 'lender');
+  const longer = (id: string, head: string, l: Longer, unit: string, text: string) =>
+    push({ id, head, text, move: `+${l.needed - l.now} ${unit}${l.needed - l.now > 1 ? 's' : ''}`, bars: { now: l.now, to: l.needed, nowText: String(l.now), toText: String(l.needed) }, note: cashLeft(l), ...chips(l) }, 'lender');
+  if (v.moratorium) longer('moratorium', 'A longer moratorium', v.moratorium, 'month', `A moratorium of ${v.moratorium.needed} months (now ${v.moratorium.now}), the whole term within ${longest} months.`);
+  else if (v.moratoriumNone) push({ id: 'moratorium', head: 'A longer moratorium', text: v.moratoriumNone, ...none }, 'lender');
   if (v.instalments) {
     const i = v.instalments, every = i.perYear === 4 ? 'quarterly' : 'monthly';
-    push({ id: 'repayment', text: `Or ${i.needed} ${every} instalments, ${years(i.needed, i.perYear)} (now ${i.now}), the whole term within ${longest} months.`, note: leaves(i) }, 'lender');
-  } else if (v.instalmentsNone) push({ id: 'repayment', text: v.instalmentsNone }, 'lender');
+    longer('repayment', 'A longer repayment', i, 'instalment', `${i.needed} ${every} instalments, ${years(i.needed, i.perYear)} (now ${i.now}), the whole term within ${longest} months.`);
+  } else if (v.instalmentsNone) push({ id: 'repayment', head: 'A longer repayment', text: v.instalmentsNone, ...none }, 'lender');
   return {
-    meets: v.meets, title: v.meets ? 'Every ratio meets a lender’s level' : 'Make it viable: any one of these', lines,
+    meets: v.meets, title: v.meets ? 'Every ratio meets a lender’s level: the room' : 'The levers: any one of these alone', lines,
     foot: `The levels: a fresh or enhanced loan’s benchmarks, said to follow RBI and not yet checked against an RBI publication; each lender sets its own. Each change is worked alone by the engine, the rest as typed. Change the figures above only to what the business can really reach: a lender tests sales against the market and the capacity.`,
   };
 }

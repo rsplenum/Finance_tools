@@ -45,6 +45,33 @@ describe('case R at 70 lakh: the diagnosis', () => {
   });
 });
 
+// The shortfall in rupees in each missed ratio's worst year (MV2b), by hand from the year-1 figures above: the lowest DSCR
+// needs 1.25 × 7,27,083.33 = 9,08,854.17 available, 3,13,854.17 more; interest cover 1.50 × 2,82,083.33 = 4,23,125 of
+// profit before interest and tax against 2,10,000, 2,13,125 more; the current ratio 1.10 × 8,73,972.60 = 9,61,369.86 of
+// current assets against 8,17,231.74 (unrounded 8,17,231.735), 1,44,138.13 more.
+// With a 20 lakh limit and collateral of 3 lakh: no margin, the promoters 8,00,000; working-capital interest 2,20,000,
+// profit before tax 24,50,000 − 18,00,000 − 4,20,000 − 20,000 − 2,27,083.33 − 2,20,000 = −2,37,083.33, net worth
+// 5,62,916.67. TOL 20,00,000 + 20,00,000 + 3,73,972.60 = 43,73,972.60, so TOL/TNW 7.7702; at 5 it needs a net worth of
+// 8,74,794.52, 3,11,877.85 more. Security 27,80,000 + 3,73,972.60 + 5,75,342.47 + 2,70,000 (90% of 3 lakh) = 39,99,315.07
+// against 1.20 × 40,00,000 = 48,00,000: 8,00,684.93 more.
+describe('case R at 70 lakh: the shortfall in rupees in the worst year', () => {
+  const short = (x: ReportInput) => Object.fromEntries(diagnose(projectReport(x) as Report, x).checks.filter((c) => c.meets === false).map((c) => [c.id, [c.short?.amount.toFixed(2), c.short?.of]]));
+  it('the cash for the loan, the profit and the current assets', () => {
+    expect(short(weak)).toEqual({
+      currentRatio: ['144138.13', 'currentAssets'], dscrAverage: [expect.any(String), 'cash'], dscrLowest: ['313854.17', 'cash'], interestCover: ['213125.00', 'profit'],
+    });
+  });
+  it('the average DSCR\'s over the loan: with that much more cash in total it reads 1.50 exactly', () => {
+    const r = projectReport(weak) as Report, t = r.plan.statement.total as NonNullable<Report['plan']['statement']['total']>;
+    const k = diagnose(r, weak).checks.find((c) => c.id === 'dscrAverage');
+    expect(((t.available + (k?.short?.amount as number)) / t.service).toFixed(10)).toBe('1.5000000000');
+  });
+  it('the net worth and the security, with a 20 lakh limit and collateral of 3 lakh', () => {
+    const s = short({ ...weak, wcLimit: 2000000, collateral: 300000 });
+    expect([s.tolTnw, s.securityCover]).toEqual([['311877.85', 'netWorth'], ['800684.93', 'security']]);
+  });
+});
+
 describe('case R at 70 lakh: each change alone, against every ratio', () => {
   const v = makeViable(weak) as Viability;
   it('sales 17.3% higher: 82,11,000, the hand threshold of 82,09,984.08 rounded up to the 0.1% step', () => {

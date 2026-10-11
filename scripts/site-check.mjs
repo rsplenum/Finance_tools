@@ -1026,16 +1026,16 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
   // The lender's levels and Make it viable (D-UX-50 to D-UX-52): case R meets every level that can be read, so the button
   // asks how far sales can fall (tests/viable.test.ts by hand); the security cover waits on the collateral.
   if (await page.getByTestId('rep-misses').count()) v('case R is said to miss a lender\'s level');
-  await expectText(page, v, 'rep-check-dscrLowest', /1\.25 or more\s*Meets: 2\.51 in 2026-27/, 'the lowest DSCR against its level');
+  await expectText(page, v, 'rep-check-dscrLowest', /Meets: 2\.51 in 2026-27 · level 1\.25 or more/, 'the lowest DSCR against its level');
   await expectText(page, v, 'rep-check-securityCover', /Type the collateral’s value/, 'the security cover before the collateral');
   await page.getByTestId('rep-viable').click();
-  await expectText(page, v, 'rep-viable-sales', /^Sales can fall 31\.5%, to Rs\. 82,20,000 in 2026-27/, 'how far sales can fall');
+  await expectText(page, v, 'rep-text-sales', /^Sales can fall 31\.5%, to Rs\. 82,20,000 in 2026-27/, 'how far sales can fall');
   // The collateral, under More options: 3 lakh with a 20 lakh limit misses the security cover (Rs. 4,36,226 needed).
   await leave(page, '#fld-wcLimit', '20 L');
   await leave(page, '#fld-collateral', '3 L');
   await expectText(page, v, 'rep-check-securityCover', /Misses: 1\.17 in 2026-27/, 'the security cover with the collateral');
   await page.getByTestId('rep-viable').click();
-  await expectText(page, v, 'rep-viable-collateral', /^Or collateral with a market value of Rs\. 4,36,226 \(now Rs\. 3,00,000\)/, 'the collateral that meets');
+  await expectText(page, v, 'rep-text-collateral', /^Collateral with a market value of Rs\. 4,36,226 \(now Rs\. 3,00,000\)/, 'the collateral that meets');
   await layout(page, v, 'make it viable, 390 px');
   await leave(page, '#fld-collateral', '');
   await leave(page, '#fld-wcLimit', '5 L');
@@ -1087,7 +1087,10 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
   await expectText(page, v, 'rep-status', 'Provisional: 1 still needed', 'the report with cash below nil');
   await expectText(page, v, 'rep-misses', /^It misses \S+ of a lender’s levels: .*DSCR/, 'the DSCR below the level');
   await page.getByTestId('rep-viable').click();
-  await expectText(page, v, 'rep-viable-sales', /^Sales [\d.]+% higher in every year: Rs\. [\d,]+ in 20\d\d-\d\d instead of Rs\. [\d,]+\./, 'the sales that make it viable');
+  await expectText(page, v, 'rep-short-dscrLowest', /^Short by Rs\. [\d,]+ of cash to pay the loan in 20\d\d-\d\d\.$/, 'the lowest DSCR\'s shortfall in rupees');
+  await expectText(page, v, 'rep-text-sales', /^Sales [\d.]+% higher in every year: Rs\. [\d,]+ in 20\d\d-\d\d instead of Rs\. [\d,]+\./, 'the sales that make it viable');
+  await expectText(page, v, 'rep-move-sales', /^\+[\d.]+%$/, 'how far sales must move');
+  await expectText(page, v, 'rep-reach-sales', /^Out of reach at this capacity: it needs [\d.]+% of it\./, 'sales above full capacity marked out of reach');
   if (!(await page.getByTestId('rep-viable-loan').count())) v('make it viable: no line for a smaller loan');
   await layout(page, v, 'the PMEGP report, 390 px, dark');
   await ctx.close();
