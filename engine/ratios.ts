@@ -20,7 +20,13 @@ export interface RatioCheck {
   meets?: boolean;
   /** Why it fails without a figure: net worth at or below nil. */
   why?: string;
+  /** When it misses: how much more of the ratio's own figure the worst year needs to meet the level, in rupees, the rest
+   * as it is (D-UX-53, MV2b): cash available for the loan (the DSCRs, the average's over the loan), profit before interest
+   * and tax (interest cover), current assets (current ratio), net worth (TOL/TNW, debt-equity), net fixed assets
+   * (fixed-asset cover) or security (security cover). Undefined when its two computations disagree. */
+  short?: { amount: number; of: Shortfall };
 }
+export type Shortfall = 'cash' | 'profit' | 'currentAssets' | 'netWorth' | 'fixedAssets' | 'security';
 export interface Diagnosis {
   checks: RatioCheck[];
   /** The ratios that miss their level. */
@@ -48,26 +54,53 @@ function worstOf(ys: ReportYear[], f: (y: ReportYear) => number | undefined, at:
 /** The collateral's realisable sale value that brings every year's security cover to `level`, in closed form. */
 const rsvNeeded = (r: Report, level: number) => Math.max(0, ...r.years.filter((y) => y.secured > EPS).map((y) => level * y.secured - y.security));
 
+/** Worked twice: `a` from the ratio's own parts, `b` by another route; withheld when they differ by more than a paisa. */
+const twice = (a: number, b: number | undefined, of: Shortfall) => (b === undefined || Math.abs(a - b) <= 0.01 ? { short: { amount: a, of } } : {});
+
+/** The rupees a missed ratio needs in its worst year `y` (or over the loan, for the average DSCR). */
+function shortfall(id: RatioId, level: number, r: Report, y: ReportYear | undefined) {
+  if (id === 'dscrAverage') {
+    const t = r.plan.statement.total, used = r.years.filter((k) => k.counted);
+    if (!t) return {};
+    return twice(level * t.service - t.available, used.reduce((s, k) => s + level * k.service - k.available, 0), 'cash');
+  }
+  if (!y) return {};
+  const tol = y.unsecured + y.termLoan + y.wcLoan + y.creditors, interest = y.tlInterest + y.wcInterest;
+  switch (id) {
+    case 'dscrLowest': return twice(level * y.service - y.available, y.dscr === undefined ? undefined : (level - y.dscr) * y.service, 'cash');
+    case 'interestCover': return twice(level * interest - (y.pbt + interest), y.interestCover === undefined ? undefined : (level - y.interestCover) * interest, 'profit');
+    case 'currentRatio': return twice(level * (y.wcLoan + y.creditors) - (y.currentAssets + y.cash), y.currentRatio === undefined ? undefined : (level - y.currentRatio) * (y.wcLoan + y.creditors), 'currentAssets');
+    // Net worth at or below nil has no ratio: the second route reads the outside liabilities off the balance sheet's total.
+    case 'tolTnw': return twice(tol / level - y.netWorth, (y.liabilities - y.netWorth) / level - y.netWorth, 'netWorth');
+    case 'debtEquity': return twice(y.termLoan / level - y.netWorth, y.debtEquity === undefined ? undefined : y.netWorth * (y.debtEquity / level - 1), 'netWorth');
+    case 'facr': return twice(level * y.termLoan - y.netBlock, y.facr === undefined ? undefined : (level - y.facr) * y.termLoan, 'fixedAssets');
+    case 'securityCover': return twice(level * y.secured - (y.security + (r.collateral?.rsv ?? 0)), y.securityCover === undefined ? undefined : (level - y.securityCover) * y.secured, 'security');
+  }
+  return {};
+}
+
 export function diagnose(r: Report, x: ReportInput, c: Case = 'fresh'): Diagnosis {
   const ys = r.years, checks: RatioCheck[] = [];
+  const year = (fy?: string) => ys.find((y) => y.fy === fy);
+  const push = (k: RatioCheck) => checks.push(k.meets === false ? { ...k, ...shortfall(k.id, k.level, r, year(k.fy)) } : k);
   for (const d of RATIOS) {
     const level = d[c], at = d.at as 'least' | 'most', base = { id: d.id as RatioId, label: d.label, at, level };
     if (d.id === 'dscrAverage') {
-      checks.push(r.average === undefined ? base : { ...base, worst: r.average, meets: r.average >= level - EPS });
+      push(r.average === undefined ? base : { ...base, worst: r.average, meets: r.average >= level - EPS });
       continue;
     }
     if (d.id === 'dscrLowest') {
-      checks.push(r.lowest ? { ...base, worst: r.lowest.dscr, fy: r.lowest.fy, meets: r.lowest.dscr >= level - EPS } : base);
+      push(r.lowest ? { ...base, worst: r.lowest.dscr, fy: r.lowest.fy, meets: r.lowest.dscr >= level - EPS } : base);
       continue;
     }
     if (d.id === 'tolTnw' || d.id === 'debtEquity') {
       // Net worth at or below nil: the ratio has no meaning, and it fails.
       const sunk = ys.find((y) => y.netWorth <= 0);
-      if (sunk) { checks.push({ ...base, fy: sunk.fy, meets: false, why: `net worth is at or below nil in ${sunk.fy}` }); continue; }
+      if (sunk) { push({ ...base, fy: sunk.fy, meets: false, why: `net worth is at or below nil in ${sunk.fy}` }); continue; }
     }
-    if (d.id === 'securityCover' && !r.collateral) { checks.push(base); continue; }
+    if (d.id === 'securityCover' && !r.collateral) { push(base); continue; }
     const w = worstOf(ys, (y) => y[d.id as 'currentRatio' | 'tolTnw' | 'debtEquity' | 'interestCover' | 'facr' | 'securityCover'], at);
-    checks.push(w ? { ...base, worst: w.v, fy: w.fy, meets: at === 'least' ? w.v >= level - EPS : w.v <= level + EPS } : base);
+    push(w ? { ...base, worst: w.v, fy: w.fy, meets: at === 'least' ? w.v >= level - EPS : w.v <= level + EPS } : base);
   }
   return {
     checks, misses: checks.filter((k) => k.meets === false).map((k) => k.id),
