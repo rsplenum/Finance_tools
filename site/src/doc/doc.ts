@@ -5,11 +5,19 @@
  */
 
 /** A figure as the engine gave it: an amount in rupees, a ratio, a count or a quantity (as typed), and the decimals shown. */
-export interface Figure { value: number; kind: 'amount' | 'ratio' | 'count' | 'quantity'; decimals: number }
+export interface Figure {
+  value: number; kind: 'amount' | 'ratio' | 'count' | 'quantity'; decimals: number;
+  /**
+   * In the Excel copy only, a formula (without "=") that redoes the figure from other cells, `value` being what the engine
+   * gave: `{ref}` is this column's cell in the row named `ref` on the same sheet, `{Part!ref}` on another part's sheet.
+   */
+  formula?: string;
+}
 export interface Cell { text: string; figure?: Figure }
 /** `head` names a group of rows, on a shaded band; `total` rows are in bold under a rule, and a `ratio` row between two. */
 export type RowKind = 'head' | 'total' | 'ratio';
-export interface Row { cells: Cell[]; kind?: RowKind }
+/** `ref` names the row for a formula (Figure.formula). */
+export interface Row { cells: Cell[]; kind?: RowKind; ref?: string }
 /** `wrap`: a column of words, left-aligned and wrapped, taking this share of the width the other columns leave. */
 export interface Column { label: string; sub?: string; wrap?: number }
 /** The first column names each row, and is repeated when the other columns are split across pages. */

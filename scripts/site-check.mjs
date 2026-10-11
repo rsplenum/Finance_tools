@@ -17,7 +17,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { extname, join, normalize, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-import { docxLines, docxPart, pdfPages, workbook } from './read-doc.mjs';
+import { docxLines, docxPart, pdfPages, workbook, zipPart } from './read-doc.mjs';
 
 const DIST = fileURLToPath(new URL('../site/dist/', import.meta.url));
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
@@ -1020,6 +1020,48 @@ for (const scheme of ['light', 'dark']) {
   if (book.map((x) => x.sheet).join('|') !== 'Summary|Projections|DSCR and ratios|Annex') v(`the report's Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))}`);
   const { lines, messages } = await docxLines((await save('rep-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
   if (messages.length || !lines.some((l) => l.startsWith('Total assets | 55,81,804'))) v(`the report's Word copy reads back ${JSON.stringify(lines.slice(0, 4))} ${JSON.stringify(messages).slice(0, 120)}`);
+  await ctx.close();
+}
+
+// CMA data (C1, D-UX-46), fictional case K worked outside the engine in tests/cma.test.ts: sales 300 to 520 L over
+// 2023-24 to 2027-28. In 2027-28 the balance sheet totals 2,96,80,000 on both sides and the limit by the turnover method
+// is 1,04,00,000 (25% of 520 L less the 5% margin of 26 L, the net working capital of 23.8 L being less). The default
+// path is the owner's short CMA: 25 heads for each of five years and the limit now, 126 fields (D-UX-12's count).
+{
+  const { ctx, page, v } = await open('/cma/', { scheme: 'light' });
+  if (await page.locator('#more-options').evaluate((d) => d.open)) v('the CMA page opens with More options open');
+  const fields = await page.locator('main input:not(#more-options input):not(#download input)').count();
+  if (fields !== 126) v(`the CMA page asks ${fields} fields by default; the owner's short CMA is 126 (25 heads × 5 years and the limit now)`);
+  await expectText(page, v, 'cma-years', /^Years: 2023-24 \(audited\), 2024-25 \(audited\), 2025-26 \(audited\), 2026-27 \(estimate\), 2027-28 \(projection\)\./, 'the CMA years');
+  await expectText(page, v, 'cma-status', 'Provisional: 3 still needed', 'the empty CMA page');
+  await page.getByTestId('cma-example').click();
+  await expectText(page, v, 'cma-status', 'Complete', 'the CMA example');
+  await expectText(page, v, 'cma-key-0', 'Rs. 1,04,00,000', 'the CMA limit');
+  const flags = await page.getByTestId('cma-flags').locator('li').count();
+  if (flags !== 3) v(`the CMA example shows ${flags} things to look at, want 3 (the growth and the two short margins)`);
+  await page.getByTestId('cma-form3').evaluate((t) => t.closest('details').open = true);
+  for (const label of ['Total liabilities', 'Total assets']) {
+    const got = await page.getByTestId('cma-form3').locator('tr', { has: page.locator('th', { hasText: label }) }).first().locator('td').allTextContents();
+    if (got.at(-1) !== '2,96,80,000') v(`the CMA Form III "${label}" ends ${JSON.stringify(got.at(-1))}, want 2,96,80,000`);
+  }
+  await layout(page, v, 'the CMA example, 390 px');
+  await expectText(page, v, 'cma-doc-status', 'Provisional: 1 still needed', 'the CMA document before its name');
+  await leave(page, '#fld-cma-name', 'K Steel Furniture Pvt Ltd');
+  await expectText(page, v, 'cma-doc-status', 'Complete', 'the CMA document');
+  const save = async (id) => {
+    const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.getByTestId(id).click()]);
+    const path = await file.path();
+    return { name: file.suggestedFilename(), bytes: path ? await readFile(path) : Buffer.alloc(0) };
+  };
+  const pdf = await save('cma-download-pdf');
+  if (pdf.name !== 'CMA data - K Steel Furniture Pvt Ltd.pdf') v(`the CMA PDF is named "${pdf.name}"`);
+  const text = (await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`])).join('\n');
+  if (!text.includes('1,04,00,000') || !text.includes('2,96,80,000')) v('the CMA PDF does not read back its limit and its balance sheet');
+  const xlsx = (await save('cma-download-xlsx')).bytes;
+  const book = await workbook(xlsx).catch((e) => v(`the CMA Excel copy is not read: ${e.message}`)) ?? [];
+  if (book.map((x) => x.sheet).join('|') !== 'Summary|Forms II and III|Forms IV to VI|Ratios|Check') v(`the CMA Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))}`);
+  const formulas = ((await zipPart(xlsx, 'xl/worksheets/sheet5.xml')) ?? '').match(/<f>/g)?.length ?? 0;
+  if (formulas !== 52) v(`the CMA Excel copy's Check sheet holds ${formulas} formulas, want 52`);
   await ctx.close();
 }
 
