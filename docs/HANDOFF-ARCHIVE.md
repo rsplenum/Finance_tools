@@ -168,3 +168,11 @@ The test figures are model-worked until the owner confirms fictional cases A and
 | Date | Row | Budget | Actual |
 |---|---|---|---|
 | 04-10-2026 | D-TECH-29: this rule, HANDOFF trimmed | S, about 15 steps | 17 steps to the commit (1.9M tokens re-read), about 23 with the PR: over by half, since the compaction cost 3 steps of re-reading and measuring 2 |
+| 05-10-2026 | E2b: 84 library items read against their pages, each city's own sewer charge (D-DATA-10) | L, about 200 steps plus agents | 171 steps from its prompt to the docs, about 185 with the PR (`npm run cost` reads the whole conversation's log: E2b ran in the old one), 6 `fetcher` calls, 6 compactions: within budget; redos cost about 8 (a test naming one offender at a time, two test fixtures pinned to the library, What changed hiding the unpriced sewer) and wiring moved to W1 |
+
+## Rows set aside
+Set aside by the owner on 10-10-2026 until the business entity, GST and Razorpay account are ready (D-UX-42):
+
+| # | Deliverable | Budget | Starter prompt |
+|---|---|---|---|
+| P1d | Paying unlocks the DSCR statement's download, with Razorpay's test keys (after the owner's Phase 0 items: business entity, GST, Razorpay account) | L, high | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md, docs/DECISIONS.md (D-TECH-01, D-TECH-06, D-TECH-31, D-DOC-01) and docs/CLOUDFLARE.md. Budget L (about 200 steps), at high. P1d: payment for the DSCR statement download, through Razorpay and Pages Functions beside the site (D-TECH-31: read Cloudflare's current docs first). Ask me the price first; the rest is decided. Then build it: the order made in the API, the payment verified by its signature, and the two buttons unlocked for that statement only. Test with Razorpay's test keys, set only in the environment settings, never in the repo. The preview stays free. Finish per HANDOFF." |
