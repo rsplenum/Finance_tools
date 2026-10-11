@@ -19,6 +19,7 @@
     "worker:build": "wrangler deploy --dry-run --outdir worker/dist -c worker/wrangler.jsonc"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
     "@astrojs/preact": "^6.0.5",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^7.3.5",

@@ -20,7 +20,7 @@ import { chromium } from 'playwright';
 import { docxLines, docxPart, pdfPages, workbook, zipPart } from './read-doc.mjs';
 
 const DIST = fileURLToPath(new URL('../site/dist/', import.meta.url));
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml' };
 
 const server = createServer(async (req, res) => {
   let p = decodeURIComponent(new URL(req.url ?? '/', 'http://x').pathname);
@@ -1035,6 +1035,7 @@ for (const scheme of ['light', 'dark']) {
   await ctx.close();
 }
 
+const CMA_FIELDS = 'main input:not(#more-options input):not(#download input):not(#read input)';
 // CMA data (C1, D-UX-46), fictional case K worked outside the engine in tests/cma.test.ts: sales 300 to 520 L over
 // 2023-24 to 2027-28. In 2027-28 the balance sheet totals 2,96,80,000 on both sides and the limit by the turnover method
 // is 1,04,00,000 (25% of 520 L less the 5% margin of 26 L, the net working capital of 23.8 L being less). The default
@@ -1042,7 +1043,7 @@ for (const scheme of ['light', 'dark']) {
 {
   const { ctx, page, v } = await open('/cma/', { scheme: 'light' });
   if (await page.locator('#more-options').evaluate((d) => d.open)) v('the CMA page opens with More options open');
-  const fields = await page.locator('main input:not(#more-options input):not(#download input)').count();
+  const fields = await page.locator(CMA_FIELDS).count();
   if (fields !== 126) v(`the CMA page asks ${fields} fields by default; the owner's short CMA is 126 (25 heads × 5 years and the limit now)`);
   await expectText(page, v, 'cma-years', /^Years: 2023-24 \(audited\), 2024-25 \(audited\), 2025-26 \(audited\), 2026-27 \(estimate\), 2027-28 \(projection\)\./, 'the CMA years');
   await expectText(page, v, 'cma-status', 'Provisional: 3 still needed', 'the empty CMA page');
@@ -1074,6 +1075,45 @@ for (const scheme of ['light', 'dark']) {
   if (book.map((x) => x.sheet).join('|') !== 'Summary|Forms II and III|Forms IV to VI|Ratios|Check') v(`the CMA Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))}`);
   const formulas = ((await zipPart(xlsx, 'xl/worksheets/sheet5.xml')) ?? '').match(/<f>/g)?.length ?? 0;
   if (formulas !== 52) v(`the CMA Excel copy's Check sheet holds ${formulas} formulas, want 52`);
+  await ctx.close();
+}
+
+// Reading an audited statement (U1, D-UX-48): the fictional statement K (tests/fixtures/statement-k.ts), read on the
+// phone; a pretend Worker answers with the pointers tests/read.test.ts made, as an honest reader would. Only the text
+// lines may leave the page, all eight checks must tie, and nothing may reach the forms until the borrower ticks it.
+{
+  const { ctx, page, v } = await open('/cma/', { scheme: 'dark' });
+  const fixture = (f) => fileURLToPath(new URL(`../tests/fixtures/${f}`, import.meta.url));
+  const answer = await readFile(fixture('statement-k.answer.json'), 'utf8');
+  let sent;
+  await page.route('**/api/read', (r) => { sent = r.request().postDataJSON(); return r.fulfill({ status: 200, contentType: 'application/json', body: `{"answer":${answer}}` }); });
+  const filled = () => page.locator('[id^="fld-cma-"]').evaluateAll((es) => es.filter((e) => /^fld-cma-(a\d|est|proj)-/.test(e.id) && e.value.trim()).length);
+  await page.setInputFiles('#read-file', fixture('statement-k.pdf'));
+  if (!(await page.getByTestId('read-result').waitFor({ timeout: 15000 }).then(() => true, () => false))) v('statement K was not read');
+  else {
+    const keys = Object.keys(sent ?? {}), lines = sent?.lines ?? [];
+    if (keys.join() !== 'lines' || !lines.length || lines.some((l) => Object.keys(l).join() !== 'page,line,text')) v(`the page sent ${JSON.stringify(keys)} to the reader, want only the lines`);
+    if (!lines.some((l) => l.text === 'Share capital 1 30.00 30.00')) v('the lines sent do not hold "Share capital 1 30.00 30.00"');
+    const ties = await page.locator('[data-testid^="read-checks-"] li[data-state="ties"]').count();
+    if (ties !== 8) v(`${ties} of statement K's 8 checks tie`);
+    if (await filled()) v(`${await filled()} CMA cells were filled before any tick`);
+    await expectText(page, v, 'cma-status', 'Provisional: 3 still needed', 'statement K read, nothing ticked');
+    if (await page.locator(CMA_FIELDS).count() !== 126) v('reading a statement changed the count of default fields');
+    await page.getByTestId('read-a3-sales').check();
+    await expectValue(page, v, '#fld-cma-a3-sales', '3,90,00,000', 'one figure ticked');
+    if (await filled() !== 1) v(`one tick filled ${await filled()} cells`);
+    await page.getByTestId('read-all-a3').click();
+    await page.getByTestId('read-all-a2').click();
+    if (await filled() !== 50) v(`confirming both years filled ${await filled()} cells, want 50`);
+    await expectValue(page, v, '#fld-cma-a2-reserves', '11,20,000', 'the year before confirmed');
+    await layout(page, v, 'statement K read, 390 px, dark');
+  }
+  // A PDF with no text, as a scan has: asked to be typed, and nothing sent.
+  sent = undefined;
+  const scan = '%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 595 842]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n';
+  await page.setInputFiles('#read-file', { name: 'scan.pdf', mimeType: 'application/pdf', buffer: Buffer.from(scan) });
+  await expectText(page, v, 'read-said', 'This looks scanned: type the figures, or upload the text PDF your CA sends.', 'a scanned statement');
+  if (sent) v('a scanned statement was sent to the reader');
   await ctx.close();
 }
 
