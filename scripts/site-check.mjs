@@ -1023,6 +1023,10 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
     const got = await cells(table, label);
     if (got[0] !== want) v(`the report's ${table} "${label}" shows ${JSON.stringify(got.slice(0, 2))}, want ${want} first`);
   }
+  // Make it viable (D-UX-50): case R meets, so the button asks how far sales can fall (tests/viable.test.ts by hand).
+  if (await page.getByTestId('rep-misses').count()) v('case R is said to miss the DSCR level');
+  await page.getByTestId('rep-viable').click();
+  await expectText(page, v, 'rep-viable-sales', /^Sales can fall 32\.8%, to Rs\. 80,64,000 in 2026-27/, 'how far sales can fall');
   await layout(page, v, 'the report filled, 390 px');
   await expectText(page, v, 'rep-doc-status', 'Provisional: 3 still needed', 'the report before its facts');
   await leave(page, '#fld-rep-name', 'Asha Packaging');
@@ -1069,6 +1073,10 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
   await leave(page, '#fld-fixed', '25 L');
   await expectText(page, v, 'rep-short', /^Cash goes below nil in 2030-31: Rs\. 45,18,203 short/, 'cash below nil');
   await expectText(page, v, 'rep-status', 'Provisional: 1 still needed', 'the report with cash below nil');
+  await expectText(page, v, 'rep-misses', /^The DSCR misses the level lenders commonly ask/, 'the DSCR below the level');
+  await page.getByTestId('rep-viable').click();
+  await expectText(page, v, 'rep-viable-sales', /^Sales [\d.]+% higher in every year: Rs\. [\d,]+ in 20\d\d-\d\d instead of Rs\. [\d,]+\./, 'the sales that make it viable');
+  if (!(await page.getByTestId('rep-viable-loan').count())) v('make it viable: no line for a smaller loan');
   await layout(page, v, 'the PMEGP report, 390 px, dark');
   await ctx.close();
 }

@@ -5,6 +5,8 @@
  */
 import { ASSUMPTIONS, HEADS, PMEGP, projectReport, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
 import { parseAmount, parseMonth } from '../../../engine/parse';
+import { limitText, shortfall } from '../../../engine/dscr';
+import { TARGET, makeViable } from '../../../engine/viable';
 import { BORROWERS } from '../../../engine/tax';
 import { inr } from '../../../engine/util';
 
@@ -210,16 +212,17 @@ export function viewOf(r: Report): ReportView {
   };
 }
 
-/** `short`: cash below nil, which keeps the report provisional; `flags`: the scheme's rules to look at, never a decision. */
-export interface ReportPreview { needs: string[]; blocked?: string; view?: ReportView; short?: string; flags: string[] }
+/** `short`: cash below nil, which keeps the report provisional; `flags`: the scheme's rules to look at, never a decision;
+ * `misses`: why the DSCR misses the lenders' common benchmarks (D-UX-50), with "Make it viable" beside it. */
+export interface ReportPreview { needs: string[]; blocked?: string; view?: ReportView; short?: string; flags: string[]; misses?: string }
 
 export function preview(s: ReportState): ReportPreview {
   const r = projectReport(inputOf(s));
   if ('blocked' in r) return { needs: [], blocked: r.blocked, flags: [] };
   if ('needs' in r) return { needs: r.needs, flags: [] };
-  const c = r.cashShort;
+  const c = r.cashShort, miss = shortfall(r.plan.statement, TARGET);
   return {
-    needs: [], view: viewOf(r), flags: r.scheme?.flags ?? [],
+    needs: [], view: viewOf(r), flags: r.scheme?.flags ?? [], ...(miss ? { misses: `The DSCR misses ${targetText}: ${limitText(miss)}.` } : {}),
     ...(c ? { short: `Cash goes below nil in ${c.fy}: Rs. ${rupees(c.need)} short at its lowest. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.` } : {}),
   };
 }
@@ -228,3 +231,42 @@ export const statusText = (p: ReportPreview, more = 0) => {
   const n = p.needs.length + (p.short ? 1 : 0) + more;
   return p.blocked ? 'No figures' : n ? `Provisional: ${n} still needed` : 'Complete';
 };
+
+const targetText = `the level lenders commonly ask (an average of ${ratio(TARGET.average)} and ${ratio(TARGET.minimum)} in the lowest year)`;
+/** A figure the business must reach, shown rounded up so it never reads below what meets: rupees, or a percentage to 0.1. */
+const upRupees = (x: number) => rupees(Math.ceil(x - 1e-6));
+const upPct = (x: number) => (Math.ceil(x * 10 - 1e-6) / 10).toFixed(1);
+const years = (n: number, perYear: number) => {
+  const y = Math.floor(n / perYear), m = ((n % perYear) * 12) / perYear;
+  return [y ? `${y} year${y > 1 ? 's' : ''}` : '', m ? `${m} month${m > 1 ? 's' : ''}` : ''].filter(Boolean).join(' ');
+};
+
+/** "Make it viable" (D-UX-50), in words: the engine's levers (engine/viable.ts), each alone, the rest as typed. */
+export interface ViableView { meets: boolean; title: string; lines: { id: string; text: string; note?: string }[]; foot: string }
+export function viableOf(s: ReportState): ViableView | undefined {
+  const v = makeViable(inputOf(s));
+  if ('needs' in v || 'blocked' in v) return undefined;
+  const lines: ViableView['lines'] = [], sl = v.sales;
+  if (sl && v.meets) {
+    lines.push({ id: 'sales', text: sl.tenths < 0
+      ? `Sales can fall ${(-sl.tenths / 10).toFixed(1)}%, to Rs. ${upRupees(sl.needed)} in ${sl.fy} (from Rs. ${rupees(sl.now)}), and the DSCR still meets it.`
+      : `Sales cannot fall at all before the DSCR misses it.` });
+  } else if (sl) {
+    const u = sl.use, distinct = u ? u.needed.filter((x, k) => k === 0 || Math.abs(x - u.needed[k - 1]) > 1e-9) : [];
+    lines.push({ id: 'sales', text: `Sales ${(sl.tenths / 10).toFixed(1)}% higher in every year: Rs. ${upRupees(sl.needed)} in ${sl.fy} instead of Rs. ${rupees(sl.now)}.`,
+      note: [
+        sl.price && u ? `That is a price of Rs. ${(Math.ceil(sl.price.needed * 100 - 1e-6) / 100).toFixed(2)} a unit (now Rs. ${sl.price.now}) at the same use, or the use of the capacity at ${distinct.map((x) => `${upPct(x)}%`).join(', then ')} at the same price${u.overFull ? ': above full capacity, so the price, or a larger capacity, must carry it' : ''}.` : '',
+        sl.cashNeed ? `At those sales cash still goes below nil: the promoters would need Rs. ${upRupees(sl.cashNeed)} more.` : '',
+      ].filter(Boolean).join(' ') || undefined });
+  } else if (v.salesNone) lines.push({ id: 'sales', text: `Sales: ${v.salesNone}` });
+  if (v.loan) lines.push({ id: 'loan', text: `Or a term loan of at most Rs. ${rupees(v.loan.largest)} (now Rs. ${rupees(v.loan.now)}), the promoters bringing Rs. ${upRupees(v.loan.more)} more.` });
+  else if (v.loanNone) lines.push({ id: 'loan', text: `A smaller loan: ${v.loanNone}` });
+  if (v.instalments) {
+    const i = v.instalments, every = i.perYear === 4 ? 'quarterly' : 'monthly';
+    lines.push({ id: 'repayment', text: `Or ${i.needed} ${every} instalments, ${years(i.needed, i.perYear)} (now ${i.now}), if the lender will lend that long.` });
+  } else if (v.instalmentsNone) lines.push({ id: 'repayment', text: `A longer repayment: ${v.instalmentsNone}` });
+  return {
+    meets: v.meets, title: v.meets ? 'It meets the level lenders commonly ask' : 'Make it viable: any one of these', lines,
+    foot: `The level: an average DSCR of ${ratio(TARGET.average)} and ${ratio(TARGET.minimum)} in the lowest year, commonly quoted but not checked against a published source; each lender sets its own. Each change is worked alone by the engine, the rest as typed. Change the figures above only to what the business can really reach: a lender tests sales against the market and the capacity.`,
+  };
+}

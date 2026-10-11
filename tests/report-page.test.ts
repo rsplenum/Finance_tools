@@ -9,7 +9,7 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import { docStatus, fileName, reportDoc } from '../site/src/report/document';
-import { EMPTY, assumptionsOf, preview, statusText, type ReportState } from '../site/src/report/model';
+import { EMPTY, assumptionsOf, preview, statusText, viableOf, type ReportState } from '../site/src/report/model';
 import { SITE_NAME } from '../site/src/site';
 import { docxLines, pdfPages, workbook } from '../scripts/read-doc.mjs';
 
@@ -121,5 +121,19 @@ describe('the PMEGP report to download', () => {
     expect(text).toContain('PMEGP: the rules used');
     expect(text).toContain('As read on 11-10-2026; not yet checked against KVIC');
     expect(docStatus(P, p)).toBe('Complete');
+  });
+});
+
+// Make it viable (D-UX-50): case R with sales of 70 lakh misses; the figures are worked by hand in tests/viable.test.ts.
+describe('make it viable, in words', () => {
+  it('names why it misses, then each change alone', () => {
+    const weak = { ...R, sales: '70 L' }, v = viableOf(weak);
+    expect(preview(weak).misses).toBe('The DSCR misses the level lenders commonly ask (an average of 1.50 and 1.20 in the lowest year): the lowest year, 2026-27, is below the target.');
+    expect(v?.lines[0].text).toBe('Sales 15.2% higher in every year: Rs. 80,64,000 in 2026-27 instead of Rs. 70,00,000.');
+    expect(v?.lines.map((l) => l.id)).toEqual(['sales', 'loan', 'repayment']);
+  });
+  it('as typed, it meets and says how far sales can fall', () => {
+    expect(preview(R).misses).toBeUndefined();
+    expect(viableOf(R)?.lines.map((l) => l.text)).toEqual(['Sales can fall 32.8%, to Rs. 80,64,000 in 2026-27 (from Rs. 1,20,00,000), and the DSCR still meets it.']);
   });
 });
