@@ -16,7 +16,8 @@
     "verify": "node scripts/verify.mjs",
     "worker:dev": "wrangler dev -c worker/wrangler.jsonc",
     "worker:types": "wrangler types -c worker/wrangler.jsonc worker/worker-configuration.d.ts",
-    "worker:build": "wrangler deploy --dry-run --outdir worker/dist -c worker/wrangler.jsonc"
+    "worker:build": "wrangler deploy --dry-run --outdir worker/dist -c worker/wrangler.jsonc",
+    "hosts": "node scripts/hosts.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",

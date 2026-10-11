@@ -996,11 +996,21 @@ for (const scheme of ['light', 'dark']) {
 // furniture 2 L, preliminary 1 L; a term loan of 25 L at 10% from April 2026, 60 monthly instalments of equal principal;
 // sales 1.2 Cr growing 10%, variable costs 65%, fixed costs 18 L growing 5%; a cash credit of 5 L at 11%. The project
 // costs 37,86,301; in 2026-27 the profit after tax is 11,54,407 and the balance sheet totals 55,81,804 on both sides.
+// Its sales are typed under More options (R3, D-UX-49); the default path asks the capacity and the price instead.
+// The inputs on the default path, radios included: before R3, typed sales and their growth; now the capacity, the price,
+// the months to the first sales and the scheme (None or PMEGP), 33 in all.
+const REP_DEFAULT = 33;
+const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
 {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
+  if (await page.locator('#more-options').evaluate((d) => d.open)) v('the project report opens with More options open');
+  const fields = await page.locator(REP_FIELDS).count();
+  if (fields !== REP_DEFAULT) v(`the project report asks ${fields} fields by default; it was ${REP_DEFAULT} (D-UX-49)`);
   await page.check('#fld-borrower-firm');
+  await page.locator('#more-options summary').click();
+  await page.check('#fld-salesBy-typed');
   for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-furniture', '2 L'], ['#fld-cost-preliminary', '1 L'],
-    ['#fld-tl-amount', '25 L'], ['#fld-tl-rate', '10'], ['#fld-tl-disbursed', '2026-04'], ['#fld-tl-moratorium', '0'], ['#fld-tl-instalments', '60'],
+    ['#fld-tl-amount', '25 L'], ['#fld-tl-rate', '10'], ['#fld-tl-disbursed', '2026-04'], ['#fld-tl-moratorium', '0'], ['#fld-tl-instalments', '60'], ['#fld-monthsToStart', '0'],
     ['#fld-sales', '1.2 Cr'], ['#fld-salesGrowth', '10'], ['#fld-variablePct', '65'], ['#fld-fixed', '18 L'], ['#fld-fixedGrowth', '5'], ['#fld-wcLimit', '5 L'], ['#fld-wcRate', '11']])
     await leave(page, id, value);
   await expectText(page, v, 'rep-status', 'Provisional: 1 still needed', 'the report before the repayment');
@@ -1032,6 +1042,34 @@ for (const scheme of ['light', 'dark']) {
   if (book.map((x) => x.sheet).join('|') !== 'Summary|Projections|DSCR and ratios|Annex') v(`the report's Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))}`);
   const { lines, messages } = await docxLines((await save('rep-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
   if (messages.length || !lines.some((l) => l.startsWith('Total assets | 55,81,804'))) v(`the report's Word copy reads back ${JSON.stringify(lines.slice(0, 4))} ${JSON.stringify(messages).slice(0, 120)}`);
+  await ctx.close();
+}
+
+// Case P (tests/report.test.ts), on the default path with PMEGP: land 2 L, building 6 L, plant 20 L, preliminary 50,000;
+// 24 L sanctioned at 10% from October 2026, six months' moratorium, 48 monthly instalments; 50,000 units a year at
+// Rs. 200, sales three months after the loan; general category, a village, manufacturing. The margin money is 25% of
+// PMEGP's cost of 31,43,150.68, Rs. 7,85,788; cash at the end of 2026-27 is 61,039.
+{
+  const { ctx, page, v } = await open('/project-report/', { scheme: 'dark' });
+  await page.check('#fld-borrower-firm');
+  await page.check('#fld-scheme-pmegp');
+  for (const id of ['#fld-category-general', '#fld-area-rural', '#fld-activity-manufacturing', '#fld-tl-repayment-monthly']) await page.check(id);
+  if (await page.locator('#fld-subsidy').count()) v('the project report asks a capital subsidy beside PMEGP');
+  for (const [id, value] of [['#fld-cost-land', '2 L'], ['#fld-cost-building', '6 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-preliminary', '50,000'],
+    ['#fld-tl-amount', '24 L'], ['#fld-tl-rate', '10'], ['#fld-tl-disbursed', '2026-10'], ['#fld-tl-moratorium', '6'], ['#fld-tl-instalments', '48'],
+    ['#fld-capacity', '50,000'], ['#fld-price', '200'], ['#fld-monthsToStart', '3'], ['#fld-variablePct', '70'], ['#fld-fixed', '12 L'], ['#fld-fixedGrowth', '5'],
+    ['#fld-wcLimit', '3 L'], ['#fld-wcRate', '11']])
+    await leave(page, id, value);
+  await expectText(page, v, 'rep-status', 'Complete', 'the PMEGP report');
+  const tiles = await page.locator('main dl > div').allTextContents();
+  if (!tiles.some((t) => t.startsWith('PMEGP margin money') && t.includes('Rs. 7,85,788'))) v(`the PMEGP report's tiles read ${JSON.stringify(tiles).slice(0, 200)}`);
+  await page.getByTestId('rep-cf').evaluate((t) => t.closest('details').open = true);
+  const cash = await page.getByTestId('rep-cf').locator('tr', { has: page.locator('th', { hasText: 'Cash at the end of the year' }) }).first().locator('td').allTextContents();
+  if (cash[0] !== '61,039') v(`the PMEGP report's cash at the end of 2026-27 shows ${cash[0]}, want 61,039`);
+  await leave(page, '#fld-fixed', '25 L');
+  await expectText(page, v, 'rep-short', /^Cash goes below nil in 2030-31: Rs\. 45,18,203 short/, 'cash below nil');
+  await expectText(page, v, 'rep-status', 'Provisional: 1 still needed', 'the report with cash below nil');
+  await layout(page, v, 'the PMEGP report, 390 px, dark');
   await ctx.close();
 }
 

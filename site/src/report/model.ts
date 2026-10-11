@@ -3,7 +3,7 @@
  * report to tables in words, with the engine's exact figures beside them for the Excel copy. The page and the document
  * show the same tables. Pure, no DOM. Figures: engine/report.ts only (with dscr.ts for profit, tax and DSCR).
  */
-import { ASSUMPTIONS, HEADS, projectReport, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
+import { ASSUMPTIONS, HEADS, PMEGP, projectReport, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
 import { parseAmount, parseMonth } from '../../../engine/parse';
 import { BORROWERS } from '../../../engine/tax';
 import { inr } from '../../../engine/util';
@@ -15,6 +15,9 @@ export interface ReportState {
   cost: Record<HeadId, string>;
   loan: { amount: string; ratePct: string; disbursed: string; moratoriumMonths: string; instalments: string; repayment?: Repayment };
   subsidy: string; unsecured: string;
+  /** Sales from the capacity, its use and the price (the default), or typed under More options. */
+  salesBy: 'drivers' | 'typed'; capacity: string; price: string; utilisation: string; priceGrowth: string; monthsToStart: string;
+  scheme: '' | 'pmegp'; category?: Category; area?: Area; activity?: Activity;
   sales: string; salesGrowth: string; variablePct: string; fixed: string; fixedGrowth: string;
   days: { stock: string; debtors: string; creditors: string };
   wcLimit: string; wcRate: string;
@@ -22,10 +25,12 @@ export interface ReportState {
 }
 
 const DAYS = (ASSUMPTIONS.find((a) => a.id === 'days')?.value ?? {}) as Record<string, number>;
+const assumed = (id: string) => ASSUMPTIONS.find((a) => a.id === id)?.value;
 export const EMPTY: ReportState = {
   cost: Object.fromEntries(HEADS.map((h) => [h.id, ''])) as Record<HeadId, string>,
   loan: { amount: '', ratePct: '', disbursed: '', moratoriumMonths: '', instalments: '' },
-  subsidy: '', unsecured: '', sales: '', salesGrowth: '', variablePct: '', fixed: '', fixedGrowth: '',
+  subsidy: '', unsecured: '', salesBy: 'drivers', capacity: '', price: '', monthsToStart: '', scheme: '',
+  utilisation: ((assumed('utilisation') ?? []) as number[]).join(', '), priceGrowth: String(assumed('price') ?? ''), sales: '', salesGrowth: '', variablePct: '', fixed: '', fixedGrowth: '',
   // Assumed until changed (engine/data/report.json), listed on the page.
   days: { stock: String(DAYS.stock ?? ''), debtors: String(DAYS.debtors ?? ''), creditors: String(DAYS.creditors ?? '') },
   wcLimit: '', wcRate: '', doc: { name: '', activity: '', address: '', lender: '', preparedBy: '' },
@@ -34,7 +39,15 @@ export const BORROWER_CHOICES = BORROWERS.map((b) => ({ value: b.id, label: b.la
 export const REPAYMENT_CHOICES: { value: Repayment; label: string }[] = [
   { value: 'emi', label: 'EMI every month' }, { value: 'monthly', label: 'Equal principal every month' }, { value: 'quarterly', label: 'Equal principal every quarter' },
 ];
-export { ASSUMPTIONS, HEADS };
+export const SCHEME_CHOICES: { value: '' | 'pmegp'; label: string }[] = [{ value: '', label: 'None' }, { value: 'pmegp', label: 'PMEGP' }];
+export const CATEGORY_CHOICES: { value: Category; label: string }[] = [
+  { value: 'general', label: 'General' }, { value: 'special', label: 'Special: SC, ST, OBC, minority, woman, ex-serviceman, a person with a disability and others the scheme names' },
+];
+export const AREA_CHOICES: { value: Area; label: string }[] = [{ value: 'urban', label: 'A town or city' }, { value: 'rural', label: 'A village' }];
+export const ACTIVITY_CHOICES: { value: Activity; label: string }[] = [{ value: 'manufacturing', label: 'Manufacturing' }, { value: 'service', label: 'A service' }];
+/** The assumptions listed on the page: the use of the capacity and the price only while sales come from the drivers. */
+export const assumptionsOf = (s: ReportState) => ASSUMPTIONS.filter((a) => s.salesBy === 'drivers' || (a.id !== 'utilisation' && a.id !== 'price'));
+export { ASSUMPTIONS, HEADS, PMEGP };
 
 export const amountOf = (t: string) => (t.trim() ? parseAmount(t) : undefined);
 export const plainOf = (t: string) => (t.trim() ? parseAmount(t.replace(/%\s*$/, ''), false) : undefined);
@@ -50,8 +63,13 @@ export function inputOf(s: ReportState): ReportInput {
       amount: amountOf(s.loan.amount), ratePct: plainOf(s.loan.ratePct), disbursed: parseMonth(s.loan.disbursed), moratoriumMonths: plainOf(s.loan.moratoriumMonths),
       instalments: plainOf(s.loan.instalments), ...(r ? { frequency: r === 'quarterly' ? 'quarterly' : 'monthly', style: r === 'emi' ? 'emi' : 'equal-principal' } : {}),
     },
-    subsidy: opt(s.subsidy), unsecured: opt(s.unsecured),
-    sales: amountOf(s.sales), salesGrowthPct: plainOf(s.salesGrowth), variablePct: plainOf(s.variablePct), fixedCosts: amountOf(s.fixed), fixedGrowthPct: plainOf(s.fixedGrowth),
+    subsidy: s.scheme ? undefined : opt(s.subsidy), unsecured: opt(s.unsecured),
+    salesBy: s.salesBy, monthsToStart: plainOf(s.monthsToStart),
+    ...(s.salesBy === 'typed' ? { sales: amountOf(s.sales), salesGrowthPct: plainOf(s.salesGrowth) } : {
+      capacity: plainOf(s.capacity), price: amountOf(s.price), priceGrowthPct: plainOf(s.priceGrowth),
+      utilisationPct: s.utilisation.split(/[,\s]+/).filter(Boolean).map((t) => plainOf(t) ?? NaN),
+    }),
+    ...(s.scheme === 'pmegp' ? { scheme: { id: 'pmegp' as const, category: s.category, area: s.area, activity: s.activity } } : {}), variablePct: plainOf(s.variablePct), fixedCosts: amountOf(s.fixed), fixedGrowthPct: plainOf(s.fixedGrowth),
     days: { stock: plainOf(s.days.stock), debtors: plainOf(s.days.debtors), creditors: plainOf(s.days.creditors) },
     wcLimit: amountOf(s.wcLimit), wcRatePct: plainOf(s.wcRate),
   };
@@ -86,20 +104,23 @@ export function viewOf(r: Report): ReportView {
     rows: [...r.cost.map((c) => ({ label: c.label, values: [rupees(c.amount)], n: [c.amount] })),
       { label: 'Total cost of the project', values: [rupees(r.projectCost)], n: [r.projectCost], kind: 'total' }],
   };
-  const f = r.finance;
+  const f = r.finance, sc = r.scheme, subsidyLabel = sc ? 'PMEGP margin money' : 'Capital subsidy';
   const finance: ViewTable = {
     id: 'finance', title: 'Means of finance', first: 'Source', columns: ['Rupees'],
     rows: [
       { label: `Promoters’ contribution (${f.promoterPct.toFixed(2)}%)`, values: [rupees(f.promoter)], n: [f.promoter] },
-      ...(f.subsidy ? [{ label: 'Capital subsidy', values: [rupees(f.subsidy)], n: [f.subsidy] }] : []),
+      ...(sc ? [{ label: `PMEGP margin money, ${sc.ratePct}% of Rs. ${rupees(sc.base)}: a deposit for ${PMEGP.lockInYears} years, then set off against the loan`, values: [rupees(f.subsidy)], n: [f.subsidy] }]
+        : f.subsidy ? [{ label: 'Capital subsidy', values: [rupees(f.subsidy)], n: [f.subsidy] }] : []),
       ...(f.unsecured ? [{ label: 'Unsecured loans', values: [rupees(f.unsecured)], n: [f.unsecured] }] : []),
-      { label: 'Term loan', values: [rupees(f.termLoan)], n: [f.termLoan] },
+      { label: sc ? `Term loan: Rs. ${rupees(sc.sanctioned)} sanctioned, less the margin money` : 'Term loan', values: [rupees(f.termLoan)], n: [f.termLoan] },
       { label: 'Total means of finance', values: [rupees(f.total)], n: [f.total], kind: 'total' },
     ],
   };
   const pl: ViewTable = {
     id: 'pl', title: 'Projected profit and loss', first: 'Rupees', columns: years,
     rows: [
+      ...(ys.some((y) => y.months < 12) ? [{ label: 'Months of sales', values: ys.map((y) => String(y.months)), n: ys.map((y) => y.months), fig: 'ratio' as const }] : []),
+      ...(ys.some((y) => y.utilisationPct !== undefined) ? [ratios(ys, 'Use of the capacity', (y) => y.utilisationPct, (x) => (x === undefined ? '—' : `${x}%`))] : []),
       line(ys, 'Sales', (y) => y.sales), line(ys, 'Less: materials and other variable costs', (y) => y.variable), line(ys, 'Less: fixed costs', (y) => y.fixed),
       line(ys, 'Profit before interest, depreciation and tax', (y) => y.pbdit, 'total'),
       line(ys, 'Less: depreciation', (y) => y.depreciation), line(ys, 'Less: preliminary expenses written off', (y) => y.preliminary),
@@ -110,7 +131,7 @@ export function viewOf(r: Report): ReportView {
   const bs: ViewTable = {
     id: 'bs', title: 'Projected balance sheet, at each year end', first: 'Rupees', columns: years,
     rows: [
-      head('Liabilities'), line(ys, 'Capital', (y) => y.capital), ...(any((y) => y.subsidy) ? [line(ys, 'Capital subsidy', (y) => y.subsidy)] : []),
+      head('Liabilities'), line(ys, 'Capital', (y) => y.capital), ...(any((y) => y.subsidy) ? [line(ys, subsidyLabel, (y) => y.subsidy)] : []),
       line(ys, 'Profit retained', (y) => y.retained), line(ys, 'Net worth', (y) => y.netWorth, 'total'),
       ...(any((y) => y.unsecured) ? [line(ys, 'Unsecured loans', (y) => y.unsecured)] : []), line(ys, 'Term loan', (y) => y.termLoan),
       line(ys, 'Working-capital loan', (y) => y.wcLoan), line(ys, 'Creditors', (y) => y.creditors), line(ys, 'Total liabilities', (y) => y.liabilities, 'total'),
@@ -122,7 +143,7 @@ export function viewOf(r: Report): ReportView {
   const cf: ViewTable = {
     id: 'cf', title: 'Projected cash flow', first: 'Rupees', columns: years,
     rows: [
-      head('Sources'), line(ys, 'Capital brought in', (y) => y.flow.capital), ...(any((y) => y.flow.subsidy) ? [line(ys, 'Capital subsidy', (y) => y.flow.subsidy)] : []),
+      head('Sources'), line(ys, 'Capital brought in', (y) => y.flow.capital), ...(any((y) => y.flow.subsidy) ? [line(ys, subsidyLabel, (y) => y.flow.subsidy)] : []),
       ...(any((y) => y.flow.unsecured) ? [line(ys, 'Unsecured loans', (y) => y.flow.unsecured)] : []), line(ys, 'Term loan drawn', (y) => y.flow.termLoan),
       line(ys, 'Profit after tax', (y) => y.flow.pat), line(ys, 'Depreciation', (y) => y.flow.depreciation), line(ys, 'Preliminary expenses written off', (y) => y.flow.preliminary),
       line(ys, 'Working-capital loan', (y) => y.flow.wcLoan), line(ys, 'Increase in creditors', (y) => y.flow.creditors), line(ys, 'Total sources', (y) => y.flow.sources, 'total'),
@@ -182,20 +203,28 @@ export function viewOf(r: Report): ReportView {
     years, tables: [cost, finance, pl, bs, cf, dscr, bep, keyRatios, wc, schedule],
     key: [
       { label: 'Cost of the project', value: `Rs. ${rupees(r.projectCost)}` },
+      ...(sc ? [{ label: 'PMEGP margin money', value: `Rs. ${rupees(sc.subsidy)}`, note: `${sc.ratePct}% of Rs. ${rupees(sc.base)}, set off after ${PMEGP.lockInYears} years` }] : []),
       ...(r.average !== undefined ? [{ label: 'Average DSCR', value: ratio(r.average), note: 'total A ÷ total B' }] : []),
       ...(r.lowest ? [{ label: 'Lowest DSCR', value: ratio(r.lowest.dscr), note: `in ${r.lowest.fy}` }] : []),
     ],
   };
 }
 
-export interface ReportPreview { needs: string[]; blocked?: string; view?: ReportView }
+/** `short`: cash below nil, which keeps the report provisional; `flags`: the scheme's rules to look at, never a decision. */
+export interface ReportPreview { needs: string[]; blocked?: string; view?: ReportView; short?: string; flags: string[] }
 
 export function preview(s: ReportState): ReportPreview {
   const r = projectReport(inputOf(s));
-  if ('blocked' in r) return { needs: [], blocked: r.blocked };
-  if ('needs' in r) return { needs: r.needs };
-  return { needs: [], view: viewOf(r) };
+  if ('blocked' in r) return { needs: [], blocked: r.blocked, flags: [] };
+  if ('needs' in r) return { needs: r.needs, flags: [] };
+  const c = r.cashShort;
+  return {
+    needs: [], view: viewOf(r), flags: r.scheme?.flags ?? [],
+    ...(c ? { short: `Cash goes below nil in ${c.fy}: Rs. ${rupees(c.need)} short at its lowest. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.` } : {}),
+  };
 }
 
-export const statusText = (p: ReportPreview, more = 0) =>
-  p.blocked ? 'No figures' : p.needs.length + more ? `Provisional: ${p.needs.length + more} still needed` : 'Complete';
+export const statusText = (p: ReportPreview, more = 0) => {
+  const n = p.needs.length + (p.short ? 1 : 0) + more;
+  return p.blocked ? 'No figures' : n ? `Provisional: ${n} still needed` : 'Complete';
+};

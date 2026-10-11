@@ -22,15 +22,38 @@
   },
   "assumptions": [
     { "id": "days", "what": "Stock, debtors and creditors", "value": { "stock": 30, "debtors": 30, "creditors": 30 }, "shown": "30 days each: stock and creditors of the year's materials and other variable costs, debtors of the year's sales", "why": "A common level for a small business; type the business's own" },
-    { "id": "wcUsed", "what": "The working-capital limit", "value": "full", "shown": "Fully used, and its interest paid, in every year", "why": "On the careful side: more interest, lower profit" },
+    { "id": "wcUsed", "what": "The working-capital limit", "value": "full", "shown": "Fully used from the first sales, and its interest paid, in every year", "why": "On the careful side: more interest, lower profit" },
     { "id": "drawings", "what": "Drawings and dividends", "value": 0, "shown": "None: the profits stay in the business", "why": "Type them in the figures if the owners take money out" },
-    { "id": "tax", "what": "Tax", "value": "paid", "shown": "Paid in the year it falls due", "why": "No tax is left owing in the balance sheet" }
+    { "id": "tax", "what": "Tax", "value": "paid", "shown": "Paid in the year it falls due", "why": "No tax is left owing in the balance sheet" },
+    { "id": "utilisation", "what": "Use of the capacity", "value": [60, 70, 80], "shown": "60% in the first year of sales, 70% in the second, 80% from the third", "why": "A new unit rarely runs full at once; type the business's own under More options" },
+    { "id": "price", "what": "The price a unit", "value": 0, "shown": "Held where it is in every year", "why": "On the careful side: sales grow only with the use of the capacity" }
   ],
+  "schemes": {
+    "pmegp": {
+      "label": "PMEGP (Prime Minister's Employment Generation Programme)",
+      "subsidyPct": { "general": { "urban": 15, "rural": 25 }, "special": { "urban": 25, "rural": 35 } },
+      "ownPct": { "general": 10, "special": 5 },
+      "ceiling": { "manufacturing": 5000000, "service": 2000000 },
+      "workingCapitalMaxPct": { "manufacturing": 40, "service": 60 },
+      "lockInYears": 3,
+    "notice": "Fresh PMEGP applications are paused until the scheme is continued with revised guidelines (the PMEGP portal, October 2026); the figures here are the 2021-22 to 2025-26 guideline's and may change. The Rajya Sabha committee on industry recommended raising the Rs. 50 lakh manufacturing ceiling (report of 11-03-2026, pib.gov.in PRID 2238242).",
+      "source": "PMEGP guidelines (KVIC, Ministry of MSME), as read 11-10-2026 in search results quoting them (myscheme.gov.in, tuensang.nic.in, sbi.co.in, dnsbank.in) and the owner's research (docs/SCHEMES-RESEARCH.md); the KVIC portal could not be opened from here",
+      "date": "2026-10-11",
+      "checked": false,
+      "rules": [
+        "The margin money (subsidy) is a share of the project cost: 15% in a town and 25% in a village for the general category; 25% and 35% for the special categories.",
+        "The project cost is the fixed assets without land, with one cycle of working capital; the subsidy is worked on at most Rs. 50 lakh for manufacturing and Rs. 20 lakh for a service, and the bank may lend above that without subsidy.",
+        "The borrower brings at least 10% of the project cost (5% for the special categories); the working capital is at most 40% of the project cost for manufacturing and 60% for a service.",
+        "The margin money is kept as a deposit for 3 years: no interest is paid on it and none is charged on the same amount of the loan; after 3 years it is set off against the loan, once the unit is verified."
+      ],
+      "ours": "The instalments are worked on the loan less the margin money, so the deposit clears that part of the loan when it is set off; ask the bank how it fixes them."
+    }
+  },
   "method": [
-    "Sales and fixed costs grow by the percentages given; materials and other variable costs are the same share of sales every year.",
+    "Sales are the capacity × its use × the price a unit (or the sales typed, growing by the percentage given), for the months after sales start in the first year; fixed costs likewise, growing by the percentage given; materials and other variable costs are the same share of sales every year.",
     "Profit before interest, depreciation and tax is sales less variable and fixed costs. Depreciation is on the written-down value; preliminary expenses are written off in five equal parts.",
     "Interest on the term loan is from its repayment schedule; interest on working capital is the limit × its rate. Tax is worked out by who the borrower is.",
-    "Stock, debtors and creditors are the days given of the year's figures. The margin for working capital, part of the cost of the project, is what the first year's stock and debtors need beyond the creditors and the bank's limit.",
+    "Stock, debtors and creditors are the days given of a full year's figures at that year's rate, even in a first year of a few months. The margin for working capital, part of the cost of the project, is what the first year's stock and debtors need beyond the creditors and the bank's limit.",
     "The promoters bring in the cost of the project less the term loan, any subsidy and any unsecured loans.",
     "Cash in hand is what the cash flow leaves; the balance sheet must balance with it, or no figures are shown.",
     "DSCR is the common term-loan DSCR: (profit after tax + depreciation + preliminary expenses written off + interest on the term loan) ÷ (principal + interest on the term loan); the average is the totals' ratio.",

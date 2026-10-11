@@ -37,7 +37,7 @@ export function series(rule: Rule, count: number, label: string, firstYear: stri
 }
 
 /** The twelve months of financial year '2026-27', April to March, as 'YYYY-MM'. */
-function monthsOf(fy: string): string[] {
+export function monthsOf(fy: string): string[] {
   const first = Number(fy.slice(0, 4)) * 12 + 3;
   return Array.from({ length: 12 }, (_, k) => `${Math.floor((first + k) / 12)}-${String(((first + k) % 12) + 1).padStart(2, '0')}`);
 }

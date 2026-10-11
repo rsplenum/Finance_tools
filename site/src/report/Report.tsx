@@ -12,12 +12,15 @@ import { isoDate, save, type FileKind } from '../download';
 import { monthText } from '../dscr/model';
 import { docNeeds, docStatus, fileName, reportDoc } from './document';
 import {
-  ASSUMPTIONS, BORROWER_CHOICES, EMPTY, HEADS, REPAYMENT_CHOICES, amountOf, plainOf, preview, statusText, tidyAmount,
+  PMEGP, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, REPAYMENT_CHOICES, SCHEME_CHOICES,
+  amountOf, assumptionsOf, plainOf, preview, statusText, tidyAmount,
   type ReportFacts, type ReportPreview, type ReportState, type ViewTable,
 } from './model';
 
 type Update = (f: (s: ReportState) => ReportState) => void;
 const MUTED = 'text-slate-600 dark:text-slate-300';
+const SALES_BY: { value: ReportState['salesBy']; label: string }[] = [
+  { value: 'drivers', label: 'The capacity, its use and the price' }, { value: 'typed', label: 'Sales I type, with their growth' }];
 const bad = (t: string, read: (t: string) => unknown) => !!t.trim() && read(t) === undefined;
 const notUnderstood = (t: string, read: (t: string) => unknown, example: string) => (bad(t, read) ? `Not understood. Type ${example}.` : undefined);
 
@@ -43,9 +46,20 @@ export function ReportCalculator() {
     </Section>
     <Section id="finance" title="Means of finance">
       <p class={`mt-2 ${HINT}`}>The promoters bring in the rest of the cost of the project; it is worked out.</p>
+      <Choice name="fld-scheme" legend="A government scheme" options={SCHEME_CHOICES} value={s.scheme} columns
+        onChange={(scheme) => update((x) => ({ ...x, scheme }))} />
+      {s.scheme === 'pmegp' && <>
+        <p class={`mt-2 ${HINT}`}>The margin money is worked out by the scheme's rules, as read in {monthText(PMEGP.date.slice(0, 7))} and not yet checked against KVIC's guideline.</p>
+        <Choice name="fld-category" legend="The borrower's category" options={CATEGORY_CHOICES} value={s.category}
+          onChange={(category) => update((x) => ({ ...x, category }))} />
+        <Choice name="fld-area" legend="Where the unit is" options={AREA_CHOICES} value={s.area} columns
+          onChange={(area) => update((x) => ({ ...x, area }))} />
+        <Choice name="fld-activity" legend="What it does" options={ACTIVITY_CHOICES} value={s.activity} columns
+          onChange={(activity) => update((x) => ({ ...x, activity }))} />
+      </>}
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
-        {amount('fld-tl-amount', 'Term loan', s.loan.amount, (x, t) => ({ ...x, loan: { ...x.loan, amount: t } }))}
-        {amount('fld-subsidy', 'Capital subsidy, if any', s.subsidy, (x, subsidy) => ({ ...x, subsidy }))}
+        {amount('fld-tl-amount', s.scheme ? 'Term loan sanctioned' : 'Term loan', s.loan.amount, (x, t) => ({ ...x, loan: { ...x.loan, amount: t } }))}
+        {!s.scheme && amount('fld-subsidy', 'Capital subsidy, if any', s.subsidy, (x, subsidy) => ({ ...x, subsidy }))}
         {amount('fld-unsecured', 'Unsecured loans, if any', s.unsecured, (x, unsecured) => ({ ...x, unsecured }))}
       </div>
     </Section>
@@ -63,12 +77,32 @@ export function ReportCalculator() {
     </Section>
     <Section id="operations" title="Sales and costs">
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
-        {amount('fld-sales', 'Sales in the first year', s.sales, (x, sales) => ({ ...x, sales }))}
-        {percent('fld-salesGrowth', 'Sales: growth a year (%)', s.salesGrowth, (x, salesGrowth) => ({ ...x, salesGrowth }), 'like 10')}
+        {s.salesBy === 'drivers' && <>
+          {percent('fld-capacity', 'Capacity: the units it can make or serve in a year', s.capacity, (x, capacity) => ({ ...x, capacity }), 'like 1,00,000')}
+          {amount('fld-price', 'Price a unit', s.price, (x, price) => ({ ...x, price }))}
+        </>}
+        {percent('fld-monthsToStart', 'Months from the loan to the first sales (0 if at once)', s.monthsToStart, (x, monthsToStart) => ({ ...x, monthsToStart }), 'like 3')}
         {percent('fld-variablePct', 'Materials and other variable costs (% of sales)', s.variablePct, (x, variablePct) => ({ ...x, variablePct }), 'like 65')}
-        {amount('fld-fixed', 'Fixed costs in the first year', s.fixed, (x, fixed) => ({ ...x, fixed }), 'Salaries, rent and other overheads.')}
+        {amount('fld-fixed', 'Fixed costs in a full first year', s.fixed, (x, fixed) => ({ ...x, fixed }), 'Salaries, rent and other overheads.')}
         {percent('fld-fixedGrowth', 'Fixed costs: growth a year (%)', s.fixedGrowth, (x, fixedGrowth) => ({ ...x, fixedGrowth }), 'like 5')}
       </div>
+      <details id="more-options" class="mt-4 rounded-lg border border-slate-200 dark:border-slate-800">
+        <summary class="cursor-pointer px-4 py-3 font-medium text-teal-800 dark:text-teal-300">More options: the use of the capacity, the price, typed sales</summary>
+        <div class="px-4 pb-4">
+          <Choice name="fld-salesBy" legend="Sales come from" options={SALES_BY} value={s.salesBy} columns
+            onChange={(salesBy) => update((x) => ({ ...x, salesBy }))} />
+          <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            {s.salesBy === 'drivers' ? <>
+              <TextField id="fld-utilisation" label="Use of the capacity by year (%)" hint="One a year from the first sales; the last holds after." value={s.utilisation} placeholder="like 60, 70, 80"
+                onCommit={(utilisation) => update((x) => ({ ...x, utilisation }))} />
+              {percent('fld-priceGrowth', 'The price: growth a year (%)', s.priceGrowth, (x, priceGrowth) => ({ ...x, priceGrowth }), 'like 0')}
+            </> : <>
+              {amount('fld-sales', 'Sales in a full first year', s.sales, (x, sales) => ({ ...x, sales }))}
+              {percent('fld-salesGrowth', 'Sales: growth a year (%)', s.salesGrowth, (x, salesGrowth) => ({ ...x, salesGrowth }), 'like 10')}
+            </>}
+          </div>
+        </div>
+      </details>
     </Section>
     <Section id="wc" title="Working capital">
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
@@ -82,7 +116,7 @@ export function ReportCalculator() {
     <Result p={p} />
     <Section id="assumed" title="Assumed until changed">
       <ul data-testid="rep-assumed" class="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700 dark:text-slate-300">
-        {ASSUMPTIONS.map((a) => <li key={a.id}><span class="font-medium text-slate-900 dark:text-slate-100">{a.what}:</span> {a.shown}. <span class={MUTED}>{a.why}.</span></li>)}
+        {assumptionsOf(s).map((a) => <li key={a.id}><span class="font-medium text-slate-900 dark:text-slate-100">{a.what}:</span> {a.shown}. <span class={MUTED}>{a.why}.</span></li>)}
       </ul>
     </Section>
     <Download s={s} p={p} update={update} />
@@ -116,9 +150,11 @@ function ReportTable({ t }: { t: ViewTable }) {
 function Result({ p }: { p: ReportPreview }) {
   const v = p.view;
   return <Section id="report" title="The project report">
-    <p data-testid="rep-status" class={`mt-3 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.needs.length || p.blocked
+    <p data-testid="rep-status" class={`mt-3 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.needs.length || p.blocked || p.short
       ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200'}`}>{statusText(p)}</p>
     {p.blocked && <p class="mt-2 text-sm text-red-700 dark:text-red-300">{p.blocked}</p>}
+    {p.short && <p data-testid="rep-short" class="mt-2 text-sm text-red-700 dark:text-red-300">{p.short}</p>}
+    {p.flags.length > 0 && <ul data-testid="rep-flags" class="mt-2 list-disc space-y-0.5 pl-5 text-sm text-amber-900 dark:text-amber-200">{p.flags.map((n) => <li key={n}>{n}</li>)}</ul>}
     {p.needs.length > 0 && <ul data-testid="rep-needs" class="mt-2 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>}
     {v && <>
       <dl class="mt-4 grid gap-3 sm:grid-cols-3">

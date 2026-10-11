@@ -9,7 +9,7 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import { docStatus, fileName, reportDoc } from '../site/src/report/document';
-import { EMPTY, preview, type ReportState } from '../site/src/report/model';
+import { EMPTY, assumptionsOf, preview, statusText, type ReportState } from '../site/src/report/model';
 import { SITE_NAME } from '../site/src/site';
 import { docxLines, pdfPages, workbook } from '../scripts/read-doc.mjs';
 
@@ -18,8 +18,16 @@ const R: ReportState = {
   ...EMPTY, borrower: 'firm',
   cost: { ...EMPTY.cost, building: '10 L', machinery: '20 L', furniture: '2 L', preliminary: '1 L' },
   loan: { amount: '25 L', ratePct: '10', disbursed: '2026-04', moratoriumMonths: '0', instalments: '60', repayment: 'monthly' },
-  sales: '1.2 Cr', salesGrowth: '10', variablePct: '65', fixed: '18 L', fixedGrowth: '5', wcLimit: '5 L', wcRate: '11',
+  salesBy: 'typed', monthsToStart: '0', sales: '1.2 Cr', salesGrowth: '10', variablePct: '65', fixed: '18 L', fixedGrowth: '5', wcLimit: '5 L', wcRate: '11',
   doc: { name: 'Asha Packaging', activity: 'Manufacture of corrugated boxes', address: 'Plot 4, Example MIDC, Pune', lender: '', preparedBy: '' },
+};
+// Case P (tests/report.test.ts) as typed: the capacity, its price, three months to the first sales, PMEGP.
+const P: ReportState = {
+  ...EMPTY, borrower: 'firm', scheme: 'pmegp', category: 'general', area: 'rural', activity: 'manufacturing',
+  cost: { ...EMPTY.cost, land: '2 L', building: '6 L', machinery: '20 L', preliminary: '50,000' },
+  loan: { amount: '24 L', ratePct: '10', disbursed: 'Oct 2026', moratoriumMonths: '6', instalments: '48', repayment: 'monthly' },
+  capacity: '50,000', price: '200', monthsToStart: '3', variablePct: '70', fixed: '12 L', fixedGrowth: '5', wcLimit: '3 L', wcRate: '11',
+  doc: { name: 'Meera Foods', activity: 'Roasted snacks', address: 'Example village, Nashik', lender: '', preparedBy: '' },
 };
 const row = (p: ReturnType<typeof preview>, table: string, label: string) => p.view!.tables.find((t) => t.id === table)!.rows.find((r) => r.label === label);
 
@@ -29,7 +37,9 @@ describe('the project report page', () => {
     expect(p.needs[0]).toBe('Who the borrower is: it sets the tax');
     expect(p.needs).not.toContain('Days of stock, 0 to 365');
     expect(EMPTY.days).toEqual({ stock: '30', debtors: '30', creditors: '30' });
-    expect(DATA.assumptions.map((a) => a.id)).toEqual(['days', 'wcUsed', 'drawings', 'tax']);
+    expect(DATA.assumptions.map((a) => a.id)).toEqual(['days', 'wcUsed', 'drawings', 'tax', 'utilisation', 'price']);
+    expect(assumptionsOf(EMPTY).length).toBe(6);
+    expect(assumptionsOf({ ...EMPTY, salesBy: 'typed' }).map((a) => a.id)).toEqual(['days', 'wcUsed', 'drawings', 'tax']);
   });
   it('case R as typed: the hand-worked first year in every table', () => {
     const p = preview(R);
@@ -44,6 +54,20 @@ describe('the project report page', () => {
     expect(row(p, 'ratios', 'Current ratio')?.values[0]).toBe('2.39');
     expect(row(p, 'wc', 'Bank finance, second method (75% of current assets less creditors)')?.values[0]).toBe('5,79,452');
     expect(row(p, 'finance', 'Promoters’ contribution (33.97%)')?.values).toEqual(['12,86,301']);
+  });
+  it('case P as typed: the drivers, three months of sales and the PMEGP margin money', () => {
+    const p = preview(P);
+    expect([p.needs, p.flags, p.short]).toEqual([[], [DATA.schemes.pmegp.notice], undefined]);
+    expect(p.view!.key.find((k) => k.label === 'PMEGP margin money')?.value).toBe('Rs. 7,85,788');
+    expect(row(p, 'pl', 'Months of sales')?.values).toEqual(['3', '12', '12', '12', '12']);
+    expect(row(p, 'pl', 'Use of the capacity')?.values).toEqual(['60%', '70%', '80%', '80%', '80%']);
+    expect(row(p, 'cf', 'Cash at the end of the year')?.values[0]).toBe('61,039');
+  });
+  it('PMEGP asks its three facts; cash below nil names the year and the amount, and keeps it provisional', () => {
+    expect(preview({ ...P, category: undefined, area: undefined, activity: undefined }).needs.length).toBe(3);
+    const q = preview({ ...P, fixed: '25 L' });
+    expect(q.short).toBe('Cash goes below nil in 2030-31: Rs. 45,18,203 short at its lowest. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.');
+    expect(statusText(q)).toBe('Provisional: 1 still needed');
   });
 });
 
@@ -85,5 +109,17 @@ describe('the project report to download', () => {
     const s = { ...R, doc: { ...R.doc, address: '' } }, d = reportDoc(s, preview(s), TODAY)!;
     expect(docStatus(s, preview(s))).toBe('Provisional: 1 still needed');
     for (const page of await pdfPages(pdfOf(d, MADE))) expect(page.split('\n')[0]).toBe('Project report · Asha Packaging Provisional');
+  });
+});
+
+describe('the PMEGP report to download', () => {
+  const p = preview(P), doc = reportDoc(P, p, TODAY)!, text = docText(doc);
+  it('names the scheme, the drivers and the rules used, with their source and date', () => {
+    expect(text).toContain('Scheme: PMEGP; general category; a village; manufacturing');
+    expect(text).toContain('Capacity: 50,000 units a year at Rs. 200 a unit, the price growing 0% a year');
+    expect(text).toContain('Months from the loan to the first sales: 3');
+    expect(text).toContain('PMEGP: the rules used');
+    expect(text).toContain('As read on 11-10-2026; not yet checked against KVIC');
+    expect(docStatus(P, p)).toBe('Complete');
   });
 });

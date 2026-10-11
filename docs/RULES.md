@@ -146,16 +146,18 @@ Working capital: The second method of lending (Tandon Committee): the bank finan
 **What the page assumes until you change it**
 
 - **Stock, debtors and creditors**: 30 days each: stock and creditors of the year's materials and other variable costs, debtors of the year's sales. A common level for a small business; type the business's own.
-- **The working-capital limit**: Fully used, and its interest paid, in every year. On the careful side: more interest, lower profit.
+- **The working-capital limit**: Fully used from the first sales, and its interest paid, in every year. On the careful side: more interest, lower profit.
 - **Drawings and dividends**: None: the profits stay in the business. Type them in the figures if the owners take money out.
 - **Tax**: Paid in the year it falls due. No tax is left owing in the balance sheet.
+- **Use of the capacity**: 60% in the first year of sales, 70% in the second, 80% from the third. A new unit rarely runs full at once; type the business's own under More options.
+- **The price a unit**: Held where it is in every year. On the careful side: sales grow only with the use of the capacity.
 
 **How the figures are worked out**
 
-- Sales and fixed costs grow by the percentages given; materials and other variable costs are the same share of sales every year.
+- Sales are the capacity × its use × the price a unit (or the sales typed, growing by the percentage given), for the months after sales start in the first year; fixed costs likewise, growing by the percentage given; materials and other variable costs are the same share of sales every year.
 - Profit before interest, depreciation and tax is sales less variable and fixed costs. Depreciation is on the written-down value; preliminary expenses are written off in five equal parts.
 - Interest on the term loan is from its repayment schedule; interest on working capital is the limit × its rate. Tax is worked out by who the borrower is.
-- Stock, debtors and creditors are the days given of the year's figures. The margin for working capital, part of the cost of the project, is what the first year's stock and debtors need beyond the creditors and the bank's limit.
+- Stock, debtors and creditors are the days given of a full year's figures at that year's rate, even in a first year of a few months. The margin for working capital, part of the cost of the project, is what the first year's stock and debtors need beyond the creditors and the bank's limit.
 - The promoters bring in the cost of the project less the term loan, any subsidy and any unsecured loans.
 - Cash in hand is what the cash flow leaves; the balance sheet must balance with it, or no figures are shown.
 - DSCR is the common term-loan DSCR: (profit after tax + depreciation + preliminary expenses written off + interest on the term loan) ÷ (principal + interest on the term loan); the average is the totals' ratio.

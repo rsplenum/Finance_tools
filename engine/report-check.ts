@@ -11,10 +11,12 @@ import { scheduleCheck } from './dscr-check';
 
 export interface ReportCheckIn {
   cost: Record<string, number>; promoter: number; subsidy: number; unsecured: number; limit: number;
-  sales: number[]; variablePct: number; fixed: number[]; days: { stock: number; debtors: number; creditors: number };
+  /** A full year's sales at each year's rate (typed), or the drivers to work it out afresh; the months of sales a year. */
+  run: number[]; months: number[]; drivers?: { capacity: number; price: number; utilisationPct: number[]; priceGrowthPct: number };
+  variablePct: number; fixed: number[]; days: { stock: number; debtors: number; creditors: number };
   pat: number[]; tlInterest: number[]; wcInterest: number[]; loan: LoanTerms; fys: string[];
 }
-export interface ReportCheckYear { depreciation: number; netBlock: number; stock: number; debtors: number; creditors: number; netWorth: number; termLoan: number; cash: number; bepSales?: number }
+export interface ReportCheckYear { sales: number; depreciation: number; netBlock: number; stock: number; debtors: number; creditors: number; netWorth: number; termLoan: number; cash: number; bepSales?: number }
 
 export function reportCheck(x: ReportCheckIn): ReportCheckYear[] {
   const debt = new Map(scheduleCheck(x.loan).map((d) => [d.fy, d.closing]));
@@ -29,11 +31,15 @@ export function reportCheck(x: ReportCheckIn): ReportCheckYear[] {
       depreciation += c * r * Math.pow(1 - r, k);
       netBlock += c * Math.pow(1 - r, k + 1);
     }
-    const variable = (x.sales[k] * x.variablePct) / 100;
-    const stock = (x.days.stock / 365) * variable, debtors = (x.days.debtors / 365) * x.sales[k], creditors = (x.days.creditors / 365) * variable;
+    const d = x.drivers, run = d ? d.capacity * (d.utilisationPct[k] / 100) * d.price * (1 + d.priceGrowthPct / 100) ** k : x.run[k];
+    const sales = (run * x.months[k]) / 12, runVariable = run * (x.variablePct / 100);
+    const stock = (x.days.stock / 365) * runVariable, debtors = (x.days.debtors / 365) * run, creditors = (x.days.creditors / 365) * runVariable;
     const netWorth = x.promoter + x.subsidy + profits, termLoan = debt.get(fy) ?? 0, left = prelim * Math.max(0, 1 - (k + 1) / n);
     const cash = netWorth + x.unsecured + termLoan + x.limit + creditors - netBlock - left - stock - debtors;
     const fixedAll = x.fixed[k] + depreciation + (k < n ? prelim / n : 0) + x.tlInterest[k] + x.wcInterest[k], ratio = 1 - x.variablePct / 100;
-    return { depreciation, netBlock, stock, debtors, creditors, netWorth, termLoan, cash, ...(ratio > 0 ? { bepSales: fixedAll / ratio } : {}) };
+    return { sales, depreciation, netBlock, stock, debtors, creditors, netWorth, termLoan, cash, ...(ratio > 0 ? { bepSales: fixedAll / ratio } : {}) };
   });
 }
+
+/** PMEGP's margin money by another route: the rate on the lower of the project cost and the ceiling. */
+export const pmegpCheck = (projectCost: number, ratePct: number, ceiling: number) => Math.min(projectCost * ratePct, ceiling * ratePct) / 100;
