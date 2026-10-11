@@ -9,7 +9,8 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import { docStatus, fileName, reportDoc } from '../site/src/report/document';
-import { EMPTY, assumptionsOf, preview, statusText, viableOf, type ReportState } from '../site/src/report/model';
+import { AS_TYPED, EMPTY, applyPlan, assumptionsOf, boardOf, inputOf, planOf, preview, statusText, undoPlan, viableOf, type ReportState } from '../site/src/report/model';
+import { withLevers } from '../engine/plan';
 import { SITE_NAME } from '../site/src/site';
 import { docxLines, pdfPages, workbook } from '../scripts/read-doc.mjs';
 
@@ -176,5 +177,44 @@ describe('the lender\'s levels and make it viable, in words', () => {
   });
   it('a term past 180 months is named', () => {
     expect(preview({ ...R, loan: { ...R.loan, moratoriumMonths: '12', instalments: '170' } }).longTerm).toBe('The term loan runs 182 months with its moratorium, beyond the 180 months an MSME term loan commonly runs at most.');
+  });
+});
+
+// The combined plan (MV3) on case R at 70 lakh, the promoters able to bring 12 lakh in all: the levers worked by hand in
+// tests/plan.test.ts (a limit 1,19,123 less, a term loan 1,23,260 less, sales 14.3% higher), here in words and written back.
+describe('the plan on the board, in words, used and undone', () => {
+  const weak: ReportState = { ...R, sales: '70 L', promotersMost: '12 L' };
+  const q = planOf(weak), b = q && boardOf(q, q.levers);
+  it('the steps in order, the promoters within their most, the limits kept', () => {
+    expect(q?.levers).toEqual({ ...AS_TYPED, wc: 119123, promoters: 123260, sales: 143 });
+    expect(b?.steps).toEqual([
+      'A working-capital limit of Rs. 3,80,877 (now Rs. 5,00,000).',
+      'A term loan of Rs. 23,76,740 (now Rs. 25,00,000), the promoters bringing the rest.',
+      'Sales of Rs. 80,01,000 in a full first year (now Rs. 70,00,000), 14.3% higher.']);
+    expect([b?.works, b?.verdict, b?.line]).toEqual([true, 'With these changes it meets every lender’s level that can be read.', 'Meets every level']);
+    expect(b?.promoters).toBe('The promoters bring Rs. 11,99,999 in all (now Rs. 8,75,342), within the Rs. 12,00,000 they can.');
+    expect(q?.atLimit).toBe('At the limit: the promoters’ money.');
+    expect(q?.limits).toMatch(/^The limits kept: the promoters bring at most Rs\. 12,00,000 in all; sales with no limit known/);
+    expect(q?.cards.map((c) => c.id)).toEqual(['wc', 'promoters', 'unsecured', 'fixed', 'sales', 'moratorium', 'instalments']);
+    expect([b?.moves.sales.move, b?.moves.sales.to, b?.moves.fixed.move]).toEqual(['+14.3%', 'Rs. 80,01,000 in a full first year', 'As typed']);
+  });
+  it('a slider moved back: still misses, named with its shortfall; the most passed is said', () => {
+    const c = q && boardOf(q, { ...q.levers, sales: 100 });
+    expect(c?.works).toBe(false);
+    expect(c?.line).toBe('Misses 1: DSCR in the lowest year');
+    expect(c?.still[0]).toMatch(/^DSCR in the lowest year: 1\.1\d in 2026-27, level 1\.25 or more\. Short by Rs\. [\d,]+ of cash to pay the loan in 2026-27\.$/);
+    expect(q && boardOf(q, { ...q.levers, promoters: 200000 }).promoters).toMatch(/: Rs\. 76,7\d\d more than the Rs\. 12,00,000 they can\.$/);
+  });
+  it('"Use this plan" writes the engine\'s figures, and undo puts back only those still as written', () => {
+    const { s, changes } = applyPlan(weak, q!.levers);
+    expect(changes.map((c) => `${c.label}: ${c.was} → ${c.now}`)).toEqual(['Term loan: 25 L → 23,76,740', 'Working-capital limit: 5 L → 3,80,877', 'Sales: 70 L → 80,01,000']);
+    expect(inputOf(s)).toEqual(withLevers(inputOf(weak), q!.levers));
+    expect(undoPlan(s, changes)).toEqual(weak);
+    expect(undoPlan({ ...s, wcLimit: '4 L' }, changes)).toEqual({ ...weak, wcLimit: '4 L' });
+  });
+  it('every lever written back is the figure the engine worked on, by the drivers too', () => {
+    const all = { wc: 1000, promoters: 50000, unsecured: 25000, fixed: 33, sales: 77, collateral: 150000, moratorium: 3, instalments: 7 };
+    for (const t of [{ ...weak, collateral: '2 L' }, P]) expect(inputOf(applyPlan(t, all).s)).toEqual(withLevers(inputOf(t), all));
+    expect(applyPlan(P, { ...AS_TYPED, sales: 100 }).changes.map((c) => c.now)).toEqual(['66, 77, 85']);
   });
 });
