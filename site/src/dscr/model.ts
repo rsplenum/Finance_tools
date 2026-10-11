@@ -10,8 +10,9 @@ import {
   BENCHMARKS, COMPONENTS, LOAN_LABELS, OPTIONS, PLAN_SERVICE, PRESETS, PROJECTION_LABELS, amortization, componentsOf, dscrStatement, fyRange,
   isFy, limitText, loanTimeline, maxLoanAmount, planStatement, shortestRepayment, shortfall, targetNeeds,
   type Amortization, type Component, type Definition, type Limit, type LoanInput, type ProfitTotals, type ProfitYear, type ProjectionYear, type Statement,
-  type Target, type YearFigures,
+  type Target, type YearFigures, type Plan,
 } from '../../../engine/dscr';
+import { LENDER, auditedYear, cashCheck, promotersRepaid, stressTests, type AuditedInput, type LenderYear, type Summary } from '../../../engine/lender';
 import { fyOf } from '../../../engine/loan';
 import { emisByYear, fromMonth, series, type RunningLoan } from '../../../engine/project';
 import { parseAmount, parseMonth } from '../../../engine/parse';
@@ -68,7 +69,17 @@ export interface State {
   door?: { month: string };
   /** What only the document needs: asked beside the download, taken once for the PDF, the Excel copy and the Word copy. */
   doc: DocFacts;
+  /** D1, the lenders' tests, under More options; absent until one is typed (D-UX-47). */
+  lender?: LenderText;
 }
+
+/**
+ * The lenders' tests as typed: this year's sales (they follow the profit's row: grow at its rate, stay the same, or each
+ * year), promoters' loans repaid each year, working capital as a % of sales, replacement capex a year (the same every
+ * year), and the last audited year's five figures.
+ */
+export interface LenderText { sales: string[]; promoters: string[]; wcPct: string; capex: string; audited: Record<keyof AuditedInput, string> }
+export const NO_LENDER: LenderText = { sales: [], promoters: [], wcPct: '', capex: '', audited: { sales: '', pbdit: '', depreciation: '', interest: '', tax: '' } };
 
 /** The document's own facts. The borrower's name and the lender are needed; who prepared it is given only if wanted. */
 export interface DocFacts { borrower: string; lender: string; preparedBy: string }
@@ -369,7 +380,7 @@ export interface AssumedLine { id: string; what: string; shown: string; why: str
 const WHERE: Record<string, string> = {
   method: 'method', target: 'target', tax: 'row-taxPct', proprietorTax: 'row-taxPct', margin: 'row-pbdit', asset: 'row-assetIncome',
   depreciation: 'row-depreciation', interest: 'row-interestOther', interestNone: 'row-interestOther', otherLoans: 'row-otherLoans', nonCash: 'row-nonCash',
-  start: 'start-question', loanStart: 'loan',
+  start: 'start-question', loanStart: 'loan', promoters: 'lender',
 };
 
 /** The assumptions (engine/data/defaults.json) still as assumed; one that makes no difference to these figures is not listed. */
@@ -392,6 +403,7 @@ export function assumedIn(s: State, y: Years = yearsOf(s)): AssumedLine[] {
     otherLoans: plan && at('otherLoans'),
     nonCash: plan && at('nonCash') && (definitionOf(s)?.leases !== 'yes' || at('leaseRentals')),
     start: plan && s.planStart === LOAN_YEAR && y.startChoices.length > 0,
+    promoters: plan && !(s.lender?.promoters ?? []).some((t) => t.trim()),
   };
   return DEFAULTS.assumptions.filter((a) => holds[a.id]).map((a) => ({ id: a.id, what: a.what, shown: a.shown, why: a.why, where: WHERE[a.id] }));
 }
@@ -445,6 +457,22 @@ export interface Preview {
   partYears?: Record<string, string>;
   /** Each year's DSCR against the target for the lowest year, while one is set. */
   marks?: { fy: string; dscr: string; meets: boolean; counted: boolean }[];
+  /** DSCR as lenders test it, beside the borrower's: it never changes the verdict (D-UX-47). */
+  lender?: LenderView;
+}
+
+/** A DSCR line beside the borrower's: average and lowest year, `below` under 1.00 (the cash does not cover the debt service). */
+export interface LenderLine { label: string; average: string; lowest: string; lowestYear: string; below: boolean; meets?: boolean }
+export interface LenderView {
+  /** The two stress lines, or what they need (`ask` when only sales are missing). */
+  stress: LenderLine[]; ask?: string; needs: string[];
+  notStressed?: string;
+  /** Promoters' loans: the assumption while none is repaid, else the DSCR with the repayment counted. */
+  promoters: { assumed: string } | { line: LenderLine };
+  /** Shown once any of its figures is typed. */
+  cash?: { rows: { fy: string; available: string; wc: string; capex: string; service: string; left: string; cover: string; short: boolean }[]; text: string } | { needs: string[] };
+  audited?: { fy: string; nextFy?: string; rows: { label: string; audited: string; next?: string }[]; flags: string[] } | { needs: string[] };
+  blocked?: string;
 }
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -662,6 +690,7 @@ export function preview(s: State): Preview {
     const b = r.beforeStart;
     if (b.length) p.beforeStart = `Left out: ${andList(b.map((x) => x.fy))}, before your figures start. ${b.length > 1 ? 'Their' : 'Its'} interest `
       + `(${andList(b.map((x) => rs(x.interest)))}) is taken as paid from the project cost (capitalised), not from profits.`;
+    p.lender = lenderView(s, proj, loan, def, y, r, target);
   }
   p.needs.push(...tNeeds);
   if (tNeeds.length || !y.years.length || p.blocked || y.startNeeded) return p;
@@ -685,6 +714,93 @@ export function preview(s: State): Preview {
     else if ('blocked' in few) p.blocked = few.blocked;
   }
   return p;
+}
+
+// ---- DSCR as lenders test it (D1, D-UX-47) ----
+
+const pct1 = (x: number) => `${(x * 100).toFixed(1)}%`;
+
+/** Sales for each year: they follow the profit's row, growing at its rate, the same every year, or typed for each year. */
+export function salesByYear(s: State, years: string[]): (number | undefined)[] {
+  const t = s.lender?.sales ?? [], r = rowsOf(s).find((x) => x.key === 'pbdit'), mode = r && modeOf(s, r);
+  if (mode === 'years') return years.map((_, i) => amountOf(t[i]));
+  const first = amountOf(t[0]);
+  if (first === undefined || (mode !== 'grow' && mode !== 'same')) return years.map(() => undefined);
+  const out = series({ kind: mode, first, pct: numberOf(s.rates.pbdit) }, years.length, 'Sales', years[0] ?? '');
+  return Array.isArray(out) ? out : years.map(() => undefined);
+}
+
+function lenderLine(label: string, x: Summary, target?: Target): LenderLine | undefined {
+  if (x.average === undefined || !x.minimum) return undefined;
+  const floor = LENDER.floor.value;
+  return {
+    label, average: ratioText(x.average, target?.average ?? floor), lowest: ratioText(x.minimum.dscr, target?.minimum ?? floor), lowestYear: x.minimum.fy,
+    below: x.minimum.dscr < floor, ...(target ? { meets: !shortfall({ ...x, notes: [] }, target) } : {}),
+  };
+}
+
+/** The lines beside the borrower's DSCR, each from the engine; none of them changes the verdict. */
+function lenderView(s: State, proj: ProjectionYear[], loan: LoanInput, def: Definition, y: Years, plan: Plan, target: Target): LenderView {
+  const l = s.lender ?? NO_LENDER, sales = salesByYear(s, y.years);
+  const extra: LenderYear[] = y.years.map((fy, i) => ({
+    fy, ...(sales[i] !== undefined ? { sales: sales[i] } : {}),
+    // A year left blank among the repayments is none: the field says so.
+    promoterLoans: amountOf(l.promoters[i]) ?? 0, ...(amountOf(l.capex) !== undefined ? { capex: amountOf(l.capex) } : {}),
+  }));
+  const v: LenderView = { stress: [], needs: [], promoters: { assumed: LENDER.promoters.assumed } };
+  const st = stressTests(proj, loan, def, extra, y.start);
+  if ('blocked' in st) v.blocked = st.blocked;
+  else if ('needs' in st) {
+    if (!l.sales.some((t) => t.trim())) v.ask = `Add this year's sales under More options to see the DSCR with the ${LENDER.stress.map((c) => c.label.toLowerCase()).join(' and with ')}.`;
+    else v.needs = st.needs;
+  }
+  else v.stress = st.flatMap((x) => lenderLine(x.label, x) ?? []);
+  if (proj.some((p) => (p.assetIncome ?? 0) > 0)) v.notStressed = LENDER.notStressed;
+  const pr = promotersRepaid(proj, loan, def, extra, y.start);
+  if (pr && 'blocked' in pr) v.blocked ??= pr.blocked;
+  else if (pr && 'needs' in pr) v.needs.push(...pr.needs);
+  else if (pr) {
+    const line = lenderLine(LENDER.promoters.repaid, pr, target.average !== undefined && target.minimum !== undefined ? target : undefined);
+    if (line) v.promoters = { line };
+  }
+  if (l.wcPct.trim() || l.capex.trim()) {
+    const c = cashCheck(plan, extra, numberOf(l.wcPct), amountOf(l.audited.sales));
+    if ('blocked' in c) v.blocked ??= c.blocked;
+    else if ('needs' in c) v.cash = { needs: c.needs };
+    else v.cash = {
+      rows: c.rows.map((r) => ({
+        fy: r.fy, available: rs(r.available), wc: rs(r.wcGrowth), capex: rs(r.capex), service: rs(r.service), left: rs(r.left),
+        cover: r.cover !== undefined ? ratioText(r.cover, LENDER.floor.value) : 'not counted', short: r.left < 0,
+      })),
+      text: c.short.length ? `Cash falls short of the instalments in ${andList(c.short)}, after working capital and replacement capex.`
+        : `Cash covers the instalments every year, after working capital and replacement capex${c.lowest ? `: lowest cover ${ratioText(c.lowest.cover, LENDER.floor.value)} in ${c.lowest.fy}` : ''}.`,
+    };
+  }
+  if (Object.values(l.audited).some((t) => t.trim())) {
+    const typed = Object.fromEntries(Object.entries(l.audited).map(([k, t]) => [k, amountOf(t)])) as AuditedInput;
+    const first = plan.years[0], i = y.years.indexOf(first?.fy ?? '');
+    const a = auditedYear(typed, first && { fy: first.fy, pbdit: proj[i]?.pbdit, sales: sales[i] });
+    if ('blocked' in a) v.blocked ??= a.blocked;
+    else if ('needs' in a) v.audited = { needs: a.needs };
+    else {
+      const n = a.next, f = proj[i];
+      v.audited = {
+        fy: a.fy, ...(n ? { nextFy: n.fy } : {}), flags: a.flags,
+        rows: [
+          { label: 'Sales', audited: rs(a.sales), ...(n ? { next: `${rs(sales[i] as number)} (${n.salesGrowth >= 0 ? '+' : ''}${pct1(n.salesGrowth)})` } : {}) },
+          { label: PROJECTION_LABELS.pbdit, audited: rs(a.pbdit), ...(n && f ? { next: rs(f.pbdit as number) } : {}) },
+          { label: 'Margin (that profit ÷ sales)', audited: pct1(a.margin), ...(n ? { next: pct1(n.margin) } : {}) },
+          { label: 'Depreciation', audited: rs(a.depreciation) },
+          { label: 'Interest', audited: rs(a.interest) },
+          { label: 'Profit before tax', audited: rs(a.pbt) },
+          { label: 'Tax', audited: rs(a.tax) },
+          { label: 'Profit after tax', audited: rs(a.pat) },
+          { label: 'Cash accrual (profit after tax + depreciation)', audited: rs(a.accrual) },
+        ],
+      };
+    }
+  }
+  return v;
 }
 
 /** The answer so far, in one line, for the bar that stays in view. */

@@ -127,7 +127,7 @@ describe('fictional case A′, complete: the statement for the lender', () => {
     expect(lines).toContain('Depreciation: Rs. 1,50,000 every year');
     expect(lines).toContain('Tax rate (%): 31.2% every year');
     // The assumptions are listed on the page only (the owner, D-DOC-03); the lines they leave at None are left out.
-    expect(p.assumed).toHaveLength(9);
+    expect(p.assumed).toHaveLength(10);
     expect(text).not.toContain('Assumed until changed');
     for (const a of p.assumed) expect(text).not.toContain(a.why);
     expect(text).not.toMatch(/^(Extra income from the new asset|Loans already running|Other non-cash charges[^:]*):/m);

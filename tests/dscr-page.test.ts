@@ -301,12 +301,12 @@ describe('this year\'s figures and sales growth; the rest assumed (the owner: "a
     expect(line(p, 'tax')).toEqual(['49,608', '77,376', '1,09,512', '1,42,428']);
     expect(line(p, 'dscr')).toEqual(['1.17', '0.84', '0.98', '2.26']);
     expect([p.average, p.lowest, p.lowestYear, p.verdict?.meets]).toEqual(['1.16', '0.84', '2027-28', false]);
-    expect(p.assumed.map((a) => a.id)).toEqual(['method', 'target', 'tax', 'margin', 'asset', 'depreciation', 'interest', 'otherLoans', 'nonCash']);
-    expect(statusText(p)).toBe('Complete, on 9 assumptions');
+    expect(p.assumed.map((a) => a.id)).toEqual(['method', 'target', 'tax', 'margin', 'asset', 'depreciation', 'interest', 'otherLoans', 'nonCash', 'promoters']);
+    expect(statusText(p)).toBe('Complete, on 10 assumptions');
   });
   it('an assumption that is changed leaves the list', () => {
     const s = withTaxRate({ ...A2, target: { average: '1.25', minimum: '1.20' } }, '25.168');
-    expect(preview(s).assumed.map((a) => a.id)).toEqual(['method', 'margin', 'asset', 'depreciation', 'interest', 'otherLoans', 'nonCash']);
+    expect(preview(s).assumed.map((a) => a.id)).toEqual(['method', 'margin', 'asset', 'depreciation', 'interest', 'otherLoans', 'nonCash', 'promoters']);
   });
   it('own yearly figures take none of the assumptions about the figures; coming back restores them', () => {
     const own = withSource(A2, 'own');
@@ -343,7 +343,7 @@ describe('who the borrower is, loans already running and the new asset (P1e)', (
     expect(line(p, 'dscr')).toEqual(['1.32', '1.00', '1.22', '2.94']);
     expect([p.average, p.lowest, p.lowestYear]).toEqual(['1.41', '1.00', '2027-28']);
     // The assumed rate gives way to the proprietor's own assumption: the new regime, the business's profit the only income.
-    expect(p.assumed.map((a) => a.id)).toEqual(['method', 'target', 'proprietorTax', 'margin', 'asset', 'depreciation', 'interest', 'otherLoans', 'nonCash']);
+    expect(p.assumed.map((a) => a.id)).toEqual(['method', 'target', 'proprietorTax', 'margin', 'asset', 'depreciation', 'interest', 'otherLoans', 'nonCash', 'promoters']);
   });
   it('the borrower says which EMIs to give', () => {
     expect([emisAsk(A2), ...BORROWER_CHOICES.map((b) => emisAsk(withBorrower(A2, b.id)))]).toEqual([

@@ -279,12 +279,12 @@ async function layout(page, v, step) {
   await page.getByTestId('use-examples').click();
   // Six assumptions still hold: the method, the target, and the new asset, working-capital interest, loans already running
   // and other non-cash charges as answered by the assumptions (tax, profit and depreciation were typed).
-  await expectText(page, v, 'dscr-status', 'Complete, on 6 assumptions', 'case A with the examples');
+  await expectText(page, v, 'dscr-status', 'Complete, on 7 assumptions', 'case A with the examples');
   await expectText(page, v, 'dscr-verdict', 'Below the target: the lowest year, 2027-28, is 1.16 against 1.20; the average is 1.45 against 1.50.', 'case A with the examples');
   await expectText(page, v, 'dscr-largest', 'The largest loan on these terms is Rs. 11,59,646, limited by the lowest year, 2027-28.', 'case A with the examples');
   await expectText(page, v, 'use-amount', 'Use Rs. 11,59,646', 'case A with the examples');
   await expectText(page, v, 'dscr-fewest', 'Even 14 instalments, the most the projections cover (to 2029-30), miss the target: the average is below the target. Add later years to try a longer repayment.', 'case A with the examples');
-  await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · below the target · complete, on 6 assumptions ↓', 'case A with the examples');
+  await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · below the target · complete, on 7 assumptions ↓', 'case A with the examples');
 
   // Tables become cards on phones and stay tables on wider screens, without a sideways scroll either way.
   await layout(page, v, 'case A filled, a schedule year open, 390 px');
@@ -377,7 +377,7 @@ async function layout(page, v, step) {
   await expectText(page, v, 'assumed-start', 'The first year of the figures: The year the loan is first drawn', 'the start assumption listed');
   await expectText(page, v, page.getByTestId('start-question').locator('p').first(), 'No instalment falls in 2026-27, only interest of Rs. 72,000. If operations start later, start your figures there: the interest before then is taken as paid from the project cost, not from profits.', 'the question about the first year');
   await page.check('#fld-start-2027-28');
-  await expectText(page, v, 'dscr-status', 'Complete, on 6 assumptions', 'figures starting in 2027-28');
+  await expectText(page, v, 'dscr-status', 'Complete, on 7 assumptions', 'figures starting in 2027-28');
   if (await page.getByTestId('assumed-start').count()) v('the start assumption is still listed after choosing 2027-28');
   await expectText(page, v, 'dscr-before-start', 'Left out: 2026-27, before your figures start. Its interest (Rs. 72,000) is taken as paid from the project cost (capitalised), not from profits.', 'figures starting in 2027-28');
   await expectValue(page, v, '#fld-pbdit-2027-28', '7,50,000', 'each figure stays under its year');
@@ -415,7 +415,7 @@ async function layout(page, v, step) {
   await page.getByTestId('use-examples').click();
   // Eight assumptions hold: all but the tax rate (a company's tax is worked out); this year's depreciation typed once is
   // "as this year, every year".
-  await expectText(page, v, 'dscr-status', 'Complete, on 8 assumptions', 'a few answers');
+  await expectText(page, v, 'dscr-status', 'Complete, on 9 assumptions', 'a few answers');
   // Four fields for a five-year loan (profit and its rate, depreciation, working-capital interest; the tax from who the
   // borrower is), not five a line.
   const inputs = await page.locator('#figures input[type="text"]').count();
@@ -444,7 +444,7 @@ async function layout(page, v, step) {
   await leave(page, '#fld-depreciation-2026-27', '1.5 L');
   await page.check('#fld-interestOther-same');
   await leave(page, '#fld-interestOther-2026-27', '50,000');
-  await expectText(page, v, 'dscr-status', 'Complete, on 9 assumptions', 'the quick path');
+  await expectText(page, v, 'dscr-status', 'Complete, on 10 assumptions', 'the quick path');
   await expectText(page, v, 'dscr-average', '1.16', 'the quick path');
   await expectText(page, v, 'dscr-lowest', '0.84', 'the quick path');
   await expectText(page, v, 'assumed-tax', 'Tax rate: 31.2%', 'the quick path');
@@ -593,7 +593,7 @@ async function layout(page, v, step) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
   if (await page.locator('#more-options').evaluate((d) => d.open)) v('More options is open on load');
   const texts = await page.locator('#front-door input[type="text"]').count(), radios = await page.locator('#front-door fieldset').count();
-  if (texts + radios > 8) v(`the front door asks ${texts + radios} fields (${texts} typed, ${radios} choices); the owner's list is 8`);
+  if (texts + radios !== 8) v(`the front door asks ${texts + radios} fields (${texts} typed, ${radios} choices); the owner's list is 8`);
   await expectText(page, v, 'fd-loan-note', 'The loan is taken as drawn in October 2026 and repaid by EMI every month, with no moratorium. Change it under More options.', 'the front door');
   await page.check('#fld-fd-borrower-firm');
   await leave(page, '#fld-fd-profit', '5 L');
@@ -609,6 +609,18 @@ async function layout(page, v, step) {
   await expectText(page, v, 'assumed-method', 'How DSCR is worked out, and the target: Common term-loan DSCR; average 1.50, lowest year 1.20', 'the method and the target in one line');
   await expectText(page, v, 'part-2026-27', '6 of 12 instalments', 'the first part-year');
   await layout(page, v, 'the front door filled, 390 px');
+  // D1 (D-UX-47): the lenders' lines beside the DSCR, their inputs only under More options; the front door still asks 8.
+  if (!(await page.getByTestId('lender-ask').isVisible())) v('D1: no line asking for sales beside the DSCR');
+  await expectText(page, v, 'lender-promoters', "Promoters' loans are kept in the business until this loan is repaid (subordinated).", 'D1');
+  const avg = await page.getByTestId('dscr-average').textContent();
+  await page.getByTestId('lender-ask').locator('a').click();
+  await leave(page, '#fld-lender-sales', '50 L');
+  if (!/^Sales price 5% lower: average \d\.\d{2,4}, lowest /.test((await page.getByTestId('lender-price').textContent()) ?? '')) v('D1: no line for the sales price 5% lower');
+  if (!(await page.getByTestId('lender-costs').count())) v('D1: no line for costs 10% higher');
+  if ((await page.getByTestId('dscr-average').textContent()) !== avg) v('D1: the sales changed the borrower\'s DSCR');
+  const after = await page.locator('#front-door input[type="text"]').count() + await page.locator('#front-door fieldset').count();
+  if (after !== 8) v(`D1: the front door asks ${after} fields after the lenders' tests; want 8`);
+  await layout(page, v, 'the lenders\' tests open, 390 px');
   await ctx.close();
 }
 

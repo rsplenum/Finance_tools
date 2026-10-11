@@ -107,6 +107,7 @@ Dated 02-10-2026. Set by Claude at the owner's request (30-09-2026: work everyth
 | Other non-cash charges and lease rentals | None | Few small businesses have them |
 | The first year of the figures | The year the loan is first drawn | The business is running: it has this year's figures |
 | The loan | Drawn this month, repaid by EMI every month, with no moratorium | Change any of it under More options |
+| Promoters' loans | Kept in the business until this loan is repaid (subordinated) | The owner's answer of 11-10-2026 (D-UX-47). If they are repaid sooner, give the repayments under More options: the page shows the DSCR with them counted |
 
 ## Construction and renovation estimates
 
