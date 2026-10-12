@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import DSCR from '../engine/data/dscr.json';
 import DEFAULTS from '../engine/data/defaults.json';
 import { PRESETS } from '../engine/dscr';
-import { docText, type Doc } from '../site/src/doc/doc';
+import { docText, type Doc, type Row } from '../site/src/doc/doc';
 import { docxOf } from '../site/src/doc/docx';
 import { pdfOf, printable } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
@@ -16,7 +16,7 @@ import { crc32 } from '../site/src/doc/zip';
 import { docNeeds, docStatus, fileName, sourceForLender, statementDoc } from '../site/src/dscr/document';
 import { ASSUMED, BORROWER_CHOICES, START, preview, tidyAmount, withBorrower, type State } from '../site/src/dscr/model';
 import { SITE_NAME } from '../site/src/site';
-import { docxLines, docxPart, pdfPages, workbook } from '../scripts/read-doc.mjs';
+import { docxLines, docxPart, pdfPages, workbook, zipPart } from '../scripts/read-doc.mjs';
 
 const TODAY = '2026-09-30', MADE = new Date('2026-09-30T10:00:00Z');
 const FACTS = { borrower: 'Asha Traders', lender: 'Example Bank, Pune branch', preparedBy: '' };
@@ -342,5 +342,117 @@ describe('fictional case P: who the borrower is, loans already running and the n
     expect(text).toContain('Less: tax | 40,560 | 1,26,464 | 1,70,768 | 2,20,350');
     expect(text).toContain('DSCR (A ÷ B) | 1.88 | 1.90 | 2.53 | 4.00');
     expect(lines).toContain('Debt service (B) = term-loan instalments (principal) + interest on term loans + existing EMIs (interest and principal).');
+  });
+});
+
+// Fictional case A with the lenders' tests typed (D1b): sales 25,00,000, 30,00,000, 32,00,000 and 32,00,000; promoters'
+// loans of 1,00,000 repaid in 2027-28 and 2028-29; working capital 20% of the rise in sales; replacement capex 50,000 a
+// year; the last audited year (2025-26) sales 22,00,000, that profit 4,40,000, depreciation 1,60,000, interest 70,000, tax
+// 60,000. Worked by hand from case A's statement (cash available 4,10,250, 5,83,000, 6,03,500, 5,89,750 against debt
+// service 3,41,000, 5,02,000, 4,54,000, 2,09,000; interest 1,91,000, 1,52,000, 1,04,000, 59,000, of which 50,000 a year
+// on other loans; tax 25%):
+// - price 5% lower: that profit less 1,25,000, 1,50,000, 1,60,000, 1,60,000 gives profit before tax 34,000, 3,18,000,
+//   4,26,000, 4,81,000; less 25% tax, plus depreciation and term-loan interest, cash 3,16,500, 4,70,500, 4,83,500,
+//   4,69,750: 3,16,500 ÷ 3,41,000 = 0.928 the lowest, in 2026-27; 17,40,250 ÷ 15,06,000 = 1.156 on average;
+// - costs 10% higher: costs 20,00,000, 22,50,000, 24,00,000, 24,00,000, so that profit less 2,00,000, 2,25,000,
+//   2,40,000, 2,40,000; profit before tax -41,000 (no tax), 2,43,000, 3,46,000, 4,01,000; cash 2,50,000, 4,14,250,
+//   4,23,500, 4,09,750: 2,50,000 ÷ 3,41,000 = 0.733 the lowest; 14,97,500 ÷ 15,06,000 = 0.994 on average;
+// - promoters' loans repaid: 5,83,000 ÷ 6,02,000 = 0.968 the lowest, in 2027-28; 21,86,500 ÷ 17,06,000 = 1.282;
+// - the cash check: working capital's growth 20% of 3,00,000, 5,00,000, 2,00,000, 0 = 60,000, 1,00,000, 40,000, 0;
+//   cash left 4,10,250 - 60,000 - 50,000 - 3,41,000 = -40,750, then -69,000, 59,500, 3,30,750; cover 3,00,250 ÷ 3,41,000
+//   = 0.88, 4,33,000 ÷ 5,02,000 = 0.86, 5,13,500 ÷ 4,54,000 = 1.13, 5,39,750 ÷ 2,09,000 = 2.58;
+// - the audited year: profit before tax 4,40,000 - 1,60,000 - 70,000 = 2,10,000; after tax 1,50,000; cash accrual
+//   3,10,000; margin 4,40,000 ÷ 22,00,000 = 20.0%, and 5,00,000 ÷ 25,00,000 = 20.0% in 2026-27; sales up 13.6%.
+const CASE_AL: State = {
+  ...CASE_A, doc: FACTS,
+  lender: { sales: ['25,00,000', '30,00,000', '32,00,000', '32,00,000'], promoters: ['', '1,00,000', '1,00,000', ''], wcPct: '20', capex: '50,000',
+    audited: { sales: '22,00,000', pbdit: '4,40,000', depreciation: '1,60,000', interest: '70,000', tax: '60,000' } },
+};
+const rowsOf = (d: Doc, part: string) => d.parts.find((x) => x.name === part)!.blocks.flatMap((b) => (b.kind === 'table' ? b.table.rows : [])) as Row[];
+/** A formula worked on the figures of the cells it names, as Excel would. */
+function evaluate(d: Doc, formula: string, col: number, here: Row[]): number {
+  const js = formula.replace(/\{(?:([^!}]+)!)?([^}]+)\}/g, (_, part: string | undefined, ref: string) => {
+    const v = (part ? rowsOf(d, part) : here).find((r) => r.ref === ref)?.cells[col]?.figure?.value;
+    if (v === undefined) throw new Error(`no figure for ${part ?? ''}!${ref} in column ${col}`);
+    return `(${v})`;
+  });
+  return Function(`return ${js}`)() as number;
+}
+
+describe('fictional case A with the lenders\' tests: the sensitivity analysis (D1b)', () => {
+  const { p, doc, text, lines } = build(CASE_AL);
+  it('puts it on a page of its own after page 1, which points to it; the Check sheet is last', () => {
+    expect(doc.parts.map((x) => x.name)).toEqual(['DSCR statement', 'Sensitivity', 'Basis', 'Repayment schedule', 'Check']);
+    expect(doc.parts.map((x) => !!x.sheetOnly)).toEqual([false, false, false, false, true]);
+    expect(lines).toContain('The sensitivity analysis on the next page tests this DSCR as a lender may; it does not change it.');
+    expect(lines).toContain('Sensitivity analysis');
+    // Without a test that has figures (case A′: nothing typed), no page, no check, and no pointer.
+    const a2 = build(A2);
+    expect(a2.doc.parts.map((x) => x.name)).toEqual(['DSCR statement', 'Basis', 'Repayment schedule']);
+    expect(a2.text).not.toContain('sensitivity');
+  });
+  it('shows each test as the page does, with the figures worked by hand above', () => {
+    expect(lines).toContain('Test | Average | Lowest year | In');
+    expect(lines).toContain('Sales price 5% lower | 1.16 | 0.93 | 2026-27');
+    expect(lines).toContain('Costs 10% higher | 0.99 | 0.73 | 2026-27');
+    expect(lines).toContain("Promoters' loans repaid as given, counted in debt service as a lender would | 1.28 | 0.97 | 2027-28");
+    expect(lines).toContain("Promoters' loans repaid | 0 | 1,00,000 | 1,00,000 | 0");
+    expect(lines).toContain("Debt service with them (B + promoters' loans) | 3,41,000 | 6,02,000 | 5,54,000 | 2,09,000");
+    expect(lines).toContain('Cash left | -40,750 | -69,000 | 59,500 | 3,30,750');
+    expect(lines).toContain('Cover: (A less working capital and capex) ÷ B | 0.88 | 0.86 | 1.13 | 2.58');
+    expect(lines).toContain('Profit before tax | 2,10,000 | ');
+    expect(lines).toContain('Cash accrual (profit after tax + depreciation) | 3,10,000 | ');
+    expect(lines).toContain('Margin (that profit ÷ sales) | 20.0% | 20.0%');
+    expect(lines).toContain('Sales growth into 2026-27: +13.6%.');
+    expect(text).toContain('In the lowest year the cash does not cover the debt service: Sales price 5% lower; Costs 10% higher;');
+    expect(text).toContain("Our own tests beside the DSCR on page 1, not a lender's norm");
+    // The Excel copy's figures are the engine's, exact: the hand fractions above.
+    const sens = rowsOf(doc, 'Sensitivity'), fig = (label: string) => sens.find((r) => r.cells[0].text === label)!.cells.slice(1).map((c) => c.figure?.value);
+    expect(fig('Sales price 5% lower')[0]).toBeCloseTo(1740250 / 1506000, 10);
+    expect(fig('Sales price 5% lower')[1]).toBeCloseTo(316500 / 341000, 10);
+    expect(fig('Costs 10% higher')[0]).toBeCloseTo(1497500 / 1506000, 10);
+    expect(fig('Costs 10% higher')[1]).toBeCloseTo(250000 / 341000, 10);
+    expect(fig('Cash left')).toEqual([-40750, -69000, 59500, 330750]);
+    expect(fig('Cover: (A less working capital and capex) ÷ B')).toEqual([300250 / 341000, 433000 / 502000, 513500 / 454000, 539750 / 209000]);
+  });
+  it('holds no figure the page did not already show or the user did not type (none is computed for the document)', () => {
+    const s = CASE_AL, sources = [JSON.stringify(p), JSON.stringify(s), JSON.stringify(DSCR), JSON.stringify(DEFAULTS), tidyAmount(s.loan.amount),
+      ...Object.values(s.cells).flat().map(tidyAmount), '30-09-2026', SITE_NAME].join('\n');
+    const figures = text.match(/\d+(?:,\d+)*(?:\.\d+)?/g) ?? [];
+    expect(figures.filter((f) => !sources.includes(f))).toEqual([]);
+  });
+  it('the Check sheet redoes the plain arithmetic by formulas on the other sheets\' cells, every difference 0', () => {
+    const check = rowsOf(doc, 'Check');
+    let n = 0;
+    for (const r of check) r.cells.slice(1).forEach((c, k) => {
+      if (!c.figure?.formula) return;
+      n++;
+      expect(evaluate(doc, c.figure.formula, k + 1, check)).toBeCloseTo(c.figure.value, 6);
+    });
+    // Promoters' DSCR and its difference over four years; the cash check's six rows over four; the audited year's eight.
+    expect(n).toBe(2 * 4 + 6 * 4 + 8);
+    expect(check.filter((r) => r.cells[0].text.startsWith('Difference')).flatMap((r) => r.cells.slice(1).map((c) => c.figure?.value))).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  });
+  it('the PDF and the Word copy: the sensitivity analysis on page 2, the Check sheet in neither', async () => {
+    const pages = await pdfPages(pdfOf(doc, MADE)), all = pages.join('\n');
+    expect(pages[0]).toContain('The sensitivity analysis on the next page tests this DSCR as a lender may; it does not change it.');
+    expect(pages[0]).toMatch(/Authorised signatory/);
+    expect(pages[1].split('\n')[1]).toBe('Sensitivity analysis');
+    expect(pages[1]).toContain('Sales price 5% lower 1.16 0.93 2026-27');
+    expect(pages[1]).toContain('Cash left -40,750 -69,000 59,500 3,30,750');
+    expect(all).not.toMatch(/redone/);
+    const word = (await docxLines(docxOf(doc, MADE))).lines.join('\n');
+    expect(word).toContain('Sensitivity analysis');
+    expect(word).not.toMatch(/redone/);
+  });
+  it('the Excel copy: a Sensitivity sheet and a Check sheet whose formulas name the other sheets\' cells', async () => {
+    const bytes = xlsxOf(doc, MADE), book = await workbook(bytes);
+    expect(book.map((x) => x.sheet)).toEqual(['DSCR statement', 'Sensitivity', 'Basis', 'Repayment schedule', 'Check']);
+    expect(book[0].data.flat().join(' ')).toContain('The Check sheet redoes the sensitivity figures');
+    const left = book[1].data.find((r) => r[0] === 'Cash left')?.filter((c) => c !== null);
+    expect(left).toEqual(['Cash left', -40750, -69000, 59500, 330750]);
+    const sheet = await zipPart(bytes, 'xl/worksheets/sheet5.xml');
+    expect(sheet).toMatch(/<f>'DSCR statement'!B\d+\/\('DSCR statement'!B\d+\+'Sensitivity'!B\d+\)<\/f>/);
+    expect(sheet).toMatch(/<f>'Sensitivity'!B\d+-'Sensitivity'!B\d+-'Sensitivity'!B\d+-'Sensitivity'!B\d+<\/f><v>-40750<\/v>/);
   });
 });

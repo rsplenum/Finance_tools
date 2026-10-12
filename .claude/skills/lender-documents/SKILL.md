@@ -38,7 +38,7 @@ Ask only for facts the page does not already have (such as the borrower's name a
 
 - The PDF uses the standard Helvetica fonts, so Latin letters only. `printable()` checks what the user types; a name in Devanagari is asked for again in English letters. The Word copy keeps any letters.
 - A short table stays on one page with its heading, and a long one continues under its header. Many year columns split into tables that fit the width, in the PDF and the Word copy alike (`measure` in `pdf.ts`).
-- The Excel copy holds the engine's exact figures as numbers, with lakh and crore formats and no formulas (D-DOC-02; the owner may choose formulas later). It prints on A4, one page wide. A merged cell does not grow with its text in Excel, so `xlsx.ts` sets those rows' heights itself.
+- The Excel copy holds the engine's exact figures as numbers, with lakh and crore formats (D-DOC-02); formulas only on a Check sheet that redoes the plain arithmetic beside those figures, with differences of 0 (the CMA, D-DOC-12; the DSCR's sensitivity analysis, a `sheetOnly` part kept out of the PDF and Word, D-DOC-13). It prints on A4, one page wide. A merged cell does not grow with its text in Excel, so `xlsx.ts` sets those rows' heights itself.
 - The Word copy must follow the schema's order of elements, or Word refuses the file even when other readers open it. `docx.ts` notes the order wherever it builds properties.
 
 ## Tests: text, not screenshots

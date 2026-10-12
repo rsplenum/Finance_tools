@@ -154,7 +154,7 @@ const tab = (size: number) => `<w:r><w:rPr><w:sz w:val="${size}"/></w:rPr><w:tab
 
 /** The document as a Word file. */
 export function docxOf(doc: Doc, made: Date): Uint8Array<ArrayBuffer> {
-  const body = doc.parts.map((part, i) => part.blocks.map((b, k) => block(b, i > 0 && k === 0)).join('')).join('');
+  const body = doc.parts.filter((p) => !p.sheetOnly).map((part, i) => part.blocks.map((b, k) => block(b, i > 0 && k === 0)).join('')).join('');
   const sect = `<w:sectPr><w:headerReference w:type="default" r:id="rId2"/><w:footerReference w:type="default" r:id="rId3"/>`
     + `<w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1200" w:right="840" w:bottom="1200" w:left="840" w:header="600" w:footer="560" w:gutter="0"/></w:sectPr>`;
   const enc = (t: string) => new TextEncoder().encode(t);

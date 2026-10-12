@@ -371,7 +371,7 @@ const pdfDate = (d: Date) => `D:${d.toISOString().replace(/[-:T]/g, '').slice(0,
 /** The document as a PDF file. */
 export function pdfOf(doc: Doc, made: Date): Uint8Array<ArrayBuffer> {
   const L = new Layout();
-  doc.parts.forEach((part, i) => {
+  doc.parts.filter((p) => !p.sheetOnly).forEach((part, i) => {
     if (i && L.y < TOP) L.newPage();
     part.blocks.forEach((b, k) => block(L, b, part.blocks[k + 1]));
   });
