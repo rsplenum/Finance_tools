@@ -85,8 +85,11 @@ export interface State {
 export interface LenderText { sales: string[]; promoters: string[]; wcPct: string; capex: string; audited: Record<keyof AuditedInput, string> }
 export const NO_LENDER: LenderText = { sales: [], promoters: [], wcPct: '', capex: '', audited: { sales: '', pbdit: '', depreciation: '', interest: '', tax: '' } };
 
-/** The document's own facts. The borrower's name and the lender are needed; who prepared it is given only if wanted. */
-export interface DocFacts { borrower: string; lender: string; preparedBy: string }
+/**
+ * The document's own facts. The borrower's name and the lender are needed; who prepared it, the address, the loan's purpose
+ * and a GSTIN are given only if wanted (D-DOC-10), the last three under one closed line.
+ */
+export interface DocFacts { borrower: string; lender: string; preparedBy: string; address?: string; purpose?: string; gstin?: string }
 
 /** Nothing answered: what the tests start from. */
 export const START: State = {
@@ -443,6 +446,8 @@ export interface Preview {
   statement?: StatementView;
   schedule?: ScheduleView;
   average?: string;
+  /** The engine's average, unrounded, for the Excel copy's Check sheet. */
+  averageN?: number;
   lowest?: string;
   lowestYear?: string;
   notCounted?: string;
@@ -611,6 +616,7 @@ function fillStatement(p: Preview, st: Statement, t: Target, def: Definition, pa
     p.notCounted = `Not counted: ${andList(skipped)} (${def.years === 'repayment' ? 'no term-loan instalment' : 'no interest or instalments due'}).`;
   if (st.average !== undefined && st.minimum) {
     p.average = ratioText(st.average, t.average);
+    p.averageN = st.average;
     p.lowest = ratioText(st.minimum.dscr, t.minimum);
     p.lowestYear = st.minimum.fy;
   }

@@ -20,7 +20,7 @@ import { inr, rs } from '../../../engine/util';
 import { BUTTON, CellInput, Choice, HINT, Section, SourceNote, TextField } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
-import { allNeeds, docNeeds, docStatus, fileName, statementDoc } from './document';
+import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
 import {
   BORROWER_CHOICES, EXAMPLE_TARGETS, GROUP_TITLES, NO_LENDER, OPTION_KEYS, amountOf, barText, choicesOf, emisAsk, frontDoor, loanRead, modeOf, monthText, numberOf,
   parseFy, presetText, preview, rowValues, rowsOf, statusText, targetText, tidyAmount, withBorrower, withPlanStart, withSource, yearsOf,
@@ -554,15 +554,16 @@ function LenderSection({ s, update, y }: { s: State; update: Update; y: Years })
 /** The statement to download: first what only the document needs, asked once; then the PDF, the Excel copy and the Word copy. */
 function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Update }) {
   const f = s.doc, set = (patch: Partial<DocFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
-  const english = (t: string) => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
+  const english = (t = '') => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
+  const gstinSaid = f.gstin?.trim() && !gstinOf(f.gstin) ? 'A GSTIN has 15 letters and digits, like 27ABCDE1234F1Z5.' : undefined;
   const own = docNeeds(f), provisional = allNeeds(s, p).length > 0, ready = !!p.statement && !p.blocked;
   const save = (kind: FileKind) => {
     const now = new Date();
     saveFile(statementDoc(s, p, isoDate(now)), kind, fileName(s, p, kind), now);
   };
   const field = (id: keyof DocFacts, label: string, hint?: string, placeholder?: string) =>
-    <TextField id={`fld-${id}`} label={label} hint={hint} placeholder={placeholder} value={f[id]} onCommit={(t) => set({ [id]: t })}
-      said={english(f[id])} invalid={!!english(f[id])} />;
+    <TextField id={`fld-${id}`} label={label} hint={hint} placeholder={placeholder} value={f[id] ?? ''} onCommit={(t) => set({ [id]: t })}
+      said={english(f[id]) ?? (id === 'gstin' ? gstinSaid : undefined)} invalid={!!english(f[id]) || (id === 'gstin' && !!gstinSaid)} />;
   return <Section id="download" title="Download the statement">
     <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy for the accountant and a Word copy to edit, made in your browser from the figures above.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
@@ -570,6 +571,14 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
       {field('lender', 'Lender', 'The bank or finance company, and the branch.')}
       {field('preparedBy', 'Prepared by, if not the borrower', 'Your name or your firm’s; leave empty if the borrower prepares it.')}
     </div>
+    <details id="doc-more" class="mt-4 rounded-lg border border-slate-200 dark:border-slate-800">
+      <summary class="cursor-pointer px-4 py-3 font-medium text-teal-800 dark:text-teal-300">Address, the loan’s purpose and GSTIN, if you want them on the statement</summary>
+      <div class="grid gap-4 px-4 pb-4 sm:grid-cols-2">
+        {field('address', 'Address', 'The business’s address.')}
+        {field('purpose', 'Purpose of the loan', undefined, 'like a new CNC machine')}
+        {field('gstin', 'GSTIN, if registered', undefined, 'like 27ABCDE1234F1Z5')}
+      </div>
+    </details>
     {ready
       ? <div class="mt-5">
         <p data-testid="doc-status" class={`inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${provisional

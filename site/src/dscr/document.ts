@@ -29,7 +29,16 @@ export function docNeeds(f: DocFacts): string[] {
   ask(f.borrower, "The borrower's name");
   ask(f.lender, 'The lender');
   if (f.preparedBy.trim() && !printable(f.preparedBy)) needs.push('Prepared by, in English letters');
+  if (f.address?.trim() && !printable(f.address)) needs.push('The address, in English letters');
+  if (f.purpose?.trim() && !printable(f.purpose)) needs.push("The loan's purpose, in English letters");
+  if (f.gstin?.trim() && !gstinOf(f.gstin)) needs.push('The GSTIN, as its 15 letters and digits');
   return needs;
+}
+
+/** A GSTIN as typed, in capitals without spaces, when it has a GSTIN's shape (2 digits, a PAN, 1, Z, 1); else undefined. */
+export function gstinOf(t: string): string | undefined {
+  const g = t.replace(/[\s-]/g, '').toUpperCase();
+  return /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(g) ? g : undefined;
 }
 
 /**
@@ -68,7 +77,7 @@ function statementTable(st: StatementView): Table {
       ...(st.total ? [{ label: 'Total', ...(st.total.sub ? { sub: st.total.sub } : {}) }] : [])],
     rows: st.lines.map((l) => (l.kind === 'head'
       ? { kind: 'head', cells: [{ text: l.label }] }
-      : { ...(l.kind ? { kind: l.kind } : {}), ...(l.id === 'available' || l.id === 'service' ? { ref: l.id } : {}), cells: [{ text: l.label }, ...l.values.map((v, i) => cell(v, l.n?.[i], kind(l))),
+      : { ...(l.kind ? { kind: l.kind } : {}), ...(l.id === 'available' || l.id === 'service' || l.id === 'dscr' ? { ref: l.id } : {}), cells: [{ text: l.label }, ...l.values.map((v, i) => cell(v, l.n?.[i], kind(l))),
         ...(st.total ? [l.total ? cell(l.total.text, l.total.n, kind(l)) : { text: '' }] : [])] })),
   };
 }
@@ -304,15 +313,49 @@ function sensitivityPart(v: LenderView, years: string[]): Part {
 }
 
 /**
+ * The Check sheet's first table (D2, D-DOC-10): each year's DSCR redone from page 1's A and B, and the average by the
+ * method chosen over the years counted: by totals, A and B added up over those years and divided; by mean, the mean of
+ * their DSCRs. A year not counted keeps its DSCR checked and is left out of the average.
+ */
+function statementCheck(st: StatementView, p: Preview): Block[] {
+  const line = (id: string) => st.lines.find((l) => l.id === id);
+  const dscr = line('dscr'), a = line('available'), b = line('service');
+  if (!dscr?.n || !a?.n || !b?.n || p.average === undefined || p.averageN === undefined) return [];
+  const S = (ref: string, k?: number) => `{${STATEMENT}!${ref}${k === undefined ? '' : `@${k}`}}`;
+  const has = dscr.n.map((n) => n !== undefined && Number.isFinite(n)), counted = has.flatMap((h, i) => (h && st.counted[i] ? [i + 1] : []));
+  const blank: Cell[] = st.years.map(() => ({ text: '' })), totals = !!st.total && !!a.total && !!b.total && !!dscr.total;
+  const diff = (label: string, years: string | undefined, end: string): Row => ({ cells: [{ text: label },
+    ...has.map((h) => (h && years ? ratio('0', 0, years) : { text: years ? '—' : '' })), ratio('0', 0, end)] });
+  const sumOf = (l: typeof a, ref: string, label: string): Row[] => [
+    { ref, cells: [{ text: label }, ...blank, money(l.total!.text, l.total!.n, counted.map((k) => S(l.id as string, k)).join('+'))] },
+    diff('Difference (0 if they agree)', undefined, `{${ref}}-${S(l.id as string)}`),
+  ];
+  const rows: Row[] = [
+    ...(totals ? [...sumOf(a, 'sumA', 'Cash available (A), redone: the years counted added up'), ...sumOf(b, 'sumB', 'Debt service (B), redone: the years counted added up')] : []),
+    { ref: 'dscrCheck', cells: [{ text: totals ? 'DSCR, redone: A ÷ B; the average, total A ÷ total B' : 'DSCR, redone: A ÷ B; the average, the mean of the years counted' },
+      ...dscr.n.map((n, i) => (has[i] ? ratio(dscr.values[i], n, `${S('available')}/${S('service')}`) : { text: '—' })),
+      ratio(p.average, p.averageN, totals ? '{sumA}/{sumB}' : `(${counted.map((k) => `{dscrCheck@${k}}`).join('+')})/${counted.length}`)] },
+    ...(totals ? [] : [{ ref: 'pageAverage', cells: [{ text: 'The average, as page 1 gives it' }, ...blank, ratio(p.average, p.averageN)] }]),
+    diff('Difference (0 if they agree)', `{dscrCheck}-${S('dscr')}`, totals ? `{dscrCheck}-${S('dscr')}` : '{dscrCheck}-{pageAverage}'),
+  ];
+  const all = st.counted.every(Boolean);
+  return [{ kind: 'heading', text: "Page 1's DSCR" }, { kind: 'table', table: {
+    columns: [{ label: 'Rupees' }, ...st.years.map((fy, i) => (st.counted[i] ? { label: fy } : { label: fy, sub: 'not counted' })),
+      { label: totals ? 'Total' : 'Average', ...(all ? {} : { sub: 'years counted' }) }],
+    rows,
+  } }];
+}
+
+/**
  * The Excel copy's Check sheet (D-DOC-12, as on the CMA): the sensitivity figures whose arithmetic is plain, redone by
  * formulas on the cells of the other sheets beside the engine's figure, with their differences of 0. The stress lines
  * stay numbers: their tax is worked again by slab. Not in the PDF or the Word copy.
  */
-function checkPart(v: LenderView, years: string[]): Part | undefined {
-  const blocks: Block[] = [];
+function checkPart(st: StatementView, p: Preview, v?: LenderView): Part | undefined {
+  const blocks: Block[] = [...statementCheck(st, p)], years = st.years;
   const table = (heading: string, columns: Table['columns'], rows: Row[]) => blocks.push({ kind: 'heading', text: heading }, { kind: 'table', table: { columns, rows } });
   const across: Table['columns'] = [{ label: 'Rupees' }, ...years.map((label) => ({ label }))];
-  if ('line' in v.promoters) {
+  if (v && 'line' in v.promoters) {
     const y = v.promoters.years, has = y.map((r) => r.n.dscr !== undefined);
     table("Promoters' loans repaid", across, [
       { ref: 'promotersDscr', cells: [{ text: "DSCR, redone: page 1's A ÷ (page 1's B + promoters' loans)" },
@@ -320,7 +363,7 @@ function checkPart(v: LenderView, years: string[]): Part | undefined {
       zero('Difference (0 if they agree)', `{promotersDscr}-{${SENSITIVITY}!promotersDscr}`, has),
     ]);
   }
-  const c = v.cash;
+  const c = v?.cash;
   if (c && 'rows' in c) {
     const all = c.rows.map(() => true), has = c.rows.map((r) => r.n.cover !== undefined);
     const S = (ref: string) => `{${SENSITIVITY}!${ref}}`;
@@ -335,7 +378,7 @@ function checkPart(v: LenderView, years: string[]): Part | undefined {
       zero('Difference (0 if they agree)', `{cashCover}-${S('cashCover')}`, has),
     ]);
   }
-  const a = v.audited;
+  const a = v?.audited;
   if (a && 'rows' in a) {
     const n = (id: string) => (a.rows.find((r) => r.id === id) as { n: number }).n, A = (id: string) => `{${SENSITIVITY}!a_${id}}`;
     const redo = (id: string, label: string, formula: string, text: string): Row[] => [
@@ -353,7 +396,7 @@ function checkPart(v: LenderView, years: string[]): Part | undefined {
   if (!blocks.length) return undefined;
   return { name: CHECK, sheetOnly: true, blocks: [
     { kind: 'title', text: 'Check', small: true },
-    { kind: 'text', text: "The sensitivity figures whose arithmetic is plain, redone by formulas on the cells of the other sheets beside the engine's figures, with their differences. The stress lines stay numbers: their tax is worked again by slab.", small: true },
+    { kind: 'text', text: `Page 1's DSCR for each year and its average${v ? ', then the sensitivity figures whose arithmetic is plain,' : ''} redone by formulas on the cells of the other sheets beside the engine's figures, with their differences (0 when they agree).${v ? ' The stress lines stay numbers: their tax is worked again by slab.' : ''}`, small: true },
     ...blocks,
   ] };
 }
@@ -383,6 +426,11 @@ export function statementDoc(s: State, p: Preview, today: string): Doc | undefin
   const borrower = f.borrower.trim() && printable(f.borrower) ? f.borrower.trim() : '';
   const by = f.preparedBy.trim() && printable(f.preparedBy) ? f.preparedBy.trim() : '';
   const facts: [string, string][][] = [[['Lender', given(f.lender)], ['Prepared on', dmy(today)]]];
+  const ok = (t?: string) => (t?.trim() && printable(t) ? t.trim().replace(/\s+/g, ' ') : ''), gstin = f.gstin && gstinOf(f.gstin);
+  // The address on a line of its own (it is long); the purpose and the GSTIN two to a line.
+  const two = ([['Purpose', ok(f.purpose)], ['GSTIN', gstin ?? '']] as [string, string][]).filter((x) => x[1]);
+  if (ok(f.address)) facts.push([['Address', ok(f.address)]]);
+  if (two.length) facts.push(two);
   if (by) facts.push([['Prepared by', by]]);
 
   // Page 1: who and what, then the whole working as the page shows it, every line, and the answer under it; signed.
@@ -397,7 +445,7 @@ export function statementDoc(s: State, p: Preview, today: string): Doc | undefin
   if (notes.length) blocks.push({ kind: 'list', items: notes, small: true });
   const key = keyFigures(def, p);
   if (key.length) blocks.push({ kind: 'figures', items: key });
-  const lender = p.lender && hasFigures(p.lender) ? p.lender : undefined, check = lender && checkPart(lender, years);
+  const lender = p.lender && hasFigures(p.lender) ? p.lender : undefined, check = checkPart(st, p, lender);
   if (lender) blocks.push({ kind: 'text', text: 'The sensitivity analysis on the next page tests this DSCR as a lender may; it does not change it.', small: true });
   blocks.push({ kind: 'signature', lines: [`For ${borrower || 'the borrower'}`, '', 'Authorised signatory', 'Date:', 'Place:'] });
 
@@ -406,7 +454,7 @@ export function statementDoc(s: State, p: Preview, today: string): Doc | undefin
     header: `DSCR statement${borrower ? ` · ${borrower}` : ''}`,
     ...(needs.length ? { mark: 'Provisional' } : {}),
     footer: `Made with ${SITE_NAME} on ${dmy(today)} from the figures entered; every figure worked out twice. Not a CA's certificate.`,
-    workbookNote: check ? "Each cell holds the exact figure worked out on the page, shown in whole rupees. The Check sheet redoes the sensitivity figures whose arithmetic is plain by formulas, beside the engine's figures, with their differences."
+    workbookNote: check ? `Each cell holds the exact figure worked out on the page, shown in whole rupees. The Check sheet redoes page 1's DSCR and its average${lender ? ' and the sensitivity figures whose arithmetic is plain' : ''} by formulas, beside the engine's figures, with their differences.`
       : 'Each cell holds the exact figure worked out on the page, shown in whole rupees; there are no formulas.',
     ...(by || borrower ? { author: by || borrower } : {}),
     creator: SITE_NAME,

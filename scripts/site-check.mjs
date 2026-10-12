@@ -477,6 +477,12 @@ async function layout(page, v, step) {
   await expectText(page, v, page.getByTestId('doc-needs').locator('li').first(), "The borrower's name, in English letters", 'a name in Devanagari');
   await leave(page, '#fld-borrower', 'Asha Traders');
   await leave(page, '#fld-lender', 'Example Bank, Pune branch');
+  // The address, the purpose and a GSTIN sit under one closed line (D2); a GSTIN without its shape is flagged.
+  if (await page.locator('#doc-more').getAttribute('open') !== null) v('the address, purpose and GSTIN line is open by default');
+  await page.locator('#doc-more summary').click();
+  await leave(page, '#fld-gstin', '27ABCDE1234');
+  await expectText(page, v, 'fld-gstin-said', 'A GSTIN has 15 letters and digits, like 27ABCDE1234F1Z5.', 'a short GSTIN');
+  await leave(page, '#fld-gstin', '');
   await expectText(page, v, 'doc-status', 'Complete', 'the download with its facts');
   if (await page.getByTestId('doc-needs').count()) v('the download still lists needs once its facts are in');
   pdf = await save('download-pdf');
@@ -498,7 +504,7 @@ async function layout(page, v, step) {
   if (xlsx.name !== 'DSCR statement - Asha Traders.xlsx') v(`the Excel copy is named "${xlsx.name}"`);
   const book = await workbook(xlsx.bytes).catch((e) => v(`the Excel copy is not read: ${e.message}`)) ?? [];
   const cash = book[0]?.data.find((r) => r[0] === 'Cash available (A)')?.filter((c) => c !== null);
-  if (book.map((x) => x.sheet).join('|') !== 'DSCR statement|Basis|Repayment schedule' || JSON.stringify(cash) !== JSON.stringify(['Cash available (A)', 400392, 422624, 445488, 473072, 1741576]))
+  if (book.map((x) => x.sheet).join('|') !== 'DSCR statement|Basis|Repayment schedule|Check' || JSON.stringify(cash) !== JSON.stringify(['Cash available (A)', 400392, 422624, 445488, 473072, 1741576]))
     v(`the Excel copy holds sheets ${JSON.stringify(book.map((x) => x.sheet))} and cash available ${JSON.stringify(cash)}`);
   const cells = book.flatMap((x) => x.data.flat()).filter((c) => typeof c === 'string').join('\n');
   for (const not of ONLY_ON_THE_PAGE) if (cells.includes(not)) v(`the Excel copy says "${not}"`);

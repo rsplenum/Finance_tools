@@ -13,7 +13,7 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf, printable } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import { crc32 } from '../site/src/doc/zip';
-import { docNeeds, docStatus, fileName, sourceForLender, statementDoc } from '../site/src/dscr/document';
+import { docNeeds, docStatus, fileName, gstinOf, sourceForLender, statementDoc } from '../site/src/dscr/document';
 import { ASSUMED, BORROWER_CHOICES, START, preview, tidyAmount, withBorrower, type State } from '../site/src/dscr/model';
 import { SITE_NAME } from '../site/src/site';
 import { docxLines, docxPart, pdfPages, workbook, zipPart } from '../scripts/read-doc.mjs';
@@ -53,6 +53,12 @@ describe('what the document asks that the page does not', () => {
     expect(printable('Müller & Söhne (Pune) – 2nd unit')).toBe(true);
     expect(printable('श्री गणेश ट्रेडर्स')).toBe(false);
     expect(docNeeds({ ...FACTS, borrower: 'श्री गणेश ट्रेडर्स' })).toEqual(["The borrower's name, in English letters"]);
+  });
+  it('the address, the purpose and a GSTIN only if given; a GSTIN must have its shape', () => {
+    expect(docNeeds({ ...FACTS, address: '12 MIDC Road, Bhosari, Pune 411026', purpose: 'A new CNC machine', gstin: '27abcde1234f1z5' })).toEqual([]);
+    expect(gstinOf(' 27 ABCDE 1234 F1Z5 ')).toBe('27ABCDE1234F1Z5');
+    expect(docNeeds({ ...FACTS, gstin: '27ABCDE1234F1Y5' })).toEqual(['The GSTIN, as its 15 letters and digits']);
+    expect(docNeeds({ ...FACTS, address: 'पुणे', purpose: 'मशीन' })).toEqual(['The address, in English letters', "The loan's purpose, in English letters"]);
   });
   it('names the file after the borrower, and says provisional while anything is missing', () => {
     expect(fileName(A2, preview(A2), 'pdf')).toBe('DSCR statement - Asha Traders.pdf');
@@ -133,8 +139,8 @@ describe('fictional case A′, complete: the statement for the lender', () => {
     expect(text).not.toMatch(/^(Extra income from the new asset|Loans already running|Other non-cash charges[^:]*):/m);
   });
   it('puts the basis and the repayment schedule in two annexes, each from a new page', () => {
-    expect(doc.parts.map((x) => x.name)).toEqual(['DSCR statement', 'Basis', 'Repayment schedule']);
-    expect(doc.parts.map((x) => x.blocks[0].kind === 'title' && x.blocks[0].text)).toEqual(['Asha Traders', 'Annex 1. The basis', 'Annex 2. Repayment schedule']);
+    expect(doc.parts.map((x) => x.name)).toEqual(['DSCR statement', 'Basis', 'Repayment schedule', 'Check']);
+    expect(doc.parts.map((x) => x.blocks[0].kind === 'title' && x.blocks[0].text)).toEqual(['Asha Traders', 'Annex 1. The basis', 'Annex 2. Repayment schedule', 'Check']);
     expect(text).toContain('2026-27 | 1,41,000 | 2,00,000 | 10,00,000');
     // December 2026, by hand: interest 1% of 12,00,000 = 12,000; the first quarterly instalment of 1,00,000.
     expect(text).toContain('Dec 2026 | 1 | 12,00,000 | 12,000 | 1,00,000 | 1,12,000 | 11,00,000');
@@ -212,7 +218,7 @@ describe('the PDF, read back by pdf.js', () => {
 describe('the Excel copy, read back by read-excel-file', () => {
   it('fictional case A′: the engine\'s figures as numbers, a sheet for each part', async () => {
     const { p, doc } = build(A2), book = await workbook(xlsxOf(doc, MADE));
-    expect(book.map((x) => x.sheet)).toEqual(['DSCR statement', 'Basis', 'Repayment schedule']);
+    expect(book.map((x) => x.sheet)).toEqual(['DSCR statement', 'Basis', 'Repayment schedule', 'Check']);
     const rows = book[0].data, row = (label: string) => rows.find((r) => r[0] === label)?.filter((c) => c !== null);
     expect(rows[0][0]).toBe('Asha Traders');
     expect(row('Lender')).toEqual(['Lender', 'Example Bank, Pune branch']);
@@ -225,7 +231,7 @@ describe('the Excel copy, read back by read-excel-file', () => {
     // The DSCR as the engine gave it, not rounded: 4,00,392 ÷ 3,41,000 and so on, and the average 17,41,576 ÷ 15,06,000.
     expect(row('DSCR (A ÷ B)')).toEqual(['DSCR (A ÷ B)', 400392 / 341000, 422624 / 502000, 445488 / 454000, 473072 / 209000, 1741576 / 1506000]);
     for (const l of p.statement!.lines) if (l.n) expect(row(l.label)?.slice(1)).toEqual([...l.n, l.total?.n]);
-    expect(rows.flat()).toContain('Each cell holds the exact figure worked out on the page, shown in whole rupees; there are no formulas.');
+    expect(rows.flat()).toContain("Each cell holds the exact figure worked out on the page, shown in whole rupees. The Check sheet redoes page 1's DSCR and its average by formulas, beside the engine's figures, with their differences.");
     expect(book[1].data.flat()).toContain('Common term-loan DSCR.');
     const months = book[2].data;
     expect(months.find((r) => r[0] === 'Dec 2026')).toEqual(['Dec 2026', 1, 1200000, 12000, 100000, 112000, 1100000]);
@@ -245,7 +251,7 @@ describe('the Excel copy, read back by read-excel-file', () => {
     expect(lines.join('\n')).not.toMatch(/target/i);
     expect(lines).not.toContain('The loan');
     const book = await workbook(xlsxOf(doc, MADE));
-    expect(book.map((x) => x.sheet)).toEqual(['DSCR statement', 'Basis']);
+    expect(book.map((x) => x.sheet)).toEqual(['DSCR statement', 'Basis', 'Check']);
     // The Total column leaves out 2026-27, not counted: 1,60,000 + 1,60,000.
     expect(book[0].data.find((r) => r[0] === 'Rupees')?.filter((c) => c !== null)).toEqual(['Rupees', '2026-27 (not counted)', '2027-28', '2028-29', 'Total (years counted)']);
     expect(book[0].data.find((r) => r[0] === 'Cash available (A)')?.filter((c) => c !== null)).toEqual(['Cash available (A)', 150000, 160000, 160000, 320000]);
@@ -371,8 +377,8 @@ const CASE_AL: State = {
 const rowsOf = (d: Doc, part: string) => d.parts.find((x) => x.name === part)!.blocks.flatMap((b) => (b.kind === 'table' ? b.table.rows : [])) as Row[];
 /** A formula worked on the figures of the cells it names, as Excel would. */
 function evaluate(d: Doc, formula: string, col: number, here: Row[]): number {
-  const js = formula.replace(/\{(?:([^!}]+)!)?([^}]+)\}/g, (_, part: string | undefined, ref: string) => {
-    const v = (part ? rowsOf(d, part) : here).find((r) => r.ref === ref)?.cells[col]?.figure?.value;
+  const js = formula.replace(/\{(?:([^!}]+)!)?([^}@]+)(?:@(\d+))?\}/g, (_, part: string | undefined, ref: string, at?: string) => {
+    const v = (part ? rowsOf(d, part) : here).find((r) => r.ref === ref)?.cells[at === undefined ? col : Number(at)]?.figure?.value;
     if (v === undefined) throw new Error(`no figure for ${part ?? ''}!${ref} in column ${col}`);
     return `(${v})`;
   });
@@ -388,7 +394,7 @@ describe('fictional case A with the lenders\' tests: the sensitivity analysis (D
     expect(lines).toContain('Sensitivity analysis');
     // Without a test that has figures (case A′: nothing typed), no page, no check, and no pointer.
     const a2 = build(A2);
-    expect(a2.doc.parts.map((x) => x.name)).toEqual(['DSCR statement', 'Basis', 'Repayment schedule']);
+    expect(a2.doc.parts.map((x) => x.name)).toEqual(['DSCR statement', 'Basis', 'Repayment schedule', 'Check']);
     expect(a2.text).not.toContain('sensitivity');
   });
   it('shows each test as the page does, with the figures worked by hand above', () => {
@@ -429,9 +435,10 @@ describe('fictional case A with the lenders\' tests: the sensitivity analysis (D
       n++;
       expect(evaluate(doc, c.figure.formula, k + 1, check)).toBeCloseTo(c.figure.value, 6);
     });
-    // Promoters' DSCR and its difference over four years; the cash check's six rows over four; the audited year's eight.
-    expect(n).toBe(2 * 4 + 6 * 4 + 8);
-    expect(check.filter((r) => r.cells[0].text.startsWith('Difference')).flatMap((r) => r.cells.slice(1).map((c) => c.figure?.value))).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    // Page 1's: the two totals and their differences, the DSCR and its difference over four years and the Total; then
+    // promoters' DSCR and its difference over four years; the cash check's six rows over four; the audited year's eight.
+    expect(n).toBe(4 + 2 * 5 + 2 * 4 + 6 * 4 + 8);
+    expect(check.filter((r) => r.cells[0].text.startsWith('Difference')).flatMap((r) => r.cells.slice(1).flatMap((c) => (c.figure ? [c.figure.value] : [])))).toEqual(Array(2 + 5 + 16).fill(0));
   });
   it('the PDF and the Word copy: the sensitivity analysis on page 2, the Check sheet in neither', async () => {
     const pages = await pdfPages(pdfOf(doc, MADE)), all = pages.join('\n');
@@ -448,11 +455,77 @@ describe('fictional case A with the lenders\' tests: the sensitivity analysis (D
   it('the Excel copy: a Sensitivity sheet and a Check sheet whose formulas name the other sheets\' cells', async () => {
     const bytes = xlsxOf(doc, MADE), book = await workbook(bytes);
     expect(book.map((x) => x.sheet)).toEqual(['DSCR statement', 'Sensitivity', 'Basis', 'Repayment schedule', 'Check']);
-    expect(book[0].data.flat().join(' ')).toContain('The Check sheet redoes the sensitivity figures');
+    expect(book[0].data.flat().join(' ')).toContain("The Check sheet redoes page 1's DSCR and its average and the sensitivity figures whose arithmetic is plain");
     const left = book[1].data.find((r) => r[0] === 'Cash left')?.filter((c) => c !== null);
     expect(left).toEqual(['Cash left', -40750, -69000, 59500, 330750]);
     const sheet = await zipPart(bytes, 'xl/worksheets/sheet5.xml');
     expect(sheet).toMatch(/<f>'DSCR statement'!B\d+\/\('DSCR statement'!B\d+\+'Sensitivity'!B\d+\)<\/f>/);
     expect(sheet).toMatch(/<f>'Sensitivity'!B\d+-'Sensitivity'!B\d+-'Sensitivity'!B\d+-'Sensitivity'!B\d+<\/f><v>-40750<\/v>/);
+  });
+});
+
+// D2: the Check sheet's first table, page 1's DSCR by the method chosen (D-DOC-10). By hand, case A′: A over the four
+// years 4,00,392 + 4,22,624 + 4,45,488 + 4,73,072 = 17,41,576, B 3,41,000 + 5,02,000 + 4,54,000 + 2,09,000 = 15,06,000,
+// average 17,41,576 ÷ 15,06,000 = 1.156. Own figures (2026-27 not counted, no instalment): A 1,60,000 + 1,60,000 =
+// 3,20,000, B 1,40,000 + 1,20,000 = 2,60,000, by totals 1.231; by mean (1,60,000 ÷ 1,40,000 + 1,60,000 ÷ 1,20,000) ÷ 2
+// = (1.142857 + 1.333333) ÷ 2 = 1.238095. 2026-27's DSCR, 1,50,000 ÷ 50,000 = 3.00, is checked and left out of both.
+describe("the Check sheet redoes page 1's DSCR and its average (D2)", () => {
+  const OWN: State = {
+    ...START, source: 'own', method: 'common', firstYear: '2026-27', yearCount: '3', doc: FACTS,
+    cells: { pat: ['60,000', '80,000', '1,00,000'], depreciation: ['40,000', '40,000', '40,000'], interestTL: ['50,000', '40,000', '20,000'], principalTL: ['0', '1,00,000', '1,00,000'] },
+    modes: { nonCash: 'none' },
+  };
+  const MEAN: State = { ...OWN, method: 'choose', choice: { interest: 'term-loans', leases: 'no', years: 'repayment', average: 'mean' } };
+  const table = (d: Doc) => rowsOf(d, 'Check'), label = (rows: Row[], t: string) => rows.find((r) => r.cells[0].text.startsWith(t))!;
+  const worked = (d: Doc) => table(d).flatMap((r) => r.cells.flatMap((c, k) => (c.figure?.formula ? [[evaluate(d, c.figure.formula, k, table(d)), c.figure.value]] : [])));
+  it('case A′, by totals: each year A ÷ B, the totals added up, the average total A ÷ total B; every difference 0', () => {
+    const { doc } = build(A2), rows = table(doc);
+    for (const [got, want] of worked(doc)) expect(got).toBeCloseTo(want, 9);
+    expect(label(rows, 'Cash available (A), redone').cells[5].figure).toMatchObject({ value: 1741576, formula: '{DSCR statement!available@1}+{DSCR statement!available@2}+{DSCR statement!available@3}+{DSCR statement!available@4}' });
+    expect(label(rows, 'Debt service (B), redone').cells[5].figure?.value).toBe(1506000);
+    const d = label(rows, 'DSCR, redone').cells.slice(1).map((c) => c.figure?.value);
+    expect(d).toEqual([400392 / 341000, 422624 / 502000, 445488 / 454000, 473072 / 209000, 1741576 / 1506000]);
+    expect(worked(doc)).toHaveLength(14);
+    expect(rows.filter((r) => r.cells[0].text.startsWith('Difference')).flatMap((r) => r.cells.flatMap((c) => (c.figure ? [c.figure.value] : [])))).toEqual(Array(7).fill(0));
+  });
+  it('case A, the CA\'s projection: its four years and the average, as on page 1', () => {
+    const { p, doc } = build(CASE_A), d = label(table(doc), 'DSCR, redone').cells.slice(1).map((c) => c.figure?.value);
+    expect(d).toEqual([...p.statement!.lines.find((l) => l.id === 'dscr')!.n!, p.averageN]);
+    expect(d[4]).toBeCloseTo(2186500 / 1506000, 12);
+    for (const [got, want] of worked(doc)) expect(got).toBeCloseTo(want, 9);
+  });
+  it('a year not counted: its DSCR checked, left out of the totals and the average', () => {
+    const { doc } = build(OWN), rows = table(doc);
+    for (const [got, want] of worked(doc)) expect(got).toBeCloseTo(want, 9);
+    expect(label(rows, 'Cash available (A), redone').cells[4].figure).toMatchObject({ value: 320000, formula: '{DSCR statement!available@2}+{DSCR statement!available@3}' });
+    expect(label(rows, 'DSCR, redone').cells.slice(1).map((c) => c.figure?.value)).toEqual([3, 160000 / 140000, 160000 / 120000, 320000 / 260000]);
+  });
+  it('by mean: the average is the mean of the years counted, against page 1\'s figure', async () => {
+    const { p, doc } = build(MEAN), rows = table(doc);
+    expect(p.averageN).toBeCloseTo((160000 / 140000 + 160000 / 120000) / 2, 12);
+    for (const [got, want] of worked(doc)) expect(got).toBeCloseTo(want, 9);
+    expect(label(rows, 'DSCR, redone').cells[4].figure?.formula).toBe('({dscrCheck@2}+{dscrCheck@3})/2');
+    expect(rows.some((r) => r.cells[0].text.startsWith('Cash available'))).toBe(false);
+    const sheet = await zipPart(xlsxOf(doc, MADE), 'xl/worksheets/sheet3.xml');
+    expect(sheet).toMatch(/<f>\(C(\d+)\+D\1\)\/2<\/f>/);
+    expect(sheet).toMatch(/<f>'DSCR statement'!B\d+\/'DSCR statement'!B\d+<\/f>/);
+  });
+});
+
+describe('the address, the purpose and the GSTIN in the header (D2)', () => {
+  const MORE = { ...A2, doc: { ...FACTS, address: '12 MIDC Road, Bhosari, Pune 411026', purpose: 'A new CNC machine', gstin: '27abcde1234f1z5' } };
+  it('printed beside the lender when given, the GSTIN in capitals; none when not given', async () => {
+    const { lines, doc } = build(MORE);
+    expect(lines).toContain('Address: 12 MIDC Road, Bhosari, Pune 411026');
+    expect(lines).toContain('Purpose: A new CNC machine');
+    expect(lines).toContain('GSTIN: 27ABCDE1234F1Z5');
+    expect(build(A2).text).not.toMatch(/Address|Purpose|GSTIN/);
+    const head = (await pdfPages(pdfOf(doc, MADE)))[0].split('\n').slice(3, 6);
+    expect(head).toEqual(['Lender Example Bank, Pune branch Prepared on 30-09-2026', 'Address 12 MIDC Road, Bhosari, Pune 411026', 'Purpose A new CNC machine GSTIN 27ABCDE1234F1Z5']);
+  });
+  it('a GSTIN without its shape is left out, and the document says so', () => {
+    const { lines, p } = build({ ...MORE, doc: { ...MORE.doc, gstin: '27ABCDE1234' } });
+    expect(lines.join('\n')).not.toContain('GSTIN:');
+    expect(docStatus({ ...MORE, doc: { ...MORE.doc, gstin: '27ABCDE1234' } }, p)).toBe('Provisional: 1 still needed');
   });
 });

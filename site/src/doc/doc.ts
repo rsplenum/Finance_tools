@@ -9,7 +9,7 @@ export interface Figure {
   value: number; kind: 'amount' | 'ratio' | 'count' | 'quantity'; decimals: number;
   /**
    * In the Excel copy only, a formula (without "=") that redoes the figure from other cells, `value` being what the engine
-   * gave: `{ref}` is this column's cell in the row named `ref` on the same sheet, `{Part!ref}` on another part's sheet.
+   * gave: `{ref}` is this column's cell in the row named `ref` on the same sheet, `{Part!ref}` on another part's sheet, and `{ref@3}` the cell in the table's column 3 (0 the labels).
    */
   formula?: string;
 }
