@@ -242,7 +242,7 @@ function Viable({ s, p, update, use }: { s: ReportState; p: ReportPreview; updat
 function Result({ s, p, update, use, used, undo, keep }: { s: ReportState; p: ReportPreview; update: Update; use: (l: Levers) => void; used: PlanChange[]; undo: () => void; keep: () => void }) {
   const v = p.view;
   return <Section id="report" title="The project report">
-    <p data-testid="rep-status" class={`mt-3 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.needs.length || p.blocked || p.short
+    <p data-testid="rep-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class={`mt-3 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.needs.length || p.blocked || p.short
       ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200'}`}>{statusText(p)}</p>
     {p.blocked && <p class="mt-2 text-sm text-red-700 dark:text-red-300">{p.blocked}</p>}
     {used.length > 0 && <div data-testid="rep-used" role="status" class="mt-3 rounded-lg border border-teal-600 bg-teal-50 p-3 dark:border-teal-500 dark:bg-teal-950">

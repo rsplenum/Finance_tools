@@ -1,4 +1,4 @@
-// API Worker (D-TECH-01): a health route and POST /read (U1, D-UX-48). Razorpay orders, webhook checks and download tokens come later.
+// API Worker (D-TECH-01): a health route, POST /read (U1, D-UX-48) and POST /e (UD1, D-TECH-37) with its nightly prune. Razorpay orders, webhook checks and download tokens come later.
 // The two IDs are placeholders. Create the D1 database and the KV namespace in the Cloudflare dashboard and put their
 // IDs here (IDs are not secrets). Secrets never go in this file: use `wrangler secret put` or the dashboard.
 {
@@ -9,12 +9,15 @@
   "compatibility_date": "2026-09-26",
   "workers_dev": true,
   "preview_urls": true,
-  "observability": { "enabled": true },
+  // Invocation logs are off: they would keep each request's headers, an IP among them (D-TECH-37). Errors still log.
+  "observability": { "enabled": true, "logs": { "enabled": true, "invocation_logs": false } },
+  // UD1: rows of interaction data older than 400 days are deleted at 03:17 UTC each night.
+  "triggers": { "crons": ["17 3 * * *"] },
   "d1_databases": [
-    { "binding": "DB", "database_name": "finance-tools", "database_id": "00000000-0000-0000-0000-000000000000" }
+    { "binding": "DB", "database_name": "finance-tools", "database_id": "00000000-0000-0000-0000-000000000000", "migrations_dir": "migrations" }
   ],
   // Reading statements (D-UX-48): the model, its effort (empty for a model without one), reads per address and in all
-  // per day (the owner pays for each), and the site origins allowed to call from another host ("." starts a subdomain suffix; never ".pages.dev", which admits anyone's site).
+  // per day (the owner pays for each), and the site origins allowed to call from another host (POST /e takes batches only from these too) ("." starts a subdomain suffix; never ".pages.dev", which admits anyone's site).
   // The ANTHROPIC_API_KEY is a secret: `wrangler secret put ANTHROPIC_API_KEY`. Without it /read answers 503.
   "vars": {
     "READ_MODEL": "claude-opus-5-5",

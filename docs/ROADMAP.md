@@ -6,9 +6,10 @@ Sizes come from HANDOFF: S is about 60 steps or 15 minutes, M about 120 or 30, L
 
 | # | Row | Size | Needs from the owner first |
 |---|---|---|---|
-| 1 | **UD1 Interaction data** (D-TECH-37): the site records which steps are used, never what is typed; `npm run usage` prints each page's funnel | L, high | nothing; it starts recording once the Worker is live (row 2) |
+| 1 | **UD1 Interaction data** (D-TECH-37, D-TECH-38): done 12-10-2026; records once the Worker is live (row 2) | L, high | — |
 | 2 | **DEP1 Worker live**: D1 and KV created, UD1 recording on; U1's reading on if a key is set | S, high | the D1 and KV IDs (`docs/CLOUDFLARE.md` §2); an Anthropic key only if U1 is to be on |
 | 3 | **LEGAL1 Policy pages**: privacy, terms, a "not advice" line, refunds and contact, linked from every footer (Razorpay asks for all of them). AI drafts, marked as drafts | M, high | the business name and a contact email; the lawyer reads them together with `docs/TRADEMARKS.md` |
+| 3b | **DT1 Design team** (proposed 12-10-2026, waits on the owner's yes): `docs/DESIGN.md` (principles, the look as tokens, the shared parts, do and don't, borrowing proven public form patterns such as the GOV.UK Design System's), two agents in `.claude/agents/` (a designer that proposes and builds screens, and a critic that reviews screenshots at 390 px and a desktop, light and dark, against DESIGN.md, `brief-first` and WCAG 2.2 AA), automatic checks for contrast, tap-target size and text size in the site check, and `docs/DESIGN-LESSONS.md` that each review adds to. It learns through files: the funnels (UD1), your test notes (UX1) and your verdicts. UX1 to UX4 then run through it | M, Extra | your yes; a few sites you like the look of, as references |
 | 4 | **UX1 Research**: each tool and the home page audited at 390 px and on a desktop against `brief-first` and UD1's first funnels, plus a 20-minute test script for five people you pick (DSAs, borrowers, a CA) | M, high | you run the five tests, about 2 hours of your time |
 | 5 | **UX2 Design**: one look for the site (type, colour, spacing, the shared parts) and the home page | L, Extra | UX1's findings and your test notes |
 | 6 | **UX3** The look applied to the DSCR and CMA pages | M, high | — |

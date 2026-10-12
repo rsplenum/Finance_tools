@@ -7,6 +7,8 @@ import { SITE_NAME, pageTitle } from './site';
 
 interface Props { name?: string; description: string }
 const { name, description } = Astro.props;
+// Interaction data (UD1, D-TECH-37) is on once the Worker is live; the footer says what is counted only then.
+const counting = Boolean(import.meta.env.PUBLIC_API_URL) || import.meta.env.PUBLIC_EVENTS === 'on';
 ---
 <!doctype html>
 <html lang="en-IN">
@@ -30,6 +32,8 @@ const { name, description } = Astro.props;
     <main id="main" class="mx-auto max-w-3xl px-4 py-8"><slot /></main>
     <footer class="mx-auto max-w-3xl border-t border-slate-200 px-4 py-6 text-sm text-slate-600 dark:border-slate-800 dark:text-slate-400">
       Figures you type are worked out in your browser and are not sent to us.
+      {counting && <span data-testid="counted"> We count which steps are used (the page, which fields change by name, downloads, errors), never what you type, to make the tools better. No cookies.</span>}
     </footer>
+    <script>import { start } from './events'; start();</script>
   </body>
 </html>

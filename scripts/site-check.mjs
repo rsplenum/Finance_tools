@@ -57,8 +57,13 @@ for (const [dir, label] of [[fileURLToPath(new URL('../site/public/', import.met
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 
 /** Opens a page at 390 px. `stored` is a saved theme choice; `blockScripts` loads the page without its script files. */
-async function open(path, { scheme = 'light', stored, blockScripts = false, at = '2026-10-02T10:00:00+05:30' } = {}) {
+async function open(path, { scheme = 'light', stored, blockScripts = false, at = '2026-10-02T10:00:00+05:30', events } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: scheme });
+  // Interaction data (UD1): `events` collects each batch the page sends, as the live Worker would get it.
+  if (events) {
+    await ctx.addInitScript(() => { window.__EVENTS__ = '/api/e'; });
+    await ctx.route('**/api/e', (r) => { events.push(r.request().postData() ?? ''); return r.fulfill({ status: 204 }); });
+  }
   if (stored) await ctx.addInitScript((v) => { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('app-theme', v); sessionStorage.setItem('seeded', '1'); } }, stored);
   if (blockScripts) await ctx.route('**/*.js', (r) => r.abort());
   const page = await ctx.newPage();
@@ -1313,6 +1318,54 @@ const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await
   const due = await page.getByTestId('review-due').allTextContents();
   if (!due.includes('Due for review since 30-09-2027.')) v(`dscr.json's passed review-by date is not flagged on 01-10-2027 (seen: ${due.join(' | ') || 'none'})`);
   await ctx.close();
+}
+
+// Interaction data (UD1, D-TECH-37): the steps only, never what is typed. Case S typed on the front door, Make it viable,
+// its plan used, More options opened, a PDF and an Excel copy, a field marked wrong, then leaving: every batch has the
+// Worker's shape, holds each step, and holds none of the typed figures in any form. Built without the Worker's address
+// (as now), a page sends nothing.
+{
+  const { check } = await import('../worker/src/event-shape.ts');
+  const events = [];
+  const { ctx, page, v } = await open('/dscr/', { scheme: 'light', events });
+  const typed = { '#fld-fd-profit': '4.5 L', '#fld-fd-growth': '0', '#fld-fd-amount': '12 L', '#fld-fd-rate': '12.25', '#fld-fd-years': '5' };
+  await page.check('#fld-fd-borrower-firm');
+  for (const [sel, x] of Object.entries(typed)) await leave(page, sel, x);
+  await page.getByTestId('dscr-viable').click();
+  await leave(page, '#fld-dscr-ownMost', '1.37 L');
+  await page.getByTestId('dscr-plan-use').click();
+  await openMore(page);
+  for (const kind of ['pdf', 'xlsx']) {
+    const saved = page.waitForEvent('download');
+    await page.getByTestId(`download-${kind}`).click();
+    await saved;
+  }
+  await leave(page, '#fld-fd-amount', '1,23,45,678');
+  await leave(page, '#fld-fd-rate', 'twelve');
+  await page.waitForTimeout(100);
+  await page.evaluate(() => dispatchEvent(new Event('pagehide')));
+  await page.waitForTimeout(300);
+  const batches = events.map((b) => { try { return JSON.parse(b); } catch { return b; } });
+  for (const b of batches) { const r = check(b); if (!r.ok) v(`UD1: a batch the Worker would refuse (${r.why}): ${String(JSON.stringify(b)).slice(0, 120)}`); }
+  const steps = batches.flatMap((b) => b.ev ?? []).map((e) => (e.f ? `${e.e} ${e.f}` : e.e));
+  for (const want of ['open', 'field fld-fd-borrower', 'field fld-fd-amount', 'result dscr-status-ready', 'tap dscr-viable', 'tap dscr-plan-use',
+    'more more-options', 'download pdf', 'download xlsx', 'error fld-fd-rate']) if (!steps.includes(want)) v(`UD1: no "${want}" in the batches (seen: ${steps.join(', ').slice(-300)})`);
+  if (!steps.at(-1)?.startsWith('leave error-fld-')) v(`UD1: leaving does not name the last step, an error (seen: ${steps.at(-1)})`);
+  // The figures as typed, in digits, and as the page shows them; the times are left out, being the page's own.
+  const said = events.join('\n').replace(/"t":\d+/g, '');
+  for (const x of ['4.5 L', '450000', '4,50,000', '12 L', '1200000', '12,00,000', '12.25', '1.37 L', '137000', '1,37,000', '11,00,000', '1100000', '12345678', '1,23,45,678'])
+    if (said.includes(x)) v(`UD1: the typed or shown figure ${x} is in a batch`);
+  if (await page.getByTestId('counted').count()) v('UD1: the footer says steps are counted on a build without the Worker');
+  await ctx.close();
+  // A build without the Worker's address sends nothing.
+  const { ctx: c2, page: p2, v: v2 } = await open('/dscr/', { scheme: 'dark' });
+  let sent = 0;
+  p2.on('request', (r) => { if (r.method() === 'POST') sent++; });
+  await leave(p2, '#fld-fd-amount', '12 L');
+  await p2.evaluate(() => dispatchEvent(new Event('pagehide')));
+  await p2.waitForTimeout(200);
+  if (sent) v2(`UD1: ${sent} requests sent while the Worker is not live`);
+  await c2.close();
 }
 
 await browser.close();

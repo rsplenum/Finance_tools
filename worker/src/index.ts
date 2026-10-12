@@ -1,9 +1,11 @@
 /**
  * API Worker (D-TECH-01). A health route, and POST /read (U1, D-UX-48), which sends an audited statement's text lines
  * to an AI that only points to where each figure is printed; the figures are still worked in the browser by the engine,
- * and the lines are never logged or stored. Razorpay orders, webhook checks and download tokens come later. Every path
+ * and the lines are never logged or stored. POST /e (UD1, D-TECH-37) stores which steps a visit used, never what was
+ * typed, with a nightly cron deleting rows past 400 days. Razorpay orders, webhook checks and download tokens come later. Every path
  * also answers under /api, so the site can call it at its own /api/* (docs/OWNER.md).
  */
+import { events, prune } from './events';
 import { read, type ReadEnv } from './read';
 
 const BINDINGS = ['DB', 'KV'] as const;
@@ -17,11 +19,20 @@ export default {
       if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405, { allow: 'POST', ...cors });
       return read(req, env, (body, status, headers = {}) => json(body, status, { ...cors, ...headers }));
     }
+    if (pathname === '/e') {
+      if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405, { allow: 'POST' });
+      const r = await events(req, env, 'access-control-allow-origin' in cors);
+      for (const [k, v] of Object.entries(cors)) r.headers.set(k, v);
+      return r;
+    }
     if (pathname !== '/health') return json({ error: 'not found' }, 404);
     if (req.method !== 'GET' && req.method !== 'HEAD') return json({ error: 'method not allowed' }, 405, { allow: 'GET, HEAD' });
     // A missing binding is reported by name, never assumed present.
     const missing = BINDINGS.filter((b) => !env[b]);
     return json({ ok: missing.length === 0, missing }, missing.length ? 503 : 200);
+  },
+  async scheduled(_event, env) {
+    await prune(env);
   },
 } satisfies ExportedHandler<ReadEnv>;
 

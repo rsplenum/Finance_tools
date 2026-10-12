@@ -142,7 +142,7 @@ function Questions({ s, update, p, done }: { s: PlanState; update: Update; p: Pl
 function Answer({ v, update, heading }: { v: PlanView; update: Update; heading: { current: HTMLHeadingElement | null } }) {
   return <section id="pl-result" aria-labelledby="pl-result-h" class="mt-6">
     <h2 id="pl-result-h" ref={heading} tabIndex={-1} class="sr-only">The estimate</h2>
-    <p data-testid="pl-total" class={`text-3xl font-semibold tabular-nums ${INK}`}>Rs. {v.total}</p>
+    <p data-testid="pl-total" data-result={'ready'} class={`text-3xl font-semibold tabular-nums ${INK}`}>Rs. {v.total}</p>
     {v.range.text && <p data-testid="pl-range" class={`mt-1 text-sm ${INK}`}>{v.range.text}</p>}
     <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="tabular-nums">Rs. {v.perSqft}</span> a sq ft of {v.areaName.toLowerCase()}</p>
     <p data-testid="pl-rates" class={`mt-1 text-sm ${MUTED}`}>{v.ratesLine}</p>

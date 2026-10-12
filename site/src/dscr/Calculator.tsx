@@ -413,7 +413,7 @@ function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
       <div><dt class={`text-sm ${MUTED}`}>Each instalment</dt><dd data-testid="dscr-instalment" class="font-semibold tabular-nums">{p.loanLine.instalment}</dd></div>
       <div><dt class={`text-sm ${MUTED}`}>Interest over the whole loan</dt><dd data-testid="dscr-total-interest" class="font-semibold tabular-nums">{p.loanLine.totalInterest}</dd></div>
     </dl>}
-    <p data-testid="dscr-status" class={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.blocked
+    <p data-testid="dscr-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.blocked
       ? 'bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200' : p.needs.length
         ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200'}`}>
       {statusText(p)}
