@@ -1,6 +1,7 @@
 {
   "title": "Appliances",
   "date": "2026-10-02",
+  "reviewBy": "2027-04-02",
   "families": [
     { "id": "chimney", "name": "Kitchen chimney", "unit": "nos", "levels": ["ch-60", "ch-60", "ch-90", "ch-90", "ch-90"], "kind": "appliance" },
     { "id": "hob", "name": "Built-in hob", "unit": "nos", "levels": [null, "hb-builtin", "hb-builtin", "hb-builtin", "hb-builtin"], "kind": "appliance" },

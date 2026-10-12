@@ -17,6 +17,8 @@ import { LENDER } from '../../../engine/lender';
 import { parseMonth } from '../../../engine/parse';
 import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
+import DSCR_FILE from '../../../engine/data/dscr.json';
+import TAX_FILE from '../../../engine/data/tax.json';
 import { BUTTON, CellInput, Choice, HINT, Section, SourceNote, TextField } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
@@ -152,7 +154,7 @@ function Start({ s, update }: { s: State; update: Update }) {
           { value: 'choose', label: 'Choose each of the four', hint: 'For a lender who works it out differently.' },
         ]} />
     </div>
-    <SourceNote what="Where these methods come from">
+    <SourceNote what="Where these methods come from" reviewBy={DSCR_FILE.reviewBy}>
       {PRESETS.map((m) => <span key={m.id} class="mt-1 block"><b>{m.label}:</b> {m.source}. Dated {showDate(m.date)}.</span>)}
     </SourceNote>
     {s.method === 'choose' && OPTION_KEYS.map((k) => <Choice key={k} name={`fld-${k}`} legend={OPTIONS[k].question} options={choicesOf(k)}
@@ -283,7 +285,7 @@ function FigureRow({ s, group, years, update }: { s: State; group: RowDef[]; yea
     {mode === 'none'
       ? <p class={`mt-2 text-sm ${MUTED}`}>None in any year.</p>
       : shown.map((r) => <RowFields key={r.key} s={s} r={r} mode={mode as RowMode} years={years} update={update} titled={shown.length > 1} />)}
-    {r0.key === 'taxPct' && <SourceNote what="About these rates">{TAX_STATUS}
+    {r0.key === 'taxPct' && <SourceNote what="About these rates" reviewBy={TAX_FILE.reviewBy}>{TAX_STATUS}
       {BORROWERS.map((b) => <span key={b.id} class="mt-1 block"><b>{b.label}:</b> {b.law}. Sources (secondary): {b.source}. Dated {showDate(b.date)}; not yet checked.</span>)}
     </SourceNote>}
   </div>;
@@ -392,7 +394,7 @@ function TargetSection({ s, update }: { s: State; update: Update }) {
         Use {targetText(a.value)} and {targetText(m.value)}
       </button>
       <p class={HINT}>Commonly quoted examples, not a rule: each lender sets its own.{!(a.verified && m.verified) && ' Not yet checked against a published source.'}</p>
-      <SourceNote what="Where the examples come from">{a.source}. Dated {showDate(a.date)}.</SourceNote>
+      <SourceNote what="Where the examples come from" reviewBy={DSCR_FILE.reviewBy}>{a.source}. Dated {showDate(a.date)}.</SourceNote>
     </div>}
   </Section>;
 }

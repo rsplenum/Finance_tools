@@ -15,6 +15,7 @@ const checks = [
   ['skill pack', 'node portable/pack.mjs --check'],
   ['cost guard', 'node .claude/hooks/cost-guard.mjs --self-test'],
   ['doc sizes', 'node scripts/doc-sizes.mjs'],
+  ['review dates', 'node scripts/review-dates.mjs'],
   ['rules doc', 'npm run rules-doc'],
 ];
 

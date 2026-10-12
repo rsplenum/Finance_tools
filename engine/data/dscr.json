@@ -1,6 +1,7 @@
 {
   "title": "DSCR: how it is worked out",
   "date": "2026-09-30",
+  "reviewBy": "2027-09-30",
   "status": "Written from general practice by Claude. Not yet checked against a public worked example or confirmed by the owner; no figures, formats or norms from any employer (D-BIZ-02).",
   "formula": "DSCR for a year = cash available for debt service ÷ debt service in that year.",
   "components": {

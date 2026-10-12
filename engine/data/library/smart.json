@@ -1,6 +1,7 @@
 {
   "title": "Smart home and security",
   "date": "2026-10-02",
+  "reviewBy": "2027-04-02",
   "families": [
     { "id": "video-door-phone", "name": "Video door phone", "unit": "nos", "levels": [null, null, "vdp-unit", "vdp-unit", "vdp-unit"] },
     { "id": "smart-switch", "name": "Smart switches", "unit": "nos", "levels": [null, null, null, "sw-wifi", null] },

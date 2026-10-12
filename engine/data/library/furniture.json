@@ -1,6 +1,7 @@
 {
   "title": "Furniture and furnishings (movable)",
   "date": "2026-10-03",
+  "reviewBy": "2027-04-03",
   "status": "Movable items, in sections of their own: Furniture and Soft furnishings, on for Interiors and off for Repair and for a new house, as Appliances and Smart home are (the owner, D-UX-19). Lenders treat them apart from fixed works. Where the library has nothing above a level yet, its highest item stands for the levels above, and its note says so.",
   "families": [
     { "id": "sofa", "name": "Sofa", "unit": "nos", "levels": ["sf-entry", "sf-mid", "sf-premium", "sf-luxury", "sf-bespoke"], "kind": "movable" },

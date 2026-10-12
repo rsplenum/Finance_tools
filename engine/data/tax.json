@@ -1,7 +1,8 @@
 {
   "title": "Tax by borrower",
   "date": "2026-10-01",
-  "status": "Rates for tax year 2026-27 (April 2026 to March 2027), the first under the Income-tax Act, 2025. Public summaries say the Finance Act, 2026 kept the rates of FY 2025-26. Secondary sources only, not yet checked against the Act or the Finance Act: the official sites (incometaxindia.gov.in, incometax.gov.in, indiabudget.gov.in, egazette.gov.in) could not be opened from the session. Later years are taken at the same rates. Tax is worked out on profit before tax, nil on a loss, and not rounded to the nearest Rs. 10 as a return is. The borrower's CA confirms it; any other rate can be typed.",
+  "reviewBy": "2027-03-31",
+  "status": "Rates for tax year 2026-27 (April 2026 to March 2027), the first under the Income-tax Act, 2025. Public summaries say the Finance Act, 2026 kept the rates of FY 2025-26. Secondary sources only, not yet checked against the Act or the Finance Act: the official sites (incometaxindia.gov.in, incometax.gov.in, indiabudget.gov.in, egazette.gov.in) could not be opened from the session of 01-10-2026, and on 12-10-2026 (Q2) incometaxindia.gov.in refused this session (403 from its edge) and indiacode.nic.in timed out, so the rates stay as public summaries give them until the owner confirms them against the Act and the Finance Act, 2026. On 12-10-2026 the owner sent pages of the Act: they confirm the company's 22% (section 200(1)), the proprietor's slabs (section 202(1)'s Table) and the rebate to Rs. 12 lakh of Rs. 60,000 with its relief above (section 156(2) and (3)). The owner's pages of the Finance Bill, 2026 (section 2, rates of income-tax) give the 4% Health and Education Cess on income-tax and surcharge for the tax year 2026-27 (section 2(16)), and agree with the firm's 12% surcharge above Rs. 1 crore (section 2(2)'s Table, Sl. No. 5, and the Rs. 1 crore relief threshold for a firm in section 2(12)); a Bill, not the Act as passed. Still from public summaries: the firm's 30% and the slab surcharges, set in Part III of the First Schedule, not in the pages sent. Later years are taken at the same rates. Tax is worked out on profit before tax, nil on a loss, and not rounded to the nearest Rs. 10 as a return is. The borrower's CA confirms it; any other rate can be typed.",
   "borrowers": [
     {
       "id": "proprietor",
@@ -12,7 +13,7 @@
       "surcharge": [[5000000, 10], [10000000, 15], [20000000, 25]],
       "cess": 4,
       "law": "Section 202 (the new tax regime; section 115BAC of the 1961 Act) and section 156 (the rebate; section 87A of the 1961 Act) of the Income-tax Act, 2025; marginal relief just above the rebate's limit and at each surcharge threshold",
-      "source": "cleartax.in and axismaxlife.com slab tables for FY 2026-27; bajajfinserv.in on Budget 2026 (slabs unchanged); aubsp.com and caclubindia.com on the section 156 rebate and its marginal relief; taxguru.in on section 202; cleartax.in on surcharge and marginal relief",
+      "source": "The slabs: the Table of section 202(1); the rebate and its relief: section 156(2)(a) and (b) and 156(3); both of the Income-tax Act, 2025 as amended by the Finance Act, 2026, read on the copy the owner sent on 12-10-2026. The surcharge and cess: cleartax.in on surcharge and marginal relief, not yet checked against the Finance Act, 2026",
       "kind": "secondary",
       "date": "2026-10-01",
       "verified": false
@@ -38,7 +39,7 @@
       "surcharge": [[0, 10]],
       "cess": 4,
       "law": "Section 115BAA of the Income-tax Act, 1961; section 200 of the Income-tax Act, 2025",
-      "source": "taxmann.com and caalley.com rate charts for AY 2026-27; taxtmi.com on section 200",
+      "source": "The 22%: section 200(1) of the Income-tax Act, 2025 as amended by the Finance Act, 2026, read on the copy the owner sent on 12-10-2026. The surcharge and cess: taxmann.com and caalley.com rate charts for AY 2026-27, not yet checked against the Act",
       "kind": "secondary",
       "date": "2026-09-30",
       "verified": false

@@ -57,13 +57,13 @@ for (const [dir, label] of [[fileURLToPath(new URL('../site/public/', import.met
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 
 /** Opens a page at 390 px. `stored` is a saved theme choice; `blockScripts` loads the page without its script files. */
-async function open(path, { scheme = 'light', stored, blockScripts = false } = {}) {
+async function open(path, { scheme = 'light', stored, blockScripts = false, at = '2026-10-02T10:00:00+05:30' } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: scheme });
   if (stored) await ctx.addInitScript((v) => { if (!sessionStorage.getItem('seeded')) { localStorage.setItem('app-theme', v); sessionStorage.setItem('seeded', '1'); } }, stored);
   if (blockScripts) await ctx.route('**/*.js', (r) => r.abort());
   const page = await ctx.newPage();
   // A fixed day, so the front door's "this month" (October 2026) and the documents' dates never depend on when this runs.
-  await page.clock.setFixedTime(new Date('2026-10-02T10:00:00+05:30'));
+  await page.clock.setFixedTime(new Date(at));
   const v = (m) => violations.push(`${path} (${scheme}${stored ? `, saved ${stored}` : ''}${blockScripts ? ', no scripts' : ''}): ${m}`);
   page.on('pageerror', (e) => v(`script error: ${e.message}`));
   if (!blockScripts) {
@@ -1299,6 +1299,19 @@ const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await
   await page.setInputFiles('#read-file', { name: 'scan.pdf', mimeType: 'application/pdf', buffer: Buffer.from(scan) });
   await expectText(page, v, 'read-said', 'This looks scanned: type the figures, or upload the text PDF your CA sends.', 'a scanned statement');
   if (sent) v('a scanned statement was sent to the reader');
+  await ctx.close();
+}
+
+// Review-by dates (Q2, D-DATA-19): nothing is flagged while in time; a year on, dscr.json's and tax.json's passed dates show beside their sources.
+{
+  const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  if (await page.getByTestId('review-due').count()) v('a source is flagged due for review on 02-10-2026');
+  await ctx.close();
+}
+{
+  const { ctx, page, v } = await open('/dscr/', { scheme: 'light', at: '2027-10-01T10:00:00+05:30' });
+  const due = await page.getByTestId('review-due').allTextContents();
+  if (!due.includes('Due for review since 30-09-2027.')) v(`dscr.json's passed review-by date is not flagged on 01-10-2027 (seen: ${due.join(' | ') || 'none'})`);
   await ctx.close();
 }
 

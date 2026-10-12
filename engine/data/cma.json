@@ -1,6 +1,7 @@
 {
   "title": "CMA data for a working-capital limit",
   "date": "2026-10-11",
+  "reviewBy": "2027-10-11",
   "status": "Set by Claude at the owner's request (C1, D-UX-46): the borrower's own figures, typed, for three audited years, this year's estimate and next year's projection; the limit by the turnover method for limits up to Rs. 5 crore. The turnover method's shares were read through search results only, from two banks' published MSME policies; their pages were refused here, so they are as reported, not checked against the page. Lenders apply their own norms.",
   "years": [
     { "id": "a1", "kind": "audited" },

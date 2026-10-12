@@ -1,6 +1,7 @@
 {
   "title": "Project report",
   "date": "2026-10-02",
+  "reviewBy": "2027-10-02",
   "status": "How a project report for a term loan with working capital is worked out here, in the form chartered accountants commonly use for small and medium enterprises. Set by Claude at the owner's request (02-10-2026); the depreciation rates and the working-capital methods are as described in public sources, not checked against the primary texts from here.",
   "heads": [
     { "id": "land", "label": "Land", "depreciationPct": 0 },

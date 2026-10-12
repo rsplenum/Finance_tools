@@ -7,6 +7,7 @@
  * architect-check.ts prices every item a second way. Some families carry teaching notes, and the sections where to spend
  * and where to save (T1, notes.json): words for the page's Why?, never an amount.
  */
+import { earliest } from './review';
 import SOURCES from './data/sources.json';
 import LABOUR from './data/library/labour.json';
 import CIVIL from './data/library/civil.json';
@@ -81,6 +82,8 @@ export const SOURCE: Record<string, Source> = SOURCES.sources;
 export const CLASSES: Record<string, string> = SOURCES.classes;
 export const LIBRARY_DATE = SOURCES.date;
 export const LIBRARY_STATUS = SOURCES.status;
+/** The day the library's prices are next due for a review: the earliest of its files' (Q2, D-DATA-19). */
+export const LIBRARY_REVIEW_BY = earliest([SOURCES, LABOUR, NOTES_FILE, ...FILES].map((f) => (f as { reviewBy: string }).reviewBy));
 /** The teaching notes by family, and where to spend and where to save by section, in the estimate's order (T1). */
 export const NOTES = new Map<string, FamilyNotes>(Object.entries(NOTES_FILE.families as Record<string, FamilyNotes>));
 export const SPEND_SAVE = NOTES_FILE.spendSave as SpendSave[];

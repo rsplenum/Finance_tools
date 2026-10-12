@@ -7,6 +7,7 @@
  * While anything is missing the document says provisional and lists it; its own facts are asked beside the download, once.
  */
 import DSCR from '../../../engine/data/dscr.json';
+import { overdueNote, todayIso } from '../../../engine/review';
 import { LENDER } from '../../../engine/lender';
 import { COMPONENTS, OPTIONS, PLAN_SERVICE, componentsOf, targetNeeds, type Component, type Definition } from '../../../engine/dscr';
 import { parseMonth } from '../../../engine/parse';
@@ -134,7 +135,7 @@ function methodBlocks(s: State, p: Preview, def: Definition): Block[] {
       `The average: ${lower(choiceLabel(def, 'average'))}. The lowest year is the lowest DSCR among the years counted.`,
     ] },
   ];
-  if (preset) out.push({ kind: 'text', text: `Source: ${sourceForLender(preset.source)}. Dated ${dmy(preset.date)}.`, small: true });
+  if (preset) out.push({ kind: 'text', text: `Source: ${sourceForLender(preset.source)}. Dated ${dmy(preset.date)}. ${overdueNote(DSCR.reviewBy, todayIso())}`.trim(), small: true });
   return out;
 }
 
