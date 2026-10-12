@@ -624,6 +624,46 @@ async function layout(page, v, step) {
   await ctx.close();
 }
 
+// Make it viable on the front door (MV5, D-UX-57): fictional case S, worked by hand in tests/dscr-plan.test.ts (a firm,
+// Rs. 4,50,000 this year with no growth, Rs. 12,00,000 at 12% for 5 years). The bars with the cash short, the engine's
+// plan (20 more instalments), the borrower's most (all of it, then 10 more), "Use this plan" writing the loan and the
+// term only, and Undo; the front door still asks 8.
+{
+  const { ctx, page, v } = await open('/dscr/', { scheme: 'dark' });
+  await page.check('#fld-fd-borrower-firm');
+  await leave(page, '#fld-fd-profit', '4.5 L');
+  await leave(page, '#fld-fd-growth', '0');
+  await leave(page, '#fld-fd-amount', '12 L');
+  await leave(page, '#fld-fd-rate', '12');
+  await leave(page, '#fld-fd-years', '5');
+  await expectText(page, v, 'dscr-short-average', 'Short by Rs. 4,19,502 of cash to pay the loan, in total over the loan.', 'case S');
+  await expectText(page, v, 'dscr-short-lowest', 'Short by Rs. 63,148 of cash to pay the loan in 2030-31.', 'case S');
+  await page.getByTestId('dscr-viable').click();
+  await expectText(page, v, 'dscr-plan-steps', '80 monthly instalments, 6 years 8 months in all (now 5 years), if the lender agrees.', 'case S\'s plan');
+  await expectText(page, v, 'dscr-plan-verdict', 'With these changes it meets the target.', 'case S\'s plan');
+  await expectText(page, v, 'dscr-move-cut', 'As typed', 'case S\'s plan');
+  await expectText(page, v, 'dscr-text-cut', 'A loan of Rs. 9,78,928, the largest on these terms, meets the target: you bring the rest, or buy less.', 'case S, the loan alone');
+  await expectText(page, v, 'dscr-text-profit', /^This year’s profit before interest, depreciation and tax of Rs\. 5,51,624, /, 'case S, the profit alone');
+  await leave(page, '#fld-dscr-ownMost', '1 L');
+  await expectText(page, v, 'dscr-plan-own', 'You bring Rs. 1,00,000 in place of the loan, within the Rs. 1,00,000 you can.', 'case S with 1 L of the borrower\'s own');
+  await expectText(page, v, 'dscr-move-more', '+10 instalments', 'case S with 1 L of the borrower\'s own');
+  await layout(page, v, 'case S\'s plan, 390 px');
+  await page.getByTestId('dscr-plan-use').click();
+  await expectValue(page, v, '#fld-fd-amount', '11,00,000', 'case S\'s plan used');
+  await expectValue(page, v, '#fld-fd-years', '5.83', 'case S\'s plan used');
+  await expectText(page, v, page.locator('#fld-fd-amount-hint'), 'Changed by the plan; it was 12,00,000.', 'case S\'s plan used');
+  await expectText(page, v, page.locator('#fld-fd-years-hint'), 'Changed by the plan; it was 60 instalments.', 'case S\'s plan used');
+  await expectText(page, v, 'dscr-verdict', /^Meets the target/, 'case S\'s plan used');
+  if (await page.getByTestId('dscr-levels').count()) v('case S still shows why it does not work after its plan is used');
+  await page.getByTestId('dscr-undo').click();
+  await expectValue(page, v, '#fld-fd-amount', '12,00,000', 'case S\'s plan undone');
+  await expectValue(page, v, '#fld-fd-years', '5', 'case S\'s plan undone');
+  if (await page.getByTestId('dscr-used').count()) v('Undo left the banner of the plan used');
+  const fields = await page.locator('#front-door input[type="text"]').count() + await page.locator('#front-door fieldset').count();
+  if (fields !== 8) v(`MV5: the front door asks ${fields} fields; want 8`);
+  await ctx.close();
+}
+
 // The planning estimate (E1, E3, A3, A8, V1): six questions and no other field, then the answer first; a line for every
 // section, ten on for a renovation and ten for interiors with Furniture and Soft furnishings (D-UX-19); a slider and what
 // it changed, the strip, Compare, the rooms (a size and a level of one's own) and the item drawer; the downloads read

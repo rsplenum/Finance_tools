@@ -13,7 +13,9 @@ import {
   type Target, type YearFigures, type Plan,
 } from '../../../engine/dscr';
 import { LENDER, auditedYear, cashCheck, promotersRepaid, stressTests, type AuditedInput, type LenderYear, type Summary } from '../../../engine/lender';
-import { fyOf } from '../../../engine/loan';
+import { PERIOD_MONTHS, fyOf, monthAfter, type LoanTerms } from '../../../engine/loan';
+import type { DscrCase } from '../../../engine/dscr-plan';
+import { LEVELS } from '../../../engine/ratios';
 import { emisByYear, fromMonth, series, type RunningLoan } from '../../../engine/project';
 import { parseAmount, parseMonth } from '../../../engine/parse';
 import { BORROWERS, borrowerOf, taxSummary } from '../../../engine/tax';
@@ -69,6 +71,8 @@ export interface State {
   door?: { month: string };
   /** What only the document needs: asked beside the download, taken once for the PDF, the Excel copy and the Word copy. */
   doc: DocFacts;
+  /** Make it viable (MV5): the most the borrower can bring in, typed on the board only. */
+  ownMost?: string;
   /** D1, the lenders' tests, under More options; absent until one is typed (D-UX-47). */
   lender?: LenderText;
 }
@@ -462,7 +466,7 @@ export interface Preview {
 }
 
 /** A DSCR line beside the borrower's: average and lowest year, `below` under 1.00 (the cash does not cover the debt service). */
-export interface LenderLine { label: string; average: string; lowest: string; lowestYear: string; below: boolean; meets?: boolean }
+export interface LenderLine { label: string; average: string; lowest: string; lowestYear: string; below: boolean; meets?: boolean; low: number }
 export interface LenderView {
   /** The two stress lines, or what they need (`ask` when only sales are missing). */
   stress: LenderLine[]; ask?: string; needs: string[];
@@ -705,8 +709,14 @@ export function preview(s: State): Preview {
   else if ('blocked' in most) p.blocked = most.blocked;
 
   if (amount !== undefined) {
-    const few = shortestRepayment(proj, { ...loan, instalments: undefined }, def, target, y.start);
-    if ('instalments' in few) p.fewest = {
+    // On the front door the later years follow the growth, so the repayment may run past the years shown, within the
+    // longest term (MV5: the same years as Make it viable).
+    const long = dscrCaseOf(s)?.proj, past = !!long && long.length > proj.length;
+    const few = shortestRepayment(long ?? proj, { ...loan, instalments: undefined }, def, target, y.start);
+    if (past && ('none' in few || ('instalments' in few
+      && (loan.moratoriumMonths ?? 0) + few.instalments * PERIOD_MONTHS[loan.frequency ?? 'monthly'] > LEVELS.term.longestMonths))) {
+      p.fewest = { text: `No repayment within ${LEVELS.term.longestMonths} months meets the target.` };
+    } else if ('instalments' in few) p.fewest = {
       text: `The fewest instalments for ${rs(amount)} are ${few.instalments} ${loan.frequency === 'quarterly' ? 'quarterly' : 'monthly'}.`,
       ...(few.instalments !== loan.instalments ? { instalments: few.instalments } : {}),
     };
@@ -714,6 +724,32 @@ export function preview(s: State): Preview {
     else if ('blocked' in few) p.blocked = few.blocked;
   }
   return p;
+}
+
+// ---- Make it viable (MV5, D-UX-57) ----
+
+/** The projections for the given years, or none while any row needs a figure for them. */
+function projFor(s: State, years: string[]): ProjectionYear[] | undefined {
+  const rows = rowsOf(s), vals = rows.map((r) => rowValues(s, r, years));
+  if (vals.some((v) => v.needs.length || v.blocked)) return undefined;
+  const tax = rows.find((r) => r.key === 'taxPct'), taxBy = tax && modeOf(s, tax) === 'borrower' ? borrowerOf(s.borrower)?.id : undefined;
+  return years.map((fy, i) => ({ fy, ...Object.fromEntries(rows.map((r, k) => [r.key, vals[k].values[i]])), ...(taxBy ? { taxBy } : {}) }) as ProjectionYear);
+}
+
+/** The case "Make it viable" works on: the projections through the last year a 180-month term could reach (only the
+ * years shown while a row is typed year by year), once the loan, the method and the target are in. */
+export function dscrCaseOf(s: State): DscrCase | undefined {
+  const def = definitionOf(s), y = yearsOf(s), target = targetOf(s), l = loanInput(s);
+  if (s.source !== 'plan' || !complete(def) || !y.years.length || y.startNeeded || targetNeeds(target).length) return undefined;
+  if ([l.amount, l.ratePct, l.moratoriumMonths, l.instalments].some((x) => x === undefined || !Number.isFinite(x)) || !l.disbursed || !l.style || !l.frequency) return undefined;
+  const loan = l as LoanTerms, end = monthAfter(loan.disbursed, LEVELS.term.longestMonths - 1), last = fyOf(end.year, end.month);
+  const count = Number(last.slice(0, 4)) - Number(y.years[0].slice(0, 4)) + 1;
+  // A row typed year by year has no figure past the years typed: then only the years shown.
+  const long = projFor(s, fyRange(y.years[0], Math.max(y.years.length, count)));
+  const keys = long ? (Object.keys(long[0]) as (keyof ProjectionYear)[]).filter((k) => long[0][k] !== undefined) : [];
+  const full = long?.every((x) => keys.every((k) => x[k] !== undefined));
+  const proj = (full ? long : undefined) ?? projFor(s, y.years);
+  return proj && { proj, shown: y.years.length, loan, def, target, ...(y.start ? { start: y.start } : {}) };
 }
 
 // ---- DSCR as lenders test it (D1, D-UX-47) ----
@@ -735,7 +771,7 @@ function lenderLine(label: string, x: Summary, target?: Target): LenderLine | un
   const floor = LENDER.floor.value;
   return {
     label, average: ratioText(x.average, target?.average ?? floor), lowest: ratioText(x.minimum.dscr, target?.minimum ?? floor), lowestYear: x.minimum.fy,
-    below: x.minimum.dscr < floor, ...(target ? { meets: !shortfall({ ...x, notes: [] }, target) } : {}),
+    below: x.minimum.dscr < floor, low: x.minimum.dscr, ...(target ? { meets: !shortfall({ ...x, notes: [] }, target) } : {}),
   };
 }
 
