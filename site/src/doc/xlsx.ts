@@ -184,12 +184,12 @@ export function xlsxOf(doc: Doc, made: Date): Uint8Array<ArrayBuffer> {
   // The footer the PDF prints on every page is also said once, under the first title, with the note about the cells.
   const names = doc.parts.map((p) => p.name.replace(/[[\]:*?/\\]/g, ' ').slice(0, 31));
   const all = doc.parts.map((part, i) => sheetRows(part.blocks, i ? [] : [doc.footer, doc.workbookNote ?? ''].filter(Boolean)));
-  // A formula's {ref} or {Part!ref} becomes the cell in this column of the row so named.
+  // A formula's {ref} or {Part!ref} becomes the cell in this column of the row so named; {ref@3}, in the table's column 3.
   const rowOf = all.map((rows) => new Map(rows.flatMap((r, i) => (r.ref ? [[r.ref, i + 1] as const] : []))));
-  const resolve = (part: number) => (f: string, col: string) => f.replace(/\{(?:([^!}]+)!)?([^}]+)\}/g, (_, sheet: string | undefined, ref: string) => {
+  const resolve = (part: number) => (f: string, col: string) => f.replace(/\{(?:([^!}]+)!)?([^}@]+)(?:@(\d+))?\}/g, (_, sheet: string | undefined, ref: string, at?: string) => {
     const k = sheet === undefined ? part : doc.parts.findIndex((p) => p.name === sheet), n = rowOf[k]?.get(ref);
     if (n === undefined) throw new Error(`No row "${ref}" for a formula`);
-    return `${sheet === undefined ? '' : `'${names[k].replace(/'/g, "''")}'!`}${col}${n}`;
+    return `${sheet === undefined ? '' : `'${names[k].replace(/'/g, "''")}'!`}${at === undefined ? col : column(Number(at))}${n}`;
   });
   const sheets = all.map((rows, i) => sheetXml(doc, rows, shared, resolve(i)));
   const enc = (t: string) => new TextEncoder().encode(t);
