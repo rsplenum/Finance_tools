@@ -1,20 +1,22 @@
 /**
  * The DSCR statement as a document to download, one document written three times (site/src/doc/): a PDF for the lender,
  * an Excel copy for the accountant and a Word copy to edit. Laid out as a chartered accountant's statement (P1g): page 1
- * the whole working, signed; Annex 1 the basis; Annex 2 the repayment schedule. Built from the page's state and preview
+ * the whole working, signed; then the sensitivity analysis when the lenders' tests have figures (D1b); Annex 1 the basis;
+ * Annex 2 the repayment schedule; and in the Excel copy alone, a Check sheet of formulas. Built from the page's state and preview
  * only, reusing the statement and schedule views of model.ts: every figure is the engine's, and none is computed here.
  * While anything is missing the document says provisional and lists it; its own facts are asked beside the download, once.
  */
 import DSCR from '../../../engine/data/dscr.json';
+import { LENDER } from '../../../engine/lender';
 import { COMPONENTS, OPTIONS, PLAN_SERVICE, componentsOf, targetNeeds, type Component, type Definition } from '../../../engine/dscr';
 import { parseMonth } from '../../../engine/parse';
-import type { Block, Cell, Doc, Figure, KeyFigure, Part, Table } from '../doc/doc';
+import type { Block, Cell, Doc, Figure, KeyFigure, Part, Row, Table } from '../doc/doc';
 import { printable } from '../doc/pdf';
 import { SITE_NAME } from '../site';
 import {
   BORROWER_CHOICES, GROUP_TITLES, amountOf, definitionOf, loanRead, modeOf, monthText, numberOf, presetOf, rowsOf, runningLoan, statusText,
   targetOf, tidyAmount, yearsOf,
-  type DocFacts, type OptionKey, type Preview, type RowDef, type RowMode, type ScheduleView, type State, type StatementView, type Years,
+  type DocFacts, type LenderView, type OptionKey, type Preview, type RowDef, type RowMode, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 
 /** What the document needs that the page does not ask: the borrower's name and the lender, in letters the PDF prints. */
@@ -66,7 +68,7 @@ function statementTable(st: StatementView): Table {
       ...(st.total ? [{ label: 'Total', ...(st.total.sub ? { sub: st.total.sub } : {}) }] : [])],
     rows: st.lines.map((l) => (l.kind === 'head'
       ? { kind: 'head', cells: [{ text: l.label }] }
-      : { ...(l.kind ? { kind: l.kind } : {}), cells: [{ text: l.label }, ...l.values.map((v, i) => cell(v, l.n?.[i], kind(l))),
+      : { ...(l.kind ? { kind: l.kind } : {}), ...(l.id === 'available' || l.id === 'service' ? { ref: l.id } : {}), cells: [{ text: l.label }, ...l.values.map((v, i) => cell(v, l.n?.[i], kind(l))),
         ...(st.total ? [l.total ? cell(l.total.text, l.total.n, kind(l)) : { text: '' }] : [])] })),
   };
 }
@@ -224,6 +226,138 @@ function schedulePart(sch: ScheduleView): Part {
   };
 }
 
+// ---- The sensitivity analysis (D1b): the lenders' tests of D-UX-47 as the page shows them, and the Excel copy's check ----
+
+const STATEMENT = 'DSCR statement', SENSITIVITY = 'Sensitivity', CHECK = 'Check';
+/** An amount as the view words it, without its "Rs." (the table says rupees), and the engine's figure. */
+const money = (text: string, value: number, formula?: string): Cell => ({ text: text.replace(/^Rs\. /, ''), figure: { value, kind: 'amount', decimals: 0, ...(formula ? { formula } : {}) } });
+const ratio = (text: string, value: number | undefined, formula?: string): Cell => (value === undefined || !Number.isFinite(value) ? { text }
+  : { text, figure: { value, kind: 'ratio', decimals: (text.split('.')[1] ?? '').length, ...(formula ? { formula } : {}) } });
+/** A row of the check: 0 in each year it checks, from a formula that is 0 when the two figures agree. */
+const zero = (label: string, formula: string, has: boolean[]): Row => ({ cells: [{ text: label }, ...has.map((h) => (h ? ratio('0', 0, formula) : { text: '—' }))] });
+
+/** Whether the lenders' tests have a figure to show: a stress line, promoters' loans repaid, the cash check or the audited year. */
+const hasFigures = (v: LenderView) => v.stress.length > 0 || 'line' in v.promoters || (!!v.cash && 'rows' in v.cash) || (!!v.audited && 'rows' in v.audited);
+
+/** The page after page 1: each test as the page shows it, by line; our own tests, never the verdict (D-UX-47). */
+function sensitivityPart(v: LenderView, years: string[]): Part {
+  const lines = [...v.stress, ...('line' in v.promoters ? [v.promoters.line] : [])];
+  const blocks: Block[] = [
+    { kind: 'title', text: 'Sensitivity analysis', small: true },
+    { kind: 'text', text: "Our own tests beside the DSCR on page 1, not a lender's norm: each lender sets its own cases. They do not change the DSCR on page 1.", small: true },
+  ];
+  if (v.blocked) blocks.push({ kind: 'box', title: 'Not shown', items: [v.blocked] });
+  if (lines.length) {
+    const below = lines.filter((l) => l.below).map((l) => l.label);
+    blocks.push({ kind: 'heading', text: 'The DSCR under stress' }, { kind: 'table', table: {
+      columns: [{ label: 'Test' }, { label: 'Average' }, { label: 'Lowest year' }, { label: 'In' }],
+      rows: lines.map((l) => ({ cells: [{ text: l.label }, ratio(l.average, l.n.average), ratio(l.lowest, l.n.lowest), { text: l.lowestYear }] })),
+    } });
+    if (below.length) blocks.push({ kind: 'text', text: `In the lowest year the cash does not cover the debt service: ${below.join('; ')}.` });
+  }
+  const notes = [
+    ...(v.stress.length ? LENDER.stress.map((x) => `${x.label}: ${x.how}.`) : []),
+    ...(v.ask ? [`The DSCR with the ${LENDER.stress.map((c) => c.label.toLowerCase()).join(' and with ')} needs this year's sales.`] : []),
+    ...('assumed' in v.promoters ? [`${v.promoters.assumed}.`] : []),
+    ...(v.notStressed ? [`${v.notStressed}.`] : []),
+    ...(lines.length ? [`${LENDER.floor.why}.`] : []),
+  ];
+  if (notes.length) blocks.push({ kind: 'list', items: notes, small: true });
+  if (v.needs.length) blocks.push({ kind: 'box', title: 'Still needed for these tests', items: v.needs });
+  const across = (counted: boolean[]): Table['columns'] => [{ label: 'Rupees' }, ...years.map((fy, i) => (counted[i] ? { label: fy } : { label: fy, sub: 'not counted' }))];
+
+  if ('line' in v.promoters) {
+    const y = v.promoters.years;
+    blocks.push({ kind: 'heading', text: "Promoters' loans repaid, year by year" }, { kind: 'table', table: { columns: across(y.map((r) => r.counted)), rows: [
+      { cells: [{ text: 'Cash available (A)' }, ...y.map((r) => money(r.available, r.n.available))] },
+      { ref: 'promoters', cells: [{ text: "Promoters' loans repaid" }, ...y.map((r) => money(r.repaid, r.n.repaid))] },
+      { kind: 'total', cells: [{ text: "Debt service with them (B + promoters' loans)" }, ...y.map((r) => money(r.service, r.n.service))] },
+      { kind: 'ratio', ref: 'promotersDscr', cells: [{ text: 'DSCR (A ÷ B)' }, ...y.map((r) => ratio(r.dscr, r.n.dscr))] },
+    ] } });
+  }
+  const c = v.cash;
+  if (c && 'rows' in c) blocks.push({ kind: 'heading', text: 'Cash after working capital and replacement capex' }, { kind: 'text', text: c.text },
+    { kind: 'table', table: { columns: across(c.rows.map(() => true)), rows: [
+      { ref: 'cashAvailable', cells: [{ text: 'Cash available (A)' }, ...c.rows.map((r) => money(r.available, r.n.available))] },
+      { ref: 'cashWc', cells: [{ text: "Less: working capital's growth" }, ...c.rows.map((r) => money(r.wc, r.n.wc))] },
+      { ref: 'cashCapex', cells: [{ text: 'Less: replacement capex' }, ...c.rows.map((r) => money(r.capex, r.n.capex))] },
+      { ref: 'cashService', cells: [{ text: 'Less: debt service (B)' }, ...c.rows.map((r) => money(r.service, r.n.service))] },
+      { kind: 'total', ref: 'cashLeft', cells: [{ text: 'Cash left' }, ...c.rows.map((r) => money(r.left, r.n.left))] },
+      { kind: 'ratio', ref: 'cashCover', cells: [{ text: 'Cover: (A less working capital and capex) ÷ B' }, ...c.rows.map((r) => ratio(r.cover, r.n.cover))] },
+    ] } });
+  else if (c) blocks.push({ kind: 'box', title: 'The cash check still needs', items: c.needs });
+  const a = v.audited;
+  if (a && 'rows' in a) {
+    const pct = (r: { id: string }) => r.id === 'margin';
+    const fig = (text: string, n: number | undefined, r: { id: string }) => (n === undefined ? { text } : pct(r) ? ratio(text, n) : money(text.replace(/ \(.*\)$/, ''), n));
+    blocks.push({ kind: 'heading', text: 'The last audited year beside the first year of figures' }, { kind: 'table', table: {
+      columns: [{ label: 'Rupees' }, { label: a.fy, sub: 'audited' }, ...(a.nextFy ? [{ label: a.nextFy, sub: 'projected' }] : [])],
+      rows: a.rows.map((r) => ({ ref: `a_${r.id}`, ...(r.id === 'pbt' || r.id === 'accrual' ? { kind: 'total' as const } : {}),
+        cells: [{ text: r.label }, fig(r.audited, r.n, r), ...(a.nextFy ? [r.next === undefined ? { text: '' } : fig(r.next, r.nNext, r)] : [])] })),
+    } });
+    const growth = a.rows.find((r) => r.id === 'sales')?.next?.match(/\(([^)]*)\)$/)?.[1];
+    const said = [...(growth ? [`Sales growth into ${a.nextFy}: ${growth}.`] : []), ...a.flags.map((f) => `${f}.`)];
+    if (said.length) blocks.push({ kind: 'list', items: said, small: true });
+  }
+  else if (a) blocks.push({ kind: 'box', title: 'The last audited year still needs', items: a.needs });
+  return { name: SENSITIVITY, blocks };
+}
+
+/**
+ * The Excel copy's Check sheet (D-DOC-12, as on the CMA): the sensitivity figures whose arithmetic is plain, redone by
+ * formulas on the cells of the other sheets beside the engine's figure, with their differences of 0. The stress lines
+ * stay numbers: their tax is worked again by slab. Not in the PDF or the Word copy.
+ */
+function checkPart(v: LenderView, years: string[]): Part | undefined {
+  const blocks: Block[] = [];
+  const table = (heading: string, columns: Table['columns'], rows: Row[]) => blocks.push({ kind: 'heading', text: heading }, { kind: 'table', table: { columns, rows } });
+  const across: Table['columns'] = [{ label: 'Rupees' }, ...years.map((label) => ({ label }))];
+  if ('line' in v.promoters) {
+    const y = v.promoters.years, has = y.map((r) => r.n.dscr !== undefined);
+    table("Promoters' loans repaid", across, [
+      { ref: 'promotersDscr', cells: [{ text: "DSCR, redone: page 1's A ÷ (page 1's B + promoters' loans)" },
+        ...y.map((r) => ratio(r.dscr, r.n.dscr, `{${STATEMENT}!available}/({${STATEMENT}!service}+{${SENSITIVITY}!promoters})`))] },
+      zero('Difference (0 if they agree)', `{promotersDscr}-{${SENSITIVITY}!promotersDscr}`, has),
+    ]);
+  }
+  const c = v.cash;
+  if (c && 'rows' in c) {
+    const all = c.rows.map(() => true), has = c.rows.map((r) => r.n.cover !== undefined);
+    const S = (ref: string) => `{${SENSITIVITY}!${ref}}`;
+    table('Cash after working capital and replacement capex', across, [
+      zero("Cash available, page 1's less this test's (0 if they agree)", `{${STATEMENT}!available}-${S('cashAvailable')}`, all),
+      zero("Debt service, page 1's less this test's (0 if they agree)", `{${STATEMENT}!service}-${S('cashService')}`, all),
+      { ref: 'cashLeft', cells: [{ text: 'Cash left, redone: A less working capital, capex and B' },
+        ...c.rows.map((r) => money(r.left, r.n.left, `${S('cashAvailable')}-${S('cashWc')}-${S('cashCapex')}-${S('cashService')}`))] },
+      zero('Difference (0 if they agree)', `{cashLeft}-${S('cashLeft')}`, all),
+      { ref: 'cashCover', cells: [{ text: 'Cover, redone: (A less working capital and capex) ÷ B' },
+        ...c.rows.map((r) => ratio(r.cover, r.n.cover, `(${S('cashAvailable')}-${S('cashWc')}-${S('cashCapex')})/${S('cashService')}`))] },
+      zero('Difference (0 if they agree)', `{cashCover}-${S('cashCover')}`, has),
+    ]);
+  }
+  const a = v.audited;
+  if (a && 'rows' in a) {
+    const n = (id: string) => (a.rows.find((r) => r.id === id) as { n: number }).n, A = (id: string) => `{${SENSITIVITY}!a_${id}}`;
+    const redo = (id: string, label: string, formula: string, text: string): Row[] => [
+      { ref: `a_${id}`, cells: [{ text: label }, id === 'margin' ? ratio(text, n(id), formula) : money(text, n(id), formula)] },
+      zero('Difference (0 if they agree)', `{a_${id}}-${A(id)}`, [true]),
+    ];
+    const row = (id: string) => a.rows.find((r) => r.id === id)?.audited ?? '';
+    table('The last audited year', [{ label: 'Rupees' }, { label: a.fy, sub: 'audited' }], [
+      ...redo('pbt', 'Profit before tax, redone: that profit less depreciation and interest', `${A('pbdit')}-${A('depreciation')}-${A('interest')}`, row('pbt')),
+      ...redo('pat', 'Profit after tax, redone: profit before tax less tax', `${A('pbt')}-${A('tax')}`, row('pat')),
+      ...redo('accrual', 'Cash accrual, redone: profit after tax + depreciation', `${A('pat')}+${A('depreciation')}`, row('accrual')),
+      ...redo('margin', 'Margin, redone: that profit ÷ sales × 100', `${A('pbdit')}/${A('sales')}*100`, row('margin')),
+    ]);
+  }
+  if (!blocks.length) return undefined;
+  return { name: CHECK, sheetOnly: true, blocks: [
+    { kind: 'title', text: 'Check', small: true },
+    { kind: 'text', text: "The sensitivity figures whose arithmetic is plain, redone by formulas on the cells of the other sheets beside the engine's figures, with their differences. The stress lines stay numbers: their tax is worked again by slab.", small: true },
+    ...blocks,
+  ] };
+}
+
 /** Annex 1, the basis: the figures entered, each once, and how DSCR is worked out. */
 function basisPart(s: State, p: Preview, def: Definition, y: Years): Part {
   const entered = enteredPairs(s, p, y);
@@ -263,6 +397,8 @@ export function statementDoc(s: State, p: Preview, today: string): Doc | undefin
   if (notes.length) blocks.push({ kind: 'list', items: notes, small: true });
   const key = keyFigures(def, p);
   if (key.length) blocks.push({ kind: 'figures', items: key });
+  const lender = p.lender && hasFigures(p.lender) ? p.lender : undefined, check = lender && checkPart(lender, years);
+  if (lender) blocks.push({ kind: 'text', text: 'The sensitivity analysis on the next page tests this DSCR as a lender may; it does not change it.', small: true });
   blocks.push({ kind: 'signature', lines: [`For ${borrower || 'the borrower'}`, '', 'Authorised signatory', 'Date:', 'Place:'] });
 
   return {
@@ -270,9 +406,11 @@ export function statementDoc(s: State, p: Preview, today: string): Doc | undefin
     header: `DSCR statement${borrower ? ` · ${borrower}` : ''}`,
     ...(needs.length ? { mark: 'Provisional' } : {}),
     footer: `Made with ${SITE_NAME} on ${dmy(today)} from the figures entered; every figure worked out twice. Not a CA's certificate.`,
-    workbookNote: 'Each cell holds the exact figure worked out on the page, shown in whole rupees; there are no formulas.',
+    workbookNote: check ? "Each cell holds the exact figure worked out on the page, shown in whole rupees. The Check sheet redoes the sensitivity figures whose arithmetic is plain by formulas, beside the engine's figures, with their differences."
+      : 'Each cell holds the exact figure worked out on the page, shown in whole rupees; there are no formulas.',
     ...(by || borrower ? { author: by || borrower } : {}),
     creator: SITE_NAME,
-    parts: [{ name: 'DSCR statement', blocks }, basisPart(s, p, def, y), ...(p.schedule ? [schedulePart(p.schedule)] : [])],
+    parts: [{ name: STATEMENT, blocks }, ...(lender ? [sensitivityPart(lender, years)] : []), basisPart(s, p, def, y), ...(p.schedule ? [schedulePart(p.schedule)] : []),
+      ...(check ? [check] : [])],
   };
 }

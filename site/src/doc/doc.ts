@@ -40,8 +40,8 @@ export type Block =
   | { kind: 'table'; table: Table }
   | { kind: 'signature'; lines: string[] };
 
-/** A part is a sheet in the Excel copy, and starts a new page in the PDF and the Word copy. */
-export interface Part { name: string; blocks: Block[] }
+/** A part is a sheet in the Excel copy, and starts a new page in the PDF and the Word copy; `sheetOnly` (a check sheet of formulas) is in the Excel copy alone. */
+export interface Part { name: string; blocks: Block[]; sheetOnly?: boolean }
 
 export interface Doc {
   title: string;

@@ -466,16 +466,29 @@ export interface Preview {
 }
 
 /** A DSCR line beside the borrower's: average and lowest year, `below` under 1.00 (the cash does not cover the debt service). */
-export interface LenderLine { label: string; average: string; lowest: string; lowestYear: string; below: boolean; meets?: boolean; low: number }
+export interface LenderLine {
+  label: string; average: string; lowest: string; lowestYear: string; below: boolean; meets?: boolean; low: number;
+  /** The engine's figures behind the words, for the Excel copy. */
+  n: { average: number; lowest: number };
+}
+/** A year of the cash check in words, with the engine's figures in `n` (the cover absent where there is no debt service). */
+export interface CashRowView {
+  fy: string; available: string; wc: string; capex: string; service: string; left: string; cover: string; short: boolean;
+  n: { available: number; wc: number; capex: number; service: number; left: number; cover?: number };
+}
+/** A line of the last audited year beside the first year of figures; `n` and `nNext` the engine's figures (a margin in per cent). */
+export interface AuditedRowView { id: string; label: string; audited: string; next?: string; n: number; nNext?: number }
+/** A year of the DSCR with promoters' loans repaid: words, and the engine's figures in `n`. */
+export interface PromoterYearView { fy: string; counted: boolean; available: string; repaid: string; service: string; dscr: string; n: { available: number; repaid: number; service: number; dscr?: number } }
 export interface LenderView {
   /** The two stress lines, or what they need (`ask` when only sales are missing). */
   stress: LenderLine[]; ask?: string; needs: string[];
   notStressed?: string;
   /** Promoters' loans: the assumption while none is repaid, else the DSCR with the repayment counted. */
-  promoters: { assumed: string } | { line: LenderLine };
+  promoters: { assumed: string } | { line: LenderLine; years: PromoterYearView[] };
   /** Shown once any of its figures is typed. */
-  cash?: { rows: { fy: string; available: string; wc: string; capex: string; service: string; left: string; cover: string; short: boolean }[]; text: string } | { needs: string[] };
-  audited?: { fy: string; nextFy?: string; rows: { label: string; audited: string; next?: string }[]; flags: string[] } | { needs: string[] };
+  cash?: { rows: CashRowView[]; text: string } | { needs: string[] };
+  audited?: { fy: string; nextFy?: string; rows: AuditedRowView[]; flags: string[] } | { needs: string[] };
   blocked?: string;
 }
 
@@ -771,7 +784,7 @@ function lenderLine(label: string, x: Summary, target?: Target): LenderLine | un
   const floor = LENDER.floor.value;
   return {
     label, average: ratioText(x.average, target?.average ?? floor), lowest: ratioText(x.minimum.dscr, target?.minimum ?? floor), lowestYear: x.minimum.fy,
-    below: x.minimum.dscr < floor, low: x.minimum.dscr, ...(target ? { meets: !shortfall({ ...x, notes: [] }, target) } : {}),
+    below: x.minimum.dscr < floor, low: x.minimum.dscr, n: { average: x.average, lowest: x.minimum.dscr }, ...(target ? { meets: !shortfall({ ...x, notes: [] }, target) } : {}),
   };
 }
 
@@ -797,7 +810,12 @@ function lenderView(s: State, proj: ProjectionYear[], loan: LoanInput, def: Defi
   else if (pr && 'needs' in pr) v.needs.push(...pr.needs);
   else if (pr) {
     const line = lenderLine(LENDER.promoters.repaid, pr, target.average !== undefined && target.minimum !== undefined ? target : undefined);
-    if (line) v.promoters = { line };
+    const by = new Map(extra.map((e) => [e.fy, e.promoterLoans ?? 0]));
+    if (line) v.promoters = { line, years: pr.rows.map((r) => {
+      const repaid = by.get(r.fy) ?? 0;
+      return { fy: r.fy, counted: r.counted, available: rs(r.available), repaid: rs(repaid), service: rs(r.service), dscr: r.dscr === undefined ? '—' : ratioText(r.dscr, LENDER.floor.value),
+        n: { available: r.available, repaid, service: r.service, ...(r.dscr !== undefined ? { dscr: r.dscr } : {}) } };
+    }) };
   }
   if (l.wcPct.trim() || l.capex.trim()) {
     const c = cashCheck(plan, extra, numberOf(l.wcPct), amountOf(l.audited.sales));
@@ -807,6 +825,7 @@ function lenderView(s: State, proj: ProjectionYear[], loan: LoanInput, def: Defi
       rows: c.rows.map((r) => ({
         fy: r.fy, available: rs(r.available), wc: rs(r.wcGrowth), capex: rs(r.capex), service: rs(r.service), left: rs(r.left),
         cover: r.cover !== undefined ? ratioText(r.cover, LENDER.floor.value) : 'not counted', short: r.left < 0,
+        n: { available: r.available, wc: r.wcGrowth, capex: r.capex, service: r.service, left: r.left, ...(r.cover !== undefined ? { cover: r.cover } : {}) },
       })),
       text: c.short.length ? `Cash falls short of the instalments in ${andList(c.short)}, after working capital and replacement capex.`
         : `Cash covers the instalments every year, after working capital and replacement capex${c.lowest ? `: lowest cover ${ratioText(c.lowest.cover, LENDER.floor.value)} in ${c.lowest.fy}` : ''}.`,
@@ -823,15 +842,15 @@ function lenderView(s: State, proj: ProjectionYear[], loan: LoanInput, def: Defi
       v.audited = {
         fy: a.fy, ...(n ? { nextFy: n.fy } : {}), flags: a.flags,
         rows: [
-          { label: 'Sales', audited: rs(a.sales), ...(n ? { next: `${rs(sales[i] as number)} (${n.salesGrowth >= 0 ? '+' : ''}${pct1(n.salesGrowth)})` } : {}) },
-          { label: PROJECTION_LABELS.pbdit, audited: rs(a.pbdit), ...(n && f ? { next: rs(f.pbdit as number) } : {}) },
-          { label: 'Margin (that profit ÷ sales)', audited: pct1(a.margin), ...(n ? { next: pct1(n.margin) } : {}) },
-          { label: 'Depreciation', audited: rs(a.depreciation) },
-          { label: 'Interest', audited: rs(a.interest) },
-          { label: 'Profit before tax', audited: rs(a.pbt) },
-          { label: 'Tax', audited: rs(a.tax) },
-          { label: 'Profit after tax', audited: rs(a.pat) },
-          { label: 'Cash accrual (profit after tax + depreciation)', audited: rs(a.accrual) },
+          { id: 'sales', label: 'Sales', audited: rs(a.sales), n: a.sales, ...(n ? { next: `${rs(sales[i] as number)} (${n.salesGrowth >= 0 ? '+' : ''}${pct1(n.salesGrowth)})`, nNext: sales[i] as number } : {}) },
+          { id: 'pbdit', label: PROJECTION_LABELS.pbdit, audited: rs(a.pbdit), n: a.pbdit, ...(n && f ? { next: rs(f.pbdit as number), nNext: f.pbdit as number } : {}) },
+          { id: 'margin', label: 'Margin (that profit ÷ sales)', audited: pct1(a.margin), n: a.margin * 100, ...(n ? { next: pct1(n.margin), nNext: n.margin * 100 } : {}) },
+          { id: 'depreciation', label: 'Depreciation', audited: rs(a.depreciation), n: a.depreciation },
+          { id: 'interest', label: 'Interest', audited: rs(a.interest), n: a.interest },
+          { id: 'pbt', label: 'Profit before tax', audited: rs(a.pbt), n: a.pbt },
+          { id: 'tax', label: 'Tax', audited: rs(a.tax), n: a.tax },
+          { id: 'pat', label: 'Profit after tax', audited: rs(a.pat), n: a.pat },
+          { id: 'accrual', label: 'Cash accrual (profit after tax + depreciation)', audited: rs(a.accrual), n: a.accrual },
         ],
       };
     }
