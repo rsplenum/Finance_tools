@@ -10,17 +10,23 @@ import { EXAMPLE } from './example';
 
 export interface CmaFacts { name: string; preparedBy: string }
 export type Grid = Record<YearId, Record<HeadId, string>>;
-export interface CmaState { startYear: number; figures: Grid; existingLimit: string; quasi: boolean; doc: CmaFacts }
+/** `loanCase`: a fresh or enhanced limit, or a renewal, which sets a lender's levels (D-UX-51), unset until the borrower
+ * says; `collateral`, its market value (More options); `promotersMost`, the most they can bring in all, for the plan. */
+export interface CmaState {
+  startYear: number; figures: Grid; existingLimit: string; quasi: boolean; doc: CmaFacts;
+  loanCase: '' | 'fresh' | 'renewal'; collateral: string; promotersMost: string;
+}
 
 /** The year now running starts in April: in January to March it is the one that began last April. */
 export const startYearOf = (d: Date) => d.getFullYear() - (d.getMonth() < 3 ? 1 : 0);
 const blankYear = () => Object.fromEntries(HEADS.map((h) => [h.id, ''])) as Record<HeadId, string>;
 export const emptyState = (startYear: number): CmaState => ({
   startYear, figures: Object.fromEntries(YEARS.map((y) => [y.id, blankYear()])) as Grid, existingLimit: '', quasi: false, doc: { name: '', preparedBy: '' },
+  loanCase: '', collateral: '', promotersMost: '',
 });
 /** Case K (tests/cma.test.ts), typed in for the years from `startYear`, to try the page. */
 export const exampleState = (s: CmaState): CmaState => ({
-  ...s, existingLimit: inr(EXAMPLE.existingLimit),
+  ...s, existingLimit: inr(EXAMPLE.existingLimit), loanCase: 'fresh',
   figures: Object.fromEntries(YEARS.map((y, k) => [y.id, Object.fromEntries(HEADS.map((h) => [h.id, inr(EXAMPLE.rows[h.id][k] * 100000)]))])) as Grid,
 });
 export { ASSUMPTIONS, HEADS, YEARS };
@@ -37,7 +43,8 @@ export function inputOf(s: CmaState): CmaInput {
     // A figure typed but not understood is NaN, so the engine asks it again; a blank stays blank.
     if (typed.length) figures[y.id] = Object.fromEntries(typed.map((h) => [h.id, amountOf(row[h.id]) ?? NaN]));
   }
-  return { startYear: s.startYear, figures, existingLimit: amountOf(s.existingLimit), quasiEquity: s.quasi };
+  const collateral = s.collateral.trim() ? amountOf(s.collateral) ?? NaN : undefined;
+  return { startYear: s.startYear, figures, existingLimit: amountOf(s.existingLimit), quasiEquity: s.quasi, ...(collateral !== undefined ? { collateral } : {}) };
 }
 
 // ---- Forms I to VI and the ratios, for the page and the document alike ----

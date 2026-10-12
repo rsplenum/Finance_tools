@@ -1,7 +1,7 @@
 {
   "title": "The lender's benchmark ratios",
   "date": "2026-10-11",
-  "status": "The levels a project's ratios are read against, each in its worst year (D-UX-51), and the values of the collateral (D-UX-52). The owner's figures (11-10-2026): only the benchmark level, no relaxation or deviation; each lender sets its own.",
+  "status": "The levels a project's ratios, and the CMA's estimated and projected years, are read against, each in its worst year (D-UX-51; how on the CMA: `cmaHow`, D-UX-56), and the values of the collateral (D-UX-52). The owner's figures (11-10-2026): only the benchmark level, no relaxation or deviation; each lender sets its own.",
   "source": "The owner's benchmarks, said to follow RBI; not yet checked against an RBI publication",
   "verified": false,
   "cases": {
@@ -9,14 +9,14 @@
     "renewal": "An existing loan on review or renewal"
   },
   "ratios": [
-    { "id": "currentRatio", "label": "Current ratio", "at": "least", "fresh": 1.10, "renewal": 1.00, "how": "(stock + debtors + cash) ÷ (the working-capital limit + creditors), at each year's end" },
-    { "id": "tolTnw", "label": "Total outside liabilities ÷ net worth", "at": "most", "fresh": 5, "renewal": 6, "how": "(unsecured loans + the term loan + the working-capital limit + creditors) ÷ net worth" },
-    { "id": "debtEquity", "label": "Term loan ÷ net worth (debt-equity)", "at": "most", "fresh": 4, "renewal": 4, "how": "the term loan outstanding ÷ net worth" },
-    { "id": "dscrAverage", "label": "Average DSCR", "at": "least", "fresh": 1.50, "renewal": 1.50, "how": "total cash available ÷ total debt service, over the loan" },
-    { "id": "dscrLowest", "label": "DSCR in the lowest year", "at": "least", "fresh": 1.25, "renewal": 1.25, "how": "the year's cash available ÷ its debt service" },
-    { "id": "interestCover", "label": "Interest cover", "at": "least", "fresh": 1.50, "renewal": 1.25, "how": "(profit before tax + all interest) ÷ all interest" },
-    { "id": "facr", "label": "Fixed-asset cover", "at": "least", "fresh": 1.20, "renewal": 1.20, "how": "net fixed assets ÷ the term loan outstanding" },
-    { "id": "securityCover", "label": "Security cover", "at": "least", "fresh": 1.20, "renewal": 1.20, "how": "(net fixed assets + stock + debtors + the collateral's realisable sale value) ÷ (the term loan + the working-capital limit outstanding)" }
+    { "id": "currentRatio", "label": "Current ratio", "at": "least", "fresh": 1.10, "renewal": 1.00, "how": "(stock + debtors + cash) ÷ (the working-capital limit + creditors), at each year's end", "cmaHow": "current assets ÷ current liabilities (the bank's working-capital borrowing, creditors, term loans due within 12 months and the rest), at each year's end" },
+    { "id": "tolTnw", "label": "Total outside liabilities ÷ net worth", "at": "most", "fresh": 5, "renewal": 6, "how": "(unsecured loans + the term loan + the working-capital limit + creditors) ÷ net worth", "cmaHow": "all outside liabilities ÷ net worth" },
+    { "id": "debtEquity", "label": "Term loan ÷ net worth (debt-equity)", "at": "most", "fresh": 4, "renewal": 4, "how": "the term loan outstanding ÷ net worth", "cmaHow": "term liabilities (term loans beyond 12 months, and promoters' loans unless counted as the owners' funds) ÷ net worth" },
+    { "id": "dscrAverage", "label": "Average DSCR", "at": "least", "fresh": 1.50, "renewal": 1.50, "how": "total cash available ÷ total debt service, over the loan", "cmaHow": "the two years' (net profit + depreciation + term-loan interest) ÷ their (term-loan interest + the term loans due within 12 months at the year before's end)" },
+    { "id": "dscrLowest", "label": "DSCR in the lowest year", "at": "least", "fresh": 1.25, "renewal": 1.25, "how": "the year's cash available ÷ its debt service", "cmaHow": "the year's (net profit + depreciation + term-loan interest) ÷ (term-loan interest + the term loans due within 12 months at the year before's end)" },
+    { "id": "interestCover", "label": "Interest cover", "at": "least", "fresh": 1.50, "renewal": 1.25, "how": "(profit before tax + all interest) ÷ all interest", "cmaHow": "profit before interest, depreciation and tax ÷ all interest, as on the CMA's forms" },
+    { "id": "facr", "label": "Fixed-asset cover", "at": "least", "fresh": 1.20, "renewal": 1.20, "how": "net fixed assets ÷ the term loan outstanding", "cmaHow": "net fixed assets ÷ the term loans outstanding" },
+    { "id": "securityCover", "label": "Security cover", "at": "least", "fresh": 1.20, "renewal": 1.20, "how": "(net fixed assets + stock + debtors + the collateral's realisable sale value) ÷ (the term loan + the working-capital limit outstanding)", "cmaHow": "(net fixed assets + stock + debtors + the collateral's realisable sale value) ÷ (the term loans + the bank's working-capital borrowing)" }
   ],
   "collateral": {
     "rsvPct": 90,

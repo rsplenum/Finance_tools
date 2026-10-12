@@ -3,14 +3,18 @@
  * year now running and the projection for the next), and the working-capital limit now. Then Forms I to VI and the
  * ratios as the engine works them out, provisional while anything is missing; what it assumes; and the downloads.
  * Or the audited years read from the statement's PDF, each figure ticked by the borrower (Read.tsx, D-UX-48).
- * Promoters' loans as the owners' funds sit under one closed "More options". Figures: engine/cma.ts only, via model.ts.
+ * Whether the limit is fresh or a renewal sets a lender's levels, read as bars with "Make it viable" (Levels.tsx, MV4).
+ * Promoters' loans as the owners' funds and the collateral sit under one closed "More options". Figures: engine/cma.ts and
+ * engine/cma-plan.ts only, via model.ts and levers.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
-import { BUTTON, CellInput, HINT, Section, TextField } from '../fields';
+import { BUTTON, CellInput, Choice, HINT, Section, TextField } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { cmaDoc, docNeeds, docStatus, fileName } from './document';
 import { ReadStatement } from './Read';
+import { Levels } from './Levels';
+import { CASE_CHOICES, COLLATERAL_HINT, applyCmaPlan, undoCmaPlan, type CmaChange, type CmaLevers } from './levers';
 import {
   ASSUMPTIONS, HEADS, amountOf, columnsOf, emptyState, exampleState, preview, startYearOf, statusText, tidyAmount,
   type CmaFacts, type CmaPreview, type CmaState, type ViewTable,
@@ -26,6 +30,11 @@ export function CmaCalculator() {
   const update: Update = (f) => setS(f);
   const p = useMemo(() => preview(s), [s]);
   const cols = columnsOf(s.startYear);
+  // "Use this plan" (MV4): the fields it wrote, each marked with what it was, until undone or kept.
+  const [used, setUsed] = useState<CmaChange[]>([]);
+  const use = (l: CmaLevers) => { const a = applyCmaPlan(s, l); setS(a.s); setUsed(a.changes); };
+  const undo = () => { setS((x) => undoCmaPlan(x, used)); setUsed([]); };
+  const was = (field: string) => { const c = used.find((u) => u.field === field); return c ? `Changed by the plan; it was ${c.was || 'empty'}.` : undefined; };
   return <div>
     <p data-testid="cma-years" class={`mt-2 ${HINT}`}>
       Years: {cols.map((c) => `${c.fy} (${KIND[c.kind]})`).join(', ')}. Type in rupees, or like 12 L or 1.2 Cr. Leave the oldest years empty if the business is younger.
@@ -38,19 +47,26 @@ export function CmaCalculator() {
           tidy={tidyAmount} placeholder="like 70 L" invalid={bad(s.existingLimit)} said={bad(s.existingLimit) ? 'Not understood. Type 70,00,000 or 70 L.' : undefined}
           onCommit={(existingLimit) => update((x) => ({ ...x, existingLimit }))} />
       </div>
+      <Choice name="fld-cma-case" legend="The limit you ask for" options={CASE_CHOICES} value={s.loanCase || undefined} columns
+        onChange={(loanCase) => update((x) => ({ ...x, loanCase }))} />
     </Section>
-    <Grid form="II" title="Profit and loss (Form II)" s={s} update={update} />
-    <Grid form="III" title="Balance sheet (Form III)" s={s} update={update} />
+    <Grid form="II" title="Profit and loss (Form II)" s={s} update={update} was={was} />
+    <Grid form="III" title="Balance sheet (Form III)" s={s} update={update} was={was} />
     <details id="more-options" class="mt-6 rounded-lg border border-slate-200 dark:border-slate-800">
-      <summary class="cursor-pointer px-4 py-3 font-medium text-teal-800 dark:text-teal-300">More options: promoters’ loans</summary>
+      <summary class="cursor-pointer px-4 py-3 font-medium text-teal-800 dark:text-teal-300">More options: promoters’ loans, collateral</summary>
       <div class="px-4 pb-4">
         <label class="flex items-start gap-2 text-slate-900 dark:text-slate-100">
           <input id="fld-cma-quasi" type="checkbox" class="mt-1" checked={s.quasi} onChange={(e) => { const quasi = (e.currentTarget as HTMLInputElement).checked; update((x) => ({ ...x, quasi })); }} />
-          <span>Count unsecured loans from promoters as the owners’ funds<span class={`block text-sm ${MUTED}`}>Only when they stay in the business till the bank’s loan is repaid.</span></span>
+          <span>Count unsecured loans from promoters as the owners’ funds<span class={`block text-sm ${MUTED}`}>{was('fld-cma-quasi') ?? 'Only when they stay in the business till the bank’s loan is repaid.'}</span></span>
         </label>
+        <div class="mt-4 max-w-sm">
+          <TextField id="fld-cma-collateral" label="Collateral’s market value (0 if none)" hint={was('fld-cma-collateral') ?? COLLATERAL_HINT} inputMode="decimal" value={s.collateral}
+            tidy={tidyAmount} placeholder="like 50 L" invalid={bad(s.collateral)} said={bad(s.collateral) ? 'Not understood. Type 50,00,000 or 50 L.' : undefined}
+            onCommit={(collateral) => update((x) => ({ ...x, collateral }))} />
+        </div>
       </div>
     </details>
-    <Result p={p} />
+    <Result s={s} p={p} update={update} use={use} used={used} undo={undo} keep={() => setUsed([])} />
     <Section id="assumed" title="Assumed until changed">
       <ul data-testid="cma-assumed" class="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700 dark:text-slate-300">
         {ASSUMPTIONS.map((a) => <li key={a.id}><span class="font-medium text-slate-900 dark:text-slate-100">{a.what}:</span> {a.shown}. <span class={MUTED}>{a.why}.</span></li>)}
@@ -61,7 +77,7 @@ export function CmaCalculator() {
 }
 
 /** The figures of one form, heads down and years across; it scrolls sideways inside itself on a phone. */
-function Grid({ form, title, s, update }: { form: 'II' | 'III'; title: string; s: CmaState; update: Update }) {
+function Grid({ form, title, s, update, was }: { form: 'II' | 'III'; title: string; s: CmaState; update: Update; was: (field: string) => string | undefined }) {
   const cols = columnsOf(s.startYear);
   return <Section id={`form-${form}`} title={title}>
     <div class="mt-3 overflow-x-auto">
@@ -75,7 +91,7 @@ function Grid({ form, title, s, update }: { form: 'II' | 'III'; title: string; s
             <th scope="row" class="min-w-44 py-1.5 pr-3 text-left font-normal text-slate-800 dark:text-slate-200">{h.label}
               {'hint' in h && h.hint && <span class={`block text-xs ${MUTED}`}>{h.hint}</span>}</th>
             {cols.map((c) => { const v = s.figures[c.id][h.id]; return <td key={c.id} class="px-1 py-1">
-              <CellInput id={`fld-cma-${c.id}-${h.id}`} name={`${h.label}, ${c.fy}`} value={v} decimal tidy={tidyAmount} invalid={bad(v)}
+              <CellInput id={`fld-cma-${c.id}-${h.id}`} name={`${h.label}, ${c.fy}`} value={v} decimal tidy={tidyAmount} invalid={bad(v)} changed={was(`fld-cma-${c.id}-${h.id}`)}
                 onCommit={(t) => update((x) => ({ ...x, figures: { ...x.figures, [c.id]: { ...x.figures[c.id], [h.id]: t } } }))} />
             </td>; })}
           </tr>)}
@@ -109,12 +125,20 @@ function FormTable({ t }: { t: ViewTable }) {
   </details>;
 }
 
-function Result({ p }: { p: CmaPreview }) {
+function Result({ s, p, update, use, used, undo, keep }: { s: CmaState; p: CmaPreview; update: Update; use: (l: CmaLevers) => void; used: CmaChange[]; undo: () => void; keep: () => void }) {
   const v = p.view;
   return <Section id="result" title="The CMA data">
     <p data-testid="cma-status" class={`mt-3 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.needs.length || p.blocked
       ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200'}`}>{statusText(p)}</p>
     {p.blocked && <p class="mt-2 text-sm text-red-700 dark:text-red-300">{p.blocked}</p>}
+    {used.length > 0 && <div data-testid="cma-used" role="status" class="mt-3 rounded-lg border border-teal-600 bg-teal-50 p-3 dark:border-teal-500 dark:bg-teal-950">
+      <p class="font-medium text-slate-900 dark:text-slate-100">The plan is used: these figures above changed.</p>
+      <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-800 tabular-nums dark:text-slate-200">{used.map((c) => <li key={c.key}>{c.label}: {c.was || 'none'} → {c.now}</li>)}</ul>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button type="button" data-testid="cma-undo" class={BUTTON} onClick={undo}>Undo</button>
+        <button type="button" data-testid="cma-keep" class={BUTTON} onClick={keep}>Keep these</button>
+      </div>
+    </div>}
     {p.needs.length > 0 && <ul data-testid="cma-needs" class="mt-2 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">
       {p.needs.slice(0, 8).map((n) => <li key={n}>{n}</li>)}{p.needs.length > 8 && <li>and {p.needs.length - 8} more</li>}</ul>}
     {v && <>
@@ -125,6 +149,7 @@ function Result({ p }: { p: CmaPreview }) {
           {k.note && <dd class={`text-sm ${MUTED}`}>{k.note}</dd>}
         </div>)}
       </dl>
+      {!p.blocked && <Levels s={s} update={update} use={use} />}
       {v.flags.length > 0 && <div class="mt-4">
         <h3 class="font-medium text-slate-900 dark:text-slate-100">To look at</h3>
         <ul data-testid="cma-flags" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{v.flags.map((f) => <li key={f}>{f}</li>)}</ul>

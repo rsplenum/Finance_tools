@@ -5,11 +5,14 @@
  */
 import { ASSUMPTIONS, HEADS, PMEGP, projectReport, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
 import { parseAmount, parseMonth } from '../../../engine/parse';
-import { LEVELS, collateralNeeded, diagnose, type RatioCheck, type RatioId, type Shortfall } from '../../../engine/ratios';
+import { LEVELS, collateralNeeded, diagnose, type RatioCheck } from '../../../engine/ratios';
 import { makeViable, type Longer, type Outcome } from '../../../engine/viable';
 import { AS_TYPED, LEVER_IDS, makePlan, withLevers, type LeverId, type Levers } from '../../../engine/plan';
 import { BORROWERS } from '../../../engine/tax';
 import { inr } from '../../../engine/util';
+import {
+  inSentence, labelOf, listed, rowOf, upPct, upRupees, type BoardMove, type CheckRow, type ViableLine, type ViableView,
+} from '../board-model';
 
 export type Repayment = 'emi' | 'monthly' | 'quarterly';
 export interface ReportFacts { name: string; activity: string; address: string; lender: string; preparedBy: string }
@@ -226,14 +229,6 @@ export function viewOf(r: Report): ReportView {
   };
 }
 
-/** A ratio against its level (D-UX-51), in words: the level, its worst year, and whether it meets. */
-export interface CheckRow {
-  id: RatioId; label: string; level: string; worst: string; verdict: 'meets' | 'misses' | 'wait';
-  /** The bar (MV2b): the ratio's length on a track from 0 to twice its level, so the level sits at the middle; 0 to 100. */
-  bar: number; at: 'least' | 'most';
-  /** When it misses: the rupees its worst year needs, in words (engine/ratios.ts). */
-  short?: string;
-}
 /** `short`: cash below nil, which keeps the report provisional; `flags`: the scheme's rules to look at, never a decision;
  * `checks`: each lender's ratio against its level, `misses` their summary when any misses, with "Make it viable" beside it
  * (D-UX-50, D-UX-52); `collateralNote`: what the security cover needs; `longTerm`: a term past the longest. */
@@ -242,38 +237,12 @@ export interface ReportPreview {
   checks?: CheckRow[]; misses?: string; collateralNote?: string; longTerm?: string;
 }
 
-const levelText = (c: RatioCheck) => `${c.level.toFixed(2)} or ${c.at === 'least' ? 'more' : 'less'}`;
-/** A ratio to two places, or four when two would read as meeting a level it misses (1.0996 against 1.10). */
-const ratioAt = (x: number, c: RatioCheck) => {
-  const two = Number(x.toFixed(2)), reads = c.at === 'least' ? two >= c.level : two <= c.level;
-  return reads === !!c.meets ? x.toFixed(2) : x.toFixed(4);
-};
-/** A label inside a sentence: lower case, but DSCR stays DSCR. */
-export const inSentence = (label: string) => (/^[A-Z][A-Z]/.test(label) ? label : label[0].toLowerCase() + label.slice(1));
-const listed = (xs: string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
-/** What a ratio's shortfall is more of, in plain words (engine/ratios.ts's `short.of`). */
-const SHORT_OF: Record<Shortfall, string> = {
-  cash: 'cash to pay the loan', profit: 'profit before interest and tax', currentAssets: 'current assets (stock, debtors and cash)',
-  netWorth: 'net worth (the promoters’ money and the profit kept)', fixedAssets: 'net fixed assets', security: 'security',
-};
-const shortText = (k: RatioCheck) => k.short && k.short.amount > 0
-  ? `Short by Rs. ${upRupees(k.short.amount)} of ${SHORT_OF[k.short.of]}${k.fy ? ` in ${k.fy}` : ', in total over the loan'}.` : undefined;
-/** Where the bar ends: 0 at nil or below, the level at the middle, full past twice the level (or net worth at or below nil). */
-const barOf = (k: RatioCheck) => (k.why ? 100 : k.worst === undefined ? 0 : Math.max(0, Math.min(100, (k.worst / (2 * k.level)) * 100)));
-const labelOf = (id: RatioId) => inSentence(LEVELS.ratios.find((r) => r.id === id)?.label ?? id);
-
-const rowOf = (k: RatioCheck): CheckRow => ({
-  id: k.id, label: k.label, level: levelText(k),
-  worst: k.why ? `Net worth at or below nil in ${k.fy}` : k.worst === undefined ? (k.id === 'securityCover' ? 'Type the collateral’s value' : '—') : `${ratioAt(k.worst, k)}${k.fy ? ` in ${k.fy}` : ' over the loan'}`,
-  verdict: k.meets === undefined ? 'wait' : k.meets ? 'meets' : 'misses', bar: barOf(k), at: k.at,
-  ...(shortText(k) ? { short: shortText(k) } : {}),
-});
 
 export function preview(s: ReportState): ReportPreview {
   const x = inputOf(s), r = projectReport(x);
   if ('blocked' in r) return { needs: [], blocked: r.blocked, flags: [] };
   if ('needs' in r) return { needs: r.needs, flags: [] };
-  const c = r.cashShort, d = diagnose(r, x), checks = d.checks.map(rowOf);
+  const c = r.cashShort, d = diagnose(r, x), checks = d.checks.map((k) => rowOf(k));
   const sc = d.checks.find((k) => k.id === 'securityCover') as RatioCheck, need = sc.meets ? undefined : collateralNeeded(r, x);
   const collateralNote = need === undefined ? undefined : need === 0
     ? `Security cover: the project’s own assets reach ${sc.level.toFixed(2)} without collateral.`
@@ -295,9 +264,6 @@ export const statusText = (p: ReportPreview, more = 0) => {
   return p.blocked ? 'No figures' : n ? `Provisional: ${n} still needed` : 'Complete';
 };
 
-/** A figure the business must reach, shown rounded up so it never reads below what meets: rupees, or a percentage to 0.1. */
-const upRupees = (x: number) => rupees(Math.ceil(x - 1e-6));
-const upPct = (x: number) => (Math.ceil(x * 10 - 1e-6) / 10).toFixed(1);
 const years = (n: number, perYear: number) => {
   const y = Math.floor(n / perYear), m = ((n % perYear) * 12) / perYear;
   return [y ? `${y} year${y > 1 ? 's' : ''}` : '', m ? `${m} month${m > 1 ? 's' : ''}` : ''].filter(Boolean).join(' ');
@@ -306,17 +272,6 @@ const years = (n: number, perYear: number) => {
 /** "Make it viable" (D-UX-50, D-UX-52) as a board (MV2b): the engine's changes (engine/viable.ts), each alone, the rest as
  * typed, the borrower's first, then the lender's. Each card: the lever, how far it moves (and a bar of now against needed),
  * the ratios it brings to their level and those it leaves short, and whether it is within reach. */
-export interface ViableLine {
-  id: string; by: 'borrower' | 'lender'; head: string; text: string; note?: string;
-  /** How far it moves, in one figure ("+17.3%", "Rs. 15,64,221 less", "+6 months"); none when no answer. */
-  move?: string;
-  /** Now and needed, for two bars side by side; the longer is the full width. */
-  bars?: { now: number; to: number; nowText: string; toText: string };
-  fixes: string[]; still: string[];
-  /** Sales beyond full capacity are out of reach; beyond the most a plan takes, a warning. */
-  reach?: { out: boolean; text: string };
-}
-export interface ViableView { meets: boolean; title: string; lines: ViableLine[]; foot: string }
 /** Cash below nil that a change leaves. */
 const cashLeft = (o: Outcome) => (o.cashNeed ? `Cash still goes below nil: the promoters would need Rs. ${upRupees(o.cashNeed)} more.` : undefined);
 const chips = (o: Outcome) => ({ fixes: o.fixes.map(labelOf), still: o.still.map(labelOf) });
@@ -412,8 +367,6 @@ export function planOf(s: ReportState, held: Partial<Levers> = {}): PlanView | u
   };
 }
 
-/** Each lever at the slider: how far it moves, the figure it gives, and the slider's end. */
-export interface BoardMove { move: string; to: string; max: number }
 /** The board at the sliders (one run of the report): the bars, the verdict, the plan in steps, the promoters' money. */
 export interface BoardView {
   checks?: CheckRow[]; works: boolean; verdict: string; still: string[]; line: string;
@@ -450,7 +403,7 @@ export function boardOf(q: PlanView, l: Levers): BoardView {
     const why = 'blocked' in r ? r.blocked : `No figures with these changes: ${r.needs.join('; ')}.`;
     return { works: false, verdict: why, still: [], line: 'No figures', steps, moves };
   }
-  const d = diagnose(r, y), checks = d.checks.map(rowOf), miss = checks.filter((c) => c.verdict === 'misses');
+  const d = diagnose(r, y), checks = d.checks.map((k) => rowOf(k)), miss = checks.filter((c) => c.verdict === 'misses');
   const p = r.finance.promoter, over = q.most !== undefined && p > q.most + 1e-6, cash = r.cashShort;
   const still = [...miss.map((c) => `${c.label}: ${c.worst}, level ${c.level}.${c.short ? ` ${c.short}` : ''}`),
     ...(cash ? [`Cash goes below nil in ${cash.fy}: Rs. ${upRupees(cash.need)} short at its lowest.`] : [])];
@@ -498,4 +451,4 @@ export function applyPlan(s: ReportState, l: Levers): { s: ReportState; changes:
 /** Undo: each field the plan wrote back as it was, unless it has been changed since. */
 export const undoPlan = (s: ReportState, changes: PlanChange[]) => changes.reduce((t, c) => (get(t, c.key) === c.now ? put(t, c.key, c.was) : t), s);
 export const sameLevers = (a: Levers, b: Levers) => LEVER_IDS.every((id) => a[id] === b[id]);
-export { AS_TYPED, LEVER_IDS, type LeverId, type Levers };
+export { AS_TYPED, LEVER_IDS, inSentence, type BoardMove, type CheckRow, type LeverId, type Levers, type ViableLine, type ViableView };

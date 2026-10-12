@@ -20,13 +20,16 @@ export interface RatioCheck {
   meets?: boolean;
   /** Why it fails without a figure: net worth at or below nil. */
   why?: string;
+  /** Why it is not read at all, on the CMA (MV4): no term loan to repay, or no interest to pay. */
+  na?: string;
   /** When it misses: how much more of the ratio's own figure the worst year needs to meet the level, in rupees, the rest
    * as it is (D-UX-53, MV2b): cash available for the loan (the DSCRs, the average's over the loan), profit before interest
    * and tax (interest cover), current assets (current ratio), net worth (TOL/TNW, debt-equity), net fixed assets
    * (fixed-asset cover) or security (security cover). Undefined when its two computations disagree. */
   short?: { amount: number; of: Shortfall };
 }
-export type Shortfall = 'cash' | 'profit' | 'currentAssets' | 'netWorth' | 'fixedAssets' | 'security';
+/** `pbdit`: the CMA's interest cover is on profit before interest, depreciation and tax (MV4). */
+export type Shortfall = 'cash' | 'profit' | 'pbdit' | 'currentAssets' | 'netWorth' | 'fixedAssets' | 'security';
 export interface Diagnosis {
   checks: RatioCheck[];
   /** The ratios that miss their level. */

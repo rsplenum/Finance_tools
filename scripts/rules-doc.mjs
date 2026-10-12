@@ -86,9 +86,9 @@ out.push('| Head of the project | Depreciation a year |', '|---|---|', ...report
 out.push(report.depreciationSource, '', `Working capital: ${report.workingCapital.source}`, '');
 out.push('**What the page assumes until you change it**', '', ...report.assumptions.map((a) => `- **${a.what}**: ${a.shown}. ${a.why}.`), '');
 out.push('**How the figures are worked out**', '', ...report.method.map((m) => `- ${m}`), '');
-// The lender's levels the project report is read against (engine/ratios.ts, D-UX-51, D-UX-52).
+// The lender's levels the project report and the CMA are read against (engine/ratios.ts, engine/cma-plan.ts, D-UX-51, D-UX-52, D-UX-56).
 out.push(`## ${ratios.title}`, '', `Dated ${date(ratios.date)}. ${ratios.status} Source: ${ratios.source}${ratios.verified ? '' : ' (unverified)'}.`, '');
-out.push(`| Ratio | ${ratios.cases.fresh} | ${ratios.cases.renewal} | How |`, '|---|---|---|---|', ...ratios.ratios.map((r) => `| ${r.label} | ${r.at === 'least' ? 'at least' : 'at most'} ${r.fresh.toFixed(2)} | ${r.at === 'least' ? 'at least' : 'at most'} ${r.renewal.toFixed(2)} | ${r.how} |`), '');
+out.push(`| Ratio | ${ratios.cases.fresh} | ${ratios.cases.renewal} | How |`, '|---|---|---|---|', ...ratios.ratios.map((r) => `| ${r.label} | ${r.at === 'least' ? 'at least' : 'at most'} ${r.fresh.toFixed(2)} | ${r.at === 'least' ? 'at least' : 'at most'} ${r.renewal.toFixed(2)} | ${r.how}; on the CMA, ${r.cmaHow} |`), '');
 out.push(`- **Collateral**: realisable sale value ${ratios.collateral.rsvPct}% and distress sale value ${ratios.collateral.dsvPct}% of the market value. ${ratios.collateral.source}.`,
   `- **The longest term**: ${ratios.term.longestMonths} months. ${ratios.term.source}.`, `- **Use of the capacity in a plan**: at most ${ratios.capacity.mostUsePct}%. ${ratios.capacity.source}.`, '');
 

@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
 import { BUTTON, Choice, HINT, Section, TextField } from '../fields';
+import { Bar, Lever, PlanLever } from '../Board';
 import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { monthText } from '../dscr/model';
@@ -14,8 +15,8 @@ import { docNeeds, docStatus, fileName, reportDoc } from './document';
 import {
   PMEGP, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, REPAYMENT_CHOICES, SCHEME_CHOICES,
   ALONE, AS_TYPED, COLLATERAL_HINT, amountOf, applyPlan, assumptionsOf, boardOf, plainOf, planOf, preview, sameLevers, statusText, tidyAmount, undoPlan, viableOf,
-  type BoardMove, type CheckRow, type LeverId, type Levers, type PlanCard, type PlanChange, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
-  type ViableLine, type ViableView, type ViewTable,
+  type LeverId, type Levers, type PlanChange, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
+  type ViableView, type ViewTable,
 } from './model';
 
 type Update = (f: (s: ReportState) => ReportState) => void;
@@ -155,73 +156,6 @@ function ReportTable({ t }: { t: ViewTable }) {
   </details>;
 }
 
-const TONE = { meets: 'bg-teal-600 dark:bg-teal-400', misses: 'bg-red-600 dark:bg-red-400', wait: 'bg-slate-300 dark:bg-slate-600' } as const;
-const INK = { meets: 'text-teal-800 dark:text-teal-300', misses: 'text-red-700 dark:text-red-300', wait: MUTED } as const;
-
-/** One ratio as a bar against its level (MV2b): the track runs from nil to twice the level, so the level is the line at the
- * middle; under it the rupees its worst year is short, from the engine. */
-function Bar({ c, pre = 'rep' }: { c: CheckRow; pre?: string }) {
-  return <li data-testid={`${pre}-check-${c.id}`} class="py-1.5">
-    <p class="text-sm text-slate-800 dark:text-slate-200">{c.label}</p>
-    <div aria-hidden="true" class="relative mt-1 h-3 rounded-full bg-slate-100 dark:bg-slate-800">
-      <div class={`h-3 rounded-full ${TONE[c.verdict]}`} style={{ width: `${c.verdict === 'misses' ? Math.max(c.bar, 3) : c.bar}%` }} />
-      <div class="absolute -inset-y-[3px] left-1/2 w-0.5 bg-slate-900 dark:bg-slate-100" />
-    </div>
-    <p class="mt-0.5 text-sm"><span class={`tabular-nums ${INK[c.verdict]}`}>{c.verdict === 'misses' ? 'Misses: ' : c.verdict === 'meets' ? 'Meets: ' : ''}{c.worst}</span>
-      <span class={`text-xs ${MUTED}`}> · level {c.level}{c.at === 'most' ? ', a shorter bar is better' : ''}</span></p>
-    {c.short && <p data-testid={`${pre}-short-${c.id}`} class="text-sm font-medium text-red-700 dark:text-red-300">{c.short}</p>}
-  </li>;
-}
-
-/** A lever on the board: how far it moves, now against needed, and the ratios it brings to their level. */
-function Lever({ l }: { l: ViableLine }) {
-  const most = l.bars ? Math.max(l.bars.now, l.bars.to, 1e-9) : 1, w = (x: number) => `${Math.max(0, (x / most) * 100)}%`;
-  return <li data-testid={`rep-viable-${l.id}`} class={`rounded-lg border p-3 ${l.reach?.out ? 'border-red-300 dark:border-red-800' : 'border-slate-300 dark:border-slate-600'}`}>
-    <div class="flex items-baseline justify-between gap-2">
-      <span class="font-medium text-slate-900 dark:text-slate-100">{l.head}</span>
-      {l.move && <span data-testid={`rep-move-${l.id}`} class="shrink-0 text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">{l.move}</span>}
-    </div>
-    {l.bars && <div class="mt-1 space-y-1 text-xs tabular-nums">
-      {[['Now', l.bars.now, l.bars.nowText, 'bg-slate-400 dark:bg-slate-500'], ['Needed', l.bars.to, l.bars.toText, l.reach?.out ? 'bg-red-600 dark:bg-red-400' : 'bg-teal-600 dark:bg-teal-400']].map(([k, x, t, tone]) =>
-        <div key={k as string} class="flex items-center gap-2">
-          <span class={`w-14 shrink-0 ${MUTED}`}>{k}</span>
-          <div aria-hidden="true" class="h-2.5 flex-1 rounded-full bg-slate-100 dark:bg-slate-800"><div class={`h-2.5 rounded-full ${tone}`} style={{ width: w(x as number) }} /></div>
-          <span class="w-24 shrink-0 text-right text-slate-800 dark:text-slate-200">{t}</span>
-        </div>)}
-    </div>}
-    <Said l={l} />
-  </li>;
-}
-
-/** What MV2b's board says of a lever worked alone: within reach or not, the ratios it meets and leaves, in words. */
-function Said({ l, alone }: { l: ViableLine; alone?: boolean }) {
-  return <>
-    {l.reach && <p data-testid={`rep-reach-${l.id}`} class={`mt-1.5 text-sm font-medium ${l.reach.out ? 'text-red-700 dark:text-red-300' : 'text-amber-900 dark:text-amber-200'}`}>{l.reach.text}</p>}
-    {(l.fixes.length > 0 || l.still.length > 0) && <ul class="mt-1.5 flex flex-wrap gap-1 text-xs">
-      {alone && <li class={`py-0.5 ${MUTED}`}>Alone:</li>}
-      {l.fixes.map((f) => <li key={f} class="rounded-full bg-teal-100 px-2 py-0.5 text-teal-900 dark:bg-teal-950 dark:text-teal-200">✓ {f}</li>)}
-      {l.still.map((f) => <li key={f} class="rounded-full bg-red-100 px-2 py-0.5 text-red-900 dark:bg-red-950 dark:text-red-200">✗ {f}</li>)}
-    </ul>}
-    <p class="mt-1.5 text-sm text-slate-800 dark:text-slate-200">{alone && <span class={MUTED}>Alone: </span>}<span data-testid={`rep-text-${l.id}`}>{l.text}</span></p>
-    {l.note && <p class={`mt-0.5 text-sm ${MUTED}`}>{l.note}</p>}
-  </>;
-}
-
-/** A lever in the plan (MV3): its slider, set where the plan puts it; how far it moves and the figure it gives, live;
- * and what it does alone (MV2b). */
-function PlanLever({ c, m, value, alone, set }: { c: PlanCard; m: BoardMove; value: number; alone?: ViableLine; set: (n: number) => void }) {
-  return <li data-testid={`rep-lever-${c.id}`} class={`rounded-lg border p-3 ${alone?.reach?.out ? 'border-red-300 dark:border-red-800' : 'border-slate-300 dark:border-slate-600'}`}>
-    <div class="flex items-baseline justify-between gap-2">
-      <label for={`rep-slider-${c.id}`} class="font-medium text-slate-900 dark:text-slate-100">{c.head}</label>
-      <span data-testid={`rep-move-${c.id}`} class="shrink-0 text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">{m.move}</span>
-    </div>
-    {m.max > 0 && <input id={`rep-slider-${c.id}`} type="range" min={0} max={m.max} step={1} value={value} aria-valuetext={`${m.move}: ${m.to}`}
-      onInput={(e) => set(Number((e.currentTarget as HTMLInputElement).value))} class="mt-2 h-6 w-full accent-teal-700 dark:accent-teal-400" />}
-    <p data-testid={`rep-to-${c.id}`} class="text-sm tabular-nums text-slate-800 dark:text-slate-200">{m.to}</p>
-    {alone && <Said l={alone} alone />}
-  </li>;
-}
-
 /** Why it does not work yet: each lender's ratio as a bar against its level in its worst year (D-UX-51), then "Make it
  * viable" (D-UX-50, D-UX-52), worked on a tap since it runs the whole report many times. When a level misses, the engine's
  * plan (MV3): a slider for each lever, set where the plan puts it, the borrower's first; the sliders change nothing above
@@ -252,7 +186,7 @@ function Viable({ s, p, update, use }: { s: ReportState; p: ReportPreview; updat
     const cs = plan && b ? plan.cards.filter((c) => c.by === by) : [];
     return cs.length > 0 && b && <>
       <p class="mt-3 text-sm font-medium text-slate-800 dark:text-slate-200">{title}</p>
-      <ul class="mt-1 space-y-2">{cs.map((c) => <PlanLever key={c.id} c={c} m={b.moves[c.id]} value={lv[c.id]} set={(n) => move(c.id, n)}
+      <ul class="mt-1 space-y-2">{cs.map((c) => <PlanLever key={c.id} id={c.id} head={c.head} m={b.moves[c.id]} value={lv[c.id]} set={(n) => move(c.id, n)}
         alone={v?.lines.find((l) => l.id === ALONE[c.id])} />)}</ul>
     </>;
   };

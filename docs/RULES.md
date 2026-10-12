@@ -165,18 +165,18 @@ Working capital: The second method of lending (Tandon Committee): the bank finan
 
 ## The lender's benchmark ratios
 
-Dated 11-10-2026. The levels a project's ratios are read against, each in its worst year (D-UX-51), and the values of the collateral (D-UX-52). The owner's figures (11-10-2026): only the benchmark level, no relaxation or deviation; each lender sets its own. Source: The owner's benchmarks, said to follow RBI; not yet checked against an RBI publication (unverified).
+Dated 11-10-2026. The levels a project's ratios, and the CMA's estimated and projected years, are read against, each in its worst year (D-UX-51; how on the CMA: `cmaHow`, D-UX-56), and the values of the collateral (D-UX-52). The owner's figures (11-10-2026): only the benchmark level, no relaxation or deviation; each lender sets its own. Source: The owner's benchmarks, said to follow RBI; not yet checked against an RBI publication (unverified).
 
 | Ratio | A fresh or enhanced loan | An existing loan on review or renewal | How |
 |---|---|---|---|
-| Current ratio | at least 1.10 | at least 1.00 | (stock + debtors + cash) ÷ (the working-capital limit + creditors), at each year's end |
-| Total outside liabilities ÷ net worth | at most 5.00 | at most 6.00 | (unsecured loans + the term loan + the working-capital limit + creditors) ÷ net worth |
-| Term loan ÷ net worth (debt-equity) | at most 4.00 | at most 4.00 | the term loan outstanding ÷ net worth |
-| Average DSCR | at least 1.50 | at least 1.50 | total cash available ÷ total debt service, over the loan |
-| DSCR in the lowest year | at least 1.25 | at least 1.25 | the year's cash available ÷ its debt service |
-| Interest cover | at least 1.50 | at least 1.25 | (profit before tax + all interest) ÷ all interest |
-| Fixed-asset cover | at least 1.20 | at least 1.20 | net fixed assets ÷ the term loan outstanding |
-| Security cover | at least 1.20 | at least 1.20 | (net fixed assets + stock + debtors + the collateral's realisable sale value) ÷ (the term loan + the working-capital limit outstanding) |
+| Current ratio | at least 1.10 | at least 1.00 | (stock + debtors + cash) ÷ (the working-capital limit + creditors), at each year's end; on the CMA, current assets ÷ current liabilities (the bank's working-capital borrowing, creditors, term loans due within 12 months and the rest), at each year's end |
+| Total outside liabilities ÷ net worth | at most 5.00 | at most 6.00 | (unsecured loans + the term loan + the working-capital limit + creditors) ÷ net worth; on the CMA, all outside liabilities ÷ net worth |
+| Term loan ÷ net worth (debt-equity) | at most 4.00 | at most 4.00 | the term loan outstanding ÷ net worth; on the CMA, term liabilities (term loans beyond 12 months, and promoters' loans unless counted as the owners' funds) ÷ net worth |
+| Average DSCR | at least 1.50 | at least 1.50 | total cash available ÷ total debt service, over the loan; on the CMA, the two years' (net profit + depreciation + term-loan interest) ÷ their (term-loan interest + the term loans due within 12 months at the year before's end) |
+| DSCR in the lowest year | at least 1.25 | at least 1.25 | the year's cash available ÷ its debt service; on the CMA, the year's (net profit + depreciation + term-loan interest) ÷ (term-loan interest + the term loans due within 12 months at the year before's end) |
+| Interest cover | at least 1.50 | at least 1.25 | (profit before tax + all interest) ÷ all interest; on the CMA, profit before interest, depreciation and tax ÷ all interest, as on the CMA's forms |
+| Fixed-asset cover | at least 1.20 | at least 1.20 | net fixed assets ÷ the term loan outstanding; on the CMA, net fixed assets ÷ the term loans outstanding |
+| Security cover | at least 1.20 | at least 1.20 | (net fixed assets + stock + debtors + the collateral's realisable sale value) ÷ (the term loan + the working-capital limit outstanding); on the CMA, (net fixed assets + stock + debtors + the collateral's realisable sale value) ÷ (the term loans + the bank's working-capital borrowing) |
 
 - **Collateral**: realisable sale value 90% and distress sale value 80% of the market value. The owner's figures (11-10-2026): realisable sale value 90% of the market value, which MSME lenders use for security cover; distress sale value 80%, shown.
 - **The longest term**: 180 months. The owner's figure (11-10-2026): an MSME term loan's longest, the moratorium included.
