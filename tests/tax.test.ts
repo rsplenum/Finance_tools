@@ -76,9 +76,10 @@ describe('a firm or LLP and a company: the rates as before', () => {
 });
 
 describe('the data', () => {
-  it('each borrower is dated, sourced and marked not yet checked; each says which EMIs count', () => {
+  it('each borrower is dated and sourced, only the firm checked against Part III (D-DATA-21); each says which EMIs count', () => {
     for (const b of BORROWERS) {
-      expect([b.date, b.source.length > 0, b.law.length > 0, b.verified, b.kind]).toEqual([expect.stringMatching(/^2026-/), true, true, false, 'secondary']);
+      const checked = b.id === 'firm';
+      expect([b.date, b.source.length > 0, b.law.length > 0, b.verified, b.kind]).toEqual([expect.stringMatching(/^2026-/), true, true, checked, checked ? 'primary' : 'secondary']);
       expect(Object.keys(DSCR.existingEmis.byBorrower)).toContain(b.id);
     }
     expect(Object.keys(DSCR.existingEmis.byBorrower)).toEqual(BORROWERS.map((b) => b.id));
