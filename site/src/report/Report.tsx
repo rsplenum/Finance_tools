@@ -11,9 +11,10 @@ import { Bar, Lever, PlanLever } from '../Board';
 import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { monthText } from '../dscr/model';
+import { overdueNote, todayIso } from '../../../engine/review';
 import { docNeeds, docStatus, fileName, reportDoc } from './document';
 import {
-  PMEGP, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, REPAYMENT_CHOICES, SCHEME_CHOICES,
+  PMEGP, REPORT_REVIEW_BY, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, REPAYMENT_CHOICES, SCHEME_CHOICES,
   ALONE, AS_TYPED, COLLATERAL_HINT, amountOf, applyPlan, assumptionsOf, boardOf, plainOf, planOf, preview, sameLevers, statusText, tidyAmount, undoPlan, viableOf,
   type LeverId, type Levers, type PlanChange, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
   type ViableView, type ViewTable,
@@ -57,7 +58,7 @@ export function ReportCalculator() {
       <Choice name="fld-scheme" legend="A government scheme" options={SCHEME_CHOICES} value={s.scheme} columns
         onChange={(scheme) => update((x) => ({ ...x, scheme }))} />
       {s.scheme === 'pmegp' && <>
-        <p class={`mt-2 ${HINT}`}>The margin money is worked out by the scheme's rules, as read in {monthText(PMEGP.date.slice(0, 7))} and not yet checked against KVIC's guideline.</p>
+        <p class={`mt-2 ${HINT}`}>The margin money is worked out by the scheme's rules, as read in {monthText(PMEGP.date.slice(0, 7))} and not yet checked against KVIC's guideline. {overdueNote(REPORT_REVIEW_BY, todayIso())}</p>
         <Choice name="fld-category" legend="The borrower's category" options={CATEGORY_CHOICES} value={s.category}
           onChange={(category) => update((x) => ({ ...x, category }))} />
         <Choice name="fld-area" legend="Where the unit is" options={AREA_CHOICES} value={s.area} columns

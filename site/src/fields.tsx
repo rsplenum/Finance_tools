@@ -1,6 +1,7 @@
 /** Form fields shared by the tool pages. A field keeps what is being typed to itself and hands it on only when it is left. */
 import type { ComponentChildren } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { overdueNote, todayIso } from '../../engine/review';
 
 export const INPUT = 'block w-full rounded-md border bg-white px-3 py-2 text-base text-slate-900 placeholder:text-slate-500 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/30 focus:outline-none dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-400';
 const BORDER = 'border-slate-300 dark:border-slate-600', BAD = 'border-red-600 dark:border-red-400';
@@ -106,11 +107,13 @@ export function Choice<T extends string>(p: { name: string; legend: string; opti
 }
 
 /** A source and date, behind an icon (lessons §1: no citations in the running text). */
-export function SourceNote(p: { what: string; children: ComponentChildren }) {
+export function SourceNote(p: { what: string; children: ComponentChildren; /** The data file's review-by date: once passed, said beside the summary (Q2, D-DATA-19). */ reviewBy?: string }) {
+  const due = p.reviewBy ? overdueNote(p.reviewBy, todayIso()) : '';
   return <details class="mt-1 text-sm text-slate-600 dark:text-slate-300">
     <summary class="inline-flex cursor-pointer items-center gap-1 text-teal-800 underline-offset-4 hover:underline dark:text-teal-300">
       <span aria-hidden="true">ⓘ</span> {p.what}
     </summary>
+    {due && <span data-testid="review-due" class="ml-2 text-amber-800 dark:text-amber-300">{due}</span>}
     <p class="mt-1">{p.children}</p>
   </details>;
 }

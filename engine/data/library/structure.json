@@ -1,6 +1,7 @@
 {
   "title": "Building a house: materials, labour and treatment",
   "date": "2026-10-03",
+  "reviewBy": "2027-04-03",
   "status": "For building a house (E5, thin): the structure costed at one specification from rules of thumb a sq ft of built-up area (house.thumb in engine/data/architect.json), its materials with their wastage, its labour by stage and the anti-termite treatment. A structural engineer's design replaces them.",
   "families": [
     { "id": "anti-termite", "name": "Anti-termite treatment before building", "unit": "sqft", "fixed": "at-soil" },

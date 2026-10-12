@@ -19,6 +19,8 @@ export const ASSUMPTIONS = DATA.assumptions;
 export const METHOD = DATA.method;
 export type HeadId = (typeof DATA.heads)[number]['id'];
 export const PMEGP = DATA.schemes.pmegp;
+/** The day the report's rules and the schemes are next due for a review (Q2, D-DATA-19). */
+export const REPORT_REVIEW_BY = DATA.reviewBy;
 export type Category = keyof typeof PMEGP.ownPct;
 export type Area = keyof typeof PMEGP.subsidyPct.general;
 export type Activity = keyof typeof PMEGP.ceiling;

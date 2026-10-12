@@ -3,7 +3,7 @@
  * report to tables in words, with the engine's exact figures beside them for the Excel copy. The page and the document
  * show the same tables. Pure, no DOM. Figures: engine/report.ts only (with dscr.ts for profit, tax and DSCR).
  */
-import { ASSUMPTIONS, HEADS, PMEGP, projectReport, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
+import { ASSUMPTIONS, HEADS, PMEGP, REPORT_REVIEW_BY, projectReport, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
 import { parseAmount, parseMonth } from '../../../engine/parse';
 import { LEVELS, collateralNeeded, diagnose, type RatioCheck } from '../../../engine/ratios';
 import { makeViable, type Longer, type Outcome } from '../../../engine/viable';
@@ -57,7 +57,7 @@ export const AREA_CHOICES: { value: Area; label: string }[] = [{ value: 'urban',
 export const ACTIVITY_CHOICES: { value: Activity; label: string }[] = [{ value: 'manufacturing', label: 'Manufacturing' }, { value: 'service', label: 'A service' }];
 /** The assumptions listed on the page: the use of the capacity and the price only while sales come from the drivers. */
 export const assumptionsOf = (s: ReportState) => ASSUMPTIONS.filter((a) => s.salesBy === 'drivers' || (a.id !== 'utilisation' && a.id !== 'price'));
-export { ASSUMPTIONS, HEADS, PMEGP };
+export { ASSUMPTIONS, HEADS, PMEGP, REPORT_REVIEW_BY };
 
 export const amountOf = (t: string) => (t.trim() ? parseAmount(t) : undefined);
 export const plainOf = (t: string) => (t.trim() ? parseAmount(t.replace(/%\s*$/, ''), false) : undefined);

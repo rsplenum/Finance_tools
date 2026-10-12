@@ -11,7 +11,8 @@ import {
   BATHS, BHKS, CITIES, EXTRAS, FLOORS, FLOORS_ADDED, LEVELS, PLOT_SIDE, R, ROOM_SIDE, SIZE_WORDS, bathsOf, bedroomsOf, billOf, WORK_KINDS, architect, architectNeeds, builds, changeOf, choicesFor, levelName, levelRuns, overPackage, planRooms, wordName,
   type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choice, type ExtraKind, type House, type Level, type LevelRuns, type Line, type RoomKind, type SizeWord, type Stage, type WorkKind,
 } from '../../../engine/architect';
-import { CLASSES, FT_PER_M, LIBRARY_DATE, NOTES, PER, SOURCE, SPEND_SAVE, SQFT_PER_SQM, namesBrand, type ItemKind, type Note, type Unit } from '../../../engine/library';
+import { overdueNote, todayIso } from '../../../engine/review';
+import { CLASSES, FT_PER_M, LIBRARY_DATE, LIBRARY_REVIEW_BY, NOTES, PER, SOURCE, SPEND_SAVE, SQFT_PER_SQM, namesBrand, type ItemKind, type Note, type Unit } from '../../../engine/library';
 import { parseAmount } from '../../../engine/parse';
 import { inr, rupeesWords } from '../../../engine/util';
 
@@ -521,7 +522,7 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
     strip: levels.map((n, i) => ({ level: (i + 1) as Level, name: LEVEL_NAMES[i], total: shortRupees(n), full: rupees(n), n, current: i + 1 === e.level })),
     bar, sections, ...(split ? { split } : {}), assumed, flags: e.flags.filter((f) => f.decides).map((f) => f.text), notes: e.flags.filter((f) => !f.decides).map((f) => f.text),
     unpriced: e.unpriced.map((u) => `${u.roomName}, ${u.name.toLowerCase()}: ${u.entryName}`),
-    ratesLine: `A planning estimate: rates as reported on ${dmy(e.ratesDate)} for ${listed ? city : 'another place, at the six cities’ average'}; ${e.lines.filter((l) => l.checked).length} of ${e.lines.length} lines checked against their pages`,
+    ratesLine: `A planning estimate: rates as reported on ${dmy(e.ratesDate)} for ${listed ? city : 'another place, at the six cities’ average'}; ${e.lines.filter((l) => l.checked).length} of ${e.lines.length} lines checked against their pages${overdueNote(LIBRARY_REVIEW_BY, todayIso()) ? `. ${overdueNote(LIBRARY_REVIEW_BY, todayIso()).replace(/\.$/, '')}` : ''}`,
     range: rangeOf(e, runs), bill: billView(s, e),
     ratesDate: dmy(LIBRARY_DATE), sources: [...numbered.values()],
     classes: Object.entries(CLASSES).filter(([id]) => [...numbered.values()].some((x) => x.cls === id)).map(([id, means]) => ({ id, means })),

@@ -1,6 +1,7 @@
 {
   "title": "Electrical and lights",
   "date": "2026-10-02",
+  "reviewBy": "2027-04-02",
   "families": [
     { "id": "wiring", "name": "Wiring, switches and sockets, by the point", "unit": "nos", "levels": ["wr-isi", "wr-branded", "wr-premium", "wr-premium", "wr-knx"] },
     { "id": "db", "name": "Distribution board", "unit": "set", "fixed": "db-set" },

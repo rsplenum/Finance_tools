@@ -1,6 +1,7 @@
 {
   "title": "The architect's rules",
   "date": "2026-10-03",
+  "reviewBy": "2027-10-03",
   "status": "What an architect would decide from six answers: the rooms and their sizes, the doors and windows, how each surface is measured, what each room needs at each level, and how many points the wiring and plumbing need (D-UX-18). Each rule names its source, or says it is our own rule and why. A rule is an assumption until the user changes it, and the page and the document list it (D-UX-08). The sources were read through search summaries; the city costs were checked against their page on 04-10-2026 (E2), the other rules not yet.",
   "levels": [
     { "n": 1, "name": "Basic", "owner": "Modest", "means": "Sound and simple: ISI-marked materials, the economy ranges of known brands, nothing decorative" },

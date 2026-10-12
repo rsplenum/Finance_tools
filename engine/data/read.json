@@ -1,6 +1,7 @@
 {
   "title": "Reading an audited statement into the CMA heads",
   "date": "2026-10-11",
+  "reviewBy": "2027-10-11",
   "status": "Set by Claude at the owner's request (U1, D-UX-48): an AI only points to the line and the number on it where the statement prints each head; the program copies the digits, adds a head printed on several lines, applies the units and checks the sums against the totals the statement prints. Nothing counts until the borrower ticks it. Text PDFs only; a scanned one is asked to be typed.",
   "maxLines": 4000,
   "maxChars": 300000,
