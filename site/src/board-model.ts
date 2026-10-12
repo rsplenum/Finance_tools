@@ -10,7 +10,7 @@ const rupees = (x: number) => inr(x);
 
 /** A ratio against its level (D-UX-51), in words: the level, its worst year, and whether it meets. */
 export interface CheckRow {
-  id: RatioId; label: string; level: string; worst: string; verdict: 'meets' | 'misses' | 'wait';
+  id: string; label: string; level: string; worst: string; verdict: 'meets' | 'misses' | 'wait';
   /** The bar (MV2b): the ratio's length on a track from 0 to twice its level, so the level sits at the middle; 0 to 100. */
   bar: number; at: 'least' | 'most';
   /** When it misses: the rupees its worst year needs, in words (engine/ratios.ts). */

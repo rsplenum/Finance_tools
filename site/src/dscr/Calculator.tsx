@@ -26,8 +26,12 @@ import {
   parseFy, presetText, preview, rowValues, rowsOf, statusText, targetText, tidyAmount, withBorrower, withPlanStart, withSource, yearsOf,
   type DocFacts, type LenderLine, type LenderText, type LenderView, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
+import { applyDscrPlan, undoDscrPlan, type DscrChange, type DscrLevers } from './levers';
+import { Levels } from './Levels';
 
 type Update = (f: (s: State) => State) => void;
+/** The plan's change to a field, said under it until kept or undone. */
+type Was = (key: DscrChange['key']) => string | undefined;
 const showDate = (iso: string) => iso.split('-').reverse().join('-');
 const notUnderstood = (text: string, read: (t: string) => unknown, example: string) =>
   text.trim() && read(text) === undefined ? `Not understood. Try ${example}.` : undefined;
@@ -42,16 +46,21 @@ export function DscrCalculator() {
   const rows = useMemo(() => rowsOf(s), [s]);
   const y = useMemo(() => yearsOf(s), [s]);
   const openMore = () => setMore(true);
+  // "Use this plan" (MV5): the loan and the term written, with an undo while the change is fresh.
+  const [used, setUsed] = useState<DscrChange[]>([]);
+  const use = (l: DscrLevers) => { const a = applyDscrPlan(s, l); setS(a.s); setUsed(a.changes); };
+  const undo = () => { setS((x) => undoDscrPlan(x, used)); setUsed([]); };
+  const was = (key: DscrChange['key']) => { const c = used.find((u) => u.key === key); return c ? `Changed by the plan; it was ${c.was || 'empty'}.` : undefined; };
   return <div>
     <ClearAll shown={JSON.stringify(s) !== JSON.stringify(start())} onClear={() => setS(start())} />
-    {s.source === 'plan' && <FrontDoor s={s} update={update} openMore={openMore} />}
+    {s.source === 'plan' && <FrontDoor s={s} update={update} openMore={openMore} was={was} />}
     <details id="more-options" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)}
       class="mt-8 rounded-lg border border-slate-300 dark:border-slate-700">
       <summary class="cursor-pointer px-4 py-3 font-medium text-teal-800 dark:text-teal-300">More options: the method, the loan in full, year-by-year figures</summary>
       <div class="px-4 pb-6">
         <Start s={s} update={update} />
         {p.started && <>
-          {s.source === 'plan' ? <Loan s={s} update={update} y={y} p={p} /> : <YearsSection s={s} update={update} y={y} />}
+          {s.source === 'plan' ? <Loan s={s} update={update} y={y} p={p} was={was} /> : <YearsSection s={s} update={update} y={y} />}
           <Figures s={s} update={update} rows={rows} y={y} p={p} />
           <TargetSection s={s} update={update} />
           {s.source === 'plan' && <LenderSection s={s} update={update} y={y} />}
@@ -59,7 +68,7 @@ export function DscrCalculator() {
       </div>
     </details>
     {p.started && <>
-      <PreviewSection p={p} update={update} openMore={openMore} />
+      <PreviewSection s={s} p={p} update={update} openMore={openMore} use={use} used={used} undo={undo} keep={() => setUsed([])} />
       <DownloadSection s={s} p={p} update={update} />
       <div class="sticky bottom-0 z-10 -mx-4 mt-10 border-t border-slate-200 bg-white px-4 py-2.5 dark:border-slate-800 dark:bg-slate-950">
         <a href="#preview" data-testid="answer-bar" aria-live="polite" class="block text-sm font-medium text-slate-900 dark:text-slate-100">
@@ -74,7 +83,7 @@ export function DscrCalculator() {
  * The front door: the owner's eight inputs, written into the same state the detailed form uses, so More options shows
  * them too. Depreciation is optional (empty: none); EMIs already paid are one figure a month (empty: none).
  */
-function FrontDoor({ s, update, openMore }: { s: State; update: Update; openMore: () => void }) {
+function FrontDoor({ s, update, openMore, was }: { s: State; update: Update; openMore: () => void; was: Was }) {
   const perYear = s.loan.repayment === 'quarterly' ? 4 : 12, k = numberOf(s.loan.instalments);
   const years = k === undefined ? '' : String(+(k / perYear).toFixed(2));
   const emi = s.modes.otherLoans === 'emi' ? s.running[0]?.emi ?? '' : '';
@@ -99,11 +108,11 @@ function FrontDoor({ s, update, openMore }: { s: State; update: Update; openMore
           : { ...x, modes: { ...x.modes, otherLoans: 'none' } }))} />
       <TextField id="fld-fd-depreciation" label="Depreciation a year, if any" hint="Leave empty if none." inputMode="decimal" value={dep} tidy={tidyAmount}
         said={amountSaid(dep)} onCommit={(t) => update((x) => (t.trim() ? { ...first('depreciation', t)(x), modes: { ...x.modes, depreciation: 'same' } } : { ...x, modes: { ...x.modes, depreciation: 'none' } }))} />
-      <TextField id="fld-fd-amount" label="Loan amount" inputMode="decimal" value={s.loan.amount} tidy={tidyAmount} placeholder="like 12 L"
+      <TextField id="fld-fd-amount" label="Loan amount" hint={was('amount')} inputMode="decimal" value={s.loan.amount} tidy={tidyAmount} placeholder="like 12 L"
         said={amountSaid(s.loan.amount)} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, amount: t } }))} />
       <TextField id="fld-fd-rate" label="Interest rate (% a year)" inputMode="decimal" value={s.loan.ratePct} placeholder="like 12"
         said={notUnderstood(s.loan.ratePct, numberOf, 'a number, like 12')} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, ratePct: t } }))} />
-      <TextField id="fld-fd-years" label="Term (years)" inputMode="decimal" value={years} placeholder="like 5"
+      <TextField id="fld-fd-years" label="Term (years)" hint={was('instalments') && `${was('instalments')?.replace(/\.$/, '')} instalments.`} inputMode="decimal" value={years} placeholder="like 5"
         said={notUnderstood(years, numberOf, 'a number, like 5')} onCommit={(t) => update((x) => {
           const n = numberOf(t), per = x.loan.repayment === 'quarterly' ? 4 : 12;
           return { ...x, loan: { ...x.loan, instalments: n === undefined ? t : String(Math.round(n * per)) } };
@@ -151,7 +160,7 @@ function Start({ s, update }: { s: State; update: Update }) {
   </div>;
 }
 
-function Loan({ s, update, y, p }: { s: State; update: Update; y: Years; p: Preview }) {
+function Loan({ s, update, y, p, was }: { s: State; update: Update; y: Years; p: Preview; was: Was }) {
   const l = s.loan, set = (patch: Partial<LoanText>) => update((x) => ({ ...x, loan: { ...x.loan, ...patch } }));
   const read = loanRead(y);
   return <Section id="loan" title="The loan">
@@ -173,7 +182,7 @@ function Loan({ s, update, y, p }: { s: State; update: Update; y: Years; p: Prev
         hint="Months before the first instalment; interest is still paid." onCommit={(t) => set({ moratoriumMonths: t })}
         said={notUnderstood(l.moratoriumMonths, numberOf, '6, or 0 if none')} />
       <TextField id="fld-instalments" label="Number of instalments" inputMode="numeric" placeholder="like 60" value={l.instalments}
-        hint={l.repayment === 'quarterly' ? 'Quarterly instalments, after the moratorium.' : l.repayment ? 'Monthly instalments, after the moratorium.' : 'After the moratorium.'}
+        hint={was('instalments') ?? (l.repayment === 'quarterly' ? 'Quarterly instalments, after the moratorium.' : l.repayment ? 'Monthly instalments, after the moratorium.' : 'After the moratorium.')}
         onCommit={(t) => set({ instalments: t })} said={notUnderstood(l.instalments, numberOf, '60')} />
     </div>
     {(read || p.schedule) && <div data-testid="loan-read" class="mt-4 space-y-1 rounded-md bg-slate-100 px-3 py-2 text-sm text-slate-800 dark:bg-slate-800 dark:text-slate-200">
@@ -388,7 +397,9 @@ function TargetSection({ s, update }: { s: State; update: Update }) {
   </Section>;
 }
 
-function PreviewSection({ p, update, openMore }: { p: Preview; update: Update; openMore: () => void }) {
+function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
+  s: State; p: Preview; update: Update; openMore: () => void; use: (l: DscrLevers) => void; used: DscrChange[]; undo: () => void; keep: () => void;
+}) {
   const box = 'mt-4 rounded-md border px-3 py-2';
   const largest = p.largest?.amount, fewest = p.fewest?.instalments;
   // The method and the target read as one line (D-UX-10: shorter).
@@ -428,7 +439,16 @@ function PreviewSection({ p, update, openMore }: { p: Preview; update: Update; o
     {p.verdict && <p data-testid="dscr-verdict" class={`${box} ${p.verdict.meets
       ? 'border-teal-300 bg-teal-50 text-teal-900 dark:border-teal-800 dark:bg-teal-950 dark:text-teal-100'
       : 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100'}`}>{p.verdict.text}</p>}
+    {used.length > 0 && <div data-testid="dscr-used" role="status" class="mt-3 rounded-lg border border-teal-600 bg-teal-50 p-3 dark:border-teal-500 dark:bg-teal-950">
+      <p class="font-medium text-slate-900 dark:text-slate-100">The plan is used: these figures above changed.</p>
+      <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-800 tabular-nums dark:text-slate-200">{used.map((c) => <li key={c.key}>{c.label}: {c.was || 'none'} → {c.now}</li>)}</ul>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button type="button" data-testid="dscr-undo" class={BUTTON} onClick={undo}>Undo</button>
+        <button type="button" data-testid="dscr-keep" class={BUTTON} onClick={keep}>Keep these</button>
+      </div>
+    </div>}
     {p.lender && <LenderLines v={p.lender} openMore={openMore} />}
+    {s.source === 'plan' && <Levels s={s} lender={p.lender} update={update} use={use} />}
     {p.largest && <div class="mt-3 text-sm text-slate-800 dark:text-slate-200">
       <p data-testid="dscr-largest">{p.largest.text}</p>
       {largest !== undefined && <button type="button" data-testid="use-amount" class={`mt-1 ${BUTTON}`}
