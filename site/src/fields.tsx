@@ -3,12 +3,16 @@ import type { ComponentChildren } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { overdueNote, todayIso } from '../../engine/review';
 
-export const INPUT = 'block w-full rounded-md border bg-white px-3 py-2 text-base text-slate-900 placeholder:text-slate-500 focus:border-teal-600 focus:ring-2 focus:ring-teal-600/30 focus:outline-none dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-400';
-const BORDER = 'border-slate-300 dark:border-slate-600', BAD = 'border-red-600 dark:border-red-400';
-const CHANGED = 'border-teal-600 ring-2 ring-teal-600/40 dark:border-teal-400 dark:ring-teal-400/40';
-export const LABEL = 'block font-medium text-slate-900 dark:text-slate-100';
-export const HINT = 'mt-1 text-sm text-slate-600 dark:text-slate-300';
-export const BUTTON = 'rounded-md border border-teal-700 bg-white px-3 py-1.5 text-sm font-medium text-teal-800 hover:bg-teal-50 dark:border-teal-500 dark:bg-slate-900 dark:text-teal-300 dark:hover:bg-slate-800';
+// The shared parts' classes, in the tokens of docs/DESIGN.md. A field is 44 px tall and its edge 3:1 (WCAG 1.4.11); the
+// focus ring comes from global.css.
+export const INPUT = 'block min-h-11 w-full rounded-control border bg-field px-3 py-2 text-base text-ink placeholder:text-ink-muted focus:border-focus';
+const BORDER = 'border-edge', BAD = 'border-bad';
+const CHANGED = 'border-focus ring-2 ring-focus/40';
+export const LABEL = 'block font-medium text-ink';
+export const HINT = 'mt-1 text-sm text-ink-muted';
+export const BUTTON = 'rounded-control border border-accent bg-field px-3 py-1.5 text-sm font-medium text-link hover:bg-surface';
+/** The main action: the one accent fill on a screen, 44 px tall on a phone. */
+export const FILLED = 'min-h-11 rounded-control border border-accent bg-accent px-3 py-1.5 text-sm font-medium text-on-accent hover:bg-accent-hover sm:min-h-0';
 
 /**
  * Text kept in a local draft while typing (a re-render from another field must not wipe it, lessons §4) and handed on

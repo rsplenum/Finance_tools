@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { Bar, Lever, PlanLever } from '../Board';
-import { BUTTON, HINT, TextField } from '../fields';
+import { BUTTON, FILLED, HINT, TextField } from '../fields';
 import type { ViableView } from '../board-model';
 import { amountOf, tidyAmount, type LenderView, type State } from './model';
 import {
@@ -15,7 +15,6 @@ import {
 } from './levers';
 
 type Update = (f: (s: State) => State) => void;
-const FILLED = 'rounded-md border border-teal-700 bg-teal-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-800 dark:border-teal-400 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300';
 const tone = (ok: boolean) => (ok ? 'text-teal-800 dark:text-teal-300' : 'text-red-700 dark:text-red-300');
 
 export function Levels({ s, lender, update, use }: { s: State; lender?: LenderView; update: Update; use: (l: DscrLevers) => void }) {

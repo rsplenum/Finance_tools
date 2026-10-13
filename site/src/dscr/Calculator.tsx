@@ -72,8 +72,9 @@ export function DscrCalculator() {
     {p.started && <>
       <PreviewSection s={s} p={p} update={update} openMore={openMore} use={use} used={used} undo={undo} keep={() => setUsed([])} />
       <DownloadSection s={s} p={p} update={update} />
-      <div class="sticky bottom-0 z-10 -mx-4 mt-10 border-t border-slate-200 bg-white px-4 py-2.5 dark:border-slate-800 dark:bg-slate-950">
-        <a href="#preview" data-testid="answer-bar" aria-live="polite" class="block text-sm font-medium text-slate-900 dark:text-slate-100">
+      <div class="sticky bottom-0 z-10 -mx-4 mt-10 border-t border-line bg-canvas px-4">
+        {/* The whole bar is the target, 44 px tall: it sits over the fields as they scroll under it (WCAG 2.5.8). */}
+        <a href="#preview" data-testid="answer-bar" aria-live="polite" class="flex min-h-11 items-center gap-1 text-sm font-medium text-ink">
           {barText(p)} <span aria-hidden="true">↓</span>
         </a>
       </div>
