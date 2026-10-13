@@ -465,7 +465,7 @@ function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
     </div>}
     {assumed.length > 0 && <div data-testid="dscr-assumed" class="mt-4 text-slate-900 dark:text-slate-100">
       <p class="font-medium">Assumed until you change them</p>
-      <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">
+      <ul class="mt-1 mb-2 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">
         {assumed.map((a) => <li key={a.id} data-testid={`assumed-${a.id}`}>
           <a href={`#${a.where}`} onClick={openMore} class="text-teal-700 underline underline-offset-2 dark:text-teal-400">{a.what}</a>: {a.shown}
         </li>)}
@@ -493,7 +493,7 @@ function LenderLines({ v, openMore }: { v: LenderView; openMore: () => void }) {
     {v.blocked && <p role="alert" class="mt-1 text-sm text-red-900 dark:text-red-200">{v.blocked}</p>}
     <ul class="mt-1 space-y-1 text-sm text-slate-700 dark:text-slate-300">
       {v.stress.map((l, i) => line(l, LENDER.stress[i]?.id ?? String(i)))}
-      {v.ask && <li data-testid="lender-ask"><a href="#lender" onClick={openMore} class="text-teal-700 underline underline-offset-2 dark:text-teal-400">{v.ask}</a></li>}
+      {v.ask && <li data-testid="lender-ask"><a href="#lender" onClick={openMore} class="inline-flex min-h-6 items-center text-teal-700 underline underline-offset-2 dark:text-teal-400">{v.ask}</a></li>}
       {'line' in v.promoters ? line(v.promoters.line, 'promoters') : <li data-testid="lender-promoters">{v.promoters.assumed}.</li>}
       {v.notStressed && <li>{v.notStressed}.</li>}
     </ul>

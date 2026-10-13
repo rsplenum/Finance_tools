@@ -74,11 +74,16 @@ export function TextField(p: TextProps) {
 /** A cell of a grid; `changed`, what the cell was before a plan wrote it, marks it until undone or kept. */
 export function CellInput(p: { id: string; name: string; value: string; onCommit: (t: string) => void; tidy?: (t: string) => string; invalid?: boolean; decimal?: boolean; month?: boolean; changed?: string }) {
   const d = useDraft(p.value, p.onCommit, p.tidy);
-  return <input id={p.id} type={p.month ? 'month' : 'text'} inputMode={p.decimal ? 'decimal' : undefined} autocomplete="off" spellcheck={false} enterkeyhint="next"
-    aria-label={p.name} aria-invalid={p.invalid || undefined} placeholder={p.month ? 'like 2028-03' : undefined}
-    title={p.invalid ? (p.month ? 'Not understood: type 2028-03 or Mar 2028' : 'Not understood: type 1,50,000 or 1.5 L') : p.changed}
-    data-changed={p.changed === undefined ? undefined : 'plan'}
-    {...d} class={`${INPUT} ${p.invalid ? BAD : p.changed !== undefined ? CHANGED : BORDER} px-2 ${p.month ? '' : 'text-right tabular-nums'} sm:min-w-28`} />;
+  const wrong = p.month ? 'Not understood. Type 2028-03 or Mar 2028.' : 'Not understood. Type 1,50,000 or 1.5 L.';
+  // The error shows under the cell and is tied to it, not left in a tooltip (WCAG 3.3.1; docs/DESIGN.md, Field; UX1).
+  return <>
+    <input id={p.id} type={p.month ? 'month' : 'text'} inputMode={p.decimal ? 'decimal' : undefined} autocomplete="off" spellcheck={false} enterkeyhint="next"
+      aria-label={p.name} aria-invalid={p.invalid || undefined} aria-describedby={p.invalid ? `${p.id}-error` : undefined} placeholder={p.month ? 'like 2028-03' : undefined}
+      title={p.invalid ? wrong : p.changed}
+      data-changed={p.changed === undefined ? undefined : 'plan'}
+      {...d} class={`${INPUT} ${p.invalid ? BAD : p.changed !== undefined ? CHANGED : BORDER} px-2 ${p.month ? '' : 'text-right tabular-nums'} sm:min-w-28`} />
+    {p.invalid && <p id={`${p.id}-error`} aria-live="polite" class="mt-1 text-sm text-bad">{wrong}</p>}
+  </>;
 }
 
 /** A choice from a list, as a select; `placeholder` is the empty first option. */

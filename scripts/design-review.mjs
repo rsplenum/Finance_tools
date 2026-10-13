@@ -12,7 +12,7 @@
 import { mkdir } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import { serveDist } from './serve-dist.mjs';
-import { measure, openAt, STATES } from './design-checks.mjs';
+import { lostFocus, measure, openAt, STATES } from './design-checks.mjs';
 
 const args = process.argv.slice(2);
 const flag = (f) => { const i = args.indexOf(f); return i < 0 ? undefined : args.splice(i, 2)[1]; };
@@ -38,6 +38,15 @@ function firstScreen() {
   };
 }
 
+// A review of a build older than the source measures the old page (UX1): say so first.
+{
+  const { stat, readdir } = await import('node:fs/promises');
+  const src = new URL('../site/src/', import.meta.url);
+  const built = (await stat(new URL('../site/dist/index.html', import.meta.url))).mtimeMs;
+  let newest = 0;
+  for (const f of await readdir(src, { recursive: true })) newest = Math.max(newest, (await stat(new URL(f, src))).mtimeMs);
+  if (newest > built) console.log('WARNING: site/dist is older than site/src: run `npm run build` first, or this review measures the old pages.');
+}
 const { BASE, server } = await serveDist();
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 
@@ -82,7 +91,7 @@ if (tokens) {
           first = `  on screen after the last step at 360 px (${f.words} words, ${f.fields} fields shown on the page): ${f.text}\n  headings: ${f.heads.join(' / ')}`;
         }
         // Keys are traversed light and dark at each width: the ring's contrast differs, the order does not.
-        for (const l of [...errors, ...await measure(page, { phone: width === 'phone' })]) found.set(l, [...(found.get(l) ?? []), `${width === 'phone' ? 360 : 1280} ${scheme}`]);
+        for (const l of [...errors, ...await lostFocus(page, state), ...await measure(page, { phone: width === 'phone' })]) found.set(l, [...(found.get(l) ?? []), `${width === 'phone' ? 360 : 1280} ${scheme}`]);
         if (shots) await page.screenshot({ path: `${shots}/${path.replace(/\W+/g, '') || 'home'}-${state}-${width === 'phone' ? 360 : 1280}-${scheme}.png`, fullPage: true });
         await ctx.close();
       }

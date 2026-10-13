@@ -200,15 +200,19 @@ function Viable({ s, p, update, use }: { s: ReportState; p: ReportPreview; updat
     {p.collateralNote && <p data-testid="rep-collateral-note" class={`mt-1 ${HINT}`}>{p.collateralNote}</p>}
     {p.longTerm && <p data-testid="rep-long-term" class="mt-2 text-sm text-red-700 dark:text-red-300">{p.longTerm}</p>}
     {p.misses && <p data-testid="rep-misses" class="mt-2 text-sm text-red-700 dark:text-red-300">{p.misses}</p>}
-    {!v && <button type="button" data-testid="rep-viable" class={`mt-2 ${BUTTON}`} onClick={() => { setV(viableOf(s)); if (p.misses) replan([], AS_TYPED); }}>
+    {!v && <button type="button" data-testid="rep-viable" class={`mt-2 ${BUTTON}`} onClick={() => {
+      setV(viableOf(s)); if (p.misses) replan([], AS_TYPED);
+      // The button removes itself, so the focus moves to what replaces it (WCAG 2.4.3; DESIGN-LESSONS lesson 1).
+      requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid="rep-plan"], [data-testid="rep-viable-box"]')?.focus());
+    }}>
       {p.misses ? 'Make it viable' : 'How far can sales fall?'}</button>}
-    {v && !plan && <div data-testid="rep-viable-box" class="mt-2">
+    {v && !plan && <div data-testid="rep-viable-box" tabIndex={-1} class="mt-2">
       <p class="font-medium text-slate-900 dark:text-slate-100">{v.title}</p>
       {group('borrower', v.meets ? 'The room' : 'Your changes')}
       {group('lender', 'The lender’s, if it agrees')}
       <p class={`mt-2 ${HINT}`}>{v.foot}</p>
     </div>}
-    {v && plan && b && <div data-testid="rep-plan" class="mt-3 rounded-lg border border-slate-300 p-3 dark:border-slate-600">
+    {v && plan && b && <div data-testid="rep-plan" tabIndex={-1} class="mt-3 rounded-lg border border-slate-300 p-3 dark:border-slate-600">
       <p class="font-medium text-slate-900 dark:text-slate-100">The plan: the levers together</p>
       <p class={HINT}>The engine’s plan, your changes first and the lender’s last. The sliders change none of the figures above until you use the plan.</p>
       <TextField id="fld-promotersMost" class="mt-3" label="The most the promoters can bring in all, if known" hint="Without it, no more of their money is assumed."

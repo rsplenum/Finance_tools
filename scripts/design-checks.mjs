@@ -303,6 +303,13 @@ export const STATES = {
   '/': { page: async () => {} },
 };
 
+/** After a state's last step the focus is still on a control, never dropped to the page (WCAG 2.4.3; DESIGN-LESSONS lesson 1, recurred on /cma/ and /project-report/ in UX1). */
+export async function lostFocus(page, state) {
+  if (state === 'empty' || state === 'page') return [];
+  // Two frames first: a control that removes itself moves the focus on the next frame.
+  return await page.evaluate(async () => { await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); return document.activeElement === document.body || !document.activeElement; }) ? ['focus: dropped to the page after the last step (WCAG 2.4.3)'] : [];
+}
+
 /** The states the site check measures beside each page as it loads: an error, the plan's sliders, the result and the download row. */
 export const SITE_STATES = ['error', 'plan', 'download'];
 
@@ -338,7 +345,7 @@ export async function designChecks({ browser, BASE, pages, violations }) {
         for (const scheme of ['light', 'dark']) {
           const { ctx, page } = await openAt(browser, BASE + path, { width, scheme });
           await STATES[path][state](page);
-          for (const l of await measure(page, { phone: width === 'phone' })) note(`${path} ${state} ${width} ${scheme}: ${l}`);
+          for (const l of [...await lostFocus(page, state), ...await measure(page, { phone: width === 'phone' })]) note(`${path} ${state} ${width} ${scheme}: ${l}`);
           await ctx.close();
         }
       }

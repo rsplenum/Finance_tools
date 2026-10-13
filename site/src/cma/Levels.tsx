@@ -68,15 +68,19 @@ function Viable({ s, misses, update, use }: { s: CmaState; misses: boolean; upda
   };
   const bad = !!s.promotersMost.trim() && amountOf(s.promotersMost) === undefined;
   return <>
-    {!v && <button type="button" data-testid="cma-viable" class={`mt-2 ${BUTTON}`} onClick={() => { setV(cmaViableOf(s)); if (misses) replan([], CMA_AS_TYPED); }}>
+    {!v && <button type="button" data-testid="cma-viable" class={`mt-2 ${BUTTON}`} onClick={() => {
+      setV(cmaViableOf(s)); if (misses) replan([], CMA_AS_TYPED);
+      // The button removes itself, so the focus moves to what replaces it (WCAG 2.4.3; DESIGN-LESSONS lesson 1).
+      requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid="cma-plan"], [data-testid="cma-viable-box"]')?.focus());
+    }}>
       {misses ? 'Make it viable' : 'How far can sales fall?'}</button>}
-    {v && !plan && <div data-testid="cma-viable-box" class="mt-2">
+    {v && !plan && <div data-testid="cma-viable-box" tabIndex={-1} class="mt-2">
       <p class="font-medium text-slate-900 dark:text-slate-100">{v.title}</p>
       {group('borrower', v.meets ? 'The room' : 'Your changes')}
       {group('lender', 'The lender’s, if it agrees')}
       <p class={`mt-2 ${HINT}`}>{v.foot}</p>
     </div>}
-    {v && plan && b && <div data-testid="cma-plan" class="mt-3 rounded-lg border border-slate-300 p-3 dark:border-slate-600">
+    {v && plan && b && <div data-testid="cma-plan" tabIndex={-1} class="mt-3 rounded-lg border border-slate-300 p-3 dark:border-slate-600">
       <p class="font-medium text-slate-900 dark:text-slate-100">The plan: the levers together</p>
       <p class={HINT}>The engine’s plan, your changes first and the lender’s last. The sliders change none of the figures above until you use the plan.</p>
       <TextField id="fld-cma-promotersMost" class="mt-3" label="The most the promoters can bring as capital, if known" hint="Without it, no more of their money is assumed."
