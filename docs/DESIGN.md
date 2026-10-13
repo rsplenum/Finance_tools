@@ -2,6 +2,8 @@
 
 What every page is held to, read whole by the designer and the critic (`.claude/agents/`). AI agents have no taste of their own: the look comes from these rules, the measured checks, the usage numbers and the owner's judgement of the preview link. A rule stays only with its evidence; a "law" without a source counts for nothing. The owner's input behind it, with the rows that do not hold: `docs/design-inputs/cognitive-matrix.md`. Proposed rules wait in `docs/DESIGN-LESSONS.md` until accepted. The site is Astro, Preact and Tailwind 4; the tokens are in `site/src/global.css`.
 
+From 13-10-2026 the look follows antigravity.google's structure (D-UX-66); AG1 writes its forbidden list here, and that list wins over the rules below wherever they differ, except on accessibility, figures and the law.
+
 **Reference sites** (the owner's matrix, 13-10-2026; the owner may name others, `docs/OWNER.md`): GOV.UK for forms, questions and errors; Our World in Data for labels on charts and one colour per thing; Linear for speed and quiet dark surfaces; Stripe's docs for an explanation beside what it explains; ciechanow.ski for a control beside its effect. Borrow their patterns, never their look. In order: reuse a pattern here, adapt one, invent only when none fits, and test a new one before it is reused.
 
 ## Principles

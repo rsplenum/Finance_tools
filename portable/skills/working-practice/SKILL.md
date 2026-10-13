@@ -32,6 +32,7 @@ What the owner taught across projects, so a new project starts where the last on
 - Propose your own ideas and criticise your own work; do not wait to be told everything.
 - Search the source before asking the owner for a fact it already holds. Cite only what was looked up; say "approximate" otherwise.
 - With the owner, name a setting as the screen they use shows it; use the setting file's word only where a file needs it.
+- A change to a look is one the owner sees at a glance: show it beside what it replaces. When the owner names a site they like, follow its structure rather than build from rules alone, and keep accessibility, accuracy and the law above it.
 
 ## Checks
 
