@@ -6,6 +6,7 @@ import type { Doc } from './doc/doc';
 import { docxOf } from './doc/docx';
 import { pdfOf } from './doc/pdf';
 import { xlsxOf } from './doc/xlsx';
+import { track } from './events';
 
 /** Each file: its writer and its type. */
 export const FILES = {
@@ -31,6 +32,7 @@ export function download(bytes: Uint8Array<ArrayBuffer>, name: string, type: str
 /** Print: the same PDF, opened in a new tab to print from (one layout, not a second one for the web page). */
 export function openPdf(doc: Doc | undefined, now: Date) {
   if (!doc) return;
+  track('download', 'print');
   const url = URL.createObjectURL(new Blob([pdfOf(doc, now)], { type: 'application/pdf' }));
   window.open(url, '_blank', 'noopener');
   setTimeout(() => URL.revokeObjectURL(url), 60_000);
@@ -38,5 +40,7 @@ export function openPdf(doc: Doc | undefined, now: Date) {
 
 /** Writes the document as one of the three files and saves it; nothing while there is no document. */
 export function save(doc: Doc | undefined, kind: FileKind, name: string, now: Date) {
-  if (doc) download(FILES[kind].write(doc, now), name, FILES[kind].type);
+  if (!doc) return;
+  track('download', kind);
+  download(FILES[kind].write(doc, now), name, FILES[kind].type);
 }

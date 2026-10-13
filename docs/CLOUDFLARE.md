@@ -36,5 +36,6 @@
    | Builds for non-production branches | on |
 
 5. Check: `https://finance-tools-api.<your-subdomain>.workers.dev/health` shows `{"ok":true,"missing":[]}`.
+6. The interaction data's table (UD1, D-TECH-38): the session that puts the IDs in runs `npx wrangler d1 migrations apply finance-tools --remote -c worker/wrangler.jsonc` once (or paste `worker/migrations/0001_events.sql` into the D1 console). Recording starts when the Pages project is rebuilt with `PUBLIC_API_URL` set (`docs/OWNER.md`); `npm run usage` then prints the funnels. With a custom domain, add it to `READ_ORIGINS` in `worker/wrangler.jsonc`, or the Worker refuses its batches.
 
 Secrets (Razorpay keys, later) go in the Worker's **Settings → Variables and Secrets**, never in the repo.

@@ -53,12 +53,14 @@ interface TextProps {
 
 export function TextField(p: TextProps) {
   const d = useDraft(p.value, p.onCommit, p.tidy);
+  // A read-back saying the text was not understood marks the field wrong too, for screen readers and the error count (UD1).
+  const bad = p.invalid || /^Not understood/.test(p.said ?? '');
   return <div class={p.class}>
     <label for={p.id} class={LABEL}>{p.label}</label>
     {p.hint && <p id={`${p.id}-hint`} class={HINT}>{p.hint}</p>}
     <input id={p.id} type={p.type ?? 'text'} inputMode={p.inputMode} autocomplete="off" spellcheck={false} enterkeyhint="done"
-      placeholder={p.placeholder} aria-invalid={p.invalid || undefined} aria-describedby={p.hint ? `${p.id}-hint` : undefined}
-      {...d} class={`mt-1 ${INPUT} ${p.invalid ? BAD : BORDER}`} />
+      placeholder={p.placeholder} aria-invalid={bad || undefined} aria-describedby={p.hint ? `${p.id}-hint` : undefined}
+      {...d} class={`mt-1 ${INPUT} ${bad ? BAD : BORDER}`} />
     {p.said && <p data-testid={`${p.id}-said`} aria-live="polite" class="mt-1 text-sm break-words text-slate-700 dark:text-slate-300">{p.said}</p>}
   </div>;
 }
