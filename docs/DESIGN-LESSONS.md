@@ -6,4 +6,4 @@ Each entry: **observation**; evidence; root cause; the rule proposed; scope; sta
 
 ## Open
 
-1. **Links styled as blocks fall under 24 px.** The "Provisional: n still needed ↓" pill and the result lines that jump to a section are 16 to 20 px tall at 360 px and on a desktop (the first review, 13-10-2026). Evidence: WCAG 2.5.8 (AA). Root cause: a link outside a sentence is sized by its text alone, with no part for it. Rule proposed: a link that stands alone (not inside a sentence) is at least 24 px tall, as a shared `JUMP` class. Scope: every page. Status: proposed, 13-10-2026.
+1. **A control that removes itself drops the focus to the page.** "Make it viable" replaced itself with the plan and left the focus on `body` (the first review, 13-10-2026; fixed there by focusing the plan's box). Evidence: WCAG 2.4.3 (focus order). Root cause: a button that hides on click, with nothing told where the focus goes. Rule proposed: a control that removes or replaces itself moves the focus to what replaces it (a box with `tabIndex={-1}`, focused after the render). Scope: every page. Status: proposed, 13-10-2026.

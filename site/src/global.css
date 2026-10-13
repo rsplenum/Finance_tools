@@ -79,6 +79,10 @@
   input, select, textarea { font-size: max(16px, 1rem); }
   /* One focus for every control, 2 px at 3:1 or more in both themes (WCAG 2.4.7, 1.4.11; docs/DESIGN.md). */
   :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  /* A control scrolled to by Tab stops above the DSCR page's sticky answer bar, 45 px tall (WCAG 2.4.11; the design check measures it). */
+  html { scroll-padding-bottom: 4rem; }
+  /* Every "Why?" and drawer summary is a target of 24 px at least (WCAG 2.5.8; docs/DESIGN-LESSONS.md, lesson 1). */
+  summary { min-height: 1.5rem; }
 }
 
 /* Reduced motion: nothing slides or spins (WCAG 2.3.3; the design check measures it). */

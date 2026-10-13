@@ -57,7 +57,7 @@ export function DscrCalculator() {
     <ClearAll shown={JSON.stringify(s) !== JSON.stringify(start())} onClear={() => setS(start())} />
     {s.source === 'plan' && <FrontDoor s={s} update={update} openMore={openMore} was={was} />}
     <details id="more-options" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)}
-      class="mt-8 rounded-lg border border-slate-300 dark:border-slate-700">
+      class="mt-8 rounded-card border border-edge">
       <summary class="cursor-pointer px-4 py-3 font-medium text-teal-800 dark:text-teal-300">More options: the method, the loan in full, year-by-year figures</summary>
       <div class="px-4 pb-6">
         <Start s={s} update={update} />
@@ -410,16 +410,17 @@ function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
   const assumed = p.assumed.filter((a) => !(method && target && a.id === 'target'))
     .map((a) => (a.id === 'method' && target ? { ...a, what: 'How DSCR is worked out, and the target', shown: `${a.shown}; ${target.shown.toLowerCase()}` } : a));
   return <Section id="preview" title="Results">
+    {/* The answer first (docs/DESIGN.md, principle 1); one tone a meaning: good meets, bad misses or blocked, warn provisional. */}
+    {p.verdict && <p data-testid="dscr-verdict" class={`${box} text-ink ${p.verdict.meets ? 'border-good bg-good-tint' : 'border-bad bg-bad-tint'}`}>{p.verdict.text}</p>}
     {p.loanLine && <dl data-testid="dscr-loan-line" class="mt-3 grid grid-cols-2 gap-3 text-slate-900 dark:text-slate-100">
       <div><dt class={`text-sm ${MUTED}`}>Each instalment</dt><dd data-testid="dscr-instalment" class="font-semibold tabular-nums">{p.loanLine.instalment}</dd></div>
       <div><dt class={`text-sm ${MUTED}`}>Interest over the whole loan</dt><dd data-testid="dscr-total-interest" class="font-semibold tabular-nums">{p.loanLine.totalInterest}</dd></div>
     </dl>}
     <p data-testid="dscr-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.blocked
-      ? 'bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-200' : p.needs.length
-        ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200'}`}>
+      ? 'bg-bad-tint text-bad' : p.needs.length ? 'bg-warn-tint text-warn' : 'border border-line text-ink'}`}>
       {statusText(p)}
     </p>
-    {p.blocked && <p data-testid="dscr-blocked" role="alert" class={`${box} border-red-300 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950 dark:text-red-200`}>{p.blocked}</p>}
+    {p.blocked && <p data-testid="dscr-blocked" role="alert" class={`${box} border-bad bg-bad-tint text-ink`}>{p.blocked}</p>}
     {p.average !== undefined && <dl class="mt-4 grid grid-cols-2 gap-3">
       <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
         <dt class={`text-sm ${MUTED}`}>Average DSCR</dt>
@@ -434,14 +435,10 @@ function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
       </div>
     </dl>}
     {p.marks && p.marks.length > 0 && <ul data-testid="dscr-marks" class="mt-3 flex flex-wrap gap-2 text-sm">
-      {p.marks.map((m) => <li key={m.fy} data-testid={`mark-${m.fy}`} class={`rounded-full px-2.5 py-0.5 ${!m.counted ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
-        : m.meets ? 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200' : 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200'}`}>
+      {p.marks.map((m) => <li key={m.fy} data-testid={`mark-${m.fy}`} class={`rounded-full px-2.5 py-0.5 ${!m.counted ? 'bg-surface text-ink-muted' : m.meets ? 'bg-good-tint text-good' : 'bg-bad-tint text-bad'}`}>
         {m.fy}: {m.dscr}, {!m.counted ? 'not counted' : m.meets ? 'meets the target' : 'below the target'}
       </li>)}
     </ul>}
-    {p.verdict && <p data-testid="dscr-verdict" class={`${box} ${p.verdict.meets
-      ? 'border-teal-300 bg-teal-50 text-teal-900 dark:border-teal-800 dark:bg-teal-950 dark:text-teal-100'
-      : 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100'}`}>{p.verdict.text}</p>}
     {used.length > 0 && <div data-testid="dscr-used" role="status" class="mt-3 rounded-lg border border-teal-600 bg-teal-50 p-3 dark:border-teal-500 dark:bg-teal-950">
       <p class="font-medium text-slate-900 dark:text-slate-100">The plan is used: these figures above changed.</p>
       <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-800 tabular-nums dark:text-slate-200">{used.map((c) => <li key={c.key}>{c.label}: {c.was || 'none'} → {c.now}</li>)}</ul>

@@ -63,9 +63,10 @@ export function TextField(p: TextProps) {
     <label for={p.id} class={LABEL}>{p.label}</label>
     {p.hint && <p id={`${p.id}-hint`} class={HINT}>{p.hint}</p>}
     <input id={p.id} type={p.type ?? 'text'} inputMode={p.inputMode} autocomplete="off" spellcheck={false} enterkeyhint="done"
-      placeholder={p.placeholder} aria-invalid={bad || undefined} aria-describedby={p.hint ? `${p.id}-hint` : undefined}
+      placeholder={p.placeholder} aria-invalid={bad || undefined} aria-describedby={[p.hint && `${p.id}-hint`, p.said && `${p.id}-said`].filter(Boolean).join(' ') || undefined}
       {...d} class={`mt-1 ${INPUT} ${bad ? BAD : BORDER}`} />
-    {p.said && <p data-testid={`${p.id}-said`} aria-live="polite" class="mt-1 text-sm break-words text-slate-700 dark:text-slate-300">{p.said}</p>}
+    {/* The read-back, or the error beside its field in the error colour (GOV.UK Error message), tied to the field for a screen reader. */}
+    {p.said && <p id={`${p.id}-said`} data-testid={`${p.id}-said`} aria-live="polite" class={`mt-1 text-sm break-words ${bad ? 'text-bad' : 'text-ink-muted'}`}>{p.said}</p>}
   </div>;
 }
 
@@ -100,12 +101,12 @@ export function Choice<T extends string>(p: { name: string; legend: string; opti
     <legend class={LABEL}>{p.legend}</legend>
     <div class={`mt-2 grid gap-2 ${p.columns ? 'sm:grid-cols-2' : ''}`}>
       {p.options.map((o) => <label key={o.value} for={`${p.name}-${o.value}`}
-        class="flex cursor-pointer items-start gap-3 rounded-lg border border-slate-300 bg-white p-3 has-checked:border-teal-700 has-checked:bg-teal-50 dark:border-slate-700 dark:bg-slate-900 dark:has-checked:border-teal-500 dark:has-checked:bg-teal-950">
+        class="flex cursor-pointer items-start gap-3 rounded-card border border-edge bg-field p-3 has-checked:border-accent has-checked:bg-teal-50 dark:has-checked:bg-teal-950">
         <input type="radio" id={`${p.name}-${o.value}`} name={p.name} value={o.value} checked={p.value === o.value}
-          onChange={() => p.onChange(o.value)} class="mt-1 size-4 shrink-0 accent-teal-700 dark:accent-teal-500" />
+          onChange={() => p.onChange(o.value)} class="mt-1 size-4 shrink-0 accent-accent" />
         <span class="min-w-0">
-          <span class="block text-slate-900 dark:text-slate-100">{o.label}</span>
-          {o.hint && <span class="mt-0.5 block text-sm text-slate-600 dark:text-slate-300">{o.hint}</span>}
+          <span class="block text-ink">{o.label}</span>
+          {o.hint && <span class="mt-0.5 block text-sm text-ink-muted">{o.hint}</span>}
         </span>
       </label>)}
     </div>
@@ -115,8 +116,8 @@ export function Choice<T extends string>(p: { name: string; legend: string; opti
 /** A source and date, behind an icon (lessons §1: no citations in the running text). */
 export function SourceNote(p: { what: string; children: ComponentChildren; /** The data file's review-by date: once passed, said beside the summary (Q2, D-DATA-19). */ reviewBy?: string }) {
   const due = p.reviewBy ? overdueNote(p.reviewBy, todayIso()) : '';
-  return <details class="mt-1 text-sm text-slate-600 dark:text-slate-300">
-    <summary class="inline-flex cursor-pointer items-center gap-1 text-teal-800 underline-offset-4 hover:underline dark:text-teal-300">
+  return <details class="mt-1 text-sm text-ink-muted">
+    <summary class="inline-flex min-h-6 cursor-pointer items-center gap-1 text-link underline-offset-4 hover:underline">
       <span aria-hidden="true">ⓘ</span> {p.what}
     </summary>
     {due && <span data-testid="review-due" class="ml-2 text-amber-800 dark:text-amber-300">{due}</span>}

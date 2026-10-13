@@ -52,6 +52,7 @@ Ratios on canvas, measured by `node scripts/design-review.mjs --tokens` (every p
 - **Drawer and "Why?"**: closed `<details>`, opened by a tap; never holds a field the default path needs.
 - **Download row**: the formats in a row with what each is for; provisional until what it needs is in, and says so.
 - **Notice**: a line on the `warn` or `bad` tint, in words first.
+- **Targets**: a link that stands alone (not in a sentence) and every `<summary>` at least 24 px tall (`min-h-6`; global.css gives it to summaries); a sticky band leaves a `scroll-padding-bottom` of its height, so Tab never stops under it (WCAG 2.5.8, 2.4.11; lesson 1, accepted 13-10-2026 after it recurred).
 
 ## Page templates
 - **Tool page** (DSCR, CMA, estimate, report): h1 and one line of what it gives; the default questions; the answer; the tables; More options (closed); the download. One column, `max-w-3xl`.
@@ -61,7 +62,7 @@ Ratios on canvas, measured by `node scripts/design-review.mjs --tokens` (every p
 Each tool is reviewed empty, partly filled, provisional (a fact missing), with an error, with a result, and at the download, with focus and hover on its controls; at 360 px (the common Indian Android width) and on a desktop, light and dark. `npm run design-review -- /dscr/` drives them and prints what it measures as text; screenshots (`--shots <dir>`) only for the pages a change touches. A page's states are listed in `scripts/design-review.mjs`.
 
 ## Measured checks (`scripts/design-checks.mjs`, in the site check)
-On every page at 360 and 1280 px, light and dark: axe-core with no WCAG 2.2 A or AA violation; text at 4.5:1 and large text at 3:1 (WCAG 1.4.3); a field's edge and the focus ring at 3:1 (1.4.11, 2.4.7); every target at least 24 by 24 px or spaced (2.5.8); fields and accent buttons 44 px tall on a phone (2.5.5, AAA, as a house rule); every control reached by Tab (2.1.1); no sideways scroll at 320 px (1.4.10); nothing moving under reduced motion (2.3.3); the token ratchet. A defect the checks cannot see goes to the critic.
+On every page at 360 and 1280 px, light and dark: axe-core with no WCAG 2.2 A or AA violation; text at 4.5:1 and large text at 3:1 (WCAG 1.4.3); a field's edge and the focus ring at 3:1 (1.4.11, 2.4.7); every target at least 24 by 24 px or spaced (2.5.8); fields and accent buttons 44 px tall on a phone (2.5.5, AAA, as a house rule); every control reached by Tab (2.1.1) and not hidden under a sticky band once focused (2.4.11); no sideways scroll at 320 px (1.4.10); nothing moving under reduced motion (2.3.3); the token ratchet. A defect the checks cannot see goes to the critic.
 
 ## Acceptable and unacceptable
 - Acceptable: the DSCR's verdict in a sentence with the average and the lowest year beside it, the years marked against the target. Unacceptable: the verdict only as a colour, or below the table.

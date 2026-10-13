@@ -2,7 +2,7 @@
  * Design checks (DT1, D-UX-58), measured as text; each rule, the friction it removes and its evidence: docs/DESIGN.md,
  * "Measured checks". The site check runs `designChecks` on every built page at 360 px and at 1280 px, light and dark:
  * axe-core (WCAG 2.2 A and AA); the edges of fields at 3:1 and a visible focus at 3:1 (WCAG 1.4.11, 2.4.7); targets of
- * 24 by 24 px (2.5.8) and, at 360 px, fields and buttons filled with the accent 44 px tall; every control reached by Tab (2.1.1); no
+ * 24 by 24 px (2.5.8) and, at 360 px, fields and buttons filled with the accent 44 px tall; every control reached by Tab (2.1.1) and, once focused, not hidden under a sticky band (2.4.11); no
  * sideways scroll at 320 px (1.4.10); nothing moving under reduced motion (2.3.3). `tokenCounts` counts the raw colour
  * classes and arbitrary values in site/src: a ratchet against scripts/design-baseline.json until UX2 to UX4 bring both to
  * nil. A count held in the baseline may fall, never grow; when it falls, lower the baseline in the same commit.
@@ -109,6 +109,7 @@ async function keyboard(page) {
     const els = [...document.querySelectorAll('a[href], button, input:not([type=hidden]), select, textarea, summary, [tabindex]:not([tabindex="-1"])')]
       .filter((el) => shown(el) && !el.disabled && el.tabIndex >= 0);
     els.forEach((el, i) => { el.dataset.dcKey = el.type === 'radio' && el.name ? `radio:${el.name}` : String(i); });
+    for (const el of document.querySelectorAll('body *')) if (/sticky|fixed/.test(getComputedStyle(el).position)) el.dataset.dcBand = '';
     // Tab from the top of the page, wherever the state's last step left the focus.
     const start = document.body.insertBefore(Object.assign(document.createElement('span'), { tabIndex: -1, id: 'dc-start' }), document.body.firstChild);
     start.focus();
@@ -135,7 +136,14 @@ async function keyboard(page) {
       for (const m of s.boxShadow === 'none' ? [] : s.boxShadow.matchAll(/((?:rgba?|oklab|oklch|lab|lch|color)\([^)]*\)|#[0-9a-f]+)[^,]*?(\d+(?:\.\d+)?)px(?=\s*(?:,|$))/gi)) {
         if (parseFloat(m[2]) >= 1) best = Math.max(best, ratio(rgba(m[1]), behind));
       }
-      return { key: el.dataset.dcKey ?? '', what: `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''} "${(el.textContent || el.value || '').trim().replace(/\s+/g, ' ').slice(0, 30)}"`, best };
+      // WCAG 2.4.11: the focused control not wholly hidden by a sticky or fixed band (the answer bar).
+      const r = el.getBoundingClientRect();
+      const hidden = [...document.querySelectorAll('[data-dc-band]')].some((b) => {
+        if (b.contains(el)) return false;
+        const q = b.getBoundingClientRect();
+        return q.height > 0 && r.top >= q.top && r.bottom <= q.bottom && r.left >= q.left && r.right <= q.right;
+      });
+      return { hidden, key: el.dataset.dcKey ?? '', what: `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''} "${(el.textContent || el.value || '').trim().replace(/\s+/g, ' ').slice(0, 30)}"`, best };
     });
     if (!f) { if (reached.size) break; continue; } // past the last control
     if (f.key && f.key === last) continue; // a month or date field takes Tab once per part
@@ -143,8 +151,9 @@ async function keyboard(page) {
     last = f.key;
     if (f.key) reached.add(f.key);
     if (f.best < 3) unseen.push(`${f.what} focus ${f.best.toFixed(2)}:1`);
+    if (f.hidden) unseen.push(`${f.what} hidden under a sticky band`);
   }
-  await page.evaluate(() => document.getElementById('dc-start')?.remove());
+  await page.evaluate(() => { document.getElementById('dc-start')?.remove(); for (const el of document.querySelectorAll('[data-dc-band]')) delete el.dataset.dcBand; });
   const missed = all.filter((k) => !reached.has(k));
   const names = missed.length ? await page.evaluate((ks) => ks.map((k) => {
     const el = document.querySelector(k.startsWith('radio:') ? `input[name="${k.slice(6)}"]` : `[data-dc-key="${k}"]`);
@@ -197,6 +206,9 @@ export const STATES = {
     result: async (page) => frontDoor(page, ['5 L', '10', '10 L', '12', '5']),
     download: async (page) => {
       await frontDoor(page, ['5 L', '10', '10 L', '12', '5']);
+      // All eight inputs once: the EMIs already paid and the depreciation too, so their read-backs are measured.
+      await leave(page, '#fld-fd-emis', '5,000');
+      await leave(page, '#fld-fd-depreciation', '40,000');
       await leave(page, '#fld-borrower', 'Asha Traders');
       await leave(page, '#fld-lender', 'A bank');
       await page.locator('#download').scrollIntoViewIfNeeded();
