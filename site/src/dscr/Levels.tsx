@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { Bar, Lever, PlanLever } from '../Board';
-import { BUTTON, HINT, TextField } from '../fields';
+import { BUTTON, FILLED, HINT, TextField } from '../fields';
 import type { ViableView } from '../board-model';
 import { amountOf, tidyAmount, type LenderView, type State } from './model';
 import {
@@ -15,7 +15,6 @@ import {
 } from './levers';
 
 type Update = (f: (s: State) => State) => void;
-const FILLED = 'rounded-md border border-teal-700 bg-teal-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-800 dark:border-teal-400 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300';
 const tone = (ok: boolean) => (ok ? 'text-teal-800 dark:text-teal-300' : 'text-red-700 dark:text-red-300');
 
 export function Levels({ s, lender, update, use }: { s: State; lender?: LenderView; update: Update; use: (l: DscrLevers) => void }) {
@@ -63,14 +62,18 @@ function Viable({ s, update, use }: { s: State; update: Update; use: (l: DscrLev
   // The loan and the term are written; a plan that moves only the profit has nothing to use.
   const usable = !!(lv.cut || lv.more);
   return <>
-    {!v && <button type="button" data-testid="dscr-viable" class={`mt-2 ${BUTTON}`} onClick={() => { setV(dscrViableOf(s)); replan([], DSCR_AS_TYPED); }}>Make it viable</button>}
-    {v && !plan && <div data-testid="dscr-viable-box" class="mt-2">
+    {/* The one filled button on a short result (docs/DESIGN.md, principle 6). It removes itself, so the focus moves to what replaces it (WCAG 2.4.3). */}
+    {!v && <button type="button" data-testid="dscr-viable" class={`mt-2 ${FILLED}`} onClick={() => {
+      setV(dscrViableOf(s)); replan([], DSCR_AS_TYPED);
+      requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid="dscr-plan"], [data-testid="dscr-viable-box"]')?.focus());
+    }}>Make it viable</button>}
+    {v && !plan && <div data-testid="dscr-viable-box" tabIndex={-1} class="mt-2">
       <p class="font-medium text-slate-900 dark:text-slate-100">{v.title}</p>
       {group('borrower', 'Your changes')}
       {group('lender', 'The lender’s, if it agrees')}
       <p class={`mt-2 ${HINT}`}>{v.foot}</p>
     </div>}
-    {v && plan && b && <div data-testid="dscr-plan" class="mt-3 rounded-lg border border-slate-300 p-3 dark:border-slate-600">
+    {v && plan && b && <div data-testid="dscr-plan" tabIndex={-1} class="mt-3 rounded-card border border-edge p-3">
       <p class="font-medium text-slate-900 dark:text-slate-100">The plan: the levers together</p>
       <p class={HINT}>The engine’s plan: a smaller loan first, then a longer repayment, then the profit still needed. The sliders change none of the figures above until you use the plan, which writes the loan and the term, never the profit.</p>
       <TextField id="fld-dscr-ownMost" class="mt-3" label="The most you can bring in yourself, if known" hint="Without it, no more of your own money is assumed."

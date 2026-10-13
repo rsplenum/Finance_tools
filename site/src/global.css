@@ -3,7 +3,89 @@
 /* Tailwind's dark: variant keys on the `dark` class of <html>, set by theme.ts (and before first paint by THEME_BOOT). */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/*
+ * The design tokens (docs/DESIGN.md, "Tokens"; D-UX-58). Each is a role, not a colour: `text-ink`, `bg-canvas`,
+ * `border-edge`, `bg-accent`, and needs no dark: twin, since its value changes with the theme below. They map onto
+ * Tailwind's palette, so today's look is kept; UX2 sets the look by changing this mapping only. Raw palette classes
+ * (`text-slate-600`) are counted by the site check and may not grow (scripts/design-baseline.json).
+ */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-line: var(--line);
+  --color-edge: var(--edge);
+  --color-field: var(--field);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-on-accent: var(--on-accent);
+  --color-link: var(--link);
+  --color-focus: var(--focus);
+  --color-good: var(--good);
+  --color-warn: var(--warn);
+  --color-bad: var(--bad);
+  --color-good-tint: var(--good-tint);
+  --color-warn-tint: var(--warn-tint);
+  --color-bad-tint: var(--bad-tint);
+  --radius-control: var(--radius-md);
+  --radius-card: var(--radius-lg);
+}
+
+:root {
+  --canvas: var(--color-white);           /* the page */
+  --surface: var(--color-slate-50);       /* a panel set off from the page */
+  --ink: var(--color-slate-900);          /* text: 17.9:1 on canvas */
+  --ink-muted: var(--color-slate-600);    /* hints and secondary lines: 7.6:1 */
+  --line: var(--color-slate-200);         /* dividers that only group, never a control's edge */
+  --edge: var(--color-slate-500);         /* a field's edge: 4.8:1, WCAG 1.4.11 asks 3:1 */
+  --field: var(--color-white);            /* inside a field */
+  --accent: var(--color-teal-700);        /* the one accent: the main action, the chosen option */
+  --accent-hover: var(--color-teal-800);
+  --on-accent: var(--color-white);        /* text on the accent: 5.5:1 */
+  --link: var(--color-teal-800);
+  --focus: var(--color-teal-600);         /* the focus ring: 3.7:1 on canvas */
+  --good: var(--color-green-800);
+  --warn: var(--color-amber-900);
+  --bad: var(--color-red-700);
+  --good-tint: var(--color-green-50);
+  --warn-tint: var(--color-amber-50);
+  --bad-tint: var(--color-red-50);
+}
+
+.dark {
+  --canvas: var(--color-slate-950);       /* not pure black behind white text (docs/DESIGN.md, principle 9) */
+  --surface: var(--color-slate-900);
+  --ink: var(--color-slate-100);
+  --ink-muted: var(--color-slate-300);
+  --line: var(--color-slate-800);
+  --edge: var(--color-slate-400);         /* 7.9:1 on canvas, 5.7:1 on slate-800 */
+  --field: var(--color-slate-900);
+  --accent: var(--color-teal-400);
+  --accent-hover: var(--color-teal-300);
+  --on-accent: var(--color-slate-950);
+  --link: var(--color-teal-300);
+  --focus: var(--color-teal-400);
+  --good: var(--color-green-300);
+  --warn: var(--color-amber-200);
+  --bad: var(--color-red-300);
+  --good-tint: var(--color-green-950);
+  --warn-tint: var(--color-amber-950);
+  --bad-tint: var(--color-red-950);
+}
+
 @layer base {
   /* 16 px inputs, so phones do not zoom in on focus (scripts/site-check.mjs flags anything smaller). */
   input, select, textarea { font-size: max(16px, 1rem); }
+  /* One focus for every control, 2 px at 3:1 or more in both themes (WCAG 2.4.7, 1.4.11; docs/DESIGN.md). */
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  /* A control scrolled to by Tab stops above the DSCR page's sticky answer bar, 45 px tall (WCAG 2.4.11; the design check measures it). */
+  html { scroll-padding-bottom: 4rem; }
+  /* Every "Why?" and drawer summary is a target of 24 px at least (WCAG 2.5.8; docs/DESIGN-LESSONS.md, lesson 1). */
+  summary { min-height: 1.5rem; }
+}
+
+/* Reduced motion: nothing slides or spins (WCAG 2.3.3; the design check measures it). */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
 }

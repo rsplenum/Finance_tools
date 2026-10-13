@@ -9,7 +9,7 @@ Sizes come from HANDOFF: S is about 60 steps or 15 minutes, M about 120 or 30, L
 | 1 | **UD1 Interaction data** (D-TECH-37, D-TECH-38): done 12-10-2026; records once the Worker is live (row 2) | L, high | — |
 | 2 | **DEP1 Worker live**: D1 and KV created, UD1 recording on; U1's reading on if a key is set | S, high | the D1 and KV IDs (`docs/CLOUDFLARE.md` §2); an Anthropic key only if U1 is to be on |
 | 3 | **LEGAL1 Policy pages**: privacy, terms, a "not advice" line, refunds and contact, linked from every footer (Razorpay asks for all of them). AI drafts, marked as drafts | M, high | the business name and a contact email; the lawyer reads them together with `docs/TRADEMARKS.md` |
-| 3b | **DT1 Design team** (the owner's yes, 13-10-2026, D-UX-58): as agreed in "The design team" below | L, Extra | a few sites you like the look of, as references |
+| 3b | **DT1 Design team** (the owner's yes, 13-10-2026, D-UX-58): as agreed in "The design team" below; done 13-10-2026 (D-UX-59), the first review in `docs/design-reviews/` | L, Extra | a few sites you like the look of, as references |
 | 4 | **UX1 Research**: each tool and the home page audited at 390 px and on a desktop against `brief-first` and UD1's first funnels, plus a 20-minute test script for five people you pick (DSAs, borrowers, a CA) | M, high | you run the five tests, about 2 hours of your time |
 | 5 | **UX2 Design**: one look for the site (type, colour, spacing, the shared parts) and the home page | L, Extra | UX1's findings and your test notes |
 | 6 | **UX3** The look applied to the DSCR and CMA pages | M, high | — |

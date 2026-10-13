@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { Bar, Lever, PlanLever } from '../Board';
-import { BUTTON, HINT, TextField } from '../fields';
+import { BUTTON, FILLED, HINT, TextField } from '../fields';
 import { amountOf, tidyAmount, type CmaState } from './model';
 import {
   CMA_AS_TYPED, cmaBoardOf, cmaPlanOf, cmaViableOf, levelsOf, sameCmaLevers,
@@ -16,7 +16,6 @@ import type { ViableView } from '../board-model';
 
 type Update = (f: (s: CmaState) => CmaState) => void;
 const MUTED = 'text-slate-600 dark:text-slate-300';
-const FILLED = 'rounded-md border border-teal-700 bg-teal-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-800 dark:border-teal-400 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300';
 const ALONE: Record<CmaLeverId, string> = { quasi: 'quasi', capital: 'capital', sales: 'sales', months: 'months', collateral: 'collateral' };
 const tone = (ok: boolean) => (ok ? 'text-teal-800 dark:text-teal-300' : 'text-red-700 dark:text-red-300');
 

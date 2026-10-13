@@ -18,7 +18,8 @@
     "worker:types": "wrangler types -c worker/wrangler.jsonc worker/worker-configuration.d.ts",
     "worker:build": "wrangler deploy --dry-run --outdir worker/dist -c worker/wrangler.jsonc",
     "hosts": "node scripts/hosts.mjs",
-    "usage": "node scripts/usage.mjs"
+    "usage": "node scripts/usage.mjs",
+    "design-review": "node scripts/design-review.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",
@@ -29,6 +30,7 @@
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
+    "axe-core": "^4.14.0",
     "jszip": "^3.10.2",
     "mammoth": "^1.13.0",
     "pdfjs-dist": "^6.3.289",

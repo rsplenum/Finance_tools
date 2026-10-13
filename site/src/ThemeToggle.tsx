@@ -10,10 +10,12 @@ export function ThemeToggle() {
   const [p, setP] = useState<ThemePref>('system');
   useEffect(() => { initTheme(); setP(themePref()); }, []);
   const next = NEXT_THEME[p];
-  return <button type="button" data-testid="theme-toggle" aria-label={`${LABEL[p]} — switch to ${next}`} title={`${LABEL[p]}. Click for ${next}.`}
+  // Its name starts "Theme:" and ends with the word shown, so a voice command of what is seen reaches it (WCAG 2.5.3).
+  return <button type="button" data-testid="theme-toggle" title={`${LABEL[p]}. Click for ${next}.`}
     onClick={() => { setThemePref(next); setP(next); }}
-    class="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
-    <span aria-hidden="true" class="text-sm leading-none">{ICON[p]}</span>
+    class="inline-flex min-h-8 items-center gap-1 rounded-control border border-edge bg-field px-2.5 py-1.5 text-sm font-medium text-ink hover:bg-surface">
+    <span aria-hidden="true" class="leading-none">{ICON[p]}</span>
+    <span class="sr-only">Theme: </span>
     <span>{p === 'system' ? 'Auto' : p === 'light' ? 'Light' : 'Dark'}</span>
   </button>;
 }

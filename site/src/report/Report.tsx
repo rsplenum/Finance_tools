@@ -6,7 +6,7 @@
  */
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
-import { BUTTON, Choice, HINT, Section, TextField } from '../fields';
+import { BUTTON, Choice, FILLED, HINT, Section, TextField } from '../fields';
 import { Bar, Lever, PlanLever } from '../Board';
 import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
@@ -22,7 +22,6 @@ import {
 
 type Update = (f: (s: ReportState) => ReportState) => void;
 const MUTED = 'text-slate-600 dark:text-slate-300';
-const FILLED = 'rounded-md border border-teal-700 bg-teal-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-teal-800 dark:border-teal-400 dark:bg-teal-400 dark:text-slate-950 dark:hover:bg-teal-300';
 const SALES_BY: { value: ReportState['salesBy']; label: string }[] = [
   { value: 'drivers', label: 'The capacity, its use and the price' }, { value: 'typed', label: 'Sales I type, with their growth' }];
 const bad = (t: string, read: (t: string) => unknown) => !!t.trim() && read(t) === undefined;
