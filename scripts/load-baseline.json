@@ -11,7 +11,7 @@
       "controls": 4,
       "answerAt": 0.3,
       "gap": null,
-      "styles": 4,
+      "styles": 5,
       "colours": 1,
       "outOfSight": null
     },
@@ -105,6 +105,14 @@
       "count": "all",
       "from": 91,
       "to": 114,
+      "why": "D-UX-64",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "styles",
+      "from": 4,
+      "to": 5,
       "why": "D-UX-64",
       "date": "2026-10-13"
     }
