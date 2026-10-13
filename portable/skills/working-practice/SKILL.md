@@ -26,6 +26,7 @@ What the owner taught across projects, so a new project starts where the last on
 
 ## What the owner asks for
 
+- Once given, an answer is final: spend each new turn on the new ask, and revisit an earlier answer only when the owner points out a problem with it. An error met by chance in new work gets one line, never a review.
 - Give the tradeoffs they may not have considered: the three to five that could change the decision, each with a recommendation. Then build, unless the choice is genuinely theirs; `brief-first` has the rest.
 - A list the owner gives is examples, not the full set: generalise from it and say which cases you added. Where the rules are silent, flag it for a person; do not restrict.
 - Propose your own ideas and criticise your own work; do not wait to be told everything.
