@@ -1,17 +1,17 @@
 {
   "pages": {
     "/": {
-      "before": 5,
-      "shown": 83,
-      "all": 83,
+      "before": 9,
+      "shown": 114,
+      "all": 114,
       "plan": null,
       "long": 0,
       "abbr": 2,
       "questions": 0,
       "controls": 4,
-      "answerAt": 0.2,
+      "answerAt": 0.3,
       "gap": null,
-      "styles": 3,
+      "styles": 4,
       "colours": 1,
       "outOfSight": null
     },
@@ -91,6 +91,23 @@
       "outOfSight": 15
     }
   },
-  "raised": [],
+  "raised": [
+    {
+      "page": "/",
+      "count": "shown",
+      "from": 91,
+      "to": 114,
+      "why": "D-UX-64",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "all",
+      "from": 91,
+      "to": 114,
+      "why": "D-UX-64",
+      "date": "2026-10-13"
+    }
+  ],
   "fontProbe": 320.2
 }
