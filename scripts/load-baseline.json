@@ -75,6 +75,51 @@
       "colours": 3,
       "outOfSight": 0
     },
+    "/looks/a/": {
+      "before": 9,
+      "shown": 87,
+      "all": 87,
+      "plan": null,
+      "long": 0,
+      "abbr": 2,
+      "questions": 0,
+      "controls": 4,
+      "answerAt": 0.3,
+      "gap": null,
+      "styles": 4,
+      "colours": 1,
+      "outOfSight": null
+    },
+    "/looks/b/": {
+      "before": 9,
+      "shown": 114,
+      "all": 114,
+      "plan": null,
+      "long": 0,
+      "abbr": 2,
+      "questions": 0,
+      "controls": 4,
+      "answerAt": 0.3,
+      "gap": null,
+      "styles": 4,
+      "colours": 1,
+      "outOfSight": null
+    },
+    "/looks/c/": {
+      "before": 9,
+      "shown": 87,
+      "all": 87,
+      "plan": null,
+      "long": 0,
+      "abbr": 2,
+      "questions": 0,
+      "controls": 4,
+      "answerAt": 0.3,
+      "gap": null,
+      "styles": 4,
+      "colours": 1,
+      "outOfSight": null
+    },
     "/project-report/": {
       "before": 43,
       "shown": 738,
@@ -91,5 +136,6 @@
       "outOfSight": 15
     }
   },
-  "raised": []
+  "raised": [],
+  "fontProbe": 320.2
 }
