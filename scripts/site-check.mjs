@@ -686,7 +686,8 @@ for (const scheme of ['light', 'dark']) {
   await expectText(page, v, 'pl-sticky-total', total, 'the total in the bar at the bottom');
   // L1: the level's range by its choices, in one line under the total.
   await expectText(page, v, 'pl-range', /^At Basic, the choices run from Rs\. [\d,]+ to Rs\. [\d,]+: the cheapest in each item to the dearest\. \d+ of the \d+ items offer a choice\.$/, 'the level\'s range under the total');
-  if ((await page.getByTestId('pl-strip-1').getAttribute('aria-label')) !== `Basic: ${total}` || (await page.getByTestId('pl-strip-1').getAttribute('aria-pressed')) !== 'true')
+  const strip = (await page.getByTestId('pl-strip-1').textContent()) ?? '';
+  if (!strip.startsWith('Basic') || !strip.endsWith(`(${total})`) || (await page.getByTestId('pl-strip-1').getAttribute('aria-pressed')) !== 'true')
     v('the strip does not mark Basic at the total');
   const cards = await page.locator('[data-testid^="pl-card-"]').count(), on = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
   if (cards !== 15 || on !== 10) v(`a renovation shows ${cards} sections with ${on} on (want 15 and 10)`);

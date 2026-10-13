@@ -137,7 +137,7 @@ function ReportTable({ t }: { t: ViewTable }) {
   const cols = t.columns.length + 1;
   return <details open={t.id === 'cost' || t.id === 'finance' || t.id === 'dscr'} class="mt-4 rounded-lg border border-slate-200 dark:border-slate-800">
     <summary class="cursor-pointer px-3 py-2 font-medium text-slate-900 dark:text-slate-100">{t.title}</summary>
-    <div class="overflow-x-auto px-3 pb-3">
+    <div class="overflow-x-auto px-3 pb-3" tabIndex={0} role="region" aria-label={t.title}>
       <table data-testid={`rep-${t.id}`} class="w-full border-collapse text-sm">
         <thead><tr class="border-b border-slate-300 dark:border-slate-700">
           <th scope="col" class="py-2 pr-3 text-left font-medium text-slate-700 dark:text-slate-200">{t.first}</th>
@@ -200,15 +200,19 @@ function Viable({ s, p, update, use }: { s: ReportState; p: ReportPreview; updat
     {p.collateralNote && <p data-testid="rep-collateral-note" class={`mt-1 ${HINT}`}>{p.collateralNote}</p>}
     {p.longTerm && <p data-testid="rep-long-term" class="mt-2 text-sm text-red-700 dark:text-red-300">{p.longTerm}</p>}
     {p.misses && <p data-testid="rep-misses" class="mt-2 text-sm text-red-700 dark:text-red-300">{p.misses}</p>}
-    {!v && <button type="button" data-testid="rep-viable" class={`mt-2 ${BUTTON}`} onClick={() => { setV(viableOf(s)); if (p.misses) replan([], AS_TYPED); }}>
+    {!v && <button type="button" data-testid="rep-viable" class={`mt-2 ${BUTTON}`} onClick={() => {
+      setV(viableOf(s)); if (p.misses) replan([], AS_TYPED);
+      // The button removes itself, so the focus moves to what replaces it (WCAG 2.4.3; DESIGN-LESSONS lesson 1).
+      requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid="rep-plan"], [data-testid="rep-viable-box"]')?.focus());
+    }}>
       {p.misses ? 'Make it viable' : 'How far can sales fall?'}</button>}
-    {v && !plan && <div data-testid="rep-viable-box" class="mt-2">
+    {v && !plan && <div data-testid="rep-viable-box" tabIndex={-1} class="mt-2">
       <p class="font-medium text-slate-900 dark:text-slate-100">{v.title}</p>
       {group('borrower', v.meets ? 'The room' : 'Your changes')}
       {group('lender', 'The lender’s, if it agrees')}
       <p class={`mt-2 ${HINT}`}>{v.foot}</p>
     </div>}
-    {v && plan && b && <div data-testid="rep-plan" class="mt-3 rounded-lg border border-slate-300 p-3 dark:border-slate-600">
+    {v && plan && b && <div data-testid="rep-plan" tabIndex={-1} class="mt-3 rounded-lg border border-slate-300 p-3 dark:border-slate-600">
       <p class="font-medium text-slate-900 dark:text-slate-100">The plan: the levers together</p>
       <p class={HINT}>The engine’s plan, your changes first and the lender’s last. The sliders change none of the figures above until you use the plan.</p>
       <TextField id="fld-promotersMost" class="mt-3" label="The most the promoters can bring in all, if known" hint="Without it, no more of their money is assumed."
