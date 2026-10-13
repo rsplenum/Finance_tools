@@ -11,7 +11,7 @@ import { openAt } from './design-checks.mjs';
 export const NEW_LOOK = ['/'];
 /** F13: the sections in antigravity.google's order, as docs/design-reference/antigravity.md maps them. */
 export const ORDER = ['hero', 'story', 'statement', 'tools', 'uses', 'try', 'checked', 'closing'];
-/** F15: the page's weight as it loads, before compression (HTML, styles, scripts, the font), in KB: 121 measured 13-10-2026 (D-UX-67). */
+/** F15: the page's weight as it loads, before compression (HTML, styles, scripts, the font), in KB: 124 measured 13-10-2026 (D-UX-67). */
 export const WEIGHT_CAP = 140;
 
 const SITE = await readFile(new URL('../site/src/site.ts', import.meta.url), 'utf8');

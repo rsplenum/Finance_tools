@@ -39,7 +39,7 @@ What the reference does not do, so a page in the new look does not. *Tested*: by
 - **F12 A one-line foot**: it links every tool, says what happens to the figures, carries the name large. *Tested*.
 - **F13 Another order**: hero, story, statement, tools, uses, try, checked, closing. *Tested*.
 - **F14 Anything from another site.** *Tested*.
-- **F15 A heavy page**: home 121 KB before compression (13-10-2026), cap 140 KB. *Tested*, printed.
+- **F15 A heavy page**: home 124 KB before compression (13-10-2026), cap 140 KB. *Tested*, printed.
 - **F16 Google's own**: its words, images, video, logo, Google Sans or code; a custom cursor; a hijacked scroll (they cost phones and keyboards). The critic's.
 
 Yield in the new look: principle 6 (two ink pills may share a screen; the accent fills none), 7's page column, 10 for the dash fields (never behind a figure, still under reduced motion), and the Tokens' type, radius and motion lines (motion to 0.9 s, stopping per F9).
