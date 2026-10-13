@@ -44,6 +44,7 @@ function inPage({ tools, order, phone }) {
     const s = getComputedStyle(el), bg = s.backgroundColor, r = el.getBoundingClientRect();
     const filled = bg !== 'transparent' && !/rgba\(.*, 0\)$/.test(bg);
     if (filled && px(el, 'borderTopLeftRadius') < r.height / 2 - 1) out.push(`F4 a filled control that is not a pill: "${name(el)}"`);
+    if (filled && r.height < 43.5) out.push(`F4 a filled control ${Math.round(r.height)} px tall (want 44): "${name(el)}"`);
     if (filled && bg === accent) out.push(`F5 a control filled with the accent: "${name(el)}"`);
     // F8: a link that stands alone is not underlined; a link inside a sentence keeps its line.
     const alone = el.tagName === 'A' && (el.parentElement?.textContent ?? '').trim() === (el.textContent ?? '').trim();

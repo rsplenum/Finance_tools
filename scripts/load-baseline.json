@@ -9,7 +9,7 @@
       "abbr": 6,
       "questions": 0,
       "controls": 17,
-      "answerAt": 0.5,
+      "answerAt": 0.6,
       "gap": null,
       "styles": 10,
       "colours": 2,
@@ -201,6 +201,14 @@
       "count": "colours",
       "from": 1,
       "to": 2,
+      "why": "D-UX-67",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "answerAt",
+      "from": 0.5,
+      "to": 0.6,
       "why": "D-UX-67",
       "date": "2026-10-13"
     }

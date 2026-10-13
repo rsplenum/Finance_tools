@@ -135,7 +135,9 @@
 /* The new look's motion (AG1, D-UX-66): text types in, blocks rise into view, the header hides while reading down. Each
    stops within 5 s or follows the reader (WCAG 2.2.2), and none runs under reduced motion (the block below). */
 body[data-look='new'] { font-family: var(--font-display); }
-html:has(body[data-look='new']) { scroll-padding-top: 8rem; }
+/* The new look's bar is about 160 px tall on a phone (two rows and the notice), 120 px from lg. */
+html:has(body[data-look='new']) { scroll-padding-top: 11rem; }
+@media (min-width: 64rem) { html:has(body[data-look='new']) { scroll-padding-top: 8rem; } }
 .js [data-typed] .rest { opacity: 0; }
 [data-typed].typing .done::after { content: ''; display: inline-block; width: 0.06em; height: 0.85em; margin-left: 0.04em; vertical-align: -0.05em; background: currentColor; animation: caret 0.8s steps(1) 6; }
 @keyframes caret { 50% { opacity: 0; } }

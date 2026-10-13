@@ -33,10 +33,13 @@ function field(canvas: HTMLCanvasElement, motion: boolean) {
     let seed = 7;
     const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
     const n = Math.round(Math.min(420, (w * h) / 2600)), cx = w / 2, cy = h / 2;
+    // No dash comes to rest on the words or within 12 px of them (principle 10; axe cannot see a canvas).
+    const words = [...host.querySelectorAll('h1, h2, p, a, button')].map((el) => el.getBoundingClientRect())
+      .map((b) => ({ x0: b.left - r.left - 12, x1: b.right - r.left + 12, y0: b.top - r.top - 12, y1: b.bottom - r.top + 12 }));
     dashes = Array.from({ length: n }, () => {
       const t = rnd() * Math.PI * 2, k = 0.45 + Math.sqrt(rnd()) * 0.6; // emptier in the middle, where the words are
       return { hx: cx + Math.cos(t) * w * 0.6 * k, hy: cy + Math.sin(t) * h * 0.6 * k, a: t + (rnd() - 0.5) * 0.8, c: Math.floor(rnd() * 3), ox: 0, oy: 0 };
-    });
+    }).filter((d) => !words.some((b) => d.hx > b.x0 && d.hx < b.x1 && d.hy > b.y0 && d.hy < b.y1));
   };
   const draw = (e: number) => {
     const css = getComputedStyle(canvas), cx = w / 2, cy = h / 2, len = 2 + 3 * e;
@@ -136,15 +139,15 @@ function story() {
   const box = document.querySelector<HTMLElement>('[data-story]'), play = box?.querySelector<HTMLButtonElement>('[data-play]');
   if (!box || !play) return;
   const steps = [...box.querySelectorAll<HTMLElement>('[data-at]')], last = Math.max(...steps.map((s) => Number(s.dataset.at)));
-  let at = 0, timer = 0, running = false;
+  let at = 0, timer = 0, running = false, played = false;
   const show = () => steps.forEach((s) => s.classList.toggle('on', Number(s.dataset.at) <= at));
-  const say = () => { play.textContent = running ? 'Stop and show it all' : 'Play it again'; };
+  const say = () => { play.textContent = running ? 'Stop and show it all' : played ? 'Play it again' : 'Play it'; };
   const next = () => {
     at += 1; show();
     if (at >= last) { running = false; say(); return; }
     timer = window.setTimeout(next, at < 7 ? 650 : 1500);
   };
-  const go = () => { at = 0; show(); running = true; say(); timer = window.setTimeout(next, 300); };
+  const go = () => { at = 0; show(); running = played = true; say(); timer = window.setTimeout(next, 300); };
   const stop = () => { clearTimeout(timer); at = last; show(); running = false; say(); };
   play.hidden = false;
   say();
