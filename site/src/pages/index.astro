@@ -1,20 +1,19 @@
 ---
-// The home page in the owner's pick from UX2b's looks (D-UX-64): B's questions first (each tool's question as the link,
-// its name and what it gives under it) in C's cards, two by two from 640 px. The question's ::after covers the card, so
-// the whole card is the target while the link's spoken name stays the question alone.
+// The home page in the owner's pick from UX2b's looks (D-UX-64) in C's cards, two by two from 640 px, each card the tool's
+// name, what it is in plain words and what ours gives (D-UX-65). The name's ::after covers the card, so the whole card is
+// the target while the link's spoken name stays the tool's name alone.
 import Base from '../Base.astro';
 import { TOOLS } from '../site';
 const ready = TOOLS.filter((t) => t.status === 'Ready' && t.href), later = TOOLS.filter((t) => t.status === 'Later');
 ---
 <Base description="DSCR statements, construction estimates and project reports in the format lenders expect, worked out in your browser.">
   <h1 class="text-balance text-2xl font-semibold tracking-tight text-ink sm:text-3xl">Loan documents lenders ask for</h1>
-  <p class="mt-3 max-w-prose text-ink-muted">Start with your question.</p>
   <ul class="mt-6 grid gap-3 sm:grid-cols-2" data-answer>
     {ready.map((t) => (
       <li class="relative rounded-card border border-edge p-4 hover:border-link hover:bg-surface has-focus-visible:bg-surface">
-        <h2 class="text-balance text-lg font-semibold"><a href={t.href} class="text-link underline underline-offset-4 after:absolute after:inset-0 after:rounded-card">{t.ask ?? t.name}</a></h2>
-        <p class="mt-1 text-sm font-semibold text-ink">{t.name}</p>
-        <p class="text-sm text-ink-muted">{t.what}</p>
+        <h2 class="text-balance text-lg font-semibold"><a href={t.href} class="text-link underline underline-offset-4 after:absolute after:inset-0 after:rounded-card">{t.name}</a></h2>
+        <p class="mt-1 text-sm text-ink">{t.what}</p>
+        <p class="mt-2 text-sm text-ink-muted">{t.gives}</p>
       </li>
     ))}
   </ul>

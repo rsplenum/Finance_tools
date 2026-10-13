@@ -1,17 +1,17 @@
 {
   "pages": {
     "/": {
-      "before": 9,
-      "shown": 114,
-      "all": 114,
+      "before": 5,
+      "shown": 163,
+      "all": 163,
       "plan": null,
       "long": 0,
-      "abbr": 2,
+      "abbr": 3,
       "questions": 0,
       "controls": 4,
-      "answerAt": 0.3,
+      "answerAt": 0.2,
       "gap": null,
-      "styles": 5,
+      "styles": 3,
       "colours": 1,
       "outOfSight": null
     },
@@ -114,6 +114,30 @@
       "from": 4,
       "to": 5,
       "why": "D-UX-64",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "shown",
+      "from": 114,
+      "to": 163,
+      "why": "D-UX-65",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "all",
+      "from": 114,
+      "to": 163,
+      "why": "D-UX-65",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "abbr",
+      "from": 2,
+      "to": 3,
+      "why": "D-UX-65",
       "date": "2026-10-13"
     }
   ],

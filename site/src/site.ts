@@ -11,24 +11,25 @@ export const BRAND_NOTICE_SHORT = 'Brand names belong to their owners and are us
 export const BRAND_NOTICE = `${BRAND_NOTICE_SHORT} Each price comes from the source and date shown; where brands are listed as examples, the price is for the level, not a quote for any one brand. Prices change: check with a seller before you buy.`;
 
 /**
- * `ask`: the question the tool answers, in a borrower's or DSA's own words (about 8 words), only for a tool that works;
- * `what`: one line of what the reader takes away (about 14 words). `status`: Ready when the page works today.
+ * `what`: what the tool is, in plain words for someone who has never met the term (about 15 words);
+ * `gives`: what ours gives that a lender, DSA or accountant would want (about 15 words), only for a tool that works and
+ * only what the engine does today (D-UX-65). `status`: Ready when the page works today.
  */
-export interface Tool { name: string; ask?: string; what: string; status: 'Ready' | 'Later'; href?: string }
+export interface Tool { name: string; what: string; gives?: string; status: 'Ready' | 'Later'; href?: string }
 
 export const TOOLS: Tool[] = [
   { name: 'DSCR statement', status: 'Ready', href: '/dscr/',
-    ask: 'Can the business repay this loan?',
-    what: 'Year-by-year DSCR, the lowest year, and the largest loan that meets the lender’s target.' },
+    what: 'How many times a business’s yearly earnings cover its loan repayments.',
+    gives: 'Each year’s cover, the weakest year and the largest loan that passes, as PDF, Excel or Word.' },
   { name: 'Construction, renovation or interiors estimate', status: 'Ready', href: '/estimate/',
-    ask: 'How much will my building work cost?',
-    what: 'Cost at five quality levels, room by room: a planning estimate for the lender.' },
+    what: 'What your building, renovation or interior work should cost, before you collect contractors’ quotes.',
+    gives: 'Room by room at five quality levels, a check of each quote against reported prices, and a bill of quantities.' },
   { name: 'Project report', status: 'Ready', href: '/project-report/',
-    ask: 'Does my project work for a lender?',
-    what: 'For a term loan: projected profit and loss, balance sheet, cash flow and DSCR.' },
+    what: 'The report a lender reads before a term loan: what the project costs, how it is paid for, whether it can repay.',
+    gives: 'Projected profit and loss, balance sheet and cash flow, every figure worked out twice, as PDF, Excel or Word.' },
   { name: 'CMA data', status: 'Ready', href: '/cma/',
-    ask: 'What working-capital limit can I ask for?',
-    what: 'Forms I to VI, ratios and the turnover-method limit, from five years’ figures.' },
+    what: 'The forms a bank uses to set a working-capital limit, such as cash credit, from a business’s figures.',
+    gives: 'Forms I to VI, the ratios and the turnover-method limit, from five years’ figures.' },
   { name: 'Home-loan project cost', status: 'Later', what: 'Free calculator for a home project’s total cost.' },
 ];
 
