@@ -1,6 +1,6 @@
 # The load measure: a paper for the owner's go (UX2, D-UX-61)
 
-Proposed 13-10-2026. Nothing fails yet: the prototype prints today's baseline (`npm run load`, `scripts/load-measure.mjs`), and UX2b turns it into a check once the owner says go. Sources marked [S] were read only through search results, because their hosts are blocked in this environment (`docs/OWNER.md`); UX2b reads them in the original once they are allowed.
+Proposed 13-10-2026; the owner said go the same day, with §7's five recommendations. Nothing fails yet: the prototype prints today's baseline (`npm run load`, `scripts/load-measure.mjs`), and UX2b turns it into a check. Sources marked [S] were read only through search results, because their hosts are blocked in this environment (`docs/OWNER.md`); UX2b reads them in the original once they are allowed.
 
 ## 1. What it is for
 Design here is cutting the reader's effort: every screen spends attention and working memory (D-UX-61). Cognitive load theory splits that effort in two. One part is the task itself: a DSCR is what it is. The other comes from how the task is shown (Sweller, 1988; the term "extraneous load" [S]). Design can cut only the second part, and this measure counts it. Working memory holds about four chunks at once (Cowan, 2001 [S]), so every figure, word or colour a reader must carry from one place to another costs them.
