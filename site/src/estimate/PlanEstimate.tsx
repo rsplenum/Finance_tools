@@ -80,7 +80,7 @@ export function PlanEstimate() {
           <span class="font-medium">{v.change.text}</span>{v.change.items && <span class={MUTED}> · {v.change.items}</span>}
         </>}</p>
         <div class="flex items-center justify-between gap-3">
-          <p class={INK}>Total <span data-testid="pl-sticky-total" class="font-semibold tabular-nums">Rs. {v.total}</span></p>
+          <p class={INK} data-answer-echo>Total <span data-testid="pl-sticky-total" class="font-semibold tabular-nums">Rs. {v.total}</span></p>
           <a href="#pl-download" class={BUTTON}>Download</a>
         </div>
       </div>
@@ -142,9 +142,12 @@ function Questions({ s, update, p, done }: { s: PlanState; update: Update; p: Pl
 function Answer({ v, update, heading }: { v: PlanView; update: Update; heading: { current: HTMLHeadingElement | null } }) {
   return <section id="pl-result" aria-labelledby="pl-result-h" class="mt-6">
     <h2 id="pl-result-h" ref={heading} tabIndex={-1} class="sr-only">The estimate</h2>
-    <p data-testid="pl-total" data-result={'ready'} class={`text-3xl font-semibold tabular-nums ${INK}`}>Rs. {v.total}</p>
-    {v.range.text && <p data-testid="pl-range" class={`mt-1 text-sm ${INK}`}>{v.range.text}</p>}
-    <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="tabular-nums">Rs. {v.perSqft}</span> a sq ft of {v.areaName.toLowerCase()}</p>
+    {/* The answer in words and its figure, marked for the load measure (docs/LOAD-MEASURE.md, count 8). */}
+    <div data-answer>
+      <p data-testid="pl-total" data-result={'ready'} class={`text-3xl font-semibold tabular-nums ${INK}`}>Rs. {v.total}</p>
+      {v.range.text && <p data-testid="pl-range" class={`mt-1 text-sm ${INK}`}>{v.range.text}</p>}
+      <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="tabular-nums">Rs. {v.perSqft}</span> a sq ft of {v.areaName.toLowerCase()}</p>
+    </div>
     <p data-testid="pl-rates" class={`mt-1 text-sm ${MUTED}`}>{v.ratesLine}</p>
     <div role="group" aria-label="The total at each level; choose one to switch the package" class="mt-4 grid grid-cols-5 gap-1.5">
       {v.strip.map((x) => <button key={x.level} type="button" data-testid={`pl-strip-${x.level}`} aria-pressed={x.current}

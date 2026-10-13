@@ -1,0 +1,145 @@
+{
+  "pages": {
+    "/": {
+      "before": 5,
+      "shown": 163,
+      "all": 163,
+      "plan": null,
+      "long": 0,
+      "abbr": 3,
+      "questions": 0,
+      "controls": 4,
+      "answerAt": 0.2,
+      "gap": null,
+      "styles": 3,
+      "colours": 1,
+      "outOfSight": null
+    },
+    "/404.html": {
+      "before": 3,
+      "shown": 8,
+      "all": 8,
+      "plan": null,
+      "long": 0,
+      "abbr": 0,
+      "questions": 0,
+      "controls": 1,
+      "answerAt": 0.2,
+      "gap": null,
+      "styles": 2,
+      "colours": 1,
+      "outOfSight": null
+    },
+    "/cma/": {
+      "before": 99,
+      "shown": 912,
+      "all": 1669,
+      "plan": 1763,
+      "long": 6,
+      "abbr": 5,
+      "questions": 130,
+      "controls": 142,
+      "answerAt": 3.7,
+      "gap": 158,
+      "styles": 7,
+      "colours": 2,
+      "outOfSight": 73
+    },
+    "/dscr/": {
+      "before": 38,
+      "shown": 1203,
+      "all": 3557,
+      "plan": 3944,
+      "long": 0,
+      "abbr": 5,
+      "questions": 11,
+      "controls": 39,
+      "answerAt": 2,
+      "gap": 0,
+      "styles": 8,
+      "colours": 3,
+      "outOfSight": 0
+    },
+    "/estimate/": {
+      "before": 29,
+      "shown": 351,
+      "all": 1597,
+      "plan": 3453,
+      "long": 2,
+      "abbr": 2,
+      "questions": 7,
+      "controls": 36,
+      "answerAt": 0.5,
+      "gap": 0,
+      "styles": 8,
+      "colours": 3,
+      "outOfSight": 0
+    },
+    "/project-report/": {
+      "before": 43,
+      "shown": 738,
+      "all": 1398,
+      "plan": 1491,
+      "long": 1,
+      "abbr": 5,
+      "questions": 33,
+      "controls": 46,
+      "answerAt": 4.8,
+      "gap": 41,
+      "styles": 8,
+      "colours": 2,
+      "outOfSight": 15
+    }
+  },
+  "raised": [
+    {
+      "page": "/",
+      "count": "shown",
+      "from": 91,
+      "to": 114,
+      "why": "D-UX-64",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "all",
+      "from": 91,
+      "to": 114,
+      "why": "D-UX-64",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "styles",
+      "from": 4,
+      "to": 5,
+      "why": "D-UX-64",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "shown",
+      "from": 114,
+      "to": 163,
+      "why": "D-UX-65",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "all",
+      "from": 114,
+      "to": 163,
+      "why": "D-UX-65",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "abbr",
+      "from": 2,
+      "to": 3,
+      "why": "D-UX-65",
+      "date": "2026-10-13"
+    }
+  ],
+  "fontProbe": 320.2
+}

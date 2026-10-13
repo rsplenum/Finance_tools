@@ -12,6 +12,7 @@
  * The construction estimate (P2) and the project report (P3) are filled in, worked out and downloaded the same way.
  * Then the design checks (DT1, scripts/design-checks.mjs): axe, contrast, field edges and focus at 3:1, target sizes, Tab
  * reach, 320 px and reduced motion on every page at 360 and 1280 px, light and dark, and the token ratchet.
+ * Then the load measure (UX2b, scripts/load-measure.mjs): every page's counts against scripts/load-baseline.json.
  * Run after `npm run build`. CHROMIUM_PATH overrides the browser Playwright would use.
  */
 import { readFile, readdir } from 'node:fs/promises';
@@ -21,6 +22,7 @@ import { chromium } from 'playwright';
 import { docxLines, docxPart, pdfPages, workbook, zipPart } from './read-doc.mjs';
 import { DIST, serveDist } from './serve-dist.mjs';
 import { designChecks } from './design-checks.mjs';
+import { loadCheck } from './load-measure.mjs';
 
 const { BASE, server } = await serveDist();
 
@@ -1358,9 +1360,11 @@ const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await
 
 // The design team's measured checks (DT1, docs/DESIGN.md): every page at 360 and 1280 px, light and dark, 320 px, reduced motion.
 const design = await designChecks({ browser, BASE, pages, violations });
+const load = await loadCheck({ browser, BASE, pages, violations });
 await browser.close();
 server.close();
 console.log(`site check: ${pages.length} pages at 390 px, light and dark: ${violations.length} violations`);
 console.log(`design checks: ${design.lines} findings measured (each held in scripts/design-baseline.json), ${design.tokens.rawColour} raw colour classes, ${design.tokens.arbitraryValue} arbitrary values${design.lower.length ? `; lower the baseline: ${design.lower.join(', ')}` : ''}${design.fixed ? `; ${design.fixed} known findings fixed, take them out of the baseline` : ''}`);
+console.log(`load measure: ${load.pages} pages against scripts/load-baseline.json, ${load.rose} counts rose, ${load.fell} fell${load.fonts ? '' : '; other fonts here than the baseline\'s, so the answer\'s place and the out-of-sight count are not compared'} (docs/LOAD-MEASURE.md)`);
 for (const x of violations) console.log(`  - ${x}`);
 process.exit(violations.length ? 1 : 0);

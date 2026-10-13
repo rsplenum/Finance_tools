@@ -1,39 +1,55 @@
 /**
- * The load measure, a prototype (UX2, D-UX-61). The paper, with what each count stands for in the reader's head, its
- * source, what it misses and how it could be gamed: docs/LOAD-MEASURE.md. Opens each built page at 360 by 780 px, light,
- * as it loads and in its answer state (the default path filled, from scripts/design-checks.mjs STATES), and prints its
- * twelve counts as one table row a page. It fails nothing yet: UX2b makes it a ratchet in the site check.
+ * The load measure (UX2, UX2b; D-UX-61, D-UX-62, D-UX-63). The paper, with what each count stands for in the reader's head,
+ * its source, what it misses and how it could be gamed: docs/LOAD-MEASURE.md. Opens each built page at 360 by 780 px, light,
+ * as it loads, in its answer state (the `result` state of scripts/design-checks.mjs, or as it loads on a page without
+ * one) and in its plan state, and takes its counts. Each page marks its answer `data-answer` (words, not only a figure)
+ * and a sticky echo of it `data-answer-echo`. The site check fails when a count differs from scripts/load-baseline.json:
+ * a rise needs a decision, a fall a lower baseline in the same commit.
  *
- *   node scripts/load-measure.mjs [/dscr/ ...] [--text] [--no-effects]
+ *   node scripts/load-measure.mjs [/dscr/ ...] [--text] [--no-effects]   the counts as a table, the aims under it
+ *   node scripts/load-measure.mjs --lower [/dscr/ ...]                   writes the counts that fell, and new pages
+ *   node scripts/load-measure.mjs --raise /dscr/ controls D-UX-63        writes one count that rose, with its decision
  * --text also prints what the counts saw: the long sentences, the abbreviations, the text styles, the colours and the
  * controls whose figures move out of sight (the writer's and the critic's input). --no-effects skips the slowest count.
  * Run after `npm run build`.
  */
+import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { sep } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
-import { serveDist } from './serve-dist.mjs';
+import { DIST, serveDist } from './serve-dist.mjs';
 import { openAt, STATES } from './design-checks.mjs';
 
-/** Each page: the state that answers (none on a page without questions), its answer, and an echo of it that stays in view. */
-export const PAGES = {
-  '/': { answer: 'main a[href^="/"]' },
-  '/dscr/': { state: 'result', answer: '[data-testid=dscr-verdict]', echo: '[data-testid=answer-bar]' },
-  '/cma/': { state: 'result', answer: '[data-testid=cma-status]' },
-  '/estimate/': { state: 'result', answer: '[data-testid=pl-total]', echo: '[data-testid=pl-sticky-total]' },
-  '/project-report/': { state: 'result', answer: '[data-testid=rep-status]' },
-  '/404.html': { answer: 'main a[href="/"]' },
-};
 const LONG = 25; // words: GOV.UK, "Use clear language" (try to split a longer sentence)
 
 /** Runs in the page: every count that reads the page as it stands. `after`: measured where a state's last step left the reader. */
-function inPage({ answer, echo, after, open, text, limit = 25 }) {
+function inPage({ after, open, text, limit = 25 }) {
   const main = document.querySelector('main') ?? document.body;
-  const H = innerHeight, Y = scrollY;
   const box = (el) => { const r = el.getBoundingClientRect(); return r.width > 1 && r.height > 1 ? r : null; };
   const shown = (el) => !!el && el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && !!box(el);
   // A radio or checkbox drawn as a card hides its input: its label shows it.
   const shownControl = (el) => shown(el) || [...(el.labels ?? [])].some(shown);
   const words = (t) => t.split(' ').filter((w) => /[\p{L}\p{N}]/u.test(w));
   const range = document.createRange();
+  // Questions: fields, a radio group once, a row of pressed buttons once.
+  const FIELD = 'input:not([type=hidden],[type=button],[type=submit],[type=reset]), select, textarea, button[aria-pressed]';
+  const seen = new Set(), questions = [];
+  for (const el of main.querySelectorAll(FIELD)) {
+    if (!shownControl(el)) continue;
+    const key = el.type === 'radio' ? `r:${el.name}` : el.matches('[aria-pressed]') ? el.parentElement : el;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    questions.push(el);
+  }
+  // The answer, marked on the page; the state ends on the last question shown above it, brought into view as typing it
+  // would; where none shows (the estimate folds its questions once answered), where the state's last step left the screen.
+  const marks = [...main.querySelectorAll('[data-answer]')].filter(shown), ans = marks[0];
+  if (after && ans) {
+    const last = questions.filter((q) => q.compareDocumentPosition(ans) & Node.DOCUMENT_POSITION_FOLLOWING).at(-1);
+    const at = last && (shown(last) ? last : [...last.labels].find(shown));
+    at?.scrollIntoView({ block: 'nearest' });
+  }
+  const H = innerHeight, Y = scrollY;
 
   // Opening every closed part counts the words behind a tap too; they close again after.
   const closed = open ? [...main.querySelectorAll('details:not([open])')] : [];
@@ -49,16 +65,6 @@ function inPage({ answer, echo, after, open, text, limit = 25 }) {
   for (const d of closed) d.open = false;
   if (open) return { wordsAll: nodes.reduce((s, x) => s + words(x.t).length, 0) };
 
-  // Questions: fields, a radio group once, a row of pressed buttons once.
-  const FIELD = 'input:not([type=hidden],[type=button],[type=submit],[type=reset]), select, textarea, button[aria-pressed]';
-  const seen = new Set(), questions = [];
-  for (const el of main.querySelectorAll(FIELD)) {
-    if (!shownControl(el)) continue;
-    const key = el.type === 'radio' ? `r:${el.name}` : el.matches('[aria-pressed]') ? el.parentElement : el;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    questions.push(el);
-  }
   const controls = [...main.querySelectorAll('a[href], button, summary, ' + FIELD)].filter(shownControl);
   const choices = new Set(controls.map((el) => (el.type === 'radio' ? `r:${el.name}` : el))).size;
 
@@ -110,15 +116,14 @@ function inPage({ answer, echo, after, open, text, limit = 25 }) {
   if (families.length > 1 && sorted[0] + 360 - sorted.at(-1) <= 15) families[0].push(...families.pop());
 
   // The answer: how far down the page, and how far from where the state's last step left the reader (nil when it or an echo of it is in view).
-  const ans = document.querySelector(answer);
-  const ar = ans && shown(ans) ? ans.getBoundingClientRect() : null;
-  const e = echo && document.querySelector(echo), er = e && shown(e) ? e.getBoundingClientRect() : null;
+  const ar = ans ? ans.getBoundingClientRect() : null;
+  const e = document.querySelector('[data-answer-echo]'), er = e && shown(e) ? e.getBoundingClientRect() : null;
   const inView = (r) => r && r.top < H && r.bottom > 0;
   const gap = !after || !ar ? null : inView(er) || inView(ar) ? 0 : Math.round(ar.top >= H ? ar.top - H : -ar.bottom);
   return {
     before, firstTop: Math.round(firstTop), wordsShown: nodes.reduce((s, x) => s + words(x.t).length, 0), long: long.length,
     abbr: abbr.length, questions: questions.length, controls: choices,
-    answerTop: ar ? Math.round(ar.top + Y) : null, gap, styles: styles.size, colours: families.length,
+    answerTop: ar ? Math.round(ar.top + Y) : null, gap, marks: marks.length, answerWords: ans ? words(ans.textContent.replace(/[\d.,]+/g, ' ').replace(/\bRs\b/g, '')).length : 0, styles: styles.size, colours: families.length,
     seen: text ? { long: long.map((s) => `${words(s).length}: ${s.slice(0, 160)}`), abbr, styles: [...styles].map(([k, n]) => `${k} (${n})`),
       colours: families.map((f) => `${f[0]}-${f.at(-1)}deg ${hues.get(f[0])}`) } : undefined,
   };
@@ -213,36 +218,152 @@ async function effects(page) {
   return { tried, out };
 }
 
-const args = process.argv.slice(2);
-const text = args.includes('--text'), skipEffects = args.includes('--no-effects');
-const only = args.filter((a) => a.startsWith('/'));
-const { BASE, server } = await serveDist();
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
-const rows = [], notes = [];
-for (const [path, p] of Object.entries(PAGES)) {
-  if (only.length && !only.includes(path)) continue;
+/** The counts, their names in the table, and the aim each prints beside it from its source (docs/LOAD-MEASURE.md §5): printed, never failed. */
+export const COUNTS = [
+  ['before', 'Words before Q1', 40], ['shown', 'Words shown'], ['all', 'Words in all'], ['plan', 'Words in all, with the plan'], ['long', 'Long sentences', 0],
+  ['abbr', 'Abbreviations'], ['questions', 'Questions'], ['controls', 'Controls'], ['answerAt', 'Answer at (screens)', 1],
+  ['gap', 'From last step to answer (px)'], ['styles', 'Text styles'], ['colours', 'Colours'], ['outOfSight', 'Out of sight', 0],
+];
+/** The counts that hang on where text wraps, so on the fonts: compared only where the fonts match the baseline's (CI's runner may differ from the sessions'). */
+const LAYOUT = ['answerAt', 'gap', 'outOfSight'];
+/** The fonts, as the width of one line in the page's body text at 16 px. */
+async function fontProbe(browser, BASE) {
+  const { ctx, page } = await openAt(browser, `${BASE}/404.html`);
+  const w = await page.evaluate(() => { const s = document.createElement('span'); s.textContent = 'Short by Rs. 4,19,502 of cash to pay the loan'; document.querySelector('main').append(s); const w = s.getBoundingClientRect().width; s.remove(); return Math.round(w * 100) / 100; });
+  await ctx.close();
+  return w;
+}
+export const BASELINE = fileURLToPath(new URL('./load-baseline.json', import.meta.url));
+const DECISIONS = fileURLToPath(new URL('../docs/DECISIONS.md', import.meta.url));
+
+/** Every built page, as the site check lists them. */
+export async function builtPages() {
+  return (await readdir(DIST, { recursive: true })).filter((f) => f.endsWith('.html'))
+    .map((f) => '/' + f.split(sep).join('/').replace(/(^|\/)index\.html$/, '$1')).sort();
+}
+
+const frames = (page) => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+
+/** One page's counts (nil where a count does not apply), its first question's place in screens, a defect in its marks, and what the counts saw. */
+export async function countPage(browser, BASE, path, { text = false, effectsToo = true } = {}) {
+  const state = STATES[path]?.result, plan = STATES[path]?.plan;
   // As it loads: the words before the first question and the questions asked.
   let { ctx, page } = await openAt(browser, `${BASE}${path}`);
-  const atLoad = await page.evaluate(inPage, { answer: p.answer });
-  if (p.state) {
+  const atLoad = await page.evaluate(inPage, {});
+  if (state) {
     await ctx.close();
     ({ ctx, page } = await openAt(browser, `${BASE}${path}`));
-    await STATES[path][p.state](page);
-    await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
+    await state(page);
+    await frames(page);
   }
-  const at = await page.evaluate(inPage, { answer: p.answer, echo: p.echo, after: !!p.state, text, limit: LONG });
-  const { wordsAll } = await page.evaluate(inPage, { answer: p.answer, open: true });
-  const eff = p.state && !skipEffects ? await effects(page) : null;
+  const at = await page.evaluate(inPage, { after: !!state, text, limit: LONG });
+  const { wordsAll } = await page.evaluate(inPage, { open: true });
+  const eff = state && effectsToo ? await effects(page) : null;
   await ctx.close();
-  const screens = (px) => (px === null ? '-' : (px / 780).toFixed(1));
-  rows.push([path, atLoad.before, screens(atLoad.firstTop), at.wordsShown, wordsAll, at.long, at.abbr, atLoad.questions, at.controls,
-    screens(at.answerTop), at.gap ?? '-', at.styles, at.colours, eff ? `${eff.out.length} of ${eff.tried}` : '-']);
-  if (text) notes.push(`\n${path}\n  long sentences: ${at.seen.long.join('\n    ') || 'none'}\n  abbreviations: ${at.seen.abbr.join(', ')}\n  text styles: ${at.seen.styles.join(', ')}\n  colours: ${at.seen.colours.join(', ')}${eff ? `\n  out of sight: ${eff.out.join('; ') || 'none'}` : ''}`);
+  // The plan: text that shows only after a button, counted with every closed part opened (count 3's guard).
+  let wordsPlan = null;
+  if (plan) {
+    ({ ctx, page } = await openAt(browser, `${BASE}${path}`));
+    await plan(page);
+    await frames(page);
+    ({ wordsAll: wordsPlan } = await page.evaluate(inPage, { open: true }));
+    await ctx.close();
+  }
+  const screens = (px) => (px === null ? null : Math.round(px / 78) / 10);
+  const counts = {
+    before: atLoad.before, shown: at.wordsShown, all: wordsAll, plan: wordsPlan, long: at.long, abbr: at.abbr, questions: atLoad.questions,
+    controls: at.controls, answerAt: screens(at.answerTop), gap: at.gap, styles: at.styles, colours: at.colours, outOfSight: eff ? eff.out.length : null,
+  };
+  const defect = at.marks !== 1 ? `${at.marks} answers marked data-answer in view of the page (want 1)` : !at.answerWords ? 'the answer marked data-answer holds no words, only a figure' : null;
+  const seen = text ? `\n${path}\n  long sentences: ${at.seen.long.join('\n    ') || 'none'}\n  abbreviations: ${at.seen.abbr.join(', ')}\n  text styles: ${at.seen.styles.join(', ')}\n  colours: ${at.seen.colours.join(', ')}${eff ? `\n  out of sight: ${eff.out.join('; ') || 'none'}` : ''}` : '';
+  return { counts, q1At: screens(atLoad.firstTop === null || !isFinite(atLoad.firstTop) ? null : atLoad.firstTop), moving: eff?.tried ?? null, defect, seen };
 }
-await browser.close();
-server.close();
-const head = ['Page', 'Words before Q1', 'Q1 at (screens)', 'Words shown', 'Words in all', 'Long sentences', 'Abbreviations', 'Questions', 'Controls',
-  'Answer at (screens)', 'From last step to answer (px)', 'Text styles', 'Colours', 'Out of sight'];
-console.log(`| ${head.join(' | ')} |\n|${head.map((_, i) => (i ? '---:' : '---')).join('|')}|`);
-for (const r of rows) console.log(`| ${r.join(' | ')} |`);
-if (text) console.log(notes.join('\n'));
+
+/**
+ * The site check's part: every built page against scripts/load-baseline.json. A count that rose, a count that fell, a page
+ * without a baseline and a page whose answer is not marked are violations, each with the command that settles it.
+ */
+export async function loadCheck({ browser, BASE, pages, violations }) {
+  const base = JSON.parse(await readFile(BASELINE, 'utf8'));
+  const fonts = (await fontProbe(browser, BASE)) === base.fontProbe;
+  let rose = 0, fell = 0;
+  for (const path of pages) {
+    const { counts, defect } = await countPage(browser, BASE, path);
+    if (defect) violations.push(`load: ${path}: ${defect}`);
+    const was = base.pages[path];
+    if (!was) { violations.push(`load: ${path} has no baseline (npm run load -- --lower ${path})`); continue; }
+    for (const [k, name] of COUNTS) {
+      const [now, then] = [counts[k], was[k]];
+      if (now === then || (!fonts && LAYOUT.includes(k))) continue;
+      if (now === null || then === null || now > then) {
+        rose++;
+        violations.push(`load: ${path} ${name} rose from ${then ?? 'none'} to ${now ?? 'none'} (cut it, or a line in docs/DECISIONS.md and npm run load -- --raise ${path} ${k} <D-id>)`);
+      } else {
+        fell++;
+        violations.push(`load: ${path} ${name} fell from ${then} to ${now}: lower the baseline in this commit (npm run load -- --lower ${path})`);
+      }
+    }
+  }
+  for (const path of Object.keys(base.pages)) if (!pages.includes(path)) violations.push(`load: ${path} is in the baseline but not built (take it out of scripts/load-baseline.json)`);
+  return { pages: pages.length, rose, fell, fonts };
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  const text = args.includes('--text'), skipEffects = args.includes('--no-effects'), lower = args.includes('--lower'), raise = args.indexOf('--raise');
+  const [rPage, rCount, rWhy] = raise >= 0 ? args.slice(raise + 1, raise + 4) : [];
+  if (raise >= 0) {
+    if (!COUNTS.some(([k]) => k === rCount)) throw new Error(`--raise <page> <count> <D-id>: the count is one of ${COUNTS.map(([k]) => k).join(', ')}`);
+    if (!/^D-[A-Z]+-\d+$/.test(rWhy ?? '') || !(await readFile(DECISIONS, 'utf8')).includes(`| ${rWhy} |`)) throw new Error(`--raise: ${rWhy} is not a decision in docs/DECISIONS.md; write its line first`);
+  }
+  const only = raise >= 0 ? [rPage] : args.filter((a) => a.startsWith('/') && !a.startsWith('//'));
+  const { BASE, server } = await serveDist();
+  const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
+  const pages = (await builtPages()).filter((p) => !only.length || only.includes(p));
+  const rows = [], notes = [], measured = {};
+  for (const path of pages) {
+    const r = await countPage(browser, BASE, path, { text, effectsToo: !skipEffects });
+    measured[path] = r.counts;
+    const c = r.counts, show = (v) => v ?? '-';
+    rows.push([path, `${c.before} (${show(r.q1At)})`, ...COUNTS.slice(1).map(([k]) => (k === 'outOfSight' && c[k] !== null ? `${c[k]} of ${r.moving}` : show(c[k])))]);
+    if (r.defect) notes.push(`\n${path}: ${r.defect}`);
+    if (text) notes.push(r.seen);
+  }
+  await browser.close();
+  server.close();
+  const head = ['Page', ...COUNTS.map(([k, name]) => (k === 'before' ? 'Words before Q1 (Q1 at, screens)' : name))];
+  console.log(`| ${head.join(' | ')} |\n|${head.map((_, i) => (i ? '---:' : '---')).join('|')}|`);
+  for (const r of rows) console.log(`| ${r.join(' | ')} |`);
+  console.log(`| Aim | ${COUNTS.map(([, , aim]) => aim ?? '').join(' | ')} |`);
+  if (notes.length) console.log(notes.join('\n'));
+  if (!lower && raise < 0) return;
+  const base = JSON.parse(await readFile(BASELINE, 'utf8').catch(() => '{"pages":{},"raised":[]}'));
+  const { BASE: B2, server: s2 } = await serveDist(), b2 = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
+  const probe = await fontProbe(b2, B2);
+  await b2.close();
+  s2.close();
+  if (base.fontProbe === undefined) base.fontProbe = probe;
+  else if (base.fontProbe !== probe) throw new Error(`the fonts here differ from the baseline's (a line ${probe} px wide, not ${base.fontProbe}): write the baseline where it was written, a session's container`);
+  const changed = [];
+  if (raise >= 0) {
+    const [then, now] = [base.pages[rPage]?.[rCount], measured[rPage]?.[rCount]];
+    if (!(now > then || (then === null && now !== null))) throw new Error(`--raise: ${rPage} ${rCount} is ${now ?? 'none'}, not above ${then ?? 'none'}`);
+    base.pages[rPage][rCount] = now;
+    base.raised.push({ page: rPage, count: rCount, from: then, to: now, why: rWhy, date: new Date().toISOString().slice(0, 10) });
+    changed.push(`${rPage} ${rCount} ${then} → ${now} (${rWhy})`);
+  } else {
+    if (skipEffects) throw new Error('--lower measures every count: leave out --no-effects');
+    for (const [path, counts] of Object.entries(measured)) {
+      if (!base.pages[path]) { base.pages[path] = counts; changed.push(`${path} added`); continue; }
+      for (const [k] of COUNTS) {
+        const [then, now] = [base.pages[path][k], counts[k]];
+        if (now !== null && then !== null && now < then) { base.pages[path][k] = now; changed.push(`${path} ${k} ${then} → ${now}`); }
+      }
+    }
+  }
+  base.pages = Object.fromEntries(Object.entries(base.pages).sort(([a], [b]) => a.localeCompare(b)));
+  await writeFile(BASELINE, JSON.stringify(base, null, 2) + '\n');
+  console.log(`scripts/load-baseline.json: ${changed.join(', ') || 'nothing to change'}`);
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1]).href) await main();
