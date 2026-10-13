@@ -74,7 +74,7 @@ export function DscrCalculator() {
       <DownloadSection s={s} p={p} update={update} />
       <div class="sticky bottom-0 z-10 -mx-4 mt-10 border-t border-line bg-canvas px-4">
         {/* The whole bar is the target, 44 px tall: it sits over the fields as they scroll under it (WCAG 2.5.8). */}
-        <a href="#preview" data-testid="answer-bar" aria-live="polite" class="flex min-h-11 items-center gap-1 text-sm font-medium text-ink">
+        <a href="#preview" data-testid="answer-bar" data-answer-echo aria-live="polite" class="flex min-h-11 items-center gap-1 text-sm font-medium text-ink">
           {barText(p)} <span aria-hidden="true">↓</span>
         </a>
       </div>
@@ -411,7 +411,7 @@ function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
     .map((a) => (a.id === 'method' && target ? { ...a, what: 'How DSCR is worked out, and the target', shown: `${a.shown}; ${target.shown.toLowerCase()}` } : a));
   return <Section id="preview" title="Results">
     {/* The answer first (docs/DESIGN.md, principle 1); one tone a meaning: good meets, bad misses or blocked, warn provisional. */}
-    {p.verdict && <p data-testid="dscr-verdict" class={`${box} text-ink ${p.verdict.meets ? 'border-good bg-good-tint' : 'border-bad bg-bad-tint'}`}>{p.verdict.text}</p>}
+    {p.verdict && <p data-testid="dscr-verdict" data-answer class={`${box} text-ink ${p.verdict.meets ? 'border-good bg-good-tint' : 'border-bad bg-bad-tint'}`}>{p.verdict.text}</p>}
     {p.loanLine && <dl data-testid="dscr-loan-line" class="mt-3 grid grid-cols-2 gap-3 text-slate-900 dark:text-slate-100">
       <div><dt class={`text-sm ${MUTED}`}>Each instalment</dt><dd data-testid="dscr-instalment" class="font-semibold tabular-nums">{p.loanLine.instalment}</dd></div>
       <div><dt class={`text-sm ${MUTED}`}>Interest over the whole loan</dt><dd data-testid="dscr-total-interest" class="font-semibold tabular-nums">{p.loanLine.totalInterest}</dd></div>

@@ -301,6 +301,8 @@ export const STATES = {
     },
   },
   '/': { page: async () => {} },
+  // UX2b's three looks of home, for the owner's pick on the preview; gone once home is built in one.
+  '/looks/a/': { page: async () => {} }, '/looks/b/': { page: async () => {} }, '/looks/c/': { page: async () => {} },
 };
 
 /** After a state's last step the focus is still on a control, never dropped to the page (WCAG 2.4.3; DESIGN-LESSONS lesson 1, recurred on /cma/ and /project-report/ in UX1). */
