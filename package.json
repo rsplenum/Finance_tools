@@ -19,7 +19,8 @@
     "worker:build": "wrangler deploy --dry-run --outdir worker/dist -c worker/wrangler.jsonc",
     "hosts": "node scripts/hosts.mjs",
     "usage": "node scripts/usage.mjs",
-    "design-review": "node scripts/design-review.mjs"
+    "design-review": "node scripts/design-review.mjs",
+    "load": "node scripts/load-measure.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.133.0",
