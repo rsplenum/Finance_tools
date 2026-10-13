@@ -12,7 +12,7 @@ const pct = (n: number) => `${Math.min(100, (n / scale) * 100).toFixed(2)}%`;
 <figure data-at={at} class="mt-10 first:mt-0">
   <figcaption class="text-sm font-medium text-ink-muted">{title}<span class="sr-only">; the target for the lowest year is {target}</span></figcaption>
   <div class="relative mt-4 flex h-52 pr-12 sm:h-60 sm:pr-16">
-    <ol class="flex h-full flex-1 items-end gap-1 sm:gap-3">
+    <ol class="flex h-full min-w-0 flex-1 items-end gap-1 sm:gap-3">
       {frame.years.map((y, i) => (
         <li class="flex h-full min-w-0 flex-1 flex-col items-center justify-end">
           <span class="sr-only">{y.fy}:</span>

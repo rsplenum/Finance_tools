@@ -137,6 +137,7 @@
 body[data-look='new'] { font-family: var(--font-display); }
 /* The new look's bar is about 160 px tall on a phone (two rows and the notice), 120 px from lg. */
 html:has(body[data-look='new']) { scroll-padding-top: 11rem; }
+@media (max-width: 23.99rem) { html:has(body[data-look='new']) { scroll-padding-top: 14rem; } }
 @media (min-width: 64rem) { html:has(body[data-look='new']) { scroll-padding-top: 8rem; } }
 .js [data-typed] .rest { opacity: 0; }
 [data-typed].typing .done::after { content: ''; display: inline-block; width: 0.06em; height: 0.85em; margin-left: 0.04em; vertical-align: -0.05em; background: currentColor; animation: caret 0.8s steps(1) 6; }
