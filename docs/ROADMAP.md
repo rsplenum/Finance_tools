@@ -12,7 +12,7 @@ Sizes come from HANDOFF: S is about 60 steps or 15 minutes, M about 120 or 30, L
 | 3b | **DT1 Design team** (the owner's yes, 13-10-2026, D-UX-58): as agreed in "The design team" below; done 13-10-2026 (D-UX-59), the first review in `docs/design-reviews/` | L, Extra | a few sites you like the look of, as references |
 | 4 | **UX1 Research**: each tool and the home page audited at 390 px and on a desktop against `brief-first` and UD1's first funnels, plus a 20-minute test script for five people you pick (DSAs, borrowers, a CA) | M, high | you run the five tests, about 2 hours of your time |
 | 5 | **UX2 Design**: one look for the site (type, colour, spacing, the shared parts) and the home page | L, Extra | UX1's findings and your test notes |
-| 6 | **UX3** The look applied to the DSCR and CMA pages | M, high | — |
+| 6 | **AG1, then UX3** The home page in antigravity.google's structure with the forbidden list (D-UX-66), then that look applied to the DSCR and CMA pages | L, Extra, then M, high | the four hosts in `docs/OWNER.md`; the business name |
 | 7 | **UX4** The look applied to the estimate and the project report | M, high | — |
 | 8 | **SEO1 pSEO plan**: the searches people in India make, the page types, how many pages, and the data each page needs | M, high | the hosts `npm run hosts` names, allowed first |
 | 9 | **SEO2 pSEO template and first batch** (about 50 pages, each with a working calculator), plus the sitemap, canonical tags, structured data, and a site check that fails thin pages | L, Extra | — |
