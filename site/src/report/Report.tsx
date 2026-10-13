@@ -137,7 +137,7 @@ function ReportTable({ t }: { t: ViewTable }) {
   const cols = t.columns.length + 1;
   return <details open={t.id === 'cost' || t.id === 'finance' || t.id === 'dscr'} class="mt-4 rounded-lg border border-slate-200 dark:border-slate-800">
     <summary class="cursor-pointer px-3 py-2 font-medium text-slate-900 dark:text-slate-100">{t.title}</summary>
-    <div class="overflow-x-auto px-3 pb-3">
+    <div class="overflow-x-auto px-3 pb-3" tabIndex={0} role="region" aria-label={t.title}>
       <table data-testid={`rep-${t.id}`} class="w-full border-collapse text-sm">
         <thead><tr class="border-b border-slate-300 dark:border-slate-700">
           <th scope="col" class="py-2 pr-3 text-left font-medium text-slate-700 dark:text-slate-200">{t.first}</th>

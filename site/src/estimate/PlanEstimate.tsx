@@ -147,11 +147,11 @@ function Answer({ v, update, heading }: { v: PlanView; update: Update; heading: 
     <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="tabular-nums">Rs. {v.perSqft}</span> a sq ft of {v.areaName.toLowerCase()}</p>
     <p data-testid="pl-rates" class={`mt-1 text-sm ${MUTED}`}>{v.ratesLine}</p>
     <div role="group" aria-label="The total at each level; choose one to switch the package" class="mt-4 grid grid-cols-5 gap-1.5">
-      {v.strip.map((x) => <button key={x.level} type="button" data-testid={`pl-strip-${x.level}`} aria-pressed={x.current} aria-label={`${x.name}: Rs. ${x.full}`}
+      {v.strip.map((x) => <button key={x.level} type="button" data-testid={`pl-strip-${x.level}`} aria-pressed={x.current}
         title={`Rs. ${x.full}`} onClick={() => update((s) => withLevel(s, x.level))}
         class={`rounded-md border px-1 py-1.5 text-center ${x.current ? 'border-teal-700 bg-teal-50 dark:border-teal-500 dark:bg-teal-950' : 'border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900'}`}>
         <span class={`block text-xs ${x.current ? 'font-semibold' : ''} ${INK}`}>{x.name}</span>
-        <span class={`block text-xs tabular-nums ${MUTED}`}>{x.total}</span>
+        <span class={`block text-xs tabular-nums ${MUTED}`}>{x.total}<span class="sr-only"> (Rs. {x.full})</span></span>
       </button>)}
     </div>
     <p class={`mt-1 text-xs ${MUTED}`}>Each level as a package; tap one to switch.</p>
@@ -273,8 +273,8 @@ function Why({ id, about, title, w }: { id: string; about: string; title?: strin
       {title && <p class="font-medium">{title}</p>}
       {w.items.map((x, i) => <p key={i}><span class="font-medium">{x.label}:</span> {x.text}</p>)}
       <p class={MUTED}>{w.sources.length
-        ? <>Sources: {w.sources.map((x, i) => <span key={x.id}>{i ? '; ' : ''}{x.url
-          ? <a href={x.url} target="_blank" rel="noopener noreferrer" class="text-teal-800 underline dark:text-teal-300">{x.what}</a> : x.what}</span>)}
+        ? <>Sources: {w.sources.map((x, i) => [i ? '; ' : '', x.url
+          ? <a key={x.id} href={x.url} target="_blank" rel="noopener noreferrer" class="text-teal-800 underline dark:text-teal-300">{x.what}</a> : x.what])}
           {w.own ? '; and our own rule' : ''}.{w.reported ? ' As reported, not yet checked.' : ` Checked against ${w.sources.length === 1 ? 'its page' : 'their pages'}.`}</>
         : 'Our own rule, with its reason given.'}</p>
     </div>
@@ -326,8 +326,8 @@ function Drawer({ s, l, d, groups, setGroup, update }: { s: PlanState; l: LineVi
         <li>Rate: {d.how.rate.join('; ')}</li>
         <li>Amount: {d.how.amount}</li>
       </ul>
-      {l.sources.length > 0 && <p class={`mt-1 text-xs ${MUTED}`}>Sources: {l.sources.map((x, i) => <span key={x.id}>{i ? '; ' : ''}{x.url
-        ? <a href={x.url} target="_blank" rel="noopener noreferrer" class="text-teal-800 underline dark:text-teal-300">{x.what}</a> : x.what}</span>)}. {checkedLine(l)}</p>}
+      {l.sources.length > 0 && <p class={`mt-1 text-xs ${MUTED}`}>Sources: {l.sources.map((x, i) => [i ? '; ' : '', x.url
+        ? <a key={x.id} href={x.url} target="_blank" rel="noopener noreferrer" class="text-teal-800 underline dark:text-teal-300">{x.what}</a> : x.what])}. {checkedLine(l)}</p>}
       {l.note && <p class={`mt-1 text-xs ${MUTED}`}>{l.note}</p>}
     </details>
   </div>;

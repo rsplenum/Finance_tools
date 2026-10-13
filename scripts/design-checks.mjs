@@ -187,6 +187,27 @@ const frontDoor = async (page, [profit, growth, amount, rate, years]) => {
   await page.check('#fld-fd-borrower-firm');
   for (const [id, v] of [['profit', profit], ['growth', growth], ['amount', amount], ['rate', rate], ['years', years]]) if (v !== undefined) await leave(page, `#fld-fd-${id}`, v);
 };
+// The planning estimate's six questions (scripts/site-check.mjs: a 2BHK of 1,000 sq ft in Pune); the last, the level, left out when `level` is false.
+const sixQuestions = async (page, level = true) => {
+  await page.check('#fld-work-renovate');
+  await page.check('#fld-home-flat');
+  await page.selectOption('#fld-city', 'pune');
+  await leave(page, '#fld-carpet', '1,000');
+  await page.check('#fld-bhk-2');
+  if (level) await page.click('#fld-level-1');
+};
+// Fictional case R (tests/plan.test.ts, scripts/site-check.mjs), every fact but the repayment unless `repayment`.
+const caseR = async (page, repayment = true) => {
+  await page.check('#fld-borrower-firm');
+  await page.locator('#more-options summary').click();
+  await page.check('#fld-salesBy-typed');
+  for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-furniture', '2 L'], ['#fld-cost-preliminary', '1 L'],
+    ['#fld-tl-amount', '25 L'], ['#fld-tl-rate', '10'], ['#fld-tl-disbursed', '2026-04'], ['#fld-tl-moratorium', '0'], ['#fld-tl-instalments', '60'], ['#fld-monthsToStart', '0'],
+    ['#fld-sales', '1.2 Cr'], ['#fld-salesGrowth', '10'], ['#fld-variablePct', '65'], ['#fld-fixed', '18 L'], ['#fld-fixedGrowth', '5'], ['#fld-wcLimit', '5 L'], ['#fld-wcRate', '11']])
+    await leave(page, id, value);
+  if (repayment) await page.check('#fld-tl-repayment-monthly');
+  await page.locator('#more-options summary').click();
+};
 
 /**
  * Each page's states, in the order a user meets them (docs/DESIGN.md, "States"). A state is a function that brings a
@@ -214,6 +235,72 @@ export const STATES = {
       await page.locator('#download').scrollIntoViewIfNeeded();
     },
   },
+  // CMA data (UX1): fictional case K is the worked example (tests/cma.test.ts).
+  '/cma/': {
+    empty: async () => {},
+    partly: async (page) => leave(page, '#fld-cma-a1-sales', '300 L'),
+    // The sales of every year and fresh, but no other head: the result says what it still needs.
+    provisional: async (page) => {
+      for (const [y, v] of [['a1', '300 L'], ['a2', '340 L'], ['a3', '390 L'], ['est', '450 L'], ['proj', '520 L']]) await leave(page, `#fld-cma-${y}-sales`, v);
+      await page.check('#fld-cma-case-fresh');
+    },
+    error: async (page) => leave(page, '#fld-cma-a1-sales', 'seventy'),
+    result: async (page) => page.getByTestId('cma-example').click(),
+    plan: async (page) => { await page.getByTestId('cma-example').click(); await page.getByTestId('cma-viable').click(); },
+    download: async (page) => {
+      await page.getByTestId('cma-example').click();
+      await leave(page, '#fld-cma-name', 'K Steel Furniture Pvt Ltd');
+      await page.locator('#download').scrollIntoViewIfNeeded();
+    },
+  },
+  // The planning estimate first, then the typed quotation, its second path (UX1).
+  '/estimate/': {
+    empty: async () => {},
+    partly: async (page) => { await page.check('#fld-work-renovate'); await page.check('#fld-home-flat'); },
+    provisional: async (page) => sixQuestions(page, false),
+    error: async (page) => { await page.check('#fld-work-renovate'); await page.check('#fld-home-flat'); await leave(page, '#fld-carpet', 'seventy'); },
+    result: async (page) => sixQuestions(page),
+    // A section opened and a line's drawer with its choices: the controls beside the figure they change.
+    plan: async (page) => {
+      await sixQuestions(page);
+      await page.getByTestId('pl-card-flooring').locator('summary').first().click();
+      await page.getByTestId('pl-open-living:floor:floor-skirting').click();
+    },
+    download: async (page) => {
+      await sixQuestions(page);
+      await leave(page, '#fld-pl-owner', 'Asha Rao');
+      await leave(page, '#fld-pl-property', 'Flat 4, Example Towers, Pune');
+      await page.locator('#fld-pl-property').scrollIntoViewIfNeeded();
+    },
+    // The typed quotation (scripts/site-check.mjs, P2): two lines, GST at 18%, no contingency yet.
+    typed: async (page) => {
+      await page.locator('#typed-path > summary').click();
+      await page.check('#fld-kind-construction');
+      await leave(page, '#fld-area', '1,200');
+      await page.selectOption('#fld-item-1-head', 'earthwork');
+      await leave(page, '#fld-item-1-description', 'Excavation for foundations');
+      await leave(page, '#fld-item-1-quantity', '45');
+      await leave(page, '#fld-item-1-rate', '350');
+      await page.check('#fld-gst-add');
+      await leave(page, '#fld-gstPct', '18');
+    },
+  },
+  // The project report on fictional case R (UX1).
+  '/project-report/': {
+    empty: async () => {},
+    partly: async (page) => { await page.check('#fld-borrower-firm'); await leave(page, '#fld-cost-building', '10 L'); },
+    provisional: async (page) => caseR(page, false),
+    error: async (page) => { await page.check('#fld-borrower-firm'); await leave(page, '#fld-tl-amount', 'seventy'); },
+    result: async (page) => caseR(page),
+    plan: async (page) => { await caseR(page); await page.getByTestId('rep-viable').click(); },
+    download: async (page) => {
+      await caseR(page);
+      await leave(page, '#fld-rep-name', 'Asha Packaging');
+      await leave(page, '#fld-rep-activity', 'Manufacture of corrugated boxes');
+      await page.locator('#download').scrollIntoViewIfNeeded();
+    },
+  },
+  '/': { page: async () => {} },
 };
 
 /** The states the site check measures beside each page as it loads: an error, the plan's sliders, the result and the download row. */
