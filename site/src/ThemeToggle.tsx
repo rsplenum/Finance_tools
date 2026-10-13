@@ -13,7 +13,7 @@ export function ThemeToggle() {
   // Its name starts "Theme:" and ends with the word shown, so a voice command of what is seen reaches it (WCAG 2.5.3).
   return <button type="button" data-testid="theme-toggle" title={`${LABEL[p]}. Click for ${next}.`}
     onClick={() => { setThemePref(next); setP(next); }}
-    class="inline-flex min-h-8 items-center gap-1 rounded-control border border-edge bg-field px-2.5 py-1.5 text-sm font-medium text-ink hover:bg-surface">
+    class="inline-flex min-h-8 items-center gap-1 rounded-full border border-edge bg-field px-2.5 py-1.5 text-sm font-medium text-ink hover:bg-surface">
     <span aria-hidden="true" class="leading-none">{ICON[p]}</span>
     <span class="sr-only">Theme: </span>
     <span>{p === 'system' ? 'Auto' : p === 'light' ? 'Light' : 'Dark'}</span>

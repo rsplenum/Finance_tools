@@ -1,18 +1,18 @@
 {
   "pages": {
     "/": {
-      "before": 5,
-      "shown": 163,
-      "all": 163,
+      "before": 27,
+      "shown": 735,
+      "all": 735,
       "plan": null,
       "long": 0,
-      "abbr": 3,
+      "abbr": 6,
       "questions": 0,
-      "controls": 4,
-      "answerAt": 0.2,
+      "controls": 17,
+      "answerAt": 0.5,
       "gap": null,
-      "styles": 3,
-      "colours": 1,
+      "styles": 10,
+      "colours": 2,
       "outOfSight": null
     },
     "/404.html": {
@@ -138,6 +138,70 @@
       "from": 2,
       "to": 3,
       "why": "D-UX-65",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "before",
+      "from": 5,
+      "to": 27,
+      "why": "D-UX-67",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "shown",
+      "from": 163,
+      "to": 735,
+      "why": "D-UX-67",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "all",
+      "from": 163,
+      "to": 735,
+      "why": "D-UX-67",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "abbr",
+      "from": 3,
+      "to": 6,
+      "why": "D-UX-67",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "controls",
+      "from": 4,
+      "to": 17,
+      "why": "D-UX-67",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "answerAt",
+      "from": 0.2,
+      "to": 0.5,
+      "why": "D-UX-67",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "styles",
+      "from": 3,
+      "to": 10,
+      "why": "D-UX-67",
+      "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "colours",
+      "from": 1,
+      "to": 2,
+      "why": "D-UX-67",
       "date": "2026-10-13"
     }
   ],
