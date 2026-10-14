@@ -3,7 +3,8 @@
  * mark or a block falls onto its line and comes to rest with a small spring), tick (a line drawn when a rule is met) and
  * count (a figure runs to the engine's value, which is in the page from the start). The hero's and the closing's dashes
  * fall into ledger rows; the two ways in gather into what each gives; the story's pages land on the desk. What starts by
- * itself ends within 5 s or follows the reader, and the story has a Stop (WCAG 2.2.2). Under reduced motion Base.astro
+ * itself ends within 5 s or follows the reader. The story's trailer is written by a pen on its scratch paper once as it
+ * comes into view and has "Show it all" (AG3, D-UX-77); the tool drawings draw themselves once (D-UX-73). Under reduced motion Base.astro
  * leaves out the `js` mark: everything is drawn once, at rest.
  */
 export function start() {
@@ -13,7 +14,8 @@ export function start() {
   if (!motion) return;
   settling();
   header();
-  story();
+  drawings();
+  for (const p of document.querySelectorAll<HTMLElement>('[data-trailer]')) trailer(p);
 }
 
 const ease = (p: number) => 1 - (1 - p) ** 3;
@@ -228,65 +230,110 @@ function header() {
   }, { passive: true });
 }
 
-/** Count: the figure runs from `data-from` to the value it holds in the page, in its own decimals, and ends on that text. */
-function count(el: HTMLElement, alive: () => boolean, then: () => void) {
-  const final = el.dataset.value ?? (el.dataset.value = el.textContent ?? '');
-  const to = Number(final.replace(/,/g, '')), from = Number((el.dataset.from ?? '0').replace(/,/g, '')), dp = (final.split('.')[1] ?? '').length;
-  if (!Number.isFinite(to)) { then(); return; }
-  const fmt = (v: number) => v.toLocaleString('en-IN', { minimumFractionDigits: dp, maximumFractionDigits: dp });
-  const t0 = performance.now(), ms = 700;
-  const step = (now: number) => {
-    if (!alive()) return;
-    const p = clamp((now - t0) / ms);
-    el.textContent = p < 1 ? fmt(from + (to - from) * ease(p)) : final;
-    if (p < 1) requestAnimationFrame(step); else then();
+/**
+ * A story's trailer (AG3, D-UX-77): once the sheet is in view, the pen writes each line letter by letter, stroke after
+ * stroke at one speed with a short lift between, a typeset card settles between the shots, a beat of stillness before
+ * the last line, and the marigold marker swipes the result; about 5.5 s in all, never tied to the scroll. "Show it all"
+ * finishes it at once, then offers to write it again. Without scripts or under reduced motion it stands written.
+ */
+function trailer(sheet: HTMLElement) {
+  if (!document.documentElement.classList.contains('js')) return;
+  const beats = [...sheet.querySelectorAll<HTMLElement>('[data-beat]')], mark = sheet.querySelector<SVGRectElement>('[data-mark]');
+  const btn = sheet.closest('[data-story]')?.querySelector<HTMLButtonElement>('[data-show]');
+  const strokes = (b: HTMLElement) => [...b.querySelectorAll<SVGPathElement>('path')];
+  const pens = beats.filter((b) => b.dataset.beat !== 'card');
+  let anims: Animation[] = [];
+  const hide = () => {
+    for (const b of beats) if (b.dataset.beat === 'card') b.style.opacity = '0';
+    for (const p of pens.flatMap(strokes)) { p.setAttribute('pathLength', '1'); p.style.strokeDasharray = '1'; p.style.strokeDashoffset = '1'; }
+    if (mark) { mark.style.transformBox = 'fill-box'; mark.style.transformOrigin = 'left center'; mark.style.transform = 'scaleX(0)'; }
   };
-  requestAnimationFrame(step);
+  const play = () => {
+    const all = pens.flatMap(strokes), length = all.reduce((a, p) => a + p.getTotalLength(), 0);
+    // The pen's speed: about 3 s of writing; the cards, the gaps, the lifts, the beat and the marker take the rest.
+    const lift = 6, speed = length / 3000, settle = { duration: 300, easing: 'ease-out', fill: 'both' as const };
+    let t = 0;
+    for (const [k, b] of beats.entries()) {
+      if (b.dataset.beat === 'card') {
+        if (k === beats.length - 2) t += 300;
+        anims.push(b.animate([{ opacity: 0, transform: 'translateY(-0.4rem)' }, { opacity: 1, transform: 'none' }], { ...settle, delay: t }));
+        t += 300;
+        continue;
+      }
+      for (const p of strokes(b)) {
+        const d = p.getTotalLength() / speed;
+        anims.push(p.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: d, delay: t, fill: 'both' }));
+        t += d + lift;
+      }
+      t += 100;
+    }
+    if (mark) anims.push(mark.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 400, delay: t, easing: 'ease-out', fill: 'both' }));
+    const end = Promise.all(anims.map((a) => a.finished)).then(() => say(), () => undefined);
+    void end;
+    say();
+  };
+  const done = () => anims.length > 0 && anims.every((a) => a.playState === 'finished');
+  const say = () => { if (btn) btn.textContent = done() ? 'Write it again' : 'Show it all'; };
+  hide();
+  // A third of the sheet, or half a short screen (1280 at 400%) when the sheet is taller than the screen.
+  const io = new IntersectionObserver((es) => {
+    if (es.some((e) => e.intersectionRatio >= 0.35 || e.intersectionRect.height >= innerHeight / 2)) { io.disconnect(); play(); }
+  }, { threshold: [0, 0.1, 0.2, 0.35] });
+  io.observe(sheet);
+  if (!btn) return;
+  btn.hidden = false;
+  say();
+  btn.addEventListener('click', () => {
+    if (btn.textContent === 'Show it all') { io.disconnect(); if (!anims.length) play(); anims.forEach((a) => a.finish()); say(); return; }
+    anims.forEach((a) => a.cancel()); anims = []; play();
+  });
 }
 
 /**
- * The story: the pages land on the desk in turn, whole, each once it is in view (on a phone they stand one under another,
- * so each waits for the reader), then the made-viable figure counts and is ticked; Stop shows it all. A page is in view
- * when its top is above the lower fifth of the screen, not a share of its height, so a short screen plays it too.
+ * The tool drawings draw themselves once as each comes into view (D-UX-73, D-UX-77): one pen at a constant speed, its
+ * strokes in the order the drawing lists them (the ground, then the walls, the roof, the openings, the details), each
+ * stroke's time set by its length, about 2 s in all. While it draws, each stroke is dashed by its own length, so it scales
+ * with the drawing (a non-scaling stroke dashes in screen units and stops short: docs/GOTCHAS.md); once drawn, the one
+ * path is put back. One already in view when the page opens stays drawn; without scripts or under reduced motion each
+ * stands finished.
  */
-function story() {
-  const box = document.querySelector<HTMLElement>('[data-story]'), play = box?.querySelector<HTMLButtonElement>('[data-play]');
-  if (!box || !play) return;
-  const pages = [...box.querySelectorAll<HTMLElement>('[data-at]')], last = pages.length;
-  const ticks = [...box.querySelectorAll<HTMLElement>('[data-tick]')], counts = [...box.querySelectorAll<HTMLElement>('[data-count]')];
-  let at = 0, timer = 0, running = false, played = false, run = 0, waiting = false;
-  const seen = new Set<Element>();
-  const show = () => pages.forEach((s) => s.classList.toggle('on', Number(s.dataset.at) <= at));
-  const say = () => { play.textContent = running ? 'Stop and show it all' : played ? 'Play it again' : 'Play it'; };
-  const end = () => { running = false; say(); };
-  const settle = (me: number) => {
-    let left = counts.length;
-    const tick = () => { if (me === run) { ticks.forEach((t) => t.classList.add('ticked')); end(); } };
-    if (!left) tick();
-    counts.forEach((c) => count(c, () => me === run, () => { if (--left === 0) tick(); }));
-  };
-  const next = () => {
-    if (!seen.has(pages[at])) { waiting = true; return; }
-    at += 1; show();
-    if (at >= last) { timer = window.setTimeout(() => settle(run), 500); return; }
-    timer = window.setTimeout(next, 900);
-  };
-  const go = () => {
-    run += 1; at = 0; waiting = false; ticks.forEach((t) => t.classList.remove('ticked')); show();
-    running = played = true; say(); timer = window.setTimeout(next, 250);
-  };
-  const stop = () => {
-    clearTimeout(timer); run += 1; at = last; waiting = false; show();
-    counts.forEach((c) => { if (c.dataset.value) c.textContent = c.dataset.value; });
-    ticks.forEach((t) => t.classList.add('ticked')); end();
-  };
-  play.hidden = false;
-  say();
-  play.addEventListener('click', () => (running ? stop() : go()));
+function drawings() {
   const io = new IntersectionObserver((es) => {
-    for (const e of es) if (e.isIntersecting) { seen.add(e.target); io.unobserve(e.target); }
-    if (!played && seen.has(pages[0])) go();
-    else if (waiting && running) { waiting = false; next(); }
-  }, { rootMargin: '0px 0px -20% 0px' });
-  pages.forEach((p) => io.observe(p));
+    for (const e of es) {
+      const svg = e.target as SVGSVGElement;
+      if (svg.dataset.split) {
+        if (!e.isIntersecting) continue;
+        io.unobserve(svg);
+        svg.querySelectorAll<SVGElement>('[data-stroke]').forEach((p) => p.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }],
+          { duration: Number(p.dataset.d), delay: Number(p.dataset.t), easing: 'linear', fill: 'both' }));
+        setTimeout(() => { svg.querySelectorAll('[data-stroke]').forEach((p) => p.remove()); svg.querySelectorAll<SVGElement>('[data-whole]').forEach((p) => p.style.removeProperty('display')); }, Number(svg.dataset.split) + 200);
+        continue;
+      }
+      if (e.isIntersecting) { io.unobserve(svg); continue; }
+      const scale = svg.clientWidth / svg.viewBox.baseVal.width, width = `${(1.6 / (scale || 1)).toFixed(3)}`;
+      const strokes: SVGGeometryElement[] = [];
+      for (const whole of svg.querySelectorAll<SVGGeometryElement>('path, circle')) {
+        const parts = whole.tagName === 'path' ? (whole.getAttribute('d') ?? '').split(/(?=M)/) : [null];
+        for (const part of parts) {
+          const p = whole.cloneNode() as SVGGeometryElement;
+          if (part) p.setAttribute('d', part);
+          p.removeAttribute('vector-effect'); p.setAttribute('stroke-width', width); p.setAttribute('pathLength', '1'); p.dataset.stroke = '';
+          p.style.strokeDasharray = '1'; p.style.strokeDashoffset = '1';
+          whole.before(p); strokes.push(p);
+        }
+        whole.dataset.whole = ''; whole.style.display = 'none';
+      }
+      // One pen: each stroke after the last, at the same speed, with a short lift between.
+      const lengths = strokes.map((p) => p.getTotalLength()), lift = Math.min(0.03, 0.6 / strokes.length);
+      const speed = lengths.reduce((a, b) => a + b, 0) / (2 - lift * strokes.length);
+      let t = 0;
+      for (const [k, p] of strokes.entries()) {
+        const d = lengths[k] / Math.max(speed, 1);
+        p.dataset.t = String(Math.round(t * 1000)); p.dataset.d = String(Math.round(d * 1000));
+        t += d + lift;
+      }
+      svg.dataset.split = String(Math.round(t * 1000));
+    }
+  }, { rootMargin: '0px 0px -10% 0px' });
+  document.querySelectorAll('[data-draw]').forEach((s) => io.observe(s));
 }

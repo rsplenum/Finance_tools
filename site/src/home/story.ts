@@ -48,3 +48,33 @@ export const STORY_FIX = (() => {
   if (!l?.move) throw new Error('The story case needs no longer repayment.');
   return { head: l.head, text: l.text, move: l.move };
 })();
+
+/** One line of a trailer: the pen writes `hand` and `title` lines; a `card` is set in type between them, as a trailer's
+ *  title card cuts between its shots; `mark` is the part the marigold marker swipes across once the line is written. */
+export interface TrailerLine { kind: 'title' | 'hand' | 'card'; text: string; mark?: string }
+export interface Trailer { id: string; lines: TrailerLine[]; go: { href: string; text: string } }
+
+/** The DSCR story as a trailer (AG3, D-UX-77): the question; who asks for what; the lowest year as typed, cash over
+ *  the EMIs, short of the target; the lender's change; the same sum passing, marked. Every figure the engine's. */
+export const DSCR_TRAILER: Trailer = (() => {
+  const sum = (s: State, f: StoryFrame) => {
+    const st = preview(s).statement, i = st?.years.indexOf(f.lowestYear) ?? -1, v = (id: string) => st?.lines.find((l) => l.id === id)?.values[i];
+    const a = v('available'), b = v('service'), r = v('dscr');
+    if (!a || !b || r !== f.lowest) throw new Error('The story case gives no lowest year.');
+    return `${a} ÷ ${b} = ${r}`;
+  };
+  const l = STORY_CASE.loan;
+  return {
+    id: 'dscr',
+    lines: [
+      { kind: 'title', text: 'Will the loan pass?' },
+      { kind: 'hand', text: `Profit ${STORY_CASE.cells.pbdit?.[0]} a year` },
+      { kind: 'hand', text: `Loan ${l.amount} · ${l.ratePct}% · ${years(l.instalments)}` },
+      { kind: 'card', text: `Lowest year · target ${STORY_TARGET.minimum}` },
+      { kind: 'hand', text: sum(STORY_CASE, STORY_TYPED) },
+      { kind: 'card', text: `Over ${STORY_FIXED.loan.instalments} instalments` },
+      { kind: 'hand', text: `${sum(STORY_FIXED, STORY_LONGER)} ✓`, mark: STORY_LONGER.lowest },
+    ],
+    go: { href: '/dscr/', text: 'Try it with your figures' },
+  };
+})();

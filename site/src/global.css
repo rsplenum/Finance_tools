@@ -59,6 +59,8 @@
    axis kept: wide for the large figures, condensed for caps labels of one to three words. Cut to the glyphs below. */
 @font-face {
   font-family: 'Anek'; font-style: normal; font-weight: 500; font-stretch: 75% 125%; font-display: swap;
+  /* Pinned to the font's own box as Chromium reads it, so the highlighter sits on the digits on every system (AG3). */
+  ascent-override: 89%; descent-override: 22%;
   src: url('/fonts/anek-latin.woff2') format('woff2');
   unicode-range: U+0020-007E, U+00A0, U+00A9, U+00B7, U+00D7, U+2010-2014, U+2018-201D, U+2022, U+2026, U+2032, U+20B9, U+2191, U+2193, U+2212;
 }
@@ -228,14 +230,10 @@ html:has(body[data-look='new']) { scroll-padding-top: 11rem; }
 .js [data-settle].settled { opacity: 1; transform: none; }
 [data-header] { transition: transform 0.25s ease-out; }
 [data-header][data-away]:not(:focus-within) { transform: translateY(-100%); }
-/* The story's pages land on the desk in turn (home.ts); Stop shows them all. */
-.js [data-story] [data-at] { transition: opacity 0.45s ease-out, transform 0.8s cubic-bezier(0.3, 1.45, 0.55, 1); }
-.js [data-story] [data-at]:not(.on) { opacity: 0; transform: translateY(-2rem); }
-[data-bar] { transform-origin: bottom; transition: transform 0.8s cubic-bezier(0.3, 1.3, 0.55, 1); transition-delay: calc(0.2s + var(--i, 0) * 80ms); }
-.js [data-story] [data-at]:not(.on) [data-bar] { transform: scaleY(0); }
-/* Tick: the marigold highlighter drawn across a figure that clears its line. */
-[data-tick] { background: linear-gradient(var(--marigold), var(--marigold)) no-repeat 0 72% / 100% 62%; transition: background-size 0.5s ease-out 0.15s; }
-.js [data-tick]:not(.ticked) { background-size: 0% 62%; }
+/* The story's scratch paper (AG3, D-UX-77; Trailer.astro): ruled from the start, its double margin rule in red. */
+[data-paper] { --pm: 2.25rem; }
+@media (min-width: 40rem) { [data-paper] { --pm: 3.75rem; } }
+[data-paper]::before { content: ''; position: absolute; inset-block: 0; left: var(--pm); width: 5px; border-inline: 1px solid var(--margin); pointer-events: none; }
 /* The name at the foot: its letters drop and settle onto a ledger rule. */
 .js [data-wordmark] span { display: inline-block; opacity: 0; transform: translateY(-45%); transition: opacity 0.5s ease-out, transform 0.9s cubic-bezier(0.3, 1.45, 0.55, 1); transition-delay: calc(var(--i, 0) * 70ms); }
 .js [data-wordmark].settled span { opacity: 1; transform: none; }
