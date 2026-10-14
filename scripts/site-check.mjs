@@ -1368,6 +1368,6 @@ server.close();
 console.log(`site check: ${pages.length} pages at 390 px, light and dark: ${violations.length} violations`);
 console.log(`design checks: ${design.lines} findings measured (each held in scripts/design-baseline.json), ${design.tokens.rawColour} raw colour classes, ${design.tokens.arbitraryValue} arbitrary values${design.lower.length ? `; lower the baseline: ${design.lower.join(', ')}` : ''}${design.fixed ? `; ${design.fixed} known findings fixed, take them out of the baseline` : ''}`);
 console.log(`load measure: ${load.pages} pages against scripts/load-baseline.json, ${load.rose} counts rose, ${load.fell} fell${load.fonts ? '' : '; other fonts here than the baseline\'s, so the answer\'s place and the out-of-sight count are not compared'} (docs/LOAD-MEASURE.md)`);
-console.log(`FinSight's rules: ${forbidden.pages} page in the new look (docs/DESIGN.md), F1 to F17; home weighs ${forbidden.weight} KB as it loads (cap ${WEIGHT_CAP} KB)`);
+console.log(`FinSight's rules: ${forbidden.pages} page in the new look (docs/DESIGN.md), F1 to F19; home weighs ${forbidden.weight} KB as it loads (cap ${WEIGHT_CAP} KB)`);
 for (const x of violations) console.log(`  - ${x}`);
 process.exit(violations.length ? 1 : 0);

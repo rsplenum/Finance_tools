@@ -1,6 +1,6 @@
 # Design system (DT1, D-UX-58)
 
-What every page is held to, read whole by the designer and the critic (`.claude/agents/`). AI agents have no taste of their own: the look comes from these rules, the measured checks, the usage numbers and the owner's judgement of the preview link. A rule stays only with its evidence; a "law" without a source counts for nothing. The owner's input behind it, with the rows that do not hold: `docs/design-inputs/cognitive-matrix.md`. Proposed rules wait in `docs/DESIGN-LESSONS.md` until accepted. The site is Astro, Preact and Tailwind 4; the tokens are in `site/src/global.css`.
+What every page is held to, read whole by the designer and the critic (`.claude/agents/`). The look comes from these rules, the measured checks, the usage numbers and the owner's judgement of the preview, not from an agent's taste. A rule stays only with its evidence. The owner's inputs, and the rows that do not hold: `docs/design-inputs/cognitive-matrix.md`. Proposed rules wait in `docs/DESIGN-LESSONS.md` until accepted. Astro, Preact and Tailwind 4; the tokens in `site/src/global.css`.
 
 From 13-10-2026 the look follows antigravity.google's structure (D-UX-66; the map: `docs/design-reference/antigravity.md`). From 14-10-2026 it is FinSight's own (D-UX-72, `docs/design-reference/finsight.md`). On a page in the new look (`look="new"` in `site/src/Base.astro`) FinSight's rules win where the rules differ, except on accessibility, figures and the law.
 
@@ -24,26 +24,28 @@ Each: the friction it removes; its evidence.
 Not rules, for want of evidence: rounded corners read faster; a 1 px border with a shadow for depth; a fixed 8 px grid over the 4 px scale.
 
 ## FinSight's rules (AG2, D-UX-72)
-The brief and its load test: `docs/design-reference/finsight.md`. *Tested*: by `scripts/forbidden-checks.mjs` (its thresholds beside each check) at 360 and 1280 px in the site check; the rest are the critic's.
+The brief: `docs/design-reference/finsight.md`. *Tested*: by `scripts/forbidden-checks.mjs` (thresholds beside each check) in the site check; the rest are the critic's.
 - **F1 Type**: Figtree for text; Anek (Ek Type, OFL) for headings, `figure` (wide, tabular) and `caps` (condensed, labels of one to three words). *Tested*.
 - **F2 Small headings**: h1 `text-hero`, h2 `text-section` or `text-statement`, h3 `text-title`. *Tested*.
 - **F3 Boxed cards**: a panel is set off by its fill, never a border all round. *Tested*.
 - **F4 Square buttons**: a filled link or button is a 44 px pill. *Tested*.
 - **F5 Accent-filled buttons**: pills are `bg-ink text-canvas`, soft `bg-ink/5`, or on a desk `bg-on-desk`; the accent keeps to the tool pages. *Tested*.
 - **F6 A narrow page**: sections run to `max-w-7xl`; running text `max-w-prose`. *Tested*.
-- **F7 Tight sections**: `py-16 sm:py-24` or more. *Tested*.
+- **F7 Tight sections**: `py-16 sm:py-24` or more; the story's `py-16` and the hero's `pb-24` by the owner's word (D-UX-81). *Tested*.
 - **F8 Lone links underlined**: the bar's, the foot's, titles' and pills' carry no line; one in a sentence does. *Tested*.
-- **F9 Motion that does not end**: settle, tick and count only, loose to settled; what moves by itself stops within 5 s; the story's pages land whole, with "Stop and show it all"; nothing moves under reduced motion; a block lands once its top is in view; scrolled through, all shows. *Tested*.
+- **F9 Motion that does not end**: settle, tick and count only, loose to settled; what moves by itself stops within 5 s; the story lands whole with "Show it all"; nothing moves under reduced motion; a block lands once its top is in view; scrolled through, all shows. *Tested*.
 - **F10 Words or figures only once moved**: headings and counted figures are in the page, as the engine gave them, from the start. *Tested*.
 - **F11 A tool two taps away**: every tool in the top bar, in the first screen. *Tested*.
 - **F12 A one-line foot**: it links every tool, says what happens to the figures, the name large on a ledger rule. *Tested*.
 - **F13 Another order**: hero, story, tools, uses, figures, try, closing (D-UX-78). *Tested*.
 - **F14 Anything from another site.** *Tested*.
-- **F15 A heavy page**: home 166 KB unzipped (14-10-2026, D-UX-80), cap 170 KB. *Tested*, printed.
-- **F16 Another's own**: the reference's or the video's words, images, footage, logo, font or code; a custom cursor; a hijacked scroll. The critic's.
+- **F15 A heavy page**: home 168 KB unzipped (14-10-2026, D-UX-81), cap 170 KB. *Tested*, printed.
+- **F16 Another's own**: the reference's words, images, footage, logo, font or code; a custom cursor; a hijacked scroll. The critic's.
 - **F17 Shadows**: only paper (`shadow-paper`) casts one. *Tested*.
+- **F18 Faint tags**: a tag under 4.5:1 on its fill as it comes into view, a fade counted, light and dark (D-UX-81). *Tested*.
+- **F19 Tab against the eye**: the next control in the page's order sits left in the same row, or above in the same column, at 360, 1024 or 1280 (WCAG 2.4.3; D-UX-81). *Tested*.
 
-Colour: ink, ledger red (the margin rule only, never a figure) and marigold (highlighter, ticks, glow), one highlight per screen; the critic's. Yield in the new look: principle 6 (two ink pills may share a screen; the accent fills none), 7's page column, 10 for the fields and the glow (never behind a figure, still under reduced motion), and the Tokens' type, radius and motion lines (motion to 0.9 s, ending per F9).
+Colour: ink, ledger red (the margin rule only, never a figure) and marigold (highlighter, ticks, glow), one highlight per screen; the critic's. Yield in the new look: principle 6 (two ink pills may share a screen; no accent fill), 7's column, 10 for fields and the glow (never behind a figure, still under reduced motion), and the Tokens' type, radius and motion (to 0.9 s, ending per F9).
 
 ## Tokens (`site/src/global.css`)
 A token is a role, not a colour, and needs no `dark:` twin. New work uses tokens only: the site check counts raw palette classes (`text-slate-600`) and arbitrary values (`text-[11px]`) and fails if either grows (`scripts/design-baseline.json`); UX2 to UX4 bring both to nil, then the check asks nil.
@@ -65,13 +67,13 @@ A token is a role, not a colour, and needs no `dark:` twin. New work uses tokens
 | `desk` `paper` `margin` `marigold` | new look: ink desk, paper, red, highlighter | | |
 
 Ratios on canvas, measured by `node scripts/design-review.mjs --tokens` (every pair but `line`, which marks no control, is at least 3.5:1, on surface and on the tints too). Colour never carries meaning alone: a miss says "Misses" in words.
-- **Type**: the system font (the new look: F1 and the scale `text-hero` to `-wordmark`, F2); 16 px for body and fields (16 px also stops phones zooming); 14 px (`text-sm`) for hints, second lines and table cells; 12 px (`text-xs`) only for labels inside a chart. Headings: h1 `text-2xl` (`sm:text-3xl` on the home page), h2 `text-lg`, h3 `text-base`, all `font-semibold`. Figures in tables use `tabular-nums`, right-aligned (GOV.UK Table, numeric cells). WCAG sets no minimum size; these are the house sizes.
+- **Type**: the system font (the new look: F1 and the scale `text-hero` to `-wordmark`, F2); 16 px for body and fields (it stops phones zooming); 14 px (`text-sm`) for hints, second lines and table cells; 12 px (`text-xs`) only for labels in a chart. Headings: h1 `text-2xl` (`sm:text-3xl` on the home page), h2 `text-lg`, h3 `text-base`, all `font-semibold`. Figures in tables: `tabular-nums`, right-aligned (GOV.UK Table). WCAG sets no minimum size; these are the house sizes.
 - **Space**: Tailwind's 4 px scale; use 1, 2, 3, 4, 6, 8, 10, 12 (4 to 48 px). Related things sit closer than unrelated ones (Gestalt proximity).
 - **Radius**: `rounded-control` (6 px) for fields and buttons, `rounded-card` (8 px) for panels, `rounded-full` for status pills. For consistency only.
 - **Motion**: none needed to understand anything; 150 ms at most; none under reduced motion (global.css).
 
 ## Shared parts (`site/src/fields.tsx` and its neighbours)
-- **Field** (`TextField`, `INPUT`): label above, hint between label and field, the field 44 px tall with a 3:1 edge, the read-back or error under it. Never a placeholder as the label or the only hint (NN/g, "Placeholders in form fields are harmful", 2014); a format example ("like 12 L") may sit in the field only where a read-back under it confirms what was understood. An error says what is wrong and how to put it right, beside the field (GOV.UK Error message).
+- **Field** (`TextField`, `INPUT`): label above, hint between label and field, the field 44 px tall with a 3:1 edge, the read-back or error under it. Never a placeholder as the label or the only hint (NN/g, "Placeholders in form fields are harmful", 2014); a format example ("like 12 L") may sit in the field only where a read-back under it confirms what was understood. An error says what is wrong and how to fix it, beside the field (GOV.UK).
 - **Choice** (radio cards): one question, the options as whole clickable cards; the chosen card takes the accent edge.
 - **Buttons**: `FILLED`, the main action, one a screen, 44 px tall on a phone; `BUTTON`, outlined, for the rest; a text link for moving about.
 - **Result panel**: the answer first in words and one figure, then its status pill (provisional, meets, misses).
@@ -87,10 +89,10 @@ Ratios on canvas, measured by `node scripts/design-review.mjs --tokens` (every p
 - **Home** (new look): the eight sections of `docs/design-reference/antigravity.md`; each tool's words are `site/src/site.ts`'s `what` and `gives` (D-UX-65).
 
 ## States, the critic's checklist
-Each tool is reviewed empty, partly filled, provisional (a fact missing), with an error, with a result, and at the download, with focus and hover on its controls; at 360 px (the common Indian Android width) and on a desktop, light and dark. `npm run design-review -- /dscr/` drives them and prints what it measures as text; screenshots (`--shots <dir>`) only for the pages a change touches. A page's states are listed in `scripts/design-review.mjs`.
+Each tool is reviewed empty, partly filled, provisional (a fact missing), with an error, with a result, and at the download, with focus and hover; at 360 px (the common Indian Android width) and on a desktop, 1024 too for a change in `lg:`, light and dark. `npm run design-review -- /dscr/` drives the states listed in `scripts/design-review.mjs` and prints what it measures; screenshots (`--shots <dir>`) only for pages a change touches.
 
 ## Measured checks (`scripts/design-checks.mjs`, in the site check)
-On every page at 360 and 1280 px, light and dark: axe-core, no WCAG 2.2 A or AA violation; text 4.5:1, large text 3:1 (1.4.3); a field's edge and the focus ring 3:1 (1.4.11, 2.4.7); targets 24 px or spaced (2.5.8); fields and accent buttons 44 px on a phone (2.5.5, a house rule); every control reached by Tab (2.1.1); the focus kept after a state's last step (2.4.3) and never under a sticky band (2.4.11, read by what is on top); no sideways scroll at 320 px (1.4.10); still under reduced motion (2.3.3); the token ratchet. What the checks cannot see goes to the critic.
+On every page at 360 and 1280 px, light and dark: axe-core, no WCAG 2.2 A or AA violation; text 4.5:1, large text 3:1 (1.4.3); a field's edge and the focus ring 3:1 (1.4.11, 2.4.7); targets 24 px or spaced (2.5.8); fields and accent buttons 44 px on a phone (2.5.5, house rule); every control reached by Tab (2.1.1); the focus kept after a state's last step (2.4.3) and never under a sticky band (2.4.11, read by what is on top); no sideways scroll at 320 px (1.4.10); still under reduced motion (2.3.3); the token ratchet. What the checks cannot see goes to the critic.
 
 ## Acceptable and unacceptable
 - Acceptable: the DSCR's verdict in a sentence with the average and the lowest year beside it, the years marked against the target. Unacceptable: the verdict only as a colour, or below the table.
@@ -100,4 +102,4 @@ On every page at 360 and 1280 px, light and dark: axe-core, no WCAG 2.2 A or AA 
 - Unacceptable anywhere: `text-[11px]`, a `#hex` class, `outline-none` without a ring, a field edge of slate-300.
 
 ## How the team works
-Each agent in `.claude/agents/` reads this file and the open lessons. The designer offers two or three options when the choice is the owner's and builds with the tokens and shared parts; the checks run; the critic reviews alone, ranks each finding blocker, significant or polish, and checks each fix. The writer puts words plain against counts 1 to 5 of `docs/LOAD-MEASURE.md`; the researcher turns the owner's test notes into ranked findings, each tied to a count or to none (both on Sonnet). A recurring finding or a rule the owner states becomes a lesson; accepted, it moves here. The owner sets the direction and judges the preview; agents never merge.
+Each agent reads this file and the open lessons. The designer offers two or three options when the choice is the owner's and builds with the tokens and parts; the critic reviews alone, ranks findings and checks each fix. The writer puts words plain against counts 1 to 5 of `docs/LOAD-MEASURE.md`; the researcher turns the owner's test notes into ranked findings, each tied to a count or to none (both on Sonnet). A recurring finding or the owner's rule becomes a lesson; accepted, it moves here. Agents never merge.

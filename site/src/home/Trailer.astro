@@ -13,7 +13,7 @@ const { trailer, lazy = false } = Astro.props;
 const svgs = lazy ? [] : svgsOf(trailer), holds = lazy ? holdsOf(trailer) : [];
 ---
 <article data-paper data-trailer={trailer.id} data-src={lazy ? `/trailers/${trailer.id}.json` : undefined}
-  class="relative mx-auto max-w-xl rounded-card bg-paper py-8 pr-6 pl-14 text-on-paper shadow-paper sm:py-10 sm:pr-10 sm:pl-20">
+  class="relative mx-auto max-w-xl rounded-card bg-paper py-8 pr-6 pl-14 text-on-paper shadow-paper sm:py-10 sm:pr-10 sm:pl-20 lg:max-w-none lg:text-xl xl:text-2xl">
   {trailer.lines.map((l, i) => l.kind === 'card' ? (
     <p data-beat="card" class="caps mt-6 text-paper-muted">{l.text}</p>
   ) : (
