@@ -33,7 +33,8 @@ const USES = [
   { who: 'A chartered accountant', head: 'A project report whose every figure is worked out twice', href: '/project-report/', go: 'Open the project report' },
   { who: 'A business renewing its cash credit', head: 'Forms I to VI and the limit, from five years’ figures', href: '/cma/', go: 'Open CMA data' },
 ];
-// Each trailer under its tool's name (D-UX-78), on one line (AG3c), and from lg beside the line on what the tool does.
+// Each trailer under its tool's name (D-UX-78), on one line (AG3c), and from lg beside the line on what the tool does;
+// its two buttons keep the page's order, Show then Try, so Tab follows the eye (F19).
 const REELS = TRAILERS.map((t) => { const tool = READY.find((r) => r.href === t.go.href); return { trailer: t, name: tool?.brief ?? tool?.name ?? '', what: tool?.what ?? '' }; });
 // The DSCR's questions are fixed (D-UX-10's seven); the other tools' depend on the case, so they show no count.
 const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
@@ -62,12 +63,12 @@ const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
           <button type="button" data-sound aria-pressed="false" hidden class={DESK_SOFT}>Pencil sound<span aria-hidden="true" data-state>&nbsp;· off</span></button>
         </div>
         {REELS.map((r, i) => (
-          <div data-reel class="mx-auto mt-12 flex max-w-xl flex-wrap items-center gap-x-3 sm:mt-16 lg:mt-12 lg:max-w-none">
+          <div data-reel class={`mx-auto mt-12 flex max-w-xl flex-wrap items-center gap-x-3 sm:mt-16 lg:max-w-none ${i ? 'lg:mt-24' : 'lg:mt-12'}`}>
             <h3 class="min-w-0 basis-full text-title text-on-desk sm:basis-0 sm:grow">{r.name}</h3>
             <p data-what class="hidden text-lead text-on-desk-muted lg:block">{r.what}</p>
             <div data-acts class="contents">
               <button type="button" data-show hidden class={`${DESK_SOFT} mt-3 min-w-40 shrink-0 sm:mt-0`}>Show it all</button>
-              <a href={r.trailer.go.href} class={`${DESK} order-last mt-8 lg:order-first lg:mt-0`}>{r.trailer.go.text}</a>
+              <a href={r.trailer.go.href} class={`${DESK} order-last mt-8 lg:mt-0`}>{r.trailer.go.text}</a>
             </div>
             <div data-sheet class="mt-6 basis-full lg:mt-0"><Trailer trailer={r.trailer} lazy={i > 0} /></div>
           </div>

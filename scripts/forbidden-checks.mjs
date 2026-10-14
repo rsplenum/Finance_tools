@@ -109,6 +109,23 @@ const still = (page) => page.evaluate(() => ({
   fields: [...document.querySelectorAll('canvas[data-field], canvas[data-gather]')].map((c) => c.toDataURL().length + ':' + c.toDataURL().slice(-64)),
 }));
 
+/**
+ * Tab against the eye (F19, AG3c): in the page's order, a control that comes next yet sits to the left in the same row,
+ * or above in the same column, was moved by CSS `order` or a grid (WCAG 2.4.3). Runs in the page.
+ */
+export function tabAgainstEye() {
+  const els = [...document.querySelectorAll('main a[href], main button, main input, main select, main textarea, main [tabindex]')]
+    .filter((e) => e.tabIndex >= 0 && !e.closest('[hidden], [inert]') && e.getClientRects().length && getComputedStyle(e).visibility === 'visible');
+  const out = [];
+  for (let i = 1; i < els.length; i++) {
+    const a = els[i - 1].getBoundingClientRect(), b = els[i].getBoundingClientRect();
+    const row = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > Math.min(a.height, b.height) / 2;
+    const col = Math.min(a.right, b.right) - Math.max(a.left, b.left) > 0;
+    if ((row && b.right <= a.left) || (col && !row && b.bottom <= a.top)) out.push(`"${els[i - 1].textContent.trim()}" then "${els[i].textContent.trim()}"`);
+  }
+  return out;
+}
+
 export async function forbiddenChecks({ browser, BASE, violations }) {
   let weight = 0;
   for (const path of NEW_LOOK) {
@@ -156,6 +173,15 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
       if (!tags.length) v('F18 no tag row ([data-tags] li) to measure');
       for (const t of tags.filter((x) => x.r < 4.5).slice(0, 3)) v(`F18 the tag "${t.t}" reads ${t.r.toFixed(1)}:1 as it comes into view, ${colorScheme} (want 4.5)`);
       await tc.close();
+    }
+    // F19: Tab follows the eye at 360 and where lg's layouts start and widen (AG3c: the trailers' buttons swapped at lg).
+    for (const w of [360, 1024, 1280]) {
+      const oc = await browser.newContext({ viewport: { width: w, height: 900 } });
+      const op = await oc.newPage();
+      await op.goto(BASE + path, { waitUntil: 'load' });
+      await op.waitForTimeout(300);
+      for (const m of (await op.evaluate(tabAgainstEye)).slice(0, 3)) v(`F19 Tab runs against the eye at ${w} px: ${m}`);
+      await oc.close();
     }
     // F9 on a phone and on a short screen (1280 at 400%): scrolled through, every block that settles or lands shows, every
     // line of the story's three trailers is written in strokes, the two that come as the reader nears them included
