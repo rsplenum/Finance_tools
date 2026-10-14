@@ -1,17 +1,20 @@
 ---
 /**
- * The home page in antigravity.google's structure (AG1, D-UX-66, D-UX-67; the map: docs/design-reference/antigravity.md):
- * a hero with a field of dashes and a typed heading; a DSCR statement building itself from the seven answers (the engine's
- * figures for fictional case S, site/src/home/story.ts); a statement; the four tools, each with a picture of what it
- * gives; who it is for; two ways in; the rules behind the figures with their dates; a closing panel. The motion is in
- * site/src/home/home.ts and stops by itself (WCAG 2.2.2); without scripts or under reduced motion everything stands still
- * and shows. The forbidden list (docs/DESIGN.md) is held by scripts/forbidden-checks.mjs.
+ * The home page in FinSight's own look (AG2, D-UX-68 to D-UX-72; the brief: docs/design-reference/finsight.md): loose
+ * figures put in order, so marks fall from the field and settle onto paper. In our order: a hero whose dashes fall into
+ * ledger rows; the story on the ink desk, the engine's figures for fictional case S landing as pages of paper
+ * (site/src/home/story.ts); the four tools, each with a line drawing on its glow; who it is for; what happens to your
+ * figures; two ways in on the ink desk; the rules behind the figures as a ruled list; the closing desk. The motion is
+ * settle, tick and count only (site/src/home/home.ts), it ends by itself (WCAG 2.2.2), and without scripts or under
+ * reduced motion everything stands where it rests. FinSight's rules (docs/DESIGN.md) are held by
+ * scripts/forbidden-checks.mjs.
  */
 import Base from '../Base.astro';
 import Bars from '../home/Bars.astro';
+import Arrow from '../home/Arrow.astro';
+import Drawing from '../home/Drawing.astro';
 import { READY } from '../site';
 import { STORY_CASE, STORY_FIX, STORY_FIXED, STORY_INPUTS, STORY_LONGER, STORY_TARGET, STORY_TYPED } from '../home/story';
-import ARCHITECT from '../../../engine/data/architect.json';
 import DSCR from '../../../engine/data/dscr.json';
 import TAX from '../../../engine/data/tax.json';
 import ESTIMATE from '../../../engine/data/estimate.json';
@@ -22,17 +25,19 @@ import RATIOS from '../../../engine/data/ratios.json';
 const WRAP = 'mx-auto max-w-7xl px-4 sm:px-8';
 const INK = 'inline-flex min-h-11 items-center justify-center rounded-full bg-ink px-6 py-2.5 font-medium text-canvas hover:bg-ink/85';
 const SOFT = 'inline-flex min-h-11 items-center justify-center rounded-full bg-ink/5 px-6 py-2.5 font-medium text-ink hover:bg-ink/10';
-const H2 = 'text-balance text-section font-book text-ink';
+// On the ink desk: a pill in paper, and a soft one.
+const DESK = 'inline-flex min-h-11 items-center justify-center rounded-full bg-on-desk px-6 py-2.5 font-medium text-desk hover:bg-on-desk/85';
+const DESK_SOFT = 'inline-flex min-h-11 items-center justify-center rounded-full bg-on-desk/10 px-6 py-2.5 font-medium text-on-desk hover:bg-on-desk/20';
+const H2 = 'text-balance text-section text-ink';
+// A page of paper on the desk: the only thing that casts a shadow (FinSight's rule 2).
+const PAPER = 'min-w-0 rounded-card bg-paper p-5 text-on-paper shadow-paper sm:p-6';
 // The scale fits the typed years with room for their figures; a taller bar (the last, part year of the longer plan) is cut
 // at the top and marked so, its figure on it.
 // A year such as 2030-31 never breaks at its hyphen (U+2011).
 const nb = (t: string) => t.replace(/(\d{4})-(\d{2})/g, '$1\u2011$2');
 const scale = Math.max(...STORY_TYPED.years.map((y) => y.n)) * 1.4;
-const level = ARCHITECT.levels.map((l) => l.name);
-// The titles of the six forms on /cma/ (site/src/cma/model.ts).
-const FORMS = ['The working-capital limit', 'Operating statement', 'Analysis of the balance sheet', 'Current assets and current liabilities', 'The limit by the turnover method', 'Funds flow'];
-const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI'];
-const SHEETS = ['Profit and loss', 'Balance sheet', 'Cash flow'];
+// The two ways in gather into what each gives: the bars of the story as typed against the target, and a statement's rows.
+const GATHER = JSON.stringify(STORY_TYPED.years.map((y) => y.n));
 const CHIPS = ['DSCR statement', 'Repayment schedule', 'Room-by-room estimate', 'Bill of quantities', 'Projected balance sheet', 'Cash flow', 'Forms I to VI', 'Turnover-method limit', 'PDF', 'Excel', 'Word'];
 const USES = [
   { who: 'A shop owner asking for a term loan', head: 'See whether the loan passes before the bank does', href: '/dscr/', go: 'Start a DSCR statement' },
@@ -43,12 +48,14 @@ const USES = [
 const day = (d: string) => d.split('-').reverse().join('-');
 const RULES = [DSCR, TAX, ESTIMATE, REPORT, CMA, RATIOS].sort((a, b) => b.date.localeCompare(a.date));
 const instalments = (n: string) => `${n} monthly instalments`;
+// The DSCR's questions are fixed (D-UX-10's seven); the other tools' depend on the case, so they show no count.
+const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
 ---
 <Base look="new" description="DSCR statements, construction estimates, project reports and CMA data in the format lenders expect, worked out in your browser.">
   <section data-ag="hero" class="relative isolate">
     <canvas data-field="hero" aria-hidden="true" class="absolute inset-0 -z-10 size-full"></canvas>
     <div class={`${WRAP} flex flex-col items-center pt-16 pb-24 text-center sm:py-32 lg:py-44`}>
-      <h1 data-typed class="max-w-5xl text-balance text-hero font-book text-ink"><span class="done"></span><span class="rest">Loan documents lenders ask for, worked out in your browser</span></h1>
+      <h1 class="max-w-5xl text-balance text-hero text-ink">Loan documents lenders ask for, worked out in your browser</h1>
       <p data-answer class="mt-6 max-w-lg text-lead text-ink-muted">A DSCR statement, a construction estimate, a project report and CMA data, in the format lenders expect.</p>
       <div class="mt-10 flex flex-wrap justify-center gap-3">
         <a href="/dscr/" class={INK}>Start a DSCR statement</a>
@@ -58,135 +65,126 @@ const instalments = (n: string) => `${n} monthly instalments`;
   </section>
 
   <section data-ag="story" class={`${WRAP} py-16 sm:py-24`}>
-    <h2 data-rise class={`${H2} max-w-3xl`}>From seven answers to a DSCR statement and its verdict</h2>
-    <p data-rise class="mt-4 max-w-lg text-lead text-ink-muted">A fictional firm asks for a loan. Every figure below is worked out by the DSCR tool, as it would be for you.</p>
-    <div data-story class="mt-10 rounded-panel bg-surface p-5 sm:p-10 lg:grid lg:grid-cols-3 lg:gap-x-12 lg:gap-y-6">
-      <button type="button" data-play hidden class={`${SOFT} mb-8 justify-self-start lg:col-span-3 lg:mb-0`}>Play it</button>
-      <div>
-        <p class="text-sm font-medium text-ink-muted">The seven answers</p>
-        <dl class="mt-4 space-y-3">
-          {STORY_INPUTS.map((x, i) => (
-            <div data-at={i + 1}><dt class="text-sm text-ink-muted">{x.label}</dt><dd class="text-lg font-medium text-ink tabular-nums">{x.value}</dd></div>
-          ))}
-        </dl>
+    <h2 data-settle class={`${H2} max-w-3xl`}>From seven answers to a DSCR statement and its verdict</h2>
+    <p data-settle class="mt-4 max-w-lg text-lead text-ink-muted">A fictional firm asks for a loan. Every figure below is worked out by the DSCR tool, as it would be for you.</p>
+    <div data-story data-desk class="mt-10 rounded-panel px-5 py-8 sm:px-10 sm:py-12">
+      <div class="flex min-h-11 flex-wrap items-center justify-between gap-4 pl-3 sm:pl-4">
+        <p class="caps text-on-desk-muted">Case S</p>
+        <button type="button" data-play hidden class={DESK_SOFT}>Play it</button>
       </div>
-      <div class="mt-10 lg:col-span-2 lg:mt-0">
-        <Bars frame={STORY_TYPED} target={STORY_TARGET.minimum} scale={scale} at={8} title={`As typed: ${instalments(STORY_CASE.loan.instalments)}`} />
-        <p data-at="9" class="mt-4 max-w-lg text-lead text-ink">{nb(STORY_TYPED.verdict)}</p>
-        <div data-at="10" class="mt-8 rounded-panel bg-canvas p-5 sm:p-6">
-          <p class="text-sm font-medium text-ink-muted">Make it viable: {STORY_FIX.head.toLowerCase()}, {STORY_FIX.move}</p>
-          <p class="mt-1 max-w-lg text-lead text-ink">{STORY_FIX.text}</p>
-        </div>
-        <Bars frame={STORY_LONGER} target={STORY_TARGET.minimum} scale={scale} at={11} title={`With ${instalments(STORY_FIXED.loan.instalments)}`} />
-        <p data-at="12" class="mt-4 max-w-lg text-lead text-ink">{nb(STORY_LONGER.verdict)}</p>
-        <div class="mt-8 flex flex-wrap gap-3">
-          <a href="/dscr/" class={SOFT}>Try it with your figures</a>
-        </div>
+      <ol class="mt-6 grid grid-cols-1 gap-6 pl-3 sm:pl-4 lg:grid-cols-3 lg:items-start">
+        <li data-at="1" class={PAPER}>
+          <h3 class="caps text-paper-muted">(1) The seven answers</h3>
+          <dl class="mt-3">
+            {STORY_INPUTS.map((x) => (
+              <div class="flex items-baseline justify-between gap-4 border-b border-on-paper/10 py-2 last:border-0"><dt class="text-sm text-paper-muted">{x.label}</dt><dd class="figure shrink-0 text-right text-on-paper">{x.value}</dd></div>
+            ))}
+          </dl>
+        </li>
+        <li data-at="2" class={PAPER}>
+          <h3 class="caps text-paper-muted">(2) As typed</h3>
+          <p class="mt-3 text-sm text-paper-muted">{instalments(STORY_CASE.loan.instalments)}; lowest year {nb(STORY_TYPED.lowestYear)}</p>
+          <p class="figure mt-1 text-statement text-on-paper">{STORY_TYPED.lowest}</p>
+          <Bars frame={STORY_TYPED} target={STORY_TARGET.minimum} scale={scale} title={`As typed: ${instalments(STORY_CASE.loan.instalments)}`} />
+          <p class="mt-4 text-sm text-on-paper">{nb(STORY_TYPED.verdict)}</p>
+        </li>
+        <li data-at="3" class={PAPER}>
+          <h3 class="caps text-paper-muted">(3) Made viable</h3>
+          <p class="mt-3 text-sm text-paper-muted">{instalments(STORY_FIXED.loan.instalments)}; lowest year {nb(STORY_LONGER.lowestYear)}</p>
+          <p class="figure mt-1 text-statement text-on-paper"><span data-tick data-count data-from={STORY_TYPED.lowest} class="px-1">{STORY_LONGER.lowest}</span></p>
+          <Bars frame={STORY_LONGER} target={STORY_TARGET.minimum} scale={scale} title={`With ${instalments(STORY_FIXED.loan.instalments)}`} />
+          <p class="mt-4 text-sm text-on-paper">{STORY_FIX.text} {nb(STORY_LONGER.verdict)}</p>
+        </li>
+      </ol>
+      <div class="mt-8 pl-3 sm:pl-4">
+        <a href="/dscr/" class={DESK}>Try it with your figures</a>
       </div>
     </div>
   </section>
 
-  <section data-ag="statement" class="py-20 text-center sm:py-32">
-    <ul data-drift aria-label="What the tools give" class="mx-auto flex flex-wrap justify-center gap-3 px-4">
-      {CHIPS.map((c) => <li class="shrink-0 rounded-full bg-ink/5 px-4 py-2 text-sm font-medium text-ink">{c}</li>)}
-    </ul>
-    <h2 data-typed class={`${WRAP} mt-12 max-w-5xl text-balance text-statement font-book text-ink`}><span class="done"></span><span class="rest">Worked out in your browser, from rules with their sources and dates. What you type is not sent to us.</span></h2>
-  </section>
-
   <section id="tools" data-ag="tools" class={`${WRAP} py-16 sm:py-24`}>
-    <h2 data-rise class={`${H2} max-w-3xl`}>Four tools, one for each paper a lender asks for</h2>
-    <div class="mt-12 space-y-20 sm:space-y-28">
+    <h2 data-settle class={`${H2} max-w-3xl`}>Four tools, one for each paper a lender asks for</h2>
+    <div class="mt-12 space-y-16 sm:space-y-24">
       {READY.map((t) => (
-        <article data-rise class="grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
+        <article data-settle class="grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
           <div>
-            <h3 class="text-title font-book"><a href={t.href} class="text-ink hover:text-link">{t.name} <span aria-hidden="true">→</span></a></h3>
+            {ASKS[t.href] && <p class="caps mb-3 text-ink-muted">{ASKS[t.href]}</p>}
+            <h3 class="text-title"><a href={t.href} class="text-ink hover:text-link">{t.name} <Arrow /></a></h3>
             <p class="mt-4 max-w-lg text-lead text-ink">{t.what}</p>
             <p class="mt-3 max-w-lg text-lead text-ink-muted">{t.gives}</p>
           </div>
-          <div aria-hidden="true" class="flex min-h-64 flex-col justify-center rounded-panel bg-surface p-6 sm:p-10">
-            {t.href === '/dscr/' && (
-              <div>
-                <div class="flex h-36 items-end gap-2">{STORY_TYPED.years.map((y) => <span class={`flex-1 rounded-t-md ${y.meets ? 'bg-good' : 'bg-bad'}`} style={`height:${((y.n / scale) * 100).toFixed(2)}%`}></span>)}</div>
-                <p class="mt-4 text-sm text-ink-muted">Lowest {STORY_TYPED.lowest} in {nb(STORY_TYPED.lowestYear)}; average {STORY_TYPED.average}</p>
-              </div>
-            )}
-            {t.href === '/estimate/' && (
-              <ol class="space-y-2">{level.map((l, i) => <li class="rounded-full bg-canvas px-4 py-2 text-sm font-medium text-ink" style={`width:${40 + i * 15}%`}>{i + 1}. {l}</li>)}</ol>
-            )}
-            {t.href === '/project-report/' && (
-              <div class="grid gap-3 sm:grid-cols-3">{SHEETS.map((s) => (
-                <div class="rounded-card bg-canvas p-4"><p class="text-sm font-medium text-ink">{s}</p>{[90, 70, 80, 55].map((w) => <span class="mt-2 block h-1.5 rounded-full bg-line" style={`width:${w}%`}></span>)}</div>
-              ))}</div>
-            )}
-            {t.href === '/cma/' && (
-              <ol class="grid grid-cols-2 gap-3 sm:grid-cols-3">{FORMS.map((f, i) => (
-                <li class="rounded-card bg-canvas p-3"><span class="block text-title font-book text-ink">{ROMAN[i]}</span><span class="mt-1 block text-sm text-ink-muted">{f}</span></li>
-              ))}</ol>
-            )}
+          <div aria-hidden="true" data-glow class="flex min-h-64 items-center justify-center rounded-panel p-6 text-ink sm:p-10">
+            <Drawing href={t.href} />
           </div>
         </article>
       ))}
     </div>
   </section>
 
-  <section data-ag="uses" class="py-16 sm:py-24">
-    <div class={`${WRAP} flex flex-wrap items-end justify-between gap-6`}>
-      <div>
-        <h2 data-rise class={`${H2} max-w-3xl`}>For whoever carries the papers to the lender</h2>
-        <p data-rise class="mt-4 max-w-lg text-lead text-ink-muted">Borrowers, families, chartered accountants and agents use the same figures.</p>
-      </div>
-      <div class="flex gap-2" data-slide-buttons hidden>
-        <button type="button" data-slide="-1" aria-label="Previous" class="inline-flex size-11 items-center justify-center rounded-full bg-ink/5 text-ink hover:bg-ink/10 aria-disabled:opacity-40"><span aria-hidden="true">←</span></button>
-        <button type="button" data-slide="1" aria-label="Next" class="inline-flex size-11 items-center justify-center rounded-full bg-ink/5 text-ink hover:bg-ink/10 aria-disabled:opacity-40"><span aria-hidden="true">→</span></button>
-      </div>
-    </div>
-    <ul data-slider class="mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2">
-      {USES.map((u) => (
-        <li class="flex min-h-80 w-72 shrink-0 snap-start flex-col rounded-panel bg-surface p-6 sm:w-96 sm:p-8">
+  <div class={WRAP}><div data-ledger aria-hidden="true"></div></div>
+
+  <section data-ag="uses" class={`${WRAP} py-16 sm:py-24`}>
+    <h2 data-settle class={`${H2} max-w-3xl`}>For whoever carries the papers to the lender</h2>
+    <p data-settle class="mt-4 max-w-lg text-lead text-ink-muted">Borrowers, families, chartered accountants and agents use the same figures.</p>
+    <ul class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {USES.map((u, i) => (
+        <li data-settle style={`--i:${i}`} class="flex flex-col rounded-panel bg-surface p-6 sm:min-h-64 sm:p-8">
           <p class="text-sm font-medium text-ink-muted">{u.who}</p>
-          <h3 class="mt-4 text-balance text-title font-book text-ink">{u.head}</h3>
-          <a href={u.href} class="mt-auto inline-flex min-h-11 items-center pt-6 font-medium text-ink hover:text-link">{u.go} <span aria-hidden="true" class="ml-2">→</span></a>
+          <h3 class="mt-4 text-balance text-title text-ink">{u.head}</h3>
+          <a href={u.href} class="mt-auto inline-flex min-h-11 items-center pt-6 font-medium text-ink hover:text-link">{u.go} <Arrow class="ml-2" /></a>
         </li>
       ))}
     </ul>
   </section>
 
-  <section data-ag="try" class={`${WRAP} grid gap-16 py-16 sm:py-24 lg:grid-cols-2`}>
-    <div data-rise>
-      <p class="text-sm font-medium text-ink-muted">For borrowers</p>
-      <h2 class={`${H2} mt-3`}>See whether your loan passes before you apply</h2>
-      <p class="mt-4 max-w-lg text-lead text-ink-muted">Seven answers give the DSCR statement and its verdict; Make it viable shows each change that would pass.</p>
-      <a href="/dscr/" class={`mt-8 ${INK}`}>Start a DSCR statement</a>
-    </div>
-    <div data-rise>
-      <p class="text-sm font-medium text-ink-muted">For CAs and DSAs</p>
-      <h2 class={`${H2} mt-3`}>Papers in the format lenders expect</h2>
-      <p class="mt-4 max-w-lg text-lead text-ink-muted">A project report as PDF, Excel or Word, and the CMA's forms I to VI from five years' figures.</p>
-      <a href="/project-report/" class={`mt-8 ${SOFT}`}>Open the project report</a>
+  <section data-ag="figures" class="py-20 text-center sm:py-32">
+    <ul aria-label="What the tools give" class="mx-auto flex max-w-5xl flex-wrap justify-center gap-3 px-4">
+      {CHIPS.map((c, i) => <li data-settle style={`--i:${i}`} class="rounded-full bg-ink/5 px-4 py-2 text-sm font-medium text-ink">{c}</li>)}
+    </ul>
+    <div class={`${WRAP} mt-8`}><div data-ledger aria-hidden="true"></div></div>
+    <h2 data-settle class={`${WRAP} mt-12 max-w-5xl text-balance text-statement text-ink`}>Worked out in your browser, from rules with their sources and dates. What you type is not sent to us.</h2>
+  </section>
+
+  <section data-ag="try" class="px-4 py-12 sm:px-8 sm:py-16">
+    <div data-desk class="mx-auto grid max-w-7xl gap-16 rounded-panel px-6 py-14 sm:px-12 sm:py-20 lg:grid-cols-2">
+      <div class="pl-3 sm:pl-4">
+        <canvas data-gather="bars" data-values={GATHER} data-target={STORY_TARGET.minimum} aria-hidden="true" class="h-36 w-full max-w-md"></canvas>
+        <p class="mt-8 text-sm font-medium text-on-desk-muted">For borrowers</p>
+        <h2 class="mt-3 text-balance text-section text-on-desk">See whether your loan passes before you apply</h2>
+        <p class="mt-4 max-w-lg text-lead text-on-desk-muted">Seven answers give the DSCR statement and its verdict; Make it viable shows each change that would pass.</p>
+        <a href="/dscr/" class={`mt-8 ${DESK}`}>Start a DSCR statement</a>
+      </div>
+      <div class="pl-3 sm:pl-4">
+        <canvas data-gather="rows" aria-hidden="true" class="h-36 w-full max-w-md"></canvas>
+        <p class="mt-8 text-sm font-medium text-on-desk-muted">For CAs and DSAs</p>
+        <h2 class="mt-3 text-balance text-section text-on-desk">Papers in the format lenders expect</h2>
+        <p class="mt-4 max-w-lg text-lead text-on-desk-muted">A project report as PDF, Excel or Word, and the CMA's forms I to VI from five years' figures.</p>
+        <a href="/project-report/" class={`mt-8 ${DESK_SOFT}`}>Open the project report</a>
+      </div>
     </div>
   </section>
 
   <section data-ag="checked" class={`${WRAP} py-16 sm:py-24`}>
-    <h2 data-rise class={`${H2} max-w-3xl`}>The rules behind the figures, each with its date</h2>
-    <p data-rise class="mt-4 max-w-lg text-lead text-ink-muted">Every rule and rate sits in a dated file with its source, and each file has a date by which it is looked at again.</p>
-    <ul class="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {RULES.map((r) => (
-        <li data-rise class="flex min-h-44 flex-col rounded-panel bg-surface p-6">
-          <p class="text-sm text-ink-muted">Dated {day(r.date)}</p>
-          <h3 class="mt-3 text-balance text-title font-book text-ink">{r.title}</h3>
-          <p class="mt-auto pt-6 text-sm text-ink-muted">Review by {day(r.reviewBy)}</p>
+    <h2 data-settle class={`${H2} max-w-3xl`}>The rules behind the figures, each with its date</h2>
+    <p data-settle class="mt-4 max-w-lg text-lead text-ink-muted">Every rule and rate sits in a dated file with its source, and each file has a date by which it is looked at again.</p>
+    <ul class="mt-12 border-t border-ink">
+      {RULES.map((r, i) => (
+        <li data-settle style={`--i:${i}`} class="grid gap-1 border-b border-line py-5 sm:grid-cols-4 sm:items-baseline sm:gap-6">
+          <p class="figure text-sm text-ink-muted">{day(r.date)}</p>
+          <h3 class="text-balance text-title text-ink sm:col-span-2">{r.title}</h3>
+          <p class="text-sm text-ink-muted sm:text-right">Review by <span class="figure">{day(r.reviewBy)}</span></p>
         </li>
       ))}
     </ul>
   </section>
 
   <section data-ag="closing" class="px-4 py-12 sm:px-8 sm:py-16">
-    <div class="relative isolate mx-auto max-w-7xl overflow-hidden rounded-panel bg-stage px-6 py-24 text-center text-on-stage sm:py-32">
+    <div data-desk class="relative isolate mx-auto max-w-7xl overflow-hidden rounded-panel px-6 py-24 text-center sm:py-32">
       <canvas data-field="stage" aria-hidden="true" class="absolute inset-0 -z-10 size-full"></canvas>
-      <h2 data-typed class="mx-auto max-w-4xl text-balance text-statement font-book"><span class="done"></span><span class="rest">Have the figures ready before you meet the lender</span></h2>
+      <h2 class="mx-auto max-w-4xl text-balance text-statement text-on-desk">Have the figures ready before you meet the lender</h2>
       <div class="mt-10 flex flex-wrap justify-center gap-3">
-        <a href="/dscr/" class="inline-flex min-h-11 items-center justify-center rounded-full bg-on-stage px-6 py-2.5 font-medium text-stage hover:bg-on-stage/85">Start a DSCR statement</a>
-        <a href="#tools" class="inline-flex min-h-11 items-center justify-center rounded-full bg-on-stage/10 px-6 py-2.5 font-medium text-on-stage hover:bg-on-stage/20">See the four tools</a>
+        <a href="/dscr/" class={DESK}>Start a DSCR statement</a>
+        <a href="#tools" class={DESK_SOFT}>See the four tools</a>
       </div>
     </div>
   </section>

@@ -2,17 +2,17 @@
   "pages": {
     "/": {
       "before": 27,
-      "shown": 735,
-      "all": 735,
+      "shown": 674,
+      "all": 674,
       "plan": null,
       "long": 0,
       "abbr": 6,
       "questions": 0,
-      "controls": 17,
+      "controls": 15,
       "answerAt": 0.6,
       "gap": null,
-      "styles": 10,
-      "colours": 2,
+      "styles": 9,
+      "colours": 0,
       "outOfSight": null
     },
     "/404.html": {

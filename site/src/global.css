@@ -35,6 +35,14 @@
   --color-spark-1: var(--spark-1);
   --color-spark-2: var(--spark-2);
   --color-spark-3: var(--spark-3);
+  --color-desk: var(--desk);
+  --color-on-desk: var(--on-desk);
+  --color-on-desk-muted: var(--on-desk-muted);
+  --color-paper: var(--paper);
+  --color-on-paper: var(--on-paper);
+  --color-paper-muted: var(--paper-muted);
+  --color-margin: var(--margin);
+  --color-marigold: var(--marigold);
 }
 
 /*
@@ -47,8 +55,17 @@
   src: url('/fonts/figtree-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
+/* FinSight's voice in type (AG2, D-UX-72): Ek Type's Anek Latin (OFL, from github.com/EkType/Anek), one weight, its width
+   axis kept: wide for the large figures, condensed for caps labels of one to three words. Cut to the glyphs below. */
+@font-face {
+  font-family: 'Anek'; font-style: normal; font-weight: 500; font-stretch: 75% 125%; font-display: swap;
+  src: url('/fonts/anek-latin.woff2') format('woff2');
+  unicode-range: U+0020-007E, U+00A0, U+00A9, U+00B7, U+00D7, U+2010-2014, U+2018-201D, U+2022, U+2026, U+2032, U+20B9, U+2191, U+2193, U+2212;
+}
 @theme {
   --font-display: 'Figtree', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Anek', 'Figtree', ui-sans-serif, system-ui, sans-serif;
+  --shadow-paper: 0 1px 2px oklch(0.16 0.05 270 / 0.28), 0 22px 44px -14px oklch(0.1 0.05 270 / 0.6);
   --font-weight-book: 450;
   --text-hero: clamp(2.75rem, 1.6rem + 4.6vw, 4.5rem);
   --text-hero--line-height: 1.02;
@@ -121,6 +138,50 @@
   --spark-3: var(--color-indigo-300);
 }
 
+/*
+ * FinSight's palette (AG2, D-UX-68, D-UX-72; docs/design-reference/finsight.md): indigo ink, ledger red and marigold, on
+ * pages in the new look only, so the tool pages keep theirs until UX3. Ink is the text and the desks; red is the margin
+ * rule alone and never touches a figure; marigold says "look here, it is met". Paper stays paper in dark mode, dimmed.
+ * Contrast measured by the design checks in both themes.
+ */
+body[data-look='new'] {
+  --canvas: oklch(1 0 0);
+  --surface: oklch(0.972 0.008 268);
+  --ink: oklch(0.255 0.06 268);           /* indigo ink: 15:1 on canvas */
+  --ink-muted: oklch(0.46 0.045 268);
+  --line: oklch(0.9 0.018 268);
+  --link: oklch(0.45 0.17 268);
+  --focus: oklch(0.5 0.19 268);
+  --desk: oklch(0.255 0.065 270);         /* the ink desk: the story, two ways in, the closing */
+  --on-desk: oklch(0.975 0.012 85);
+  --on-desk-muted: oklch(0.84 0.03 268);
+  --desk-rule: oklch(0.975 0.012 85 / 0.07);
+  --paper: oklch(1 0 0);                  /* a statement's page: the only thing that casts a shadow */
+  --on-paper: oklch(0.255 0.06 268);
+  --paper-muted: oklch(0.46 0.045 268);
+  --margin: oklch(0.56 0.2 27);           /* ledger red: the margin rule only */
+  --marigold: oklch(0.82 0.15 76);        /* the highlighter, the ticks, the glow */
+  --stage: var(--desk);
+  --on-stage: var(--on-desk);
+  --spark-1: oklch(0.5 0.12 268);         /* the dashes: ink, red, marigold; drawn only, never text */
+  --spark-2: var(--margin);
+  --spark-3: var(--marigold);
+}
+.dark body[data-look='new'] {
+  --canvas: oklch(0.205 0.045 270);       /* the page turns ink; not black (principle 11) */
+  --surface: oklch(0.25 0.05 270);
+  --ink: oklch(0.965 0.012 85);
+  --ink-muted: oklch(0.84 0.03 268);
+  --line: oklch(0.34 0.05 270);
+  --link: oklch(0.84 0.09 268);
+  --focus: var(--marigold);
+  --desk: oklch(0.15 0.04 270);
+  --paper: oklch(0.93 0.01 85);           /* paper, a little dimmed */
+  --margin: oklch(0.66 0.19 27);
+  --spark-1: oklch(0.56 0.09 268);       /* quieter on the dark page: the field sits behind the words */
+}
+[data-desk] { --focus: var(--marigold); }
+
 @layer base {
   /* 16 px inputs, so phones do not zoom in on focus (scripts/site-check.mjs flags anything smaller). */
   input, select, textarea { font-size: max(16px, 1rem); }
@@ -132,36 +193,55 @@
   summary { min-height: 1.5rem; }
 }
 
-/* The new look's motion (AG1, D-UX-66): text types in, blocks rise into view, the header hides while reading down. Each
-   stops within 5 s or follows the reader (WCAG 2.2.2), and none runs under reduced motion (the block below). */
+/* The new look (AG1, AG2): the text in Figtree, headings and figures in Anek. */
 body[data-look='new'] { font-family: var(--font-display); }
+body[data-look='new'] :is(h1, h2, h3, [data-wordmark]) { font-family: var(--font-heading); font-weight: 500; }
 /* The new look's bar is about 160 px tall on a phone (two rows and the notice), 120 px from lg. */
 html:has(body[data-look='new']) { scroll-padding-top: 11rem; }
 @media (max-width: 23.99rem) { html:has(body[data-look='new']) { scroll-padding-top: 14rem; } }
 @media (min-width: 64rem) { html:has(body[data-look='new']) { scroll-padding-top: 8rem; } }
-.js [data-typed] .rest { opacity: 0; }
-[data-typed].typing .done::after { content: ''; display: inline-block; width: 0.06em; height: 0.85em; margin-left: 0.04em; vertical-align: -0.05em; background: currentColor; animation: caret 0.8s steps(1) 6; }
-@keyframes caret { 50% { opacity: 0; } }
-.js [data-rise] { opacity: 0; transform: translateY(1.5rem); transition: opacity 0.7s ease-out, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1); }
-.js [data-rise].risen { opacity: 1; transform: none; }
+
+/* A statement's marks (AG2, home's story only): figures wide and tabular, short labels in condensed caps, the rules. */
+@utility figure { font-family: var(--font-heading); font-weight: 500; font-stretch: 125%; font-variant-numeric: tabular-nums lining-nums; }
+@utility caps { font-family: var(--font-heading); font-weight: 500; font-stretch: 87.5%; font-size: 1rem; line-height: 1.375rem; letter-spacing: 0.06em; text-transform: uppercase; }
+@utility rule-single { border-bottom: 1px solid currentColor; }
+@utility rule-double { border-bottom: 3px double currentColor; }
+/* The ledger rule: sections part on a thin line crossed by the double red margin rule of an account book. */
+[data-ledger] { position: relative; height: 1px; background: var(--line); }
+[data-ledger]::before { content: ''; position: absolute; top: -0.625rem; bottom: -0.625rem; left: clamp(2rem, 6vw, 5.5rem); width: 4px; border-inline: 1px solid var(--margin); }
+/* The ink desk: ruled like a ledger's page, its double margin rule in red. Rules only, no texture. */
+[data-desk] {
+  --mx: 0.625rem; background-color: var(--desk); color: var(--on-desk);
+  background-image:
+    linear-gradient(to right, transparent var(--mx), var(--margin) var(--mx) calc(var(--mx) + 1px), transparent calc(var(--mx) + 1px) calc(var(--mx) + 4px), var(--margin) calc(var(--mx) + 4px) calc(var(--mx) + 5px), transparent calc(var(--mx) + 5px)),
+    repeating-linear-gradient(to bottom, transparent 0 calc(2rem - 1px), var(--desk-rule) calc(2rem - 1px) 2rem);
+}
+@media (min-width: 40rem) { [data-desk] { --mx: 1.5rem; } }
+/* The glow behind a tool's picture only: still, no blur that moves. */
+[data-glow] { --glow-warm: 34%; --glow-red: 16%; background-color: var(--surface); background-image: radial-gradient(60% 70% at 38% 74%, color-mix(in oklch, var(--marigold) var(--glow-warm), transparent), transparent 70%), radial-gradient(55% 60% at 78% 26%, color-mix(in oklch, var(--margin) var(--glow-red), transparent), transparent 70%), radial-gradient(70% 70% at 60% 60%, color-mix(in oklch, var(--spark-1) 16%, transparent), transparent 75%); }
+/* On the dark page a strong marigold over ink turns olive: less of it, and half the red, so it still reads as light. */
+.dark [data-glow] { --glow-warm: 18%; --glow-red: 8%; }
+
+/* The three verbs (D-UX-68): settle, tick, count. Each ends (WCAG 2.2.2) and none runs under reduced motion. Without the
+   `js` mark everything stands where it rests. Settle: a block falls onto its line and comes to rest with a small spring. */
+.js [data-settle] { opacity: 0; transform: translateY(-1.5rem); transition: opacity 0.5s ease-out, transform 0.8s cubic-bezier(0.3, 1.45, 0.55, 1); transition-delay: calc(var(--i, 0) * 70ms); }
+.js [data-settle].settled { opacity: 1; transform: none; }
 [data-header] { transition: transform 0.25s ease-out; }
 [data-header][data-away]:not(:focus-within) { transform: translateY(-100%); }
-/* The DSCR story plays one step at a time (home.ts); its Pause stops it. Without the mark everything stands. */
-.js [data-story] [data-at] { transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
-.js [data-story] [data-at]:not(.on) { opacity: 0; transform: translateY(0.75rem); }
-[data-bar] { transform-origin: bottom; transition: transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1); transition-delay: calc(var(--i, 0) * 90ms); }
+/* The story's pages land on the desk in turn (home.ts); Stop shows them all. */
+.js [data-story] [data-at] { transition: opacity 0.45s ease-out, transform 0.8s cubic-bezier(0.3, 1.45, 0.55, 1); }
+.js [data-story] [data-at]:not(.on) { opacity: 0; transform: translateY(-2rem); }
+[data-bar] { transform-origin: bottom; transition: transform 0.8s cubic-bezier(0.3, 1.3, 0.55, 1); transition-delay: calc(0.2s + var(--i, 0) * 80ms); }
 .js [data-story] [data-at]:not(.on) [data-bar] { transform: scaleY(0); }
-/* The chips drift sideways as the page scrolls (home.ts sets --drift); still, they wrap. */
-.js [data-drift] { flex-wrap: nowrap; justify-content: flex-start; width: max-content; transform: translateX(var(--drift, 0)); }
-/* The name at the foot rises a letter at a time. */
-.js [data-wordmark] span { display: inline-block; opacity: 0; transform: translateY(35%); transition: opacity 0.9s ease-out, transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1); transition-delay: calc(var(--i, 0) * 60ms); }
-.js [data-wordmark].risen span { opacity: 1; transform: none; }
-/* The use cases scroll sideways, their first card in line with the page's column. */
-[data-slider] { scrollbar-width: none; padding-inline: max(1rem, calc(50% - 39rem)); scroll-padding-inline: max(1rem, calc(50% - 39rem)); }
-@media (min-width: 40rem) { [data-slider] { padding-inline: max(2rem, calc(50% - 38rem)); scroll-padding-inline: max(2rem, calc(50% - 38rem)); } }
+/* Tick: the marigold highlighter drawn across a figure that clears its line. */
+[data-tick] { background: linear-gradient(var(--marigold), var(--marigold)) no-repeat 0 72% / 100% 62%; transition: background-size 0.5s ease-out 0.15s; }
+.js [data-tick]:not(.ticked) { background-size: 0% 62%; }
+/* The name at the foot: its letters drop and settle onto a ledger rule. */
+.js [data-wordmark] span { display: inline-block; opacity: 0; transform: translateY(-45%); transition: opacity 0.5s ease-out, transform 0.9s cubic-bezier(0.3, 1.45, 0.55, 1); transition-delay: calc(var(--i, 0) * 70ms); }
+.js [data-wordmark].settled span { opacity: 1; transform: none; }
 
 /* Reduced motion: nothing slides or spins (WCAG 2.3.3; the design check measures it). */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
-  .js [data-rise] { opacity: 1; transform: none; }
+  .js [data-settle] { opacity: 1; transform: none; }
 }

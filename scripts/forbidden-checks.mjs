@@ -1,6 +1,6 @@
 /**
- * The forbidden list (AG1, D-UX-66, D-UX-67; docs/DESIGN.md, "The forbidden list"): what antigravity.google's structure
- * does not do, held on every page in the new look (`look="new"` in site/src/Base.astro). Each item a script can see is
+ * FinSight's rules (AG1, AG2; D-UX-67, D-UX-72; docs/DESIGN.md, "FinSight's rules"; the brief:
+ * docs/design-reference/finsight.md), held on every page in the new look (`look="new"` in site/src/Base.astro). Each item a script can see is
  * tested here, at 360 and 1280 px; F3's cards, F8's underlines and the like are read off the page as it stands, F9 waits
  * for the motion to stop. The page's weight is printed and capped. Called by scripts/site-check.mjs.
  */
@@ -9,10 +9,14 @@ import { openAt } from './design-checks.mjs';
 
 /** The pages in the new look; UX3 and UX4 add the tool pages. */
 export const NEW_LOOK = ['/'];
-/** F13: the sections in antigravity.google's order, as docs/design-reference/antigravity.md maps them. */
-export const ORDER = ['hero', 'story', 'statement', 'tools', 'uses', 'try', 'checked', 'closing'];
-/** F15: the page's weight as it loads, before compression (HTML, styles, scripts, the font), in KB: 124 measured 13-10-2026 (D-UX-67). */
-export const WEIGHT_CAP = 140;
+/** F13: our order, the borrower's path (docs/design-reference/finsight.md, rule 10). */
+export const ORDER = ['hero', 'story', 'tools', 'uses', 'figures', 'try', 'checked', 'closing'];
+/**
+ * F15: the page's weight as it loads, before compression (HTML, styles, scripts, the fonts), in KB: 160 measured 14-10-2026
+ * (D-UX-72), AG1's 124 with Anek (27 KB, one weight cut to the signs the pages use) and the line drawings. The cap
+ * leaves 10 KB for AG3's story; a heavier page lowers something else first.
+ */
+export const WEIGHT_CAP = 170;
 
 const SITE = await readFile(new URL('../site/src/site.ts', import.meta.url), 'utf8');
 const TOOLS = [...SITE.matchAll(/status: 'Ready', href: '([^']+)'/g)].map((m) => m[1]);
@@ -23,8 +27,12 @@ function inPage({ tools, order, phone }) {
   const shown = (el) => getComputedStyle(el).clipPath !== 'inset(50%)' && el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && el.getBoundingClientRect().width > 1;
   const px = (el, k) => parseFloat(getComputedStyle(el)[k]);
   const name = (el) => (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 40);
-  // F1: the house font, loaded.
+  // F1: the text in Figtree, the headings in Anek, both loaded from here.
   if (!getComputedStyle(document.body).fontFamily.startsWith('Figtree') || !document.fonts.check('16px Figtree')) out.push('F1 the page is not set in Figtree');
+  for (const h of document.querySelectorAll('h1, h2')) if (!getComputedStyle(h).fontFamily.startsWith('Anek')) out.push(`F1 the heading "${name(h)}" is not in Anek`);
+  if (!document.fonts.check('500 16px Anek')) out.push('F1 Anek is not loaded');
+  // F17: only paper casts a shadow (a page on the desk: the shadow-paper token).
+  for (const el of document.querySelectorAll('main *, footer *')) if (getComputedStyle(el).boxShadow !== 'none' && !el.matches('.shadow-paper') && shown(el)) out.push(`F17 a shadow on something that is not paper: <${el.tagName.toLowerCase()}> "${name(el)}"`);
   // F2: large headings.
   const h1 = document.querySelector('h1');
   if (!h1 || px(h1, 'fontSize') < (phone ? 40 : 64)) out.push(`F2 the h1 is ${h1 ? px(h1, 'fontSize') : 0} px (want ${phone ? 40 : 64} or more)`);
@@ -71,17 +79,17 @@ function inPage({ tools, order, phone }) {
   return out;
 }
 
-/** The text of the typed headings, the running animations and a picture of each field, to compare over time. */
+/** The headings and counted figures, the running animations and a picture of each field, to compare over time. */
 const still = (page) => page.evaluate(() => ({
-  typed: [...document.querySelectorAll('[data-typed]')].map((e) => e.textContent),
+  typed: [...document.querySelectorAll('h1, h2, [data-count]')].map((e) => e.textContent),
   running: document.getAnimations().filter((a) => a.playState === 'running').map((a) => `${a.constructor.name} on <${a.effect?.target?.tagName?.toLowerCase()}>`),
-  fields: [...document.querySelectorAll('canvas[data-field]')].map((c) => c.toDataURL().length + ':' + c.toDataURL().slice(-64)),
+  fields: [...document.querySelectorAll('canvas[data-field], canvas[data-gather]')].map((c) => c.toDataURL().length + ':' + c.toDataURL().slice(-64)),
 }));
 
 export async function forbiddenChecks({ browser, BASE, violations }) {
   let weight = 0;
   for (const path of NEW_LOOK) {
-    const v = (m) => violations.push(`${path} forbidden list: ${m}`);
+    const v = (m) => violations.push(`${path} FinSight's rules: ${m}`);
     for (const width of ['phone', 'desktop']) {
       const { ctx, page } = await openAt(browser, BASE + path, { width });
       for (const m of await page.evaluate(inPage, { tools: TOOLS, order: path === '/' ? ORDER : null, phone: width === 'phone' })) v(`${m} (${width})`);
@@ -99,7 +107,8 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
     await page.waitForTimeout(1000);
     const later = await still(page);
     weight = Math.round((await Promise.all(sizes)).reduce((a, b) => a + b, 0) / 1024);
-    if (first.typed.join('|') !== settled.typed.join('|')) v('F10 a typed heading\'s words are not all in the page from the start');
+    if (first.typed.join('|') !== settled.typed.join('|')) v('F10 a heading\'s words or a counted figure are not in the page from the start');
+    if (await page.locator('[data-typed]').count()) v('F10 a heading still types itself');
     if (settled.running.length) v(`F9 still moving 6 s after load: ${[...new Set(settled.running)].join(', ')}`);
     if (settled.fields.join() !== later.fields.join()) v('F9 a field of dashes still moves 6 s after load');
     for (const h of hosts) if (h !== BASE) v(`F14 a request to ${h}`);
@@ -112,6 +121,32 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
     const b = await still(rm.page);
     if (b.running.length || a.fields.join() !== b.fields.join()) v('F9 something moves under reduced motion');
     await rm.ctx.close();
+    // F9 on a phone and on a short screen (1280 at 400%): scrolled through, every block that settles or lands shows, and
+    // no two figures in a chart overlap (lesson 6). A block that waits for a share of its height never shows on a short one.
+    for (const [w, h] of [[360, 740], [320, 256]]) {
+      const sc = await browser.newContext({ viewport: { width: w, height: h } });
+      const p = await sc.newPage();
+      await p.goto(BASE + path);
+      await p.evaluate(async () => {
+        for (let y = 0; y < document.body.scrollHeight; y += innerHeight / 2) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 100)); }
+      });
+      await p.waitForTimeout(5000);
+      const r = await p.evaluate(() => {
+        const hidden = [...document.querySelectorAll('[data-settle], [data-at]')].filter((e) => getComputedStyle(e).opacity !== '1')
+          .map((e) => `<${e.tagName.toLowerCase()}> "${(e.textContent ?? '').trim().slice(0, 30)}"`);
+        const boxes = [...document.querySelectorAll('figure span, figure li')].filter((e) => e.childElementCount === 0 && e.textContent?.trim())
+          .map((e) => ({ t: e.textContent.trim(), b: e.getBoundingClientRect() })).filter(({ b }) => b.width > 1 && b.height > 1);
+        const overlaps = [];
+        for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+          const A = boxes[i].b, B = boxes[j].b;
+          if (Math.min(A.right, B.right) - Math.max(A.left, B.left) > 1 && Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top) > 1) overlaps.push(`${boxes[i].t} and ${boxes[j].t}`);
+        }
+        return { hidden, overlaps };
+      });
+      for (const x of r.hidden.slice(0, 3)) v(`F9 still hidden after scrolling through at ${w}×${h}: ${x}`);
+      for (const x of r.overlaps.slice(0, 3)) v(`principle 5: chart figures overlap at ${w}×${h}: ${x}`);
+      await sc.close();
+    }
   }
   return { pages: NEW_LOOK.length, weight };
 }

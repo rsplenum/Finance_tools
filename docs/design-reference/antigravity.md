@@ -22,6 +22,8 @@ Motion besides: smooth scrolling taken over by script, a custom cursor, blocks r
 
 ## Ours (`site/src/pages/index.astro`, `site/src/home/`)
 
+AG1's map, kept as the record. From AG2 (14-10-2026, D-UX-72) home is FinSight's own: its parts, order and motion are in `docs/design-reference/finsight.md` (the rules of the look), and `statement` became `figures`, after `uses`.
+
 | # | Theirs | Ours (`data-ag`) | What it shows |
 |---|---|---|---|
 | - | Top bar | the new look's top bar (`Base.astro`) | FinSight; the four tools by their short names (on a phone, a second row); the theme; the ink pill "Start a DSCR"; the notice: CMA data, the newest tool. Steps away while reading down, back on the way up or on focus. |

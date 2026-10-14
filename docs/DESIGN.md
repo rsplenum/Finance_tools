@@ -2,7 +2,7 @@
 
 What every page is held to, read whole by the designer and the critic (`.claude/agents/`). AI agents have no taste of their own: the look comes from these rules, the measured checks, the usage numbers and the owner's judgement of the preview link. A rule stays only with its evidence; a "law" without a source counts for nothing. The owner's input behind it, with the rows that do not hold: `docs/design-inputs/cognitive-matrix.md`. Proposed rules wait in `docs/DESIGN-LESSONS.md` until accepted. The site is Astro, Preact and Tailwind 4; the tokens are in `site/src/global.css`.
 
-From 13-10-2026 the look follows antigravity.google's structure (D-UX-66; the map: `docs/design-reference/antigravity.md`). On a page in the new look (`look="new"` in `site/src/Base.astro`) the forbidden list wins where the rules differ, except on accessibility, figures and the law.
+From 13-10-2026 the look follows antigravity.google's structure (D-UX-66; the map: `docs/design-reference/antigravity.md`). From 14-10-2026 it is FinSight's own (D-UX-72, `docs/design-reference/finsight.md`). On a page in the new look (`look="new"` in `site/src/Base.astro`) FinSight's rules win where the rules differ, except on accessibility, figures and the law.
 
 **Reference sites** (the owner's matrix, `docs/design-inputs/cognitive-matrix.md`): GOV.UK for forms and errors; Our World in Data for chart labels; Linear for speed and quiet dark; Stripe's docs for an explanation beside its subject; ciechanow.ski for a control beside its effect. Borrow patterns, never looks: reuse, adapt, invent only when none fits, test before reuse.
 
@@ -23,26 +23,27 @@ Each: the friction it removes; its evidence.
 
 Not rules, for want of evidence: rounded corners read faster; a 1 px border with a shadow for depth; a fixed 8 px grid over the 4 px scale.
 
-## The forbidden list (AG1, D-UX-67)
-What the reference does not do, so a page in the new look does not. *Tested*: by `scripts/forbidden-checks.mjs` (its thresholds beside each check) at 360 and 1280 px in the site check; the rest are the critic's.
-- **F1 The system font**: Figtree, self-hosted (OFL); `font-book` for display. *Tested*.
+## FinSight's rules (AG2, D-UX-72)
+The brief and its load test: `docs/design-reference/finsight.md`. *Tested*: by `scripts/forbidden-checks.mjs` (its thresholds beside each check) at 360 and 1280 px in the site check; the rest are the critic's.
+- **F1 Type**: Figtree for text; Anek (Ek Type, OFL) for headings, `figure` (wide, tabular) and `caps` (condensed, labels of one to three words). *Tested*.
 - **F2 Small headings**: h1 `text-hero`, h2 `text-section` or `text-statement`, h3 `text-title`. *Tested*.
-- **F3 Boxed cards**: a panel is set off by its fill (`bg-surface rounded-panel`), never a border all round. *Tested*.
+- **F3 Boxed cards**: a panel is set off by its fill, never a border all round. *Tested*.
 - **F4 Square buttons**: a filled link or button is a 44 px pill. *Tested*.
-- **F5 Accent-filled buttons**: pills are `bg-ink text-canvas`, soft `bg-ink/5`, or `bg-on-stage`; the accent keeps to the tool pages. *Tested*.
+- **F5 Accent-filled buttons**: pills are `bg-ink text-canvas`, soft `bg-ink/5`, or on a desk `bg-on-desk`; the accent keeps to the tool pages. *Tested*.
 - **F6 A narrow page**: sections run to `max-w-7xl`; running text `max-w-prose`. *Tested*.
 - **F7 Tight sections**: `py-16 sm:py-24` or more. *Tested*.
 - **F8 Lone links underlined**: the bar's, the foot's, titles' and pills' carry no line; one in a sentence does. *Tested*.
-- **F9 Motion that does not stop**: what moves by itself stops within 5 s (dashes 2.4 s, typing 1.6 s); the story runs longer, with "Stop and show it all"; the rest follows the scroll or the pointer; nothing moves under reduced motion. *Tested*.
-- **F10 Words only once typed**: a typed heading's words are in the page from the start. *Tested*.
+- **F9 Motion that does not end**: settle, tick and count only, loose to settled; what moves by itself stops within 5 s (field 2.4 s, two ways in 3.2 s); the story's pages land whole, with "Stop and show it all"; nothing moves under reduced motion; scrolled through, all shows. *Tested*.
+- **F10 Words or figures only once moved**: headings and counted figures are in the page, as the engine gave them, from the start. *Tested*.
 - **F11 A tool two taps away**: every tool in the top bar, in the first screen. *Tested*.
-- **F12 A one-line foot**: it links every tool, says what happens to the figures, carries the name large. *Tested*.
-- **F13 Another order**: hero, story, statement, tools, uses, try, checked, closing. *Tested*.
+- **F12 A one-line foot**: it links every tool, says what happens to the figures, the name large on a ledger rule. *Tested*.
+- **F13 Another order**: hero, story, tools, uses, figures, try, checked, closing. *Tested*.
 - **F14 Anything from another site.** *Tested*.
-- **F15 A heavy page**: home 124 KB before compression (13-10-2026), cap 140 KB. *Tested*, printed.
-- **F16 Google's own**: its words, images, video, logo, Google Sans or code; a custom cursor; a hijacked scroll (they cost phones and keyboards). The critic's.
+- **F15 A heavy page**: home 160 KB before compression (14-10-2026), cap 170 KB. *Tested*, printed.
+- **F16 Another's own**: the reference's or the video's words, images, footage, logo, font or code; a custom cursor; a hijacked scroll. The critic's.
+- **F17 Shadows**: only paper (`shadow-paper`) casts one. *Tested*.
 
-Yield in the new look: principle 6 (two ink pills may share a screen; the accent fills none), 7's page column, 10 for the dash fields (never behind a figure, still under reduced motion), and the Tokens' type, radius and motion lines (motion to 0.9 s, stopping per F9).
+Colour: ink, ledger red (the margin rule only, never a figure) and marigold (highlighter, ticks, glow), one highlight per screen; the critic's. Yield in the new look: principle 6 (two ink pills may share a screen; the accent fills none), 7's page column, 10 for the fields and the glow (never behind a figure, still under reduced motion), and the Tokens' type, radius and motion lines (motion to 0.9 s, ending per F9).
 
 ## Tokens (`site/src/global.css`)
 A token is a role, not a colour, and needs no `dark:` twin. New work uses tokens only: the site check counts raw palette classes (`text-slate-600`) and arbitrary values (`text-[11px]`) and fails if either grows (`scripts/design-baseline.json`); UX2 to UX4 bring both to nil, then the check asks nil.
@@ -60,10 +61,11 @@ A token is a role, not a colour, and needs no `dark:` twin. New work uses tokens
 | `focus` | the focus ring, 2 px, offset 2 px | 3.7:1 | 10.8:1 |
 | `good` `warn` `bad` (+ `-tint` grounds) | meets, a caution, misses or wrong | 7.1, 9.1, 6.4:1 | 14.4, 16.2, 10.5:1 |
 | `stage` / `on-stage` | the closing panel of the new look / its text | slate-950 / white | slate-900 / slate-50 |
-| `spark-1` to `-3` | the dashes of the fields only, never text | teal-500, sky-500, indigo-400 | teal-300, sky-300, indigo-300 |
+| `spark-1` to `-3` | the dashes of the fields only, never text | teal-500, sky-500, indigo-400; new look: ink, red, marigold | teal-300, sky-300, indigo-300 |
+| `desk` `paper` `margin` `marigold` | new look: ink desk, paper, red, highlighter | | |
 
 Ratios on canvas, measured by `node scripts/design-review.mjs --tokens` (every pair but `line`, which marks no control, is at least 3.5:1, on surface and on the tints too). Colour never carries meaning alone: a miss says "Misses" in words.
-- **Type**: the system font (the new look: Figtree and the scale `text-hero`, `-statement`, `-section`, `-title`, `-lead`, `-wordmark`, F1, F2); 16 px for body and fields (16 px also stops phones zooming); 14 px (`text-sm`) for hints, second lines and table cells; 12 px (`text-xs`) only for labels inside a chart. Headings: h1 `text-2xl` (`sm:text-3xl` on the home page), h2 `text-lg`, h3 `text-base`, all `font-semibold`. Figures in tables use `tabular-nums`, right-aligned (GOV.UK Table, numeric cells). WCAG sets no minimum size; these are the house sizes.
+- **Type**: the system font (the new look: F1 and the scale `text-hero` to `-wordmark`, F2); 16 px for body and fields (16 px also stops phones zooming); 14 px (`text-sm`) for hints, second lines and table cells; 12 px (`text-xs`) only for labels inside a chart. Headings: h1 `text-2xl` (`sm:text-3xl` on the home page), h2 `text-lg`, h3 `text-base`, all `font-semibold`. Figures in tables use `tabular-nums`, right-aligned (GOV.UK Table, numeric cells). WCAG sets no minimum size; these are the house sizes.
 - **Space**: Tailwind's 4 px scale; use 1, 2, 3, 4, 6, 8, 10, 12 (4 to 48 px). Related things sit closer than unrelated ones (Gestalt proximity).
 - **Radius**: `rounded-control` (6 px) for fields and buttons, `rounded-card` (8 px) for panels, `rounded-full` for status pills. For consistency only.
 - **Motion**: none needed to understand anything; 150 ms at most; none under reduced motion (global.css).
