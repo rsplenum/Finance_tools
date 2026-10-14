@@ -5,6 +5,7 @@
  */
 import { frontDoor, preview, withBorrower, type State } from '../dscr/model';
 import { dscrViableOf } from '../dscr/levers';
+import { workedYear, type Paper } from './paper';
 
 const door = (instalments: string): State => {
   const s = withBorrower(frontDoor('2026-10'), 'firm');
@@ -47,4 +48,35 @@ export const STORY_FIX = (() => {
   const l = dscrViableOf(STORY_CASE)?.lines.find((x) => x.id === 'more');
   if (!l?.move) throw new Error('The story case needs no longer repayment.');
   return { head: l.head, text: l.text, move: l.move };
+})();
+
+const verdictHead = (f: StoryFrame) => `${f.verdict.split(':')[0]}.`;
+const nbYear = (t: string) => t.replace(/(\d{4})-(\d{2})/g, '$1‑$2');
+/** The DSCR story as one scratch paper (AG3, D-UX-74): the seven answers; each year as typed and its verdict; the
+ *  lender's change; each year with it; the lowest year worked out in the statement's own lines, its DSCR counted from the
+ *  lowest as typed and ticked. */
+export const DSCR_PAPER: Paper = (() => {
+  const st = preview(STORY_FIXED).statement, i = st?.years.indexOf(STORY_LONGER.lowestYear) ?? -1;
+  if (!st || i < 0) throw new Error('The story case gives no statement.');
+  const worked = workedYear(st.lines, i, ['pbt', 'Profit after tax', 'available', 'service'], 'dscr');
+  const dscr = worked[worked.length - 1];
+  Object.assign(dscr, { label: `${dscr.label}, against ${STORY_TARGET.minimum}`, from: STORY_TYPED.lowest, tick: true });
+  const each = (f: StoryFrame) => [
+    { kind: 'years' as const, years: f.years.map((y) => ({ fy: nbYear(y.fy), value: y.dscr })) },
+    { label: `Lowest year, ${nbYear(f.lowestYear)}, against ${STORY_TARGET.minimum}`, value: f.lowest },
+    { label: `Average, against ${STORY_TARGET.average}`, value: f.average },
+    { kind: 'text' as const, label: verdictHead(f) },
+  ];
+  return {
+    id: 'dscr', tab: 'DSCR', kicker: 'Case S',
+    title: `A firm asks for Rs. ${STORY_CASE.loan.amount} over ${years(STORY_CASE.loan.instalments)}`,
+    steps: [
+      { head: 'What the firm typed', lines: STORY_INPUTS.map((x) => ({ label: x.label, value: x.value })) },
+      { head: `Each year's DSCR, as typed`, lines: each(STORY_TYPED) },
+      { head: STORY_FIX.head, lines: [{ kind: 'text', label: STORY_FIX.text }] },
+      { head: `Each year's DSCR, with ${STORY_FIXED.loan.instalments} instalments`, lines: each(STORY_LONGER) },
+      { head: `The lowest year worked out, ${nbYear(STORY_LONGER.lowestYear)}`, lines: worked },
+    ],
+    go: { href: '/dscr/', text: 'Try it with your figures' },
+  };
 })();

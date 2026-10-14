@@ -3,7 +3,8 @@
  * mark or a block falls onto its line and comes to rest with a small spring), tick (a line drawn when a rule is met) and
  * count (a figure runs to the engine's value, which is in the page from the start). The hero's and the closing's dashes
  * fall into ledger rows; the two ways in gather into what each gives; the story's pages land on the desk. What starts by
- * itself ends within 5 s or follows the reader, and the story has a Stop (WCAG 2.2.2). Under reduced motion Base.astro
+ * itself ends within 5 s or follows the reader. The story's scratch paper writes each line once as it comes into view and
+ * has "Show it all" (AG3, D-UX-74); the tool drawings draw themselves once (D-UX-73). Under reduced motion Base.astro
  * leaves out the `js` mark: everything is drawn once, at rest.
  */
 export function start() {
@@ -13,7 +14,8 @@ export function start() {
   if (!motion) return;
   settling();
   header();
-  story();
+  drawings();
+  for (const p of document.querySelectorAll<HTMLElement>('[data-paper]')) paper(p);
 }
 
 const ease = (p: number) => 1 - (1 - p) ** 3;
@@ -245,48 +247,72 @@ function count(el: HTMLElement, alive: () => boolean, then: () => void) {
 }
 
 /**
- * The story: the pages land on the desk in turn, whole, each once it is in view (on a phone they stand one under another,
- * so each waits for the reader), then the made-viable figure counts and is ticked; Stop shows it all. A page is in view
- * when its top is above the lower fifth of the screen, not a share of its height, so a short screen plays it too.
+ * The story's scratch paper (AG3, D-UX-74): each line writes itself once as it comes into view, in the paper's order, a
+ * pen's pace apart, and stays written when the reader scrolls back; never tied to the scroll position. A counted figure
+ * then runs to the engine's value and is ticked. "Show it all" writes every line at once; once all are written it offers
+ * to write them again. A line is in view when its top is above the lower eighth of the screen, so a short screen writes it too.
  */
-function story() {
-  const box = document.querySelector<HTMLElement>('[data-story]'), play = box?.querySelector<HTMLButtonElement>('[data-play]');
-  if (!box || !play) return;
-  const pages = [...box.querySelectorAll<HTMLElement>('[data-at]')], last = pages.length;
-  const ticks = [...box.querySelectorAll<HTMLElement>('[data-tick]')], counts = [...box.querySelectorAll<HTMLElement>('[data-count]')];
-  let at = 0, timer = 0, running = false, played = false, run = 0, waiting = false;
-  const seen = new Set<Element>();
-  const show = () => pages.forEach((s) => s.classList.toggle('on', Number(s.dataset.at) <= at));
-  const say = () => { play.textContent = running ? 'Stop and show it all' : played ? 'Play it again' : 'Play it'; };
-  const end = () => { running = false; say(); };
-  const settle = (me: number) => {
-    let left = counts.length;
-    const tick = () => { if (me === run) { ticks.forEach((t) => t.classList.add('ticked')); end(); } };
-    if (!left) tick();
-    counts.forEach((c) => count(c, () => me === run, () => { if (--left === 0) tick(); }));
+function paper(sheet: HTMLElement) {
+  const lines = [...sheet.querySelectorAll<HTMLElement>('[data-line]')], btn = sheet.parentElement?.closest('[data-story]')?.querySelector<HTMLButtonElement>('[data-show]');
+  let queue: HTMLElement[] = [], timer = 0, run = 0;
+  const say = () => { if (btn) btn.textContent = lines.every((l) => l.classList.contains('written')) ? 'Write it again' : 'Show it all'; };
+  const write = (l: HTMLElement, me: number) => {
+    l.classList.add('written');
+    const c = l.querySelector<HTMLElement>('[data-count]'), t = l.querySelector<HTMLElement>('[data-tick]');
+    if (c) window.setTimeout(() => count(c, () => me === run, () => t?.classList.add('ticked')), 300);
+    else t?.classList.add('ticked');
+    say();
   };
-  const next = () => {
-    if (!seen.has(pages[at])) { waiting = true; return; }
-    at += 1; show();
-    if (at >= last) { timer = window.setTimeout(() => settle(run), 500); return; }
-    timer = window.setTimeout(next, 900);
+  const pump = () => {
+    const l = queue.shift();
+    timer = l ? window.setTimeout(pump, 110) : 0;
+    if (l) write(l, run);
   };
-  const go = () => {
-    run += 1; at = 0; waiting = false; ticks.forEach((t) => t.classList.remove('ticked')); show();
-    running = played = true; say(); timer = window.setTimeout(next, 250);
-  };
-  const stop = () => {
-    clearTimeout(timer); run += 1; at = last; waiting = false; show();
-    counts.forEach((c) => { if (c.dataset.value) c.textContent = c.dataset.value; });
-    ticks.forEach((t) => t.classList.add('ticked')); end();
-  };
-  play.hidden = false;
-  say();
-  play.addEventListener('click', () => (running ? stop() : go()));
   const io = new IntersectionObserver((es) => {
-    for (const e of es) if (e.isIntersecting) { seen.add(e.target); io.unobserve(e.target); }
-    if (!played && seen.has(pages[0])) go();
-    else if (waiting && running) { waiting = false; next(); }
-  }, { rootMargin: '0px 0px -20% 0px' });
-  pages.forEach((p) => io.observe(p));
+    for (const e of es) if (e.isIntersecting) { io.unobserve(e.target); queue.push(e.target as HTMLElement); }
+    queue.sort((a, b) => lines.indexOf(a) - lines.indexOf(b));
+    if (!timer) pump();
+  }, { rootMargin: '0px 0px -12% 0px' });
+  const watch = () => lines.forEach((l) => io.observe(l));
+  watch();
+  if (!btn) return;
+  btn.hidden = false;
+  say();
+  btn.addEventListener('click', () => {
+    clearTimeout(timer); timer = 0; queue = []; run += 1; io.disconnect();
+    if (btn.textContent === 'Show it all') {
+      for (const c of sheet.querySelectorAll<HTMLElement>('[data-count]')) if (c.dataset.value) c.textContent = c.dataset.value;
+      lines.forEach((l) => { l.classList.add('written'); l.querySelector('[data-tick]')?.classList.add('ticked'); });
+      say();
+    } else {
+      lines.forEach((l) => { l.classList.remove('written'); l.querySelector('[data-tick]')?.classList.remove('ticked'); });
+      say(); requestAnimationFrame(watch);
+    }
+  });
+}
+
+/**
+ * The tool drawings draw themselves once as each comes into view (D-UX-73): the drawing's strokes, split from its one
+ * path, each drawn as a pen would, one after another, in about 1.5 s in all. One already in view when the page opens stays
+ * drawn; without scripts or under reduced motion each stands finished.
+ */
+function drawings() {
+  const io = new IntersectionObserver((es) => {
+    for (const e of es) {
+      const svg = e.target as SVGSVGElement;
+      if (svg.dataset.split) { if (e.isIntersecting) { io.unobserve(svg); svg.classList.add('drawn'); } continue; }
+      if (e.isIntersecting) { io.unobserve(svg); continue; }
+      const path = svg.querySelector('path'), d = path?.getAttribute('d');
+      if (!path || !d) continue;
+      const strokes = d.split(/(?=M)/), n = strokes.length, each = 0.45, gap = (1.5 - each) / Math.max(1, n - 1);
+      for (const [k, part] of strokes.entries()) {
+        const p = path.cloneNode() as SVGPathElement;
+        p.setAttribute('d', part); p.setAttribute('pathLength', '1'); p.style.setProperty('--t', `${(k * gap).toFixed(3)}s`);
+        path.before(p);
+      }
+      path.remove();
+      svg.dataset.split = '1';
+    }
+  }, { rootMargin: '0px 0px -10% 0px' });
+  document.querySelectorAll('[data-draw]').forEach((s) => io.observe(s));
 }

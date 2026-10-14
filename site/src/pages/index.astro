@@ -2,19 +2,19 @@
 /**
  * The home page in FinSight's own look (AG2, D-UX-68 to D-UX-72; the brief: docs/design-reference/finsight.md): loose
  * figures put in order, so marks fall from the field and settle onto paper. In our order: a hero whose dashes fall into
- * ledger rows; the story on the ink desk, the engine's figures for fictional case S landing as pages of paper
- * (site/src/home/story.ts); the four tools, each with a line drawing on its glow; who it is for; what happens to your
+ * ledger rows; the story on the ink desk, the engine's figures for fictional case S written on one scratch paper, each
+ * line once as it comes into view (site/src/home/story.ts, Paper.astro; AG3, D-UX-74); the four tools, each with a line drawing on its glow; who it is for; what happens to your
  * figures; two ways in on the ink desk; the rules behind the figures as a ruled list; the closing desk. The motion is
  * settle, tick and count only (site/src/home/home.ts), it ends by itself (WCAG 2.2.2), and without scripts or under
  * reduced motion everything stands where it rests. FinSight's rules (docs/DESIGN.md) are held by
  * scripts/forbidden-checks.mjs.
  */
 import Base from '../Base.astro';
-import Bars from '../home/Bars.astro';
 import Arrow from '../home/Arrow.astro';
+import Paper from '../home/Paper.astro';
 import Drawing from '../home/Drawing.astro';
 import { READY } from '../site';
-import { STORY_CASE, STORY_FIX, STORY_FIXED, STORY_INPUTS, STORY_LONGER, STORY_TARGET, STORY_TYPED } from '../home/story';
+import { DSCR_PAPER, STORY_TARGET, STORY_TYPED } from '../home/story';
 import DSCR from '../../../engine/data/dscr.json';
 import TAX from '../../../engine/data/tax.json';
 import ESTIMATE from '../../../engine/data/estimate.json';
@@ -29,13 +29,6 @@ const SOFT = 'inline-flex min-h-11 items-center justify-center rounded-full bg-i
 const DESK = 'inline-flex min-h-11 items-center justify-center rounded-full bg-on-desk px-6 py-2.5 font-medium text-desk hover:bg-on-desk/85';
 const DESK_SOFT = 'inline-flex min-h-11 items-center justify-center rounded-full bg-on-desk/10 px-6 py-2.5 font-medium text-on-desk hover:bg-on-desk/20';
 const H2 = 'text-balance text-section text-ink';
-// A page of paper on the desk: the only thing that casts a shadow (FinSight's rule 2).
-const PAPER = 'min-w-0 rounded-card bg-paper p-5 text-on-paper shadow-paper sm:p-6';
-// The scale fits the typed years with room for their figures; a taller bar (the last, part year of the longer plan) is cut
-// at the top and marked so, its figure on it.
-// A year such as 2030-31 never breaks at its hyphen (U+2011).
-const nb = (t: string) => t.replace(/(\d{4})-(\d{2})/g, '$1\u2011$2');
-const scale = Math.max(...STORY_TYPED.years.map((y) => y.n)) * 1.4;
 // The two ways in gather into what each gives: the bars of the story as typed against the target, and a statement's rows.
 const GATHER = JSON.stringify(STORY_TYPED.years.map((y) => y.n));
 const CHIPS = ['DSCR statement', 'Repayment schedule', 'Room-by-room estimate', 'Bill of quantities', 'Projected balance sheet', 'Cash flow', 'Forms I to VI', 'Turnover-method limit', 'PDF', 'Excel', 'Word'];
@@ -47,7 +40,6 @@ const USES = [
 ];
 const day = (d: string) => d.split('-').reverse().join('-');
 const RULES = [DSCR, TAX, ESTIMATE, REPORT, CMA, RATIOS].sort((a, b) => b.date.localeCompare(a.date));
-const instalments = (n: string) => `${n} monthly instalments`;
 // The DSCR's questions are fixed (D-UX-10's seven); the other tools' depend on the case, so they show no count.
 const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
 ---
@@ -67,37 +59,13 @@ const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
   <section data-ag="story" class={`${WRAP} py-16 sm:py-24`}>
     <h2 data-settle class={`${H2} max-w-3xl`}>From seven answers to a DSCR statement and its verdict</h2>
     <p data-settle class="mt-4 max-w-lg text-lead text-ink-muted">A fictional firm asks for a loan. Every figure below is worked out by the DSCR tool, as it would be for you.</p>
-    <div data-story data-desk class="mt-10 rounded-panel px-5 py-8 sm:px-10 sm:py-12">
-      <div class="flex min-h-11 flex-wrap items-center justify-between gap-4 pl-3 sm:pl-4">
-        <p class="caps text-on-desk-muted">Case S</p>
-        <button type="button" data-play hidden class={DESK_SOFT}>Play it</button>
+    <div data-story data-desk class="mt-10 rounded-panel px-3 py-8 sm:px-10 sm:py-12">
+      <div class="mx-auto flex min-h-11 max-w-3xl items-center justify-end">
+        <button type="button" data-show hidden class={DESK_SOFT}>Show it all</button>
       </div>
-      <ol class="mt-6 grid grid-cols-1 gap-6 pl-3 sm:pl-4 lg:grid-cols-3 lg:items-start">
-        <li data-at="1" class={PAPER}>
-          <h3 class="caps text-paper-muted">(1) The seven answers</h3>
-          <dl class="mt-3">
-            {STORY_INPUTS.map((x) => (
-              <div class="flex items-baseline justify-between gap-4 border-b border-on-paper/10 py-2 last:border-0"><dt class="text-sm text-paper-muted">{x.label}</dt><dd class="figure shrink-0 text-right text-on-paper">{x.value}</dd></div>
-            ))}
-          </dl>
-        </li>
-        <li data-at="2" class={PAPER}>
-          <h3 class="caps text-paper-muted">(2) As typed</h3>
-          <p class="mt-3 text-sm text-paper-muted">{instalments(STORY_CASE.loan.instalments)}; lowest year {nb(STORY_TYPED.lowestYear)}</p>
-          <p class="figure mt-1 text-statement text-on-paper">{STORY_TYPED.lowest}</p>
-          <Bars frame={STORY_TYPED} target={STORY_TARGET.minimum} scale={scale} title={`As typed: ${instalments(STORY_CASE.loan.instalments)}`} />
-          <p class="mt-4 text-sm text-on-paper">{nb(STORY_TYPED.verdict)}</p>
-        </li>
-        <li data-at="3" class={PAPER}>
-          <h3 class="caps text-paper-muted">(3) Made viable</h3>
-          <p class="mt-3 text-sm text-paper-muted">{instalments(STORY_FIXED.loan.instalments)}; lowest year {nb(STORY_LONGER.lowestYear)}</p>
-          <p class="figure mt-1 text-statement text-on-paper"><span data-tick data-count data-from={STORY_TYPED.lowest} class="px-1">{STORY_LONGER.lowest}</span></p>
-          <Bars frame={STORY_LONGER} target={STORY_TARGET.minimum} scale={scale} title={`With ${instalments(STORY_FIXED.loan.instalments)}`} />
-          <p class="mt-4 text-sm text-on-paper">{STORY_FIX.text} {nb(STORY_LONGER.verdict)}</p>
-        </li>
-      </ol>
-      <div class="mt-8 pl-3 sm:pl-4">
-        <a href="/dscr/" class={DESK}>Try it with your figures</a>
+      <div class="mt-6"><Paper paper={DSCR_PAPER} /></div>
+      <div class="mx-auto mt-8 max-w-3xl">
+        <a href={DSCR_PAPER.go.href} class={DESK}>{DSCR_PAPER.go.text}</a>
       </div>
     </div>
   </section>

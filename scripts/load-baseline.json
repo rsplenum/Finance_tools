@@ -2,8 +2,8 @@
   "pages": {
     "/": {
       "before": 27,
-      "shown": 674,
-      "all": 674,
+      "shown": 740,
+      "all": 740,
       "plan": null,
       "long": 0,
       "abbr": 6,
@@ -11,7 +11,7 @@
       "controls": 15,
       "answerAt": 0.6,
       "gap": null,
-      "styles": 9,
+      "styles": 7,
       "colours": 0,
       "outOfSight": null
     },
@@ -211,6 +211,22 @@
       "to": 0.6,
       "why": "D-UX-67",
       "date": "2026-10-13"
+    },
+    {
+      "page": "/",
+      "count": "shown",
+      "from": 674,
+      "to": 740,
+      "why": "D-UX-75",
+      "date": "2026-10-14"
+    },
+    {
+      "page": "/",
+      "count": "all",
+      "from": 674,
+      "to": 740,
+      "why": "D-UX-75",
+      "date": "2026-10-14"
     }
   ],
   "fontProbe": 320.2

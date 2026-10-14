@@ -1,0 +1,40 @@
+---
+/**
+ * A story's scratch paper (AG3, D-UX-74; site/src/home/paper.ts): a ruled sheet on the ink desk, its double margin rule
+ * in red with the steps numbered in the margin, the label on the left and the amount always in the same right-hand
+ * column. Every line is in the page from the start; home.ts writes each once as it comes into view (`data-line`).
+ */
+import type { Paper } from './paper';
+interface Props { paper: Paper }
+const { paper } = Astro.props;
+const ROW = 'flex items-baseline justify-between gap-4 border-b border-on-paper/10 py-1.5';
+// A row of years: three to a line on a phone, all on one from 640 px.
+const YEARS: Record<number, string> = { 6: 'sm:grid-cols-6', 8: 'sm:grid-cols-8' };
+---
+<article data-paper={paper.id} class="relative mx-auto max-w-3xl rounded-card bg-paper py-8 pr-6 pl-14 text-on-paper shadow-paper sm:py-10 sm:pr-10 sm:pl-20">
+  <p data-line class="caps text-paper-muted"><span>{paper.kicker}</span></p>
+  <h3 data-line class="mt-1 text-balance text-title"><span>{paper.title}</span></h3>
+  <ol class="mt-6 space-y-8">
+    {paper.steps.map((s, k) => (
+      <li class="relative">
+        <h4 data-line class="caps text-paper-muted"><span aria-hidden="true" class="figure absolute right-full mr-5 sm:mr-8">({k + 1})</span><span>{s.head}</span></h4>
+        <div class="mt-2">
+          {s.lines.map((l) => l.kind === 'years' ? (
+            <div data-line class={`grid grid-cols-3 gap-x-4 gap-y-3 border-b border-on-paper/10 py-3 ${YEARS[l.years?.length ?? 0] ?? ''}`}>
+              {l.years?.map((y, i) => <p style={`--k:${i}`}><span class="block text-sm text-paper-muted tabular-nums">{y.fy}</span><span class="figure">{y.value}</span></p>)}
+            </div>
+          ) : l.kind === 'text' ? (
+            <p data-line class="border-b border-on-paper/10 py-2 font-medium"><span>{l.label}</span></p>
+          ) : (
+            <p data-line class={ROW}>
+              <span class="text-sm">{l.label}</span>
+              <span data-rule={l.kind === 'sub' || l.kind === 'total' ? l.kind : undefined} class={`figure relative min-w-24 shrink-0 text-right ${l.kind === 'total' ? 'pt-1 pb-2 text-section' : ''}`}>
+                {l.kind === 'less' ? <>({l.value}<span class="absolute left-full">)</span></> : l.tick ? <span data-tick data-count data-from={l.from} class="px-1">{l.value}</span> : l.value}
+              </span>
+            </p>
+          ))}
+        </div>
+      </li>
+    ))}
+  </ol>
+</article>
