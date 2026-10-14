@@ -14,6 +14,7 @@ Before designing, write down (and show the owner when it is new or unclear):
 - **Inputs** the user will type, in the owner's words, and how many.
 - **Outputs** they expect to see and to take away (a table, a schedule, a PDF, a spreadsheet, a printout).
 - **Who** types them: a customer on a phone, an agent, an accountant.
+- **Size**, for a showcase (a trailer, a demo, a story on a home page): write it in lines and seconds before building, and show the owner something of that size first. A showcase gives a glimpse of the tool, never the tool's full working.
 
 The inputs the owner lists for a page are its default path: a ceiling, not a floor to build on. When the maths needs a fact the list lacks, prefer an assumption stated on the page over a new question. Ask first what narrows later questions (purpose, product, type), and take each fact once, shown elsewhere read-only.
 
