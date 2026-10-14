@@ -238,6 +238,11 @@ html:has(body[data-look='new']) { scroll-padding-top: 11rem; }
 [data-desk][data-story] { background-image: repeating-linear-gradient(to bottom, transparent 0 calc(2rem - 1px), var(--desk-rule) calc(2rem - 1px) 2rem); }
 /* A trailer whose strokes are on their way stays blank; if they never come, its words show in type. */
 .js [data-src] [data-beat] { visibility: hidden; }
+/* Until a later trailer's strokes come, each pen line holds their box, so the sheet keeps its size when they do (AG3b). */
+.js [data-src] [data-beat] > span[style] { font-size: inherit; line-height: 1; width: var(--w); max-width: 100%; aspect-ratio: var(--r); overflow: hidden; }
+/* Without motion every trailer stands written: the first keeps its marker, the later ones a rule under the payoff, so a
+   screen holds one highlight (DESIGN.md, Colour). */
+html:not(.js) [data-reel] + [data-reel] [data-mark] { transform-box: fill-box; transform-origin: left bottom; transform: scaleY(0.2); }
 /* The name at the foot: its letters drop and settle onto a ledger rule. */
 .js [data-wordmark] span { display: inline-block; opacity: 0; transform: translateY(-45%); transition: opacity 0.5s ease-out, transform 0.9s cubic-bezier(0.3, 1.45, 0.55, 1); transition-delay: calc(var(--i, 0) * 70ms); }
 .js [data-wordmark].settled span { opacity: 1; transform: none; }

@@ -374,7 +374,12 @@ function write(sheet: HTMLElement) {
       }
       t += 100;
     }
-    if (mark) { anims.push(mark.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 400, delay: t, easing: 'ease-out', fill: 'both' })); t += 400; }
+    if (mark) {
+      for (const a of mark.getAnimations()) if (a.id === 'rule') a.cancel();
+      const swipe = mark.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { id: 'swipe', duration: 400, delay: t, easing: 'ease-out', fill: 'both' });
+      anims.push(swipe); t += 400;
+      void swipe.finished.then(() => only(mark), () => undefined);
+    }
     void Promise.all(anims.map((a) => a.finished)).then(() => say(), () => undefined);
     follow(sheet, anims, t, downs);
     say();
@@ -383,7 +388,9 @@ function write(sheet: HTMLElement) {
   const say = () => { if (btn) btn.textContent = done() ? 'Write it again' : 'Show it all'; };
   hide();
   // A third of the sheet, or half a short screen (1280 at 400%) when the sheet is taller than the screen.
+  // A sheet first seen from below, its top already above the screen (a jump past it), stands written at once.
   const io = new IntersectionObserver((es) => {
+    if (es.some((e) => e.isIntersecting && e.boundingClientRect.top < 0)) { io.disconnect(); play(); anims.forEach((a) => a.finish()); say(); return; }
     if (es.some((e) => e.intersectionRatio >= 0.35 || e.intersectionRect.height >= innerHeight / 2)) { io.disconnect(); play(); }
   }, { threshold: [0, 0.1, 0.2, 0.35] });
   io.observe(sheet);
@@ -394,6 +401,19 @@ function write(sheet: HTMLElement) {
     if (btn.textContent === 'Show it all') { io.disconnect(); if (!anims.length) play(); anims.forEach((a) => a.finish()); say(); return; }
     anims.forEach((a) => a.cancel()); anims = []; play();
   });
+}
+
+/**
+ * One highlight a screen (DESIGN.md, Colour): once a trailer's marker has swiped its payoff, the markers of the trailers
+ * written before it narrow to a rule under theirs.
+ */
+function only(mark: SVGRectElement) {
+  for (const m of document.querySelectorAll<SVGRectElement>('[data-trailer] [data-mark]')) {
+    const a = m.getAnimations();
+    if (m === mark || a.some((x) => x.id === 'rule') || !a.some((x) => x.id === 'swipe' && x.playState === 'finished')) continue;
+    m.style.transformOrigin = 'left bottom';
+    m.animate([{ transform: 'scaleY(1)' }, { transform: 'scaleY(0.2)' }], { id: 'rule', duration: 300, easing: 'ease-out', fill: 'forwards' });
+  }
 }
 
 /**

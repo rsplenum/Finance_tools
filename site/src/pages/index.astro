@@ -53,16 +53,16 @@ const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
 
   <section data-ag="story" class={`${WRAP} py-16 sm:py-24`}>
     <h2 data-settle class={`${H2} max-w-3xl`}>Three tools at work, each on a fictional case</h2>
-    <p data-settle class="mt-4 max-w-lg text-lead text-ink-muted">Every figure below is worked out by the tool, as it would be for you.</p>
+    <p data-settle class="mt-4 max-w-lg text-pretty text-lead text-ink-muted">Every figure below is worked out by the tool, as it would be for you.</p>
     <div data-story data-desk class="mt-10 rounded-panel px-3 py-8 sm:px-10 sm:py-12">
       <div class="mx-auto flex min-h-11 max-w-xl items-center justify-end">
         <button type="button" data-sound aria-pressed="false" hidden class={DESK_SOFT}>Pencil sound<span aria-hidden="true" data-state>&nbsp;· off</span></button>
       </div>
       {REELS.map((r, i) => (
-        <div data-reel class={i ? 'mt-16 sm:mt-20' : 'mt-6'}>
-          <div class="mx-auto flex max-w-xl flex-wrap items-center justify-between gap-3">
-            <h3 class="text-title text-on-desk">{r.name}</h3>
-            <button type="button" data-show hidden class={DESK_SOFT}>Show it all</button>
+        <div data-reel class="mt-12 sm:mt-16">
+          <div class="mx-auto flex max-w-xl flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h3 class="min-w-0 text-title text-on-desk">{r.name}</h3>
+            <button type="button" data-show hidden class={`${DESK_SOFT} min-w-40 shrink-0`}>Show it all</button>
           </div>
           <div class="mt-6"><Trailer trailer={r.trailer} lazy={i > 0} /></div>
           <div class="mx-auto mt-8 max-w-xl">

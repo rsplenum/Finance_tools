@@ -87,7 +87,7 @@ export const REPORT_TRAILER: Trailer = (() => {
   return {
     id: 'report',
     lines: [
-      { kind: 'title', text: 'Will the bank fund the factory?' },
+      { kind: 'title', text: 'Will the bank lend?' },
       { kind: 'hand', text: `Loan ${l.amount} · ${l.ratePct}% · ${years(l.instalments)}` },
       { kind: 'hand', text: `Sales ${REPORT_FIX.from} in year one` },
       { kind: 'card', text: `Lowest year · level ${weak.level}` },
@@ -116,7 +116,7 @@ export const ESTIMATE_TRAILER: Trailer = (() => {
   return {
     id: 'estimate',
     lines: [
-      { kind: 'title', text: `Can we redo the flat in ${ESTIMATE_BUDGET.text}?` },
+      { kind: 'title', text: `Will ${ESTIMATE_BUDGET.text} do it?` },
       { kind: 'hand', text: `${s.bhk}BHK flat · ${s.area} sq ft` },
       { kind: 'hand', text: 'Renovate it in Pune' },
       { kind: 'card', text: `${at.level} in every room` },

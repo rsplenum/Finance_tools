@@ -106,7 +106,7 @@ describe('the project report\'s trailer', () => {
   const lines = REPORT_TRAILER.lines;
   it('seven lines: the question, the loan, the sales, the lowest year short of its level, higher sales, the sum that meets it', () =>
     expect(lines.map((l) => [l.kind, l.text])).toEqual([
-      ['title', 'Will the bank fund the factory?'],
+      ['title', 'Will the bank lend?'],
       ['hand', 'Loan 25,00,000 · 10% · 5 years'],
       ['hand', 'Sales 70,00,000 in year one'],
       ['card', 'Lowest year · level 1.25'],
@@ -141,7 +141,7 @@ describe('the estimate\'s trailer', () => {
   const lines = ESTIMATE_TRAILER.lines, total = (t: string) => Number(t.replace(/^Total |[ ,✓]/g, ''));
   it('seven lines: the question with its budget, the flat, Standard over it, Basic bedrooms within it', () =>
     expect(lines.map((l) => [l.kind, l.text])).toEqual([
-      ['title', 'Can we redo the flat in 12 lakh?'],
+      ['title', 'Will 12 lakh do it?'],
       ['hand', '2BHK flat · 1,000 sq ft'],
       ['hand', 'Renovate it in Pune'],
       ['card', 'Standard in every room'],
@@ -166,5 +166,18 @@ describe('the three trailers', () => {
   it('the pen has every letter each writes, and throws on one it lacks', () => {
     for (const t of TRAILERS) for (const l of t.lines.filter((x) => x.kind !== 'card')) expect(write(l.text).strokes.length).toBeGreaterThan(0);
     expect(() => write('₹')).toThrow(/no "₹"/);
+  });
+  it('each stroke, sent in moves from the point before, stays inside its line', () => {
+    const line = write('Will 12 lakh do it? ✓'), pts: number[][] = [];
+    for (const { d } of line.strokes) {
+      let x = 0, y = 0;
+      for (const [, c, a] of d.matchAll(/([Mlc])([^Mlc]*)/g)) {
+        const v = (a.match(/-?\d+/g) ?? []).map(Number), n = c === 'c' ? 6 : 2;
+        if (c === 'M') { [x, y] = v; pts.push([x, y]); continue; }
+        for (let i = 0; i < v.length; i += n) { const [dx, dy] = v.slice(i + n - 2, i + n); x += dx; y += dy; pts.push([x, y]); }
+      }
+    }
+    expect(pts.every(([x, y]) => x >= -5 && x <= line.w + 5 && y >= line.top - 1 && y <= line.bottom + 1)).toBe(true);
+    expect(Math.max(...pts.map(([x]) => x))).toBeGreaterThan(line.w - 70);
   });
 });

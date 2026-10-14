@@ -13,7 +13,7 @@ export const NEW_LOOK = ['/'];
 export const ORDER = ['hero', 'story', 'tools', 'uses', 'figures', 'try', 'closing'];
 /**
  * F15: the page's weight as it loads, before compression (HTML, styles, scripts, the fonts), in KB: 160 measured 14-10-2026
- * (D-UX-72), AG1's 124 with Anek (27 KB, one weight cut to the signs the pages use) and the line drawings; 169 with
+ * (D-UX-72), AG1's 124 with Anek (27 KB, one weight cut to the signs the pages use) and the line drawings; 166 with
  * AG3b's three trailers, the two later ones fetched only as the reader nears them (D-UX-78). A heavier page lowers
  * something else first.
  */
