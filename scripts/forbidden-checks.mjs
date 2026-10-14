@@ -14,7 +14,8 @@ export const ORDER = ['hero', 'story', 'tools', 'uses', 'figures', 'try', 'closi
 /**
  * F15: the page's weight as it loads, before compression (HTML, styles, scripts, the fonts), in KB: 160 measured 14-10-2026
  * (D-UX-72), AG1's 124 with Anek (27 KB, one weight cut to the signs the pages use) and the line drawings; 166 with
- * AG3b's three trailers, the two later ones fetched only as the reader nears them (D-UX-78). A heavier page lowers
+ * AG3b's three trailers, the two later ones fetched only as the reader nears them (D-UX-78); 168 with AG3c's trailers
+ * beside their text (D-UX-81). A heavier page lowers
  * something else first.
  */
 export const WEIGHT_CAP = 170;
@@ -80,6 +81,27 @@ function inPage({ tools, order, phone }) {
   return out;
 }
 
+/**
+ * Runs in the page: each tag of the row of what the tools give, its words against its fill as the eye meets them, any fade
+ * counted (F18, AG3c). Colours come as oklch, so each is painted on a 1×1 canvas and read back (docs/GOTCHAS.md).
+ */
+export function tagContrast() {
+  const g = Object.assign(document.createElement('canvas'), { width: 1, height: 1 }).getContext('2d', { willReadFrequently: true });
+  const rgba = (css) => { g.clearRect(0, 0, 1, 1); g.fillStyle = '#000'; g.fillStyle = css; g.fillRect(0, 0, 1, 1); const d = g.getImageData(0, 0, 1, 1).data; return [d[0], d[1], d[2], d[3] / 255]; };
+  const over = (top, under, a) => [0, 1, 2].map((i) => top[i] * a + under[i] * (1 - a));
+  const lum = (c) => c.map((v) => (v /= 255) <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0);
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+  return [...document.querySelectorAll('[data-tags] li')].map((li) => {
+    // The fade of the tag and of what holds it, down to the first solid ground: the page under the row.
+    let op = 1, e = li, ground = null;
+    for (; e && !ground; e = e.parentElement) { const s = getComputedStyle(e), bg = rgba(s.backgroundColor); if (e !== li && bg[3] === 1) ground = bg; else op *= parseFloat(s.opacity); }
+    ground ??= [255, 255, 255, 1];
+    const s = getComputedStyle(li), fill = rgba(s.backgroundColor), ink = rgba(s.color);
+    const chip = over(fill, ground, fill[3]), word = over(ink, chip, ink[3]);
+    return { t: li.textContent.trim(), r: ratio(over(word, ground, op), over(chip, ground, op)) };
+  });
+}
+
 /** The headings and counted figures, the running animations and a picture of each field, to compare over time. */
 const still = (page) => page.evaluate(() => ({
   typed: [...document.querySelectorAll('h1, h2, [data-count]')].map((e) => e.textContent),
@@ -122,6 +144,19 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
     const b = await still(rm.page);
     if (b.running.length || a.fields.join() !== b.fields.join()) v('F9 something moves under reduced motion');
     await rm.ctx.close();
+    // F18: the tag row reads as it comes into view, light and dark: 150 ms after its top enters the screen each tag's
+    // words stand at 4.5:1 on its fill, a fade counted (AG3c; the owner saw them faint while they settled one by one).
+    if (path === '/') for (const colorScheme of ['light', 'dark']) {
+      const tc = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme });
+      const tp = await tc.newPage();
+      await tp.goto(BASE + path);
+      await tp.evaluate(() => { const u = document.querySelector('[data-tags]'); if (u) scrollTo({ top: u.getBoundingClientRect().top + scrollY - innerHeight * 0.8, behavior: 'instant' }); });
+      await tp.waitForTimeout(150);
+      const tags = await tp.evaluate(tagContrast);
+      if (!tags.length) v('F18 no tag row ([data-tags] li) to measure');
+      for (const t of tags.filter((x) => x.r < 4.5).slice(0, 3)) v(`F18 the tag "${t.t}" reads ${t.r.toFixed(1)}:1 as it comes into view, ${colorScheme} (want 4.5)`);
+      await tc.close();
+    }
     // F9 on a phone and on a short screen (1280 at 400%): scrolled through, every block that settles or lands shows, every
     // line of the story's three trailers is written in strokes, the two that come as the reader nears them included
     // (D-UX-77, D-UX-78), and no two figures in a chart overlap (lesson 6). A block that waits for a share of its height

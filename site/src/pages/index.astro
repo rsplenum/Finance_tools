@@ -33,15 +33,15 @@ const USES = [
   { who: 'A chartered accountant', head: 'A project report whose every figure is worked out twice', href: '/project-report/', go: 'Open the project report' },
   { who: 'A business renewing its cash credit', head: 'Forms I to VI and the limit, from five years’ figures', href: '/cma/', go: 'Open CMA data' },
 ];
-// Each trailer under its tool's name (D-UX-78).
-const REELS = TRAILERS.map((t) => ({ trailer: t, name: READY.find((r) => r.href === t.go.href)?.name ?? '' }));
+// Each trailer under its tool's name (D-UX-78), on one line (AG3c), and from lg beside the line on what the tool does.
+const REELS = TRAILERS.map((t) => { const tool = READY.find((r) => r.href === t.go.href); return { trailer: t, name: tool?.brief ?? tool?.name ?? '', what: tool?.what ?? '' }; });
 // The DSCR's questions are fixed (D-UX-10's seven); the other tools' depend on the case, so they show no count.
 const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
 ---
 <Base look="new" description="DSCR statements, construction estimates, project reports and CMA data in the format lenders expect, worked out in your browser.">
   <section data-ag="hero" class="relative isolate">
     <canvas data-field="hero" aria-hidden="true" class="absolute inset-0 -z-10 size-full"></canvas>
-    <div class={`${WRAP} flex flex-col items-center pt-16 pb-24 text-center sm:py-32 lg:py-44`}>
+    <div class={`${WRAP} flex flex-col items-center pt-16 pb-24 text-center sm:pt-32 lg:pt-44`}>
       <h1 class="max-w-5xl text-balance text-hero text-ink">Loan documents lenders ask for, worked out in your browser</h1>
       <p data-answer class="mt-6 max-w-lg text-lead text-ink-muted">A DSCR statement, a construction estimate, a project report and CMA data, in the format lenders expect.</p>
       <div class="mt-10 flex flex-wrap justify-center gap-3">
@@ -51,25 +51,28 @@ const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
     </div>
   </section>
 
-  <section data-ag="story" class={`${WRAP} py-16 sm:py-24`}>
-    <h2 data-settle class={`${H2} max-w-3xl`}>Three tools at work, each on a fictional case</h2>
-    <p data-settle class="mt-4 max-w-lg text-pretty text-lead text-ink-muted">Every figure below is worked out by the tool, as it would be for you.</p>
-    <div data-story data-desk class="mt-10 rounded-panel px-3 py-8 sm:px-10 sm:py-12">
-      <div class="mx-auto flex min-h-11 max-w-xl items-center justify-end">
-        <button type="button" data-sound aria-pressed="false" hidden class={DESK_SOFT}>Pencil sound<span aria-hidden="true" data-state>&nbsp;· off</span></button>
-      </div>
-      {REELS.map((r, i) => (
-        <div data-reel class="mt-12 sm:mt-16">
-          <div class="mx-auto flex max-w-xl flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h3 class="min-w-0 text-title text-on-desk">{r.name}</h3>
-            <button type="button" data-show hidden class={`${DESK_SOFT} min-w-40 shrink-0`}>Show it all</button>
-          </div>
-          <div class="mt-6"><Trailer trailer={r.trailer} lazy={i > 0} /></div>
-          <div class="mx-auto mt-8 max-w-xl">
-            <a href={r.trailer.go.href} class={DESK}>{r.trailer.go.text}</a>
-          </div>
+  <section data-ag="story" class="py-16 lg:pb-0">
+    <div class={WRAP}>
+      <h2 data-settle class={`${H2} max-w-3xl`}>Three tools at work, each on a fictional case</h2>
+      <p data-settle class="mt-4 max-w-lg text-pretty text-lead text-ink-muted">Every figure below is worked out by the tool, as it would be for you.</p>
+    </div>
+    <div data-story data-desk class="mx-4 mt-10 rounded-panel px-3 py-8 sm:mx-8 sm:px-10 sm:py-12 lg:mx-0 lg:rounded-none lg:px-0 lg:py-16">
+      <div class="lg:mx-auto lg:max-w-7xl lg:px-8">
+        <div class="mx-auto flex min-h-11 max-w-xl items-center justify-end lg:max-w-none">
+          <button type="button" data-sound aria-pressed="false" hidden class={DESK_SOFT}>Pencil sound<span aria-hidden="true" data-state>&nbsp;· off</span></button>
         </div>
-      ))}
+        {REELS.map((r, i) => (
+          <div data-reel class="mx-auto mt-12 flex max-w-xl flex-wrap items-center gap-x-3 sm:mt-16 lg:mt-12 lg:max-w-none">
+            <h3 class="min-w-0 basis-full text-title text-on-desk sm:basis-0 sm:grow">{r.name}</h3>
+            <p data-what class="hidden text-lead text-on-desk-muted lg:block">{r.what}</p>
+            <div data-acts class="contents">
+              <button type="button" data-show hidden class={`${DESK_SOFT} mt-3 min-w-40 shrink-0 sm:mt-0`}>Show it all</button>
+              <a href={r.trailer.go.href} class={`${DESK} order-last mt-8 lg:order-first lg:mt-0`}>{r.trailer.go.text}</a>
+            </div>
+            <div data-sheet class="mt-6 basis-full lg:mt-0"><Trailer trailer={r.trailer} lazy={i > 0} /></div>
+          </div>
+        ))}
+      </div>
     </div>
   </section>
 
@@ -109,8 +112,8 @@ const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
   </section>
 
   <section data-ag="figures" class="py-20 text-center sm:py-32">
-    <ul aria-label="What the tools give" class="mx-auto flex max-w-5xl flex-wrap justify-center gap-3 px-4">
-      {CHIPS.map((c, i) => <li data-settle style={`--i:${i}`} class="rounded-full bg-ink/5 px-4 py-2 text-sm font-medium text-ink">{c}</li>)}
+    <ul data-tags aria-label="What the tools give" class="mx-auto flex max-w-5xl flex-wrap justify-center gap-3 px-4">
+      {CHIPS.map((c) => <li class="rounded-full bg-ink/5 px-4 py-2 font-medium text-ink">{c}</li>)}
     </ul>
     <div class={`${WRAP} mt-8`}><div data-ledger aria-hidden="true"></div></div>
     <h2 data-settle class={`${WRAP} mt-12 max-w-5xl text-balance text-statement text-ink`}>Worked out in your browser, from rules with their sources and dates. What you type is not sent to us.</h2>

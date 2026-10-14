@@ -198,10 +198,11 @@ body[data-look='new'] {
 /* The new look (AG1, AG2): the text in Figtree, headings and figures in Anek. */
 body[data-look='new'] { font-family: var(--font-display); }
 body[data-look='new'] :is(h1, h2, h3, [data-wordmark]) { font-family: var(--font-heading); font-weight: 500; }
-/* The new look's bar is about 160 px tall on a phone (two rows and the notice), 120 px from lg. */
-html:has(body[data-look='new']) { scroll-padding-top: 11rem; }
-@media (max-width: 23.99rem) { html:has(body[data-look='new']) { scroll-padding-top: 14rem; } }
-@media (min-width: 64rem) { html:has(body[data-look='new']) { scroll-padding-top: 8rem; } }
+/* The new look's bar is 116 px tall on a phone (two rows; 156 under 384 px, where the tools take two), 68 px from lg; the
+   notice under it scrolls away (AG3c). */
+html:has(body[data-look='new']) { scroll-padding-top: 8.5rem; }
+@media (max-width: 23.99rem) { html:has(body[data-look='new']) { scroll-padding-top: 11rem; } }
+@media (min-width: 64rem) { html:has(body[data-look='new']) { scroll-padding-top: 5.5rem; } }
 
 /* A statement's marks (AG2, home's story only): figures wide and tabular, short labels in condensed caps, the rules. */
 @utility figure { font-family: var(--font-heading); font-weight: 500; font-stretch: 125%; font-variant-numeric: tabular-nums lining-nums; }
@@ -236,6 +237,15 @@ html:has(body[data-look='new']) { scroll-padding-top: 11rem; }
 [data-paper]::before { content: ''; position: absolute; inset-block: 0; left: var(--pm); width: 5px; border-inline: 1px solid var(--margin); pointer-events: none; }
 /* The story's desk holds papers that carry their own margin, so it is ruled only, with no red rule of its own (D-UX-78). */
 [data-desk][data-story] { background-image: repeating-linear-gradient(to bottom, transparent 0 calc(2rem - 1px), var(--desk-rule) calc(2rem - 1px) 2rem); }
+/* From lg each trailer sits beside its words (AG3c): the name, the line on what the tool does and the buttons on the
+   left, the paper larger on the right, as the tools' pictures are; phones keep the paper under the name. */
+@media (min-width: 64rem) {
+  [data-reel] { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); grid-template-rows: 1fr auto auto auto 1fr; grid-template-areas: '. sheet' 'name sheet' 'what sheet' 'acts sheet' '. sheet'; column-gap: 3rem; align-items: start; }
+  [data-reel] > h3 { grid-area: name; }
+  [data-reel] > [data-what] { grid-area: what; margin-top: 1rem; }
+  [data-reel] > [data-acts] { grid-area: acts; display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
+  [data-reel] > [data-sheet] { grid-area: sheet; }
+}
 /* A trailer whose strokes are on their way stays blank; if they never come, its words show in type. */
 .js [data-src] [data-beat] { visibility: hidden; }
 /* Until a later trailer's strokes come, each pen line holds their box, so the sheet keeps its size when they do (AG3b). */

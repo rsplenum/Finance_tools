@@ -31,7 +31,7 @@ The brief and its load test: `docs/design-reference/finsight.md`. *Tested*: by `
 - **F4 Square buttons**: a filled link or button is a 44 px pill. *Tested*.
 - **F5 Accent-filled buttons**: pills are `bg-ink text-canvas`, soft `bg-ink/5`, or on a desk `bg-on-desk`; the accent keeps to the tool pages. *Tested*.
 - **F6 A narrow page**: sections run to `max-w-7xl`; running text `max-w-prose`. *Tested*.
-- **F7 Tight sections**: `py-16 sm:py-24` or more. *Tested*.
+- **F7 Tight sections**: `py-16 sm:py-24` or more; the story keeps `py-16` and the hero's foot `pb-24`, at the owner's word (D-UX-81). *Tested*.
 - **F8 Lone links underlined**: the bar's, the foot's, titles' and pills' carry no line; one in a sentence does. *Tested*.
 - **F9 Motion that does not end**: settle, tick and count only, loose to settled; what moves by itself stops within 5 s; the story's pages land whole, with "Stop and show it all"; nothing moves under reduced motion; a block lands once its top is in view; scrolled through, all shows. *Tested*.
 - **F10 Words or figures only once moved**: headings and counted figures are in the page, as the engine gave them, from the start. *Tested*.
@@ -39,9 +39,10 @@ The brief and its load test: `docs/design-reference/finsight.md`. *Tested*: by `
 - **F12 A one-line foot**: it links every tool, says what happens to the figures, the name large on a ledger rule. *Tested*.
 - **F13 Another order**: hero, story, tools, uses, figures, try, closing (D-UX-78). *Tested*.
 - **F14 Anything from another site.** *Tested*.
-- **F15 A heavy page**: home 166 KB unzipped (14-10-2026, D-UX-80), cap 170 KB. *Tested*, printed.
+- **F15 A heavy page**: home 168 KB unzipped (14-10-2026, D-UX-81), cap 170 KB. *Tested*, printed.
 - **F16 Another's own**: the reference's or the video's words, images, footage, logo, font or code; a custom cursor; a hijacked scroll. The critic's.
 - **F17 Shadows**: only paper (`shadow-paper`) casts one. *Tested*.
+- **F18 Faint tags**: a tag of the row of what the tools give under 4.5:1 on its fill as it comes into view, a fade counted, light and dark (D-UX-81). *Tested*.
 
 Colour: ink, ledger red (the margin rule only, never a figure) and marigold (highlighter, ticks, glow), one highlight per screen; the critic's. Yield in the new look: principle 6 (two ink pills may share a screen; the accent fills none), 7's page column, 10 for the fields and the glow (never behind a figure, still under reduced motion), and the Tokens' type, radius and motion lines (motion to 0.9 s, ending per F9).
 
