@@ -3,19 +3,22 @@
  * mark or a block falls onto its line and comes to rest with a small spring), tick (a line drawn when a rule is met) and
  * count (a figure runs to the engine's value, which is in the page from the start). The hero's and the closing's dashes
  * fall into ledger rows; the two ways in gather into what each gives; the story's pages land on the desk. What starts by
- * itself ends within 5 s or follows the reader. The story's trailer is written by a pen on its scratch paper once as it
- * comes into view and has "Show it all" (AG3, D-UX-77); the tool drawings draw themselves once (D-UX-73). Under reduced motion Base.astro
- * leaves out the `js` mark: everything is drawn once, at rest.
+ * itself ends within 5 s or follows the reader. The story's three trailers are each written by a pen on its scratch
+ * paper once as it comes into view and have "Show it all" (AG3, D-UX-77); the tool drawings draw themselves once
+ * (D-UX-73). The pen keeps pace with a reader who scrolls fast, and the pencil is heard only once switched on (AG3b,
+ * D-UX-78). Under reduced motion Base.astro leaves out the `js` mark: everything is drawn once, at rest.
  */
 export function start() {
   const motion = document.documentElement.classList.contains('js');
   for (const c of document.querySelectorAll<HTMLCanvasElement>('canvas[data-field]')) field(c, motion);
   for (const c of document.querySelectorAll<HTMLCanvasElement>('canvas[data-gather]')) gather(c, motion);
+  for (const p of document.querySelectorAll<HTMLElement>('[data-trailer][data-src]')) nearing(p);
   if (!motion) return;
   settling();
   header();
   drawings();
   for (const p of document.querySelectorAll<HTMLElement>('[data-trailer]')) trailer(p);
+  sound();
 }
 
 const ease = (p: number) => 1 - (1 - p) ** 3;
@@ -231,15 +234,118 @@ function header() {
 }
 
 /**
+ * The trailers after the first come as the reader nears them, half a screen ahead (AG3b, D-UX-78), so home's first load stays
+ * within F15: each line's strokes are put in beside its words, which then go to screen readers only. If they never come,
+ * the words stay in type. Under reduced motion they come the same way and stand written.
+ */
+const loaded = new WeakMap<HTMLElement, Promise<boolean>>();
+function nearing(sheet: HTMLElement) {
+  let done: (ok: boolean) => void = () => undefined;
+  loaded.set(sheet, new Promise((r) => { done = r; }));
+  const io = new IntersectionObserver((es) => {
+    if (!es.some((e) => e.isIntersecting)) return;
+    io.disconnect();
+    fetch(sheet.dataset.src ?? '').then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status))))).then((j: { lines: (string | null)[] }) => {
+      sheet.querySelectorAll('[data-beat]').forEach((b, i) => {
+        const svg = j.lines[i];
+        if (svg && b.firstElementChild) { b.firstElementChild.className = 'sr-only'; b.insertAdjacentHTML('beforeend', svg); }
+      });
+      return true;
+    }).catch(() => false).then((ok) => { done(ok); sheet.removeAttribute('data-src'); });
+  }, { rootMargin: '0px 0px 50% 0px' });
+  io.observe(sheet);
+}
+
+/** How fast the reader goes down the page, in px a ms, smoothed; nil once still for 150 ms, or going up. */
+const reader = (() => {
+  let y = 0, t = 0, v = 0;
+  addEventListener('scroll', () => {
+    const n = performance.now();
+    if (t && n > t) v = 0.6 * v + 0.4 * ((scrollY - y) / (n - t));
+    y = scrollY; t = n;
+  }, { passive: true });
+  return () => (performance.now() - t > 150 ? 0 : Math.max(0, v));
+})();
+
+/**
+ * Keeps a piece of motion in step with the reader (D-UX-78): at the reader's speed down the page, it plays fast enough to
+ * end before it leaves the screen (up to six times its pace), and eases back to its own pace once the reader slows; once
+ * scrolled past, it shows whole. `downs` are the pen's strokes on its timeline, for the pencil's sound.
+ */
+function follow(el: Element, anims: Animation[], end: number, downs?: [number, number][]) {
+  let rate = 1;
+  const tick = () => {
+    const a = anims[0];
+    if (!a || anims.some((x) => x.playState === 'idle') || anims.every((x) => x.playState === 'finished')) { pencil.down(el, false); return; }
+    const box = el.getBoundingClientRect(), v = reader();
+    if (box.bottom < 0) { anims.forEach((x) => x.finish()); pencil.down(el, false); return; }
+    const now = Number(a.currentTime ?? 0), leave = v > 0.05 ? box.bottom / v : Infinity;
+    const want = Math.min(6, Math.max(1, (end - now) / Math.max(leave, 1)));
+    let next = rate + (want - rate) * (want > rate ? 0.5 : 0.08);
+    if (Math.abs(want - next) < 0.05) next = want;
+    if (next !== rate) { rate = next; anims.forEach((x) => x.updatePlaybackRate(rate)); }
+    if (downs) pencil.down(el, downs.some(([f, to]) => now >= f && now < to));
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+/**
+ * The pencil's scratch (D-UX-78): made in the page from noise through a band of a pencil's pitch, so no sound file loads;
+ * silent until the reader switches it on, and heard only while a pen is down, its loudness a little uneven, as graphite
+ * on paper is.
+ */
+const pencil = (() => {
+  let ctx: AudioContext | undefined, gain: GainNode | undefined, band: BiquadFilterNode | undefined, on = false;
+  const down = new Set<Element>();
+  const begin = () => {
+    ctx = new AudioContext();
+    const noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate), d = noise.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    const src = ctx.createBufferSource();
+    src.buffer = noise; src.loop = true;
+    band = ctx.createBiquadFilter(); band.type = 'bandpass'; band.frequency.value = 3500; band.Q.value = 0.8;
+    gain = ctx.createGain(); gain.gain.value = 0;
+    src.connect(band).connect(gain).connect(ctx.destination);
+    src.start();
+  };
+  return {
+    set(v: boolean) { on = v; if (v && !ctx) begin(); void (v ? ctx?.resume() : ctx?.suspend()); },
+    down(el: Element, d: boolean) {
+      if (d) down.add(el); else down.delete(el);
+      if (!on || !ctx || !gain || !band) return;
+      gain.gain.setTargetAtTime(down.size ? 0.1 + Math.random() * 0.08 : 0, ctx.currentTime, 0.015);
+      band.frequency.setTargetAtTime(2800 + Math.random() * 1600, ctx.currentTime, 0.03);
+    },
+  };
+})();
+
+/** The pencil's switch, off by default; shown only where the page can make the sound. */
+function sound() {
+  const b = document.querySelector<HTMLButtonElement>('[data-sound]');
+  if (!b || !('AudioContext' in window)) return;
+  b.hidden = false;
+  b.addEventListener('click', () => {
+    const on = b.getAttribute('aria-pressed') !== 'true', state = b.querySelector('[data-state]');
+    b.setAttribute('aria-pressed', String(on));
+    if (state) state.textContent = ` · ${on ? 'on' : 'off'}`;
+    pencil.set(on);
+  });
+}
+
+/**
  * A story's trailer (AG3, D-UX-77): once the sheet is in view, the pen writes each line letter by letter, stroke after
  * stroke at one speed with a short lift between, a typeset card settles between the shots, a beat of stillness before
- * the last line, and the marigold marker swipes the result; about 5.5 s in all, never tied to the scroll. "Show it all"
- * finishes it at once, then offers to write it again. Without scripts or under reduced motion it stands written.
+ * the last line, and the marigold marker swipes the result; about 5.5 s in all at its own pace, quicker for a reader who
+ * scrolls fast (`follow`). "Show it all" finishes it at once, then offers to write it again. Without scripts or under
+ * reduced motion it stands written; one whose strokes never came keeps its words in type.
  */
 function trailer(sheet: HTMLElement) {
-  if (!document.documentElement.classList.contains('js')) return;
+  void (loaded.get(sheet) ?? Promise.resolve(true)).then((ok) => { if (ok) write(sheet); });
+}
+function write(sheet: HTMLElement) {
   const beats = [...sheet.querySelectorAll<HTMLElement>('[data-beat]')], mark = sheet.querySelector<SVGRectElement>('[data-mark]');
-  const btn = sheet.closest('[data-story]')?.querySelector<HTMLButtonElement>('[data-show]');
+  const btn = sheet.closest('[data-reel]')?.querySelector<HTMLButtonElement>('[data-show]');
   const strokes = (b: HTMLElement) => [...b.querySelectorAll<SVGPathElement>('path')];
   const pens = beats.filter((b) => b.dataset.beat !== 'card');
   let anims: Animation[] = [];
@@ -251,7 +357,7 @@ function trailer(sheet: HTMLElement) {
   const play = () => {
     const all = pens.flatMap(strokes), length = all.reduce((a, p) => a + p.getTotalLength(), 0);
     // The pen's speed: about 3 s of writing; the cards, the gaps, the lifts, the beat and the marker take the rest.
-    const lift = 6, speed = length / 3000, settle = { duration: 300, easing: 'ease-out', fill: 'both' as const };
+    const lift = 6, speed = length / 3000, settle = { duration: 300, easing: 'ease-out', fill: 'both' as const }, downs: [number, number][] = [];
     let t = 0;
     for (const [k, b] of beats.entries()) {
       if (b.dataset.beat === 'card') {
@@ -263,13 +369,14 @@ function trailer(sheet: HTMLElement) {
       for (const p of strokes(b)) {
         const d = p.getTotalLength() / speed;
         anims.push(p.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: d, delay: t, fill: 'both' }));
+        downs.push([t, t + d]);
         t += d + lift;
       }
       t += 100;
     }
-    if (mark) anims.push(mark.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 400, delay: t, easing: 'ease-out', fill: 'both' }));
-    const end = Promise.all(anims.map((a) => a.finished)).then(() => say(), () => undefined);
-    void end;
+    if (mark) { anims.push(mark.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 400, delay: t, easing: 'ease-out', fill: 'both' })); t += 400; }
+    void Promise.all(anims.map((a) => a.finished)).then(() => say(), () => undefined);
+    follow(sheet, anims, t, downs);
     say();
   };
   const done = () => anims.length > 0 && anims.every((a) => a.playState === 'finished');
@@ -292,10 +399,10 @@ function trailer(sheet: HTMLElement) {
 /**
  * The tool drawings draw themselves once as each comes into view (D-UX-73, D-UX-77): one pen at a constant speed, its
  * strokes in the order the drawing lists them (the ground, then the walls, the roof, the openings, the details), each
- * stroke's time set by its length, about 2 s in all. While it draws, each stroke is dashed by its own length, so it scales
- * with the drawing (a non-scaling stroke dashes in screen units and stops short: docs/GOTCHAS.md); once drawn, the one
- * path is put back. One already in view when the page opens stays drawn; without scripts or under reduced motion each
- * stands finished.
+ * stroke's time set by its length, about 2 s in all, quicker for a reader who scrolls fast (`follow`, D-UX-78). While it
+ * draws, each stroke is dashed by its own length, so it scales with the drawing (a non-scaling stroke dashes in screen
+ * units and stops short: docs/GOTCHAS.md); once drawn, the one path is put back. One already in view when the page opens
+ * stays drawn; without scripts or under reduced motion each stands finished.
  */
 function drawings() {
   const io = new IntersectionObserver((es) => {
@@ -304,9 +411,13 @@ function drawings() {
       if (svg.dataset.split) {
         if (!e.isIntersecting) continue;
         io.unobserve(svg);
-        svg.querySelectorAll<SVGElement>('[data-stroke]').forEach((p) => p.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }],
+        const anims = [...svg.querySelectorAll<SVGElement>('[data-stroke]')].map((p) => p.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }],
           { duration: Number(p.dataset.d), delay: Number(p.dataset.t), easing: 'linear', fill: 'both' }));
-        setTimeout(() => { svg.querySelectorAll('[data-stroke]').forEach((p) => p.remove()); svg.querySelectorAll<SVGElement>('[data-whole]').forEach((p) => p.style.removeProperty('display')); }, Number(svg.dataset.split) + 200);
+        void Promise.all(anims.map((a) => a.finished)).then(() => {
+          svg.querySelectorAll('[data-stroke]').forEach((p) => p.remove());
+          svg.querySelectorAll<SVGElement>('[data-whole]').forEach((p) => p.style.removeProperty('display'));
+        }, () => undefined);
+        follow(svg, anims, Number(svg.dataset.split));
         continue;
       }
       if (e.isIntersecting) { io.unobserve(svg); continue; }
