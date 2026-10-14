@@ -10,11 +10,12 @@ import { openAt } from './design-checks.mjs';
 /** The pages in the new look; UX3 and UX4 add the tool pages. */
 export const NEW_LOOK = ['/'];
 /** F13: our order, the borrower's path (docs/design-reference/finsight.md, rule 10). */
-export const ORDER = ['hero', 'story', 'tools', 'uses', 'figures', 'try', 'checked', 'closing'];
+export const ORDER = ['hero', 'story', 'tools', 'uses', 'figures', 'try', 'closing'];
 /**
  * F15: the page's weight as it loads, before compression (HTML, styles, scripts, the fonts), in KB: 160 measured 14-10-2026
- * (D-UX-72), AG1's 124 with Anek (27 KB, one weight cut to the signs the pages use) and the line drawings. The cap
- * leaves 10 KB for AG3's story; a heavier page lowers something else first.
+ * (D-UX-72), AG1's 124 with Anek (27 KB, one weight cut to the signs the pages use) and the line drawings; 166 with
+ * AG3b's three trailers, the two later ones fetched only as the reader nears them (D-UX-78). A heavier page lowers
+ * something else first.
  */
 export const WEIGHT_CAP = 170;
 
@@ -122,8 +123,9 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
     if (b.running.length || a.fields.join() !== b.fields.join()) v('F9 something moves under reduced motion');
     await rm.ctx.close();
     // F9 on a phone and on a short screen (1280 at 400%): scrolled through, every block that settles or lands shows, every
-    // line of the story's trailer is written (D-UX-77), and
-    // no two figures in a chart overlap (lesson 6). A block that waits for a share of its height never shows on a short one.
+    // line of the story's three trailers is written in strokes, the two that come as the reader nears them included
+    // (D-UX-77, D-UX-78), and no two figures in a chart overlap (lesson 6). A block that waits for a share of its height
+    // never shows on a short one.
     for (const [w, h] of [[360, 740], [320, 256]]) {
       const sc = await browser.newContext({ viewport: { width: w, height: h } });
       const p = await sc.newPage();
@@ -135,6 +137,7 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
       const r = await p.evaluate(() => {
         const hidden = [...document.querySelectorAll('[data-settle], [data-at]')].filter((e) => getComputedStyle(e).opacity !== '1')
           .concat([...document.querySelectorAll('.js [data-trailer] [data-beat]')].filter((b) => getComputedStyle(b).opacity !== '1'
+            || getComputedStyle(b).visibility !== 'visible' || (b.dataset.beat !== 'card' && !b.querySelector('svg path'))
             || [...b.querySelectorAll('path')].some((p) => parseFloat(getComputedStyle(p).strokeDashoffset) > 0.001)))
           .map((e) => `<${e.tagName.toLowerCase()}> "${(e.textContent ?? '').trim().slice(0, 30)}"`);
         const boxes = [...document.querySelectorAll('figure span, figure li')].filter((e) => e.childElementCount === 0 && e.textContent?.trim())

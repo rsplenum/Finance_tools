@@ -37,9 +37,9 @@ The brief and its load test: `docs/design-reference/finsight.md`. *Tested*: by `
 - **F10 Words or figures only once moved**: headings and counted figures are in the page, as the engine gave them, from the start. *Tested*.
 - **F11 A tool two taps away**: every tool in the top bar, in the first screen. *Tested*.
 - **F12 A one-line foot**: it links every tool, says what happens to the figures, the name large on a ledger rule. *Tested*.
-- **F13 Another order**: hero, story, tools, uses, figures, try, checked, closing. *Tested*.
+- **F13 Another order**: hero, story, tools, uses, figures, try, closing (D-UX-78). *Tested*.
 - **F14 Anything from another site.** *Tested*.
-- **F15 A heavy page**: home 160 KB before compression (14-10-2026), cap 170 KB. *Tested*, printed.
+- **F15 A heavy page**: home 166 KB unzipped (14-10-2026, D-UX-80), cap 170 KB. *Tested*, printed.
 - **F16 Another's own**: the reference's or the video's words, images, footage, logo, font or code; a custom cursor; a hijacked scroll. The critic's.
 - **F17 Shadows**: only paper (`shadow-paper`) casts one. *Tested*.
 

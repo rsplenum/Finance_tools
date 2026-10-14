@@ -2,9 +2,10 @@
 /**
  * The home page in FinSight's own look (AG2, D-UX-68 to D-UX-72; the brief: docs/design-reference/finsight.md): loose
  * figures put in order, so marks fall from the field and settle onto paper. In our order: a hero whose dashes fall into
- * ledger rows; the story on the ink desk, a trailer of the DSCR tool: fictional case S written by a pen on a scratch paper,
- * once, as it comes into view (site/src/home/story.ts, Trailer.astro; AG3, D-UX-77); the four tools, each with a line drawing on its glow; who it is for; what happens to your
- * figures; two ways in on the ink desk; the rules behind the figures as a ruled list; the closing desk. The motion is
+ * ledger rows; the story on the ink desk, three trailers one after another, the DSCR's, the project report's and the
+ * estimate's, each a fictional case written by a pen on a scratch paper once as it comes into view, under its tool's name
+ * (site/src/home/story.ts, Trailer.astro; AG3, D-UX-77; AG3b, D-UX-78); the four tools, each with a line drawing on its
+ * glow; who it is for; what happens to your figures; two ways in on the ink desk; the closing desk. The motion is
  * settle, tick and count only (site/src/home/home.ts), it ends by itself (WCAG 2.2.2), and without scripts or under
  * reduced motion everything stands where it rests. FinSight's rules (docs/DESIGN.md) are held by
  * scripts/forbidden-checks.mjs.
@@ -14,13 +15,7 @@ import Arrow from '../home/Arrow.astro';
 import Trailer from '../home/Trailer.astro';
 import Drawing from '../home/Drawing.astro';
 import { READY } from '../site';
-import { DSCR_TRAILER, STORY_TARGET, STORY_TYPED } from '../home/story';
-import DSCR from '../../../engine/data/dscr.json';
-import TAX from '../../../engine/data/tax.json';
-import ESTIMATE from '../../../engine/data/estimate.json';
-import REPORT from '../../../engine/data/report.json';
-import CMA from '../../../engine/data/cma.json';
-import RATIOS from '../../../engine/data/ratios.json';
+import { TRAILERS, STORY_TARGET, STORY_TYPED } from '../home/story';
 
 const WRAP = 'mx-auto max-w-7xl px-4 sm:px-8';
 const INK = 'inline-flex min-h-11 items-center justify-center rounded-full bg-ink px-6 py-2.5 font-medium text-canvas hover:bg-ink/85';
@@ -38,8 +33,8 @@ const USES = [
   { who: 'A chartered accountant', head: 'A project report whose every figure is worked out twice', href: '/project-report/', go: 'Open the project report' },
   { who: 'A business renewing its cash credit', head: 'Forms I to VI and the limit, from five years’ figures', href: '/cma/', go: 'Open CMA data' },
 ];
-const day = (d: string) => d.split('-').reverse().join('-');
-const RULES = [DSCR, TAX, ESTIMATE, REPORT, CMA, RATIOS].sort((a, b) => b.date.localeCompare(a.date));
+// Each trailer under its tool's name (D-UX-78).
+const REELS = TRAILERS.map((t) => ({ trailer: t, name: READY.find((r) => r.href === t.go.href)?.name ?? '' }));
 // The DSCR's questions are fixed (D-UX-10's seven); the other tools' depend on the case, so they show no count.
 const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
 ---
@@ -57,16 +52,24 @@ const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
   </section>
 
   <section data-ag="story" class={`${WRAP} py-16 sm:py-24`}>
-    <h2 data-settle class={`${H2} max-w-3xl`}>From seven answers to a DSCR statement and its verdict</h2>
-    <p data-settle class="mt-4 max-w-lg text-lead text-ink-muted">A fictional firm asks for a loan. Every figure below is worked out by the DSCR tool, as it would be for you.</p>
+    <h2 data-settle class={`${H2} max-w-3xl`}>Three tools at work, each on a fictional case</h2>
+    <p data-settle class="mt-4 max-w-lg text-pretty text-lead text-ink-muted">Every figure below is worked out by the tool, as it would be for you.</p>
     <div data-story data-desk class="mt-10 rounded-panel px-3 py-8 sm:px-10 sm:py-12">
       <div class="mx-auto flex min-h-11 max-w-xl items-center justify-end">
-        <button type="button" data-show hidden class={DESK_SOFT}>Show it all</button>
+        <button type="button" data-sound aria-pressed="false" hidden class={DESK_SOFT}>Pencil sound<span aria-hidden="true" data-state>&nbsp;· off</span></button>
       </div>
-      <div class="mt-6"><Trailer trailer={DSCR_TRAILER} /></div>
-      <div class="mx-auto mt-8 max-w-xl">
-        <a href={DSCR_TRAILER.go.href} class={DESK}>{DSCR_TRAILER.go.text}</a>
-      </div>
+      {REELS.map((r, i) => (
+        <div data-reel class="mt-12 sm:mt-16">
+          <div class="mx-auto flex max-w-xl flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h3 class="min-w-0 text-title text-on-desk">{r.name}</h3>
+            <button type="button" data-show hidden class={`${DESK_SOFT} min-w-40 shrink-0`}>Show it all</button>
+          </div>
+          <div class="mt-6"><Trailer trailer={r.trailer} lazy={i > 0} /></div>
+          <div class="mx-auto mt-8 max-w-xl">
+            <a href={r.trailer.go.href} class={DESK}>{r.trailer.go.text}</a>
+          </div>
+        </div>
+      ))}
     </div>
   </section>
 
@@ -130,20 +133,6 @@ const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
         <a href="/project-report/" class={`mt-8 ${DESK_SOFT}`}>Open the project report</a>
       </div>
     </div>
-  </section>
-
-  <section data-ag="checked" class={`${WRAP} py-16 sm:py-24`}>
-    <h2 data-settle class={`${H2} max-w-3xl`}>The rules behind the figures, each with its date</h2>
-    <p data-settle class="mt-4 max-w-lg text-lead text-ink-muted">Every rule and rate sits in a dated file with its source, and each file has a date by which it is looked at again.</p>
-    <ul class="mt-12 border-t border-ink">
-      {RULES.map((r, i) => (
-        <li data-settle style={`--i:${i}`} class="grid gap-1 border-b border-line py-5 sm:grid-cols-4 sm:items-baseline sm:gap-6">
-          <p class="figure text-sm text-ink-muted">{day(r.date)}</p>
-          <h3 class="text-balance text-title text-ink sm:col-span-2">{r.title}</h3>
-          <p class="text-sm text-ink-muted sm:text-right">Review by <span class="figure">{day(r.reviewBy)}</span></p>
-        </li>
-      ))}
-    </ul>
   </section>
 
   <section data-ag="closing" class="px-4 py-12 sm:px-8 sm:py-16">

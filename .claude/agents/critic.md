@@ -12,7 +12,7 @@ How to review a page:
 3. Look at screenshots only for what text cannot tell: the layout and order at 360 px light and dark for the states with a result, and one desktop shot. Read each image once; never all of them.
 4. Read the page's component only to find a cause.
 
-Judge each state (empty, partly filled, provisional, error, result, short of the target with its plan, the download) against the principles, in this order: is the answer first; does the default path ask only the owner's fields; is each control beside the figure it changes; are labels on the chart or table; is there one accent and one filled button a screen; is a reset in reach; do the words read plainly; does anything carry no meaning.
+Judge each state (empty, partly filled, provisional, error, result, short of the target with its plan, the download; on a page whose parts load or move as it scrolls, also the page scrolled through slowly and fast, and again once its motion has ended, measuring whether anything below jumps) against the principles, in this order: is the answer first; does the default path ask only the owner's fields; is each control beside the figure it changes; are labels on the chart or table; is there one accent and one filled button a screen; is a reset in reach; do the words read plainly; does anything carry no meaning.
 
 Rank each finding:
 - **Blocker**: an accessibility failure (any measured WCAG A or AA defect), broken navigation, an unusable phone layout, or an answer that is wrong or hidden. Always a blocker, whatever its size.

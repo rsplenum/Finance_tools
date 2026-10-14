@@ -36,6 +36,24 @@ export interface PenLine {
   top: number; bottom: number;
 }
 
+/** A rounded path rewritten in moves from the point before: the same points in fewer digits, since home sends every
+ *  stroke in its HTML. A line that goes nowhere is dropped, unless it is the stroke's only one. */
+function rel(d: string): string {
+  let cx = 0, cy = 0, out = '', last = '';
+  for (const [, c, args] of d.matchAll(/([MLC])([^MLC]*)/g)) {
+    const v = (args.match(/-?\d+/g) ?? []).map(Number), n = c === 'C' ? 6 : 2, cmd = c === 'C' ? 'c' : 'l';
+    let i = 0;
+    if (c === 'M') { [cx, cy] = v; out += `M${cx} ${cy}`; last = 'M'; i = 2; }
+    for (; i < v.length; i += n) {
+      const seg = v.slice(i, i + n).map((p, j) => p - (j % 2 ? cy : cx));
+      if (cmd === 'l' && !seg[0] && !seg[1] && (i + n < v.length || last !== 'M')) continue;
+      out += (last === cmd ? (seg[0] < 0 ? '' : ' ') : cmd) + seg.map((p, j) => (j && p >= 0 ? ' ' : '') + p).join('');
+      last = cmd; cx = v[i + n - 2]; cy = v[i + n - 1];
+    }
+  }
+  return out;
+}
+
 /** Lays a line out in the pen's strokes; `✓` is drawn as a tick. A character the font lacks is a mistake, not a gap. */
 export function write(text: string): PenLine {
   const strokes: PenLine['strokes'] = [], x: number[] = [];
@@ -49,8 +67,8 @@ export function write(text: string): PenLine {
       const d = part.replace(/-?[\d.]+/g, (v) => {
         if (n++ % 2 === 0) return String(Math.round((Number(v) + ox) / OUT));
         const y = BASE - Number(v); top = Math.min(top, y); bottom = Math.max(bottom, y); return String(Math.round(y / OUT));
-      }).replace(/\s*([MLC])\s*/g, '$1');
-      strokes.push({ d, at });
+      });
+      strokes.push({ d: rel(d), at });
     }
     ox += g.w - TRACK;
   });
