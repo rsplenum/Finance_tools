@@ -2,17 +2,17 @@
   "pages": {
     "/": {
       "before": 27,
-      "shown": 740,
-      "all": 740,
+      "shown": 542,
+      "all": 542,
       "plan": null,
       "long": 0,
-      "abbr": 6,
+      "abbr": 5,
       "questions": 0,
       "controls": 15,
       "answerAt": 0.6,
       "gap": null,
       "styles": 7,
-      "colours": 0,
+      "colours": 1,
       "outOfSight": null
     },
     "/404.html": {
@@ -226,6 +226,14 @@
       "from": 674,
       "to": 740,
       "why": "D-UX-75",
+      "date": "2026-10-14"
+    },
+    {
+      "page": "/",
+      "count": "colours",
+      "from": 0,
+      "to": 1,
+      "why": "D-UX-77",
       "date": "2026-10-14"
     }
   ],

@@ -122,7 +122,7 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
     if (b.running.length || a.fields.join() !== b.fields.join()) v('F9 something moves under reduced motion');
     await rm.ctx.close();
     // F9 on a phone and on a short screen (1280 at 400%): scrolled through, every block that settles or lands shows, every
-    // line of the story's paper is written (D-UX-74), and
+    // line of the story's trailer is written (D-UX-77), and
     // no two figures in a chart overlap (lesson 6). A block that waits for a share of its height never shows on a short one.
     for (const [w, h] of [[360, 740], [320, 256]]) {
       const sc = await browser.newContext({ viewport: { width: w, height: h } });
@@ -134,7 +134,8 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
       await p.waitForTimeout(5000);
       const r = await p.evaluate(() => {
         const hidden = [...document.querySelectorAll('[data-settle], [data-at]')].filter((e) => getComputedStyle(e).opacity !== '1')
-          .concat([...document.querySelectorAll('.js [data-line]:not(.written)')])
+          .concat([...document.querySelectorAll('.js [data-trailer] [data-beat]')].filter((b) => getComputedStyle(b).opacity !== '1'
+            || [...b.querySelectorAll('path')].some((p) => parseFloat(getComputedStyle(p).strokeDashoffset) > 0.001)))
           .map((e) => `<${e.tagName.toLowerCase()}> "${(e.textContent ?? '').trim().slice(0, 30)}"`);
         const boxes = [...document.querySelectorAll('figure span, figure li')].filter((e) => e.childElementCount === 0 && e.textContent?.trim())
           .map((e) => ({ t: e.textContent.trim(), b: e.getBoundingClientRect() })).filter(({ b }) => b.width > 1 && b.height > 1);

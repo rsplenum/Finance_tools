@@ -5,7 +5,6 @@
  */
 import { frontDoor, preview, withBorrower, type State } from '../dscr/model';
 import { dscrViableOf } from '../dscr/levers';
-import { workedYear, type Paper } from './paper';
 
 const door = (instalments: string): State => {
   const s = withBorrower(frontDoor('2026-10'), 'firm');
@@ -50,32 +49,31 @@ export const STORY_FIX = (() => {
   return { head: l.head, text: l.text, move: l.move };
 })();
 
-const verdictHead = (f: StoryFrame) => `${f.verdict.split(':')[0]}.`;
-const nbYear = (t: string) => t.replace(/(\d{4})-(\d{2})/g, '$1‑$2');
-/** The DSCR story as one scratch paper (AG3, D-UX-74): the seven answers; each year as typed and its verdict; the
- *  lender's change; each year with it; the lowest year worked out in the statement's own lines, its DSCR counted from the
- *  lowest as typed and ticked. */
-export const DSCR_PAPER: Paper = (() => {
-  const st = preview(STORY_FIXED).statement, i = st?.years.indexOf(STORY_LONGER.lowestYear) ?? -1;
-  if (!st || i < 0) throw new Error('The story case gives no statement.');
-  const worked = workedYear(st.lines, i, ['pbt', 'Profit after tax', 'available', 'service'], 'dscr');
-  const dscr = worked[worked.length - 1];
-  Object.assign(dscr, { label: `${dscr.label}, against ${STORY_TARGET.minimum}`, from: STORY_TYPED.lowest, tick: true });
-  const each = (f: StoryFrame) => [
-    { kind: 'years' as const, years: f.years.map((y) => ({ fy: nbYear(y.fy), value: y.dscr })) },
-    { label: `Lowest year, ${nbYear(f.lowestYear)}, against ${STORY_TARGET.minimum}`, value: f.lowest },
-    { label: `Average, against ${STORY_TARGET.average}`, value: f.average },
-    { kind: 'text' as const, label: verdictHead(f) },
-  ];
+/** One line of a trailer: the pen writes `hand` and `title` lines; a `card` is set in type between them, as a trailer's
+ *  title card cuts between its shots; `mark` is the part the marigold marker swipes across once the line is written. */
+export interface TrailerLine { kind: 'title' | 'hand' | 'card'; text: string; mark?: string }
+export interface Trailer { id: string; lines: TrailerLine[]; go: { href: string; text: string } }
+
+/** The DSCR story as a trailer (AG3, D-UX-77): the question; who asks for what; the lowest year as typed, cash over
+ *  the EMIs, short of the target; the lender's change; the same sum passing, marked. Every figure the engine's. */
+export const DSCR_TRAILER: Trailer = (() => {
+  const sum = (s: State, f: StoryFrame) => {
+    const st = preview(s).statement, i = st?.years.indexOf(f.lowestYear) ?? -1, v = (id: string) => st?.lines.find((l) => l.id === id)?.values[i];
+    const a = v('available'), b = v('service'), r = v('dscr');
+    if (!a || !b || r !== f.lowest) throw new Error('The story case gives no lowest year.');
+    return `${a} ÷ ${b} = ${r}`;
+  };
+  const l = STORY_CASE.loan;
   return {
-    id: 'dscr', tab: 'DSCR', kicker: 'Case S',
-    title: `A firm asks for Rs. ${STORY_CASE.loan.amount} over ${years(STORY_CASE.loan.instalments)}`,
-    steps: [
-      { head: 'What the firm typed', lines: STORY_INPUTS.map((x) => ({ label: x.label, value: x.value })) },
-      { head: `Each year's DSCR, as typed`, lines: each(STORY_TYPED) },
-      { head: STORY_FIX.head, lines: [{ kind: 'text', label: STORY_FIX.text }] },
-      { head: `Each year's DSCR, with ${STORY_FIXED.loan.instalments} instalments`, lines: each(STORY_LONGER) },
-      { head: `The lowest year worked out, ${nbYear(STORY_LONGER.lowestYear)}`, lines: worked },
+    id: 'dscr',
+    lines: [
+      { kind: 'title', text: 'Will the loan pass?' },
+      { kind: 'hand', text: `Profit ${STORY_CASE.cells.pbdit?.[0]} a year` },
+      { kind: 'hand', text: `Loan ${l.amount} · ${l.ratePct}% · ${years(l.instalments)}` },
+      { kind: 'card', text: `Lowest year · target ${STORY_TARGET.minimum}` },
+      { kind: 'hand', text: sum(STORY_CASE, STORY_TYPED) },
+      { kind: 'card', text: `Over ${STORY_FIXED.loan.instalments} instalments` },
+      { kind: 'hand', text: `${sum(STORY_FIXED, STORY_LONGER)} ✓`, mark: STORY_LONGER.lowest },
     ],
     go: { href: '/dscr/', text: 'Try it with your figures' },
   };

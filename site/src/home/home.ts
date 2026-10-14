@@ -3,8 +3,8 @@
  * mark or a block falls onto its line and comes to rest with a small spring), tick (a line drawn when a rule is met) and
  * count (a figure runs to the engine's value, which is in the page from the start). The hero's and the closing's dashes
  * fall into ledger rows; the two ways in gather into what each gives; the story's pages land on the desk. What starts by
- * itself ends within 5 s or follows the reader. The story's scratch paper writes each line once as it comes into view and
- * has "Show it all" (AG3, D-UX-74); the tool drawings draw themselves once (D-UX-73). Under reduced motion Base.astro
+ * itself ends within 5 s or follows the reader. The story's trailer is written by a pen on its scratch paper once as it
+ * comes into view and has "Show it all" (AG3, D-UX-77); the tool drawings draw themselves once (D-UX-73). Under reduced motion Base.astro
  * leaves out the `js` mark: everything is drawn once, at rest.
  */
 export function start() {
@@ -15,7 +15,7 @@ export function start() {
   settling();
   header();
   drawings();
-  for (const p of document.querySelectorAll<HTMLElement>('[data-paper]')) paper(p);
+  for (const p of document.querySelectorAll<HTMLElement>('[data-trailer]')) trailer(p);
 }
 
 const ease = (p: number) => 1 - (1 - p) ** 3;
@@ -230,88 +230,109 @@ function header() {
   }, { passive: true });
 }
 
-/** Count: the figure runs from `data-from` to the value it holds in the page, in its own decimals, and ends on that text. */
-function count(el: HTMLElement, alive: () => boolean, then: () => void) {
-  const final = el.dataset.value ?? (el.dataset.value = el.textContent ?? '');
-  const to = Number(final.replace(/,/g, '')), from = Number((el.dataset.from ?? '0').replace(/,/g, '')), dp = (final.split('.')[1] ?? '').length;
-  if (!Number.isFinite(to)) { then(); return; }
-  const fmt = (v: number) => v.toLocaleString('en-IN', { minimumFractionDigits: dp, maximumFractionDigits: dp });
-  const t0 = performance.now(), ms = 700;
-  const step = (now: number) => {
-    if (!alive()) return;
-    const p = clamp((now - t0) / ms);
-    el.textContent = p < 1 ? fmt(from + (to - from) * ease(p)) : final;
-    if (p < 1) requestAnimationFrame(step); else then();
-  };
-  requestAnimationFrame(step);
-}
-
 /**
- * The story's scratch paper (AG3, D-UX-74): each line writes itself once as it comes into view, in the paper's order, a
- * pen's pace apart, and stays written when the reader scrolls back; never tied to the scroll position. A counted figure
- * then runs to the engine's value and is ticked. "Show it all" writes every line at once; once all are written it offers
- * to write them again. A line is in view when its top is above the lower eighth of the screen, so a short screen writes it too.
+ * A story's trailer (AG3, D-UX-77): once the sheet is in view, the pen writes each line letter by letter, stroke after
+ * stroke at one speed with a short lift between, a typeset card settles between the shots, a beat of stillness before
+ * the last line, and the marigold marker swipes the result; about 5.5 s in all, never tied to the scroll. "Show it all"
+ * finishes it at once, then offers to write it again. Without scripts or under reduced motion it stands written.
  */
-function paper(sheet: HTMLElement) {
-  const lines = [...sheet.querySelectorAll<HTMLElement>('[data-line]')], btn = sheet.parentElement?.closest('[data-story]')?.querySelector<HTMLButtonElement>('[data-show]');
-  let queue: HTMLElement[] = [], timer = 0, run = 0;
-  const say = () => { if (btn) btn.textContent = lines.every((l) => l.classList.contains('written')) ? 'Write it again' : 'Show it all'; };
-  const write = (l: HTMLElement, me: number) => {
-    l.classList.add('written');
-    const c = l.querySelector<HTMLElement>('[data-count]'), t = l.querySelector<HTMLElement>('[data-tick]');
-    if (c) window.setTimeout(() => count(c, () => me === run, () => t?.classList.add('ticked')), 300);
-    else t?.classList.add('ticked');
+function trailer(sheet: HTMLElement) {
+  if (!document.documentElement.classList.contains('js')) return;
+  const beats = [...sheet.querySelectorAll<HTMLElement>('[data-beat]')], mark = sheet.querySelector<SVGRectElement>('[data-mark]');
+  const btn = sheet.closest('[data-story]')?.querySelector<HTMLButtonElement>('[data-show]');
+  const strokes = (b: HTMLElement) => [...b.querySelectorAll<SVGPathElement>('path')];
+  const pens = beats.filter((b) => b.dataset.beat !== 'card');
+  let anims: Animation[] = [];
+  const hide = () => {
+    for (const b of beats) if (b.dataset.beat === 'card') b.style.opacity = '0';
+    for (const p of pens.flatMap(strokes)) { p.setAttribute('pathLength', '1'); p.style.strokeDasharray = '1'; p.style.strokeDashoffset = '1'; }
+    if (mark) { mark.style.transformBox = 'fill-box'; mark.style.transformOrigin = 'left center'; mark.style.transform = 'scaleX(0)'; }
+  };
+  const play = () => {
+    const all = pens.flatMap(strokes), length = all.reduce((a, p) => a + p.getTotalLength(), 0);
+    // The pen's speed: about 3 s of writing; the cards, the gaps, the lifts, the beat and the marker take the rest.
+    const lift = 6, speed = length / 3000, settle = { duration: 300, easing: 'ease-out', fill: 'both' as const };
+    let t = 0;
+    for (const [k, b] of beats.entries()) {
+      if (b.dataset.beat === 'card') {
+        if (k === beats.length - 2) t += 300;
+        anims.push(b.animate([{ opacity: 0, transform: 'translateY(-0.4rem)' }, { opacity: 1, transform: 'none' }], { ...settle, delay: t }));
+        t += 300;
+        continue;
+      }
+      for (const p of strokes(b)) {
+        const d = p.getTotalLength() / speed;
+        anims.push(p.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: d, delay: t, fill: 'both' }));
+        t += d + lift;
+      }
+      t += 100;
+    }
+    if (mark) anims.push(mark.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], { duration: 400, delay: t, easing: 'ease-out', fill: 'both' }));
+    const end = Promise.all(anims.map((a) => a.finished)).then(() => say(), () => undefined);
+    void end;
     say();
   };
-  const pump = () => {
-    const l = queue.shift();
-    timer = l ? window.setTimeout(pump, 110) : 0;
-    if (l) write(l, run);
-  };
+  const done = () => anims.length > 0 && anims.every((a) => a.playState === 'finished');
+  const say = () => { if (btn) btn.textContent = done() ? 'Write it again' : 'Show it all'; };
+  hide();
+  // A third of the sheet, or half a short screen (1280 at 400%) when the sheet is taller than the screen.
   const io = new IntersectionObserver((es) => {
-    for (const e of es) if (e.isIntersecting) { io.unobserve(e.target); queue.push(e.target as HTMLElement); }
-    queue.sort((a, b) => lines.indexOf(a) - lines.indexOf(b));
-    if (!timer) pump();
-  }, { rootMargin: '0px 0px -12% 0px' });
-  const watch = () => lines.forEach((l) => io.observe(l));
-  watch();
+    if (es.some((e) => e.intersectionRatio >= 0.35 || e.intersectionRect.height >= innerHeight / 2)) { io.disconnect(); play(); }
+  }, { threshold: [0, 0.1, 0.2, 0.35] });
+  io.observe(sheet);
   if (!btn) return;
   btn.hidden = false;
   say();
   btn.addEventListener('click', () => {
-    clearTimeout(timer); timer = 0; queue = []; run += 1; io.disconnect();
-    if (btn.textContent === 'Show it all') {
-      for (const c of sheet.querySelectorAll<HTMLElement>('[data-count]')) if (c.dataset.value) c.textContent = c.dataset.value;
-      lines.forEach((l) => { l.classList.add('written'); l.querySelector('[data-tick]')?.classList.add('ticked'); });
-      say();
-    } else {
-      lines.forEach((l) => { l.classList.remove('written'); l.querySelector('[data-tick]')?.classList.remove('ticked'); });
-      say(); requestAnimationFrame(watch);
-    }
+    if (btn.textContent === 'Show it all') { io.disconnect(); if (!anims.length) play(); anims.forEach((a) => a.finish()); say(); return; }
+    anims.forEach((a) => a.cancel()); anims = []; play();
   });
 }
 
 /**
- * The tool drawings draw themselves once as each comes into view (D-UX-73): the drawing's strokes, split from its one
- * path, each drawn as a pen would, one after another, in about 1.5 s in all. One already in view when the page opens stays
- * drawn; without scripts or under reduced motion each stands finished.
+ * The tool drawings draw themselves once as each comes into view (D-UX-73, D-UX-77): one pen at a constant speed, its
+ * strokes in the order the drawing lists them (the ground, then the walls, the roof, the openings, the details), each
+ * stroke's time set by its length, about 2 s in all. While it draws, each stroke is dashed by its own length, so it scales
+ * with the drawing (a non-scaling stroke dashes in screen units and stops short: docs/GOTCHAS.md); once drawn, the one
+ * path is put back. One already in view when the page opens stays drawn; without scripts or under reduced motion each
+ * stands finished.
  */
 function drawings() {
   const io = new IntersectionObserver((es) => {
     for (const e of es) {
       const svg = e.target as SVGSVGElement;
-      if (svg.dataset.split) { if (e.isIntersecting) { io.unobserve(svg); svg.classList.add('drawn'); } continue; }
-      if (e.isIntersecting) { io.unobserve(svg); continue; }
-      const path = svg.querySelector('path'), d = path?.getAttribute('d');
-      if (!path || !d) continue;
-      const strokes = d.split(/(?=M)/), n = strokes.length, each = 0.45, gap = (1.5 - each) / Math.max(1, n - 1);
-      for (const [k, part] of strokes.entries()) {
-        const p = path.cloneNode() as SVGPathElement;
-        p.setAttribute('d', part); p.setAttribute('pathLength', '1'); p.style.setProperty('--t', `${(k * gap).toFixed(3)}s`);
-        path.before(p);
+      if (svg.dataset.split) {
+        if (!e.isIntersecting) continue;
+        io.unobserve(svg);
+        svg.querySelectorAll<SVGElement>('[data-stroke]').forEach((p) => p.animate([{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }],
+          { duration: Number(p.dataset.d), delay: Number(p.dataset.t), easing: 'linear', fill: 'both' }));
+        setTimeout(() => { svg.querySelectorAll('[data-stroke]').forEach((p) => p.remove()); svg.querySelectorAll<SVGElement>('[data-whole]').forEach((p) => p.style.removeProperty('display')); }, Number(svg.dataset.split) + 200);
+        continue;
       }
-      path.remove();
-      svg.dataset.split = '1';
+      if (e.isIntersecting) { io.unobserve(svg); continue; }
+      const scale = svg.clientWidth / svg.viewBox.baseVal.width, width = `${(1.6 / (scale || 1)).toFixed(3)}`;
+      const strokes: SVGGeometryElement[] = [];
+      for (const whole of svg.querySelectorAll<SVGGeometryElement>('path, circle')) {
+        const parts = whole.tagName === 'path' ? (whole.getAttribute('d') ?? '').split(/(?=M)/) : [null];
+        for (const part of parts) {
+          const p = whole.cloneNode() as SVGGeometryElement;
+          if (part) p.setAttribute('d', part);
+          p.removeAttribute('vector-effect'); p.setAttribute('stroke-width', width); p.setAttribute('pathLength', '1'); p.dataset.stroke = '';
+          p.style.strokeDasharray = '1'; p.style.strokeDashoffset = '1';
+          whole.before(p); strokes.push(p);
+        }
+        whole.dataset.whole = ''; whole.style.display = 'none';
+      }
+      // One pen: each stroke after the last, at the same speed, with a short lift between.
+      const lengths = strokes.map((p) => p.getTotalLength()), lift = Math.min(0.03, 0.6 / strokes.length);
+      const speed = lengths.reduce((a, b) => a + b, 0) / (2 - lift * strokes.length);
+      let t = 0;
+      for (const [k, p] of strokes.entries()) {
+        const d = lengths[k] / Math.max(speed, 1);
+        p.dataset.t = String(Math.round(t * 1000)); p.dataset.d = String(Math.round(d * 1000));
+        t += d + lift;
+      }
+      svg.dataset.split = String(Math.round(t * 1000));
     }
   }, { rootMargin: '0px 0px -10% 0px' });
   document.querySelectorAll('[data-draw]').forEach((s) => io.observe(s));

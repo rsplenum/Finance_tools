@@ -2,8 +2,8 @@
 /**
  * The home page in FinSight's own look (AG2, D-UX-68 to D-UX-72; the brief: docs/design-reference/finsight.md): loose
  * figures put in order, so marks fall from the field and settle onto paper. In our order: a hero whose dashes fall into
- * ledger rows; the story on the ink desk, the engine's figures for fictional case S written on one scratch paper, each
- * line once as it comes into view (site/src/home/story.ts, Paper.astro; AG3, D-UX-74); the four tools, each with a line drawing on its glow; who it is for; what happens to your
+ * ledger rows; the story on the ink desk, a trailer of the DSCR tool: fictional case S written by a pen on a scratch paper,
+ * once, as it comes into view (site/src/home/story.ts, Trailer.astro; AG3, D-UX-77); the four tools, each with a line drawing on its glow; who it is for; what happens to your
  * figures; two ways in on the ink desk; the rules behind the figures as a ruled list; the closing desk. The motion is
  * settle, tick and count only (site/src/home/home.ts), it ends by itself (WCAG 2.2.2), and without scripts or under
  * reduced motion everything stands where it rests. FinSight's rules (docs/DESIGN.md) are held by
@@ -11,10 +11,10 @@
  */
 import Base from '../Base.astro';
 import Arrow from '../home/Arrow.astro';
-import Paper from '../home/Paper.astro';
+import Trailer from '../home/Trailer.astro';
 import Drawing from '../home/Drawing.astro';
 import { READY } from '../site';
-import { DSCR_PAPER, STORY_TARGET, STORY_TYPED } from '../home/story';
+import { DSCR_TRAILER, STORY_TARGET, STORY_TYPED } from '../home/story';
 import DSCR from '../../../engine/data/dscr.json';
 import TAX from '../../../engine/data/tax.json';
 import ESTIMATE from '../../../engine/data/estimate.json';
@@ -60,12 +60,12 @@ const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
     <h2 data-settle class={`${H2} max-w-3xl`}>From seven answers to a DSCR statement and its verdict</h2>
     <p data-settle class="mt-4 max-w-lg text-lead text-ink-muted">A fictional firm asks for a loan. Every figure below is worked out by the DSCR tool, as it would be for you.</p>
     <div data-story data-desk class="mt-10 rounded-panel px-3 py-8 sm:px-10 sm:py-12">
-      <div class="mx-auto flex min-h-11 max-w-3xl items-center justify-end">
+      <div class="mx-auto flex min-h-11 max-w-xl items-center justify-end">
         <button type="button" data-show hidden class={DESK_SOFT}>Show it all</button>
       </div>
-      <div class="mt-6"><Paper paper={DSCR_PAPER} /></div>
-      <div class="mx-auto mt-8 max-w-3xl">
-        <a href={DSCR_PAPER.go.href} class={DESK}>{DSCR_PAPER.go.text}</a>
+      <div class="mt-6"><Trailer trailer={DSCR_TRAILER} /></div>
+      <div class="mx-auto mt-8 max-w-xl">
+        <a href={DSCR_TRAILER.go.href} class={DESK}>{DSCR_TRAILER.go.text}</a>
       </div>
     </div>
   </section>
