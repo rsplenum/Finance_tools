@@ -247,12 +247,15 @@ const frames = (page) => page.evaluate(() => new Promise((r) => requestAnimation
 /** One page's counts (nil where a count does not apply), its first question's place in screens, a defect in its marks, and what the counts saw. */
 export async function countPage(browser, BASE, path, { text = false, effectsToo = true } = {}) {
   const state = STATES[path]?.result, plan = STATES[path]?.plan;
+  // Each page is read still, under reduced motion: as a reader finds it once its motion has played (a heading typed in
+  // full, a block risen into view; AG1, D-UX-67), not half drawn at the moment of loading.
+  const open = () => openAt(browser, `${BASE}${path}`, { reducedMotion: 'reduce' });
   // As it loads: the words before the first question and the questions asked.
-  let { ctx, page } = await openAt(browser, `${BASE}${path}`);
+  let { ctx, page } = await open();
   const atLoad = await page.evaluate(inPage, {});
   if (state) {
     await ctx.close();
-    ({ ctx, page } = await openAt(browser, `${BASE}${path}`));
+    ({ ctx, page } = await open());
     await state(page);
     await frames(page);
   }
@@ -263,7 +266,7 @@ export async function countPage(browser, BASE, path, { text = false, effectsToo 
   // The plan: text that shows only after a button, counted with every closed part opened (count 3's guard).
   let wordsPlan = null;
   if (plan) {
-    ({ ctx, page } = await openAt(browser, `${BASE}${path}`));
+    ({ ctx, page } = await open());
     await plan(page);
     await frames(page);
     ({ wordsAll: wordsPlan } = await page.evaluate(inPage, { open: true }));

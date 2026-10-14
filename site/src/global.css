@@ -30,6 +30,43 @@
   --color-bad-tint: var(--bad-tint);
   --radius-control: var(--radius-md);
   --radius-card: var(--radius-lg);
+  --color-stage: var(--stage);
+  --color-on-stage: var(--on-stage);
+  --color-spark-1: var(--spark-1);
+  --color-spark-2: var(--spark-2);
+  --color-spark-3: var(--spark-3);
+}
+
+/*
+ * The new look (AG1, D-UX-66; docs/DESIGN.md, "The forbidden list"): an open font of the reference's feel, served from
+ * here (never from Google), its type scale from 360 to 1440 px, the panel's radius. Pages in the new look set
+ * `data-look="new"` on <body> (Base.astro).
+ */
+@font-face {
+  font-family: 'Figtree'; font-style: normal; font-weight: 300 900; font-display: swap;
+  src: url('/fonts/figtree-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@theme {
+  --font-display: 'Figtree', ui-sans-serif, system-ui, sans-serif;
+  --font-weight-book: 450;
+  --text-hero: clamp(2.75rem, 1.6rem + 4.6vw, 4.5rem);
+  --text-hero--line-height: 1.02;
+  --text-hero--letter-spacing: -0.02em;
+  --text-statement: clamp(2.125rem, 1.4rem + 3vw, 3.375rem);
+  --text-statement--line-height: 1.06;
+  --text-statement--letter-spacing: -0.018em;
+  --text-section: clamp(1.75rem, 1.2rem + 1.8vw, 2.625rem);
+  --text-section--line-height: 1.06;
+  --text-section--letter-spacing: -0.015em;
+  --text-title: clamp(1.5rem, 1.2rem + 0.8vw, 1.75rem);
+  --text-title--line-height: 1.1;
+  --text-lead: clamp(0.9375rem, 0.85rem + 0.4vw, 1.09375rem);
+  --text-lead--line-height: 1.45;
+  --text-wordmark: clamp(4rem, 25.5vw, 21.5rem);
+  --text-wordmark--line-height: 1.2;
+  --text-wordmark--letter-spacing: -0.03em;
+  --radius-panel: 1.5rem;
 }
 
 :root {
@@ -51,6 +88,11 @@
   --good-tint: var(--color-green-50);
   --warn-tint: var(--color-amber-50);
   --bad-tint: var(--color-red-50);
+  --stage: var(--color-slate-950);        /* the closing panel, dark in both themes */
+  --on-stage: var(--color-white);
+  --spark-1: var(--color-teal-500);       /* the particles: drawn only, never text */
+  --spark-2: var(--color-sky-500);
+  --spark-3: var(--color-indigo-400);
 }
 
 .dark {
@@ -72,6 +114,11 @@
   --good-tint: var(--color-green-950);
   --warn-tint: var(--color-amber-950);
   --bad-tint: var(--color-red-950);
+  --stage: var(--color-slate-900);        /* not pure black (principle 11) */
+  --on-stage: var(--color-slate-50);
+  --spark-1: var(--color-teal-300);
+  --spark-2: var(--color-sky-300);
+  --spark-3: var(--color-indigo-300);
 }
 
 @layer base {
@@ -85,7 +132,36 @@
   summary { min-height: 1.5rem; }
 }
 
+/* The new look's motion (AG1, D-UX-66): text types in, blocks rise into view, the header hides while reading down. Each
+   stops within 5 s or follows the reader (WCAG 2.2.2), and none runs under reduced motion (the block below). */
+body[data-look='new'] { font-family: var(--font-display); }
+/* The new look's bar is about 160 px tall on a phone (two rows and the notice), 120 px from lg. */
+html:has(body[data-look='new']) { scroll-padding-top: 11rem; }
+@media (max-width: 23.99rem) { html:has(body[data-look='new']) { scroll-padding-top: 14rem; } }
+@media (min-width: 64rem) { html:has(body[data-look='new']) { scroll-padding-top: 8rem; } }
+.js [data-typed] .rest { opacity: 0; }
+[data-typed].typing .done::after { content: ''; display: inline-block; width: 0.06em; height: 0.85em; margin-left: 0.04em; vertical-align: -0.05em; background: currentColor; animation: caret 0.8s steps(1) 6; }
+@keyframes caret { 50% { opacity: 0; } }
+.js [data-rise] { opacity: 0; transform: translateY(1.5rem); transition: opacity 0.7s ease-out, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1); }
+.js [data-rise].risen { opacity: 1; transform: none; }
+[data-header] { transition: transform 0.25s ease-out; }
+[data-header][data-away]:not(:focus-within) { transform: translateY(-100%); }
+/* The DSCR story plays one step at a time (home.ts); its Pause stops it. Without the mark everything stands. */
+.js [data-story] [data-at] { transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+.js [data-story] [data-at]:not(.on) { opacity: 0; transform: translateY(0.75rem); }
+[data-bar] { transform-origin: bottom; transition: transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1); transition-delay: calc(var(--i, 0) * 90ms); }
+.js [data-story] [data-at]:not(.on) [data-bar] { transform: scaleY(0); }
+/* The chips drift sideways as the page scrolls (home.ts sets --drift); still, they wrap. */
+.js [data-drift] { flex-wrap: nowrap; justify-content: flex-start; width: max-content; transform: translateX(var(--drift, 0)); }
+/* The name at the foot rises a letter at a time. */
+.js [data-wordmark] span { display: inline-block; opacity: 0; transform: translateY(35%); transition: opacity 0.9s ease-out, transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1); transition-delay: calc(var(--i, 0) * 60ms); }
+.js [data-wordmark].risen span { opacity: 1; transform: none; }
+/* The use cases scroll sideways, their first card in line with the page's column. */
+[data-slider] { scrollbar-width: none; padding-inline: max(1rem, calc(50% - 39rem)); scroll-padding-inline: max(1rem, calc(50% - 39rem)); }
+@media (min-width: 40rem) { [data-slider] { padding-inline: max(2rem, calc(50% - 38rem)); scroll-padding-inline: max(2rem, calc(50% - 38rem)); } }
+
 /* Reduced motion: nothing slides or spins (WCAG 2.3.3; the design check measures it). */
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+  .js [data-rise] { opacity: 1; transform: none; }
 }

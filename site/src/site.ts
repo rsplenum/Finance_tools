@@ -1,5 +1,5 @@
 /** Site name and the tools, in build order (docs/PROJECT.md). A tool gets `href` only once its page exists. */
-export const SITE_NAME = 'Loan document tools';
+export const SITE_NAME = 'FinSight';
 
 /**
  * The notice wherever brand names show (D-BIZ-03, rule 4 of docs/TRADEMARKS.md, word for word), in the same type as the
@@ -15,23 +15,26 @@ export const BRAND_NOTICE = `${BRAND_NOTICE_SHORT} Each price comes from the sou
  * `gives`: what ours gives that a lender, DSA or accountant would want (about 15 words), only for a tool that works and
  * only what the engine does today (D-UX-65). `status`: Ready when the page works today.
  */
-export interface Tool { name: string; what: string; gives?: string; status: 'Ready' | 'Later'; href?: string }
+export interface Tool { name: string; short?: string; what: string; gives?: string; status: 'Ready' | 'Later'; href?: string }
 
 export const TOOLS: Tool[] = [
-  { name: 'DSCR statement', status: 'Ready', href: '/dscr/',
+  { name: 'DSCR statement', short: 'DSCR', status: 'Ready', href: '/dscr/',
     what: 'How many times a business’s yearly earnings cover its loan repayments.',
     gives: 'Each year’s cover, the weakest year and the largest loan that passes, as PDF, Excel or Word.' },
-  { name: 'Construction, renovation or interiors estimate', status: 'Ready', href: '/estimate/',
+  { name: 'Construction, renovation or interiors estimate', short: 'Estimate', status: 'Ready', href: '/estimate/',
     what: 'What your building, renovation or interior work should cost, before you collect contractors’ quotes.',
     gives: 'Room by room at five quality levels, a check of each quote against reported prices, and a bill of quantities.' },
-  { name: 'Project report', status: 'Ready', href: '/project-report/',
+  { name: 'Project report', short: 'Project report', status: 'Ready', href: '/project-report/',
     what: 'The report a lender reads before a term loan: what the project costs, how it is paid for, whether it can repay.',
     gives: 'Projected profit and loss, balance sheet and cash flow, every figure worked out twice, as PDF, Excel or Word.' },
-  { name: 'CMA data', status: 'Ready', href: '/cma/',
+  { name: 'CMA data', short: 'CMA data', status: 'Ready', href: '/cma/',
     what: 'The forms a bank uses to set a working-capital limit, such as cash credit, from a business’s figures.',
     gives: 'Forms I to VI, the ratios and the turnover-method limit, from five years’ figures.' },
   { name: 'Home-loan project cost', status: 'Later', what: 'Free calculator for a home project’s total cost.' },
 ];
+
+/** The tools that work today, in build order: the top bar and the footer of the new look link each (D-UX-66). */
+export const READY = TOOLS.filter((t): t is Tool & { href: string; short: string } => t.status === 'Ready' && Boolean(t.href && t.short));
 
 /** Page <title>: the page name, then the site name. */
 export const pageTitle = (name?: string) => (name ? `${name} · ${SITE_NAME}` : SITE_NAME);

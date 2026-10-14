@@ -1,14 +1,24 @@
 ---
-/** Page shell: head (no-flash theme), header with the theme toggle, footer. Logic stays in .ts files (D-TECH-05). */
+/**
+ * Page shell: head (no-flash theme), header with the theme toggle, footer. Logic stays in .ts files (D-TECH-05).
+ * `look="new"` is the look of D-UX-66 (AG1, docs/DESIGN.md, "The forbidden list"): the top bar links every tool and hides
+ * while reading down, the page runs wide, and the footer lists the tools above the name; the tool pages take it in UX3
+ * and UX4.
+ */
 import './global.css';
 import { ThemeToggle } from './ThemeToggle';
 import { THEME_BOOT } from './theme';
-import { SITE_NAME, pageTitle } from './site';
+import { READY, SITE_NAME, pageTitle } from './site';
 
-interface Props { name?: string; description: string }
-const { name, description } = Astro.props;
+interface Props { name?: string; description: string; look?: 'new' }
+const { name, description, look } = Astro.props;
+const fresh = look === 'new';
 // Interaction data (UD1, D-TECH-37) is on once the Worker is live; the footer says what is counted only then.
 const counting = Boolean(import.meta.env.PUBLIC_API_URL) || import.meta.env.PUBLIC_EVENTS === 'on';
+// The new look's motion waits for this mark, so a page without scripts, or under reduced motion, shows everything still.
+const MOTION_BOOT = "matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.classList.add('js')";
+const PRIVACY = 'Figures you type are worked out in your browser and are not sent to us.';
+const COUNTED = 'We count which steps are used (the page, which fields change by name, downloads, errors), never what you type, to make the tools better. No cookies.';
 ---
 <!doctype html>
 <html lang="en-IN">
@@ -20,20 +30,63 @@ const counting = Boolean(import.meta.env.PUBLIC_API_URL) || import.meta.env.PUBL
     <meta name="description" content={description} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <script is:inline set:html={THEME_BOOT}></script>
+    {fresh && <script is:inline set:html={MOTION_BOOT}></script>}
+    {fresh && <link rel="preload" href="/fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin />}
   </head>
-  <body class="min-h-dvh bg-canvas text-ink antialiased">
-    <a href="#main" class="sr-only rounded-control bg-accent px-3 py-2 text-on-accent focus:not-sr-only focus:absolute focus:top-2 focus:left-2">Skip to content</a>
-    <header class="border-b border-line">
-      <div class="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
-        <a href="/" class="min-w-0 truncate font-semibold text-ink">{SITE_NAME}</a>
-        <ThemeToggle client:load />
-      </div>
-    </header>
-    <main id="main" class="mx-auto max-w-3xl px-4 py-8"><slot /></main>
-    <footer class="mx-auto max-w-3xl border-t border-line px-4 py-6 text-sm text-ink-muted">
-      Figures you type are worked out in your browser and are not sent to us.
-      {counting && <span data-testid="counted"> We count which steps are used (the page, which fields change by name, downloads, errors), never what you type, to make the tools better. No cookies.</span>}
-    </footer>
+  <body class="min-h-dvh bg-canvas text-ink antialiased" data-look={look}>
+    <a href="#main" class={`sr-only px-3 py-2 focus:not-sr-only focus:absolute focus:top-2 focus:left-2 ${fresh ? 'z-50 rounded-full bg-ink text-canvas' : 'rounded-control bg-accent text-on-accent'}`}>Skip to content</a>
+    {fresh ? (
+      <header data-header class="sticky top-0 z-40 bg-canvas">
+        <div class="mx-auto flex max-w-7xl items-center gap-6 px-4 py-3 sm:px-8">
+          <a href="/" class="min-w-0 truncate text-xl font-semibold tracking-tight text-ink">{SITE_NAME}</a>
+          <nav aria-label="Tools" class="hidden flex-1 gap-1 lg:flex">
+            {READY.map((t) => <a href={t.href} class="rounded-full px-3 py-2 text-sm font-medium text-ink-muted hover:bg-surface hover:text-ink">{t.short}</a>)}
+          </nav>
+          <div class="ml-auto flex items-center gap-2">
+            <ThemeToggle client:load tall />
+            <a href="/dscr/" data-pill class="hidden min-h-11 items-center rounded-full bg-ink px-5 text-sm font-medium text-canvas hover:bg-ink/85 sm:inline-flex">Start a DSCR</a>
+          </div>
+        </div>
+        <nav aria-label="Tools" class="flex flex-wrap justify-center gap-1 px-2 pt-1 pb-2 lg:hidden">
+          {READY.map((t) => <a href={t.href} class="rounded-full px-2.5 py-2 text-sm font-medium text-ink-muted hover:bg-surface hover:text-ink">{t.short}</a>)}
+        </nav>
+        <p class="border-y border-line bg-surface px-4 py-2 text-center text-sm text-ink" data-news>
+          <span class="mr-2 rounded-full bg-ink px-2 py-0.5 text-sm font-semibold text-canvas">New</span>
+          CMA data: the bank's forms I to VI from five years' figures.
+          <a href="/cma/" class="ml-1 font-medium whitespace-nowrap text-ink underline underline-offset-4">Open it →</a>
+        </p>
+      </header>
+    ) : (
+      <header class="border-b border-line">
+        <div class="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
+          <a href="/" class="min-w-0 truncate font-semibold text-ink">{SITE_NAME}</a>
+          <ThemeToggle client:load />
+        </div>
+      </header>
+    )}
+    <main id="main" class={fresh ? 'overflow-x-clip' : 'mx-auto max-w-3xl px-4 py-8'}><slot /></main>
+    {fresh ? (
+      <footer class="mx-auto max-w-7xl px-4 pt-16 sm:px-8">
+        <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
+          <p class="text-title font-book text-ink lg:col-span-2">Loan papers, worked out.</p>
+          <div>
+            <p class="text-sm font-medium text-ink-muted">Tools</p>
+            <ul class="mt-3 space-y-2">{READY.map((t) => <li><a href={t.href} class="text-sm font-medium text-ink hover:text-link">{t.name}</a></li>)}</ul>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-ink-muted">Your figures</p>
+            <p class="mt-3 max-w-prose text-sm text-ink">{PRIVACY}{counting && <span data-testid="counted"> {COUNTED}</span>}</p>
+          </div>
+        </div>
+        <p aria-hidden="true" data-wordmark data-rise class="mt-16 overflow-hidden text-wordmark font-semibold text-ink select-none">{[...SITE_NAME].map((c, i) => <span style={`--i:${i}`}>{c}</span>)}</p>
+        <p class="border-t border-line py-6 text-sm text-ink-muted">{SITE_NAME} · {new Date().getFullYear()}</p>
+      </footer>
+    ) : (
+      <footer class="mx-auto max-w-3xl border-t border-line px-4 py-6 text-sm text-ink-muted">
+        {PRIVACY}
+        {counting && <span data-testid="counted"> {COUNTED}</span>}
+      </footer>
+    )}
     <script>import { start } from './events'; start();</script>
   </body>
 </html>

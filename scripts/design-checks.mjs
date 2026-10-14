@@ -137,8 +137,9 @@ async function keyboard(page) {
         if (parseFloat(m[2]) >= 1) best = Math.max(best, ratio(rgba(m[1]), behind));
       }
       // WCAG 2.4.11: the focused control not wholly hidden by a sticky or fixed band (the answer bar).
-      const r = el.getBoundingClientRect();
-      const hidden = [...document.querySelectorAll('[data-dc-band]')].some((b) => {
+      // A control drawn above the band (the skip link, on top while focused) is not under it.
+      const r = el.getBoundingClientRect(), onTop = el.contains(document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2));
+      const hidden = !onTop && [...document.querySelectorAll('[data-dc-band]')].some((b) => {
         if (b.contains(el)) return false;
         const q = b.getBoundingClientRect();
         return q.height > 0 && r.top >= q.top && r.bottom <= q.bottom && r.left >= q.left && r.right <= q.right;
