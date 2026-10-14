@@ -10,7 +10,7 @@ The owner, 14-10-2026, on AG2's extras and the five tradeoffs: accepted, and "In
 ## The load test (D-UX-70)
 The owner, 14-10-2026, on a general analysis of the video's design by laws of perception: "It is us (you and I) who has to adapt this analysis to our purpose and take only the design elements that bring our point across to the user with minimal or zero cognitive load."
 
-Our point: *your figures, put in order, and whether they clear.* The critic asks two things of every part: does it go from loose to settled, and if it gives the reader something to read, does it make that point quicker to see? A part that fails is cut. What asks nothing of the reader (the glow, the foot) is judged by the first question alone: zero load is not zero beauty. Each principle is taken only in our form, with its plain reason (the laws are not quoted):
+Our point: *your figures, put in order, and whether they clear.* The critic asks two things of every part: does it go from loose to settled, and if it gives the reader something to read, does it make that point quicker to see? A part that fails is cut. What asks nothing of the reader (the glow, the foot) is judged by the first question alone: zero load is not zero beauty. Beauty has its own use: it holds attention, as a charming person holds a listener (the owner, D-UX-71); the critic prefers a part that is beautiful and also carries the point. Each principle is taken only in our form, with its plain reason (the laws are not quoted):
 
 | Principle | Our form |
 |---|---|
@@ -20,7 +20,7 @@ Our point: *your figures, put in order, and whether they clear.* The critic asks
 | A bounded task holds attention | No timer: the size of the task shown instead, "1 of 5" on the story, the number of questions on a tool's card where that number is fixed; a time only if measured with people |
 | A shadow reads as height | One shadow for all paper |
 | The eye follows direction | Every motion ends at the figure that matters: marks fall toward it; the line of reading ends at the amount |
-| Few new things at once | One card per step; at most three figures move (count or tick) in a step; a card that lands still counts as one |
+| Few new things at once | Each page of the story lands whole and is read at once: the reader gathers what they need, not fed figure by figure (D-UX-71); one card per step |
 | Short bold labels scan fast | Caps for labels of one to three words only |
 | Equal-width digits keep columns still | Tabular figures wherever a figure stands in a column |
 | The one different thing is remembered | One marigold highlight per screen; the double rule is not a highlight |

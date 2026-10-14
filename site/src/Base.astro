@@ -32,6 +32,7 @@ const COUNTED = 'We count which steps are used (the page, which fields change by
     <script is:inline set:html={THEME_BOOT}></script>
     {fresh && <script is:inline set:html={MOTION_BOOT}></script>}
     {fresh && <link rel="preload" href="/fonts/figtree-latin.woff2" as="font" type="font/woff2" crossorigin />}
+    {fresh && <link rel="preload" href="/fonts/anek-latin.woff2" as="font" type="font/woff2" crossorigin />}
   </head>
   <body class="min-h-dvh bg-canvas text-ink antialiased" data-look={look}>
     <a href="#main" class={`sr-only px-3 py-2 focus:not-sr-only focus:absolute focus:top-2 focus:left-2 ${fresh ? 'z-50 rounded-full bg-ink text-canvas' : 'rounded-control bg-accent text-on-accent'}`}>Skip to content</a>
@@ -68,7 +69,7 @@ const COUNTED = 'We count which steps are used (the page, which fields change by
     {fresh ? (
       <footer class="mx-auto max-w-7xl px-4 pt-16 sm:px-8">
         <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          <p class="text-title font-book text-ink lg:col-span-2">Loan papers, worked out.</p>
+          <p class="font-heading text-title text-ink lg:col-span-2">Loan papers, worked out.</p>
           <div>
             <p class="text-sm font-medium text-ink-muted">Tools</p>
             <ul class="mt-3 space-y-2">{READY.map((t) => <li><a href={t.href} class="text-sm font-medium text-ink hover:text-link">{t.name}</a></li>)}</ul>
@@ -78,8 +79,9 @@ const COUNTED = 'We count which steps are used (the page, which fields change by
             <p class="mt-3 max-w-prose text-sm text-ink">{PRIVACY}{counting && <span data-testid="counted"> {COUNTED}</span>}</p>
           </div>
         </div>
-        <p aria-hidden="true" data-wordmark data-rise class="mt-16 overflow-hidden text-wordmark font-semibold text-ink select-none">{[...SITE_NAME].map((c, i) => <span style={`--i:${i}`}>{c}</span>)}</p>
-        <p class="border-t border-line py-6 text-sm text-ink-muted">{SITE_NAME} · {new Date().getFullYear()}</p>
+        <p aria-hidden="true" data-wordmark data-settle class="mt-16 overflow-hidden text-wordmark text-ink select-none">{[...SITE_NAME].map((c, i) => <span style={`--i:${i}`}>{c}</span>)}</p>
+        <div data-ledger aria-hidden="true"></div>
+        <p class="py-6 text-sm text-ink-muted">{SITE_NAME} · {new Date().getFullYear()}</p>
       </footer>
     ) : (
       <footer class="mx-auto max-w-3xl border-t border-line px-4 py-6 text-sm text-ink-muted">
