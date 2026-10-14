@@ -7,6 +7,7 @@
  */
 import './global.css';
 import { ThemeToggle } from './ThemeToggle';
+import Arrow from './home/Arrow.astro';
 import { THEME_BOOT } from './theme';
 import { READY, SITE_NAME, pageTitle } from './site';
 
@@ -45,7 +46,7 @@ const COUNTED = 'We count which steps are used (the page, which fields change by
           </nav>
           <div class="ml-auto flex items-center gap-2">
             <ThemeToggle client:load tall />
-            <a href="/dscr/" data-pill class="hidden min-h-11 items-center rounded-full bg-ink px-5 text-sm font-medium text-canvas hover:bg-ink/85 sm:inline-flex">Start a DSCR</a>
+            <a href="/dscr/" data-pill class="hidden min-h-11 items-center rounded-full bg-ink px-5 text-sm font-medium text-canvas hover:bg-ink/85 sm:inline-flex">Start a DSCR statement</a>
           </div>
         </div>
         <nav aria-label="Tools" class="flex flex-wrap justify-center gap-1 px-2 pt-1 pb-2 lg:hidden">
@@ -54,7 +55,7 @@ const COUNTED = 'We count which steps are used (the page, which fields change by
         <p class="border-y border-line bg-surface px-4 py-2 text-center text-sm text-ink" data-news>
           <span class="mr-2 rounded-full bg-ink px-2 py-0.5 text-sm font-semibold text-canvas">New</span>
           CMA data: the bank's forms I to VI from five years' figures.
-          <a href="/cma/" class="ml-1 font-medium whitespace-nowrap text-ink underline underline-offset-4">Open it →</a>
+          <a href="/cma/" class="ml-1 font-medium whitespace-nowrap text-ink underline underline-offset-4">Open it <Arrow /></a>
         </p>
       </header>
     ) : (

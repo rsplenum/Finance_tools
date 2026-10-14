@@ -218,7 +218,9 @@ html:has(body[data-look='new']) { scroll-padding-top: 11rem; }
 }
 @media (min-width: 40rem) { [data-desk] { --mx: 1.5rem; } }
 /* The glow behind a tool's picture only: still, no blur that moves. */
-[data-glow] { background-color: var(--surface); background-image: radial-gradient(60% 70% at 22% 78%, color-mix(in oklch, var(--marigold) 34%, transparent), transparent 70%), radial-gradient(55% 60% at 82% 24%, color-mix(in oklch, var(--margin) 16%, transparent), transparent 70%), radial-gradient(70% 70% at 60% 60%, color-mix(in oklch, var(--spark-1) 16%, transparent), transparent 75%); }
+[data-glow] { --glow-warm: 34%; --glow-red: 16%; background-color: var(--surface); background-image: radial-gradient(60% 70% at 38% 74%, color-mix(in oklch, var(--marigold) var(--glow-warm), transparent), transparent 70%), radial-gradient(55% 60% at 78% 26%, color-mix(in oklch, var(--margin) var(--glow-red), transparent), transparent 70%), radial-gradient(70% 70% at 60% 60%, color-mix(in oklch, var(--spark-1) 16%, transparent), transparent 75%); }
+/* On the dark page a strong marigold over ink turns olive: less of it, and half the red, so it still reads as light. */
+.dark [data-glow] { --glow-warm: 18%; --glow-red: 8%; }
 
 /* The three verbs (D-UX-68): settle, tick, count. Each ends (WCAG 2.2.2) and none runs under reduced motion. Without the
    `js` mark everything stands where it rests. Settle: a block falls onto its line and comes to rest with a small spring. */

@@ -244,13 +244,18 @@ function count(el: HTMLElement, alive: () => boolean, then: () => void) {
   requestAnimationFrame(step);
 }
 
-/** The story: the pages land on the desk in turn, whole, then the made-viable figure counts and is ticked; Stop shows it all. */
+/**
+ * The story: the pages land on the desk in turn, whole, each once it is in view (on a phone they stand one under another,
+ * so each waits for the reader), then the made-viable figure counts and is ticked; Stop shows it all. A page is in view
+ * when its top is above the lower fifth of the screen, not a share of its height, so a short screen plays it too.
+ */
 function story() {
   const box = document.querySelector<HTMLElement>('[data-story]'), play = box?.querySelector<HTMLButtonElement>('[data-play]');
   if (!box || !play) return;
   const pages = [...box.querySelectorAll<HTMLElement>('[data-at]')], last = pages.length;
   const ticks = [...box.querySelectorAll<HTMLElement>('[data-tick]')], counts = [...box.querySelectorAll<HTMLElement>('[data-count]')];
-  let at = 0, timer = 0, running = false, played = false, run = 0;
+  let at = 0, timer = 0, running = false, played = false, run = 0, waiting = false;
+  const seen = new Set<Element>();
   const show = () => pages.forEach((s) => s.classList.toggle('on', Number(s.dataset.at) <= at));
   const say = () => { play.textContent = running ? 'Stop and show it all' : played ? 'Play it again' : 'Play it'; };
   const end = () => { running = false; say(); };
@@ -261,22 +266,27 @@ function story() {
     counts.forEach((c) => count(c, () => me === run, () => { if (--left === 0) tick(); }));
   };
   const next = () => {
+    if (!seen.has(pages[at])) { waiting = true; return; }
     at += 1; show();
     if (at >= last) { timer = window.setTimeout(() => settle(run), 500); return; }
     timer = window.setTimeout(next, 900);
   };
   const go = () => {
-    run += 1; at = 0; ticks.forEach((t) => t.classList.remove('ticked')); show();
+    run += 1; at = 0; waiting = false; ticks.forEach((t) => t.classList.remove('ticked')); show();
     running = played = true; say(); timer = window.setTimeout(next, 250);
   };
   const stop = () => {
-    clearTimeout(timer); run += 1; at = last; show();
+    clearTimeout(timer); run += 1; at = last; waiting = false; show();
     counts.forEach((c) => { if (c.dataset.value) c.textContent = c.dataset.value; });
     ticks.forEach((t) => t.classList.add('ticked')); end();
   };
   play.hidden = false;
   say();
   play.addEventListener('click', () => (running ? stop() : go()));
-  const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); go(); } }, { threshold: 0.25 });
-  io.observe(box);
+  const io = new IntersectionObserver((es) => {
+    for (const e of es) if (e.isIntersecting) { seen.add(e.target); io.unobserve(e.target); }
+    if (!played && seen.has(pages[0])) go();
+    else if (waiting && running) { waiting = false; next(); }
+  }, { rootMargin: '0px 0px -20% 0px' });
+  pages.forEach((p) => io.observe(p));
 }

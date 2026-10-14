@@ -25,7 +25,7 @@ Not rules, for want of evidence: rounded corners read faster; a 1 px border with
 
 ## FinSight's rules (AG2, D-UX-72)
 The brief and its load test: `docs/design-reference/finsight.md`. *Tested*: by `scripts/forbidden-checks.mjs` (its thresholds beside each check) at 360 and 1280 px in the site check; the rest are the critic's.
-- **F1 Type**: Figtree for text; Anek (Ek Type, OFL, self-hosted) for headings, `figure` (wide, tabular) and `caps` (condensed, labels of one to three words). *Tested*.
+- **F1 Type**: Figtree for text; Anek (Ek Type, OFL) for headings, `figure` (wide, tabular) and `caps` (condensed, labels of one to three words). *Tested*.
 - **F2 Small headings**: h1 `text-hero`, h2 `text-section` or `text-statement`, h3 `text-title`. *Tested*.
 - **F3 Boxed cards**: a panel is set off by its fill, never a border all round. *Tested*.
 - **F4 Square buttons**: a filled link or button is a 44 px pill. *Tested*.
@@ -33,13 +33,13 @@ The brief and its load test: `docs/design-reference/finsight.md`. *Tested*: by `
 - **F6 A narrow page**: sections run to `max-w-7xl`; running text `max-w-prose`. *Tested*.
 - **F7 Tight sections**: `py-16 sm:py-24` or more. *Tested*.
 - **F8 Lone links underlined**: the bar's, the foot's, titles' and pills' carry no line; one in a sentence does. *Tested*.
-- **F9 Motion that does not end**: settle, tick and count only, loose to settled; what moves by itself stops within 5 s (field 2.4 s, two ways in 3.2 s); the story's pages land whole, with "Stop and show it all"; nothing moves under reduced motion. *Tested*.
+- **F9 Motion that does not end**: settle, tick and count only, loose to settled; what moves by itself stops within 5 s (field 2.4 s, two ways in 3.2 s); the story's pages land whole, with "Stop and show it all"; nothing moves under reduced motion; scrolled through, all shows. *Tested*.
 - **F10 Words or figures only once moved**: headings and counted figures are in the page, as the engine gave them, from the start. *Tested*.
 - **F11 A tool two taps away**: every tool in the top bar, in the first screen. *Tested*.
-- **F12 A one-line foot**: it links every tool, says what happens to the figures, sets the name large on a ledger rule. *Tested*.
+- **F12 A one-line foot**: it links every tool, says what happens to the figures, the name large on a ledger rule. *Tested*.
 - **F13 Another order**: hero, story, tools, uses, figures, try, checked, closing. *Tested*.
 - **F14 Anything from another site.** *Tested*.
-- **F15 A heavy page**: home 157 KB before compression (14-10-2026), cap 170 KB. *Tested*, printed.
+- **F15 A heavy page**: home 160 KB before compression (14-10-2026), cap 170 KB. *Tested*, printed.
 - **F16 Another's own**: the reference's or the video's words, images, footage, logo, font or code; a custom cursor; a hijacked scroll. The critic's.
 - **F17 Shadows**: only paper (`shadow-paper`) casts one. *Tested*.
 

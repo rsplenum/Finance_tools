@@ -11,6 +11,7 @@
  */
 import Base from '../Base.astro';
 import Bars from '../home/Bars.astro';
+import Arrow from '../home/Arrow.astro';
 import Drawing from '../home/Drawing.astro';
 import { READY } from '../site';
 import { STORY_CASE, STORY_FIX, STORY_FIXED, STORY_INPUTS, STORY_LONGER, STORY_TARGET, STORY_TYPED } from '../home/story';
@@ -68,7 +69,7 @@ const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
     <p data-settle class="mt-4 max-w-lg text-lead text-ink-muted">A fictional firm asks for a loan. Every figure below is worked out by the DSCR tool, as it would be for you.</p>
     <div data-story data-desk class="mt-10 rounded-panel px-5 py-8 sm:px-10 sm:py-12">
       <div class="flex min-h-11 flex-wrap items-center justify-between gap-4 pl-3 sm:pl-4">
-        <p class="caps text-on-desk-muted">Case S, a firm</p>
+        <p class="caps text-on-desk-muted">Case S</p>
         <button type="button" data-play hidden class={DESK_SOFT}>Play it</button>
       </div>
       <ol class="mt-6 grid grid-cols-1 gap-6 pl-3 sm:pl-4 lg:grid-cols-3 lg:items-start">
@@ -108,7 +109,7 @@ const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
         <article data-settle class="grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
           <div>
             {ASKS[t.href] && <p class="caps mb-3 text-ink-muted">{ASKS[t.href]}</p>}
-            <h3 class="text-title"><a href={t.href} class="text-ink hover:text-link">{t.name} <span aria-hidden="true">→</span></a></h3>
+            <h3 class="text-title"><a href={t.href} class="text-ink hover:text-link">{t.name} <Arrow /></a></h3>
             <p class="mt-4 max-w-lg text-lead text-ink">{t.what}</p>
             <p class="mt-3 max-w-lg text-lead text-ink-muted">{t.gives}</p>
           </div>
@@ -130,7 +131,7 @@ const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
         <li data-settle style={`--i:${i}`} class="flex flex-col rounded-panel bg-surface p-6 sm:min-h-64 sm:p-8">
           <p class="text-sm font-medium text-ink-muted">{u.who}</p>
           <h3 class="mt-4 text-balance text-title text-ink">{u.head}</h3>
-          <a href={u.href} class="mt-auto inline-flex min-h-11 items-center pt-6 font-medium text-ink hover:text-link">{u.go} <span aria-hidden="true" class="ml-2">→</span></a>
+          <a href={u.href} class="mt-auto inline-flex min-h-11 items-center pt-6 font-medium text-ink hover:text-link">{u.go} <Arrow class="ml-2" /></a>
         </li>
       ))}
     </ul>

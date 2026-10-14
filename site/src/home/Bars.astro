@@ -3,7 +3,8 @@
  * The story's bars (AG1, AG2): each year's DSCR as the engine gave it, on a page of paper. Its figure sits on the bar's end
  * and the target's line is labelled at its own end (principle 5 of docs/DESIGN.md). A year that clears the target is in
  * ink, one under it pale; the verdict under the bars says which in words. A bar taller than the scale is cut, with a gap
- * near its top. The bars rise when their page lands (global.css, `[data-bar]`).
+ * near its top. On a phone only the lowest year's figure and the cut bar's show (the rest are read out), as eight
+ * figures do not fit side by side. The bars rise when their page lands (global.css, `[data-bar]`).
  */
 import type { StoryFrame } from './story';
 interface Props { frame: StoryFrame; target: string; scale: number; title: string }
@@ -17,7 +18,7 @@ const pct = (n: number) => `${Math.min(100, (n / scale) * 100).toFixed(2)}%`;
       {frame.years.map((y, i) => (
         <li class="flex h-full min-w-0 flex-1 flex-col items-center justify-end">
           <span class="sr-only">{y.fy}:</span>
-          <span class="relative z-10 bg-paper text-xs sm:px-0.5 font-semibold text-on-paper tabular-nums">{y.dscr}</span>
+          <span class={`relative z-10 bg-paper text-xs font-semibold text-on-paper tabular-nums sm:px-0.5 ${y.fy === frame.lowestYear || y.n > scale ? '' : 'max-sm:sr-only'}`}>{y.dscr}</span>
           <span data-bar style={`height:${pct(y.n)};--i:${i}`} class={`mt-1 block w-full rounded-t-sm ${y.meets ? 'bg-on-paper' : 'bg-on-paper/25'}`}>{y.n > scale && <span class="mt-3 block h-1 bg-paper"></span>}</span>
         </li>
       ))}

@@ -12,9 +12,9 @@ export const NEW_LOOK = ['/'];
 /** F13: our order, the borrower's path (docs/design-reference/finsight.md, rule 10). */
 export const ORDER = ['hero', 'story', 'tools', 'uses', 'figures', 'try', 'checked', 'closing'];
 /**
- * F15: the page's weight as it loads, before compression (HTML, styles, scripts, the fonts), in KB: 157 measured 14-10-2026
- * (D-UX-72), AG1's 124 with Anek (27 KB, one weight cut to the signs the pages use) and the four line drawings. The cap
- * leaves 13 KB for AG3's story; a heavier page lowers something else first.
+ * F15: the page's weight as it loads, before compression (HTML, styles, scripts, the fonts), in KB: 160 measured 14-10-2026
+ * (D-UX-72), AG1's 124 with Anek (27 KB, one weight cut to the signs the pages use) and the line drawings. The cap
+ * leaves 10 KB for AG3's story; a heavier page lowers something else first.
  */
 export const WEIGHT_CAP = 170;
 
@@ -121,6 +121,32 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
     const b = await still(rm.page);
     if (b.running.length || a.fields.join() !== b.fields.join()) v('F9 something moves under reduced motion');
     await rm.ctx.close();
+    // F9 on a phone and on a short screen (1280 at 400%): scrolled through, every block that settles or lands shows, and
+    // no two figures in a chart overlap (lesson 6). A block that waits for a share of its height never shows on a short one.
+    for (const [w, h] of [[360, 740], [320, 256]]) {
+      const sc = await browser.newContext({ viewport: { width: w, height: h } });
+      const p = await sc.newPage();
+      await p.goto(BASE + path);
+      await p.evaluate(async () => {
+        for (let y = 0; y < document.body.scrollHeight; y += innerHeight / 2) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 100)); }
+      });
+      await p.waitForTimeout(5000);
+      const r = await p.evaluate(() => {
+        const hidden = [...document.querySelectorAll('[data-settle], [data-at]')].filter((e) => getComputedStyle(e).opacity !== '1')
+          .map((e) => `<${e.tagName.toLowerCase()}> "${(e.textContent ?? '').trim().slice(0, 30)}"`);
+        const boxes = [...document.querySelectorAll('figure span, figure li')].filter((e) => e.childElementCount === 0 && e.textContent?.trim())
+          .map((e) => ({ t: e.textContent.trim(), b: e.getBoundingClientRect() })).filter(({ b }) => b.width > 1 && b.height > 1);
+        const overlaps = [];
+        for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+          const A = boxes[i].b, B = boxes[j].b;
+          if (Math.min(A.right, B.right) - Math.max(A.left, B.left) > 1 && Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top) > 1) overlaps.push(`${boxes[i].t} and ${boxes[j].t}`);
+        }
+        return { hidden, overlaps };
+      });
+      for (const x of r.hidden.slice(0, 3)) v(`F9 still hidden after scrolling through at ${w}×${h}: ${x}`);
+      for (const x of r.overlaps.slice(0, 3)) v(`principle 5: chart figures overlap at ${w}×${h}: ${x}`);
+      await sc.close();
+    }
   }
   return { pages: NEW_LOOK.length, weight };
 }
