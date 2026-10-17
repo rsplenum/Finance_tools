@@ -1,27 +1,46 @@
-# Road to launch (12-10-2026, D-TECH-36)
+# Road to launch (17-10-2026; D-TECH-36, redrawn by D-TECH-42)
 
-The engines and the five tools (DSCR, CMA, the planning estimate, the project report, Make it viable) are built for a first launch. None of the work below is new money maths: it's the wrapper. Each row is one fresh session. HANDOFF's Next table holds the row due next; when a session ends, it moves the following row from here into that table.
+The engines and the five tools (DSCR, CMA, the planning estimate, the project report, Make it viable) are built. What is left is the wrapper: the last pages in the new look, the Worker, the policy pages, downloads on any phone, the search pages, one release check, then launch. None of it is new money maths. Each row is one fresh session; HANDOFF's Next table holds the rows due next, and the session that ends moves the following row from here into it.
 
-Sizes come from HANDOFF: S is about 60 steps or 15 minutes, M about 120 or 30, L about 200 or 45. The last ten sessions used 30 to 80% of their budget.
+Sizes come from HANDOFF: S is about 60 steps, M about 120, L about 200. What is left adds up to about 1,000 steps over ten sessions. The long pole is the owner's column, not the sessions, so the owner's items start now, in parallel (below).
 
-| # | Row | Size | Needs from the owner first |
-|---|---|---|---|
-| 1 | **UD1 Interaction data** (D-TECH-37, D-TECH-38): done 12-10-2026; records once the Worker is live (row 2) | L, high | — |
-| 2 | **DEP1 Worker live**: D1 and KV created, UD1 recording on; U1's reading on if a key is set | S, high | the D1 and KV IDs (`docs/CLOUDFLARE.md` §2); an Anthropic key only if U1 is to be on |
-| 3 | **LEGAL1 Policy pages**: privacy, terms, a "not advice" line, refunds and contact, linked from every footer (Razorpay asks for all of them). AI drafts, marked as drafts | M, high | the business name and a contact email; the lawyer reads them together with `docs/TRADEMARKS.md` |
-| 3b | **DT1 Design team** (the owner's yes, 13-10-2026, D-UX-58): as agreed in "The design team" below; done 13-10-2026 (D-UX-59), the first review in `docs/design-reviews/` | L, Extra | a few sites you like the look of, as references |
-| 4 | **UX1 Research**: each tool and the home page audited at 390 px and on a desktop against `brief-first` and UD1's first funnels, plus a 20-minute test script for five people you pick (DSAs, borrowers, a CA) | M, high | you run the five tests, about 2 hours of your time |
-| 5 | **UX2 Design**: one look for the site (type, colour, spacing, the shared parts) and the home page | L, Extra | UX1's findings and your test notes |
-| 6 | **AG1, then UX3** The home page in antigravity.google's structure with the forbidden list (D-UX-66), then that look applied to the DSCR and CMA pages | L, Extra, then M, high | the four hosts in `docs/OWNER.md`; the business name |
-| 7 | **UX4** The look applied to the estimate and the project report | M, high | — |
-| 8 | **SEO1 pSEO plan**: the searches people in India make, the page types, how many pages, and the data each page needs | M, high | the hosts `npm run hosts` names, allowed first |
-| 9 | **SEO2 pSEO template and first batch** (about 50 pages, each with a working calculator), plus the sitemap, canonical tags, structured data, and a site check that fails thin pages | L, Extra | — |
-| 10 | **SEO3** The rest of the batch and the internal links | M, high | — |
-| 11 | **Q1 Downloads on any phone** | S, high | your phone test of today's downloads |
-| 12 | **LAUNCH**: the real domain, `noindex` off, Search Console, Cloudflare Web Analytics | S, high | the name and domain, the lawyer's review |
-| 13 | **P1d Payment** (its row: `docs/HANDOFF-ARCHIVE.md`) | L, high | Phase 0: the entity, GST, Razorpay and the price |
+## Done
+UD1 interaction data (records once DEP1 is live), DT1 the design team, UX1 research, UX2 and UX2b the load measure and home, AG1 to AG3c FinSight's look and trailers on home, UX3 the DSCR and CMA pages, UX4 the critics' fixes and the estimate (PR #74).
 
-The free tools can launch at row 12, with payment added at row 13 when Phase 0 is done.
+## The path, in order
+| # | Row | Size | Done when (the quality bar) | Needs from the owner first |
+|---|---|---|---|---|
+| 1 | **UX5** The project report in FinSight's look; the report's findings 3 to 12; CMA 6 (a card a year below 640 px) and 14; the critics on the estimate and the report | M, high | every finding a blocker or significant fixed, the critics' fix-checks pass, the load and token ratchets no higher | — (your test notes, if they have come) |
+| 2 | **UX6** The last of the look: the 404 page in the new look, the old look's rules out of `docs/DESIGN.md` (its cap back to 12 KB), raw colours and arbitrary values to nil; the site check's one intermittent CI failure (D-TECH-41) root-caused if its annotation has named it | S, high | every page in `NEW_LOOK`; the ratchet at 0 and the baseline file emptied of tokens | — |
+| 3 | **DEP1** Worker live: D1 and KV, the events table, `PUBLIC_API_URL`, UD1 recording | S, high | `/health` ok, a batch from the live site in D1, `npm run usage` answering | the D1 and KV IDs (`docs/CLOUDFLARE.md` §2) |
+| 4 | **LEGAL1** Policy pages: privacy, terms, "not advice", refunds, contact, in every footer. AI drafts, marked as drafts | M, high | each page linked from every footer and checked by the site check; the drafts with the lawyer | the business name and a contact email |
+| 5 | **Q1** Downloads on any phone: a slow-phone timing in the site check, a way out of WhatsApp's in-app browser | S, high | every download opens on your iPhone and Android, timed in the check | your phone test of today's downloads |
+| 6 | **SEO1** pSEO plan: the searches people in India make, the page types, the count, each page's data | M, high | a plan you approve, with its sources | the hosts `npm run hosts` names, allowed |
+| 7 | **SEO2** The pSEO template and the first 50 pages, each with a working calculator; sitemap, canonicals, structured data; a check that fails thin pages | L, Extra | every page passes the thin-page check and the site check | — |
+| 8 | **SEO3** The rest of the batch and the internal links | M, high | as SEO2, at full count | — |
+| 9 | **RC1** Release check: every page by a critic at once, your five tests scored by the researcher, the live Worker's first funnels read, `noindex` still on; what it finds is fixed in this row or named as a launch blocker | M, high | no blocker open; every check at 0 | your five tests' notes; the lawyer's review back |
+| 10 | **LAUNCH** The real domain, `noindex` off, Search Console, Cloudflare Web Analytics | S, high | the site on its domain, indexed, the analytics counting | the name and domain, the lawyer's sign-off |
+| 11 | **P1d Payment** (its row: `docs/HANDOFF-ARCHIVE.md`) | L, high | a paid statement end to end in Razorpay's test mode, then live | Phase 0: the entity, GST, Razorpay and the price |
+
+The free tools launch at row 10; payment follows at row 11 when Phase 0 is done.
+
+## The owner's path, started now (each one unblocks a row above)
+In order of the rows they unblock; `docs/OWNER.md` has the clicks for each.
+1. Try PR #74's work on the live site once merged (`docs/OWNER.md`), and run the five tests (`docs/design-reviews/2026-10-13-test-script.md`), about 2 hours: RC1, and UX5 if they come early.
+2. Create the D1 and KV and send their IDs: DEP1.
+3. The name: search the trademark register, buy the domain, set up a contact email: LEGAL1 and LAUNCH.
+4. Book the IP lawyer for `docs/TRADEMARKS.md` and the policy drafts: RC1 and LAUNCH.
+5. The phone test of the downloads: Q1.
+6. Allow SEO1's hosts, and `productionresultssa18.blob.core.windows.net` so a session can read CI's logs.
+7. Phase 0 (entity, GST, Razorpay, price): P1d only; it does not hold the launch.
+
+## How the cost stays low without a shortcut
+- Quality holds by gates, not effort: `npm run verify` at 0 violations on every change, an independent second computation for any figure, the critics' blockers fixed before "merge", your try on the preview, and RC1 before launch.
+- One deliverable a session, in a new session, with its owner inputs gathered before it starts: a session that waits mid-way for an answer pays for its whole context again.
+- Agents only where they pay for themselves (UX4: 62% of its cost). The designer builds; one critic per page changed, never a second pass over a page unchanged; fix-checks by text assertions, not screenshots.
+- A fix to a shared part is checked on every page that uses it, in the same session (DESIGN-LESSONS 8), so no row redoes another's work.
+- SEO2 makes pages from one template and data, so fifty pages cost one template; the thin-page check keeps quality at scale.
+- CI's failures come back as annotations (D-TECH-41), so a red check is read in one step, not guessed at.
 
 ## The design team (DT1, D-UX-58)
 Agreed 13-10-2026 from the owner's request and two outside reviews. AI agents have no taste of their own and learn only through files, so the team runs on written rules, measured checks, real usage and the owner's judgement. The site is Astro, Preact and Tailwind 4.
@@ -35,4 +54,4 @@ Agreed 13-10-2026 from the owner's request and two outside reviews. AI agents ha
 - Left out: the reviews' quiz and simulation patterns, written for another site; a human designer for the logo waits until the name is settled.
 
 ## After launch, only if the interaction data asks for it
-D3, the borrower's one-page checklist (D-DOC-11; its starter prompt is in HANDOFF-ARCHIVE, 12-10-2026). The CMA's second method above ₹5 crore and Form IV. U1 on the DSCR, an ITR or a CA's provisional figures. The schemes: CGTMSE's fee, MUDRA's limits, Stand-Up India and PMEGP from KVIC. The next four cities (D-DATA-13). More Make it viable levers (D-UX-50). Notes for kitchens, bathrooms and flooring. Design mode (D-UX-31). A sterner DSCR in own-figures mode.
+D3, the borrower's one-page checklist (D-DOC-11; its starter prompt is in HANDOFF-ARCHIVE, 12-10-2026). The CMA's second method above ₹5 crore and Form IV. U1 on the DSCR, an ITR or a CA's provisional figures. The schemes: CGTMSE's fee, MUDRA's limits, Stand-Up India and PMEGP from KVIC. The next four cities (D-DATA-13). More Make it viable levers (D-UX-50). Notes for kitchens, bathrooms and flooring. Design mode (D-UX-31). A sterner DSCR in own-figures mode. A paid API for lenders (parked, SWOT 10-10-2026).
