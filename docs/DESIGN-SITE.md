@@ -18,7 +18,7 @@ drawings and the motion the other pages borrow. The owner's word (D-UX-83): it s
 - **Inputs stay still.** Fields, choices and More options do not move, settle or draw. No box with a border on all
   four sides (F3): a group sits on `bg-surface`, a plan or a note takes one rule (`border-t-2` or `border-l-4`).
 - **Results land as paper.** The answer, and the statement or forms behind it, sit on `.paper` with `shadow-paper`, the
-  only shadow (F17); paper keeps its light values in dark mode. A result is there at once, never settling in: it
+  only shadow (F17); in dark mode it is a sheet of ink a step above the page, never white (D-UX-91). A result is there at once, never settling in: it
   changes as the figures are typed.
 - **The answer first.** On the default path the results follow its questions, before More options. A long page has an
   answer bar pinned to the foot: the answer as text, read out as it changes, and one 44 px arrow to the results
