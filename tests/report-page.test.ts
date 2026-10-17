@@ -108,7 +108,7 @@ describe('the project report to download', () => {
   });
   it('provisional while the business\'s address is missing, and said on every page', async () => {
     const s = { ...R, doc: { ...R.doc, address: '' } }, d = reportDoc(s, preview(s), TODAY)!;
-    expect(docStatus(s, preview(s))).toBe('Provisional: 1 still needed');
+    expect(docStatus(s, preview(s))).toBe('Figures complete; for the document, 1 still needed');
     for (const page of await pdfPages(pdfOf(d, MADE))) expect(page.split('\n')[0]).toBe('Project report · Asha Packaging Provisional');
   });
 });

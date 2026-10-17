@@ -10,6 +10,7 @@ import { METHOD, PMEGP, REPORT_REVIEW_BY } from '../../../engine/report';
 import { overdueNote, todayIso } from '../../../engine/review';
 import { BORROWERS } from '../../../engine/tax';
 import type { Block, Cell, Doc, Table } from '../doc/doc';
+import { forDocument } from '../doc/doc';
 import { printable } from '../doc/pdf';
 import { monthText } from '../dscr/model';
 import { SITE_NAME } from '../site';
@@ -29,7 +30,10 @@ export function docNeeds(f: ReportFacts): string[] {
   return needs;
 }
 export const allNeeds = (s: ReportState, p: ReportPreview) => [...p.needs, ...(p.short ? [p.short] : []), ...docNeeds(s.doc)];
-export const docStatus = (s: ReportState, p: ReportPreview) => statusText(p, docNeeds(s.doc).length);
+export const docStatus = (s: ReportState, p: ReportPreview) => {
+  const own = docNeeds(s.doc).length;
+  return own && statusText(p) === 'Complete' ? forDocument(own) : statusText(p, own);
+};
 export function fileName(s: ReportState, p: ReportPreview, ext: string): string {
   const name = s.doc.name.replace(/[\\/:*?"<>|\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60).trim();
   return `Project report${name ? ` - ${name}` : ''}${allNeeds(s, p).length ? ' (provisional)' : ''}.${ext}`;

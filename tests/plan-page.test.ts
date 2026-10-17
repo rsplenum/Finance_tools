@@ -63,7 +63,11 @@ describe('the answer, worded from the engine', () => {
     expect(v.sections.filter((x) => x.on).length).toBe(10);
     const i = view(withKind(FLAT, 'interiors'));
     expect(i.sections.filter((x) => x.on).map((x) => x.name)).toEqual(['Civil and repairs', 'Walls and paint', 'Ceiling', 'Kitchen', 'Wardrobes and storage', 'Electrical and lights', 'Appliances', 'Smart home and security', 'Furniture', 'Soft furnishings']);
-    expect(i.split?.map((x) => x.label)).toEqual(['Fixed works', 'Movable items', 'Appliances']);
+    expect(i.split?.map((x) => x.label)).toEqual(['Fixed works', 'Movable items', 'Equipment']);
+    // The documents say what the screen says (UX5, D-UX-87): the kind "Equipment", the section still "Appliances".
+    const t = withKind(FLAT, 'interiors'), text = docText(planDoc(t, planPreview(t), TODAY)!);
+    expect(text).toMatch(/^Equipment\b/m);
+    expect(text).not.toMatch(/^Appliances\s+[\d,]+(?:\.\d+)?$/m);
   });
   it('the bar holds each section with an amount, the largest the full width', () => {
     expect(v.bar.map((x) => x.id)).toEqual(v.sections.filter((x) => x.on && x.n > 0).map((x) => x.id));
@@ -310,7 +314,7 @@ describe('the planning estimate to download', () => {
   });
   it('provisional while the owner\'s name is missing, and said on every page', async () => {
     const t = { ...s, doc: { ...s.doc, owner: '' } }, d = planDoc(t, planPreview(t), TODAY)!;
-    expect(planDocStatus(t, planPreview(t))).toBe('Provisional: 1 still needed');
+    expect(planDocStatus(t, planPreview(t))).toBe('Figures complete; for the document, 1 still needed');
     for (const page of await pdfPages(pdfOf(d, MADE))) expect(page.split('\n')[0]).toBe('Planning estimate Provisional');
   });
 });

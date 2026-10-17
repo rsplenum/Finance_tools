@@ -5,6 +5,7 @@
  */
 import { KINDS, METHOD } from '../../../engine/estimate';
 import type { Block, Cell, Doc, Figure, Table } from '../doc/doc';
+import { forDocument } from '../doc/doc';
 import { printable } from '../doc/pdf';
 import { SITE_NAME } from '../site';
 import { plainOf, quantityText, statusText, type EstimateFacts, type EstimatePreview, type EstimateState } from './model';
@@ -24,7 +25,10 @@ export function docNeeds(f: EstimateFacts): string[] {
 }
 
 export const allNeeds = (s: EstimateState, p: EstimatePreview) => [...p.needs, ...docNeeds(s.doc)];
-export const docStatus = (s: EstimateState, p: EstimatePreview) => statusText(p, docNeeds(s.doc));
+export const docStatus = (s: EstimateState, p: EstimatePreview) => {
+  const own = docNeeds(s.doc);
+  return own.length && statusText(p) === 'Complete' ? forDocument(own.length) : statusText(p, own);
+};
 
 export function fileName(s: EstimateState, p: EstimatePreview, ext: string): string {
   const name = s.doc.borrower.replace(/[\\/:*?"<>|\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60).trim();
