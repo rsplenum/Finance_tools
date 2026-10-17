@@ -21,7 +21,7 @@ export function Levels({ s, lender, update, use }: { s: State; lender?: LenderVi
   const lv = useMemo(() => dscrLevelsOf(s, lender), [s, lender]);
   if (!lv?.misses) return null;
   return <div data-testid="dscr-levels" class="mt-4">
-    <h3 class="font-medium text-ink">Why it does not work yet</h3>
+    <h3 class="text-title text-ink">Why it does not work yet</h3>
     <ul class="mt-1 divide-y divide-line">{lv.checks.map((c) => <Bar key={c.id} c={c} pre="dscr" />)}</ul>
     <Viable s={s} update={update} use={use} />
   </div>;
@@ -68,13 +68,13 @@ function Viable({ s, update, use }: { s: State; update: Update; use: (l: DscrLev
       requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid="dscr-plan"], [data-testid="dscr-viable-box"]')?.focus());
     }}>Make it viable</button>}
     {v && !plan && <div data-testid="dscr-viable-box" tabIndex={-1} class="mt-2">
-      <h3 class="font-medium text-ink">{v.title}</h3>
+      <h3 class="text-title text-ink">{v.title}</h3>
       {group('borrower', 'Your changes')}
       {group('lender', 'The lender’s, if it agrees')}
       <p class={`mt-2 ${HINT}`}>{v.foot}</p>
     </div>}
     {v && plan && b && <div data-testid="dscr-plan" tabIndex={-1} class="mt-6 border-t-2 border-ink pt-4">
-      <h3 class="font-medium text-ink">The plan: the levers together</h3>
+      <h3 class="text-title text-ink">The plan: the levers together</h3>
       <p class={HINT}>The engine’s plan: a smaller loan first, then a longer repayment, then the profit still needed. The sliders change none of the figures above until you use the plan, which writes the loan and the term, never the profit.</p>
       <TextField id="fld-dscr-ownMost" class="mt-3" label="The most you can bring in yourself, if known" hint="Without it, no more of your own money is assumed."
         inputMode="decimal" value={most} tidy={tidyAmount} placeholder="like 2 L" invalid={bad}

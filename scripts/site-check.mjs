@@ -803,6 +803,14 @@ for (const scheme of ['light', 'dark']) {
   await expectText(page, v, 'pl-level-flooring', 'Premium', 'the strip switches the package and every slider with it');
   if ((await page.getByTestId('pl-strip-3').getAttribute('aria-pressed')) !== 'true') v('the strip does not mark the package chosen on it');
   await expectText(page, v, 'pl-what-changed', /^Every section to Premium: Rs\. [\d,]+ more/, 'what the new package changed');
+  // UX4 (review finding 3): a new package can be undone from the bar, and the level already chosen does nothing.
+  await page.getByTestId('pl-strip-3').click();
+  if (!(await page.getByTestId('pl-level-undo').isVisible())) v('tapping the level already chosen took away the Undo of the last package');
+  await page.getByTestId('pl-level-undo').click();
+  await expectText(page, v, 'pl-level-flooring', 'Luxury', 'Undo puts back the package and the slider as they were');
+  if ((await page.getByTestId('pl-strip-1').getAttribute('aria-pressed')) !== 'true') v('Undo does not put back the package on the strip');
+  if (await page.getByTestId('pl-level-undo').count()) v('Undo stays after the package is put back');
+  await page.getByTestId('pl-strip-3').click();
   // Compare (A8): closed under the strip; each section on and the total at the five levels, the package's level marked.
   if (await page.getByTestId('pl-compare').evaluate((d) => d.open)) v('Compare is open on load');
   await page.getByTestId('pl-compare').locator('summary').click();
@@ -873,7 +881,7 @@ for (const scheme of ['light', 'dark']) {
   const onI = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
   const movable = await Promise.all(['appliances', 'smart', 'furniture', 'furnishings'].map((x) => page.isChecked(`#fld-on-${x}`)));
   if (onI !== 10 || movable.includes(false)) v(`interiors show ${onI} sections on, Appliances, Smart home, Furniture and Soft furnishings ${movable.join('/')}`);
-  await expectText(page, v, 'pl-split', /^Fixed works Rs\. [\d,]+ · Movable items Rs\. [\d,]+ · Appliances Rs\. [\d,]+$/, 'the movable items apart');
+  await expectText(page, v, 'pl-split', /^Fixed works Rs\. [\d,]+ · Movable items Rs\. [\d,]+ · Equipment Rs\. [\d,]+$/, 'the movable items apart');
   await layout(page, v, 'the estimate as interiors, 390 px');
   // A new house (A3, D-UX-23): the second question asks the floors and the area is the built-up area, still six
   // questions; eighteen sections with thirteen on (E5: Outside works and Water), the structure the same at every level;
@@ -1068,7 +1076,7 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
   // The lender's levels and Make it viable (D-UX-50 to D-UX-52): case R meets every level that can be read, so the button
   // asks how far sales can fall (tests/viable.test.ts by hand); the security cover waits on the collateral.
   if (await page.getByTestId('rep-misses').count()) v('case R is said to miss a lender\'s level');
-  await expectText(page, v, 'rep-check-dscrLowest', /Meets: 2\.51 in 2026-27 · level 1\.25 or more/, 'the lowest DSCR against its level');
+  await expectText(page, v, 'rep-check-dscrLowest', /Meets: 2\.51 in 2026-27 · target 1\.25 or more/, 'the lowest DSCR against its level');
   await expectText(page, v, 'rep-check-securityCover', /Type the collateral’s value/, 'the security cover before the collateral');
   await page.getByTestId('rep-viable').click();
   await expectText(page, v, 'rep-text-sales', /^Sales can fall 31\.5%, to Rs\. 82,20,000 in 2026-27/, 'how far sales can fall');
@@ -1370,4 +1378,6 @@ console.log(`design checks: ${design.lines} findings measured (each held in scri
 console.log(`load measure: ${load.pages} pages against scripts/load-baseline.json, ${load.rose} counts rose, ${load.fell} fell${load.fonts ? '' : '; other fonts here than the baseline\'s, so the answer\'s place and the out-of-sight count are not compared'} (docs/LOAD-MEASURE.md)`);
 console.log(`FinSight's rules: ${forbidden.pages} page${forbidden.pages === 1 ? '' : 's'} in the new look (docs/DESIGN.md), F1 to F19; home weighs ${forbidden.weight} KB as it loads (cap ${WEIGHT_CAP} KB)`);
 for (const x of violations) console.log(`  - ${x}`);
+// In CI each violation is also an annotation, readable where the job's log is not (UX4).
+if (process.env.GITHUB_ACTIONS) for (const x of violations) console.log(`::error title=site check::${String(x).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
 process.exit(violations.length ? 1 : 0);

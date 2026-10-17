@@ -5,7 +5,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   ASSUMED, BORROWER_CHOICES, START, barText, emisAsk, groupNeeds, loanRead, parseFy, preview, ratioText, rowsOf, statusText, tidyAmount, withBorrower, withPlanStart,
-  withSource, withTaxRate, yearsOf,
+  withFrontNeeds, withSource, withTaxRate, yearsOf, frontDoor,
   type Preview, type State,
 } from '../site/src/dscr/model';
 
@@ -109,6 +109,11 @@ describe('what is still needed', () => {
       'Number of instalments', 'How the loan is repaid (EMI, or equal principal every month or quarter)',
       'A target DSCR for the average, the lowest year, or both',
     ]);
+  });
+  it('on the front door, lists every missing fact at once by the label it shows, in its order (design review 5, UX4)', () => {
+    const s = frontDoor('2026-10'), p = withFrontNeeds(s, preview(s), yearsOf(s).years[0]);
+    expect(p.needs.slice(0, 4)).toEqual(['This year’s profit before interest, depreciation and tax', 'Growth in sales a year (%)', 'Loan amount', 'Interest rate (% a year)']);
+    expect(p.needs).toContain('Number of instalments');
   });
   it('groups a figure missing in several years into one line', () => {
     const cells = { ...CASE_A.cells, depreciation: [], pbdit: ['5,00,000', '', '8,00,000', 'lots'] };

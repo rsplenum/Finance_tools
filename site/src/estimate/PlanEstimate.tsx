@@ -11,7 +11,7 @@
  * last change did. Figures: engine/architect.ts only, via plan-model.ts.
  */
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { BUTTON, Choice, HINT, LABEL, Section, SelectField, SourceNote, TextField } from '../fields';
+import { BUTTON, Choice, FILLED, HINT, LABEL, Section, SelectField, SourceNote, TextField } from '../fields';
 import { printable } from '../doc/pdf';
 import { BRAND_NOTICE } from '../site';
 import { isoDate, save, type FileKind } from '../download';
@@ -26,24 +26,31 @@ import {
 import type { Bhk, ExtraKind, Level } from '../../../engine/architect';
 
 type Update = (f: (s: PlanState) => PlanState) => void;
-const MUTED = 'text-slate-600 dark:text-slate-300';
-const INK = 'text-slate-900 dark:text-slate-100';
-const CARD = 'rounded-lg border border-slate-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-900';
-const CHIP = 'flex cursor-pointer items-center gap-2 rounded-full border border-slate-300 bg-white px-3 py-1.5 text-slate-900 has-checked:border-teal-700 has-checked:bg-teal-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:has-checked:border-teal-500 dark:has-checked:bg-teal-950';
-const RADIO = 'size-4 shrink-0 text-base accent-teal-700 dark:accent-teal-500';
-/** One of a room's four size buttons: a radio, so the arrow keys move along them and a screen reader names the group. */
-/** "× Take out" on a room (R2): quieter than the buttons that add. */
-const OUT = 'rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800';
-const SEG = 'flex min-h-11 cursor-pointer items-center justify-center rounded-md border border-slate-300 bg-white px-1 py-1 text-center text-[13px] leading-tight text-slate-900 has-checked:border-teal-700 has-checked:bg-teal-50 has-checked:font-semibold has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-teal-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:has-checked:border-teal-500 dark:has-checked:bg-teal-950';
+// Tokens only (docs/DESIGN.md, Tokens); on paper they take the light page's values (global.css, `.paper`).
+const MUTED = 'text-ink-muted';
+const INK = 'text-ink';
+/** A group set off by its fill, never a border all round (F3). */
+const CARD = 'rounded-card bg-surface p-4';
+const CHIP = 'flex cursor-pointer items-center gap-2 rounded-full border border-edge bg-field px-3 py-1.5 text-ink has-checked:border-accent has-checked:bg-accent/10';
+const RADIO = 'size-4 shrink-0 text-base accent-accent';
+/**
+ * One of a room's four size buttons: a radio, so the arrow keys move along them and a screen reader names the group. Set
+ * off by its fill, the chosen one by the accent's outline, as Choice is in the new look (F3).
+ */
+const SEG = 'flex min-h-11 cursor-pointer items-center justify-center rounded-control bg-surface px-1 py-1 text-center text-sm leading-tight text-ink has-checked:font-semibold has-checked:outline-2 has-checked:-outline-offset-2 has-checked:outline-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-focus';
+/** A link inside a sentence keeps its line (F8). */
+const LINK = 'text-link underline underline-offset-4';
+/** A closed line's summary, standing alone: no line until hovered (F8); 24 px tall from global.css. */
+const SUMMARY = 'cursor-pointer text-sm text-link underline-offset-4 hover:underline';
 /**
  * The bar of shares' colours by kind: the four kinds of room in the reference palette's first four slots, in that order,
  * checked for colour-blind separation in light and dark; the passage and the inside walls in greys. Every part is also named
- * with its share in the list under the bar, so no colour is read alone.
+ * with its share in the list under the bar, so no colour is read alone. The colours are tokens (`--share-*`, global.css).
  */
 const SHARE_COLOR: Record<string, string> = {
-  living: 'bg-[#2a78d6] dark:bg-[#3987e5]', bedroom: 'bg-[#eb6834] dark:bg-[#d95926]', kitchen: 'bg-[#1baf7a] dark:bg-[#199e70]', bath: 'bg-[#eda100] dark:bg-[#c98500]',
-  pooja: 'bg-[#7a1f4f] dark:bg-[#c06090]', study: 'bg-[#5b2a86] dark:bg-[#7444a8]', utility: 'bg-[#8a6440] dark:bg-[#6e4a2a]', store: 'bg-[#e8d27a] dark:bg-[#d4bd5f]',
-  passage: 'bg-slate-300 dark:bg-slate-600', walls: 'bg-slate-500 dark:bg-slate-400',
+  living: 'bg-share-living', bedroom: 'bg-share-bedroom', kitchen: 'bg-share-kitchen', bath: 'bg-share-bath',
+  pooja: 'bg-share-pooja', study: 'bg-share-study', utility: 'bg-share-utility', store: 'bg-share-store',
+  passage: 'bg-share-passage', walls: 'bg-share-walls',
 };
 
 export function PlanEstimate() {
@@ -58,30 +65,52 @@ export function PlanEstimate() {
     if (p.view && !folded.current) { folded.current = true; setEditing(false); requestAnimationFrame(() => result.current?.focus()); }
   }, [p.view]);
   const v = p.view;
+  // A new package resets every section, item, brand and room level, so the tap can be undone from the bar (principle 8;
+  // review finding 3); the level already chosen does nothing.
+  const [undo, setUndo] = useState<{ before: PlanState; after: PlanState } | null>(null);
+  const toLevel = (level: Level) => {
+    if (level === s.level) return;
+    const after = withLevel(s, level);
+    setUndo(p.view ? { before: s, after } : null);
+    setS(after);
+  };
+  const undone = () => {
+    if (!undo) return;
+    setS(undo.before); setUndo(null);
+    // The Undo button goes, so the focus moves to the level chosen again (docs/DESIGN.md, Focus).
+    requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid^="pl-strip-"][aria-pressed="true"]')?.focus());
+  };
   return <div>
     {editing || !v
-      ? <Questions s={s} update={update} p={p} done={v ? () => setEditing(false) : undefined} />
+      ? <Questions s={s} update={update} p={p} toLevel={toLevel} done={v ? () => setEditing(false) : undefined} />
       : <div data-testid="pl-answers" class={`mt-6 flex flex-wrap items-center justify-between gap-2 ${CARD}`}>
         <p data-testid="pl-summary" class={`min-w-0 ${INK}`}>{v.summary}</p>
         <button type="button" data-testid="pl-change" class={BUTTON} onClick={() => setEditing(true)}>Change</button>
       </div>}
     {!v && !p.blocked && p.needs.length > 0 && p.needs.length < 6 &&
       <p data-testid="pl-needs" class={`mt-4 ${HINT}`}>Still to answer: {p.needs.join('; ').toLowerCase()}.</p>}
-    {p.blocked && <p data-testid="pl-blocked" class="mt-4 text-sm text-red-700 dark:text-red-300">{p.blocked}</p>}
+    {p.blocked && <p data-testid="pl-blocked" role="alert" class="mt-4 rounded-control border-l-4 border-bad bg-bad-tint px-3 py-2 text-sm text-ink">{p.blocked}</p>}
     {v && <>
-      <Answer v={v} update={update} heading={result} />
-      <Sections s={s} v={v} update={update} />
+      {/* The answer as paper, there at once: it changes as the figures are typed, never settling in (docs/DESIGN-SITE.md, tool pages). */}
+      <div class="paper shadow-paper mt-6 rounded-card p-3 sm:p-6">
+        <Answer v={v} toLevel={toLevel} heading={result} />
+        <Sections s={s} v={v} update={update} />
+      </div>
       <Checks s={s} v={v} update={update} />
       <Rooms s={s} v={v} update={update} />
       <Download s={s} p={p} update={update} />
-      <div data-testid="pl-sticky" class="sticky bottom-0 z-10 -mx-4 mt-8 border-t border-slate-300 bg-white/95 px-4 py-3 backdrop-blur dark:border-slate-700 dark:bg-slate-950/95">
-        {/* What changed (A8): one line after a change, said aloud as it comes. */}
-        <p data-testid="pl-what-changed" aria-live="polite" class={`mb-2 line-clamp-2 text-sm empty:hidden ${INK}`}>{v.change && <>
-          <span class="font-medium">{v.change.text}</span>{v.change.items && <span class={MUTED}> · {v.change.items}</span>}
-        </>}</p>
-        <div class="flex items-center justify-between gap-3">
-          <p class={INK} data-answer-echo>Total <span data-testid="pl-sticky-total" class="font-semibold tabular-nums">Rs. {v.total}</span></p>
-          <a href="#pl-download" class={BUTTON}>Download</a>
+      {/* The answer bar (D-UX-84): text read out as it changes, one 44 px arrow to the results; solid, no blur (principle 10). */}
+      <div data-testid="pl-sticky" class="sticky bottom-0 z-10 -mx-4 mt-10 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8">
+        {/* What changed (A8): one line after a change, said aloud as it comes; a new package can be undone beside it. */}
+        <div class="flex items-center gap-2">
+          <p data-testid="pl-what-changed" aria-live="polite" class={`min-w-0 flex-1 pt-2 line-clamp-2 text-sm empty:hidden ${INK}`}>{v.change && <>
+            <span class="font-medium">{v.change.text}</span>{v.change.items && <span class={MUTED}> · {v.change.items}</span>}
+          </>}</p>
+          {undo && s === undo.after && v.change && <button type="button" data-testid="pl-level-undo" class={`mt-2 shrink-0 ${BUTTON}`} onClick={undone}>Undo</button>}
+        </div>
+        <div class="flex items-center gap-2">
+          <p data-answer-echo aria-live="polite" class={`flex-1 py-2 text-sm font-medium ${INK}`}>Total <span data-testid="pl-sticky-total" class="tabular-nums">Rs. {v.total}</span></p>
+          <a href="#pl-result" aria-label="To the estimate" class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↑</span></a>
         </div>
       </div>
     </>}
@@ -89,7 +118,7 @@ export function PlanEstimate() {
 }
 
 /** The six questions (A3): each in a block of its own, counted by the site check. */
-function Questions({ s, update, p, done }: { s: PlanState; update: Update; p: PlanPreview; done?: () => void }) {
+function Questions({ s, update, p, toLevel, done }: { s: PlanState; update: Update; p: PlanPreview; toLevel: (l: Level) => void; done?: () => void }) {
   const badArea = plainOf(s.area) === null;
   return <div id="six-questions">
     <div data-question>
@@ -131,7 +160,7 @@ function Questions({ s, update, p, done }: { s: PlanState; update: Update; p: Pl
     </div>
     <div data-question>
       <Choice name="fld-level" legend="Which level?" options={LEVEL_CHOICES} value={s.level ? String(s.level) : undefined} columns
-        onChange={(l) => update((x) => withLevel(x, Number(l) as Level))} />
+        onChange={(l) => toLevel(Number(l) as Level)} />
     </div>
     {done && <button type="button" data-testid="pl-done" class={`mt-6 ${BUTTON}`} onClick={done}>Done</button>}
     {!done && p.needs.length === 6 && <p class={`mt-4 ${HINT}`}>The estimate appears as soon as the six are answered.</p>}
@@ -139,32 +168,34 @@ function Questions({ s, update, p, done }: { s: PlanState; update: Update; p: Pl
 }
 
 /** The answer (A8, V1, L1): the total and the level's range, the cost a sq ft and the rates' line, the five levels, Compare and a new house's stages. */
-function Answer({ v, update, heading }: { v: PlanView; update: Update; heading: { current: HTMLHeadingElement | null } }) {
-  return <section id="pl-result" aria-labelledby="pl-result-h" class="mt-6">
-    <h2 id="pl-result-h" ref={heading} tabIndex={-1} class="sr-only">The estimate</h2>
+function Answer({ v, toLevel, heading }: { v: PlanView; toLevel: (l: Level) => void; heading: { current: HTMLHeadingElement | null } }) {
+  return <section id="pl-result" aria-labelledby="pl-result-h">
+    <h2 id="pl-result-h" ref={heading} tabIndex={-1} class="sr-only text-section">The estimate</h2>
     {/* The answer in words and its figure, marked for the load measure (docs/LOAD-MEASURE.md, count 8). */}
     <div data-answer>
-      <p data-testid="pl-total" data-result={'ready'} class={`text-3xl font-semibold tabular-nums ${INK}`}>Rs. {v.total}</p>
+      <p data-testid="pl-total" data-result={'ready'} class={`figure text-section ${INK}`}>Rs. {v.total}</p>
       {v.range.text && <p data-testid="pl-range" class={`mt-1 text-sm ${INK}`}>{v.range.text}</p>}
       <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="tabular-nums">Rs. {v.perSqft}</span> a sq ft of {v.areaName.toLowerCase()}</p>
     </div>
     <p data-testid="pl-rates" class={`mt-1 text-sm ${MUTED}`}>{v.ratesLine}</p>
-    <div role="group" aria-label="The total at each level; choose one to switch the package" class="mt-4 grid grid-cols-5 gap-1.5">
+    {/* Edged, never filled: the chosen level takes the accent's edge (principle 6; F4 asks a filled control to be a pill).
+        The five totals read as a chart's labels: 12 px on a phone, where "Standard" at 14 px overflows its fifth of 360 px. */}
+    <div role="group" aria-label="The total at each level; choose one to switch the package" class="mt-4 grid grid-cols-5 gap-1">
       {v.strip.map((x) => <button key={x.level} type="button" data-testid={`pl-strip-${x.level}`} aria-pressed={x.current}
-        title={`Rs. ${x.full}`} onClick={() => update((s) => withLevel(s, x.level))}
-        class={`rounded-md border px-1 py-1.5 text-center ${x.current ? 'border-teal-700 bg-teal-50 dark:border-teal-500 dark:bg-teal-950' : 'border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900'}`}>
-        <span class={`block text-xs ${x.current ? 'font-semibold' : ''} ${INK}`}>{x.name}</span>
-        <span class={`block text-xs tabular-nums ${MUTED}`}>{x.total}<span class="sr-only"> (Rs. {x.full})</span></span>
+        title={`Rs. ${x.full}`} onClick={() => toLevel(x.level)}
+        class={`min-h-11 min-w-0 rounded-control px-0.5 text-center ${x.current ? 'border-2 border-accent py-1' : 'border border-edge py-1.25'}`}>
+        <span class={`block text-xs leading-tight sm:text-sm ${x.current ? "font-semibold" : ""} ${INK}`}>{x.name}</span>
+        <span class={`block text-xs leading-tight tabular-nums sm:text-sm ${MUTED}`}>{x.total}<span class="sr-only"> (Rs. {x.full})</span></span>
       </button>)}
     </div>
-    <p class={`mt-1 text-xs ${MUTED}`}>Each level as a package; tap one to switch.</p>
+    <p class={`mt-1 text-sm ${MUTED}`}>Each level as a package; tap one to switch.</p>
     <Compare v={v} />
     {v.stages && <Stages v={v} />}
   </section>;
 }
 
 /** A chevron for a line that opens, turned down when open; drawn, so it adds no word to the page. */
-const CHEVRON = <svg aria-hidden="true" viewBox="0 0 20 20" class="size-4 shrink-0 text-slate-500 transition-transform group-open:rotate-90 dark:text-slate-400">
+const CHEVRON = <svg aria-hidden="true" viewBox="0 0 20 20" class="size-4 shrink-0 text-ink-muted transition-transform group-open:rotate-90">
   <path fill="currentColor" d="M7.3 4.3a1 1 0 0 1 1.4 0l5 5a1 1 0 0 1 0 1.4l-5 5a1 1 0 1 1-1.4-1.4L11.6 10 7.3 5.7a1 1 0 0 1 0-1.4z" />
 </svg>;
 
@@ -182,32 +213,31 @@ function Sections({ s, v, update }: { s: PlanState; v: PlanView; update: Update 
   const d = useMemo(() => (open ? drawerView(s, v, open) : undefined), [open, s, v]);
   const width = new Map(v.bar.map((b) => [b.id, b.width]));
   const list = [...v.sections.filter((x) => x.on).sort((a, b) => b.pkg - a.pkg), ...v.sections.filter((x) => !x.on)];
-  return <section id="pl-sections" aria-labelledby="pl-sections-h" class="mt-6">
-    <h2 id="pl-sections-h" class={`text-sm font-medium ${INK}`}>By section</h2>
-    <ul data-testid="pl-bar" class="mt-1 divide-y divide-slate-200 dark:divide-slate-800">
+  return <Section id="pl-sections" title="By section">
+    <ul data-testid="pl-bar" class="mt-4 divide-y divide-line">
       {list.map((x) => {
         // The section's own level, named on its line only when it differs from the package.
         const own = x.on && x.slider && (x.mixed > 0 || (x.level !== null && x.level !== s.level));
         return <li key={x.id}>
           <details id={`pl-card-${x.id}`} data-testid={`pl-card-${x.id}`} class="group"
             onToggle={(ev) => { const o = (ev.currentTarget as HTMLDetailsElement).open; setOpened((m) => (m[x.id] === o ? m : { ...m, [x.id]: o })); }}>
-            <summary data-testid={`pl-bar-${x.id}`} class="flex cursor-pointer list-none items-center gap-2 rounded px-1 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 [&::-webkit-details-marker]:hidden">
+            <summary data-testid={`pl-bar-${x.id}`} class="flex cursor-pointer list-none items-center gap-2 rounded-control px-1 py-2 hover:bg-surface [&::-webkit-details-marker]:hidden">
               <span class="min-w-0 flex-1">
                 <span class={`flex items-baseline justify-between gap-3 text-sm ${INK}`}>
-                  <span class="min-w-0">{x.name}{x.on && x.lines.length > 0 && <> <span class={`ml-1 text-xs ${MUTED}`}>{x.lines.length} item{x.lines.length === 1 ? '' : 's'}</span></>}
-                    {own && <> <span data-testid={`pl-own-${x.id}`} class={`ml-1 text-xs ${MUTED}`}>{x.mixed ? x.mixedText : x.levelName}</span></>}</span>
-                  <span data-testid={`pl-amount-${x.id}`} class={`shrink-0 tabular-nums ${x.on ? '' : MUTED}`}>{x.on ? x.amount : 'Off'}</span>
+                  <span class="min-w-0">{x.name}{x.on && x.lines.length > 0 && <> <span class={`ml-1 text-sm ${MUTED}`}>{x.lines.length} item{x.lines.length === 1 ? '' : 's'}</span></>}
+                    {own && <> <span data-testid={`pl-own-${x.id}`} class={`ml-1 text-sm ${MUTED}`}>{x.mixed ? x.mixedText : x.levelName}</span></>}</span>
+                  <span data-testid={`pl-amount-${x.id}`} class={`shrink-0 tabular-nums ${x.on && x.n !== 0 ? '' : MUTED}`}>{!x.on ? 'Off' : x.n === 0 ? 'Nothing at this level' : x.amount}</span>
                 </span>
-                {x.on && x.n > 0 && <span aria-hidden="true" class="mt-1 block h-1.5 rounded-r bg-teal-600 dark:bg-teal-400" style={{ width: `${width.get(x.id) ?? 1}%` }} />}
+                {x.on && x.n > 0 && <span aria-hidden="true" class="mt-1 block h-1.5 rounded-r bg-ink-muted" style={{ width: `${width.get(x.id) ?? 1}%` }} />}
               </span>
               {CHEVRON}
             </summary>
-            <div class="mb-3 rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-900">
+            <div class="mb-3 rounded-control bg-surface p-3">
               <div class="flex items-center justify-between gap-3">
                 <p class={`min-w-0 text-sm ${MUTED}`}>{x.on ? x.where : 'Not in this estimate'}</p>
                 <label for={`fld-on-${x.id}`} class={`flex shrink-0 items-center gap-2 text-sm ${INK}`}>
                   <input type="checkbox" role="switch" id={`fld-on-${x.id}`} checked={x.on} onChange={(e) => update((st) => withSection(st, x.id, (e.currentTarget as HTMLInputElement).checked))}
-                    class="size-5 text-base accent-teal-700 dark:accent-teal-500" />
+                    class="size-5 text-base accent-accent" />
                   <span><span class="sr-only">{x.name}: </span>{x.on ? 'On' : 'Off'}</span>
                 </label>
               </div>
@@ -217,7 +247,7 @@ function Sections({ s, v, update }: { s: PlanState; v: PlanView; update: Update 
                 {x.lines.length === 0 && <p data-testid={`pl-spec-${x.id}`} class={`mt-2 text-sm ${INK}`}>Nothing at this level</p>}
               </>}
               {opened[x.id] && x.why && <Why id={`pl-why-section-${x.id}`} about={x.name} title="Where to spend, where to save" w={x.why} />}
-              {x.on && opened[x.id] && x.lines.length > 0 && <ol data-testid={`pl-items-${x.id}`} class="mt-2 divide-y divide-slate-200 dark:divide-slate-700">
+              {x.on && opened[x.id] && x.lines.length > 0 && <ol data-testid={`pl-items-${x.id}`} class="mt-2 divide-y divide-line">
                 {x.lines.map((l) => <Item key={l.key} s={s} l={l} open={open === l.key} d={open === l.key ? d : undefined} groups={groups} setGroup={setGroup} toggle={() => setOpen((k) => (k === l.key ? null : l.key))} update={update} />)}
               </ol>}
               {/* The brand notice where a brand shows in the section, in the items' own type (D-BIZ-03): a line's item names one, or the open drawer shows one (D-BIZ-05). Closed with the answer, so V1's count is unchanged. */}
@@ -227,8 +257,8 @@ function Sections({ s, v, update }: { s: PlanState; v: PlanView; update: Update 
         </li>;
       })}
     </ul>
-    {v.split && <p data-testid="pl-split" class={`mt-3 text-sm ${INK}`}>{v.split.map((x) => `${x.label} Rs. ${x.amount}`).join(' · ')}</p>}
-  </section>;
+    {v.split && <p data-testid="pl-split" class={`mt-3 text-sm ${INK}`}>{v.split.map((x) => `${x.shown} Rs. ${x.amount}`).join(' · ')}</p>}
+  </Section>;
 }
 
 /** Five stops, snapping; the package's stop marked. Moving it sets every item of the section to that level. */
@@ -241,8 +271,8 @@ function Slider({ s, x, update }: { s: PlanState; x: SectionView; update: Update
     </label>
     <input type="range" id={`fld-slider-${x.id}`} min={1} max={5} step={1} value={level} aria-valuetext={x.mixed ? `Mixed, around ${x.levelName}` : x.levelName}
       onInput={(e) => update((st) => withSlider(st, x.id, Number((e.currentTarget as HTMLInputElement).value) as Level, x.lines.map((l) => l.key)))}
-      class="mt-1 block w-full text-base accent-teal-700 dark:accent-teal-500" />
-    <div aria-hidden="true" class="mt-0.5 grid grid-cols-5 text-center text-[11px] leading-tight">
+      class="mt-1 block w-full text-base accent-accent" />
+    <div aria-hidden="true" class="mt-0.5 grid grid-cols-5 text-center text-xs leading-tight">
       {LEVEL_NAMES.map((n, i) => <span key={n} class={i + 1 === s.level ? `font-semibold underline underline-offset-2 ${INK}` : MUTED}>{n}</span>)}
     </div>
   </div>;
@@ -254,7 +284,7 @@ function Item({ s, l, open, d, groups, setGroup, toggle, update }: { s: PlanStat
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0">
         <p class={`text-sm ${INK}`}><span class={MUTED}>{l.room}:</span> {l.item}{l.chosen ? ' (your choice)' : ''}</p>
-        <p class={`text-xs tabular-nums ${MUTED}`}>{l.qty} {l.unit} × Rs. {l.rate} = <span class={`font-medium ${INK}`}>Rs. {l.amount}</span></p>
+        <p class={`text-sm tabular-nums ${MUTED}`}>{l.qty} {l.unit} × Rs. {l.rate} = <span class={`font-medium ${INK}`}>Rs. {l.amount}</span></p>
       </div>
       <button type="button" data-testid={`pl-open-${l.key}`} aria-expanded={open} class={`shrink-0 ${BUTTON}`} onClick={toggle}>{open ? 'Close' : 'Change'}</button>
     </div>
@@ -268,8 +298,8 @@ function Item({ s, l, open, d, groups, setGroup, toggle, update }: { s: PlanStat
  * their sources, linked, and whether they are still as reported. No amount: the line's figures are the engine's.
  */
 function Why({ id, about, title, w }: { id: string; about: string; title?: string; w: WhyView }) {
-  return <details data-testid={id} class="mt-1 text-xs">
-    <summary class="inline-flex cursor-pointer items-center gap-1 text-teal-800 underline-offset-4 hover:underline dark:text-teal-300">
+  return <details data-testid={id} class="mt-1 text-sm">
+    <summary class="inline-flex cursor-pointer items-center gap-1 text-link underline-offset-4 hover:underline">
       <span aria-hidden="true">ⓘ</span> Why?<span class="sr-only"> {about}</span>
     </summary>
     <div class={`mt-1 space-y-1 ${INK}`}>
@@ -277,7 +307,7 @@ function Why({ id, about, title, w }: { id: string; about: string; title?: strin
       {w.items.map((x, i) => <p key={i}><span class="font-medium">{x.label}:</span> {x.text}</p>)}
       <p class={MUTED}>{w.sources.length
         ? <>Sources: {w.sources.map((x, i) => [i ? '; ' : '', x.url
-          ? <a key={x.id} href={x.url} target="_blank" rel="noopener noreferrer" class="text-teal-800 underline dark:text-teal-300">{x.what}</a> : x.what])}
+          ? <a key={x.id} href={x.url} target="_blank" rel="noopener noreferrer" class={LINK}>{x.what}</a> : x.what])}
           {w.own ? '; and our own rule' : ''}.{w.reported ? ' As reported, not yet checked.' : ` Checked against ${w.sources.length === 1 ? 'its page' : 'their pages'}.`}</>
         : 'Our own rule, with its reason given.'}</p>
     </div>
@@ -297,41 +327,41 @@ function Drawer({ s, l, d, groups, setGroup, update }: { s: PlanState; l: LineVi
       <input type="radio" id={`${name}-${i}`} name={name} checked={x.current} disabled={!x.usable} onChange={() => { if (!x.current) choose(x); }} class={`mt-1 ${RADIO}`} />
       <span class="min-w-0">
         <span class={`block text-sm ${INK}`}>{x.name} · <span class="tabular-nums">{x.rate}</span>{x.mark && <span class={MUTED}> ({x.mark})</span>}</span>
-        <span class={`block text-xs ${MUTED}`}>{x.spec}</span>
+        <span class={`block text-sm ${MUTED}`}>{x.spec}</span>
       </span>
     </label>
     {x.brands.length > 0 && x.usable && <div class="mt-1 ml-7 flex flex-wrap gap-1.5">
       {x.brands.map((b) => {
         const on = x.current && l.brand === b;
         return <button key={b} type="button" data-testid={`pl-brand-${b}`} aria-pressed={on} onClick={() => choose(x, on ? undefined : b)}
-          class={`rounded-full border px-2.5 py-0.5 text-xs ${on ? 'border-teal-700 bg-teal-50 text-teal-900 dark:border-teal-500 dark:bg-teal-950 dark:text-teal-100' : `border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900 ${INK}`}`}>{b}</button>;
+          class={`rounded-full text-sm ${INK} ${on ? 'border-2 border-accent px-2.75 py-0.75 font-medium' : 'border border-edge px-3 py-1'}`}>{b}</button>;
       })}
     </div>}
   </li>;
-  return <div data-testid="pl-drawer" class="mt-2 rounded-md border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800">
+  return <div data-testid="pl-drawer" class="mt-2 rounded-control bg-field p-3">
     <p class={`text-sm ${INK}`}><span class="font-medium">{l.name}</span> · {l.kind}{l.brands ? ` · ${l.brands}` : ''}</p>
     <fieldset class="mt-1 min-w-0">
       <legend class="sr-only">The item for {l.room.toLowerCase()}, {l.name.toLowerCase()}</legend>
       {d.groups.map((g, gi) => {
-        const list = <ol class="divide-y divide-slate-200 dark:divide-slate-700">{g.choices.map((x, i) => rung(x, `${gi}-${i}`))}</ol>;
+        const list = <ol class="divide-y divide-line">{g.choices.map((x, i) => rung(x, `${gi}-${i}`))}</ol>;
         return gi === 0
           ? <div key={g.title} data-testid={`pl-choices-${g.level ?? 'other'}`}><p class={`mt-1 text-sm font-medium ${INK}`}>{g.title}</p>{list}</div>
           : <details key={g.title} data-testid={`pl-choices-${g.level ?? 'other'}`} class="mt-1" open={groups[groupKey(d.key, g)] ?? g.open} onToggle={(ev) => setGroup(groupKey(d.key, g), (ev.currentTarget as HTMLDetailsElement).open)}>
-            <summary class={`cursor-pointer text-sm text-teal-800 dark:text-teal-300`}>{g.title}</summary>{list}
+            <summary class={SUMMARY}>{g.title}</summary>{list}
           </details>;
       })}
     </fieldset>
     {l.chosen && <button type="button" data-testid="pl-item-reset" class={`mt-2 ${BUTTON}`} onClick={() => update((st) => withItem(st, l.key, null, undefined, `${l.room}, ${l.name.toLowerCase()}: back to the level’s item`))}>Back to the level’s item</button>}
     <details class="mt-2" open>
       <summary class={`cursor-pointer text-sm font-medium ${INK}`}>How we worked this out</summary>
-      <ul data-testid="pl-how" class={`mt-1 list-disc space-y-0.5 pl-5 text-xs ${INK}`}>
+      <ul data-testid="pl-how" class={`mt-1 list-disc space-y-0.5 pl-5 text-sm ${INK}`}>
         <li>Quantity: {d.how.quantity}</li>
         <li>Rate: {d.how.rate.join('; ')}</li>
         <li>Amount: {d.how.amount}</li>
       </ul>
-      {l.sources.length > 0 && <p class={`mt-1 text-xs ${MUTED}`}>Sources: {l.sources.map((x, i) => [i ? '; ' : '', x.url
-        ? <a key={x.id} href={x.url} target="_blank" rel="noopener noreferrer" class="text-teal-800 underline dark:text-teal-300">{x.what}</a> : x.what])}. {checkedLine(l)}</p>}
-      {l.note && <p class={`mt-1 text-xs ${MUTED}`}>{l.note}</p>}
+      {l.sources.length > 0 && <p class={`mt-1 text-sm ${MUTED}`}>Sources: {l.sources.map((x, i) => [i ? '; ' : '', x.url
+        ? <a key={x.id} href={x.url} target="_blank" rel="noopener noreferrer" class={LINK}>{x.what}</a> : x.what])}. {checkedLine(l)}</p>}
+      {l.note && <p class={`mt-1 text-sm ${MUTED}`}>{l.note}</p>}
     </details>
   </div>;
 }
@@ -339,20 +369,20 @@ function Drawer({ s, l, d, groups, setGroup, update }: { s: PlanState; l: LineVi
 /** Compare (A8): each section that is on, and the total, at the five levels as a package; the estimate's own level marked. */
 function Compare({ v }: { v: PlanView }) {
   const cell = (c: PlanView['compare']['totals'][number], name: string, i: number) => <td key={i} aria-label={`${name}, ${LEVEL_NAMES[i]}: Rs. ${c.full}${c.mine ? ', your level' : ''}`} title={`Rs. ${c.full}`}
-    class={`px-1 py-1 text-right ${c.mine ? 'rounded bg-teal-50 font-semibold text-teal-900 ring-1 ring-teal-700 dark:bg-teal-950 dark:text-teal-100 dark:ring-teal-500' : ''}`}>{c.text}</td>;
+    class={`px-1 py-1 text-right ${c.mine ? 'rounded-control bg-accent/10 font-semibold' : ''}`}>{c.text}</td>;
   return <details data-testid="pl-compare" class="mt-3">
-    <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">Compare the five levels, section by section</summary>
+    <summary class={SUMMARY}>Compare the five levels, section by section</summary>
     <div class="mt-2 overflow-x-auto">
-      <table class={`w-full text-xs tabular-nums ${INK}`}>
-        <caption class={`text-left text-xs ${MUTED}`}>Each section at each level as a package, in lakhs where large; yours marked.</caption>
+      <table class={`w-full text-sm tabular-nums ${INK}`}>
+        <caption class={`text-left text-sm ${MUTED}`}>Each section at each level as a package, in lakhs where large; yours marked.</caption>
         <thead><tr class={MUTED}><th scope="col" class="py-1 pr-1 text-left font-normal">Section</th>{LEVEL_NAMES.map((n) => <th key={n} scope="col" class="px-1 py-1 text-right font-normal">{n}</th>)}</tr></thead>
-        <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+        <tbody class="divide-y divide-line">
           {v.compare.rows.map((r) => <tr key={r.id} data-testid={`pl-compare-${r.id}`}>
-            <th scope="row" class="py-1 pr-1 text-left font-normal">{r.name}{r.yours && <span class={`block text-[11px] ${MUTED}`}>{r.yours}</span>}</th>
+            <th scope="row" class="py-1 pr-1 text-left font-normal">{r.name}{r.yours && <span class={`block text-sm ${MUTED}`}>{r.yours}</span>}</th>
             {r.cells.map((c, i) => cell(c, r.name, i))}
           </tr>)}
           <tr data-testid="pl-compare-total" class="font-semibold">
-            <th scope="row" class="py-1 pr-1 text-left">Total{v.compare.yours && <span class={`block text-[11px] font-normal ${MUTED}`}>{v.compare.yours}</span>}</th>
+            <th scope="row" class="py-1 pr-1 text-left">Total{v.compare.yours && <span class={`block text-sm font-normal ${MUTED}`}>{v.compare.yours}</span>}</th>
             {v.compare.totals.map((c, i) => cell(c, 'Total', i))}
           </tr>
         </tbody>
@@ -365,15 +395,15 @@ function Compare({ v }: { v: PlanView }) {
 function Stages({ v }: { v: PlanView }) {
   const st = v.stages ?? [];
   return <details data-testid="pl-stages" class="mt-2">
-    <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">Stages for {v.loan === 'extension' ? 'an extension' : 'a construction'} loan</summary>
+    <summary class={SUMMARY}>Stages for {v.loan === 'extension' ? 'an extension' : 'a construction'} loan</summary>
     <div class="mt-2 overflow-x-auto">
-      <table class={`w-full text-xs tabular-nums ${INK}`}>
-        <caption class={`text-left text-xs ${MUTED}`}>The structure split by published shares; the rest from the estimate's own items. For planning a loan's payments, not a lender's own schedule.</caption>
+      <table class={`w-full text-sm tabular-nums ${INK}`}>
+        <caption class={`text-left text-sm ${MUTED}`}>The structure split by published shares; the rest from the estimate's own items. For planning a loan's payments, not a lender's own schedule.</caption>
         <thead><tr class={MUTED}><th scope="col" class="py-1 pr-1 text-left font-normal">Stage</th><th scope="col" class="px-1 py-1 text-right font-normal">Rupees</th>
           <th scope="col" class="px-1 py-1 text-right font-normal">Share</th><th scope="col" class="px-1 py-1 text-right font-normal">By then</th></tr></thead>
-        <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+        <tbody class="divide-y divide-line">
           {st.map((x) => <tr key={x.id} data-testid={`pl-stage-${x.id}`}>
-            <th scope="row" class="py-1 pr-1 text-left font-normal">{x.name}<span class={`block text-[11px] ${MUTED}`}>{x.what}</span></th>
+            <th scope="row" class="py-1 pr-1 text-left font-normal">{x.name}<span class={`block text-sm ${MUTED}`}>{x.what}</span></th>
             <td class="px-1 py-1 text-right">{x.amount}</td><td class="px-1 py-1 text-right">{x.share}</td><td class="px-1 py-1 text-right">{x.upTo}</td>
           </tr>)}
           <tr data-testid="pl-stages-total" class="font-semibold">
@@ -389,10 +419,10 @@ function Stages({ v }: { v: PlanView }) {
 function Shares({ v }: { v: PlanView }) {
   return <figure data-testid="pl-shares" class="mt-3">
     <figcaption class={`text-sm font-medium ${INK}`}>How your carpet area is shared</figcaption>
-    <div aria-hidden="true" class="mt-1.5 flex h-4 w-full gap-[2px] overflow-hidden rounded bg-slate-100 dark:bg-slate-800">
+    <div aria-hidden="true" class="mt-1.5 flex h-4 w-full gap-0.5 overflow-hidden rounded bg-surface">
       {v.shares.map((x) => <span key={x.id} title={`${x.name} ${x.share}`} class={`h-full shrink-0 ${SHARE_COLOR[x.kind]}`} style={{ width: `calc(${x.width.toFixed(3)}% - 2px)` }} />)}
     </div>
-    <ul class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[13px] sm:grid-cols-3">
+    <ul class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3">
       {v.shares.map((x) => <li key={x.id} data-testid={`pl-share-${x.id}`} class={`flex items-baseline gap-1.5 ${INK}`}>
         <span aria-hidden="true" class={`inline-block size-2.5 shrink-0 rounded-sm ${SHARE_COLOR[x.kind]}`} />
         <span class="min-w-0">{x.name}</span><span class="ml-auto tabular-nums">{x.share}</span>
@@ -413,13 +443,13 @@ function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) 
   const named = (r: RoomView, what: string) => <><span class="sr-only">{r.name}, </span>{what}</>;
   const side = (r: RoomView, which: 'l' | 'b') => <TextField id={`fld-room-${r.id}-${which}`} class="w-24" label={named(r, `${which === 'l' ? 'Length' : 'Breadth'}, ${unit}`)} inputMode="decimal"
     value={r[which]} placeholder={r.planned[which]} invalid={!!r.bad} onCommit={(t) => update((x) => withRoomSide(x, r.id, which, t, r.name))} />;
-  return <section id="pl-rooms" aria-labelledby="pl-rooms-h" class="mt-6">
-    <details data-testid="pl-rooms">
-      <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300"><h2 id="pl-rooms-h" class="inline font-medium">Rooms ({v.rooms.length})</h2>: add or take out a room, size each, give one its own level</summary>
+  return <Section id="pl-rooms" title="Rooms">
+    <details data-testid="pl-rooms" class="mt-2">
+      <summary class={SUMMARY}>{v.rooms.length} rooms: add or take out a room, size each, give one its own level</summary>
       <p class={`mt-3 text-sm ${MUTED}`}>The rooms share the carpet area: a room made larger takes its extra from the others, and a size you type moves no other room. To make them all larger, change the area.</p>
       <Shares v={v} />
-      {v.roomsNote && <p data-testid="pl-rooms-note" class="mt-3 text-sm text-amber-900 dark:text-amber-200">{v.roomsNote}</p>}
-      <ul class="mt-2 divide-y divide-slate-200 dark:divide-slate-800">
+      {v.roomsNote && <p data-testid="pl-rooms-note" class="mt-3 text-sm text-warn">{v.roomsNote}</p>}
+      <ul class="mt-2 divide-y divide-line">
         {v.rooms.map((r) => <li key={r.id} data-testid={`pl-room-${r.id}`} class="py-3">
           <div class="flex flex-wrap items-baseline justify-between gap-x-3">
             <h3 class={`font-medium ${INK}`}>{r.name}</h3>
@@ -435,26 +465,26 @@ function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) 
               </label>)}
             </div>
           </fieldset>}
-          {r.below && <p data-testid={`pl-room-below-${r.id}`} class="mt-1 text-sm text-amber-900 dark:text-amber-200">{r.below}</p>}
+          {r.below && <p data-testid={`pl-room-below-${r.id}`} class="mt-1 text-sm text-warn">{r.below}</p>}
           {(r.bedroom || r.out) && <div class="mt-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
             {r.bedroom ? <label for={`fld-attached-${r.id}`} class={`flex min-h-11 cursor-pointer items-center gap-2 text-sm ${INK}`}>
               <input type="checkbox" id={`fld-attached-${r.id}`} checked={r.attached} class={RADIO}
                 onChange={(ev) => update((x) => withAttached(x, r.id, (ev.currentTarget as HTMLInputElement).checked, r.name))} />
               <span><span class="sr-only">{r.name}: </span>Attached bathroom</span>
             </label> : <span />}
-            {r.out && <button type="button" data-testid={`pl-room-out-${r.id}`} class={OUT} aria-label={`Take out ${r.name}`}
+            {r.out && <button type="button" data-testid={`pl-room-out-${r.id}`} class={BUTTON} aria-label={`Take out ${r.name}`}
               onClick={() => update((x) => (r.id.startsWith('bedroom-') ? withBedroomTakenOut(x, r.id, r.name) : r.id.startsWith('bath-') ? withBathTakenOut(x, r.id, r.name) : r.id === 'balcony' ? withBalcony(x, false) : withExtra(x, r.id as ExtraKind, false)))}>× Take out</button>}
           </div>}
           {/* A size typed and a level of the room's own, behind one line (R1): open when either is set. */}
           <details data-testid={`pl-room-more-${r.id}`} class="mt-2" open={r.typed || !!r.bad || r.level !== null}>
-            <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300"><span class="sr-only">{r.name}: </span>Your own size or level</summary>
+            <summary class={SUMMARY}><span class="sr-only">{r.name}: </span>Your own size or level</summary>
             <div class="mt-1 flex flex-wrap items-end gap-x-3 gap-y-2">
               {side(r, 'l')}{side(r, 'b')}
               <SelectField id={`fld-roomlevel-${r.id}`} class="w-40" label={named(r, 'Level')} value={r.level ? String(r.level) : ''} options={levels}
                 onChange={(lv) => update((x) => withRoomLevel(x, r.id, lv ? (Number(lv) as Level) : null, r.name))} />
               {r.typed && <button type="button" data-testid={`pl-room-reset-${r.id}`} class={BUTTON} onClick={() => update((x) => withRoomReset(x, r.id, r.name))}>Planned size</button>}
             </div>
-            {r.bad && <p data-testid={`pl-room-bad-${r.id}`} class="mt-1 text-sm text-red-700 dark:text-red-300">{r.bad} Until then the planned size is used.</p>}
+            {r.bad && <p data-testid={`pl-room-bad-${r.id}`} class="mt-1 text-sm text-bad">{r.bad} Until then the planned size is used.</p>}
           </details>
         </li>)}
       </ul>
@@ -465,7 +495,7 @@ function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) 
         {v.add.extras.map((x) => <button key={x.kind} type="button" data-testid={`pl-room-add-${x.kind}`} class={BUTTON} onClick={() => update((y) => withExtra(y, x.kind, true))}>+ {x.name}</button>)}
       </div>}
     </details>
-  </section>;
+  </Section>;
 }
 
 /**
@@ -478,21 +508,21 @@ function Assumed({ s, v, update }: { s: PlanState; v: PlanView; update: Update }
   const plotSide = (which: 'l' | 'b') => plot && <TextField id={`fld-plot-${which}`} class="w-28" label={`Plot ${which === 'l' ? 'length' : 'width'}, ${unit}`} inputMode="decimal"
     value={plot[which]} placeholder={plot.planned[which]} invalid={!!plot.bad} onCommit={(t) => update((x) => withPlotSide(x, which, t))} />;
   return <details id="pl-assumed" data-testid="pl-assumed" class="mt-2">
-    <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">What the estimate assumes ({v.assumed.length})</summary>
+    <summary class={SUMMARY}>What the estimate assumes ({v.assumed.length})</summary>
     <ul class="mt-3 space-y-2">
       {v.assumed.map((a, i) => <li key={a.what} data-testid={`pl-assumed-${i}`} class={`text-sm ${INK}`}>
         <span class="font-medium">{a.what}:</span> {a.shown}
-        {a.what === 'Ceiling height' && !height && <> <button type="button" data-testid="pl-height-change" class="text-teal-800 underline dark:text-teal-300" onClick={() => setHeight(true)}>Change</button></>}
+        {a.what === 'Ceiling height' && !height && <> <button type="button" data-testid="pl-height-change" class={LINK} onClick={() => setHeight(true)}>Change</button></>}
         {a.what === 'Ceiling height' && height && <TextField id="fld-height" class="mt-2 max-w-xs" label="Ceiling height, in metres" inputMode="decimal" value={s.height}
           placeholder={`like ${RULE_HEIGHT}`} invalid={bad} said={bad ? `Type a height from 2 to 6 metres, like 3. Until then the estimate uses ${RULE_HEIGHT} m.` : undefined} onCommit={(t) => update((x) => ({ ...x, height: t }))} />}
-        {a.what === 'The plot' && plot && !plotOpen && !plot.own && !plot.bad && <> <button type="button" data-testid="pl-plot-change" class="text-teal-800 underline dark:text-teal-300" onClick={() => setPlot(true)}>Change</button></>}
+        {a.what === 'The plot' && plot && !plotOpen && !plot.own && !plot.bad && <> <button type="button" data-testid="pl-plot-change" class={LINK} onClick={() => setPlot(true)}>Change</button></>}
         {a.what === 'The plot' && plot && (plotOpen || plot.own || plot.bad) && <div class="mt-2 flex flex-wrap items-end gap-x-3 gap-y-2">
           {plotSide('l')}{plotSide('b')}
           {plot.own && <button type="button" data-testid="pl-plot-reset" class={BUTTON} onClick={() => update(withPlotReset)}>Planned plot</button>}
         </div>}
-        {a.what === 'The plot' && plot?.bad && <p data-testid="pl-plot-bad" class="mt-1 text-sm text-red-700 dark:text-red-300">{plot.bad} Until then the planned plot is used.</p>}
+        {a.what === 'The plot' && plot?.bad && <p data-testid="pl-plot-bad" class="mt-1 text-sm text-bad">{plot.bad} Until then the planned plot is used.</p>}
         {a.what === 'Water' && s.kind === 'build' && <label for="fld-sewer" class="mt-2 flex items-center gap-2 text-sm">
-          <input type="checkbox" id="fld-sewer" checked={s.sewer} onChange={(e) => update((x) => withSewer(x, (e.currentTarget as HTMLInputElement).checked))} class="h-4 w-4 accent-teal-700" />
+          <input type="checkbox" id="fld-sewer" checked={s.sewer} onChange={(e) => update((x) => withSewer(x, (e.currentTarget as HTMLInputElement).checked))} class="h-4 w-4 accent-accent" />
           The city's sewer reaches my plot
         </label>}
         <SourceNote what="Why">{a.why}{a.sources.length ? ` Sources: ${a.sources.map((x) => x.what).join('; ')}.` : ''}</SourceNote>
@@ -506,17 +536,16 @@ function Assumed({ s, v, update }: { s: PlanState; v: PlanView; update: Update }
  * count, the other things to check and what the estimate assumes.
  */
 function Checks({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) {
-  return <section id="pl-checks" aria-labelledby="pl-checks-h" class="mt-6">
-    <h2 id="pl-checks-h" class={`text-sm font-medium ${INK}`}>To check</h2>
-    {v.flags.length > 0 && <ul data-testid="pl-flags" class="mt-2 list-disc space-y-1 rounded-md border border-amber-300 bg-amber-50 py-3 pr-3 pl-8 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
+  return <Section id="pl-checks" title="To check">
+    {v.flags.length > 0 && <ul data-testid="pl-flags" class="mt-2 list-disc space-y-1 rounded-control border-l-4 border-warn bg-warn-tint py-3 pr-3 pl-8 text-sm text-ink">
       {v.flags.map((f) => <li key={f}>{f}</li>)}
     </ul>}
     {v.notes.length > 0 && <details data-testid="pl-notes" class="mt-2">
-      <summary class="cursor-pointer text-sm text-teal-800 dark:text-teal-300">Other things to check ({v.notes.length})</summary>
+      <summary class={SUMMARY}>Other things to check ({v.notes.length})</summary>
       <ul class={`mt-2 list-disc space-y-1 pl-5 text-sm ${INK}`}>{v.notes.map((f) => <li key={f}>{f}</li>)}</ul>
     </details>}
     <Assumed s={s} v={v} update={update} />
-  </section>;
+  </Section>;
 }
 
 /** The document's own facts, asked once, then the planning estimate as a PDF, an Excel copy and a Word copy. */
@@ -544,10 +573,10 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
     </div>
     <div class="mt-5">
       <p data-testid="pl-doc-status" class={`inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${own.length
-        ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200'}`}>{planDocStatus(s, p)}</p>
-      {own.length > 0 && <ul data-testid="pl-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
+        ? 'bg-warn-tint text-warn' : 'bg-good-tint text-good'}`}>{planDocStatus(s, p)}</p>
+      {own.length > 0 && <ul data-testid="pl-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
       <div class="mt-3 flex flex-wrap gap-2">
-        <button type="button" data-testid="pl-download-pdf" class={BUTTON} onClick={() => go('pdf')}>Download PDF</button>
+        <button type="button" data-testid="pl-download-pdf" class={FILLED} onClick={() => go('pdf')}>Download PDF</button>
         <button type="button" data-testid="pl-download-xlsx" class={BUTTON} onClick={() => go('xlsx')}>Download Excel</button>
         <button type="button" data-testid="pl-download-docx" class={BUTTON} onClick={() => go('docx')}>Download Word</button>
       </div>

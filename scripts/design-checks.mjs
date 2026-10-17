@@ -167,9 +167,20 @@ async function keyboard(page) {
 export async function measure(page, { phone, keys = true } = {}) {
   const lines = [];
   await page.evaluate(AXE);
-  const axe = await page.evaluate(async () => (await window.axe.run(document, {
-    runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] }, resultTypes: ['violations'],
-  })).violations.map((x) => `${x.id} (${x.impact}, ${x.nodes.length}): ${x.nodes[0]?.target.join(' ')}`));
+  // axe runs from the page's top, the fonts in: its target-size counts a control cut by the window's edge as small, so where a
+  // state happened to scroll decided the result (#fld-home-flat 10 px above the edge, one CI run in several; D-TECH-43).
+  const axe = await page.evaluate(async () => {
+    await document.fonts.ready;
+    const y = scrollY;
+    scrollTo({ top: 0, behavior: 'instant' });
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    const found = (await window.axe.run(document, {
+      runOnly: { type: 'tag', values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'] }, resultTypes: ['violations'],
+    })).violations.map((x) => `${x.id} (${x.impact}, ${x.nodes.length}): ${x.nodes[0]?.target.join(' ')}`);
+    scrollTo({ top: y, behavior: 'instant' });
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    return found;
+  });
   for (const x of axe) lines.push(`axe: ${x}`);
   const m = await page.evaluate(inPage, phone);
   for (const x of m.edges) lines.push(`field edge below 3:1: ${x}`);

@@ -91,10 +91,12 @@ export function cmaNeeds(x: CmaInput): string[] {
   if (x.collateral !== undefined && !(isNum(x.collateral) && x.collateral >= 0)) needs.push('The collateral’s market value, as a figure of 0 or more');
   for (const id of yearsGiven(x)) {
     const y = YEARS.find((t) => t.id === id) as (typeof YEARS)[number], f = x.figures[id] ?? {}, name = yearName(fy[id], y.kind as YearKind);
+    // A figure typed but not read is named first, before the blanks of its year (design review 5, UX4).
     const missing = HEADS.filter((h) => f[h.id] === undefined).map((h) => h.label);
-    if (missing.length) { needs.push(`${name}: ${missing.length === 1 ? missing[0] : `${missing.length} figures, the first ${missing[0]}`}`); continue; }
-    const wrong = HEADS.filter((h) => !(isNum(f[h.id]) && (h.negative || (f[h.id] as number) >= 0))).map((h) => h.label);
-    if (wrong.length) { needs.push(`${name}: ${wrong.join(', ')} as a figure of 0 or more`); continue; }
+    const wrong = HEADS.filter((h) => f[h.id] !== undefined && !(isNum(f[h.id]) && (h.negative || (f[h.id] as number) >= 0))).map((h) => h.label);
+    if (wrong.length) needs.push(`${name}: ${wrong.join(', ')} as a figure of 0 or more`);
+    if (missing.length) needs.push(`${name}: ${missing.length === 1 ? missing[0] : `${missing.length} figures, the first ${missing[0]}`}`);
+    if (wrong.length || missing.length) continue;
     const v = f as Figures;
     if (v.tlDue12 > v.termLoans) needs.push(`${name}: the term loans due within 12 months are more than the term loans outstanding`);
     const t = totals(v, !!x.quasiEquity);

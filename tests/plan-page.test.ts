@@ -547,7 +547,7 @@ describe('R2b on the page: + Pooja room, + Study, + Utility and + Store room, ea
 describe('V1 on the page: short by default', () => {
   const interiors = view(withKind(FLAT, 'interiors'));
   it('the flags that can change the decision go with the answer and the rest one tap away, each largest first', () => {
-    expect(interiors.flags).toEqual(['A 2 BHK is usually 650–850 sq ft of carpet area; yours is 1000.']);
+    expect(interiors.flags).toEqual(['A 2 BHK is usually 650–850 sq ft of carpet area; yours is 1,000.']); // grouped on screen (UX4); the engine says 1000
     expect(interiors.notes.map((f) => f.slice(0, 26))).toEqual(['The furniture is a sofa an', 'The soft furnishings are c']);
   });
   it('the rates as reported in one line by the total, for the city or another place', () => {

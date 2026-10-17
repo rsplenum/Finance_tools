@@ -32,9 +32,9 @@
     },
     "/cma/": {
       "before": 99,
-      "shown": 917,
-      "all": 1674,
-      "plan": 1768,
+      "shown": 912,
+      "all": 1669,
+      "plan": 1763,
       "long": 6,
       "abbr": 5,
       "questions": 130,
@@ -43,18 +43,18 @@
       "gap": 0,
       "styles": 7,
       "colours": 3,
-      "outOfSight": 82
+      "outOfSight": 23
     },
     "/dscr/": {
       "before": 38,
-      "shown": 1036,
-      "all": 3390,
-      "plan": 3777,
+      "shown": 1042,
+      "all": 3396,
+      "plan": 3783,
       "long": 0,
       "abbr": 5,
       "questions": 8,
       "controls": 39,
-      "answerAt": 2,
+      "answerAt": 2.1,
       "gap": 0,
       "styles": 8,
       "colours": 3,
@@ -62,17 +62,17 @@
     },
     "/estimate/": {
       "before": 29,
-      "shown": 351,
-      "all": 1597,
-      "plan": 3453,
+      "shown": 354,
+      "all": 1600,
+      "plan": 3456,
       "long": 2,
       "abbr": 2,
       "questions": 7,
       "controls": 36,
-      "answerAt": 0.5,
+      "answerAt": 0.7,
       "gap": 0,
-      "styles": 8,
-      "colours": 3,
+      "styles": 6,
+      "colours": 2,
       "outOfSight": 0
     },
     "/project-report/": {
@@ -307,6 +307,70 @@
       "to": 3,
       "why": "D-UX-84",
       "date": "2026-10-15"
+    },
+    {
+      "page": "/dscr/",
+      "count": "shown",
+      "from": 1036,
+      "to": 1042,
+      "why": "D-UX-86",
+      "date": "2026-10-17"
+    },
+    {
+      "page": "/estimate/",
+      "count": "shown",
+      "from": 351,
+      "to": 354,
+      "why": "D-UX-87",
+      "date": "2026-10-17"
+    },
+    {
+      "page": "/dscr/",
+      "count": "all",
+      "from": 3390,
+      "to": 3396,
+      "why": "D-UX-86",
+      "date": "2026-10-17"
+    },
+    {
+      "page": "/estimate/",
+      "count": "all",
+      "from": 1597,
+      "to": 1600,
+      "why": "D-UX-87",
+      "date": "2026-10-17"
+    },
+    {
+      "page": "/dscr/",
+      "count": "plan",
+      "from": 3777,
+      "to": 3783,
+      "why": "D-UX-86",
+      "date": "2026-10-17"
+    },
+    {
+      "page": "/estimate/",
+      "count": "plan",
+      "from": 3453,
+      "to": 3456,
+      "why": "D-UX-87",
+      "date": "2026-10-17"
+    },
+    {
+      "page": "/dscr/",
+      "count": "answerAt",
+      "from": 2,
+      "to": 2.1,
+      "why": "D-UX-86",
+      "date": "2026-10-17"
+    },
+    {
+      "page": "/estimate/",
+      "count": "answerAt",
+      "from": 0.5,
+      "to": 0.7,
+      "why": "D-UX-87",
+      "date": "2026-10-17"
     }
   ],
   "fontProbe": 320.2
