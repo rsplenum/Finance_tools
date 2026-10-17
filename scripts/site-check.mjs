@@ -1076,10 +1076,12 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
   // The lender's levels and Make it viable (D-UX-50 to D-UX-52): case R meets every level that can be read, so the button
   // asks how far sales can fall (tests/viable.test.ts by hand); the security cover waits on the collateral.
   if (await page.getByTestId('rep-misses').count()) v('case R is said to miss a lender\'s level');
-  await expectText(page, v, 'rep-check-dscrLowest', /Meets: 2\.51 in 2026-27 · target 1\.25 or more/, 'the lowest DSCR against its level');
+  await expectText(page, v, 'rep-check-dscrLowest', /^Lowest DSCR ?2\.51 ?in 2026-27 ?Meets · target 1\.25 or more$/, 'the lowest DSCR against its level, on its key figure');
+  if (await page.getByTestId('rep-checks').getByText('DSCR in the lowest year').count()) v('the lowest DSCR is shown twice: on its key figure and as a bar (review finding 9)');
   await expectText(page, v, 'rep-check-securityCover', /Type the collateral’s value/, 'the security cover before the collateral');
   await page.getByTestId('rep-viable').click();
-  await expectText(page, v, 'rep-text-sales', /^Sales can fall 31\.5%, to Rs\. 82,20,000 in 2026-27/, 'how far sales can fall');
+  await expectText(page, v, 'rep-text-sales', /^To Rs\. 82,20,000 in 2026-27/, 'how far sales can fall');
+  await expectText(page, v, 'rep-move-sales', '31.5%', 'how far sales can fall, its figure');
   // The plan (MV3, D-UX-52) on case R at 70 lakh (tests/plan.test.ts by hand): without the promoters' most, sales alone,
   // 17.3% higher; with 12 lakh, the limit, the term loan, then sales 14.3% higher. A slider changes no figure above;
   // "Use this plan" writes the plan's, marked, and Undo puts them back.
@@ -1094,7 +1096,7 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
   await page.keyboard.press('ArrowLeft');
   await expectText(page, v, 'rep-move-sales', '+14.2%', 'the sales slider a step back');
   await expectText(page, v, 'rep-plan-line', 'With these changes: Misses 1: DSCR in the lowest year', 'the verdict at the sliders');
-  await expectText(page, v, 'rep-check-dscrLowest', /^DSCR in the lowest year ?Misses: /, 'the bars above as typed');
+  await expectText(page, v, 'rep-check-dscrLowest', /^Lowest DSCR.*Misses · target/, 'the key figures above as typed');
   if (await page.inputValue('#fld-sales') !== '70,00,000') v('a slider changed a typed figure');
   if (!(await page.getByTestId('rep-plan-rest').count())) v('the plan: no "Work out the rest" after a slider moved');
   await page.getByTestId('rep-plan-back').click();
