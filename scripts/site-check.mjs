@@ -1378,4 +1378,6 @@ console.log(`design checks: ${design.lines} findings measured (each held in scri
 console.log(`load measure: ${load.pages} pages against scripts/load-baseline.json, ${load.rose} counts rose, ${load.fell} fell${load.fonts ? '' : '; other fonts here than the baseline\'s, so the answer\'s place and the out-of-sight count are not compared'} (docs/LOAD-MEASURE.md)`);
 console.log(`FinSight's rules: ${forbidden.pages} page${forbidden.pages === 1 ? '' : 's'} in the new look (docs/DESIGN.md), F1 to F19; home weighs ${forbidden.weight} KB as it loads (cap ${WEIGHT_CAP} KB)`);
 for (const x of violations) console.log(`  - ${x}`);
+// In CI each violation is also an annotation, readable where the job's log is not (UX4).
+if (process.env.GITHUB_ACTIONS) for (const x of violations) console.log(`::error title=site check::${String(x).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
 process.exit(violations.length ? 1 : 0);
