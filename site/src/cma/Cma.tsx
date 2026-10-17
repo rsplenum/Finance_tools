@@ -14,7 +14,7 @@ import { isoDate, save, type FileKind } from '../download';
 import { cmaDoc, docNeeds, docStatus, fileName } from './document';
 import { ReadStatement } from './Read';
 import { Levels } from './Levels';
-import { CASE_CHOICES, COLLATERAL_HINT, applyCmaPlan, undoCmaPlan, type CmaChange, type CmaLevers } from './levers';
+import { CASE_CHOICES, COLLATERAL_HINT, applyCmaPlan, levelsOf, undoCmaPlan, type CmaChange, type CmaLevers } from './levers';
 import {
   ASSUMPTIONS, HEADS, amountOf, columnsOf, emptyState, exampleState, preview, startYearOf, statusText, tidyAmount,
   type CmaFacts, type CmaPreview, type CmaState, type ViewTable,
@@ -33,6 +33,7 @@ export function CmaCalculator() {
   const typed = JSON.stringify(s) !== JSON.stringify(blank());
   const update: Update = (f) => setS(f);
   const p = useMemo(() => preview(s), [s]);
+  const shown = Boolean(p.view || typed);
   const cols = columnsOf(s.startYear);
   // "Use this plan" (MV4): the fields it wrote, each marked with what it was, until undone or kept.
   const [used, setUsed] = useState<CmaChange[]>([]);
@@ -83,11 +84,21 @@ export function CmaCalculator() {
     </Section>
     <Download s={s} p={p} update={update} />
     {/* The limit and its status on every screen of the forms (review finding 4), as the DSCR's answer bar. */}
-    {(p.view || typed) && <div class="sticky bottom-0 z-10 -mx-4 mt-10 flex items-center gap-2 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8">
-      <p data-testid="cma-answer-bar" data-answer-echo aria-live="polite" class="flex-1 py-2 text-sm font-medium text-ink">{p.view ? `Limit ${p.view.key[0]?.value} · ${statusText(p)}` : statusText(p)}</p>
-      <a href="#result" aria-label="To the CMA data" class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↓</span></a>
-    </div>}
+    {/* In the page from load, empty and unseen, so its first answer is a change and is read out (UX5b). */}
+    <div class={shown ? 'sticky bottom-0 z-10 -mx-4 mt-10 flex items-center gap-2 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8' : 'sr-only'}>
+      <p data-testid="cma-answer-bar" data-answer-echo aria-live="polite" class={shown ? 'flex-1 py-2 text-sm font-medium text-ink' : undefined}>{shown ? barText(p, s) : ''}</p>
+      {shown && <a href="#result" aria-label="To the CMA data" class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↓</span></a>}
+    </div>
   </div>;
+}
+
+/** The answer bar's words (D-UX-84), as the report's: the limit, whether it meets a lender's levels, the status; never
+ * "Complete" alone under a miss (UX5b critic, finding 1). */
+function barText(p: CmaPreview, s: CmaState) {
+  if (!p.view) return statusText(p);
+  const n = levelsOf(s)?.missCount;
+  const said = n === undefined ? undefined : n ? (n > 1 ? 'Misses lender’s levels' : 'Misses a lender’s level') : 'Meets a lender’s levels';
+  return [`Limit ${p.view.key[0]?.value}`, said, statusText(p)].filter(Boolean).join(' · ');
 }
 
 /** Each column of a form spans its heads and the years' line (11 + 1 and 14 + 1), so the rows line up across the years. */

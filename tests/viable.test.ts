@@ -20,7 +20,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { projectReport, type Report, type ReportInput } from '../engine/report';
-import { diagnose } from '../engine/ratios';
+import { collateralNeeded, diagnose } from '../engine/ratios';
 import { makeViable, type Viability } from '../engine/viable';
 import { CASE_R } from './report.test';
 
@@ -39,8 +39,11 @@ describe('case R at 70 lakh: the diagnosis', () => {
     expect(d.checks.map((c) => [c.id, c.worst?.toFixed(4), c.fy, c.meets])).toEqual([
       ['currentRatio', '0.9351', '2026-27', false], ['tolTnw', expect.any(String), '2026-27', true], ['debtEquity', expect.any(String), '2026-27', true],
       ['dscrAverage', expect.any(String), undefined, false], ['dscrLowest', '0.8183', '2026-27', false], ['interestCover', '0.7445', '2026-27', false],
-      ['facr', '1.3900', '2026-27', true], ['securityCover', undefined, undefined, undefined],
+      ['facr', '1.3900', '2026-27', true], ['securityCover', '1.4917', '2026-27', true],
     ]);
+    // By hand, no collateral typed: net block 27,80,000 (1.39 × the 20,00,000 left), stock 45,50,000 × 30/365 = 3,73,972.60 and
+    // debtors 70,00,000 × 30/365 = 5,75,342.47 secure 20,00,000 + 5,00,000: 37,29,315.07 ÷ 25,00,000 = 1.4917, on the own assets.
+    expect([d.checks.find((c) => c.id === 'securityCover')?.own, collateralNeeded(projectReport(weak) as Report, weak)]).toEqual([true, 0]);
     expect([v.meets, d.misses, d.term]).toEqual([false, ['currentRatio', 'dscrAverage', 'dscrLowest', 'interestCover'], { months: 60, longest: 180 }]);
   });
 });

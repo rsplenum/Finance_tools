@@ -16,8 +16,11 @@ export interface RatioCheck {
   id: RatioId; label: string; at: 'least' | 'most'; level: number;
   /** The worst year's figure and the year (none for the average DSCR, which is over the loan). */
   worst?: number; fy?: string;
-  /** Undefined while it cannot be read: the security cover before the collateral is typed, or no year to read. */
+  /** Undefined while it cannot be read: the security cover before the collateral is typed and short of its level on the
+   * project's own assets, or no year to read. */
   meets?: boolean;
+  /** The security cover read on the project's own assets, no collateral typed: shown only when that alone meets (UX5b). */
+  own?: boolean;
   /** Why it fails without a figure: net worth at or below nil. */
   why?: string;
   /** Why it is not read at all, on the CMA (MV4): no term loan to repay, or no interest to pay. */
@@ -101,7 +104,13 @@ export function diagnose(r: Report, x: ReportInput, c: Case = 'fresh'): Diagnosi
       const sunk = ys.find((y) => y.netWorth <= 0);
       if (sunk) { push({ ...base, fy: sunk.fy, meets: false, why: `net worth is at or below nil in ${sunk.fy}` }); continue; }
     }
-    if (d.id === 'securityCover' && !r.collateral) { push(base); continue; }
+    if (d.id === 'securityCover' && !r.collateral) {
+      // No collateral typed: the project's own assets may meet the level alone (then typing collateral only adds to it);
+      // short of it, the cover waits for the collateral's value. collateralNeeded() is its second computation (0 when it meets).
+      const w = worstOf(ys, (y) => (y.secured > 0 ? y.security / y.secured : undefined), at);
+      push(w && w.v >= level - EPS ? { ...base, worst: w.v, fy: w.fy, meets: true, own: true } : base);
+      continue;
+    }
     const w = worstOf(ys, (y) => y[d.id as 'currentRatio' | 'tolTnw' | 'debtEquity' | 'interestCover' | 'facr' | 'securityCover'], at);
     push(w ? { ...base, worst: w.v, fy: w.fy, meets: at === 'least' ? w.v >= level - EPS : w.v <= level + EPS } : base);
   }
