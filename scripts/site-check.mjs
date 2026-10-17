@@ -803,6 +803,14 @@ for (const scheme of ['light', 'dark']) {
   await expectText(page, v, 'pl-level-flooring', 'Premium', 'the strip switches the package and every slider with it');
   if ((await page.getByTestId('pl-strip-3').getAttribute('aria-pressed')) !== 'true') v('the strip does not mark the package chosen on it');
   await expectText(page, v, 'pl-what-changed', /^Every section to Premium: Rs\. [\d,]+ more/, 'what the new package changed');
+  // UX4 (review finding 3): a new package can be undone from the bar, and the level already chosen does nothing.
+  await page.getByTestId('pl-strip-3').click();
+  if (!(await page.getByTestId('pl-level-undo').isVisible())) v('tapping the level already chosen took away the Undo of the last package');
+  await page.getByTestId('pl-level-undo').click();
+  await expectText(page, v, 'pl-level-flooring', 'Luxury', 'Undo puts back the package and the slider as they were');
+  if ((await page.getByTestId('pl-strip-1').getAttribute('aria-pressed')) !== 'true') v('Undo does not put back the package on the strip');
+  if (await page.getByTestId('pl-level-undo').count()) v('Undo stays after the package is put back');
+  await page.getByTestId('pl-strip-3').click();
   // Compare (A8): closed under the strip; each section on and the total at the five levels, the package's level marked.
   if (await page.getByTestId('pl-compare').evaluate((d) => d.open)) v('Compare is open on load');
   await page.getByTestId('pl-compare').locator('summary').click();
@@ -873,7 +881,7 @@ for (const scheme of ['light', 'dark']) {
   const onI = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
   const movable = await Promise.all(['appliances', 'smart', 'furniture', 'furnishings'].map((x) => page.isChecked(`#fld-on-${x}`)));
   if (onI !== 10 || movable.includes(false)) v(`interiors show ${onI} sections on, Appliances, Smart home, Furniture and Soft furnishings ${movable.join('/')}`);
-  await expectText(page, v, 'pl-split', /^Fixed works Rs\. [\d,]+ · Movable items Rs\. [\d,]+ · Appliances Rs\. [\d,]+$/, 'the movable items apart');
+  await expectText(page, v, 'pl-split', /^Fixed works Rs\. [\d,]+ · Movable items Rs\. [\d,]+ · Equipment Rs\. [\d,]+$/, 'the movable items apart');
   await layout(page, v, 'the estimate as interiors, 390 px');
   // A new house (A3, D-UX-23): the second question asks the floors and the area is the built-up area, still six
   // questions; eighteen sections with thirteen on (E5: Outside works and Water), the structure the same at every level;

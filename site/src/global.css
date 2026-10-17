@@ -45,6 +45,17 @@
   --color-paper-muted: var(--paper-muted);
   --color-margin: var(--margin);
   --color-marigold: var(--marigold);
+  /* The estimate's bar of room shares (R1): a chart's colours, checked for colour-blind separation, each part also named. */
+  --color-share-living: var(--share-living);
+  --color-share-bedroom: var(--share-bedroom);
+  --color-share-kitchen: var(--share-kitchen);
+  --color-share-bath: var(--share-bath);
+  --color-share-pooja: var(--share-pooja);
+  --color-share-study: var(--share-study);
+  --color-share-utility: var(--share-utility);
+  --color-share-store: var(--share-store);
+  --color-share-passage: var(--share-passage);
+  --color-share-walls: var(--share-walls);
 }
 
 /*
@@ -114,6 +125,9 @@
   --spark-1: var(--color-teal-500);       /* the particles: drawn only, never text */
   --spark-2: var(--color-sky-500);
   --spark-3: var(--color-indigo-400);
+  --share-living: #2a78d6; --share-bedroom: #eb6834; --share-kitchen: #1baf7a; --share-bath: #eda100;
+  --share-pooja: #7a1f4f; --share-study: #5b2a86; --share-utility: #8a6440; --share-store: #e8d27a;
+  --share-passage: var(--color-slate-300); --share-walls: var(--color-slate-500);
 }
 
 .dark {
@@ -140,6 +154,9 @@
   --spark-1: var(--color-teal-300);
   --spark-2: var(--color-sky-300);
   --spark-3: var(--color-indigo-300);
+  --share-living: #3987e5; --share-bedroom: #d95926; --share-kitchen: #199e70; --share-bath: #c98500;
+  --share-pooja: #c06090; --share-study: #7444a8; --share-utility: #6e4a2a; --share-store: #d4bd5f;
+  --share-passage: var(--color-slate-600); --share-walls: var(--color-slate-400);
 }
 
 /*
@@ -197,6 +214,7 @@ body[data-look='new'] {
    light page's values. Its shadow is the paper's own (F17). */
 body[data-look='new'] .paper { background-color: var(--paper); color: var(--on-paper); --ink: var(--on-paper); --ink-muted: var(--paper-muted); }
 .dark body[data-look='new'] .paper {
+  color-scheme: light; /* radios, checkboxes and sliders on paper drawn light, as the paper is (UX4) */
   --surface: oklch(0.885 0.012 85); --line: oklch(0.8 0.02 268); --edge: oklch(0.55 0.045 268); --field: oklch(0.97 0.006 85);
   --link: oklch(0.45 0.17 268); --focus: oklch(0.5 0.19 268); --accent: var(--link); --on-accent: oklch(1 0 0);
   --good: var(--color-green-800); --warn: var(--color-amber-900); --bad: var(--color-red-700);
