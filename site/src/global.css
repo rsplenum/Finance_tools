@@ -162,7 +162,7 @@
 /*
  * FinSight's palette (AG2, D-UX-68, D-UX-72; docs/design-reference/finsight.md): indigo ink, ledger red and marigold, on
  * pages in the new look only, so the tool pages keep theirs until UX3. Ink is the text and the desks; red is the margin
- * rule alone and never touches a figure; marigold says "look here, it is met". Paper stays paper in dark mode, dimmed.
+ * rule alone and never touches a figure; marigold says "look here, it is met". Home's scratch paper stays light, dimmed.
  * Contrast measured by the design checks in both themes.
  */
 body[data-look='new'] {
@@ -210,15 +210,13 @@ body[data-look='new'] {
   --edge: oklch(0.7 0.04 268);
   --field: oklch(0.25 0.05 270);
 }
-/* A result lands as paper (UX3, D-UX-73): light in both themes, a little dimmed in dark, so inside it the tokens keep the
-   light page's values. Its shadow is the paper's own (F17). */
+/* A result lands as paper (UX3, D-UX-73): a sheet that casts the only shadow (F17). Light, inside it the light page's
+   values; in dark mode a sheet of ink a step above the page, so nothing on a tool page shines white (UX5b, D-UX-91). */
 body[data-look='new'] .paper { background-color: var(--paper); color: var(--on-paper); --ink: var(--on-paper); --canvas: var(--paper); --ink-muted: var(--paper-muted); }
 .dark body[data-look='new'] .paper {
-  color-scheme: light; /* radios, checkboxes and sliders on paper drawn light, as the paper is (UX4) */
-  --surface: oklch(0.885 0.012 85); --line: oklch(0.8 0.02 268); --edge: oklch(0.55 0.045 268); --field: oklch(0.97 0.006 85);
-  --link: oklch(0.45 0.17 268); --focus: oklch(0.5 0.19 268); --accent: var(--link); --on-accent: oklch(1 0 0);
-  --good: var(--color-green-800); --warn: var(--color-amber-900); --bad: var(--color-red-700);
-  --good-tint: var(--color-green-100); --warn-tint: var(--color-amber-100); --bad-tint: var(--color-red-100);
+  --paper: oklch(0.29 0.05 270); --on-paper: oklch(0.965 0.012 85); --paper-muted: oklch(0.84 0.03 268);
+  --surface: oklch(0.34 0.05 270); --line: oklch(0.42 0.05 270); --field: oklch(0.24 0.045 270);
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.07), var(--shadow-paper); /* its top edge catches the light */
 }
 [data-desk] { --focus: var(--marigold); }
 

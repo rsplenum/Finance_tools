@@ -40,7 +40,7 @@ const rowsOf = (ks: RatioCheck[], s: CmaState, need?: number) => {
 };
 
 /** The bars, or what they wait on: the CMA's figures, then whether the limit is fresh or a renewal. */
-export interface LevelsView { ask?: string; checks?: CheckRow[]; misses?: string; collateralNote?: string; foot?: string }
+export interface LevelsView { ask?: string; checks?: CheckRow[]; misses?: string; missCount?: number; collateralNote?: string; foot?: string }
 export function levelsOf(s: CmaState): LevelsView | undefined {
   const x = inputOf(s), r = cma(x), c = caseOf(s);
   if ('needs' in r || 'blocked' in r) return undefined;
@@ -48,7 +48,7 @@ export function levelsOf(s: CmaState): LevelsView | undefined {
   const d = cmaDiagnose(r, x, c), sc = d.checks.find((k) => k.id === 'securityCover') as RatioCheck;
   const need = sc.meets ? undefined : cmaCollateralNeeded(r, x, c);
   return {
-    checks: rowsOf(d.checks, s, need), foot: FOOT(c),
+    checks: rowsOf(d.checks, s, need), foot: FOOT(c), missCount: d.misses.length,
     ...(d.misses.length ? { misses: `It misses ${d.misses.length === 1 ? 'one' : d.misses.length} of a lender’s levels: ${listed(d.misses.map(labelOf))}.` } : {}),
     ...(need === undefined || need === 0 ? {} : {
       collateralNote: `Security cover: collateral with a market value of ${rs(need)} or more brings it to ${sc.level.toFixed(2)}.`,

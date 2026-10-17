@@ -47,7 +47,8 @@ const COUNTED = 'We count which steps are used (the page, which fields change by
           </nav>
           <div class="ml-auto flex items-center gap-2">
             <ThemeToggle tall />
-            {here !== '/dscr/' && <a href="/dscr/" data-pill class="hidden min-h-11 items-center rounded-full bg-ink px-5 text-sm font-medium text-canvas hover:bg-ink/85 sm:inline-flex">Start a DSCR statement</a>}
+            {/* Filled on home only: on a tool page the one filled pill is its Download PDF (DESIGN-SITE, Buttons; UX5b). */}
+            {here !== '/dscr/' && <a href="/dscr/" data-pill class={`hidden min-h-11 items-center rounded-full px-5 text-sm font-medium sm:inline-flex ${here === '/' ? 'bg-ink text-canvas hover:bg-ink/85' : 'bg-ink/5 text-ink hover:bg-ink/10'}`}>Start a DSCR statement</a>}
           </div>
         </div>
         <nav aria-label="Tools" class="flex flex-wrap justify-center gap-1 px-2 pt-1 pb-2 lg:hidden">

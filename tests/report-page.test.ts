@@ -135,16 +135,16 @@ describe('the lender\'s levels and make it viable, in words', () => {
       'Current ratio | 1.10 or more | misses 0.94 in 2026-27', 'Total outside liabilities ÷ net worth | 5.00 or less | meets 3.58 in 2026-27',
       'Term loan ÷ net worth (debt-equity) | 4.00 or less | meets 2.49 in 2026-27', 'Average DSCR | 1.50 or more | misses 1.26 over the loan',
       'DSCR in the lowest year | 1.25 or more | misses 0.82 in 2026-27', 'Interest cover | 1.50 or more | misses 0.74 in 2026-27',
-      'Fixed-asset cover | 1.20 or more | meets 1.39 in 2026-27', 'Security cover | 1.20 or more | wait Type the collateral’s value',
+      'Fixed-asset cover | 1.20 or more | meets 1.39 in 2026-27', 'Security cover | 1.20 or more | meets 1.49 in 2026-27 on the project’s own assets',
     ]);
     expect([p.misses, p.collateralNote, p.longTerm]).toEqual(['It misses 4 of a lender’s levels: current ratio, average DSCR, DSCR in the lowest year and interest cover.',
-      'Security cover: the project’s own assets reach 1.20 without collateral.', undefined]);
+      undefined, undefined]);
     // The bars (the level at the middle) and the rupees short, rounded up from tests/viable.test.ts's hand figures.
     expect(p.checks?.map((c) => [c.id, c.bar.toFixed(1), c.short])).toEqual([
       ['currentRatio', '42.5', 'Short by Rs. 1,44,139 of current assets (stock, debtors and cash) in 2026-27.'], ['tolTnw', '35.8', undefined], ['debtEquity', '31.1', undefined],
       ['dscrAverage', '42.2', expect.stringMatching(/^Short by Rs\. [\d,]+ of cash to pay the loan, in total over the loan\.$/)],
       ['dscrLowest', '32.7', 'Short by Rs. 3,13,855 of cash to pay the loan in 2026-27.'], ['interestCover', '24.8', 'Short by Rs. 2,13,125 of profit before interest and tax in 2026-27.'],
-      ['facr', '57.9', undefined], ['securityCover', '0.0', undefined],
+      ['facr', '57.9', undefined], ['securityCover', '62.2', undefined],
     ]);
   });
   it('the borrower\'s changes first, then the lender\'s, each a card with how far it moves and what it fixes', () => {
@@ -191,7 +191,7 @@ describe('the plan on the board, in words, used and undone', () => {
       'A working-capital limit of Rs. 3,80,877 (now Rs. 5,00,000).',
       'A term loan of Rs. 23,76,740 (now Rs. 25,00,000), the promoters bringing the rest.',
       'Sales of Rs. 80,01,000 in a full first year (now Rs. 70,00,000), 14.3% higher.']);
-    expect([b?.works, b?.verdict, b?.line]).toEqual([true, 'With these changes it meets every lender’s level that can be read.', 'Meets every level']);
+    expect([b?.works, b?.verdict, b?.line]).toEqual([true, 'With these changes it meets every lender’s level.', 'Meets every level']);
     expect(b?.promoters).toBe('The promoters bring Rs. 11,99,999 in all (now Rs. 8,75,342), within the Rs. 12,00,000 they can.');
     expect(q?.atLimit).toBe('At the limit: the promoters’ money.');
     expect(q?.limits).toMatch(/^The limits kept: the promoters bring at most Rs\. 12,00,000 in all; sales with no limit known/);

@@ -1074,11 +1074,12 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
     if (got[0] !== want) v(`the report's ${table} "${label}" shows ${JSON.stringify(got.slice(0, 2))}, want ${want} first`);
   }
   // The lender's levels and Make it viable (D-UX-50 to D-UX-52): case R meets every level that can be read, so the button
-  // asks how far sales can fall (tests/viable.test.ts by hand); the security cover waits on the collateral.
+  // asks how far sales can fall (tests/viable.test.ts by hand); the security cover meets on the project's own assets, read once (UX5b).
   if (await page.getByTestId('rep-misses').count()) v('case R is said to miss a lender\'s level');
   await expectText(page, v, 'rep-check-dscrLowest', /^Lowest DSCR ?2\.51 ?in 2026-27 ?Meets · target 1\.25 or more$/, 'the lowest DSCR against its level, on its key figure');
   if (await page.getByTestId('rep-checks').getByText('DSCR in the lowest year').count()) v('the lowest DSCR is shown twice: on its key figure and as a bar (review finding 9)');
-  await expectText(page, v, 'rep-check-securityCover', /Type the collateral’s value/, 'the security cover before the collateral');
+  await expectText(page, v, 'rep-check-securityCover', /Meets: [0-9.]+ in 20[0-9-]+ on the project’s own assets/, 'the security cover before the collateral, on the own assets');
+  if (await page.getByTestId('rep-collateral-note').count()) v('the security cover met on the own assets still asks for the collateral (UX5b)');
   await page.getByTestId('rep-viable').click();
   await expectText(page, v, 'rep-text-sales', /^To Rs\. 82,20,000 in 2026-27/, 'how far sales can fall');
   await expectText(page, v, 'rep-move-sales', '31.5%', 'how far sales can fall, its figure');

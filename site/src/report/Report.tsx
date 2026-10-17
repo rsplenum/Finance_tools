@@ -175,10 +175,11 @@ export function ReportCalculator() {
     </Section>
     <Download s={s} p={p} update={update} />
     {/* The answer on every screen of the fields (D-UX-84): text, read out as it changes; only the arrow is a target, 44 px. */}
-    {typed && <div class="sticky bottom-0 z-10 -mx-4 mt-10 flex items-center gap-2 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8">
-      <p data-testid="rep-answer-bar" data-answer-echo aria-live="polite" class="flex-1 py-2 text-sm font-medium text-ink">{barText(p)}</p>
-      <a href="#report" aria-label="To the report" class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↓</span></a>
-    </div>}
+    {/* In the page from load, empty and unseen, so its first answer is a change and is read out (UX5b). */}
+    <div class={typed ? 'sticky bottom-0 z-10 -mx-4 mt-10 flex items-center gap-2 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8' : 'sr-only'}>
+      <p data-testid="rep-answer-bar" data-answer-echo aria-live="polite" class={typed ? 'flex-1 py-2 text-sm font-medium text-ink' : undefined}>{typed ? barText(p) : ''}</p>
+      {typed && <a href="#report" aria-label="To the report" class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↓</span></a>}
+    </div>
   </div>;
 }
 
@@ -264,7 +265,8 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
       <h3 class="text-title text-ink">{p.misses ? 'Why it does not work yet' : 'Against a lender’s levels'}</h3>
       <p class={HINT}>Each ratio in its worst year; the line is the lender’s level.</p>
       <ul class="mt-1 divide-y divide-line">{p.checks.filter((c) => !onKey.has(c.id)).map((c) => <Bar key={c.id} c={c}>
-        {c.id === 'securityCover' && (p.collateralNote || !s.collateral.trim()) && <p data-testid="rep-collateral-note" class={HINT}>
+        {/* Met on the project's own assets, the cover reads once: no note, no ask (UX5b, the critic's finding 3). */}
+        {c.id === 'securityCover' && (p.collateralNote || (!s.collateral.trim() && c.verdict !== 'meets')) && <p data-testid="rep-collateral-note" class={HINT}>
           {p.collateralNote}{!s.collateral.trim() && <>{p.collateralNote ? ' ' : ''}<a href="#fld-collateral" data-testid="rep-to-collateral" onClick={toCollateral}
             class="text-link underline underline-offset-4">Type it under More options</a>.</>}</p>}
       </Bar>)}</ul>

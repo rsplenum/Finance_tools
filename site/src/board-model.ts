@@ -41,7 +41,7 @@ export const labelOf = (id: RatioId) => inSentence(LEVELS.ratios.find((r) => r.i
 /** A ratio's row; `over`, the years an average is read over, in words. */
 export const rowOf = (k: RatioCheck, over = 'over the loan'): CheckRow => ({
   id: k.id, label: k.label, level: levelText(k),
-  worst: k.na ? k.na : k.why ? `Net worth at or below nil in ${k.fy}` : k.worst === undefined ? (k.id === 'securityCover' ? 'Type the collateral’s value' : '—') : `${ratioAt(k.worst, k)}${k.fy ? ` in ${k.fy}` : ` ${over}`}`,
+  worst: k.na ? k.na : k.why ? `Net worth at or below nil in ${k.fy}` : k.worst === undefined ? (k.id === 'securityCover' ? 'Type the collateral’s value' : '—') : `${ratioAt(k.worst, k)}${k.fy ? ` in ${k.fy}` : ` ${over}`}${k.own ? ' on the project’s own assets' : ''}`,
   verdict: k.meets === undefined ? 'wait' : k.meets ? 'meets' : 'misses', bar: barOf(k), at: k.at,
   ...(shortText(k, over) ? { short: shortText(k, over) } : {}),
 });

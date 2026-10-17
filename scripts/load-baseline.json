@@ -32,9 +32,9 @@
     },
     "/cma/": {
       "before": 99,
-      "shown": 1414,
-      "all": 2171,
-      "plan": 2265,
+      "shown": 1418,
+      "all": 2175,
+      "plan": 2269,
       "long": 6,
       "abbr": 5,
       "questions": 130,
@@ -43,7 +43,7 @@
       "gap": 0,
       "styles": 7,
       "colours": 3,
-      "outOfSight": 23
+      "outOfSight": 17
     },
     "/dscr/": {
       "before": 38,
@@ -77,13 +77,13 @@
     },
     "/project-report/": {
       "before": 43,
-      "shown": 960,
-      "all": 2509,
-      "plan": 2596,
+      "shown": 941,
+      "all": 2490,
+      "plan": 2577,
       "long": 1,
       "abbr": 5,
       "questions": 33,
-      "controls": 50,
+      "controls": 49,
       "answerAt": 5.2,
       "gap": 0,
       "styles": 8,
@@ -490,6 +490,30 @@
       "from": 3456,
       "to": 3460,
       "why": "D-UX-88",
+      "date": "2026-10-17"
+    },
+    {
+      "page": "/cma/",
+      "count": "shown",
+      "from": 1414,
+      "to": 1418,
+      "why": "D-UX-92",
+      "date": "2026-10-17"
+    },
+    {
+      "page": "/cma/",
+      "count": "all",
+      "from": 2171,
+      "to": 2175,
+      "why": "D-UX-92",
+      "date": "2026-10-17"
+    },
+    {
+      "page": "/cma/",
+      "count": "plan",
+      "from": 2265,
+      "to": 2269,
+      "why": "D-UX-92",
       "date": "2026-10-17"
     }
   ],
