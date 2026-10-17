@@ -1068,7 +1068,7 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
   // The lender's levels and Make it viable (D-UX-50 to D-UX-52): case R meets every level that can be read, so the button
   // asks how far sales can fall (tests/viable.test.ts by hand); the security cover waits on the collateral.
   if (await page.getByTestId('rep-misses').count()) v('case R is said to miss a lender\'s level');
-  await expectText(page, v, 'rep-check-dscrLowest', /Meets: 2\.51 in 2026-27 · level 1\.25 or more/, 'the lowest DSCR against its level');
+  await expectText(page, v, 'rep-check-dscrLowest', /Meets: 2\.51 in 2026-27 · target 1\.25 or more/, 'the lowest DSCR against its level');
   await expectText(page, v, 'rep-check-securityCover', /Type the collateral’s value/, 'the security cover before the collateral');
   await page.getByTestId('rep-viable').click();
   await expectText(page, v, 'rep-text-sales', /^Sales can fall 31\.5%, to Rs\. 82,20,000 in 2026-27/, 'how far sales can fall');

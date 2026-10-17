@@ -7,7 +7,7 @@ import type { BoardMove, CheckRow, ViableLine } from './board-model';
 
 const MUTED = 'text-ink-muted';
 const TONE = { meets: 'bg-good', misses: 'bg-bad', wait: 'bg-line' } as const;
-const INK = { meets: 'text-link', misses: 'text-bad', wait: MUTED } as const;
+const INK = { meets: 'text-good', misses: 'text-bad', wait: MUTED } as const;
 
 /** One ratio as a bar against its level (MV2b): the track runs from nil to twice the level, so the level is the line at the
  * middle; under it the rupees its worst year is short, from the engine. */
@@ -19,7 +19,7 @@ export function Bar({ c, pre = 'rep' }: { c: CheckRow; pre?: string }) {
       <div class="absolute -inset-y-[3px] left-1/2 w-0.5 bg-ink" />
     </div>
     <p class="mt-0.5 text-sm"><span class={`tabular-nums ${INK[c.verdict]}`}>{c.verdict === 'misses' ? 'Misses: ' : c.verdict === 'meets' ? 'Meets: ' : ''}{c.worst}</span>
-      <span class={`text-xs ${MUTED}`}> · level {c.level}{c.at === 'most' ? ', a shorter bar is better' : ''}</span></p>
+      <span class={`text-xs ${MUTED}`}> · target {c.level}{c.at === 'most' ? ', a shorter bar is better' : ''}</span></p>
     {c.short && <p data-testid={`${pre}-short-${c.id}`} class="text-sm font-medium text-bad">{c.short}</p>}
   </li>;
 }

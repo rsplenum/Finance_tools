@@ -83,8 +83,8 @@ export function CmaCalculator() {
     </Section>
     <Download s={s} p={p} update={update} />
     {/* The limit and its status on every screen of the forms (review finding 4), as the DSCR's answer bar. */}
-    {p.view && <div class="sticky bottom-0 z-10 -mx-4 mt-10 flex items-center gap-2 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8">
-      <p data-testid="cma-answer-bar" data-answer-echo aria-live="polite" class="flex-1 py-2 text-sm font-medium text-ink">Limit {p.view.key[0]?.value} · {statusText(p)}</p>
+    {(p.view || typed) && <div class="sticky bottom-0 z-10 -mx-4 mt-10 flex items-center gap-2 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8">
+      <p data-testid="cma-answer-bar" data-answer-echo aria-live="polite" class="flex-1 py-2 text-sm font-medium text-ink">{p.view ? `Limit ${p.view.key[0]?.value} · ${statusText(p)}` : statusText(p)}</p>
       <a href="#result" aria-label="To the CMA data" class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↓</span></a>
     </div>}
   </div>;
@@ -165,8 +165,8 @@ function Result({ s, p, update, use, used, undo, keep }: { s: CmaState; p: CmaPr
       </dl>
       {!p.blocked && <Levels s={s} update={update} use={use} />}
       {v.flags.length > 0 && <div class="mt-4">
-        <h3 class="font-medium text-ink">To look at</h3>
-        <ul data-testid="cma-flags" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{v.flags.map((f) => <li key={f}>{f}</li>)}</ul>
+        <h3 class="text-title text-ink">To look at</h3>
+        <ul data-testid="cma-flags" class="mt-1 max-w-prose list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{v.flags.map((f) => <li key={f}>{f}</li>)}</ul>
       </div>}
       {v.tables.map((t) => <FormTable key={t.id} t={t} />)}
     </>}

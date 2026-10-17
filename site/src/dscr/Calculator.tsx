@@ -25,7 +25,7 @@ import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
 import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
 import {
   BORROWER_CHOICES, EXAMPLE_TARGETS, GROUP_TITLES, NO_LENDER, OPTION_KEYS, amountOf, barText, choicesOf, emisAsk, frontDoor, loanRead, modeOf, monthText, numberOf,
-  parseFy, presetText, preview, rowValues, rowsOf, statusText, targetText, tidyAmount, withBorrower, withPlanStart, withSource, yearsOf,
+  parseFy, presetText, preview, rowValues, rowsOf, statusText, targetText, tidyAmount, withBorrower, withFrontNeeds, FRONT, frontAt, withPlanStart, withSource, yearsOf,
   type DocFacts, type LenderLine, type LenderText, type LenderView, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 import { applyDscrPlan, undoDscrPlan, type DscrChange, type DscrLevers } from './levers';
@@ -39,14 +39,21 @@ const notUnderstood = (text: string, read: (t: string) => unknown, example: stri
   text.trim() && read(text) === undefined ? `Not understood. Try ${example}.` : undefined;
 const MUTED = 'text-ink-muted';
 
+const goTo = (id: string) => (e: Event) => {
+  const el = document.getElementById(id), to = el?.matches('fieldset') ? el.querySelector('input') : el;
+  if (!to) return;
+  e.preventDefault();
+  (to as HTMLElement).focus();
+};
+
 export function DscrCalculator() {
   const start = () => frontDoor(isoDate(new Date()).slice(0, 7));
   const [s, setS] = useState<State>(start);
   const [more, setMore] = useState(false);
   const update: Update = (f) => setS(f);
-  const p = useMemo(() => preview(s), [s]);
-  const rows = useMemo(() => rowsOf(s), [s]);
   const y = useMemo(() => yearsOf(s), [s]);
+  const p = useMemo(() => withFrontNeeds(s, preview(s), y.years[0]), [s, y]);
+  const rows = useMemo(() => rowsOf(s), [s]);
   const openMore = () => setMore(true);
   // "Use this plan" (MV5): the loan and the term written, with an undo while the change is fresh.
   const [used, setUsed] = useState<DscrChange[]>([]);
@@ -104,7 +111,7 @@ function FrontDoor({ s, update, openMore, was }: { s: State; update: Update; ope
       <TextField id="fld-fd-profit" label="This year’s profit before interest, depreciation and tax" inputMode="decimal" value={s.cells.pbdit?.[0] ?? ''}
         tidy={tidyAmount} placeholder="like 5 L" said={amountSaid(s.cells.pbdit?.[0] ?? '')}
         onCommit={(t) => update((x) => ({ ...first('pbdit', t)(x), modes: { ...x.modes, pbdit: 'grow' } }))} />
-      <TextField id="fld-fd-growth" label="Growth in sales a year (%)" inputMode="decimal" value={s.rates.pbdit ?? ''} placeholder="like 10"
+      <TextField id="fld-fd-growth" label="Growth in sales a year (%)" inputMode="decimal" hint="Like 10." value={s.rates.pbdit ?? ''}
         said={notUnderstood(s.rates.pbdit ?? '', numberOf, 'a number, like 10')} onCommit={(t) => update((x) => ({ ...x, rates: { ...x.rates, pbdit: t } }))} />
       <TextField id="fld-fd-emis" label="EMIs already paid, a month" hint={`${emisAsk(s).replace(/\.?$/, '.')} Leave empty if none.`} inputMode="decimal" value={emi} tidy={tidyAmount}
         said={amountSaid(emi)} onCommit={(t) => update((x) => (t.trim()
@@ -114,9 +121,9 @@ function FrontDoor({ s, update, openMore, was }: { s: State; update: Update; ope
         said={amountSaid(dep)} onCommit={(t) => update((x) => (t.trim() ? { ...first('depreciation', t)(x), modes: { ...x.modes, depreciation: 'same' } } : { ...x, modes: { ...x.modes, depreciation: 'none' } }))} />
       <TextField id="fld-fd-amount" label="Loan amount" hint={was('amount')} inputMode="decimal" value={s.loan.amount} tidy={tidyAmount} placeholder="like 12 L"
         said={amountSaid(s.loan.amount)} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, amount: t } }))} />
-      <TextField id="fld-fd-rate" label="Interest rate (% a year)" inputMode="decimal" value={s.loan.ratePct} placeholder="like 12"
+      <TextField id="fld-fd-rate" label="Interest rate (% a year)" inputMode="decimal" hint="Like 12." value={s.loan.ratePct}
         said={notUnderstood(s.loan.ratePct, numberOf, 'a number, like 12')} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, ratePct: t } }))} />
-      <TextField id="fld-fd-years" label="Term (years)" hint={was('instalments') && `${was('instalments')?.replace(/\.$/, '')} instalments.`} inputMode="decimal" value={years} placeholder="like 5"
+      <TextField id="fld-fd-years" label="Term (years)" hint={was('instalments') ? `${was('instalments')?.replace(/\.$/, '')} instalments.` : 'Like 5.'} inputMode="decimal" value={years}
         said={notUnderstood(years, numberOf, 'a number, like 5')} onCommit={(t) => update((x) => {
           const n = numberOf(t), per = x.loan.repayment === 'quarterly' ? 4 : 12;
           return { ...x, loan: { ...x.loan, instalments: n === undefined ? t : String(Math.round(n * per)) } };
@@ -420,7 +427,7 @@ function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
       <div><dt class={`text-sm ${MUTED}`}>Interest over the whole loan</dt><dd data-testid="dscr-total-interest" class="font-semibold tabular-nums">{p.loanLine.totalInterest}</dd></div>
     </dl>}
     <p data-testid="dscr-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.blocked
-      ? 'bg-bad-tint text-bad' : p.needs.length ? 'bg-warn-tint text-warn' : 'bg-good-tint text-good'}`}>
+      ? 'bg-bad-tint text-bad' : p.needs.length ? 'bg-warn-tint text-warn' : 'bg-surface text-ink'}`}>
       {statusText(p)}
     </p>
     {p.blocked && <p data-testid="dscr-blocked" role="alert" class={`${box} border-bad bg-bad-tint text-ink`}>{p.blocked}</p>}
@@ -433,7 +440,7 @@ function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
         <dt class={`text-sm ${MUTED}`}>Lowest year</dt>
         <dd class="text-ink">
           <span data-testid="dscr-lowest" class="figure text-section">{p.lowest}</span>
-          {' '}<span data-testid="dscr-lowest-year" class="text-sm">in {p.lowestYear}</span>
+          {' '}<span data-testid="dscr-lowest-year" class="whitespace-nowrap text-sm">in {p.lowestYear}</span>
         </dd>
       </div>
     </dl>}
@@ -465,7 +472,10 @@ function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
     </div>}
     {p.needs.length > 0 && <div data-testid="dscr-needs" class="mt-4 text-ink">
       <p class="font-medium">Still needed</p>
-      <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>
+      <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => {
+        const i = s.source === 'plan' ? frontAt(n, yearsOf(s).years[0]) : -1;
+        return <li key={n}>{i < 0 ? n : <a href={`#${FRONT[i][2]}`} onClick={goTo(FRONT[i][2])} class="inline-flex min-h-6 items-center text-link">{FRONT[i][1]}</a>}</li>;
+      })}</ul>
     </div>}
     {assumed.length > 0 && <div data-testid="dscr-assumed" class="mt-4 text-ink">
       <p class="font-medium">Assumed until you change them</p>
@@ -587,7 +597,7 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
         </details>
         <div class="mt-5">
         <p data-testid="doc-status" class={`inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${provisional
-          ? 'bg-warn-tint text-warn' : 'bg-good-tint text-good'}`}>
+          ? 'bg-warn-tint text-warn' : 'bg-surface text-ink'}`}>
           {docStatus(s, p)}
         </p>
         {provisional && <p class={HINT}>The document says so on every page and lists what is still needed{own.length ? ':' : '.'}</p>}

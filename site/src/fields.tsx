@@ -82,7 +82,7 @@ export function CellInput(p: { id: string; name: string; value: string; onCommit
       aria-label={p.name} aria-invalid={p.invalid || undefined} aria-describedby={p.invalid ? `${p.id}-error` : undefined} placeholder={p.month ? 'like 2028-03' : undefined}
       title={p.invalid ? wrong : p.changed}
       data-changed={p.changed === undefined ? undefined : 'plan'}
-      {...d} class={`${INPUT} ${p.invalid ? BAD : p.changed !== undefined ? CHANGED : BORDER} px-2 ${p.month ? '' : 'text-right tabular-nums'} sm:min-w-28`} />
+      {...d} class={`${INPUT.replace('px-3', 'px-2')} ${p.invalid ? BAD : p.changed !== undefined ? CHANGED : BORDER} ${p.month ? '' : 'text-right tabular-nums'} min-w-28`} />
     {p.invalid && <p id={`${p.id}-error`} aria-live="polite" class="mt-1 text-sm text-bad">{wrong}</p>}
   </>;
 }

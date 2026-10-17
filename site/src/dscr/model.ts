@@ -875,6 +875,25 @@ export function barText(p: Preview): string {
 }
 
 /** "Complete", or "Complete, on 7 assumptions" while any still holds. */
+/** The front door's needs by the labels it shows, in its order, each linked to its field (design review 5, UX4). */
+export const FRONT: [RegExp, string, string][] = [
+  [/^Who the borrower is/, 'Who is the borrower?', 'fld-fd-borrower'],
+  [/^(This year’s profit|Profit before interest, depreciation and tax (in|for) )/, 'This year’s profit before interest, depreciation and tax', 'fld-fd-profit'],
+  [/^(Growth in sales|Profit before interest, depreciation and tax: growth)/, 'Growth in sales a year (%)', 'fld-fd-growth'],
+  [/^Loan amount$/, 'Loan amount', 'fld-fd-amount'],
+  [/^Interest rate/, 'Interest rate (% a year)', 'fld-fd-rate'],
+  [/^Number of instalments$/, 'Term (years)', 'fld-fd-years'],
+];
+export const frontAt = (n: string, first?: string) => FRONT.findIndex(([m], i) => m.test(n) && (i !== 1 || !first || !/\d{4}-\d{2}$/.test(n) || n.endsWith(first)));
+/** On the front door every missing fact shows at once: the profit and its growth before the loan's dates give the years. */
+export const withFrontNeeds = (s: State, p: Preview, first?: string): Preview => {
+  if (s.source !== 'plan' || !s.door || !p.needs.length) return p;
+  const needs = [...p.needs], grows = (s.modes.pbdit ?? 'grow') === 'grow';
+  if (grows && !(s.cells.pbdit?.[0] ?? '').trim() && !needs.some((n) => frontAt(n, first) === 1)) needs.push(FRONT[1][1]);
+  if (grows && !(s.rates.pbdit ?? '').trim() && !needs.some((n) => frontAt(n, first) === 2)) needs.push(FRONT[2][1]);
+  const at = (n: string) => { const i = frontAt(n, first); return i < 0 ? FRONT.length : i; };
+  return { ...p, needs: needs.map((n, i) => [n, i] as const).sort((a, b) => at(a[0]) - at(b[0]) || a[1] - b[1]).map(([n]) => n) };
+};
 export const statusText = (p: Preview) =>
   p.blocked ? 'No figures' : p.needs.length ? `Provisional: ${p.needs.length} still needed`
     : p.assumed.length ? `Complete, on ${p.assumed.length} assumption${p.assumed.length > 1 ? 's' : ''}` : 'Complete';

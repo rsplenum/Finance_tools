@@ -104,6 +104,10 @@ describe('CMA, what it asks and refuses', () => {
     const x: CmaInput = { ...CASE_K, existingLimit: undefined, figures: { ...CASE_K.figures, est: { ...CASE_K.figures.est, tax: undefined } } };
     expect(cmaNeeds(x)).toEqual(['The working-capital limit you have now (0 if none)', '2026-27 (estimate): Tax']);
   });
+  it('names a figure it could not read before the blanks of its year (design review 5, UX4)', () => {
+    const x: CmaInput = { ...CASE_K, figures: { ...CASE_K.figures, est: { ...CASE_K.figures.est, sales: NaN, tax: undefined } } };
+    expect(cmaNeeds(x)).toEqual(['2026-27 (estimate): Net sales (without GST) as a figure of 0 or more', '2026-27 (estimate): Tax']);
+  });
   it('lists a balance sheet that does not balance, and never makes it balance', () => {
     const x: CmaInput = { ...CASE_K, figures: { ...CASE_K.figures, a2: { ...CASE_K.figures.a2, cash: 1920000 + 5000 } } };
     expect(cmaNeeds(x)).toEqual(['2024-25 (audited): the balance sheet does not balance: the assets are Rs. 5,000 more than the liabilities']);

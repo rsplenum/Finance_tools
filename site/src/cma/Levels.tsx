@@ -17,7 +17,7 @@ import type { ViableView } from '../board-model';
 type Update = (f: (s: CmaState) => CmaState) => void;
 const MUTED = 'text-ink-muted';
 const ALONE: Record<CmaLeverId, string> = { quasi: 'quasi', capital: 'capital', sales: 'sales', months: 'months', collateral: 'collateral' };
-const tone = (ok: boolean) => (ok ? 'text-link' : 'text-bad');
+const tone = (ok: boolean) => (ok ? 'text-good' : 'text-bad');
 
 export function Levels({ s, update, use }: { s: CmaState; update: Update; use: (l: CmaLevers) => void }) {
   const lv = useMemo(() => levelsOf(s), [s]);
@@ -25,8 +25,8 @@ export function Levels({ s, update, use }: { s: CmaState; update: Update; use: (
   return <div data-testid="cma-levels" class="mt-4">
     {lv.ask && <p data-testid="cma-levels-ask" class="text-sm text-warn">{lv.ask}</p>}
     {lv.checks && <div data-testid="cma-checks">
-      <p class="font-medium text-ink">{lv.misses ? 'Why it does not work yet' : 'Against a lender’s levels'}</p>
-      <p class={`text-xs ${MUTED}`}>Each ratio in its worse year of the estimate and the projection; the line is the lender’s level.</p>
+      <h3 class="text-title text-ink">{lv.misses ? 'Why it does not work yet' : 'Against a lender’s levels'}</h3>
+      <p class={`text-xs ${MUTED}`}>Each ratio in its worse year of the estimate and the projection; the line is the lender’s target.</p>
       <ul class="mt-1 divide-y divide-line">{lv.checks.map((c) => <Bar key={c.id} c={c} pre="cma" />)}</ul>
     </div>}
     {lv.collateralNote && <p data-testid="cma-collateral-note" class={`mt-1 ${HINT}`}>{lv.collateralNote}</p>}
@@ -54,14 +54,14 @@ function Viable({ s, misses, update, use }: { s: CmaState; misses: boolean; upda
   const group = (by: 'borrower' | 'lender', title: string) => {
     const ls = v?.lines.filter((l) => l.by === by) ?? [];
     return ls.length > 0 && <>
-      <p class="mt-3 text-sm font-medium text-ink">{title}</p>
+      <h4 class="mt-3 text-sm font-medium text-ink">{title}</h4>
       <ul class="mt-1 space-y-2">{ls.map((l) => <Lever key={l.id} l={l} pre="cma" />)}</ul>
     </>;
   };
   const cards = (by: 'borrower' | 'lender', title: string) => {
     const cs = plan && b ? plan.cards.filter((c) => c.by === by) : [];
     return cs.length > 0 && b && <>
-      <p class="mt-3 text-sm font-medium text-ink">{title}</p>
+      <h4 class="mt-3 text-sm font-medium text-ink">{title}</h4>
       <ul class="mt-1 space-y-2">{cs.map((c) => <PlanLever key={c.id} id={c.id} head={c.head} m={b.moves[c.id]} value={lv[c.id]} set={(n) => move(c.id, n)}
         pre="cma" toggle={c.toggle} alone={v?.lines.find((l) => l.id === ALONE[c.id])} />)}</ul>
     </>;
@@ -81,7 +81,7 @@ function Viable({ s, misses, update, use }: { s: CmaState; misses: boolean; upda
       <p class={`mt-2 ${HINT}`}>{v.foot}</p>
     </div>}
     {v && plan && b && <div data-testid="cma-plan" tabIndex={-1} class="mt-6 border-t-2 border-ink pt-4">
-      <p class="font-medium text-ink">The plan: the levers together</p>
+      <h3 class="text-title text-ink">The plan: the levers together</h3>
       <p class={HINT}>The engine’s plan, your changes first and the lender’s last. The sliders change none of the figures above until you use the plan.</p>
       <TextField id="fld-cma-promotersMost" class="mt-3" label="The most the promoters can bring as capital, if known" hint="Without it, no more of their money is assumed."
         inputMode="decimal" value={s.promotersMost} tidy={tidyAmount} placeholder="like 12 L" invalid={bad}
