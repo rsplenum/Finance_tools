@@ -31,7 +31,7 @@ In order of the rows they unblock; `docs/OWNER.md` has the clicks for each.
 3. The name: search the trademark register, buy the domain, set up a contact email: LEGAL1 and LAUNCH.
 4. Book the IP lawyer for `docs/TRADEMARKS.md` and the policy drafts: RC1 and LAUNCH.
 5. The phone test of the downloads: Q1.
-6. Allow SEO1's hosts (the log host for CI was allowed on 17-10-2026).
+6. Allow SEO1's hosts.
 7. Phase 0 (entity, GST, Razorpay, price): P1d only; it does not hold the launch.
 
 ## How the cost stays low without a shortcut
