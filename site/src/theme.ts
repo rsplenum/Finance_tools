@@ -45,3 +45,20 @@ export const THEME_BOOT = `(function(){var p;try{p=localStorage.getItem(${JSON.s
   `var r=document.documentElement,h=r.getAttribute('data-theme'),` +
   `d=p==='dark'||(p!=='light'&&(h?h==='dark':matchMedia('(prefers-color-scheme: dark)').matches));` +
   `r.classList.toggle('dark',d);r.style.colorScheme=d?'dark':'light'})()`;
+
+const ICON: Record<ThemePref, string> = { system: '◐', light: '☀', dark: '☾' };
+const LABEL: Record<ThemePref, string> = { system: 'Theme: as system', light: 'Theme: light', dark: 'Theme: dark' };
+const WORD: Record<ThemePref, string> = { system: 'Auto', light: 'Light', dark: 'Dark' };
+
+/** The header's theme buttons (site/src/ThemeToggle.astro): each says the choice and steps it on a click. */
+export function themeToggles() {
+  initTheme();
+  const buttons = [...document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]')];
+  const show = () => buttons.forEach((b) => {
+    b.title = `${LABEL[pref]}. Click for ${NEXT_THEME[pref]}.`;
+    b.querySelector('[data-icon]')!.textContent = ICON[pref];
+    b.querySelector('[data-word]')!.textContent = WORD[pref];
+  });
+  buttons.forEach((b) => b.addEventListener('click', () => { setThemePref(NEXT_THEME[pref]); show(); }));
+  show();
+}

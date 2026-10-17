@@ -1,0 +1,14 @@
+---
+/**
+ * Header button: System → Light → Dark. Plain HTML, stepped by `themeToggles()` (site/src/theme.ts): as a Preact island it
+ * brought Preact's runtime, about 20 KB, to home for this one button (UX3, F15). `tall`: the new look's 44 px (F4 in docs/DESIGN.md).
+ * The first render says Auto, as the pre-built HTML must; the stored choice is shown once the script runs.
+ * Its name starts "Theme:" and ends with the word shown, so a voice command of what is seen reaches it (WCAG 2.5.3).
+ */
+interface Props { tall?: boolean }
+const { tall = false } = Astro.props;
+---
+<button type="button" data-testid="theme-toggle" data-theme-toggle title="Theme: as system. Click for light."
+  class:list={['inline-flex items-center gap-1 rounded-full border border-edge bg-field py-1.5 text-sm font-medium text-ink hover:bg-surface', tall ? 'min-h-11 px-3.5' : 'min-h-8 px-2.5']}>
+  <span aria-hidden="true" class="leading-none" data-icon>◐</span><span class="sr-only">Theme: </span><span data-word>Auto</span>
+</button>

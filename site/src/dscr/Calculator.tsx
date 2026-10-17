@@ -19,7 +19,7 @@ import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import DSCR_FILE from '../../../engine/data/dscr.json';
 import TAX_FILE from '../../../engine/data/tax.json';
-import { BUTTON, CellInput, Choice, HINT, Section, SourceNote, TextField } from '../fields';
+import { BUTTON, CellInput, Choice, FILLED, HINT, Section, SourceNote, TextField } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
 import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
@@ -37,7 +37,7 @@ type Was = (key: DscrChange['key']) => string | undefined;
 const showDate = (iso: string) => iso.split('-').reverse().join('-');
 const notUnderstood = (text: string, read: (t: string) => unknown, example: string) =>
   text.trim() && read(text) === undefined ? `Not understood. Try ${example}.` : undefined;
-const MUTED = 'text-slate-600 dark:text-slate-300';
+const MUTED = 'text-ink-muted';
 
 export function DscrCalculator() {
   const start = () => frontDoor(isoDate(new Date()).slice(0, 7));
@@ -53,13 +53,15 @@ export function DscrCalculator() {
   const use = (l: DscrLevers) => { const a = applyDscrPlan(s, l); setS(a.s); setUsed(a.changes); };
   const undo = () => { setS((x) => undoDscrPlan(x, used)); setUsed([]); };
   const was = (key: DscrChange['key']) => { const c = used.find((u) => u.key === key); return c ? `Changed by the plan; it was ${c.was || 'empty'}.` : undefined; };
+  const results = <PreviewSection s={s} p={p} update={update} openMore={openMore} use={use} used={used} undo={undo} keep={() => setUsed([])} />;
   return <div>
     <ClearAll shown={JSON.stringify(s) !== JSON.stringify(start())} onClear={() => setS(start())} />
     {s.source === 'plan' && <FrontDoor s={s} update={update} openMore={openMore} was={was} />}
-    <details id="more-options" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)}
-      class="mt-8 rounded-card border border-edge">
-      <summary class="cursor-pointer px-4 py-3 font-medium text-teal-800 dark:text-teal-300">More options: the method, the loan in full, year-by-year figures</summary>
-      <div class="px-4 pb-6">
+    {/* On the front door the answer comes before More options (review finding 12); with year-by-year figures, after them. */}
+    {p.started && s.source === 'plan' && results}
+    <details id="more-options" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)} class="mt-12">
+      <summary class="flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link">More options: the method, the loan in full, year-by-year figures</summary>
+      <div class="pb-6">
         <Start s={s} update={update} />
         {p.started && <>
           {s.source === 'plan' ? <Loan s={s} update={update} y={y} p={p} was={was} /> : <YearsSection s={s} update={update} y={y} />}
@@ -70,13 +72,12 @@ export function DscrCalculator() {
       </div>
     </details>
     {p.started && <>
-      <PreviewSection s={s} p={p} update={update} openMore={openMore} use={use} used={used} undo={undo} keep={() => setUsed([])} />
+      {s.source !== 'plan' && results}
       <DownloadSection s={s} p={p} update={update} />
-      <div class="sticky bottom-0 z-10 -mx-4 mt-10 border-t border-line bg-canvas px-4">
-        {/* The whole bar is the target, 44 px tall: it sits over the fields as they scroll under it (WCAG 2.5.8). */}
-        <a href="#preview" data-testid="answer-bar" data-answer-echo aria-live="polite" class="flex min-h-11 items-center gap-1 text-sm font-medium text-ink">
-          {barText(p)} <span aria-hidden="true">↓</span>
-        </a>
+      {/* The answer's echo is text; only the arrow is a target, 44 px, so a field under the bar can still be tapped (WCAG 2.5.8; UX3). */}
+      <div class="sticky bottom-0 z-10 -mx-4 mt-10 flex items-center gap-2 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8">
+        <p data-testid="answer-bar" data-answer-echo aria-live="polite" class="flex-1 py-2 text-sm font-medium text-ink">{barText(p)}</p>
+        <a href="#preview" aria-label="To the results" class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↓</span></a>
       </div>
     </>}
   </div>;
@@ -96,7 +97,7 @@ function FrontDoor({ s, update, openMore, was }: { s: State; update: Update; ope
   const first = (key: string, t: string) => (x: State) => ({ ...x, cells: { ...x.cells, [key]: [t, ...(x.cells[key] ?? []).slice(1)] } });
   return <section id="front-door" aria-label="The loan and the business" class="mt-4">
     <p class={HINT}>Have year-by-year projections, a moratorium, or a loan already drawn? <a href="#more-options" onClick={openMore}
-      class="text-teal-700 underline underline-offset-2 dark:text-teal-400">Use More options</a>.</p>
+      class="text-link underline underline-offset-4">Use More options</a>.</p>
     <Choice name="fld-fd-borrower" legend="Who is the borrower?" columns value={s.borrower as string | undefined}
       options={BORROWER_CHOICES.map((b) => ({ value: b.id, label: b.label }))} onChange={(id) => update((x) => withBorrower(x, id))} />
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
@@ -133,7 +134,7 @@ function ClearAll({ shown, onClear }: { shown: boolean; onClear: () => void }) {
   return <div class="mt-4 flex flex-wrap items-center justify-end gap-2 text-sm">
     {asking
       ? <>
-        <span class="text-slate-800 dark:text-slate-200">Clear everything you typed?</span>
+        <span class="text-ink">Clear everything you typed?</span>
         <button type="button" data-testid="clear-yes" class={BUTTON} onClick={() => { setAsking(false); onClear(); }}>Yes, clear</button>
         <button type="button" data-testid="clear-no" class={BUTTON} onClick={() => setAsking(false)}>No</button>
       </>
@@ -188,7 +189,7 @@ function Loan({ s, update, y, p, was }: { s: State; update: Update; y: Years; p:
         hint={was('instalments') ?? (l.repayment === 'quarterly' ? 'Quarterly instalments, after the moratorium.' : l.repayment ? 'Monthly instalments, after the moratorium.' : 'After the moratorium.')}
         onCommit={(t) => set({ instalments: t })} said={notUnderstood(l.instalments, numberOf, '60')} />
     </div>
-    {(read || p.schedule) && <div data-testid="loan-read" class="mt-4 space-y-1 rounded-md bg-slate-100 px-3 py-2 text-sm text-slate-800 dark:bg-slate-800 dark:text-slate-200">
+    {(read || p.schedule) && <div data-testid="loan-read" class="mt-4 space-y-1 rounded-md bg-surface px-3 py-2 text-sm text-ink">
       {p.schedule && <p data-testid="loan-level">{p.schedule.level}</p>}
       {read && <p data-testid="loan-dates">{read}</p>}
     </div>}
@@ -203,7 +204,7 @@ function YearsSection({ s, update, y }: { s: State; update: Update; y: Years }) 
       <TextField id="fld-yearCount" label="Number of years" inputMode="numeric" placeholder="like 5" hint="Every year with interest or instalments." value={s.yearCount}
         onCommit={(t) => update((x) => ({ ...x, yearCount: t }))} />
     </div>
-    {y.years.length > 0 && <p data-testid="years-read" class="mt-3 text-sm text-slate-700 dark:text-slate-300">
+    {y.years.length > 0 && <p data-testid="years-read" class="mt-3 text-sm text-ink-muted">
       {y.years.length > 1 ? `${y.years[0]} to ${y.years[y.years.length - 1]}` : y.years[0]}
     </p>}
   </Section>;
@@ -249,7 +250,7 @@ function Figures({ s, update, rows, y, p }: { s: State; update: Update; rows: Ro
         {plan && <div class="mt-4 flex flex-wrap items-center gap-2">
           <button type="button" data-testid="add-year" class={BUTTON} onClick={() => setYears(years.length + 1)}>Add a year after {last}</button>
           {years.length > (y.loanYears ?? 0) && <button type="button" data-testid="remove-year" class={BUTTON} onClick={() => setYears(years.length - 1)}>Remove {last}</button>}
-          <span class="text-sm text-slate-600 dark:text-slate-300">A later year lets the page try a longer repayment.</span>
+          <span class="text-sm text-ink-muted">A later year lets the page try a longer repayment.</span>
         </div>}
       </>}
   </Section>;
@@ -273,13 +274,13 @@ function FigureRow({ s, group, years, update }: { s: State; group: RowDef[]; yea
   const r0 = group[0], mode = modeOf(s, r0), title = group.length > 1 ? GROUP_TITLES[r0.modeKey] ?? r0.label : r0.label;
   const shown = mode ? group.filter((r) => !r.only || r.only.includes(mode)) : [];
   const setMode = (m: RowMode) => update((x) => ({ ...x, modes: { ...x.modes, [r0.modeKey]: m } }));
-  return <div id={`row-${r0.modeKey}`} data-testid={`row-${r0.modeKey}`} class="scroll-mt-4 rounded-lg border border-slate-300 p-3 dark:border-slate-700">
-    <p class="font-medium text-slate-900 dark:text-slate-100">{title}</p>
+  return <div id={`row-${r0.modeKey}`} data-testid={`row-${r0.modeKey}`} class="scroll-mt-4 rounded-card bg-surface p-3">
+    <p class="font-medium text-ink">{title}</p>
     {r0.hint && <p class={`text-xs ${MUTED}`}>{r0.hint}</p>}
     <div role="radiogroup" aria-label={`${title}: how it is given`} class="mt-2 flex flex-wrap gap-2">
       {r0.modes.map((m) => <label key={m} for={`fld-${r0.key}-${m}`}
-        class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 py-1 text-sm text-slate-800 has-checked:border-teal-700 has-checked:bg-teal-50 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:has-checked:border-teal-500 dark:has-checked:bg-teal-950">
-        <input type="radio" id={`fld-${r0.key}-${m}`} name={`fld-${r0.key}-how`} checked={mode === m} onChange={() => setMode(m)} class="size-4 accent-teal-700 dark:accent-teal-500" />
+        class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-edge bg-field px-3 py-1 text-sm text-ink has-checked:border-accent has-checked:bg-accent/10">
+        <input type="radio" id={`fld-${r0.key}-${m}`} name={`fld-${r0.key}-how`} checked={mode === m} onChange={() => setMode(m)} class="size-4 accent-accent" />
         {HOW[m]}
       </label>)}
     </div>
@@ -297,7 +298,7 @@ function RunningFields({ s, update }: { s: State; update: Update }) {
   const set = (i: number, patch: Partial<RunningText>) => update((x) => ({ ...x, running: x.running.map((l, k) => (k === i ? { ...l, ...patch } : l)) }));
   const several = s.running.length > 1;
   return <div class="mt-2">
-    <p data-testid="emis-ask" class="text-sm text-slate-800 dark:text-slate-200">{emisAsk(s)}.</p>
+    <p data-testid="emis-ask" class="text-sm text-ink">{emisAsk(s)}.</p>
     <p class={`text-xs ${MUTED}`}>Interest and principal together; leave their interest out of the working-capital interest. Counted every month unless the last EMI is given.</p>
     {s.running.map((l, i) => <div key={i} class="mt-2 grid gap-3 sm:grid-cols-2">
       <div>
@@ -347,8 +348,8 @@ function RowFields({ s, r, mode, years, update, titled }: { s: State; r: RowDef;
   const asset = s.asset, setAsset = (patch: Partial<State['asset']>) => update((x) => ({ ...x, asset: { ...x.asset, ...patch } }));
   const by = borrowerOf(s.borrower);
   return <div class="mt-2">
-    {titled && <p class="text-sm text-slate-800 dark:text-slate-200">{r.label}</p>}
-    {mode === 'borrower' && <p data-testid="tax-by" class="mt-2 text-sm text-slate-800 dark:text-slate-200">{by
+    {titled && <p class="text-sm text-ink">{r.label}</p>}
+    {mode === 'borrower' && <p data-testid="tax-by" class="mt-2 text-sm text-ink">{by
       ? `Worked out each year for a ${by.label.toLowerCase()}: ${BORROWER_CHOICES.find((b) => b.id === by.id)?.tax}.`
       : 'Say who the borrower is, at the top of this section.'}</p>}
     {mode === 'emi' && <RunningFields s={s} update={update} />}
@@ -370,10 +371,10 @@ function RowFields({ s, r, mode, years, update, titled }: { s: State; r: RowDef;
       {rateField(mode === 'grow' ? (r.key === 'pbdit' ? 'Sales growth, % a year' : 'Then grows by, % a year') : 'Then falls by, % a year')}
     </div>}
     {mode === 'years' && <div class="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">{years.map((fy, i) => cell(i, fy))}</div>}
-    {worked[0] !== undefined && lastValue !== undefined && years.length > 1 && <p data-testid={`readback-${r.key}`} class="mt-2 text-sm text-slate-700 dark:text-slate-300">
+    {worked[0] !== undefined && lastValue !== undefined && years.length > 1 && <p data-testid={`readback-${r.key}`} class="mt-2 text-sm text-ink-muted">
       Worked out: {rs(worked[0])} in {years[0]} to {rs(lastValue)} in {years[years.length - 1]}.
     </p>}
-    {steps.length > 0 && steps.every((v) => v !== undefined) && <p data-testid={`readback-${r.key}`} class="mt-2 text-sm text-slate-700 dark:text-slate-300">
+    {steps.length > 0 && steps.every((v) => v !== undefined) && <p data-testid={`readback-${r.key}`} class="mt-2 text-sm text-ink-muted">
       Worked out: {steps.map((v, i) => `${rs(v)} in ${years[i]}`).join('; ')}.
     </p>}
   </div>;
@@ -403,7 +404,7 @@ function TargetSection({ s, update }: { s: State; update: Update }) {
 function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
   s: State; p: Preview; update: Update; openMore: () => void; use: (l: DscrLevers) => void; used: DscrChange[]; undo: () => void; keep: () => void;
 }) {
-  const box = 'mt-4 rounded-md border px-3 py-2';
+  const box = 'mt-4 rounded-control border-l-4 px-3 py-2';
   const largest = p.largest?.amount, fewest = p.fewest?.instalments;
   // The method and the target read as one line (D-UX-10: shorter).
   const method = p.assumed.find((a) => a.id === 'method'), target = p.assumed.find((a) => a.id === 'target');
@@ -411,37 +412,40 @@ function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
     .map((a) => (a.id === 'method' && target ? { ...a, what: 'How DSCR is worked out, and the target', shown: `${a.shown}; ${target.shown.toLowerCase()}` } : a));
   return <Section id="preview" title="Results">
     {/* The answer first (docs/DESIGN.md, principle 1); one tone a meaning: good meets, bad misses or blocked, warn provisional. */}
+    {/* The answer as paper, there at once: it changes as the figures are typed (docs/DESIGN-SITE.md, tool pages). */}
+    <div class="paper shadow-paper mt-6 rounded-card p-4 sm:p-6">
     {p.verdict && <p data-testid="dscr-verdict" data-answer class={`${box} text-ink ${p.verdict.meets ? 'border-good bg-good-tint' : 'border-bad bg-bad-tint'}`}>{p.verdict.text}</p>}
-    {p.loanLine && <dl data-testid="dscr-loan-line" class="mt-3 grid grid-cols-2 gap-3 text-slate-900 dark:text-slate-100">
+    {p.loanLine && <dl data-testid="dscr-loan-line" class="mt-3 grid grid-cols-2 gap-3 text-ink">
       <div><dt class={`text-sm ${MUTED}`}>Each instalment</dt><dd data-testid="dscr-instalment" class="font-semibold tabular-nums">{p.loanLine.instalment}</dd></div>
       <div><dt class={`text-sm ${MUTED}`}>Interest over the whole loan</dt><dd data-testid="dscr-total-interest" class="font-semibold tabular-nums">{p.loanLine.totalInterest}</dd></div>
     </dl>}
     <p data-testid="dscr-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.blocked
-      ? 'bg-bad-tint text-bad' : p.needs.length ? 'bg-warn-tint text-warn' : 'border border-line text-ink'}`}>
+      ? 'bg-bad-tint text-bad' : p.needs.length ? 'bg-warn-tint text-warn' : 'bg-good-tint text-good'}`}>
       {statusText(p)}
     </p>
     {p.blocked && <p data-testid="dscr-blocked" role="alert" class={`${box} border-bad bg-bad-tint text-ink`}>{p.blocked}</p>}
     {p.average !== undefined && <dl class="mt-4 grid grid-cols-2 gap-3">
-      <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+      <div class="rounded-control bg-surface p-3">
         <dt class={`text-sm ${MUTED}`}>Average DSCR</dt>
-        <dd data-testid="dscr-average" class="text-2xl font-semibold tabular-nums text-slate-900 dark:text-slate-100">{p.average}</dd>
+        <dd data-testid="dscr-average" class="figure text-section text-ink">{p.average}</dd>
       </div>
-      <div class="rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+      <div class="rounded-control bg-surface p-3">
         <dt class={`text-sm ${MUTED}`}>Lowest year</dt>
-        <dd class="text-slate-900 dark:text-slate-100">
-          <span data-testid="dscr-lowest" class="text-2xl font-semibold tabular-nums">{p.lowest}</span>
+        <dd class="text-ink">
+          <span data-testid="dscr-lowest" class="figure text-section">{p.lowest}</span>
           {' '}<span data-testid="dscr-lowest-year" class="text-sm">in {p.lowestYear}</span>
         </dd>
       </div>
     </dl>}
-    {p.marks && p.marks.length > 0 && <ul data-testid="dscr-marks" class="mt-3 flex flex-wrap gap-2 text-sm">
+    {p.marks && p.marks.length > 0 && <ul data-testid="dscr-marks" class="mt-4 flex flex-wrap gap-2 text-sm">
       {p.marks.map((m) => <li key={m.fy} data-testid={`mark-${m.fy}`} class={`rounded-full px-2.5 py-0.5 ${!m.counted ? 'bg-surface text-ink-muted' : m.meets ? 'bg-good-tint text-good' : 'bg-bad-tint text-bad'}`}>
         {m.fy}: {m.dscr}, {!m.counted ? 'not counted' : m.meets ? 'meets the target' : 'below the target'}
       </li>)}
     </ul>}
-    {used.length > 0 && <div data-testid="dscr-used" role="status" class="mt-3 rounded-lg border border-teal-600 bg-teal-50 p-3 dark:border-teal-500 dark:bg-teal-950">
-      <p class="font-medium text-slate-900 dark:text-slate-100">The plan is used: these figures above changed.</p>
-      <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-800 tabular-nums dark:text-slate-200">{used.map((c) => <li key={c.key}>{c.label}: {c.was || 'none'} → {c.now}</li>)}</ul>
+    </div>
+    {used.length > 0 && <div data-testid="dscr-used" role="status" class="mt-3 rounded-control border-l-4 border-accent bg-accent/10 p-3">
+      <p class="font-medium text-ink">The plan is used: these figures above changed.</p>
+      <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink tabular-nums">{used.map((c) => <li key={c.key}>{c.label}: {c.was || 'none'} → {c.now}</li>)}</ul>
       <div class="mt-2 flex flex-wrap gap-2">
         <button type="button" data-testid="dscr-undo" class={BUTTON} onClick={undo}>Undo</button>
         <button type="button" data-testid="dscr-keep" class={BUTTON} onClick={keep}>Keep these</button>
@@ -449,25 +453,25 @@ function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
     </div>}
     {p.lender && <LenderLines v={p.lender} openMore={openMore} />}
     {s.source === 'plan' && <Levels s={s} lender={p.lender} update={update} use={use} />}
-    {p.largest && <div class="mt-3 text-sm text-slate-800 dark:text-slate-200">
+    {p.largest && <div class="mt-3 text-sm text-ink">
       <p data-testid="dscr-largest">{p.largest.text}</p>
       {largest !== undefined && <button type="button" data-testid="use-amount" class={`mt-1 ${BUTTON}`}
         onClick={() => update((x) => ({ ...x, loan: { ...x.loan, amount: inr(largest) } }))}>Use {rs(largest)}</button>}
     </div>}
-    {p.fewest && <div class="mt-3 text-sm text-slate-800 dark:text-slate-200">
+    {p.fewest && <div class="mt-3 text-sm text-ink">
       <p data-testid="dscr-fewest">{p.fewest.text}</p>
       {fewest !== undefined && <button type="button" data-testid="use-instalments" class={`mt-1 ${BUTTON}`}
         onClick={() => update((x) => ({ ...x, loan: { ...x.loan, instalments: String(fewest) } }))}>Use {fewest} instalments</button>}
     </div>}
-    {p.needs.length > 0 && <div data-testid="dscr-needs" class="mt-4 text-slate-900 dark:text-slate-100">
+    {p.needs.length > 0 && <div data-testid="dscr-needs" class="mt-4 text-ink">
       <p class="font-medium">Still needed</p>
-      <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>
+      <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>
     </div>}
-    {assumed.length > 0 && <div data-testid="dscr-assumed" class="mt-4 text-slate-900 dark:text-slate-100">
+    {assumed.length > 0 && <div data-testid="dscr-assumed" class="mt-4 text-ink">
       <p class="font-medium">Assumed until you change them</p>
-      <ul class="mt-1 mb-2 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">
+      <ul class="mt-1 mb-2 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">
         {assumed.map((a) => <li key={a.id} data-testid={`assumed-${a.id}`}>
-          <a href={`#${a.where}`} onClick={openMore} class="text-teal-700 underline underline-offset-2 dark:text-teal-400">{a.what}</a>: {a.shown}
+          <a href={`#${a.where}`} onClick={openMore} class="text-link underline underline-offset-4">{a.what}</a>: {a.shown}
         </li>)}
       </ul>
       <SourceNote what="Why these">{p.assumed.map((a) => <span key={a.id} class="mt-1 block"><b>{a.what}:</b> {a.why}.</span>)}</SourceNote>
@@ -475,7 +479,7 @@ function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
     {p.statement && <StatementTable st={p.statement} parts={p.partYears} />}
     {p.beforeStart && <p data-testid="dscr-before-start" class={`mt-2 ${HINT}`}>{p.beforeStart}</p>}
     {p.notCounted && <p data-testid="dscr-not-counted" class={`mt-2 ${HINT}`}>{p.notCounted}</p>}
-    {p.notes.length > 0 && <ul data-testid="dscr-notes" class="mt-2 space-y-0.5 text-sm text-amber-900 dark:text-amber-200">{p.notes.map((n) => <li key={n}>{n}</li>)}</ul>}
+    {p.notes.length > 0 && <ul data-testid="dscr-notes" class="mt-2 space-y-0.5 text-sm text-warn">{p.notes.map((n) => <li key={n}>{n}</li>)}</ul>}
     {p.schedule && <Schedule sch={p.schedule} />}
     <p class={`mt-6 ${HINT}`}>A free preview, worked out twice in your browser; figures are shown only when both agree.</p>
   </Section>;
@@ -483,36 +487,36 @@ function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
 
 /** DSCR as lenders test it, beside the borrower's (D-UX-47): never part of the verdict. */
 function LenderLines({ v, openMore }: { v: LenderView; openMore: () => void }) {
-  const line = (l: LenderLine, id: string) => <li key={id} data-testid={`lender-${id}`} class={l.below ? 'text-red-800 dark:text-red-300' : ''}>
+  const line = (l: LenderLine, id: string) => <li key={id} data-testid={`lender-${id}`} class={l.below ? 'text-bad' : ''}>
     <b>{l.label}:</b> average {l.average}, lowest {l.lowest} in {l.lowestYear}{l.below ? ': the cash does not cover the debt service' : ''}
     {l.meets !== undefined ? (l.meets ? '; meets the target' : '; below the target') : ''}.
   </li>;
   const c = v.cash, a = v.audited, td = 'px-2 py-1 text-right tabular-nums';
-  return <div data-testid="dscr-lender" class="mt-4 text-slate-900 dark:text-slate-100">
+  return <div data-testid="dscr-lender" class="mt-4 text-ink">
     <p class="font-medium">As a lender tests it</p>
-    {v.blocked && <p role="alert" class="mt-1 text-sm text-red-900 dark:text-red-200">{v.blocked}</p>}
-    <ul class="mt-1 space-y-1 text-sm text-slate-700 dark:text-slate-300">
+    {v.blocked && <p role="alert" class="mt-1 text-sm text-bad">{v.blocked}</p>}
+    <ul class="mt-1 space-y-1 text-sm text-ink-muted">
       {v.stress.map((l, i) => line(l, LENDER.stress[i]?.id ?? String(i)))}
-      {v.ask && <li data-testid="lender-ask"><a href="#lender" onClick={openMore} class="inline-flex min-h-6 items-center text-teal-700 underline underline-offset-2 dark:text-teal-400">{v.ask}</a></li>}
+      {v.ask && <li data-testid="lender-ask"><a href="#lender" onClick={openMore} class="inline-flex min-h-6 items-center text-link">{v.ask}</a></li>}
       {'line' in v.promoters ? line(v.promoters.line, 'promoters') : <li data-testid="lender-promoters">{v.promoters.assumed}.</li>}
       {v.notStressed && <li>{v.notStressed}.</li>}
     </ul>
-    {v.needs.length > 0 && <ul class="mt-1 list-disc pl-5 text-sm text-amber-900 dark:text-amber-200">{v.needs.map((n) => <li key={n}>{n}</li>)}</ul>}
+    {v.needs.length > 0 && <ul class="mt-1 list-disc pl-5 text-sm text-warn">{v.needs.map((n) => <li key={n}>{n}</li>)}</ul>}
     {c && ('needs' in c
       ? <div data-testid="lender-cash-needs" class="mt-3 text-sm"><p class="font-medium">The cash check still needs</p><ul class="list-disc pl-5">{c.needs.map((n) => <li key={n}>{n}</li>)}</ul></div>
-      : <div data-testid="lender-cash" class="mt-3 text-sm"><p class={c.rows.some((r) => r.short) ? 'text-red-800 dark:text-red-300' : ''}>{c.text}</p>
-        <div class="mt-1 overflow-x-auto"><table class="min-w-full text-xs"><thead><tr class="text-slate-600 dark:text-slate-400">
+      : <div data-testid="lender-cash" class="mt-3 text-sm"><p class={c.rows.some((r) => r.short) ? 'text-bad' : ''}>{c.text}</p>
+        <div class="mt-1 overflow-x-auto"><table class="min-w-full text-xs"><thead><tr class="text-ink-muted">
           <th class="px-2 py-1 text-left">Year</th><th class={td}>Cash available</th><th class={td}>Working capital's growth</th><th class={td}>Replacement capex</th>
           <th class={td}>Debt service</th><th class={td}>Cash left</th><th class={td}>Cover</th></tr></thead>
-          <tbody>{c.rows.map((r) => <tr key={r.fy} class={r.short ? 'text-red-800 dark:text-red-300' : ''}><td class="px-2 py-1">{r.fy}</td><td class={td}>{r.available}</td>
+          <tbody>{c.rows.map((r) => <tr key={r.fy} class={r.short ? 'text-bad' : ''}><td class="px-2 py-1">{r.fy}</td><td class={td}>{r.available}</td>
             <td class={td}>{r.wc}</td><td class={td}>{r.capex}</td><td class={td}>{r.service}</td><td class={td}>{r.left}</td><td class={td}>{r.cover}</td></tr>)}</tbody></table></div>
       </div>)}
     {a && ('needs' in a
       ? <div data-testid="lender-audited-needs" class="mt-3 text-sm"><p class="font-medium">The last audited year still needs</p><ul class="list-disc pl-5">{a.needs.map((n) => <li key={n}>{n}</li>)}</ul></div>
-      : <div data-testid="lender-audited" class="mt-3 text-sm"><div class="overflow-x-auto"><table class="min-w-full text-xs"><thead><tr class="text-slate-600 dark:text-slate-400">
+      : <div data-testid="lender-audited" class="mt-3 text-sm"><div class="overflow-x-auto"><table class="min-w-full text-xs"><thead><tr class="text-ink-muted">
           <th class="px-2 py-1 text-left"></th><th class={td}>{a.fy} (audited)</th>{a.nextFy && <th class={td}>{a.nextFy} (projected)</th>}</tr></thead>
           <tbody>{a.rows.map((r) => <tr key={r.label}><td class="px-2 py-1">{r.label}</td><td class={td}>{r.audited}</td>{a.nextFy && <td class={td}>{r.next ?? ''}</td>}</tr>)}</tbody></table></div>
-        {a.flags.map((f) => <p key={f} class="mt-1 text-amber-900 dark:text-amber-200">{f}.</p>)}
+        {a.flags.map((f) => <p key={f} class="mt-1 text-warn">{f}.</p>)}
       </div>)}
     <SourceNote what="About these tests">{LENDER.status} {LENDER.stress.map((x) => `${x.label}: ${x.how}.`).join(' ')} {LENDER.floor.why}.</SourceNote>
   </div>;
@@ -530,20 +534,20 @@ function LenderSection({ s, update, y }: { s: State; update: Update; y: Years })
     onCommit={(t) => set((x) => ({ ...x, audited: { ...x.audited, [k]: t } }))} />;
   return <Section id="lender" title="As a lender tests it">
     <p class={`mt-1 ${HINT}`}>Optional. Each adds a line beside your DSCR; none changes it.</p>
-    <h3 class="mt-4 font-medium text-slate-900 dark:text-slate-100">Sales, for the price and cost tests</h3>
+    <h3 class="mt-4 font-medium text-ink">Sales, for the price and cost tests</h3>
     {byYear ? cells('sales', 'Sales') : <TextField id="fld-lender-sales" label="This year’s sales" hint="They grow as the profit does." inputMode="decimal" value={l.sales[0] ?? ''}
       tidy={tidyAmount} placeholder="like 50 L" said={notUnderstood(l.sales[0] ?? '', amountOf, '50,00,000 or 50 L')} onCommit={(t) => set((x) => ({ ...x, sales: [t] }))} />}
-    <h3 class="mt-6 font-medium text-slate-900 dark:text-slate-100">Promoters’ loans repaid</h3>
+    <h3 class="mt-6 font-medium text-ink">Promoters’ loans repaid</h3>
     <p class={HINT}>Taken as kept in the business until this loan is repaid. If any is repaid sooner, type it by year; leave a year empty for none.</p>
     {cells('promoters', "Promoters' loans repaid")}
-    <h3 class="mt-6 font-medium text-slate-900 dark:text-slate-100">The cash check</h3>
+    <h3 class="mt-6 font-medium text-ink">The cash check</h3>
     <div class="mt-2 grid gap-3 sm:grid-cols-2">
       <TextField id="fld-lender-wc" label="Working capital needed, % of sales" hint="Stock and debtors less creditors, as a share of sales." inputMode="decimal" value={l.wcPct}
         placeholder="like 20" onCommit={(t) => set((x) => ({ ...x, wcPct: t }))} />
       <TextField id="fld-lender-capex" label="Replacement capex a year" hint="The same every year; 0 if none." inputMode="decimal" value={l.capex} tidy={tidyAmount}
         onCommit={(t) => set((x) => ({ ...x, capex: t }))} />
     </div>
-    <h3 class="mt-6 font-medium text-slate-900 dark:text-slate-100">The last audited year</h3>
+    <h3 class="mt-6 font-medium text-ink">The last audited year</h3>
     <p class={HINT}>The year before your first year of figures. Its sales also start the cash check.</p>
     <div class="mt-2 grid gap-3 sm:grid-cols-2">
       {aud('sales', 'Sales')}{aud('pbdit', 'Profit before interest, depreciation and tax')}{aud('depreciation', 'Depreciation')}{aud('interest', 'Interest')}{aud('tax', 'Tax')}
@@ -566,32 +570,34 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
       said={english(f[id]) ?? (id === 'gstin' ? gstinSaid : undefined)} invalid={!!english(f[id]) || (id === 'gstin' && !!gstinSaid)} />;
   return <Section id="download" title="Download the statement">
     <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy for the accountant and a Word copy to edit, made in your browser from the figures above.</p>
-    <div class="mt-4 grid gap-4 sm:grid-cols-2">
-      {field('borrower', 'Borrower’s name', undefined, 'like Asha Traders')}
-      {field('lender', 'Lender', 'The bank or finance company, and the branch.')}
-      {field('preparedBy', 'Prepared by, if not the borrower', 'Your name or your firm’s; leave empty if the borrower prepares it.')}
-    </div>
-    <details id="doc-more" class="mt-4 rounded-lg border border-slate-200 dark:border-slate-800">
-      <summary class="cursor-pointer px-4 py-3 font-medium text-teal-800 dark:text-teal-300">Address, the loan’s purpose and GSTIN, if you want them on the statement</summary>
-      <div class="grid gap-4 px-4 pb-4 sm:grid-cols-2">
-        {field('address', 'Address', 'The business’s address.')}
-        {field('purpose', 'Purpose of the loan', undefined, 'like a new CNC machine')}
-        {field('gstin', 'GSTIN, if registered', undefined, 'like 27ABCDE1234F1Z5')}
-      </div>
-    </details>
     {ready
       ? <div class="mt-5">
+        <div class="grid gap-4 sm:grid-cols-2">
+          {field('borrower', 'Borrower’s name', undefined, 'like Asha Traders')}
+          {field('lender', 'Lender', 'The bank or finance company, and the branch.')}
+          {field('preparedBy', 'Prepared by, if not the borrower', 'Your name or your firm’s; leave empty if the borrower prepares it.')}
+        </div>
+        <details id="doc-more" class="mt-4">
+          <summary class="flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link">Address, the loan’s purpose and GSTIN, if you want them on the statement</summary>
+          <div class="grid gap-4 pt-2 pb-4 sm:grid-cols-2">
+            {field('address', 'Address', 'The business’s address.')}
+            {field('purpose', 'Purpose of the loan', undefined, 'like a new CNC machine')}
+            {field('gstin', 'GSTIN, if registered', undefined, 'like 27ABCDE1234F1Z5')}
+          </div>
+        </details>
+        <div class="mt-5">
         <p data-testid="doc-status" class={`inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${provisional
-          ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200'}`}>
+          ? 'bg-warn-tint text-warn' : 'bg-good-tint text-good'}`}>
           {docStatus(s, p)}
         </p>
         {provisional && <p class={HINT}>The document says so on every page and lists what is still needed{own.length ? ':' : '.'}</p>}
-        {own.length > 0 && <ul data-testid="doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
+        {own.length > 0 && <ul data-testid="doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
         <div class="mt-3 flex flex-wrap gap-2">
-          <button type="button" data-testid="download-pdf" class={BUTTON} onClick={() => save('pdf')}>Download PDF</button>
+          <button type="button" data-testid="download-pdf" class={FILLED} onClick={() => save('pdf')}>Download PDF</button>
           <button type="button" data-testid="download-xlsx" class={BUTTON} onClick={() => save('xlsx')}>Download Excel</button>
           <button type="button" data-testid="download-docx" class={BUTTON} onClick={() => save('docx')}>Download Word</button>
           <button type="button" data-testid="print" class={BUTTON} onClick={() => { const now = new Date(); openPdf(statementDoc(s, p, isoDate(now)), now); }}>Print</button>
+        </div>
         </div>
       </div>
       : <p data-testid="doc-wait" class={`mt-4 ${HINT}`}>{p.blocked ? 'No document while the two computations disagree.' : 'The document can be made once the statement shows figures.'}</p>}
@@ -599,32 +605,35 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
 }
 
 const lineClass = (kind?: string) => kind === 'total' || kind === 'ratio'
-  ? 'font-semibold text-slate-900 dark:text-slate-100' : 'text-slate-800 dark:text-slate-200';
+  ? 'font-semibold text-ink' : 'text-ink';
 
 /** The DSCR statement: years across on wider screens (as in a project report), one card per year on phones; then the Total. */
 function StatementTable({ st, parts = {} }: { st: StatementView; parts?: Record<string, string> }) {
   const cols = st.years.length + 1 + (st.total ? 1 : 0);
-  return <div class="mt-6">
-    <h3 class="font-semibold text-slate-900 dark:text-slate-100">DSCR statement</h3>
-    <p class={`mt-1 ${HINT}`}>In rupees.</p>
+  // On a phone a line that is nil every year is left off the cards; the table and the document keep it (finding 16).
+  const shown = st.lines.filter((l) => l.kind || !l.n || l.n.some((x) => x !== 0));
+  const hidden = st.lines.length - shown.length;
+  return <div class="paper shadow-paper mt-8 rounded-card p-4 sm:p-6">
+    <h3 class="font-semibold text-ink">Year by year</h3>
+    <p class={`mt-1 ${HINT}`}>In rupees.{hidden > 0 && <span class="sm:hidden"> Lines that are nil every year are left out here; the document keeps them.</span>}</p>
     <div class="mt-2 overflow-x-auto max-sm:hidden">
       <table data-testid="dscr-statement" class="w-full border-collapse text-sm">
         <thead>
-          <tr class="border-b border-slate-300 dark:border-slate-700">
-            <th scope="col" class="py-2 pr-3 text-left font-medium text-slate-700 dark:text-slate-200"><span class="sr-only">Line</span></th>
-            {st.years.map((fy, i) => <th key={fy} scope="col" class="px-2 py-2 text-right align-bottom font-medium text-slate-700 dark:text-slate-200">
+          <tr class="border-b border-line">
+            <th scope="col" class="py-2 pr-3 text-left font-medium text-ink-muted"><span class="sr-only">Line</span></th>
+            {st.years.map((fy, i) => <th key={fy} scope="col" class="px-2 py-2 text-right align-bottom font-medium text-ink-muted">
               {fy}{!st.counted[i] && <span class={`block text-xs font-normal ${MUTED}`}>not counted</span>}
               {parts[fy] && <span data-testid={`part-${fy}`} class={`block text-xs font-normal ${MUTED}`}>{parts[fy]}</span>}
             </th>)}
-            {st.total && <th scope="col" class="px-2 py-2 text-right align-bottom font-semibold text-slate-900 dark:text-slate-100">
+            {st.total && <th scope="col" class="px-2 py-2 text-right align-bottom font-semibold text-ink">
               Total{st.total.sub && <span class={`block text-xs font-normal ${MUTED}`}>{st.total.sub}</span>}
             </th>}
           </tr>
         </thead>
         <tbody>
           {st.lines.map((l) => l.kind === 'head'
-            ? <tr key={l.label}><th colSpan={cols} scope="colgroup" class="pt-4 pb-1 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase dark:text-slate-300">{l.label}</th></tr>
-            : <tr key={l.label} class={`border-b border-slate-100 dark:border-slate-800 ${l.kind ? 'border-t border-t-slate-300 dark:border-t-slate-600' : ''}`}>
+            ? <tr key={l.label}><th colSpan={cols} scope="colgroup" class="pt-4 pb-1 text-left text-xs font-semibold tracking-wide text-ink-muted uppercase">{l.label}</th></tr>
+            : <tr key={l.label} class={`border-b border-line ${l.kind ? 'border-t border-t-ink/25' : ''}`}>
               <th scope="row" class={`py-1.5 pr-3 text-left font-normal ${lineClass(l.kind)}`}>{l.label}</th>
               {l.values.map((v, i) => <td key={i} data-testid={l.id ? `${l.id}-${st.years[i]}` : undefined}
                 class={`px-2 py-1.5 text-right tabular-nums ${!st.counted[i] && l.kind === 'ratio' ? `font-semibold ${MUTED}` : lineClass(l.kind)}`}>{v}</td>)}
@@ -634,21 +643,21 @@ function StatementTable({ st, parts = {} }: { st: StatementView; parts?: Record<
       </table>
     </div>
     <div class="mt-2 space-y-3 sm:hidden">
-      {st.years.map((fy, i) => <div key={fy} data-testid={`card-${fy}`} class="rounded-lg border border-slate-300 p-3 dark:border-slate-700">
-        <p class="font-medium text-slate-900 dark:text-slate-100">{fy}{!st.counted[i] && <span class={`ml-2 text-xs font-normal ${MUTED}`}>not counted</span>}
+      {st.years.map((fy, i) => <div key={fy} data-testid={`card-${fy}`} class="rounded-control bg-surface p-3">
+        <p class="font-medium text-ink">{fy}{!st.counted[i] && <span class={`ml-2 text-xs font-normal ${MUTED}`}>not counted</span>}
           {parts[fy] && <span class={`ml-2 text-xs font-normal ${MUTED}`}>{parts[fy]}</span>}</p>
         <div class="mt-1 text-sm">
-          {st.lines.map((l) => l.kind === 'head'
+          {shown.map((l) => l.kind === 'head'
             ? <p key={l.label} class={`pt-2 text-xs font-semibold tracking-wide uppercase ${MUTED}`}>{l.label}</p>
             : <p key={l.label} class={`flex justify-between gap-3 py-0.5 ${lineClass(l.kind)}`}>
               <span>{l.label}</span><span data-line={l.id} class="text-right tabular-nums">{l.values[i]}</span>
             </p>)}
         </div>
       </div>)}
-      {st.total && <div data-testid="card-total" class="rounded-lg border border-slate-400 p-3 dark:border-slate-600">
-        <p class="font-medium text-slate-900 dark:text-slate-100">Total{st.total.sub && <span class={`ml-2 text-xs font-normal ${MUTED}`}>{st.total.sub}</span>}</p>
+      {st.total && <div data-testid="card-total" class="rounded-control border-l-4 border-ink bg-surface p-3">
+        <p class="font-medium text-ink">Total{st.total.sub && <span class={`ml-2 text-xs font-normal ${MUTED}`}>{st.total.sub}</span>}</p>
         <div class="mt-1 text-sm">
-          {st.lines.map((l) => l.kind === 'head'
+          {shown.map((l) => l.kind === 'head'
             ? <p key={l.label} class={`pt-2 text-xs font-semibold tracking-wide uppercase ${MUTED}`}>{l.label}</p>
             : <p key={l.label} class={`flex justify-between gap-3 py-0.5 ${lineClass(l.kind)}`}>
               <span>{l.label}</span><span data-line={l.id} class="text-right tabular-nums">{l.total?.text ?? ''}</span>
@@ -663,22 +672,22 @@ function StatementTable({ st, parts = {} }: { st: StatementView; parts?: Record<
 function Schedule({ sch }: { sch: ScheduleView }) {
   const cols = 'grid grid-cols-[4.5rem_1fr_1fr_1fr] gap-2 sm:grid-cols-[6rem_1fr_1fr_1fr]';
   return <div data-testid="schedule" class="mt-8">
-    <h3 class="font-semibold text-slate-900 dark:text-slate-100">Repayment schedule</h3>
+    <h3 class="font-semibold text-ink">Repayment schedule</h3>
     <p data-testid="schedule-level" class={`mt-1 ${HINT}`}>{sch.level}</p>
     <p class={HINT}>In rupees, rounded; totals use the exact figures. Open a year for its months.</p>
     <div class={`${cols} mt-3 px-3 text-xs font-medium ${MUTED}`}>
       <span>Year</span><span class="text-right">Interest</span><span class="text-right">Principal</span><span class="text-right">Balance at year end</span>
     </div>
-    <div class="mt-1 divide-y divide-slate-200 rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
+    <div class="mt-1 divide-y divide-line rounded-card bg-surface">
       {sch.years.map((y) => <details key={y.fy} data-testid={`schedule-${y.fy}`} class="group">
-        <summary class={`${cols} cursor-pointer list-none px-3 py-2 text-sm tabular-nums text-slate-900 dark:text-slate-100 [&::-webkit-details-marker]:hidden`}>
+        <summary class={`${cols} cursor-pointer list-none px-3 py-2 text-sm tabular-nums text-ink [&::-webkit-details-marker]:hidden`}>
           <span class="font-medium"><span aria-hidden="true" class="mr-1 inline-block transition-transform group-open:rotate-90">›</span>{y.fy}</span>
           <span class="text-right">{y.interest}</span><span class="text-right">{y.principal}</span><span class="text-right">{y.closing}</span>
         </summary>
         <div class="overflow-x-auto px-3 pb-3">
           <table class="w-full border-collapse text-xs tabular-nums sm:text-sm">
             <thead>
-              <tr class={`border-b border-slate-200 dark:border-slate-800 ${MUTED}`}>
+              <tr class={`border-b border-line ${MUTED}`}>
                 <th scope="col" class="py-1 pr-2 text-left font-medium">Month</th>
                 <th scope="col" class="px-1 py-1 text-right font-medium max-sm:hidden">Balance at start</th>
                 <th scope="col" class="px-1 py-1 text-right font-medium">Interest</th>
@@ -688,7 +697,7 @@ function Schedule({ sch }: { sch: ScheduleView }) {
               </tr>
             </thead>
             <tbody>
-              {y.months.map((m) => <tr key={m.ym} data-testid={`month-${m.ym}`} class="border-b border-slate-100 text-slate-800 dark:border-slate-800 dark:text-slate-200">
+              {y.months.map((m) => <tr key={m.ym} data-testid={`month-${m.ym}`} class="border-b border-line text-ink">
                 <th scope="row" class="py-1 pr-2 text-left font-normal whitespace-nowrap">{m.month}{m.instalment && <span class={`ml-1 ${MUTED}`}>#{m.instalment}</span>}</th>
                 <td class="px-1 py-1 text-right max-sm:hidden">{m.opening}</td>
                 <td class="px-1 py-1 text-right">{m.interest}</td>

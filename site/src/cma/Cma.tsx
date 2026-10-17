@@ -8,7 +8,7 @@
  * engine/cma-plan.ts only, via model.ts and levers.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
-import { BUTTON, CellInput, Choice, HINT, Section, TextField } from '../fields';
+import { BUTTON, CellInput, Choice, FILLED, HINT, Section, TextField } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { cmaDoc, docNeeds, docStatus, fileName } from './document';
@@ -21,12 +21,16 @@ import {
 } from './model';
 
 type Update = (f: (s: CmaState) => CmaState) => void;
-const MUTED = 'text-slate-600 dark:text-slate-300';
+const MUTED = 'text-ink-muted';
 const KIND = { audited: 'audited', estimate: 'estimate', projection: 'projection' } as const;
 const bad = (t: string) => !!t.trim() && amountOf(t) === undefined;
 
 export function CmaCalculator() {
-  const [s, setS] = useState<CmaState>(() => emptyState(startYearOf(new Date())));
+  const blank = () => emptyState(startYearOf(new Date()));
+  const [s, setS] = useState<CmaState>(blank);
+  // Clear all on a 131-field page, with an undo until the next figure is typed (review finding 7).
+  const [cleared, setCleared] = useState<CmaState>();
+  const typed = JSON.stringify(s) !== JSON.stringify(blank());
   const update: Update = (f) => setS(f);
   const p = useMemo(() => preview(s), [s]);
   const cols = columnsOf(s.startYear);
@@ -39,7 +43,12 @@ export function CmaCalculator() {
     <p data-testid="cma-years" class={`mt-2 ${HINT}`}>
       Years: {cols.map((c) => `${c.fy} (${KIND[c.kind]})`).join(', ')}. Type in rupees, or like 12 L or 1.2 Cr. Leave the oldest years empty if the business is younger.
     </p>
-    <div class="mt-3"><button type="button" data-testid="cma-example" class={BUTTON} onClick={() => update((x) => exampleState(x))}>Fill with the worked example</button></div>
+    <div class="mt-3 flex flex-wrap items-center gap-2">
+      <button type="button" data-testid="cma-example" class={BUTTON} onClick={() => update((x) => exampleState(x))}>Fill with the worked example</button>
+      {typed && <button type="button" data-testid="cma-clear" class={BUTTON} onClick={() => { setCleared(s); setS(blank()); setUsed([]); }}>Clear all</button>}
+      {cleared && !typed && <p role="status" class="flex items-center gap-2 text-sm text-ink">Cleared.
+        <button type="button" data-testid="cma-clear-undo" class={BUTTON} onClick={() => { setS(cleared); setCleared(undefined); }}>Undo</button></p>}
+    </div>
     <ReadStatement s={s} update={update} />
     <Section id="limit" title="The limit now">
       <div class="mt-4 max-w-sm">
@@ -52,10 +61,10 @@ export function CmaCalculator() {
     </Section>
     <Grid form="II" title="Profit and loss (Form II)" s={s} update={update} was={was} />
     <Grid form="III" title="Balance sheet (Form III)" s={s} update={update} was={was} />
-    <details id="more-options" class="mt-6 rounded-lg border border-slate-200 dark:border-slate-800">
-      <summary class="cursor-pointer px-4 py-3 font-medium text-teal-800 dark:text-teal-300">More options: promoters’ loans, collateral</summary>
-      <div class="px-4 pb-4">
-        <label class="flex items-start gap-2 text-slate-900 dark:text-slate-100">
+    <details id="more-options" class="mt-12">
+      <summary class="flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link">More options: promoters’ loans, collateral</summary>
+      <div class="pt-4 pb-4">
+        <label class="flex items-start gap-2 text-ink">
           <input id="fld-cma-quasi" type="checkbox" class="mt-1" checked={s.quasi} onChange={(e) => { const quasi = (e.currentTarget as HTMLInputElement).checked; update((x) => ({ ...x, quasi })); }} />
           <span>Count unsecured loans from promoters as the owners’ funds<span class={`block text-sm ${MUTED}`}>{was('fld-cma-quasi') ?? 'Only when they stay in the business till the bank’s loan is repaid.'}</span></span>
         </label>
@@ -68,11 +77,16 @@ export function CmaCalculator() {
     </details>
     <Result s={s} p={p} update={update} use={use} used={used} undo={undo} keep={() => setUsed([])} />
     <Section id="assumed" title="Assumed until changed">
-      <ul data-testid="cma-assumed" class="mt-3 list-disc space-y-1 pl-5 text-sm text-slate-700 dark:text-slate-300">
-        {ASSUMPTIONS.map((a) => <li key={a.id}><span class="font-medium text-slate-900 dark:text-slate-100">{a.what}:</span> {a.shown}. <span class={MUTED}>{a.why}.</span></li>)}
+      <ul data-testid="cma-assumed" class="mt-3 list-disc space-y-1 pl-5 text-sm text-ink-muted">
+        {ASSUMPTIONS.map((a) => <li key={a.id}><span class="font-medium text-ink">{a.what}:</span> {a.shown}. <span class={MUTED}>{a.why}.</span></li>)}
       </ul>
     </Section>
     <Download s={s} p={p} update={update} />
+    {/* The limit and its status on every screen of the forms (review finding 4), as the DSCR's answer bar. */}
+    {p.view && <div class="sticky bottom-0 z-10 -mx-4 mt-10 flex items-center gap-2 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8">
+      <p data-testid="cma-answer-bar" data-answer-echo aria-live="polite" class="flex-1 py-2 text-sm font-medium text-ink">Limit {p.view.key[0]?.value} · {statusText(p)}</p>
+      <a href="#result" aria-label="To the CMA data" class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↓</span></a>
+    </div>}
   </div>;
 }
 
@@ -82,13 +96,13 @@ function Grid({ form, title, s, update, was }: { form: 'II' | 'III'; title: stri
   return <Section id={`form-${form}`} title={title}>
     <div class="mt-3 overflow-x-auto">
       <table data-testid={`cma-input-${form}`} class="w-full border-collapse text-sm">
-        <thead><tr class="border-b border-slate-300 dark:border-slate-700">
-          <th scope="col" class="py-2 pr-3 text-left font-medium text-slate-700 dark:text-slate-200">Rupees</th>
-          {cols.map((c) => <th key={c.id} scope="col" class="px-1 py-2 text-right font-medium whitespace-nowrap text-slate-700 dark:text-slate-200">{c.fy}<span class={`block text-xs font-normal ${MUTED}`}>{KIND[c.kind]}</span></th>)}
+        <thead><tr class="border-b border-line">
+          <th scope="col" class="py-2 pr-3 text-left font-medium text-ink-muted">Rupees</th>
+          {cols.map((c) => <th key={c.id} scope="col" class="px-1 py-2 text-right font-medium whitespace-nowrap text-ink-muted">{c.fy}<span class={`block text-xs font-normal ${MUTED}`}>{KIND[c.kind]}</span></th>)}
         </tr></thead>
         <tbody>
-          {HEADS.filter((h) => h.form === form).map((h) => <tr key={h.id} class="border-b border-slate-100 dark:border-slate-800">
-            <th scope="row" class="min-w-44 py-1.5 pr-3 text-left font-normal text-slate-800 dark:text-slate-200">{h.label}
+          {HEADS.filter((h) => h.form === form).map((h) => <tr key={h.id} class="border-b border-line">
+            <th scope="row" class="min-w-44 py-1.5 pr-3 text-left font-normal text-ink">{h.label}
               {'hint' in h && h.hint && <span class={`block text-xs ${MUTED}`}>{h.hint}</span>}</th>
             {cols.map((c) => { const v = s.figures[c.id][h.id]; return <td key={c.id} class="px-1 py-1">
               <CellInput id={`fld-cma-${c.id}-${h.id}`} name={`${h.label}, ${c.fy}`} value={v} decimal tidy={tidyAmount} invalid={bad(v)} changed={was(`fld-cma-${c.id}-${h.id}`)}
@@ -104,20 +118,20 @@ function Grid({ form, title, s, update, was }: { form: 'II' | 'III'; title: stri
 /** One of the forms, its years across; it scrolls sideways inside itself on a phone. */
 function FormTable({ t }: { t: ViewTable }) {
   const cols = t.columns.length + 1;
-  return <details open={t.id === 'form1' || t.id === 'form5'} class="mt-4 rounded-lg border border-slate-200 dark:border-slate-800">
-    <summary class="cursor-pointer px-3 py-2 font-medium text-slate-900 dark:text-slate-100">{t.title}</summary>
-    <div class="overflow-x-auto px-3 pb-3" tabIndex={0} role="region" aria-label={t.title}>
+  return <details open={t.id === 'form1' || t.id === 'form5'} class="paper shadow-paper mt-4 rounded-card">
+    <summary class="flex min-h-11 cursor-pointer items-center px-4 py-2 font-medium text-ink">{t.title}</summary>
+    <div class="overflow-x-auto px-4 pb-4" tabIndex={0} role="region" aria-label={t.title}>
       <table data-testid={`cma-${t.id}`} class="w-full border-collapse text-sm">
-        <thead><tr class="border-b border-slate-300 dark:border-slate-700">
-          <th scope="col" class="py-2 pr-3 text-left font-medium text-slate-700 dark:text-slate-200">{t.first}</th>
-          {t.columns.map((c) => <th key={c} scope="col" class="px-2 py-2 text-right font-medium whitespace-nowrap text-slate-700 dark:text-slate-200">{c}</th>)}
+        <thead><tr class="border-b border-line">
+          <th scope="col" class="py-2 pr-3 text-left font-medium text-ink-muted">{t.first}</th>
+          {t.columns.map((c) => <th key={c} scope="col" class="px-2 py-2 text-right font-medium whitespace-nowrap text-ink-muted">{c}</th>)}
         </tr></thead>
         <tbody>
           {t.rows.map((r, i) => r.kind === 'head'
-            ? <tr key={i}><th colSpan={cols} scope="colgroup" class="pt-3 pb-1 text-left text-xs font-semibold tracking-wide text-slate-600 uppercase dark:text-slate-300">{r.label}</th></tr>
-            : <tr key={i} class={`border-b border-slate-100 dark:border-slate-800 ${r.kind ? 'border-t border-t-slate-300 dark:border-t-slate-600' : ''}`}>
-              <th scope="row" class={`min-w-48 py-1.5 pr-3 text-left ${r.kind ? 'font-semibold' : 'font-normal'} text-slate-800 dark:text-slate-200`}>{r.label}</th>
-              {r.values.map((x, k) => <td key={k} class={`px-2 py-1.5 text-right whitespace-nowrap tabular-nums ${r.kind ? 'font-semibold' : ''} text-slate-800 dark:text-slate-200`}>{x}</td>)}
+            ? <tr key={i}><th colSpan={cols} scope="colgroup" class="pt-3 pb-1 text-left text-xs font-semibold tracking-wide text-ink-muted uppercase">{r.label}</th></tr>
+            : <tr key={i} class={`border-b border-line ${r.kind ? 'border-t border-t-ink/25' : ''}`}>
+              <th scope="row" class={`min-w-48 py-1.5 pr-3 text-left ${r.kind ? 'font-semibold' : 'font-normal'} text-ink`}>{r.label}</th>
+              {r.values.map((x, k) => <td key={k} class={`px-2 py-1.5 text-right whitespace-nowrap tabular-nums ${r.kind ? 'font-semibold' : ''} text-ink`}>{x}</td>)}
             </tr>)}
         </tbody>
       </table>
@@ -129,30 +143,30 @@ function Result({ s, p, update, use, used, undo, keep }: { s: CmaState; p: CmaPr
   const v = p.view;
   return <Section id="result" title="The CMA data">
     <p data-testid="cma-status" data-answer data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class={`mt-3 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.needs.length || p.blocked
-      ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200'}`}>{statusText(p)}</p>
-    {p.blocked && <p class="mt-2 text-sm text-red-700 dark:text-red-300">{p.blocked}</p>}
-    {used.length > 0 && <div data-testid="cma-used" role="status" class="mt-3 rounded-lg border border-teal-600 bg-teal-50 p-3 dark:border-teal-500 dark:bg-teal-950">
-      <p class="font-medium text-slate-900 dark:text-slate-100">The plan is used: these figures above changed.</p>
-      <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-800 tabular-nums dark:text-slate-200">{used.map((c) => <li key={c.key}>{c.label}: {c.was || 'none'} → {c.now}</li>)}</ul>
+      ? 'bg-warn-tint text-warn' : 'bg-good-tint text-good'}`}>{statusText(p)}</p>
+    {p.blocked && <p class="mt-2 text-sm text-bad">{p.blocked}</p>}
+    {used.length > 0 && <div data-testid="cma-used" role="status" class="mt-3 rounded-control border-l-4 border-accent bg-accent/10 p-3">
+      <p class="font-medium text-ink">The plan is used: these figures above changed.</p>
+      <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink tabular-nums">{used.map((c) => <li key={c.key}>{c.label}: {c.was || 'none'} → {c.now}</li>)}</ul>
       <div class="mt-2 flex flex-wrap gap-2">
         <button type="button" data-testid="cma-undo" class={BUTTON} onClick={undo}>Undo</button>
         <button type="button" data-testid="cma-keep" class={BUTTON} onClick={keep}>Keep these</button>
       </div>
     </div>}
-    {p.needs.length > 0 && <ul data-testid="cma-needs" class="mt-2 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">
+    {p.needs.length > 0 && <ul data-testid="cma-needs" class="mt-2 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">
       {p.needs.slice(0, 8).map((n) => <li key={n}>{n}</li>)}{p.needs.length > 8 && <li>and {p.needs.length - 8} more</li>}</ul>}
     {v && <>
-      <dl class="mt-4 grid gap-3 sm:grid-cols-3">
-        {v.key.map((k, i) => <div key={k.label} class="rounded-lg bg-slate-100 p-3 dark:bg-slate-800">
+      <dl class="paper shadow-paper mt-4 grid gap-3 rounded-card p-4 sm:grid-cols-3 sm:p-6">
+        {v.key.map((k, i) => <div key={k.label}>
           <dt class={`text-sm ${MUTED}`}>{k.label}</dt>
-          <dd data-testid={`cma-key-${i}`} class="text-xl font-semibold text-slate-900 tabular-nums dark:text-slate-100">{k.value}</dd>
+          <dd data-testid={`cma-key-${i}`} class="figure text-2xl text-ink">{k.value}</dd>
           {k.note && <dd class={`text-sm ${MUTED}`}>{k.note}</dd>}
         </div>)}
       </dl>
       {!p.blocked && <Levels s={s} update={update} use={use} />}
       {v.flags.length > 0 && <div class="mt-4">
-        <h3 class="font-medium text-slate-900 dark:text-slate-100">To look at</h3>
-        <ul data-testid="cma-flags" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{v.flags.map((f) => <li key={f}>{f}</li>)}</ul>
+        <h3 class="font-medium text-ink">To look at</h3>
+        <ul data-testid="cma-flags" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{v.flags.map((f) => <li key={f}>{f}</li>)}</ul>
       </div>}
       {v.tables.map((t) => <FormTable key={t.id} t={t} />)}
     </>}
@@ -178,10 +192,10 @@ function Download({ s, p, update }: { s: CmaState; p: CmaPreview; update: Update
     {ready
       ? <div class="mt-5">
         <p data-testid="cma-doc-status" class={`inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${own.length
-          ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200'}`}>{docStatus(s, p)}</p>
-        {own.length > 0 && <ul data-testid="cma-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
+          ? 'bg-warn-tint text-warn' : 'bg-good-tint text-good'}`}>{docStatus(s, p)}</p>
+        {own.length > 0 && <ul data-testid="cma-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
         <div class="mt-3 flex flex-wrap gap-2">
-          <button type="button" data-testid="cma-download-pdf" class={BUTTON} onClick={() => go('pdf')}>Download PDF</button>
+          <button type="button" data-testid="cma-download-pdf" class={FILLED} onClick={() => go('pdf')}>Download PDF</button>
           <button type="button" data-testid="cma-download-xlsx" class={BUTTON} onClick={() => go('xlsx')}>Download Excel</button>
         </div>
       </div>
