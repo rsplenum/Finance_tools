@@ -18,7 +18,7 @@ UD1 interaction data (records once DEP1 is live), DT1 the design team, UX1 resea
 | 6 | **SEO1** pSEO plan: the searches people in India make, the page types, the count, each page's data | M, high | a plan you approve, with its sources | the hosts `npm run hosts` names, allowed |
 | 7 | **SEO2** The pSEO template and the first 50 pages, each with a working calculator; sitemap, canonicals, structured data; a check that fails thin pages | L, Extra | every page passes the thin-page check and the site check | — |
 | 8 | **SEO3** The rest of the batch and the internal links | M, high | as SEO2, at full count | — |
-| 9 | **RC1** Release check: every page by a critic at once, your five tests scored by the researcher, the live Worker's first funnels read, `noindex` still on; what it finds is fixed in this row or named as a launch blocker | M, high | no blocker open; every check at 0 | your five tests' notes; the lawyer's review back |
+| 9 | **RC1** Release check: every page by a critic at once, your five tests scored by the researcher, the live Worker's first funnels read, `noindex` still on; what it finds is fixed in this row or named as a launch blocker; the network back from Full to the list of allowed hosts, with the ones SEO1 used (`docs/OWNER.md`) | M, high | no blocker open; every check at 0 | your five tests' notes; the lawyer's review back |
 | 10 | **LAUNCH** The real domain, `noindex` off, Search Console, Cloudflare Web Analytics | S, high | the site on its domain, indexed, the analytics counting | the name and domain, the lawyer's sign-off |
 | 11 | **P1d Payment** (its row: `docs/HANDOFF-ARCHIVE.md`) | L, high | a paid statement end to end in Razorpay's test mode, then live | Phase 0: the entity, GST, Razorpay and the price |
 

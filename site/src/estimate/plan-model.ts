@@ -351,10 +351,9 @@ export function shortRupees(n: number): string {
   return inr(n);
 }
 const dmy = (iso: string) => iso.split('-').reverse().join('-');
-/** The kinds of item in the documents' words (unchanged there). */
-const KIND_WORD: Record<ItemKind, string> = { fixed: 'Fixed works', movable: 'Movable items', appliance: 'Appliances' };
-/** On screen "Appliances" already names a section, so the kind takes its own word (UX4, review finding 5). */
-const KIND_SHOWN: Record<ItemKind, string> = { ...KIND_WORD, appliance: 'Equipment' };
+/** The kinds of item, on screen and in the documents alike: "Appliances" already names a section, so the kind takes
+ * its own word (UX4, review finding 5; the documents since UX5, D-UX-87). */
+const KIND_WORD: Record<ItemKind, string> = { fixed: 'Fixed works', movable: 'Movable items', appliance: 'Equipment' };
 /** The engine writes the carpet area in a flag as a bare number ("yours is 1000"); on screen it is grouped as every figure is (UX4, finding 10). */
 const groupedFlag = (t: string) => t.replace(/\byours is (\d{4,})\b/g, (_, n: string) => `yours is ${inr(Number(n))}`);
 export const TITLE: Record<WorkKind, string> = { build: 'Estimate of cost of construction', extend: 'Estimate of cost of an extension', renovate: 'Estimate of cost of renovation', interiors: 'Estimate of cost of interiors and furnishing' };
@@ -436,7 +435,7 @@ export interface PlanView {
   /** A new house's stages, adding up to the total, the loan they are for (an extension's too, E5b), and a new house's plot. */
   stages?: StageView[]; loan?: 'construction' | 'extension'; plot?: PlotView;
   /** Fixed works, movable items and appliances, when there is more than fixed works. */
-  split?: { label: string; shown: string; amount: string; n: number }[];
+  split?: { label: string; amount: string; n: number }[];
   /** What to check (V1): the flags that can change the decision, shown with the answer, and the rest, one tap away; each largest first. */
   assumed: AssumedView[]; flags: string[]; notes: string[]; unpriced: string[];
   /** One line by the total: a planning estimate, its rates as reported on their date for the city, and how many lines were checked against their pages (E2). */
@@ -506,7 +505,7 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
   const shown = sections.filter((x) => x.on && x.n > 0), most = Math.max(1, ...shown.map((x) => x.n));
   const bar = shown.map((x) => ({ id: x.id, name: x.name, amount: x.amount, n: x.n, width: Math.max(1, (x.n / most) * 100) }));
   const split = e.split.movable || e.split.appliance
-    ? (['fixed', 'movable', 'appliance'] as ItemKind[]).filter((k) => e.split[k]).map((k) => ({ label: KIND_WORD[k], shown: KIND_SHOWN[k], amount: rupees(e.split[k]), n: e.split[k] }))
+    ? (['fixed', 'movable', 'appliance'] as ItemKind[]).filter((k) => e.split[k]).map((k) => ({ label: KIND_WORD[k], amount: rupees(e.split[k]), n: e.split[k] }))
     : undefined;
   const assumed = e.assumptions.map((a) => ({ what: a.what, shown: a.shown, why: a.why, sources: a.src.filter((x) => x !== 'own').map(sourceOf) }));
   const listed = CITIES.some((c) => c.id === e.city), city = listed ? e.cityName : 'Another place';
@@ -627,7 +626,7 @@ function lineView(s: PlanState, l: Line, no: string, sourceOf: (id: string) => S
     key: l.key, no, room: l.roomName, name: l.name, entry: l.entry, item: l.entryName, spec: l.spec, brands, ...(chosen ? { brand: chosen } : {}),
     level: l.level ? levelName(l.level) : '', chosen: l.chosen, at: l.at,
     qty: lineQty(l.qty, l.unit), unit: unitText(l.unit), rate: rateText(l.rate), amount: rupees(l.amount), n: { qty: l.qty, rate: l.rate, amount: l.amount },
-    kind: KIND_SHOWN[l.kind], how: l.how, rateHow: l.rateHow, sources: l.sources.filter((x) => x !== 'own').map(sourceOf), ...(l.note ? { note: l.note } : {}), ...(l.checked ? { checked: l.checked } : {}),
+    kind: KIND_WORD[l.kind], how: l.how, rateHow: l.rateHow, sources: l.sources.filter((x) => x !== 'own').map(sourceOf), ...(l.note ? { note: l.note } : {}), ...(l.checked ? { checked: l.checked } : {}),
     ...(FAMILY_WHY.has(l.family) ? { why: FAMILY_WHY.get(l.family) } : {}),
   };
 }

@@ -12,6 +12,7 @@ import { LENDER } from '../../../engine/lender';
 import { COMPONENTS, OPTIONS, PLAN_SERVICE, componentsOf, targetNeeds, type Component, type Definition } from '../../../engine/dscr';
 import { parseMonth } from '../../../engine/parse';
 import type { Block, Cell, Doc, Figure, KeyFigure, Part, Row, Table } from '../doc/doc';
+import { forDocument } from '../doc/doc';
 import { printable } from '../doc/pdf';
 import { SITE_NAME } from '../site';
 import {
@@ -51,8 +52,12 @@ export function allNeeds(s: State, p: Preview): string[] {
   return [...p.needs.filter((n) => !target.has(n)), ...docNeeds(s.doc)];
 }
 
-/** "Complete", or "Provisional: 2 still needed" counting the document's own facts, for beside the download buttons. */
-export const docStatus = (s: State, p: Preview) => statusText({ ...p, needs: allNeeds(s, p), assumed: [] });
+/** "Complete", "Provisional: 2 still needed" counting the document's own facts, or, when only those are missing, that
+ * the figures are complete (CMA review finding 14, UX5); for beside the download buttons. */
+export const docStatus = (s: State, p: Preview) => {
+  const all = allNeeds(s, p), own = docNeeds(s.doc).length;
+  return !p.blocked && own && all.length === own ? forDocument(own) : statusText({ ...p, needs: all, assumed: [] });
+};
 
 /** The file's name: the borrower's, and "(provisional)" while anything is missing. */
 export function fileName(s: State, p: Preview, ext: 'pdf' | 'xlsx' | 'docx'): string {

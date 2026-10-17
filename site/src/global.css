@@ -212,7 +212,7 @@ body[data-look='new'] {
 }
 /* A result lands as paper (UX3, D-UX-73): light in both themes, a little dimmed in dark, so inside it the tokens keep the
    light page's values. Its shadow is the paper's own (F17). */
-body[data-look='new'] .paper { background-color: var(--paper); color: var(--on-paper); --ink: var(--on-paper); --ink-muted: var(--paper-muted); }
+body[data-look='new'] .paper { background-color: var(--paper); color: var(--on-paper); --ink: var(--on-paper); --canvas: var(--paper); --ink-muted: var(--paper-muted); }
 .dark body[data-look='new'] .paper {
   color-scheme: light; /* radios, checkboxes and sliders on paper drawn light, as the paper is (UX4) */
   --surface: oklch(0.885 0.012 85); --line: oklch(0.8 0.02 268); --edge: oklch(0.55 0.045 268); --field: oklch(0.97 0.006 85);

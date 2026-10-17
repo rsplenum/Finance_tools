@@ -9,7 +9,7 @@ on it; F13 (our order) and F15 (the weight cap) are home's alone.
 The pitch: the hero, the story with its trailers, the tools, the figures, the closing. It sets the type, the colours, the
 drawings and the motion the other pages borrow. The owner's word (D-UX-83): it stands as the reference.
 
-## Tool pages (`/dscr/`, `/cma/`, `/estimate/`; the report in UX4)
+## Tool pages (`/dscr/`, `/cma/`, `/estimate/`, `/project-report/`)
 - **Type:** the h1 in `text-hero`, each section's h2 in `text-section` with its ledger rule above; the line under the h1
   is body size in `text-ink-muted` (the lead size is home's pitch). Figures that answer use `figure`.
 - **Colours:** tokens only. Links and the chosen option in the accent (the new look's indigo, `--link`); good, warn and
@@ -30,7 +30,3 @@ drawings and the motion the other pages borrow. The owner's word (D-UX-83): it s
 ## Downloads (PDF, Excel, Word)
 Plain: the documents keep their own layout and type (`docs/DESIGN.md`, Documents; the `lender-documents` skill). The new
 look never reaches a lender's page; a line left off a phone's cards stays in the document.
-
-## The report (until UX4)
-The old look. Shared parts style the new look behind the `new:` variant (`site/src/global.css`), so a change there must
-leave these pages as they were.

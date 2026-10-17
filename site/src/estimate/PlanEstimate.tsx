@@ -257,7 +257,7 @@ function Sections({ s, v, update }: { s: PlanState; v: PlanView; update: Update 
         </li>;
       })}
     </ul>
-    {v.split && <p data-testid="pl-split" class={`mt-3 text-sm ${INK}`}>{v.split.map((x) => `${x.shown} Rs. ${x.amount}`).join(' · ')}</p>}
+    {v.split && <p data-testid="pl-split" class={`mt-3 text-sm ${INK}`}>{v.split.map((x) => `${x.label} Rs. ${x.amount}`).join(' · ')}</p>}
   </Section>;
 }
 

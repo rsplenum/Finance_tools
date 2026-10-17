@@ -8,7 +8,7 @@ import { readFile } from 'node:fs/promises';
 import { openAt } from './design-checks.mjs';
 
 /** The pages in the new look: home, from UX3 the DSCR and CMA pages, from UX4 the estimate; the report next. */
-export const NEW_LOOK = ['/', '/dscr/', '/cma/', '/estimate/'];
+export const NEW_LOOK = ['/', '/dscr/', '/cma/', '/estimate/', '/project-report/'];
 /** F13: our order, the borrower's path (docs/design-reference/finsight.md, rule 10). */
 export const ORDER = ['hero', 'story', 'tools', 'uses', 'figures', 'try', 'closing'];
 /**
@@ -117,7 +117,7 @@ const still = (page) => page.evaluate(() => ({
 export function tabAgainstEye() {
   const pinned = (e) => { for (let x = e; x && x !== document.body; x = x.parentElement) if (/sticky|fixed/.test(getComputedStyle(x).position)) return true; return false; };
   const els = [...document.querySelectorAll('main a[href], main button, main input, main select, main textarea, main [tabindex]')]
-    .filter((e) => e.tabIndex >= 0 && !e.closest('[hidden], [inert]') && e.getClientRects().length && getComputedStyle(e).visibility === 'visible' && !pinned(e));
+    .filter((e) => e.tabIndex >= 0 && !e.closest('[hidden], [inert], details:not([open]) > :not(summary)') && e.getClientRects().length && getComputedStyle(e).visibility === 'visible' && !pinned(e));
   const out = [];
   for (let i = 1; i < els.length; i++) {
     const a = els[i - 1].getBoundingClientRect(), b = els[i].getBoundingClientRect();

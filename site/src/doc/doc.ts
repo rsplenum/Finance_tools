@@ -74,3 +74,7 @@ export function docText(d: Doc): string {
   }
   return out.filter(Boolean).join('\n');
 }
+
+/** Beside the download buttons when the figures are complete and only the document's own facts are missing: not
+ * "Provisional", which says the figures may change (CMA review finding 14, UX5). */
+export const forDocument = (n: number) => `Figures complete; for the document, ${n} still needed`;

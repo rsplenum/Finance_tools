@@ -90,27 +90,36 @@ export function CmaCalculator() {
   </div>;
 }
 
-/** The figures of one form, heads down and years across; it scrolls sideways inside itself on a phone. */
+/** Each column of a form spans its heads and the years' line (11 + 1 and 14 + 1), so the rows line up across the years. */
+const SPAN = { II: 'sm:row-span-12', III: 'sm:row-span-15' } as const;
+
+/** The figures of one form. From 640 px heads down and years across; below, a card a year, each cell named by its row
+ * (review finding 13; docs/DESIGN.md, Table). One set of fields serves both, a year at a time down its column, so Tab
+ * follows the eye at every width (F19); the cells keep `px-2` and `min-w-28`, so a typed figure is never cut (finding 1). */
 function Grid({ form, title, s, update, was }: { form: 'II' | 'III'; title: string; s: CmaState; update: Update; was: (field: string) => string | undefined }) {
-  const cols = columnsOf(s.startYear);
+  const cols = columnsOf(s.startYear), heads = HEADS.filter((h) => h.form === form);
+  const hint = (h: (typeof heads)[number]) => 'hint' in h && h.hint ? <span class={`block text-xs ${MUTED}`}>{h.hint}</span> : null;
   return <Section id={`form-${form}`} title={title}>
-    <div class="mt-3 overflow-x-auto">
-      <table data-testid={`cma-input-${form}`} class="w-full border-collapse text-sm">
-        <thead><tr class="border-b border-line">
-          <th scope="col" class="py-2 pr-3 text-left font-medium text-ink-muted">Rupees</th>
-          {cols.map((c) => <th key={c.id} scope="col" class="px-1 py-2 text-right font-medium whitespace-nowrap text-ink-muted">{c.fy}<span class={`block text-xs font-normal ${MUTED}`}>{KIND[c.kind]}</span></th>)}
-        </tr></thead>
-        <tbody>
-          {HEADS.filter((h) => h.form === form).map((h) => <tr key={h.id} class="border-b border-line">
-            <th scope="row" class="min-w-44 py-1.5 pr-3 text-left font-normal text-ink">{h.label}
-              {'hint' in h && h.hint && <span class={`block text-xs ${MUTED}`}>{h.hint}</span>}</th>
-            {cols.map((c) => { const v = s.figures[c.id][h.id]; return <td key={c.id} class="px-1 py-1">
-              <CellInput id={`fld-cma-${c.id}-${h.id}`} name={`${h.label}, ${c.fy}`} value={v} decimal tidy={tidyAmount} invalid={bad(v)} changed={was(`fld-cma-${c.id}-${h.id}`)}
+    <div class="mt-3 sm:overflow-x-auto">
+      <div data-testid={`cma-input-${form}`} class="space-y-3 text-sm sm:grid sm:grid-flow-col sm:gap-x-2 sm:space-y-0">
+        <div class={`max-sm:hidden sm:grid sm:grid-rows-subgrid ${SPAN[form]} sm:min-w-44`}>
+          <p class="flex items-end border-b border-line py-2 pr-3 font-medium text-ink-muted">Rupees</p>
+          {heads.map((h) => <p key={h.id} class="flex flex-col justify-center border-b border-line py-1.5 pr-3 text-ink">{h.label}{hint(h)}</p>)}
+        </div>
+        {cols.map((c) => <div key={c.id} role="group" aria-label={`${c.fy}, ${KIND[c.kind]}`} data-testid={`cma-input-${form}-${c.id}`}
+          class={`rounded-card bg-surface p-3 sm:grid sm:grid-rows-subgrid ${SPAN[form]} sm:rounded-none sm:bg-transparent sm:p-0`}>
+          <p class="font-medium text-ink sm:flex sm:flex-col sm:items-end sm:justify-end sm:border-b sm:border-line sm:py-2 sm:whitespace-nowrap sm:text-ink-muted">{c.fy}
+            <span class={`ml-2 text-xs font-normal ${MUTED} sm:ml-0`}>{KIND[c.kind]}</span></p>
+          {heads.map((h) => { const id = `fld-cma-${c.id}-${h.id}`, v = s.figures[c.id][h.id]; return <div key={h.id}
+            class="mt-2 flex items-center justify-between gap-3 sm:mt-0 sm:border-b sm:border-line sm:py-1">
+            <label for={id} class="text-ink sm:hidden">{h.label}{hint(h)}</label>
+            <div class="w-36 shrink-0 sm:w-full">
+              <CellInput id={id} name={`${h.label}, ${c.fy}`} value={v} decimal tidy={tidyAmount} invalid={bad(v)} changed={was(id)}
                 onCommit={(t) => update((x) => ({ ...x, figures: { ...x.figures, [c.id]: { ...x.figures[c.id], [h.id]: t } } }))} />
-            </td>; })}
-          </tr>)}
-        </tbody>
-      </table>
+            </div>
+          </div>; })}
+        </div>)}
+      </div>
     </div>
   </Section>;
 }

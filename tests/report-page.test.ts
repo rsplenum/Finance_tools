@@ -108,7 +108,7 @@ describe('the project report to download', () => {
   });
   it('provisional while the business\'s address is missing, and said on every page', async () => {
     const s = { ...R, doc: { ...R.doc, address: '' } }, d = reportDoc(s, preview(s), TODAY)!;
-    expect(docStatus(s, preview(s))).toBe('Provisional: 1 still needed');
+    expect(docStatus(s, preview(s))).toBe('Figures complete; for the document, 1 still needed');
     for (const page of await pdfPages(pdfOf(d, MADE))) expect(page.split('\n')[0]).toBe('Project report · Asha Packaging Provisional');
   });
 });
@@ -165,7 +165,7 @@ describe('the lender\'s levels and make it viable, in words', () => {
   });
   it('as typed, it meets and says how far sales can fall', () => {
     expect(preview(R).misses).toBeUndefined();
-    expect(viableOf(R)?.lines.map((l) => l.text)).toEqual(['Sales can fall 31.5%, to Rs. 82,20,000 in 2026-27 (from Rs. 1,20,00,000), and every ratio still meets its level.']);
+    expect(viableOf(R)?.lines.map((l) => l.text)).toEqual(['To Rs. 82,20,000 in 2026-27 (from Rs. 1,20,00,000), and every ratio still meets its level.']);
   });
   it('the collateral typed: its values in the report, the security cover read, and the collateral it needs', () => {
     const s = { ...R, wcLimit: '20 L', collateral: '3 L' }, p = preview(s), v = viableOf(s);

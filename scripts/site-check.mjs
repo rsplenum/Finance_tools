@@ -449,7 +449,7 @@ async function layout(page, v, step) {
   await layout(page, v, 'the quick path, 390 px');
 
   // The statement to download, at 390 px. Without the borrower's name and the lender it is provisional, and says so.
-  await expectText(page, v, 'doc-status', 'Provisional: 2 still needed', 'the download before its facts');
+  await expectText(page, v, 'doc-status', 'Figures complete; for the document, 2 still needed', 'the download before its facts');
   const own = await page.getByTestId('doc-needs').locator('li').allTextContents();
   if (own.join('|') !== "The borrower's name|The lender") v(`the download asks for ${JSON.stringify(own)}`);
   const save = async (id) => {
@@ -715,7 +715,7 @@ for (const scheme of ['light', 'dark']) {
   await expectText(page, v, 'pl-rates', /^A planning estimate: rates as reported on \d\d-\d\d-\d{4} for Pune; \d+ of \d+ lines checked against their pages$/, 'the rates as reported, in one line by the total');
 
   // The downloads, at the package as answered.
-  await expectText(page, v, 'pl-doc-status', 'Provisional: 2 still needed', 'the planning estimate before its facts');
+  await expectText(page, v, 'pl-doc-status', 'Figures complete; for the document, 2 still needed', 'the planning estimate before its facts');
   await leave(page, '#fld-pl-owner', 'Asha Rao');
   await leave(page, '#fld-pl-property', 'Flat 4, Example Towers, Pune');
   await expectText(page, v, 'pl-doc-status', 'Complete', 'the planning estimate with its facts');
@@ -1018,7 +1018,7 @@ for (const scheme of ['light', 'dark']) {
   for (const [id, want] of [['est-works', '2,81,750'], ['est-gst', '50,715'], ['est-total', '3,32,465'], ['est-per-sqft', 'Rs. 277'], ['item-2-amount', 'Rs. 2,66,000']])
     await expectText(page, v, id, want, 'the estimate');
   await layout(page, v, 'the estimate filled, 390 px');
-  await expectText(page, v, 'est-doc-status', 'Provisional: 2 still needed', 'the estimate before its facts');
+  await expectText(page, v, 'est-doc-status', 'Figures complete; for the document, 2 still needed', 'the estimate before its facts');
   await leave(page, '#fld-est-borrower', 'Asha Traders');
   await leave(page, '#fld-est-property', 'Plot 12, Example Nagar, Pune');
   await expectText(page, v, 'est-doc-status', 'Complete', 'the estimate with its facts');
@@ -1076,10 +1076,12 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
   // The lender's levels and Make it viable (D-UX-50 to D-UX-52): case R meets every level that can be read, so the button
   // asks how far sales can fall (tests/viable.test.ts by hand); the security cover waits on the collateral.
   if (await page.getByTestId('rep-misses').count()) v('case R is said to miss a lender\'s level');
-  await expectText(page, v, 'rep-check-dscrLowest', /Meets: 2\.51 in 2026-27 · target 1\.25 or more/, 'the lowest DSCR against its level');
+  await expectText(page, v, 'rep-check-dscrLowest', /^Lowest DSCR ?2\.51 ?in 2026-27 ?Meets · target 1\.25 or more$/, 'the lowest DSCR against its level, on its key figure');
+  if (await page.getByTestId('rep-checks').getByText('DSCR in the lowest year').count()) v('the lowest DSCR is shown twice: on its key figure and as a bar (review finding 9)');
   await expectText(page, v, 'rep-check-securityCover', /Type the collateral’s value/, 'the security cover before the collateral');
   await page.getByTestId('rep-viable').click();
-  await expectText(page, v, 'rep-text-sales', /^Sales can fall 31\.5%, to Rs\. 82,20,000 in 2026-27/, 'how far sales can fall');
+  await expectText(page, v, 'rep-text-sales', /^To Rs\. 82,20,000 in 2026-27/, 'how far sales can fall');
+  await expectText(page, v, 'rep-move-sales', '31.5%', 'how far sales can fall, its figure');
   // The plan (MV3, D-UX-52) on case R at 70 lakh (tests/plan.test.ts by hand): without the promoters' most, sales alone,
   // 17.3% higher; with 12 lakh, the limit, the term loan, then sales 14.3% higher. A slider changes no figure above;
   // "Use this plan" writes the plan's, marked, and Undo puts them back.
@@ -1094,7 +1096,7 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
   await page.keyboard.press('ArrowLeft');
   await expectText(page, v, 'rep-move-sales', '+14.2%', 'the sales slider a step back');
   await expectText(page, v, 'rep-plan-line', 'With these changes: Misses 1: DSCR in the lowest year', 'the verdict at the sliders');
-  await expectText(page, v, 'rep-check-dscrLowest', /^DSCR in the lowest year ?Misses: /, 'the bars above as typed');
+  await expectText(page, v, 'rep-check-dscrLowest', /^Lowest DSCR.*Misses · target/, 'the key figures above as typed');
   if (await page.inputValue('#fld-sales') !== '70,00,000') v('a slider changed a typed figure');
   if (!(await page.getByTestId('rep-plan-rest').count())) v('the plan: no "Work out the rest" after a slider moved');
   await page.getByTestId('rep-plan-back').click();
@@ -1118,7 +1120,7 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
   await leave(page, '#fld-collateral', '');
   await leave(page, '#fld-wcLimit', '5 L');
   await layout(page, v, 'the report filled, 390 px');
-  await expectText(page, v, 'rep-doc-status', 'Provisional: 3 still needed', 'the report before its facts');
+  await expectText(page, v, 'rep-doc-status', 'Figures complete; for the document, 3 still needed', 'the report before its facts');
   await leave(page, '#fld-rep-name', 'Asha Packaging');
   await leave(page, '#fld-rep-activity', 'Manufacture of corrugated boxes');
   await leave(page, '#fld-rep-address', 'Plot 4, Example MIDC, Pune');
@@ -1208,7 +1210,7 @@ const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await
   await expectText(page, v, 'cma-move-sales', '8.4%', 'how far case K\'s sales can fall');
   await expectText(page, v, 'cma-text-sales', /to Rs\. 4,76,32,000 \(from Rs\. 5,20,00,000\)/, 'case K\'s sales at the edge');
   await layout(page, v, 'the CMA example, 390 px');
-  await expectText(page, v, 'cma-doc-status', 'Provisional: 1 still needed', 'the CMA document before its name');
+  await expectText(page, v, 'cma-doc-status', 'Figures complete; for the document, 1 still needed', 'the CMA document before its name');
   await leave(page, '#fld-cma-name', 'K Steel Furniture Pvt Ltd');
   await expectText(page, v, 'cma-doc-status', 'Complete', 'the CMA document');
   const save = async (id) => {

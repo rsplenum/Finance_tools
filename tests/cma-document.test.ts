@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Doc, Row } from '../site/src/doc/doc';
 import { xlsxOf } from '../site/src/doc/xlsx';
-import { cmaDoc } from '../site/src/cma/document';
+import { cmaDoc, docStatus } from '../site/src/cma/document';
 import { emptyState, exampleState, preview } from '../site/src/cma/model';
 
 /*
@@ -22,6 +22,11 @@ function evaluate(d: Doc, formula: string, col: number, here: Row[]): number {
 describe('CMA document, case K', () => {
   const s = { ...exampleState(emptyState(2026)), doc: { name: 'K Steel Furniture Pvt Ltd', preparedBy: '' } };
   const d = cmaDoc(s, preview(s), '2026-10-11') as Doc;
+  it('beside the download: complete with the name; without it, the figures complete and the name still needed (review finding 14)', () => {
+    expect(docStatus(s, preview(s))).toBe('Complete');
+    const t = { ...s, doc: { ...s.doc, name: '' } };
+    expect(docStatus(t, preview(t))).toBe('Figures complete; for the document, 1 still needed');
+  });
   it('has the five parts', () => expect(d.parts.map((p) => p.name)).toEqual(['Summary', 'Forms II and III', 'Forms IV to VI', 'Ratios', 'Check']));
   it('redoes each checked figure by its formula, and every difference is 0', () => {
     const check = rowsOf(d, 'Check');

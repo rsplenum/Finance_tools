@@ -5,6 +5,7 @@
  * them. Built from the page's state and preview only: the tables are the page's (model.ts), every figure the engine's.
  */
 import type { Block, Cell, Doc, Table } from '../doc/doc';
+import { forDocument } from '../doc/doc';
 import { printable } from '../doc/pdf';
 import { SITE_NAME } from '../site';
 import { ASSUMPTIONS, statusText, type CmaFacts, type CmaPreview, type CmaState, type ViewTable } from './model';
@@ -17,7 +18,10 @@ export function docNeeds(f: CmaFacts): string[] {
   return needs;
 }
 export const allNeeds = (s: CmaState, p: CmaPreview) => [...p.needs, ...docNeeds(s.doc)];
-export const docStatus = (s: CmaState, p: CmaPreview) => statusText(p, docNeeds(s.doc).length);
+export const docStatus = (s: CmaState, p: CmaPreview) => {
+  const own = docNeeds(s.doc).length;
+  return own && statusText(p) === 'Complete' ? forDocument(own) : statusText(p, own);
+};
 export function fileName(s: CmaState, p: CmaPreview, ext: string): string {
   const name = s.doc.name.replace(/[\\/:*?"<>|\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60).trim();
   return `CMA data${name ? ` - ${name}` : ''}${allNeeds(s, p).length ? ' (provisional)' : ''}.${ext}`;

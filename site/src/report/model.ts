@@ -104,7 +104,8 @@ const head = (label: string): ViewRow => ({ label, values: [], kind: 'head' });
 const ratios = (ys: ReportYear[], label: string, f: (y: ReportYear) => number | undefined, show = ratio): ViewRow =>
   ({ label, values: ys.map((y) => show(f(y))), n: ys.map(f), fig: 'ratio' });
 
-export interface ReportView { tables: ViewTable[]; key: { label: string; value: string; note?: string }[]; years: string[] }
+/** `key`: the answer's figures; `check`, the lender's ratio (CheckRow's id) a figure is read against, said beside it on the page. */
+export interface ReportView { tables: ViewTable[]; key: { label: string; value: string; note?: string; check?: string }[]; years: string[] }
 
 export function viewOf(r: Report): ReportView {
   const ys = r.years, years = ys.map((y) => y.fy), any = (f: (y: ReportYear) => number) => ys.some((y) => Math.abs(f(y)) > 0.005);
@@ -223,8 +224,8 @@ export function viewOf(r: Report): ReportView {
     key: [
       { label: 'Cost of the project', value: `Rs. ${rupees(r.projectCost)}` },
       ...(sc ? [{ label: 'PMEGP margin money', value: `Rs. ${rupees(sc.subsidy)}`, note: `${sc.ratePct}% of Rs. ${rupees(sc.base)}, set off after ${PMEGP.lockInYears} years` }] : []),
-      ...(r.average !== undefined ? [{ label: 'Average DSCR', value: ratio(r.average), note: 'total A ÷ total B' }] : []),
-      ...(r.lowest ? [{ label: 'Lowest DSCR', value: ratio(r.lowest.dscr), note: `in ${r.lowest.fy}` }] : []),
+      ...(r.average !== undefined ? [{ label: 'Average DSCR', value: ratio(r.average), note: 'total A ÷ total B', check: 'dscrAverage' }] : []),
+      ...(r.lowest ? [{ label: 'Lowest DSCR', value: ratio(r.lowest.dscr), note: `in ${r.lowest.fy}`, check: 'dscrLowest' }] : []),
     ],
   };
 }
@@ -286,7 +287,8 @@ export function viableOf(s: ReportState): ViableView | undefined {
   if (sl && v.meets) {
     push({ id: 'sales', head: 'Sales can fall', ...none, ...(sl.tenths < 0 ? {
       move: `${(-sl.tenths / 10).toFixed(1)}%`, bars: { now: sl.now, to: sl.needed, nowText: rs(sl.now), toText: `Rs. ${upRupees(sl.needed)}` },
-      text: `Sales can fall ${(-sl.tenths / 10).toFixed(1)}%, to Rs. ${upRupees(sl.needed)} in ${sl.fy} (from Rs. ${rupees(sl.now)}), and every ratio still meets its level.`,
+      // The fall is the card's figure (`move`), so the words do not repeat it (review finding 10).
+      text: `To Rs. ${upRupees(sl.needed)} in ${sl.fy} (from Rs. ${rupees(sl.now)}), and every ratio still meets its level.`,
     } : { text: 'Sales cannot fall at all before a ratio misses its level.' }) });
   } else if (sl) {
     const u = sl.use, distinct = u ? u.needed.filter((x, k) => k === 0 || Math.abs(x - u.needed[k - 1]) > 1e-9) : [], top = u ? Math.max(...u.needed) : 0;

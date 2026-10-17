@@ -104,7 +104,7 @@ function Viable({ s, misses, update, use }: { s: CmaState; misses: boolean; upda
       </div>}
       {cards('borrower', 'Your changes')}
       {cards('lender', 'The lender’s, if it agrees')}
-      <p data-testid="cma-plan-line" aria-live="polite" class={`sticky bottom-0 mt-2 border-t border-line bg-canvas py-2 text-sm font-medium ${tone(b.works)}`}>With these changes: {b.line}</p>
+      <p data-testid="cma-plan-line" aria-live="polite" class={`sticky bottom-12 mt-2 border-t border-line bg-canvas py-2 text-sm font-medium ${tone(b.works)}`}>With these changes: {b.line}</p>
       <p class={HINT}>{v.foot}</p>
     </div>}
   </>;
