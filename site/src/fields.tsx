@@ -10,9 +10,10 @@ const BORDER = 'border-edge', BAD = 'border-bad';
 const CHANGED = 'border-focus ring-2 ring-focus/40';
 export const LABEL = 'block font-medium text-ink';
 export const HINT = 'mt-1 text-sm text-ink-muted';
-export const BUTTON = 'rounded-control border border-accent bg-field px-3 py-1.5 text-sm font-medium text-link hover:bg-surface';
+// In the new look (UX3) both are 44 px pills (F4): the main action in ink, the rest soft; never the accent's fill (F5).
+export const BUTTON = 'rounded-control border border-accent bg-field px-3 py-1.5 text-sm font-medium text-link hover:bg-surface new:min-h-11 new:rounded-full new:border-0 new:bg-ink/6 new:px-4 new:text-ink new:hover:bg-ink/12';
 /** The main action: the one accent fill on a screen, 44 px tall on a phone. */
-export const FILLED = 'min-h-11 rounded-control border border-accent bg-accent px-3 py-1.5 text-sm font-medium text-on-accent hover:bg-accent-hover sm:min-h-0';
+export const FILLED = 'min-h-11 rounded-control border border-accent bg-accent px-3 py-1.5 text-sm font-medium text-on-accent hover:bg-accent-hover sm:min-h-0 new:rounded-full new:border-0 new:bg-ink new:px-5 new:text-canvas new:hover:bg-ink/85 new:sm:min-h-11';
 
 /**
  * Text kept in a local draft while typing (a re-render from another field must not wipe it, lessons §4) and handed on
@@ -106,7 +107,7 @@ export function Choice<T extends string>(p: { name: string; legend: string; opti
     <legend class={LABEL}>{p.legend}</legend>
     <div class={`mt-2 grid gap-2 ${p.columns ? 'sm:grid-cols-2' : ''}`}>
       {p.options.map((o) => <label key={o.value} for={`${p.name}-${o.value}`}
-        class="flex cursor-pointer items-start gap-3 rounded-card border border-edge bg-field p-3 has-checked:border-accent has-checked:bg-teal-50 dark:has-checked:bg-teal-950">
+        class="flex cursor-pointer items-start gap-3 rounded-card border border-edge bg-field p-3 has-checked:border-accent has-checked:bg-accent/10 new:border-0 new:bg-surface new:has-checked:outline-2 new:has-checked:outline-accent">
         <input type="radio" id={`${p.name}-${o.value}`} name={p.name} value={o.value} checked={p.value === o.value}
           onChange={() => p.onChange(o.value)} class="mt-1 size-4 shrink-0 accent-accent" />
         <span class="min-w-0">
@@ -125,14 +126,16 @@ export function SourceNote(p: { what: string; children: ComponentChildren; /** T
     <summary class="inline-flex min-h-6 cursor-pointer items-center gap-1 text-link underline-offset-4 hover:underline">
       <span aria-hidden="true">ⓘ</span> {p.what}
     </summary>
-    {due && <span data-testid="review-due" class="ml-2 text-amber-800 dark:text-amber-300">{due}</span>}
+    {due && <span data-testid="review-due" class="ml-2 text-warn">{due}</span>}
     <p class="mt-1">{p.children}</p>
   </details>;
 }
 
 export function Section(p: { id: string; title: string; children: ComponentChildren }) {
-  return <section id={p.id} aria-labelledby={`${p.id}-h`} class="mt-10 border-t border-slate-200 pt-6 dark:border-slate-800">
-    <h2 id={`${p.id}-h`} class="text-lg font-semibold text-slate-900 dark:text-slate-100">{p.title}</h2>
+  // In the new look a section parts on the ledger rule and its heading takes the section size (F2).
+  return <section id={p.id} aria-labelledby={`${p.id}-h`} class="mt-10 border-t border-line pt-6 new:mt-14 new:border-0 new:pt-0">
+    <div data-ledger aria-hidden="true" class="hidden new:block new:mb-8" />
+    <h2 id={`${p.id}-h`} class="text-lg font-semibold text-ink new:text-section new:font-medium">{p.title}</h2>
     {p.children}
   </section>;
 }

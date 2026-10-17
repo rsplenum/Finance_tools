@@ -32,27 +32,27 @@
     },
     "/cma/": {
       "before": 99,
-      "shown": 912,
-      "all": 1669,
-      "plan": 1763,
+      "shown": 917,
+      "all": 1674,
+      "plan": 1768,
       "long": 6,
       "abbr": 5,
       "questions": 130,
-      "controls": 142,
-      "answerAt": 3.7,
-      "gap": 158,
+      "controls": 144,
+      "answerAt": 4.1,
+      "gap": 0,
       "styles": 7,
-      "colours": 2,
-      "outOfSight": 73
+      "colours": 3,
+      "outOfSight": 82
     },
     "/dscr/": {
       "before": 38,
-      "shown": 1203,
-      "all": 3557,
-      "plan": 3944,
+      "shown": 1036,
+      "all": 3390,
+      "plan": 3777,
       "long": 0,
       "abbr": 5,
-      "questions": 11,
+      "questions": 8,
       "controls": 39,
       "answerAt": 2,
       "gap": 0,
@@ -87,7 +87,7 @@
       "answerAt": 4.8,
       "gap": 41,
       "styles": 8,
-      "colours": 2,
+      "colours": 3,
       "outOfSight": 15
     }
   },
@@ -243,6 +243,70 @@
       "to": 17,
       "why": "D-UX-79",
       "date": "2026-10-14"
+    },
+    {
+      "page": "/cma/",
+      "count": "shown",
+      "from": 912,
+      "to": 917,
+      "why": "D-UX-84",
+      "date": "2026-10-15"
+    },
+    {
+      "page": "/cma/",
+      "count": "all",
+      "from": 1669,
+      "to": 1674,
+      "why": "D-UX-84",
+      "date": "2026-10-15"
+    },
+    {
+      "page": "/cma/",
+      "count": "plan",
+      "from": 1763,
+      "to": 1768,
+      "why": "D-UX-84",
+      "date": "2026-10-15"
+    },
+    {
+      "page": "/cma/",
+      "count": "controls",
+      "from": 142,
+      "to": 144,
+      "why": "D-UX-84",
+      "date": "2026-10-15"
+    },
+    {
+      "page": "/cma/",
+      "count": "answerAt",
+      "from": 3.7,
+      "to": 4.1,
+      "why": "D-UX-84",
+      "date": "2026-10-15"
+    },
+    {
+      "page": "/cma/",
+      "count": "outOfSight",
+      "from": 73,
+      "to": 82,
+      "why": "D-UX-84",
+      "date": "2026-10-15"
+    },
+    {
+      "page": "/cma/",
+      "count": "colours",
+      "from": 2,
+      "to": 3,
+      "why": "D-UX-84",
+      "date": "2026-10-15"
+    },
+    {
+      "page": "/project-report/",
+      "count": "colours",
+      "from": 2,
+      "to": 3,
+      "why": "D-UX-84",
+      "date": "2026-10-15"
     }
   ],
   "fontProbe": 320.2

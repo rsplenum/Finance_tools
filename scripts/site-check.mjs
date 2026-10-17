@@ -279,7 +279,7 @@ async function layout(page, v, step) {
   await expectText(page, v, 'dscr-largest', 'The largest loan on these terms is Rs. 11,59,646, limited by the lowest year, 2027-28.', 'case A with the examples');
   await expectText(page, v, 'use-amount', 'Use Rs. 11,59,646', 'case A with the examples');
   await expectText(page, v, 'dscr-fewest', 'Even 14 instalments, the most the projections cover (to 2029-30), miss the target: the average is below the target. Add later years to try a longer repayment.', 'case A with the examples');
-  await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · below the target · complete, on 7 assumptions ↓', 'case A with the examples');
+  await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · below the target · complete, on 7 assumptions', 'case A with the examples');
 
   // Tables become cards on phones and stay tables on wider screens, without a sideways scroll either way.
   await layout(page, v, 'case A filled, a schedule year open, 390 px');
@@ -1368,6 +1368,6 @@ server.close();
 console.log(`site check: ${pages.length} pages at 390 px, light and dark: ${violations.length} violations`);
 console.log(`design checks: ${design.lines} findings measured (each held in scripts/design-baseline.json), ${design.tokens.rawColour} raw colour classes, ${design.tokens.arbitraryValue} arbitrary values${design.lower.length ? `; lower the baseline: ${design.lower.join(', ')}` : ''}${design.fixed ? `; ${design.fixed} known findings fixed, take them out of the baseline` : ''}`);
 console.log(`load measure: ${load.pages} pages against scripts/load-baseline.json, ${load.rose} counts rose, ${load.fell} fell${load.fonts ? '' : '; other fonts here than the baseline\'s, so the answer\'s place and the out-of-sight count are not compared'} (docs/LOAD-MEASURE.md)`);
-console.log(`FinSight's rules: ${forbidden.pages} page in the new look (docs/DESIGN.md), F1 to F19; home weighs ${forbidden.weight} KB as it loads (cap ${WEIGHT_CAP} KB)`);
+console.log(`FinSight's rules: ${forbidden.pages} page${forbidden.pages === 1 ? '' : 's'} in the new look (docs/DESIGN.md), F1 to F19; home weighs ${forbidden.weight} KB as it loads (cap ${WEIGHT_CAP} KB)`);
 for (const x of violations) console.log(`  - ${x}`);
 process.exit(violations.length ? 1 : 0);

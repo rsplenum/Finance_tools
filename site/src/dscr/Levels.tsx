@@ -15,14 +15,14 @@ import {
 } from './levers';
 
 type Update = (f: (s: State) => State) => void;
-const tone = (ok: boolean) => (ok ? 'text-teal-800 dark:text-teal-300' : 'text-red-700 dark:text-red-300');
+const tone = (ok: boolean) => (ok ? 'text-link' : 'text-bad');
 
 export function Levels({ s, lender, update, use }: { s: State; lender?: LenderView; update: Update; use: (l: DscrLevers) => void }) {
   const lv = useMemo(() => dscrLevelsOf(s, lender), [s, lender]);
   if (!lv?.misses) return null;
   return <div data-testid="dscr-levels" class="mt-4">
-    <p class="font-medium text-slate-900 dark:text-slate-100">Why it does not work yet</p>
-    <ul class="mt-1 divide-y divide-slate-100 dark:divide-slate-800">{lv.checks.map((c) => <Bar key={c.id} c={c} pre="dscr" />)}</ul>
+    <h3 class="font-medium text-ink">Why it does not work yet</h3>
+    <ul class="mt-1 divide-y divide-line">{lv.checks.map((c) => <Bar key={c.id} c={c} pre="dscr" />)}</ul>
     <Viable s={s} update={update} use={use} />
   </div>;
 }
@@ -46,14 +46,14 @@ function Viable({ s, update, use }: { s: State; update: Update; use: (l: DscrLev
   const group = (by: 'borrower' | 'lender', title: string) => {
     const ls = v?.lines.filter((l) => l.by === by) ?? [];
     return ls.length > 0 && <>
-      <p class="mt-3 text-sm font-medium text-slate-800 dark:text-slate-200">{title}</p>
+      <h4 class="mt-3 text-sm font-medium text-ink">{title}</h4>
       <ul class="mt-1 space-y-2">{ls.map((l) => <Lever key={l.id} l={l} pre="dscr" />)}</ul>
     </>;
   };
   const cards = (by: 'borrower' | 'lender', title: string) => {
     const cs = plan && b ? plan.cards.filter((c) => c.by === by) : [];
     return cs.length > 0 && b && <>
-      <p class="mt-3 text-sm font-medium text-slate-800 dark:text-slate-200">{title}</p>
+      <h4 class="mt-3 text-sm font-medium text-ink">{title}</h4>
       <ul class="mt-1 space-y-2">{cs.map((c) => <PlanLever key={c.id} id={c.id} head={c.head} m={b.moves[c.id]} value={lv[c.id]} set={(n) => move(c.id, n)}
         pre="dscr" alone={v?.lines.find((l) => l.id === c.id)} />)}</ul>
     </>;
@@ -68,23 +68,23 @@ function Viable({ s, update, use }: { s: State; update: Update; use: (l: DscrLev
       requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid="dscr-plan"], [data-testid="dscr-viable-box"]')?.focus());
     }}>Make it viable</button>}
     {v && !plan && <div data-testid="dscr-viable-box" tabIndex={-1} class="mt-2">
-      <p class="font-medium text-slate-900 dark:text-slate-100">{v.title}</p>
+      <h3 class="font-medium text-ink">{v.title}</h3>
       {group('borrower', 'Your changes')}
       {group('lender', 'The lender’s, if it agrees')}
       <p class={`mt-2 ${HINT}`}>{v.foot}</p>
     </div>}
-    {v && plan && b && <div data-testid="dscr-plan" tabIndex={-1} class="mt-3 rounded-card border border-edge p-3">
-      <p class="font-medium text-slate-900 dark:text-slate-100">The plan: the levers together</p>
+    {v && plan && b && <div data-testid="dscr-plan" tabIndex={-1} class="mt-6 border-t-2 border-ink pt-4">
+      <h3 class="font-medium text-ink">The plan: the levers together</h3>
       <p class={HINT}>The engine’s plan: a smaller loan first, then a longer repayment, then the profit still needed. The sliders change none of the figures above until you use the plan, which writes the loan and the term, never the profit.</p>
       <TextField id="fld-dscr-ownMost" class="mt-3" label="The most you can bring in yourself, if known" hint="Without it, no more of your own money is assumed."
         inputMode="decimal" value={most} tidy={tidyAmount} placeholder="like 2 L" invalid={bad}
         said={bad ? 'Not understood. Type 2,00,000 or 2 L.' : undefined} onCommit={(ownMost) => update((x) => ({ ...x, ownMost }))} />
       {b.steps.length
-        ? <ol data-testid="dscr-plan-steps" class="mt-3 list-decimal space-y-0.5 pl-5 text-sm text-slate-800 dark:text-slate-200">{b.steps.map((t) => <li key={t}>{t}</li>)}</ol>
-        : <p data-testid="dscr-plan-steps" class="mt-3 text-sm text-slate-800 dark:text-slate-200">No lever moves: nothing within its limit helps.</p>}
-      {b.own && <p data-testid="dscr-plan-own" class={`mt-1 text-sm ${b.over ? 'font-medium text-red-700 dark:text-red-300' : 'text-slate-800 dark:text-slate-200'}`}>{b.own}</p>}
+        ? <ol data-testid="dscr-plan-steps" class="mt-3 list-decimal space-y-0.5 pl-5 text-sm text-ink">{b.steps.map((t) => <li key={t}>{t}</li>)}</ol>
+        : <p data-testid="dscr-plan-steps" class="mt-3 text-sm text-ink">No lever moves: nothing within its limit helps.</p>}
+      {b.own && <p data-testid="dscr-plan-own" class={`mt-1 text-sm ${b.over ? 'font-medium text-bad' : 'text-ink'}`}>{b.own}</p>}
       <p data-testid="dscr-plan-verdict" class={`mt-2 text-sm font-medium ${tone(b.works)}`}>{b.verdict}</p>
-      {b.still.length > 0 && <ul data-testid="dscr-plan-still" class="mt-0.5 list-disc space-y-0.5 pl-5 text-sm text-red-700 dark:text-red-300">{b.still.map((t) => <li key={t}>{t}</li>)}</ul>}
+      {b.still.length > 0 && <ul data-testid="dscr-plan-still" class="mt-0.5 list-disc space-y-0.5 pl-5 text-sm text-bad">{b.still.map((t) => <li key={t}>{t}</li>)}</ul>}
       <p data-testid="dscr-plan-limits" class={HINT}>{plan.limits}{plan.atLimit ? ` ${plan.atLimit}` : ''}</p>
       <div class="mt-3 flex flex-wrap gap-2">
         {usable && <button type="button" data-testid="dscr-plan-use" class={FILLED} onClick={() => use(lv)}>Use this plan</button>}
@@ -92,12 +92,12 @@ function Viable({ s, update, use }: { s: State; update: Update; use: (l: DscrLev
         {(touched.length > 0 || !sameDscrLevers(lv, plan.levers)) && <button type="button" data-testid="dscr-plan-back" class={BUTTON} onClick={() => replan([], DSCR_AS_TYPED)}>Back to the engine’s plan</button>}
       </div>
       {b.checks.length > 0 && <div data-testid="dscr-plan-checks" class="mt-3">
-        <p class="text-sm font-medium text-slate-900 dark:text-slate-100">With these changes</p>
-        <ul class="mt-1 divide-y divide-slate-100 dark:divide-slate-800">{b.checks.map((c) => <Bar key={c.id} c={c} pre="dscr-plan" />)}</ul>
+        <h4 class="text-sm font-medium text-ink">With these changes</h4>
+        <ul class="mt-1 divide-y divide-line">{b.checks.map((c) => <Bar key={c.id} c={c} pre="dscr-plan" />)}</ul>
       </div>}
       {cards('borrower', 'Your changes')}
       {cards('lender', 'The lender’s, if it agrees')}
-      <p data-testid="dscr-plan-line" aria-live="polite" class={`sticky bottom-10 mt-2 border-t border-slate-200 bg-white py-2 text-sm font-medium dark:border-slate-700 dark:bg-slate-900 ${tone(b.works)}`}>With these changes: {b.line}</p>
+      <p data-testid="dscr-plan-line" aria-live="polite" class={`sticky bottom-10 mt-2 border-t border-line bg-canvas py-2 text-sm font-medium ${tone(b.works)}`}>With these changes: {b.line}</p>
       <p class={HINT}>{v.foot}</p>
     </div>}
   </>;

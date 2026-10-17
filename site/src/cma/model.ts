@@ -179,7 +179,7 @@ export function viewOf(r: Cma, quasi: boolean): CmaView {
     key: [
       { label: `Limit by the turnover method, ${last.fy}`, value: `Rs. ${inr(r.limit)}`, note: `${TURNOVER.needPct}% of the turnover less the larger of the ${TURNOVER.marginPct}% margin and the net working capital` },
       { label: 'Limit now', value: `Rs. ${inr(r.existingLimit)}` },
-      { label: 'Current ratio', value: ratio(last.currentRatio), note: `in ${last.fy}` },
+      { label: `Current ratio, ${last.fy}`, value: ratio(last.currentRatio) },
     ],
     flags: r.flags.map((x) => x.text),
   };

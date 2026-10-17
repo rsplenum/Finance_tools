@@ -7,8 +7,8 @@
 import { readFile } from 'node:fs/promises';
 import { openAt } from './design-checks.mjs';
 
-/** The pages in the new look; UX3 and UX4 add the tool pages. */
-export const NEW_LOOK = ['/'];
+/** The pages in the new look: home, and from UX3 the DSCR and CMA pages; UX4 adds the estimate and the report. */
+export const NEW_LOOK = ['/', '/dscr/', '/cma/'];
 /** F13: our order, the borrower's path (docs/design-reference/finsight.md, rule 10). */
 export const ORDER = ['hero', 'story', 'tools', 'uses', 'figures', 'try', 'closing'];
 /**
@@ -111,11 +111,13 @@ const still = (page) => page.evaluate(() => ({
 
 /**
  * Tab against the eye (F19, AG3c): in the page's order, a control that comes next yet sits to the left in the same row,
- * or above in the same column, was moved by CSS `order` or a grid (WCAG 2.4.3). Runs in the page.
+ * or above in the same column, was moved by CSS `order` or a grid (WCAG 2.4.3). A control pinned to the screen (sticky or
+ * fixed, as the tool pages' answer bar at the foot) has no place in the flow to compare, so it is left out (UX3). Runs in the page.
  */
 export function tabAgainstEye() {
+  const pinned = (e) => { for (let x = e; x && x !== document.body; x = x.parentElement) if (/sticky|fixed/.test(getComputedStyle(x).position)) return true; return false; };
   const els = [...document.querySelectorAll('main a[href], main button, main input, main select, main textarea, main [tabindex]')]
-    .filter((e) => e.tabIndex >= 0 && !e.closest('[hidden], [inert]') && e.getClientRects().length && getComputedStyle(e).visibility === 'visible');
+    .filter((e) => e.tabIndex >= 0 && !e.closest('[hidden], [inert]') && e.getClientRects().length && getComputedStyle(e).visibility === 'visible' && !pinned(e));
   const out = [];
   for (let i = 1; i < els.length; i++) {
     const a = els[i - 1].getBoundingClientRect(), b = els[i].getBoundingClientRect();
@@ -146,13 +148,14 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
     const settled = await still(page);
     await page.waitForTimeout(1000);
     const later = await still(page);
-    weight = Math.round((await Promise.all(sizes)).reduce((a, b) => a + b, 0) / 1024);
+    const kb = Math.round((await Promise.all(sizes)).reduce((a, b) => a + b, 0) / 1024);
+    if (path === '/') weight = kb;
     if (first.typed.join('|') !== settled.typed.join('|')) v('F10 a heading\'s words or a counted figure are not in the page from the start');
     if (await page.locator('[data-typed]').count()) v('F10 a heading still types itself');
     if (settled.running.length) v(`F9 still moving 6 s after load: ${[...new Set(settled.running)].join(', ')}`);
     if (settled.fields.join() !== later.fields.join()) v('F9 a field of dashes still moves 6 s after load');
     for (const h of hosts) if (h !== BASE) v(`F14 a request to ${h}`);
-    if (path === '/' && weight > WEIGHT_CAP) v(`F15 the page weighs ${weight} KB as it loads (cap ${WEIGHT_CAP} KB)`);
+    if (path === '/' && kb > WEIGHT_CAP) v(`F15 the page weighs ${kb} KB as it loads (cap ${WEIGHT_CAP} KB)`);
     await ctx.close();
     // Under reduced motion nothing moves at all.
     const rm = await openAt(browser, BASE + path, { width: 'desktop', reducedMotion: 'reduce' });

@@ -2,6 +2,8 @@
 
 /* Tailwind's dark: variant keys on the `dark` class of <html>, set by theme.ts (and before first paint by THEME_BOOT). */
 @custom-variant dark (&:where(.dark, .dark *));
+/* A shared part styled for the new look only (UX3): the estimate and the report keep the old one until UX4. */
+@custom-variant new (&:where(body[data-look='new'] *));
 
 /*
  * The design tokens (docs/DESIGN.md, "Tokens"; D-UX-58). Each is a role, not a colour: `text-ink`, `bg-canvas`,
@@ -168,6 +170,10 @@ body[data-look='new'] {
   --spark-1: oklch(0.5 0.12 268);         /* the dashes: ink, red, marigold; drawn only, never text */
   --spark-2: var(--margin);
   --spark-3: var(--marigold);
+  --accent: var(--link);                  /* the tool pages' chosen option and sliders: ink, never a fill (F5) */
+  --accent-hover: oklch(0.38 0.15 268);
+  --on-accent: oklch(1 0 0);
+  --edge: oklch(0.55 0.045 268);          /* a field's edge, inked: 3:1 or more */
 }
 .dark body[data-look='new'] {
   --canvas: oklch(0.205 0.045 270);       /* the page turns ink; not black (principle 11) */
@@ -181,6 +187,20 @@ body[data-look='new'] {
   --paper: oklch(0.93 0.01 85);           /* paper, a little dimmed */
   --margin: oklch(0.66 0.19 27);
   --spark-1: oklch(0.56 0.09 268);       /* quieter on the dark page: the field sits behind the words */
+  --accent: var(--link);
+  --accent-hover: oklch(0.9 0.06 268);
+  --on-accent: oklch(0.205 0.045 270);
+  --edge: oklch(0.7 0.04 268);
+  --field: oklch(0.25 0.05 270);
+}
+/* A result lands as paper (UX3, D-UX-73): light in both themes, a little dimmed in dark, so inside it the tokens keep the
+   light page's values. Its shadow is the paper's own (F17). */
+body[data-look='new'] .paper { background-color: var(--paper); color: var(--on-paper); --ink: var(--on-paper); --ink-muted: var(--paper-muted); }
+.dark body[data-look='new'] .paper {
+  --surface: oklch(0.885 0.012 85); --line: oklch(0.8 0.02 268); --edge: oklch(0.55 0.045 268); --field: oklch(0.97 0.006 85);
+  --link: oklch(0.45 0.17 268); --focus: oklch(0.5 0.19 268); --accent: var(--link); --on-accent: oklch(1 0 0);
+  --good: var(--color-green-800); --warn: var(--color-amber-900); --bad: var(--color-red-700);
+  --good-tint: var(--color-green-100); --warn-tint: var(--color-amber-100); --bad-tint: var(--color-red-100);
 }
 [data-desk] { --focus: var(--marigold); }
 
@@ -197,6 +217,10 @@ body[data-look='new'] {
 
 /* The new look (AG1, AG2): the text in Figtree, headings and figures in Anek. */
 body[data-look='new'] { font-family: var(--font-display); }
+/* A field or button the browser scrolls to stops clear of the sticky top bar and of a tool page's answer bar at the foot
+   (WCAG 2.4.11; UX3). */
+html:has(body[data-look='new']) { scroll-padding-top: 5rem; }
+html:has([data-answer-echo]) { scroll-padding-bottom: 4rem; }
 body[data-look='new'] :is(h1, h2, h3, [data-wordmark]) { font-family: var(--font-heading); font-weight: 500; }
 /* The new look's bar is 116 px tall on a phone (two rows; 156 under 384 px, where the tools take two), 68 px from lg; the
    notice under it scrolls away (AG3c). */

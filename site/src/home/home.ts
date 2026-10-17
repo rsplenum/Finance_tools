@@ -14,8 +14,7 @@ export function start() {
   for (const c of document.querySelectorAll<HTMLCanvasElement>('canvas[data-gather]')) gather(c, motion);
   for (const p of document.querySelectorAll<HTMLElement>('[data-trailer][data-src]')) nearing(p);
   if (!motion) return;
-  settling();
-  header();
+  // Settling and the top bar are the new look's own, run on every page in it (site/src/look.ts).
   drawings();
   for (const p of document.querySelectorAll<HTMLElement>('[data-trailer]')) trailer(p);
   sound();
@@ -206,31 +205,6 @@ function gather(canvas: HTMLCanvasElement, motion: boolean) {
     });
   };
   play(canvas, motion, GATHER, layout, frame);
-}
-
-/** Blocks settle into place once in view; one that takes the focus first shows at once. */
-function settling() {
-  const io = new IntersectionObserver((es) => {
-    for (const e of es) if (e.isIntersecting) { e.target.classList.add('settled'); io.unobserve(e.target); }
-  }, { rootMargin: '0px 0px -8% 0px' });
-  document.querySelectorAll('[data-settle]').forEach((el) => io.observe(el));
-  document.addEventListener('focusin', (e) => {
-    const r = (e.target as Element).closest?.<HTMLElement>('[data-settle]:not(.settled)');
-    if (r) { r.style.transition = 'none'; r.classList.add('settled'); }
-  });
-}
-
-/** The top bar steps out of the way while reading down and comes back on the way up (or when it holds the focus). */
-function header() {
-  const bar = document.querySelector<HTMLElement>('[data-header]');
-  if (!bar) return;
-  let last = scrollY;
-  addEventListener('scroll', () => {
-    const y = scrollY;
-    if (y > last + 4 && y > 240) bar.dataset.away = '';
-    else if (y < last - 4) delete bar.dataset.away;
-    last = y;
-  }, { passive: true });
 }
 
 /**
