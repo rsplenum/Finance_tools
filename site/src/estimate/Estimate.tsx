@@ -5,7 +5,7 @@
  * three downloads. Figures: engine/estimate.ts only, via model.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
-import { BUTTON, Choice, HINT, Section, SelectField, TextField } from '../fields';
+import { BUTTON, Choice, FILLED, HINT, Section, SelectField, TextField } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { docNeeds, docStatus, estimateDoc, fileName } from './document';
@@ -16,7 +16,7 @@ import {
 import { sharedPlan } from './shared';
 
 type Update = (f: (s: EstimateState) => EstimateState) => void;
-const MUTED = 'text-slate-600 dark:text-slate-300';
+const MUTED = 'text-ink-muted';
 const bad = (t: string, read: (t: string) => unknown) => !!t.trim() && read(t) === undefined;
 
 export function EstimateCalculator() {
@@ -62,9 +62,9 @@ function Items({ s, update, p, q }: { s: EstimateState; update: Update; p: Estim
     <ol class="mt-4 space-y-4">
       {s.items.map((it, i) => {
         const head = heads.find((h) => h.id === it.head), n = i + 1;
-        return <li key={i} data-testid={`item-${n}`} class="rounded-lg border border-slate-300 p-4 dark:border-slate-700">
+        return <li key={i} data-testid={`item-${n}`} class="rounded-card bg-surface p-4">
           <div class="flex items-center justify-between gap-2">
-            <p class="font-medium text-slate-900 dark:text-slate-100">Item {n}{it.no && <span class={`font-normal ${MUTED}`}> · No. {it.no} on the bill</span>}</p>
+            <p class="font-medium text-ink">Item {n}{it.no && <span class={`font-normal ${MUTED}`}> · No. {it.no} on the bill</span>}</p>
             {s.items.length > 1 && <button type="button" data-testid={`remove-item-${n}`} class={BUTTON}
               onClick={() => update((x) => ({ ...x, items: x.items.filter((_, k) => k !== i) }))}>Remove</button>}
           </div>
@@ -78,10 +78,10 @@ function Items({ s, update, p, q }: { s: EstimateState; update: Update; p: Estim
             <SelectField id={`fld-item-${n}-unit`} label="Unit" value={it.unit} placeholder="Choose a unit" options={UNIT_CHOICES} onChange={(unit) => set(i, { unit })} />
             <TextField id={`fld-item-${n}-rate`} label={`Rate (Rs.${it.unit ? ` per ${it.unit}` : ''})`} inputMode="decimal" value={it.rate} tidy={tidyRate}
               invalid={bad(it.rate, rateOf)} said={bad(it.rate, rateOf) ? 'Not understood. Type 9,500 or 1.85 L.' : undefined} onCommit={(rate) => set(i, { rate })} />
-            <p class="self-end text-sm text-slate-700 dark:text-slate-300">Amount: <span data-testid={`item-${n}-amount`} class="font-medium tabular-nums">
+            <p class="self-end text-sm text-ink">Amount: <span data-testid={`item-${n}-amount`} class="font-medium tabular-nums">
               {p.amounts[i] ? `Rs. ${p.amounts[i]}` : '—'}</span></p>
           </div>
-          {q?.lines[i] && <p data-testid={`item-${n}-check`} class={`mt-3 text-sm ${q.lines[i].flagged ? 'font-medium text-amber-800 dark:text-amber-300' : MUTED}`}>{q.lines[i].text}</p>}
+          {q?.lines[i] && <p data-testid={`item-${n}-check`} class={`mt-3 text-sm ${q.lines[i].flagged ? 'font-medium text-warn' : MUTED}`}>{q.lines[i].text}</p>}
           {q && !it.from && (q.lines[i]?.where === 'not-matched' || it.pick) && <SelectField id={`fld-item-${n}-pick`} class="mt-2 max-w-sm" label="What it is in the library"
             value={it.pick ?? ''} placeholder="Choose one" options={FAMILY_CHOICES} onChange={(pick) => set(i, { pick: pick || undefined })} />}
         </li>;
@@ -108,21 +108,21 @@ function FromBill({ s, update }: { s: EstimateState; update: Update }) {
   return <div class="mb-6">
     <p class={HINT}>Asked contractors to quote on the bill of quantities above? Start from it: its lines filled in, for you to type one contractor’s rates and see each against the library.</p>
     <button type="button" data-testid="from-bill" class={`mt-2 ${BUTTON}`} onClick={go}>Start from the bill</button>
-    {said && <p data-testid="from-bill-said" class="mt-2 text-sm text-amber-800 dark:text-amber-300">{said}</p>}
+    {said && <p data-testid="from-bill-said" class="mt-2 text-sm text-warn">{said}</p>}
   </div>;
 }
 
 /** Each rate against the library's band at its line's level (E4b): the lines to check, those left out and those not matched; the rule and the GST line. */
 function Against({ q }: { q: QuoteView }) {
   const list = (id: string, title: string, xs: string[]) => xs.length > 0 && <div class="mt-3">
-    <p class="text-sm font-medium text-slate-900 dark:text-slate-100">{title}: {xs.length}</p>
-    <ul data-testid={id} class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{xs.map((x, k) => <li key={k}>{x}</li>)}</ul>
+    <p class="text-sm font-medium text-ink">{title}: {xs.length}</p>
+    <ul data-testid={id} class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink">{xs.map((x, k) => <li key={k}>{x}</li>)}</ul>
   </div>;
   return <Section id="against" title="Against the library">
-    <p data-testid="quote-gst" class="mt-2 text-sm text-slate-800 dark:text-slate-200">{QUOTE_GST}</p>
+    <p data-testid="quote-gst" class="mt-2 text-sm text-ink">{QUOTE_GST}</p>
     <p data-testid="quote-rule" class={`mt-2 text-sm ${MUTED}`}>{QUOTE_RULE} {QUOTE_WHY}</p>
-    {q.blocked && <p class="mt-2 text-sm text-red-700 dark:text-red-300">{q.blocked}</p>}
-    {!q.blocked && !q.flagged.length && !q.leftOut.length && !q.unmatched.length && <p data-testid="quote-clear" class="mt-3 text-sm text-slate-800 dark:text-slate-200">No rate to check, and nothing left out.</p>}
+    {q.blocked && <p class="mt-2 text-sm text-bad">{q.blocked}</p>}
+    {!q.blocked && !q.flagged.length && !q.leftOut.length && !q.unmatched.length && <p data-testid="quote-clear" class="mt-3 text-sm text-ink">No rate to check, and nothing left out.</p>}
     {list('quote-flagged', 'Rates to check', q.flagged)}
     {list('quote-left-out', 'Left out of the quotation (no rate)', q.leftOut)}
     {list('quote-unmatched', 'Not matched to the library', q.unmatched)}
@@ -133,30 +133,33 @@ function Against({ q }: { q: QuoteView }) {
 function Result({ p }: { p: EstimatePreview }) {
   const v = p.view;
   return <Section id="result" title="The estimate">
-    <p data-testid="est-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class={`mt-3 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.needs.length || p.blocked
-      ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200'}`}>{statusText(p)}</p>
-    {p.blocked && <p class="mt-2 text-sm text-red-700 dark:text-red-300">{p.blocked}</p>}
-    {p.needs.length > 0 && <ul data-testid="est-needs" class="mt-2 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>}
+    {/* The answer as paper, there at once (docs/DESIGN-SITE.md, tool pages). */}
+    <div class="paper shadow-paper mt-6 rounded-card p-4 sm:p-6">
+    <p data-testid="est-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class={`inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.needs.length || p.blocked
+      ? 'bg-warn-tint text-warn' : 'bg-good-tint text-good'}`}>{statusText(p)}</p>
+    {p.blocked && <p class="mt-2 text-sm text-bad">{p.blocked}</p>}
+    {p.needs.length > 0 && <ul data-testid="est-needs" class="mt-2 list-disc space-y-0.5 pl-5 text-sm text-ink">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>}
     {v && <>
       <table data-testid="est-abstract" class="mt-4 w-full border-collapse text-sm">
-        <thead><tr class="border-b border-slate-300 dark:border-slate-700">
-          <th scope="col" class="py-2 pr-3 text-left font-medium text-slate-700 dark:text-slate-200">Abstract of cost</th>
-          <th scope="col" class="py-2 text-right font-medium text-slate-700 dark:text-slate-200">Rupees</th>
+        <thead><tr class="border-b border-edge">
+          <th scope="col" class="py-2 pr-3 text-left font-medium text-ink-muted">Abstract of cost</th>
+          <th scope="col" class="py-2 text-right font-medium text-ink-muted">Rupees</th>
         </tr></thead>
         <tbody>
-          {v.heads.map((h) => <tr key={h.no} class="border-b border-slate-100 dark:border-slate-800">
-            <th scope="row" class="py-1.5 pr-3 text-left font-normal text-slate-800 dark:text-slate-200">{h.no}. {h.label}</th>
-            <td data-testid={`head-${h.no}`} class="py-1.5 text-right tabular-nums text-slate-800 dark:text-slate-200">{h.amount}</td>
+          {v.heads.map((h) => <tr key={h.no} class="border-b border-line">
+            <th scope="row" class="py-1.5 pr-3 text-left font-normal text-ink">{h.no}. {h.label}</th>
+            <td data-testid={`head-${h.no}`} class="py-1.5 text-right tabular-nums text-ink">{h.amount}</td>
           </tr>)}
-          {v.totals.map((t) => <tr key={t.id} class={t.id === 'works' || t.id === 'total' ? 'border-t border-slate-400 dark:border-slate-500' : ''}>
-            <th scope="row" class={`py-1.5 pr-3 text-left ${t.id === 'works' || t.id === 'total' ? 'font-semibold' : 'font-normal'} text-slate-900 dark:text-slate-100`}>{t.label}</th>
-            <td data-testid={`est-${t.id}`} class={`py-1.5 text-right tabular-nums ${t.id === 'works' || t.id === 'total' ? 'font-semibold' : ''} text-slate-900 dark:text-slate-100`}>{t.amount}</td>
+          {v.totals.map((t) => <tr key={t.id} class={t.id === 'works' || t.id === 'total' ? 'border-t border-ink' : ''}>
+            <th scope="row" class={`py-1.5 pr-3 text-left ${t.id === 'works' || t.id === 'total' ? 'font-semibold' : 'font-normal'} text-ink`}>{t.label}</th>
+            <td data-testid={`est-${t.id}`} class={`py-1.5 text-right tabular-nums ${t.id === 'works' || t.id === 'total' ? 'font-semibold' : ''} text-ink`}>{t.amount}</td>
           </tr>)}
         </tbody>
       </table>
-      {v.perSqft && <p class="mt-3 text-slate-900 dark:text-slate-100">Cost per sq ft of built-up area: <span data-testid="est-per-sqft" class="font-semibold tabular-nums">Rs. {v.perSqft}</span></p>}
+      {v.perSqft && <p class="mt-3 text-ink">Cost per sq ft of built-up area: <span data-testid="est-per-sqft" class="font-semibold tabular-nums">Rs. {v.perSqft}</span></p>}
       <p class={`mt-2 text-sm ${MUTED}`}>Each item's amount is on its card; the download lists them all.</p>
     </>}
+    </div>
   </Section>;
 }
 
@@ -182,10 +185,10 @@ function Download({ s, p, update }: { s: EstimateState; p: EstimatePreview; upda
     {ready
       ? <div class="mt-5">
         <p data-testid="est-doc-status" class={`inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${own.length
-          ? 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200' : 'bg-teal-100 text-teal-900 dark:bg-teal-950 dark:text-teal-200'}`}>{docStatus(s, p)}</p>
-        {own.length > 0 && <ul data-testid="est-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-slate-700 dark:text-slate-300">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
+          ? 'bg-warn-tint text-warn' : 'bg-good-tint text-good'}`}>{docStatus(s, p)}</p>
+        {own.length > 0 && <ul data-testid="est-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
         <div class="mt-3 flex flex-wrap gap-2">
-          <button type="button" data-testid="est-download-pdf" class={BUTTON} onClick={() => go('pdf')}>Download PDF</button>
+          <button type="button" data-testid="est-download-pdf" class={FILLED} onClick={() => go('pdf')}>Download PDF</button>
           <button type="button" data-testid="est-download-xlsx" class={BUTTON} onClick={() => go('xlsx')}>Download Excel</button>
           <button type="button" data-testid="est-download-docx" class={BUTTON} onClick={() => go('docx')}>Download Word</button>
         </div>
