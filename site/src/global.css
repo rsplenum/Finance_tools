@@ -281,6 +281,11 @@ html:has(body[data-look='new']) { scroll-padding-top: 8.5rem; }
 .js [data-settle].settled { opacity: 1; transform: none; }
 [data-header] { transition: transform 0.25s ease-out; }
 [data-header][data-away]:not(:focus-within) { transform: translateY(-100%); }
+/* The CMA's strip of years (UX9b) follows the top bar up when it hides, so no row scrolls above it; a box tabbed to, either
+   way, stops clear of both (88 + 48 px past the strip's foot at 125, the UX9b critic). */
+[data-years-strip] { transition: top 0.25s ease-out; }
+html:has([data-header][data-away]:not(:focus-within)) [data-years-strip] { top: 0; }
+@media (min-width: 64rem) { [data-years-grid] :is(input, select) { scroll-margin-top: 3rem; } }
 /* The story's scratch paper (AG3, D-UX-77; Trailer.astro): ruled from the start, its double margin rule in red. */
 [data-paper] { --pm: 2.25rem; }
 @media (min-width: 40rem) { [data-paper] { --pm: 3.75rem; } }

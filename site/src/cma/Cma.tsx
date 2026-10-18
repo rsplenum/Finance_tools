@@ -129,12 +129,12 @@ function Grid({ form, title, s, update, was }: { form: 'II' | 'III'; title: stri
   // 1024 px each card carries its own head.
   const head = (c: (typeof cols)[number]) => <><span aria-hidden="true" class={`absolute inset-x-0 top-0 border-t-2 ${SURE[c.kind]}`} />{c.fy}</>;
   return <Section id={`form-${form}`} title={title}>
-    <div aria-hidden="true" data-testid={`cma-years-${form}`} class="sticky top-18 z-10 mt-3 hidden bg-canvas text-sm lg:grid lg:grid-cols-years lg:gap-x-3">
+    <div aria-hidden="true" data-years-strip data-testid={`cma-years-${form}`} class="sticky top-18 z-10 mt-3 hidden bg-canvas text-sm lg:grid lg:grid-cols-years lg:gap-x-3">
       <p class="flex items-end border-b border-line py-2 pr-3 font-medium text-ink-muted">Rs.</p>
       {cols.map((c) => <p key={c.id} class="relative flex flex-col items-end justify-end border-b border-line pt-2 pb-2 font-medium whitespace-nowrap text-ink-muted">
         {head(c)}<span class={`text-xs font-normal ${MUTED}`}>{KIND[c.kind]}</span></p>)}
     </div>
-    <div data-testid={`cma-input-${form}`} class="mt-3 space-y-3 text-sm lg:mt-0 lg:grid lg:grid-flow-col lg:grid-cols-years lg:gap-x-3 lg:space-y-0">
+    <div data-years-grid data-testid={`cma-input-${form}`} class="mt-3 space-y-3 text-sm lg:mt-0 lg:grid lg:grid-flow-col lg:grid-cols-years lg:gap-x-3 lg:space-y-0">
       <div class={`max-lg:hidden lg:grid lg:grid-rows-subgrid ${SPAN[form]}`}>
         {heads.map((h) => <p key={h.id} class="flex flex-col justify-center border-b border-line py-1.5 pr-3 text-ink">{h.label}{hint(h)}</p>)}
         {SUBTOTALS[form].map((l, i) => <p key={l} class={`flex items-center py-1.5 pr-3 font-semibold text-ink ${i ? '' : 'border-t border-t-ink/25'} border-b border-line`}>{l}</p>)}

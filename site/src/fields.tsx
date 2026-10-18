@@ -165,8 +165,8 @@ export const goTo = (id: string) => (e: Event) => {
 
 /** A figure not yet known (UX8, D-UX-106): "—", never 0, a link to the box that fills it when there is one. */
 export function Dash({ to, what }: { to?: string; what: string }) {
-  if (!to) return <span aria-label={`${what}: still needed`} class="text-ink-muted">—</span>;
-  return <a href={`#${to}`} onClick={goTo(to)} aria-label={`${what}: still needed, to its box`}
+  if (!to) return <span aria-label={`${what}: still to answer`} class="text-ink-muted">—</span>;
+  return <a href={`#${to}`} onClick={goTo(to)} aria-label={`${what}: still to answer, to its box`}
     class="inline-flex min-h-6 min-w-6 items-center text-link underline-offset-4 hover:underline">—</a>;
 }
 
@@ -229,7 +229,7 @@ export function Ledger(p: { id: string; testid: string; title: string; rows: Led
         <span class="text-link"><span class="group-open:hidden">Show</span><span class="hidden group-open:inline">Hide</span></span>
       </summary>
       {list(p.rows.filter((r) => r.to))}
-      {p.rows.some((r) => !r.to) && <><h3 class="mt-4 text-sm font-medium text-ink-muted">Not changed on this page</h3>{list(p.rows.filter((r) => !r.to))}</>}
+      {p.rows.some((r) => !r.to) && <><h3 class="mt-4 text-sm font-medium text-ink-muted">No box here changes these</h3>{list(p.rows.filter((r) => !r.to))}</>}
       <SourceNote what="Why these">{p.rows.map((r) => <span key={r.id} class="mt-1 block"><b>{r.what}:</b> {r.why}.</span>)}</SourceNote>
     </details>
   </section>;
@@ -296,7 +296,7 @@ export function SourceNote(p: { what: string; children: ComponentChildren; /** T
 export function Why({ id, children }: { id: string; children: ComponentChildren }) {
   const [open, setOpen] = useState(false);
   return <>{' '}<button type="button" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}
-    class="inline-flex min-h-6 cursor-pointer items-center text-link underline-offset-4 hover:underline">Why</button>
+    class="inline-flex min-h-6 cursor-pointer items-center text-link underline underline-offset-4">Why</button>
     <span id={id} hidden={!open} class="mt-1 block">{children}</span></>;
 }
 
