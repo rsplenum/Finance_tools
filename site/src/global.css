@@ -9,7 +9,7 @@
  * The design tokens (docs/DESIGN.md, "Tokens"; D-UX-58). Each is a role, not a colour: `text-ink`, `bg-canvas`,
  * `border-edge`, `bg-accent`, and needs no dark: twin, since its value changes with the theme below. They map onto
  * Tailwind's palette, so today's look is kept; UX2 sets the look by changing this mapping only. Raw palette classes
- * (`text-slate-600`) are counted by the site check and may not grow (scripts/design-baseline.json).
+ * (a palette shade by name) are counted by the site check and may not grow (scripts/design-baseline.json).
  */
 @theme inline {
   --color-canvas: var(--canvas);
@@ -302,3 +302,7 @@ html:not(.js) [data-reel] + [data-reel] [data-mark] { transform-box: fill-box; t
   *, ::before, ::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
   .js [data-settle] { opacity: 1; transform: none; }
 }
+
+/* A label column, then three figures (the DSCR's changes, UX6): named here so no class carries an arbitrary value. */
+@utility grid-cols-label { grid-template-columns: 4.5rem 1fr 1fr 1fr; }
+@utility grid-cols-label-wide { grid-template-columns: 6rem 1fr 1fr 1fr; }

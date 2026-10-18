@@ -680,7 +680,7 @@ function StatementTable({ st, parts = {} }: { st: StatementView; parts?: Record<
 
 /** The repayment schedule: a line per financial year; each opens to its months. */
 function Schedule({ sch }: { sch: ScheduleView }) {
-  const cols = 'grid grid-cols-[4.5rem_1fr_1fr_1fr] gap-2 sm:grid-cols-[6rem_1fr_1fr_1fr]';
+  const cols = 'grid grid-cols-label gap-2 sm:grid-cols-label-wide';
   return <div data-testid="schedule" class="mt-8">
     <h3 class="font-semibold text-ink">Repayment schedule</h3>
     <p data-testid="schedule-level" class={`mt-1 ${HINT}`}>{sch.level}</p>

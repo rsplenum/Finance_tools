@@ -156,7 +156,7 @@ async function expectText(page, v, what, want, step) {
   const fits = (t) => (want instanceof RegExp ? want.test(t) : t === want);
   let got = await read();
   for (let i = 0; !fits(got) && i < 30; i++) { await page.waitForTimeout(100); got = await read(); }
-  if (!fits(got)) v(`${step}: ${name} says "${got}", want "${want}"`);
+  if (!fits(got)) await v(`${step}: ${name} says "${got}", want "${want}"`);
 }
 /** The same for what a field holds. */
 async function expectValue(page, v, sel, want, step) {
@@ -1081,7 +1081,9 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
   await expectText(page, v, 'rep-check-securityCover', /Meets: [0-9.]+ in 20[0-9-]+ on the project’s own assets/, 'the security cover before the collateral, on the own assets');
   if (await page.getByTestId('rep-collateral-note').count()) v('the security cover met on the own assets still asks for the collateral (UX5b)');
   await page.getByTestId('rep-viable').click();
-  await expectText(page, v, 'rep-text-sales', /^To Rs\. 82,20,000 in 2026-27/, 'how far sales can fall');
+  // If the answer is missing, say what is there (the intermittent miss on CI, UX6: a reset after paint undid the tap).
+  const there = async () => (await Promise.all(['rep-viable', 'rep-viable-box', 'rep-plan'].map(async (id) => `${id} ${await page.getByTestId(id).count()}`))).join(', ');
+  await expectText(page, (m) => there().then((t) => v(`${m} (${t})`)), 'rep-text-sales', /^To Rs\. 82,20,000 in 2026-27/, 'how far sales can fall');
   await expectText(page, v, 'rep-move-sales', '31.5%', 'how far sales can fall, its figure');
   // The plan (MV3, D-UX-52) on case R at 70 lakh (tests/plan.test.ts by hand): without the promoters' most, sales alone,
   // 17.3% higher; with 12 lakh, the limit, the term loan, then sales 14.3% higher. A slider changes no figure above;
@@ -1092,7 +1094,7 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
   await leave(page, '#fld-promotersMost', '12 L');
   await expectText(page, v, 'rep-plan-steps', /^A working-capital limit of Rs\. 3,80,877 \(now Rs\. 5,00,000\)\.A term loan of Rs\. 23,76,740 .*Sales of Rs\. 80,01,000 in a full first year/, 'the plan with the promoters\' most');
   await expectText(page, v, 'rep-plan-promoters', 'The promoters bring Rs. 11,99,999 in all (now Rs. 8,75,342), within the Rs. 12,00,000 they can.', 'the promoters within their most');
-  await expectText(page, v, 'rep-plan-line', 'With these changes: Meets every level', 'the plan\'s verdict');
+  await expectText(page, v, 'rep-plan-line', 'With these changes: Meets every benchmark', 'the plan\'s verdict');
   await page.focus('#rep-slider-sales');
   await page.keyboard.press('ArrowLeft');
   await expectText(page, v, 'rep-move-sales', '+14.2%', 'the sales slider a step back');
@@ -1166,7 +1168,7 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
   await leave(page, '#fld-fixed', '25 L');
   await expectText(page, v, 'rep-short', /^Cash goes below nil in 2030-31: Rs\. 45,18,203 short/, 'cash below nil');
   await expectText(page, v, 'rep-status', 'Provisional: 1 still needed', 'the report with cash below nil');
-  await expectText(page, v, 'rep-misses', /^It misses \S+ of a lender’s levels: .*DSCR/, 'the DSCR below the level');
+  await expectText(page, v, 'rep-misses', /^It misses \S+ of the default benchmark ratios: .*DSCR/, 'the DSCR below the level');
   await page.getByTestId('rep-viable').click();
   await expectText(page, v, 'rep-short-dscrLowest', /^Short by Rs\. [\d,]+ of cash to pay the loan in 20\d\d-\d\d\.$/, 'the lowest DSCR\'s shortfall in rupees');
   await expectText(page, v, 'rep-text-sales', /^Sales [\d.]+% higher in every year: Rs\. [\d,]+ in 20\d\d-\d\d instead of Rs\. [\d,]+\./, 'the sales that make it viable');
@@ -1205,7 +1207,7 @@ const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await
   }
   // MV4 (D-UX-56): case K is fresh and meets every level in its worse year; the room is how far its sales can fall.
   const misses = await page.locator('[data-testid^="cma-check-"]', { hasText: 'Misses:' }).count();
-  if (misses || await page.getByTestId('cma-misses').count()) v(`the CMA example misses ${misses} of a lender's levels, want none`);
+  if (misses || await page.getByTestId('cma-misses').count()) v(`the CMA example misses ${misses} of the default benchmark ratios, want none`);
   await expectText(page, v, 'cma-check-dscrAverage', /Meets: 5\.84 over 2026-27 and 2027-28/, 'case K\'s average DSCR');
   await page.getByTestId('cma-viable').click();
   await expectText(page, v, 'cma-move-sales', '8.4%', 'how far case K\'s sales can fall');
@@ -1223,7 +1225,7 @@ const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await
   if (pdf.name !== 'CMA data - K Steel Furniture Pvt Ltd.pdf') v(`the CMA PDF is named "${pdf.name}"`);
   const text = (await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`])).join('\n');
   if (!text.includes('1,04,00,000') || !text.includes('2,96,80,000')) v('the CMA PDF does not read back its limit and its balance sheet');
-  if (/DSCR|lender’s level|viable/i.test(text)) v('the CMA PDF carries the levels or the plan (MV4 keeps them on the page)');
+  if (/DSCR|benchmark|viable/i.test(text)) v('the CMA PDF carries the levels or the plan (MV4 keeps them on the page)');
   const xlsx = (await save('cma-download-xlsx')).bytes;
   const book = await workbook(xlsx).catch((e) => v(`the CMA Excel copy is not read: ${e.message}`)) ?? [];
   if (book.map((x) => x.sheet).join('|') !== 'Summary|Forms II and III|Forms IV to VI|Ratios|Check') v(`the CMA Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))}`);
@@ -1249,14 +1251,14 @@ const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await
   await page.locator('#fld-cma-case-fresh').check();
   await page.locator('#more-options').evaluate((d) => d.open = true);
   await leave(page, '#fld-cma-collateral', '0');
-  await expectText(page, v, 'cma-misses', /^It misses 5 of a lender’s levels: current ratio, total outside liabilities ÷ net worth, average DSCR, interest cover and security cover\.$/, 'case M fresh');
+  await expectText(page, v, 'cma-misses', /^It misses 5 of the default benchmark ratios: current ratio, total outside liabilities ÷ net worth, average DSCR, interest cover and security cover\.$/, 'case M fresh');
   await expectText(page, v, 'cma-short-currentRatio', /Short by Rs\. 5,60,000 of current assets/, 'case M\'s current ratio');
   await page.getByTestId('cma-viable').click();
   await expectText(page, v, 'cma-plan-steps', /Sales of Rs\. 2,52,48,000 in 2027-28 \(now Rs\. 2,40,00,000\), 5\.2% higher.*Collateral with a market value of Rs\. 3,11,112/, 'case M\'s plan');
-  await expectText(page, v, 'cma-plan-verdict', 'With these changes it still misses one of a lender’s levels.', 'case M\'s plan without the promoters\' most');
+  await expectText(page, v, 'cma-plan-verdict', 'With these changes it still misses one of the default benchmark ratios.', 'case M\'s plan without the promoters\' most');
   await leave(page, '#fld-cma-promotersMost', '10 L');
   await expectText(page, v, 'cma-plan-steps', /Capital of Rs\. 5,45,455 more brought in by the end of 2026-27/, 'case M\'s plan with 10 L from the promoters');
-  await expectText(page, v, 'cma-plan-verdict', 'With these changes it meets every lender’s level.', 'case M\'s plan with 10 L from the promoters');
+  await expectText(page, v, 'cma-plan-verdict', 'With these changes it meets every default benchmark ratio.', 'case M\'s plan with 10 L from the promoters');
   await layout(page, v, 'case M\'s plan, 390 px');
   await page.getByTestId('cma-plan-use').click();
   await expectValue(page, v, '#fld-cma-proj-sales', '2,52,48,000', 'case M\'s plan used');

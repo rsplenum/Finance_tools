@@ -2,9 +2,9 @@
 
 What every page is held to, read whole by the designer and the critic (`.claude/agents/`). The look comes from these rules, the measured checks, the usage numbers and the owner's judgement of the preview, not from an agent's taste. A rule stays only with its evidence. The owner's inputs, and the rows that do not hold: `docs/design-inputs/cognitive-matrix.md`. Proposed rules wait in `docs/DESIGN-LESSONS.md` until accepted. Astro, Preact and Tailwind 4; the tokens in `site/src/global.css`.
 
-From 13-10-2026 the look follows antigravity.google's structure (D-UX-66; the map: `docs/design-reference/antigravity.md`). From 14-10-2026 it is FinSight's own (D-UX-72, `docs/design-reference/finsight.md`). On a page in the new look (`look="new"` in `site/src/Base.astro`) FinSight's rules win where the rules differ, except on accessibility, figures and the law.
+The look is FinSight's own (D-UX-72, `docs/design-reference/finsight.md`; how it lands on each page: `docs/DESIGN-SITE.md`), on every page (`look="new"` in `site/src/Base.astro`, listed in `NEW_LOOK`). Its rules win where they differ, except on accessibility, figures and the law.
 
-**Reference sites** (the owner's matrix, `docs/design-inputs/cognitive-matrix.md`): GOV.UK for forms and errors; Our World in Data for chart labels; Linear for speed and quiet dark; Stripe's docs for an explanation beside its subject; ciechanow.ski for a control beside its effect. Borrow patterns, never looks: reuse, adapt, invent only when none fits, test before reuse.
+**Reference sites** (the owner's matrix, `docs/design-inputs/cognitive-matrix.md`): GOV.UK (forms, errors), Our World in Data (chart labels), Linear (speed), Stripe's docs (an explanation beside its subject), ciechanow.ski (a control beside its effect). Borrow patterns, never looks.
 
 ## Principles
 Each: the friction it removes; its evidence.
@@ -17,11 +17,10 @@ Each: the friction it removes; its evidence.
 7. **Lines of 45 to 75 characters** for running text (`max-w-prose` or the page's `max-w-3xl` column). Friction: losing the line on the return sweep. Evidence: Bringhurst, *The Elements of Typographic Style*; WCAG 1.4.8 (AAA) caps at 80.
 8. **A reset always in reach**: Clear all, Undo after "Use this plan", every change reversible. Friction: fear of trying. Evidence: Nielsen's heuristic 3, "User control and freedom" (NN/g).
 9. **An answer within 100 ms** of leaving a field: the engine runs in the page, no spinner. Friction: waiting breaks the flow of thought. Evidence: Nielsen, "Response times: the 3 important limits" (NN/g, 1993).
-10. **No decoration that carries no meaning**: no shadow, gradient, blur or icon that tells nothing. Friction: the eye spends effort on it. Evidence: Tufte's data-ink principle (1983); GOV.UK uses no decorative elevation.
-11. **No pure black behind white text in dark mode** (the canvas is slate-950). Evidence: Material Design, "Dark theme" (dark grey over black); a guideline, not research.
+10. **Every element says something, or goes** (the owner, 18-10-2026): no shadow, gradient, blur, icon, box or space that tells nothing; each size, gap and colour from the maths in `docs/DESIGN-MATHS.md`. Evidence: Tufte's data-ink principle (1983).
+11. **No pure black behind white text in dark mode** (the canvas is a dark grey). Evidence: Material Design, "Dark theme" (a guideline).
 12. **Plain words on screen**, the owner's words; a CA's terms in the documents. Evidence: GOV.UK, "Writing for GOV.UK"; LESSONS-CARRIED §1.
 
-Not rules, for want of evidence: rounded corners read faster; a 1 px border with a shadow for depth; a fixed 8 px grid over the 4 px scale.
 
 ## FinSight's rules (AG2, D-UX-72)
 The brief: `docs/design-reference/finsight.md`. *Tested*: by `scripts/forbidden-checks.mjs` (thresholds beside each check) in the site check; the rest are the critic's.
@@ -45,61 +44,44 @@ The brief: `docs/design-reference/finsight.md`. *Tested*: by `scripts/forbidden-
 - **F18 Faint tags**: a tag under 4.5:1 on its fill as it comes into view, a fade counted, light and dark (D-UX-81). *Tested*.
 - **F19 Tab against the eye**: the next control in the page's order sits left in the same row, or above in the same column, at 360, 1024 or 1280 (WCAG 2.4.3; D-UX-81). *Tested*.
 
-Colour: ink, ledger red (the margin rule only, never a figure) and marigold (highlighter, ticks, glow), one highlight per screen; the critic's. Yield in the new look: principle 6 (two ink pills may share a screen; no accent fill), 7's column, 10 for fields and the glow (never behind a figure, still under reduced motion), and the Tokens' type, radius and motion (to 0.9 s, ending per F9).
+Colour: ink, ledger red (the margin rule only, never a figure) and marigold (highlighter, ticks, glow), one highlight per screen; the critic's. Principle 6 yields: two ink pills may share a screen, never an accent fill; principle 10 yields for the glow (never behind a figure, still under reduced motion).
 
 ## Tokens (`site/src/global.css`)
-A token is a role, not a colour, and needs no `dark:` twin. New work uses tokens only: the site check counts raw palette classes (`text-slate-600`) and arbitrary values (`text-[11px]`) and fails if either grows (`scripts/design-baseline.json`); UX2 to UX4 bring both to nil, then the check asks nil.
+A token is a role, needing no `dark:` twin. New work uses tokens only: the site check counts raw palette classes (`text-slate-600`) and arbitrary values (`text-[11px]`) and fails if either grows (`scripts/design-baseline.json`); both stand at nil from UX6.
 
-| Token | Use | Light | Dark |
-|---|---|---|---|
-| `canvas` | the page | white | slate-950 |
-| `surface` | a panel set off from the page | slate-50 | slate-900 |
-| `field` | inside a field | white | slate-900 |
-| `ink` / `ink-muted` | text / hints and second lines | 17.8 / 7.6:1 | 18.4 / 13.6:1 |
-| `line` | dividers that only group (never a control's edge) | slate-200 | slate-800 |
-| `edge` | a field's edge | 4.8:1 | 7.7:1 |
-| `accent` / `on-accent` / `accent-hover` | the main action and the chosen option / its text | 5.4:1 | 10.8:1 |
-| `link` | links | 7.5:1 | 13.8:1 |
-| `focus` | the focus ring, 2 px, offset 2 px | 3.7:1 | 10.8:1 |
-| `good` `warn` `bad` (+ `-tint` grounds) | meets, a caution, misses or wrong | 7.1, 9.1, 6.4:1 | 14.4, 16.2, 10.5:1 |
-| `stage` / `on-stage` | the closing panel of the new look / its text | slate-950 / white | slate-900 / slate-50 |
-| `spark-1` to `-3` | the dashes of the fields only, never text | teal-500, sky-500, indigo-400; new look: ink, red, marigold | teal-300, sky-300, indigo-300 |
-| `desk` `paper` `margin` `marigold` | new look: ink desk, paper, red, highlighter | | |
+Tokens and their use: `canvas` the page; `surface` a panel set off from it; `field` inside a field; `ink` / `ink-muted` text / hints and second lines; `line` dividers that only group (never a control's edge); `edge` a field's edge; `accent` / `on-accent` / `accent-hover` the chosen option (on the tool pages) / its text; `link`; `focus` the ring, 2 px, offset 2 px; `good` `warn` `bad` (+ `-tint` grounds) meets, provisional or a caution, misses or wrong; `stage` / `on-stage` the closing panel / its text; `spark-1` to `-3` the fields' dashes only (ink, red, marigold); `desk` `paper` `margin` `marigold` the ink desk, paper, the ledger red, the highlighter.
 
-Ratios on canvas, measured by `node scripts/design-review.mjs --tokens` (every pair but `line`, which marks no control, is at least 3.5:1, on surface and on the tints too). Colour never carries meaning alone: a miss says "Misses" in words.
-- **Type**: the system font (the new look: F1 and the scale `text-hero` to `-wordmark`, F2); 16 px for body and fields (it stops phones zooming); 14 px (`text-sm`) for hints, second lines and table cells; 12 px (`text-xs`) only for labels in a chart. Headings: h1 `text-2xl` (`sm:text-3xl` on the home page), h2 `text-lg`, h3 `text-base`, all `font-semibold`. Figures in tables: `tabular-nums`, right-aligned (GOV.UK Table). WCAG sets no minimum size; these are the house sizes.
+Ratios: `node scripts/design-review.mjs --tokens` (every pair but `line` at least 3.5:1, on surface and the tints too). Colour never carries meaning alone: a miss says "Misses" in words.
+- **Type**: F1 and F2; 16 px for body and fields (it stops phones zooming); 14 px (`text-sm`) for hints, second lines and table cells; 12 px (`text-xs`) only for labels in a chart. Figures in tables: `tabular-nums`, right-aligned (GOV.UK Table).
 - **Space**: Tailwind's 4 px scale; use 1, 2, 3, 4, 6, 8, 10, 12 (4 to 48 px). Related things sit closer than unrelated ones (Gestalt proximity).
-- **Radius**: `rounded-control` (6 px) for fields and buttons, `rounded-card` (8 px) for panels, `rounded-full` for status pills. For consistency only.
-- **Motion**: none needed to understand anything; 150 ms at most; none under reduced motion (global.css).
+- **Radius**: `rounded-control` (6 px) for fields, `rounded-card` (8 px) for panels, `rounded-full` for buttons (F4) and status pills.
+- **Motion**: none needed to understand anything; F9; none under reduced motion (global.css).
 
 ## Shared parts (`site/src/fields.tsx` and its neighbours)
 - **Field** (`TextField`, `INPUT`): label above, hint between label and field, the field 44 px tall with a 3:1 edge, the read-back or error under it. Never a placeholder as the label or the only hint (NN/g, "Placeholders in form fields are harmful", 2014); a format example ("like 12 L") may sit in the field only where a read-back under it confirms what was understood. An error says what is wrong and how to fix it, beside the field (GOV.UK).
 - **Choice** (radio cards): one question, the options as whole clickable cards; the chosen card takes the accent edge.
-- **Buttons**: `FILLED`, the main action, one a screen, 44 px tall on a phone; `BUTTON`, outlined, for the rest; a text link for moving about.
-- **Result panel**: the answer first in words and one figure, then its status pill (provisional, meets, misses).
+- **Buttons**: pills (F4); `FILLED`, in ink, the page's main act, one a screen; `BUTTON` for the rest; a text link for moving about.
 - **Table**: a table at 640 px and wider, cards below; numbers right-aligned; the total last and bold.
 - **Drawer and "Why?"**: closed `<details>`, opened by a tap; never holds a field the default path needs.
 - **Download row**: the formats in a row with what each is for; provisional until what it needs is in, and says so.
 - **Notice**: a line on the `warn` or `bad` tint, in words first.
-- **Focus**: a control that removes or replaces itself ("Make it viable", "How far can sales fall?") moves the focus to what replaces it, a box with `tabIndex={-1}` focused after the render; the design check fails a state whose last step leaves the focus on the page (WCAG 2.4.3; lesson 1, accepted 13-10-2026 after it recurred on `/cma/` and `/project-report/`).
-- **Targets**: a link that stands alone (not in a sentence) and every `<summary>` at least 24 px tall (`min-h-6`; global.css gives it to summaries); a sticky band leaves a `scroll-padding-bottom` of its height, so Tab never stops under it (WCAG 2.5.8, 2.4.11; lesson 1, accepted 13-10-2026 after it recurred).
+- **Focus**: a control that removes or replaces itself ("Make it viable", "How far can sales fall?") moves the focus to what replaces it, a box with `tabIndex={-1}` focused after the render; the design check fails a state whose last step leaves the focus on the page (WCAG 2.4.3; lesson 1).
+- **Targets**: a link that stands alone (not in a sentence) and every `<summary>` at least 24 px tall (`min-h-6`; global.css gives it to summaries); a sticky band leaves a `scroll-padding-bottom` of its height, so Tab never stops under it (WCAG 2.5.8, 2.4.11; lesson 1).
 
 ## Page templates
-- **Tool page** (DSCR, CMA, estimate, report): h1 and one line of what it gives; the default questions; the answer; the tables; More options (closed); the download. One column, `max-w-3xl`.
-- **Home** (new look): the eight sections of `docs/design-reference/antigravity.md`; each tool's words are `site/src/site.ts`'s `what` and `gives` (D-UX-65).
+Tool pages: `docs/DESIGN-SITE.md`. Home: FinSight's order (F13); each tool's words are `site/src/site.ts`'s `what` and `gives` (D-UX-65).
 
 ## States, the critic's checklist
-Each tool is reviewed empty, partly filled, provisional (a fact missing), with an error, with a result, missing a lender's level, an optional input empty, at the download, with focus and hover; at 360 px and on a desktop, 1024 too for a change in `lg:`, light and dark. `npm run design-review -- /dscr/` drives the states listed in `scripts/design-review.mjs` and prints what it measures; screenshots (`--shots <dir>`) only for pages a change touches.
+Each tool is reviewed empty, partly filled, provisional (a fact missing), with an error, with a result, missing a default benchmark ratio, an optional input empty, at the download, with focus and hover; at 360 px and on a desktop, 1024 too for a change in `lg:`, light and dark. `npm run design-review -- /dscr/` drives the states listed in `scripts/design-review.mjs` and prints what it measures; screenshots (`--shots <dir>`) only for pages a change touches.
 
 ## Measured checks (`scripts/design-checks.mjs`, in the site check)
-On every page at 360 and 1280 px, light and dark: axe-core, no WCAG 2.2 A or AA violation; text 4.5:1, large text 3:1 (1.4.3); a field's edge and the focus ring 3:1 (1.4.11, 2.4.7); targets 24 px or spaced (2.5.8); fields and accent buttons 44 px on a phone (2.5.5, house rule); every control reached by Tab (2.1.1); the focus kept after a state's last step (2.4.3) and never under a sticky band (2.4.11, read by what is on top); no sideways scroll at 320 px (1.4.10); still under reduced motion (2.3.3); the token ratchet. What the checks cannot see goes to the critic.
+On every page at 360 and 1280 px, light and dark: axe-core (WCAG 2.2 A and AA), text 4.5:1 and large 3:1, edges and focus 3:1, targets 24 px, 44 px on a phone, every control by Tab, the focus kept and never under a sticky band, no sideways scroll at 320 px, still under reduced motion, the token ratchet. What they cannot see goes to the critic.
 
 ## Acceptable and unacceptable
 - Acceptable: the DSCR's verdict in a sentence with the average and the lowest year beside it, the years marked against the target. Unacceptable: the verdict only as a colour, or below the table.
 - Acceptable: "Short by Rs. 4,19,502 of cash to pay the loan" on the bar it explains. Unacceptable: a legend under the chart naming the bar's colours.
 - Acceptable: one filled "Make it viable", the rest outlined or links. Unacceptable: three filled buttons in a row.
-- Acceptable: a hint under the label ("Leave empty if none."). Unacceptable: the same hint as greyed text inside the field.
-- Unacceptable anywhere: `text-[11px]`, a `#hex` class, `outline-none` without a ring, a field edge of slate-300.
+- Unacceptable anywhere: `text-[11px]`, a `#hex` class, `outline-none` without a ring, a raw palette class.
 
 ## How the team works
-Each agent reads this file and the open lessons. The designer offers two or three options when the choice is the owner's and builds with the tokens and parts; the critic reviews alone, ranks findings and checks each fix. The writer puts words plain against counts 1 to 5 of `docs/LOAD-MEASURE.md`; the researcher turns the owner's test notes into ranked findings, each tied to a count or to none (both on Sonnet). A recurring finding or the owner's rule becomes a lesson; accepted, it moves here. Agents never merge.
+Each agent reads this file and the open lessons. The designer offers two or three options when the choice is the owner's and builds with the tokens and parts; the critic reviews alone, ranks findings and checks each fix; the writer puts words plain against `docs/LOAD-MEASURE.md`; the researcher turns test notes into ranked findings. A recurring finding or the owner's rule becomes a lesson; accepted, it moves here. Agents never merge.

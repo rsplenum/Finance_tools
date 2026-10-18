@@ -250,7 +250,7 @@ export function preview(s: ReportState): ReportPreview {
     : `Security cover: collateral with a market value of Rs. ${rupees(need)} or more brings it to ${sc.level.toFixed(2)}.`;
   return {
     needs: [], view: viewOf(r), flags: r.scheme?.flags ?? [], checks,
-    ...(d.misses.length ? { misses: `It misses ${d.misses.length === 1 ? 'one' : d.misses.length} of a lender’s levels: ${listed(d.misses.map(labelOf))}.` } : {}),
+    ...(d.misses.length ? { misses: `It misses ${d.misses.length === 1 ? 'one' : d.misses.length} of the default benchmark ratios: ${listed(d.misses.map(labelOf))}.` } : {}),
     ...(collateralNote ? { collateralNote } : {}),
     ...(d.term.months > d.term.longest ? { longTerm: `The term loan runs ${d.term.months} months with its moratorium, beyond the ${d.term.longest} months an MSME term loan commonly runs at most.` } : {}),
     ...(c ? { short: `Cash goes below nil in ${c.fy}: Rs. ${rupees(c.need)} short at its lowest. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.` } : {}),
@@ -323,7 +323,7 @@ export function viableOf(s: ReportState): ViableView | undefined {
   } else if (v.instalmentsNone) push({ id: 'repayment', head: 'A longer repayment', text: v.instalmentsNone, ...none }, 'lender');
   return {
     meets: v.meets, title: v.meets ? 'Every ratio meets a lender’s level: the room' : 'The levers: any one of these alone', lines,
-    foot: `The levels: a fresh or enhanced loan’s benchmarks, said to follow RBI and not yet checked against an RBI publication; each lender sets its own. Each change is worked alone by the engine, the rest as typed. Change the figures above only to what the business can really reach: a lender tests sales against the market and the capacity.`,
+    foot: `The default benchmark ratios: a fresh or enhanced loan’s, said to follow RBI and not yet checked against an RBI publication; each bank sets its own. Each change is worked alone by the engine, the rest as typed. Change the figures above only to what the business can really reach: a lender tests sales against the market and the capacity.`,
   };
 }
 
@@ -411,9 +411,9 @@ export function boardOf(q: PlanView, l: Levers): BoardView {
     ...(cash ? [`Cash goes below nil in ${cash.fy}: Rs. ${upRupees(cash.need)} short at its lowest.`] : [])];
   return {
     checks, works: !miss.length, still, steps, moves, over,
-    verdict: miss.length ? `With these changes it still does not work as structured: it misses ${miss.length === 1 ? 'one' : miss.length} of a lender’s levels.`
-      : `With these changes it meets every lender’s level${checks.some((c) => c.verdict === 'wait') ? ' that can be read' : ''}.`,
-    line: miss.length ? `Misses ${miss.length}: ${listed(miss.map((c) => inSentence(c.label)))}` : 'Meets every level',
+    verdict: miss.length ? `With these changes it still does not work as structured: it misses ${miss.length === 1 ? 'one' : miss.length} of the default benchmark ratios.`
+      : `With these changes it meets every default benchmark ratio${checks.some((c) => c.verdict === 'wait') ? ' that can be read' : ''}.`,
+    line: miss.length ? `Misses ${miss.length}: ${listed(miss.map((c) => inSentence(c.label)))}` : 'Meets every benchmark',
     promoters: `The promoters bring ${rs(p)} in all (now ${rs(q.promotersNow)})${q.most === undefined ? '' : over
       ? `: Rs. ${upRupees(p - q.most)} more than the ${rs(q.most)} they can` : `, within the ${rs(q.most)} they can`}.`,
   };

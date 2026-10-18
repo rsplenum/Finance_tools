@@ -25,7 +25,7 @@ const rs = (n: number) => `Rs. ${inr(n)}`;
 const pct = (t: number) => `${(Math.abs(t) / 10).toFixed(1)}%`;
 const fyOf = (s: CmaState) => { const c = columnsOf(s.startYear); return { e: c[3].fy, p: c[4].fy }; };
 const fig = (x: CmaInput, id: 'est' | 'proj') => x.figures[id] as Figures;
-const FOOT = (c: string) => `The levels: ${c === 'renewal' ? 'a renewal’s' : 'a fresh or enhanced limit’s'} benchmarks, said to follow RBI and not yet checked against an RBI publication; each lender sets its own. They are read on the estimate and the projection, each ratio in its worse year. Each change is worked by the engine on these figures; change them only to what the business can really reach.`;
+const FOOT = (c: string) => `The default benchmark ratios: ${c === 'renewal' ? 'a renewal’s' : 'a fresh or enhanced limit’s'}, said to follow RBI and not yet checked against an RBI publication; each bank sets its own. They are read on the estimate and the projection, each ratio in its worse year. Each change is worked by the engine on these figures; change them only to what the business can really reach.`;
 const caseOf = (s: CmaState) => (s.loanCase || undefined) as 'fresh' | 'renewal' | undefined;
 /** The rows for the bars: the security cover reads once on the business's own assets when they reach the level alone
  * (D-UX-93, as the report); short of it, it waits, under More options, for the collateral (0 if none). */
@@ -43,12 +43,12 @@ export interface LevelsView { ask?: string; checks?: CheckRow[]; misses?: string
 export function levelsOf(s: CmaState): LevelsView | undefined {
   const x = inputOf(s), r = cma(x), c = caseOf(s);
   if ('needs' in r || 'blocked' in r) return undefined;
-  if (!c) return { ask: 'Needed to read it against a lender’s levels: whether the limit is fresh or enhanced, or a renewal (above).' };
+  if (!c) return { ask: 'Needed to read it against the default benchmark ratios: whether the limit is fresh or enhanced, or a renewal (above).' };
   const d = cmaDiagnose(r, x, c), sc = d.checks.find((k) => k.id === 'securityCover') as RatioCheck;
   const need = sc.meets ? undefined : cmaCollateralNeeded(r, x, c);
   return {
     checks: rowsOf(d.checks, s), foot: FOOT(c), missCount: d.misses.length,
-    ...(d.misses.length ? { misses: `It misses ${d.misses.length === 1 ? 'one' : d.misses.length} of a lender’s levels: ${listed(d.misses.map(labelOf))}.` } : {}),
+    ...(d.misses.length ? { misses: `It misses ${d.misses.length === 1 ? 'one' : d.misses.length} of the default benchmark ratios: ${listed(d.misses.map(labelOf))}.` } : {}),
     ...(need === undefined || need === 0 ? {} : {
       collateralNote: `Security cover: collateral with a market value of ${rs(need)} or more brings it to ${sc.level.toFixed(2)}.`,
     }),
@@ -172,9 +172,9 @@ export function cmaBoardOf(q: CmaPlanView, l: CmaLevers, s: CmaState): CmaBoard 
   return {
     checks, works: !miss.length, steps, moves, over,
     still: miss.map((k) => `${k.label}: ${k.worst}, level ${k.level}.${k.short ? ` ${k.short}` : ''}`),
-    verdict: miss.length ? `With these changes it still misses ${miss.length === 1 ? 'one' : miss.length} of a lender’s levels.`
-      : `With these changes it meets every lender’s level${checks.some((k) => k.verdict === 'wait') ? ' that can be read' : ''}.`,
-    line: miss.length ? `Misses ${miss.length}: ${listed(miss.map((k) => inSentence(k.label)))}` : 'Meets every level',
+    verdict: miss.length ? `With these changes it still misses ${miss.length === 1 ? 'one' : miss.length} of the default benchmark ratios.`
+      : `With these changes it meets every default benchmark ratio${checks.some((k) => k.verdict === 'wait') ? ' that can be read' : ''}.`,
+    line: miss.length ? `Misses ${miss.length}: ${listed(miss.map((k) => inSentence(k.label)))}` : 'Meets every benchmark',
     ...(l.capital ? { promoters: `The promoters bring ${rs(l.capital)} more as capital${q.most === undefined ? '' : over
       ? `: Rs. ${upRupees(l.capital - q.most)} more than the ${rs(q.most)} they can` : `, within the ${rs(q.most)} they can`}.` } : {}),
   };
