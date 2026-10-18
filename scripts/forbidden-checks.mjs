@@ -38,7 +38,8 @@ function inPage({ tools, order, phone }) {
   // F2: large headings.
   const h1 = document.querySelector('h1');
   if (!h1 || px(h1, 'fontSize') < (phone ? 40 : 64)) out.push(`F2 the h1 is ${h1 ? px(h1, 'fontSize') : 0} px (want ${phone ? 40 : 64} or more)`);
-  for (const h of document.querySelectorAll('main h2')) if (px(h, 'fontSize') < (phone ? 26 : 40)) out.push(`F2 the h2 "${name(h)}" is ${px(h, 'fontSize')} px`);
+  // A folded section's one line and a heading kept for screen readers (1 px, sr-only) are not headings on show (UX8, D-UX-106).
+  for (const h of document.querySelectorAll('main h2')) if (!h.closest('[data-folded]') && h.getBoundingClientRect().width > 1 && px(h, 'fontSize') < (phone ? 26 : 40)) out.push(`F2 the h2 "${name(h)}" is ${px(h, 'fontSize')} px`);
   // F3: no boxed cards; panels are set off by their fill.
   for (const el of document.querySelectorAll('main *, footer *')) {
     const s = getComputedStyle(el), r = el.getBoundingClientRect();

@@ -14,7 +14,7 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf, printable } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import {
-  EMPTY_PLAN, areaLabel, floorsQuestion, drawerBrands, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withExtra, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit, type PlanState,
+  EMPTY_PLAN, areaLabel, lakhs, roundRupees, floorsQuestion, drawerBrands, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withExtra, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit, type PlanState,
 } from '../site/src/estimate/plan-model';
 import { billDoc, billFileName, planDoc, planDocStatus, planFileName } from '../site/src/estimate/plan-document';
 import { BRAND_NOTICE, BRAND_NOTICE_SHORT, SITE_NAME } from '../site/src/site';
@@ -157,6 +157,26 @@ describe('L1 on the page: the level\'s range under the total', () => {
     const all = view(FLAT).sections.map((x) => x.id), only = (id: string) => ({ ...FLAT, sections: Object.fromEntries(all.map((x) => [x, x === id])) });
     expect(view(only('plumbing')).range.text).toBe('At Standard, each of the 7 items has one choice.');
     expect(view(only('nothing')).range.text).toBe('');
+  });
+});
+
+describe('UX8 on the page: the headline as precise as the estimate, one rule for figures (D-UX-106)', () => {
+  it('rounds the headline to a tenth of a lakh, or a hundredth of a crore, and keeps the rupee under a lakh', () => {
+    // The review's own case (docs/design-reviews/2026-10-18-tool-videos.md, finding 5): 21,38,356 is 21.38356 lakh.
+    expect(roundRupees(2138356)).toBe('Rs. 21.4 lakh');
+    expect(roundRupees(1736582)).toBe('Rs. 17.4 lakh');
+    expect(roundRupees(2490247)).toBe('Rs. 24.9 lakh');
+    expect(roundRupees(12345678)).toBe('Rs. 1.23 crore');
+    expect(roundRupees(85000)).toBe('Rs. 85,000');
+    expect(lakhs(840271)).toBe('8.40');
+  });
+  it('draws the range with the total at its place: (total - low) / (high - low), and its ends rounded as the headline', () => {
+    const r = (levelRuns(inputOf(FLAT)) as LevelRuns).range, v = view(FLAT);
+    expect(v.headline).toBe(roundRupees(v.n.total));
+    expect([v.rangeBar?.low, v.rangeBar?.high]).toEqual([roundRupees(r.low), roundRupees(r.high)]);
+    expect(v.rangeBar?.at).toBeCloseTo(100 * (v.n.total - r.low) / (r.high - r.low), 9);
+    expect(v.rangeBar?.text).toBe(`At Standard: the cheapest choice in each item to the dearest; ${r.lines} of the ${r.of} items offer one.`);
+    expect(v.strip.map((x) => x.total)).toEqual(v.strip.map((x) => (x.n / 100000).toFixed(2)));
   });
 });
 

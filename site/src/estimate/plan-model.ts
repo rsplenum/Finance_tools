@@ -344,11 +344,15 @@ export const qtyText = (n: number) => inr(n, 2).replace(/\.?0+$/, '');
 /** A line's quantity as estimates show it: areas and lengths to two places, counts whole. */
 const lineQty = (n: number, u: Unit) => (['nos', 'set', 'lot', 'bag', 'kg', 'litre'].includes(u) && Number.isInteger(n) ? inr(n) : inr(n, 2));
 export const rateWords = (n: number, u: Unit) => `Rs. ${rateText(n)} ${UNIT_RATE[u]}`;
-/** A total in lakhs or crores for the strip, where five must fit across a phone: 8.46 L, 1.23 Cr. */
-export function shortRupees(n: number): string {
-  if (n >= 1e7) return `${(n / 1e7).toFixed(2)} Cr`;
-  if (n >= 1e5) return `${(n / 1e5).toFixed(2)} L`;
-  return inr(n);
+/** One rule for writing figures on screen (UX8, review finding 4): full rupees in tables, "Rs." in the column head; a
+ * summary chip (the strip, Compare) in lakh to two places, its unit in its group's head, so five fit across a phone. */
+export const lakhs = (n: number) => inr(n / 1e5, 2);
+/** The headline (UX8, review finding 5): as precise as the estimate, lakh to one place, crore to two; under a lakh to the
+ * rupee. The bill and the documents keep the rupee, and the page says so. */
+export function roundRupees(n: number): string {
+  if (n >= 1e7) return `Rs. ${inr(n / 1e7, 2)} crore`;
+  if (n >= 1e5) return `Rs. ${inr(n / 1e5, 1)} lakh`;
+  return `Rs. ${inr(n)}`;
 }
 const dmy = (iso: string) => iso.split('-').reverse().join('-');
 /** The kinds of item, on screen and in the documents alike: "Appliances" already names a section, so the kind takes
@@ -411,7 +415,7 @@ export interface RoomView {
 export interface ShareView { id: string; name: string; kind: RoomKind | 'walls'; share: string; width: number }
 /** The size words for the buttons, in order. */
 export const WORD_CHOICES: { value: SizeWord; label: string }[] = SIZE_WORDS.map((w) => ({ value: w.id, label: w.name }));
-/** One amount in Compare: in lakhs for the table, in full for its label; `mine` marks the level the estimate is at. */
+/** One amount in Compare: in lakh for the table, in full for its label; `mine` marks the level the estimate is at. */
 export interface CompareCell { text: string; full: string; n: number; mine: boolean }
 /** Compare (A8): each section on and the total, at the five levels as a package; "Yours" where the estimate differs. */
 export interface CompareView { rows: { id: string; name: string; cells: CompareCell[]; yours?: string }[]; totals: CompareCell[]; yours?: string }
@@ -426,6 +430,8 @@ export interface PlanView {
   /** "Carpet area", or "Built-up area" for a new house: the area typed and the one the cost a sq ft is of. */
   areaName: string;
   total: string; perSqft: string; words: string; n: { total: number; perSqft: number };
+  /** The total as the headline shows it, rounded (UX8): `roundRupees`. */
+  headline: string;
   strip: StripView[]; bar: BarView[]; sections: SectionView[];
   rooms: RoomView[]; roomsNote?: string; compare: CompareView; change?: ChangeView;
   /** The bar of shares: each room's, the passage's and the inside walls' share of the carpet area (R1). */
@@ -442,6 +448,9 @@ export interface PlanView {
   ratesLine: string; ratesDate: string;
   /** One line under the total (L1): the chosen level's range, from the cheapest priced choice at it in every item to the dearest; empty with no items. */
   range: { text: string; low: number; high: number; lines: number; of: number };
+  /** The range as a bar on screen (UX8, review finding 5): its ends rounded as the headline, the total's place on it in
+   * per cent when it lies between them, and the words under it; absent when no item offers a choice. */
+  rangeBar?: { low: string; high: string; at?: number; text: string };
   /** Every source the lines and the assumptions use, numbered in order of first use, and what each class means; on the page only. */
   sources: SourceView[]; classes: { id: string; means: string }[];
   /** The bill of quantities for quotes (E4a): each item once with its rooms and summed quantity; no rate or amount of ours. */
@@ -522,12 +531,12 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
     // Each answer kept on one line (no-break spaces inside it), so a phone wraps only between answers.
     summary: [kind, home, city, s.unit === 'sqm' ? `${qtyText(sqm)} sq m` : `${qtyText(sqft)} sq ft`, bhk, pkg].map((x) => x.replace(/ /g, '\u00a0')).join(' · '),
     title: TITLE[e.kind], kind, home, city, area, bhk, level: pkg, areaName: e.per === 'built-up' ? 'Built-up area' : 'Carpet area',
-    total: rupees(e.total), perSqft: rupees(e.perSqft), words: rupeesWords(e.total), n: { total: e.total, perSqft: e.perSqft },
-    strip: levels.map((n, i) => ({ level: (i + 1) as Level, name: LEVEL_NAMES[i], total: shortRupees(n), full: rupees(n), n, current: i + 1 === e.level })),
+    total: rupees(e.total), perSqft: rupees(e.perSqft), words: rupeesWords(e.total), n: { total: e.total, perSqft: e.perSqft }, headline: roundRupees(e.total),
+    strip: levels.map((n, i) => ({ level: (i + 1) as Level, name: LEVEL_NAMES[i], total: lakhs(n), full: rupees(n), n, current: i + 1 === e.level })),
     bar, sections, ...(split ? { split } : {}), assumed, flags: e.flags.filter((f) => f.decides).map((f) => groupedFlag(f.text)), notes: e.flags.filter((f) => !f.decides).map((f) => groupedFlag(f.text)),
     unpriced: e.unpriced.map((u) => `${u.roomName}, ${u.name.toLowerCase()}: ${u.entryName}`),
     ratesLine: `A planning estimate: rates as reported on ${dmy(e.ratesDate)} for ${listed ? city : 'another place, at the six cities’ average'}; ${e.lines.filter((l) => l.checked).length} of ${e.lines.length} lines checked against their pages${overdueNote(LIBRARY_REVIEW_BY, todayIso()) ? `. ${overdueNote(LIBRARY_REVIEW_BY, todayIso()).replace(/\.$/, '')}` : ''}`,
-    range: rangeOf(e, runs), bill: billView(s, e),
+    range: rangeOf(e, runs), ...rangeBarOf(e, runs), bill: billView(s, e),
     ratesDate: dmy(LIBRARY_DATE), sources: [...numbered.values()],
     classes: Object.entries(CLASSES).filter(([id]) => [...numbered.values()].some((x) => x.cls === id)).map(([id, means]) => ({ id, means })),
   };
@@ -545,6 +554,16 @@ function rangeOf(e: ArchitectEstimate, runs: LevelRuns): PlanView['range'] {
     ? `${at}, the choices run from Rs. ${rupees(r.low)} to Rs. ${rupees(r.high)}: the cheapest in each item to the dearest. ${r.lines} of the ${items(r.of)} offer a choice.`
     : `${at}, each of the ${items(r.of)} has one choice.`;
   return { text, low: r.low, high: r.high, lines: r.lines, of: r.of };
+}
+
+/** The range drawn (UX8): from the cheapest choice to the dearest, rounded as the headline, the total marked on it. */
+function rangeBarOf(e: ArchitectEstimate, runs: LevelRuns): { rangeBar?: PlanView['rangeBar'] } {
+  const r = runs.range;
+  if (!r.of || !r.lines || !(r.high > r.low)) return {};
+  const at = e.total >= r.low && e.total <= r.high ? ((e.total - r.low) / (r.high - r.low)) * 100 : undefined;
+  const pkg = Math.abs(e.total - runs.totals[e.level - 1]) >= 0.005 ? ' as a package' : '';
+  return { rangeBar: { low: roundRupees(r.low), high: roundRupees(r.high), ...(at === undefined ? {} : { at }),
+    text: `At ${levelName(e.level)}${pkg}: the cheapest choice in each item to the dearest; ${r.lines} of the ${r.of} items offer one.` } };
 }
 
 /** The rooms as planned or sized, in the page's unit, each with its own level. */
@@ -589,7 +608,7 @@ function plotView(s: PlanState, h: House): PlotView {
 
 /** Compare: each section that is on, and the total, at the five levels; the estimate's own level marked, and its own amount where it differs. */
 function compareOf(e: ArchitectEstimate, runs: LevelRuns, sections: SectionView[]): CompareView {
-  const cells = (ns: number[], at: number): CompareCell[] => ns.map((n, i) => ({ text: shortRupees(n), full: rupees(n), n, mine: i + 1 === at }));
+  const cells = (ns: number[], at: number): CompareCell[] => ns.map((n, i) => ({ text: lakhs(n), full: rupees(n), n, mine: i + 1 === at }));
   const differs = (now: number, ns: number[], at: number) => Math.abs(now - ns[at - 1]) >= 0.005;
   const rows = sections.filter((x) => x.on && (runs.sections[x.id] ?? []).some((n) => n > 0)).map((x) => {
     const ns = runs.sections[x.id], at = x.level ?? e.level;

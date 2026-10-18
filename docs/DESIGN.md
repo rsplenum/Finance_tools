@@ -25,7 +25,7 @@ Each: the friction it removes; its evidence.
 ## FinSight's rules (AG2, D-UX-72)
 The brief: `docs/design-reference/finsight.md`. *Tested*: by `scripts/forbidden-checks.mjs` (thresholds beside each check) in the site check; the rest are the critic's.
 - **F1 Type**: Figtree for text; Anek (Ek Type, OFL) for headings, `figure` (wide, tabular) and `caps` (condensed, labels of one to three words). *Tested*.
-- **F2 Small headings**: h1 `text-hero`, h2 `text-section` or `text-statement`, h3 `text-title`. *Tested*.
+- **F2 Small headings**: h1 `text-hero`, h2 `text-section` or `text-statement`, h3 `text-title`; not a fold's line or an sr-only one (D-UX-106). *Tested*.
 - **F3 Boxed cards**: a panel is set off by its fill, never a border all round. *Tested*.
 - **F4 Square buttons**: a filled link or button is a 44 px pill. *Tested*.
 - **F5 Accent-filled buttons**: pills are `bg-ink text-canvas`, soft `bg-ink/5`, or on a desk `bg-on-desk`; the accent keeps to the tool pages. *Tested*.
