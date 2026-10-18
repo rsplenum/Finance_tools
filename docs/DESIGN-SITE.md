@@ -33,6 +33,16 @@ drawings and the motion the other pages borrow. The owner's word (D-UX-83): it s
 - **One bottom-bar rule** (UX8): under 1024 px every tool has the answer bar pinned to the foot from load: the answer as
   text, read out as it changes, and one 44 px arrow to it (D-UX-84; `BAR`, `BAR_ARROW`). From 1024 px it keeps only its
   words for a screen reader (the estimate's line of what changed stays, for its Undo).
+  On the DSCR, the report and the CMA its words come back at the foot while the panel is out of view, without the
+  arrow; on a phone the arrow points where the answer is, ↑ or ↓ (UX9, D-UX-107; `AnswerBar`).
+- **A box and its unit** (UX9): the unit inside the box, "Rs." before, "%", "years", "months" or "days" after; one hint
+  line below that the read-back takes over; no placeholders, the example in the hint; a default that still stands reads
+  "30 · assumed" (`TextField`'s `unit` and `assumed`). Fields side by side align label, box and hint (`grid-rows-subgrid`).
+- **What is assumed** (UX9): one closed line "Assumed until changed: N" (D-UX-32) opening to a ledger, a row each of
+  what, the value and Change to its box; the reasons behind "Why these" (`Ledger`).
+- **The CMA's years** (UX9): the five years as columns across the full width from 1024 px, a card a year below, with the
+  engine's gross and net profit, both totals and "Balances" or "Differs by Rs. X" under each; audited years under a solid
+  rule, the estimate dashed, the projection dashed and lighter.
 - **Empty folds** (UX8): a section that cannot be used yet is one line, its heading in body size (`Folded`); the foot's
   wordmark is small on a tool page.
 - **One rule for figures** (UX8): full rupees in tables, "Rs." in the column head; a summary chip in lakh to two places,

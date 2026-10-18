@@ -218,7 +218,7 @@ async function layout(page, v, step) {
   await page.locator('#fld-loanAmount').waitFor({ timeout: 3000 }).catch(() => v('the loan is not asked at once'));
   await expectValue(page, v, '#fld-targetAverage', '1.50', 'the assumed target');
   // The method and the target read as one line (P1f).
-  await expectText(page, v, 'assumed-method', 'How DSCR is worked out, and the target: Common term-loan DSCR; average 1.50, lowest year 1.20', 'the assumptions listed');
+  await expectText(page, v, 'assumed-method', 'How DSCR is worked out, and the target: Common term-loan DSCR; average 1.50, lowest year 1.20 Change', 'the assumptions listed');
 
   // The loan amount field, kept from P0: read back in figures and words while typing; long words wrap.
   const field = page.locator('#fld-loanAmount');
@@ -370,7 +370,7 @@ async function layout(page, v, step) {
   // depreciation are asked (only the later years were typed).
   await expectText(page, v, 'dscr-status', 'Provisional: 2 still needed', 'a first year with interest only');
   if (!(await page.isChecked('#fld-start-2026-27'))) v("the figures do not start in the loan's first year as assumed");
-  await expectText(page, v, 'assumed-start', 'The first year of the figures: The year the loan is first drawn', 'the start assumption listed');
+  await expectText(page, v, 'assumed-start', 'The first year of the figures: The year the loan is first drawn Change', 'the start assumption listed');
   await expectText(page, v, page.getByTestId('start-question').locator('p').first(), 'No instalment falls in 2026-27, only interest of Rs. 72,000. If operations start later, start your figures there: the interest before then is taken as paid from the project cost, not from profits.', 'the question about the first year');
   await page.check('#fld-start-2027-28');
   await expectText(page, v, 'dscr-status', 'Complete, on 7 assumptions', 'figures starting in 2027-28');
@@ -443,7 +443,7 @@ async function layout(page, v, step) {
   await expectText(page, v, 'dscr-status', 'Complete, on 10 assumptions', 'the quick path');
   await expectText(page, v, 'dscr-average', '1.16', 'the quick path');
   await expectText(page, v, 'dscr-lowest', '0.84', 'the quick path');
-  await expectText(page, v, 'assumed-tax', 'Tax rate: 31.2%', 'the quick path');
+  await expectText(page, v, 'assumed-tax', 'Tax rate: 31.2% Change', 'the quick path');
   // Four figures typed for the business, whatever the number of years, beside the assumed tax rate.
   const inputs = await page.locator('#figures input[type="text"]').count();
   if (inputs !== 5) v(`${inputs} fields in the figures on the quick path; want 5 (4 typed and the assumed tax rate)`);
@@ -539,7 +539,7 @@ async function layout(page, v, step) {
   await expectText(page, v, 'tax-by', 'Worked out each year for a proprietor: slab rates of 5% to 30% with 4% cess, nothing up to Rs. 12,00,000 of profit.', "a proprietor's tax");
   await expectText(page, v, 'tax-2026-27', '0', "a proprietor's tax");
   await expectText(page, v, 'dscr-average', '1.41', "a proprietor's tax");
-  await expectText(page, v, 'assumed-proprietorTax', "A proprietor's tax: The new regime's slab rates, on the business's profit as the only income", "a proprietor's tax");
+  await expectText(page, v, 'assumed-proprietorTax', "A proprietor's tax: The new regime's slab rates, on the business's profit as the only income Change", "a proprietor's tax");
   await page.check('#fld-otherLoansInterest-emi');
   await expectText(page, v, 'emis-ask', 'All EMIs a month, business and personal (home, car, personal loans).', "a proprietor's EMIs");
   await leave(page, '#fld-emi-1', '20000');
@@ -608,7 +608,7 @@ async function layout(page, v, step) {
   if (!(await page.getByTestId('dscr-average').isVisible())) v('the front door: no average DSCR without opening More options');
   if (!(await page.getByTestId('dscr-marks').isVisible())) v('the front door: the years are not marked against the target');
   if (await page.locator('#more-options').evaluate((d) => d.open)) v('More options opened by itself');
-  await expectText(page, v, 'assumed-method', 'How DSCR is worked out, and the target: Common term-loan DSCR; average 1.50, lowest year 1.20', 'the method and the target in one line');
+  await expectText(page, v, 'assumed-method', 'How DSCR is worked out, and the target: Common term-loan DSCR; average 1.50, lowest year 1.20 Change', 'the method and the target in one line');
   await expectText(page, v, 'part-2026-27', '6 of 12 instalments', 'the first part-year');
   await layout(page, v, 'the front door filled, 390 px');
   // D1 (D-UX-47): the lenders' lines beside the DSCR, their inputs only under More options; the front door still asks 8.

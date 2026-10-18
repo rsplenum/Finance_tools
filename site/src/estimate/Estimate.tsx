@@ -5,7 +5,7 @@
  * three downloads. Figures: engine/estimate.ts only, via model.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
-import { answerRule, BUTTON, Choice, FILLED, HINT, Section, SelectField, STATE, TextField, Tick } from '../fields';
+import { answerRule, BUTTON, Choice, FILLED, goTo, HINT, Section, SelectField, STATE, TextField, Tick } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { docNeeds, docStatus, estimateDoc, fileName } from './document';
@@ -13,7 +13,7 @@ import {
   EMPTY, FAMILY_CHOICES, KIND_CHOICES, QUOTE_GST, QUOTE_RULE, QUOTE_WHY, UNIT_CHOICES, blankItem, fromBill, headsOf, plainOf, preview, quoteView, rateOf, statusText, tidyRate, withHead,
   type EstimateFacts, type EstimatePreview, type EstimateState, type ItemText, type QuoteView,
 } from './model';
-import { sharedPlan } from './shared';
+import { sharedPlan, useSharedPlan } from './shared';
 
 type Update = (f: (s: EstimateState) => EstimateState) => void;
 const MUTED = 'text-ink-muted';
@@ -97,6 +97,7 @@ function Items({ s, update, p, q }: { s: EstimateState; update: Update; p: Estim
  */
 function FromBill({ s, update }: { s: EstimateState; update: Update }) {
   const [said, setSaid] = useState('');
+  const { plan, first, left } = useSharedPlan();
   const go = () => {
     const typed = s.items.some((it) => it.description.trim() || it.quantity.trim() || it.rate.trim());
     if (typed && !window.confirm('Replace the items typed so far with the bill’s lines?')) return;
@@ -106,8 +107,12 @@ function FromBill({ s, update }: { s: EstimateState; update: Update }) {
     update(() => next);
   };
   return <div class="mb-6">
-    <p class={HINT}>Asked contractors to quote on the bill of quantities above? Start from it: its lines filled in, for you to type one contractor’s rates and see each against the library.</p>
-    <button type="button" data-testid="from-bill" class={`mt-2 ${BUTTON}`} onClick={go}>Start from the bill</button>
+    {/* Until the planning estimate's questions are answered, the way to them, not an error after the click (review finding 7). */}
+    {plan && left === 0
+      ? <><p class={HINT}>Asked contractors to quote on the bill of quantities above? Start from it: its lines filled in, for you to type one contractor’s rates and see each against the library.</p>
+        <button type="button" data-testid="from-bill" class={`mt-2 ${BUTTON}`} onClick={go}>Start from the bill</button></>
+      : <p data-testid="from-bill-first" class="mt-2 text-sm text-ink">The bill is made from the planning estimate’s answers: {left || 'six'} still to answer.{' '}
+        {first && <a href={`#${first}`} onClick={goTo(first)} class="inline-flex min-h-6 items-center text-link underline underline-offset-4">To the first</a>}</p>}
     {said && <p data-testid="from-bill-said" class="mt-2 text-sm text-warn">{said}</p>}
   </div>;
 }

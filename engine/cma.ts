@@ -8,7 +8,7 @@
  */
 import DATA from './data/cma.json';
 import LEVELS from './data/ratios.json';
-import { cmaCheck } from './cma-check';
+import { cmaCheck, subtotalsCheck } from './cma-check';
 import type { Blocked, Needs } from './dscr';
 import { inr } from './util';
 
@@ -106,6 +106,27 @@ export function cmaNeeds(x: CmaInput): string[] {
     }
   }
   return needs;
+}
+
+export interface Subtotals { grossProfit?: number; netProfit?: number; assets?: number; liabilities?: number; blocked?: string }
+
+/**
+ * A year's subtotals while it is typed (UX9, review finding 3): gross profit once net sales and the cost of sales are in,
+ * net profit once every figure of the profit and loss before drawings is, and both sides of the balance sheet once all
+ * its heads are; each worked again by cma-check.ts, and none shown unless both agree. The balance sheet is compared,
+ * never made to balance.
+ */
+export function subtotalsOf(f: Partial<Record<HeadId, number>>, quasi: boolean): Subtotals {
+  const has = (form: 'II' | 'III', but: string[] = []) => HEADS.every((h) => h.form !== form || but.includes(h.id) || isNum(f[h.id]));
+  const v = f as Figures, out: Subtotals = {};
+  if (['sales', 'materials', 'otherDirect', 'depreciation'].every((h) => isNum(f[h as HeadId]))) out.grossProfit = v.sales - (v.materials + v.otherDirect + v.depreciation);
+  if (has('II', ['drawings'])) out.netProfit = (out.grossProfit as number) - v.employees - v.sga - (v.wcInterest + v.tlInterest) + v.otherIncome - v.tax;
+  if (has('III')) { const t = totals(v, quasi); out.assets = t.assets; out.liabilities = t.liabilities; }
+  const c = subtotalsCheck(f);
+  for (const k of ['grossProfit', 'netProfit', 'assets', 'liabilities'] as const)
+    if ((out[k] === undefined) !== (c[k] === undefined) || (out[k] !== undefined && !money(out[k] as number, c[k] as number)))
+      return { blocked: `The two computations disagree on ${k}, so no subtotals are shown. Please report this.` };
+  return out;
 }
 
 function totals(f: Figures, quasi: boolean) {

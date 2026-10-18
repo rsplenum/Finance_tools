@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cma, cmaNeeds, fyLabels, type Cma, type CmaInput, type Figures, type YearId } from '../engine/cma';
+import { cma, cmaNeeds, fyLabels, subtotalsOf, type Cma, type CmaInput, type Figures, type YearId } from '../engine/cma';
 
 /*
  * Fictional case K (C1, 11-10-2026), a private company making steel furniture, worked outside the engine by a separate
@@ -132,5 +132,26 @@ describe('CMA, what it asks and refuses', () => {
     const more = { ...CASE_K.figures.proj, bankWc: 12000000, cash: 5280000 + 2500000 } as Figures;
     expect(ok({ ...CASE_K, figures: { ...CASE_K.figures, proj: more } }).flags.find((f) => f.id === 'proposed')?.text)
       .toBe('The projected balance sheet borrows Rs. 1,20,00,000 from banks for working capital, Rs. 16,00,000 more than the limit by the turnover method');
+  });
+});
+
+describe('CMA, a year’s subtotals as it is typed (UX9, review finding 3)', () => {
+  const proj = CASE_K.figures.proj as Figures;
+  it('case K 2027-28 by hand: gross profit 520 − 399 = 121 L, net profit 42 L, both sides 296.8 L', () => {
+    expect(subtotalsOf(proj, false)).toEqual({ grossProfit: 121 * L, netProfit: 42 * L, assets: 296.8 * L, liabilities: 296.8 * L });
+    // Promoters' loans as the owners' funds move between the sides' parts, never the totals.
+    expect(subtotalsOf(proj, true).liabilities).toBe(296.8 * L);
+  });
+  it('shows each subtotal only once every figure it takes is there, never a blank as nil', () => {
+    const { sales, materials, otherDirect, depreciation } = proj;
+    expect(subtotalsOf({ sales, materials, otherDirect, depreciation }, false)).toEqual({ grossProfit: 121 * L });
+    expect(subtotalsOf({ ...proj, tax: undefined }, false)).toEqual({ grossProfit: 121 * L, assets: 296.8 * L, liabilities: 296.8 * L });
+    expect(subtotalsOf({ ...proj, drawings: undefined }, false).netProfit).toBe(42 * L);
+    expect(subtotalsOf({ ...proj, cash: undefined }, false)).toEqual({ grossProfit: 121 * L, netProfit: 42 * L });
+    expect(subtotalsOf({}, false)).toEqual({});
+  });
+  it('compares the sides and never makes them balance: 2024-25’s cash Rs. 5,000 over, the assets Rs. 5,000 more', () => {
+    const t = subtotalsOf({ ...(CASE_K.figures.a2 as Figures), cash: 1920000 + 5000 }, false);
+    expect((t.assets as number) - (t.liabilities as number)).toBe(5000);
   });
 });

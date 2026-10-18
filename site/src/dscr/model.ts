@@ -387,7 +387,7 @@ export interface AssumedLine { id: string; what: string; shown: string; why: str
 const WHERE: Record<string, string> = {
   method: 'method', target: 'target', tax: 'row-taxPct', proprietorTax: 'row-taxPct', margin: 'row-pbdit', asset: 'row-assetIncome',
   depreciation: 'row-depreciation', interest: 'row-interestOther', interestNone: 'row-interestOther', otherLoans: 'row-otherLoans', nonCash: 'row-nonCash',
-  start: 'start-question', loanStart: 'loan', promoters: 'lender',
+  start: 'start-question', loanStart: 'fld-disbursed', promoters: 'fld-lender-promoters-0',
 };
 
 /** The assumptions (engine/data/defaults.json) still as assumed; one that makes no difference to these figures is not listed. */

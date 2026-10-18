@@ -3,7 +3,7 @@
  * Forms I to VI and the ratios as tables in words, with the engine's exact figures beside them for the Excel copy. Each
  * row the Excel copy's check sheet redoes is named (`ref`). Pure, no DOM. Figures: engine/cma.ts only.
  */
-import { ASSUMPTIONS, HEADS, TURNOVER, YEARS, cma, fyLabels, yearName, type Cma, type CmaInput, type CmaYear, type FlowYear, type HeadId, type Turnover, type YearId, type YearKind } from '../../../engine/cma';
+import { ASSUMPTIONS, HEADS, TURNOVER, YEARS, cma, fyLabels, subtotalsOf, yearName, type Cma, type CmaInput, type CmaYear, type FlowYear, type HeadId, type Subtotals, type Turnover, type YearId, type YearKind } from '../../../engine/cma';
 import { parseAmount } from '../../../engine/parse';
 import { inr } from '../../../engine/util';
 import { EXAMPLE } from './example';
@@ -49,6 +49,9 @@ export function inputOf(s: CmaState): CmaInput {
   const collateral = s.collateral.trim() ? amountOf(s.collateral) ?? NaN : undefined;
   return { startYear: s.startYear, figures, existingLimit: amountOf(s.existingLimit), quasiEquity: s.quasi, ...(collateral !== undefined ? { collateral } : {}) };
 }
+
+/** A year's subtotals as it is typed (UX9, review finding 3), the engine's: a figure not understood keeps its subtotal waiting. */
+export const subtotals = (s: CmaState, id: YearId): Subtotals => subtotalsOf(inputOf(s).figures[id] ?? {}, s.quasi);
 
 // ---- Forms I to VI and the ratios, for the page and the document alike ----
 

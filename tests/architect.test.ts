@@ -838,3 +838,12 @@ describe('L1: a level is a band of choices; its range runs from the cheapest pri
     }
   });
 });
+
+describe('a flat\'s area against the usual for its bedrooms, with 10% slack (UX9, review finding 14)', () => {
+  // A 2 BHK is usually 650–850 sq ft of carpet area; 10% slack, by hand: 650 × 0.9 = 585 and 850 × 1.1 = 935.
+  const said = (area: number) => run({ area }).flags.some((f) => f.text.startsWith('A 2 BHK is usually'));
+  it('a few sq ft off says nothing; past the slack it is a flag', () => {
+    expect([859, 935, 585, 590].map(said)).toEqual([false, false, false, false]);
+    expect([936, 584, 1000].map(said)).toEqual([true, true, true]);
+  });
+});

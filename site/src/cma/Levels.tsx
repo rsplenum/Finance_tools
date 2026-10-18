@@ -90,7 +90,7 @@ function Viable({ s, misses, update, use }: { s: CmaState; misses: boolean; upda
       <h3 class="text-title text-ink">The plan: the levers together</h3>
       <p class={HINT}>The engine’s plan, your changes first and the lender’s last. The sliders change none of the figures above until you use the plan.</p>
       <TextField id="fld-cma-promotersMost" class="mt-3" label="The most the promoters can bring as capital, if known" hint="Without it, no more of their money is assumed."
-        inputMode="decimal" value={s.promotersMost} tidy={tidyAmount} placeholder="like 12 L" invalid={bad}
+        unit="Rs." inputMode="decimal" value={s.promotersMost} tidy={tidyAmount} invalid={bad}
         said={bad ? 'Not understood. Type 10,00,000 or 10 L.' : undefined} onCommit={(promotersMost) => update((x) => ({ ...x, promotersMost }))} />
       {b.steps.length
         ? <ol data-testid="cma-plan-steps" class="mt-3 list-decimal space-y-0.5 pl-5 text-sm text-ink">{b.steps.map((t) => <li key={t}>{t}</li>)}</ol>

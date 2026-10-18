@@ -15,6 +15,8 @@ interface Props { name?: string; description: string; look?: 'new' }
 const { name, description, look } = Astro.props;
 const fresh = look === 'new';
 const here = Astro.url.pathname;
+// The menu marks the page it is on (UX9, review finding 12).
+const on = (href: string) => (here.startsWith(href) ? ('page' as const) : undefined);
 // Interaction data (UD1, D-TECH-37) is on once the Worker is live; the footer says what is counted only then.
 const counting = Boolean(import.meta.env.PUBLIC_API_URL) || import.meta.env.PUBLIC_EVENTS === 'on';
 // The new look's motion waits for this mark, so a page without scripts, or under reduced motion, shows everything still.
@@ -43,16 +45,17 @@ const COUNTED = 'We count which steps are used (the page, which fields change by
         <div class="mx-auto flex max-w-7xl items-center gap-6 px-4 py-3 sm:px-8">
           <a href="/" class="min-w-0 truncate text-xl font-semibold tracking-tight text-ink">{SITE_NAME}</a>
           <nav aria-label="Tools" class="hidden flex-1 gap-1 lg:flex">
-            {READY.map((t) => <a href={t.href} class="rounded-full px-3 py-2 text-sm font-medium text-ink-muted hover:bg-surface hover:text-ink">{t.short}</a>)}
+            {READY.map((t) => <a href={t.href} aria-current={on(t.href)} class={`rounded-full px-3 py-2 text-sm hover:bg-surface hover:text-ink ${on(t.href) ? 'font-semibold text-ink underline decoration-2 underline-offset-8' : 'font-medium text-ink-muted'}`}>{t.short}</a>)}
           </nav>
           <div class="ml-auto flex items-center gap-2">
             <ThemeToggle tall />
-            {/* Filled on home only: on a tool page the one filled pill is its Download PDF (DESIGN-SITE, Buttons; UX5b). */}
-            {here !== '/dscr/' && <a href="/dscr/" data-pill class={`hidden min-h-11 items-center rounded-full px-5 text-sm font-medium sm:inline-flex ${here === '/' ? 'bg-ink text-canvas hover:bg-ink/85' : 'bg-ink/5 text-ink hover:bg-ink/10'}`}>Start a DSCR statement</a>}
+            {/* On home only: on a tool page the one filled pill is its Download PDF (DESIGN-SITE, Buttons; UX5b), and another
+                tool's page is not the place to send to the DSCR (UX9, review finding 12). */}
+            {here === '/' && <a href="/dscr/" data-pill class="hidden min-h-11 items-center rounded-full bg-ink px-5 text-sm font-medium text-canvas hover:bg-ink/85 sm:inline-flex">Start a DSCR statement</a>}
           </div>
         </div>
         <nav aria-label="Tools" class="flex flex-wrap justify-center gap-1 px-2 pt-1 pb-2 lg:hidden">
-          {READY.map((t) => <a href={t.href} class="rounded-full px-2.5 py-2 text-sm font-medium text-ink-muted hover:bg-surface hover:text-ink">{t.short}</a>)}
+          {READY.map((t) => <a href={t.href} aria-current={on(t.href)} class={`rounded-full px-2.5 py-2 text-sm hover:bg-surface hover:text-ink ${on(t.href) ? 'font-semibold text-ink underline decoration-2 underline-offset-8' : 'font-medium text-ink-muted'}`}>{t.short}</a>)}
         </nav>
       </header>
       {here === '/' && <p class="border-y border-line bg-surface px-4 py-2 text-center text-sm text-ink" data-news>

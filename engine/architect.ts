@@ -73,7 +73,7 @@ export interface Rules {
   makingGood: { share: number } & Sourced;
   cities: { list: { id: string; name: string; cost: [number, number] }[]; range: { for: string; upTo: number } & Sourced } & Sourced;
   gst: { pct: number } & Sourced;
-  checks: { paintRatio: [number, number] } & Sourced;
+  checks: { paintRatio: [number, number]; areaSlack: number } & Sourced;
   quote: { farOut: number } & Sourced;
   house: {
     shape: { aspect: number } & Sourced; slab: { m: number } & Sourced; parapet: { m: number } & Sourced; terraceUpturn: { m: number } & Sourced;
@@ -959,9 +959,10 @@ function flags(ctx: Ctx, bhk: Bhk, carpetSqft: number, lines: Line[], unpriced: 
     }
   }
   // A flat's usual carpet area for its bedrooms: off it, the area typed may be the wrong one (V1). A new house's rooms are
-  // what its floors leave, so the range is only a note there.
-  const typical = R.programmes[bhk].typical;
-  if (typical && (carpetSqft < typical[0] || carpetSqft > typical[1])) (ctx.house ? note : check)(`A ${BHKS.find((b) => b.id === bhk)?.label} is usually ${typical[0]}–${typical[1]} sq ft of carpet area; yours is ${Math.round(carpetSqft)}.`, total);
+  // what its floors leave, so the range is only a note there. Within the slack, a few sq ft off, it says nothing (UX9,
+  // review finding 14).
+  const typical = R.programmes[bhk].typical, slack = R.checks.areaSlack / 100;
+  if (typical && (carpetSqft < typical[0] * (1 - slack) || carpetSqft > typical[1] * (1 + slack))) (ctx.house ? note : check)(`A ${BHKS.find((b) => b.id === bhk)?.label} is usually ${typical[0]}–${typical[1]} sq ft of carpet area; yours is ${Math.round(carpetSqft)}.`, total);
   // The paint against the carpet area checks the sizes typed; with the rooms as planned (and a house's stair walls) it is a note.
   const paint = lines.filter((l) => l.family === 'paint').reduce((s, l) => s + l.qty, 0);
   const ratio = paint / carpetSqft, [lo, hi] = R.checks.paintRatio;
