@@ -1,15 +1,16 @@
 ---
 import Policy from '../Policy.astro';
+import { FIRM, GRIEVANCE_OFFICER } from '../site';
 const sections = [
   { h: 'Write to us', p: [
     'Email {email} about the site, a figure that looks wrong, your data or these policies.',
     'For a figure that looks wrong, tell us the tool, what you typed and what you expected. Leave out names, account numbers and anything else that says who you are: we do not need them.',
   ] },
   { h: 'Complaints', p: [
-    'Our grievance officer is {gap:the grievance officer’s name}, at the same email address. Complaints about your data, a payment or these policies go to them.',
+    `Our grievance officer, ${GRIEVANCE_OFFICER}, answers complaints about your data, a payment or these policies, at the same email address.`,
   ] },
   { h: 'Who runs FinSight', p: [
-    '{gap:the legal name and postal address of the person or firm who runs FinSight}',
+    `${FIRM.name}, ${FIRM.kind}, ${FIRM.town}.`,
   ] },
   { h: 'What we cannot do', p: [
     'We cannot tell you whether a lender will sanction your loan, or advise on a particular loan. We never ask for passwords, OTPs or bank details.',

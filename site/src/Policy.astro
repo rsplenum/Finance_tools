@@ -1,7 +1,8 @@
 ---
 /**
  * A policy page (LEGAL1, D-BIZ-07): its name, the draft mark while LEGAL_DRAFT holds, the day its words last changed,
- * then its sections in plain words (policy.ts). One column at reading width, in the new look.
+ * then its sections in plain words (policy.ts). One column at reading width, in the new look. Its lead line is its answer,
+ * as home's is (the load measure).
  */
 import Base from './Base.astro';
 import { LEGAL_DRAFT, POLICY_DATE, SITE_NAME } from './site';
@@ -14,7 +15,7 @@ const { title, description, lead, sections } = Astro.props;
   <article class="mx-auto max-w-3xl px-4 pt-10 pb-16 sm:px-8 sm:pt-16">
     <p class="caps text-ink-muted">{SITE_NAME} · Policies</p>
     <h1 class="mt-4 text-hero text-ink">{title}</h1>
-    <p class="mt-5 max-w-prose text-lead text-ink-muted" set:html={words(lead)} />
+    <p data-answer class="mt-5 max-w-prose text-lead text-ink-muted" set:html={words(lead)} />
     {LEGAL_DRAFT && <p data-draft class="mt-6 max-w-prose rounded-card bg-surface px-4 py-3 text-sm text-ink"><strong class="font-semibold">Draft for our lawyer to review.</strong> It says what {SITE_NAME} does today; its words may change before {SITE_NAME} takes any payment.</p>}
     <p class="mt-4 text-sm text-ink-muted">Last changed {POLICY_DATE}</p>
     {sections.map((s) => (

@@ -1,6 +1,6 @@
 /**
  * A policy page's words to HTML (LEGAL1, D-BIZ-07). The words are plain text, escaped; two marks stand for what is not
- * plain text: {email} is the contact email as a link, and {gap:what} a fact only the owner can give, shown in brackets so
+ * plain text: {email} is the contact email as a link (the Contact page only, D-BIZ-07), and {gap:what} a fact only the owner can give, shown in brackets so
  * a reader and the lawyer see it is missing (the site check finds it by `data-gap`). [text](/path/) is a link to a page.
  */
 import { CONTACT_EMAIL } from './site';
@@ -11,7 +11,7 @@ const link = (href: string, text: string) => `<a href="${href}" class="text-link
 
 export function words(text: string): string {
   return esc(text)
-    .replace(/\{email\}/g, () => (CONTACT_EMAIL ? link(`mailto:${CONTACT_EMAIL}`, esc(CONTACT_EMAIL)) : gap('our contact email')))
+    .replace(/\{email\}/g, () => link(`mailto:${CONTACT_EMAIL}`, esc(CONTACT_EMAIL)))
     .replace(/\{gap:([^}]+)\}/g, (_, what: string) => gap(what))
     .replace(/\[([^\]]+)\]\((\/[a-z0-9/-]*)\)/g, (_, t: string, href: string) => link(href, t));
 }

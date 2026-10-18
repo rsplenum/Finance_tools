@@ -54,7 +54,31 @@ export const POLICIES = [
 export const LEGAL_DRAFT = true;
 /** The day the policies' words last changed; each page shows it. */
 export const POLICY_DATE = '18-10-2026';
-/** The contact email, from the owner (LEGAL1 had none yet): null shows a gap where it goes. */
-export const CONTACT_EMAIL: string | null = null;
+/**
+ * The owner's details (18-10-2026, D-BIZ-07), each shown in as few places as the policies need, as the owner asked: the
+ * email, the grievance officer and the firm's town on the Contact page only, the courts' town in the terms only. The repo
+ * is public, so the GSTIN (it holds the proprietor's PAN) and the full postal address stay out of it until payments (P1d);
+ * the site check fails on a PAN or GSTIN on any page, and on the email or the officer's name off the Contact page.
+ */
+export const CONTACT_EMAIL = 'rsplenum@gmail.com';
+export const GRIEVANCE_OFFICER = 'Gaurang Bhardwaj';
+export const FIRM = { name: 'Tripadi International', kind: 'a proprietorship firm', town: 'Moradabad, Uttar Pradesh' } as const;
+export const COURTS = 'Moradabad, Uttar Pradesh';
+
+const GST_CHARS = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+/**
+ * Whether a GSTIN's last character is its check character (for P1d, when the GSTIN goes on the site and the invoices):
+ * each of the first 14 characters' values (0-9, then A-Z as 10-35), times 1 and 2 in turn, with the product's base-36
+ * digits added; the check is what takes the sum to a multiple of 36.
+ */
+export function gstinOk(gstin: string): boolean {
+  if (!/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(gstin)) return false;
+  let sum = 0;
+  for (let i = 0; i < 14; i++) {
+    const p = GST_CHARS.indexOf(gstin[i]) * (i % 2 ? 2 : 1);
+    sum += Math.floor(p / 36) + (p % 36);
+  }
+  return GST_CHARS[(36 - (sum % 36)) % 36] === gstin[14];
+}
 /** Interaction data (UD1, D-TECH-37) is on once the Worker is live; the footer and the privacy page say so only then. */
 export const COUNTING = Boolean(import.meta.env.PUBLIC_API_URL) || import.meta.env.PUBLIC_EVENTS === 'on';

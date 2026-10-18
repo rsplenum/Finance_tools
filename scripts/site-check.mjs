@@ -16,7 +16,7 @@
  * Run after `npm run build`. CHROMIUM_PATH overrides the browser Playwright would use.
  */
 import { readFile, readdir } from 'node:fs/promises';
-import { sep } from 'node:path';
+import { join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { docxLines, docxPart, pdfPages, workbook, zipPart } from './read-doc.mjs';
@@ -43,6 +43,27 @@ const SHORT = NOTICE.split(/(?<=\.) /).slice(0, 2).join(' '); // its first two s
 for (const [dir, label] of [[fileURLToPath(new URL('../site/public/', import.meta.url)), 'site/public'], [DIST, 'the built site']]) {
   const images = (await readdir(dir, { recursive: true })).filter((f) => /\.(png|jpe?g|gif|webp|avif|svg|ico|bmp|tiff?)$/i.test(f) && f !== 'favicon.svg');
   if (images.length) violations.push(`${label} holds an image besides the favicon (docs/TRADEMARKS.md, rule 1: no logos or product photos): ${images.join(', ')}`);
+}
+// D-BIZ-07: every page's footer links the five policy pages; each policy page carries the draft mark while LEGAL_DRAFT
+// holds, and no page a draft mark or a gap once it does not; the owner's email and grievance officer show on the Contact
+// page only, and no page a PAN or a GSTIN (the owner's word, 18-10-2026). Read from site.ts and the built HTML.
+const SITE_TS = await readFile(fileURLToPath(new URL('../site/src/site.ts', import.meta.url)), 'utf8');
+const policyHrefs = [...(SITE_TS.match(/export const POLICIES = \[([\s\S]*?)\] as const/)?.[1] ?? '').matchAll(/href: '([^']+)'/g)].map((m) => m[1]);
+const legalDraft = /export const LEGAL_DRAFT = true;/.test(SITE_TS);
+const own = (name) => SITE_TS.match(new RegExp(`export const ${name} = '([^']+)'`))?.[1];
+const contactOnly = [['the contact email', own('CONTACT_EMAIL')], ['the grievance officer’s name', own('GRIEVANCE_OFFICER')]];
+if (policyHrefs.length !== 5 || contactOnly.some(([, v]) => !v)) violations.push('D-BIZ-07: site.ts no longer gives the five POLICIES, CONTACT_EMAIL and GRIEVANCE_OFFICER as the site check reads them');
+for (const f of (await readdir(DIST, { recursive: true })).filter((f) => f.endsWith('.html'))) {
+  const path = '/' + f.split(sep).join('/').replace(/(^|\/)index\.html$/, '$1');
+  const html = await readFile(join(DIST, f), 'utf8');
+  const nav = html.match(/<nav[^>]*data-policies[^>]*>([\s\S]*?)<\/nav>/)?.[1] ?? '';
+  const unlinked = policyHrefs.filter((h) => !nav.includes(`href="${h}"`));
+  if (unlinked.length) violations.push(`${path}: the footer does not link ${unlinked.join(', ')} (D-BIZ-07)`);
+  if (legalDraft && policyHrefs.includes(path) && !html.includes('data-draft')) violations.push(`${path}: a policy page without its draft mark while LEGAL_DRAFT holds (D-BIZ-07)`);
+  if (!legalDraft && /data-(draft|gap)\b/.test(html)) violations.push(`${path}: a draft mark or a gap left with LEGAL_DRAFT false (D-BIZ-07)`);
+  for (const [what, v] of contactOnly) if (v && path !== '/contact/' && html.includes(v)) violations.push(`${path}: shows ${what}, which the owner allowed on the Contact page only (D-BIZ-07)`);
+  const text = html.replace(/<(script|style)[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ');
+  if (/[A-Z]{5}\d{4}[A-Z]/.test(text)) violations.push(`${path}: shows a PAN or a GSTIN, which stay off the site until payments (D-BIZ-07)`);
 }
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 

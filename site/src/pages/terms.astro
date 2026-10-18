@@ -1,8 +1,9 @@
 ---
 import Policy from '../Policy.astro';
+import { COURTS, FIRM } from '../site';
 const sections = [
   { h: 'Who we are', p: [
-    'FinSight is run by {gap:the legal name of the person or firm who runs FinSight}. By using this site you agree to these terms; if you do not, please do not use it.',
+    `FinSight is run by ${FIRM.name}, ${FIRM.kind}. By using this site you agree to these terms; if you do not, please do not use it.`,
   ] },
   { h: 'What the tools do', p: [
     'The tools work out DSCR statements, CMA data, construction estimates and project reports from the figures you type, using rules and rates from public sources, each shown with its source and date. They are free to use today.',
@@ -21,7 +22,7 @@ const sections = [
     'We take care that the figures are right and test them against worked examples. Even so, the tools are given as they are, and so far as the law allows we are not responsible for a loss that comes from relying on them.',
   ] },
   { h: 'If something goes wrong', p: [
-    'Write to us first, at {email}. These terms follow the laws of India, and the courts at {gap:the city whose courts hear a dispute} decide any dispute.',
+    `Write to us first, through the [Contact](/contact/) page. These terms follow the laws of India, and the courts at ${COURTS}, decide any dispute.`,
     'We may change these terms; the date at the top shows when they last changed. Using the site after a change means you accept it.',
   ] },
 ];
