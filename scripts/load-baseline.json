@@ -34,13 +34,13 @@
     },
     "/cma/": {
       "before": 99,
-      "shown": 1412,
-      "all": 2169,
-      "plan": 2264,
+      "shown": 1414,
+      "all": 2240,
+      "plan": 2335,
       "long": 5,
       "abbr": 5,
       "questions": 130,
-      "controls": 144,
+      "controls": 145,
       "answerAt": 12,
       "gap": 0,
       "styles": 7,
@@ -82,13 +82,13 @@
     },
     "/project-report/": {
       "before": 39,
-      "shown": 939,
-      "all": 2488,
-      "plan": 2576,
+      "shown": 941,
+      "all": 2559,
+      "plan": 2647,
       "long": 0,
       "abbr": 5,
       "questions": 33,
-      "controls": 49,
+      "controls": 50,
       "answerAt": 5.3,
       "gap": 0,
       "styles": 8,
@@ -688,6 +688,70 @@
       "from": 3,
       "to": 13,
       "why": "D-UX-100",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/cma/",
+      "count": "shown",
+      "from": 1412,
+      "to": 1414,
+      "why": "D-UX-101",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/cma/",
+      "count": "all",
+      "from": 2169,
+      "to": 2240,
+      "why": "D-UX-101",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/cma/",
+      "count": "plan",
+      "from": 2264,
+      "to": 2335,
+      "why": "D-UX-101",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/cma/",
+      "count": "controls",
+      "from": 144,
+      "to": 145,
+      "why": "D-UX-101",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/project-report/",
+      "count": "shown",
+      "from": 939,
+      "to": 941,
+      "why": "D-UX-101",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/project-report/",
+      "count": "all",
+      "from": 2488,
+      "to": 2559,
+      "why": "D-UX-101",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/project-report/",
+      "count": "plan",
+      "from": 2576,
+      "to": 2647,
+      "why": "D-UX-101",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/project-report/",
+      "count": "controls",
+      "from": 49,
+      "to": 50,
+      "why": "D-UX-101",
       "date": "2026-10-18"
     }
   ],

@@ -11,6 +11,7 @@ import { xlsxOf } from '../site/src/doc/xlsx';
 import { docStatus, fileName, reportDoc } from '../site/src/report/document';
 import { AS_TYPED, EMPTY, applyPlan, assumptionsOf, boardOf, inputOf, planOf, preview, statusText, undoPlan, viableOf, type ReportState } from '../site/src/report/model';
 import { withLevers } from '../engine/plan';
+import { benchmarkFields, levelsOf, withBenchmark } from '../site/src/board-model';
 import { SITE_NAME } from '../site/src/site';
 import { docxLines, pdfPages, workbook } from '../scripts/read-doc.mjs';
 
@@ -127,6 +128,24 @@ describe('the PMEGP report to download', () => {
 
 // Make it viable (D-UX-50, D-UX-52): case R with sales of 70 lakh misses; the figures are worked by hand in
 // tests/viable.test.ts, with the 20 lakh limit's collateral.
+describe('changed benchmarks on the page (BEN1)', () => {
+  const weak = { ...R, sales: '70 L' };
+  it('reads a figure or "5:1", leaves a blank or a wrong one to its default, and resets to untouched', () => {
+    expect(levelsOf({ tolTnw: '5:1', dscrLowest: ' 0.8 ', currentRatio: 'abc', facr: '0', interestCover: '' })).toEqual({ tolTnw: 5, dscrLowest: 0.8 });
+    expect(withBenchmark(withBenchmark(undefined, 'dscrLowest', '1.1'), 'dscrLowest', ' ')).toBeUndefined();
+    const f = benchmarkFields('renewal', { currentRatio: 'x' });
+    expect([f.length, f[0].hint, f[0].error?.slice(0, 15), f.find((d) => d.id === 'dscrLowest')?.hint]).toEqual([8, 'Default 1.00 or more', 'Not understood.', 'Default 1.25 or more']);
+  });
+  it('a looser benchmark flips the verdict, says its default and warns', () => {
+    const p = preview({ ...weak, benchmarks: { dscrLowest: '0.8', currentRatio: '0.9' } });
+    expect(p.checks?.filter((c) => c.byDefault).map((c) => `${c.id} ${c.level} ${c.verdict} default ${c.byDefault} ${c.looser}`)).toEqual([
+      'currentRatio 0.90 or more meets default 1.10 true', 'dscrLowest 0.80 or more meets default 1.25 true']);
+    expect(p.misses).toBe('It misses 2 of the benchmark ratios: average DSCR and interest cover.');
+    expect(p.benchmarks).toBe('Your benchmarks for current ratio and DSCR in the lowest year, in place of the defaults. Looser than the default for current ratio and DSCR in the lowest year: a pass here is one a bank may not give.');
+    expect(preview(weak).benchmarks).toBeUndefined();
+  });
+});
+
 describe('the lender\'s levels and make it viable, in words', () => {
   const weak = { ...R, sales: '70 L' };
   it('each ratio against its level in its worst year, and what misses', () => {

@@ -8,8 +8,8 @@ import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
 import { BUTTON, Choice, FILLED, HINT, Section, TextField, toAnswer } from '../fields';
-import { Bar, Lever, PlanLever } from '../Board';
-import { inSentence, listed } from '../board-model';
+import { Bar, Benchmarks, Lever, PlanLever, targetOf } from '../Board';
+import { benchmarkFields, inSentence, listed, withBenchmark } from '../board-model';
 import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { monthText } from '../dscr/model';
@@ -39,14 +39,15 @@ function verdictOf(p: ReportPreview): { text: string; tone: keyof typeof TONE } 
   if (!p.view || p.blocked) return undefined;
   if (p.misses) return { text: p.misses, tone: 'bad' };
   const wait = (p.checks ?? []).filter((c) => c.verdict === 'wait').map((c) => inSentence(c.label));
-  return wait.length ? { text: `It meets every default benchmark ratio it can read now; not yet read: ${listed(wait)}.`, tone: 'warn' } : { text: 'It meets every default benchmark ratio.', tone: 'good' };
+  const which = p.benchmarks ? 'benchmark ratio, yours where you changed them,' : 'default benchmark ratio';
+  return wait.length ? { text: `It meets every ${which} it can read now; not yet read: ${listed(wait)}.`, tone: 'warn' } : { text: `It meets every ${which.replace(/,$/, '')}.`, tone: 'good' };
 }
 
 /** The answer bar's words (D-UX-84): the lowest DSCR as the model gives it, the verdict and the status. */
 function barText(p: ReportPreview) {
   if (p.blocked || !p.view) return statusText(p);
   const lowest = p.view.key.find((k) => k.check === 'dscrLowest'), misses = (p.checks ?? []).filter((c) => c.verdict === 'misses');
-  const said = misses.length ? (misses.length > 1 ? 'Misses the benchmarks' : 'Misses a benchmark') : 'Meets the benchmarks it reads';
+  const said = misses.length ? (misses.length > 1 ? 'Misses the benchmarks' : 'Misses a benchmark') : p.benchmarks ? 'Meets your benchmarks' : 'Meets the benchmarks it reads';
   return [lowest && `Lowest DSCR ${lowest.value}`, said, statusText(p)].filter(Boolean).join(' · ');
 }
 
@@ -264,14 +265,17 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
   const tone = (ok: boolean) => (ok ? 'text-good' : 'text-bad');
   return <div class="mt-6">
     {p.checks && <div data-testid="rep-checks">
-      <h3 class="text-title text-ink">{p.misses ? 'Why it does not work yet' : 'Against the default benchmark ratios'}</h3>
-      <p class={HINT}>Each ratio in its worst year; the line is its default benchmark.</p>
+      <h3 class="text-title text-ink">{p.misses ? 'Why it does not work yet' : p.benchmarks ? 'Against the benchmark ratios' : 'Against the default benchmark ratios'}</h3>
+      <p class={HINT}>Each ratio in its worst year; the line is its benchmark.</p>
+      {p.benchmarks && <p data-testid="rep-benchmarks-note" class="mt-1 text-sm text-warn">{p.benchmarks}</p>}
       <ul class="mt-1 divide-y divide-line">{p.checks.filter((c) => !onKey.has(c.id)).map((c) => <Bar key={c.id} c={c}>
         {/* Met on the project's own assets, the cover reads once: no note, no ask (UX5b, the critic's finding 3). */}
         {c.id === 'securityCover' && (p.collateralNote || (!s.collateral.trim() && c.verdict !== 'meets')) && <p data-testid="rep-collateral-note" class={HINT}>
           {p.collateralNote}{!s.collateral.trim() && <>{p.collateralNote ? ' ' : ''}<a href="#fld-collateral" data-testid="rep-to-collateral" onClick={toCollateral}
             class="text-link underline underline-offset-4">Type it under More options</a>.</>}</p>}
       </Bar>)}</ul>
+      <Benchmarks pre="rep" fields={benchmarkFields('fresh', s.benchmarks)} reset={() => update((t) => ({ ...t, benchmarks: undefined }))}
+        set={(id, t) => update((u) => ({ ...u, benchmarks: withBenchmark(u.benchmarks, id, t) }))} />
     </div>}
     {p.longTerm && <p data-testid="rep-long-term" class="mt-2 text-sm text-bad">{p.longTerm}</p>}
     {!v && <button type="button" data-testid="rep-viable" class={`mt-4 ${BUTTON}`} onClick={() => {
@@ -346,7 +350,7 @@ function Result({ s, p, update, use, used, undo, keep, toCollateral, reset }: {
             <dd data-testid={`rep-key-${i}`} class="figure text-2xl text-ink">{k.value}</dd>
             {k.note && <dd class={`text-sm ${MUTED}`}>{k.note}</dd>}
             {c && <dd class="mt-1 text-sm"><span class={c.verdict === 'meets' ? 'text-good' : c.verdict === 'misses' ? 'text-bad' : MUTED}>
-              {c.verdict === 'meets' ? 'Meets' : c.verdict === 'misses' ? 'Misses' : 'Not yet read'}</span><span class={MUTED}> · target {c.level}</span></dd>}
+              {c.verdict === 'meets' ? 'Meets' : c.verdict === 'misses' ? 'Misses' : 'Not yet read'}</span><span class={MUTED}> · {targetOf(c)}</span></dd>}
             {c?.short && <dd data-testid={`rep-short-${c.id}`} class="mt-0.5 text-sm font-medium text-bad">{c.short}</dd>}
           </div>;
         })}

@@ -10,9 +10,11 @@ import {
   CMA_AS_TYPED, CMA_LEVER_IDS, cmaCollateralNeeded, cmaDiagnose, cmaViable, makeCmaPlan, withCmaLevers,
   type CmaLeverId, type CmaLevers, type CmaOutcome, type CmaViability,
 } from '../../../engine/cma-plan';
-import { LEVELS, type RatioCheck } from '../../../engine/ratios';
+import { LEVELS, type Levels, type RatioCheck } from '../../../engine/ratios';
 import { inr } from '../../../engine/util';
-import { inSentence, labelOf, listed, rowOf, upRupees, type BoardMove, type CheckRow, type ViableLine, type ViableView } from '../board-model';
+import {
+  benchmarksNote, inSentence, labelOf, listed, levelsOf as benchLevels, ratiosWord, rowOf, upRupees, type BoardMove, type CheckRow, type ViableLine, type ViableView,
+} from '../board-model';
 import { HEADS, amountOf, columnsOf, inputOf, type CmaState } from './model';
 
 export const CASE_CHOICES = [
@@ -25,7 +27,7 @@ const rs = (n: number) => `Rs. ${inr(n)}`;
 const pct = (t: number) => `${(Math.abs(t) / 10).toFixed(1)}%`;
 const fyOf = (s: CmaState) => { const c = columnsOf(s.startYear); return { e: c[3].fy, p: c[4].fy }; };
 const fig = (x: CmaInput, id: 'est' | 'proj') => x.figures[id] as Figures;
-const FOOT = (c: string) => `The default benchmark ratios: ${c === 'renewal' ? 'a renewal’s' : 'a fresh or enhanced limit’s'}, said to follow RBI and not yet checked against an RBI publication; each bank sets its own. They are read on the estimate and the projection, each ratio in its worse year. Each change is worked by the engine on these figures; change them only to what the business can really reach.`;
+const FOOT = (c: string, lv: Levels) => `${Object.keys(lv).length ? 'The benchmark ratios: yours where you changed them, else the defaults' : 'The default benchmark ratios'}: ${c === 'renewal' ? 'a renewal’s' : 'a fresh or enhanced limit’s'}, said to follow RBI and not yet checked against an RBI publication; each bank sets its own. They are read on the estimate and the projection, each ratio in its worse year. Each change is worked by the engine on these figures; change them only to what the business can really reach.`;
 const caseOf = (s: CmaState) => (s.loanCase || undefined) as 'fresh' | 'renewal' | undefined;
 /** The rows for the bars: the security cover reads once on the business's own assets when they reach the level alone
  * (D-UX-93, as the report); short of it, it waits, under More options, for the collateral (0 if none). */
@@ -39,16 +41,20 @@ const rowsOf = (ks: RatioCheck[], s: CmaState) => {
 };
 
 /** The bars, or what they wait on: the CMA's figures, then whether the limit is fresh or a renewal. */
-export interface LevelsView { ask?: string; checks?: CheckRow[]; misses?: string; missCount?: number; collateralNote?: string; foot?: string }
+export interface LevelsView {
+  ask?: string; checks?: CheckRow[]; misses?: string; missCount?: number; collateralNote?: string; foot?: string;
+  /** Which benchmarks are the user's, and a looser one's warning (BEN1). */
+  benchmarks?: string;
+}
 export function levelsOf(s: CmaState): LevelsView | undefined {
   const x = inputOf(s), r = cma(x), c = caseOf(s);
   if ('needs' in r || 'blocked' in r) return undefined;
   if (!c) return { ask: 'Needed to read it against the default benchmark ratios: whether the limit is fresh or enhanced, or a renewal (above).' };
-  const d = cmaDiagnose(r, x, c), sc = d.checks.find((k) => k.id === 'securityCover') as RatioCheck;
-  const need = sc.meets ? undefined : cmaCollateralNeeded(r, x, c);
+  const lv = benchLevels(s.benchmarks), d = cmaDiagnose(r, x, c, lv), sc = d.checks.find((k) => k.id === 'securityCover') as RatioCheck;
+  const need = sc.meets ? undefined : cmaCollateralNeeded(r, x, c, lv), own = benchmarksNote(d.checks);
   return {
-    checks: rowsOf(d.checks, s), foot: FOOT(c), missCount: d.misses.length,
-    ...(d.misses.length ? { misses: `It misses ${d.misses.length === 1 ? 'one' : d.misses.length} of the default benchmark ratios: ${listed(d.misses.map(labelOf))}.` } : {}),
+    checks: rowsOf(d.checks, s), foot: FOOT(c, lv), missCount: d.misses.length, ...(own ? { benchmarks: own } : {}),
+    ...(d.misses.length ? { misses: `It misses ${d.misses.length === 1 ? 'one' : d.misses.length} of the ${ratiosWord(lv)}: ${listed(d.misses.map(labelOf))}.` } : {}),
     ...(need === undefined || need === 0 ? {} : {
       collateralNote: `Security cover: collateral with a market value of ${rs(need)} or more brings it to ${sc.level.toFixed(2)}.`,
     }),
@@ -63,7 +69,7 @@ const none = { fixes: [], still: [] };
 export function cmaViableOf(s: CmaState): ViableView | undefined {
   const c = caseOf(s), x = inputOf(s);
   if (!c) return undefined;
-  const v = cmaViable(x, c);
+  const lv = benchLevels(s.benchmarks), v = cmaViable(x, c, lv);
   if ('needs' in v || 'blocked' in v) return undefined;
   const lines: ViableLine[] = [], { e } = fyOf(s), sl = v.sales;
   if (v.meets) {
@@ -75,7 +81,7 @@ export function cmaViableOf(s: CmaState): ViableView | undefined {
     lines.push(...boardLines(v, e));
   }
   return {
-    meets: v.meets, title: v.meets ? 'Every ratio meets a lender’s level: the room' : 'The levers: any one of these alone', lines, foot: FOOT(c),
+    meets: v.meets, title: v.meets ? 'Every ratio meets a lender’s level: the room' : 'The levers: any one of these alone', lines, foot: FOOT(c, lv),
   };
 }
 
@@ -113,7 +119,7 @@ const HEAD: Record<CmaLeverId, string> = {
 };
 export interface CmaCard { id: CmaLeverId; by: 'borrower' | 'lender'; head: string; toggle?: boolean }
 export interface CmaPlanView {
-  x: CmaInput; c: 'fresh' | 'renewal'; levers: CmaLevers; cards: CmaCard[]; limits: string; atLimit?: string;
+  x: CmaInput; c: 'fresh' | 'renewal'; lv: Levels; levers: CmaLevers; cards: CmaCard[]; limits: string; atLimit?: string;
   most?: number; room: number; alone: Partial<Record<CmaLeverId, number>>; fy: { e: string; p: string };
 }
 
@@ -122,16 +128,16 @@ export function cmaPlanOf(s: CmaState, held: Partial<CmaLevers> = {}): CmaPlanVi
   const c = caseOf(s), x = inputOf(s), m = amountOf(s.promotersMost);
   if (!c) return undefined;
   const most = m !== undefined && Number.isFinite(m) && m >= 0 ? m : undefined;
-  const q = makeCmaPlan(x, c, { ...(most !== undefined ? { promotersMost: most } : {}), held });
+  const lv = benchLevels(s.benchmarks), q = makeCmaPlan(x, c, { ...(most !== undefined ? { promotersMost: most } : {}), held, levels: lv });
   if ('needs' in q || 'blocked' in q) return undefined;
-  const E = fig(x, 'est'), P = fig(x, 'proj'), v = cmaViable(x, c), room = q.limits.monthsRoom;
+  const E = fig(x, 'est'), P = fig(x, 'proj'), v = cmaViable(x, c, lv), room = q.limits.monthsRoom;
   const alone = 'diagnosis' in v ? { capital: v.capital?.needed, collateral: v.collateral?.needed } : {};
   const show: Record<CmaLeverId, boolean> = {
     quasi: !x.quasiEquity && (E.promoterLoans > 0 || P.promoterLoans > 0), capital: true, sales: P.sales > 0, months: room >= 1,
     collateral: x.collateral !== undefined || q.levers.collateral > 0,
   };
   return {
-    x, c, levers: q.levers, room, alone, fy: fyOf(s), ...(most !== undefined ? { most } : {}),
+    x, c, lv, levers: q.levers, room, alone, fy: fyOf(s), ...(most !== undefined ? { most } : {}),
     cards: CMA_LEVER_IDS.filter((id) => show[id]).map((id) => ({ id, by: id === 'months' ? 'lender' : 'borrower', head: HEAD[id], ...(id === 'quasi' ? { toggle: true } : {}) })),
     limits: `The limits kept: ${most !== undefined ? `the promoters bring at most ${rs(most)} of capital` : 'no more capital from the promoters, since the most they can bring is not typed'}; every term loan within ${LEVELS.term.longestMonths} months; interest as typed; sales with no limit known, so a lender will test them against the market.`,
     ...(q.atLimit.length ? { atLimit: `At the limit: ${listed(q.atLimit.map((id) => (id === 'capital' ? 'the promoters’ money' : 'the term')))}.` } : {}),
@@ -167,13 +173,13 @@ export function cmaBoardOf(q: CmaPlanView, l: CmaLevers, s: CmaState): CmaBoard 
     const why = 'blocked' in r ? r.blocked : `No figures with these changes: ${r.needs.join('; ')}.`;
     return { works: false, verdict: why, still: [], line: 'No figures', steps, moves };
   }
-  const d = cmaDiagnose(r, y, q.c), checks = rowsOf(d.checks, s), miss = checks.filter((k) => k.verdict === 'misses');
+  const d = cmaDiagnose(r, y, q.c, q.lv), checks = rowsOf(d.checks, s), miss = checks.filter((k) => k.verdict === 'misses');
   const over = q.most !== undefined && l.capital > q.most + 1e-6;
   return {
     checks, works: !miss.length, steps, moves, over,
     still: miss.map((k) => `${k.label}: ${k.worst}, level ${k.level}.${k.short ? ` ${k.short}` : ''}`),
-    verdict: miss.length ? `With these changes it still misses ${miss.length === 1 ? 'one' : miss.length} of the default benchmark ratios.`
-      : `With these changes it meets every default benchmark ratio${checks.some((k) => k.verdict === 'wait') ? ' that can be read' : ''}.`,
+    verdict: miss.length ? `With these changes it still misses ${miss.length === 1 ? 'one' : miss.length} of the ${ratiosWord(q.lv)}.`
+      : `With these changes it meets every ${ratiosWord(q.lv).replace('ratios', 'ratio')}${checks.some((k) => k.verdict === 'wait') ? ' that can be read' : ''}.`,
     line: miss.length ? `Misses ${miss.length}: ${listed(miss.map((k) => inSentence(k.label)))}` : 'Meets every benchmark',
     ...(l.capital ? { promoters: `The promoters bring ${rs(l.capital)} more as capital${q.most === undefined ? '' : over
       ? `: Rs. ${upRupees(l.capital - q.most)} more than the ${rs(q.most)} they can` : `, within the ${rs(q.most)} they can`}.` } : {}),

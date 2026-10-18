@@ -1050,7 +1050,7 @@ for (const scheme of ['light', 'dark']) {
 // The inputs on the default path, radios included: before R3, typed sales and their growth; now the capacity, the price,
 // the months to the first sales and the scheme (None or PMEGP), 33 in all.
 const REP_DEFAULT = 33;
-const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
+const REP_FIELDS = 'main input:not(#more-options input):not(#download input):not(#benchmarks input)';
 {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
   if (await page.locator('#more-options').evaluate((d) => d.open)) v('the project report opens with More options open');
@@ -1077,7 +1077,7 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
   // asks how far sales can fall (tests/viable.test.ts by hand); the security cover meets on the project's own assets, read once (UX5b).
   if (await page.getByTestId('rep-misses').count()) v('case R is said to miss a lender\'s level');
   await expectText(page, v, 'rep-check-dscrLowest', /^Lowest DSCR ?2\.51 ?in 2026-27 ?Meets · target 1\.25 or more$/, 'the lowest DSCR against its level, on its key figure');
-  if (await page.getByTestId('rep-checks').getByText('DSCR in the lowest year').count()) v('the lowest DSCR is shown twice: on its key figure and as a bar (review finding 9)');
+  if (await page.getByTestId('rep-checks').getByText('DSCR in the lowest year').count() > await page.locator('#benchmarks').getByText('DSCR in the lowest year').count()) v('the lowest DSCR is shown twice: on its key figure and as a bar (review finding 9)');
   await expectText(page, v, 'rep-check-securityCover', /Meets: [0-9.]+ in 20[0-9-]+ on the project’s own assets/, 'the security cover before the collateral, on the own assets');
   if (await page.getByTestId('rep-collateral-note').count()) v('the security cover met on the own assets still asks for the collateral (UX5b)');
   await page.getByTestId('rep-viable').click();
@@ -1180,7 +1180,7 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input)';
   await ctx.close();
 }
 
-const CMA_FIELDS = 'main input:not([type="radio"]):not(#more-options input):not(#download input):not(#read input)';
+const CMA_FIELDS = 'main input:not([type="radio"]):not(#more-options input):not(#download input):not(#read input):not(#benchmarks input)';
 // A choice counts as one field, whatever its options (MV4: fresh or renewal).
 const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await page.locator('main fieldset:not(#more-options fieldset):has(input[type="radio"])').count();
 // CMA data (C1, D-UX-46), fictional case K worked outside the engine in tests/cma.test.ts: sales 300 to 520 L over

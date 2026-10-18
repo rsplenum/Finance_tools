@@ -7,6 +7,7 @@ import { ASSUMPTIONS, HEADS, TURNOVER, YEARS, cma, fyLabels, yearName, type Cma,
 import { parseAmount } from '../../../engine/parse';
 import { inr } from '../../../engine/util';
 import { EXAMPLE } from './example';
+import type { BenchmarkText } from '../board-model';
 
 export interface CmaFacts { name: string; preparedBy: string }
 export type Grid = Record<YearId, Record<HeadId, string>>;
@@ -15,6 +16,8 @@ export type Grid = Record<YearId, Record<HeadId, string>>;
 export interface CmaState {
   startYear: number; figures: Grid; existingLimit: string; quasi: boolean; doc: CmaFacts;
   loanCase: '' | 'fresh' | 'renewal'; collateral: string; promotersMost: string;
+  /** The benchmarks the user changed (BEN1), as typed; kept when the case changes, until reset. */
+  benchmarks?: BenchmarkText;
 }
 
 /** The year now running starts in April: in January to March it is the one that began last April. */

@@ -96,8 +96,8 @@ export function CmaCalculator() {
  * "Complete" alone under a miss (UX5b critic, finding 1). */
 function barText(p: CmaPreview, s: CmaState) {
   if (!p.view) return statusText(p);
-  const n = levelsOf(s)?.missCount;
-  const said = n === undefined ? undefined : n ? (n > 1 ? 'Misses the benchmarks' : 'Misses a benchmark') : 'Meets the benchmarks';
+  const l = levelsOf(s), n = l?.missCount;
+  const said = n === undefined ? undefined : n ? (n > 1 ? 'Misses the benchmarks' : 'Misses a benchmark') : l?.benchmarks ? 'Meets your benchmarks' : 'Meets the benchmarks';
   return [`Limit ${p.view.key[0]?.value}`, said, statusText(p)].filter(Boolean).join(' · ');
 }
 

@@ -5,14 +5,14 @@
  * engine/cma-plan.ts only, via levers.ts.
  */
 import { useEffect, useMemo, useState } from 'preact/hooks';
-import { Bar, Lever, PlanLever } from '../Board';
+import { Bar, Benchmarks, Lever, PlanLever } from '../Board';
 import { BUTTON, FILLED, HINT, TextField } from '../fields';
 import { amountOf, tidyAmount, type CmaState } from './model';
 import {
   CMA_AS_TYPED, cmaBoardOf, cmaPlanOf, cmaViableOf, levelsOf, sameCmaLevers,
   type CmaLeverId, type CmaLevers, type CmaPlanView,
 } from './levers';
-import type { ViableView } from '../board-model';
+import { benchmarkFields, withBenchmark, type ViableView } from '../board-model';
 
 type Update = (f: (s: CmaState) => CmaState) => void;
 const MUTED = 'text-ink-muted';
@@ -26,9 +26,12 @@ export function Levels({ s, update, use }: { s: CmaState; update: Update; use: (
   return <div data-testid="cma-levels" class={lv.checks ? 'paper shadow-paper mt-4 rounded-card p-4 sm:p-6' : 'mt-4'}>
     {lv.ask && <p data-testid="cma-levels-ask" class="text-sm text-warn">{lv.ask}</p>}
     {lv.checks && <div data-testid="cma-checks">
-      <h3 class="text-title text-ink">{lv.misses ? 'Why it does not work yet' : 'Against the default benchmark ratios'}</h3>
-      <p class={`text-xs ${MUTED}`}>Each ratio in its worse year of the estimate and the projection; the line is the lender’s target.</p>
+      <h3 class="text-title text-ink">{lv.misses ? 'Why it does not work yet' : lv.benchmarks ? 'Against the benchmark ratios' : 'Against the default benchmark ratios'}</h3>
+      <p class={`text-xs ${MUTED}`}>Each ratio in its worse year of the estimate and the projection; the line is its benchmark.</p>
+      {lv.benchmarks && <p data-testid="cma-benchmarks-note" class="mt-1 text-sm text-warn">{lv.benchmarks}</p>}
       <ul class="mt-1 divide-y divide-line">{lv.checks.map((c) => <Bar key={c.id} c={c} pre="cma" />)}</ul>
+      <Benchmarks pre="cma" fields={benchmarkFields(s.loanCase || undefined, s.benchmarks)} reset={() => update((t) => ({ ...t, benchmarks: undefined }))}
+        set={(id, t) => update((u) => ({ ...u, benchmarks: withBenchmark(u.benchmarks, id, t) }))} />
     </div>}
     {lv.collateralNote && <p data-testid="cma-collateral-note" class={`mt-1 ${HINT}`}>{lv.collateralNote}</p>}
     {lv.misses && <p data-testid="cma-misses" class="mt-2 text-sm text-bad">{lv.misses}</p>}
