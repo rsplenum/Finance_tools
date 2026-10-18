@@ -25,7 +25,10 @@ drawings and the motion the other pages borrow. The owner's word (D-UX-83): it s
   (D-UX-84), never a long link lying over the fields.
 - **Buttons:** pills at least 44 px (F4); one filled, in ink, for the page's main act (Download PDF); the rest neutral;
   never filled in the accent (F5).
-- **Drawings:** the foot's wordmark and the ledger rules only; the trailers stay home's.
+- **The heading** (D-UX-94, after Zerodha Varsity's module head): the tool's place in caps ("Tool 1 of 4") beside
+  home's drawing for the tool on its glow, still; the h1; one line of what the page needs, then what it gives.
+- **Drawings:** the heading's, the foot's wordmark and the ledger rules only; the trailers stay home's.
+- **Codes:** one channel a meaning, and no two meanings in near hues (`docs/DESIGN-MATHS.md`, the Extra codes count).
 
 ## Downloads (PDF, Excel, Word)
 Plain: the documents keep their own layout and type (`docs/DESIGN.md`, Documents; the `lender-documents` skill). The new

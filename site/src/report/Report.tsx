@@ -7,7 +7,7 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
-import { BUTTON, Choice, FILLED, HINT, Section, TextField } from '../fields';
+import { BUTTON, Choice, FILLED, HINT, Section, TextField, toAnswer } from '../fields';
 import { Bar, Lever, PlanLever } from '../Board';
 import { inSentence, listed } from '../board-model';
 import { printable } from '../doc/pdf';
@@ -178,7 +178,7 @@ export function ReportCalculator() {
     {/* In the page from load, empty and unseen, so its first answer is a change and is read out (UX5b). */}
     <div class={typed ? 'sticky bottom-0 z-10 -mx-4 mt-10 flex items-center gap-2 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8' : 'sr-only'}>
       <p data-testid="rep-answer-bar" data-answer-echo aria-live="polite" class={typed ? 'flex-1 py-2 text-sm font-medium text-ink' : undefined}>{typed ? barText(p) : ''}</p>
-      {typed && <a href="#report" aria-label="To the report" class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↓</span></a>}
+      {typed && <a href="#report" aria-label="To the report" onClick={toAnswer} class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↓</span></a>}
     </div>
   </div>;
 }

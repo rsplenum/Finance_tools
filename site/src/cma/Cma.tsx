@@ -8,7 +8,7 @@
  * engine/cma-plan.ts only, via model.ts and levers.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
-import { BUTTON, CellInput, Choice, FILLED, HINT, Section, TextField } from '../fields';
+import { BUTTON, CellInput, Choice, FILLED, HINT, Section, TextField, toAnswer } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { cmaDoc, docNeeds, docStatus, fileName } from './document';
@@ -87,7 +87,7 @@ export function CmaCalculator() {
     {/* In the page from load, empty and unseen, so its first answer is a change and is read out (UX5b). */}
     <div class={shown ? 'sticky bottom-0 z-10 -mx-4 mt-10 flex items-center gap-2 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8' : 'sr-only'}>
       <p data-testid="cma-answer-bar" data-answer-echo aria-live="polite" class={shown ? 'flex-1 py-2 text-sm font-medium text-ink' : undefined}>{shown ? barText(p, s) : ''}</p>
-      {shown && <a href="#result" aria-label="To the CMA data" class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↓</span></a>}
+      {shown && <a href="#result" aria-label="To the CMA data" onClick={toAnswer} class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↓</span></a>}
     </div>
   </div>;
 }

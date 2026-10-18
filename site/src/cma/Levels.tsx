@@ -22,7 +22,8 @@ const tone = (ok: boolean) => (ok ? 'text-good' : 'text-bad');
 export function Levels({ s, update, use }: { s: CmaState; update: Update; use: (l: CmaLevers) => void }) {
   const lv = useMemo(() => levelsOf(s), [s]);
   if (!lv) return null;
-  return <div data-testid="cma-levels" class="mt-4">
+  // The levels and "Make it viable" are results, so they land on paper (docs/DESIGN-SITE.md; a dark sheet in dark mode, UX5c).
+  return <div data-testid="cma-levels" class={lv.checks ? 'paper shadow-paper mt-4 rounded-card p-4 sm:p-6' : 'mt-4'}>
     {lv.ask && <p data-testid="cma-levels-ask" class="text-sm text-warn">{lv.ask}</p>}
     {lv.checks && <div data-testid="cma-checks">
       <h3 class="text-title text-ink">{lv.misses ? 'Why it does not work yet' : 'Against a lender’s levels'}</h3>

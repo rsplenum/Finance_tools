@@ -131,6 +131,15 @@ export function SourceNote(p: { what: string; children: ComponentChildren; /** T
   </details>;
 }
 
+/** The answer bar's arrow: it takes the focus to the results as well as the eye, so Tab goes on from there (UX5c). */
+export function toAnswer(e: MouseEvent) {
+  const t = document.getElementById((e.currentTarget as HTMLAnchorElement).hash.slice(1));
+  if (!t) return;
+  e.preventDefault();
+  if (!t.hasAttribute('tabindex')) t.setAttribute('tabindex', '-1');
+  t.focus();
+}
+
 export function Section(p: { id: string; title: string; children: ComponentChildren }) {
   // In the new look a section parts on the ledger rule and its heading takes the section size (F2).
   return <section id={p.id} aria-labelledby={`${p.id}-h`} class="mt-10 border-t border-line pt-6 new:mt-14 new:border-0 new:pt-0">
