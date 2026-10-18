@@ -329,6 +329,8 @@ export const STATES = {
     },
   },
   '/': { page: async () => {} },
+  // The policy pages (LEGAL1): read as they load.
+  ...Object.fromEntries(['/privacy/', '/terms/', '/not-advice/', '/refunds/', '/contact/'].map((p) => [p, { page: async () => {} }])),
 };
 
 /** After a state's last step the focus is still on a control, never dropped to the page (WCAG 2.4.3; DESIGN-LESSONS lesson 1, recurred on /cma/ and /project-report/ in UX1). */
