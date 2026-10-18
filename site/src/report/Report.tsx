@@ -7,7 +7,7 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
-import { answerRule, BUTTON, Choice, Claim, FILLED, HINT, Section, STATE, TextField, Tick, toAnswer } from '../fields';
+import { answerRule, BAR, BAR_ARROW, BUTTON, Choice, Claim, Counter, Dash, FILLED, Folded, goTo, HINT, Section, STATE, TextField, Tick, toAnswer } from '../fields';
 import { Bar, Benchmarks, Lever, PlanLever, targetOf } from '../Board';
 import { benchmarkFields, inSentence, listed, withBenchmark } from '../board-model';
 import { printable } from '../doc/pdf';
@@ -30,6 +30,20 @@ const bad = (t: string, read: (t: string) => unknown) => !!t.trim() && read(t) =
 const notUnderstood = (t: string, read: (t: string) => unknown, example: string) => (bad(t, read) ? `Not understood. Type ${example}.` : undefined);
 /** A control that removes itself hands the focus on, after the render (WCAG 2.4.3; docs/DESIGN.md, Focus). */
 const focusNext = (sel: string) => requestAnimationFrame(() => document.querySelector<HTMLElement>(sel)?.focus());
+/** The box each of the engine's needs is typed in, by the first words of the need (engine/report.ts), and whether it sits
+ * under More options: each missing figure is a link to its box (UX8, review finding 2). */
+const BOXES: [string, string, boolean?][] = [
+  ['Who the borrower', 'fld-borrower'], ['Cost of the project', 'cost'], ['The term loan: its amount', 'fld-tl-amount'],
+  ['The term loan: its interest', 'fld-tl-rate'], ['The term loan: the month', 'fld-tl-disbursed'], ['The term loan: the moratorium', 'fld-tl-moratorium'],
+  ['The term loan: the number', 'fld-tl-instalments'], ['The term loan: how', 'fld-tl-repayment'], ['Capital subsidy', 'fld-subsidy'],
+  ['Unsecured', 'fld-unsecured'], ['Sales in', 'fld-sales', true], ['Sales: growth', 'fld-salesGrowth', true], ['Capacity', 'fld-capacity'],
+  ['Price a unit', 'fld-price'], ['Use of the capacity', 'fld-utilisation', true], ['The price: growth', 'fld-priceGrowth', true],
+  ['Months from', 'fld-monthsToStart'], ['PMEGP: the borrower', 'fld-category'], ['PMEGP: a town', 'fld-area'], ['PMEGP: manufacturing', 'fld-activity'],
+  ['Materials', 'fld-variablePct'], ['Fixed costs in', 'fld-fixed'], ['Fixed costs: growth', 'fld-fixedGrowth'], ['Days of stock', 'fld-days-stock'],
+  ['Days of debtors', 'fld-days-debtors'], ['Days of creditors', 'fld-days-creditors'], ['The working-capital limit sought', 'fld-wcLimit'],
+  ['The working-capital limit: its', 'fld-wcRate'], ['The collateral', 'fld-collateral', true],
+];
+const boxOf = (need: string) => BOXES.find(([w]) => need.startsWith(w));
 /** One tone a meaning (docs/DESIGN-SITE.md, Colours): good meets, warn provisional, bad misses. */
 
 /** The answer in words (review finding 3): the model's own sentence when a level misses; else what meets and what it cannot
@@ -74,6 +88,12 @@ export function ReportCalculator() {
   const unclear = () => { if (cleared) setS(cleared); setCleared(undefined); focusNext('[data-testid="rep-clear"]'); };
   // The security cover's row links to the collateral field under More options (review finding 4).
   const toCollateral = (e: Event) => { e.preventDefault(); setMore(true); focusNext('#fld-collateral'); };
+  // A missing figure's link: to its box, opening More options first when it sits there.
+  const toBox = (need: string) => (e: Event) => {
+    const b = boxOf(need);
+    if (!b?.[2]) return b && goTo(b[1])(e);
+    e.preventDefault(); setMore(true); focusNext(`#${b[1]}`);
+  };
   const mark = (id: string, hint?: string) => { const c = used.find((u) => u.field === id); return c ? `Changed by the plan; it was ${c.was || 'empty'}.${hint ? ` ${hint}` : ''}` : hint; };
   // Each setter builds on the latest state (x), never on the one this render saw.
   const amount = (id: string, label: string, value: string, set: (x: ReportState, t: string) => ReportState, hint?: string) =>
@@ -82,7 +102,9 @@ export function ReportCalculator() {
   const percent = (id: string, label: string, value: string, set: (x: ReportState, t: string) => ReportState, placeholder: string) =>
     <TextField id={id} label={label} hint={mark(id)} inputMode="decimal" value={value} placeholder={placeholder}
       invalid={bad(value, plainOf)} said={notUnderstood(value, plainOf, 'a number, like 10')} onCommit={(t) => update((x) => set(x, t))} />;
-  return <div>
+  // From 1024 px the questions stand left and the answer panel right (UX8, D-UX-106); the report's tables, what it assumes
+  // and the download run the full width below.
+  return <div class="lg:grid lg:grid-cols-tool-grid lg:gap-x-10"><div class="lg:col-start-1 lg:row-start-1">
     <Choice name="fld-borrower" legend="Who is the borrower? It sets the tax." options={BORROWER_CHOICES} value={s.borrower} columns
       onChange={(borrower) => update((x) => ({ ...x, borrower }))} />
     <Section id="cost" title="Cost of the project">
@@ -161,24 +183,28 @@ export function ReportCalculator() {
           {percent(`fld-days-${k}`, `Days of ${k}`, s.days[k], (x, t) => ({ ...x, days: { ...x.days, [k]: t } }), 'like 30')}
         </div>)}
       </div>
-      {typed && <p data-testid="rep-arrived" class="mt-8 text-ink"><a href="#report" class="text-link underline underline-offset-4">The project report below</a> {arrived(p)}</p>}
+      {typed && <p data-testid="rep-arrived" class="mt-8 text-ink lg:hidden"><a href="#report" class="text-link underline underline-offset-4">The project report below</a> {arrived(p)}</p>}
     </Section>
-    <Result s={s} p={p} update={update} use={use} used={used} undo={undo} keep={() => setUsed([])} toCollateral={toCollateral}
+    </div>
+    <Result s={s} p={p} update={update} use={use} used={used} undo={undo} keep={() => setUsed([])} toCollateral={toCollateral} toBox={toBox}
       reset={typed
         ? <button type="button" data-testid="rep-clear" class={BUTTON} onClick={clear}>Clear all</button>
         : cleared && <p role="status" class="flex items-center gap-2 text-sm text-ink">Cleared.
           <button type="button" data-testid="rep-clear-undo" class={BUTTON} onClick={unclear}>Undo</button></p>} />
+    <div class="lg:col-span-2 lg:row-start-2">
+    {p.view && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
     <Section id="assumed" title="Assumed until changed">
       <ul data-testid="rep-assumed" class="mt-3 max-w-prose list-disc space-y-1 pl-5 text-sm text-ink-muted">
         {assumptionsOf(s).map((a) => <li key={a.id}><span class="font-medium text-ink">{a.what}:</span> {a.shown}. <span class={MUTED}>{a.why}.</span></li>)}
       </ul>
     </Section>
     <Download s={s} p={p} update={update} />
-    {/* The answer on every screen of the fields (D-UX-84): text, read out as it changes; only the arrow is a target, 44 px. */}
-    {/* In the page from load, empty and unseen, so its first answer is a change and is read out (UX5b). */}
-    <div class={typed ? 'sticky bottom-0 z-10 -mx-4 mt-10 flex items-center gap-2 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8' : 'sr-only'}>
-      <p data-testid="rep-answer-bar" data-answer-echo aria-live="polite" class={typed ? 'flex-1 py-2 text-sm font-medium text-ink' : undefined}>{typed ? barText(p) : ''}</p>
-      {typed && <a href="#report" aria-label="To the report" onClick={toAnswer} class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↓</span></a>}
+    </div>
+    {/* The answer on every screen of the fields (D-UX-84), from load as on every tool (UX8, review finding 13): text, read
+        out as it changes; only the arrow is a target, 44 px. From 1024 px the panel stands beside, so only the words stay. */}
+    <div class={`${BAR} lg:col-span-2`}>
+      <p data-testid="rep-answer-bar" data-answer-echo aria-live="polite" class="flex-1 py-2 text-sm font-medium text-ink">{barText(p)}</p>
+      <a href="#report" aria-label="To the report" onClick={toAnswer} class={BAR_ARROW}><span aria-hidden="true">↓</span></a>
     </div>
   </div>;
 }
@@ -191,7 +217,7 @@ const line = (label: string, value: string | undefined, kind: ViewRow['kind'], k
  * docs/DESIGN.md, Table). The repayment's rows are its years, so a card a row; a table of one column stays a table. */
 function ReportTable({ t }: { t: ViewTable }) {
   const cols = t.columns.length + 1, byRow = t.first === 'Year', cards = t.columns.length > 1;
-  return <details open={t.id === 'cost' || t.id === 'finance' || t.id === 'dscr'} class="paper shadow-paper mt-4 rounded-card">
+  return <details open={t.id === 'cost' || t.id === 'finance' || t.id === 'dscr'} class="paper mt-4 rounded-card">
     <summary class="flex min-h-11 cursor-pointer items-center px-4 py-2 font-medium text-ink">{t.title}</summary>
     <div class={`overflow-x-auto px-4 pb-4 ${cards ? 'max-sm:hidden' : ''}`} tabIndex={0} role="region" aria-label={t.title}>
       <table data-testid={`rep-${t.id}`} class="w-full border-collapse text-sm">
@@ -315,58 +341,62 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
       {cards('borrower', 'Your changes')}
       {cards('lender', 'The lender’s, if it agrees')}
       {/* Above the page's answer bar, which is pinned to the foot too. */}
-      <p data-testid="rep-plan-line" aria-live="polite" class={`sticky bottom-12 mt-2 border-t border-line bg-paper py-2 text-sm font-medium ${tone(b.works)}`}>With these changes: {b.line}</p>
+      <p data-testid="rep-plan-line" data-pinned-line aria-live="polite" class={`sticky bottom-12 lg:bottom-0 mt-2 border-t border-line bg-paper py-2 text-sm font-medium ${tone(b.works)}`}>With these changes: {b.line}</p>
       <p class={`max-w-prose ${HINT}`}>{v.foot}</p>
     </div>}
   </div>;
 }
 
-function Result({ s, p, update, use, used, undo, keep, toCollateral, reset }: {
+function Result({ s, p, update, use, used, undo, keep, toCollateral, toBox, reset }: {
   s: ReportState; p: ReportPreview; update: Update; use: (l: Levers) => void; used: PlanChange[]; undo: () => void; keep: () => void;
-  toCollateral: (e: Event) => void; reset: ComponentChildren;
+  toCollateral: (e: Event) => void; toBox: (need: string) => (e: Event) => void; reset: ComponentChildren;
 }) {
   const v = p.view, verdict = verdictOf(p);
-  return <Section id="report" title="The project report">
-    {reset && <div class="mt-4 flex flex-wrap items-center justify-end gap-2">{reset}</div>}
-    {used.length > 0 && <div data-testid="rep-used" role="status" class="mt-3 rounded-control border-l-4 border-ink bg-surface p-3">
-      <p class="font-medium text-ink">The plan is used: these figures above changed.</p>
+  const result = p.blocked ? 'blocked' : p.needs.length || p.short ? 'provisional' : 'ready';
+  // Before the figures, the report's outline: its key figures with "—" for each not yet known, never 0 (UX8, review finding 2).
+  const first = p.needs.map(boxOf).find((b) => b && !b[2])?.[1];
+  const key = v?.key ?? [{ label: 'Cost of the project' }, { label: 'Average DSCR', check: 'dscrAverage' }, { label: 'Lowest DSCR', check: 'dscrLowest' }];
+  return <div class="lg:col-start-2 lg:row-start-1"><section id="report" aria-labelledby="report-h" class="answer-panel mt-10 lg:mt-4">
+    <h2 id="report-h" class="sr-only">The project report</h2>
+    {reset && <div class="mb-3 flex flex-wrap items-center justify-end gap-2">{reset}</div>}
+    {used.length > 0 && <div data-testid="rep-used" role="status" class="mb-3 rounded-control border-l-4 border-ink bg-surface p-3">
+      <p class="font-medium text-ink">The plan is used: these figures changed.</p>
       <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink tabular-nums">{used.map((c) => <li key={c.key}>{c.label}: {c.was || 'none'} → {c.now}</li>)}</ul>
       <div class="mt-2 flex flex-wrap gap-2">
         <button type="button" data-testid="rep-undo" class={BUTTON} onClick={undo}>Undo</button>
         <button type="button" data-testid="rep-keep" class={BUTTON} onClick={keep}>Keep these</button>
       </div>
     </div>}
-    {/* The answer as paper, there at once (docs/DESIGN-SITE.md): the verdict in words and the key figures above the status
-        (review finding 3); one tone a meaning, and the status plain when complete, never green under a miss. */}
-    <div class="paper shadow-paper mt-6 rounded-card p-4 sm:p-6">
+    {/* The answer as paper, there from load (docs/DESIGN-SITE.md): the verdict in words and the key figures above the
+        status (review finding 3); one tone a meaning, and the status plain when complete, never green under a miss. */}
+    <div class="paper shadow-paper rounded-card p-4 sm:p-6">
       {/* The answer is the paper's heading (UX7): a flat claim, its rule solid once final and dashed while provisional. */}
       {verdict && <h3 data-testid={p.misses ? 'rep-misses' : 'rep-verdict'} data-answer class={`text-title text-ink ${answerRule(!p.blocked && !p.needs.length)}`}><Claim text={verdict.text} /></h3>}
       {p.short && <p data-testid="rep-short" class="mt-3 text-sm font-medium text-bad">{p.short}</p>}
-      {v && <dl class="mt-4 grid gap-3 sm:grid-cols-3">
-        {v.key.map((k, i) => {
-          const c = k.check ? p.checks?.find((x) => x.id === k.check) : undefined;
-          return <div key={k.label} data-testid={c ? `rep-check-${c.id}` : undefined} class="rounded-control bg-surface p-3">
+      <Counter id="rep-status" result={result} text={statusText(p)} rule={!verdict} answer={!verdict} class={verdict ? 'mt-2' : ''}>
+        {p.needs.length > 0 && <ul data-testid="rep-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => {
+          const b = boxOf(n);
+          return <li key={n}>{b ? <a href={`#${b[1]}`} onClick={toBox(n)} class="inline-flex min-h-6 items-center text-link">{n}</a> : n}</li>;
+        })}</ul>}
+      </Counter>
+      {p.blocked && <p role="alert" class={`mt-3 ${answerRule(true)} text-ink`}>{p.blocked}</p>}
+      {!p.blocked && <dl class="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-2">
+        {key.map((k, i) => {
+          const c = k.check && v ? p.checks?.find((x) => x.id === k.check) : undefined;
+          return <div key={k.label} data-testid={c ? `rep-check-${c.id}` : undefined} class={`rounded-control bg-surface p-3 ${k.check ? '' : 'lg:col-span-2'}`}>
             <dt class={`text-sm ${MUTED}`}>{k.label}</dt>
-            <dd data-testid={`rep-key-${i}`} class="figure text-2xl text-ink">{k.value}</dd>
-            {k.note && <dd class={`text-sm ${MUTED}`}>{k.note}</dd>}
+            <dd data-testid={`rep-key-${i}`} class="figure text-2xl text-ink">{'value' in k ? k.value : <Dash what={k.label} to={i ? first : 'cost'} />}</dd>
+            {'note' in k && k.note && <dd class={`text-sm ${MUTED}`}>{k.note}</dd>}
             {c && <dd class="mt-1 text-sm"><span class={c.verdict === 'meets' ? 'text-good' : c.verdict === 'misses' ? 'text-bad' : MUTED}>
               {c.verdict === 'meets' ? 'Meets' : c.verdict === 'misses' ? 'Misses' : 'Not yet read'}</span><span class={MUTED}> · {targetOf(c)}</span></dd>}
             {c?.short && <dd data-testid={`rep-short-${c.id}`} class="mt-0.5 text-sm font-medium text-bad">{c.short}</dd>}
           </div>;
         })}
       </dl>}
-      <p data-testid="rep-status" data-answer={verdict ? undefined : true} data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'}
-        class={`${STATE} mt-4 ${verdict ? '' : answerRule(!p.blocked && !p.needs.length)} ${p.blocked ? 'text-bad' : p.needs.length || p.short ? 'text-warn' : 'text-ink'}`}>{!p.blocked && !p.needs.length && !p.short && <Tick />}{statusText(p)}</p>
-      {p.blocked && <p role="alert" class={`mt-3 ${answerRule(true)} text-ink`}>{p.blocked}</p>}
-      {p.needs.length > 0 && <div class="mt-4 text-ink">
-        <p class="font-medium">Still needed</p>
-        <ul data-testid="rep-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>
-      </div>}
       {p.flags.length > 0 && <ul data-testid="rep-flags" class="mt-3 list-disc space-y-0.5 pl-5 text-sm text-warn">{p.flags.map((n) => <li key={n}>{n}</li>)}</ul>}
       {v && !p.blocked && <Viable s={s} p={p} update={update} use={use} toCollateral={toCollateral} />}
     </div>
-    {v && v.tables.map((t) => <ReportTable key={t.id} t={t} />)}
-  </Section>;
+  </section></div>;
 }
 
 function Download({ s, p, update }: { s: ReportState; p: ReportPreview; update: Update }) {
@@ -379,6 +409,9 @@ function Download({ s, p, update }: { s: ReportState; p: ReportPreview; update: 
   };
   const field = (id: keyof ReportFacts, label: string, hint?: string) =>
     <TextField id={`fld-rep-${id}`} label={label} hint={hint} value={f[id]} said={english(f[id])} invalid={!!english(f[id])} onCommit={(t) => set({ [id]: t })} />;
+  // Before the report shows figures the section is one line (UX8, review finding 9).
+  if (!ready) return <Folded id="download" title="Download the project report"><span data-testid="rep-doc-wait">{p.blocked
+    ? 'No document while the two computations disagree.' : 'A PDF, an Excel copy and a Word copy, once the report shows figures.'}</span></Folded>;
   return <Section id="download" title="Download the project report">
     <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy and a Word copy to edit, made in your browser from the figures above.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
@@ -388,8 +421,7 @@ function Download({ s, p, update }: { s: ReportState; p: ReportPreview; update: 
       {field('lender', 'Lender, if known')}
       {field('preparedBy', 'Prepared by, if any', 'Your name or your firm’s.')}
     </div>
-    {ready
-      ? <div class="mt-5">
+    <div class="mt-5">
         <p data-testid="rep-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{docStatus(s, p)}</p>
         {own.length > 0 && <ul data-testid="rep-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
         <div class="mt-3 flex flex-wrap gap-2">
@@ -398,6 +430,5 @@ function Download({ s, p, update }: { s: ReportState; p: ReportPreview; update: 
           <button type="button" data-testid="rep-download-docx" class={BUTTON} onClick={() => go('docx')}>Download Word</button>
         </div>
       </div>
-      : <p data-testid="rep-doc-wait" class={`mt-4 ${HINT}`}>{p.blocked ? 'No document while the two computations disagree.' : 'The document can be made once the report shows figures.'}</p>}
   </Section>;
 }

@@ -22,8 +22,9 @@ const tone = (ok: boolean) => (ok ? 'text-good' : 'text-bad');
 export function Levels({ s, update, use }: { s: CmaState; update: Update; use: (l: CmaLevers) => void }) {
   const lv = useMemo(() => levelsOf(s), [s]);
   if (!lv) return null;
-  // The levels and "Make it viable" are results, so they land on paper (docs/DESIGN-SITE.md; a dark sheet in dark mode, UX5c).
-  return <div data-testid="cma-levels" class={lv.checks ? 'paper shadow-paper mt-4 rounded-card p-4 sm:p-6' : 'mt-4'}>
+  // Under the answer's sheet in its panel, on the page itself: a second sheet arriving with its shadow read as a sudden
+  // dark smudge (UX8, D-UX-106).
+  return <div data-testid="cma-levels" class="mt-4">
     {lv.ask && <p data-testid="cma-levels-ask" class="text-sm text-warn">{lv.ask}</p>}
     {lv.checks && <div data-testid="cma-checks">
       <h3 class="text-title text-ink">{lv.misses ? 'Why it does not work yet' : `${lv.checks.some((c) => c.verdict === 'wait') ? 'Against' : 'Meets'} the ${lv.benchmarks ? '' : 'default '}benchmark ratios`}</h3>
@@ -109,7 +110,7 @@ function Viable({ s, misses, update, use }: { s: CmaState; misses: boolean; upda
       </div>}
       {cards('borrower', 'Your changes')}
       {cards('lender', 'The lender’s, if it agrees')}
-      <p data-testid="cma-plan-line" aria-live="polite" class={`sticky bottom-12 mt-2 border-t border-line bg-canvas py-2 text-sm font-medium ${tone(b.works)}`}>With these changes: {b.line}</p>
+      <p data-testid="cma-plan-line" data-pinned-line aria-live="polite" class={`sticky bottom-12 lg:bottom-0 mt-2 border-t border-line bg-canvas py-2 text-sm font-medium ${tone(b.works)}`}>With these changes: {b.line}</p>
       <p class={HINT}>{v.foot}</p>
     </div>}
   </>;

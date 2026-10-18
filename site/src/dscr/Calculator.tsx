@@ -19,7 +19,7 @@ import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import DSCR_FILE from '../../../engine/data/dscr.json';
 import TAX_FILE from '../../../engine/data/tax.json';
-import { answerRule, BUTTON, CellInput, Claim, Choice, FILLED, HINT, Section, SourceNote, STATE, TextField, Tick, toAnswer } from '../fields';
+import { answerRule, BAR, BAR_ARROW, BUTTON, CellInput, Claim, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Section, SourceNote, STATE, TextField, Tick, toAnswer } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
 import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
@@ -39,13 +39,6 @@ const notUnderstood = (text: string, read: (t: string) => unknown, example: stri
   text.trim() && read(text) === undefined ? `Not understood. Try ${example}.` : undefined;
 const MUTED = 'text-ink-muted';
 
-const goTo = (id: string) => (e: Event) => {
-  const el = document.getElementById(id), to = el?.matches('fieldset') ? el.querySelector('input') : el;
-  if (!to) return;
-  e.preventDefault();
-  (to as HTMLElement).focus();
-};
-
 export function DscrCalculator() {
   const start = () => frontDoor(isoDate(new Date()).slice(0, 7));
   const [s, setS] = useState<State>(start);
@@ -60,13 +53,20 @@ export function DscrCalculator() {
   const use = (l: DscrLevers) => { const a = applyDscrPlan(s, l); setS(a.s); setUsed(a.changes); };
   const undo = () => { setS((x) => undoDscrPlan(x, used)); setUsed([]); };
   const was = (key: DscrChange['key']) => { const c = used.find((u) => u.key === key); return c ? `Changed by the plan; it was ${c.was || 'empty'}.` : undefined; };
-  const results = <PreviewSection s={s} p={p} update={update} openMore={openMore} use={use} used={used} undo={undo} keep={() => setUsed([])} />;
-  return <div>
-    <ClearAll shown={JSON.stringify(s) !== JSON.stringify(start())} onClear={() => setS(start())} />
-    {s.source === 'plan' && <FrontDoor s={s} update={update} openMore={openMore} was={was} />}
+  // The answer beside the questions from 1024 px (UX8, D-UX-106): its panel spans the front door and More options, and
+  // the working, year by year, runs under both. On a phone the column keeps the old order.
+  const results = <>
+    <AnswerPanel s={s} p={p} update={update} use={use} used={used} undo={undo} keep={() => setUsed([])} />
+    {p.started && <Working s={s} p={p} openMore={openMore} />}
+  </>;
+  return <div class="lg:grid lg:grid-cols-tool lg:gap-x-12">
+    <div class="lg:col-start-1 lg:row-start-1">
+      <ClearAll shown={JSON.stringify(s) !== JSON.stringify(start())} onClear={() => setS(start())} />
+      {s.source === 'plan' && <FrontDoor s={s} update={update} openMore={openMore} was={was} />}
+    </div>
     {/* On the front door the answer comes before More options (review finding 12); with year-by-year figures, after them. */}
-    {p.started && s.source === 'plan' && results}
-    <details id="more-options" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)} class="mt-12">
+    {s.source === 'plan' && results}
+    <details id="more-options" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)} class="mt-12 lg:col-start-1 lg:row-start-2">
       <summary class="flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link">More options: the method, the loan in full, year-by-year figures</summary>
       <div class="pb-6">
         <Start s={s} update={update} />
@@ -78,15 +78,13 @@ export function DscrCalculator() {
         </>}
       </div>
     </details>
-    {p.started && <>
-      {s.source !== 'plan' && results}
-      <DownloadSection s={s} p={p} update={update} />
-      {/* The answer's echo is text; only the arrow is a target, 44 px, so a field under the bar can still be tapped (WCAG 2.5.8; UX3). */}
-      <div class="sticky bottom-0 z-10 -mx-4 mt-10 flex items-center gap-2 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8">
-        <p data-testid="answer-bar" data-answer-echo aria-live="polite" class="flex-1 py-2 text-sm font-medium text-ink">{barText(p)}</p>
-        <a href="#preview" aria-label="To the results" onClick={toAnswer} class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↓</span></a>
-      </div>
-    </>}
+    {s.source !== 'plan' && results}
+    {p.started && <div class="lg:col-span-2 lg:row-start-4"><DownloadSection s={s} p={p} update={update} /></div>}
+    {/* The answer's echo is text; only the arrow is a target, 44 px, so a field under the bar can still be tapped (WCAG 2.5.8; UX3). */}
+    <div class={`${BAR} lg:col-span-2`}>
+      <p data-testid="answer-bar" data-answer-echo aria-live="polite" class="flex-1 py-2 text-sm font-medium text-ink">{barText(p)}</p>
+      <a href="#preview" aria-label="To the results" onClick={toAnswer} class={BAR_ARROW}><span aria-hidden="true">↓</span></a>
+    </div>
   </div>;
 }
 
@@ -408,41 +406,55 @@ function TargetSection({ s, update }: { s: State; update: Update }) {
   </Section>;
 }
 
-function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
-  s: State; p: Preview; update: Update; openMore: () => void; use: (l: DscrLevers) => void; used: DscrChange[]; undo: () => void; keep: () => void;
+/** The box a missing figure is typed in: the first of the needs among the front door's fields `from` to `to`. */
+const boxFor = (s: State, p: Preview, from = 0, to = FRONT.length) => {
+  if (s.source !== 'plan') return undefined;
+  const first = yearsOf(s).years[0];
+  const i = p.needs.map((n) => frontAt(n, first)).find((k) => k >= from && k < to);
+  return i === undefined ? undefined : FRONT[i][2];
+};
+
+/**
+ * The answer, pinned beside the questions from 1024 px (UX8, D-UX-106) and there from load: the verdict as the paper's
+ * heading, one counter of what is still needed opening to its links, and the figures' outline with "—" for each one not
+ * yet known, never 0 (review finding 2); then the plan used, why it misses and the largest loan or fewest instalments.
+ */
+function AnswerPanel({ s, p, update, use, used, undo, keep }: {
+  s: State; p: Preview; update: Update; use: (l: DscrLevers) => void; used: DscrChange[]; undo: () => void; keep: () => void;
 }) {
   const largest = p.largest?.amount, fewest = p.fewest?.instalments;
-  // The method and the target read as one line (D-UX-10: shorter).
-  const method = p.assumed.find((a) => a.id === 'method'), target = p.assumed.find((a) => a.id === 'target');
-  const assumed = p.assumed.filter((a) => !(method && target && a.id === 'target'))
-    .map((a) => (a.id === 'method' && target ? { ...a, what: 'How DSCR is worked out, and the target', shown: `${a.shown}; ${target.shown.toLowerCase()}` } : a));
-  return <Section id="preview" title="Results">
-    {/* The answer first (docs/DESIGN.md, principle 1); one tone a meaning: good meets, bad misses or blocked, warn provisional. */}
+  const result = p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready';
+  const dash = (what: string, from?: number, to?: number) => <Dash what={what} to={boxFor(s, p, from, to)} />;
+  // The panel pins inside a column that spans the questions' rows, so it never runs over the working below.
+  return <div class="lg:col-start-2 lg:row-start-1 lg:row-end-3"><section id="preview" aria-labelledby="preview-h" class="answer-panel mt-10 lg:mt-4">
+    <h2 id="preview-h" class="sr-only">Results</h2>
     {/* The answer as paper, there at once: it changes as the figures are typed (docs/DESIGN-SITE.md, tool pages). */}
-    <div class="paper shadow-paper mt-6 rounded-card p-4 sm:p-6">
+    <div class="paper shadow-paper rounded-card p-4 sm:p-6">
     {/* The answer is the paper's heading (UX7): a flat claim, its rule solid once final and dashed while provisional. */}
     {p.verdict && <h3 data-testid="dscr-verdict" data-answer class={`text-title text-ink ${answerRule(!p.blocked && !p.needs.length)}`}><Claim text={p.verdict.text} /></h3>}
-    {p.loanLine && <dl data-testid="dscr-loan-line" class="mt-3 grid grid-cols-2 gap-3 text-ink">
-      <div><dt class={`text-sm ${MUTED}`}>Each instalment</dt><dd data-testid="dscr-instalment" class="font-semibold tabular-nums">{p.loanLine.instalment}</dd></div>
-      <div><dt class={`text-sm ${MUTED}`}>Interest over the whole loan</dt><dd data-testid="dscr-total-interest" class="font-semibold tabular-nums">{p.loanLine.totalInterest}</dd></div>
-    </dl>}
-    <p data-testid="dscr-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class={`${STATE} mt-2 ${p.verdict ? '' : answerRule(!p.blocked && !p.needs.length)} ${p.blocked
-      ? 'text-bad' : p.needs.length ? 'text-warn' : 'text-ink'}`}>
-      {!p.blocked && !p.needs.length && <Tick />}{statusText(p)}
-    </p>
+    <Counter id="dscr-status" result={result} text={statusText(p)} rule={!p.verdict} class={p.verdict ? 'mt-2' : ''}>
+      {p.needs.length > 0 && <ul data-testid="dscr-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => {
+        const i = s.source === 'plan' ? frontAt(n, yearsOf(s).years[0]) : -1;
+        return <li key={n}>{i < 0 ? n : <a href={`#${FRONT[i][2]}`} onClick={goTo(FRONT[i][2])} class="inline-flex min-h-6 items-center text-link">{FRONT[i][1]}</a>}</li>;
+      })}</ul>}
+    </Counter>
     {p.blocked && <p data-testid="dscr-blocked" role="alert" class={`mt-4 ${answerRule(true)} text-ink`}>{p.blocked}</p>}
-    {p.average !== undefined && <dl class="mt-4 grid grid-cols-2 gap-3">
+    {!p.blocked && <dl class="mt-4 grid grid-cols-2 gap-3">
       <div class="rounded-control bg-surface p-3">
         <dt class={`text-sm ${MUTED}`}>Average DSCR</dt>
-        <dd data-testid="dscr-average" class="figure text-section text-ink">{p.average}</dd>
+        <dd data-testid="dscr-average" class="figure text-section text-ink">{p.average ?? dash('Average DSCR')}</dd>
       </div>
       <div class="rounded-control bg-surface p-3">
         <dt class={`text-sm ${MUTED}`}>Lowest year</dt>
         <dd class="text-ink">
-          <span data-testid="dscr-lowest" class="figure text-section">{p.lowest}</span>
-          {' '}<span data-testid="dscr-lowest-year" class="whitespace-nowrap text-sm">in {p.lowestYear}</span>
+          <span data-testid="dscr-lowest" class="figure text-section">{p.lowest ?? dash('Lowest year')}</span>
+          {p.lowestYear && <>{' '}<span data-testid="dscr-lowest-year" class="whitespace-nowrap text-sm">in {p.lowestYear}</span></>}
         </dd>
       </div>
+    </dl>}
+    {!p.blocked && s.source === 'plan' && <dl data-testid="dscr-loan-line" class="mt-3 grid grid-cols-2 gap-3 text-ink">
+      <div><dt class={`text-sm ${MUTED}`}>Each instalment</dt><dd data-testid="dscr-instalment" class="font-semibold tabular-nums">{p.loanLine?.instalment ?? dash('Each instalment', 3)}</dd></div>
+      <div><dt class={`text-sm ${MUTED}`}>Interest over the whole loan</dt><dd data-testid="dscr-total-interest" class="font-semibold tabular-nums">{p.loanLine?.totalInterest ?? dash('Interest over the whole loan', 3)}</dd></div>
     </dl>}
     {p.marks && p.marks.length > 0 && <ul data-testid="dscr-marks" class="mt-4 flex flex-wrap gap-2 text-sm">
       {p.marks.map((m) => <li key={m.fy} data-testid={`mark-${m.fy}`} class={`rounded-full bg-surface px-2.5 py-0.5 ${!m.counted ? 'text-ink-muted' : m.meets ? 'text-good' : 'text-bad'}`}>
@@ -458,8 +470,7 @@ function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
         <button type="button" data-testid="dscr-keep" class={BUTTON} onClick={keep}>Keep these</button>
       </div>
     </div>}
-    {p.lender && <LenderLines v={p.lender} openMore={openMore} />}
-    {s.source === 'plan' && <Levels s={s} lender={p.lender} update={update} use={use} />}
+    {s.source === 'plan' && p.started && <Levels s={s} lender={p.lender} update={update} use={use} />}
     {p.largest && <div class="mt-3 text-sm text-ink">
       <p data-testid="dscr-largest">{p.largest.text}</p>
       {largest !== undefined && <button type="button" data-testid="use-amount" class={`mt-1 ${BUTTON}`}
@@ -470,14 +481,19 @@ function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
       {fewest !== undefined && <button type="button" data-testid="use-instalments" class={`mt-1 ${BUTTON}`}
         onClick={() => update((x) => ({ ...x, loan: { ...x.loan, instalments: String(fewest) } }))}>Use {fewest} instalments</button>}
     </div>}
-    {p.needs.length > 0 && <div data-testid="dscr-needs" class="mt-4 text-ink">
-      <p class="font-medium">Still needed</p>
-      <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => {
-        const i = s.source === 'plan' ? frontAt(n, yearsOf(s).years[0]) : -1;
-        return <li key={n}>{i < 0 ? n : <a href={`#${FRONT[i][2]}`} onClick={goTo(FRONT[i][2])} class="inline-flex min-h-6 items-center text-link">{FRONT[i][1]}</a>}</li>;
-      })}</ul>
-    </div>}
-    {assumed.length > 0 && <div data-testid="dscr-assumed" class="mt-4 text-ink">
+  </section></div>;
+}
+
+/** The working under the answer, full width from 1024 px: the lenders' tests, what is assumed, the statement year by year
+ * and the repayment schedule. */
+function Working({ s, p, openMore }: { s: State; p: Preview; openMore: () => void }) {
+  // The method and the target read as one line (D-UX-10: shorter).
+  const method = p.assumed.find((a) => a.id === 'method'), target = p.assumed.find((a) => a.id === 'target');
+  const assumed = p.assumed.filter((a) => !(method && target && a.id === 'target'))
+    .map((a) => (a.id === 'method' && target ? { ...a, what: 'How DSCR is worked out, and the target', shown: `${a.shown}; ${target.shown.toLowerCase()}` } : a));
+  return <section id="working" aria-label="How it is worked out" class="lg:col-span-2 lg:row-start-3">
+    {p.lender && <LenderLines v={p.lender} openMore={openMore} />}
+    {assumed.length > 0 && <div data-testid="dscr-assumed" class="mt-6 text-ink">
       <p class="font-medium">Assumed until you change them</p>
       <ul class="mt-1 mb-2 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">
         {assumed.map((a) => <li key={a.id} data-testid={`assumed-${a.id}`}>
@@ -492,7 +508,7 @@ function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
     {p.notes.length > 0 && <ul data-testid="dscr-notes" class="mt-2 space-y-0.5 text-sm text-warn">{p.notes.map((n) => <li key={n}>{n}</li>)}</ul>}
     {p.schedule && <Schedule sch={p.schedule} />}
     <p class={`mt-6 ${HINT}`}>A free preview, worked out twice in your browser; figures are shown only when both agree.</p>
-  </Section>;
+  </section>;
 }
 
 /** DSCR as lenders test it, beside the borrower's (D-UX-47): never part of the verdict. */
@@ -578,6 +594,9 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
   const field = (id: keyof DocFacts, label: string, hint?: string, placeholder?: string) =>
     <TextField id={`fld-${id}`} label={label} hint={hint} placeholder={placeholder} value={f[id] ?? ''} onCommit={(t) => set({ [id]: t })}
       said={english(f[id]) ?? (id === 'gstin' ? gstinSaid : undefined)} invalid={!!english(f[id]) || (id === 'gstin' && !!gstinSaid)} />;
+  // Before the statement shows figures the section is one line (UX8, review finding 9).
+  if (!ready) return <Folded id="download" title="Download the statement"><span data-testid="doc-wait">{p.blocked
+    ? 'No document while the two computations disagree.' : 'A PDF, an Excel and a Word copy, once the statement shows figures.'}</span></Folded>;
   return <Section id="download" title="Download the statement">
     <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy for the accountant and a Word copy to edit, made in your browser from the figures above.</p>
     {ready
@@ -609,7 +628,7 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
         </div>
         </div>
       </div>
-      : <p data-testid="doc-wait" class={`mt-4 ${HINT}`}>{p.blocked ? 'No document while the two computations disagree.' : 'The document can be made once the statement shows figures.'}</p>}
+      : null}
   </Section>;
 }
 
@@ -622,7 +641,8 @@ function StatementTable({ st, parts = {} }: { st: StatementView; parts?: Record<
   // On a phone a line that is nil every year is left off the cards; the table and the document keep it (finding 16).
   const shown = st.lines.filter((l) => l.kind || !l.n || l.n.some((x) => x !== 0));
   const hidden = st.lines.length - shown.length;
-  return <div class="paper shadow-paper mt-8 rounded-card p-4 sm:p-6">
+  // A sheet lying flat: only the answer's casts the shadow (UX8, D-UX-106).
+  return <div class="paper mt-8 rounded-card p-4 sm:p-6">
     <h3 class="font-semibold text-ink">Year by year</h3>
     <p class={`mt-1 ${HINT}`}>In rupees.{hidden > 0 && <span class="sm:hidden"> Lines that are nil every year are left out here; the document keeps them.</span>}</p>
     <div class="mt-2 overflow-x-auto max-sm:hidden">

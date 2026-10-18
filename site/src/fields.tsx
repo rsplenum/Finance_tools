@@ -136,6 +136,64 @@ export function Claim({ text }: { text: string }) {
   return <><span>{text.slice(0, at)}</span><span class="sr-only">:</span> <span class="mt-1 block font-display text-base font-normal first-letter:uppercase">{text.slice(at + 2)}</span></>;
 }
 
+/** Takes the focus to a box, so a link to a missing figure lands where it is typed: a field itself, or in a group of
+ * them (a fieldset, a form's grid) the first one still empty. */
+export const goTo = (id: string) => (e: Event) => {
+  const el = document.getElementById(id), boxes = el?.matches('input, select, textarea') ? [] : [...(el?.querySelectorAll('input, select, textarea') ?? [])] as HTMLInputElement[];
+  const to = boxes.length ? boxes.find((b) => b.type !== 'radio' && !b.value) ?? boxes[0] : el;
+  if (!to) return;
+  e.preventDefault();
+  (to as HTMLElement).focus();
+};
+
+/** A figure not yet known (UX8, D-UX-106): "—", never 0, a link to the box that fills it when there is one. */
+export function Dash({ to, what }: { to?: string; what: string }) {
+  if (!to) return <span aria-label={`${what}: still needed`} class="text-ink-muted">—</span>;
+  return <a href={`#${to}`} onClick={goTo(to)} aria-label={`${what}: still needed, to its box`}
+    class="inline-flex min-h-6 min-w-6 items-center text-link underline-offset-4 hover:underline">—</a>;
+}
+
+/** Whether the last key was Tab (and no pointer since): only then does a lost focus come back to the counter. */
+let tabbing = false;
+if (typeof window !== 'undefined') {
+  addEventListener('keydown', (e) => { tabbing = e.key === 'Tab'; }, true);
+  addEventListener('pointerdown', () => { tabbing = false; }, true);
+}
+
+/**
+ * The one count of what is still needed (UX8, review finding 2 and its tradeoff 5): the state as the summary, opening to
+ * the list of links to each missing box; final or blocked, the state alone. `id` names the state for the tests and UD1;
+ * `answer` marks it as the page's answer (the load measure's one) where no verdict stands above it.
+ */
+export function Counter(p: { id: string; result: 'blocked' | 'provisional' | 'ready'; text: string; rule?: boolean; answer?: boolean; class?: string; children?: ComponentChildren }) {
+  const tone = p.result === 'blocked' ? 'text-bad' : p.result === 'provisional' ? 'text-warn' : 'text-ink';
+  const state = <span data-testid={p.id} data-answer={p.answer || undefined} data-result={p.result} class={`${STATE} ${tone}`}>{p.result === 'ready' && <Tick />}{p.text}</span>;
+  const box = `${p.class ?? ''} ${p.rule ? answerRule(p.result === 'ready') : ''}`;
+  // The last answer, committed as Tab leaves its box, turns the list into the state alone and takes the summary away just
+  // as Tab moves to it: the state takes the focus, so Tab goes on from there, not from the top (WCAG 2.4.3; UX8's critic).
+  const summary = useRef<HTMLElement>(null), line = useRef<HTMLParagraphElement>(null), had = useRef(false);
+  if (typeof document !== 'undefined') had.current = summary.current?.isConnected ?? false;
+  useLayoutEffect(() => { if (had.current && !p.children && tabbing && document.activeElement === document.body) line.current?.focus(); });
+  if (!p.children) return <p ref={line} tabIndex={-1} class={box}>{state}</p>;
+  return <details class={`group ${box}`}>
+    <summary ref={summary} class="flex min-h-11 cursor-pointer flex-wrap items-center gap-x-2 [&::-webkit-details-marker]:hidden">{state}
+      <span class="text-sm text-link"><span class="group-open:hidden">Show which</span><span class="hidden group-open:inline">Hide</span></span></summary>
+    <div class="pb-1">{p.children}</div>
+  </details>;
+}
+
+/** A section with nothing in it yet folds to one line (UX8, review finding 9): its heading in body size and what it waits for. */
+export function Folded(p: { id: string; title: string; children: ComponentChildren; class?: string }) {
+  return <section id={p.id} data-folded aria-labelledby={`${p.id}-h`} class={`mt-10 flex flex-wrap items-baseline gap-x-2 border-t border-line pt-3 text-sm ${p.class ?? ''}`}>
+    <h2 id={`${p.id}-h`} class="font-medium text-ink">{p.title}</h2><p class="text-ink-muted">{p.children}</p>
+  </section>;
+}
+
+/** The answer bar (D-UX-84) under 1024 px, from load on every tool (UX8, review finding 13); from 1024 px the answer panel
+ * stands beside the questions, so the bar keeps only its words for a screen reader, and its arrow goes. */
+export const BAR = 'sticky bottom-0 z-10 -mx-4 mt-10 flex items-center gap-2 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8 lg:sr-only';
+export const BAR_ARROW = 'inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface lg:hidden';
+
 /** The line under an answer that says its state: the tick and "Complete" in ink, or what is still needed in the warning's
  * words, or why there is none in the bad's; one colour a meaning, on text only. */
 export const STATE = 'flex items-start gap-1.5 text-sm font-medium';

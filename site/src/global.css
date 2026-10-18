@@ -216,8 +216,14 @@ body[data-look='new'] .paper { background-color: var(--paper); color: var(--on-p
 .dark body[data-look='new'] .paper {
   --paper: oklch(0.29 0.05 270); --on-paper: oklch(0.965 0.012 85); --paper-muted: oklch(0.84 0.03 268);
   --surface: oklch(0.34 0.05 270); --line: oklch(0.42 0.05 270); --field: oklch(0.24 0.045 270);
-  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.07), var(--shadow-paper); /* its top edge catches the light */
 }
+/* Only a sheet that casts the shadow takes it in dark mode too; its top edge catches the light. */
+.dark body[data-look='new'] .paper.shadow-paper { box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.07), var(--shadow-paper); }
+/* On a tool page (UX8, D-UX-106) one sheet casts it, the answer's, there from load, and a quieter one than home's: the
+   heavy one arriving with the first answer over a tall sheet (or nine of them on the CMA) read as a sudden dark smudge. */
+[data-tool] { --shadow-sheet: 0 1px 2px oklch(0.16 0.05 270 / 0.18), 0 10px 24px -12px oklch(0.1 0.05 270 / 0.32); }
+[data-tool] .shadow-paper { --tw-shadow: var(--shadow-sheet); }
+.dark body[data-look='new'] [data-tool] .paper.shadow-paper { box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.07), var(--shadow-sheet); }
 [data-desk] { --focus: var(--marigold); }
 
 @layer base {
@@ -237,6 +243,9 @@ body[data-look='new'] { font-family: var(--font-display); }
    (WCAG 2.4.11; UX3). */
 html:has(body[data-look='new']) { scroll-padding-top: 5rem; }
 html:has([data-answer-echo]) { scroll-padding-bottom: 4rem; }
+/* A plan's pinned line rides 3rem above the bar on a phone: a control scrolled or tabbed to stays clear of both (UX8). */
+html:has([data-pinned-line]) { scroll-padding-bottom: 7rem; }
+@media (min-width: 64rem) { html:has([data-pinned-line]) { scroll-padding-bottom: 4rem; } }
 body[data-look='new'] :is(h1, h2, h3, [data-wordmark]) { font-family: var(--font-heading); font-weight: 500; }
 /* The new look's bar is 116 px tall on a phone (two rows; 156 under 384 px, where the tools take two), 68 px from lg; the
    notice under it scrolls away (AG3c). */
@@ -305,4 +314,12 @@ html:not(.js) [data-reel] + [data-reel] [data-mark] { transform-box: fill-box; t
 
 /* A label column, then three figures (the DSCR's changes, UX6): named here so no class carries an arbitrary value. */
 @utility grid-cols-label { grid-template-columns: 4.5rem 1fr 1fr 1fr; }
+/* The tool pages side by side from 1024 px (UX8, D-UX-106): the questions left, the answer right, pinned under the top
+   bar and scrolling within itself when taller than the screen, with room for its sheet's shadow. */
+@utility grid-cols-tool { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+/* The CMA's and the report's: their grids of years need the width, so the answer takes a narrower column. */
+@utility grid-cols-tool-grid { grid-template-columns: minmax(0, 1fr) 24rem; }
+@utility answer-panel {
+  @media (width >= 64rem) { position: sticky; top: 4.5rem; max-height: calc(100dvh - 5.5rem); overflow-y: auto; overscroll-behavior: contain; margin-inline: -1rem; padding: 0 1rem 2.5rem; }
+}
 @utility grid-cols-label-wide { grid-template-columns: 6rem 1fr 1fr 1fr; }

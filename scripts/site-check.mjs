@@ -311,7 +311,8 @@ async function layout(page, v, step) {
   await expectText(page, v, 'dscr-status', 'Provisional: 1 still needed', 'a figure not understood');
   const missing = await page.getByTestId('dscr-needs').locator('li').allTextContents();
   if (missing.join('|') !== 'Profit before interest, depreciation and tax for 2028-29') v(`a figure not understood: still needed ${JSON.stringify(missing)}`);
-  if (await page.getByTestId('dscr-average').count()) v('figures shown while a figure is not understood');
+  // The answer's outline stays, each figure a "—" until every figure is understood (UX8, D-UX-106).
+  if (/\d/.test((await page.getByTestId('dscr-average').textContent()) ?? '')) v('figures shown while a figure is not understood');
 
   // Who the borrower is sets the tax for every year in one tap.
   await page.check('#fld-borrowerType-company');
@@ -684,13 +685,16 @@ for (const scheme of ['light', 'dark']) {
   // The questions fold into one line as the sixth is answered, so the last is clicked rather than checked.
   await page.click('#fld-level-1');
   await expectText(page, v, 'pl-summary', 'Repair or renovate · Flat · Pune · 1,000 sq ft · 2 BHK · Basic', 'the answers folded');
-  const total = ((await page.getByTestId('pl-total').textContent()) ?? '').trim();
-  if (!/^Rs\. [\d,]+$/.test(total)) v(`the estimate's total reads "${total}"`);
-  await expectText(page, v, 'pl-sticky-total', total, 'the total in the bar at the bottom');
-  // L1: the level's range by its choices, in one line under the total.
-  await expectText(page, v, 'pl-range', /^At Basic, the choices run from Rs\. [\d,]+ to Rs\. [\d,]+: the cheapest in each item to the dearest\. \d+ of the \d+ items offer a choice\.$/, 'the level\'s range under the total');
+  // The headline as precise as the estimate, the exact total beside it for the bill and the documents (UX8, D-UX-106).
+  const head = ((await page.getByTestId('pl-total').textContent()) ?? '').trim();
+  if (!/^Rs\. [\d,]+\.\d (lakh|crore)$/.test(head)) v(`the estimate's headline reads "${head}"`);
+  const exact = /Rs\. \d[\d,]*\d/.exec((await page.getByTestId('pl-exact').textContent()) ?? '')?.[0] ?? '';
+  if (!exact) v('the exact total is not beside the headline');
+  await expectText(page, v, 'pl-sticky-total', head, 'the total in the bar at the bottom');
+  // L1: the level's range by its choices, as a bar under the total with its words.
+  await expectText(page, v, 'pl-range', /^At Basic: the cheapest choice in each item to the dearest; \d+ of the \d+ items offer one\.$/, 'the level\'s range under the total');
   const strip = (await page.getByTestId('pl-strip-1').textContent()) ?? '';
-  if (!strip.startsWith('Basic') || !strip.endsWith(`(${total})`) || (await page.getByTestId('pl-strip-1').getAttribute('aria-pressed')) !== 'true')
+  if (!strip.startsWith('Basic') || !strip.endsWith(`(${exact})`) || (await page.getByTestId('pl-strip-1').getAttribute('aria-pressed')) !== 'true')
     v('the strip does not mark Basic at the total');
   const cards = await page.locator('[data-testid^="pl-card-"]').count(), on = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
   if (cards !== 15 || on !== 10) v(`a renovation shows ${cards} sections with ${on} on (want 15 and 10)`);
@@ -727,7 +731,7 @@ for (const scheme of ['light', 'dark']) {
   const pdf = await save('pl-download-pdf');
   if (pdf.name !== 'Planning estimate - Asha Rao.pdf') v(`the planning estimate PDF is named "${pdf.name}"`);
   const pdfText = (await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]));
-  const figure = total.replace('Rs. ', '');
+  const figure = exact.replace('Rs. ', '');
   if (!pdfText[0].includes('Estimate of cost of renovation') || !pdfText[0].split('\n').includes(`Total estimated cost ${figure}`)
     || !pdfText.some((x) => x.includes('Annex 1. Detailed estimate')) || !pdfText.some((x) => x.includes('Annex 2. What the estimate assumes')) || !pdfText.join('\n').includes('303.03'))
     v('the planning estimate PDF does not read back its title, total, annexes and the living room floor');
@@ -966,8 +970,8 @@ for (const scheme of ['light', 'dark']) {
   for (const [label, answer, flags, why] of cases) {
     const { ctx, page, v } = await open('/estimate/', { scheme: 'light' });
     await answer(page);
-    await expectText(page, v, 'pl-total', /^Rs\. [\d,]+$/, label);
-    await expectText(page, v, 'pl-range', /^At (Standard|Luxury), the choices run from Rs\. [\d,]+ to Rs\. [\d,]+: /, `${label}: the level's range`);
+    await expectText(page, v, 'pl-total', /^Rs\. [\d,]+\.\d+ (lakh|crore)$/, label);
+    await expectText(page, v, 'pl-range', /^At (Standard|Luxury)( as a package)?: the cheapest choice in each item to the dearest; /, `${label}: the level's range`);
     const words = await page.locator('main').evaluate((m) => (m.innerText.match(/\S+/g) ?? []).length);
     if (words > BUDGET) v(`${label}: ${words} words shown with the answer (budget ${BUDGET})`);
     const shown = await page.locator('[data-testid="pl-flags"] li').count();

@@ -82,7 +82,8 @@ const COUNTED = 'We count which steps are used (the page, which fields change by
             <p class="mt-3 max-w-prose text-sm text-ink">{PRIVACY}{counting && <span data-testid="counted"> {COUNTED}</span>}</p>
           </div>
         </div>
-        <p aria-hidden="true" data-wordmark data-settle class="mt-16 overflow-hidden text-wordmark text-ink select-none">{[...SITE_NAME].map((c, i) => <span style={`--i:${i}`}>{c}</span>)}</p>
+        {/* Home's name is large; a tool page's foot keeps it small, so the frame never outweighs the figures (UX8, review finding 9). */}
+        <p aria-hidden="true" data-wordmark data-settle class={`overflow-hidden text-ink select-none ${here === '/' ? 'mt-16 text-wordmark' : 'mt-10 text-section'}`}>{[...SITE_NAME].map((c, i) => <span style={`--i:${i}`}>{c}</span>)}</p>
         <div data-ledger aria-hidden="true"></div>
         <p class="py-6 text-sm text-ink-muted">{SITE_NAME} · {new Date().getFullYear()}</p>
       </footer>

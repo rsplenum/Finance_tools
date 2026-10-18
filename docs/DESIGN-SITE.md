@@ -21,12 +21,23 @@ drawings and the motion the other pages borrow. The owner's word (D-UX-83): it s
 - **Ratios** (`site/src/Board.tsx`): a bar in ink against the benchmark's one line; a miss's gap dashed.
 - **Inputs stay still.** Fields, choices and More options do not move, settle or draw. No box with a border on all
   four sides (F3): a group sits on `bg-surface`, a plan or a note takes one rule (`border-t-2` or `border-l-4`).
-- **Results land as paper.** The answer, and the statement or forms behind it, sit on `.paper` with `shadow-paper`, the
-  only shadow (F17); in dark mode it is a sheet of ink a step above the page, never white (D-UX-91). A result is there at once, never settling in: it
-  changes as the figures are typed.
-- **The answer first.** On the default path the results follow its questions, before More options. A long page has an
-  answer bar pinned to the foot: the answer as text, read out as it changes, and one 44 px arrow to the results
-  (D-UX-84), never a long link lying over the fields.
+- **Results land as paper.** The answer sits on `.paper` with `shadow-paper`, the one shadow on a tool page (F17), in
+  the quieter `--shadow-sheet` (`[data-tool]`, UX8); the statements and forms behind it are paper lying flat. In dark mode
+  it is a sheet of ink a step above the page, never white (D-UX-91). It is there from load, never arriving: before the
+  figures it is the answer's outline, "—" for each figure not yet known (never 0), each a link to its box (`Dash`), and
+  one counter of what is still needed, opening to the links (`Counter`) (UX8, D-UX-106).
+- **Side by side from 1024 px** (UX8): the questions left, the answer panel right, pinned below the header and
+  scrolling inside itself (`answer-panel`, `grid-cols-tool`; `grid-cols-tool-grid` where the panel is 24 rem); the
+  statements, the assumptions and the download run the full width below. A sticky panel sits in a wrapper spanning the
+  questions' rows, so it stops before the next row. Under 1024 px one column, the answer after its questions.
+- **One bottom-bar rule** (UX8): under 1024 px every tool has the answer bar pinned to the foot from load: the answer as
+  text, read out as it changes, and one 44 px arrow to it (D-UX-84; `BAR`, `BAR_ARROW`). From 1024 px it keeps only its
+  words for a screen reader (the estimate's line of what changed stays, for its Undo).
+- **Empty folds** (UX8): a section that cannot be used yet is one line, its heading in body size (`Folded`); the foot's
+  wordmark is small on a tool page.
+- **One rule for figures** (UX8): full rupees in tables, "Rs." in the column head; a summary chip in lakh to two places,
+  its unit in the group's head; a unit on every figure alone; a headline as precise as the figure, the estimate's
+  rounded with its range as a bar and the exact figure beside it, as in the bill and the documents.
 - **Buttons:** pills at least 44 px (F4); one filled, in ink, for the page's main act (Download PDF); the rest neutral;
   never filled in the accent (F5).
 - **The heading** (D-UX-94, after Zerodha Varsity's module head): the tool's place in caps ("Tool 1 of 4") beside

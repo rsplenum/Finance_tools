@@ -12,7 +12,7 @@
  */
 import { Fragment } from 'preact';
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { answerRule, BUTTON, Choice, FILLED, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, toAnswer } from '../fields';
+import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, toAnswer } from '../fields';
 import { printable } from '../doc/pdf';
 import { BRAND_NOTICE } from '../site';
 import { isoDate, save, type FileKind } from '../download';
@@ -81,41 +81,70 @@ export function PlanEstimate() {
     // The Undo button goes, so the focus moves to the level chosen again (docs/DESIGN.md, Focus).
     requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid^="pl-strip-"][aria-pressed="true"]')?.focus());
   };
-  return <div>
-    {editing || !v
-      ? <Questions s={s} update={update} p={p} toLevel={toLevel} done={v ? () => setEditing(false) : undefined} />
-      : <div data-testid="pl-answers" class={`mt-6 flex flex-wrap items-center justify-between gap-2 ${CARD}`}>
-        <p data-testid="pl-summary" class={`min-w-0 ${INK}`}>{v.summary}</p>
-        <button type="button" data-testid="pl-change" class={BUTTON} onClick={() => setEditing(true)}>Change</button>
-      </div>}
-    {!v && !p.blocked && p.needs.length > 0 && p.needs.length < 6 &&
-      <p data-testid="pl-needs" class={`mt-4 ${HINT}`}>Still to answer: {p.needs.join('; ').toLowerCase()}.</p>}
-    {p.blocked && <p data-testid="pl-blocked" role="alert" class={`mt-4 ${answerRule(true)} py-2 text-sm text-ink`}>{p.blocked}</p>}
-    {v && <>
-      {/* The answer as paper, there at once: it changes as the figures are typed, never settling in (docs/DESIGN-SITE.md, tool pages). */}
-      <div class="paper shadow-paper mt-6 rounded-card p-3 sm:p-6">
-        <Answer v={v} toLevel={toLevel} heading={result} />
-        <Sections s={s} v={v} update={update} />
-      </div>
+  // From 1024 px the questions and the sections stand left and the answer panel right (UX8, D-UX-106).
+  return <div class="lg:grid lg:grid-cols-tool lg:gap-x-12">
+    <div class="lg:col-start-1 lg:row-start-1">
+      {editing || !v
+        ? <Questions s={s} update={update} p={p} toLevel={toLevel} done={v ? () => setEditing(false) : undefined} />
+        : <div data-testid="pl-answers" class={`mt-6 flex flex-wrap items-center justify-between gap-2 ${CARD}`}>
+          <p data-testid="pl-summary" class={`min-w-0 ${INK}`}>{v.summary}</p>
+          <button type="button" data-testid="pl-change" class={BUTTON} onClick={() => setEditing(true)}>Change</button>
+        </div>}
+      {p.blocked && <p data-testid="pl-blocked" role="alert" class={`mt-4 ${answerRule(true)} py-2 text-sm text-ink`}>{p.blocked}</p>}
+    </div>
+    {/* The answer as paper, there from load as its outline, and the one sheet with a shadow (docs/DESIGN-SITE.md, tool pages). */}
+    <div class="lg:col-start-2 lg:row-start-1 lg:row-end-3"><section id="pl-result" aria-labelledby="pl-result-h" class="answer-panel mt-6 lg:mt-4">
+      <h2 id="pl-result-h" ref={result} tabIndex={-1} class="sr-only text-section">The estimate</h2>
+      <div class="paper shadow-paper rounded-card p-3 sm:p-6">{v ? <Answer v={v} toLevel={toLevel} /> : <Outline p={p} />}</div>
+    </section></div>
+    {v && <div class="lg:col-start-1 lg:row-start-2">
+      <Sections s={s} v={v} update={update} />
       <Checks s={s} v={v} update={update} />
       <Rooms s={s} v={v} update={update} />
-      <Download s={s} p={p} update={update} />
-      {/* The answer bar (D-UX-84): text read out as it changes, one 44 px arrow to the results; solid, no blur (principle 10). */}
-      <div data-testid="pl-sticky" class="sticky bottom-0 z-10 -mx-4 mt-10 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8">
-        {/* What changed (A8): one line after a change, said aloud as it comes; a new package can be undone beside it. */}
-        <div class="flex items-center gap-2">
-          <p data-testid="pl-what-changed" aria-live="polite" class={`min-w-0 flex-1 pt-2 line-clamp-2 text-sm empty:hidden ${INK}`}>{v.change && <>
-            <span class="font-medium">{v.change.text}</span>{v.change.items && <span class={MUTED}> · {v.change.items}</span>}
-          </>}</p>
-          {undo && s === undo.after && v.change && <button type="button" data-testid="pl-level-undo" class={`mt-2 shrink-0 ${BUTTON}`} onClick={undone}>Undo</button>}
-        </div>
-        <div class="flex items-center gap-2">
-          <p data-answer-echo aria-live="polite" class={`flex-1 py-2 text-sm font-medium ${INK}`}>Total <span data-testid="pl-sticky-total" class="whitespace-nowrap tabular-nums">Rs. {v.total}</span></p>
-          <a href="#pl-result" aria-label="To the estimate" onClick={toAnswer} class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↑</span></a>
-        </div>
+    </div>}
+    <div class="lg:col-span-2 lg:row-start-3">
+      {v ? <Download s={s} p={p} update={update} />
+        : <Folded id="pl-download" title="Download the planning estimate">A PDF, an Excel copy and a Word copy, once the six are answered.</Folded>}
+    </div>
+    {/* The answer bar (D-UX-84), from load as on every tool (UX8, review finding 13): text read out as it changes, one 44 px
+        arrow to the answer; solid, no blur (principle 10). From 1024 px only what changed stays in sight, for its Undo. */}
+    <div data-testid="pl-sticky" class={`sticky bottom-0 z-10 -mx-4 mt-10 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8 lg:col-span-2 ${v?.change ? 'lg:pb-2' : 'lg:sr-only'}`}>
+      {/* What changed (A8): one line after a change, said aloud as it comes; a new package can be undone beside it. */}
+      {v && <div class="flex items-center gap-2">
+        <p data-testid="pl-what-changed" aria-live="polite" class={`min-w-0 flex-1 pt-2 line-clamp-2 text-sm empty:hidden ${INK}`}>{v.change && <>
+          <span class="font-medium">{v.change.text}</span>{v.change.items && <span class={MUTED}> · {v.change.items}</span>}
+        </>}</p>
+        {undo && s === undo.after && v.change && <button type="button" data-testid="pl-level-undo" class={`mt-2 shrink-0 ${BUTTON}`} onClick={undone}>Undo</button>}
+      </div>}
+      <div class="flex items-center gap-2 lg:sr-only">
+        <p data-answer-echo aria-live="polite" class={`flex-1 py-2 text-sm font-medium ${INK}`}>{v
+          ? <>Total <span data-testid="pl-sticky-total" class="whitespace-nowrap tabular-nums">{v.headline}</span></> : stillText(p)}</p>
+        <a href="#pl-result" aria-label="To the estimate" onClick={toAnswer} class={BAR_ARROW}><span aria-hidden="true">{v ? '↑' : '↓'}</span></a>
       </div>
-    </>}
+    </div>
   </div>;
+}
+
+/** The question each of the engine's needs is answered in, by its first words (engine/architect.ts). */
+const ASKED: [string, string][] = [['What the work', 'fld-work'], ['How many floors', 'fld-floors'], ['Flat or house', 'fld-home'], ['Which city', 'fld-city'],
+  ['The built-up', 'fld-carpet'], ['The carpet', 'fld-carpet'], ['How many bedrooms', 'fld-bhk'], ['Which level', 'fld-level']];
+const askedIn = (need: string) => ASKED.find(([w]) => need.startsWith(w))?.[1];
+const stillText = (p: PlanPreview) => (p.blocked ? 'No figures' : `${p.needs.length} still to answer`);
+
+/** Before the six answers, the estimate's outline (UX8, review finding 2): the total and the cost a sq ft as "—", never 0,
+ * and one counter opening to a link to each question still to answer. */
+function Outline({ p }: { p: PlanPreview }) {
+  const first = p.needs.map(askedIn).find(Boolean);
+  return <>
+    <p class={`figure text-section ${INK}`}><Dash what="The total" to={first} /></p>
+    <p class={`mt-1 ${MUTED}`}><Dash what="The cost a sq ft" to={first} /> a sq ft</p>
+    <Counter id="pl-status" result={p.blocked ? 'blocked' : 'provisional'} text={stillText(p)} rule answer class="mt-2">
+      {p.needs.length > 0 && <ul data-testid="pl-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => {
+        const to = askedIn(n);
+        return <li key={n}>{to ? <a href={`#${to}`} onClick={goTo(to)} class="inline-flex min-h-6 items-center text-link">{n}</a> : n}</li>;
+      })}</ul>}
+    </Counter>
+  </>;
 }
 
 /** The six questions (A3): each in a block of its own, counted by the site check. */
@@ -168,15 +197,17 @@ function Questions({ s, update, p, toLevel, done }: { s: PlanState; update: Upda
   </div>;
 }
 
-/** The answer (A8, V1, L1): the total and the level's range, the cost a sq ft and the rates' line, the five levels, Compare and a new house's stages. */
-function Answer({ v, toLevel, heading }: { v: PlanView; toLevel: (l: Level) => void; heading: { current: HTMLHeadingElement | null } }) {
-  return <section id="pl-result" aria-labelledby="pl-result-h">
-    <h2 id="pl-result-h" ref={heading} tabIndex={-1} class="sr-only text-section">The estimate</h2>
-    {/* The answer in words and its figure, marked for the load measure (docs/LOAD-MEASURE.md, count 8). */}
+/** The answer (A8, V1, L1): the total rounded and the level's range as a bar, the cost a sq ft, the exact total and the
+ * rates' line, the five levels, Compare and a new house's stages. */
+function Answer({ v, toLevel }: { v: PlanView; toLevel: (l: Level) => void }) {
+  return <>
+    {/* The answer in words and its figure, marked for the load measure (docs/LOAD-MEASURE.md, count 8). As precise as the
+        estimate (UX8, review finding 5): rounded here, to the rupee in the bill and the documents, as the page says. */}
     <div data-answer class={answerRule(true)}>
-      <p data-testid="pl-total" data-result={'ready'} class={`figure text-section ${INK}`}>Rs. {v.total}</p>
-      {v.range.text && <p data-testid="pl-range" class={`mt-1 text-sm ${INK}`}>{v.range.text}</p>}
+      <p data-testid="pl-total" data-result={'ready'} class={`figure text-section ${INK}`}>{v.headline}</p>
+      {v.rangeBar ? <Range r={v.rangeBar} /> : v.range.text && <p data-testid="pl-range" class={`mt-1 text-sm ${INK}`}>{v.range.text}</p>}
       <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="whitespace-nowrap tabular-nums">Rs. {v.perSqft}</span> a sq ft of {v.areaName.toLowerCase()}</p>
+      <p data-testid="pl-exact" class={`mt-1 text-sm ${MUTED}`}>Exact: <span class="whitespace-nowrap tabular-nums">Rs. {v.total}</span>, as in the bill and the documents.</p>
     </div>
     <p data-testid="pl-rates" class={`mt-2 flex items-start gap-1.5 text-sm ${MUTED}`}><Tick />{v.ratesLine}</p>
     {/* Edged, never filled: the chosen level takes an edge in ink (UX7: the accent is for links alone) (principle 6; F4 asks a filled control to be a pill).
@@ -189,10 +220,21 @@ function Answer({ v, toLevel, heading }: { v: PlanView; toLevel: (l: Level) => v
         <span class={`block text-xs leading-tight tabular-nums sm:text-sm ${MUTED}`}>{x.total}<span class="sr-only"> (Rs. {x.full})</span></span>
       </button>)}
     </div>
-    <p class={`mt-1 text-sm ${MUTED}`}>Each level as a package; tap one to switch.</p>
+    <p class={`mt-1 text-sm ${MUTED}`}>Each level as a package, in Rs. lakh; tap one to switch.</p>
     <Compare v={v} />
     {v.stages && <Stages v={v} />}
-  </section>;
+  </>;
+}
+
+/** The level's range as a bar (UX8, review finding 5): its ends rounded as the headline, the total a mark on it. */
+function Range({ r }: { r: NonNullable<PlanView['rangeBar']> }) {
+  return <figure class="mt-3">
+    <div aria-hidden="true" class="relative h-1.5 rounded-full bg-line">
+      {r.at !== undefined && <span class="absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-ink" style={{ left: `${r.at.toFixed(1)}%` }} />}
+    </div>
+    <p class={`mt-1 flex justify-between gap-3 text-sm tabular-nums ${INK}`}><span>{r.low}</span><span>{r.high}</span></p>
+    <figcaption data-testid="pl-range" class={`text-sm ${MUTED}`}>{r.text}</figcaption>
+  </figure>;
 }
 
 /** A chevron for a line that opens, turned down when open; drawn, so it adds no word to the page. */
@@ -215,7 +257,9 @@ function Sections({ s, v, update }: { s: PlanState; v: PlanView; update: Update 
   const width = new Map(v.bar.map((b) => [b.id, b.width]));
   const list = [...v.sections.filter((x) => x.on).sort((a, b) => b.pkg - a.pkg), ...v.sections.filter((x) => !x.on)];
   return <Section id="pl-sections" title="By section">
-    <ul data-testid="pl-bar" class="mt-4 divide-y divide-line">
+    {/* A table's figures in full rupees, the unit in the column's head (UX8, review finding 4); over the amounts, clear of the chevron. */}
+    <p class={`mt-4 pr-7 text-right text-sm ${MUTED}`}>Rs.</p>
+    <ul data-testid="pl-bar" class="divide-y divide-line">
       {list.map((x) => {
         // The section's own level, named on its line only when it differs from the package.
         const own = x.on && x.slider && (x.mixed > 0 || (x.level !== null && x.level !== s.level));
@@ -375,7 +419,7 @@ function Compare({ v }: { v: PlanView }) {
     <summary class={SUMMARY}>Compare the five levels, section by section</summary>
     <div class="mt-2 overflow-x-auto">
       <table class={`w-full text-sm tabular-nums ${INK}`}>
-        <caption class={`text-left text-sm ${MUTED}`}>Each section at each level as a package, in lakhs where large; yours marked.</caption>
+        <caption class={`text-left text-sm ${MUTED}`}>Each section at each level as a package, in Rs. lakh; yours marked.</caption>
         <thead><tr class={MUTED}><th scope="col" class="py-1 pr-1 text-left font-normal">Section</th>{LEVEL_NAMES.map((n) => <th key={n} scope="col" class="px-1 py-1 text-right font-normal">{n}</th>)}</tr></thead>
         <tbody class="divide-y divide-line">
           {v.compare.rows.map((r) => <tr key={r.id} data-testid={`pl-compare-${r.id}`}>
@@ -400,7 +444,7 @@ function Stages({ v }: { v: PlanView }) {
     <div class="mt-2 overflow-x-auto">
       <table class={`w-full text-sm tabular-nums ${INK}`}>
         <caption class={`text-left text-sm ${MUTED}`}>The structure split by published shares; the rest from the estimate's own items. For planning a loan's payments, not a lender's own schedule.</caption>
-        <thead><tr class={MUTED}><th scope="col" class="py-1 pr-1 text-left font-normal">Stage</th><th scope="col" class="px-1 py-1 text-right font-normal">Rupees</th>
+        <thead><tr class={MUTED}><th scope="col" class="py-1 pr-1 text-left font-normal">Stage</th><th scope="col" class="px-1 py-1 text-right font-normal">Rs.</th>
           <th scope="col" class="px-1 py-1 text-right font-normal">Share</th><th scope="col" class="px-1 py-1 text-right font-normal">By then</th></tr></thead>
         <tbody class="divide-y divide-line">
           {st.map((x) => <tr key={x.id} data-testid={`pl-stage-${x.id}`}>
