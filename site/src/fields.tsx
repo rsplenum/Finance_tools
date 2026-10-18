@@ -107,9 +107,9 @@ export function Choice<T extends string>(p: { name: string; legend: string; opti
     <legend class={LABEL}>{p.legend}</legend>
     <div class={`mt-2 grid gap-2 ${p.columns ? 'sm:grid-cols-2' : ''}`}>
       {p.options.map((o) => <label key={o.value} for={`${p.name}-${o.value}`}
-        class="flex cursor-pointer items-start gap-3 rounded-card border border-edge bg-field p-3 has-checked:border-accent has-checked:bg-accent/10 new:border-0 new:bg-surface new:has-checked:outline-2 new:has-checked:outline-accent">
+        class="flex cursor-pointer items-start gap-3 rounded-card border border-edge bg-field p-3 has-checked:border-accent has-checked:bg-accent/10 new:border-0 new:bg-surface new:has-checked:bg-surface new:has-checked:outline-2 new:has-checked:outline-ink">
         <input type="radio" id={`${p.name}-${o.value}`} name={p.name} value={o.value} checked={p.value === o.value}
-          onChange={() => p.onChange(o.value)} class="mt-1 size-4 shrink-0 accent-accent" />
+          onChange={() => p.onChange(o.value)} class="mt-1 size-4 shrink-0 accent-ink" />
         <span class="min-w-0">
           <span class="block text-ink">{o.label}</span>
           {o.hint && <span class="mt-0.5 block text-sm text-ink-muted">{o.hint}</span>}
@@ -118,6 +118,27 @@ export function Choice<T extends string>(p: { name: string; legend: string; opti
     </div>
   </fieldset>;
 }
+
+/** The answer's rule (UX7, D-UX-104): ink, solid once the result is final, dashed while it is provisional, so its outline
+ * tells the state before its words do; the colour never does (docs/DESIGN-MATHS.md §2). */
+export const answerRule = (final: boolean) => `border-l-4 border-ink pl-3 ${final ? '' : 'border-dashed'}`;
+
+/** The auditor's tick (UX7, D-UX-104): a drawn tick in ink, set before the pencil note that says a result is final. Only
+ * a final result takes it; a provisional one says what it waits for instead. */
+export const Tick = () => <svg aria-hidden="true" viewBox="0 0 20 16" class="mt-0.5 h-4 w-5 shrink-0 text-ink" fill="none" stroke="currentColor"
+  stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9.6c1.5.9 2.9 2.3 4.1 3.9C8.8 8.7 12.9 4.1 18.4 1.6" /></svg>;
+
+/** A verdict as a flat claim (UX7, after The Whole Truth's headings): the words before its first colon large, the facts
+ * after it in body size under them; the text reads the same, colon and all, to a screen reader and a test. */
+export function Claim({ text }: { text: string }) {
+  const at = text.indexOf(': ');
+  if (at < 0) return <>{text}</>;
+  return <><span>{text.slice(0, at)}</span><span class="sr-only">:</span> <span class="mt-1 block font-display text-base font-normal first-letter:uppercase">{text.slice(at + 2)}</span></>;
+}
+
+/** The line under an answer that says its state: the tick and "Complete" in ink, or what is still needed in the warning's
+ * words, or why there is none in the bad's; one colour a meaning, on text only. */
+export const STATE = 'flex items-start gap-1.5 text-sm font-medium';
 
 /** A source and date, behind an icon (lessons §1: no citations in the running text). */
 export function SourceNote(p: { what: string; children: ComponentChildren; /** The data file's review-by date: once passed, said beside the summary (Q2, D-DATA-19). */ reviewBy?: string }) {

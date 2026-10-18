@@ -46,7 +46,7 @@
       "styles": 7,
       "colours": 3,
       "outOfSight": 17,
-      "codes": 3
+      "codes": 0
     },
     "/dscr/": {
       "before": 45,
@@ -59,10 +59,10 @@
       "controls": 39,
       "answerAt": 2.2,
       "gap": 0,
-      "styles": 8,
+      "styles": 9,
       "colours": 3,
       "outOfSight": 0,
-      "codes": 4
+      "codes": 0
     },
     "/estimate/": {
       "before": 39,
@@ -78,7 +78,7 @@
       "styles": 6,
       "colours": 2,
       "outOfSight": 0,
-      "codes": 3
+      "codes": 0
     },
     "/project-report/": {
       "before": 39,
@@ -94,7 +94,7 @@
       "styles": 8,
       "colours": 3,
       "outOfSight": 4,
-      "codes": 4
+      "codes": 0
     }
   },
   "raised": [
@@ -752,6 +752,14 @@
       "from": 49,
       "to": 50,
       "why": "D-UX-101",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/dscr/",
+      "count": "styles",
+      "from": 8,
+      "to": 9,
+      "why": "D-UX-104",
       "date": "2026-10-18"
     }
   ],

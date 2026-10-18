@@ -12,7 +12,7 @@
  */
 import { Fragment } from 'preact';
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { BUTTON, Choice, FILLED, HINT, LABEL, Section, SelectField, SourceNote, TextField, toAnswer } from '../fields';
+import { answerRule, BUTTON, Choice, FILLED, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, toAnswer } from '../fields';
 import { printable } from '../doc/pdf';
 import { BRAND_NOTICE } from '../site';
 import { isoDate, save, type FileKind } from '../download';
@@ -32,13 +32,13 @@ const MUTED = 'text-ink-muted';
 const INK = 'text-ink';
 /** A group set off by its fill, never a border all round (F3). */
 const CARD = 'rounded-card bg-surface p-4';
-const CHIP = 'flex cursor-pointer items-center gap-2 rounded-full border border-edge bg-field px-3 py-1.5 text-ink has-checked:border-accent has-checked:bg-accent/10';
-const RADIO = 'size-4 shrink-0 text-base accent-accent';
+const CHIP = 'flex cursor-pointer items-center gap-2 rounded-full border border-edge bg-field px-3 py-1.5 text-ink has-checked:border-ink has-checked:outline has-checked:outline-ink';
+const RADIO = 'size-4 shrink-0 text-base accent-ink';
 /**
  * One of a room's four size buttons: a radio, so the arrow keys move along them and a screen reader names the group. Set
  * off by its fill, the chosen one by the accent's outline, as Choice is in the new look (F3).
  */
-const SEG = 'flex min-h-11 cursor-pointer items-center justify-center rounded-control bg-surface px-1 py-1 text-center text-sm leading-tight text-ink has-checked:font-semibold has-checked:outline-2 has-checked:-outline-offset-2 has-checked:outline-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-focus';
+const SEG = 'flex min-h-11 cursor-pointer items-center justify-center rounded-control bg-surface px-1 py-1 text-center text-sm leading-tight text-ink has-checked:font-semibold has-checked:outline-2 has-checked:-outline-offset-2 has-checked:outline-ink has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-focus';
 /** A link inside a sentence keeps its line (F8). */
 const LINK = 'text-link underline underline-offset-4';
 /** A closed line's summary, standing alone: no line until hovered (F8); 24 px tall from global.css. */
@@ -90,7 +90,7 @@ export function PlanEstimate() {
       </div>}
     {!v && !p.blocked && p.needs.length > 0 && p.needs.length < 6 &&
       <p data-testid="pl-needs" class={`mt-4 ${HINT}`}>Still to answer: {p.needs.join('; ').toLowerCase()}.</p>}
-    {p.blocked && <p data-testid="pl-blocked" role="alert" class="mt-4 rounded-control border-l-4 border-bad bg-bad-tint px-3 py-2 text-sm text-ink">{p.blocked}</p>}
+    {p.blocked && <p data-testid="pl-blocked" role="alert" class={`mt-4 ${answerRule(true)} py-2 text-sm text-ink`}>{p.blocked}</p>}
     {v && <>
       {/* The answer as paper, there at once: it changes as the figures are typed, never settling in (docs/DESIGN-SITE.md, tool pages). */}
       <div class="paper shadow-paper mt-6 rounded-card p-3 sm:p-6">
@@ -173,18 +173,18 @@ function Answer({ v, toLevel, heading }: { v: PlanView; toLevel: (l: Level) => v
   return <section id="pl-result" aria-labelledby="pl-result-h">
     <h2 id="pl-result-h" ref={heading} tabIndex={-1} class="sr-only text-section">The estimate</h2>
     {/* The answer in words and its figure, marked for the load measure (docs/LOAD-MEASURE.md, count 8). */}
-    <div data-answer>
+    <div data-answer class={answerRule(true)}>
       <p data-testid="pl-total" data-result={'ready'} class={`figure text-section ${INK}`}>Rs. {v.total}</p>
       {v.range.text && <p data-testid="pl-range" class={`mt-1 text-sm ${INK}`}>{v.range.text}</p>}
       <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="whitespace-nowrap tabular-nums">Rs. {v.perSqft}</span> a sq ft of {v.areaName.toLowerCase()}</p>
     </div>
-    <p data-testid="pl-rates" class={`mt-1 text-sm ${MUTED}`}>{v.ratesLine}</p>
-    {/* Edged, never filled: the chosen level takes the accent's edge (principle 6; F4 asks a filled control to be a pill).
+    <p data-testid="pl-rates" class={`mt-2 flex items-start gap-1.5 text-sm ${MUTED}`}><Tick />{v.ratesLine}</p>
+    {/* Edged, never filled: the chosen level takes an edge in ink (UX7: the accent is for links alone) (principle 6; F4 asks a filled control to be a pill).
         The five totals read as a chart's labels: 12 px on a phone, where "Standard" at 14 px overflows its fifth of 360 px. */}
     <div role="group" aria-label="The total at each level; choose one to switch the package" class="mt-4 grid grid-cols-5 gap-1">
       {v.strip.map((x) => <button key={x.level} type="button" data-testid={`pl-strip-${x.level}`} aria-pressed={x.current}
         title={`Rs. ${x.full}`} onClick={() => toLevel(x.level)}
-        class={`min-h-11 min-w-0 rounded-control px-0.5 text-center ${x.current ? 'border-2 border-accent py-1' : 'border border-edge py-1.25'}`}>
+        class={`min-h-11 min-w-0 rounded-control px-0.5 text-center ${x.current ? 'border-2 border-ink py-1' : 'border border-edge py-1.25'}`}>
         <span class={`block text-xs leading-tight sm:text-sm ${x.current ? "font-semibold" : ""} ${INK}`}>{x.name}</span>
         <span class={`block text-xs leading-tight tabular-nums sm:text-sm ${MUTED}`}>{x.total}<span class="sr-only"> (Rs. {x.full})</span></span>
       </button>)}
@@ -238,7 +238,7 @@ function Sections({ s, v, update }: { s: PlanState; v: PlanView; update: Update 
                 <p class={`min-w-0 text-sm ${MUTED}`}>{x.on ? x.where : 'Not in this estimate'}</p>
                 <label for={`fld-on-${x.id}`} class={`flex shrink-0 items-center gap-2 text-sm ${INK}`}>
                   <input type="checkbox" role="switch" id={`fld-on-${x.id}`} checked={x.on} onChange={(e) => update((st) => withSection(st, x.id, (e.currentTarget as HTMLInputElement).checked))}
-                    class="size-5 text-base accent-accent" />
+                    class="size-5 text-base accent-ink" />
                   <span><span class="sr-only">{x.name}: </span>{x.on ? 'On' : 'Off'}</span>
                 </label>
               </div>
@@ -272,7 +272,7 @@ function Slider({ s, x, update }: { s: PlanState; x: SectionView; update: Update
     </label>
     <input type="range" id={`fld-slider-${x.id}`} min={1} max={5} step={1} value={level} aria-valuetext={x.mixed ? `Mixed, around ${x.levelName}` : x.levelName}
       onInput={(e) => update((st) => withSlider(st, x.id, Number((e.currentTarget as HTMLInputElement).value) as Level, x.lines.map((l) => l.key)))}
-      class="mt-1 block w-full text-base accent-accent" />
+      class="mt-1 block w-full text-base accent-ink" />
     <div aria-hidden="true" class="mt-0.5 grid grid-cols-5 text-center text-xs leading-tight">
       {LEVEL_NAMES.map((n, i) => <span key={n} class={i + 1 === s.level ? `font-semibold underline underline-offset-2 ${INK}` : MUTED}>{n}</span>)}
     </div>
@@ -335,7 +335,7 @@ function Drawer({ s, l, d, groups, setGroup, update }: { s: PlanState; l: LineVi
       {x.brands.map((b) => {
         const on = x.current && l.brand === b;
         return <button key={b} type="button" data-testid={`pl-brand-${b}`} aria-pressed={on} onClick={() => choose(x, on ? undefined : b)}
-          class={`rounded-full text-sm ${INK} ${on ? 'border-2 border-accent px-2.75 py-0.75 font-medium' : 'border border-edge px-3 py-1'}`}>{b}</button>;
+          class={`rounded-full text-sm ${INK} ${on ? 'border-2 border-ink px-2.75 py-0.75 font-medium' : 'border border-edge px-3 py-1'}`}>{b}</button>;
       })}
     </div>}
   </li>;
@@ -370,7 +370,7 @@ function Drawer({ s, l, d, groups, setGroup, update }: { s: PlanState; l: LineVi
 /** Compare (A8): each section that is on, and the total, at the five levels as a package; the estimate's own level marked. */
 function Compare({ v }: { v: PlanView }) {
   const cell = (c: PlanView['compare']['totals'][number], name: string, i: number) => <td key={i} aria-label={`${name}, ${LEVEL_NAMES[i]}: Rs. ${c.full}${c.mine ? ', your level' : ''}`} title={`Rs. ${c.full}`}
-    class={`px-1 py-1 text-right ${c.mine ? 'rounded-control bg-accent/10 font-semibold' : ''}`}>{c.text}</td>;
+    class={`px-1 py-1 text-right ${c.mine ? 'rounded-control bg-surface font-semibold' : ''}`}>{c.text}</td>;
   return <details data-testid="pl-compare" class="mt-3">
     <summary class={SUMMARY}>Compare the five levels, section by section</summary>
     <div class="mt-2 overflow-x-auto">
@@ -523,7 +523,7 @@ function Assumed({ s, v, update }: { s: PlanState; v: PlanView; update: Update }
         </div>}
         {a.what === 'The plot' && plot?.bad && <p data-testid="pl-plot-bad" class="mt-1 text-sm text-bad">{plot.bad} Until then the planned plot is used.</p>}
         {a.what === 'Water' && s.kind === 'build' && <label for="fld-sewer" class="mt-2 flex items-center gap-2 text-sm">
-          <input type="checkbox" id="fld-sewer" checked={s.sewer} onChange={(e) => update((x) => withSewer(x, (e.currentTarget as HTMLInputElement).checked))} class="h-4 w-4 accent-accent" />
+          <input type="checkbox" id="fld-sewer" checked={s.sewer} onChange={(e) => update((x) => withSewer(x, (e.currentTarget as HTMLInputElement).checked))} class="h-4 w-4 accent-ink" />
           The city's sewer reaches my plot
         </label>}
         <SourceNote what="Why">{a.why}{a.sources.length ? ` Sources: ${a.sources.map((x) => x.what).join('; ')}.` : ''}</SourceNote>
@@ -538,7 +538,7 @@ function Assumed({ s, v, update }: { s: PlanState; v: PlanView; update: Update }
  */
 function Checks({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) {
   return <Section id="pl-checks" title="To check">
-    {v.flags.length > 0 && <ul data-testid="pl-flags" class="mt-2 list-disc space-y-1 rounded-control border-l-4 border-warn bg-warn-tint py-3 pr-3 pl-8 text-sm text-ink">
+    {v.flags.length > 0 && <ul data-testid="pl-flags" class="mt-2 list-disc space-y-1 rounded-control border-l-4 border-ink-muted bg-surface py-3 pr-3 pl-8 text-sm text-ink">
       {v.flags.map((f) => <li key={f}>{f}</li>)}
     </ul>}
     {v.notes.length > 0 && <details data-testid="pl-notes" class="mt-2">
@@ -573,8 +573,7 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
       {field('preparedBy', 'Prepared by', 'An engineer or architect who adopts it, with registration number. Leave empty for a planning estimate.')}
     </div>
     <div class="mt-5">
-      <p data-testid="pl-doc-status" class={`inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${own.length
-        ? 'bg-warn-tint text-warn' : 'bg-good-tint text-good'}`}>{planDocStatus(s, p)}</p>
+      <p data-testid="pl-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{planDocStatus(s, p)}</p>
       {own.length > 0 && <ul data-testid="pl-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
       <div class="mt-3 flex flex-wrap gap-2">
         <button type="button" data-testid="pl-download-pdf" class={FILLED} onClick={() => go('pdf')}>Download PDF</button>

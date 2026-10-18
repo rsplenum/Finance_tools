@@ -12,9 +12,13 @@ drawings and the motion the other pages borrow. The owner's word (D-UX-83): it s
 ## Tool pages (`/dscr/`, `/cma/`, `/estimate/`, `/project-report/`)
 - **Type:** the h1 in `text-hero`, each section's h2 in `text-section` with its ledger rule above; the line under the h1
   is body size in `text-ink-muted` (the lead size is home's pitch). Figures that answer use `figure`.
-- **Colours:** tokens only. Links and the chosen option in the accent (the new look's indigo, `--link`); good, warn and
-  bad only for meets, provisional and misses (one tone a meaning). No raw palette class (the ratchet in
-  `scripts/design-baseline.json`).
+- **Colours:** tokens only, one channel a meaning (UX7, D-UX-104). The accent (`--link`) colours links only; a chosen
+  option takes an edge in ink. Good, warn and bad colour the words for meets, provisional and misses, never a ground, an
+  edge or a bar. No raw palette class (the ratchet in `scripts/design-baseline.json`).
+- **The answer's state** (UX7): the answer, as the paper's heading where it is a sentence, carries a 4 px rule in ink,
+  solid when final and dashed while provisional (`answerRule` in `site/src/fields.tsx`); the line under it says
+  "Complete" after the auditor's tick (`Tick`), or what is still needed in the warning's words.
+- **Ratios** (`site/src/Board.tsx`): a bar in ink against the benchmark's one line; a miss's gap dashed.
 - **Inputs stay still.** Fields, choices and More options do not move, settle or draw. No box with a border on all
   four sides (F3): a group sits on `bg-surface`, a plan or a note takes one rule (`border-t-2` or `border-l-4`).
 - **Results land as paper.** The answer, and the statement or forms behind it, sit on `.paper` with `shadow-paper`, the
@@ -28,7 +32,7 @@ drawings and the motion the other pages borrow. The owner's word (D-UX-83): it s
 - **The heading** (D-UX-94, after Zerodha Varsity's module head): the tool's place in caps ("Tool 1 of 4") beside
   home's drawing for the tool on its glow, still; the h1; one line of what the page needs, then what it gives.
 - **Drawings:** the heading's, the foot's wordmark and the ledger rules only; the trailers stay home's.
-- **Codes:** one channel a meaning, and no two meanings in near hues (`docs/DESIGN-MATHS.md`, the Extra codes count).
+- **Codes:** one channel a meaning, and no two meanings in near hues (`docs/DESIGN-MATHS.md`, the Extra codes count: nil).
 
 ## Downloads (PDF, Excel, Word)
 Plain: the documents keep their own layout and type (`docs/DESIGN.md`, Documents; the `lender-documents` skill). The new

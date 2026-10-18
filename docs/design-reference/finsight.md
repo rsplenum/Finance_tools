@@ -56,3 +56,13 @@ The owner: "I like the fusion of design and this has the potential of becoming a
 ## A fourth source: The Whole Truth (18-10-2026, D-UX-98)
 The owner, 18-10-2026: "From inspiration from three sources to Fusion to make something of our own and also added thewholetruthfoods.com as an inspiration source for design. This source really has the communication through design that we are talking about." And: "Every design element should be mathematically sound and should communicate to the user and not add bulk or design for the sake of design." Read in full from the owner's video (18-10-2026): `whole-truth.md` beside this file, with what we borrow, what we leave and our own.
 What it gives the fusion, as a pattern and never its look (F14, F16): the truth on the front. Its packs put the whole ingredient list where the name usually goes; its headings are short, flat statements ("We make real food.", "Real food is flawed."). For us: the answer and what it rests on (the benchmarks, the assumptions, what is still missing) said first and plainly, a provisional result saying so as loudly as a final one, and every mark on the page there to tell something (principle 10, `docs/DESIGN.md`; the maths in `docs/DESIGN-MATHS.md`).
+
+## Built from it (UX7, D-UX-104)
+The owner accepted the five recommendations of `whole-truth.md` (D-UX-103). On the tool pages they became:
+- **One colour, one channel.** Good, warn and bad colour words only, never a ground, an edge or a bar; the accent colours links only, so a chosen option takes an edge in ink. The Extra codes count (`docs/DESIGN-MATHS.md` §2) is nil on every page.
+- **Provisional dashed, final solid.** The answer carries a 4 px rule in ink on its left: solid once nothing is missing, dashed while it waits; the words then say what for.
+- **The auditor's tick.** A drawn tick in ink, still, before the line that says a result or a document is complete; never on a provisional one. Our mark in place of their doodles and handwriting (no new font).
+- **The benchmark line, the one shape.** Each ratio a bar in ink against one line in ink; a miss's gap to the line dashed, the words under it saying meets or misses.
+- **Headings as the answer.** The DSCR's and the report's verdict is the paper's heading; the benchmark card's heading says "Meets the default benchmark ratios" when all are read and met.
+- **Home kept** (D-UX-83): its headings already read as the story, the tools are in the first screen (F11), nothing hides content behind arrows, and "What you type is not sent to us" is its fact. Proof stays by method, never quotes.
+

@@ -39,11 +39,11 @@ confused.
   meaning cost 1, because the reader must learn that both say "meets". Two meanings in near hues cost 1, because the
   reader must tell them apart.
 
-The aim is 0; the check holds each page at its baseline and lets it only fall (`docs/LOAD-MEASURE.md` §5). Baseline at
-UX5c: home 0, 404 0, CMA 3, DSCR 4, estimate 3, project report 4. Where they come from: act on text and ground (the
-chosen option's fill); good on text, ground and rule (a met level's tint and edge); warn on text and ground or rule.
-Cutting them is a later row's work, one meaning at a time; a tint behind text in its own hue may stay where the critic
-finds it reads faster, with its line in `docs/DECISIONS.md`.
+The aim is 0; the check holds each page at its baseline and lets it only fall (`docs/LOAD-MEASURE.md` §5). At UX5c
+the tool pages stood at 3 or 4 (act on text and ground, good and warn on text, ground and rule). UX7 (D-UX-104) cut them
+all to 0: good, warn and bad on text only, the accent on links only, a chosen option and the answer's state drawn in ink.
+Kept, with its line: a field in error has a red edge beside its red words, the convention people know; no measured
+state shows one.
 
 *Gamed by:* drawing a meaning in a raw colour that matches no token (the design baseline's ratchet on raw palette
 classes guards it), or one token for two meanings (the critic's "one colour per thing").

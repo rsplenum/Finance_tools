@@ -8,7 +8,7 @@
  * engine/cma-plan.ts only, via model.ts and levers.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
-import { BUTTON, CellInput, Choice, FILLED, HINT, Section, TextField, toAnswer } from '../fields';
+import { answerRule, BUTTON, CellInput, Choice, FILLED, HINT, Section, STATE, TextField, Tick, toAnswer } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { cmaDoc, docNeeds, docStatus, fileName } from './document';
@@ -162,10 +162,10 @@ function FormTable({ t }: { t: ViewTable }) {
 function Result({ s, p, update, use, used, undo, keep }: { s: CmaState; p: CmaPreview; update: Update; use: (l: CmaLevers) => void; used: CmaChange[]; undo: () => void; keep: () => void }) {
   const v = p.view;
   return <Section id="result" title="The CMA data">
-    <p data-testid="cma-status" data-answer data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class={`mt-3 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.needs.length || p.blocked
-      ? 'bg-warn-tint text-warn' : 'bg-good-tint text-good'}`}>{statusText(p)}</p>
+    <p data-testid="cma-status" data-answer data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class={`${STATE} mt-3 ${answerRule(!p.needs.length && !p.blocked)} ${p.needs.length || p.blocked
+      ? 'text-warn' : 'text-ink'}`}>{!p.needs.length && !p.blocked && <Tick />}{statusText(p)}</p>
     {p.blocked && <p class="mt-2 text-sm text-bad">{p.blocked}</p>}
-    {used.length > 0 && <div data-testid="cma-used" role="status" class="mt-3 rounded-control border-l-4 border-accent bg-accent/10 p-3">
+    {used.length > 0 && <div data-testid="cma-used" role="status" class="mt-3 rounded-control border-l-4 border-ink bg-surface p-3">
       <p class="font-medium text-ink">The plan is used: these figures above changed.</p>
       <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink tabular-nums">{used.map((c) => <li key={c.key}>{c.label}: {c.was || 'none'} → {c.now}</li>)}</ul>
       <div class="mt-2 flex flex-wrap gap-2">
@@ -211,8 +211,7 @@ function Download({ s, p, update }: { s: CmaState; p: CmaPreview; update: Update
     </div>
     {ready
       ? <div class="mt-5">
-        <p data-testid="cma-doc-status" class={`inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${own.length
-          ? 'bg-warn-tint text-warn' : 'bg-good-tint text-good'}`}>{docStatus(s, p)}</p>
+        <p data-testid="cma-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{docStatus(s, p)}</p>
         {own.length > 0 && <ul data-testid="cma-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
         <div class="mt-3 flex flex-wrap gap-2">
           <button type="button" data-testid="cma-download-pdf" class={FILLED} onClick={() => go('pdf')}>Download PDF</button>
