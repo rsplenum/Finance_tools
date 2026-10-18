@@ -59,7 +59,13 @@ export const CATEGORY_CHOICES: { value: Category; label: string }[] = [
 export const AREA_CHOICES: { value: Area; label: string }[] = [{ value: 'urban', label: 'A town or city' }, { value: 'rural', label: 'A village' }];
 export const ACTIVITY_CHOICES: { value: Activity; label: string }[] = [{ value: 'manufacturing', label: 'Manufacturing' }, { value: 'service', label: 'A service' }];
 /** The assumptions listed on the page: the use of the capacity and the price only while sales come from the drivers. */
-export const assumptionsOf = (s: ReportState) => ASSUMPTIONS.filter((a) => s.salesBy === 'drivers' || (a.id !== 'utilisation' && a.id !== 'price'));
+// Each still standing, and the days only those not typed over (review finding 8: the ledger never lists a value changed).
+export function assumptionsOf(s: ReportState) {
+  const days = (['stock', 'debtors', 'creditors'] as const).filter((k) => s.days[k] === EMPTY.days[k]);
+  return ASSUMPTIONS.filter((a) => (s.salesBy === 'drivers' || (a.id !== 'utilisation' && a.id !== 'price'))
+    && (a.id !== 'days' || days.length > 0) && (a.id !== 'utilisation' || s.utilisation === EMPTY.utilisation) && (a.id !== 'price' || s.priceGrowth === EMPTY.priceGrowth))
+    .map((a) => (a.id === 'days' && days.length < 3 ? { ...a, shown: days.map((k) => `${k} ${EMPTY.days[k]} days`).join(', ') } : a));
+}
 export { ASSUMPTIONS, HEADS, PMEGP, REPORT_REVIEW_BY };
 
 export const amountOf = (t: string) => (t.trim() ? parseAmount(t) : undefined);

@@ -19,7 +19,7 @@ import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import DSCR_FILE from '../../../engine/data/dscr.json';
 import TAX_FILE from '../../../engine/data/tax.json';
-import { answerRule, BAR, BAR_ARROW, BUTTON, CellInput, Claim, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Section, SourceNote, STATE, TextField, Tick, toAnswer } from '../fields';
+import { answerRule, AnswerBar, BUTTON, CellInput, Claim, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
 import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
@@ -81,10 +81,7 @@ export function DscrCalculator() {
     {s.source !== 'plan' && results}
     {p.started && <div class="lg:col-span-2 lg:row-start-4"><DownloadSection s={s} p={p} update={update} /></div>}
     {/* The answer's echo is text; only the arrow is a target, 44 px, so a field under the bar can still be tapped (WCAG 2.5.8; UX3). */}
-    <div class={`${BAR} lg:col-span-2`}>
-      <p data-testid="answer-bar" data-answer-echo aria-live="polite" class="flex-1 py-2 text-sm font-medium text-ink">{barText(p)}</p>
-      <a href="#preview" aria-label="To the results" onClick={toAnswer} class={BAR_ARROW}><span aria-hidden="true">↓</span></a>
-    </div>
+    <AnswerBar to="preview" label="To the results" testid="answer-bar" text={barText(p)} />
   </div>;
 }
 
@@ -106,22 +103,22 @@ function FrontDoor({ s, update, openMore, was }: { s: State; update: Update; ope
     <Choice name="fld-fd-borrower" legend="Who is the borrower?" columns value={s.borrower as string | undefined}
       options={BORROWER_CHOICES.map((b) => ({ value: b.id, label: b.label }))} onChange={(id) => update((x) => withBorrower(x, id))} />
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
-      <TextField id="fld-fd-profit" label="This year’s profit before interest, depreciation and tax" inputMode="decimal" value={s.cells.pbdit?.[0] ?? ''}
-        tidy={tidyAmount} placeholder="like 5 L" said={amountSaid(s.cells.pbdit?.[0] ?? '')}
+      <TextField id="fld-fd-profit" label="This year’s profit before interest, depreciation and tax" unit="Rs." inputMode="decimal" value={s.cells.pbdit?.[0] ?? ''}
+        tidy={tidyAmount} said={amountSaid(s.cells.pbdit?.[0] ?? '')}
         onCommit={(t) => update((x) => ({ ...first('pbdit', t)(x), modes: { ...x.modes, pbdit: 'grow' } }))} />
-      <TextField id="fld-fd-growth" label="Growth in sales a year (%)" inputMode="decimal" hint="Like 10." value={s.rates.pbdit ?? ''}
+      <TextField id="fld-fd-growth" label="Growth in sales a year (%)" unit="%" inputMode="decimal" hint="Like 10." value={s.rates.pbdit ?? ''}
         said={notUnderstood(s.rates.pbdit ?? '', numberOf, 'a number, like 10')} onCommit={(t) => update((x) => ({ ...x, rates: { ...x.rates, pbdit: t } }))} />
-      <TextField id="fld-fd-emis" label="EMIs already paid, a month" hint={`${emisAsk(s).replace(/\.?$/, '.')} Leave empty if none.`} inputMode="decimal" value={emi} tidy={tidyAmount}
+      <TextField id="fld-fd-emis" label="EMIs already paid, a month" unit="Rs." hint={`${emisAsk(s).replace(/\.?$/, '.')} Leave empty if none.`} inputMode="decimal" value={emi} tidy={tidyAmount}
         said={amountSaid(emi)} onCommit={(t) => update((x) => (t.trim()
           ? { ...x, modes: { ...x.modes, otherLoans: 'emi' }, running: [{ emi: t, last: x.running[0]?.last ?? '' }, ...x.running.slice(1)] }
           : { ...x, modes: { ...x.modes, otherLoans: 'none' } }))} />
-      <TextField id="fld-fd-depreciation" label="Depreciation a year, if any" hint="Leave empty if none." inputMode="decimal" value={dep} tidy={tidyAmount}
+      <TextField id="fld-fd-depreciation" label="Depreciation a year, if any" unit="Rs." hint="Leave empty if none." inputMode="decimal" value={dep} tidy={tidyAmount}
         said={amountSaid(dep)} onCommit={(t) => update((x) => (t.trim() ? { ...first('depreciation', t)(x), modes: { ...x.modes, depreciation: 'same' } } : { ...x, modes: { ...x.modes, depreciation: 'none' } }))} />
-      <TextField id="fld-fd-amount" label="Loan amount" hint={was('amount')} inputMode="decimal" value={s.loan.amount} tidy={tidyAmount} placeholder="like 12 L"
+      <TextField id="fld-fd-amount" label="Loan amount" unit="Rs." hint={was('amount')} inputMode="decimal" value={s.loan.amount} tidy={tidyAmount}
         said={amountSaid(s.loan.amount)} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, amount: t } }))} />
-      <TextField id="fld-fd-rate" label="Interest rate (% a year)" inputMode="decimal" hint="Like 12." value={s.loan.ratePct}
+      <TextField id="fld-fd-rate" label="Interest rate (% a year)" unit="%" inputMode="decimal" hint="Like 12." value={s.loan.ratePct}
         said={notUnderstood(s.loan.ratePct, numberOf, 'a number, like 12')} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, ratePct: t } }))} />
-      <TextField id="fld-fd-years" label="Term (years)" hint={was('instalments') ? `${was('instalments')?.replace(/\.$/, '')} instalments.` : 'Like 5.'} inputMode="decimal" value={years}
+      <TextField id="fld-fd-years" label="Term (years)" unit="years" hint={was('instalments') ? `${was('instalments')?.replace(/\.$/, '')} instalments.` : 'Like 5.'} inputMode="decimal" value={years}
         said={notUnderstood(years, numberOf, 'a number, like 5')} onCommit={(t) => update((x) => {
           const n = numberOf(t), per = x.loan.repayment === 'quarterly' ? 4 : 12;
           return { ...x, loan: { ...x.loan, instalments: n === undefined ? t : String(Math.round(n * per)) } };
@@ -176,9 +173,9 @@ function Loan({ s, update, y, p, was }: { s: State; update: Update; y: Years; p:
     <p class={`mt-2 ${HINT}`}>As in the sanction letter.</p>
     <div class="mt-4"><AmountField value={l.amount} onCommit={(t) => set({ amount: t })} /></div>
     <div class="mt-2 grid gap-4 sm:grid-cols-2">
-      <TextField id="fld-ratePct" label="Interest rate, % a year" inputMode="decimal" placeholder="like 10.5" value={l.ratePct}
+      <TextField id="fld-ratePct" label="Interest rate, % a year" unit="%" hint="Like 10.5." inputMode="decimal" value={l.ratePct}
         onCommit={(t) => set({ ratePct: t })} said={notUnderstood(l.ratePct, numberOf, '10.5')} />
-      <TextField id="fld-disbursed" type="month" label="Month the loan is first drawn" placeholder="like 2026-04" value={l.disbursed}
+      <TextField id="fld-disbursed" type="month" label="Month the loan is first drawn" hint="Like 2026-04." value={l.disbursed}
         onCommit={(t) => set({ disbursed: t })} said={notUnderstood(l.disbursed, parseMonth, '2026-04 or Apr 2026')} />
     </div>
     <Choice name="fld-repayment" legend="How is it repaid?" value={l.repayment} onChange={(v) => set({ repayment: v })} options={[
@@ -187,10 +184,10 @@ function Loan({ s, update, y, p, was }: { s: State; update: Update; y: Years; p:
       { value: 'quarterly', label: 'Equal principal every quarter', hint: 'Interest on the balance is still paid every month.' },
     ]} />
     <div class="mt-6 grid gap-4 sm:grid-cols-2">
-      <TextField id="fld-moratoriumMonths" label="Moratorium, months" inputMode="numeric" placeholder="0 if none" value={l.moratoriumMonths}
-        hint="Months before the first instalment; interest is still paid." onCommit={(t) => set({ moratoriumMonths: t })}
+      <TextField id="fld-moratoriumMonths" label="Moratorium, months" unit="months" inputMode="numeric" value={l.moratoriumMonths}
+        hint="Months before the first instalment, 0 if none; interest is still paid." onCommit={(t) => set({ moratoriumMonths: t })}
         said={notUnderstood(l.moratoriumMonths, numberOf, '6, or 0 if none')} />
-      <TextField id="fld-instalments" label="Number of instalments" inputMode="numeric" placeholder="like 60" value={l.instalments}
+      <TextField id="fld-instalments" label="Number of instalments" inputMode="numeric" value={l.instalments}
         hint={was('instalments') ?? (l.repayment === 'quarterly' ? 'Quarterly instalments, after the moratorium.' : l.repayment ? 'Monthly instalments, after the moratorium.' : 'After the moratorium.')}
         onCommit={(t) => set({ instalments: t })} said={notUnderstood(l.instalments, numberOf, '60')} />
     </div>
@@ -204,9 +201,9 @@ function Loan({ s, update, y, p, was }: { s: State; update: Update; y: Years; p:
 function YearsSection({ s, update, y }: { s: State; update: Update; y: Years }) {
   return <Section id="years" title="Years">
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
-      <TextField id="fld-firstYear" label="First year" placeholder="like 2026-27" hint="A financial year, April to March." value={s.firstYear}
+      <TextField id="fld-firstYear" label="First year" hint="A financial year, April to March, like 2026-27." value={s.firstYear}
         onCommit={(t) => update((x) => ({ ...x, firstYear: t }))} said={notUnderstood(s.firstYear, parseFy, '2026-27')} />
-      <TextField id="fld-yearCount" label="Number of years" inputMode="numeric" placeholder="like 5" hint="Every year with interest or instalments." value={s.yearCount}
+      <TextField id="fld-yearCount" label="Number of years" unit="years" inputMode="numeric" hint="Every year with interest or instalments." value={s.yearCount}
         onCommit={(t) => update((x) => ({ ...x, yearCount: t }))} />
     </div>
     {y.years.length > 0 && <p data-testid="years-read" class="mt-3 text-sm text-ink-muted">
@@ -391,9 +388,9 @@ function TargetSection({ s, update }: { s: State; update: Update }) {
   return <Section id="target" title="The lender’s target">
     <p class={`mt-2 ${HINT}`}>The DSCR the lender asks for: the average, the lowest year, or both.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
-      <TextField id="fld-targetAverage" label="Average" inputMode="decimal" placeholder="like 1.50" value={t.average}
+      <TextField id="fld-targetAverage" label="Average" hint="Like 1.50." inputMode="decimal" value={t.average}
         onCommit={(v) => set({ average: v })} said={notUnderstood(t.average, numberOf, '1.50')} />
-      <TextField id="fld-targetMinimum" label="Lowest year" inputMode="decimal" placeholder="like 1.20" value={t.minimum}
+      <TextField id="fld-targetMinimum" label="Lowest year" hint="Like 1.20." inputMode="decimal" value={t.minimum}
         onCommit={(v) => set({ minimum: v })} said={notUnderstood(t.minimum, numberOf, '1.20')} />
     </div>
     {a && m && <div class="mt-4">
@@ -489,19 +486,13 @@ function AnswerPanel({ s, p, update, use, used, undo, keep }: {
 function Working({ s, p, openMore }: { s: State; p: Preview; openMore: () => void }) {
   // The method and the target read as one line (D-UX-10: shorter).
   const method = p.assumed.find((a) => a.id === 'method'), target = p.assumed.find((a) => a.id === 'target');
-  const assumed = p.assumed.filter((a) => !(method && target && a.id === 'target'))
-    .map((a) => (a.id === 'method' && target ? { ...a, what: 'How DSCR is worked out, and the target', shown: `${a.shown}; ${target.shown.toLowerCase()}` } : a));
+  const rows: LedgerRow[] = p.assumed.filter((a) => !(method && target && a.id === 'target')).map((a) => ({
+    ...(a.id === 'method' && target ? { what: 'How DSCR is worked out, and the target', shown: `${a.shown}; ${target.shown.toLowerCase()}`, why: `${a.why}. The target: ${target.why}` } : a),
+    id: a.id, to: a.where, go: (e: Event) => { e.preventDefault(); openMore(); requestAnimationFrame(() => goTo(a.where)(e)); },
+  }));
   return <section id="working" aria-label="How it is worked out" class="lg:col-span-2 lg:row-start-3">
     {p.lender && <LenderLines v={p.lender} openMore={openMore} />}
-    {assumed.length > 0 && <div data-testid="dscr-assumed" class="mt-6 text-ink">
-      <p class="font-medium">Assumed until you change them</p>
-      <ul class="mt-1 mb-2 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">
-        {assumed.map((a) => <li key={a.id} data-testid={`assumed-${a.id}`}>
-          <a href={`#${a.where}`} onClick={openMore} class="text-link underline underline-offset-4">{a.what}</a>: {a.shown}
-        </li>)}
-      </ul>
-      <SourceNote what="Why these">{p.assumed.map((a) => <span key={a.id} class="mt-1 block"><b>{a.what}:</b> {a.why}.</span>)}</SourceNote>
-    </div>}
+    <Ledger id="assumed" testid="dscr-assumed" row="assumed-" title="Assumed until changed" rows={rows} />
     {p.statement && <StatementTable st={p.statement} parts={p.partYears} />}
     {p.beforeStart && <p data-testid="dscr-before-start" class={`mt-2 ${HINT}`}>{p.beforeStart}</p>}
     {p.notCounted && <p data-testid="dscr-not-counted" class={`mt-2 ${HINT}`}>{p.notCounted}</p>}
@@ -556,21 +547,21 @@ function LenderSection({ s, update, y }: { s: State; update: Update; y: Years })
     {y.years.map((fy, i) => <label key={fy} class="text-sm">{fy}<CellInput id={`fld-lender-${key}-${i}`} name={`${name} ${fy}`} decimal value={l[key][i] ?? ''} tidy={tidyAmount}
       onCommit={(t) => set((x) => ({ ...x, [key]: at(x[key], i, t) }))} /></label>)}
   </div>;
-  const aud = (k: keyof LenderText['audited'], label: string) => <TextField id={`fld-lender-audited-${k}`} label={label} inputMode="decimal" value={l.audited[k]} tidy={tidyAmount}
+  const aud = (k: keyof LenderText['audited'], label: string) => <TextField id={`fld-lender-audited-${k}`} label={label} unit="Rs." inputMode="decimal" value={l.audited[k]} tidy={tidyAmount}
     onCommit={(t) => set((x) => ({ ...x, audited: { ...x.audited, [k]: t } }))} />;
   return <Section id="lender" title="As a lender tests it">
     <p class={`mt-1 ${HINT}`}>Optional. Each adds a line beside your DSCR; none changes it.</p>
     <h3 class="mt-4 font-medium text-ink">Sales, for the price and cost tests</h3>
-    {byYear ? cells('sales', 'Sales') : <TextField id="fld-lender-sales" label="This year’s sales" hint="They grow as the profit does." inputMode="decimal" value={l.sales[0] ?? ''}
-      tidy={tidyAmount} placeholder="like 50 L" said={notUnderstood(l.sales[0] ?? '', amountOf, '50,00,000 or 50 L')} onCommit={(t) => set((x) => ({ ...x, sales: [t] }))} />}
+    {byYear ? cells('sales', 'Sales') : <TextField id="fld-lender-sales" label="This year’s sales" unit="Rs." hint="They grow as the profit does." inputMode="decimal" value={l.sales[0] ?? ''}
+      tidy={tidyAmount} said={notUnderstood(l.sales[0] ?? '', amountOf, '50,00,000 or 50 L')} onCommit={(t) => set((x) => ({ ...x, sales: [t] }))} />}
     <h3 class="mt-6 font-medium text-ink">Promoters’ loans repaid</h3>
     <p class={HINT}>Taken as kept in the business until this loan is repaid. If any is repaid sooner, type it by year; leave a year empty for none.</p>
     {cells('promoters', "Promoters' loans repaid")}
     <h3 class="mt-6 font-medium text-ink">The cash check</h3>
     <div class="mt-2 grid gap-3 sm:grid-cols-2">
-      <TextField id="fld-lender-wc" label="Working capital needed, % of sales" hint="Stock and debtors less creditors, as a share of sales." inputMode="decimal" value={l.wcPct}
-        placeholder="like 20" onCommit={(t) => set((x) => ({ ...x, wcPct: t }))} />
-      <TextField id="fld-lender-capex" label="Replacement capex a year" hint="The same every year; 0 if none." inputMode="decimal" value={l.capex} tidy={tidyAmount}
+      <TextField id="fld-lender-wc" label="Working capital needed, % of sales" unit="%" hint="Stock and debtors less creditors, as a share of sales." inputMode="decimal" value={l.wcPct}
+        onCommit={(t) => set((x) => ({ ...x, wcPct: t }))} />
+      <TextField id="fld-lender-capex" label="Replacement capex a year" unit="Rs." hint="The same every year; 0 if none." inputMode="decimal" value={l.capex} tidy={tidyAmount}
         onCommit={(t) => set((x) => ({ ...x, capex: t }))} />
     </div>
     <h3 class="mt-6 font-medium text-ink">The last audited year</h3>
@@ -591,8 +582,8 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
     const now = new Date();
     saveFile(statementDoc(s, p, isoDate(now)), kind, fileName(s, p, kind), now);
   };
-  const field = (id: keyof DocFacts, label: string, hint?: string, placeholder?: string) =>
-    <TextField id={`fld-${id}`} label={label} hint={hint} placeholder={placeholder} value={f[id] ?? ''} onCommit={(t) => set({ [id]: t })}
+  const field = (id: keyof DocFacts, label: string, hint?: string) =>
+    <TextField id={`fld-${id}`} label={label} hint={hint} value={f[id] ?? ''} onCommit={(t) => set({ [id]: t })}
       said={english(f[id]) ?? (id === 'gstin' ? gstinSaid : undefined)} invalid={!!english(f[id]) || (id === 'gstin' && !!gstinSaid)} />;
   // Before the statement shows figures the section is one line (UX8, review finding 9).
   if (!ready) return <Folded id="download" title="Download the statement"><span data-testid="doc-wait">{p.blocked
@@ -602,7 +593,7 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
     {ready
       ? <div class="mt-5">
         <div class="grid gap-4 sm:grid-cols-2">
-          {field('borrower', 'Borrower’s name', undefined, 'like Asha Traders')}
+          {field('borrower', 'Borrower’s name', 'Like Asha Traders.')}
           {field('lender', 'Lender', 'The bank or finance company, and the branch.')}
           {field('preparedBy', 'Prepared by, if not the borrower', 'Your name or your firm’s; leave empty if the borrower prepares it.')}
         </div>
@@ -610,8 +601,8 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
           <summary class="flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link">Address, the loan’s purpose and GSTIN, if you want them on the statement</summary>
           <div class="grid gap-4 pt-2 pb-4 sm:grid-cols-2">
             {field('address', 'Address', 'The business’s address.')}
-            {field('purpose', 'Purpose of the loan', undefined, 'like a new CNC machine')}
-            {field('gstin', 'GSTIN, if registered', undefined, 'like 27ABCDE1234F1Z5')}
+            {field('purpose', 'Purpose of the loan', 'Like a new CNC machine.')}
+            {field('gstin', 'GSTIN, if registered', 'Like 27ABCDE1234F1Z5.')}
           </div>
         </details>
         <div class="mt-5">

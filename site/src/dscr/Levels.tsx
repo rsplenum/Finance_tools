@@ -78,7 +78,7 @@ function Viable({ s, update, use }: { s: State; update: Update; use: (l: DscrLev
       <h3 class="text-title text-ink">The plan: the levers together</h3>
       <p class={HINT}>The engine’s plan: a smaller loan first, then a longer repayment, then the profit still needed. The sliders change none of the figures above until you use the plan, which writes the loan and the term, never the profit.</p>
       <TextField id="fld-dscr-ownMost" class="mt-3" label="The most you can bring in yourself, if known" hint="Without it, no more of your own money is assumed."
-        inputMode="decimal" value={most} tidy={tidyAmount} placeholder="like 2 L" invalid={bad}
+        unit="Rs." inputMode="decimal" value={most} tidy={tidyAmount} invalid={bad}
         said={bad ? 'Not understood. Type 2,00,000 or 2 L.' : undefined} onCommit={(ownMost) => update((x) => ({ ...x, ownMost }))} />
       {b.steps.length
         ? <ol data-testid="dscr-plan-steps" class="mt-3 list-decimal space-y-0.5 pl-5 text-sm text-ink">{b.steps.map((t) => <li key={t}>{t}</li>)}</ol>

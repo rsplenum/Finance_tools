@@ -58,7 +58,7 @@ export function PlanEstimate() {
   const [s, setS] = useState<PlanState>(EMPTY_PLAN);
   const update: Update = (f) => setS(f);
   const p = useMemo(() => planPreview(s), [s]);
-  sharePlan(s);
+  sharePlan(s, { first: p.needs.map(askedIn).find(Boolean), left: p.needs.length });
   const [editing, setEditing] = useState(true);
   const folded = useRef(false), result = useRef<HTMLHeadingElement>(null);
   // The questions fold into one line the first time the estimate works out (A8), and the answer takes the focus.
@@ -213,8 +213,7 @@ function Answer({ v, toLevel }: { v: PlanView; toLevel: (l: Level) => void }) {
     {/* Edged, never filled: the chosen level takes an edge in ink (UX7: the accent is for links alone) (principle 6; F4 asks a filled control to be a pill).
         The five totals read as a chart's labels: 12 px on a phone, where "Standard" at 14 px overflows its fifth of 360 px. */}
     <div role="group" aria-label="The total at each level; choose one to switch the package" class="mt-4 grid grid-cols-5 gap-1">
-      {v.strip.map((x) => <button key={x.level} type="button" data-testid={`pl-strip-${x.level}`} aria-pressed={x.current}
-        title={`Rs. ${x.full}`} onClick={() => toLevel(x.level)}
+      {v.strip.map((x) => <button key={x.level} type="button" data-testid={`pl-strip-${x.level}`} aria-pressed={x.current} onClick={() => toLevel(x.level)}
         class={`min-h-11 min-w-0 rounded-control px-0.5 text-center ${x.current ? 'border-2 border-ink py-1' : 'border border-edge py-1.25'}`}>
         <span class={`block text-xs leading-tight sm:text-sm ${x.current ? "font-semibold" : ""} ${INK}`}>{x.name}</span>
         <span class={`block text-xs leading-tight tabular-nums sm:text-sm ${MUTED}`}>{x.total}<span class="sr-only"> (Rs. {x.full})</span></span>
@@ -413,7 +412,7 @@ function Drawer({ s, l, d, groups, setGroup, update }: { s: PlanState; l: LineVi
 
 /** Compare (A8): each section that is on, and the total, at the five levels as a package; the estimate's own level marked. */
 function Compare({ v }: { v: PlanView }) {
-  const cell = (c: PlanView['compare']['totals'][number], name: string, i: number) => <td key={i} aria-label={`${name}, ${LEVEL_NAMES[i]}: Rs. ${c.full}${c.mine ? ', your level' : ''}`} title={`Rs. ${c.full}`}
+  const cell = (c: PlanView['compare']['totals'][number], name: string, i: number) => <td key={i} aria-label={`${name}, ${LEVEL_NAMES[i]}: Rs. ${c.full}${c.mine ? ', your level' : ''}`}
     class={`px-1 py-1 text-right ${c.mine ? 'rounded-control bg-surface font-semibold' : ''}`}>{c.text}</td>;
   return <details data-testid="pl-compare" class="mt-3">
     <summary class={SUMMARY}>Compare the five levels, section by section</summary>
@@ -465,7 +464,7 @@ function Shares({ v }: { v: PlanView }) {
   return <figure data-testid="pl-shares" class="mt-3">
     <figcaption class={`text-sm font-medium ${INK}`}>How your carpet area is shared</figcaption>
     <div aria-hidden="true" class="mt-1.5 flex h-4 w-full gap-0.5 overflow-hidden rounded bg-surface">
-      {v.shares.map((x) => <span key={x.id} title={`${x.name} ${x.share}`} class={`h-full shrink-0 ${SHARE_COLOR[x.kind]}`} style={{ width: `calc(${x.width.toFixed(3)}% - 2px)` }} />)}
+      {v.shares.map((x) => <span key={x.id} class={`h-full shrink-0 ${SHARE_COLOR[x.kind]}`} style={{ width: `calc(${x.width.toFixed(3)}% - 2px)` }} />)}
     </div>
     <ul class="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm sm:grid-cols-3">
       {v.shares.map((x) => <li key={x.id} data-testid={`pl-share-${x.id}`} class={`flex items-baseline gap-1.5 ${INK}`}>

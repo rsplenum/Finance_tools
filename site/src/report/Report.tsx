@@ -4,10 +4,10 @@
  * costs; working capital. Then the report as the engine works it out, provisional while anything is missing, table by
  * table; what it assumes until changed; and the three downloads. Figures: engine/report.ts only, via model.ts.
  */
-import type { ComponentChildren } from 'preact';
+import { Fragment, type ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
-import { answerRule, BAR, BAR_ARROW, BUTTON, Choice, Claim, Counter, Dash, FILLED, Folded, goTo, HINT, Section, STATE, TextField, Tick, toAnswer } from '../fields';
+import { answerRule, AnswerBar, BUTTON, Choice, Claim, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, Section, STATE, TextField, Tick } from '../fields';
 import { Bar, Benchmarks, Lever, PlanLever, targetOf } from '../Board';
 import { benchmarkFields, inSentence, listed, withBenchmark } from '../board-model';
 import { printable } from '../doc/pdf';
@@ -30,6 +30,8 @@ const bad = (t: string, read: (t: string) => unknown) => !!t.trim() && read(t) =
 const notUnderstood = (t: string, read: (t: string) => unknown, example: string) => (bad(t, read) ? `Not understood. Type ${example}.` : undefined);
 /** A control that removes itself hands the focus on, after the render (WCAG 2.4.3; docs/DESIGN.md, Focus). */
 const focusNext = (sel: string) => requestAnimationFrame(() => document.querySelector<HTMLElement>(sel)?.focus());
+// The box that changes an assumption, if one does, and whether it sits under More options (review finding 8).
+const ASSUMED_BOX: Record<string, [string, boolean]> = { days: ['fld-days-stock', false], utilisation: ['fld-utilisation', true], price: ['fld-priceGrowth', true] };
 /** The box each of the engine's needs is typed in, by the first words of the need (engine/report.ts), and whether it sits
  * under More options: each missing figure is a link to its box (UX8, review finding 2). */
 const BOXES: [string, string, boolean?][] = [
@@ -97,10 +99,11 @@ export function ReportCalculator() {
   const mark = (id: string, hint?: string) => { const c = used.find((u) => u.field === id); return c ? `Changed by the plan; it was ${c.was || 'empty'}.${hint ? ` ${hint}` : ''}` : hint; };
   // Each setter builds on the latest state (x), never on the one this render saw.
   const amount = (id: string, label: string, value: string, set: (x: ReportState, t: string) => ReportState, hint?: string) =>
-    <TextField id={id} label={label} hint={mark(id, hint)} inputMode="decimal" value={value} tidy={tidyAmount} placeholder="like 10 L or 10,00,000"
+    <TextField id={id} label={label} unit="Rs." hint={mark(id, hint)} inputMode="decimal" value={value} tidy={tidyAmount}
       invalid={bad(value, amountOf)} said={notUnderstood(value, amountOf, '10,00,000 or 10 L')} onCommit={(t) => update((x) => set(x, t))} />;
-  const percent = (id: string, label: string, value: string, set: (x: ReportState, t: string) => ReportState, placeholder: string) =>
-    <TextField id={id} label={label} hint={mark(id)} inputMode="decimal" value={value} placeholder={placeholder}
+  // A figure with its unit in the box and no example there (UX9, review finding 6); one the page assumes says so in the box.
+  const percent = (id: string, label: string, value: string, set: (x: ReportState, t: string) => ReportState, unit?: string, assumed?: string) =>
+    <TextField id={id} label={label} unit={unit} assumed={!!assumed && value === assumed} hint={mark(id)} inputMode="decimal" value={value}
       invalid={bad(value, plainOf)} said={notUnderstood(value, plainOf, 'a number, like 10')} onCommit={(t) => update((x) => set(x, t))} />;
   // From 1024 px the questions stand left and the answer panel right (UX8, D-UX-106); the report's tables, what it assumes
   // and the download run the full width below.
@@ -110,7 +113,7 @@ export function ReportCalculator() {
     <Section id="cost" title="Cost of the project">
       <p class={`mt-2 ${HINT}`}>Leave a head empty if the project has none. The margin for working capital is worked out and added.</p>
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
-        {HEADS.map((h) => <div key={h.id}>{amount(`fld-cost-${h.id}`, h.label, s.cost[h.id], (x, t) => ({ ...x, cost: { ...x.cost, [h.id]: t } }))}</div>)}
+        {HEADS.map((h) => <Fragment key={h.id}>{amount(`fld-cost-${h.id}`, h.label, s.cost[h.id], (x, t) => ({ ...x, cost: { ...x.cost, [h.id]: t } }))}</Fragment>)}
       </div>
     </Section>
     <Section id="finance" title="Means of finance">
@@ -134,12 +137,12 @@ export function ReportCalculator() {
     </Section>
     <Section id="loan" title="The term loan">
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
-        {percent('fld-tl-rate', 'Interest rate (% a year)', s.loan.ratePct, (x, ratePct) => ({ ...x, loan: { ...x.loan, ratePct } }), 'like 10')}
+        {percent('fld-tl-rate', 'Interest rate (% a year)', s.loan.ratePct, (x, ratePct) => ({ ...x, loan: { ...x.loan, ratePct } }), '%')}
         <TextField id="fld-tl-disbursed" label="First drawn (month)" type="month" value={s.loan.disbursed}
           said={s.loan.disbursed.trim() ? (parseMonth(s.loan.disbursed) ? monthText(parseMonth(s.loan.disbursed) as string) : 'Not understood. Type 2026-04 or Apr 2026.') : undefined}
           onCommit={(disbursed) => update((x) => ({ ...x, loan: { ...x.loan, disbursed } }))} />
-        {percent('fld-tl-moratorium', 'Moratorium (months; 0 if none)', s.loan.moratoriumMonths, (x, moratoriumMonths) => ({ ...x, loan: { ...x.loan, moratoriumMonths } }), 'like 6')}
-        {percent('fld-tl-instalments', 'Number of instalments', s.loan.instalments, (x, instalments) => ({ ...x, loan: { ...x.loan, instalments } }), 'like 60')}
+        {percent('fld-tl-moratorium', 'Moratorium (months; 0 if none)', s.loan.moratoriumMonths, (x, moratoriumMonths) => ({ ...x, loan: { ...x.loan, moratoriumMonths } }), 'months')}
+        {percent('fld-tl-instalments', 'Number of instalments', s.loan.instalments, (x, instalments) => ({ ...x, loan: { ...x.loan, instalments } }))}
       </div>
       <Choice name="fld-tl-repayment" legend="How it is repaid" options={REPAYMENT_CHOICES} value={s.loan.repayment}
         onChange={(repayment) => update((x) => ({ ...x, loan: { ...x.loan, repayment } }))} />
@@ -147,13 +150,13 @@ export function ReportCalculator() {
     <Section id="operations" title="Sales and costs">
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
         {s.salesBy === 'drivers' && <>
-          {percent('fld-capacity', 'Capacity: the units it can make or serve in a year', s.capacity, (x, capacity) => ({ ...x, capacity }), 'like 1,00,000')}
+          {percent('fld-capacity', 'Capacity: the units it can make or serve in a year', s.capacity, (x, capacity) => ({ ...x, capacity }))}
           {amount('fld-price', 'Price a unit', s.price, (x, price) => ({ ...x, price }))}
         </>}
-        {percent('fld-monthsToStart', 'Months from the loan to the first sales (0 if at once)', s.monthsToStart, (x, monthsToStart) => ({ ...x, monthsToStart }), 'like 3')}
-        {percent('fld-variablePct', 'Materials and other variable costs (% of sales)', s.variablePct, (x, variablePct) => ({ ...x, variablePct }), 'like 65')}
+        {percent('fld-monthsToStart', 'Months from the loan to the first sales (0 if at once)', s.monthsToStart, (x, monthsToStart) => ({ ...x, monthsToStart }), 'months')}
+        {percent('fld-variablePct', 'Materials and other variable costs (% of sales)', s.variablePct, (x, variablePct) => ({ ...x, variablePct }), '%')}
         {amount('fld-fixed', 'Fixed costs in a full first year', s.fixed, (x, fixed) => ({ ...x, fixed }), 'Salaries, rent and other overheads.')}
-        {percent('fld-fixedGrowth', 'Fixed costs: growth a year (%)', s.fixedGrowth, (x, fixedGrowth) => ({ ...x, fixedGrowth }), 'like 5')}
+        {percent('fld-fixedGrowth', 'Fixed costs: growth a year (%)', s.fixedGrowth, (x, fixedGrowth) => ({ ...x, fixedGrowth }), '%')}
       </div>
       {/* Set off by its fill, never a border all round (F3), as on the DSCR. */}
       <details id="more-options" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)} class="mt-6">
@@ -163,12 +166,12 @@ export function ReportCalculator() {
             onChange={(salesBy) => update((x) => ({ ...x, salesBy }))} />
           <div class="mt-4 grid gap-4 sm:grid-cols-2">
             {s.salesBy === 'drivers' ? <>
-              <TextField id="fld-utilisation" label="Use of the capacity by year (%)" hint={mark('fld-utilisation', 'One a year from the first sales; the last holds after.')} value={s.utilisation} placeholder="like 60, 70, 80"
+              <TextField id="fld-utilisation" label="Use of the capacity by year (%)" unit="%" assumed={s.utilisation === EMPTY.utilisation} hint={mark('fld-utilisation', 'One a year from the first sales, like 60, 70, 80; the last holds after.')} value={s.utilisation}
                 onCommit={(utilisation) => update((x) => ({ ...x, utilisation }))} />
-              {percent('fld-priceGrowth', 'The price: growth a year (%)', s.priceGrowth, (x, priceGrowth) => ({ ...x, priceGrowth }), 'like 0')}
+              {percent('fld-priceGrowth', 'The price: growth a year (%)', s.priceGrowth, (x, priceGrowth) => ({ ...x, priceGrowth }), '%', EMPTY.priceGrowth)}
             </> : <>
               {amount('fld-sales', 'Sales in a full first year', s.sales, (x, sales) => ({ ...x, sales }))}
-              {percent('fld-salesGrowth', 'Sales: growth a year (%)', s.salesGrowth, (x, salesGrowth) => ({ ...x, salesGrowth }), 'like 10')}
+              {percent('fld-salesGrowth', 'Sales: growth a year (%)', s.salesGrowth, (x, salesGrowth) => ({ ...x, salesGrowth }), '%')}
             </>}
             {amount('fld-collateral', 'Collateral: its market value', s.collateral, (x, collateral) => ({ ...x, collateral }), `Property offered beside the project's assets. ${COLLATERAL_HINT}`)}
           </div>
@@ -178,10 +181,10 @@ export function ReportCalculator() {
     <Section id="wc" title="Working capital">
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
         {amount('fld-wcLimit', 'Working-capital limit sought (0 if none)', s.wcLimit, (x, wcLimit) => ({ ...x, wcLimit }))}
-        {percent('fld-wcRate', 'Its interest rate (% a year)', s.wcRate, (x, wcRate) => ({ ...x, wcRate }), 'like 11')}
-        {(['stock', 'debtors', 'creditors'] as const).map((k) => <div key={k}>
-          {percent(`fld-days-${k}`, `Days of ${k}`, s.days[k], (x, t) => ({ ...x, days: { ...x.days, [k]: t } }), 'like 30')}
-        </div>)}
+        {percent('fld-wcRate', 'Its interest rate (% a year)', s.wcRate, (x, wcRate) => ({ ...x, wcRate }), '%')}
+        {(['stock', 'debtors', 'creditors'] as const).map((k) => <Fragment key={k}>
+          {percent(`fld-days-${k}`, `Days of ${k}`, s.days[k], (x, t) => ({ ...x, days: { ...x.days, [k]: t } }), 'days', EMPTY.days[k])}
+        </Fragment>)}
       </div>
       {typed && <p data-testid="rep-arrived" class="mt-8 text-ink lg:hidden"><a href="#report" class="text-link underline underline-offset-4">The project report below</a> {arrived(p)}</p>}
     </Section>
@@ -193,19 +196,15 @@ export function ReportCalculator() {
           <button type="button" data-testid="rep-clear-undo" class={BUTTON} onClick={unclear}>Undo</button></p>} />
     <div class="lg:col-span-2 lg:row-start-2">
     {p.view && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
-    <Section id="assumed" title="Assumed until changed">
-      <ul data-testid="rep-assumed" class="mt-3 max-w-prose list-disc space-y-1 pl-5 text-sm text-ink-muted">
-        {assumptionsOf(s).map((a) => <li key={a.id}><span class="font-medium text-ink">{a.what}:</span> {a.shown}. <span class={MUTED}>{a.why}.</span></li>)}
-      </ul>
-    </Section>
+    <Ledger id="assumed" testid="rep-assumed" title="Assumed until changed" rows={assumptionsOf(s).map((a) => {
+      const [to, more] = ASSUMED_BOX[a.id] ?? [];
+      return { ...a, to, go: more ? (e: Event) => { e.preventDefault(); setMore(true); focusNext(`#${to}`); } : undefined };
+    })} />
     <Download s={s} p={p} update={update} />
     </div>
     {/* The answer on every screen of the fields (D-UX-84), from load as on every tool (UX8, review finding 13): text, read
         out as it changes; only the arrow is a target, 44 px. From 1024 px the panel stands beside, so only the words stay. */}
-    <div class={`${BAR} lg:col-span-2`}>
-      <p data-testid="rep-answer-bar" data-answer-echo aria-live="polite" class="flex-1 py-2 text-sm font-medium text-ink">{barText(p)}</p>
-      <a href="#report" aria-label="To the report" onClick={toAnswer} class={BAR_ARROW}><span aria-hidden="true">↓</span></a>
-    </div>
+    <AnswerBar to="report" label="To the report" testid="rep-answer-bar" text={barText(p)} />
   </div>;
 }
 
@@ -320,7 +319,7 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
       <h3 class="text-title text-ink">The plan: the levers together</h3>
       <p class={HINT}>The engine’s plan, your changes first and the lender’s last. The sliders change none of the figures above until you use the plan.</p>
       <TextField id="fld-promotersMost" class="mt-3" label="The most the promoters can bring in all, if known" hint="Without it, no more of their money is assumed."
-        inputMode="decimal" value={s.promotersMost} tidy={tidyAmount} placeholder="like 12 L" invalid={bad(s.promotersMost, amountOf)}
+        unit="Rs." inputMode="decimal" value={s.promotersMost} tidy={tidyAmount} invalid={bad(s.promotersMost, amountOf)}
         said={notUnderstood(s.promotersMost, amountOf, '10,00,000 or 10 L')} onCommit={(promotersMost) => update((x) => ({ ...x, promotersMost }))} />
       {b.steps.length
         ? <ol data-testid="rep-plan-steps" class="mt-3 list-decimal space-y-0.5 pl-5 text-sm text-ink">{b.steps.map((t) => <li key={t}>{t}</li>)}</ol>

@@ -52,3 +52,16 @@ export function cmaCheck(years: F[], quasi: boolean, daysInYear: number, needPct
     };
   });
 }
+
+/** A year's subtotals as it is typed (UX9), by this file's own lists: gross profit as net sales less its three costs,
+ * net profit as the signed sums less tax, and each side of the balance sheet as the sum of its heads. A subtotal is left
+ * out until every figure it takes is there. */
+export function subtotalsCheck(f: Partial<F>): { grossProfit?: number; netProfit?: number; assets?: number; liabilities?: number } {
+  const has = (heads: string[]) => heads.every((h) => typeof f[h] === 'number' && Number.isFinite(f[h]));
+  const g = f as F, CAST = ['materials', 'otherDirect', 'depreciation'];
+  return {
+    ...(has(['sales', ...CAST]) ? { grossProfit: g.sales - sum(g, CAST) } : {}),
+    ...(has([...INCOME, ...COSTS, 'tax']) ? { netProfit: sum(g, INCOME) - sum(g, COSTS) - g.tax } : {}),
+    ...(has([...LIABILITIES, ...ASSETS, 'tlDue12']) ? { assets: sum(g, ASSETS), liabilities: sum(g, LIABILITIES) } : {}),
+  };
+}

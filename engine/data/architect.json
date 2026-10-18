@@ -271,8 +271,8 @@
   },
   "gst": { "pct": 18, "src": ["newsonair-gst", "jkcement-gst", "woodenmax-shower"], "why": "A rate quoted before GST has 18% added; every other rate is taken as the price paid, as its source quotes it." },
   "checks": {
-    "paintRatio": [2.5, 3.5],
-    "src": ["own"], "why": "Walls and ceilings to paint usually come to 2.5–3.5 times the carpet area; outside that, check the room sizes."
+    "paintRatio": [2.5, 3.5], "areaSlack": 10,
+    "src": ["own"], "why": "Walls and ceilings to paint usually come to 2.5–3.5 times the carpet area; outside that, check the room sizes. A flat's carpet area is checked against the usual for its bedrooms only when it is more than 10% outside it, so a few sq ft over is not a flag."
   },
   "quote": {
     "farOut": 20,

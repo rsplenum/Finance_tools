@@ -242,7 +242,8 @@ body[data-look='new'] { font-family: var(--font-display); }
 /* A field or button the browser scrolls to stops clear of the sticky top bar and of a tool page's answer bar at the foot
    (WCAG 2.4.11; UX3). */
 html:has(body[data-look='new']) { scroll-padding-top: 5rem; }
-html:has([data-answer-echo]) { scroll-padding-bottom: 4rem; }
+/* The phone bar runs to 77 px at 320 px wide with two lines (UX8's critic): a Tab stop is never half under it. */
+html:has([data-answer-echo]) { scroll-padding-bottom: 5.5rem; }
 /* A plan's pinned line rides 3rem above the bar on a phone: a control scrolled or tabbed to stays clear of both (UX8). */
 html:has([data-pinned-line]) { scroll-padding-bottom: 7rem; }
 @media (min-width: 64rem) { html:has([data-pinned-line]) { scroll-padding-bottom: 4rem; } }
@@ -258,9 +259,9 @@ html:has(body[data-look='new']) { scroll-padding-top: 8.5rem; }
 @utility caps { font-family: var(--font-heading); font-weight: 500; font-stretch: 87.5%; font-size: 1rem; line-height: 1.375rem; letter-spacing: 0.06em; text-transform: uppercase; }
 @utility rule-single { border-bottom: 1px solid currentColor; }
 @utility rule-double { border-bottom: 3px double currentColor; }
-/* The ledger rule: sections part on a thin line crossed by the double red margin rule of an account book. */
-[data-ledger] { position: relative; height: 1px; background: var(--line); }
-[data-ledger]::before { content: ''; position: absolute; top: -0.625rem; bottom: -0.625rem; left: clamp(2rem, 6vw, 5.5rem); width: 4px; border-inline: 1px solid var(--margin); }
+/* The ledger rule: sections part on a thin line. Its red tick, the account book's margin rule crossing it, read as a cursor
+   or a glitch (UX9, review finding 10), so the margin rule stays on the desk and the paper alone. */
+[data-ledger] { height: 1px; background: var(--line); }
 /* The ink desk: ruled like a ledger's page, its double margin rule in red. Rules only, no texture. */
 [data-desk] {
   --mx: 0.625rem; background-color: var(--desk); color: var(--on-desk);
@@ -318,6 +319,8 @@ html:not(.js) [data-reel] + [data-reel] [data-mark] { transform-box: fill-box; t
    bar and scrolling within itself when taller than the screen, with room for its sheet's shadow. */
 @utility grid-cols-tool { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 /* The CMA's and the report's: their grids of years need the width, so the answer takes a narrower column. */
+/* The ledger of what is assumed (UX9): what, the value, Change. */
+@utility grid-cols-ledger { grid-template-columns: minmax(0, 14rem) minmax(0, 1fr) 5rem; }
 @utility grid-cols-tool-grid { grid-template-columns: minmax(0, 1fr) 24rem; }
 @utility answer-panel {
   @media (width >= 64rem) { position: sticky; top: 4.5rem; max-height: calc(100dvh - 5.5rem); overflow-y: auto; overscroll-behavior: contain; margin-inline: -1rem; padding: 0 1rem 2.5rem; }

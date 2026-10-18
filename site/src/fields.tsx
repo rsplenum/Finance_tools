@@ -1,6 +1,6 @@
 /** Form fields shared by the tool pages. A field keeps what is being typed to itself and hands it on only when it is left. */
 import type { ComponentChildren } from 'preact';
-import { useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { overdueNote, todayIso } from '../../engine/review';
 
 // The shared parts' classes, in the tokens of docs/DESIGN.md. A field is 44 px tall and its edge 3:1 (WCAG 1.4.11); the
@@ -47,27 +47,44 @@ interface TextProps {
   onCommit: (text: string) => void;
   tidy?: (text: string) => string;
   hint?: ComponentChildren;
-  /** Shown under the field: a read-back or what is wrong. */
+  /** Shown under the field in the hint's slot: a read-back or what is wrong. */
   said?: string;
   invalid?: boolean;
   type?: 'text' | 'month';
   inputMode?: 'decimal' | 'numeric' | 'text';
+  /** Inside the box (UX9, review finding 6): "Rs." before the figure; any other, like "%" or "days", after it. */
+  unit?: string;
+  /** A value the page assumes until changed (defaults.json), said in the box beside its unit, so it never passes for one typed. */
+  assumed?: boolean;
+  /** The estimate's own; the tools' boxes take none, since an example in the box looks typed (review finding 6). */
   placeholder?: string;
   class?: string;
 }
 
+/**
+ * A box with its label above and one slot below (UX9, review finding 6): what was read or what is wrong, or else the
+ * hint, so boxes side by side line up. In a grid of fields it takes three of the grid's rows (a subgrid), so the boxes
+ * share a line however their labels wrap.
+ */
 export function TextField(p: TextProps) {
   const d = useDraft(p.value, p.onCommit, p.tidy);
   // A read-back saying the text was not understood marks the field wrong too, for screen readers and the error count (UD1).
   const bad = p.invalid || /^Not understood/.test(p.said ?? '');
-  return <div class={p.class}>
-    <label for={p.id} class={LABEL}>{p.label}</label>
-    {p.hint && <p id={`${p.id}-hint`} class={HINT}>{p.hint}</p>}
-    <input id={p.id} type={p.type ?? 'text'} inputMode={p.inputMode} autocomplete="off" spellcheck={false} enterkeyhint="done"
-      placeholder={p.placeholder} aria-invalid={bad || undefined} aria-describedby={[p.hint && `${p.id}-hint`, p.said && `${p.id}-said`].filter(Boolean).join(' ') || undefined}
-      {...d} class={`mt-1 ${INPUT} ${bad ? BAD : BORDER}`} />
+  const pre = p.unit === 'Rs.', after = [pre ? '' : p.unit, p.assumed ? 'assumed' : ''].filter(Boolean).join(' · ');
+  const pad = `${pre ? 'pl-11' : 'pl-3'} ${!after ? 'pr-3' : after.length < 4 ? 'pr-10' : after.length < 10 ? 'pr-24' : 'pr-36'}`;
+  const slot = p.said ? 'said' : p.hint ? 'hint' : '', UNIT = 'pointer-events-none absolute inset-y-0 flex items-center text-ink-muted';
+  return <div class={`grid grid-rows-subgrid row-span-3 content-start gap-0 ${p.class ?? ''}`}>
+    <label for={p.id} class={`${LABEL} self-end`}>{p.label}</label>
+    <div class="relative mt-1">
+      {pre && <span id={`${p.id}-pre`} class={`${UNIT} left-3`}>Rs.</span>}
+      {after && <span id={`${p.id}-unit`} class={`${UNIT} right-3 text-sm`}>{after}</span>}
+      <input id={p.id} type={p.type ?? 'text'} inputMode={p.inputMode} autocomplete="off" spellcheck={false} enterkeyhint="done"
+        placeholder={p.placeholder} aria-invalid={bad || undefined} aria-describedby={[pre && `${p.id}-pre`, after && `${p.id}-unit`, slot && `${p.id}-${slot}`].filter(Boolean).join(' ') || undefined}
+        {...d} class={`${INPUT.replace('px-3', pad)} ${bad ? BAD : BORDER}`} />
+    </div>
     {/* The read-back, or the error beside its field in the error colour (GOV.UK Error message), tied to the field for a screen reader. */}
-    {p.said && <p id={`${p.id}-said`} data-testid={`${p.id}-said`} aria-live="polite" class={`mt-1 text-sm break-words ${bad ? 'text-bad' : 'text-ink-muted'}`}>{p.said}</p>}
+    {p.said ? <p id={`${p.id}-said`} data-testid={`${p.id}-said`} aria-live="polite" class={`mt-1 text-sm break-words ${bad ? 'text-bad' : 'text-ink-muted'}`}>{p.said}</p>
+      : p.hint && <p id={`${p.id}-hint`} class={HINT}>{p.hint}</p>}
   </div>;
 }
 
@@ -189,10 +206,67 @@ export function Folded(p: { id: string; title: string; children: ComponentChildr
   </section>;
 }
 
+/** One thing the page assumes until changed: what, the value as assumed, why, and the box that changes it if there is one. */
+export interface LedgerRow { id: string; what: string; shown: string; why: string; to?: string; go?: (e: Event) => void }
+
+/**
+ * What is assumed, as a ledger (UX9, review finding 8): one line with the count (D-UX-32), opening to a row each of what,
+ * the value assumed and Change, so the values can be scanned; the reasons behind one "Why these".
+ */
+export function Ledger(p: { id: string; testid: string; title: string; rows: LedgerRow[]; row?: string; class?: string }) {
+  if (!p.rows.length) return null;
+  return <section id={p.id} data-folded aria-labelledby={`${p.id}-h`} class={`mt-10 border-t border-line pt-3 ${p.class ?? ''}`}>
+    <details data-testid={p.testid} class="group">
+      <summary class="flex min-h-11 cursor-pointer flex-wrap items-baseline gap-x-2 text-sm [&::-webkit-details-marker]:hidden">
+        <h2 id={`${p.id}-h`} class="font-medium text-ink">{p.title}: {p.rows.length}</h2>
+        <span class="text-link"><span class="group-open:hidden">Show</span><span class="hidden group-open:inline">Hide</span></span>
+      </summary>
+      <ul class="text-sm">
+        {p.rows.map((r) => <li key={r.id} data-testid={`${p.row ?? `${p.testid}-`}${r.id}`} class="grid gap-x-4 border-b border-line py-2 sm:grid-cols-ledger">
+          <span class="font-medium text-ink">{r.what}<span class="sr-only">: </span></span> <span class="text-ink">{r.shown}</span>{' '}
+          {r.to ? <a href={`#${r.to}`} onClick={r.go ?? goTo(r.to)} aria-label={`Change: ${r.what}`} class="text-link underline underline-offset-4 sm:text-right">Change</a> : <span />}
+        </li>)}
+      </ul>
+      <SourceNote what="Why these">{p.rows.map((r) => <span key={r.id} class="mt-1 block"><b>{r.what}:</b> {r.why}.</span>)}</SourceNote>
+    </details>
+  </section>;
+}
+
 /** The answer bar (D-UX-84) under 1024 px, from load on every tool (UX8, review finding 13); from 1024 px the answer panel
  * stands beside the questions, so the bar keeps only its words for a screen reader, and its arrow goes. */
 export const BAR = 'sticky bottom-0 z-10 -mx-4 mt-10 flex items-center gap-2 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8 lg:sr-only';
 export const BAR_ARROW = 'inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface lg:hidden';
+
+/** Where the answer is from what is in view (UX9, UX8's critic): the bar's arrow points to it, and from 1024 px the bar
+ * shows while the answer panel is out of view (the forms and the CMA's full-width years under it), its words alone while
+ * it is in view. */
+export function useAnswerPlace(id: string) {
+  const [place, setPlace] = useState<'in' | 'above' | 'below'>('in');
+  useEffect(() => {
+    // On scroll, not an IntersectionObserver: a jump past the answer (a link, Tab) crosses no threshold, so it fires none.
+    let frame = 0;
+    const look = () => { frame = 0; const r = document.getElementById(id)?.getBoundingClientRect();
+      if (r) setPlace(r.bottom <= 0 ? 'above' : r.top >= innerHeight ? 'below' : 'in'); };
+    const soon = () => { frame ||= requestAnimationFrame(look); };
+    look();
+    addEventListener('scroll', soon, { passive: true });
+    addEventListener('resize', soon);
+    return () => { removeEventListener('scroll', soon); removeEventListener('resize', soon); cancelAnimationFrame(frame); };
+  }, [id]);
+  return place;
+}
+
+/** The answer bar of DSCR, the CMA and the report: the answer as text, read out as it changes, and the one 44 px arrow
+ * to it, pointing up once it is above (D-UX-84, UX3: only the arrow is a target, so a field under the bar can be tapped).
+ * From 1024 px the words come back while the panel is out of view, without the arrow: a control there and gone by
+ * the scroll is one a Tab walk misses (UX9). */
+export function AnswerBar(p: { to: string; label: string; testid: string; text: string }) {
+  const place = useAnswerPlace(p.to), out = place !== 'in';
+  return <div class={`${out ? BAR.replace(' lg:sr-only', '') : BAR} lg:col-span-2`}>
+    <p data-testid={p.testid} data-answer-echo aria-live="polite" class="flex-1 py-2 text-sm font-medium text-ink">{p.text}</p>
+    <a href={`#${p.to}`} aria-label={p.label} onClick={toAnswer} class={BAR_ARROW}><span aria-hidden="true">{place === 'above' ? '↑' : '↓'}</span></a>
+  </div>;
+}
 
 /** The line under an answer that says its state: the tick and "Complete" in ink, or what is still needed in the warning's
  * words, or why there is none in the bad's; one colour a meaning, on text only. */
