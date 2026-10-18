@@ -1,0 +1,29 @@
+---
+/**
+ * A policy page (LEGAL1, D-BIZ-07): its name, the draft mark while LEGAL_DRAFT holds, the day its words last changed,
+ * then its sections in plain words (policy.ts). One column at reading width, in the new look.
+ */
+import Base from './Base.astro';
+import { LEGAL_DRAFT, POLICY_DATE, SITE_NAME } from './site';
+import { words, type Section } from './policy';
+
+interface Props { title: string; description: string; lead: string; sections: Section[] }
+const { title, description, lead, sections } = Astro.props;
+---
+<Base name={title} description={description} look="new">
+  <article class="mx-auto max-w-3xl px-4 pt-10 pb-16 sm:px-8 sm:pt-16">
+    <p class="caps text-ink-muted">{SITE_NAME} · Policies</p>
+    <h1 class="mt-4 text-hero text-ink">{title}</h1>
+    <p class="mt-5 max-w-prose text-lead text-ink-muted" set:html={words(lead)} />
+    {LEGAL_DRAFT && <p data-draft class="mt-6 max-w-prose rounded-card bg-surface px-4 py-3 text-sm text-ink"><strong class="font-semibold">Draft for our lawyer to review.</strong> It says what {SITE_NAME} does today; its words may change before {SITE_NAME} takes any payment.</p>}
+    <p class="mt-4 text-sm text-ink-muted">Last changed {POLICY_DATE}</p>
+    {sections.map((s) => (
+      <section class="mt-10">
+        <h2 class="text-title text-ink">{s.h}</h2>
+        {s.p.map((p) => Array.isArray(p)
+          ? <ul class="mt-3 max-w-prose list-disc space-y-2 pl-5 text-ink">{p.map((li) => <li set:html={words(li)} />)}</ul>
+          : <p class="mt-3 max-w-prose text-ink" set:html={words(p)} />)}
+      </section>
+    ))}
+  </article>
+</Base>

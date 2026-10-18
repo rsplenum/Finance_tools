@@ -1,0 +1,19 @@
+---
+import Policy from '../Policy.astro';
+const sections = [
+  { h: 'Write to us', p: [
+    'Email {email} about the site, a figure that looks wrong, your data or these policies.',
+    'For a figure that looks wrong, tell us the tool, what you typed and what you expected. Leave out names, account numbers and anything else that says who you are: we do not need them.',
+  ] },
+  { h: 'Complaints', p: [
+    'Our grievance officer is {gap:the grievance officer’s name}, at the same email address. Complaints about your data, a payment or these policies go to them.',
+  ] },
+  { h: 'Who runs FinSight', p: [
+    '{gap:the legal name and postal address of the person or firm who runs FinSight}',
+  ] },
+  { h: 'What we cannot do', p: [
+    'We cannot tell you whether a lender will sanction your loan, or advise on a particular loan. We never ask for passwords, OTPs or bank details.',
+  ] },
+];
+---
+<Policy title="Contact" description="How to reach FinSight about the site, a figure, your data or its policies." lead="Write to us about the site, a figure that looks wrong, your data or these policies." sections={sections} />

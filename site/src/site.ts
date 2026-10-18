@@ -38,3 +38,23 @@ export const READY = TOOLS.filter((t): t is Tool & { href: string; short: string
 
 /** Page <title>: the page name, then the site name. */
 export const pageTitle = (name?: string) => (name ? `${name} · ${SITE_NAME}` : SITE_NAME);
+
+/**
+ * The policy pages (LEGAL1, D-BIZ-07), linked from every footer and held there by the site check. AI drafts, marked as
+ * drafts until the owner's lawyer has read them: then LEGAL_DRAFT goes false, and the site check fails on any draft mark
+ * or gap left. A fact only the owner can give shows as a gap (policy.ts), never a guess.
+ */
+export const POLICIES = [
+  { href: '/privacy/', name: 'Privacy' },
+  { href: '/terms/', name: 'Terms of use' },
+  { href: '/not-advice/', name: 'Not advice' },
+  { href: '/refunds/', name: 'Refunds' },
+  { href: '/contact/', name: 'Contact' },
+] as const;
+export const LEGAL_DRAFT = true;
+/** The day the policies' words last changed; each page shows it. */
+export const POLICY_DATE = '18-10-2026';
+/** The contact email, from the owner (LEGAL1 had none yet): null shows a gap where it goes. */
+export const CONTACT_EMAIL: string | null = null;
+/** Interaction data (UD1, D-TECH-37) is on once the Worker is live; the footer and the privacy page say so only then. */
+export const COUNTING = Boolean(import.meta.env.PUBLIC_API_URL) || import.meta.env.PUBLIC_EVENTS === 'on';

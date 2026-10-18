@@ -1,0 +1,15 @@
+---
+import Policy from '../Policy.astro';
+const sections = [
+  { h: 'Free today', p: [
+    'You can use every tool and download every document without paying. Nothing is charged, so there is nothing to refund.',
+  ] },
+  { h: 'Before anything is charged', p: [
+    'Before FinSight charges for anything, this page will set out the price, what you get, when you can have your money back and how long a refund takes. You will see it before you pay.',
+  ] },
+  { h: 'If someone asks you to pay', p: [
+    'FinSight does not ask anyone to pay by phone, by message or to a personal UPI ID. If someone asks you to pay in FinSight’s name, do not pay, and write to {email}.',
+  ] },
+];
+---
+<Policy title="Refunds" description="FinSight's tools are free today; what will apply before anything is charged." lead="Every tool is free today, so there is nothing to refund." sections={sections} />

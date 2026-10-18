@@ -1,0 +1,32 @@
+---
+import Policy from '../Policy.astro';
+import { COUNTING } from '../site';
+const sections = [
+  { h: 'What you type stays on your device', p: [
+    'The figures, names and other details you type into a tool are worked out in your browser. They are not sent to us, and we cannot see them.',
+    'Downloads (PDF, Excel and Word) are made in your browser too. We do not keep what you type: close the page and it is gone.',
+  ] },
+  { h: 'What we count, never what you type', p: [
+    'To make the tools better, we count which steps are used:',
+    ['the page, and where the visit came from (our own pages, a search or elsewhere)', 'which field changed, by its name, never what is in it', 'parts opened, buttons tapped, whether a result was ready, a download’s format and an error shown', 'the time since the page opened, and the screen size as phone, tablet or desktop'],
+    'A random tag ties one visit’s steps together and is forgotten when you close the tab. We set no cookies, use no outside analytics and never record your screen. The counts are kept for 400 days, then deleted.',
+    COUNTING ? 'This counting is on.' : 'This counting is not switched on yet; this page will say when it is.',
+  ] },
+  { h: 'When an AI reads a statement for you', p: [
+    'On the CMA page you may choose to have an AI find the figures in an audited statement instead of typing them. Only then does the statement’s text leave your device: it goes to our server and on to Anthropic, the US company whose AI reads it, so it is handled outside India. The AI says where each figure is printed; your browser copies the figures, and none counts until you tick it.',
+    'We do not keep or log the statement’s text; Anthropic handles it under its own terms. To limit how many statements are read in a day, your internet address is counted for two days, then forgotten. If you would rather nothing left your device, type the figures.',
+  ] },
+  { h: 'Who else sees your visit', p: [
+    'Cloudflare hosts this site. Like any host, it receives your internet address and browser details when a page loads, under its own privacy policy. From launch we will also use Cloudflare Web Analytics, which counts page views without cookies.',
+    'If you choose light or dark, your browser remembers the choice on your device. It keeps nothing else for us.',
+  ] },
+  { h: 'No accounts and no payments yet', p: [
+    'You do not sign up, and we take no payments today. Before we do, this page will say what a payment shares and with whom.',
+  ] },
+  { h: 'Your rights', p: [
+    'Write to {email} to ask what we hold about you, to have it corrected or deleted, or to complain. As we keep nothing that names you, most answers will be short. Our grievance officer is {gap:the grievance officer’s name}, at the same address; the [Contact](/contact/) page says who runs FinSight.',
+    'This site is meant for adults. When this page changes, the date at the top changes too.',
+  ] },
+];
+---
+<Policy title="Privacy" description="What happens to what you type on FinSight, what we count and who else sees it." lead="What happens to what you type, what we count and who else sees it." sections={sections} />
