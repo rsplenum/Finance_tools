@@ -4,7 +4,8 @@
  * Words and figures come from board-model.ts and the page's own model; none is worked out here.
  */
 import type { ComponentChildren } from 'preact';
-import type { BoardMove, CheckRow, ViableLine } from './board-model';
+import type { BenchmarkField, BoardMove, CheckRow, ViableLine } from './board-model';
+import { BUTTON, HINT, TextField } from './fields';
 
 const MUTED = 'text-ink-muted';
 const TONE = { meets: 'bg-good', misses: 'bg-bad', wait: 'bg-line' } as const;
@@ -24,12 +25,29 @@ export function Bar({ c, pre = 'rep', children }: { c: CheckRow; pre?: string; c
     </div>
     <div class="mt-0.5 flex items-baseline justify-between gap-3">
       <p class="text-sm"><span class={`tabular-nums ${INK[c.verdict]}`}>{c.verdict === 'misses' ? 'Misses: ' : c.verdict === 'meets' ? 'Meets: ' : ''}{c.worst}</span>
-        <span class={`text-xs ${MUTED}`}> · target {c.level}{c.at === 'most' ? ', a shorter bar is better' : ''}</span></p>
+        <span class={`text-xs ${MUTED}`}> · {targetOf(c)}{c.at === 'most' ? ', a shorter bar is better' : ''}</span></p>
       {off && <p data-testid={`${pre}-off-${c.id}`} class={`shrink-0 text-xs ${MUTED}`}>off the scale</p>}
     </div>
     {c.short && <p data-testid={`${pre}-short-${c.id}`} class="text-sm font-medium text-bad">{c.short}</p>}
     {children}
   </li>;
+}
+
+/** The bar's target in words: "target 1.25 or more", or the user's with its default (BEN1). */
+export const targetOf = (c: CheckRow) =>
+  c.byDefault === undefined ? `target ${c.level}` : `your benchmark ${c.level} (default ${c.byDefault}${c.looser ? ', looser than a bank may accept' : ''})`;
+
+/** Change the benchmarks (BEN1, D-UX-101): closed under the card, never on the default path (D-UX-12), a field per ratio
+ * with its default as the hint, and Reset to defaults. */
+export function Benchmarks({ fields, set, reset, pre }: { fields: BenchmarkField[]; set: (id: string, t: string) => void; reset: () => void; pre: string }) {
+  const changed = fields.some((f) => f.value.trim());
+  return <details id="benchmarks" data-testid={`${pre}-benchmarks`} open={changed || undefined} class="mt-3">
+    <summary class="cursor-pointer text-sm font-medium text-link underline underline-offset-4">Change the benchmarks</summary>
+    <p class={HINT}>Each bank sets its own. Leave a ratio blank for its default.</p>
+    <div class="mt-2 grid gap-3 sm:grid-cols-2">{fields.map((f) => <TextField key={f.id} id={`fld-bm-${f.id}`} label={f.label} hint={f.hint}
+      value={f.value} onCommit={(t) => set(f.id, t)} inputMode="decimal" said={f.error} invalid={!!f.error} />)}</div>
+    {changed && <button type="button" data-testid={`${pre}-benchmarks-reset`} class={`mt-3 ${BUTTON}`} onClick={reset}>Reset to defaults</button>}
+  </details>;
 }
 
 /** A lever on the board: how far it moves, now against needed, and the ratios it brings to their level. */

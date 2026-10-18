@@ -1,5 +1,5 @@
 /**
- * The lender's benchmark ratios (D-UX-51) read against a project report: each ratio in its worst year (the lowest for a
+ * The default benchmark ratios (D-UX-51, D-UX-99), or those the user changed (BEN1), read against a project report: each ratio in its worst year (the lowest for a
  * ratio that must be at least its level, the highest for one that must be at most), whether it meets, and the collateral
  * the security cover needs (D-UX-52). Pure, no DOM. Every figure is the report's own (engine/report.ts); the collateral
  * needed is worked here in closed form and checked by running the report again with it.
@@ -11,9 +11,24 @@ export const RATIOS = DATA.ratios;
 export const LEVELS = DATA;
 export type Case = keyof typeof DATA.cases;
 export type RatioId = (typeof DATA.ratios)[number]['id'];
+/** Benchmarks the user changed (BEN1, D-UX-101): a ratio's id to its figure, over ratios.json's fresh or renewal value. */
+export type Levels = Partial<Record<RatioId, number>>;
+
+/** A ratio's benchmark: the user's when it is a figure above nil, else the default for the case. */
+export function levelFor(id: RatioId, c: Case, lv?: Levels): number {
+  const v = lv?.[id];
+  return v !== undefined && Number.isFinite(v) && v > 0 ? v : (RATIOS.find((d) => d.id === id) as (typeof RATIOS)[number])[c];
+}
+/** A check's head: the ratio, its benchmark and, when the user changed it, the default it replaced. */
+export function checkHead(id: RatioId, c: Case, lv?: Levels): Pick<RatioCheck, 'id' | 'label' | 'at' | 'level' | 'byDefault'> {
+  const d = RATIOS.find((k) => k.id === id) as (typeof RATIOS)[number], level = levelFor(id, c, lv);
+  return { id, label: d.label, at: d.at as 'least' | 'most', level, ...(Math.abs(level - d[c]) > EPS ? { byDefault: d[c] } : {}) };
+}
 
 export interface RatioCheck {
   id: RatioId; label: string; at: 'least' | 'most'; level: number;
+  /** The default benchmark, when the user changed this one (BEN1). */
+  byDefault?: number;
   /** The worst year's figure and the year (none for the average DSCR, which is over the loan). */
   worst?: number; fy?: string;
   /** Undefined while it cannot be read: the security cover before the collateral is typed and short of its level on the
@@ -85,12 +100,12 @@ function shortfall(id: RatioId, level: number, r: Report, y: ReportYear | undefi
   return {};
 }
 
-export function diagnose(r: Report, x: ReportInput, c: Case = 'fresh'): Diagnosis {
+export function diagnose(r: Report, x: ReportInput, c: Case = 'fresh', lv?: Levels): Diagnosis {
   const ys = r.years, checks: RatioCheck[] = [];
   const year = (fy?: string) => ys.find((y) => y.fy === fy);
   const push = (k: RatioCheck) => checks.push(k.meets === false ? { ...k, ...shortfall(k.id, k.level, r, year(k.fy)) } : k);
   for (const d of RATIOS) {
-    const level = d[c], at = d.at as 'least' | 'most', base = { id: d.id as RatioId, label: d.label, at, level };
+    const base = checkHead(d.id as RatioId, c, lv), { at, level } = base;
     if (d.id === 'dscrAverage') {
       push(r.average === undefined ? base : { ...base, worst: r.average, meets: r.average >= level - EPS });
       continue;
@@ -123,8 +138,8 @@ export function diagnose(r: Report, x: ReportInput, c: Case = 'fresh'): Diagnosi
 /** The collateral's market value, to the rupee, whose realisable sale value brings the security cover to its level in
  * every year (0 if none is needed): worked in closed form, then checked by the report itself with that collateral, and a
  * rupee less missing. Undefined when the two disagree by more than a rupee's rounding, so no figure is shown. */
-export function collateralNeeded(r: Report, x: ReportInput, c: Case = 'fresh'): number | undefined {
-  const level = (RATIOS.find((d) => d.id === 'securityCover') as (typeof RATIOS)[number])[c], rsvPct = DATA.collateral.rsvPct;
+export function collateralNeeded(r: Report, x: ReportInput, c: Case = 'fresh', lv?: Levels): number | undefined {
+  const level = levelFor('securityCover', c, lv), rsvPct = DATA.collateral.rsvPct;
   const need = rsvNeeded(r, level);
   if (need <= EPS) return 0;
   const mv = Math.ceil((need * 100) / rsvPct - 1e-6);

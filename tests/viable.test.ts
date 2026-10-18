@@ -22,6 +22,7 @@ import { describe, it, expect } from 'vitest';
 import { projectReport, type Report, type ReportInput } from '../engine/report';
 import { collateralNeeded, diagnose } from '../engine/ratios';
 import { makeViable, type Viability } from '../engine/viable';
+import { makePlan, type Plan } from '../engine/plan';
 import { CASE_R } from './report.test';
 
 export const P: ReportInput = {
@@ -149,4 +150,36 @@ describe('case P at Rs. 150 a unit: the drivers and PMEGP', () => {
 it('needs pass through: nothing is guessed', () => {
   expect(makeViable({ ...CASE_R, variablePct: undefined })).toEqual({ needs: ['Materials and other variable costs, as a share of sales (%), below 100'] });
   expect(makeViable({ ...CASE_R, collateral: -1 })).toEqual({ needs: ['The collateral\'s market value: a figure of 0 or more'] });
+});
+
+// Changed benchmarks (BEN1, D-UX-101), case R at 70 lakh, by hand from the workings above. The lowest DSCR 0.8183
+// (5,95,000 ÷ 7,27,083.33) meets a benchmark of 0.80; at 0.85 it misses by 0.85 × 7,27,083.33 − 5,95,000 = 23,020.83.
+// The current ratio 0.9351 meets 0.90. With the 20 lakh limit, year 1's cover 44,07,397.26 ÷ 40,00,000 = 1.1018 meets 1.10
+// on the project's own assets, and every later year is above 1.20 already; at 1.15 year 1 needs 46,00,000 − 44,07,397.26 =
+// 1,92,602.74 of realisable value, a market value of 2,14,003.04, 2,14,004 to the rupee (year 2: 40,25,000 < 42,07,136.99).
+describe('changed benchmarks on the project report (BEN1)', () => {
+  const at = (x: ReportInput, lv: Parameters<typeof diagnose>[3]) => diagnose(projectReport(x) as Report, x, 'fresh', lv);
+  it('a looser lowest DSCR and current ratio flip their misses, each saying its default', () => {
+    const d = at(weak, { dscrLowest: 0.8, currentRatio: 0.9 }), k = (id: string) => d.checks.find((c) => c.id === id);
+    expect([k('dscrLowest')?.meets, k('dscrLowest')?.level, k('dscrLowest')?.byDefault, k('currentRatio')?.meets, k('currentRatio')?.byDefault]).toEqual([true, 0.8, 1.25, true, 1.1]);
+    expect(d.misses).toEqual(misses(weak).filter((id) => id !== 'dscrLowest' && id !== 'currentRatio'));
+    expect(k('interestCover')?.byDefault).toBeUndefined();
+  });
+  it('a stricter one is short by its own figure', () => {
+    expect(at(weak, { dscrLowest: 0.85 }).checks.find((c) => c.id === 'dscrLowest')?.short?.amount.toFixed(2)).toBe('23020.83');
+  });
+  it('a blank, nil or wrong figure leaves the default', () => {
+    expect(at(weak, { dscrLowest: 0, currentRatio: NaN }).misses).toEqual(misses(weak));
+  });
+  it('the security cover at 1.10 meets on the project\'s own assets; at 1.15 it needs Rs. 2,14,004, in the plan too', () => {
+    const big = { ...CASE_R, wcLimit: 2000000 }, r = projectReport(big) as Report;
+    const sc = at(big, { securityCover: 1.1 }).checks.find((c) => c.id === 'securityCover');
+    expect([sc?.meets, sc?.own, sc?.worst?.toFixed(4), collateralNeeded(r, big, 'fresh', { securityCover: 1.1 })]).toEqual([true, true, '1.1018', 0]);
+    expect(collateralNeeded(r, big, 'fresh', { securityCover: 1.15 })).toBe(214004);
+    expect((makeViable(big, { securityCover: 1.15 }) as Viability).collateral).toEqual({ needed: 214004 });
+    const q = makePlan({ ...big, collateral: 300000 }, { levels: { securityCover: 1.15 } }) as Plan;
+    expect([q.works, q.levers.collateral]).toEqual([true, 0]);
+    const p = makePlan({ ...big, collateral: 100000 }, { levels: { securityCover: 1.15 } }) as Plan;
+    expect([p.works, p.levers.collateral]).toEqual([true, 114004]);
+  });
 });

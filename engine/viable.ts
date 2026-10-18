@@ -6,7 +6,7 @@
  * with the moratorium. Each answer runs the whole report again (engine/report.ts), so every figure comes from the same
  * engine and its second computation. A change aims at every ratio it can bring to its level; what it cannot is named.
  */
-import { collateralNeeded, diagnose, LEVELS, termMonths, type Diagnosis, type RatioId } from './ratios';
+import { collateralNeeded, diagnose, LEVELS, termMonths, type Diagnosis, type Levels, type RatioId } from './ratios';
 import { projectReport, type Report, type ReportInput } from './report';
 import type { Blocked, Needs } from './dscr';
 
@@ -46,10 +46,10 @@ const fullYear = (r: Report) => r.years.find((y) => y.months === 12) ?? r.years[
 
 /** A run of the report: the report and the levels it misses, or nothing when it cannot be worked. */
 interface Run { r: Report; misses: Set<RatioId>; known: Set<RatioId> }
-const run = (x: ReportInput): Run | undefined => {
+const runAt = (lv?: Levels) => (x: ReportInput): Run | undefined => {
   const r = projectReport(x);
   if (!isReport(r)) return undefined;
-  const d = diagnose(r, x);
+  const d = diagnose(r, x, 'fresh', lv);
   return { r, misses: new Set(d.misses), known: new Set(d.checks.filter((c) => c.meets !== undefined).map((c) => c.id)) };
 };
 /** The levels a change can reach: those that meet at its farthest. */
@@ -59,12 +59,13 @@ const outcome = (missed: RatioId[], u: Run): Outcome => ({
   fixes: missed.filter((id) => !u.misses.has(id)), still: [...u.misses], ...(u.r.cashShort ? { cashNeed: u.r.cashShort.need } : {}),
 });
 
-export function makeViable(x: ReportInput): Viability | Needs | Blocked {
+/** `lv`: the benchmarks the user changed (BEN1), over the fresh loan's defaults. */
+export function makeViable(x: ReportInput, lv?: Levels): Viability | Needs | Blocked {
   const base = projectReport(x);
   if (!isReport(base)) return base;
-  const diagnosis = diagnose(base, x), missed = diagnosis.misses;
+  const run = runAt(lv), diagnosis = diagnose(base, x, 'fresh', lv), missed = diagnosis.misses;
   const out: Viability = { diagnosis, meets: !missed.length };
-  const cn = collateralNeeded(base, x);
+  const cn = collateralNeeded(base, x, 'fresh', lv);
   if (cn !== undefined && (diagnosis.checks.find((c) => c.id === 'securityCover')?.meets !== true)) out.collateral = { ...(x.collateral !== undefined ? { now: x.collateral } : {}), needed: cn };
   const none = (what: string) => `${what} alone meets none of the levels missed.`;
 

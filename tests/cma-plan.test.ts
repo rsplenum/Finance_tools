@@ -168,3 +168,32 @@ describe('The levers together, case M (the plan)', () => {
     expect(p.works).toBe(true);
   });
 });
+
+// Changed benchmarks (BEN1, D-UX-101), case M fresh, from the workings at the top: the current ratio 1.0472 meets 1.04,
+// TOL/TNW 5.84 meets 6, the average DSCR 1.3704 meets 1.35, the interest cover 1.4 meets 1.35 and the security cover 1.1702
+// meets 1.15, so none misses and the plan changes nothing. Stricter: debt-equity 1.2 misses 1.0 by 30 ÷ 1 − 25 = 5 lakh of
+// net worth in 2026-27 (25 × (1.2 − 1) the second way); the fixed-asset cover 40 ÷ 24 misses 1.70 by 1.7 × 24 − 40 = 0.8
+// lakh in 2026-27. The security cover at 1.25: 1.25 × 94 − 110 = 7.5 lakh in 2026-27 (2027-28: 125 − 119 = 6), a market
+// value of 7,50,000 ÷ 0.9 = 8,33,333.33, 8,33,334 to the rupee.
+describe('changed benchmarks on the CMA (BEN1)', () => {
+  const loose = { currentRatio: 1.04, tolTnw: 6, dscrAverage: 1.35, interestCover: 1.35, securityCover: 1.15 };
+  it('the five misses of a fresh limit each flip to meets, and the plan changes nothing', () => {
+    expect(cmaDiagnose(run(M), M, 'fresh').misses).toHaveLength(5);
+    expect(cmaDiagnose(run(M), M, 'fresh', loose).misses).toEqual([]);
+    const q = makeCmaPlan(M, 'fresh', { levels: loose }) as CmaPlan;
+    expect([q.works, q.levers]).toEqual([true, CMA_AS_TYPED]);
+  });
+  it('stricter ones miss, short by their own figures; the default is kept beside each', () => {
+    const d = cmaDiagnose(run(M), M, 'fresh', { debtEquity: 1, facr: 1.7 }), k = (id: string) => d.checks.find((c) => c.id === id);
+    expect([k('debtEquity')?.short?.amount.toFixed(2), k('debtEquity')?.fy, k('debtEquity')?.byDefault]).toEqual(['500000.00', '2026-27', 4]);
+    expect([k('facr')?.short?.amount.toFixed(2), k('facr')?.fy, k('facr')?.byDefault]).toEqual(['80000.00', '2026-27', 1.2]);
+  });
+  it('a renewal keeps the user\'s figure with its own default beside it', () => {
+    const k = cmaDiagnose(run(M), M, 'renewal', { currentRatio: 1.04 }).checks.find((c) => c.id === 'currentRatio');
+    expect([k?.level, k?.byDefault, k?.meets]).toEqual([1.04, 1, true]);
+  });
+  it('the collateral for a security cover of 1.25: Rs. 8,33,334', () => {
+    expect(cmaCollateralNeeded(run(M), M, 'fresh', { securityCover: 1.25 })).toBe(833334);
+    expect((cmaViable(M, 'fresh', { securityCover: 1.25 }) as CmaViability).collateral?.needed).toBe(833334);
+  });
+});

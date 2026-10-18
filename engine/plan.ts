@@ -13,7 +13,7 @@
  * - the collateral last, since it moves only the security cover: the market value that brings it to its level.
  * A step never trades a level already met for another. Pure, no DOM.
  */
-import { collateralNeeded, diagnose, LEVELS, termMonths, type Diagnosis, type RatioId } from './ratios';
+import { collateralNeeded, diagnose, LEVELS, termMonths, type Diagnosis, type Levels, type RatioId } from './ratios';
 import { projectReport, type Report, type ReportInput } from './report';
 import type { Blocked, Needs } from './dscr';
 
@@ -68,14 +68,16 @@ export interface PlanInput {
   promotersMost?: number;
   /** Levers the borrower has set: kept as they are, the rest worked around them. */
   held?: Partial<Levers>;
+  /** The benchmarks the user changed (BEN1), over the fresh loan's defaults. */
+  levels?: Levels;
 }
 
 const isReport = (r: Report | Needs | Blocked): r is Report => !('needs' in r) && !('blocked' in r);
 interface Run { x: ReportInput; r: Report; d: Diagnosis; met: Set<RatioId> }
-const run = (x: ReportInput): Run | undefined => {
+const run = (x: ReportInput, lv?: Levels): Run | undefined => {
   const r = projectReport(x);
   if (!isReport(r)) return undefined;
-  const d = diagnose(r, x);
+  const d = diagnose(r, x, 'fresh', lv);
   return { x, r, d, met: new Set(d.checks.filter((c) => c.meets).map((c) => c.id)) };
 };
 /** The levels missed apart from the security cover, which the collateral meets last; and those met. */
@@ -101,7 +103,7 @@ export function makePlan(x: ReportInput, o: PlanInput = {}): Plan | Needs | Bloc
   const memo = new Map<string, Run | undefined>();
   const at = (l: Levers) => {
     const k = LEVER_IDS.map((id) => l[id]).join(',');
-    if (!memo.has(k)) memo.set(k, run(withLevers(x, l)));
+    if (!memo.has(k)) memo.set(k, run(withLevers(x, l), o.levels));
     return memo.get(k);
   };
 
@@ -156,7 +158,7 @@ export function makePlan(x: ReportInput, o: PlanInput = {}): Plan | Needs | Bloc
     if (free('moratorium')) l = step(l, 'moratorium', termRoom(l), 'least', true);
     if (free('instalments')) l = step(l, 'instalments', Math.floor(termRoom(l) / monthsEach), 'least', true);
     if (free('collateral')) {
-      const u = at(l), need = u ? collateralNeeded(u.r, u.x) : undefined, had = (x.collateral ?? 0) + l.collateral;
+      const u = at(l), need = u ? collateralNeeded(u.r, u.x, 'fresh', o.levels) : undefined, had = (x.collateral ?? 0) + l.collateral;
       if (need !== undefined && need > had + EPS && (x.collateral !== undefined || need > 0)) l = { ...l, collateral: need - (x.collateral ?? 0) };
     }
     return l;

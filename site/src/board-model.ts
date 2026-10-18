@@ -3,7 +3,7 @@
  * (report/model.ts) and the CMA (cma/viable.ts): each ratio as a bar against its level, each lever's card and slider.
  * Words only: every figure comes from the engine (engine/ratios.ts, engine/cma-plan.ts).
  */
-import { LEVELS, type RatioCheck, type RatioId, type Shortfall } from '../../engine/ratios';
+import { LEVELS, type Case, type Levels, type RatioCheck, type RatioId, type Shortfall } from '../../engine/ratios';
 import { inr } from '../../engine/util';
 
 const rupees = (x: number) => inr(x);
@@ -15,6 +15,8 @@ export interface CheckRow {
   bar: number; at: 'least' | 'most';
   /** When it misses: the rupees its worst year needs, in words (engine/ratios.ts). */
   short?: string;
+  /** The default benchmark, when the user changed this one (BEN1), and whether theirs is looser. */
+  byDefault?: string; looser?: boolean;
 }
 
 export const levelText = (c: RatioCheck) => `${c.level.toFixed(2)} or ${c.at === 'least' ? 'more' : 'less'}`;
@@ -44,7 +46,44 @@ export const rowOf = (k: RatioCheck, over = 'over the loan'): CheckRow => ({
   worst: k.na ? k.na : k.why ? `Net worth at or below nil in ${k.fy}` : k.worst === undefined ? (k.id === 'securityCover' ? 'Type the collateral’s value' : '—') : `${ratioAt(k.worst, k)}${k.fy ? ` in ${k.fy}` : ` ${over}`}${k.own ? ' on the project’s own assets' : ''}`,
   verdict: k.meets === undefined ? 'wait' : k.meets ? 'meets' : 'misses', bar: barOf(k), at: k.at,
   ...(shortText(k, over) ? { short: shortText(k, over) } : {}),
+  ...(k.byDefault !== undefined ? { byDefault: k.byDefault.toFixed(2), looser: looser(k) } : {}),
 });
+
+// ---- Changing the benchmarks (BEN1, D-UX-101): the user's figure over the default, kept until reset ----
+
+/** The benchmarks as typed, by ratio. A ratio left blank takes its default. */
+export type BenchmarkText = Partial<Record<RatioId, string>>;
+/** A benchmark typed: a figure above nil, "5:1" read as 5; undefined when blank or not understood. */
+const benchmarkOf = (t = '') => {
+  const v = t.trim() ? Number(t.trim().replace(/\s*:\s*1$/, '')) : NaN;
+  return Number.isFinite(v) && v > 0 ? v : undefined;
+};
+/** The engine's `levels`: only the figures understood, so a wrong one leaves its default in place and is marked. */
+export const levelsOf = (t: BenchmarkText = {}): Levels =>
+  Object.fromEntries(Object.entries(t).flatMap(([id, v]) => { const n = benchmarkOf(v); return n === undefined ? [] : [[id, n]]; }));
+/** The benchmarks with one ratio's text set; a blank one removed, none left undefined, so a reset page reads as untouched. */
+export function withBenchmark(t: BenchmarkText | undefined, id: string, text: string): BenchmarkText | undefined {
+  const u = { ...t, [id]: text.trim() };
+  if (!text.trim()) delete u[id as RatioId];
+  return Object.keys(u).length ? u : undefined;
+}
+/** "default benchmark ratios" until one is changed (D-UX-99). */
+export const ratiosWord = (lv: Levels) => (Object.keys(lv).length ? 'benchmark ratios' : 'default benchmark ratios');
+const looser = (k: RatioCheck) => k.byDefault !== undefined && (k.at === 'least' ? k.level < k.byDefault : k.level > k.byDefault);
+export interface BenchmarkField { id: RatioId; label: string; hint: string; value: string; error?: string }
+/** A field per ratio, its default for the case as the hint; `c` unset, the fresh loan's. */
+export const benchmarkFields = (c: Case | undefined, t: BenchmarkText = {}): BenchmarkField[] => LEVELS.ratios.map((d) => {
+  const id = d.id as RatioId, value = t[id] ?? '';
+  return { id, label: d.label, value, hint: `Default ${d[c ?? 'fresh'].toFixed(2)} or ${d.at === 'least' ? 'more' : 'less'}`,
+    ...(value.trim() && benchmarkOf(value) === undefined ? { error: 'Not understood. Type a figure above nil, as 1.25, or leave it blank for the default.' } : {}) };
+});
+/** The line under the heading once a benchmark is changed: which, and a looser one's warning. */
+export function benchmarksNote(checks: RatioCheck[]): string | undefined {
+  const own = checks.filter((k) => k.byDefault !== undefined), loose = own.filter(looser);
+  if (!own.length) return undefined;
+  return `Your benchmarks for ${listed(own.map((k) => inSentence(k.label)))}, in place of the defaults.${loose.length
+    ? ` Looser than the default for ${listed(loose.map((k) => inSentence(k.label)))}: a pass here is one a bank may not give.` : ''}`;
+}
 
 /** A figure the business must reach, shown rounded up so it never reads below what meets: rupees, or a percentage to 0.1. */
 export const upRupees = (x: number) => rupees(Math.ceil(x - 1e-6));

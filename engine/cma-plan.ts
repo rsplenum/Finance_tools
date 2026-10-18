@@ -18,7 +18,7 @@
  */
 import DATA from './data/ratios.json';
 import { cma, type Cma, type CmaInput, type CmaYear, type Figures } from './cma';
-import type { Case, RatioCheck, RatioId, Shortfall } from './ratios';
+import { checkHead, levelFor, type Case, type Levels, type RatioCheck, type RatioId, type Shortfall } from './ratios';
 import type { Blocked, Needs } from './dscr';
 
 const RATIOS = DATA.ratios;
@@ -26,7 +26,7 @@ const EPS = 1e-9;
 const isCma = (r: Cma | Needs | Blocked): r is Cma => !('needs' in r) && !('blocked' in r);
 /** The estimate's and the projection's years: those a lender reads the levels against. */
 const ahead = (r: Cma) => r.years.filter((y) => y.kind !== 'audited');
-export const levelOf = (id: RatioId, c: Case) => (RATIOS.find((d) => d.id === id) as (typeof RATIOS)[number])[c];
+export const levelOf = (id: RatioId, c: Case, lv?: Levels) => levelFor(id, c, lv);
 
 export interface CmaDiagnosis { checks: RatioCheck[]; misses: RatioId[] }
 
@@ -59,13 +59,13 @@ const NA: Partial<Record<RatioId, string>> = {
   interestCover: 'No interest to pay in these years', facr: 'No term loan in these years', securityCover: 'Nothing borrowed to secure',
 };
 
-/** Each ratio against its level `c` in its worse year of the estimate and the projection. */
-export function cmaDiagnose(r: Cma, x: CmaInput, c: Case): CmaDiagnosis {
+/** Each ratio against its level `c` (or the user's, `lv`, BEN1) in its worse year of the estimate and the projection. */
+export function cmaDiagnose(r: Cma, x: CmaInput, c: Case, lv?: Levels): CmaDiagnosis {
   const ys = ahead(r), checks: RatioCheck[] = [];
   const push = (k: RatioCheck) => checks.push(k.meets === false ? { ...k, ...shortfall(k.id, k.level, ys, ys.find((y) => y.fy === k.fy)) } : k);
   const meets = (v: number, level: number, at: 'least' | 'most') => (at === 'least' ? v >= level - EPS : v <= level + EPS);
   for (const d of RATIOS) {
-    const id = d.id as RatioId, level = d[c], at = d.at as 'least' | 'most', base: RatioCheck = { id, label: d.label, at, level };
+    const id = d.id as RatioId, base: RatioCheck = checkHead(id, c, lv), { at, level } = base;
     if (id === 'dscrAverage' || id === 'dscrLowest') {
       const used = ys.filter((y) => y.dscr !== undefined);
       if (!used.length) { push({ ...base, na: NA[id] }); continue; }
@@ -102,8 +102,8 @@ export function cmaDiagnose(r: Cma, x: CmaInput, c: Case): CmaDiagnosis {
 
 /** The collateral's market value, to the rupee, whose realisable sale value brings the security cover to its level in both
  * years (0 if none is needed): in closed form, then checked by the CMA itself with it, and a rupee less missing. */
-export function cmaCollateralNeeded(r: Cma, x: CmaInput, c: Case): number | undefined {
-  const level = levelOf('securityCover', c), pct = DATA.collateral.rsvPct, rsvNow = ((x.collateral ?? 0) * pct) / 100;
+export function cmaCollateralNeeded(r: Cma, x: CmaInput, c: Case, lv?: Levels): number | undefined {
+  const level = levelOf('securityCover', c, lv), pct = DATA.collateral.rsvPct, rsvNow = ((x.collateral ?? 0) * pct) / 100;
   const need = Math.max(0, ...ahead(r).filter((y) => y.secured > EPS).map((y) => level * y.secured - (y.security - rsvNow)));
   if (need <= EPS) return 0;
   const mv = Math.ceil((need * 100) / pct - 1e-6);
@@ -181,10 +181,10 @@ export function withCmaLevers(x: CmaInput, l: CmaLevers): CmaInput {
 
 /** A run of the CMA: the levels it misses and meets, or nothing when it cannot be worked. */
 interface Run { x: CmaInput; r: Cma; d: CmaDiagnosis; met: Set<RatioId> }
-const runOf = (x: CmaInput, c: Case): Run | undefined => {
+const runOf = (x: CmaInput, c: Case, lv?: Levels): Run | undefined => {
   const r = cma(x);
   if (!isCma(r)) return undefined;
-  const d = cmaDiagnose(r, x, c);
+  const d = cmaDiagnose(r, x, c, lv);
   return { x, r, d, met: new Set(d.checks.filter((k) => k.meets).map((k) => k.id)) };
 };
 /** The levels missed apart from the security cover, which the collateral meets last; and those met. */
@@ -248,19 +248,19 @@ export interface CmaViability {
   collateral?: { now?: number; needed: number };
 }
 
-export function cmaViable(x: CmaInput, c: Case): CmaViability | Needs | Blocked {
+export function cmaViable(x: CmaInput, c: Case, lv?: Levels): CmaViability | Needs | Blocked {
   const base = cma(x);
   if (!isCma(base)) return base;
-  const u0 = runOf(x, c) as Run, missed = u0.d.misses, kept = keptOf(u0), d = u0.d;
+  const u0 = runOf(x, c, lv) as Run, missed = u0.d.misses, kept = keptOf(u0), d = u0.d;
   const out: CmaViability = { diagnosis: d, meets: !missed.length };
   const outcome = (u: Run): CmaOutcome => ({ fixes: missed.filter((id) => u.met.has(id)), still: u.d.misses });
-  const lever = (l: Partial<CmaLevers>) => runOf(withCmaLevers(x, { ...CMA_AS_TYPED, ...l }), c);
+  const lever = (l: Partial<CmaLevers>) => runOf(withCmaLevers(x, { ...CMA_AS_TYPED, ...l }), c, lv);
   const none = (what: string) => `${what} alone meets none of the levels missed.`;
   const P = x.figures.proj as Figures, E = x.figures.est as Figures;
 
   const sc = d.checks.find((k) => k.id === 'securityCover');
   if (sc?.meets !== true) {
-    const n = cmaCollateralNeeded(base, x, c);
+    const n = cmaCollateralNeeded(base, x, c, lv);
     if (n !== undefined) out.collateral = { ...(x.collateral !== undefined ? { now: x.collateral } : {}), needed: n };
   }
 
@@ -333,6 +333,8 @@ export interface CmaPlanInput {
   promotersMost?: number;
   /** Levers the borrower has set: kept as they are, the rest worked around them. */
   held?: Partial<CmaLevers>;
+  /** The benchmarks the user changed (BEN1), over the case's defaults. */
+  levels?: Levels;
 }
 
 export function makeCmaPlan(x: CmaInput, c: Case, o: CmaPlanInput = {}): CmaPlan | Needs | Blocked {
@@ -341,7 +343,7 @@ export function makeCmaPlan(x: CmaInput, c: Case, o: CmaPlanInput = {}): CmaPlan
   const held = o.held ?? {}, most = o.promotersMost, free = (id: CmaLeverId) => held[id] === undefined;
   const E = x.figures.est as Figures, P = x.figures.proj as Figures, room = monthsRoom(x);
   const l: CmaLevers = { ...CMA_AS_TYPED, ...held }, atLimit: CmaLeverId[] = [];
-  const at = (k: Partial<CmaLevers>) => runOf(withCmaLevers(x, { ...l, ...k }), c);
+  const at = (k: Partial<CmaLevers>) => runOf(withCmaLevers(x, { ...l, ...k }), c, o.levels);
   let cur = at({});
   if (!cur) return { blocked: 'The levers as set leave no figures.' };
 
@@ -372,7 +374,7 @@ export function makeCmaPlan(x: CmaInput, c: Case, o: CmaPlanInput = {}): CmaPlan
     if (m) { l.months = m.m; cur = m.u; if (m.m === room) atLimit.push('months'); }
   }
   if (free('collateral') && cur.d.checks.find((k) => k.id === 'securityCover')?.meets !== true) {
-    const n = cmaCollateralNeeded(cur.r, cur.x, c), had = x.collateral ?? 0;
+    const n = cmaCollateralNeeded(cur.r, cur.x, c, o.levels), had = x.collateral ?? 0;
     if (n !== undefined && n > had) { l.collateral = n - had; cur = at({}) as Run; }
   }
   return {

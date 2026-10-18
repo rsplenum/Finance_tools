@@ -5,13 +5,14 @@
  */
 import { ASSUMPTIONS, HEADS, PMEGP, REPORT_REVIEW_BY, projectReport, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
 import { parseAmount, parseMonth } from '../../../engine/parse';
-import { LEVELS, collateralNeeded, diagnose, type RatioCheck } from '../../../engine/ratios';
+import { LEVELS, collateralNeeded, diagnose, type Levels, type RatioCheck } from '../../../engine/ratios';
 import { makeViable, type Longer, type Outcome } from '../../../engine/viable';
 import { AS_TYPED, LEVER_IDS, makePlan, withLevers, type LeverId, type Levers } from '../../../engine/plan';
 import { BORROWERS } from '../../../engine/tax';
 import { inr } from '../../../engine/util';
 import {
   inSentence, labelOf, listed, rowOf, upPct, upRupees, type BoardMove, type CheckRow, type ViableLine, type ViableView,
+  benchmarksNote, levelsOf, ratiosWord, type BenchmarkText,
 } from '../board-model';
 
 export type Repayment = 'emi' | 'monthly' | 'quarterly';
@@ -31,6 +32,8 @@ export interface ReportState {
   wcLimit: string; wcRate: string;
   /** The most the promoters can bring in all, on the plan's board only (MV3): not an input of the report. */
   promotersMost: string;
+  /** The benchmarks the user changed (BEN1), as typed; a ratio left out takes its default. Not an input of the report. */
+  benchmarks?: BenchmarkText;
   doc: ReportFacts;
 }
 
@@ -236,6 +239,8 @@ export function viewOf(r: Report): ReportView {
 export interface ReportPreview {
   needs: string[]; blocked?: string; view?: ReportView; short?: string; flags: string[];
   checks?: CheckRow[]; misses?: string; collateralNote?: string; longTerm?: string;
+  /** Which benchmarks are the user's, and a looser one's warning (BEN1). */
+  benchmarks?: string;
 }
 
 
@@ -243,15 +248,15 @@ export function preview(s: ReportState): ReportPreview {
   const x = inputOf(s), r = projectReport(x);
   if ('blocked' in r) return { needs: [], blocked: r.blocked, flags: [] };
   if ('needs' in r) return { needs: r.needs, flags: [] };
-  const c = r.cashShort, d = diagnose(r, x), checks = d.checks.map((k) => rowOf(k));
-  const sc = d.checks.find((k) => k.id === 'securityCover') as RatioCheck, need = sc.meets ? undefined : collateralNeeded(r, x);
+  const lv = levelsOf(s.benchmarks), c = r.cashShort, d = diagnose(r, x, 'fresh', lv), checks = d.checks.map((k) => rowOf(k)), own = benchmarksNote(d.checks);
+  const sc = d.checks.find((k) => k.id === 'securityCover') as RatioCheck, need = sc.meets ? undefined : collateralNeeded(r, x, 'fresh', lv);
   const collateralNote = need === undefined ? undefined : need === 0
     ? `Security cover: the project’s own assets reach ${sc.level.toFixed(2)} without collateral.`
     : `Security cover: collateral with a market value of Rs. ${rupees(need)} or more brings it to ${sc.level.toFixed(2)}.`;
   return {
     needs: [], view: viewOf(r), flags: r.scheme?.flags ?? [], checks,
-    ...(d.misses.length ? { misses: `It misses ${d.misses.length === 1 ? 'one' : d.misses.length} of the default benchmark ratios: ${listed(d.misses.map(labelOf))}.` } : {}),
-    ...(collateralNote ? { collateralNote } : {}),
+    ...(d.misses.length ? { misses: `It misses ${d.misses.length === 1 ? 'one' : d.misses.length} of the ${ratiosWord(lv)}: ${listed(d.misses.map(labelOf))}.` } : {}),
+    ...(collateralNote ? { collateralNote } : {}), ...(own ? { benchmarks: own } : {}),
     ...(d.term.months > d.term.longest ? { longTerm: `The term loan runs ${d.term.months} months with its moratorium, beyond the ${d.term.longest} months an MSME term loan commonly runs at most.` } : {}),
     ...(c ? { short: `Cash goes below nil in ${c.fy}: Rs. ${rupees(c.need)} short at its lowest. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.` } : {}),
   };
@@ -278,7 +283,7 @@ const cashLeft = (o: Outcome) => (o.cashNeed ? `Cash still goes below nil: the p
 const chips = (o: Outcome) => ({ fixes: o.fixes.map(labelOf), still: o.still.map(labelOf) });
 
 export function viableOf(s: ReportState): ViableView | undefined {
-  const v = makeViable(inputOf(s));
+  const lv = levelsOf(s.benchmarks), v = makeViable(inputOf(s), lv);
   if ('needs' in v || 'blocked' in v) return undefined;
   const lines: ViableLine[] = [], sl = v.sales, push = (l: Omit<ViableLine, 'by'>, by: ViableLine['by'] = 'borrower') => lines.push({ ...l, by });
   const none = { fixes: [], still: [] }, rs = (x: number) => `Rs. ${rupees(x)}`;
@@ -323,7 +328,7 @@ export function viableOf(s: ReportState): ViableView | undefined {
   } else if (v.instalmentsNone) push({ id: 'repayment', head: 'A longer repayment', text: v.instalmentsNone, ...none }, 'lender');
   return {
     meets: v.meets, title: v.meets ? 'Every ratio meets a lender’s level: the room' : 'The levers: any one of these alone', lines,
-    foot: `The default benchmark ratios: a fresh or enhanced loan’s, said to follow RBI and not yet checked against an RBI publication; each bank sets its own. Each change is worked alone by the engine, the rest as typed. Change the figures above only to what the business can really reach: a lender tests sales against the market and the capacity.`,
+    foot: `${ratiosWord(lv) === 'default benchmark ratios' ? 'The default benchmark ratios' : 'The benchmark ratios: yours where you changed them, else the defaults'}: a fresh or enhanced loan’s, said to follow RBI and not yet checked against an RBI publication; each bank sets its own. Each change is worked alone by the engine, the rest as typed. Change the figures above only to what the business can really reach: a lender tests sales against the market and the capacity.`,
   };
 }
 
@@ -344,14 +349,14 @@ const FIXED_MOST = 500;
 export interface PlanCard { id: LeverId; by: 'borrower' | 'lender'; head: string }
 /** The engine's plan (engine/plan.ts) for the board: the levers it sets, the cards in its order and the limits it kept. */
 export interface PlanView {
-  x: ReportInput; levers: Levers; cards: PlanCard[]; limits: string; atLimit?: string;
+  x: ReportInput; lv: Levels; levers: Levers; cards: PlanCard[]; limits: string; atLimit?: string;
   most?: number; promotersNow: number; leastLoan: number; termRoom: number; monthsEach: number; salesMost?: number;
 }
 
 /** The plan, with the levers in `held` kept as the borrower set them; none while the report has no figures. */
 export function planOf(s: ReportState, held: Partial<Levers> = {}): PlanView | undefined {
   const x = inputOf(s), m = amountOf(s.promotersMost), most = m !== undefined && Number.isFinite(m) && m >= 0 ? m : undefined;
-  const q = makePlan(x, { ...(most !== undefined ? { promotersMost: most } : {}), held });
+  const lv = levelsOf(s.benchmarks), q = makePlan(x, { ...(most !== undefined ? { promotersMost: most } : {}), held, levels: lv });
   if ('needs' in q || 'blocked' in q) return undefined;
   const L = q.limits, room = (x.loan.amount as number) - L.leastLoan;
   const show: Record<LeverId, boolean> = {
@@ -360,7 +365,7 @@ export function planOf(s: ReportState, held: Partial<Levers> = {}): PlanView | u
   };
   const limited = [...new Set(q.atLimit.map((id) => LIMIT_OF[id]).filter(Boolean))];
   return {
-    x, levers: q.levers, cards: LEVER_IDS.filter((id) => show[id]).map((id) => ({ id, by: id === 'moratorium' || id === 'instalments' ? 'lender' : 'borrower', head: HEAD[id] })),
+    x, lv, levers: q.levers, cards: LEVER_IDS.filter((id) => show[id]).map((id) => ({ id, by: id === 'moratorium' || id === 'instalments' ? 'lender' : 'borrower', head: HEAD[id] })),
     limits: `The limits kept: ${most !== undefined ? `the promoters bring at most Rs. ${rupees(most)} in all` : 'no more of the promoters’ money, since the most they can bring is not typed'}; ${L.sales === undefined
       ? 'sales with no limit known, so a lender will test them against the market' : `the use of the capacity at most ${LEVELS.capacity.mostUsePct}% in any year`}; the whole term within ${LEVELS.term.longestMonths} months; unsecured loans and fixed costs only as you set them.`,
     ...(limited.length ? { atLimit: `At the limit: ${listed(limited)}.` } : {}),
@@ -405,14 +410,14 @@ export function boardOf(q: PlanView, l: Levers): BoardView {
     const why = 'blocked' in r ? r.blocked : `No figures with these changes: ${r.needs.join('; ')}.`;
     return { works: false, verdict: why, still: [], line: 'No figures', steps, moves };
   }
-  const d = diagnose(r, y), checks = d.checks.map((k) => rowOf(k)), miss = checks.filter((c) => c.verdict === 'misses');
+  const d = diagnose(r, y, 'fresh', q.lv), checks = d.checks.map((k) => rowOf(k)), miss = checks.filter((c) => c.verdict === 'misses');
   const p = r.finance.promoter, over = q.most !== undefined && p > q.most + 1e-6, cash = r.cashShort;
   const still = [...miss.map((c) => `${c.label}: ${c.worst}, level ${c.level}.${c.short ? ` ${c.short}` : ''}`),
     ...(cash ? [`Cash goes below nil in ${cash.fy}: Rs. ${upRupees(cash.need)} short at its lowest.`] : [])];
   return {
     checks, works: !miss.length, still, steps, moves, over,
-    verdict: miss.length ? `With these changes it still does not work as structured: it misses ${miss.length === 1 ? 'one' : miss.length} of the default benchmark ratios.`
-      : `With these changes it meets every default benchmark ratio${checks.some((c) => c.verdict === 'wait') ? ' that can be read' : ''}.`,
+    verdict: miss.length ? `With these changes it still does not work as structured: it misses ${miss.length === 1 ? 'one' : miss.length} of the ${ratiosWord(q.lv)}.`
+      : `With these changes it meets every ${ratiosWord(q.lv).replace('ratios', 'ratio')}${checks.some((c) => c.verdict === 'wait') ? ' that can be read' : ''}.`,
     line: miss.length ? `Misses ${miss.length}: ${listed(miss.map((c) => inSentence(c.label)))}` : 'Meets every benchmark',
     promoters: `The promoters bring ${rs(p)} in all (now ${rs(q.promotersNow)})${q.most === undefined ? '' : over
       ? `: Rs. ${upRupees(p - q.most)} more than the ${rs(q.most)} they can` : `, within the ${rs(q.most)} they can`}.`,
