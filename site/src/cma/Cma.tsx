@@ -105,9 +105,9 @@ function barText(p: CmaPreview, s: CmaState) {
   return [`Limit ${p.view.key[0]?.value}`, said, statusText(p)].filter(Boolean).join(' · ');
 }
 
-/** Each column of a form spans its heads, the years' line and its subtotals (11 + 1 + 2 and 14 + 1 + 3), so the rows
- * line up across the years. */
-const SPAN = { II: 'lg:row-span-14', III: 'lg:row-span-18' } as const;
+/** Each column of a form spans its heads and its subtotals (11 + 2 and 14 + 3), so the rows line up across the years; the
+ * years' line is the strip above them. */
+const SPAN = { II: 'lg:row-span-13', III: 'lg:row-span-17' } as const;
 const SUBTOTALS = { II: ['Gross profit', 'Net profit'], III: ['Total liabilities', 'Total assets', 'Balance sheet'] } as const;
 /** How sure a year's figures are, drawn on its head (UX9, review finding 3): audited solid, the estimate dashed, the
  * projection dashed and lighter, as the answer's rule is solid once final (docs/DESIGN-SITE.md). */
@@ -124,10 +124,18 @@ function Grid({ form, title, s, update, was }: { form: 'II' | 'III'; title: stri
   const hint = (h: (typeof heads)[number]) => 'hint' in h && h.hint ? <span class={`block text-xs ${MUTED}`}>{h.hint}</span> : null;
   const sums = cols.map((c) => subtotals(s, c.id)), blocked = sums.find((t) => t.blocked)?.blocked;
   const ROW = 'mt-2 flex items-center justify-between gap-3 lg:mt-0 lg:border-b lg:border-line lg:py-1';
+  // From 1024 px the years' heads are one strip that stays under the top bar while the form is in view, so the eighteen
+  // rows of Form III keep their years (UX9b, the UX9 critic); each year's group is named for a screen reader, and below
+  // 1024 px each card carries its own head.
+  const head = (c: (typeof cols)[number]) => <><span aria-hidden="true" class={`absolute inset-x-0 top-0 border-t-2 ${SURE[c.kind]}`} />{c.fy}</>;
   return <Section id={`form-${form}`} title={title}>
-    <div data-testid={`cma-input-${form}`} class="mt-3 space-y-3 text-sm lg:grid lg:grid-flow-col lg:gap-x-3 lg:space-y-0">
+    <div aria-hidden="true" data-testid={`cma-years-${form}`} class="sticky top-18 z-10 mt-3 hidden bg-canvas text-sm lg:grid lg:grid-cols-years lg:gap-x-3">
+      <p class="flex items-end border-b border-line py-2 pr-3 font-medium text-ink-muted">Rs.</p>
+      {cols.map((c) => <p key={c.id} class="relative flex flex-col items-end justify-end border-b border-line pt-2 pb-2 font-medium whitespace-nowrap text-ink-muted">
+        {head(c)}<span class={`text-xs font-normal ${MUTED}`}>{KIND[c.kind]}</span></p>)}
+    </div>
+    <div data-testid={`cma-input-${form}`} class="mt-3 space-y-3 text-sm lg:mt-0 lg:grid lg:grid-flow-col lg:grid-cols-years lg:gap-x-3 lg:space-y-0">
       <div class={`max-lg:hidden lg:grid lg:grid-rows-subgrid ${SPAN[form]}`}>
-        <p class="flex items-end border-b border-line py-2 pr-3 font-medium text-ink-muted">Rs.</p>
         {heads.map((h) => <p key={h.id} class="flex flex-col justify-center border-b border-line py-1.5 pr-3 text-ink">{h.label}{hint(h)}</p>)}
         {SUBTOTALS[form].map((l, i) => <p key={l} class={`flex items-center py-1.5 pr-3 font-semibold text-ink ${i ? '' : 'border-t border-t-ink/25'} border-b border-line`}>{l}</p>)}
       </div>
@@ -140,9 +148,7 @@ function Grid({ form, title, s, update, was }: { form: 'II' | 'III'; title: stri
             : <span data-testid={`cma-balance-${c.id}`} class={`${STATE} justify-end text-warn`}>Differs by {rs(Math.abs(d))}</span>];
         return <div key={c.id} role="group" aria-label={`${c.fy}, ${KIND[c.kind]}`} data-testid={`cma-input-${form}-${c.id}`}
           class={`rounded-card bg-surface p-3 lg:grid lg:grid-rows-subgrid ${SPAN[form]} lg:rounded-none lg:bg-transparent lg:p-0`}>
-          <p class="relative pt-2 font-medium text-ink lg:flex lg:flex-col lg:items-end lg:justify-end lg:border-b lg:border-line lg:pb-2 lg:whitespace-nowrap lg:text-ink-muted">
-            <span aria-hidden="true" class={`absolute inset-x-0 top-0 border-t-2 ${SURE[c.kind]}`} />{c.fy}
-            <span class={`ml-2 text-xs font-normal ${MUTED} lg:ml-0`}>{KIND[c.kind]}</span></p>
+          <p class="relative pt-2 font-medium text-ink lg:hidden">{head(c)}<span class={`ml-2 text-xs font-normal ${MUTED}`}>{KIND[c.kind]}</span></p>
           {heads.map((h) => { const id = `fld-cma-${c.id}-${h.id}`, v = s.figures[c.id][h.id]; return <div key={h.id} class={ROW}>
             <label for={id} class="text-ink lg:hidden">{h.label}{hint(h)}</label>
             <div class="w-36 shrink-0 lg:w-full">

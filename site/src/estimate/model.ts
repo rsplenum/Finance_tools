@@ -109,9 +109,9 @@ function viewOf(e: Estimate): EstimateView {
   return { heads, totals, total: rupees(e.total), ...(e.perSqft !== undefined ? { perSqft: rupees(e.perSqft) } : {}), n: { total: e.total, ...(e.perSqft !== undefined ? { perSqft: e.perSqft } : {}) } };
 }
 
-/** "Complete", or "Provisional: 2 still needed". */
+/** "Complete", or "Provisional: 2 still to answer". */
 export const statusText = (p: EstimatePreview, more: string[] = []) =>
-  p.blocked ? 'No figures' : p.needs.length + more.length ? `Provisional: ${p.needs.length + more.length} still needed` : 'Complete';
+  p.blocked ? 'No figures' : p.needs.length + more.length ? `Provisional: ${p.needs.length + more.length} still to answer` : 'Complete';
 
 // ---- Start from the bill, and each line against the library (E4b, D-UX-36). ----
 

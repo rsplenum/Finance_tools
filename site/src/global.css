@@ -321,6 +321,8 @@ html:not(.js) [data-reel] + [data-reel] [data-mark] { transform-box: fill-box; t
 /* The CMA's and the report's: their grids of years need the width, so the answer takes a narrower column. */
 /* The ledger of what is assumed (UX9): what, the value, Change. */
 @utility grid-cols-ledger { grid-template-columns: minmax(0, 14rem) minmax(0, 1fr) 5rem; }
+/* The CMA's forms from 1024 px (UX9b): the heads, then the five years; the strip of years above takes the same tracks. */
+@utility grid-cols-years { grid-template-columns: minmax(10rem, 0.9fr) repeat(5, minmax(7rem, 1fr)); }
 @utility grid-cols-tool-grid { grid-template-columns: minmax(0, 1fr) 24rem; }
 @utility answer-panel {
   @media (width >= 64rem) { position: sticky; top: 4.5rem; max-height: calc(100dvh - 5.5rem); overflow-y: auto; overscroll-behavior: contain; margin-inline: -1rem; padding: 0 1rem 2.5rem; }

@@ -290,7 +290,6 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
   return <div class="mt-6">
     {p.checks && <div data-testid="rep-checks">
       <h3 class="text-title text-ink">{p.misses ? 'Why it does not work yet' : `${p.checks.some((c) => c.verdict === 'wait') ? 'Against' : 'Meets'} the ${p.benchmarks ? '' : 'default '}benchmark ratios`}</h3>
-      <p class={HINT}>Each ratio in its worst year; the line is its benchmark.</p>
       {p.benchmarks && <p data-testid="rep-benchmarks-note" class="mt-1 text-sm text-warn">{p.benchmarks}</p>}
       <ul class="mt-1 divide-y divide-line">{p.checks.filter((c) => !onKey.has(c.id)).map((c) => <Bar key={c.id} c={c}>
         {/* Met on the project's own assets, the cover reads once: no note, no ask (UX5b, the critic's finding 3). */}
@@ -298,6 +297,8 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
           {p.collateralNote}{!s.collateral.trim() && <>{p.collateralNote ? ' ' : ''}<a href="#fld-collateral" data-testid="rep-to-collateral" onClick={toCollateral}
             class="text-link underline underline-offset-4">Type it under More options</a>.</>}</p>}
       </Bar>)}</ul>
+      {/* How to read the bars, under them as a chart its key (UX9b, the UX9 critic). */}
+      <p class={`mt-1 ${HINT}`}>Each ratio in its worst year; the line is its benchmark.</p>
       <Benchmarks pre="rep" fields={benchmarkFields('fresh', s.benchmarks)} reset={() => update((t) => ({ ...t, benchmarks: undefined }))}
         set={(id, t) => update((u) => ({ ...u, benchmarks: withBenchmark(u.benchmarks, id, t) }))} />
     </div>}

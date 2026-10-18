@@ -684,9 +684,9 @@ function whereOf(ls: Line[], e: ArchitectEstimate): string {
   return `In ${named}${ls.some((l) => l.room === null) ? `, and for ${whole}` : ''}`;
 }
 
-/** "Complete", or "Provisional: 2 still needed". */
+/** "Complete", or "Provisional: 2 still to answer". */
 export const statusText = (p: PlanPreview, more: string[] = []) =>
-  p.blocked ? 'No figures' : p.needs.length + more.length ? `Provisional: ${p.needs.length + more.length} still needed` : 'Complete';
+  p.blocked ? 'No figures' : p.needs.length + more.length ? `Provisional: ${p.needs.length + more.length} still to answer` : 'Complete';
 
 // ---- The item drawer ----
 

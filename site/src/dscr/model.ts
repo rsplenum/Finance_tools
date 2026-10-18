@@ -870,7 +870,7 @@ export function barText(p: Preview): string {
   const parts: string[] = [];
   if (p.average) parts.push(`Average ${p.average}`, `lowest ${p.lowest} in ${p.lowestYear}`);
   if (p.verdict) parts.push(p.verdict.meets ? 'meets the target' : 'below the target');
-  parts.push(p.needs.length ? `provisional: ${p.needs.length} still needed` : statusText(p).toLowerCase());
+  parts.push(p.needs.length ? `provisional: ${p.needs.length} still to answer` : statusText(p).toLowerCase());
   return cap(parts.join(' · '));
 }
 
@@ -895,7 +895,7 @@ export const withFrontNeeds = (s: State, p: Preview, first?: string): Preview =>
   return { ...p, needs: needs.map((n, i) => [n, i] as const).sort((a, b) => at(a[0]) - at(b[0]) || a[1] - b[1]).map(([n]) => n) };
 };
 export const statusText = (p: Preview) =>
-  p.blocked ? 'No figures' : p.needs.length ? `Provisional: ${p.needs.length} still needed`
+  p.blocked ? 'No figures' : p.needs.length ? `Provisional: ${p.needs.length} still to answer`
     : p.assumed.length ? `Complete, on ${p.assumed.length} assumption${p.assumed.length > 1 ? 's' : ''}` : 'Complete';
 
 /** The commonly quoted targets from the data file, offered as examples and used only when chosen. */
