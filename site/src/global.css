@@ -281,6 +281,11 @@ html:has(body[data-look='new']) { scroll-padding-top: 8.5rem; }
 .js [data-settle].settled { opacity: 1; transform: none; }
 [data-header] { transition: transform 0.25s ease-out; }
 [data-header][data-away]:not(:focus-within) { transform: translateY(-100%); }
+/* The CMA's strip of years (UX9b) follows the top bar up when it hides, so no row scrolls above it; a box tabbed to, either
+   way, stops clear of both (88 + 48 px past the strip's foot at 125, the UX9b critic). */
+[data-years-strip] { transition: top 0.25s ease-out; }
+html:has([data-header][data-away]:not(:focus-within)) [data-years-strip] { top: 0; }
+@media (min-width: 64rem) { [data-years-grid] :is(input, select) { scroll-margin-top: 3rem; } }
 /* The story's scratch paper (AG3, D-UX-77; Trailer.astro): ruled from the start, its double margin rule in red. */
 [data-paper] { --pm: 2.25rem; }
 @media (min-width: 40rem) { [data-paper] { --pm: 3.75rem; } }
@@ -321,6 +326,8 @@ html:not(.js) [data-reel] + [data-reel] [data-mark] { transform-box: fill-box; t
 /* The CMA's and the report's: their grids of years need the width, so the answer takes a narrower column. */
 /* The ledger of what is assumed (UX9): what, the value, Change. */
 @utility grid-cols-ledger { grid-template-columns: minmax(0, 14rem) minmax(0, 1fr) 5rem; }
+/* The CMA's forms from 1024 px (UX9b): the heads, then the five years; the strip of years above takes the same tracks. */
+@utility grid-cols-years { grid-template-columns: minmax(10rem, 0.9fr) repeat(5, minmax(7rem, 1fr)); }
 @utility grid-cols-tool-grid { grid-template-columns: minmax(0, 1fr) 24rem; }
 @utility answer-panel {
   @media (width >= 64rem) { position: sticky; top: 4.5rem; max-height: calc(100dvh - 5.5rem); overflow-y: auto; overscroll-behavior: contain; margin-inline: -1rem; padding: 0 1rem 2.5rem; }

@@ -273,7 +273,7 @@ export const COLLATERAL_HINT = `Its realisable sale value, ${LEVELS.collateral.r
 
 export const statusText = (p: ReportPreview, more = 0) => {
   const n = p.needs.length + (p.short ? 1 : 0) + more;
-  return p.blocked ? 'No figures' : n ? `Provisional: ${n} still needed` : 'Complete';
+  return p.blocked ? 'No figures' : n ? `Provisional: ${n} still to answer` : 'Complete';
 };
 
 const years = (n: number, perYear: number) => {

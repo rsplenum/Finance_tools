@@ -27,8 +27,10 @@ function inPage({ after, open, text, limit = 25 }) {
   const main = document.querySelector('main') ?? document.body;
   const box = (el) => { const r = el.getBoundingClientRect(); return r.width > 1 && r.height > 1 ? r : null; };
   const shown = (el) => !!el && el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && !!box(el);
-  // A radio or checkbox drawn as a card hides its input: its label shows it.
-  const shownControl = (el) => shown(el) || [...(el.labels ?? [])].some(shown);
+  // A radio or checkbox drawn as a card hides its input: its label shows it. A control see-through until focused (the bars'
+  // arrow while the answer is in view, UX9b) still takes a Tab, so it counts whatever the fonts put in view.
+  const reached = (el) => !!el && el.checkVisibility({ checkVisibilityCSS: true }) && !!box(el);
+  const shownControl = (el) => reached(el) || [...(el.labels ?? [])].some(shown);
   const words = (t) => t.split(' ').filter((w) => /[\p{L}\p{N}]/u.test(w));
   const range = document.createRange();
   // Questions: fields, a radio group once, a row of pressed buttons once.

@@ -12,7 +12,7 @@
  */
 import { Fragment } from 'preact';
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, toAnswer } from '../fields';
+import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, toAnswer, useAnswerPlace } from '../fields';
 import { printable } from '../doc/pdf';
 import { BRAND_NOTICE } from '../site';
 import { isoDate, save, type FileKind } from '../download';
@@ -58,6 +58,7 @@ export function PlanEstimate() {
   const [s, setS] = useState<PlanState>(EMPTY_PLAN);
   const update: Update = (f) => setS(f);
   const p = useMemo(() => planPreview(s), [s]);
+  const place = useAnswerPlace('pl-result');
   sharePlan(s, { first: p.needs.map(askedIn).find(Boolean), left: p.needs.length });
   const [editing, setEditing] = useState(true);
   const folded = useRef(false), result = useRef<HTMLHeadingElement>(null);
@@ -119,7 +120,7 @@ export function PlanEstimate() {
       <div class="flex items-center gap-2 lg:sr-only">
         <p data-answer-echo aria-live="polite" class={`flex-1 py-2 text-sm font-medium ${INK}`}>{v
           ? <>Total <span data-testid="pl-sticky-total" class="whitespace-nowrap tabular-nums">{v.headline}</span></> : stillText(p)}</p>
-        <a href="#pl-result" aria-label="To the estimate" onClick={toAnswer} class={BAR_ARROW}><span aria-hidden="true">{v ? '↑' : '↓'}</span></a>
+        <a href="#pl-result" aria-label="To the estimate" onClick={toAnswer} class={`${BAR_ARROW} ${place === 'in' ? 'pointer-events-none opacity-0 focus-visible:opacity-100' : ''}`}><span aria-hidden="true">{place === 'above' ? '↑' : '↓'}</span></a>
       </div>
     </div>
   </div>;
@@ -129,7 +130,7 @@ export function PlanEstimate() {
 const ASKED: [string, string][] = [['What the work', 'fld-work'], ['How many floors', 'fld-floors'], ['Flat or house', 'fld-home'], ['Which city', 'fld-city'],
   ['The built-up', 'fld-carpet'], ['The carpet', 'fld-carpet'], ['How many bedrooms', 'fld-bhk'], ['Which level', 'fld-level']];
 const askedIn = (need: string) => ASKED.find(([w]) => need.startsWith(w))?.[1];
-const stillText = (p: PlanPreview) => (p.blocked ? 'No figures' : `${p.needs.length} still to answer`);
+const stillText = (p: PlanPreview) => (p.blocked ? 'No figures' : `Provisional: ${p.needs.length} still to answer`);
 
 /** Before the six answers, the estimate's outline (UX8, review finding 2): the total and the cost a sq ft as "—", never 0,
  * and one counter opening to a link to each question still to answer. */

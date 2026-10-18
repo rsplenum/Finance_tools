@@ -165,8 +165,8 @@ export const goTo = (id: string) => (e: Event) => {
 
 /** A figure not yet known (UX8, D-UX-106): "—", never 0, a link to the box that fills it when there is one. */
 export function Dash({ to, what }: { to?: string; what: string }) {
-  if (!to) return <span aria-label={`${what}: still needed`} class="text-ink-muted">—</span>;
-  return <a href={`#${to}`} onClick={goTo(to)} aria-label={`${what}: still needed, to its box`}
+  if (!to) return <span aria-label={`${what}: still to answer`} class="text-ink-muted">—</span>;
+  return <a href={`#${to}`} onClick={goTo(to)} aria-label={`${what}: still to answer, to its box`}
     class="inline-flex min-h-6 min-w-6 items-center text-link underline-offset-4 hover:underline">—</a>;
 }
 
@@ -211,22 +211,25 @@ export interface LedgerRow { id: string; what: string; shown: string; why: strin
 
 /**
  * What is assumed, as a ledger (UX9, review finding 8): one line with the count (D-UX-32), opening to a row each of what,
- * the value assumed and Change, so the values can be scanned; the reasons behind one "Why these".
+ * the value assumed and Change, so the values can be scanned; the reasons behind one "Why these". The rows no box changes
+ * come after, under their own line, so a row without Change does not read as one missing it (UX9b, the UX9 critic).
  */
 export function Ledger(p: { id: string; testid: string; title: string; rows: LedgerRow[]; row?: string; class?: string }) {
   if (!p.rows.length) return null;
+  const list = (rows: LedgerRow[]) => rows.length > 0 && <ul class="text-sm">
+    {rows.map((r) => <li key={r.id} data-testid={`${p.row ?? `${p.testid}-`}${r.id}`} class="grid gap-x-4 border-b border-line py-2 sm:grid-cols-ledger">
+      <span class="font-medium text-ink">{r.what}<span class="sr-only">: </span></span> <span class="text-ink">{r.shown}</span>{' '}
+      {r.to ? <a href={`#${r.to}`} onClick={r.go ?? goTo(r.to)} aria-label={`Change: ${r.what}`} class="text-link underline underline-offset-4 sm:text-right">Change</a> : <span />}
+    </li>)}
+  </ul>;
   return <section id={p.id} data-folded aria-labelledby={`${p.id}-h`} class={`mt-10 border-t border-line pt-3 ${p.class ?? ''}`}>
     <details data-testid={p.testid} class="group">
       <summary class="flex min-h-11 cursor-pointer flex-wrap items-baseline gap-x-2 text-sm [&::-webkit-details-marker]:hidden">
         <h2 id={`${p.id}-h`} class="font-medium text-ink">{p.title}: {p.rows.length}</h2>
         <span class="text-link"><span class="group-open:hidden">Show</span><span class="hidden group-open:inline">Hide</span></span>
       </summary>
-      <ul class="text-sm">
-        {p.rows.map((r) => <li key={r.id} data-testid={`${p.row ?? `${p.testid}-`}${r.id}`} class="grid gap-x-4 border-b border-line py-2 sm:grid-cols-ledger">
-          <span class="font-medium text-ink">{r.what}<span class="sr-only">: </span></span> <span class="text-ink">{r.shown}</span>{' '}
-          {r.to ? <a href={`#${r.to}`} onClick={r.go ?? goTo(r.to)} aria-label={`Change: ${r.what}`} class="text-link underline underline-offset-4 sm:text-right">Change</a> : <span />}
-        </li>)}
-      </ul>
+      {list(p.rows.filter((r) => r.to))}
+      {p.rows.some((r) => !r.to) && <><h3 class="mt-4 text-sm font-medium text-ink-muted">No box here changes these</h3>{list(p.rows.filter((r) => !r.to))}</>}
       <SourceNote what="Why these">{p.rows.map((r) => <span key={r.id} class="mt-1 block"><b>{r.what}:</b> {r.why}.</span>)}</SourceNote>
     </details>
   </section>;
@@ -239,14 +242,17 @@ export const BAR_ARROW = 'inline-flex size-11 shrink-0 items-center justify-cent
 
 /** Where the answer is from what is in view (UX9, UX8's critic): the bar's arrow points to it, and from 1024 px the bar
  * shows while the answer panel is out of view (the forms and the CMA's full-width years under it), its words alone while
- * it is in view. */
+ * it is in view. A pinned panel counts as above once it starts to slide up with the end of the questions, so the bar's
+ * words come back as it goes, not after it has gone under the header (UX9b, the UX9 critic). */
 export function useAnswerPlace(id: string) {
   const [place, setPlace] = useState<'in' | 'above' | 'below'>('in');
   useEffect(() => {
     // On scroll, not an IntersectionObserver: a jump past the answer (a link, Tab) crosses no threshold, so it fires none.
     let frame = 0;
     const look = () => { frame = 0; const r = document.getElementById(id)?.getBoundingClientRect();
-      if (r) setPlace(r.bottom <= 0 ? 'above' : r.top >= innerHeight ? 'below' : 'in'); };
+      if (!r) return;
+      const css = getComputedStyle(document.getElementById(id) as HTMLElement), pin = css.position === 'sticky' ? parseFloat(css.top) : NaN;
+      setPlace(r.bottom <= 0 || r.top < pin - 1 ? 'above' : r.top >= innerHeight ? 'below' : 'in'); };
     const soon = () => { frame ||= requestAnimationFrame(look); };
     look();
     addEventListener('scroll', soon, { passive: true });
@@ -257,14 +263,15 @@ export function useAnswerPlace(id: string) {
 }
 
 /** The answer bar of DSCR, the CMA and the report: the answer as text, read out as it changes, and the one 44 px arrow
- * to it, pointing up once it is above (D-UX-84, UX3: only the arrow is a target, so a field under the bar can be tapped).
+ * to it, shown while it is out of view (UX9b: an arrow to what is on screen leads nowhere) and on focus, so a Tab walk
+ * still meets it, pointing up once it is above (D-UX-84, UX3: only the arrow is a target, so a field under the bar can be tapped).
  * From 1024 px the words come back while the panel is out of view, without the arrow: a control there and gone by
  * the scroll is one a Tab walk misses (UX9). */
 export function AnswerBar(p: { to: string; label: string; testid: string; text: string }) {
   const place = useAnswerPlace(p.to), out = place !== 'in';
   return <div class={`${out ? BAR.replace(' lg:sr-only', '') : BAR} lg:col-span-2`}>
     <p data-testid={p.testid} data-answer-echo aria-live="polite" class="flex-1 py-2 text-sm font-medium text-ink">{p.text}</p>
-    <a href={`#${p.to}`} aria-label={p.label} onClick={toAnswer} class={BAR_ARROW}><span aria-hidden="true">{place === 'above' ? '↑' : '↓'}</span></a>
+    <a href={`#${p.to}`} aria-label={p.label} onClick={toAnswer} class={`${BAR_ARROW} ${out ? '' : 'pointer-events-none opacity-0 focus-visible:opacity-100'}`}><span aria-hidden="true">{place === 'above' ? '↑' : '↓'}</span></a>
   </div>;
 }
 
@@ -282,6 +289,15 @@ export function SourceNote(p: { what: string; children: ComponentChildren; /** T
     {due && <span data-testid="review-due" class="ml-2 text-warn">{due}</span>}
     <p class="mt-1">{p.children}</p>
   </details>;
+}
+
+/** A hint's rule behind "Why" (UX9b, the UX9 critic): the hint stays one line, as its neighbours' do, so boxes side by side
+ * line up; a button, not a disclosure, since it sits inside the hint's paragraph. */
+export function Why({ id, children }: { id: string; children: ComponentChildren }) {
+  const [open, setOpen] = useState(false);
+  return <>{' '}<button type="button" aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}
+    class="inline-flex min-h-6 cursor-pointer items-center text-link underline underline-offset-4">Why</button>
+    <span id={id} hidden={!open} class="mt-1 block">{children}</span></>;
 }
 
 /** The answer bar's arrow: it takes the focus to the results as well as the eye, so Tab goes on from there (UX5c). */

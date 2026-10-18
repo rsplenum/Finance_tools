@@ -25,7 +25,7 @@ describe('CMA document, case K', () => {
   it('beside the download: complete with the name; without it, the figures complete and the name still needed (review finding 14)', () => {
     expect(docStatus(s, preview(s))).toBe('Complete');
     const t = { ...s, doc: { ...s.doc, name: '' } };
-    expect(docStatus(t, preview(t))).toBe('Figures complete; for the document, 1 still needed');
+    expect(docStatus(t, preview(t))).toBe('Figures complete; for the document, 1 still to answer');
   });
   it('has the five parts', () => expect(d.parts.map((p) => p.name)).toEqual(['Summary', 'Forms II and III', 'Forms IV to VI', 'Ratios', 'Check']));
   it('redoes each checked figure by its formula, and every difference is 0', () => {

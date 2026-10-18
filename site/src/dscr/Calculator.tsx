@@ -19,7 +19,7 @@ import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import DSCR_FILE from '../../../engine/data/dscr.json';
 import TAX_FILE from '../../../engine/data/tax.json';
-import { answerRule, AnswerBar, BUTTON, CellInput, Claim, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick } from '../fields';
+import { answerRule, AnswerBar, Why, BUTTON, CellInput, Claim, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
 import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
@@ -108,7 +108,7 @@ function FrontDoor({ s, update, openMore, was }: { s: State; update: Update; ope
         onCommit={(t) => update((x) => ({ ...first('pbdit', t)(x), modes: { ...x.modes, pbdit: 'grow' } }))} />
       <TextField id="fld-fd-growth" label="Growth in sales a year (%)" unit="%" inputMode="decimal" hint="Like 10." value={s.rates.pbdit ?? ''}
         said={notUnderstood(s.rates.pbdit ?? '', numberOf, 'a number, like 10')} onCommit={(t) => update((x) => ({ ...x, rates: { ...x.rates, pbdit: t } }))} />
-      <TextField id="fld-fd-emis" label="EMIs already paid, a month" unit="Rs." hint={`${emisAsk(s).replace(/\.?$/, '.')} Leave empty if none.`} inputMode="decimal" value={emi} tidy={tidyAmount}
+      <TextField id="fld-fd-emis" label="EMIs already paid, a month" unit="Rs." hint={<>Leave empty if none.<Why id="fld-fd-emis-why">{emisAsk(s).replace(/\.?$/, '.')}</Why></>} inputMode="decimal" value={emi} tidy={tidyAmount}
         said={amountSaid(emi)} onCommit={(t) => update((x) => (t.trim()
           ? { ...x, modes: { ...x.modes, otherLoans: 'emi' }, running: [{ emi: t, last: x.running[0]?.last ?? '' }, ...x.running.slice(1)] }
           : { ...x, modes: { ...x.modes, otherLoans: 'none' } }))} />

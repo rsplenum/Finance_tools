@@ -231,4 +231,4 @@ export function preview(s: CmaState): CmaPreview {
 }
 
 export const statusText = (p: CmaPreview, more = 0) =>
-  p.blocked ? 'No figures' : p.needs.length + more ? `Provisional: ${p.needs.length + more} still needed` : 'Complete';
+  p.blocked ? 'No figures' : p.needs.length + more ? `Provisional: ${p.needs.length + more} still to answer` : 'Complete';
