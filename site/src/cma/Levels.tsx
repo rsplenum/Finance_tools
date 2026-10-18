@@ -26,7 +26,7 @@ export function Levels({ s, update, use }: { s: CmaState; update: Update; use: (
   return <div data-testid="cma-levels" class={lv.checks ? 'paper shadow-paper mt-4 rounded-card p-4 sm:p-6' : 'mt-4'}>
     {lv.ask && <p data-testid="cma-levels-ask" class="text-sm text-warn">{lv.ask}</p>}
     {lv.checks && <div data-testid="cma-checks">
-      <h3 class="text-title text-ink">{lv.misses ? 'Why it does not work yet' : lv.benchmarks ? 'Against the benchmark ratios' : 'Against the default benchmark ratios'}</h3>
+      <h3 class="text-title text-ink">{lv.misses ? 'Why it does not work yet' : `${lv.checks.some((c) => c.verdict === 'wait') ? 'Against' : 'Meets'} the ${lv.benchmarks ? '' : 'default '}benchmark ratios`}</h3>
       <p class={`text-xs ${MUTED}`}>Each ratio in its worse year of the estimate and the projection; the line is its benchmark.</p>
       {lv.benchmarks && <p data-testid="cma-benchmarks-note" class="mt-1 text-sm text-warn">{lv.benchmarks}</p>}
       <ul class="mt-1 divide-y divide-line">{lv.checks.map((c) => <Bar key={c.id} c={c} pre="cma" />)}</ul>

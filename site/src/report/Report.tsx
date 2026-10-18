@@ -7,7 +7,7 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
-import { BUTTON, Choice, FILLED, HINT, Section, TextField, toAnswer } from '../fields';
+import { answerRule, BUTTON, Choice, Claim, FILLED, HINT, Section, STATE, TextField, Tick, toAnswer } from '../fields';
 import { Bar, Benchmarks, Lever, PlanLever, targetOf } from '../Board';
 import { benchmarkFields, inSentence, listed, withBenchmark } from '../board-model';
 import { printable } from '../doc/pdf';
@@ -31,11 +31,10 @@ const notUnderstood = (t: string, read: (t: string) => unknown, example: string)
 /** A control that removes itself hands the focus on, after the render (WCAG 2.4.3; docs/DESIGN.md, Focus). */
 const focusNext = (sel: string) => requestAnimationFrame(() => document.querySelector<HTMLElement>(sel)?.focus());
 /** One tone a meaning (docs/DESIGN-SITE.md, Colours): good meets, warn provisional, bad misses. */
-const TONE = { good: 'border-good bg-good-tint', warn: 'border-warn bg-warn-tint', bad: 'border-bad bg-bad-tint' } as const;
 
 /** The answer in words (review finding 3): the model's own sentence when a level misses; else what meets and what it cannot
  * read yet. Words only, from the model's checks; no figure. */
-function verdictOf(p: ReportPreview): { text: string; tone: keyof typeof TONE } | undefined {
+function verdictOf(p: ReportPreview): { text: string; tone: 'good' | 'warn' | 'bad' } | undefined {
   if (!p.view || p.blocked) return undefined;
   if (p.misses) return { text: p.misses, tone: 'bad' };
   const wait = (p.checks ?? []).filter((c) => c.verdict === 'wait').map((c) => inSentence(c.label));
@@ -265,7 +264,7 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
   const tone = (ok: boolean) => (ok ? 'text-good' : 'text-bad');
   return <div class="mt-6">
     {p.checks && <div data-testid="rep-checks">
-      <h3 class="text-title text-ink">{p.misses ? 'Why it does not work yet' : p.benchmarks ? 'Against the benchmark ratios' : 'Against the default benchmark ratios'}</h3>
+      <h3 class="text-title text-ink">{p.misses ? 'Why it does not work yet' : `${p.checks.some((c) => c.verdict === 'wait') ? 'Against' : 'Meets'} the ${p.benchmarks ? '' : 'default '}benchmark ratios`}</h3>
       <p class={HINT}>Each ratio in its worst year; the line is its benchmark.</p>
       {p.benchmarks && <p data-testid="rep-benchmarks-note" class="mt-1 text-sm text-warn">{p.benchmarks}</p>}
       <ul class="mt-1 divide-y divide-line">{p.checks.filter((c) => !onKey.has(c.id)).map((c) => <Bar key={c.id} c={c}>
@@ -326,10 +325,10 @@ function Result({ s, p, update, use, used, undo, keep, toCollateral, reset }: {
   s: ReportState; p: ReportPreview; update: Update; use: (l: Levers) => void; used: PlanChange[]; undo: () => void; keep: () => void;
   toCollateral: (e: Event) => void; reset: ComponentChildren;
 }) {
-  const v = p.view, verdict = verdictOf(p), box = 'rounded-control border-l-4 px-3 py-2 text-ink';
+  const v = p.view, verdict = verdictOf(p);
   return <Section id="report" title="The project report">
     {reset && <div class="mt-4 flex flex-wrap items-center justify-end gap-2">{reset}</div>}
-    {used.length > 0 && <div data-testid="rep-used" role="status" class="mt-3 rounded-control border-l-4 border-accent bg-accent/10 p-3">
+    {used.length > 0 && <div data-testid="rep-used" role="status" class="mt-3 rounded-control border-l-4 border-ink bg-surface p-3">
       <p class="font-medium text-ink">The plan is used: these figures above changed.</p>
       <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink tabular-nums">{used.map((c) => <li key={c.key}>{c.label}: {c.was || 'none'} → {c.now}</li>)}</ul>
       <div class="mt-2 flex flex-wrap gap-2">
@@ -340,8 +339,9 @@ function Result({ s, p, update, use, used, undo, keep, toCollateral, reset }: {
     {/* The answer as paper, there at once (docs/DESIGN-SITE.md): the verdict in words and the key figures above the status
         (review finding 3); one tone a meaning, and the status plain when complete, never green under a miss. */}
     <div class="paper shadow-paper mt-6 rounded-card p-4 sm:p-6">
-      {verdict && <p data-testid={p.misses ? 'rep-misses' : 'rep-verdict'} data-answer class={`${box} ${TONE[verdict.tone]}`}>{verdict.text}</p>}
-      {p.short && <p data-testid="rep-short" class={`mt-3 ${box} ${TONE.bad}`}>{p.short}</p>}
+      {/* The answer is the paper's heading (UX7): a flat claim, its rule solid once final and dashed while provisional. */}
+      {verdict && <h3 data-testid={p.misses ? 'rep-misses' : 'rep-verdict'} data-answer class={`text-title text-ink ${answerRule(!p.blocked && !p.needs.length)}`}><Claim text={verdict.text} /></h3>}
+      {p.short && <p data-testid="rep-short" class="mt-3 text-sm font-medium text-bad">{p.short}</p>}
       {v && <dl class="mt-4 grid gap-3 sm:grid-cols-3">
         {v.key.map((k, i) => {
           const c = k.check ? p.checks?.find((x) => x.id === k.check) : undefined;
@@ -356,8 +356,8 @@ function Result({ s, p, update, use, used, undo, keep, toCollateral, reset }: {
         })}
       </dl>}
       <p data-testid="rep-status" data-answer={verdict ? undefined : true} data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'}
-        class={`mt-4 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.blocked ? 'bg-bad-tint text-bad' : p.needs.length || p.short ? 'bg-warn-tint text-warn' : 'bg-surface text-ink'}`}>{statusText(p)}</p>
-      {p.blocked && <p role="alert" class={`mt-3 ${box} ${TONE.bad}`}>{p.blocked}</p>}
+        class={`${STATE} mt-4 ${verdict ? '' : answerRule(!p.blocked && !p.needs.length)} ${p.blocked ? 'text-bad' : p.needs.length || p.short ? 'text-warn' : 'text-ink'}`}>{!p.blocked && !p.needs.length && !p.short && <Tick />}{statusText(p)}</p>
+      {p.blocked && <p role="alert" class={`mt-3 ${answerRule(true)} text-ink`}>{p.blocked}</p>}
       {p.needs.length > 0 && <div class="mt-4 text-ink">
         <p class="font-medium">Still needed</p>
         <ul data-testid="rep-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>
@@ -390,8 +390,7 @@ function Download({ s, p, update }: { s: ReportState; p: ReportPreview; update: 
     </div>
     {ready
       ? <div class="mt-5">
-        <p data-testid="rep-doc-status" class={`inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${own.length
-          ? 'bg-warn-tint text-warn' : 'bg-surface text-ink'}`}>{docStatus(s, p)}</p>
+        <p data-testid="rep-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{docStatus(s, p)}</p>
         {own.length > 0 && <ul data-testid="rep-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
         <div class="mt-3 flex flex-wrap gap-2">
           <button type="button" data-testid="rep-download-pdf" class={FILLED} onClick={() => go('pdf')}>Download PDF</button>

@@ -5,7 +5,7 @@
  * three downloads. Figures: engine/estimate.ts only, via model.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
-import { BUTTON, Choice, FILLED, HINT, Section, SelectField, TextField } from '../fields';
+import { answerRule, BUTTON, Choice, FILLED, HINT, Section, SelectField, STATE, TextField, Tick } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { docNeeds, docStatus, estimateDoc, fileName } from './document';
@@ -135,8 +135,8 @@ function Result({ p }: { p: EstimatePreview }) {
   return <Section id="result" title="The estimate">
     {/* The answer as paper, there at once (docs/DESIGN-SITE.md, tool pages). */}
     <div class="paper shadow-paper mt-6 rounded-card p-4 sm:p-6">
-    <p data-testid="est-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class={`inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.needs.length || p.blocked
-      ? 'bg-warn-tint text-warn' : 'bg-good-tint text-good'}`}>{statusText(p)}</p>
+    <p data-testid="est-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class={`${STATE} ${answerRule(!p.needs.length && !p.blocked)} ${p.needs.length || p.blocked
+      ? 'text-warn' : 'text-ink'}`}>{!p.needs.length && !p.blocked && <Tick />}{statusText(p)}</p>
     {p.blocked && <p class="mt-2 text-sm text-bad">{p.blocked}</p>}
     {p.needs.length > 0 && <ul data-testid="est-needs" class="mt-2 list-disc space-y-0.5 pl-5 text-sm text-ink">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>}
     {v && <>
@@ -184,8 +184,7 @@ function Download({ s, p, update }: { s: EstimateState; p: EstimatePreview; upda
     </div>
     {ready
       ? <div class="mt-5">
-        <p data-testid="est-doc-status" class={`inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${own.length
-          ? 'bg-warn-tint text-warn' : 'bg-good-tint text-good'}`}>{docStatus(s, p)}</p>
+        <p data-testid="est-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{docStatus(s, p)}</p>
         {own.length > 0 && <ul data-testid="est-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
         <div class="mt-3 flex flex-wrap gap-2">
           <button type="button" data-testid="est-download-pdf" class={FILLED} onClick={() => go('pdf')}>Download PDF</button>

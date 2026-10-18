@@ -8,7 +8,6 @@ import type { BenchmarkField, BoardMove, CheckRow, ViableLine } from './board-mo
 import { BUTTON, HINT, TextField } from './fields';
 
 const MUTED = 'text-ink-muted';
-const TONE = { meets: 'bg-good', misses: 'bg-bad', wait: 'bg-line' } as const;
 const INK = { meets: 'text-good', misses: 'text-bad', wait: MUTED } as const;
 
 /** One ratio as a bar against its level (MV2b): the track runs from nil to twice the level, so the level is the line at the
@@ -20,7 +19,11 @@ export function Bar({ c, pre = 'rep', children }: { c: CheckRow; pre?: string; c
   return <li data-testid={`${pre}-check-${c.id}`} class="py-1.5">
     <p class="text-sm text-ink">{c.label}</p>
     <div aria-hidden="true" class="relative mt-1 h-3 rounded-full bg-surface">
-      <div class={`h-3 rounded-full ${TONE[c.verdict]}`} style={{ width: `${c.verdict === 'misses' ? Math.max(c.bar, 3) : c.bar}%` }} />
+      {/* The bar in ink, the benchmark the one line (UX7, D-UX-104); a miss's gap to the line dashed, never coloured: the
+          words under it say meets or misses. */}
+      <div class={`h-3 rounded-full ${c.verdict === 'wait' ? 'bg-line' : 'bg-ink-muted'}`} style={{ width: `${c.verdict === 'misses' ? Math.min(Math.max(c.bar, 3), 50) : c.bar}%` }} />
+      {c.verdict === 'misses' && <div data-testid={`${pre}-gap-${c.id}`} class="absolute inset-y-0 rounded-full border-2 border-dashed border-ink-muted"
+        style={{ left: `${Math.min(Math.max(c.bar, 3), 50)}%`, width: `${Math.abs(Math.max(c.bar, 3) - 50)}%` }} />}
       <div class="absolute -inset-y-1 left-1/2 w-0.5 bg-ink" />
     </div>
     <div class="mt-0.5 flex items-baseline justify-between gap-3">
@@ -53,13 +56,13 @@ export function Benchmarks({ fields, set, reset, pre }: { fields: BenchmarkField
 /** A lever on the board: how far it moves, now against needed, and the ratios it brings to their level. */
 export function Lever({ l, pre = 'rep' }: { l: ViableLine; pre?: string }) {
   const most = l.bars ? Math.max(l.bars.now, l.bars.to, 1e-9) : 1, w = (x: number) => `${Math.max(0, (x / most) * 100)}%`;
-  return <li data-testid={`${pre}-viable-${l.id}`} class={`rounded-lg border p-3 new:border-0 ${l.reach?.out ? 'border-bad new:bg-bad-tint' : 'border-line new:bg-surface'}`}>
+  return <li data-testid={`${pre}-viable-${l.id}`} class="rounded-lg border border-line p-3 new:border-0 new:bg-surface">
     <div class="flex items-baseline justify-between gap-2">
       <span class="font-medium text-ink">{l.head}</span>
       {l.move && <span data-testid={`${pre}-move-${l.id}`} class="shrink-0 text-lg font-semibold tabular-nums text-ink">{l.move}</span>}
     </div>
     {l.bars && <div class="mt-1 space-y-1 text-xs tabular-nums">
-      {[['Now', l.bars.now, l.bars.nowText, 'bg-ink-muted'], ['Needed', l.bars.to, l.bars.toText, l.reach?.out ? 'bg-bad' : 'bg-good']].map(([k, x, t, tone]) =>
+      {[['Now', l.bars.now, l.bars.nowText, 'bg-ink-muted'], ['Needed', l.bars.to, l.bars.toText, 'bg-ink']].map(([k, x, t, tone]) =>
         <div key={k as string} class="flex items-center gap-2">
           <span class={`w-14 shrink-0 ${MUTED}`}>{k}</span>
           <div aria-hidden="true" class="h-2.5 flex-1 rounded-full bg-surface"><div class={`h-2.5 rounded-full ${tone}`} style={{ width: w(x as number) }} /></div>
@@ -74,10 +77,10 @@ export function Lever({ l, pre = 'rep' }: { l: ViableLine; pre?: string }) {
 export function Said({ l, alone, pre = 'rep' }: { l: ViableLine; alone?: boolean; pre?: string }) {
   return <>
     {l.reach && <p data-testid={`${pre}-reach-${l.id}`} class={`mt-1.5 text-sm font-medium ${l.reach.out ? 'text-bad' : 'text-warn'}`}>{l.reach.text}</p>}
-    {(l.fixes.length > 0 || l.still.length > 0) && <ul class="mt-1.5 flex flex-wrap gap-1 text-xs">
+    {(l.fixes.length > 0 || l.still.length > 0) && <ul class="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 text-xs">
       {alone && <li class={`py-0.5 ${MUTED}`}>Alone:</li>}
-      {l.fixes.map((f) => <li key={f} class="rounded-full bg-good-tint px-2 py-0.5 text-good">✓ {f}</li>)}
-      {l.still.map((f) => <li key={f} class="rounded-full bg-bad-tint px-2 py-0.5 text-bad">✗ {f}</li>)}
+      {l.fixes.map((f) => <li key={f} class="py-0.5 text-good">✓ {f}</li>)}
+      {l.still.map((f) => <li key={f} class="py-0.5 text-bad">✗ {f}</li>)}
     </ul>}
     <p class="mt-1.5 text-sm text-ink">{alone && <span class={MUTED}>Alone: </span>}<span data-testid={`${pre}-text-${l.id}`}>{l.text}</span></p>
     {l.note && <p class={`mt-0.5 text-sm ${MUTED}`}>{l.note}</p>}
@@ -89,7 +92,7 @@ export function Said({ l, alone, pre = 'rep' }: { l: ViableLine; alone?: boolean
 export function PlanLever({ id, head, m, value, alone, set, pre = 'rep', toggle }: {
   id: string; head: string; m: BoardMove; value: number; alone?: ViableLine; set: (n: number) => void; pre?: string; toggle?: boolean;
 }) {
-  return <li data-testid={`${pre}-lever-${id}`} class={`rounded-lg border p-3 new:border-0 ${alone?.reach?.out ? 'border-bad new:bg-bad-tint' : 'border-line new:bg-surface'}`}>
+  return <li data-testid={`${pre}-lever-${id}`} class="rounded-lg border border-line p-3 new:border-0 new:bg-surface">
     <div class="flex items-baseline justify-between gap-2">
       {toggle
         ? <label class="flex items-start gap-2 font-medium text-ink"><input id={`${pre}-slider-${id}`} type="checkbox" class="mt-1" checked={value > 0}
@@ -98,7 +101,7 @@ export function PlanLever({ id, head, m, value, alone, set, pre = 'rep', toggle 
       <span data-testid={`${pre}-move-${id}`} class="shrink-0 text-lg font-semibold tabular-nums text-ink">{m.move}</span>
     </div>
     {!toggle && m.max > 0 && <input id={`${pre}-slider-${id}`} type="range" min={m.min ?? 0} max={m.max} step={1} value={value} aria-valuetext={`${m.move}: ${m.to}`}
-      onInput={(e) => set(Number((e.currentTarget as HTMLInputElement).value))} class="mt-2 h-6 w-full accent-accent" />}
+      onInput={(e) => set(Number((e.currentTarget as HTMLInputElement).value))} class="mt-2 h-6 w-full accent-ink" />}
     <p data-testid={`${pre}-to-${id}`} class="text-sm tabular-nums text-ink">{m.to}</p>
     {alone && <Said l={alone} alone pre={pre} />}
   </li>;

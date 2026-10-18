@@ -19,7 +19,7 @@ import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import DSCR_FILE from '../../../engine/data/dscr.json';
 import TAX_FILE from '../../../engine/data/tax.json';
-import { BUTTON, CellInput, Choice, FILLED, HINT, Section, SourceNote, TextField, toAnswer } from '../fields';
+import { answerRule, BUTTON, CellInput, Claim, Choice, FILLED, HINT, Section, SourceNote, STATE, TextField, Tick, toAnswer } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
 import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
@@ -286,8 +286,8 @@ function FigureRow({ s, group, years, update }: { s: State; group: RowDef[]; yea
     {r0.hint && <p class={`text-xs ${MUTED}`}>{r0.hint}</p>}
     <div role="radiogroup" aria-label={`${title}: how it is given`} class="mt-2 flex flex-wrap gap-2">
       {r0.modes.map((m) => <label key={m} for={`fld-${r0.key}-${m}`}
-        class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-edge bg-field px-3 py-1 text-sm text-ink has-checked:border-accent has-checked:bg-accent/10">
-        <input type="radio" id={`fld-${r0.key}-${m}`} name={`fld-${r0.key}-how`} checked={mode === m} onChange={() => setMode(m)} class="size-4 accent-accent" />
+        class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-edge bg-field px-3 py-1 text-sm text-ink has-checked:border-ink has-checked:outline has-checked:outline-ink">
+        <input type="radio" id={`fld-${r0.key}-${m}`} name={`fld-${r0.key}-how`} checked={mode === m} onChange={() => setMode(m)} class="size-4 accent-ink" />
         {HOW[m]}
       </label>)}
     </div>
@@ -411,7 +411,6 @@ function TargetSection({ s, update }: { s: State; update: Update }) {
 function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
   s: State; p: Preview; update: Update; openMore: () => void; use: (l: DscrLevers) => void; used: DscrChange[]; undo: () => void; keep: () => void;
 }) {
-  const box = 'mt-4 rounded-control border-l-4 px-3 py-2';
   const largest = p.largest?.amount, fewest = p.fewest?.instalments;
   // The method and the target read as one line (D-UX-10: shorter).
   const method = p.assumed.find((a) => a.id === 'method'), target = p.assumed.find((a) => a.id === 'target');
@@ -421,16 +420,17 @@ function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
     {/* The answer first (docs/DESIGN.md, principle 1); one tone a meaning: good meets, bad misses or blocked, warn provisional. */}
     {/* The answer as paper, there at once: it changes as the figures are typed (docs/DESIGN-SITE.md, tool pages). */}
     <div class="paper shadow-paper mt-6 rounded-card p-4 sm:p-6">
-    {p.verdict && <p data-testid="dscr-verdict" data-answer class={`${box} text-ink ${p.verdict.meets ? 'border-good bg-good-tint' : 'border-bad bg-bad-tint'}`}>{p.verdict.text}</p>}
+    {/* The answer is the paper's heading (UX7): a flat claim, its rule solid once final and dashed while provisional. */}
+    {p.verdict && <h3 data-testid="dscr-verdict" data-answer class={`text-title text-ink ${answerRule(!p.blocked && !p.needs.length)}`}><Claim text={p.verdict.text} /></h3>}
     {p.loanLine && <dl data-testid="dscr-loan-line" class="mt-3 grid grid-cols-2 gap-3 text-ink">
       <div><dt class={`text-sm ${MUTED}`}>Each instalment</dt><dd data-testid="dscr-instalment" class="font-semibold tabular-nums">{p.loanLine.instalment}</dd></div>
       <div><dt class={`text-sm ${MUTED}`}>Interest over the whole loan</dt><dd data-testid="dscr-total-interest" class="font-semibold tabular-nums">{p.loanLine.totalInterest}</dd></div>
     </dl>}
-    <p data-testid="dscr-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${p.blocked
-      ? 'bg-bad-tint text-bad' : p.needs.length ? 'bg-warn-tint text-warn' : 'bg-surface text-ink'}`}>
-      {statusText(p)}
+    <p data-testid="dscr-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class={`${STATE} mt-2 ${p.verdict ? '' : answerRule(!p.blocked && !p.needs.length)} ${p.blocked
+      ? 'text-bad' : p.needs.length ? 'text-warn' : 'text-ink'}`}>
+      {!p.blocked && !p.needs.length && <Tick />}{statusText(p)}
     </p>
-    {p.blocked && <p data-testid="dscr-blocked" role="alert" class={`${box} border-bad bg-bad-tint text-ink`}>{p.blocked}</p>}
+    {p.blocked && <p data-testid="dscr-blocked" role="alert" class={`mt-4 ${answerRule(true)} text-ink`}>{p.blocked}</p>}
     {p.average !== undefined && <dl class="mt-4 grid grid-cols-2 gap-3">
       <div class="rounded-control bg-surface p-3">
         <dt class={`text-sm ${MUTED}`}>Average DSCR</dt>
@@ -445,12 +445,12 @@ function PreviewSection({ s, p, update, openMore, use, used, undo, keep }: {
       </div>
     </dl>}
     {p.marks && p.marks.length > 0 && <ul data-testid="dscr-marks" class="mt-4 flex flex-wrap gap-2 text-sm">
-      {p.marks.map((m) => <li key={m.fy} data-testid={`mark-${m.fy}`} class={`rounded-full px-2.5 py-0.5 ${!m.counted ? 'bg-surface text-ink-muted' : m.meets ? 'bg-good-tint text-good' : 'bg-bad-tint text-bad'}`}>
+      {p.marks.map((m) => <li key={m.fy} data-testid={`mark-${m.fy}`} class={`rounded-full bg-surface px-2.5 py-0.5 ${!m.counted ? 'text-ink-muted' : m.meets ? 'text-good' : 'text-bad'}`}>
         {m.fy}: {m.dscr}, {!m.counted ? 'not counted' : m.meets ? 'meets the target' : 'below the target'}
       </li>)}
     </ul>}
     </div>
-    {used.length > 0 && <div data-testid="dscr-used" role="status" class="mt-3 rounded-control border-l-4 border-accent bg-accent/10 p-3">
+    {used.length > 0 && <div data-testid="dscr-used" role="status" class="mt-3 rounded-control border-l-4 border-ink bg-surface p-3">
       <p class="font-medium text-ink">The plan is used: these figures above changed.</p>
       <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink tabular-nums">{used.map((c) => <li key={c.key}>{c.label}: {c.was || 'none'} → {c.now}</li>)}</ul>
       <div class="mt-2 flex flex-wrap gap-2">
@@ -596,9 +596,8 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
           </div>
         </details>
         <div class="mt-5">
-        <p data-testid="doc-status" class={`inline-block rounded-full px-2.5 py-0.5 text-sm font-medium ${provisional
-          ? 'bg-warn-tint text-warn' : 'bg-surface text-ink'}`}>
-          {docStatus(s, p)}
+        <p data-testid="doc-status" class={`${STATE} ${provisional ? 'text-warn' : 'text-ink'}`}>
+          {!provisional && <Tick />}{docStatus(s, p)}
         </p>
         {provisional && <p class={HINT}>The document says so on every page and lists what is still needed{own.length ? ':' : '.'}</p>}
         {own.length > 0 && <ul data-testid="doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
