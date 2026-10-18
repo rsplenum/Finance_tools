@@ -82,7 +82,14 @@ export function cmaDiagnose(r: Cma, x: CmaInput, c: Case): CmaDiagnosis {
       const sunk = ys.find((y) => y.netWorth <= 0);
       if (sunk) { push({ ...base, fy: sunk.fy, meets: false, why: `net worth is at or below nil in ${sunk.fy}` }); continue; }
     }
-    if (id === 'securityCover' && x.collateral === undefined) { push(base); continue; }
+    if (id === 'securityCover' && x.collateral === undefined) {
+      // No collateral typed (as the report, D-UX-93): the business's own assets may meet the level alone, read once; short of
+      // it, the cover waits for the collateral's value. cmaCollateralNeeded() is its second computation (0 when it meets).
+      const own = ys.filter((y) => y.securityCover !== undefined && Number.isFinite(y.securityCover));
+      const w = own.length ? own.reduce((a, y) => ((y.securityCover as number) < (a.securityCover as number) ? y : a)) : undefined;
+      push(w && meets(w.securityCover as number, level, at) ? { ...base, worst: w.securityCover, fy: w.fy, meets: true, own: true } : base);
+      continue;
+    }
     let w: CmaYear | undefined;
     for (const y of ys) {
       const v = y[id as Read];

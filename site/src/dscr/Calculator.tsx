@@ -19,7 +19,7 @@ import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import DSCR_FILE from '../../../engine/data/dscr.json';
 import TAX_FILE from '../../../engine/data/tax.json';
-import { BUTTON, CellInput, Choice, FILLED, HINT, Section, SourceNote, TextField } from '../fields';
+import { BUTTON, CellInput, Choice, FILLED, HINT, Section, SourceNote, TextField, toAnswer } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
 import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
@@ -84,7 +84,7 @@ export function DscrCalculator() {
       {/* The answer's echo is text; only the arrow is a target, 44 px, so a field under the bar can still be tapped (WCAG 2.5.8; UX3). */}
       <div class="sticky bottom-0 z-10 -mx-4 mt-10 flex items-center gap-2 border-t border-line bg-canvas px-4 sm:-mx-8 sm:px-8">
         <p data-testid="answer-bar" data-answer-echo aria-live="polite" class="flex-1 py-2 text-sm font-medium text-ink">{barText(p)}</p>
-        <a href="#preview" aria-label="To the results" class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↓</span></a>
+        <a href="#preview" aria-label="To the results" onClick={toAnswer} class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↓</span></a>
       </div>
     </>}
   </div>;

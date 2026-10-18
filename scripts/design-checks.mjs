@@ -225,6 +225,13 @@ const caseR = async (page, repayment = true) => {
  * Each page's states, in the order a user meets them (docs/DESIGN.md, "States"). A state is a function that brings a
  * freshly opened page to it. The design review drives them all; the site check measures those in SITE_STATES too.
  */
+/** Fictional case M, in lakh, oldest year first (tests/cma-plan.test.ts, worked by hand there). */
+const CASE_M = { sales: [150, 165, 180, 200, 240], otherIncome: [0, 0, 0, 0, 0], materials: [103, 114, 126, 140, 170], otherDirect: [15, 17, 18, 20, 25],
+  employees: [9, 10, 11, 12, 14], sga: [6, 7, 7, 8, 10], depreciation: [5, 5, 5, 5, 5], wcInterest: [7.5, 8, 8.5, 9, 12.5], tlInterest: [4.5, 4, 3.5, 3, 2.5],
+  tax: [0, 0, 0.25, 0.75, 0.25], drawings: [0, 0, 0.75, 1.25, 0.75], capital: [20, 20, 20, 20, 20], reserves: [4, 4, 4, 5, 5], promoterLoans: [10, 10, 10, 10, 10],
+  termLoans: [36, 32, 28, 24, 20], tlDue12: [4, 4, 4, 4, 4], bankWc: [55, 60, 65, 70, 80], creditors: [24, 26, 28, 30, 34], otherCl: [2, 2, 2, 2, 2],
+  netBlock: [55, 50, 45, 40, 35], nonCurrent: [10, 10, 10, 10, 10], stock: [32, 35, 38, 40, 48], debtors: [24, 26, 28, 30, 36], cash: [3, 3, 3, 3, 2], otherCa: [27, 30, 33, 38, 40] };
+
 export const STATES = {
   '/dscr/': {
     empty: async () => {},
@@ -257,6 +264,13 @@ export const STATES = {
       await page.check('#fld-cma-case-fresh');
     },
     error: async (page) => leave(page, '#fld-cma-a1-sales', 'seventy'),
+    // Fictional case M (tests/cma-plan.test.ts), fresh, the collateral left empty: it misses four levels and the security
+    // cover, 1.17 on its own assets, waits for the collateral (DESIGN-LESSONS 11: the case that breaks, UX5c).
+    missed: async (page) => {
+      for (const [h, xs] of Object.entries(CASE_M)) for (const [i, y] of ['a1', 'a2', 'a3', 'est', 'proj'].entries()) await leave(page, `#fld-cma-${y}-${h}`, `${xs[i]} L`);
+      await leave(page, '#fld-cma-existing', '60 L');
+      await page.check('#fld-cma-case-fresh');
+    },
     result: async (page) => page.getByTestId('cma-example').click(),
     plan: async (page) => { await page.getByTestId('cma-example').click(); await page.getByTestId('cma-viable').click(); },
     download: async (page) => {
@@ -304,6 +318,8 @@ export const STATES = {
     provisional: async (page) => caseR(page, false),
     error: async (page) => { await page.check('#fld-borrower-firm'); await leave(page, '#fld-tl-amount', 'seventy'); },
     result: async (page) => caseR(page),
+    // Case R with its sales cut to 70 lakh (tests/viable.test.ts): it misses a lender's levels (DESIGN-LESSONS 11, UX5c).
+    missed: async (page) => { await caseR(page); await page.locator('#more-options summary').click(); await leave(page, '#fld-sales', '70 L'); await page.locator('#more-options summary').click(); },
     plan: async (page) => { await caseR(page); await page.getByTestId('rep-viable').click(); },
     download: async (page) => {
       await caseR(page);

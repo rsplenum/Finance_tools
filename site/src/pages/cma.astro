@@ -1,11 +1,11 @@
 ---
 import Base from '../Base.astro';
+import ToolHead from '../ToolHead.astro';
 import { CmaCalculator } from '../cma/Cma';
 ---
 <Base name="CMA data" description="CMA data for a working-capital limit: the borrower's profit and loss and balance sheets typed in, Forms I to VI, the ratios and the limit by the turnover method." look="new">
   <div class="mx-auto max-w-3xl px-4 pt-10 pb-16 sm:px-8 sm:pt-16">
-  <h1 class="text-hero text-ink">CMA data</h1>
-  <p class="mt-5 max-w-prose text-ink-muted">For a working-capital limit: three audited years, this year's estimate and next year's projection give Forms I to VI, the ratios and the limit by the turnover method.</p>
+  <ToolHead href="/cma/" title="CMA data" lead="From the limit now and five years’ figures (three audited, an estimate, a projection): Forms I to VI, the ratios and the turnover-method limit." />
   <div class="mt-2"><CmaCalculator client:load /></div>
   </div>
 </Base>

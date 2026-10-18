@@ -10,8 +10,9 @@
  * planning estimate to download; the bar at the bottom says what the
  * last change did. Figures: engine/architect.ts only, via plan-model.ts.
  */
+import { Fragment } from 'preact';
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { BUTTON, Choice, FILLED, HINT, LABEL, Section, SelectField, SourceNote, TextField } from '../fields';
+import { BUTTON, Choice, FILLED, HINT, LABEL, Section, SelectField, SourceNote, TextField, toAnswer } from '../fields';
 import { printable } from '../doc/pdf';
 import { BRAND_NOTICE } from '../site';
 import { isoDate, save, type FileKind } from '../download';
@@ -109,8 +110,8 @@ export function PlanEstimate() {
           {undo && s === undo.after && v.change && <button type="button" data-testid="pl-level-undo" class={`mt-2 shrink-0 ${BUTTON}`} onClick={undone}>Undo</button>}
         </div>
         <div class="flex items-center gap-2">
-          <p data-answer-echo aria-live="polite" class={`flex-1 py-2 text-sm font-medium ${INK}`}>Total <span data-testid="pl-sticky-total" class="tabular-nums">Rs. {v.total}</span></p>
-          <a href="#pl-result" aria-label="To the estimate" class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↑</span></a>
+          <p data-answer-echo aria-live="polite" class={`flex-1 py-2 text-sm font-medium ${INK}`}>Total <span data-testid="pl-sticky-total" class="whitespace-nowrap tabular-nums">Rs. {v.total}</span></p>
+          <a href="#pl-result" aria-label="To the estimate" onClick={toAnswer} class="inline-flex size-11 shrink-0 items-center justify-center rounded-full text-ink hover:bg-surface"><span aria-hidden="true">↑</span></a>
         </div>
       </div>
     </>}
@@ -175,7 +176,7 @@ function Answer({ v, toLevel, heading }: { v: PlanView; toLevel: (l: Level) => v
     <div data-answer>
       <p data-testid="pl-total" data-result={'ready'} class={`figure text-section ${INK}`}>Rs. {v.total}</p>
       {v.range.text && <p data-testid="pl-range" class={`mt-1 text-sm ${INK}`}>{v.range.text}</p>}
-      <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="tabular-nums">Rs. {v.perSqft}</span> a sq ft of {v.areaName.toLowerCase()}</p>
+      <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="whitespace-nowrap tabular-nums">Rs. {v.perSqft}</span> a sq ft of {v.areaName.toLowerCase()}</p>
     </div>
     <p data-testid="pl-rates" class={`mt-1 text-sm ${MUTED}`}>{v.ratesLine}</p>
     {/* Edged, never filled: the chosen level takes the accent's edge (principle 6; F4 asks a filled control to be a pill).
@@ -257,7 +258,7 @@ function Sections({ s, v, update }: { s: PlanState; v: PlanView; update: Update 
         </li>;
       })}
     </ul>
-    {v.split && <p data-testid="pl-split" class={`mt-3 text-sm ${INK}`}>{v.split.map((x) => `${x.label} Rs. ${x.amount}`).join(' · ')}</p>}
+    {v.split && <p data-testid="pl-split" class={`mt-3 text-sm ${INK}`}>{v.split.map((x, i) => <Fragment key={x.label}>{i ? ' · ' : ''}{x.label} <span class="whitespace-nowrap">Rs. {x.amount}</span></Fragment>)}</p>}
   </Section>;
 }
 
@@ -284,7 +285,7 @@ function Item({ s, l, open, d, groups, setGroup, toggle, update }: { s: PlanStat
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0">
         <p class={`text-sm ${INK}`}><span class={MUTED}>{l.room}:</span> {l.item}{l.chosen ? ' (your choice)' : ''}</p>
-        <p class={`text-sm tabular-nums ${MUTED}`}>{l.qty} {l.unit} × Rs. {l.rate} = <span class={`font-medium ${INK}`}>Rs. {l.amount}</span></p>
+        <p class={`text-sm tabular-nums ${MUTED}`}>{l.qty} {l.unit} × <span class="whitespace-nowrap">Rs. {l.rate}</span> = <span class={`whitespace-nowrap font-medium ${INK}`}>Rs. {l.amount}</span></p>
       </div>
       <button type="button" data-testid={`pl-open-${l.key}`} aria-expanded={open} class={`shrink-0 ${BUTTON}`} onClick={toggle}>{open ? 'Close' : 'Change'}</button>
     </div>

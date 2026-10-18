@@ -13,7 +13,8 @@
       "gap": null,
       "styles": 7,
       "colours": 1,
-      "outOfSight": null
+      "outOfSight": null,
+      "codes": 0
     },
     "/404.html": {
       "before": 3,
@@ -28,67 +29,72 @@
       "gap": null,
       "styles": 2,
       "colours": 1,
-      "outOfSight": null
+      "outOfSight": null,
+      "codes": 0
     },
     "/cma/": {
       "before": 99,
-      "shown": 1418,
-      "all": 2175,
-      "plan": 2269,
-      "long": 6,
+      "shown": 1412,
+      "all": 2169,
+      "plan": 2263,
+      "long": 5,
       "abbr": 5,
       "questions": 130,
       "controls": 144,
-      "answerAt": 11.8,
+      "answerAt": 12,
       "gap": 0,
       "styles": 7,
       "colours": 3,
-      "outOfSight": 17
+      "outOfSight": 17,
+      "codes": 3
     },
     "/dscr/": {
-      "before": 38,
-      "shown": 1046,
-      "all": 3400,
-      "plan": 3787,
+      "before": 45,
+      "shown": 1053,
+      "all": 3407,
+      "plan": 3794,
       "long": 0,
       "abbr": 5,
       "questions": 8,
       "controls": 39,
-      "answerAt": 2.1,
+      "answerAt": 2.2,
       "gap": 0,
       "styles": 8,
       "colours": 3,
-      "outOfSight": 0
+      "outOfSight": 0,
+      "codes": 4
     },
     "/estimate/": {
-      "before": 29,
-      "shown": 358,
-      "all": 1604,
-      "plan": 3460,
+      "before": 39,
+      "shown": 368,
+      "all": 1614,
+      "plan": 3470,
       "long": 2,
       "abbr": 2,
       "questions": 7,
       "controls": 36,
-      "answerAt": 0.7,
+      "answerAt": 0.9,
       "gap": 0,
       "styles": 6,
       "colours": 2,
-      "outOfSight": 0
+      "outOfSight": 0,
+      "codes": 3
     },
     "/project-report/": {
-      "before": 43,
-      "shown": 941,
-      "all": 2490,
-      "plan": 2577,
-      "long": 1,
+      "before": 39,
+      "shown": 937,
+      "all": 2486,
+      "plan": 2573,
+      "long": 0,
       "abbr": 5,
       "questions": 33,
       "controls": 49,
-      "answerAt": 5.2,
+      "answerAt": 5.3,
       "gap": 0,
       "styles": 8,
       "colours": 3,
-      "outOfSight": 4
+      "outOfSight": 4,
+      "codes": 4
     }
   },
   "raised": [
@@ -515,6 +521,102 @@
       "to": 2269,
       "why": "D-UX-92",
       "date": "2026-10-17"
+    },
+    {
+      "page": "/dscr/",
+      "count": "before",
+      "from": 38,
+      "to": 45,
+      "why": "D-UX-94",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/estimate/",
+      "count": "before",
+      "from": 29,
+      "to": 39,
+      "why": "D-UX-94",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/cma/",
+      "count": "answerAt",
+      "from": 11.8,
+      "to": 12,
+      "why": "D-UX-94",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/dscr/",
+      "count": "answerAt",
+      "from": 2.1,
+      "to": 2.2,
+      "why": "D-UX-94",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/estimate/",
+      "count": "answerAt",
+      "from": 0.7,
+      "to": 0.9,
+      "why": "D-UX-94",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/dscr/",
+      "count": "shown",
+      "from": 1046,
+      "to": 1053,
+      "why": "D-UX-94",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/estimate/",
+      "count": "shown",
+      "from": 358,
+      "to": 368,
+      "why": "D-UX-94",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/dscr/",
+      "count": "all",
+      "from": 3400,
+      "to": 3407,
+      "why": "D-UX-94",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/dscr/",
+      "count": "plan",
+      "from": 3787,
+      "to": 3794,
+      "why": "D-UX-94",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/estimate/",
+      "count": "all",
+      "from": 1604,
+      "to": 1614,
+      "why": "D-UX-94",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/estimate/",
+      "count": "plan",
+      "from": 3460,
+      "to": 3470,
+      "why": "D-UX-94",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/project-report/",
+      "count": "answerAt",
+      "from": 5.2,
+      "to": 5.3,
+      "why": "D-UX-94",
+      "date": "2026-10-18"
     }
   ],
   "fontProbe": 320.2

@@ -1,0 +1,21 @@
+---
+/**
+ * A tool page's heading (UX5c, D-UX-94): Varsity's module head in FinSight's look. Its place among the tools in caps (as
+ * Varsity's module number), the tool's drawing from home on its glow (still: no script draws it here), the h1, and one
+ * line that says what the page needs, then what it gives (as Varsity's "what you'll learn"). The drawing sits beside the
+ * caps line, never beside the h1, so a long title keeps the full width at 360 px.
+ */
+import Drawing from './home/Drawing.astro';
+import { READY } from './site';
+interface Props { href: string; title: string; lead: string }
+const { href, title, lead } = Astro.props;
+const n = READY.findIndex((t) => t.href === href) + 1;
+---
+<div class="flex items-end justify-between gap-4">
+  <p class="caps text-ink-muted">Tool {n} of {READY.length}</p>
+  <div aria-hidden="true" data-glow class="flex w-28 items-center justify-center rounded-panel p-2 text-ink sm:w-44 sm:p-3 lg:w-56">
+    <Drawing href={href} />
+  </div>
+</div>
+<h1 class="mt-4 text-hero text-ink">{title}</h1>
+<p class="mt-5 max-w-prose text-ink-muted">{lead}</p>

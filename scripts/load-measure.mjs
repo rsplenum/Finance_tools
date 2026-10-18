@@ -88,7 +88,7 @@ function inPage({ after, open, text, limit = 25 }) {
   const hues = new Map();
   // Tailwind 4 gives oklch(); a canvas turns any colour, its see-through part taken off, into sRGB.
   const cv = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
-  const hue = (c) => {
+  const hueAt = (c) => {
     if (!c || c === 'none' || c === 'transparent') return;
     const al = c.match(/\/\s*([\d.]+)(%?)\s*\)$/) ?? c.match(/^rgba\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/);
     if (al && (al[2] === '%' ? al[1] / 100 : +al[1]) < 0.05) return;
@@ -100,9 +100,9 @@ function inPage({ after, open, text, limit = 25 }) {
     const [l, m, q] = [0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b, 0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b, 0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b].map(Math.cbrt);
     const A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * q, B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * q;
     if (Math.hypot(A, B) < 0.07) return;
-    const h = Math.round((Math.atan2(B, A) * 180 / Math.PI + 360) % 360);
-    if (!hues.has(h)) hues.set(h, c);
+    return Math.round((Math.atan2(B, A) * 180 / Math.PI + 360) % 360);
   };
+  const hue = (c) => { const h = hueAt(c); if (h !== undefined && !hues.has(h)) hues.set(h, c); };
   for (const el of [main, ...main.querySelectorAll('*')]) {
     if (!shown(el)) continue;
     const s = getComputedStyle(el);
@@ -111,6 +111,34 @@ function inPage({ after, open, text, limit = 25 }) {
     for (const side of ['Top', 'Right', 'Bottom', 'Left']) if (parseFloat(s[`border${side}Width`]) > 0) hue(s[`border${side}Color`]);
     if (el instanceof SVGElement) { hue(s.fill); hue(s.stroke); }
   }
+  // Codes per meaning (docs/DESIGN-MATHS.md §2): each colour that means something is a token; each way it is drawn (text,
+  // ground, rule, mark) is a code. One meaning wants one code, and two meanings never share a hue, so the count is the
+  // codes past the first for each meaning in use, plus each pair of meanings in use whose hues lie within 15 degrees.
+  const rgb = (c) => { cv.fillStyle = '#000'; cv.fillStyle = c.replace(/\s*\/\s*[\d.]+%?\s*\)$/, ')').replace(/^rgba\(([^,]+,[^,]+,[^,]+),[^)]+\)/, 'rgb($1)'); cv.fillRect(0, 0, 1, 1); return [...cv.getImageData(0, 0, 1, 1).data].slice(0, 3); };
+  // Its colour must not ease from one token to the next (the page eases colour), so each reading is the token's own.
+  const probe = document.createElement('span'); probe.style.transition = 'none'; main.append(probe);
+  const MEANING = { act: ['link', 'accent', 'accent-hover'], good: ['good', 'good-tint'], warn: ['warn', 'warn-tint'], bad: ['bad', 'bad-tint'], marigold: ['marigold'], margin: ['margin'], 'spark-1': ['spark-1'], 'spark-2': ['spark-2'], 'spark-3': ['spark-3'],
+    ...Object.fromEntries(['living', 'bedroom', 'kitchen', 'bath', 'pooja', 'study', 'utility', 'store', 'passage', 'walls'].map((r) => [`share-${r}`, [`share-${r}`]])) };
+  const tokens = Object.entries(MEANING).flatMap(([m, ts]) => ts.map((t) => { probe.style.color = `var(--${t})`; const c = getComputedStyle(probe).color; return c && c !== 'rgba(0, 0, 0, 0)' ? { m, c, v: rgb(c) } : null; }).filter(Boolean));
+  probe.remove();
+  const used = new Map();
+  const code = (c, kind) => {
+    if (!c || c === 'none' || c === 'transparent' || /^rgba\([^)]*,\s*0\)$/.test(c)) return;
+    const v = rgb(c), t = tokens.find((x) => x.v.every((n, i) => Math.abs(n - v[i]) <= 2));
+    if (t) (used.get(t.m) ?? used.set(t.m, new Set()).get(t.m)).add(kind);
+  };
+  for (const el of [main, ...main.querySelectorAll('*')]) {
+    if (!shown(el)) continue;
+    const s = getComputedStyle(el);
+    if ([...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) code(s.color, 'text');
+    code(s.backgroundColor, 'ground');
+    for (const side of ['Top', 'Right', 'Bottom', 'Left']) if (parseFloat(s[`border${side}Width`]) > 0) code(s[`border${side}Color`], 'rule');
+    if (el instanceof SVGElement) { code(s.fill, 'mark'); code(s.stroke, 'mark'); }
+  }
+  const mh = [...used.keys()].map((m) => [m, hueAt(tokens.find((x) => x.m === m).c)]).filter(([, h]) => h !== undefined);
+  const shared = mh.flatMap(([a, ha], i) => mh.slice(i + 1).filter(([, hb]) => Math.min(Math.abs(ha - hb), 360 - Math.abs(ha - hb)) <= 15).map(([b]) => `${a} and ${b}`));
+  const codes = [...used.values()].reduce((n, k) => n + k.size - 1, 0) + shared.length;
+
   const sorted = [...hues.keys()].sort((a, b) => a - b), families = [];
   for (const h of sorted) { const f = families.at(-1); if (f && h - f.at(-1) <= 15) f.push(h); else families.push([h]); }
   if (families.length > 1 && sorted[0] + 360 - sorted.at(-1) <= 15) families[0].push(...families.pop());
@@ -123,9 +151,10 @@ function inPage({ after, open, text, limit = 25 }) {
   return {
     before, firstTop: Math.round(firstTop), wordsShown: nodes.reduce((s, x) => s + words(x.t).length, 0), long: long.length,
     abbr: abbr.length, questions: questions.length, controls: choices,
-    answerTop: ar ? Math.round(ar.top + Y) : null, gap, marks: marks.length, answerWords: ans ? words(ans.textContent.replace(/[\d.,]+/g, ' ').replace(/\bRs\b/g, '')).length : 0, styles: styles.size, colours: families.length,
+    answerTop: ar ? Math.round(ar.top + Y) : null, gap, marks: marks.length, answerWords: ans ? words(ans.textContent.replace(/[\d.,]+/g, ' ').replace(/\bRs\b/g, '')).length : 0, styles: styles.size, colours: families.length, codes,
     seen: text ? { long: long.map((s) => `${words(s).length}: ${s.slice(0, 160)}`), abbr, styles: [...styles].map(([k, n]) => `${k} (${n})`),
-      colours: families.map((f) => `${f[0]}-${f.at(-1)}deg ${hues.get(f[0])}`) } : undefined,
+      colours: families.map((f) => `${f[0]}-${f.at(-1)}deg ${hues.get(f[0])}`),
+      codes: [...[...used].map(([m, k]) => `${m}: ${[...k].join(', ')}`), ...shared.map((x) => `one hue: ${x}`)] } : undefined,
   };
 }
 
@@ -222,7 +251,7 @@ async function effects(page) {
 export const COUNTS = [
   ['before', 'Words before Q1', 40], ['shown', 'Words shown'], ['all', 'Words in all'], ['plan', 'Words in all, with the plan'], ['long', 'Long sentences', 0],
   ['abbr', 'Abbreviations'], ['questions', 'Questions'], ['controls', 'Controls'], ['answerAt', 'Answer at (screens)', 1],
-  ['gap', 'From last step to answer (px)'], ['styles', 'Text styles'], ['colours', 'Colours'], ['outOfSight', 'Out of sight', 0],
+  ['gap', 'From last step to answer (px)'], ['styles', 'Text styles'], ['colours', 'Colours'], ['codes', 'Extra codes', 0], ['outOfSight', 'Out of sight', 0],
 ];
 /** The counts that hang on where text wraps, so on the fonts: compared only where the fonts match the baseline's (CI's runner may differ from the sessions'). */
 const LAYOUT = ['answerAt', 'gap', 'outOfSight'];
@@ -275,10 +304,10 @@ export async function countPage(browser, BASE, path, { text = false, effectsToo 
   const screens = (px) => (px === null ? null : Math.round(px / 78) / 10);
   const counts = {
     before: atLoad.before, shown: at.wordsShown, all: wordsAll, plan: wordsPlan, long: at.long, abbr: at.abbr, questions: atLoad.questions,
-    controls: at.controls, answerAt: screens(at.answerTop), gap: at.gap, styles: at.styles, colours: at.colours, outOfSight: eff ? eff.out.length : null,
+    controls: at.controls, answerAt: screens(at.answerTop), gap: at.gap, styles: at.styles, colours: at.colours, codes: at.codes, outOfSight: eff ? eff.out.length : null,
   };
   const defect = at.marks !== 1 ? `${at.marks} answers marked data-answer in view of the page (want 1)` : !at.answerWords ? 'the answer marked data-answer holds no words, only a figure' : null;
-  const seen = text ? `\n${path}\n  long sentences: ${at.seen.long.join('\n    ') || 'none'}\n  abbreviations: ${at.seen.abbr.join(', ')}\n  text styles: ${at.seen.styles.join(', ')}\n  colours: ${at.seen.colours.join(', ')}${eff ? `\n  out of sight: ${eff.out.join('; ') || 'none'}` : ''}` : '';
+  const seen = text ? `\n${path}\n  long sentences: ${at.seen.long.join('\n    ') || 'none'}\n  abbreviations: ${at.seen.abbr.join(', ')}\n  text styles: ${at.seen.styles.join(', ')}\n  colours: ${at.seen.colours.join(', ')}\n  codes: ${at.seen.codes.join('; ') || 'none'}${eff ? `\n  out of sight: ${eff.out.join('; ') || 'none'}` : ''}` : '';
   return { counts, q1At: screens(atLoad.firstTop === null || !isFinite(atLoad.firstTop) ? null : atLoad.firstTop), moving: eff?.tried ?? null, defect, seen };
 }
 
@@ -360,7 +389,8 @@ async function main() {
       if (!base.pages[path]) { base.pages[path] = counts; changed.push(`${path} added`); continue; }
       for (const [k] of COUNTS) {
         const [then, now] = [base.pages[path][k], counts[k]];
-        if (now !== null && then !== null && now < then) { base.pages[path][k] = now; changed.push(`${path} ${k} ${then} → ${now}`); }
+        // A count new to the measure takes its first reading.
+        if (then === undefined || (now !== null && then !== null && now < then)) { base.pages[path][k] = now; changed.push(`${path} ${k} ${then} → ${now}`); }
       }
     }
   }

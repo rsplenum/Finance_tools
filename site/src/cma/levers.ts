@@ -27,15 +27,14 @@ const fyOf = (s: CmaState) => { const c = columnsOf(s.startYear); return { e: c[
 const fig = (x: CmaInput, id: 'est' | 'proj') => x.figures[id] as Figures;
 const FOOT = (c: string) => `The levels: ${c === 'renewal' ? 'a renewal’s' : 'a fresh or enhanced limit’s'} benchmarks, said to follow RBI and not yet checked against an RBI publication; each lender sets its own. They are read on the estimate and the projection, each ratio in its worse year. Each change is worked by the engine on these figures; change them only to what the business can really reach.`;
 const caseOf = (s: CmaState) => (s.loanCase || undefined) as 'fresh' | 'renewal' | undefined;
-/** The rows for the bars: the security cover waits, under More options, for the collateral (0 if none), unless the
- * business's own assets reach the level without it (design review 8, UX4: the row no longer asks for what is not needed). */
-const rowsOf = (ks: RatioCheck[], s: CmaState, need?: number) => {
+/** The rows for the bars: the security cover reads once on the business's own assets when they reach the level alone
+ * (D-UX-93, as the report); short of it, it waits, under More options, for the collateral (0 if none). */
+const rowsOf = (ks: RatioCheck[], s: CmaState) => {
   const { e, p } = fyOf(s);
   return ks.map((k): CheckRow => {
     const r = rowOf(k, `over ${e} and ${p}`);
-    return r.verdict === 'wait' && k.id === 'securityCover' ? { ...r, worst: need === 0
-      ? `Reaches ${k.level.toFixed(2)} on the business’s own assets; any collateral, under More options, adds to it`
-      : 'Waits for the collateral’s value, 0 if none: under More options' } : r;
+    if (k.own) return { ...r, worst: r.worst.replace('project’s', 'business’s') };
+    return r.verdict === 'wait' && k.id === 'securityCover' ? { ...r, worst: 'Waits for the collateral’s value, 0 if none: under More options' } : r;
   });
 };
 
@@ -48,7 +47,7 @@ export function levelsOf(s: CmaState): LevelsView | undefined {
   const d = cmaDiagnose(r, x, c), sc = d.checks.find((k) => k.id === 'securityCover') as RatioCheck;
   const need = sc.meets ? undefined : cmaCollateralNeeded(r, x, c);
   return {
-    checks: rowsOf(d.checks, s, need), foot: FOOT(c), missCount: d.misses.length,
+    checks: rowsOf(d.checks, s), foot: FOOT(c), missCount: d.misses.length,
     ...(d.misses.length ? { misses: `It misses ${d.misses.length === 1 ? 'one' : d.misses.length} of a lender’s levels: ${listed(d.misses.map(labelOf))}.` } : {}),
     ...(need === undefined || need === 0 ? {} : {
       collateralNote: `Security cover: collateral with a market value of ${rs(need)} or more brings it to ${sc.level.toFixed(2)}.`,

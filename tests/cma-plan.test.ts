@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { cma, type Cma, type CmaInput, type Figures, type YearId } from '../engine/cma';
-import { CMA_AS_TYPED, cmaDiagnose, cmaViable, makeCmaPlan, monthsRoom, withCmaLevers, type CmaPlan, type CmaViability } from '../engine/cma-plan';
+import { CMA_AS_TYPED, cmaCollateralNeeded, cmaDiagnose, cmaViable, makeCmaPlan, monthsRoom, withCmaLevers, type CmaPlan, type CmaViability } from '../engine/cma-plan';
 import { EXAMPLE } from '../site/src/cma/example';
 
 /*
@@ -53,6 +53,19 @@ describe('CMA levels, case M worked by hand', () => {
     const [e, p] = run(K).years.slice(3);
     expect(e.dscr).toBeCloseTo(5.65, 9); expect(p.dscr).toBeCloseTo(6, 9);
     expect(misses(K, 'fresh')).toEqual([]);
+  });
+
+  it('case K: the security cover on its own assets, (110 + 60 + 58) ÷ (40 + 95) = 228 ÷ 135 = 1.6889 in 2027-28 (2026-27: 166 ÷ 82), meets 1.20 with no collateral typed (D-UX-93)', () => {
+    const sc = cmaDiagnose(run(K), K, 'fresh').checks.find((k) => k.id === 'securityCover');
+    expect(sc).toMatchObject({ meets: true, own: true, fy: '2027-28' }); expect(sc?.worst).toBeCloseTo(228 / 135, 9);
+    expect(cmaCollateralNeeded(run(K), K, 'fresh')).toBe(0);
+  });
+
+  it('case M with no collateral typed: 110 ÷ 94 = 1.1702 is short of 1.20, so the cover waits for the collateral’s value', () => {
+    const M0 = { ...M, collateral: undefined };
+    const sc = cmaDiagnose(run(M0), M0, 'fresh').checks.find((k) => k.id === 'securityCover');
+    expect(sc?.meets).toBeUndefined(); expect(sc?.own).toBeUndefined();
+    expect(cmaCollateralNeeded(run(M0), M0, 'fresh')).toBe(311112);
   });
 
   it('reads a fresh loan’s levels and a renewal’s, each ratio in its worse year', () => {
