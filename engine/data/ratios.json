@@ -1,8 +1,8 @@
 {
-  "title": "The lender's benchmark ratios",
+  "title": "The default benchmark ratios",
   "date": "2026-10-11",
   "reviewBy": "2027-10-11",
-  "status": "The levels a project's ratios, and the CMA's estimated and projected years, are read against, each in its worst year (D-UX-51; how on the CMA: `cmaHow`, D-UX-56), and the values of the collateral (D-UX-52). The owner's figures (11-10-2026): only the benchmark level, no relaxation or deviation; each lender sets its own.",
+  "status": "The levels a project's ratios, and the CMA's estimated and projected years, are read against, each in its worst year (D-UX-51; how on the CMA: `cmaHow`, D-UX-56), and the values of the collateral (D-UX-52). The owner's figures (11-10-2026): only the benchmark level, no relaxation or deviation; each bank sets its own.",
   "source": "The owner's benchmarks, said to follow RBI; not yet checked against an RBI publication",
   "verified": false,
   "cases": {

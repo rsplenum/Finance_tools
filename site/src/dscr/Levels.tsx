@@ -30,15 +30,16 @@ export function Levels({ s, lender, update, use }: { s: State; lender?: LenderVi
 /** Worked on a tap, since it runs the whole statement many times; any figure changed closes it, and the most the
  * borrower can bring works the plan again. */
 function Viable({ s, update, use }: { s: State; update: Update; use: (l: DscrLevers) => void }) {
-  const [v, setV] = useState<ViableView | undefined>();
-  const [plan, setPlan] = useState<DscrPlanView | undefined>();
+  const [worked, setV] = useState<{ on: string; v: ViableView | undefined }>();
+  const [planned, setPlan] = useState<{ on: string; plan: DscrPlanView | undefined }>();
   const [lv, setLv] = useState<DscrLevers>(DSCR_AS_TYPED);
   const [touched, setTouched] = useState<DscrLeverId[]>([]);
   const base = useMemo(() => JSON.stringify({ ...s, ownMost: '' }), [s]);
-  useEffect(() => { setV(undefined); setPlan(undefined); setTouched([]); }, [base]);
+  // Read at render, not reset in an effect after paint, which could undo a tap made just after a figure changed (UX6).
+  const v = worked?.on === base ? worked.v : undefined, plan = planned?.on === base ? planned.plan : undefined;
   const replan = (ids: DscrLeverId[], at: DscrLevers) => {
     const q = dscrPlanOf(s, Object.fromEntries(ids.map((id) => [id, at[id]])));
-    setPlan(q); setTouched(ids); if (q) setLv(q.levers);
+    setPlan({ on: base, plan: q }); setTouched(ids); if (q) setLv(q.levers);
   };
   useEffect(() => { if (plan) replan(touched, lv); }, [s.ownMost]);
   const b = useMemo(() => (plan ? dscrBoardOf(plan, lv) : undefined), [plan, lv]);
@@ -64,7 +65,7 @@ function Viable({ s, update, use }: { s: State; update: Update; use: (l: DscrLev
   return <>
     {/* The one filled button on a short result (docs/DESIGN.md, principle 6). It removes itself, so the focus moves to what replaces it (WCAG 2.4.3). */}
     {!v && <button type="button" data-testid="dscr-viable" class={`mt-2 ${FILLED}`} onClick={() => {
-      setV(dscrViableOf(s)); replan([], DSCR_AS_TYPED);
+      setV({ on: base, v: dscrViableOf(s) }); replan([], DSCR_AS_TYPED);
       requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid="dscr-plan"], [data-testid="dscr-viable-box"]')?.focus());
     }}>Make it viable</button>}
     {v && !plan && <div data-testid="dscr-viable-box" tabIndex={-1} class="mt-2">

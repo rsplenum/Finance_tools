@@ -137,7 +137,7 @@ describe('the lender\'s levels and make it viable, in words', () => {
       'DSCR in the lowest year | 1.25 or more | misses 0.82 in 2026-27', 'Interest cover | 1.50 or more | misses 0.74 in 2026-27',
       'Fixed-asset cover | 1.20 or more | meets 1.39 in 2026-27', 'Security cover | 1.20 or more | meets 1.49 in 2026-27 on the project’s own assets',
     ]);
-    expect([p.misses, p.collateralNote, p.longTerm]).toEqual(['It misses 4 of a lender’s levels: current ratio, average DSCR, DSCR in the lowest year and interest cover.',
+    expect([p.misses, p.collateralNote, p.longTerm]).toEqual(['It misses 4 of the default benchmark ratios: current ratio, average DSCR, DSCR in the lowest year and interest cover.',
       undefined, undefined]);
     // The bars (the level at the middle) and the rupees short, rounded up from tests/viable.test.ts's hand figures.
     expect(p.checks?.map((c) => [c.id, c.bar.toFixed(1), c.short])).toEqual([
@@ -191,7 +191,7 @@ describe('the plan on the board, in words, used and undone', () => {
       'A working-capital limit of Rs. 3,80,877 (now Rs. 5,00,000).',
       'A term loan of Rs. 23,76,740 (now Rs. 25,00,000), the promoters bringing the rest.',
       'Sales of Rs. 80,01,000 in a full first year (now Rs. 70,00,000), 14.3% higher.']);
-    expect([b?.works, b?.verdict, b?.line]).toEqual([true, 'With these changes it meets every lender’s level.', 'Meets every level']);
+    expect([b?.works, b?.verdict, b?.line]).toEqual([true, 'With these changes it meets every default benchmark ratio.', 'Meets every benchmark']);
     expect(b?.promoters).toBe('The promoters bring Rs. 11,99,999 in all (now Rs. 8,75,342), within the Rs. 12,00,000 they can.');
     expect(q?.atLimit).toBe('At the limit: the promoters’ money.');
     expect(q?.limits).toMatch(/^The limits kept: the promoters bring at most Rs\. 12,00,000 in all; sales with no limit known/);

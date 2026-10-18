@@ -17,14 +17,14 @@
       "codes": 0
     },
     "/404.html": {
-      "before": 3,
-      "shown": 8,
-      "all": 8,
+      "before": 13,
+      "shown": 29,
+      "all": 29,
       "plan": null,
       "long": 0,
-      "abbr": 0,
+      "abbr": 2,
       "questions": 0,
-      "controls": 1,
+      "controls": 5,
       "answerAt": 0.2,
       "gap": null,
       "styles": 2,
@@ -36,7 +36,7 @@
       "before": 99,
       "shown": 1412,
       "all": 2169,
-      "plan": 2263,
+      "plan": 2264,
       "long": 5,
       "abbr": 5,
       "questions": 130,
@@ -82,9 +82,9 @@
     },
     "/project-report/": {
       "before": 39,
-      "shown": 937,
-      "all": 2486,
-      "plan": 2573,
+      "shown": 939,
+      "all": 2488,
+      "plan": 2576,
       "long": 0,
       "abbr": 5,
       "questions": 33,
@@ -616,6 +616,78 @@
       "from": 5.2,
       "to": 5.3,
       "why": "D-UX-94",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/404.html",
+      "count": "shown",
+      "from": 8,
+      "to": 29,
+      "why": "D-UX-100",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/404.html",
+      "count": "all",
+      "from": 8,
+      "to": 29,
+      "why": "D-UX-100",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/404.html",
+      "count": "abbr",
+      "from": 0,
+      "to": 2,
+      "why": "D-UX-100",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/404.html",
+      "count": "controls",
+      "from": 1,
+      "to": 5,
+      "why": "D-UX-100",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/cma/",
+      "count": "plan",
+      "from": 2263,
+      "to": 2264,
+      "why": "D-UX-99",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/project-report/",
+      "count": "shown",
+      "from": 937,
+      "to": 939,
+      "why": "D-UX-99",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/project-report/",
+      "count": "all",
+      "from": 2486,
+      "to": 2488,
+      "why": "D-UX-99",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/project-report/",
+      "count": "plan",
+      "from": 2573,
+      "to": 2576,
+      "why": "D-UX-99",
+      "date": "2026-10-18"
+    },
+    {
+      "page": "/404.html",
+      "count": "before",
+      "from": 3,
+      "to": 13,
+      "why": "D-UX-100",
       "date": "2026-10-18"
     }
   ],

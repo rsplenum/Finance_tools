@@ -97,7 +97,7 @@ export function CmaCalculator() {
 function barText(p: CmaPreview, s: CmaState) {
   if (!p.view) return statusText(p);
   const n = levelsOf(s)?.missCount;
-  const said = n === undefined ? undefined : n ? (n > 1 ? 'Misses lender’s levels' : 'Misses a lender’s level') : 'Meets a lender’s levels';
+  const said = n === undefined ? undefined : n ? (n > 1 ? 'Misses the benchmarks' : 'Misses a benchmark') : 'Meets the benchmarks';
   return [`Limit ${p.view.key[0]?.value}`, said, statusText(p)].filter(Boolean).join(' · ');
 }
 

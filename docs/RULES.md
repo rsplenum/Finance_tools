@@ -163,9 +163,9 @@ Working capital: The second method of lending (Tandon Committee): the bank finan
 - DSCR is the common term-loan DSCR: (profit after tax + depreciation + preliminary expenses written off + interest on the term loan) ÷ (principal + interest on the term loan); the average is the totals' ratio.
 - Break-even: fixed costs (with depreciation, preliminary expenses written off and interest) ÷ the contribution (sales less variable costs), as a share of sales; the cash break-even leaves out depreciation and the write-off.
 
-## The lender's benchmark ratios
+## The default benchmark ratios
 
-Dated 11-10-2026. The levels a project's ratios, and the CMA's estimated and projected years, are read against, each in its worst year (D-UX-51; how on the CMA: `cmaHow`, D-UX-56), and the values of the collateral (D-UX-52). The owner's figures (11-10-2026): only the benchmark level, no relaxation or deviation; each lender sets its own. Source: The owner's benchmarks, said to follow RBI; not yet checked against an RBI publication (unverified).
+Dated 11-10-2026. The levels a project's ratios, and the CMA's estimated and projected years, are read against, each in its worst year (D-UX-51; how on the CMA: `cmaHow`, D-UX-56), and the values of the collateral (D-UX-52). The owner's figures (11-10-2026): only the benchmark level, no relaxation or deviation; each bank sets its own. Source: The owner's benchmarks, said to follow RBI; not yet checked against an RBI publication (unverified).
 
 | Ratio | A fresh or enhanced loan | An existing loan on review or renewal | How |
 |---|---|---|---|

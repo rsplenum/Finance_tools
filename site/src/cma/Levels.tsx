@@ -26,7 +26,7 @@ export function Levels({ s, update, use }: { s: CmaState; update: Update; use: (
   return <div data-testid="cma-levels" class={lv.checks ? 'paper shadow-paper mt-4 rounded-card p-4 sm:p-6' : 'mt-4'}>
     {lv.ask && <p data-testid="cma-levels-ask" class="text-sm text-warn">{lv.ask}</p>}
     {lv.checks && <div data-testid="cma-checks">
-      <h3 class="text-title text-ink">{lv.misses ? 'Why it does not work yet' : 'Against a lender’s levels'}</h3>
+      <h3 class="text-title text-ink">{lv.misses ? 'Why it does not work yet' : 'Against the default benchmark ratios'}</h3>
       <p class={`text-xs ${MUTED}`}>Each ratio in its worse year of the estimate and the projection; the line is the lender’s target.</p>
       <ul class="mt-1 divide-y divide-line">{lv.checks.map((c) => <Bar key={c.id} c={c} pre="cma" />)}</ul>
     </div>}
@@ -39,15 +39,16 @@ export function Levels({ s, update, use }: { s: CmaState; update: Update; use: (
 /** "Make it viable", worked on a tap since it runs the whole CMA many times; any figure changed closes it, and the
  * promoters' most works the plan again. */
 function Viable({ s, misses, update, use }: { s: CmaState; misses: boolean; update: Update; use: (l: CmaLevers) => void }) {
-  const [v, setV] = useState<ViableView | undefined>();
-  const [plan, setPlan] = useState<CmaPlanView | undefined>();
+  const [worked, setV] = useState<{ on: string; v: ViableView | undefined }>();
+  const [planned, setPlan] = useState<{ on: string; plan: CmaPlanView | undefined }>();
   const [lv, setLv] = useState<CmaLevers>(CMA_AS_TYPED);
   const [touched, setTouched] = useState<CmaLeverId[]>([]);
   const base = useMemo(() => JSON.stringify({ ...s, promotersMost: '', doc: undefined }), [s]);
-  useEffect(() => { setV(undefined); setPlan(undefined); setTouched([]); }, [base]);
+  // Read at render, not reset in an effect after paint, which could undo a tap made just after a figure changed (UX6).
+  const v = worked?.on === base ? worked.v : undefined, plan = planned?.on === base ? planned.plan : undefined;
   const replan = (ids: CmaLeverId[], at: CmaLevers) => {
     const q = cmaPlanOf(s, Object.fromEntries(ids.map((id) => [id, at[id]])));
-    setPlan(q); setTouched(ids); if (q) setLv(q.levers);
+    setPlan({ on: base, plan: q }); setTouched(ids); if (q) setLv(q.levers);
   };
   useEffect(() => { if (plan) replan(touched, lv); }, [s.promotersMost]);
   const b = useMemo(() => (plan ? cmaBoardOf(plan, lv, s) : undefined), [plan, lv]);
@@ -70,7 +71,7 @@ function Viable({ s, misses, update, use }: { s: CmaState; misses: boolean; upda
   const bad = !!s.promotersMost.trim() && amountOf(s.promotersMost) === undefined;
   return <>
     {!v && <button type="button" data-testid="cma-viable" class={`mt-2 ${BUTTON}`} onClick={() => {
-      setV(cmaViableOf(s)); if (misses) replan([], CMA_AS_TYPED);
+      setV({ on: base, v: cmaViableOf(s) }); if (misses) replan([], CMA_AS_TYPED);
       // The button removes itself, so the focus moves to what replaces it (WCAG 2.4.3; DESIGN-LESSONS lesson 1).
       requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid="cma-plan"], [data-testid="cma-viable-box"]')?.focus());
     }}>

@@ -39,14 +39,14 @@ function verdictOf(p: ReportPreview): { text: string; tone: keyof typeof TONE } 
   if (!p.view || p.blocked) return undefined;
   if (p.misses) return { text: p.misses, tone: 'bad' };
   const wait = (p.checks ?? []).filter((c) => c.verdict === 'wait').map((c) => inSentence(c.label));
-  return wait.length ? { text: `It meets every lender’s level it can read now; not yet read: ${listed(wait)}.`, tone: 'warn' } : { text: 'It meets every lender’s level.', tone: 'good' };
+  return wait.length ? { text: `It meets every default benchmark ratio it can read now; not yet read: ${listed(wait)}.`, tone: 'warn' } : { text: 'It meets every default benchmark ratio.', tone: 'good' };
 }
 
 /** The answer bar's words (D-UX-84): the lowest DSCR as the model gives it, the verdict and the status. */
 function barText(p: ReportPreview) {
   if (p.blocked || !p.view) return statusText(p);
   const lowest = p.view.key.find((k) => k.check === 'dscrLowest'), misses = (p.checks ?? []).filter((c) => c.verdict === 'misses');
-  const said = misses.length ? (misses.length > 1 ? 'Misses lender’s levels' : 'Misses a lender’s level') : 'Meets the levels it reads';
+  const said = misses.length ? (misses.length > 1 ? 'Misses the benchmarks' : 'Misses a benchmark') : 'Meets the benchmarks it reads';
   return [lowest && `Lowest DSCR ${lowest.value}`, said, statusText(p)].filter(Boolean).join(' · ');
 }
 
@@ -230,15 +230,17 @@ function ReportTable({ t }: { t: ViewTable }) {
  * card keeps what the lever does alone (MV2b). Any figure changed closes the board; the promoters' most works it again.
  * The two DSCRs are read against their levels on the key figures, so their bars are not repeated here (review finding 9). */
 function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: ReportPreview; update: Update; use: (l: Levers) => void; toCollateral: (e: Event) => void }) {
-  const [v, setV] = useState<ViableView | undefined>();
-  const [plan, setPlan] = useState<PlanView | undefined>();
+  const [worked, setV] = useState<{ on: string; v: ViableView }>();
+  const [planned, setPlan] = useState<{ on: string; plan: PlanView | undefined }>();
   const [lv, setLv] = useState<Levers>(AS_TYPED);
   const [touched, setTouched] = useState<LeverId[]>([]);
   const base = useMemo(() => JSON.stringify({ ...s, promotersMost: '' }), [s]);
-  useEffect(() => { setV(undefined); setPlan(undefined); setTouched([]); }, [base]);
+  // The board shows only on the figures it was worked on, read at render: a reset in an effect ran after paint and could
+  // undo a tap that landed between a figure's render and that effect (the site check's intermittent miss, UX6).
+  const v = worked?.on === base ? worked.v : undefined, plan = planned?.on === base ? planned.plan : undefined;
   const replan = (ids: LeverId[], at: Levers) => {
     const q = planOf(s, Object.fromEntries(ids.map((id) => [id, at[id]])));
-    setPlan(q); setTouched(ids); if (q) setLv(q.levers);
+    setPlan({ on: base, plan: q }); setTouched(ids); if (q) setLv(q.levers);
   };
   useEffect(() => { if (plan) replan(touched, lv); }, [s.promotersMost]);
   const b = useMemo(() => (plan ? boardOf(plan, lv) : undefined), [plan, lv]);
@@ -262,8 +264,8 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
   const tone = (ok: boolean) => (ok ? 'text-good' : 'text-bad');
   return <div class="mt-6">
     {p.checks && <div data-testid="rep-checks">
-      <h3 class="text-title text-ink">{p.misses ? 'Why it does not work yet' : 'Against a lender’s levels'}</h3>
-      <p class={HINT}>Each ratio in its worst year; the line is the lender’s level.</p>
+      <h3 class="text-title text-ink">{p.misses ? 'Why it does not work yet' : 'Against the default benchmark ratios'}</h3>
+      <p class={HINT}>Each ratio in its worst year; the line is its default benchmark.</p>
       <ul class="mt-1 divide-y divide-line">{p.checks.filter((c) => !onKey.has(c.id)).map((c) => <Bar key={c.id} c={c}>
         {/* Met on the project's own assets, the cover reads once: no note, no ask (UX5b, the critic's finding 3). */}
         {c.id === 'securityCover' && (p.collateralNote || (!s.collateral.trim() && c.verdict !== 'meets')) && <p data-testid="rep-collateral-note" class={HINT}>
@@ -273,7 +275,7 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
     </div>}
     {p.longTerm && <p data-testid="rep-long-term" class="mt-2 text-sm text-bad">{p.longTerm}</p>}
     {!v && <button type="button" data-testid="rep-viable" class={`mt-4 ${BUTTON}`} onClick={() => {
-      setV(viableOf(s)); if (p.misses) replan([], AS_TYPED);
+      const w = viableOf(s); if (w) setV({ on: base, v: w }); if (p.misses) replan([], AS_TYPED);
       // The button removes itself, so the focus moves to what replaces it (WCAG 2.4.3; DESIGN-LESSONS lesson 1).
       focusNext('[data-testid="rep-plan"], [data-testid="rep-viable-box"]');
     }}>
