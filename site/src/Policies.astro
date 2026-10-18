@@ -1,0 +1,8 @@
+---
+/** The policy pages in every footer (LEGAL1, D-BIZ-07); the site check holds each built page to all five. */
+import { POLICIES } from './site';
+
+const here = Astro.url.pathname;
+const on = (href: string) => (here.startsWith(href) ? ('page' as const) : undefined);
+---
+<nav aria-label="Policies" data-policies><ul class="flex flex-wrap gap-x-4 gap-y-1">{POLICIES.map((p) => <li><a href={p.href} aria-current={on(p.href)} class="inline-flex min-h-6 items-center text-sm text-ink-muted hover:text-ink">{p.name}</a></li>)}</ul></nav>

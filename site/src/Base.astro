@@ -9,7 +9,8 @@ import './global.css';
 import ThemeToggle from './ThemeToggle.astro';
 import Arrow from './home/Arrow.astro';
 import { THEME_BOOT } from './theme';
-import { COUNTING, POLICIES, READY, SITE_NAME, pageTitle } from './site';
+import Policies from './Policies.astro';
+import { COUNTING, READY, SITE_NAME, pageTitle } from './site';
 
 interface Props { name?: string; description: string; look?: 'new' }
 const { name, description, look } = Astro.props;
@@ -22,8 +23,6 @@ const counting = COUNTING;
 const MOTION_BOOT = "matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.classList.add('js')";
 const PRIVACY = 'Figures you type are worked out in your browser and are not sent to us.';
 const COUNTED = 'We count which steps are used (the page, which fields change by name, downloads, errors), never what you type, to make the tools better. No cookies.';
-// The policy pages in every footer (LEGAL1, D-BIZ-07); the site check holds each built page to all five.
-const policies = <nav aria-label="Policies" data-policies><ul class="flex flex-wrap gap-x-4 gap-y-1">{POLICIES.map((p) => <li><a href={p.href} aria-current={on(p.href)} class="inline-flex min-h-6 items-center text-sm text-ink-muted hover:text-ink">{p.name}</a></li>)}</ul></nav>;
 ---
 <!doctype html>
 <html lang="en-IN">
@@ -91,14 +90,14 @@ const policies = <nav aria-label="Policies" data-policies><ul class="flex flex-w
         <div data-ledger aria-hidden="true"></div>
         <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-6">
           <p class="text-sm text-ink-muted">{SITE_NAME} · {new Date().getFullYear()}</p>
-          {policies}
+          <Policies />
         </div>
       </footer>
     ) : (
       <footer class="mx-auto max-w-3xl border-t border-line px-4 py-6 text-sm text-ink-muted">
         {PRIVACY}
         {counting && <span data-testid="counted"> {COUNTED}</span>}
-        {policies}
+        <Policies />
       </footer>
     )}
     <script>import { start } from './events'; import { look } from './look'; import { themeToggles } from './theme'; start(); themeToggles(); look();</script>
