@@ -9,7 +9,8 @@ import { MAX_EVENTS, nameOk, type Batch, type Ev, type Kind } from '../../worker
 
 declare global { interface Window { __EVENTS__?: string } interface Navigator { globalPrivacyControl?: boolean } }
 
-const API = import.meta.env.PUBLIC_API_URL ?? '';
+// A trailing slash, as a copied address often has, would make `//api/e`, which the Worker answers 404 (DEP1).
+const API = (import.meta.env.PUBLIC_API_URL ?? '').replace(/\/+$/, '');
 /** Where batches go, or nothing while the Worker is not live. The site check sets `window.__EVENTS__` to catch them. */
 function target(): string | undefined {
   if (navigator.globalPrivacyControl || navigator.doNotTrack === '1') return undefined;
