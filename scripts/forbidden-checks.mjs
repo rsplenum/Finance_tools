@@ -7,8 +7,8 @@
 import { readFile } from 'node:fs/promises';
 import { openAt } from './design-checks.mjs';
 
-/** The pages in the new look: home, from UX3 the DSCR and CMA pages, from UX4 the estimate; the report next. */
-export const NEW_LOOK = ['/', '/dscr/', '/cma/', '/estimate/', '/project-report/', '/404.html'];
+/** The pages in the new look: home, from UX3 the DSCR and CMA pages, from UX4 the estimate, the report, and from LEGAL1 the policy pages. */
+export const NEW_LOOK = ['/', '/dscr/', '/cma/', '/estimate/', '/project-report/', '/404.html', '/privacy/', '/terms/', '/not-advice/', '/refunds/', '/contact/'];
 /** F13: our order, the borrower's path (docs/design-reference/finsight.md, rule 10). */
 export const ORDER = ['hero', 'story', 'tools', 'uses', 'figures', 'try', 'closing'];
 /**

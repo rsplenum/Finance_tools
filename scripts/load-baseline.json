@@ -48,6 +48,22 @@
       "outOfSight": 17,
       "codes": 0
     },
+    "/contact/": {
+      "before": 46,
+      "shown": 158,
+      "all": 158,
+      "plan": null,
+      "long": 0,
+      "abbr": 1,
+      "questions": 0,
+      "controls": 1,
+      "answerAt": 0.3,
+      "gap": null,
+      "styles": 6,
+      "colours": 1,
+      "codes": 0,
+      "outOfSight": null
+    },
     "/dscr/": {
       "before": 45,
       "shown": 960,
@@ -80,6 +96,38 @@
       "outOfSight": 0,
       "codes": 0
     },
+    "/not-advice/": {
+      "before": 249,
+      "shown": 249,
+      "all": 249,
+      "plan": null,
+      "long": 1,
+      "abbr": 3,
+      "questions": 0,
+      "controls": 0,
+      "answerAt": 0.3,
+      "gap": null,
+      "styles": 6,
+      "colours": 0,
+      "codes": 0,
+      "outOfSight": null
+    },
+    "/privacy/": {
+      "before": 453,
+      "shown": 511,
+      "all": 511,
+      "plan": null,
+      "long": 1,
+      "abbr": 4,
+      "questions": 0,
+      "controls": 1,
+      "answerAt": 0.3,
+      "gap": null,
+      "styles": 6,
+      "colours": 1,
+      "codes": 0,
+      "outOfSight": null
+    },
     "/project-report/": {
       "before": 39,
       "shown": 865,
@@ -95,6 +143,38 @@
       "colours": 3,
       "outOfSight": 4,
       "codes": 0
+    },
+    "/refunds/": {
+      "before": 139,
+      "shown": 141,
+      "all": 141,
+      "plan": null,
+      "long": 1,
+      "abbr": 2,
+      "questions": 0,
+      "controls": 1,
+      "answerAt": 0.3,
+      "gap": null,
+      "styles": 6,
+      "colours": 1,
+      "codes": 0,
+      "outOfSight": null
+    },
+    "/terms/": {
+      "before": 202,
+      "shown": 342,
+      "all": 342,
+      "plan": null,
+      "long": 3,
+      "abbr": 2,
+      "questions": 0,
+      "controls": 2,
+      "answerAt": 0.3,
+      "gap": null,
+      "styles": 6,
+      "colours": 1,
+      "codes": 0,
+      "outOfSight": null
     }
   },
   "raised": [

@@ -1,0 +1,21 @@
+---
+import Policy from '../Policy.astro';
+const sections = [
+  { h: 'Figures, not advice', p: [
+    'FinSight works out figures from what you type, by published rules. It is not financial, tax, legal or investment advice, and not a recommendation to borrow.',
+  ] },
+  { h: 'Not a lender’s decision', p: [
+    'FinSight is not a lender and does not decide or arrange loans. A DSCR statement, CMA data or a project report from here does not mean a loan will be sanctioned: each lender sets its own levels and checks. A level shown as a lender’s is marked unverified until it is confirmed.',
+  ] },
+  { h: 'Not a chartered accountant’s certificate', p: [
+    'A statement made here is not audited or certified. If a lender asks for a chartered accountant’s certificate, take the statement to your CA.',
+  ] },
+  { h: 'An estimate is a planning figure', p: [
+    'The construction, renovation or interiors estimate comes from typical quantities and dated prices. It is not a quotation, a valuation or a design, and it is not made by a registered architect or engineer. Get quotations from builders before you borrow or sign.',
+  ] },
+  { h: 'Rules and rates change', p: [
+    'Every rule and rate carries its source and the date it was checked, and may change after that date. Tax is worked out for planning only; your CA works out the tax you file. Check what matters with your lender, your CA or the source.',
+  ] },
+];
+---
+<Policy title="Not advice" description="What FinSight's figures are, and what they are not." lead="What our figures are, and what they are not." sections={sections} />
