@@ -14,7 +14,7 @@ import { linesOfFile } from './pdf-lines';
 type Update = (f: (s: CmaState) => CmaState) => void;
 type Stage = { kind: 'idle' } | { kind: 'busy'; what: string } | { kind: 'said'; text: string } | { kind: 'read'; lines: Line[]; answer: Answer; name: string };
 const LABEL = Object.fromEntries(HEADS.map((h) => [h.id, h.label]));
-const API = `${import.meta.env.PUBLIC_API_URL ?? ''}/api/read`;
+const API = `${(import.meta.env.PUBLIC_API_URL ?? '').replace(/\/+$/, '')}/api/read`;
 const textOf = (f: ReadFigure) => tidyAmount(String(f.value));
 const LIST = 'mt-2 space-y-1 text-sm text-ink-muted';
 
