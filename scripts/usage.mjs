@@ -6,6 +6,7 @@
  * The database holds steps only, never what was typed (worker/migrations/0001_events.sql).
  */
 import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 
 const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const days = Number(arg('--days', '30'));
@@ -26,13 +27,31 @@ const SQL = [
    GROUP BY page, name ORDER BY n DESC`,
 ].map((q) => q.replace(/\s+/g, ' ')).join('; ');
 
-const where_ = process.argv.includes('--local') ? '--local' : '--remote';
-const r = spawnSync('npx', ['wrangler', 'd1', 'execute', 'finance-tools', where_, '--json', '-c', 'worker/wrangler.jsonc', '--command', SQL], { encoding: 'utf8' });
-const out = r.stdout.slice(r.stdout.indexOf('['));
-let sets;
-try { sets = JSON.parse(out).map((s) => s.results); } catch {
-  console.error(`Could not read the database (${where_}). Is the Worker live with its D1 (docs/CLOUDFLARE.md §2)?`);
-  console.error(`${r.stdout}${r.stderr}`.trim().split('\n').filter((l) => !/WARNING|proxy/i.test(l)).slice(-5).join('\n'));
+// --local reads the `wrangler dev` database through wrangler; the live one goes straight to the D1 API, so a session
+// whose token is a Network secret (the proxy adds the Bearer header, D-TECH-49) needs no wrangler login. Elsewhere
+// CLOUDFLARE_API_TOKEN, if set, is sent through curl's stdin, never on its command line.
+const local = process.argv.includes('--local');
+let sets, why;
+if (local) {
+  const r = spawnSync('npx', ['wrangler', 'd1', 'execute', 'finance-tools', '--local', '--json', '-c', 'worker/wrangler.jsonc', '--command', SQL], { encoding: 'utf8' });
+  try { sets = JSON.parse(r.stdout.slice(r.stdout.indexOf('['))).map((s) => s.results); } catch { why = `${r.stdout}${r.stderr}`; }
+} else {
+  const account = process.env.CLOUDFLARE_ACCOUNT_ID;
+  const db = readFileSync('worker/wrangler.jsonc', 'utf8').match(/"database_id":\s*"([0-9a-f-]{36})"/)?.[1];
+  if (!account || !db) { console.error(account ? 'No database_id in worker/wrangler.jsonc.' : 'CLOUDFLARE_ACCOUNT_ID is not set (docs/CLOUDFLARE.md §2 step 6).'); process.exit(2); }
+  const token = process.env.CLOUDFLARE_API_TOKEN;
+  const r = spawnSync('curl', ['-sS', '-X', 'POST', '-H', 'Content-Type: application/json', ...(token ? ['-H', '@-'] : []),
+    '--data-binary', JSON.stringify({ sql: SQL }), `https://api.cloudflare.com/client/v4/accounts/${account}/d1/database/${db}/query`],
+  { encoding: 'utf8', input: token ? `Authorization: Bearer ${token}\n` : '' });
+  try {
+    const j = JSON.parse(r.stdout);
+    if (j.success && j.result?.length === 4) sets = j.result.map((s) => s.results);
+    else why = (j.errors ?? []).map((e) => `${e.code} ${e.message}`).join('; ');
+  } catch { why = `${r.stdout}${r.stderr}`; }
+}
+if (!sets) {
+  console.error(`Could not read the database (${local ? 'local' : 'live'}). Is the Worker live with its D1, and the token allowed (docs/CLOUDFLARE.md §2)?`);
+  console.error(String(why).trim().split('\n').filter((l) => !/WARNING|proxy/i.test(l)).slice(-5).join('\n'));
   process.exit(1);
 }
 const [funnel, downloads, errors, leaving] = sets;
