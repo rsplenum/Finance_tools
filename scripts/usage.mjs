@@ -38,7 +38,7 @@ if (local) {
 } else {
   const account = process.env.CLOUDFLARE_ACCOUNT_ID;
   const db = readFileSync('worker/wrangler.jsonc', 'utf8').match(/"database_id":\s*"([0-9a-f-]{36})"/)?.[1];
-  if (!account || !db) { console.error(account ? 'No database_id in worker/wrangler.jsonc.' : 'CLOUDFLARE_ACCOUNT_ID is not set (docs/CLOUDFLARE.md §2 step 6).'); process.exit(2); }
+  if (!account || !db) { console.error(account ? 'No database_id in worker/wrangler.jsonc.' : 'CLOUDFLARE_ACCOUNT_ID is not set: add it to the environment, or run `CLOUDFLARE_ACCOUNT_ID=<id> npm run usage` (docs/CLOUDFLARE.md §2 step 6).'); process.exit(2); }
   const token = process.env.CLOUDFLARE_API_TOKEN;
   const r = spawnSync('curl', ['-sS', '-X', 'POST', '-H', 'Content-Type: application/json', ...(token ? ['-H', '@-'] : []),
     '--data-binary', JSON.stringify({ sql: SQL }), `https://api.cloudflare.com/client/v4/accounts/${account}/d1/database/${db}/query`],
