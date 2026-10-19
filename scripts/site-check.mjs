@@ -187,7 +187,7 @@ async function expectValue(page, v, sel, want, step) {
 }
 /** Q1: each download, timed from the tap to the file on a slow phone (the CPU four times slower, as a low-cost Android);
  * past SLOW_MS it fails. Returns the file's name and bytes. */
-const SLOW_MS = 3000;
+const SLOW_MS = 1500;
 const timings = [];
 const saver = (page, v) => async (id) => {
   const cdp = await page.context().newCDPSession(page);
@@ -1398,6 +1398,12 @@ const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await
 {
   const UA = 'Mozilla/5.0 (Linux; Android 13; SM-A145F; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/129.0.0.0 Mobile Safari/537.36 WhatsApp/2.24.21.80';
   const { ctx, page, v } = await open('/estimate/', { userAgent: UA });
+  await page.check('#fld-work-renovate');
+  await page.check('#fld-home-flat');
+  await page.selectOption('#fld-city', 'pune');
+  await leave(page, '#fld-carpet', '1,000');
+  await page.check('#fld-bhk-2');
+  await page.click('#fld-level-1');
   const href = await page.getByTestId('pl-in-app').locator('a').getAttribute('href', { timeout: 3000 }).catch(() => null);
   if (href !== 'intent://' + new URL(BASE).host + '/estimate/#Intent;scheme=http;end') v(`Q1: in WhatsApp the downloads' way out reads ${href}`);
   await ctx.close();
