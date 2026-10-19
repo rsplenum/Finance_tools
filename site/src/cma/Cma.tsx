@@ -8,7 +8,7 @@
  * engine/cma-plan.ts only, via model.ts and levers.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
-import { AnswerBar, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, HINT, Ledger, Section, STATE, TextField, Tick } from '../fields';
+import { AnswerBar, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote } from '../fields';
 import { printable } from '../doc/pdf';
 import { inr } from '../../../engine/util';
 import { isoDate, save, type FileKind } from '../download';
@@ -268,6 +268,7 @@ function Download({ s, p, update }: { s: CmaState; p: CmaPreview; update: Update
           <button type="button" data-testid="cma-download-pdf" class={FILLED} onClick={() => go('pdf')}>Download PDF</button>
           <button type="button" data-testid="cma-download-xlsx" class={BUTTON} onClick={() => go('xlsx')}>Download Excel</button>
         </div>
+        <InAppNote id="cma-in-app" />
       </div>
       : null}
   </Section>;

@@ -5,7 +5,7 @@
  * three downloads. Figures: engine/estimate.ts only, via model.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
-import { answerRule, BUTTON, Choice, FILLED, goTo, HINT, Section, SelectField, STATE, TextField, Tick } from '../fields';
+import { answerRule, BUTTON, Choice, FILLED, goTo, HINT, Section, SelectField, STATE, TextField, Tick, InAppNote } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { docNeeds, docStatus, estimateDoc, fileName } from './document';
@@ -196,6 +196,7 @@ function Download({ s, p, update }: { s: EstimateState; p: EstimatePreview; upda
           <button type="button" data-testid="est-download-xlsx" class={BUTTON} onClick={() => go('xlsx')}>Download Excel</button>
           <button type="button" data-testid="est-download-docx" class={BUTTON} onClick={() => go('docx')}>Download Word</button>
         </div>
+        <InAppNote id="est-in-app" />
       </div>
       : <p data-testid="est-doc-wait" class={`mt-4 ${HINT}`}>{p.blocked ? 'No document while the two computations disagree.' : 'The document can be made once the estimate shows figures.'}</p>}
   </Section>;

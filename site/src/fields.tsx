@@ -2,6 +2,7 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { overdueNote, todayIso } from '../../engine/review';
+import { inAppBrowser, intentUrl } from './in-app';
 
 // The shared parts' classes, in the tokens of docs/DESIGN.md. A field is 44 px tall and its edge 3:1 (WCAG 1.4.11); the
 // focus ring comes from global.css.
@@ -316,4 +317,17 @@ export function Section(p: { id: string; title: string; children: ComponentChild
     <h2 id={`${p.id}-h`} class="text-lg font-semibold text-ink new:text-section new:font-medium">{p.title}</h2>
     {p.children}
   </section>;
+}
+
+/** Q1: under the download buttons, only in an app's own browser, which may not save files: the way out to the phone's. */
+export function InAppNote({ id }: { id: string }) {
+  const [where, setWhere] = useState<'android' | 'ios'>();
+  useEffect(() => setWhere(inAppBrowser(navigator.userAgent)), []);
+  if (!where) return null;
+  return <p data-testid={id} class={HINT}>
+    This app’s own browser may not save files.{' '}
+    {where === 'android'
+      ? <a class="font-medium text-link underline" href={intentUrl(new URL(location.href))}>Open this page in your browser</a>
+      : <>Tap ⋯ or the share icon, then Open in Safari.</>}
+  </p>;
 }
