@@ -132,6 +132,34 @@ describe('fictional case P: drivers, three months of sales in the first year, PM
   });
 });
 
+/**
+ * Case P by products (D-UX-109), worked apart from the engine by a short script from first principles: as P, but two
+ * lines instead of the capacity: roasted chana, 2,500 packs a month at full running at Rs. 200, and roasted peanuts, 1,500
+ * at Rs. 200; 96,00,000 a year at full running. At 60%: 57,60,000, variable 40,32,000; stock and creditors 3,31,397.26,
+ * debtors 4,73,424.66; the margin 1,73,424.66. PMEGP's cost 31,23,424.66, the margin money 7,80,856.16, the loan repaid
+ * 16,19,143.84; the project 30,23,424.66, the promoters 6,23,424.66, their own share 13.56%. 2026-27 (three months):
+ * chana 4,500 packs, 9,00,000; peanuts 2,700 packs, 5,40,000; sales 14,40,000; term loan interest 80,957.19; a loss of
+ * 3,27,207.19; cash 42,792.81. 2027-28 at 70%: chana 21,000 packs, 42,00,000; peanuts 12,600, 25,20,000.
+ */
+const CASE_P_LINES: ReportInput = { ...CASE_P, capacity: undefined, price: undefined,
+  products: [{ name: 'Roasted chana', unitsMonth: 2500, price: 200 }, { name: 'Roasted peanuts', unitsMonth: 1500, price: 200 }] };
+describe('fictional case P by products: the lines add up to sales', () => {
+  const p = projectReport(CASE_P_LINES) as Report, sc = p.scheme, [a, b] = p.years;
+  it('works the margin money, the year and each line', () => {
+    expect(two([p.marginMoney, sc?.cost, sc?.subsidy, p.finance.termLoan, p.projectCost, p.finance.promoter, sc?.ownPct]))
+      .toEqual(['173424.66', '3123424.66', '780856.16', '1619143.84', '3023424.66', '623424.66', '13.56']);
+    expect(a.products?.map((l) => [l.name, l.units.toFixed(2), l.price.toFixed(2), l.sales.toFixed(2)]))
+      .toEqual([['Roasted chana', '4500.00', '200.00', '900000.00'], ['Roasted peanuts', '2700.00', '200.00', '540000.00']]);
+    expect(two([a.sales, a.tlInterest, a.pbt, a.cash])).toEqual(['1440000.00', '80957.19', '-327207.19', '42792.81']);
+    expect(b.products?.map((l) => [l.units.toFixed(2), l.sales.toFixed(2)])).toEqual([['21000.00', '4200000.00'], ['12600.00', '2520000.00']]);
+  });
+  it('asks each line\'s three facts, by its number', () => {
+    expect(reportNeeds({ ...CASE_P_LINES, products: [CASE_P_LINES.products![0], { name: ' ' }] }).filter((n) => n.startsWith('Sales')))
+      .toEqual(['Sales, line 2: what is sold', 'Sales, line 2: how many a month at full running', 'Sales, line 2: the price a unit']);
+    expect(reportNeeds({ ...CASE_P_LINES, products: [] })).toContain('Sales: at least one product or service');
+  });
+});
+
 // Q: a service, special category, a town; building 10 lakh, plant 20 lakh, preliminary 1 lakh, no cash credit; 40,000
 // units at Rs. 150; variable 55%; fixed 9 lakh; 26 lakh sanctioned at 10%, drawn October 2026, 9 months' moratorium, 48
 // monthly instalments; sales from May 2027 (7 months on). PMEGP's cost 33,95,890.41 is above the Rs. 20 lakh ceiling, so

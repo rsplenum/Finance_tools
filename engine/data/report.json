@@ -38,13 +38,14 @@
       "workingCapitalMaxPct": { "manufacturing": 40, "service": 60 },
       "lockInYears": 3,
     "notice": "Fresh PMEGP applications are paused until the scheme is continued with revised guidelines (the PMEGP portal, October 2026); the figures here are the 2021-22 to 2025-26 guideline's and may change. The Rajya Sabha committee on industry recommended raising the Rs. 50 lakh manufacturing ceiling (report of 11-03-2026, pib.gov.in PRID 2238242).",
-      "source": "PMEGP guidelines (KVIC, Ministry of MSME), as read 11-10-2026 in search results quoting them (myscheme.gov.in, tuensang.nic.in, sbi.co.in, dnsbank.in) and the owner's research (docs/SCHEMES-RESEARCH.md); the KVIC portal could not be opened from here",
-      "date": "2026-10-11",
-      "checked": false,
+      "source": "PMEGP guidelines as revised by the Ministry of MSME's O.M. PMEGP/UdhyamReg./01/2023 of 07-12-2023 (docs/inbox/pmegp-guidelines-2023-12-07.pdf, read 20-10-2026), which supersedes the certified 2022 text (KVIC, https://www.kvic.gov.in/kvicres/update/pmegp/PMEGP_Guidelines_Certified_2022.pdf) with the same figures and adds Udyam registration before the margin money is adjusted: para 3.1 and its notes (shares and ceilings), 4.1 (land, education, existing units), 8.1 and 8.3 (the bank's share, working capital), 11.20 (the deposit). The guideline covers 2021-22 to 2025-26; no notice continuing it into 2026-27 was found on kvic.gov.in, and kviconline.gov.in does not answer this cloud",
+      "date": "2026-10-20",
+      "checked": true,
       "rules": [
         "The margin money (subsidy) is a share of the project cost: 15% in a town and 25% in a village for the general category; 25% and 35% for the special categories.",
-        "The project cost is the fixed assets without land, with one cycle of working capital; the subsidy is worked on at most Rs. 50 lakh for manufacturing and Rs. 20 lakh for a service, and the bank may lend above that without subsidy.",
+        "The project cost leaves out the land and includes the working capital; the subsidy is worked on at most Rs. 50 lakh for manufacturing and Rs. 20 lakh for a service, and the bank may lend above that without subsidy.",
         "The borrower brings at least 10% of the project cost (5% for the special categories); the working capital is at most 40% of the project cost for manufacturing and 60% for a service.",
+        "Above Rs. 10 lakh in manufacturing or Rs. 5 lakh in a service, the borrower must have passed class VIII. Only new units can apply: not an existing unit, nor one that has had a government subsidy under another scheme.",
         "The margin money is kept as a deposit for 3 years: no interest is paid on it and none is charged on the same amount of the loan; after 3 years it is set off against the loan, once the unit is verified."
       ],
       "ours": "The instalments are worked on the loan less the margin money, so the deposit clears that part of the loan when it is set off; ask the bank how it fixes them."
