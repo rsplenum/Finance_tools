@@ -57,3 +57,24 @@ Our strengths (`docs/PROJECT.md`): every figure true, the maths proved twice, ri
 | Pramadoc, Pramafile | the proof document | PRAMANA, PRAMAC (9, 42) | crowded: drop |
 
 Recommended: **Primaprova**. Its tradeoffs: five syllables, long for a logo and to type; *prima* is a cousin in Spanish and Portuguese, though *prima prova* reads as "first proof"; German says the v as f.
+
+## Hindi and Sanskrit roots for "right the first time" (NAME2, the owner's ask, 20-10-2026, D-BIZ-14)
+In the style of Zerodha and Upstox: a Hindi or Sanskrit root, two or three syllables, said easily in English and Hindi, without "loan" or "-craft". Roots: अचूक *achook* (unerring, never misses), अमोघ *amogh* (unfailing), सटीक *sateek* (exact), एक बार *ek baar* (once), सिद्ध *siddh* (proven), ऋत *rita* (the right order), सही *sahi* (right), पक्का *pakka* (sure), सम्यक् *samyak* (correct), भूल *bhool* (a mistake), अंक *ank* (a figure).
+- **Taken (34):** achook achuka agrim agrimly agrimo amogh amogha amoghly amoghya ekank ekanka ekbaar ekpass nabhool nirdo nirdosh pakkapass pakkaro pakkio pehlo pramank pramit prathamik ritam ritamo sahiko sahiq samyak samyank sateek satika satiko satyam siddho.
+- **Free (46):** abhool abhulo achooka achookank achookfin achookh achookio achookly achookpass achukam achuko amoghank amoghfin amoghi amoghio amogho ekbaari ekbarsahi ekdhaar eksahi eksiddh ekpakka nabhul nirdoshi pakkank pramito prathmo ritank ritanka ritanko sahipass samyako samyakt sateekam sateekank sateekfin sateeki sateekio sateekly sateeko sidhank siddhank sidhyo theekly zerobhul.
+
+| Name | Says | Nearest live US marks in 9, 36 or 42 | Reading |
+|---|---|---|---|
+| **Achookly** (a-CHOOK-lee) | अचूक: unerring, never misses (*achook nishana*, a shot that cannot miss) | SCHOOLY (9, 42) | clean |
+| **Amoghi** (a-MOH-ghee) | अमोघ: unfailing, never in vain | EMOSHI (42), ACMOHI, EMOCHI (9) | clean |
+| **Ekbaari** (ek-BAH-ree) | एक बार: once, in one go | none | clean |
+| Ritanka | ऋत + अंक: the right figure | RICANTA (9), TITANIA (9, 42) | fair; *rita* is rare in today's Hindi |
+| Siddhank | सिद्ध + अंक: the proven figure | MIDBANK (36, 42) | fair; English drops the *dh* |
+| Sateekly, Sateeko | सटीक: exact | SATEEK INSIGHTS (42) | close: drop |
+| Achuko, Achooka | अचूक | ACCURO (9), ACCURA (9) | fair; Achookly is cleaner |
+| Zerobhul | zero mistakes | ZEROBAR, ZEROBOT (9, 42); Zerodha in India | close: drop |
+| Eksiddh, Samyakt, Pakkank | once proven; correct; the sure figure | EKXIDE, SAMYANG, PAYBANK | hard to say in English: drop |
+
+A web search on 20-10-2026 found no business using Achookly, Amoghi or Ekbaari. The common misspellings: achukly.com and achookli.com are free; amogi.com and ekbari.com are taken.
+
+Recommended: **Achookly**. Its tradeoffs: an Indian examiner may read *achook* as a word of praise (Trade Marks Act 1999, s. 9(1)(b)), so the whole word is filed, never the root; in Australian English a *chook* is a hen; abroad it carries no meaning, where Primaprova does.
