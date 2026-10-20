@@ -41,6 +41,7 @@ In order of the rows they unblock; `docs/OWNER.md` has the clicks for each.
 - A fix to a shared part is checked on every page that uses it, in the same session (DESIGN-LESSONS 8), so no row redoes another's work.
 - SEO2 makes pages from one template and data, so fifty pages cost one template; the thin-page check keeps quality at scale.
 - CI's failures come back as annotations (D-TECH-41), so a red check is read in one step, not guessed at.
+- Bulk reading goes to Gemini where the owner runs it (D-TECH-53): reading many sites, collecting search terms, counting competitors' pages, mining forums, first summaries of rules or schemes. It returns each fact as a word-for-word quote with its address, saved as a file in `docs/inbox/` (never a big paste); Claude checks every figure and a sample of the rest by fetching just those lines. Never for engine maths, page code, a red check or a design; a figure counts only once found in its source, as for WebFetch; nothing bank-internal pasted into it. Worth it for big reading jobs only: each hand-off is the owner's time.
 
 ## The design team (DT1, D-UX-58)
 Agreed 13-10-2026 from the owner's request and two outside reviews. AI agents have no taste of their own and learn only through files, so the team runs on written rules, measured checks, real usage and the owner's judgement. The site is Astro, Preact and Tailwind 4.
