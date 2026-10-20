@@ -40,3 +40,20 @@ So the three are screened at USPTO only; the owner runs WIPO (which also holds I
 1. **Kredalo** (kre-DAH-lo). Says credit in all six languages, each letter read the same, nearest US marks sound unlike it. Tradeoff: *kred-* is common in lending brands (KreditBee, KredX, Kredo.al), so the mark protects the whole word, not the root, and a reader may take it for a lender rather than a tool.
 2. **Pramelo** (pra-MAY-lo). प्रमाण (proof) to an Indian ear, a soft *caramelo* sound elsewhere. Tradeoff: means nothing outside India; PRAMANA marks sit in 9 and 42; in British English a *pram* is a baby's carriage.
 3. **Dossamo** (do-SAH-mo). Dossier, the one file a borrower takes to the lender, said alike everywhere (the double s stays s). Tradeoff: an Indian ear may hear *dosa*; DOSSA sits in 42.
+
+## Names from our strengths (the owner's ask, 20-10-2026, D-BIZ-13)
+Our strengths (`docs/PROJECT.md`): every figure true, the maths proved twice, right on the first submission, the answer before any sign-up, one file ready for the lender. Roots that carry them in all six languages: *prova* (proof: prueba, preuve, Probe, prova, प्रमाण), *prima* (first), *bis* and *duo* (twice), *vera* (true), *dosso* (dossier), *satya* and *anka* (true, figure, in Hindi).
+- **Taken (24):** duovero firstfiled klardoc klarsum pramaniq pramank primadoc primalend primasum primavero prontodoc prontofile prontoverde proprima satyank trufile veradoc verafile verank veranka verasum verdosso veridue verifold.
+- **Free (20):** biprova bisprima bisprova bisvero duoprova filedonce okprima oncefiled pramadoc pramafile pramanko pramasum primafile primaok primaprova provabis provasum satyanka veradosso veriprima. Oncefiled reads "eleven filed" in Spanish.
+
+| Name | Says | Nearest live US marks in 9, 36 or 42 | Reading |
+|---|---|---|---|
+| **Primaprova** | proof, first time (Italian *prima prova*, the first attempt) | PRIMAL ASTROLOGY (9) | clean |
+| **Bisprova** | proved twice | ASPROVA (9), IPROVA (9, 42) | fair |
+| **Satyanka** | the true figure (Hindi) | SATONAKA (9) | clean; a meaning in India only |
+| Veradosso | the true file | VERADD, VERADA (42) | fair |
+| Duoprova | two proofs | UPROVA (36, finance) | close: drop |
+| Veriprima | true, first | VARIPRIME (9) | close: drop |
+| Pramadoc, Pramafile | the proof document | PRAMANA, PRAMAC (9, 42) | crowded: drop |
+
+Recommended: **Primaprova**. Its tradeoffs: five syllables, long for a logo and to type; *prima* is a cousin in Spanish and Portuguese, though *prima prova* reads as "first proof"; German says the v as f.
