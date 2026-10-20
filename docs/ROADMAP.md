@@ -1,37 +1,37 @@
-# Road to launch (17-10-2026; D-TECH-36, redrawn by D-TECH-42)
+# Road to launch (redrawn 20-10-2026 from the vision, `docs/PROJECT.md`; D-TECH-36, D-TECH-42, D-BIZ-11)
 
-The engines and the five tools (DSCR, CMA, the planning estimate, the project report, Make it viable) are built. What is left is the wrapper: the last pages in the new look, the Worker, the policy pages, downloads on any phone, the search pages, one release check, then launch. None of it is new money maths. Each row is one fresh session; HANDOFF's Next table holds the rows due next, and the session that ends moves the following row from here into it.
+The engines and the five tools (DSCR, CMA, the planning estimate, the project report, Make it viable) are built and live, with the Worker, the policy pages and downloads on any phone. What is left: the project report's gaps against Finline (the gap list in `docs/design-inputs/finline-2026-10-20.md`), one review of every page, the search pages, the lawyer's read, one release check, then launch and payment. Each row is one fresh session; HANDOFF's Next table holds the rows due next, and the session that ends moves the following row from here into it.
 
-Sizes come from HANDOFF: S is about 60 steps, M about 120, L about 200. What is left adds up to about 1,000 steps over ten sessions. The long pole is the owner's column, not the sessions, so the owner's items start now, in parallel (below).
+Sizes come from HANDOFF: S is about 60 steps, M about 120, L about 200. What is left adds up to about 1,400 steps over eleven sessions. The long pole is the owner's column, so the owner's items start now, in parallel (below).
 
 ## Done
-SEO1 the pSEO plan (`docs/SEO-PLAN.md`, D-BIZ-08), UD1 interaction data (records once DEP1 is live), DT1 the design team, UX1 research, UX2 and UX2b the load measure and home, AG1 to AG3c FinSight's look and trailers on home, UX3 the DSCR and CMA pages, UX4 the critics' fixes and the estimate (PR #74).
+VIS1 the vision (D-BIZ-11), REP1 sales by product and PMEGP checked (D-UX-109, D-DATA-22), LEGAL1 the policy pages (D-BIZ-07), Q1 downloads on any phone, DEP1 to DEP1c the Worker live (D-TECH-48 to 51), UX5 and UX6 the last of the look, SEO1 the pSEO plan (`docs/SEO-PLAN.md`, D-BIZ-08), UD1 interaction data, DT1 the design team, UX1 to UX4, AG1 to AG3c FinSight's look.
 
 ## The path, in order
 | # | Row | Size | Done when (the quality bar) | Needs from the owner first |
 |---|---|---|---|---|
-| 1 | **UX5** The project report in FinSight's look; the report's findings 3 to 12; CMA 6 (a card a year below 640 px) and 14; the critics on the estimate and the report | M, high | every finding a blocker or significant fixed, the critics' fix-checks pass, the load and token ratchets no higher | — (your test notes, if they have come) |
-| 2 | **UX6** The last of the look: the 404 page in the new look, the old look's rules out of `docs/DESIGN.md` (its cap back to 12 KB), raw colours and arbitrary values to nil; the site check's one intermittent CI failure (D-TECH-41) root-caused if its annotation has named it | S, high | every page in `NEW_LOOK`; the ratchet at 0 and the baseline file emptied of tokens | — |
-| 3 | **DEP1** Worker live: D1 and KV, the events table, `PUBLIC_API_URL`, UD1 recording | S, high | `/health` ok, a batch from the live site in D1, `npm run usage` answering | the D1 and KV IDs (`docs/CLOUDFLARE.md` §2) |
-| 4 | **LEGAL1** Policy pages: privacy, terms, "not advice", refunds, contact, in every footer. AI drafts, marked as drafts | M, high | each page linked from every footer and checked by the site check; the drafts with the lawyer | the business name and a contact email |
-| 5 | **Q1** Downloads on any phone: a slow-phone timing in the site check, a way out of WhatsApp's in-app browser | S, high | every download opens on your iPhone and Android, timed in the check | your phone test of today's downloads |
-| 7 | **SEO2** The pSEO template (`docs/SEO-PLAN.md`) and its 23 pages that need no new source (DSCR and CMA questions, scheme hubs, six cities), the four tool pages retuned; sitemap, canonicals, structured data; a check that fails thin pages | L, Extra | every page passes the thin-page check and the site check | your approval of the plan's five tradeoffs |
-| 8 | **SEO3** The project report by business, the first 30, each from a model profile read into a dated file | L, high | as SEO2 | the model profile PDFs (`docs/OWNER.md`) |
-| 8b | **SEO4** The rest of the businesses (to about 60), the three loan tools, the internal links | M, high | as SEO2, at full count | — |
-| 9 | **RC1** Release check: every page by a critic at once, your five tests scored by the researcher, the live Worker's first funnels read, `noindex` still on; what it finds is fixed in this row or named as a launch blocker; the network back from Full to the list of allowed hosts, with the ones SEO1 used (`docs/OWNER.md`) | M, high | no blocker open; every check at 0 | your five tests' notes; the lawyer's review back |
-| 10 | **LAUNCH** The real domain, `noindex` off, Search Console, Cloudflare Web Analytics | S, high | the site on its domain, indexed, the analytics counting | the name and domain, the lawyer's sign-off |
-| 11 | **P1d Payment** (its row: `docs/HANDOFF-ARCHIVE.md`) | L, high | a paid statement end to end in Razorpay's test mode, then live | Phase 0: the entity, GST, Razorpay and the price |
+| 1 | **SCH1** Mudra in the project report: its level by amount, no collateral up to Rs. 20 L, CGFMU as its guarantee, "Make it viable" saying when the project cannot be funded (D-DATA-23, D-UX-111) | M, Extra | a hand-worked Mudra case matches; every level and fee from the PDFs in `docs/inbox/` with source and date | — |
+| 2 | **REP3** Simple and expert modes on the report (D-UX-110): ten short steps, as Finline's, with every other field an assumption on the page; costs by head in expert | M, Extra | the site check counts each mode's fields; assumptions only from `defaults.json` | the simple mode's inputs |
+| 3 | **REP2** The report's words as an AI draft from the user's inputs only, marked draft (D-AI-01) | M, Extra | a check fails a claim a new business cannot have; never a figure in the text | the new inputs (experience, process); the Worker's key to go live |
+| 4 | **REV1** Review of every page: the look, the content and AdSense readiness, worked from the owner's videos of the site | M, high | every finding ranked; blockers and significant ones fixed or named as rows; an AdSense list of what is missing | the videos, attached in the session |
+| 5 | **SEO2** The pSEO template and its first 23 pages, the four tool pages retuned; sitemap, canonicals, structured data; the thin-page check | L, Extra | every page passes the thin-page check and the site check | the plan's five tradeoffs answered |
+| 6 | **SEO3** The project report by business, the first 30, each from a model profile read into a dated file | L, high | as SEO2 | the model profile PDFs |
+| 7 | **SEO4** The rest of the businesses (to about 60), the three loan tools, the internal links | M, high | as SEO2, at full count | — |
+| 8 | **LEGAL2** The lawyer's changes to the policy pages, `LEGAL_DRAFT` false; runs whenever the lawyer answers | S, high | the site check fails any draft mark left | the lawyer's read |
+| 9 | **RC1** Release check: every page by a critic at once, the five tests scored, the first funnels read, `noindex` still on, the network back to the allowed list | M, high | no blocker open; every check at 0 | your five tests' notes; LEGAL2 done |
+| 10 | **LAUNCH** The .com domain on Pages and the Worker's route, `noindex` off, Search Console, Web Analytics, the AdSense application | S, high | the site on its domain, indexed, the analytics counting | the domain bought, the lawyer's sign-off |
+| 11 | **P1d Payment** (its row: `docs/HANDOFF-ARCHIVE.md`) and the price against Finline's | L, high | a paid document end to end in Razorpay's test mode, then live | Phase 0: the entity, GST, Razorpay and the price |
 
-The free tools launch at row 10; payment follows at row 11 when Phase 0 is done.
+The free tools launch at row 10; payment follows at row 11 when Phase 0 is done. After launch: three months of improving from the interaction data, then more Indian languages, then the US, Europe and South America (PROJECT.md).
 
 ## The owner's path, started now (each one unblocks a row above)
 In order of the rows they unblock; `docs/OWNER.md` has the clicks for each.
-1. Try PR #74's work on the live site once merged (`docs/OWNER.md`), and run the five tests (`docs/design-reviews/2026-10-13-test-script.md`), about 2 hours: RC1, and UX5 if they come early.
-2. Create the D1 and KV and send their IDs: DEP1.
-3. The name: search the trademark register, buy the domain, set up a contact email: LEGAL1 and LAUNCH.
-4. Book the IP lawyer for `docs/TRADEMARKS.md` and the policy drafts: RC1 and LAUNCH.
-5. The phone test of the downloads: Q1.
-6. Approve the pSEO plan's tradeoffs (SEO2), and download the model profile PDFs (SEO3).
+1. The simple mode's inputs and REP2's new inputs: REP3 and REP2.
+2. Record the site on a phone and a desktop, every page: REV1.
+3. Answer the pSEO plan's five tradeoffs (SEO2), and download the model profile PDFs (SEO3).
+4. The name and the .com: search the trademark registers (India, and the US and EU for later), buy the domain (the shortlist in `docs/OWNER.md`): LAUNCH.
+5. The lawyer's read of the policy pages and `docs/TRADEMARKS.md`: LEGAL2, RC1.
+6. The five tests (`docs/design-reviews/2026-10-13-test-script.md`), about 2 hours: RC1.
 7. Phase 0 (entity, GST, Razorpay, price): P1d only; it does not hold the launch.
 
 ## How the cost stays low without a shortcut
