@@ -73,5 +73,8 @@ myloancare.in and nobroker.in gave no sitemap URLs to a script. **The gap:** no 
 4. **Interest service coverage ratio** (50,000, rising): *Recommended:* add ISCR to the DSCR engine in SEO2 (a small addition, under the money-maths checks) so its page shows a real figure; otherwise its page explains without one.
 5. **Ads before search ranks.** The forecast's clicks are cheap, but payment is not live (P1d). *Recommended:* no ads until P1d is live; then a test on the T3 and T4 terms only, never on brand names (`docs/TRADEMARKS.md` rule 10).
 
+## The reading, offloaded (D-TECH-53)
+SEO2 to SEO4 read the most (scheme pages, model profiles, competitors' sitemaps, search terms). Where the owner runs Gemini on it: the session writes the Gemini prompt and the hosts, the owner saves Gemini's answer as `docs/inbox/<row>-gemini.md`, each fact a word-for-word quote with its address and date. Claude then fetches only the quoted lines, checks every figure (a rate, limit, count or price) and about one in five of the rest, and marks each same, differs or unclear; only checked lines go into a dated data file. A figure never comes from Gemini's own words, and no page text or code is taken from it unchecked.
+
 ## What SEO2 builds from this
 The page template (the five tests above as code), T1's 4 retuned and the 23 pages of T2, T4, T5 and T6 from data files, a sitemap, canonicals, breadcrumbs and `WebApplication` structured data, and the thin-page check: it fails a page with fewer than its type's own data values, no prefilled tool, no source and date, or a paragraph repeated on another page. Mudra's tiers need a source this cloud can read (mudra.org.in does not answer it): SEO2 lists the hosts first, as always. T3 waits on tradeoff 1.
