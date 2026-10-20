@@ -123,7 +123,7 @@ describe('the PMEGP report to download', () => {
     expect(text).toContain('Sales by product');
     expect(text).toContain('Months from the loan to the first sales: 3');
     expect(text).toContain('PMEGP: the rules used');
-    expect(text).toContain('Checked against KVIC\'s guideline on 20-10-2026.');
+    expect(text).toContain('Checked against PMEGP\'s guideline (2023) on 20-10-2026.');
     expect(docStatus(P, p)).toBe('Complete');
   });
 });

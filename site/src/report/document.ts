@@ -121,7 +121,7 @@ export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc 
         { kind: 'heading', text: 'The figures entered' }, { kind: 'pairs', pairs: entered(s) },
         { kind: 'heading', text: 'How the figures are worked out' }, { kind: 'list', items: METHOD },
         ...(s.scheme === 'pmegp' ? [{ kind: 'heading', text: 'PMEGP: the rules used' } as Block, { kind: 'list', items: [...PMEGP.rules, PMEGP.ours,
-          `Source: ${PMEGP.source}. ${PMEGP.checked ? `Checked against KVIC's guideline on ${dmy(PMEGP.date)}.` : `As read on ${dmy(PMEGP.date)}; not yet checked against KVIC's current guideline.`} ${overdueNote(REPORT_REVIEW_BY, todayIso())}`.trim()] } as Block] : []),
+          `Source: ${PMEGP.source}. ${PMEGP.checked ? `Checked against PMEGP's guideline (2023) on ${dmy(PMEGP.date)}.` : `As read on ${dmy(PMEGP.date)}; not yet checked against KVIC's current guideline.`} ${overdueNote(REPORT_REVIEW_BY, todayIso())}`.trim()] } as Block] : []),
       ] },
     ],
   };
