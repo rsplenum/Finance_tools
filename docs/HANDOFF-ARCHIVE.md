@@ -167,6 +167,7 @@ The test figures are model-worked until the owner confirms fictional cases A and
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 20-10-2026 | SCH1's row and its sources: Mudra and CGFMU (D-DATA-23, D-UX-111); CGFMU's and CGTMSE's documents in `docs/inbox/` and their fees' basis; the owner's five fee answers | follow-up, none set | 115 steps after the last merge |
 | 04-10-2026 | D-TECH-29: this rule, HANDOFF trimmed | S, about 15 steps | 17 steps to the commit (1.9M tokens re-read), about 23 with the PR: over by half, since the compaction cost 3 steps of re-reading and measuring 2 |
 | 05-10-2026 | E2b: 84 library items read against their pages, each city's own sewer charge (D-DATA-10) | L, about 200 steps plus agents | 171 steps from its prompt to the docs, about 185 with the PR (`npm run cost` reads the whole conversation's log: E2b ran in the old one), 6 `fetcher` calls, 6 compactions: within budget; redos cost about 8 (a test naming one offender at a time, two test fixtures pinned to the library, What changed hiding the unpriced sewer) and wiring moved to W1 |
 | 05-10-2026 | D-BIZ-03: the legal check of brand names and pSEO pages, recorded (asked after E2b) | not budgeted; S at most | 11 steps to the answer and about 18 to record it with the PR, in E2b's conversation; two re-searches (the page text sat in Astro islands; brands sit in their own list) |

@@ -34,4 +34,3 @@ Then the rows follow `docs/ROADMAP.md`: SEO3 (once the owner's model profile PDF
 | 20-10-2026 | NAME2: three names from Hindi roots (D-BIZ-14) | S | about 20 steps |
 | 20-10-2026 | NAME1: three names (D-BIZ-12) | S | about 35 steps |
 | 20-10-2026 | VIS1: the vision and the roadmap; a .com shortlist (D-BIZ-11) | S | about 32 steps |
-| 20-10-2026 | SCH1's row and its sources: Mudra and CGFMU (D-DATA-23, D-UX-111); CGFMU's and CGTMSE's documents in `docs/inbox/` and their fees' basis; the owner's five fee answers | follow-up, none set | 115 steps after the last merge |
