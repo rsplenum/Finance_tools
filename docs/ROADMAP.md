@@ -5,7 +5,7 @@ The engines and the five tools (DSCR, CMA, the planning estimate, the project re
 Sizes come from HANDOFF: S is about 60 steps, M about 120, L about 200. What is left adds up to about 1,000 steps over ten sessions. The long pole is the owner's column, not the sessions, so the owner's items start now, in parallel (below).
 
 ## Done
-UD1 interaction data (records once DEP1 is live), DT1 the design team, UX1 research, UX2 and UX2b the load measure and home, AG1 to AG3c FinSight's look and trailers on home, UX3 the DSCR and CMA pages, UX4 the critics' fixes and the estimate (PR #74).
+SEO1 the pSEO plan (`docs/SEO-PLAN.md`, D-BIZ-08), UD1 interaction data (records once DEP1 is live), DT1 the design team, UX1 research, UX2 and UX2b the load measure and home, AG1 to AG3c FinSight's look and trailers on home, UX3 the DSCR and CMA pages, UX4 the critics' fixes and the estimate (PR #74).
 
 ## The path, in order
 | # | Row | Size | Done when (the quality bar) | Needs from the owner first |
@@ -15,9 +15,9 @@ UD1 interaction data (records once DEP1 is live), DT1 the design team, UX1 resea
 | 3 | **DEP1** Worker live: D1 and KV, the events table, `PUBLIC_API_URL`, UD1 recording | S, high | `/health` ok, a batch from the live site in D1, `npm run usage` answering | the D1 and KV IDs (`docs/CLOUDFLARE.md` §2) |
 | 4 | **LEGAL1** Policy pages: privacy, terms, "not advice", refunds, contact, in every footer. AI drafts, marked as drafts | M, high | each page linked from every footer and checked by the site check; the drafts with the lawyer | the business name and a contact email |
 | 5 | **Q1** Downloads on any phone: a slow-phone timing in the site check, a way out of WhatsApp's in-app browser | S, high | every download opens on your iPhone and Android, timed in the check | your phone test of today's downloads |
-| 6 | **SEO1** pSEO plan: the searches people in India make, the page types, the count, each page's data | M, high | a plan you approve, with its sources | the hosts `npm run hosts` names, allowed |
-| 7 | **SEO2** The pSEO template and the first 50 pages, each with a working calculator; sitemap, canonicals, structured data; a check that fails thin pages | L, Extra | every page passes the thin-page check and the site check | — |
-| 8 | **SEO3** The rest of the batch and the internal links | M, high | as SEO2, at full count | — |
+| 7 | **SEO2** The pSEO template (`docs/SEO-PLAN.md`) and its 23 pages that need no new source (DSCR and CMA questions, scheme hubs, six cities), the four tool pages retuned; sitemap, canonicals, structured data; a check that fails thin pages | L, Extra | every page passes the thin-page check and the site check | your approval of the plan's five tradeoffs |
+| 8 | **SEO3** The project report by business, the first 30, each from a model profile read into a dated file | L, high | as SEO2 | the model profile PDFs (`docs/OWNER.md`) |
+| 8b | **SEO4** The rest of the businesses (to about 60), the three loan tools, the internal links | M, high | as SEO2, at full count | — |
 | 9 | **RC1** Release check: every page by a critic at once, your five tests scored by the researcher, the live Worker's first funnels read, `noindex` still on; what it finds is fixed in this row or named as a launch blocker; the network back from Full to the list of allowed hosts, with the ones SEO1 used (`docs/OWNER.md`) | M, high | no blocker open; every check at 0 | your five tests' notes; the lawyer's review back |
 | 10 | **LAUNCH** The real domain, `noindex` off, Search Console, Cloudflare Web Analytics | S, high | the site on its domain, indexed, the analytics counting | the name and domain, the lawyer's sign-off |
 | 11 | **P1d Payment** (its row: `docs/HANDOFF-ARCHIVE.md`) | L, high | a paid statement end to end in Razorpay's test mode, then live | Phase 0: the entity, GST, Razorpay and the price |
@@ -31,7 +31,7 @@ In order of the rows they unblock; `docs/OWNER.md` has the clicks for each.
 3. The name: search the trademark register, buy the domain, set up a contact email: LEGAL1 and LAUNCH.
 4. Book the IP lawyer for `docs/TRADEMARKS.md` and the policy drafts: RC1 and LAUNCH.
 5. The phone test of the downloads: Q1.
-6. Allow SEO1's hosts.
+6. Approve the pSEO plan's tradeoffs (SEO2), and download the model profile PDFs (SEO3).
 7. Phase 0 (entity, GST, Razorpay, price): P1d only; it does not hold the launch.
 
 ## How the cost stays low without a shortcut
