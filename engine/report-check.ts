@@ -12,7 +12,8 @@ import { scheduleCheck } from './dscr-check';
 export interface ReportCheckIn {
   cost: Record<string, number>; promoter: number; subsidy: number; unsecured: number; limit: number;
   /** A full year's sales at each year's rate (typed), or the drivers to work it out afresh; the months of sales a year. */
-  run: number[]; months: number[]; drivers?: { capacity: number; price: number; utilisationPct: number[]; priceGrowthPct: number };
+  run: number[]; months: number[];
+  drivers?: { capacity?: number; price?: number; products?: { unitsMonth: number; price: number }[]; utilisationPct: number[]; priceGrowthPct: number };
   variablePct: number; fixed: number[]; days: { stock: number; debtors: number; creditors: number };
   pat: number[]; tlInterest: number[]; wcInterest: number[]; loan: LoanTerms; fys: string[];
 }
@@ -31,7 +32,9 @@ export function reportCheck(x: ReportCheckIn): ReportCheckYear[] {
       depreciation += c * r * Math.pow(1 - r, k);
       netBlock += c * Math.pow(1 - r, k + 1);
     }
-    const d = x.drivers, run = d ? d.capacity * (d.utilisationPct[k] / 100) * d.price * (1 + d.priceGrowthPct / 100) ** k : x.run[k];
+    // By the drivers: each product's units a year at the year's use, times its price that year, summed; else as typed.
+    const d = x.drivers, priced = (units: number, price: number) => units * (d as NonNullable<typeof d>).utilisationPct[k] / 100 * price * (1 + (d as NonNullable<typeof d>).priceGrowthPct / 100) ** k;
+    const run = !d ? x.run[k] : d.products ? d.products.reduce((t, p) => t + priced(p.unitsMonth * 12, p.price), 0) : priced(d.capacity as number, d.price as number);
     const sales = (run * x.months[k]) / 12, runVariable = run * (x.variablePct / 100);
     const stock = (x.days.stock / 365) * runVariable, debtors = (x.days.debtors / 365) * run, creditors = (x.days.creditors / 365) * runVariable;
     const netWorth = x.promoter + x.subsidy + profits, termLoan = debt.get(fy) ?? 0, left = prelim * Math.max(0, 1 - (k + 1) / n);

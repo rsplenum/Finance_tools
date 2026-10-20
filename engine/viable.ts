@@ -38,9 +38,12 @@ export interface Viability {
 
 const GRID = 1000, MAX_FACTOR = 100;
 const isReport = (r: Report | Needs | Blocked): r is Report => !('needs' in r) && !('blocked' in r);
-/** The report with sales scaled by `f`: the price under the drivers (capacity × use × price), or the typed sales. */
+/** The report with sales scaled by `f`: the price (every product's) under the drivers (capacity × use × price), or the typed sales. */
 const scaled = (x: ReportInput, f: number): ReportInput =>
-  x.salesBy === 'typed' ? { ...x, sales: (x.sales as number) * f } : { ...x, price: (x.price as number) * f };
+  x.salesBy === 'typed' ? { ...x, sales: (x.sales as number) * f }
+    : x.products ? { ...x, products: x.products.map((p) => ({ ...p, price: (p.price as number) * f })) } : { ...x, price: (x.price as number) * f };
+/** The one price a unit, when the business sells one thing; none for several products. */
+const onePrice = (x: ReportInput) => (x.products ? (x.products.length === 1 ? x.products[0].price : undefined) : x.price);
 /** The first year with twelve months of sales, else the first: the year the page names. */
 const fullYear = (r: Report) => r.years.find((y) => y.months === 12) ?? r.years[0];
 
@@ -101,7 +104,7 @@ export function makeViable(x: ReportInput, lv?: Levels): Viability | Needs | Blo
       out.sales = {
         tenths: hi, fy: y.fy, now: y0.sales, needed: y.sales, ...outcome(missed, u),
         ...(x.salesBy !== 'typed' ? {
-          price: { now: x.price as number, needed: (x.price as number) * f },
+          ...(onePrice(x) !== undefined ? { price: { now: onePrice(x) as number, needed: (onePrice(x) as number) * f } } : {}),
           use: { now: base.years.map((b) => b.utilisationPct as number), needed: use, overFull: use.some((p) => p > 100 + 1e-9), overMost: use.some((p) => p > most + 1e-9) },
         } : {}),
       };

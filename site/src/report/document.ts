@@ -75,7 +75,8 @@ function entered(s: ReportState): [string, string][] {
   if (s.collateral.trim()) pairs.push(['Collateral: market value', amount(s.collateral)]);
   if (s.salesBy === 'typed') pairs.push(['Sales in a full first year', `${amount(s.sales)}, growing ${plainOf(s.salesGrowth)}% a year`]);
   else {
-    pairs.push(['Capacity', `${s.capacity.trim()} units a year at Rs. ${tidyAmount(s.price)} a unit, the price growing ${plainOf(s.priceGrowth)}% a year`]);
+    for (const pr of s.products) pairs.push([`Sales: ${pr.name.trim()}`, `${pr.units.trim()} a month at full running, at Rs. ${tidyAmount(pr.price)} a unit`]);
+    pairs.push(['The prices', `Growing ${plainOf(s.priceGrowth)}% a year`]);
     pairs.push(['Use of the capacity', `${s.utilisation.split(/[,\s]+/).filter(Boolean).join('%, ')}% by year from the first sales`]);
   }
   pairs.push(['Months from the loan to the first sales', `${plainOf(s.monthsToStart)}`]);
@@ -113,14 +114,14 @@ export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc 
     creator: SITE_NAME,
     parts: [
       { name: 'Summary', blocks: first },
-      { name: 'Projections', blocks: [{ kind: 'title', text: 'Projected financial statements', small: true }, ...table('pl'), ...table('bs'), ...table('cf')] },
+      { name: 'Projections', blocks: [{ kind: 'title', text: 'Projected financial statements', small: true }, ...(v.tables.some((t) => t.id === 'sales') ? table('sales') : []), ...table('pl'), ...table('bs'), ...table('cf')] },
       { name: 'DSCR and ratios', blocks: [{ kind: 'title', text: 'DSCR, break-even, ratios and working capital', small: true }, ...table('dscr'), ...table('bep'), ...table('ratios'), ...table('wc')] },
       { name: 'Annex', blocks: [
         { kind: 'title', text: 'Annex. The term loan, and the basis', small: true }, ...table('schedule'),
         { kind: 'heading', text: 'The figures entered' }, { kind: 'pairs', pairs: entered(s) },
         { kind: 'heading', text: 'How the figures are worked out' }, { kind: 'list', items: METHOD },
         ...(s.scheme === 'pmegp' ? [{ kind: 'heading', text: 'PMEGP: the rules used' } as Block, { kind: 'list', items: [...PMEGP.rules, PMEGP.ours,
-          `Source: ${PMEGP.source}. As read on ${dmy(PMEGP.date)}; not yet checked against KVIC's current guideline. ${overdueNote(REPORT_REVIEW_BY, todayIso())}`.trim()] } as Block] : []),
+          `Source: ${PMEGP.source}. ${PMEGP.checked ? `Checked against KVIC's guideline on ${dmy(PMEGP.date)}.` : `As read on ${dmy(PMEGP.date)}; not yet checked against KVIC's current guideline.`} ${overdueNote(REPORT_REVIEW_BY, todayIso())}`.trim()] } as Block] : []),
       ] },
     ],
   };

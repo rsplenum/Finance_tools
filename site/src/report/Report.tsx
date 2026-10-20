@@ -16,7 +16,7 @@ import { monthText } from '../dscr/model';
 import { overdueNote, todayIso } from '../../../engine/review';
 import { docNeeds, docStatus, fileName, reportDoc } from './document';
 import {
-  PMEGP, REPORT_REVIEW_BY, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, REPAYMENT_CHOICES, SCHEME_CHOICES,
+  PMEGP, REPORT_REVIEW_BY, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, NO_PRODUCT, REPAYMENT_CHOICES, SCHEME_CHOICES,
   ALONE, AS_TYPED, COLLATERAL_HINT, amountOf, applyPlan, assumptionsOf, boardOf, plainOf, planOf, preview, sameLevers, statusText, tidyAmount, undoPlan, viableOf,
   type LeverId, type Levers, type PlanChange, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
   type ViableView, type ViewRow, type ViewTable,
@@ -25,7 +25,7 @@ import {
 type Update = (f: (s: ReportState) => ReportState) => void;
 const MUTED = 'text-ink-muted';
 const SALES_BY: { value: ReportState['salesBy']; label: string }[] = [
-  { value: 'drivers', label: 'The capacity, its use and the price' }, { value: 'typed', label: 'Sales I type, with their growth' }];
+  { value: 'drivers', label: 'Each product: how many a month and its price' }, { value: 'typed', label: 'Sales I type, with their growth' }];
 const bad = (t: string, read: (t: string) => unknown) => !!t.trim() && read(t) === undefined;
 const notUnderstood = (t: string, read: (t: string) => unknown, example: string) => (bad(t, read) ? `Not understood. Type ${example}.` : undefined);
 /** A control that removes itself hands the focus on, after the render (WCAG 2.4.3; docs/DESIGN.md, Focus). */
@@ -38,14 +38,18 @@ const BOXES: [string, string, boolean?][] = [
   ['Who the borrower', 'fld-borrower'], ['Cost of the project', 'cost'], ['The term loan: its amount', 'fld-tl-amount'],
   ['The term loan: its interest', 'fld-tl-rate'], ['The term loan: the month', 'fld-tl-disbursed'], ['The term loan: the moratorium', 'fld-tl-moratorium'],
   ['The term loan: the number', 'fld-tl-instalments'], ['The term loan: how', 'fld-tl-repayment'], ['Capital subsidy', 'fld-subsidy'],
-  ['Unsecured', 'fld-unsecured'], ['Sales in', 'fld-sales', true], ['Sales: growth', 'fld-salesGrowth', true], ['Capacity', 'fld-capacity'],
-  ['Price a unit', 'fld-price'], ['Use of the capacity', 'fld-utilisation', true], ['The price: growth', 'fld-priceGrowth', true],
+  ['Unsecured', 'fld-unsecured'], ['Sales in', 'fld-sales', true], ['Sales: growth', 'fld-salesGrowth', true], ['Use of the capacity', 'fld-utilisation', true], ['The price: growth', 'fld-priceGrowth', true],
   ['Months from', 'fld-monthsToStart'], ['PMEGP: the borrower', 'fld-category'], ['PMEGP: a town', 'fld-area'], ['PMEGP: manufacturing', 'fld-activity'],
   ['Materials', 'fld-variablePct'], ['Fixed costs in', 'fld-fixed'], ['Fixed costs: growth', 'fld-fixedGrowth'], ['Days of stock', 'fld-days-stock'],
   ['Days of debtors', 'fld-days-debtors'], ['Days of creditors', 'fld-days-creditors'], ['The working-capital limit sought', 'fld-wcLimit'],
   ['The working-capital limit: its', 'fld-wcRate'], ['The collateral', 'fld-collateral', true],
 ];
-const boxOf = (need: string) => BOXES.find(([w]) => need.startsWith(w));
+// A product's line (D-UX-109): "Sales, line 2: the price a unit" is the price's box on the second line.
+const LINE_FACT: [string, string][] = [['what', 'name'], ['how many', 'units'], ['the price', 'price']];
+const boxOf = (need: string): [string, string, boolean?] | undefined => {
+  const m = /^Sales, line (\d+): (.*)$/.exec(need), fact = m && LINE_FACT.find(([w]) => m[2].startsWith(w));
+  return fact ? [need, `fld-product-${Number((m as RegExpExecArray)[1]) - 1}-${fact[1]}`] : BOXES.find(([w]) => need.startsWith(w));
+};
 /** One tone a meaning (docs/DESIGN-SITE.md, Colours): good meets, warn provisional, bad misses. */
 
 /** The answer in words (review finding 3): the model's own sentence when a level misses; else what meets and what it cannot
@@ -121,7 +125,7 @@ export function ReportCalculator() {
       <Choice name="fld-scheme" legend="A government scheme" options={SCHEME_CHOICES} value={s.scheme} columns
         onChange={(scheme) => update((x) => ({ ...x, scheme }))} />
       {s.scheme === 'pmegp' && <>
-        <p class={`mt-2 ${HINT}`}>The margin money is worked out by the scheme's rules, as read in {monthText(PMEGP.date.slice(0, 7))} and not yet checked against KVIC's guideline. {overdueNote(REPORT_REVIEW_BY, todayIso())}</p>
+        <p class={`mt-2 ${HINT}`}>The margin money is worked out by the scheme's rules, {PMEGP.checked ? `checked against KVIC's guideline (2022) in ${monthText(PMEGP.date.slice(0, 7))}` : `as read in ${monthText(PMEGP.date.slice(0, 7))} and not yet checked against KVIC's guideline`}. {overdueNote(REPORT_REVIEW_BY, todayIso())}</p>
         <Choice name="fld-category" legend="The borrower's category" options={CATEGORY_CHOICES} value={s.category}
           onChange={(category) => update((x) => ({ ...x, category }))} />
         <Choice name="fld-area" legend="Where the unit is" options={AREA_CHOICES} value={s.area} columns
@@ -148,11 +152,25 @@ export function ReportCalculator() {
         onChange={(repayment) => update((x) => ({ ...x, loan: { ...x.loan, repayment } }))} />
     </Section>
     <Section id="operations" title="Sales and costs">
+      {/* One line per product or service (D-UX-109): what it is, how many a month at full running, its price; they add up to sales. */}
+      {s.salesBy === 'drivers' && <>
+        {s.products.map((pr, k) => {
+          const set = (f: keyof typeof pr) => (x: ReportState, t: string) => ({ ...x, products: x.products.map((q, i) => (i === k ? { ...q, [f]: t } : q)) });
+          return <fieldset key={k} data-testid={`rep-product-${k}`} class="mt-4">
+            <legend class="font-medium text-ink">{s.products.length > 1 ? `Product or service ${k + 1}` : 'What it sells'}</legend>
+            <div class="mt-2 grid gap-4 sm:grid-cols-3">
+              <TextField id={`fld-product-${k}-name`} label="What it is" value={pr.name} onCommit={(t) => update((x) => set('name')(x, t))} />
+              {percent(`fld-product-${k}-units`, 'How many a month at full running', pr.units, set('units'))}
+              {amount(`fld-product-${k}-price`, 'Price a unit', pr.price, set('price'))}
+            </div>
+            {k > 0 && <button type="button" data-testid={`rep-product-remove-${k}`} class="mt-2 min-h-11 text-link underline underline-offset-4"
+              onClick={() => update((x) => ({ ...x, products: x.products.filter((_, i) => i !== k) }))}>Remove this line</button>}
+          </fieldset>;
+        })}
+        <button type="button" data-testid="rep-product-add" class="mt-2 min-h-11 text-link underline underline-offset-4"
+          onClick={() => update((x) => ({ ...x, products: [...x.products, NO_PRODUCT] }))}>Add another product or service</button>
+      </>}
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
-        {s.salesBy === 'drivers' && <>
-          {percent('fld-capacity', 'Capacity: the units it can make or serve in a year', s.capacity, (x, capacity) => ({ ...x, capacity }))}
-          {amount('fld-price', 'Price a unit', s.price, (x, price) => ({ ...x, price }))}
-        </>}
         {percent('fld-monthsToStart', 'Months from the loan to the first sales (0 if at once)', s.monthsToStart, (x, monthsToStart) => ({ ...x, monthsToStart }), 'months')}
         {percent('fld-variablePct', 'Materials and other variable costs (% of sales)', s.variablePct, (x, variablePct) => ({ ...x, variablePct }), '%')}
         {amount('fld-fixed', 'Fixed costs in a full first year', s.fixed, (x, fixed) => ({ ...x, fixed }), 'Salaries, rent and other overheads.')}

@@ -26,6 +26,11 @@ export type Area = keyof typeof PMEGP.subsidyPct.general;
 export type Activity = keyof typeof PMEGP.ceiling;
 /** A government scheme the project is financed under: only PMEGP so far (D-UX-49). */
 export interface SchemeInput { id: 'pmegp'; category?: Category; area?: Area; activity?: Activity }
+/** A product or service sold (D-UX-109): what it is, how many a month at full running, and its price a unit. */
+export interface ProductInput { name?: string; unitsMonth?: number; price?: number }
+/** A product's line in a year: the units sold (at the year's use of the capacity, for its months of sales), the price a
+ * unit that year, and the sales; the lines add up to the year's sales. */
+export interface ProductYear { name: string; units: number; price: number; sales: number }
 
 export interface ReportInput {
   /** Who the borrower is (an id in engine/data/tax.json): it sets the tax. */
@@ -37,9 +42,10 @@ export interface ReportInput {
   subsidy?: number;
   unsecured?: number;
   /** Sales by the capacity (units a year) × its use (% by year of sales, the last repeating) × the price a unit, growing
-   * by `priceGrowthPct` a year; or, with `salesBy: 'typed'`, a full year's sales and their growth a year (%). */
+   * by `priceGrowthPct` a year; or, with `salesBy: 'typed'`, a full year's sales and their growth a year (%). `products`,
+   * one line each (units a month at full running and the price), take the place of the capacity and the price. */
   salesBy?: 'drivers' | 'typed';
-  capacity?: number; price?: number; utilisationPct?: number[]; priceGrowthPct?: number;
+  capacity?: number; price?: number; products?: ProductInput[]; utilisationPct?: number[]; priceGrowthPct?: number;
   sales?: number; salesGrowthPct?: number;
   /** Months from the term loan's first draw to the first sales (0 if at once). */
   monthsToStart?: number;
@@ -63,8 +69,8 @@ export interface Flow {
 }
 export interface ReportYear {
   fy: string;
-  /** Months of sales in the year, and the use of the capacity (by drivers only). */
-  months: number; utilisationPct?: number;
+  /** Months of sales in the year, the use of the capacity and the sales by product (by drivers only). */
+  months: number; utilisationPct?: number; products?: ProductYear[];
   sales: number; variable: number; fixed: number; pbdit: number; depreciation: number; preliminary: number; tlInterest: number; wcInterest: number; pbt: number; tax: number; pat: number;
   capital: number; subsidy: number; retained: number; netWorth: number; unsecured: number; termLoan: number; wcLoan: number; creditors: number; liabilities: number;
   grossBlock: number; accumulated: number; netBlock: number; preliminaryLeft: number; stock: number; debtors: number; cash: number; assets: number;
@@ -118,8 +124,17 @@ export function reportNeeds(x: ReportInput): string[] {
     if (!isNum(x.sales)) needs.push('Sales in a full first year');
     if (!isNum(x.salesGrowthPct)) needs.push('Sales: growth a year (%)');
   } else {
-    if (!(isNum(x.capacity) && x.capacity > 0)) needs.push('Capacity: the units the business can make or serve in a year');
-    if (!(isNum(x.price) && x.price > 0)) needs.push('Price a unit');
+    if (x.products) {
+      if (!x.products.length) needs.push('Sales: at least one product or service');
+      x.products.forEach((p, k) => {
+        if (!p.name?.trim()) needs.push(`Sales, line ${k + 1}: what is sold`);
+        if (!(isNum(p.unitsMonth) && p.unitsMonth > 0)) needs.push(`Sales, line ${k + 1}: how many a month at full running`);
+        if (!(isNum(p.price) && p.price > 0)) needs.push(`Sales, line ${k + 1}: the price a unit`);
+      });
+    } else {
+      if (!(isNum(x.capacity) && x.capacity > 0)) needs.push('Capacity: the units the business can make or serve in a year');
+      if (!(isNum(x.price) && x.price > 0)) needs.push('Price a unit');
+    }
     const u = x.utilisationPct ?? [];
     if (!u.length || !u.every((p) => isNum(p) && p >= 0 && p <= 100)) needs.push('Use of the capacity by year (%), each 0 to 100');
     if (!isNum(x.priceGrowthPct)) needs.push('The price: growth a year (%)');
@@ -157,8 +172,12 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   // each month of sales in it.
   const drivers = x.salesBy !== 'typed', u = x.utilisationPct ?? [];
   const util = drivers ? fys.map((_, k) => u[Math.min(k, u.length - 1)]) : [];
+  // The products as units a year at full running (the capacity is one line); their sales at full running add up.
+  const lines = !drivers ? [] : x.products ? x.products.map((p) => ({ name: (p.name as string).trim(), perYear: 12 * (p.unitsMonth as number), price: p.price as number }))
+    : [{ name: '', perYear: x.capacity as number, price: x.price as number }];
+  const full = lines.reduce((t, l) => t + l.perYear * l.price, 0), grow = (k: number) => Math.pow(1 + (x.priceGrowthPct as number) / 100, k);
   let runS: number[];
-  if (drivers) runS = util.map((p, k) => ((x.capacity as number) * (x.price as number) * Math.pow(1 + (x.priceGrowthPct as number) / 100, k) * p) / 100);
+  if (drivers) runS = util.map((p, k) => (full * grow(k) * p) / 100);
   else {
     const typed = series({ kind: 'grow', first: x.sales, pct: x.salesGrowthPct }, n, 'Sales', first);
     if (!Array.isArray(typed)) return typed;
@@ -241,8 +260,16 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   const collateral = isNum(x.collateral) ? { market: x.collateral, rsv: (x.collateral * RATIOS.collateral.rsvPct) / 100, dsv: (x.collateral * RATIOS.collateral.dsvPct) / 100 } : undefined;
   const out: ReportYear[] = [];
   let cash = 0, retained = 0, accumulated = 0, written = 0, prev = { stock: 0, debtors: 0, creditors: 0 };
+  let byProductOk = true;
   rows.forEach((r, k) => {
     const p = plan.profit[k], d = plan.schedule.find((s) => s.fy === r.fy), st = plan.statement.rows[k], lv = level(k);
+    // Each product's units sold in the year (a twelfth of its year at full running, at the year's use, for each month of
+    // sales) at the year's price; the lines must add up to the year's sales.
+    const byProduct = drivers && x.products ? lines.map((l) => {
+      const units = (((l.perYear * util[k]) / 100) * months[k]) / 12, price = l.price * grow(k);
+      return { name: l.name, units, price, sales: units * price };
+    }) : undefined;
+    if (byProduct && !money(byProduct.reduce((t, l) => t + l.sales, 0), r.sales)) byProductOk = false;
     const principal = d?.principal ?? 0, tlLeft = d?.closing ?? 0;
     retained += p.pat; accumulated += r.depreciation; written += r.preliminary;
     const flow: Flow = {
@@ -262,7 +289,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     const interest = p.interestTL + r.wcInterest, currentAssets = lv.stock + lv.debtors;
     const security = netBlock + currentAssets, secured = tlLeft + limit;
     out.push({
-      fy: r.fy, months: months[k], ...(drivers ? { utilisationPct: util[k] } : {}), sales: r.sales, variable: r.variable, fixed: r.fixed, pbdit: r.pbdit, depreciation: r.depreciation, preliminary: r.preliminary,
+      fy: r.fy, months: months[k], ...(drivers ? { utilisationPct: util[k] } : {}), ...(byProduct ? { products: byProduct } : {}), sales: r.sales, variable: r.variable, fixed: r.fixed, pbdit: r.pbdit, depreciation: r.depreciation, preliminary: r.preliminary,
       tlInterest: p.interestTL, wcInterest: r.wcInterest, pbt: p.pbt, tax: p.tax, pat: p.pat,
       capital: promoter, subsidy, retained, netWorth, unsecured, termLoan: tlLeft, wcLoan: limit, creditors: lv.creditors, liabilities,
       grossBlock: fixedAssets, accumulated, netBlock, preliminaryLeft, stock: lv.stock, debtors: lv.debtors, cash, assets, flow,
@@ -280,11 +307,13 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     prev = lv;
   });
 
+  if (!byProductOk) return blocked('the sales by product');
   const unbalanced = out.find((y) => !money(y.assets, y.liabilities));
   if (unbalanced) return blocked(`the balance sheet for ${unbalanced.fy}`);
   const check = reportCheck({
     cost: { ...cost, preliminary: prelimAll }, promoter, subsidy, unsecured, limit, run: runS, months, variablePct: v, fixed: rows.map((r) => r.fixed), days,
-    ...(drivers ? { drivers: { capacity: x.capacity as number, price: x.price as number, utilisationPct: util, priceGrowthPct: x.priceGrowthPct as number } } : {}),
+    ...(drivers ? { drivers: { ...(x.products ? { products: x.products.map((p) => ({ unitsMonth: p.unitsMonth as number, price: p.price as number })) } : { capacity: x.capacity as number, price: x.price as number }),
+      utilisationPct: util, priceGrowthPct: x.priceGrowthPct as number } } : {}),
     pat: plan.profit.map((p) => p.pat), tlInterest: plan.profit.map((p) => p.interestTL), wcInterest: rows.map((r) => r.wcInterest),
     loan: loan as LoanTerms, fys,
   });

@@ -131,11 +131,11 @@
     "/project-report/": {
       "before": 39,
       "shown": 865,
-      "all": 2600,
-      "plan": 2688,
+      "all": 2602,
+      "plan": 2690,
       "long": 0,
       "abbr": 5,
-      "questions": 28,
+      "questions": 29,
       "controls": 51,
       "answerAt": 5.3,
       "gap": 0,
@@ -1009,6 +1009,30 @@
       "to": 32,
       "why": "D-UX-108",
       "date": "2026-10-18"
+    },
+    {
+      "page": "/project-report/",
+      "count": "all",
+      "from": 2600,
+      "to": 2602,
+      "why": "D-UX-109",
+      "date": "2026-10-20"
+    },
+    {
+      "page": "/project-report/",
+      "count": "plan",
+      "from": 2688,
+      "to": 2690,
+      "why": "D-UX-109",
+      "date": "2026-10-20"
+    },
+    {
+      "page": "/project-report/",
+      "count": "questions",
+      "from": 28,
+      "to": 29,
+      "why": "D-UX-109",
+      "date": "2026-10-20"
     }
   ],
   "fontProbe": 320.2

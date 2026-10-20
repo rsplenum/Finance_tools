@@ -24,8 +24,8 @@ export interface ReportState {
   subsidy: string; unsecured: string;
   /** The collateral's market value, under More options (D-UX-52). */
   collateral: string;
-  /** Sales from the capacity, its use and the price (the default), or typed under More options. */
-  salesBy: 'drivers' | 'typed'; capacity: string; price: string; utilisation: string; priceGrowth: string; monthsToStart: string;
+  /** Sales from one line per product, its use and the prices (the default, D-UX-109), or typed under More options. */
+  salesBy: 'drivers' | 'typed'; products: ProductRow[]; utilisation: string; priceGrowth: string; monthsToStart: string;
   scheme: '' | 'pmegp'; category?: Category; area?: Area; activity?: Activity;
   sales: string; salesGrowth: string; variablePct: string; fixed: string; fixedGrowth: string;
   days: { stock: string; debtors: string; creditors: string };
@@ -37,12 +37,15 @@ export interface ReportState {
   doc: ReportFacts;
 }
 
+/** A product or service as typed: what it is, how many a month at full running, its price a unit. */
+export interface ProductRow { name: string; units: string; price: string }
+export const NO_PRODUCT: ProductRow = { name: '', units: '', price: '' };
 const DAYS = (ASSUMPTIONS.find((a) => a.id === 'days')?.value ?? {}) as Record<string, number>;
 const assumed = (id: string) => ASSUMPTIONS.find((a) => a.id === id)?.value;
 export const EMPTY: ReportState = {
   cost: Object.fromEntries(HEADS.map((h) => [h.id, ''])) as Record<HeadId, string>,
   loan: { amount: '', ratePct: '', disbursed: '', moratoriumMonths: '', instalments: '' },
-  subsidy: '', unsecured: '', collateral: '', salesBy: 'drivers', capacity: '', price: '', monthsToStart: '', scheme: '',
+  subsidy: '', unsecured: '', collateral: '', salesBy: 'drivers', products: [NO_PRODUCT], monthsToStart: '', scheme: '',
   utilisation: ((assumed('utilisation') ?? []) as number[]).join(', '), priceGrowth: String(assumed('price') ?? ''), sales: '', salesGrowth: '', variablePct: '', fixed: '', fixedGrowth: '',
   // Assumed until changed (engine/data/report.json), listed on the page.
   days: { stock: String(DAYS.stock ?? ''), debtors: String(DAYS.debtors ?? ''), creditors: String(DAYS.creditors ?? '') },
@@ -85,7 +88,8 @@ export function inputOf(s: ReportState): ReportInput {
     subsidy: s.scheme ? undefined : opt(s.subsidy), unsecured: opt(s.unsecured), collateral: opt(s.collateral),
     salesBy: s.salesBy, monthsToStart: plainOf(s.monthsToStart),
     ...(s.salesBy === 'typed' ? { sales: amountOf(s.sales), salesGrowthPct: plainOf(s.salesGrowth) } : {
-      capacity: plainOf(s.capacity), price: amountOf(s.price), priceGrowthPct: plainOf(s.priceGrowth),
+      products: s.products.map((p) => ({ name: p.name, unitsMonth: plainOf(p.units), price: amountOf(p.price) })),
+      priceGrowthPct: plainOf(s.priceGrowth),
       utilisationPct: s.utilisation.split(/[,\s]+/).filter(Boolean).map((t) => plainOf(t) ?? NaN),
     }),
     ...(s.scheme === 'pmegp' ? { scheme: { id: 'pmegp' as const, category: s.category, area: s.area, activity: s.activity } } : {}), variablePct: plainOf(s.variablePct), fixedCosts: amountOf(s.fixed), fixedGrowthPct: plainOf(s.fixedGrowth),
@@ -136,6 +140,17 @@ export function viewOf(r: Report): ReportView {
       { label: 'Total means of finance', values: [rupees(f.total)], n: [f.total], kind: 'total' },
     ],
   };
+  // Sales by product (D-UX-109): each line's units sold, price a unit and sales a year; the lines add up to the sales.
+  const whole = (x: number) => (Math.abs(x - Math.round(x)) < 1e-6 ? inr(Math.round(x)) : inr(x, 2));
+  const names = ys[0].products?.map((p) => p.name) ?? [];
+  const sales: ViewTable | undefined = names.length ? {
+    id: 'sales', title: 'Sales by product', first: 'Rupees', columns: years,
+    rows: [...names.flatMap((name, i) => [head(name),
+      { label: 'Units sold', values: ys.map((y) => whole((y.products as NonNullable<ReportYear['products']>)[i].units)), n: ys.map((y) => (y.products as NonNullable<ReportYear['products']>)[i].units), fig: 'ratio' as const },
+      { label: 'Price a unit', values: ys.map((y) => whole((y.products as NonNullable<ReportYear['products']>)[i].price)), n: ys.map((y) => (y.products as NonNullable<ReportYear['products']>)[i].price) },
+      line(ys, 'Sales', (y) => (y.products as NonNullable<ReportYear['products']>)[i].sales)]),
+    line(ys, 'Total sales', (y) => y.sales, 'total')],
+  } : undefined;
   const pl: ViewTable = {
     id: 'pl', title: 'Projected profit and loss', first: 'Rupees', columns: years,
     rows: [
@@ -229,7 +244,7 @@ export function viewOf(r: Report): ReportView {
     rows: r.plan.schedule.map((d) => ({ label: d.fy, values: [rupees(d.interest), rupees(d.principal), rupees(d.closing)], n: [d.interest, d.principal, d.closing] })),
   };
   return {
-    years, tables: [cost, finance, ...(collateral ? [collateral] : []), pl, bs, cf, dscr, bep, keyRatios, wc, schedule],
+    years, tables: [cost, finance, ...(collateral ? [collateral] : []), ...(sales ? [sales] : []), pl, bs, cf, dscr, bep, keyRatios, wc, schedule],
     key: [
       { label: 'Cost of the project', value: `Rs. ${rupees(r.projectCost)}` },
       ...(sc ? [{ label: 'PMEGP margin money', value: `Rs. ${rupees(sc.subsidy)}`, note: `${sc.ratePct}% of Rs. ${rupees(sc.base)}, set off after ${PMEGP.lockInYears} years` }] : []),
@@ -309,7 +324,8 @@ export function viableOf(s: ReportState): ViableView | undefined {
       ...(u?.overFull ? { reach: { out: true, text: `Out of reach at this capacity: it needs ${upPct(top)}% of it. Only a higher price or a larger capacity can carry it.` } }
         : u?.overMost ? { reach: { out: false, text: `Above the ${LEVELS.capacity.mostUsePct}% use of the capacity a plan takes at most: give the reason it can.` } } : {}),
       note: [
-        sl.price && u ? `That is a price of Rs. ${(Math.ceil(sl.price.needed * 100 - 1e-6) / 100).toFixed(2)} a unit (now Rs. ${sl.price.now}) at the same use, or the use of the capacity at ${distinct.map((x) => `${upPct(x)}%`).join(', then ')} at the same price.` : '',
+        sl.price && u ? `That is a price of Rs. ${(Math.ceil(sl.price.needed * 100 - 1e-6) / 100).toFixed(2)} a unit (now Rs. ${sl.price.now}) at the same use, or the use of the capacity at ${distinct.map((x) => `${upPct(x)}%`).join(', then ')} at the same price.`
+          : u ? `That is every price ${(sl.tenths / 10).toFixed(1)}% higher at the same use, or the use of the capacity at ${distinct.map((x) => `${upPct(x)}%`).join(', then ')} at the same prices.` : '',
         cashLeft(sl) ?? '',
       ].filter(Boolean).join(' ') || undefined });
   } else if (v.salesNone) push({ id: 'sales', head: 'Higher sales', text: v.salesNone, ...none });
