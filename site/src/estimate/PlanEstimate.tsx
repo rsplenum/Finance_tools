@@ -12,7 +12,7 @@
  */
 import { Fragment } from 'preact';
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, toAnswer, useAnswerPlace } from '../fields';
+import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, toAnswer, useAnswerPlace, InAppNote } from '../fields';
 import { printable } from '../doc/pdf';
 import { BRAND_NOTICE } from '../site';
 import { isoDate, save, type FileKind } from '../download';
@@ -624,6 +624,7 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
         <button type="button" data-testid="pl-download-xlsx" class={BUTTON} onClick={() => go('xlsx')}>Download Excel</button>
         <button type="button" data-testid="pl-download-docx" class={BUTTON} onClick={() => go('docx')}>Download Word</button>
       </div>
+      <InAppNote id="pl-in-app" />
     </div>
     <div class="mt-5">
       <p class={HINT}>A bill of quantities for two or three contractors to quote like for like: each item, where it goes and how much, with the rates left blank.</p>

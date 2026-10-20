@@ -19,7 +19,7 @@ import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import DSCR_FILE from '../../../engine/data/dscr.json';
 import TAX_FILE from '../../../engine/data/tax.json';
-import { answerRule, AnswerBar, Why, BUTTON, CellInput, Claim, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick } from '../fields';
+import { answerRule, AnswerBar, Why, BUTTON, CellInput, Claim, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick, InAppNote } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
 import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
@@ -617,6 +617,7 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
           <button type="button" data-testid="download-docx" class={BUTTON} onClick={() => save('docx')}>Download Word</button>
           <button type="button" data-testid="print" class={BUTTON} onClick={() => { const now = new Date(); openPdf(statementDoc(s, p, isoDate(now)), now); }}>Print</button>
         </div>
+        <InAppNote id="in-app" />
         </div>
       </div>
       : null}

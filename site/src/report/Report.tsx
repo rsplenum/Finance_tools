@@ -7,7 +7,7 @@
 import { Fragment, type ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
-import { answerRule, AnswerBar, BUTTON, Choice, Claim, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, Section, STATE, TextField, Tick } from '../fields';
+import { answerRule, AnswerBar, BUTTON, Choice, Claim, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote } from '../fields';
 import { Bar, Benchmarks, Lever, PlanLever, targetOf } from '../Board';
 import { benchmarkFields, inSentence, listed, withBenchmark } from '../board-model';
 import { printable } from '../doc/pdf';
@@ -429,6 +429,7 @@ function Download({ s, p, update }: { s: ReportState; p: ReportPreview; update: 
           <button type="button" data-testid="rep-download-xlsx" class={BUTTON} onClick={() => go('xlsx')}>Download Excel</button>
           <button type="button" data-testid="rep-download-docx" class={BUTTON} onClick={() => go('docx')}>Download Word</button>
         </div>
+        <InAppNote id="rep-in-app" />
       </div>
   </Section>;
 }

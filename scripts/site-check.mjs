@@ -68,8 +68,8 @@ for (const f of (await readdir(DIST, { recursive: true })).filter((f) => f.endsW
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 
 /** Opens a page at 390 px. `stored` is a saved theme choice; `blockScripts` loads the page without its script files. */
-async function open(path, { scheme = 'light', stored, blockScripts = false, at = '2026-10-02T10:00:00+05:30', events } = {}) {
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: scheme });
+async function open(path, { scheme = 'light', stored, blockScripts = false, at = '2026-10-02T10:00:00+05:30', events, userAgent } = {}) {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: scheme, userAgent });
   // Interaction data (UD1): `events` collects each batch the page sends, as the live Worker would get it.
   if (events) {
     await ctx.addInitScript(() => { window.__EVENTS__ = '/api/e'; });
@@ -185,6 +185,23 @@ async function expectValue(page, v, sel, want, step) {
   for (let i = 0; got !== want && i < 30; i++) { await page.waitForTimeout(100); got = await page.inputValue(sel); }
   if (got !== want) v(`${step}: ${sel} holds "${got}", want "${want}"`);
 }
+/** Q1: each download, timed from the tap to the file on a slow phone (the CPU four times slower, as a low-cost Android);
+ * past SLOW_MS it fails. Returns the file's name and bytes. */
+const SLOW_MS = 1500;
+const timings = [];
+const saver = (page, v) => async (id) => {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+  const t0 = Date.now();
+  const [file] = await Promise.all([page.waitForEvent('download', { timeout: 10000 }), page.getByTestId(id).click()]);
+  const ms = Date.now() - t0;
+  await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
+  await cdp.detach();
+  timings.push([id, ms]);
+  if (ms > SLOW_MS) v(`${id} took ${ms} ms on a slow phone, over ${SLOW_MS} (Q1)`);
+  const path = await file.path();
+  return { name: file.suggestedFilename(), bytes: path ? await readFile(path) : Buffer.alloc(0) };
+};
 const leave = async (page, sel, value) => { await page.fill(sel, value); await page.press(sel, 'Tab'); };
 /** The detailed form sits under the closed "More options" (P1f): the flows below open it first. */
 const openMore = async (page) => {
@@ -474,11 +491,7 @@ async function layout(page, v, step) {
   await expectText(page, v, 'doc-status', 'Figures complete; for the document, 2 still to answer', 'the download before its facts');
   const own = await page.getByTestId('doc-needs').locator('li').allTextContents();
   if (own.join('|') !== "The borrower's name|The lender") v(`the download asks for ${JSON.stringify(own)}`);
-  const save = async (id) => {
-    const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.getByTestId(id).click()]);
-    const path = await file.path();
-    return { name: file.suggestedFilename(), bytes: path ? await readFile(path) : Buffer.alloc(0) };
-  };
+  const save = saver(page, v);
   let pdf = await save('download-pdf');
   if (pdf.name !== 'DSCR statement (provisional).pdf') v(`the provisional PDF is named "${pdf.name}"`);
   let pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
@@ -744,11 +757,7 @@ for (const scheme of ['light', 'dark']) {
   await leave(page, '#fld-pl-owner', 'Asha Rao');
   await leave(page, '#fld-pl-property', 'Flat 4, Example Towers, Pune');
   await expectText(page, v, 'pl-doc-status', 'Complete', 'the planning estimate with its facts');
-  const save = async (id) => {
-    const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.getByTestId(id).click()]);
-    const path = await file.path();
-    return { name: file.suggestedFilename(), bytes: path ? await readFile(path) : Buffer.alloc(0) };
-  };
+  const save = saver(page, v);
   const pdf = await save('pl-download-pdf');
   if (pdf.name !== 'Planning estimate - Asha Rao.pdf') v(`the planning estimate PDF is named "${pdf.name}"`);
   const pdfText = (await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]));
@@ -1047,11 +1056,7 @@ for (const scheme of ['light', 'dark']) {
   await leave(page, '#fld-est-borrower', 'Asha Traders');
   await leave(page, '#fld-est-property', 'Plot 12, Example Nagar, Pune');
   await expectText(page, v, 'est-doc-status', 'Complete', 'the estimate with its facts');
-  const save = async (id) => {
-    const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.getByTestId(id).click()]);
-    const path = await file.path();
-    return { name: file.suggestedFilename(), bytes: path ? await readFile(path) : Buffer.alloc(0) };
-  };
+  const save = saver(page, v);
   const pdf = await save('est-download-pdf');
   if (pdf.name !== 'Estimate - Asha Traders.pdf') v(`the estimate PDF is named "${pdf.name}"`);
   const pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
@@ -1153,11 +1158,7 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input):not
   await leave(page, '#fld-rep-activity', 'Manufacture of corrugated boxes');
   await leave(page, '#fld-rep-address', 'Plot 4, Example MIDC, Pune');
   await expectText(page, v, 'rep-doc-status', 'Complete', 'the report with its facts');
-  const save = async (id) => {
-    const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.getByTestId(id).click()]);
-    const path = await file.path();
-    return { name: file.suggestedFilename(), bytes: path ? await readFile(path) : Buffer.alloc(0) };
-  };
+  const save = saver(page, v);
   const pdf = await save('rep-download-pdf');
   if (pdf.name !== 'Project report - Asha Packaging.pdf') v(`the report PDF is named "${pdf.name}"`);
   const pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
@@ -1241,11 +1242,7 @@ const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await
   await expectText(page, v, 'cma-doc-status', 'Figures complete; for the document, 1 still to answer', 'the CMA document before its name');
   await leave(page, '#fld-cma-name', 'K Steel Furniture Pvt Ltd');
   await expectText(page, v, 'cma-doc-status', 'Complete', 'the CMA document');
-  const save = async (id) => {
-    const [file] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }), page.getByTestId(id).click()]);
-    const path = await file.path();
-    return { name: file.suggestedFilename(), bytes: path ? await readFile(path) : Buffer.alloc(0) };
-  };
+  const save = saver(page, v);
   const pdf = await save('cma-download-pdf');
   if (pdf.name !== 'CMA data - K Steel Furniture Pvt Ltd.pdf') v(`the CMA PDF is named "${pdf.name}"`);
   const text = (await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`])).join('\n');
@@ -1397,6 +1394,24 @@ const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await
   await c2.close();
 }
 
+// Q1: in WhatsApp's own browser the downloads carry the way out to the phone's: on Android a link to the same page.
+{
+  const UA = 'Mozilla/5.0 (Linux; Android 13; SM-A145F; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/129.0.0.0 Mobile Safari/537.36 WhatsApp/2.24.21.80';
+  const { ctx, page, v } = await open('/estimate/', { userAgent: UA });
+  await page.check('#fld-work-renovate');
+  await page.check('#fld-home-flat');
+  await page.selectOption('#fld-city', 'pune');
+  await leave(page, '#fld-carpet', '1,000');
+  await page.check('#fld-bhk-2');
+  await page.click('#fld-level-1');
+  const href = await page.getByTestId('pl-in-app').locator('a').getAttribute('href', { timeout: 3000 }).catch(() => null);
+  if (href !== 'intent://' + new URL(BASE).host + '/estimate/#Intent;scheme=http;end') v(`Q1: in WhatsApp the downloads' way out reads ${href}`);
+  await ctx.close();
+  const plain = await open('/estimate/');
+  if (await plain.page.getByTestId('pl-in-app').count()) plain.v('Q1: the in-app line shows in a phone\'s own browser');
+  await plain.ctx.close();
+}
+
 // The design team's measured checks (DT1, docs/DESIGN.md): every page at 360 and 1280 px, light and dark, 320 px, reduced motion.
 const design = await designChecks({ browser, BASE, pages, violations });
 const load = await loadCheck({ browser, BASE, pages, violations });
@@ -1407,6 +1422,7 @@ console.log(`site check: ${pages.length} pages at 390 px, light and dark: ${viol
 console.log(`design checks: ${design.lines} findings measured (each held in scripts/design-baseline.json), ${design.tokens.rawColour} raw colour classes, ${design.tokens.arbitraryValue} arbitrary values${design.lower.length ? `; lower the baseline: ${design.lower.join(', ')}` : ''}${design.fixed ? `; ${design.fixed} known findings fixed, take them out of the baseline` : ''}`);
 console.log(`load measure: ${load.pages} pages against scripts/load-baseline.json, ${load.rose} counts rose, ${load.fell} fell${load.fonts ? '' : '; other fonts here than the baseline\'s, so the answer\'s place and the out-of-sight count are not compared'} (docs/LOAD-MEASURE.md)`);
 console.log(`FinSight's rules: ${forbidden.pages} page${forbidden.pages === 1 ? '' : 's'} in the new look (docs/DESIGN.md), F1 to F19; home weighs ${forbidden.weight} KB as it loads (cap ${WEIGHT_CAP} KB)`);
+console.log(`downloads on a slow phone (CPU ×4): ${timings.length} timed, slowest ${Math.max(0, ...timings.map((t) => t[1]))} ms (cap ${SLOW_MS} ms)`);
 for (const x of violations) console.log(`  - ${x}`);
 // In CI each violation is also an annotation, readable where the job's log is not (UX4).
 if (process.env.GITHUB_ACTIONS) for (const x of violations) console.log(`::error title=site check::${String(x).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
