@@ -151,6 +151,12 @@ Working capital: The second method of lending (Tandon Committee): the bank finan
 - **Tax**: Paid in the year it falls due. No tax is left owing in the balance sheet.
 - **Use of the capacity**: 60% in the first year of sales, 70% in the second, 80% from the third. A new unit rarely runs full at once; type the business's own under More options.
 - **The price a unit**: Held where it is in every year. On the careful side: sales grow only with the use of the capacity.
+- **The guarantee fee**: Paid by the borrower every year, at the scheme's rate, as a finance cost. The bank may bear it, pass it on or add a risk-based fee; type the sanction letter's rate under More options (0 if the bank bears it).
+- **The guarantee fee's first year**: Pro rata by months: the term loan's from its first draw, the limit's from the first sales. The schemes bill the first year for twelve months or to 31 March; by months, each year bears its own part.
+- **Other loans under CGTMSE**: None: the fee's slab is set by this term loan and limit alone. Other loans the borrower has under CGTMSE add to the cover and may raise the slab; type the sanction letter's rate if so.
+- **CGTMSE's rate**: The standard rate for the slab, less the concessions ticked. A bank's own rate may be up to 10% lower or 70% higher; type the sanction letter's rate under More options.
+- **CGTMSE on the working-capital limit**: Charged on the whole limit. The upper figure: the bank reports the outstanding it expects, which may be less.
+- **PMEGP's margin money under CGTMSE**: Counted in the term loan outstanding until it is set off after 3 years. The upper figure: the bank holds it as a deposit against the loan until then.
 
 **How the figures are worked out**
 
@@ -161,7 +167,8 @@ Working capital: The second method of lending (Tandon Committee): the bank finan
 - The promoters bring in the cost of the project less the term loan, any subsidy and any unsecured loans.
 - Cash in hand is what the cash flow leaves; the balance sheet must balance with it, or no figures are shown.
 - DSCR is the common term-loan DSCR: (profit after tax + depreciation + preliminary expenses written off + interest on the term loan) ÷ (principal + interest on the term loan); the average is the totals' ratio.
-- Break-even: fixed costs (with depreciation, preliminary expenses written off and interest) ÷ the contribution (sales less variable costs), as a share of sales; the cash break-even leaves out depreciation and the write-off.
+- Break-even: fixed costs (with depreciation, preliminary expenses written off interest and any guarantee fee) ÷ the contribution (sales less variable costs), as a share of sales; the cash break-even leaves out depreciation and the write-off.
+- A guarantee fee, when the loans are guaranteed (CGFMU under Mudra, or CGTMSE when ticked), is a finance cost, worked a month at a time. CGFMU: 1% a year of the term loan sanctioned in the year of its first draw, then of what is outstanding on 1 April, and of the working-capital limit. CGTMSE: the rate for the slab of the whole cover, less 10% for each concession ticked; on the amount guaranteed for the first twelve months, then on what was outstanding on the 31 December before each year, while the loan runs; and on the whole limit. The fee before the first sales is paid from the cost of the project, with the interest then.
 
 ## The default benchmark ratios
 

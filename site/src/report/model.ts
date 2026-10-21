@@ -3,19 +3,21 @@
  * report to tables in words, with the engine's exact figures beside them for the Excel copy. The page and the document
  * show the same tables. Pure, no DOM. Figures: engine/report.ts only (with dscr.ts for profit, tax and DSCR).
  */
-import { ASSUMPTIONS, HEADS, PMEGP, REPORT_REVIEW_BY, projectReport, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
+import { ASSUMPTIONS, HEADS, MUDRA, PMEGP, REPORT_REVIEW_BY, mudraLevel, mudraShort, projectReport, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
 import { parseAmount, parseMonth } from '../../../engine/parse';
 import { LEVELS, collateralNeeded, diagnose, type Levels, type RatioCheck } from '../../../engine/ratios';
 import { makeViable, type Longer, type Outcome } from '../../../engine/viable';
 import { AS_TYPED, LEVER_IDS, makePlan, withLevers, type LeverId, type Levers } from '../../../engine/plan';
 import { BORROWERS } from '../../../engine/tax';
 import { inr } from '../../../engine/util';
+import { GUARANTEES } from '../../../engine/guarantee';
 import {
   inSentence, labelOf, listed, rowOf, upPct, upRupees, type BoardMove, type CheckRow, type ViableLine, type ViableView,
   benchmarksNote, levelsOf, ratiosWord, type BenchmarkText,
 } from '../board-model';
 
 export type Repayment = 'emi' | 'monthly' | 'quarterly';
+export type Scheme = '' | 'pmegp' | 'mudra';
 export interface ReportFacts { name: string; activity: string; address: string; lender: string; preparedBy: string }
 export interface ReportState {
   borrower?: string;
@@ -26,7 +28,12 @@ export interface ReportState {
   collateral: string;
   /** Sales from one line per product, its use and the prices (the default, D-UX-109), or typed under More options. */
   salesBy: 'drivers' | 'typed'; products: ProductRow[]; utilisation: string; priceGrowth: string; monthsToStart: string;
-  scheme: '' | 'pmegp'; category?: Category; area?: Area; activity?: Activity;
+  scheme: Scheme; category?: Category; area?: Area; activity?: Activity;
+  /** PMEGP's conditions confirmed; on Mudra, a Tarun loan repaid (only then Tarun Plus, above Rs. 10 lakh). */
+  pmegpConfirmed?: boolean; tarunRepaid?: boolean;
+  /** CGTMSE's guarantee ticked, on a loan not under Mudra, and its concessions ticked (CGTMSE.groups, in order); a fee
+   * rate typed from the sanction letter (% a year), over the scheme's, under More options. */
+  cgtmse?: boolean; concessions?: boolean[]; feeRate: string;
   sales: string; salesGrowth: string; variablePct: string; fixed: string; fixedGrowth: string;
   days: { stock: string; debtors: string; creditors: string };
   wcLimit: string; wcRate: string;
@@ -49,13 +56,28 @@ export const EMPTY: ReportState = {
   utilisation: ((assumed('utilisation') ?? []) as number[]).join(', '), priceGrowth: String(assumed('price') ?? ''), sales: '', salesGrowth: '', variablePct: '', fixed: '', fixedGrowth: '',
   // Assumed until changed (engine/data/report.json), listed on the page.
   days: { stock: String(DAYS.stock ?? ''), debtors: String(DAYS.debtors ?? ''), creditors: String(DAYS.creditors ?? '') },
-  wcLimit: '', wcRate: '', promotersMost: '', doc: { name: '', activity: '', address: '', lender: '', preparedBy: '' },
+  wcLimit: '', wcRate: '', feeRate: '', promotersMost: '', doc: { name: '', activity: '', address: '', lender: '', preparedBy: '' },
 };
 export const BORROWER_CHOICES = BORROWERS.map((b) => ({ value: b.id, label: b.label }));
 export const REPAYMENT_CHOICES: { value: Repayment; label: string }[] = [
   { value: 'emi', label: 'EMI every month' }, { value: 'monthly', label: 'Equal principal every month' }, { value: 'quarterly', label: 'Equal principal every quarter' },
 ];
-export const SCHEME_CHOICES: { value: '' | 'pmegp'; label: string }[] = [{ value: '', label: 'None' }, { value: 'pmegp', label: 'PMEGP' }];
+export const SCHEME_CHOICES: { value: Scheme; label: string }[] = [{ value: '', label: 'None' }, { value: 'pmegp', label: 'PMEGP' }, { value: 'mudra', label: 'Mudra' }];
+export const CGTMSE = GUARANTEES.cgtmse, CGFMU = GUARANTEES.cgfmu;
+/** On Mudra, its level by the term loan and the limit typed; until both are typed, what it waits for. */
+export function mudraLine(s: ReportState): string {
+  const tl = amountOf(s.loan.amount), wc = amountOf(s.wcLimit);
+  if (tl === undefined || wc === undefined) return 'Its level shows once the term loan and the working-capital limit are typed.';
+  const v = mudraLevel(tl + wc);
+  return v ? `${v.label}: the term loan and the limit come to Rs. ${rupees(tl + wc)}${v.onlyAfterTarun ? ', only for a borrower who has repaid a Tarun loan' : ''}.`
+    : `The term loan and the limit come to Rs. ${rupees(tl + wc)}, above the Rs. ${rupees(MUDRA.mostInAll)} Mudra lends in all.`;
+}
+/** Mudra's Tarun Plus, which asks whether a Tarun loan was repaid: above Tarun's most, or once ticked. */
+export const tarunAsked = (s: ReportState) => s.scheme === 'mudra' && (!!s.tarunRepaid || (amountOf(s.loan.amount) ?? 0) + (amountOf(s.wcLimit) ?? 0) > (MUDRA.levels.find((v) => v.id === 'tarun') as { upTo: number }).upTo);
+
+/** The guarantee on the loans as chosen: CGFMU's on Mudra, CGTMSE's when ticked on another loan. */
+export const guaranteeOf = (s: ReportState) => (s.scheme === 'mudra' ? 'cgfmu' : s.cgtmse ? 'cgtmse' : undefined);
+export { MUDRA };
 export const CATEGORY_CHOICES: { value: Category; label: string }[] = [
   { value: 'general', label: 'General' }, { value: 'special', label: 'Special: SC, ST, OBC, minority, woman, ex-serviceman, a person with a disability and others the scheme names' },
 ];
@@ -63,9 +85,16 @@ export const AREA_CHOICES: { value: Area; label: string }[] = [{ value: 'urban',
 export const ACTIVITY_CHOICES: { value: Activity; label: string }[] = [{ value: 'manufacturing', label: 'Manufacturing' }, { value: 'service', label: 'A service' }];
 /** The assumptions listed on the page: the use of the capacity and the price only while sales come from the drivers. */
 // Each still standing, and the days only those not typed over (review finding 8: the ledger never lists a value changed).
+// The guarantee's only while there is one: CGTMSE's rate and slab only at its own rate, its limit only with one, its
+// margin money only under PMEGP.
 export function assumptionsOf(s: ReportState) {
   const days = (['stock', 'debtors', 'creditors'] as const).filter((k) => s.days[k] === EMPTY.days[k]);
-  return ASSUMPTIONS.filter((a) => (s.salesBy === 'drivers' || (a.id !== 'utilisation' && a.id !== 'price'))
+  const g = guaranteeOf(s), own = !s.feeRate.trim(), limit = (amountOf(s.wcLimit) ?? 0) > 0;
+  const shows: Record<string, boolean> = {
+    guaranteeFee: !!g && own, guaranteeFirst: !!g, cgtmseOther: g === 'cgtmse' && own, cgtmseRate: g === 'cgtmse' && own,
+    cgtmseWc: g === 'cgtmse' && limit, cgtmsePmegp: g === 'cgtmse' && s.scheme === 'pmegp',
+  };
+  return ASSUMPTIONS.filter((a) => (shows[a.id] ?? true) && (s.salesBy === 'drivers' || (a.id !== 'utilisation' && a.id !== 'price'))
     && (a.id !== 'days' || days.length > 0) && (a.id !== 'utilisation' || s.utilisation === EMPTY.utilisation) && (a.id !== 'price' || s.priceGrowth === EMPTY.priceGrowth))
     .map((a) => (a.id === 'days' && days.length < 3 ? { ...a, shown: days.map((k) => `${k} ${EMPTY.days[k]} days`).join(', ') } : a));
 }
@@ -85,14 +114,17 @@ export function inputOf(s: ReportState): ReportInput {
       amount: amountOf(s.loan.amount), ratePct: plainOf(s.loan.ratePct), disbursed: parseMonth(s.loan.disbursed), moratoriumMonths: plainOf(s.loan.moratoriumMonths),
       instalments: plainOf(s.loan.instalments), ...(r ? { frequency: r === 'quarterly' ? 'quarterly' : 'monthly', style: r === 'emi' ? 'emi' : 'equal-principal' } : {}),
     },
-    subsidy: s.scheme ? undefined : opt(s.subsidy), unsecured: opt(s.unsecured), collateral: opt(s.collateral),
+    subsidy: s.scheme === 'pmegp' ? undefined : opt(s.subsidy), unsecured: opt(s.unsecured), collateral: s.scheme === 'mudra' ? undefined : opt(s.collateral),
     salesBy: s.salesBy, monthsToStart: plainOf(s.monthsToStart),
     ...(s.salesBy === 'typed' ? { sales: amountOf(s.sales), salesGrowthPct: plainOf(s.salesGrowth) } : {
       products: s.products.map((p) => ({ name: p.name, unitsMonth: plainOf(p.units), price: amountOf(p.price) })),
       priceGrowthPct: plainOf(s.priceGrowth),
       utilisationPct: s.utilisation.split(/[,\s]+/).filter(Boolean).map((t) => plainOf(t) ?? NaN),
     }),
-    ...(s.scheme === 'pmegp' ? { scheme: { id: 'pmegp' as const, category: s.category, area: s.area, activity: s.activity } } : {}), variablePct: plainOf(s.variablePct), fixedCosts: amountOf(s.fixed), fixedGrowthPct: plainOf(s.fixedGrowth),
+    ...(s.scheme === 'pmegp' ? { scheme: { id: 'pmegp' as const, category: s.category, area: s.area, activity: s.activity, confirmed: !!s.pmegpConfirmed } }
+      : s.scheme === 'mudra' ? { scheme: { id: 'mudra' as const, tarunRepaid: !!s.tarunRepaid } } : {}),
+    ...(guaranteeOf(s) ? { guarantee: { ...(guaranteeOf(s) === 'cgtmse' ? { cgtmse: true, concessions: (s.concessions ?? []).filter(Boolean).length } : {}),
+      ...(s.feeRate.trim() ? { ratePct: plainOf(s.feeRate) ?? NaN } : {}) } } : {}), variablePct: plainOf(s.variablePct), fixedCosts: amountOf(s.fixed), fixedGrowthPct: plainOf(s.fixedGrowth),
     days: { stock: plainOf(s.days.stock), debtors: plainOf(s.days.debtors), creditors: plainOf(s.days.creditors) },
     wcLimit: amountOf(s.wcLimit), wcRatePct: plainOf(s.wcRate),
   };
@@ -128,7 +160,7 @@ export function viewOf(r: Report): ReportView {
     rows: [...r.cost.map((c) => ({ label: c.label, values: [rupees(c.amount)], n: [c.amount] })),
       { label: 'Total cost of the project', values: [rupees(r.projectCost)], n: [r.projectCost], kind: 'total' }],
   };
-  const f = r.finance, sc = r.scheme, subsidyLabel = sc ? 'PMEGP margin money' : 'Capital subsidy';
+  const f = r.finance, sc = r.scheme, g = r.guarantee, subsidyLabel = sc ? 'PMEGP margin money' : 'Capital subsidy';
   const finance: ViewTable = {
     id: 'finance', title: 'Means of finance', first: 'Source', columns: ['Rupees'],
     rows: [
@@ -136,7 +168,7 @@ export function viewOf(r: Report): ReportView {
       ...(sc ? [{ label: `PMEGP margin money, ${sc.ratePct}% of Rs. ${rupees(sc.base)}: a deposit for ${PMEGP.lockInYears} years, then set off against the loan`, values: [rupees(f.subsidy)], n: [f.subsidy] }]
         : f.subsidy ? [{ label: 'Capital subsidy', values: [rupees(f.subsidy)], n: [f.subsidy] }] : []),
       ...(f.unsecured ? [{ label: 'Unsecured loans', values: [rupees(f.unsecured)], n: [f.unsecured] }] : []),
-      { label: sc ? `Term loan: Rs. ${rupees(sc.sanctioned)} sanctioned, less the margin money` : 'Term loan', values: [rupees(f.termLoan)], n: [f.termLoan] },
+      { label: sc ? `Term loan: Rs. ${rupees(sc.sanctioned)} sanctioned, less the margin money` : r.mudra ? `Term loan under Mudra (${r.mudra.level.label}), with no collateral` : 'Term loan', values: [rupees(f.termLoan)], n: [f.termLoan] },
       { label: 'Total means of finance', values: [rupees(f.total)], n: [f.total], kind: 'total' },
     ],
   };
@@ -160,6 +192,7 @@ export function viewOf(r: Report): ReportView {
       line(ys, 'Profit before interest, depreciation and tax', (y) => y.pbdit, 'total'),
       line(ys, 'Less: depreciation', (y) => y.depreciation), line(ys, 'Less: preliminary expenses written off', (y) => y.preliminary),
       line(ys, 'Less: interest on the term loan', (y) => y.tlInterest), line(ys, 'Less: interest on working capital', (y) => y.wcInterest),
+      ...(g ? [line(ys, `Less: guarantee fee (${g.id.toUpperCase()})`, (y) => y.guaranteeFee)] : []),
       line(ys, 'Profit before tax', (y) => y.pbt, 'total'), line(ys, 'Less: tax', (y) => y.tax), line(ys, 'Profit after tax', (y) => y.pat, 'total'),
     ],
   };
@@ -248,6 +281,8 @@ export function viewOf(r: Report): ReportView {
     key: [
       { label: 'Cost of the project', value: `Rs. ${rupees(r.projectCost)}` },
       ...(sc ? [{ label: 'PMEGP margin money', value: `Rs. ${rupees(sc.subsidy)}`, note: `${sc.ratePct}% of Rs. ${rupees(sc.base)}, set off after ${PMEGP.lockInYears} years` }] : []),
+      ...(r.mudra ? [{ label: 'Mudra', value: r.mudra.level.label, note: `Rs. ${rupees(r.mudra.total)} in all, the term loan and the limit; no collateral up to Rs. ${rupees(r.mudra.collateralFreeUpTo)}` }] : []),
+      ...(g ? [{ label: `Guarantee fee (${g.id.toUpperCase()})`, value: `${g.ratePct}% a year`, note: `Rs. ${rupees(g.total)} over the loan${g.beforeStart > 0.005 ? `, Rs. ${rupees(g.beforeStart)} of it before sales start` : ''}` }] : []),
       ...(r.average !== undefined ? [{ label: 'Average DSCR', value: ratio(r.average), note: 'total A ÷ total B', check: 'dscrAverage' }] : []),
       ...(r.lowest ? [{ label: 'Lowest DSCR', value: ratio(r.lowest.dscr), note: `in ${r.lowest.fy}`, check: 'dscrLowest' }] : []),
     ],
@@ -373,6 +408,8 @@ export interface PlanCard { id: LeverId; by: 'borrower' | 'lender'; head: string
 export interface PlanView {
   x: ReportInput; lv: Levels; levers: Levers; cards: PlanCard[]; limits: string; atLimit?: string;
   most?: number; promotersNow: number; leastLoan: number; termRoom: number; monthsEach: number; salesMost?: number;
+  /** On Mudra, when the promoters' most and Mudra's Rs. 20 lakh in all cannot fund the project (D-UX-111). */
+  mudraShort?: string;
 }
 
 /** The plan, with the levers in `held` kept as the borrower set them; none while the report has no figures. */
@@ -386,7 +423,10 @@ export function planOf(s: ReportState, held: Partial<Levers> = {}): PlanView | u
     collateral: x.collateral !== undefined || q.levers.collateral > 0, moratorium: L.termRoom >= 1, instalments: L.termRoom >= L.monthsEach,
   };
   const limited = [...new Set(q.atLimit.map((id) => LIMIT_OF[id]).filter(Boolean))];
+  const r = x.scheme?.id === 'mudra' && most !== undefined ? projectReport(x) : undefined;
+  const short = r && !('needs' in r) && !('blocked' in r) ? mudraShort(r, most as number) : undefined;
   return {
+    ...(short !== undefined ? { mudraShort: `On Mudra, the promoters’ Rs. ${rupees(most as number)} and Mudra’s Rs. ${rupees(MUDRA.mostInAll)} in all leave Rs. ${rupees(short)} of the project unfunded. A loan to a small enterprise outside Mudra, which CGTMSE can guarantee, can be larger: choose None for the scheme and tick CGTMSE under More options.` } : {}),
     x, lv, levers: q.levers, cards: LEVER_IDS.filter((id) => show[id]).map((id) => ({ id, by: id === 'moratorium' || id === 'instalments' ? 'lender' : 'borrower', head: HEAD[id] })),
     limits: `The limits kept: ${most !== undefined ? `the promoters bring at most Rs. ${rupees(most)} in all` : 'no more of the promoters’ money, since the most they can bring is not typed'}; ${L.sales === undefined
       ? 'sales with no limit known, so a lender will test them against the market' : `the use of the capacity at most ${LEVELS.capacity.mostUsePct}% in any year`}; the whole term within ${LEVELS.term.longestMonths} months; unsecured loans and fixed costs only as you set them.`,

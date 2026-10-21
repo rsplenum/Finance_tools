@@ -119,6 +119,13 @@ export function diagnose(r: Report, x: ReportInput, c: Case = 'fresh', lv?: Leve
       const sunk = ys.find((y) => y.netWorth <= 0);
       if (sunk) { push({ ...base, fy: sunk.fy, meets: false, why: `net worth is at or below nil in ${sunk.fy}` }); continue; }
     }
+    if (d.id === 'securityCover' && r.mudra) {
+      // A Mudra loan takes no collateral, CGFMU's guarantee standing in (SCH1): the cover on the project's own assets is
+      // shown, never counted, so it neither meets nor misses.
+      const w = worstOf(ys, (y) => (y.secured > 0 ? y.security / y.secured : undefined), at);
+      push({ ...base, na: `${w ? `${w.v.toFixed(2)} in ${w.fy} on the project's own assets; ` : ''}not counted on a Mudra loan, which needs no collateral: CGFMU's guarantee stands in` });
+      continue;
+    }
     if (d.id === 'securityCover' && !r.collateral) {
       // No collateral typed: the project's own assets may meet the level alone (then typing collateral only adds to it);
       // short of it, the cover waits for the collateral's value. collateralNeeded() is its second computation (0 when it meets).
@@ -137,8 +144,10 @@ export function diagnose(r: Report, x: ReportInput, c: Case = 'fresh', lv?: Leve
 
 /** The collateral's market value, to the rupee, whose realisable sale value brings the security cover to its level in
  * every year (0 if none is needed): worked in closed form, then checked by the report itself with that collateral, and a
- * rupee less missing. Undefined when the two disagree by more than a rupee's rounding, so no figure is shown. */
+ * rupee less missing. Undefined when the two disagree by more than a rupee's rounding, so no figure is shown, and on a
+ * Mudra loan, which takes no collateral. */
 export function collateralNeeded(r: Report, x: ReportInput, c: Case = 'fresh', lv?: Levels): number | undefined {
+  if (r.mudra) return undefined;
   const level = levelFor('securityCover', c, lv), rsvPct = DATA.collateral.rsvPct;
   const need = rsvNeeded(r, level);
   if (need <= EPS) return 0;

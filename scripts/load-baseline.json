@@ -130,11 +130,11 @@
     },
     "/project-report/": {
       "before": 39,
-      "shown": 865,
-      "all": 2602,
-      "plan": 2690,
+      "shown": 867,
+      "all": 2628,
+      "plan": 2716,
       "long": 0,
-      "abbr": 5,
+      "abbr": 6,
       "questions": 29,
       "controls": 51,
       "answerAt": 5.3,
@@ -1033,6 +1033,38 @@
       "to": 29,
       "why": "D-UX-109",
       "date": "2026-10-20"
+    },
+    {
+      "page": "/project-report/",
+      "count": "shown",
+      "from": 865,
+      "to": 867,
+      "why": "D-DATA-24",
+      "date": "2026-10-21"
+    },
+    {
+      "page": "/project-report/",
+      "count": "all",
+      "from": 2602,
+      "to": 2628,
+      "why": "D-DATA-24",
+      "date": "2026-10-21"
+    },
+    {
+      "page": "/project-report/",
+      "count": "plan",
+      "from": 2690,
+      "to": 2716,
+      "why": "D-DATA-24",
+      "date": "2026-10-21"
+    },
+    {
+      "page": "/project-report/",
+      "count": "abbr",
+      "from": 5,
+      "to": 6,
+      "why": "D-DATA-24",
+      "date": "2026-10-21"
     }
   ],
   "fontProbe": 320.2

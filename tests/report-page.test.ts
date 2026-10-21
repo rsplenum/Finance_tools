@@ -25,7 +25,7 @@ const R: ReportState = {
 };
 // Case P by products (tests/report.test.ts) as typed: two lines, three months to the first sales, PMEGP.
 const P: ReportState = {
-  ...EMPTY, borrower: 'firm', scheme: 'pmegp', category: 'general', area: 'rural', activity: 'manufacturing',
+  ...EMPTY, borrower: 'firm', scheme: 'pmegp', category: 'general', area: 'rural', activity: 'manufacturing', pmegpConfirmed: true,
   cost: { ...EMPTY.cost, land: '2 L', building: '6 L', machinery: '20 L', preliminary: '50,000' },
   loan: { amount: '24 L', ratePct: '10', disbursed: 'Oct 2026', moratoriumMonths: '6', instalments: '48', repayment: 'monthly' },
   products: [{ name: 'Roasted chana', units: '2,500', price: '200' }, { name: 'Roasted peanuts', units: '1,500', price: '200' }], monthsToStart: '3', variablePct: '70', fixed: '12 L', fixedGrowth: '5', wcLimit: '3 L', wcRate: '11',
@@ -39,7 +39,8 @@ describe('the project report page', () => {
     expect(p.needs[0]).toBe('Who the borrower is: it sets the tax');
     expect(p.needs).not.toContain('Days of stock, 0 to 365');
     expect(EMPTY.days).toEqual({ stock: '30', debtors: '30', creditors: '30' });
-    expect(DATA.assumptions.map((a) => a.id)).toEqual(['days', 'wcUsed', 'drawings', 'tax', 'utilisation', 'price']);
+    expect(DATA.assumptions.map((a) => a.id)).toEqual(['days', 'wcUsed', 'drawings', 'tax', 'utilisation', 'price',
+      'guaranteeFee', 'guaranteeFirst', 'cgtmseOther', 'cgtmseRate', 'cgtmseWc', 'cgtmsePmegp']);
     expect(assumptionsOf(EMPTY).length).toBe(6);
     expect(assumptionsOf({ ...EMPTY, salesBy: 'typed' }).map((a) => a.id)).toEqual(['days', 'wcUsed', 'drawings', 'tax']);
   });
@@ -125,6 +126,34 @@ describe('the PMEGP report to download', () => {
     expect(text).toContain('PMEGP: the rules used');
     expect(text).toContain('Checked against PMEGP\'s guideline (2023) on 20-10-2026.');
     expect(docStatus(P, p)).toBe('Complete');
+  });
+});
+
+// Case R on Mudra (SCH1): a term loan of 12 lakh and a limit of 3 lakh, 15 lakh in all, so Tarun Plus. CGFMU's fee in
+// 2026-27, the year of the first draw (April 2026), worked by hand: 1% of 12,00,000 for 12 months, 12,000, and 1% of the
+// 3,00,000 limit from the first sales, 3,000: 15,000. With the promoters' most at 5 lakh: the cost of the project is
+// case R's fixed assets and preliminary, 33,00,000, and its margin for working capital, the gap of 9,86,301 (case R's
+// 4,86,301 margin with its 5,00,000 limit) less this 3,00,000 limit, 6,86,301: 39,86,301. Less 5,00,000 and Mudra's
+// 20,00,000 less the limit, 17,00,000, it leaves 17,86,301 unfunded.
+const M: ReportState = { ...R, scheme: 'mudra', tarunRepaid: true, loan: { ...R.loan, amount: '12 L' }, wcLimit: '3 L', collateral: '10 L' };
+describe('the Mudra report (SCH1)', () => {
+  const p = preview(M), text = docText(reportDoc(M, p, TODAY)!);
+  it('names its level, takes no collateral and carries CGFMU\'s fee as a finance cost', () => {
+    expect(p.needs).toEqual([]);
+    expect(inputOf(M).collateral).toBeUndefined();
+    expect(p.view!.key.find((k) => k.label === 'Mudra')?.value).toBe('Tarun Plus');
+    expect(p.view!.key.find((k) => k.label === 'Guarantee fee (CGFMU)')?.value).toBe('1% a year');
+    expect(row(p, 'pl', 'Less: guarantee fee (CGFMU)')?.values[0]).toBe('15,000');
+    expect(row(p, 'finance', 'Term loan under Mudra (Tarun Plus), with no collateral')?.values).toEqual(['12,00,000']);
+    expect(assumptionsOf(M).map((a) => a.id)).toContain('guaranteeFee');
+    expect(text).toContain('Scheme: Mudra; a Tarun loan taken and repaid');
+    expect(text).toContain('Mudra: the rules used');
+    expect(text).toContain('The guarantee fee: CGFMU');
+  });
+  it('says when the promoters\' most and Mudra\'s 20 lakh cannot fund the project, and stops above Tarun unticked', () => {
+    expect(planOf({ ...M, promotersMost: '5 L' })?.mudraShort).toContain('leave Rs. 17,86,301 of the project unfunded');
+    expect(planOf({ ...M, promotersMost: '30 L' })?.mudraShort).toBeUndefined();
+    expect(preview({ ...M, tarunRepaid: false }).needs[0]).toMatch(/^Mudra: the loans come to Rs\. 15,00,000, above Tarun's/);
   });
 });
 
