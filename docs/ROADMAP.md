@@ -56,3 +56,11 @@ Agreed 13-10-2026 from the owner's request and two outside reviews. AI agents ha
 
 ## After launch, only if the interaction data asks for it
 D3, the borrower's one-page checklist (D-DOC-11; its starter prompt is in HANDOFF-ARCHIVE, 12-10-2026). The CMA's second method above ₹5 crore and Form IV. U1 on the DSCR, an ITR or a CA's provisional figures. The schemes: CGTMSE's fee, MUDRA's limits, Stand-Up India and PMEGP from KVIC. The next four cities (D-DATA-13). More Make it viable levers (D-UX-50). Notes for kitchens, bathrooms and flooring. Design mode (D-UX-31). A sterner DSCR in own-figures mode. A paid API for lenders (parked, SWOT 10-10-2026).
+
+## Rows waiting on the owner (from `docs/HANDOFF.md`, 21-10-2026)
+Each moves back to HANDOFF's Next table when the owner answers.
+
+| # | Deliverable | Budget | Starter prompt (paste as the first message) |
+|---|---|---|---|
+| NAME3 | The chosen name on the branch preview: the site's words, the wordmark, page titles, the brand notice and the downloads, FinSight nowhere. Runs once the owner has checked and bought it (`docs/OWNER.md`). Traps: `docs/TRADEMARKS.md`; the site check's text counts; `noindex` stays | S, high | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md and docs/NAME-SEARCH.md, and grep docs/GOTCHAS.md for `site-check`. Budget S (about 60 steps), at high. NAME3: the name is …, checked and bought. Finish per HANDOFF." |
+| LEGAL2 | The lawyer's read of the five policy pages: their changes in, `LEGAL_DRAFT` false (the site check then fails any draft mark or gap left), the proprietor's name if the lawyer wants it, and the advertising-cookie lines AdSense requires (D-BIZ-16, answer 1348695) for the lawyer to word. Runs when the lawyer answers | S, high | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md and D-BIZ-07, and grep docs/GOTCHAS.md for `Policy` and `site-check`. Budget S (about 60 steps), at high. LEGAL2: my lawyer's changes to the policy pages: …. Show me any wording with my details before it goes in. Finish per HANDOFF." |
