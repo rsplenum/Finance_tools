@@ -3,7 +3,7 @@
  * report to tables in words, with the engine's exact figures beside them for the Excel copy. The page and the document
  * show the same tables. Pure, no DOM. Figures: engine/report.ts only (with dscr.ts for profit, tax and DSCR).
  */
-import { ASSUMPTIONS, HEADS, MUDRA, PMEGP, REPORT_REVIEW_BY, mudraLevel, mudraShort, projectReport, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
+import { ASSUMPTIONS, COST_HEADS, HEADS, costsOf, MUDRA, PMEGP, REPORT_REVIEW_BY, mudraLevel, mudraShort, projectReport, workedLimit, WORKING_CAPITAL, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
 import { parseAmount, parseMonth } from '../../../engine/parse';
 import { LEVELS, collateralNeeded, diagnose, type Levels, type RatioCheck } from '../../../engine/ratios';
 import { makeViable, type Longer, type Outcome } from '../../../engine/viable';
@@ -18,21 +18,28 @@ import {
 
 export type Repayment = 'emi' | 'monthly' | 'quarterly';
 export type Scheme = '' | 'pmegp' | 'mudra';
+/** Simple mode (where the page opens, D-UX-112) asks a dozen plain questions and assumes the rest, listed; expert mode
+ * asks every field. A state without a mode is expert's. */
+export type Mode = 'simple' | 'expert';
+/** The working-capital limit: worked out by the engine, the borrower's own, or none (D-UX-112). */
+export type WcBy = 'worked' | 'typed' | 'none';
+/** What backs the loan beside the project's own assets, asked in simple mode (D-UX-112). */
+export type Security = 'property' | 'cgtmse' | 'neither';
 export interface ReportFacts { name: string; activity: string; address: string; lender: string; preparedBy: string }
 export interface ReportState {
   borrower?: string;
   cost: Record<HeadId, string>;
   loan: { amount: string; ratePct: string; disbursed: string; moratoriumMonths: string; instalments: string; repayment?: Repayment };
   subsidy: string; unsecured: string;
-  /** The collateral's market value, under More options (D-UX-52). */
+  /** The collateral's market value (D-UX-52), when property backs the loan. */
   collateral: string;
-  /** Sales from one line per product, its use and the prices (the default, D-UX-109), or typed under More options. */
+  /** Sales from one line per product, its use and the prices (the default, D-UX-109), or typed in expert mode. */
   salesBy: 'drivers' | 'typed'; products: ProductRow[]; utilisation: string; priceGrowth: string; monthsToStart: string;
   scheme: Scheme; category?: Category; area?: Area; activity?: Activity;
   /** PMEGP's conditions confirmed; on Mudra, a Tarun loan repaid (only then Tarun Plus, above Rs. 10 lakh). */
   pmegpConfirmed?: boolean; tarunRepaid?: boolean;
   /** CGTMSE's guarantee ticked, on a loan not under Mudra, and its concessions ticked (CGTMSE.groups, in order); a fee
-   * rate typed from the sanction letter (% a year), over the scheme's, under More options. */
+   * rate typed from the sanction letter (% a year), over the scheme's, in expert mode. */
   cgtmse?: boolean; concessions?: boolean[]; feeRate: string;
   sales: string; salesGrowth: string; variablePct: string; fixed: string; fixedGrowth: string;
   days: { stock: string; debtors: string; creditors: string };
@@ -42,6 +49,15 @@ export interface ReportState {
   /** The benchmarks the user changed (BEN1), as typed; a ratio left out takes its default. Not an input of the report. */
   benchmarks?: BenchmarkText;
   doc: ReportFacts;
+  mode?: Mode;
+  /** Simple mode's own questions: the month sales start (the moratorium matches it), the years to repay from then, and
+   * the fixed costs a month. */
+  sellFrom?: string; years?: string; fixedMonth?: string;
+  /** How the limit is set; a state with only a limit typed is 'typed'. */
+  wcBy?: WcBy;
+  security?: Security;
+  /** Costs by head in expert mode, as typed (engine/data/report.json's costHeads): % of sales, or rupees a month. */
+  heads?: { variable?: Record<string, string>; fixed?: Record<string, string> };
 }
 
 /** A product or service as typed: what it is, how many a month at full running, its price a unit. */
@@ -66,17 +82,25 @@ export const SCHEME_CHOICES: { value: Scheme; label: string }[] = [{ value: '', 
 export const CGTMSE = GUARANTEES.cgtmse, CGFMU = GUARANTEES.cgfmu;
 /** On Mudra, its level by the term loan and the limit typed; until both are typed, what it waits for. */
 export function mudraLine(s: ReportState): string {
-  const tl = amountOf(s.loan.amount), wc = amountOf(s.wcLimit);
+  const tl = amountOf(s.loan.amount), wc = limitOf(s);
   if (tl === undefined || wc === undefined) return 'Its level shows once the term loan and the working-capital limit are typed.';
   const v = mudraLevel(tl + wc);
   return v ? `${v.label}: the term loan and the limit come to Rs. ${rupees(tl + wc)}${v.onlyAfterTarun ? ', only for a borrower who has repaid a Tarun loan' : ''}.`
     : `The term loan and the limit come to Rs. ${rupees(tl + wc)}, above the Rs. ${rupees(MUDRA.mostInAll)} Mudra lends in all.`;
 }
 /** Mudra's Tarun Plus, which asks whether a Tarun loan was repaid: above Tarun's most, or once ticked. */
-export const tarunAsked = (s: ReportState) => s.scheme === 'mudra' && (!!s.tarunRepaid || (amountOf(s.loan.amount) ?? 0) + (amountOf(s.wcLimit) ?? 0) > (MUDRA.levels.find((v) => v.id === 'tarun') as { upTo: number }).upTo);
+export const tarunAsked = (s: ReportState) => s.scheme === 'mudra' && (!!s.tarunRepaid || (amountOf(s.loan.amount) ?? 0) + (limitOf(s) ?? 0) > (MUDRA.levels.find((v) => v.id === 'tarun') as { upTo: number }).upTo);
 
 /** The guarantee on the loans as chosen: CGFMU's on Mudra, CGTMSE's when ticked on another loan. */
-export const guaranteeOf = (s: ReportState) => (s.scheme === 'mudra' ? 'cgfmu' : s.cgtmse ? 'cgtmse' : undefined);
+export const guaranteeOf = (s: ReportState) => (s.scheme === 'mudra' ? 'cgfmu' : cgtmseOn(s) ? 'cgtmse' : undefined);
+const simple = (s: ReportState) => s.mode === 'simple';
+/** CGTMSE in simple mode is the backing chosen (with a property only when ticked in expert mode); in expert mode, the tick. */
+const cgtmseOn = (s: ReportState) => (simple(s) ? s.security === 'cgtmse' || (s.security === 'property' && !!s.cgtmse) : !!s.cgtmse);
+/** The collateral counted: in simple mode only with a property chosen; never on Mudra. */
+const collateralText = (s: ReportState) => (s.scheme === 'mudra' || (simple(s) && s.security !== 'property') ? '' : s.collateral);
+export const wcByOf = (s: ReportState): WcBy | undefined => s.wcBy ?? (s.wcLimit.trim() ? 'typed' : undefined);
+/** The limit the report uses: as typed, worked out, or none; undefined while it waits for a figure. */
+export const limitOf = (s: ReportState) => inputOf(s).wcLimit;
 export { MUDRA };
 export const CATEGORY_CHOICES: { value: Category; label: string }[] = [
   { value: 'general', label: 'General' }, { value: 'special', label: 'Special: SC, ST, OBC, minority, woman, ex-serviceman, a person with a disability and others the scheme names' },
@@ -89,14 +113,136 @@ export const ACTIVITY_CHOICES: { value: Activity; label: string }[] = [{ value: 
 // margin money only under PMEGP.
 export function assumptionsOf(s: ReportState) {
   const days = (['stock', 'debtors', 'creditors'] as const).filter((k) => s.days[k] === EMPTY.days[k]);
-  const g = guaranteeOf(s), own = !s.feeRate.trim(), limit = (amountOf(s.wcLimit) ?? 0) > 0;
+  const g = guaranteeOf(s), own = !s.feeRate.trim(), limit = (limitOf(s) ?? 0) > 0;
   const shows: Record<string, boolean> = {
+    simpleCost: HEADS.every((h) => SIMPLE_COST.includes(h.id) || !s.cost[h.id].trim()), simpleFunds: !s.unsecured.trim() && (s.scheme === 'pmegp' || !s.subsidy.trim()),
+    simpleDrawn: !s.loan.disbursed.trim() && (s.loan.repayment ?? 'emi') === 'emi', simpleMoratorium: !s.loan.moratoriumMonths.trim(),
+    simpleFixedGrowth: !s.fixedGrowth.trim(), simpleWcRate: !s.wcRate.trim() && limit,
     guaranteeFee: !!g && own, guaranteeFirst: !!g, cgtmseOther: g === 'cgtmse' && own, cgtmseRate: g === 'cgtmse' && own,
     cgtmseWc: g === 'cgtmse' && limit, cgtmsePmegp: g === 'cgtmse' && s.scheme === 'pmegp',
   };
-  return ASSUMPTIONS.filter((a) => (shows[a.id] ?? true) && (s.salesBy === 'drivers' || (a.id !== 'utilisation' && a.id !== 'price'))
+  return ASSUMPTIONS.filter((a) => (shows[a.id] ?? true) && ('simple' in a ? simple(s) : true) && (s.salesBy === 'drivers' || (a.id !== 'utilisation' && a.id !== 'price'))
     && (a.id !== 'days' || days.length > 0) && (a.id !== 'utilisation' || s.utilisation === EMPTY.utilisation) && (a.id !== 'price' || s.priceGrowth === EMPTY.priceGrowth))
-    .map((a) => (a.id === 'days' && days.length < 3 ? { ...a, shown: days.map((k) => `${k} ${EMPTY.days[k]} days`).join(', ') } : a));
+    .map((a) => (a.id === 'days' && days.length < 3 ? { ...a, shown: days.map((k) => `${k} ${EMPTY.days[k]} days`).join(', ') }
+      : a.id === 'simpleFunds' && s.scheme === 'pmegp' ? { ...a, shown: 'No unsecured loans' } : a));
+}
+/** The fixed assets simple mode asks; the other heads are its assumption of none. */
+export const SIMPLE_COST: HeadId[] = ['machinery', 'building'];
+const thisMonth = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
+const monthsFrom = (a: string, b: string) => (+b.slice(0, 4) - +a.slice(0, 4)) * 12 + (+b.slice(5, 7) - +a.slice(5, 7));
+const addMonths = (a: string, n: number) => { const m = +a.slice(0, 4) * 12 + +a.slice(5, 7) - 1 + n; return `${Math.floor(m / 12)}-${String((m % 12) + 1).padStart(2, '0')}`; };
+const figText = (n: number) => inr(n, Number.isInteger(n) ? 0 : 2);
+const typedHeads = (h?: Record<string, string>) => Object.entries(h ?? {}).filter(([, t]) => t.trim());
+const LABEL = Object.fromEntries([...COST_HEADS.variable, ...COST_HEADS.fixed].map((h) => [h.id, h.label]));
+
+/** In simple mode, what it assumes or works out in place of the expert fields left empty (D-UX-112); a field typed in
+ * expert mode is kept, and listed by `changedOf`. */
+function simpleTerms(s: ReportState) {
+  const drawn = s.loan.disbursed.trim() ? parseMonth(s.loan.disbursed) : thisMonth(), sell = s.sellFrom?.trim() ? parseMonth(s.sellFrom) : undefined;
+  const toStart = drawn && sell ? monthsFrom(drawn, sell) : undefined, years = s.years?.trim() ? plainOf(s.years) : undefined, month = s.fixedMonth?.trim() ? amountOf(s.fixedMonth) : undefined;
+  return { drawn, sell, toStart, instalments: years === undefined ? undefined : Math.round(years * 12), fixed: month === undefined ? undefined : month * 12 };
+}
+
+/** Simple mode's needs, in its words: its own questions in place of the expert fields they fill. */
+export function simpleNeeds(s: ReportState): string[] {
+  const t = simpleTerms(s), out: string[] = [];
+  if (s.sellFrom?.trim() && !t.sell) out.push('When you will start selling: a month, such as March 2027');
+  else if (t.toStart !== undefined && t.toStart < 0) out.push('When you will start selling: the month the loan is first drawn or later');
+  if (s.scheme !== 'mudra' && !s.security) out.push('What backs the loan besides the project\'s own assets');
+  return out;
+}
+const SIMPLE_WORDS: [string, string | undefined][] = [
+  ['Months from the loan to the first sales', 'When you will start selling'], ['The term loan: the number of instalments', 'Years to repay'],
+  ['Fixed costs in a full first year', 'Fixed costs a month'], ['The term loan: the moratorium', undefined], ['The working-capital limit: its interest rate', undefined],
+];
+const LIMIT_NEED = 'The working-capital limit: worked out, your own figure, or none';
+const LIMIT_WAITS = 'The working-capital limit worked out: it waits for the sales, the costs and the days';
+/** The engine's needs as the page asks them: the limit's choice in both modes, simple mode's questions in its own. */
+export function needsWords(s: ReportState, needs: string[]): string[] {
+  const t = simpleTerms(s), by = wcByOf(s), words = needs.map((n) => (!n.startsWith('The working-capital limit sought') || by === 'typed' ? n : by === 'worked' ? LIMIT_WAITS : LIMIT_NEED));
+  if (!simple(s)) return words;
+  const mapped = words.map((n) => { const w = SIMPLE_WORDS.find(([k]) => n.startsWith(k)); return w ? w[1] : n; })
+    .filter((n): n is string => n !== undefined && !(t.toStart !== undefined && t.toStart < 0 && n === 'When you will start selling'));
+  return [...new Set([...mapped, ...simpleNeeds(s)])];
+}
+
+export const MODE_CHOICES: { value: Mode; label: string; hint: string }[] = [
+  { value: 'simple', label: 'Simple', hint: 'About a dozen questions; the rest assumed and listed' }, { value: 'expert', label: 'Expert', hint: 'Every figure, and costs by head' }];
+export const WC_CHOICES: { value: WcBy; label: string }[] = [{ value: 'worked', label: 'Work it out for me' }, { value: 'typed', label: 'I will type my own' }, { value: 'none', label: 'None needed' }];
+export const SECURITY_CHOICES: { value: Security; label: string; hint?: string }[] = [
+  { value: 'property', label: 'Property', hint: 'Its market value counts in the security cover' },
+  { value: 'cgtmse', label: 'A CGTMSE guarantee', hint: 'Its fee goes into the projections as a finance cost' }, { value: 'neither', label: 'Neither' }];
+export { COST_HEADS };
+/** The limit worked out, in words with the two figures it is the lower of (D-UX-112); figures from engine/report.ts. */
+export function workedLine(s: ReportState): string | undefined {
+  if (wcByOf(s) !== 'worked') return undefined;
+  const w = workedLimit(inputOf(s));
+  const { mpbfSharePct: share, turnoverBankPct: bank } = WORKING_CAPITAL;
+  return w ? `Worked out: Rs. ${inr(w.limit)}. It is the lower of ${share}% of stock and debtors less creditors, Rs. ${inr(w.need)}, and ${bank}% of a full first year's sales, Rs. ${inr(w.turnover)}.`
+    : 'Worked out once the sales, the costs and the days are in.';
+}
+/** A side's costs added up from its heads, in words, while any is typed (expert mode). */
+export function headsSum(s: ReportState, side: 'variable' | 'fixed'): string | undefined {
+  if (!typedHeads(s.heads?.[side]).length) return undefined;
+  const c = costsOf(inputOf(s)), n = side === 'variable' ? c.variablePct : c.fixedCosts;
+  if (n === undefined || !Number.isFinite(n)) return undefined;
+  return side === 'variable' ? `Materials and other variable costs: ${+n.toFixed(2)}% of sales, the heads added up.` : `Fixed costs: Rs. ${figText(n)} in a full first year, the heads added up.`;
+}
+
+/** What expert mode set apart from simple mode's assumptions, listed in simple mode with its value (D-UX-112). */
+export function changedOf(s: ReportState): string[] {
+  if (!simple(s)) return [];
+  const out: string[] = [], x = inputOf(s);
+  const others = HEADS.filter((h) => !SIMPLE_COST.includes(h.id) && s.cost[h.id].trim());
+  if (others.length) out.push(`The cost of the project: ${others.map((h) => `${h.label.toLowerCase()} Rs. ${s.cost[h.id]}`).join(', ')}`);
+  if (s.scheme !== 'pmegp' && s.subsidy.trim()) out.push(`A capital subsidy of Rs. ${s.subsidy}`);
+  if (s.unsecured.trim()) out.push(`Unsecured loans of Rs. ${s.unsecured}`);
+  if (s.loan.disbursed.trim()) out.push(`The loan first drawn in ${s.loan.disbursed}`);
+  if ((s.loan.repayment ?? 'emi') !== 'emi') out.push(`Repaid by ${(REPAYMENT_CHOICES.find((c) => c.value === s.loan.repayment) as { label: string }).label.toLowerCase()}`);
+  if (s.loan.moratoriumMonths.trim()) out.push(`A moratorium of ${s.loan.moratoriumMonths} months`);
+  if (s.salesBy === 'typed') out.push('Sales typed by year, in place of the products');
+  else {
+    if (s.utilisation !== EMPTY.utilisation) out.push(`Use of the capacity by year: ${s.utilisation}%`);
+    if (s.priceGrowth !== EMPTY.priceGrowth) out.push(`Prices growing ${s.priceGrowth}% a year`);
+  }
+  const days = (['stock', 'debtors', 'creditors'] as const).filter((k) => s.days[k] !== EMPTY.days[k]);
+  if (days.length) out.push(`Days of ${days.map((k) => `${k} ${s.days[k]}`).join(', ')}`);
+  const v = typedHeads(s.heads?.variable), f = typedHeads(s.heads?.fixed);
+  if (v.length || f.length) out.push(`Costs by head: ${[...v.map(([id, t]) => `${LABEL[id].toLowerCase()} ${t}%`), ...f.map(([id, t]) => `${LABEL[id].toLowerCase()} Rs. ${t} a month`)].join(', ')}`);
+  if (s.fixedGrowth.trim()) out.push(`Fixed costs growing ${s.fixedGrowth}% a year`);
+  if (s.wcRate.trim() && (x.wcLimit ?? 0) > 0) out.push(`The limit's rate: ${s.wcRate}%`);
+  if (guaranteeOf(s) === 'cgtmse' && s.security === 'property') out.push('A CGTMSE guarantee beside the property');
+  if (guaranteeOf(s) && s.feeRate.trim()) out.push(`A guarantee fee of ${s.feeRate}% a year`);
+  if (guaranteeOf(s) === 'cgtmse' && (s.concessions ?? []).some(Boolean)) out.push('CGTMSE\'s concessions ticked');
+  return out;
+}
+
+/** Switching modes: into expert, simple mode's answers and assumptions written into the fields they stand for; into
+ * simple, the fields simple mode asks in its own words taken back, and those at its assumptions emptied again. */
+export function withMode(s: ReportState, mode: Mode): ReportState {
+  if ((s.mode ?? 'expert') === mode) return s;
+  if (mode === 'expert') {
+    // Each assumption is written beside the answer it goes with, so the figures do not change; one not yet reached stays asked.
+    const t = simpleTerms(s), keep = (a: string, b?: string) => (a.trim() || b === undefined ? a : b), has = (x?: string) => !!x?.trim(), wc = wcByOf(s);
+    const g = s.scheme === 'mudra' ? {} : s.security === 'property' ? {} : s.security ? { cgtmse: s.security === 'cgtmse', collateral: '' } : {};
+    return {
+      ...s, ...g, mode, monthsToStart: t.toStart !== undefined && t.toStart >= 0 ? String(t.toStart) : s.monthsToStart,
+      loan: { ...s.loan, disbursed: keep(s.loan.disbursed, has(s.sellFrom) ? t.drawn : undefined), moratoriumMonths: keep(s.loan.moratoriumMonths, t.toStart !== undefined && t.toStart >= 0 ? String(t.toStart) : undefined),
+        instalments: t.instalments !== undefined && Number.isFinite(t.instalments) ? String(t.instalments) : s.loan.instalments, repayment: s.loan.repayment ?? (has(s.years) ? 'emi' : undefined) },
+      fixed: t.fixed !== undefined && Number.isFinite(t.fixed) ? figText(t.fixed) : s.fixed,
+      fixedGrowth: keep(s.fixedGrowth, has(s.fixedMonth) ? String(assumed('simpleFixedGrowth')) : undefined),
+      wcRate: wc === 'worked' || wc === 'typed' ? keep(s.wcRate, s.loan.ratePct.trim() || undefined) : s.wcRate,
+    };
+  }
+  const drawn = parseMonth(s.loan.disbursed), toStart = plainOf(s.monthsToStart), n = plainOf(s.loan.instalments), f = amountOf(s.fixed);
+  const sell = drawn && toStart !== undefined && Number.isInteger(toStart) ? addMonths(drawn, toStart) : s.sellFrom;
+  const security: Security | undefined = s.scheme === 'mudra' ? s.security : s.collateral.trim() ? 'property' : s.cgtmse ? 'cgtmse' : s.security ? 'neither' : undefined;
+  return {
+    ...s, mode, sellFrom: sell, monthsToStart: '', security,
+    years: n !== undefined && Number.isFinite(n) ? String(+(n / 12).toFixed(2)) : s.years, fixedMonth: f !== undefined && Number.isFinite(f) ? figText(+(f / 12).toFixed(2)) : s.fixedMonth, fixed: '',
+    loan: { ...s.loan, disbursed: drawn === thisMonth() ? '' : s.loan.disbursed, moratoriumMonths: s.loan.moratoriumMonths.trim() === s.monthsToStart.trim() ? '' : s.loan.moratoriumMonths, instalments: '' },
+    fixedGrowth: s.fixedGrowth.trim() === String(assumed('simpleFixedGrowth')) ? '' : s.fixedGrowth, wcRate: s.wcRate.trim() === s.loan.ratePct.trim() ? '' : s.wcRate,
+  };
 }
 export { ASSUMPTIONS, HEADS, PMEGP, REPORT_REVIEW_BY };
 
@@ -105,6 +251,27 @@ export const plainOf = (t: string) => (t.trim() ? parseAmount(t.replace(/%\s*$/,
 export const tidyAmount = (t: string) => { const n = amountOf(t); return n === undefined ? t : inr(n, Number.isInteger(n) ? 0 : 2); };
 
 export function inputOf(s: ReportState): ReportInput {
+  const x = fieldsOf(s), v = typedHeads(s.heads?.variable), f = typedHeads(s.heads?.fixed);
+  // Costs by head (expert mode): a side with a head typed is added up from its heads, in place of its total.
+  if (v.length || f.length) x.costHeads = { variable: Object.fromEntries(v.map(([id, t]) => [id, plainOf(t) ?? NaN])), fixed: Object.fromEntries(f.map(([id, t]) => [id, amountOf(t) ?? NaN])) };
+  if (v.length) x.variablePct = undefined;
+  if (f.length) x.fixedCosts = undefined;
+  if (simple(s)) {
+    const t = simpleTerms(s);
+    x.loan = { ...x.loan, disbursed: t.drawn, moratoriumMonths: s.loan.moratoriumMonths.trim() ? x.loan.moratoriumMonths : t.toStart, instalments: t.instalments,
+      ...(s.loan.repayment ? {} : { frequency: 'monthly', style: 'emi' }) };
+    x.monthsToStart = t.toStart !== undefined && t.toStart < 0 ? undefined : t.toStart;
+    if (!f.length) x.fixedCosts = t.fixed;
+    if (!s.fixedGrowth.trim()) x.fixedGrowthPct = assumed('simpleFixedGrowth') as number;
+    if (!s.wcRate.trim()) x.wcRatePct = x.loan.ratePct;
+  }
+  const by = wcByOf(s);
+  x.wcLimit = by === 'none' ? 0 : by === 'worked' ? workedLimit(x)?.limit : by === 'typed' ? x.wcLimit : undefined;
+  return x;
+}
+
+/** The input as the expert fields hold it. */
+function fieldsOf(s: ReportState): ReportInput {
   const opt = (t: string) => (t.trim() ? amountOf(t) ?? NaN : undefined);
   const r = s.loan.repayment;
   return {
@@ -114,7 +281,7 @@ export function inputOf(s: ReportState): ReportInput {
       amount: amountOf(s.loan.amount), ratePct: plainOf(s.loan.ratePct), disbursed: parseMonth(s.loan.disbursed), moratoriumMonths: plainOf(s.loan.moratoriumMonths),
       instalments: plainOf(s.loan.instalments), ...(r ? { frequency: r === 'quarterly' ? 'quarterly' : 'monthly', style: r === 'emi' ? 'emi' : 'equal-principal' } : {}),
     },
-    subsidy: s.scheme === 'pmegp' ? undefined : opt(s.subsidy), unsecured: opt(s.unsecured), collateral: s.scheme === 'mudra' ? undefined : opt(s.collateral),
+    subsidy: s.scheme === 'pmegp' ? undefined : opt(s.subsidy), unsecured: opt(s.unsecured), collateral: opt(collateralText(s)),
     salesBy: s.salesBy, monthsToStart: plainOf(s.monthsToStart),
     ...(s.salesBy === 'typed' ? { sales: amountOf(s.sales), salesGrowthPct: plainOf(s.salesGrowth) } : {
       products: s.products.map((p) => ({ name: p.name, unitsMonth: plainOf(p.units), price: amountOf(p.price) })),
@@ -152,6 +319,16 @@ const ratios = (ys: ReportYear[], label: string, f: (y: ReportYear) => number | 
 /** `key`: the answer's figures; `check`, the lender's ratio (CheckRow's id) a figure is read against, said beside it on the page. */
 export interface ReportView { tables: ViewTable[]; key: { label: string; value: string; note?: string; check?: string }[]; years: string[] }
 
+/** The costs in the profit and loss: by head where typed (D-UX-112), each side's total otherwise. */
+const costRows = (ys: ReportYear[]): ViewRow[] => {
+  const hv = ys[0]?.heads?.variable ?? [], hf = ys[0]?.heads?.fixed ?? [];
+  const by = (side: 'variable' | 'fixed', i: number) => (y: ReportYear) => y.heads?.[side][i]?.amount ?? 0;
+  return [
+    ...(hv.length ? hv.map((h, i) => line(ys, `Less: ${h.label.toLowerCase()}`, by('variable', i))) : [line(ys, 'Less: materials and other variable costs', (y) => y.variable)]),
+    ...(hf.length ? hf.map((h, i) => line(ys, `Less: ${h.label.toLowerCase()}`, by('fixed', i))) : [line(ys, 'Less: fixed costs', (y) => y.fixed)]),
+  ];
+};
+
 export function viewOf(r: Report): ReportView {
   const ys = r.years, years = ys.map((y) => y.fy), any = (f: (y: ReportYear) => number) => ys.some((y) => Math.abs(f(y)) > 0.005);
   const t = r.plan.statement.total, pt = r.plan.profitTotal, total = (x?: number) => (t && x !== undefined ? rupees(x) : '');
@@ -188,7 +365,7 @@ export function viewOf(r: Report): ReportView {
     rows: [
       ...(ys.some((y) => y.months < 12) ? [{ label: 'Months of sales', values: ys.map((y) => String(y.months)), n: ys.map((y) => y.months), fig: 'ratio' as const }] : []),
       ...(ys.some((y) => y.utilisationPct !== undefined) ? [ratios(ys, 'Use of the capacity', (y) => y.utilisationPct, (x) => (x === undefined ? '—' : `${x}%`))] : []),
-      line(ys, 'Sales', (y) => y.sales), line(ys, 'Less: materials and other variable costs', (y) => y.variable), line(ys, 'Less: fixed costs', (y) => y.fixed),
+      line(ys, 'Sales', (y) => y.sales), ...costRows(ys),
       line(ys, 'Profit before interest, depreciation and tax', (y) => y.pbdit, 'total'),
       line(ys, 'Less: depreciation', (y) => y.depreciation), line(ys, 'Less: preliminary expenses written off', (y) => y.preliminary),
       line(ys, 'Less: interest on the term loan', (y) => y.tlInterest), line(ys, 'Less: interest on working capital', (y) => y.wcInterest),
@@ -303,7 +480,9 @@ export interface ReportPreview {
 export function preview(s: ReportState): ReportPreview {
   const x = inputOf(s), r = projectReport(x);
   if ('blocked' in r) return { needs: [], blocked: r.blocked, flags: [] };
-  if ('needs' in r) return { needs: r.needs, flags: [] };
+  if ('needs' in r) return { needs: needsWords(s, r.needs), flags: [] };
+  const asks = simple(s) ? simpleNeeds(s) : [];
+  if (asks.length) return { needs: asks, flags: [] };
   const lv = levelsOf(s.benchmarks), c = r.cashShort, d = diagnose(r, x, 'fresh', lv), checks = d.checks.map((k) => rowOf(k)), own = benchmarksNote(d.checks);
   const sc = d.checks.find((k) => k.id === 'securityCover') as RatioCheck, need = sc.meets ? undefined : collateralNeeded(r, x, 'fresh', lv);
   const collateralNote = need === undefined ? undefined : need === 0
@@ -426,7 +605,7 @@ export function planOf(s: ReportState, held: Partial<Levers> = {}): PlanView | u
   const r = x.scheme?.id === 'mudra' && most !== undefined ? projectReport(x) : undefined;
   const short = r && !('needs' in r) && !('blocked' in r) ? mudraShort(r, most as number) : undefined;
   return {
-    ...(short !== undefined ? { mudraShort: `On Mudra, the promoters’ Rs. ${rupees(most as number)} and Mudra’s Rs. ${rupees(MUDRA.mostInAll)} in all leave Rs. ${rupees(short)} of the project unfunded. A loan to a small enterprise outside Mudra, which CGTMSE can guarantee, can be larger: choose None for the scheme and tick CGTMSE under More options.` } : {}),
+    ...(short !== undefined ? { mudraShort: `On Mudra, the promoters’ Rs. ${rupees(most as number)} and Mudra’s Rs. ${rupees(MUDRA.mostInAll)} in all leave Rs. ${rupees(short)} of the project unfunded. A loan to a small enterprise outside Mudra, which CGTMSE can guarantee, can be larger: choose None for the scheme, then a CGTMSE guarantee.` } : {}),
     x, lv, levers: q.levers, cards: LEVER_IDS.filter((id) => show[id]).map((id) => ({ id, by: id === 'moratorium' || id === 'instalments' ? 'lender' : 'borrower', head: HEAD[id] })),
     limits: `The limits kept: ${most !== undefined ? `the promoters bring at most Rs. ${rupees(most)} in all` : 'no more of the promoters’ money, since the most they can bring is not typed'}; ${L.sales === undefined
       ? 'sales with no limit known, so a lender will test them against the market' : `the use of the capacity at most ${LEVELS.capacity.mostUsePct}% in any year`}; the whole term within ${LEVELS.term.longestMonths} months; unsecured loans and fixed costs only as you set them.`,
@@ -502,8 +681,28 @@ const WRITES: { key: Key; field: string; label: string; by: LeverId[] }[] = [
   { key: 'loan.moratoriumMonths', field: 'fld-tl-moratorium', label: 'Moratorium', by: ['moratorium'] },
   { key: 'loan.instalments', field: 'fld-tl-instalments', label: 'Instalments', by: ['instalments'] },
 ];
-const get = (s: ReportState, k: Key) => (k.startsWith('loan.') ? s.loan[k.slice(5) as 'amount'] : s[k as 'sales']);
-const put = (s: ReportState, k: Key, t: string): ReportState => (k.startsWith('loan.') ? { ...s, loan: { ...s.loan, [k.slice(5)]: t } } : { ...s, [k]: t });
+// The limit, fixed costs and instalments as the report uses them: worked out, added up from the heads or from simple
+// mode's own questions, which "Use this plan" writes back in their place (D-UX-112).
+const SIMPLE_FIELD: Partial<Record<Key, string>> = { fixed: 'fld-fixedMonth', 'loan.instalments': 'fld-years' };
+const get = (s: ReportState, k: Key) => {
+  if (k === 'wcLimit' && wcByOf(s) !== 'typed') return figText(limitOf(s) ?? 0);
+  if (k === 'fixed' && (simple(s) || typedHeads(s.heads?.fixed).length)) { const f = costsOf(inputOf(s)).fixedCosts; return f === undefined ? '' : figText(f); }
+  if (k === 'loan.instalments' && simple(s)) { const n = inputOf(s).loan.instalments; return n === undefined ? '' : String(n); }
+  return k.startsWith('loan.') ? s.loan[k.slice(5) as 'amount'] : s[k as 'sales'];
+};
+const put = (s: ReportState, k: Key, t: string): ReportState => {
+  const n = amountOf(t), f = typedHeads(s.heads?.fixed), month = f.reduce((a, [, h]) => a + (amountOf(h) ?? 0), 0);
+  if (k === 'wcLimit') return { ...s, wcLimit: t, ...(wcByOf(s) === 'typed' ? {} : { wcBy: 'typed' as const }) };
+  if (k === 'fixed' && f.length && month > 0 && n !== undefined) {
+    return { ...s, heads: { ...s.heads, fixed: Object.fromEntries(f.map(([id, h]) => [id, figText(+(((amountOf(h) ?? 0) * n) / (12 * month)).toFixed(2))])) } };
+  }
+  if (k === 'fixed' && simple(s)) return { ...s, fixedMonth: n === undefined ? t : figText(+(n / 12).toFixed(2)) };
+  if (k === 'loan.instalments' && simple(s)) return { ...s, years: t.trim() ? String(+(+t / 12).toFixed(2)) : '' };
+  if (k === 'collateral' && simple(s)) return { ...s, collateral: t, security: 'property' };
+  return k.startsWith('loan.') ? { ...s, loan: { ...s.loan, [k.slice(5)]: t } } : { ...s, [k]: t };
+};
+/** The same figure, give or take the paise a split into heads or months leaves. */
+const same = (a: string, b: string) => a === b || Math.abs((amountOf(a) ?? NaN) - (amountOf(b) ?? NaN)) < 1;
 
 /** "Use this plan": the plan's figures (engine/plan.ts's withLevers) written into the fields, and what each was. */
 export function applyPlan(s: ReportState, l: Levers): { s: ReportState; changes: PlanChange[] } {
@@ -514,10 +713,10 @@ export function applyPlan(s: ReportState, l: Levers): { s: ReportState; changes:
     'loan.moratoriumMonths': () => String(y.loan.moratoriumMonths), 'loan.instalments': () => String(y.loan.instalments),
   };
   const changes = WRITES.filter((w) => w.by.some((id) => l[id]) && (w.key === 'sales' ? s.salesBy === 'typed' : w.key !== 'utilisation' || s.salesBy === 'drivers'))
-    .map((w) => ({ key: w.key, field: w.field, label: w.label, was: get(s, w.key), now: text[w.key]() })).filter((c) => c.was !== c.now);
+    .map((w) => ({ key: w.key, field: (simple(s) && SIMPLE_FIELD[w.key]) || w.field, label: w.label, was: get(s, w.key), now: text[w.key]() })).filter((c) => !same(c.was, c.now));
   return { s: changes.reduce((t, c) => put(t, c.key, c.now), s), changes };
 }
 /** Undo: each field the plan wrote back as it was, unless it has been changed since. */
-export const undoPlan = (s: ReportState, changes: PlanChange[]) => changes.reduce((t, c) => (get(t, c.key) === c.now ? put(t, c.key, c.was) : t), s);
+export const undoPlan = (s: ReportState, changes: PlanChange[]) => changes.reduce((t, c) => (same(get(t, c.key), c.now) ? put(t, c.key, c.was) : t), s);
 export const sameLevers = (a: Levers, b: Levers) => LEVER_IDS.every((id) => a[id] === b[id]);
 export { AS_TYPED, LEVER_IDS, inSentence, type BoardMove, type CheckRow, type LeverId, type Levers, type ViableLine, type ViableView };

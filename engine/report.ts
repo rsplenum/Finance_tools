@@ -10,7 +10,7 @@ import { PRESETS, amortization, isFy, loanTimeline, planStatement, type Blocked,
 import { fyOf, monthAfter, type LoanTerms } from './loan';
 import { monthsOf, series } from './project';
 import { GUARANTEES, cgtmseRate, guaranteeFee, type FeeYear, type GuaranteeId } from './guarantee';
-import { guaranteeFeeCheck, pmegpCheck, reportCheck } from './report-check';
+import { guaranteeFeeCheck, pmegpCheck, reportCheck, workedLimitCheck } from './report-check';
 import { borrowerOf } from './tax';
 import { inr } from './util';
 import RATIOS from './data/ratios.json';
@@ -19,6 +19,13 @@ export const HEADS = DATA.heads;
 export const ASSUMPTIONS = DATA.assumptions;
 export const METHOD = DATA.method;
 export type HeadId = (typeof DATA.heads)[number]['id'];
+/** Costs by head (expert mode, D-UX-112): those that vary with sales, as a % of sales; the rest in rupees a month. */
+export const COST_HEADS = DATA.costHeads;
+export const WORKING_CAPITAL = DATA.workingCapital;
+export type VariableHeadId = (typeof DATA.costHeads.variable)[number]['id'];
+export type FixedHeadId = (typeof DATA.costHeads.fixed)[number]['id'];
+export interface CostHeadsInput { variable?: Partial<Record<VariableHeadId, number>>; fixed?: Partial<Record<FixedHeadId, number>> }
+export interface HeadAmount { id: VariableHeadId | FixedHeadId; label: string; amount: number }
 export const PMEGP = DATA.schemes.pmegp;
 export const MUDRA = DATA.schemes.mudra;
 export type MudraLevel = (typeof MUDRA.levels)[number];
@@ -65,6 +72,9 @@ export interface ReportInput {
   variablePct?: number;
   /** Fixed costs for a full first year (salaries, rent, overheads) and their growth a year (%). */
   fixedCosts?: number; fixedGrowthPct?: number;
+  /** Or the costs by head: each variable head a % of sales and each fixed head rupees a month, added up here. A total
+   * given above takes the place of its side's heads, which then only split it in the profit and loss. */
+  costHeads?: CostHeadsInput;
   /** Days of stock, debtors and creditors. */
   days?: { stock?: number; debtors?: number; creditors?: number };
   /** The working-capital limit sought, and its interest rate (%). */
@@ -82,7 +92,10 @@ export interface ReportYear {
   fy: string;
   /** Months of sales in the year, the use of the capacity and the sales by product (by drivers only). */
   months: number; utilisationPct?: number; products?: ProductYear[];
-  sales: number; variable: number; fixed: number; pbdit: number; depreciation: number; preliminary: number; tlInterest: number; wcInterest: number;
+  sales: number; variable: number; fixed: number;
+  /** The variable and fixed costs by head, when they were given by head: they add up to `variable` and `fixed`. */
+  heads?: { variable: HeadAmount[]; fixed: HeadAmount[] };
+  pbdit: number; depreciation: number; preliminary: number; tlInterest: number; wcInterest: number;
   /** The guarantee fee in the year, a finance cost (0 without a guarantee). */
   guaranteeFee: number; pbt: number; tax: number; pat: number;
   capital: number; subsidy: number; retained: number; netWorth: number; unsecured: number; termLoan: number; wcLoan: number; creditors: number; liabilities: number;
@@ -132,6 +145,45 @@ export function mudraShort(r: Report, promotersMost: number): number | undefined
   if (!r.mudra) return undefined;
   const short = r.projectCost - r.finance.subsidy - r.finance.unsecured - promotersMost - (MUDRA.mostInAll - r.wcLimit);
   return short > 0.005 ? short : undefined;
+}
+
+const typedHeads = <K extends string>(h: Partial<Record<K, number>> | undefined) => Object.entries(h ?? {}).filter(([, v]) => v !== undefined) as [K, number][];
+/** The variable costs (% of sales) and a full first year's fixed costs: as given, or added up from the heads. */
+export function costsOf(x: ReportInput): { variablePct?: number; fixedCosts?: number } {
+  const v = typedHeads(x.costHeads?.variable), f = typedHeads(x.costHeads?.fixed);
+  return {
+    variablePct: x.variablePct ?? (v.length ? v.reduce((t, [, p]) => t + p, 0) : undefined),
+    fixedCosts: x.fixedCosts ?? (f.length ? 12 * f.reduce((t, [, m]) => t + m, 0) : undefined),
+  };
+}
+
+/** A side's costs split by its typed heads (more than 0), in their shares; none without any. */
+function splitOf<K extends string>(h: Partial<Record<K, number>> | undefined, side: 'variable' | 'fixed', total: number): HeadAmount[] {
+  const typed = typedHeads(h).filter(([, a]) => a > 0), sum = typed.reduce((t, [, a]) => t + a, 0);
+  const label = (id: string) => (COST_HEADS[side] as { id: string; label: string }[]).find((c) => c.id === id)?.label ?? id;
+  return sum > 0 ? typed.map(([id, a]) => ({ id: id as HeadAmount['id'], label: label(id), amount: (total * a) / sum })) : [];
+}
+
+/** The first year's sales at its full rate (a year of sales at that year's use of the capacity), or none while a figure
+ * it needs is missing. */
+function firstRun(x: ReportInput): number | undefined {
+  if (x.salesBy === 'typed') return isNum(x.sales) ? x.sales : undefined;
+  const u = x.utilisationPct?.[0];
+  const lines = x.products ? x.products.map((p) => [12 * (p.unitsMonth as number), p.price as number]) : [[x.capacity as number, x.price as number]];
+  const full = lines.reduce((t, [n, p]) => t + n * p, 0);
+  return isNum(full) && isNum(u) ? (full * u) / 100 : undefined;
+}
+
+/** The working-capital limit worked out (D-UX-112): the lower of the need by the second method of lending (75% of the
+ * first year's stock and debtors at its full rate, less its creditors) and the bank's share of that year's sales by the
+ * turnover method; none while sales, the variable costs or the days are missing. Checked by `workedLimitCheck`. */
+export function workedLimit(x: ReportInput): { need: number; turnover: number; limit: number } | undefined {
+  const run = firstRun(x), v = costsOf(x).variablePct, d = x.days;
+  if (run === undefined || !isNum(v) || !d || !isNum(d.stock) || !isNum(d.debtors) || !isNum(d.creditors)) return undefined;
+  const runVariable = (run * v) / 100, stock = (runVariable * d.stock) / 365, debtors = (run * d.debtors) / 365, creditors = (runVariable * d.creditors) / 365;
+  const need = Math.max(0, ((stock + debtors) * DATA.workingCapital.mpbfSharePct) / 100 - creditors), turnover = (run * DATA.workingCapital.turnoverBankPct) / 100;
+  const limit = Math.min(need, turnover), again = workedLimitCheck(run, v, d as { stock: number; debtors: number; creditors: number });
+  return money(limit, again) ? { need, turnover, limit } : undefined;
 }
 
 /** What is missing, in the order the page asks it. */
@@ -188,8 +240,13 @@ export function reportNeeds(x: ReportInput): string[] {
     if (!sc.area || !(sc.area in PMEGP.subsidyPct.general)) needs.push('PMEGP: a town or a village');
     if (!sc.activity || !(sc.activity in PMEGP.ceiling)) needs.push('PMEGP: manufacturing or a service');
   }
-  if (!(isNum(x.variablePct) && x.variablePct >= 0 && x.variablePct < 100)) needs.push('Materials and other variable costs, as a share of sales (%), below 100');
-  if (!isNum(x.fixedCosts)) needs.push('Fixed costs in a full first year');
+  for (const side of ['variable', 'fixed'] as const) for (const h of COST_HEADS[side]) {
+    const v = (x.costHeads?.[side] as Record<string, number | undefined> | undefined)?.[h.id];
+    if (v !== undefined && !(isNum(v) && v >= 0)) needs.push(`Costs by head: ${h.label.toLowerCase()}, a figure of 0 or more`);
+  }
+  const c = costsOf(x);
+  if (!(isNum(c.variablePct) && c.variablePct >= 0 && c.variablePct < 100)) needs.push('Materials and other variable costs, as a share of sales (%), below 100');
+  if (!isNum(c.fixedCosts)) needs.push('Fixed costs in a full first year');
   if (!isNum(x.fixedGrowthPct)) needs.push('Fixed costs: growth a year (%)');
   const d = x.days ?? {};
   for (const k of ['stock', 'debtors', 'creditors'] as const) if (!(isNum(d[k]) && (d[k] as number) >= 0 && (d[k] as number) <= 365)) needs.push(`Days of ${k}, 0 to 365`);
@@ -225,10 +282,11 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     if (!Array.isArray(typed)) return typed;
     runS = typed;
   }
-  const fixedS = series({ kind: 'grow', first: x.fixedCosts, pct: x.fixedGrowthPct }, n, 'Fixed costs', first);
+  const costs = costsOf(x);
+  const fixedS = series({ kind: 'grow', first: costs.fixedCosts, pct: x.fixedGrowthPct }, n, 'Fixed costs', first);
   if (!Array.isArray(fixedS)) return fixedS;
   const part = (rate: number, k: number) => monthsOf(fys[k]).reduce((t, ym) => t + (ym >= start ? rate / 12 : 0), 0);
-  const v = x.variablePct as number, days = x.days as { stock: number; debtors: number; creditors: number };
+  const v = costs.variablePct as number, days = x.days as { stock: number; debtors: number; creditors: number };
   const limit = x.wcLimit as number, wcRate = limit > 0 ? (x.wcRatePct as number) : 0;
   const cost = Object.fromEntries(HEADS.map((h) => [h.id, x.cost[h.id] ?? 0])) as Record<HeadId, number>;
 
@@ -317,7 +375,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   const collateral = isNum(x.collateral) ? { market: x.collateral, rsv: (x.collateral * RATIOS.collateral.rsvPct) / 100, dsv: (x.collateral * RATIOS.collateral.dsvPct) / 100 } : undefined;
   const out: ReportYear[] = [];
   let cash = 0, retained = 0, accumulated = 0, written = 0, prev = { stock: 0, debtors: 0, creditors: 0 };
-  let byProductOk = true;
+  let byProductOk = true, headsOk = true;
   rows.forEach((r, k) => {
     const p = plan.profit[k], d = plan.schedule.find((s) => s.fy === r.fy), st = plan.statement.rows[k], lv = level(k);
     // Each product's units sold in the year (a twelfth of its year at full running, at the year's use, for each month of
@@ -327,6 +385,10 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
       return { name: l.name, units, price, sales: units * price };
     }) : undefined;
     if (byProduct && !money(byProduct.reduce((t, l) => t + l.sales, 0), r.sales)) byProductOk = false;
+    // The costs by head (D-UX-112): each side split in the shares typed, so the heads add up to the side's total.
+    const heads = { variable: splitOf(x.costHeads?.variable, 'variable', r.variable), fixed: splitOf(x.costHeads?.fixed, 'fixed', r.fixed) };
+    const headed = heads.variable.length + heads.fixed.length > 0;
+    if ((heads.variable.length && !money(heads.variable.reduce((t, h) => t + h.amount, 0), r.variable)) || (heads.fixed.length && !money(heads.fixed.reduce((t, h) => t + h.amount, 0), r.fixed))) headsOk = false;
     const principal = d?.principal ?? 0, tlLeft = d?.closing ?? 0;
     retained += p.pat; accumulated += r.depreciation; written += r.preliminary;
     const flow: Flow = {
@@ -346,7 +408,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     const interest = p.interestTL + r.wcInterest + r.guaranteeFee, currentAssets = lv.stock + lv.debtors;
     const security = netBlock + currentAssets, secured = tlLeft + limit;
     out.push({
-      fy: r.fy, months: months[k], ...(drivers ? { utilisationPct: util[k] } : {}), ...(byProduct ? { products: byProduct } : {}), sales: r.sales, variable: r.variable, fixed: r.fixed, pbdit: r.pbdit, depreciation: r.depreciation, preliminary: r.preliminary,
+      fy: r.fy, months: months[k], ...(drivers ? { utilisationPct: util[k] } : {}), ...(byProduct ? { products: byProduct } : {}), sales: r.sales, variable: r.variable, fixed: r.fixed, ...(headed ? { heads } : {}), pbdit: r.pbdit, depreciation: r.depreciation, preliminary: r.preliminary,
       tlInterest: p.interestTL, wcInterest: r.wcInterest, guaranteeFee: r.guaranteeFee, pbt: p.pbt, tax: p.tax, pat: p.pat,
       capital: promoter, subsidy, retained, netWorth, unsecured, termLoan: tlLeft, wcLoan: limit, creditors: lv.creditors, liabilities,
       grossBlock: fixedAssets, accumulated, netBlock, preliminaryLeft, stock: lv.stock, debtors: lv.debtors, cash, assets, flow,
@@ -365,6 +427,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   });
 
   if (!byProductOk) return blocked('the sales by product');
+  if (!headsOk) return blocked('the costs by head');
   const unbalanced = out.find((y) => !money(y.assets, y.liabilities));
   if (unbalanced) return blocked(`the balance sheet for ${unbalanced.fy}`);
   const check = reportCheck({

@@ -208,17 +208,28 @@ const sixQuestions = async (page, level = true) => {
   await page.check('#fld-bhk-2');
   if (level) await page.click('#fld-level-1');
 };
-// Fictional case R (tests/plan.test.ts, scripts/site-check.mjs), every fact but the repayment unless `repayment`.
+// Case R on the default path, simple mode (REP3, D-UX-112): building 10 L, plant 20 L, a 20 L loan at 10% over 5 years,
+// 15,000 boxes a month at Rs. 100, variable costs 65%, fixed costs 1 L a month, the limit worked out, nothing behind the
+// loan; selling from three months after this month, so that it holds on any date. It meets every default benchmark, as
+// case R does, so the answer state reads the same kind of answer as before simple mode.
+const caseRSimple = async (page) => {
+  const now = new Date(), sell = new Date(now.getFullYear(), now.getMonth() + 3, 1);
+  for (const id of ['#fld-borrower-firm', '#fld-security-neither', '#fld-wcBy-worked']) await page.check(id);
+  for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-tl-amount', '20 L'], ['#fld-tl-rate', '10'], ['#fld-years', '5'],
+    ['#fld-product-0-name', 'Boxes'], ['#fld-product-0-units', '15,000'], ['#fld-product-0-price', '100'],
+    ['#fld-sellFrom', `${sell.getFullYear()}-${String(sell.getMonth() + 1).padStart(2, '0')}`], ['#fld-variablePct', '65'], ['#fld-fixedMonth', '1 L']])
+    await leave(page, id, value);
+};
+// Fictional case R (tests/plan.test.ts, scripts/site-check.mjs) in expert mode, every fact but the repayment unless `repayment`.
 const caseR = async (page, repayment = true) => {
   await page.check('#fld-borrower-firm');
-  await page.locator('#more-options summary').click();
+  await page.check('#fld-mode-expert');
   await page.check('#fld-salesBy-typed');
   for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-furniture', '2 L'], ['#fld-cost-preliminary', '1 L'],
     ['#fld-tl-amount', '25 L'], ['#fld-tl-rate', '10'], ['#fld-tl-disbursed', '2026-04'], ['#fld-tl-moratorium', '0'], ['#fld-tl-instalments', '60'], ['#fld-monthsToStart', '0'],
     ['#fld-sales', '1.2 Cr'], ['#fld-salesGrowth', '10'], ['#fld-variablePct', '65'], ['#fld-fixed', '18 L'], ['#fld-fixedGrowth', '5'], ['#fld-wcLimit', '5 L'], ['#fld-wcRate', '11']])
     await leave(page, id, value);
   if (repayment) await page.check('#fld-tl-repayment-monthly');
-  await page.locator('#more-options summary').click();
 };
 
 /**
@@ -311,15 +322,17 @@ export const STATES = {
       await leave(page, '#fld-gstPct', '18');
     },
   },
-  // The project report on fictional case R (UX1).
+  // The project report on fictional case R (UX1), on the default path and in expert mode (REP3).
   '/project-report/': {
     empty: async () => {},
     partly: async (page) => { await page.check('#fld-borrower-firm'); await leave(page, '#fld-cost-building', '10 L'); },
     provisional: async (page) => caseR(page, false),
     error: async (page) => { await page.check('#fld-borrower-firm'); await leave(page, '#fld-tl-amount', 'seventy'); },
-    result: async (page) => caseR(page),
+    // The answer on the default path, simple mode (D-UX-112); the rest in expert mode.
+    result: async (page) => caseRSimple(page),
+    expert: async (page) => caseR(page),
     // Case R with its sales cut to 70 lakh (tests/viable.test.ts): it misses a lender's levels (DESIGN-LESSONS 11, UX5c).
-    missed: async (page) => { await caseR(page); await page.locator('#more-options summary').click(); await leave(page, '#fld-sales', '70 L'); await page.locator('#more-options summary').click(); },
+    missed: async (page) => { await caseR(page); await leave(page, '#fld-sales', '70 L'); },
     plan: async (page) => { await caseR(page); await page.getByTestId('rep-viable').click(); },
     download: async (page) => {
       await caseR(page);

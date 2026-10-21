@@ -84,3 +84,11 @@ export function guaranteeFeeCheck(x: FeeCheckIn): { fy: string; termLoan: number
     return { fy, termLoan: tl.get(fy) ?? 0, workingCapital: (r * x.limit * Math.min(12, Math.max(0, 12 - from))) / 12 };
   });
 }
+
+/** The working-capital limit worked out (D-UX-112), rearranged apart from report.ts's: the bank's share of the debtors on
+ * sales, plus that share of the stock less the creditors on the variable costs, over the year's days. */
+export function workedLimitCheck(run: number, variablePct: number, days: { stock: number; debtors: number; creditors: number }): number {
+  const share = DATA.workingCapital.mpbfSharePct / 100, onVariable = (run * variablePct) / 100;
+  const need = (share * days.debtors * run + (share * days.stock - days.creditors) * onVariable) / 365;
+  return Math.min(need > 0 ? need : 0, (DATA.workingCapital.turnoverBankPct * run) / 100);
+}

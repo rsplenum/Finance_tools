@@ -129,14 +129,14 @@
       "outOfSight": null
     },
     "/project-report/": {
-      "before": 39,
-      "shown": 867,
-      "all": 2628,
-      "plan": 2716,
+      "before": 35,
+      "shown": 924,
+      "all": 3247,
+      "plan": 2807,
       "long": 0,
       "abbr": 6,
-      "questions": 29,
-      "controls": 51,
+      "questions": 16,
+      "controls": 42,
       "answerAt": 5.3,
       "gap": 0,
       "styles": 8,
@@ -1064,6 +1064,30 @@
       "from": 5,
       "to": 6,
       "why": "D-DATA-24",
+      "date": "2026-10-21"
+    },
+    {
+      "page": "/project-report/",
+      "count": "shown",
+      "from": 867,
+      "to": 924,
+      "why": "D-UX-113",
+      "date": "2026-10-21"
+    },
+    {
+      "page": "/project-report/",
+      "count": "all",
+      "from": 2628,
+      "to": 3247,
+      "why": "D-UX-113",
+      "date": "2026-10-21"
+    },
+    {
+      "page": "/project-report/",
+      "count": "plan",
+      "from": 2716,
+      "to": 2807,
+      "why": "D-UX-113",
       "date": "2026-10-21"
     }
   ],

@@ -1076,19 +1076,20 @@ for (const scheme of ['light', 'dark']) {
 // furniture 2 L, preliminary 1 L; a term loan of 25 L at 10% from April 2026, 60 monthly instalments of equal principal;
 // sales 1.2 Cr growing 10%, variable costs 65%, fixed costs 18 L growing 5%; a cash credit of 5 L at 11%. The project
 // costs 37,86,301; in 2026-27 the profit after tax is 11,54,407 and the balance sheet totals 55,81,804 on both sides.
-// Its sales are typed under More options (R3, D-UX-49); the default path asks one line per product instead (D-UX-109).
-// The inputs on the default path, radios included: before R3, typed sales and their growth; then the capacity, the price,
-// the months to the first sales and the scheme (None or PMEGP), 33 in all; from REP1 one product's line (what it is, how
-// many a month, its price) in place of the capacity and the price, 34; from SCH1 a third scheme, Mudra, 35.
-const REP_DEFAULT = 35;
-const REP_FIELDS = 'main input:not(#more-options input):not(#download input):not(#benchmarks input)';
+// Its sales are typed in expert mode (R3, D-UX-49); the default path asks one line per product instead (D-UX-109).
+// The inputs on the default path, radios included: 35 until REP3 (D-UX-112), when the page opened in simple mode: the mode
+// (2), who the borrower is (3), building and machinery, the scheme (3), the loan, its rate and its years, what backs it (3),
+// one product's line (3), when selling starts, the variable costs' share, the fixed costs a month and the limit (3), 25 in
+// all. Expert mode asks every figure (54 with one product line).
+const REP_DEFAULT = 25;
+const REP_FIELDS = 'main input:not(#download input):not(#benchmarks input)';
 {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
-  if (await page.locator('#more-options').evaluate((d) => d.open)) v('the project report opens with More options open');
+  if (!(await page.isChecked('#fld-mode-simple'))) v('the project report opens in expert mode');
   const fields = await page.locator(REP_FIELDS).count();
-  if (fields !== REP_DEFAULT) v(`the project report asks ${fields} fields by default; it was ${REP_DEFAULT} (D-UX-49)`);
+  if (fields !== REP_DEFAULT) v(`the project report asks ${fields} fields by default; it was ${REP_DEFAULT} (D-UX-49, D-UX-112)`);
   await page.check('#fld-borrower-firm');
-  await page.locator('#more-options summary').click();
+  await page.check('#fld-mode-expert');
   await page.check('#fld-salesBy-typed');
   for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-furniture', '2 L'], ['#fld-cost-preliminary', '1 L'],
     ['#fld-tl-amount', '25 L'], ['#fld-tl-rate', '10'], ['#fld-tl-disbursed', '2026-04'], ['#fld-tl-moratorium', '0'], ['#fld-tl-instalments', '60'], ['#fld-monthsToStart', '0'],
@@ -1143,7 +1144,7 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input):not
   await page.getByTestId('rep-undo').click();
   if ([await page.inputValue('#fld-tl-amount'), await page.inputValue('#fld-sales')].join() !== '25,00,000,70,00,000') v('Undo did not put the figures back');
   await leave(page, '#fld-sales', '1.2 Cr');
-  // The collateral, under More options: 3 lakh with a 20 lakh limit misses the security cover (Rs. 4,36,226 needed).
+  // The collateral, in expert mode: 3 lakh with a 20 lakh limit misses the security cover (Rs. 4,36,226 needed).
   await leave(page, '#fld-wcLimit', '20 L');
   await leave(page, '#fld-collateral', '3 L');
   await expectText(page, v, 'rep-check-securityCover', /Misses: 1\.17 in 2026-27/, 'the security cover with the collateral');
@@ -1179,6 +1180,7 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input):not
 // report-check.ts's own route) goes lowest in 2030-31, 49,07,813 short.
 {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'dark' });
+  await page.check('#fld-mode-expert');
   await page.check('#fld-borrower-firm');
   await page.check('#fld-scheme-pmegp');
   for (const id of ['#fld-category-general', '#fld-area-rural', '#fld-activity-manufacturing', '#fld-tl-repayment-monthly', '#fld-pmegp-confirmed']) await page.check(id);
@@ -1220,7 +1222,7 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input):not
 // for 15 L is 0.55%: 6,600 on the term loan and 1,650 on the limit, 8,250.
 {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
-  for (const id of ['#fld-borrower-firm', '#fld-scheme-mudra', '#fld-tl-repayment-monthly']) await page.check(id);
+  for (const id of ['#fld-mode-expert', '#fld-borrower-firm', '#fld-scheme-mudra', '#fld-tl-repayment-monthly']) await page.check(id);
   for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-furniture', '2 L'], ['#fld-cost-preliminary', '1 L'],
     ['#fld-tl-amount', '12 L'], ['#fld-tl-rate', '10'], ['#fld-tl-disbursed', '2026-04'], ['#fld-tl-moratorium', '0'], ['#fld-tl-instalments', '60'],
     ['#fld-product-0-name', 'Boxes'], ['#fld-product-0-units', '10,000'], ['#fld-product-0-price', '100'], ['#fld-monthsToStart', '0'], ['#fld-variablePct', '65'],
@@ -1234,7 +1236,6 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input):not
   await page.getByTestId('rep-pl').evaluate((t) => t.closest('details').open = true);
   const fee = (name) => page.getByTestId('rep-pl').locator('tr', { has: page.locator('th', { hasText: `Less: guarantee fee (${name})` }) }).first().locator('td').first();
   await expectText(page, v, fee('CGFMU'), '15,000', 'CGFMU\'s fee in 2026-27');
-  await page.evaluate(() => { document.querySelector('#more-options').open = true; });
   if (await page.locator('#fld-collateral, #fld-cgtmse').count()) v('the Mudra report asks collateral or CGTMSE');
   if (!(await page.locator('#fld-feeRate').count())) v('the Mudra report has no box for the lender\'s own fee rate');
   await leave(page, '#fld-tl-amount', '18 L');
@@ -1244,6 +1245,33 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input):not
   await page.check('#fld-cgtmse');
   await expectText(page, v, fee('CGTMSE'), '8,250', 'CGTMSE\'s fee in 2026-27');
   await layout(page, v, 'the Mudra report, 390 px, light');
+  await ctx.close();
+}
+
+// Simple mode (REP3, D-UX-112), case S of tests/report-page.test.ts: case P's two products, building 6 L, plant 20 L, a
+// 20 L loan at 10% over 4 years, selling from three months after this month, variable costs 70%, fixed costs 1 L a month,
+// the limit worked out and nothing behind the loan. The limit by hand: a first year's run of 96 L at 60% is 57,60,000,
+// its materials at 70% 40,32,000; 75% of 30 days' debtors and stock, less 30 days' creditors:
+// (0.75 x 30 x 57,60,000 + (0.75 x 30 - 30) x 40,32,000) / 365 = 2,72,219, below the turnover method's 11,52,000.
+// The questions are in its own words; switching to expert mode writes what it assumed, and back, nothing is listed as changed.
+{
+  const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
+  const now = new Date(), sell = new Date(now.getFullYear(), now.getMonth() + 3, 1), month = `${sell.getFullYear()}-${String(sell.getMonth() + 1).padStart(2, '0')}`;
+  for (const id of ['#fld-borrower-firm', '#fld-security-neither', '#fld-wcBy-worked']) await page.check(id);
+  await page.getByTestId('rep-product-add').click();
+  for (const [id, value] of [['#fld-cost-building', '6 L'], ['#fld-cost-machinery', '20 L'], ['#fld-tl-amount', '20 L'], ['#fld-tl-rate', '10'], ['#fld-years', '4'],
+    ['#fld-product-0-name', 'Roasted chana'], ['#fld-product-0-units', '2,500'], ['#fld-product-0-price', '200'],
+    ['#fld-product-1-name', 'Roasted peanuts'], ['#fld-product-1-units', '1,500'], ['#fld-product-1-price', '200'], ['#fld-sellFrom', month], ['#fld-variablePct', '70'], ['#fld-fixedMonth', '1 L']])
+    await leave(page, id, value);
+  await expectText(page, v, 'rep-worked', /^Worked out: Rs\. 2,72,219\. It is the lower of .*, Rs\. 2,72,219, .*, Rs\. 11,52,000\.$/, 'the limit worked out');
+  if (await page.getByTestId('rep-needs').count()) v(`simple mode still asks: ${await page.getByTestId('rep-needs').textContent()}`);
+  if (await page.locator('#fld-tl-moratorium, #fld-tl-disbursed, #fld-wcRate, #fld-fixedGrowth').count()) v('simple mode shows an expert field');
+  await layout(page, v, 'the report in simple mode, 390 px');
+  await page.check('#fld-mode-expert');
+  const got = await Promise.all(['#fld-tl-moratorium', '#fld-tl-instalments', '#fld-monthsToStart', '#fld-fixed'].map((id) => page.inputValue(id)));
+  if (got.join('|') !== '3|48|3|12,00,000') v(`expert mode after simple reads ${got.join('|')}, want 3|48|3|12,00,000`);
+  await page.check('#fld-mode-simple');
+  if (await page.getByTestId('rep-changed').count()) v('back in simple mode, values are listed as changed that were not');
   await ctx.close();
 }
 

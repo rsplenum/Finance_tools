@@ -145,16 +145,22 @@ Working capital: The second method of lending (Tandon Committee): the bank finan
 
 **What the page assumes until you change it**
 
+- **The rest of the cost of the project**: None: no land, furniture, other fixed assets, contingency or preliminary expenses. Type them in expert mode if the project has them.
+- **Other funds**: No capital subsidy and no unsecured loans. Type them in expert mode if the project has them.
+- **The term loan**: First drawn this month, repaid by EMI every month. The usual for a term loan; type the month and the way it is repaid in expert mode.
+- **The moratorium**: Until the month you start selling. The owner's rule (D-UX-112): no instalment before the first sales; a lender may give more.
+- **Fixed costs: growth a year**: 5% a year. On the careful side: costs rise each year while the price is held where it is.
+- **The working-capital limit's rate**: The term loan's rate. Banks often price the two alike; type the sanction's rate in expert mode.
 - **Stock, debtors and creditors**: 30 days each: stock and creditors of the year's materials and other variable costs, debtors of the year's sales. A common level for a small business; type the business's own.
 - **The working-capital limit**: Fully used from the first sales, and its interest paid, in every year. On the careful side: more interest, lower profit.
 - **Drawings and dividends**: None: the profits stay in the business. Type them in the figures if the owners take money out.
 - **Tax**: Paid in the year it falls due. No tax is left owing in the balance sheet.
-- **Use of the capacity**: 60% in the first year of sales, 70% in the second, 80% from the third. A new unit rarely runs full at once; type the business's own under More options.
+- **Use of the capacity**: 60% in the first year of sales, 70% in the second, 80% from the third. A new unit rarely runs full at once; type the business's own in expert mode.
 - **The price a unit**: Held where it is in every year. On the careful side: sales grow only with the use of the capacity.
-- **The guarantee fee**: Paid by the borrower every year, at the scheme's rate, as a finance cost. The bank may bear it, pass it on or add a risk-based fee; type the sanction letter's rate under More options (0 if the bank bears it).
+- **The guarantee fee**: Paid by the borrower every year, at the scheme's rate, as a finance cost. The bank may bear it, pass it on or add a risk-based fee; type the sanction letter's rate in expert mode (0 if the bank bears it).
 - **The guarantee fee's first year**: Pro rata by months: the term loan's from its first draw, the limit's from the first sales. The schemes bill the first year for twelve months or to 31 March; by months, each year bears its own part.
 - **Other loans under CGTMSE**: None: the fee's slab is set by this term loan and limit alone. Other loans the borrower has under CGTMSE add to the cover and may raise the slab; type the sanction letter's rate if so.
-- **CGTMSE's rate**: The standard rate for the slab, less the concessions ticked. A bank's own rate may be up to 10% lower or 70% higher; type the sanction letter's rate under More options.
+- **CGTMSE's rate**: The standard rate for the slab, less the concessions ticked. A bank's own rate may be up to 10% lower or 70% higher; type the sanction letter's rate in expert mode.
 - **CGTMSE on the working-capital limit**: Charged on the whole limit. The upper figure: the bank reports the outstanding it expects, which may be less.
 - **PMEGP's margin money under CGTMSE**: Counted in the term loan outstanding until it is set off after 3 years. The upper figure: the bank holds it as a deposit against the loan until then.
 

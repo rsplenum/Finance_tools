@@ -6,7 +6,7 @@
  * 5 lakh at 11%.
  */
 import { describe, it, expect } from 'vitest';
-import { PMEGP, projectReport, reportNeeds, type Report, type ReportInput } from '../engine/report';
+import { PMEGP, projectReport, reportNeeds, workedLimit, type Report, type ReportInput } from '../engine/report';
 import type { Needs } from '../engine/dscr';
 
 export const CASE_R: ReportInput = {
@@ -192,5 +192,49 @@ describe('fictional case Q: sales start in the next year, above the ceiling, cas
   it('asks the scheme\'s facts, and a loan above the margin money', () => {
     expect(reportNeeds({ ...CASE_Q, scheme: { id: 'pmegp' } })).toEqual(['PMEGP: the borrower\'s category', 'PMEGP: a town or a village', 'PMEGP: manufacturing or a service']);
     expect((projectReport({ ...CASE_Q, loan: { ...CASE_Q.loan, amount: 500000 } }) as Needs).needs).toEqual(['The term loan: more than PMEGP\'s margin money of Rs. 5,00,000, which is set off against it']);
+  });
+});
+
+// Case R with its costs typed by head (D-UX-112): materials 55%, power and fuel 6% and other variable costs 4% of sales
+// (65%); wages 80,000, rent 25,000, repairs 10,000, insurance 5,000 and admin 30,000 a month (1,50,000, so 18,00,000 a
+// year). Year 1: materials 1,20,00,000 × 55% = 66,00,000, power 7,20,000, other 4,80,000; wages 80,000 × 12 = 9,60,000,
+// rent 3,00,000, repairs 1,20,000, insurance 60,000, admin 3,60,000. Year 2, sales 1,32,00,000 and fixed costs up 5%:
+// materials 72,60,000, wages 10,08,000. Everything else is case R's.
+const CASE_R_HEADS: ReportInput = { ...CASE_R, variablePct: undefined, fixedCosts: undefined, costHeads: {
+  variable: { materials: 55, power: 6, otherVariable: 4 }, fixed: { wages: 80000, rent: 25000, repairs: 10000, insurance: 5000, admin: 30000 } } };
+describe('fictional case R by cost heads', () => {
+  const h = projectReport(CASE_R_HEADS) as Report;
+  it('adds the heads up to case R\'s costs and profit', () => {
+    expect([h.years[0].variable, h.years[0].fixed, h.years[0].pat].map((x) => x.toFixed(2))).toEqual(['7800000.00', '1800000.00', '1154406.67']);
+  });
+  it('names each head in the profit and loss, year by year', () => {
+    const at = (k: number) => [...(h.years[k].heads?.variable ?? []), ...(h.years[k].heads?.fixed ?? [])].map((x) => [x.label, rs(x.amount)]);
+    expect(at(0)).toEqual([['Materials', 6600000], ['Power and fuel', 720000], ['Other variable costs', 480000], ['Wages and salaries', 960000],
+      ['Rent', 300000], ['Repairs and maintenance', 120000], ['Insurance', 60000], ['Admin and other overheads', 360000]]);
+    expect([at(1)[0], at(1)[3]]).toEqual([['Materials', 7260000], ['Wages and salaries', 1008000]]);
+    expect(r.years[0].heads).toBeUndefined();
+  });
+  it('asks a head typed below 0', () => {
+    const bad = projectReport({ ...CASE_R_HEADS, costHeads: { ...CASE_R_HEADS.costHeads, fixed: { rent: -1 } } }) as Needs;
+    expect(bad.needs).toContain('Costs by head: rent, a figure of 0 or more');
+  });
+});
+
+// The limit worked out on case R: stock and creditors 78,00,000 × 30/365 = 6,41,095.89, debtors 9,86,301.37; the need
+// 75% × 16,27,397.26 − 6,41,095.89 = 5,79,452.05 (again: (22.5 × 1,20,00,000 − 7.5 × 78,00,000) ÷ 365 = 21,15,00,000 ÷
+// 365); the turnover method's 20% of 1,20,00,000 = 24,00,000; the limit the lower, 5,79,452.05. With 90 days of stock
+// and debtors and no creditors the need is 75% × (19,23,287.67 + 29,58,904.11) = 36,61,643.84, so the turnover method's
+// 24,00,000 holds.
+describe('the working-capital limit worked out', () => {
+  it('takes the lower of the need and the turnover method', () => {
+    const w = workedLimit(CASE_R) as { need: number; turnover: number; limit: number };
+    expect([w.need, w.turnover, w.limit].map((x) => x.toFixed(2))).toEqual(['579452.05', '2400000.00', '579452.05']);
+    const t = workedLimit({ ...CASE_R, days: { stock: 90, debtors: 90, creditors: 0 } }) as { need: number; limit: number };
+    expect([t.need, t.limit].map((x) => x.toFixed(2))).toEqual(['3661643.84', '2400000.00']);
+  });
+  it('works from the heads, and waits for a missing fact', () => {
+    expect(workedLimit(CASE_R_HEADS)?.limit.toFixed(2)).toBe('579452.05');
+    expect(workedLimit({ ...CASE_R, days: undefined })).toBeUndefined();
+    expect(workedLimit({ ...CASE_R, sales: undefined })).toBeUndefined();
   });
 });
