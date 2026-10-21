@@ -99,7 +99,7 @@ const CASE_P: ReportInput = {
   taxBy: 'firm', cost: { land: 200000, building: 600000, machinery: 2000000, preliminary: 50000 },
   loan: { amount: 2400000, ratePct: 10, disbursed: '2026-10', moratoriumMonths: 6, instalments: 48, frequency: 'monthly', style: 'equal-principal' },
   capacity: 50000, price: 200, utilisationPct: [60, 70, 80], priceGrowthPct: 0, monthsToStart: 3, variablePct: 70, fixedCosts: 1200000, fixedGrowthPct: 5,
-  days: { stock: 30, debtors: 30, creditors: 30 }, wcLimit: 300000, wcRatePct: 11, scheme: { id: 'pmegp', category: 'general', area: 'rural', activity: 'manufacturing' },
+  days: { stock: 30, debtors: 30, creditors: 30 }, wcLimit: 300000, wcRatePct: 11, scheme: { id: 'pmegp', category: 'general', area: 'rural', activity: 'manufacturing', confirmed: true },
 };
 const two = (xs: (number | undefined)[]) => xs.map((x) => x?.toFixed(2));
 
@@ -170,7 +170,7 @@ const CASE_Q: ReportInput = {
   taxBy: 'firm', cost: { building: 1000000, machinery: 2000000, preliminary: 100000 },
   loan: { amount: 2600000, ratePct: 10, disbursed: '2026-10', moratoriumMonths: 9, instalments: 48, frequency: 'monthly', style: 'equal-principal' },
   capacity: 40000, price: 150, utilisationPct: [60, 70, 80], priceGrowthPct: 0, monthsToStart: 7, variablePct: 55, fixedCosts: 900000, fixedGrowthPct: 5,
-  days: { stock: 30, debtors: 30, creditors: 30 }, wcLimit: 0, scheme: { id: 'pmegp', category: 'special', area: 'urban', activity: 'service' },
+  days: { stock: 30, debtors: 30, creditors: 30 }, wcLimit: 0, scheme: { id: 'pmegp', category: 'special', area: 'urban', activity: 'service', confirmed: true },
 };
 describe('fictional case Q: sales start in the next year, above the ceiling, cash below nil', () => {
   const q = projectReport(CASE_Q) as Report;

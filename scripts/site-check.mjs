@@ -1079,8 +1079,8 @@ for (const scheme of ['light', 'dark']) {
 // Its sales are typed under More options (R3, D-UX-49); the default path asks one line per product instead (D-UX-109).
 // The inputs on the default path, radios included: before R3, typed sales and their growth; then the capacity, the price,
 // the months to the first sales and the scheme (None or PMEGP), 33 in all; from REP1 one product's line (what it is, how
-// many a month, its price) in place of the capacity and the price, 34.
-const REP_DEFAULT = 34;
+// many a month, its price) in place of the capacity and the price, 34; from SCH1 a third scheme, Mudra, 35.
+const REP_DEFAULT = 35;
 const REP_FIELDS = 'main input:not(#more-options input):not(#download input):not(#benchmarks input)';
 {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
@@ -1181,7 +1181,7 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input):not
   const { ctx, page, v } = await open('/project-report/', { scheme: 'dark' });
   await page.check('#fld-borrower-firm');
   await page.check('#fld-scheme-pmegp');
-  for (const id of ['#fld-category-general', '#fld-area-rural', '#fld-activity-manufacturing', '#fld-tl-repayment-monthly']) await page.check(id);
+  for (const id of ['#fld-category-general', '#fld-area-rural', '#fld-activity-manufacturing', '#fld-tl-repayment-monthly', '#fld-pmegp-confirmed']) await page.check(id);
   await page.getByTestId('rep-product-add').click();
   if (await page.locator('#fld-subsidy').count()) v('the project report asks a capital subsidy beside PMEGP');
   for (const [id, value] of [['#fld-cost-land', '2 L'], ['#fld-cost-building', '6 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-preliminary', '50,000'],
@@ -1211,6 +1211,39 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input):not
   if (!(await page.getByTestId('rep-lever-promoters').count())) v('make it viable: no lever for a smaller loan');
   await expectText(page, v, 'rep-plan-limits', /the use of the capacity at most 85% in any year/, 'the plan\'s limits by the drivers');
   await layout(page, v, 'the PMEGP report, 390 px, dark');
+  await ctx.close();
+}
+
+// Mudra (SCH1), case M of tests/report-page.test.ts on the default path: a 12 L term loan from April 2026 and a 3 L
+// limit, 15 L in all, so Tarun Plus, only once a Tarun loan is ticked as repaid. CGFMU's fee in 2026-27 by hand: 1% of
+// 12,00,000 and of 3,00,000 for 12 months, 15,000. Above 20 L in all it stops. With no scheme and CGTMSE ticked, its slab
+// for 15 L is 0.55%: 6,600 on the term loan and 1,650 on the limit, 8,250.
+{
+  const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
+  for (const id of ['#fld-borrower-firm', '#fld-scheme-mudra', '#fld-tl-repayment-monthly']) await page.check(id);
+  for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-furniture', '2 L'], ['#fld-cost-preliminary', '1 L'],
+    ['#fld-tl-amount', '12 L'], ['#fld-tl-rate', '10'], ['#fld-tl-disbursed', '2026-04'], ['#fld-tl-moratorium', '0'], ['#fld-tl-instalments', '60'],
+    ['#fld-product-0-name', 'Boxes'], ['#fld-product-0-units', '10,000'], ['#fld-product-0-price', '100'], ['#fld-monthsToStart', '0'], ['#fld-variablePct', '65'],
+    ['#fld-fixed', '18 L'], ['#fld-fixedGrowth', '5'], ['#fld-wcLimit', '3 L'], ['#fld-wcRate', '11']])
+    await leave(page, id, value);
+  await expectText(page, v, 'rep-mudra-level', 'Tarun Plus: the term loan and the limit come to Rs. 15,00,000, only for a borrower who has repaid a Tarun loan.', 'Mudra\'s level');
+  await expectText(page, v, 'rep-mudra-collateral', /^No collateral needed up to Rs\. 20,00,000: CGFMU .* Apply on JanSamarth\.$/, 'Mudra without collateral');
+  await expectText(page, v, 'rep-needs', /Mudra: the loans come to Rs\. 15,00,000, above Tarun's/, 'Tarun Plus unticked');
+  await page.check('#fld-tarun');
+  await expectText(page, v, 'rep-status', 'Complete', 'the Mudra report');
+  await page.getByTestId('rep-pl').evaluate((t) => t.closest('details').open = true);
+  const fee = (name) => page.getByTestId('rep-pl').locator('tr', { has: page.locator('th', { hasText: `Less: guarantee fee (${name})` }) }).first().locator('td').first();
+  await expectText(page, v, fee('CGFMU'), '15,000', 'CGFMU\'s fee in 2026-27');
+  await page.evaluate(() => { document.querySelector('#more-options').open = true; });
+  if (await page.locator('#fld-collateral, #fld-cgtmse, #fld-subsidy').count()) v('the Mudra report asks collateral, CGTMSE or a subsidy');
+  if (!(await page.locator('#fld-feeRate').count())) v('the Mudra report has no box for the lender\'s own fee rate');
+  await leave(page, '#fld-tl-amount', '18 L');
+  await expectText(page, v, 'rep-needs', /Mudra: the term loan and the working-capital limit come to Rs\. 21,00,000, Rs\. 1,00,000 above/, 'Mudra above 20 L');
+  await leave(page, '#fld-tl-amount', '12 L');
+  await page.check('#fld-scheme-');
+  await page.check('#fld-cgtmse');
+  await expectText(page, v, fee('CGTMSE'), '8,250', 'CGTMSE\'s fee in 2026-27');
+  await layout(page, v, 'the Mudra report, 390 px, light');
   await ctx.close();
 }
 

@@ -9,7 +9,8 @@ import DATA from './data/report.json';
 import { PRESETS, amortization, isFy, loanTimeline, planStatement, type Blocked, type Definition, type LoanInput, type Needs, type Plan, type ProjectionYear } from './dscr';
 import { fyOf, monthAfter, type LoanTerms } from './loan';
 import { monthsOf, series } from './project';
-import { pmegpCheck, reportCheck } from './report-check';
+import { GUARANTEES, cgtmseRate, guaranteeFee, type FeeYear, type GuaranteeId } from './guarantee';
+import { guaranteeFeeCheck, pmegpCheck, reportCheck } from './report-check';
 import { borrowerOf } from './tax';
 import { inr } from './util';
 import RATIOS from './data/ratios.json';
@@ -19,13 +20,22 @@ export const ASSUMPTIONS = DATA.assumptions;
 export const METHOD = DATA.method;
 export type HeadId = (typeof DATA.heads)[number]['id'];
 export const PMEGP = DATA.schemes.pmegp;
+export const MUDRA = DATA.schemes.mudra;
+export type MudraLevel = (typeof MUDRA.levels)[number];
 /** The day the report's rules and the schemes are next due for a review (Q2, D-DATA-19). */
 export const REPORT_REVIEW_BY = DATA.reviewBy;
 export type Category = keyof typeof PMEGP.ownPct;
 export type Area = keyof typeof PMEGP.subsidyPct.general;
 export type Activity = keyof typeof PMEGP.ceiling;
-/** A government scheme the project is financed under: only PMEGP so far (D-UX-49). */
-export interface SchemeInput { id: 'pmegp'; category?: Category; area?: Area; activity?: Activity }
+/** A government scheme the project is financed under, one at a time (D-UX-49, SCH1): PMEGP or Mudra. */
+export type SchemeInput = PmegpInput | MudraInput;
+/** `confirmed`: the borrower confirms PMEGP's conditions (engine/data/report.json); unconfirmed, the report flags them. */
+export interface PmegpInput { id: 'pmegp'; category?: Category; area?: Area; activity?: Activity; confirmed?: boolean }
+/** `tarunRepaid`: the borrower has repaid a Tarun loan, which alone opens Tarun Plus, above Rs. 10 lakh. */
+export interface MudraInput { id: 'mudra'; tarunRepaid?: boolean }
+/** The guarantee on the loans: CGFMU's on a Mudra loan, always; on another loan CGTMSE's when ticked, with the number of
+ * its concessions that apply (0 to 3). A rate typed from the sanction letter (% a year) takes the place of the scheme's. */
+export interface GuaranteeInput { cgtmse?: boolean; concessions?: number; ratePct?: number }
 /** A product or service sold (D-UX-109): what it is, how many a month at full running, and its price a unit. */
 export interface ProductInput { name?: string; unitsMonth?: number; price?: number }
 /** A product's line in a year: the units sold (at the year's use of the capacity, for its months of sales), the price a
@@ -50,6 +60,7 @@ export interface ReportInput {
   /** Months from the term loan's first draw to the first sales (0 if at once). */
   monthsToStart?: number;
   scheme?: SchemeInput;
+  guarantee?: GuaranteeInput;
   /** Materials and other variable costs, as a share of sales (%). */
   variablePct?: number;
   /** Fixed costs for a full first year (salaries, rent, overheads) and their growth a year (%). */
@@ -62,7 +73,7 @@ export interface ReportInput {
   collateral?: number;
 }
 
-export interface CostLine { id: HeadId | 'margin' | 'idc'; label: string; amount: number }
+export interface CostLine { id: HeadId | 'margin' | 'idc' | 'fee'; label: string; amount: number }
 export interface Flow {
   capital: number; subsidy: number; unsecured: number; termLoan: number; pat: number; depreciation: number; preliminary: number; wcLoan: number; creditors: number; sources: number;
   fixedAssets: number; preliminarySpent: number; stock: number; debtors: number; repaid: number; uses: number; net: number; opening: number; closing: number;
@@ -71,7 +82,9 @@ export interface ReportYear {
   fy: string;
   /** Months of sales in the year, the use of the capacity and the sales by product (by drivers only). */
   months: number; utilisationPct?: number; products?: ProductYear[];
-  sales: number; variable: number; fixed: number; pbdit: number; depreciation: number; preliminary: number; tlInterest: number; wcInterest: number; pbt: number; tax: number; pat: number;
+  sales: number; variable: number; fixed: number; pbdit: number; depreciation: number; preliminary: number; tlInterest: number; wcInterest: number;
+  /** The guarantee fee in the year, a finance cost (0 without a guarantee). */
+  guaranteeFee: number; pbt: number; tax: number; pat: number;
   capital: number; subsidy: number; retained: number; netWorth: number; unsecured: number; termLoan: number; wcLoan: number; creditors: number; liabilities: number;
   grossBlock: number; accumulated: number; netBlock: number; preliminaryLeft: number; stock: number; debtors: number; cash: number; assets: number;
   flow: Flow;
@@ -89,8 +102,13 @@ export interface SchemeResult {
   id: 'pmegp'; label: string; cost: number; base: number; ratePct: number; subsidy: number; sanctioned: number;
   ownPct: number; ownMinPct: number; workingCapitalPct: number; workingCapitalMaxPct: number; ceiling: number; flags: string[];
 }
+/** A Mudra loan's level by the term loan and the limit in all, and where to apply. */
+export interface MudraResult { level: MudraLevel; total: number; collateralFreeUpTo: number; apply: { label: string; url: string } }
+/** The guarantee and its fee: the rate (the scheme's, or `typed`), the cover that sets CGTMSE's slab, the fee before the
+ * first sales (in the cost of the project), over the whole loan, and in each year of it from its first draw. */
+export interface GuaranteeResult { id: GuaranteeId; label: string; ratePct: number; typed: boolean; cover: number; concessions: number; beforeStart: number; total: number; years: FeeYear[] }
 export interface Report {
-  start: string; scheme?: SchemeResult; interestBeforeStart: number;
+  start: string; scheme?: SchemeResult; mudra?: MudraResult; guarantee?: GuaranteeResult; interestBeforeStart: number;
   /** The year cash first goes lowest below nil, and the promoters' money more that keeps it at nil or above. */
   cashShort?: { fy: string; lowest: number; need: number };
   cost: CostLine[]; fixedAssets: number; marginMoney: number; projectCost: number;
@@ -104,6 +122,17 @@ const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFin
 const money = (a: number, b: number) => Math.abs(a - b) <= Math.max(0.01, 1e-9 * Math.max(Math.abs(a), Math.abs(b)));
 const blocked = (where: string): Blocked => ({ blocked: `The two computations disagree on ${where}, so no figures are shown. Please report this.` });
 const DSCR_METHOD = (PRESETS.find((p) => p.id === DATA.dscrMethod) as { choice: Definition }).choice;
+
+/** Mudra's level for the term loan and the limit in all; none above the Rs. 20 lakh it lends in all. */
+export const mudraLevel = (total: number): MudraLevel | undefined => MUDRA.levels.find((v) => total <= v.upTo);
+
+/** On a Mudra loan, what the cost of the project as worked needs beyond the promoters' most, the subsidy, the unsecured
+ * loans and the largest term loan within Mudra's Rs. 20 lakh in all (the limit as typed); none when they fund it (D-UX-111). */
+export function mudraShort(r: Report, promotersMost: number): number | undefined {
+  if (!r.mudra) return undefined;
+  const short = r.projectCost - r.finance.subsidy - r.finance.unsecured - promotersMost - (MUDRA.mostInAll - r.wcLimit);
+  return short > 0.005 ? short : undefined;
+}
 
 /** What is missing, in the order the page asks it. */
 export function reportNeeds(x: ReportInput): string[] {
@@ -140,6 +169,19 @@ export function reportNeeds(x: ReportInput): string[] {
     if (!isNum(x.priceGrowthPct)) needs.push('The price: growth a year (%)');
   }
   if (!(isNum(x.monthsToStart) && Number.isInteger(x.monthsToStart) && x.monthsToStart >= 0)) needs.push('Months from the loan to the first sales (0 if at once)');
+  if (x.scheme?.id === 'mudra' && isNum(l.amount) && isNum(x.wcLimit)) {
+    const total = l.amount + x.wcLimit, most = MUDRA.mostInAll, tarun = (MUDRA.levels.find((v) => v.id === 'tarun') as MudraLevel).upTo;
+    if (total > most) needs.push(`Mudra: the term loan and the working-capital limit come to Rs. ${inr(total)}, Rs. ${inr(total - most)} above the Rs. ${inr(most)} Mudra lends in all. Lower them by Rs. ${inr(total - most)}, the promoters bringing more, or choose no scheme: a loan to a small enterprise, which CGTMSE can guarantee`);
+    else if (total > tarun && !x.scheme.tarunRepaid) needs.push(`Mudra: the loans come to Rs. ${inr(total)}, above Tarun's Rs. ${inr(tarun)}. Tarun Plus, up to Rs. ${inr(most)}, is only for a borrower who has repaid a Tarun loan: tick that if so, or lower the loans to Rs. ${inr(tarun)}`);
+  }
+  if (x.scheme?.id === 'mudra' && x.collateral !== undefined) needs.push('Mudra: a Mudra loan takes no collateral, so leave its market value empty');
+  const g = x.guarantee;
+  if (g?.concessions !== undefined && !(Number.isInteger(g.concessions) && g.concessions >= 0 && g.concessions <= GUARANTEES.cgtmse.groups.length)) needs.push(`CGTMSE: the concessions that apply, 0 to ${GUARANTEES.cgtmse.groups.length}`);
+  if (g?.ratePct !== undefined && !(isNum(g.ratePct) && g.ratePct >= 0)) needs.push('The guarantee fee: a rate of 0 or more (% a year)');
+  if (g?.cgtmse && x.scheme?.id !== 'mudra' && g.ratePct === undefined && isNum(l.amount) && isNum(x.wcLimit) && cgtmseRate(l.amount + x.wcLimit, 0) === undefined) {
+    const most = GUARANTEES.cgtmse.slabs[GUARANTEES.cgtmse.slabs.length - 1].upTo;
+    needs.push(`CGTMSE: the loans come to Rs. ${inr(l.amount + x.wcLimit)}, above the Rs. ${inr(most)} it guarantees in all; untick it`);
+  }
   if (x.scheme?.id === 'pmegp') {
     const sc = x.scheme;
     if (!sc.category || !(sc.category in PMEGP.ownPct)) needs.push('PMEGP: the borrower\'s category');
@@ -207,7 +249,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   const sanctioned = x.loan.amount as number;
   if (x.scheme?.id === 'pmegp') {
     if (x.subsidy) return { needs: ['A capital subsidy beside PMEGP: PMEGP\'s margin money is worked out, so leave the capital subsidy empty'] };
-    const sc = x.scheme as Required<SchemeInput>, ratePct = PMEGP.subsidyPct[sc.category][sc.area], ceiling = PMEGP.ceiling[sc.activity];
+    const sc = x.scheme as Required<PmegpInput>, ratePct = PMEGP.subsidyPct[sc.category][sc.area], ceiling = PMEGP.ceiling[sc.activity];
     const pc = fixedAssets - cost.land + prelim + marginMoney + limit, base = pc > ceiling ? ceiling : pc, subsidy = (ratePct / 100) * base;
     if (!money(subsidy, pmegpCheck(pc, ratePct, ceiling))) return blocked('the PMEGP margin money');
     if (subsidy >= sanctioned) return { needs: [`The term loan: more than PMEGP's margin money of Rs. ${inr(subsidy)}, which is set off against it`] };
@@ -220,7 +262,21 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   const debt = amortization(loan);
   if (!('years' in debt)) return debt;
   const interestBeforeStart = debt.years.filter((d) => d.fy < first).reduce((t, d) => t + d.interest, 0);
-  const prelimAll = prelim + interestBeforeStart, years = DATA.preliminaryYears;
+
+  // The guarantee fee (SCH1): CGFMU's on a Mudra loan, CGTMSE's when ticked; a finance cost each year, and before the first
+  // sales paid from the cost of the project with the interest then. Worked twice: guarantee.ts and report-check.ts.
+  const gid: GuaranteeId | undefined = x.scheme?.id === 'mudra' ? 'cgfmu' : x.guarantee?.cgtmse ? 'cgtmse' : undefined;
+  let guarantee: GuaranteeResult | undefined;
+  if (gid) {
+    const cover = sanctioned + limit, concessions = gid === 'cgtmse' ? x.guarantee?.concessions ?? 0 : 0, typed = x.guarantee?.ratePct !== undefined;
+    const ratePct = typed ? (x.guarantee?.ratePct as number) : gid === 'cgfmu' ? GUARANTEES.cgfmu.ratePct : (cgtmseRate(cover, concessions) as number);
+    const fee = { id: gid, ratePct, guaranteed: sanctioned, held: scheme ? scheme.subsidy : 0, heldMonths: PMEGP.lockInYears * 12, limit, start, fys: when.years };
+    const byYear = guaranteeFee({ ...fee, months: debt.months }), again = guaranteeFeeCheck({ ...fee, loan: loan as LoanTerms });
+    if (byYear.some((y, k) => !money(y.termLoan, again[k].termLoan) || !money(y.workingCapital, again[k].workingCapital))) return blocked('the guarantee fee');
+    guarantee = { id: gid, label: GUARANTEES[gid].label, ratePct, typed, cover, concessions, beforeStart: byYear.filter((y) => y.fy < first).reduce((t, y) => t + y.total, 0), total: byYear.reduce((t, y) => t + y.total, 0), years: byYear };
+  }
+  const feeBeforeStart = guarantee?.beforeStart ?? 0, feeOf = (fy: string) => guarantee?.years.find((y) => y.fy === fy)?.total ?? 0;
+  const prelimAll = prelim + interestBeforeStart + feeBeforeStart, years = DATA.preliminaryYears;
 
   // Profit before interest, depreciation and tax; depreciation on the written-down value, head by head.
   const wdv = new Map(HEADS.filter((h) => h.id !== 'preliminary').map((h) => [h.id, cost[h.id]]));
@@ -233,10 +289,10 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
       wdv.set(h.id, (wdv.get(h.id) as number) - d);
       depreciation += d;
     }
-    return { fy, sales, variable, fixed, pbdit: sales - variable - fixed, depreciation, preliminary: k < years ? prelimAll / years : 0, wcInterest: part((limit * wcRate) / 100, k) };
+    return { fy, sales, variable, fixed, pbdit: sales - variable - fixed, depreciation, preliminary: k < years ? prelimAll / years : 0, wcInterest: part((limit * wcRate) / 100, k), guaranteeFee: feeOf(fy) };
   });
   const proj: ProjectionYear[] = rows.map((r) => ({
-    fy: r.fy, pbdit: r.pbdit, assetIncome: 0, depreciation: r.depreciation, nonCash: r.preliminary, interestOther: r.wcInterest,
+    fy: r.fy, pbdit: r.pbdit, assetIncome: 0, depreciation: r.depreciation, nonCash: r.preliminary, interestOther: r.wcInterest + r.guaranteeFee,
     otherLoansInterest: 0, otherLoansPrincipal: 0, existingEmis: 0, taxBy: x.taxBy,
   }));
   const plan = planStatement(proj, loan, DSCR_METHOD, first > when.years[0] ? first : undefined);
@@ -249,10 +305,11 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   if (scheme) {
     // The promoters' own share of PMEGP's project cost: what they bring, less the land and the interest before the first
     // sales, which that cost leaves out.
-    const own = promoter - cost.land - interestBeforeStart, sc = scheme;
+    const own = promoter - cost.land - interestBeforeStart - feeBeforeStart, sc = scheme;
     sc.ownPct = sc.cost > 0 ? (own / sc.cost) * 100 : 0;
     sc.flags.push(PMEGP.notice);
-    if (sc.cost > sc.ceiling) sc.flags.push(`The project cost of Rs. ${inr(sc.cost)} is above PMEGP's Rs. ${inr(sc.ceiling)} for ${x.scheme?.activity === 'service' ? 'a service' : 'manufacturing'}: the margin money is worked on Rs. ${inr(sc.ceiling)}, and the bank may lend the rest without it.`);
+    if (!(x.scheme as PmegpInput).confirmed) sc.flags.push('PMEGP\'s conditions are not yet confirmed: the scheme finances the project only if each holds.');
+    if (sc.cost > sc.ceiling) sc.flags.push(`The project cost of Rs. ${inr(sc.cost)} is above PMEGP's Rs. ${inr(sc.ceiling)} for ${(x.scheme as PmegpInput).activity === 'service' ? 'a service' : 'manufacturing'}: the margin money is worked on Rs. ${inr(sc.ceiling)}, and the bank may lend the rest without it.`);
     if (sc.ownPct < sc.ownMinPct - 1e-9) sc.flags.push(`The promoters bring ${sc.ownPct.toFixed(2)}% of PMEGP's project cost; the scheme asks at least ${sc.ownMinPct}%.`);
     if (sc.workingCapitalPct > sc.workingCapitalMaxPct + 1e-9) sc.flags.push(`Working capital is ${sc.workingCapitalPct.toFixed(2)}% of PMEGP's project cost; the scheme allows at most ${sc.workingCapitalMaxPct}%.`);
   }
@@ -285,12 +342,12 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     flow.closing = cash;
     const netWorth = promoter + subsidy + retained, netBlock = fixedAssets - accumulated, preliminaryLeft = prelimAll - written;
     const liabilities = netWorth + unsecured + tlLeft + limit + lv.creditors, assets = netBlock + preliminaryLeft + lv.stock + lv.debtors + cash;
-    const fixedAll = r.fixed + r.depreciation + r.preliminary + p.interestTL + r.wcInterest, contribution = r.sales - r.variable;
-    const interest = p.interestTL + r.wcInterest, currentAssets = lv.stock + lv.debtors;
+    const fixedAll = r.fixed + r.depreciation + r.preliminary + p.interestTL + r.wcInterest + r.guaranteeFee, contribution = r.sales - r.variable;
+    const interest = p.interestTL + r.wcInterest + r.guaranteeFee, currentAssets = lv.stock + lv.debtors;
     const security = netBlock + currentAssets, secured = tlLeft + limit;
     out.push({
       fy: r.fy, months: months[k], ...(drivers ? { utilisationPct: util[k] } : {}), ...(byProduct ? { products: byProduct } : {}), sales: r.sales, variable: r.variable, fixed: r.fixed, pbdit: r.pbdit, depreciation: r.depreciation, preliminary: r.preliminary,
-      tlInterest: p.interestTL, wcInterest: r.wcInterest, pbt: p.pbt, tax: p.tax, pat: p.pat,
+      tlInterest: p.interestTL, wcInterest: r.wcInterest, guaranteeFee: r.guaranteeFee, pbt: p.pbt, tax: p.tax, pat: p.pat,
       capital: promoter, subsidy, retained, netWorth, unsecured, termLoan: tlLeft, wcLoan: limit, creditors: lv.creditors, liabilities,
       grossBlock: fixedAssets, accumulated, netBlock, preliminaryLeft, stock: lv.stock, debtors: lv.debtors, cash, assets, flow,
       available: st.available, service: st.service, principal, ...(st.dscr !== undefined ? { dscr: st.dscr } : {}), counted: st.counted, contribution, fixedAll,
@@ -315,7 +372,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     ...(drivers ? { drivers: { ...(x.products ? { products: x.products.map((p) => ({ unitsMonth: p.unitsMonth as number, price: p.price as number })) } : { capacity: x.capacity as number, price: x.price as number }),
       utilisationPct: util, priceGrowthPct: x.priceGrowthPct as number } } : {}),
     pat: plan.profit.map((p) => p.pat), tlInterest: plan.profit.map((p) => p.interestTL), wcInterest: rows.map((r) => r.wcInterest),
-    loan: loan as LoanTerms, fys,
+    fee: fys.map((fy) => guarantee?.years.find((y) => y.fy === fy)?.total ?? 0), loan: loan as LoanTerms, fys,
   });
   for (const [k, y] of out.entries()) {
     const c = check[k];
@@ -328,10 +385,12 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   const low = out.reduce((m, y) => (y.cash < m.cash ? y : m)), lowCheck = Math.min(...check.map((c) => c.cash));
   if (!money(low.cash, lowCheck)) return blocked('the lowest cash');
   return {
-    start, ...(scheme ? { scheme } : {}), interestBeforeStart,
+    start, ...(scheme ? { scheme } : {}), interestBeforeStart, ...(guarantee ? { guarantee } : {}),
+    ...(x.scheme?.id === 'mudra' ? { mudra: { level: mudraLevel(sanctioned + limit) as MudraLevel, total: sanctioned + limit, collateralFreeUpTo: MUDRA.collateralFreeUpTo, apply: MUDRA.apply } } : {}),
     ...(low.cash < -0.005 ? { cashShort: { fy: low.fy, lowest: low.cash, need: -low.cash } } : {}),
     cost: [...HEADS.filter((h) => cost[h.id] > 0).map((h) => ({ id: h.id, label: h.label, amount: cost[h.id] })),
       ...(interestBeforeStart > 0 ? [{ id: 'idc' as const, label: 'Interest on the term loan before sales start', amount: interestBeforeStart }] : []),
+      ...(feeBeforeStart > 0 ? [{ id: 'fee' as const, label: 'Guarantee fee before sales start', amount: feeBeforeStart }] : []),
       ...(marginMoney > 0 ? [{ id: 'margin' as const, label: 'Margin for working capital', amount: marginMoney }] : [])],
     fixedAssets, marginMoney, projectCost, ...(collateral ? { collateral } : {}),
     finance: { termLoan, subsidy, unsecured, promoter, total: termLoan + subsidy + unsecured + promoter, promoterPct: (promoter / projectCost) * 100 },

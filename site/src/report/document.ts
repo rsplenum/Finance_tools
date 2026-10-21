@@ -6,7 +6,8 @@
  * the tables are the page's (model.ts), every figure the engine's, none computed here.
  */
 import { parseMonth } from '../../../engine/parse';
-import { METHOD, PMEGP, REPORT_REVIEW_BY } from '../../../engine/report';
+import { METHOD, MUDRA, PMEGP, REPORT_REVIEW_BY } from '../../../engine/report';
+import { GUARANTEES } from '../../../engine/guarantee';
 import { overdueNote, todayIso } from '../../../engine/review';
 import { BORROWERS } from '../../../engine/tax';
 import type { Block, Cell, Doc, Table } from '../doc/doc';
@@ -14,7 +15,7 @@ import { forDocument } from '../doc/doc';
 import { printable } from '../doc/pdf';
 import { monthText } from '../dscr/model';
 import { SITE_NAME } from '../site';
-import { ACTIVITY_CHOICES, AREA_CHOICES, CATEGORY_CHOICES, HEADS, REPAYMENT_CHOICES, plainOf, statusText, tidyAmount, type ReportFacts, type ReportPreview, type ReportState, type ViewTable } from './model';
+import { ACTIVITY_CHOICES, AREA_CHOICES, CATEGORY_CHOICES, CGTMSE, HEADS, REPAYMENT_CHOICES, guaranteeOf, plainOf, statusText, tidyAmount, type ReportFacts, type ReportPreview, type ReportState, type ViewTable } from './model';
 
 export function docNeeds(f: ReportFacts): string[] {
   const needs: string[] = [];
@@ -67,9 +68,12 @@ function entered(s: ReportState): [string, string][] {
   const month = parseMonth(l.disbursed), m = plainOf(l.moratoriumMonths);
   if (s.scheme === 'pmegp') {
     const label = <T,>(c: { value: T; label: string }[], v?: T) => c.find((o) => o.value === v)?.label ?? '';
-    pairs.push(['Scheme', `PMEGP; ${label(CATEGORY_CHOICES, s.category).split(':')[0].toLowerCase()} category; ${label(AREA_CHOICES, s.area).toLowerCase()}; ${label(ACTIVITY_CHOICES, s.activity).toLowerCase()}`]);
+    pairs.push(['Scheme', `PMEGP; ${label(CATEGORY_CHOICES, s.category).split(':')[0].toLowerCase()} category; ${label(AREA_CHOICES, s.area).toLowerCase()}; ${label(ACTIVITY_CHOICES, s.activity).toLowerCase()}; its conditions ${s.pmegpConfirmed ? 'confirmed' : 'not yet confirmed'}`]);
   }
-  pairs.push([s.scheme ? 'Term loan sanctioned' : 'Term loan', `${amount(l.amount)} at ${plainOf(l.ratePct)}% a year, first drawn in ${month ? monthText(month) : l.disbursed}; ${m ? `${m} months' moratorium` : 'no moratorium'}; ${plainOf(l.instalments)} instalments, ${rep.toLowerCase()}`]);
+  if (s.scheme === 'mudra') pairs.push(['Scheme', `Mudra; ${s.tarunRepaid ? 'a Tarun loan taken and repaid' : 'no Tarun loan repaid'}`]);
+  const g = guaranteeOf(s);
+  if (g) pairs.push(['Guarantee', `${g === 'cgfmu' ? 'CGFMU' : 'CGTMSE'}${g === 'cgtmse' ? `; concessions: ${CGTMSE.groups.filter((_, k) => s.concessions?.[k]).map((t) => t.split(',')[0].toLowerCase()).join('; ') || 'none'}` : ''}${s.feeRate.trim() ? `; its fee at ${plainOf(s.feeRate)}% a year, as the lender quotes` : ''}`]);
+  pairs.push([s.scheme === 'pmegp' ? 'Term loan sanctioned' : 'Term loan', `${amount(l.amount)} at ${plainOf(l.ratePct)}% a year, first drawn in ${month ? monthText(month) : l.disbursed}; ${m ? `${m} months' moratorium` : 'no moratorium'}; ${plainOf(l.instalments)} instalments, ${rep.toLowerCase()}`]);
   if (s.subsidy.trim()) pairs.push(['Capital subsidy', amount(s.subsidy)]);
   if (s.unsecured.trim()) pairs.push(['Unsecured loans', amount(s.unsecured)]);
   if (s.collateral.trim()) pairs.push(['Collateral: market value', amount(s.collateral)]);
@@ -91,7 +95,7 @@ export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc 
   const v = p.view;
   if (!v || p.blocked) return undefined;
   const f = s.doc, needs = allNeeds(s, p), name = ok(f.name), by = ok(f.preparedBy), table = (id: string) => tableOf(v.tables.find((t) => t.id === id) as ViewTable);
-  const who = BORROWERS.find((b) => b.id === s.borrower)?.label ?? '';
+  const gid = guaranteeOf(s), who = BORROWERS.find((b) => b.id === s.borrower)?.label ?? '';
   const facts: [string, string][][] = [[['Address', ok(f.address) || 'Still needed']], [['Constitution', who], ['Prepared on', dmy(today)]]];
   if (ok(f.lender)) facts.push([['Lender', ok(f.lender)]]);
   if (by) facts.push([['Prepared by', by]]);
@@ -121,7 +125,10 @@ export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc 
         { kind: 'heading', text: 'The figures entered' }, { kind: 'pairs', pairs: entered(s) },
         { kind: 'heading', text: 'How the figures are worked out' }, { kind: 'list', items: METHOD },
         ...(s.scheme === 'pmegp' ? [{ kind: 'heading', text: 'PMEGP: the rules used' } as Block, { kind: 'list', items: [...PMEGP.rules, PMEGP.ours,
-          `Source: ${PMEGP.source}. ${PMEGP.checked ? `Checked against PMEGP's guideline (2023) on ${dmy(PMEGP.date)}.` : `As read on ${dmy(PMEGP.date)}; not yet checked against KVIC's current guideline.`} ${overdueNote(REPORT_REVIEW_BY, todayIso())}`.trim()] } as Block] : []),
+          `Source: ${PMEGP.source}. ${PMEGP.checked ? `Checked against PMEGP's guideline (2023) on ${dmy(PMEGP.date)}.` : `As read on ${dmy(PMEGP.date)}; not yet checked against KVIC's current guideline.`} ${overdueNote(REPORT_REVIEW_BY, todayIso())}`.trim()] } as Block,
+          { kind: 'heading', text: 'PMEGP: its conditions' } as Block, { kind: 'list', items: [...PMEGP.conditions, `${s.pmegpConfirmed ? 'Confirmed by the borrower' : 'Not yet confirmed by the borrower'}. Source: ${PMEGP.conditionsSource}`] } as Block] : []),
+        ...(s.scheme === 'mudra' ? [{ kind: 'heading', text: 'Mudra: the rules used' } as Block, { kind: 'list', items: [...MUDRA.rules, `Apply on ${MUDRA.apply.label}: ${MUDRA.apply.url}.`, `Source: ${MUDRA.source} Read on ${dmy(MUDRA.date)}.`] } as Block] : []),
+        ...(gid ? [{ kind: 'heading', text: `The guarantee fee: ${gid.toUpperCase()}` } as Block, { kind: 'list', items: [`Source: ${GUARANTEES[gid].source} Read on ${dmy(GUARANTEES[gid].date)}.`] } as Block] : []),
       ] },
     ],
   };

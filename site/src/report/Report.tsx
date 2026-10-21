@@ -16,8 +16,8 @@ import { monthText } from '../dscr/model';
 import { overdueNote, todayIso } from '../../../engine/review';
 import { docNeeds, docStatus, fileName, reportDoc } from './document';
 import {
-  PMEGP, REPORT_REVIEW_BY, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, NO_PRODUCT, REPAYMENT_CHOICES, SCHEME_CHOICES,
-  ALONE, AS_TYPED, COLLATERAL_HINT, amountOf, applyPlan, assumptionsOf, boardOf, plainOf, planOf, preview, sameLevers, statusText, tidyAmount, undoPlan, viableOf,
+  CGFMU, CGTMSE, MUDRA, PMEGP, REPORT_REVIEW_BY, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, NO_PRODUCT, REPAYMENT_CHOICES, SCHEME_CHOICES,
+  ALONE, AS_TYPED, COLLATERAL_HINT, amountOf, applyPlan, assumptionsOf, boardOf, guaranteeOf, mudraLine, plainOf, planOf, preview, sameLevers, statusText, tarunAsked, tidyAmount, undoPlan, viableOf,
   type LeverId, type Levers, type PlanChange, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
   type ViableView, type ViewRow, type ViewTable,
 } from './model';
@@ -43,6 +43,7 @@ const BOXES: [string, string, boolean?][] = [
   ['Materials', 'fld-variablePct'], ['Fixed costs in', 'fld-fixed'], ['Fixed costs: growth', 'fld-fixedGrowth'], ['Days of stock', 'fld-days-stock'],
   ['Days of debtors', 'fld-days-debtors'], ['Days of creditors', 'fld-days-creditors'], ['The working-capital limit sought', 'fld-wcLimit'],
   ['The working-capital limit: its', 'fld-wcRate'], ['The collateral', 'fld-collateral', true],
+  ['Mudra: the term loan and', 'fld-tl-amount'], ['Mudra: the loans come', 'fld-tarun'], ['CGTMSE: the loans', 'fld-cgtmse', true], ['The guarantee fee', 'fld-feeRate', true],
 ];
 // A product's line (D-UX-109): "Sales, line 2: the price a unit" is the price's box on the second line.
 const LINE_FACT: [string, string][] = [['what', 'name'], ['how many', 'units'], ['the price', 'price']];
@@ -106,9 +107,15 @@ export function ReportCalculator() {
     <TextField id={id} label={label} unit="Rs." hint={mark(id, hint)} inputMode="decimal" value={value} tidy={tidyAmount}
       invalid={bad(value, amountOf)} said={notUnderstood(value, amountOf, '10,00,000 or 10 L')} onCommit={(t) => update((x) => set(x, t))} />;
   // A figure with its unit in the box and no example there (UX9, review finding 6); one the page assumes says so in the box.
-  const percent = (id: string, label: string, value: string, set: (x: ReportState, t: string) => ReportState, unit?: string, assumed?: string) =>
-    <TextField id={id} label={label} unit={unit} assumed={!!assumed && value === assumed} hint={mark(id)} inputMode="decimal" value={value}
+  const percent = (id: string, label: string, value: string, set: (x: ReportState, t: string) => ReportState, unit?: string, assumed?: string, hint?: string) =>
+    <TextField id={id} label={label} unit={unit} assumed={!!assumed && value === assumed} hint={mark(id, hint)} inputMode="decimal" value={value}
       invalid={bad(value, plainOf)} said={notUnderstood(value, plainOf, 'a number, like 10')} onCommit={(t) => update((x) => set(x, t))} />;
+  const tick = (id: string, label: string, on: boolean, set: (x: ReportState, v: boolean) => ReportState, hint?: string) =>
+    <label class="mt-4 flex items-start gap-2 text-ink">
+      <input id={id} type="checkbox" class="mt-1" checked={on} onChange={(e) => { const v = (e.currentTarget as HTMLInputElement).checked; update((x) => set(x, v)); }} />
+      <span>{label}{hint && <span class={`block text-sm ${MUTED}`}>{hint}</span>}</span>
+    </label>;
+  const g = guaranteeOf(s);
   // From 1024 px the questions stand left and the answer panel right (UX8, D-UX-106); the report's tables, what it assumes
   // and the download run the full width below.
   return <div class="lg:grid lg:grid-cols-tool-grid lg:gap-x-10"><div class="lg:col-start-1 lg:row-start-1">
@@ -132,10 +139,19 @@ export function ReportCalculator() {
           onChange={(area) => update((x) => ({ ...x, area }))} />
         <Choice name="fld-activity" legend="What it does" options={ACTIVITY_CHOICES} value={s.activity} columns
           onChange={(activity) => update((x) => ({ ...x, activity }))} />
+        <p class="mt-4 font-medium text-ink">The scheme finances the project only if each of these holds:</p>
+        <ul data-testid="rep-pmegp-conditions" class="mt-2 list-disc space-y-1 pl-5 text-ink">{PMEGP.conditions.map((c) => <li key={c}>{c}</li>)}</ul>
+        {tick('fld-pmegp-confirmed', 'Each of these holds for this project', !!s.pmegpConfirmed, (x, pmegpConfirmed) => ({ ...x, pmegpConfirmed }))}
       </>}
+      {s.scheme === 'mudra' && <div data-testid="rep-mudra">
+        <p class={`mt-2 ${HINT}`}>Mudra lends up to Rs. {tidyAmount(String(MUDRA.mostInAll))} in all, the term loan and the working-capital limit together, at the bank's own rate: {MUDRA.levels.map((v) => `${v.label} up to Rs. ${tidyAmount(String(v.upTo))}`).join(', ')}.</p>
+        <p data-testid="rep-mudra-level" class="mt-2 font-medium text-ink">{mudraLine(s)}</p>
+        <p data-testid="rep-mudra-collateral" class={`mt-2 ${HINT}`}>No collateral needed up to Rs. {tidyAmount(String(MUDRA.collateralFreeUpTo))}: {CGFMU.label.split(',')[0]} guarantees the loan, for a fee of {CGFMU.ratePct}% a year, in the projections as a finance cost. Apply on <a class="text-link underline underline-offset-4" href={MUDRA.apply.url} target="_blank" rel="noopener noreferrer">{MUDRA.apply.label}</a>.</p>
+        {tarunAsked(s) && tick('fld-tarun', 'The borrower has taken and repaid a Tarun loan', !!s.tarunRepaid, (x, tarunRepaid) => ({ ...x, tarunRepaid }), `Only then Tarun Plus, above Rs. ${tidyAmount(String(MUDRA.levels[MUDRA.levels.length - 2].upTo))}.`)}
+      </div>}
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
-        {amount('fld-tl-amount', s.scheme ? 'Term loan sanctioned' : 'Term loan', s.loan.amount, (x, t) => ({ ...x, loan: { ...x.loan, amount: t } }))}
-        {!s.scheme && amount('fld-subsidy', 'Capital subsidy, if any', s.subsidy, (x, subsidy) => ({ ...x, subsidy }))}
+        {amount('fld-tl-amount', s.scheme === 'pmegp' ? 'Term loan sanctioned' : 'Term loan', s.loan.amount, (x, t) => ({ ...x, loan: { ...x.loan, amount: t } }))}
+        {s.scheme !== 'pmegp' && amount('fld-subsidy', 'Capital subsidy, if any', s.subsidy, (x, subsidy) => ({ ...x, subsidy }))}
         {amount('fld-unsecured', 'Unsecured loans, if any', s.unsecured, (x, unsecured) => ({ ...x, unsecured }))}
       </div>
     </Section>
@@ -178,7 +194,7 @@ export function ReportCalculator() {
       </div>
       {/* Set off by its fill, never a border all round (F3), as on the DSCR. */}
       <details id="more-options" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)} class="mt-6">
-        <summary class="flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link">More options: the use of the capacity, the price, typed sales, collateral</summary>
+        <summary class="flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link">More options: the use of the capacity, the price, typed sales, {s.scheme === 'mudra' ? 'the guarantee fee' : 'collateral, CGTMSE'}</summary>
         <div class="pb-4">
           <Choice name="fld-salesBy" legend="Sales come from" options={SALES_BY} value={s.salesBy} columns
             onChange={(salesBy) => update((x) => ({ ...x, salesBy }))} />
@@ -191,8 +207,18 @@ export function ReportCalculator() {
               {amount('fld-sales', 'Sales in a full first year', s.sales, (x, sales) => ({ ...x, sales }))}
               {percent('fld-salesGrowth', 'Sales: growth a year (%)', s.salesGrowth, (x, salesGrowth) => ({ ...x, salesGrowth }), '%')}
             </>}
-            {amount('fld-collateral', 'Collateral: its market value', s.collateral, (x, collateral) => ({ ...x, collateral }), `Property offered beside the project's assets. ${COLLATERAL_HINT}`)}
+            {s.scheme !== 'mudra' && amount('fld-collateral', 'Collateral: its market value', s.collateral, (x, collateral) => ({ ...x, collateral }), `Property offered beside the project's assets. ${COLLATERAL_HINT}`)}
           </div>
+          {s.scheme !== 'mudra' && tick('fld-cgtmse', 'CGTMSE guarantees the loans', !!s.cgtmse, (x, cgtmse) => ({ ...x, cgtmse }),
+            `Its fee, ${CGTMSE.slabs[0].ratePct}% to ${CGTMSE.slabs[CGTMSE.slabs.length - 1].ratePct.toFixed(2)}% a year by the loans in all, goes into the projections as a finance cost.`)}
+          {s.scheme !== 'mudra' && s.cgtmse && <fieldset class="mt-4">
+            <legend class="font-medium text-ink">Concessions that apply, each {CGTMSE.concessionPct}% off the fee</legend>
+            {CGTMSE.groups.map((t, k) => <Fragment key={k}>{tick(`fld-concession-${k}`, t, !!s.concessions?.[k], (x, v) => ({ ...x, concessions: CGTMSE.groups.map((_, i) => (i === k ? v : !!x.concessions?.[i])) }))}</Fragment>)}
+          </fieldset>}
+          {g && <div class="mt-4 grid gap-4 sm:grid-cols-2">
+            {percent('fld-feeRate', 'The guarantee fee, if the lender quotes another rate (% a year)', s.feeRate, (x, feeRate) => ({ ...x, feeRate }), '%', undefined,
+              g === 'cgfmu' ? `Left empty, CGFMU's ${CGFMU.ratePct}% a year.` : 'Left empty, CGTMSE’s rate for the loans in all, less the concessions ticked.')}
+          </div>}
         </div>
       </details>
     </Section>
@@ -347,6 +373,7 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
       <p data-testid="rep-plan-verdict" class={`mt-2 text-sm font-medium ${tone(b.works)}`}>{b.verdict}</p>
       {b.still.length > 0 && <ul data-testid="rep-plan-still" class="mt-0.5 list-disc space-y-0.5 pl-5 text-sm text-bad">{b.still.map((t) => <li key={t}>{t}</li>)}</ul>}
       <p data-testid="rep-plan-limits" class={HINT}>{plan.limits}{plan.atLimit ? ` ${plan.atLimit}` : ''}</p>
+      {plan.mudraShort && <p data-testid="rep-mudra-short" class={`mt-2 ${STATE} text-warn`}>{plan.mudraShort}</p>}
       <div class="mt-3 flex flex-wrap gap-2">
         {b.steps.length > 0 && <button type="button" data-testid="rep-plan-use" class={FILLED} onClick={() => use(lv)}>Use this plan</button>}
         {touched.length > 0 && <button type="button" data-testid="rep-plan-rest" class={BUTTON} onClick={() => replan(touched, lv)}>Work out the rest</button>}
