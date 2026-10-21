@@ -2,14 +2,14 @@
  * The project report page's model (site/src/report/model.ts) and its document (document.ts), on fictional case R typed
  * as text (worked by hand in tests/report.test.ts). The files are read back by readers written by others.
  */
-import { describe, it, expect } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import DATA from '../engine/data/report.json';
 import { docText } from '../site/src/doc/doc';
 import { docxOf } from '../site/src/doc/docx';
 import { pdfOf } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import { docStatus, fileName, reportDoc } from '../site/src/report/document';
-import { AS_TYPED, EMPTY, applyPlan, assumptionsOf, boardOf, inputOf, planOf, preview, statusText, undoPlan, viableOf, type ReportState } from '../site/src/report/model';
+import { AS_TYPED, EMPTY, applyPlan, assumptionsOf, boardOf, changedOf, inputOf, planOf, preview, statusText, undoPlan, viableOf, withMode, type ReportState } from '../site/src/report/model';
 import { withLevers } from '../engine/plan';
 import { benchmarkFields, levelsOf, withBenchmark } from '../site/src/board-model';
 import { SITE_NAME } from '../site/src/site';
@@ -39,7 +39,7 @@ describe('the project report page', () => {
     expect(p.needs[0]).toBe('Who the borrower is: it sets the tax');
     expect(p.needs).not.toContain('Days of stock, 0 to 365');
     expect(EMPTY.days).toEqual({ stock: '30', debtors: '30', creditors: '30' });
-    expect(DATA.assumptions.map((a) => a.id)).toEqual(['days', 'wcUsed', 'drawings', 'tax', 'utilisation', 'price',
+    expect(DATA.assumptions.map((a) => a.id)).toEqual(['simpleCost', 'simpleFunds', 'simpleDrawn', 'simpleMoratorium', 'simpleFixedGrowth', 'simpleWcRate', 'days', 'wcUsed', 'drawings', 'tax', 'utilisation', 'price',
       'guaranteeFee', 'guaranteeFirst', 'cgtmseOther', 'cgtmseRate', 'cgtmseWc', 'cgtmsePmegp']);
     expect(assumptionsOf(EMPTY).length).toBe(6);
     expect(assumptionsOf({ ...EMPTY, salesBy: 'typed' }).map((a) => a.id)).toEqual(['days', 'wcUsed', 'drawings', 'tax']);
@@ -266,5 +266,63 @@ describe('the plan on the board, in words, used and undone', () => {
     const all = { wc: 1000, promoters: 50000, unsecured: 25000, fixed: 33, sales: 77, collateral: 150000, moratorium: 3, instalments: 7 };
     for (const t of [{ ...weak, collateral: '2 L' }, P]) expect(inputOf(applyPlan(t, all).s)).toEqual(withLevers(inputOf(t), all));
     expect(applyPlan(P, { ...AS_TYPED, sales: 100 }).changes.map((c) => c.now)).toEqual(['66, 77, 85']);
+  });
+});
+
+// Simple mode (D-UX-112) on case P's products, the day being 15-10-2026: sales from January 2027, so the loan is drawn
+// this month with a moratorium of 3 months; 4 years to repay (48 EMIs); fixed costs 1,00,000 a month (12,00,000 a year)
+// growing 5%; the limit at the loan's rate, worked out: 96,00,000 a year at full running × 60% = 57,60,000; the need
+// (22.5 × 57,60,000 − 7.5 × 40,32,000) ÷ 365 = 2,72,219.18 (again: 75% × (3,31,397.26 + 4,73,424.66) − 3,31,397.26),
+// below the turnover method's 11,52,000.
+describe('simple and expert modes', () => {
+  beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date('2026-10-15T10:00:00Z')); });
+  afterEach(() => { vi.useRealTimers(); });
+  const S: ReportState = {
+    ...EMPTY, mode: 'simple', borrower: 'firm', cost: { ...EMPTY.cost, building: '6 L', machinery: '20 L' }, products: P.products, sellFrom: '2027-01',
+    variablePct: '70', fixedMonth: '1 L', loan: { ...EMPTY.loan, amount: '20 L', ratePct: '10' }, years: '4', wcBy: 'worked', security: 'neither', doc: P.doc,
+  };
+  it('simple mode fills what it assumes, and works the limit out', () => {
+    const x = inputOf(S);
+    expect(x.loan).toEqual({ amount: 2000000, ratePct: 10, disbursed: '2026-10', moratoriumMonths: 3, instalments: 48, frequency: 'monthly', style: 'emi' });
+    expect([x.monthsToStart, x.fixedCosts, x.fixedGrowthPct, x.wcRatePct, x.collateral, x.guarantee]).toEqual([3, 1200000, 5, 10, undefined, undefined]);
+    expect(x.wcLimit?.toFixed(2)).toBe('272219.18');
+    expect(preview(S).view).toBeDefined();
+    expect(assumptionsOf(S).map((a) => a.id).slice(0, 6)).toEqual(['simpleCost', 'simpleFunds', 'simpleDrawn', 'simpleMoratorium', 'simpleFixedGrowth', 'simpleWcRate']);
+    expect(assumptionsOf({ ...S, mode: 'expert' }).map((a) => a.id)).not.toContain('simpleCost');
+  });
+  it('asks in its own words, and never assumes the backing', () => {
+    const n = preview({ ...EMPTY, mode: 'simple' }).needs;
+    expect(n).toEqual(expect.arrayContaining(['When you will start selling', 'Years to repay', 'Fixed costs a month', 'The working-capital limit: worked out, your own figure, or none', 'What backs the loan besides the project\'s own assets']));
+    expect(n.filter((t) => /moratorium|first drawn|limit: its interest|Fixed costs: growth/.test(t))).toEqual([]);
+    expect(preview({ ...S, security: undefined }).needs).toEqual(['What backs the loan besides the project\'s own assets']);
+    expect(preview({ ...S, sellFrom: '2026-08' }).needs).toEqual(['When you will start selling: the month the loan is first drawn or later']);
+    expect(inputOf({ ...S, security: 'cgtmse' }).guarantee).toEqual({ cgtmse: true, concessions: 0 });
+    expect(inputOf({ ...S, security: 'neither', collateral: '30 L' }).collateral).toBeUndefined();
+  });
+  it('switching writes the answers into the expert fields and takes them back', () => {
+    const e = withMode(S, 'expert');
+    expect([e.loan.disbursed, e.loan.moratoriumMonths, e.loan.instalments, e.loan.repayment, e.monthsToStart, e.fixed, e.fixedGrowth, e.wcRate, e.cgtmse])
+      .toEqual(['2026-10', '3', '48', 'emi', '3', '12,00,000', '5', '10', false]);
+    expect(inputOf(e)).toEqual(inputOf(S));
+    const back = withMode(e, 'simple');
+    expect([back.sellFrom, back.years, back.fixedMonth, back.loan.disbursed, back.loan.moratoriumMonths, back.fixedGrowth, back.wcRate]).toEqual(['2027-01', '4', '1,00,000', '', '', '', '']);
+    expect([inputOf(back), changedOf(back)]).toEqual([inputOf(S), []]);
+    const six = withMode({ ...e, loan: { ...e.loan, moratoriumMonths: '6' }, days: { ...e.days, debtors: '45' } }, 'simple');
+    expect(changedOf(six)).toEqual(['A moratorium of 6 months', 'Days of debtors 45']);
+    expect(assumptionsOf(six).map((a) => a.id)).not.toContain('simpleMoratorium');
+  });
+  it('the plan writes simple mode\'s own fields', () => {
+    const l = { ...AS_TYPED, fixed: 33, instalments: 7 }, { s, changes } = applyPlan(S, l), want = withLevers(inputOf(S), l);
+    expect(changes.map((c) => c.field)).toEqual(['fld-fixedMonth', 'fld-years']);
+    expect(inputOf(s).loan.instalments).toBe(want.loan.instalments);
+    expect(Math.abs((inputOf(s).fixedCosts as number) - (want.fixedCosts as number))).toBeLessThan(1);
+  });
+  it('costs by head are named in the profit and loss, and add up to the same profit', () => {
+    const H: ReportState = { ...R, variablePct: '', fixed: '', heads: { variable: { materials: '55', power: '6', otherVariable: '4' },
+      fixed: { wages: '80,000', rent: '25,000', repairs: '10,000', insurance: '5,000', admin: '30,000' } } };
+    const p = preview(H), labels = p.view!.tables.find((t) => t.id === 'pl')!.rows.map((r) => r.label);
+    expect(labels.slice(labels.indexOf('Sales') + 1, labels.indexOf('Sales') + 9)).toEqual(['Less: materials', 'Less: power and fuel', 'Less: other variable costs',
+      'Less: wages and salaries', 'Less: rent', 'Less: repairs and maintenance', 'Less: insurance', 'Less: admin and other overheads']);
+    expect([row(p, 'pl', 'Less: materials')?.values[0], row(p, 'pl', 'Profit after tax')?.values[0]]).toEqual(['66,00,000', row(preview(R), 'pl', 'Profit after tax')?.values[0]]);
   });
 });
