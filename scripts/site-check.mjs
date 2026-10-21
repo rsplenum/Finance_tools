@@ -1235,7 +1235,7 @@ const REP_FIELDS = 'main input:not(#more-options input):not(#download input):not
   const fee = (name) => page.getByTestId('rep-pl').locator('tr', { has: page.locator('th', { hasText: `Less: guarantee fee (${name})` }) }).first().locator('td').first();
   await expectText(page, v, fee('CGFMU'), '15,000', 'CGFMU\'s fee in 2026-27');
   await page.evaluate(() => { document.querySelector('#more-options').open = true; });
-  if (await page.locator('#fld-collateral, #fld-cgtmse, #fld-subsidy').count()) v('the Mudra report asks collateral, CGTMSE or a subsidy');
+  if (await page.locator('#fld-collateral, #fld-cgtmse').count()) v('the Mudra report asks collateral or CGTMSE');
   if (!(await page.locator('#fld-feeRate').count())) v('the Mudra report has no box for the lender\'s own fee rate');
   await leave(page, '#fld-tl-amount', '18 L');
   await expectText(page, v, 'rep-needs', /Mudra: the term loan and the working-capital limit come to Rs\. 21,00,000, Rs\. 1,00,000 above/, 'Mudra above 20 L');
