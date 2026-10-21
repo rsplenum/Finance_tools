@@ -113,9 +113,9 @@
       "outOfSight": null
     },
     "/privacy/": {
-      "before": 453,
-      "shown": 511,
-      "all": 511,
+      "before": 524,
+      "shown": 582,
+      "all": 582,
       "plan": null,
       "long": 1,
       "abbr": 4,
@@ -130,13 +130,13 @@
     },
     "/project-report/": {
       "before": 35,
-      "shown": 924,
-      "all": 3247,
-      "plan": 2807,
+      "shown": 928,
+      "all": 3377,
+      "plan": 2937,
       "long": 0,
       "abbr": 6,
       "questions": 16,
-      "controls": 42,
+      "controls": 43,
       "answerAt": 5.3,
       "gap": 0,
       "styles": 8,
@@ -1088,6 +1088,62 @@
       "from": 2716,
       "to": 2807,
       "why": "D-UX-113",
+      "date": "2026-10-21"
+    },
+    {
+      "page": "/project-report/",
+      "count": "shown",
+      "from": 924,
+      "to": 928,
+      "why": "D-AI-02",
+      "date": "2026-10-21"
+    },
+    {
+      "page": "/project-report/",
+      "count": "all",
+      "from": 3247,
+      "to": 3377,
+      "why": "D-AI-02",
+      "date": "2026-10-21"
+    },
+    {
+      "page": "/project-report/",
+      "count": "plan",
+      "from": 2807,
+      "to": 2937,
+      "why": "D-AI-02",
+      "date": "2026-10-21"
+    },
+    {
+      "page": "/project-report/",
+      "count": "controls",
+      "from": 42,
+      "to": 43,
+      "why": "D-AI-02",
+      "date": "2026-10-21"
+    },
+    {
+      "page": "/privacy/",
+      "count": "before",
+      "from": 453,
+      "to": 524,
+      "why": "D-AI-02",
+      "date": "2026-10-21"
+    },
+    {
+      "page": "/privacy/",
+      "count": "shown",
+      "from": 511,
+      "to": 582,
+      "why": "D-AI-02",
+      "date": "2026-10-21"
+    },
+    {
+      "page": "/privacy/",
+      "count": "all",
+      "from": 511,
+      "to": 582,
+      "why": "D-AI-02",
       "date": "2026-10-21"
     }
   ],

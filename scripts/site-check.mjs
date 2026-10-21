@@ -1169,6 +1169,32 @@ const REP_FIELDS = 'main input:not(#download input):not(#benchmarks input)';
   if (book.map((x) => x.sheet).join('|') !== 'Summary|Projections|DSCR and ratios|Annex') v(`the report's Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))}`);
   const { lines, messages } = await docxLines((await save('rep-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
   if (messages.length || !lines.some((l) => l.startsWith('Total assets | 55,81,804'))) v(`the report's Word copy reads back ${JSON.stringify(lines.slice(0, 4))} ${JSON.stringify(messages).slice(0, 120)}`);
+  // REP2 (D-AI-02): the words, one closed fold. Off, the boxes open to write in; then a reply written by hand for case R
+  // (tests/fixtures/draft-r.json) stands in for the AI: two sentences dropped and said, and the words in the PDF and the
+  // Word copy only once ticked.
+  const reply = JSON.parse(await readFile(new URL('../tests/fixtures/draft-r.json', import.meta.url), 'utf8'));
+  if (await page.getByTestId('rep-words').evaluate((d) => d.open)) v('the report’s words are open by default');
+  // The Worker answers 503 then; a 200 with the same error keeps the console clean and takes the page's same path.
+  await page.route('**/api/draft', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: '{"error":"Drafting the words is not switched on yet: write them yourself."}' }));
+  await page.locator('[data-testid="rep-words"] > summary').click();
+  for (const [id, t] of Object.entries(reply.notes)) await leave(page, `#fld-rep-note-${id}`, t);
+  await page.getByTestId('rep-words-draft').click();
+  await expectText(page, v, 'rep-words-error', 'Drafting the words is not switched on yet: write them yourself.', 'the words while drafting is off');
+  await expectText(page, v, 'rep-words-by', 'Your own words: a box left empty stays out.', 'the boxes to write in');
+  let asked;
+  await page.unroute('**/api/draft');
+  await page.route('**/api/draft', (r) => { asked = r.request().postDataJSON(); return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ draft: reply.draft }) }); });
+  await page.getByTestId('rep-words-draft').click();
+  await expectText(page, v, 'rep-words-dropped', /^2 sentences were left out: ?“Asha Packaging is a reputed name/, 'the words: two sentences dropped');
+  if (asked?.name !== 'Asha Packaging' || asked?.notes?.market !== reply.notes.market || /lakh|Rs\.|\d,\d/.test(JSON.stringify(asked))) v(`the words were drafted from ${JSON.stringify(asked).slice(0, 160)}`);
+  await expectText(page, v, 'rep-doc-status', 'Figures complete; for the document, 1 still to answer', 'the words drafted, not yet ticked');
+  await page.check('#fld-rep-words-true');
+  await expectText(page, v, 'rep-doc-status', 'Complete', 'the words ticked');
+  await layout(page, v, 'the report’s words, 390 px');
+  const worded = (await pdfPages((await save('rep-download-pdf')).bytes).catch((e) => [`(not read: ${e.message})`])).join('\n').replace(/\s+/g, ' ');
+  if (!worded.includes('About the project') || !worded.includes('It is in talks with 3 buyers.') || /reputed|lakh/.test(worded)) v(`the report PDF holds its words as ${worded.slice(worded.indexOf('About'), 200)}`);
+  const wordedDocx = await docxLines((await save('rep-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
+  if (wordedDocx.messages.length || !wordedDocx.lines.includes('About the project') || !wordedDocx.lines.includes('The promoter')) v(`the report's Word copy lacks its words ${JSON.stringify(wordedDocx.messages).slice(0, 120)}`);
   await ctx.close();
 }
 

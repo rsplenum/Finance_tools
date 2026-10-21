@@ -11,6 +11,7 @@ import { AS_TYPED, LEVER_IDS, makePlan, withLevers, type LeverId, type Levers } 
 import { BORROWERS } from '../../../engine/tax';
 import { inr } from '../../../engine/util';
 import { GUARANTEES } from '../../../engine/guarantee';
+import type { Draft, Dropped, NoteId } from '../../../engine/narrative';
 import {
   inSentence, labelOf, listed, rowOf, upPct, upRupees, type BoardMove, type CheckRow, type ViableLine, type ViableView,
   benchmarksNote, levelsOf, ratiosWord, type BenchmarkText,
@@ -58,7 +59,11 @@ export interface ReportState {
   security?: Security;
   /** Costs by head in expert mode, as typed (engine/data/report.json's costHeads): % of sales, or rupees a month. */
   heads?: { variable?: Record<string, string>; fixed?: Record<string, string> };
+  /** The report's words (REP2, D-AI-02): the three notes, the sections as drafted and changed, and the borrower's tick. */
+  words?: ReportWords;
 }
+/** The notes as typed; the six sections, by AI from them (`ai`) or as the borrower writes; what the check left out; the tick. */
+export interface ReportWords { notes: Record<NoteId, string>; draft?: Draft; ai?: boolean; dropped?: Dropped[]; confirmed?: boolean }
 
 /** A product or service as typed: what it is, how many a month at full running, its price a unit. */
 export interface ProductRow { name: string; units: string; price: string }

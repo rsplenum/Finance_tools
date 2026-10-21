@@ -1,11 +1,13 @@
 /**
  * API Worker (D-TECH-01). A health route, and POST /read (U1, D-UX-48), which sends an audited statement's text lines
  * to an AI that only points to where each figure is printed; the figures are still worked in the browser by the engine,
- * and the lines are never logged or stored. POST /e (UD1, D-TECH-37) stores which steps a visit used, never what was
+ * and the lines are never logged or stored. POST /draft (REP2, D-AI-02) drafts the project report's words from the
+ * user's own inputs, checked on the page before they count. POST /e (UD1, D-TECH-37) stores which steps a visit used, never what was
  * typed, with a nightly cron deleting rows past 400 days. Razorpay orders, webhook checks and download tokens come later. Every path
  * also answers under /api, so the site can call it at its own /api/* (docs/OWNER.md).
  */
 import { events, prune } from './events';
+import { draft } from './draft';
 import { read, type ReadEnv } from './read';
 
 const BINDINGS = ['DB', 'KV'] as const;
@@ -14,10 +16,11 @@ export default {
   async fetch(req, env: ReadEnv): Promise<Response> {
     const pathname = new URL(req.url).pathname.replace(/^\/api(?=\/)/, '');
     const cors = corsOf(req, env);
-    if (pathname === '/read') {
+    const ai = pathname === '/read' ? read : pathname === '/draft' ? draft : undefined;
+    if (ai) {
       if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: { ...cors, 'access-control-allow-methods': 'POST', 'access-control-allow-headers': 'content-type', 'access-control-max-age': '86400' } });
       if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405, { allow: 'POST', ...cors });
-      return read(req, env, (body, status, headers = {}) => json(body, status, { ...cors, ...headers }));
+      return ai(req, env, (body, status, headers = {}) => json(body, status, { ...cors, ...headers }));
     }
     if (pathname === '/e') {
       if (req.method !== 'POST') return json({ error: 'method not allowed' }, 405, { allow: 'POST' });
