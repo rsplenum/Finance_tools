@@ -32,6 +32,11 @@ const COUNTED = 'We count which steps are used (the page, which fields change by
     <meta name="color-scheme" content="light dark" />
     <title>{pageTitle(name)}</title>
     <meta name="description" content={description} />
+    <!-- A shared link (WhatsApp, a message) shows the title and the line under it (REV1); og:url waits on the domain. -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:title" content={pageTitle(name)} />
+    <meta property="og:description" content={description} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <script is:inline set:html={THEME_BOOT}></script>
     {fresh && <script is:inline set:html={MOTION_BOOT}></script>}

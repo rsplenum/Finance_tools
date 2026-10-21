@@ -37,7 +37,9 @@ export const TOOLS: Tool[] = [
 export const READY = TOOLS.filter((t): t is Tool & { href: string; short: string } => t.status === 'Ready' && Boolean(t.href && t.short));
 
 /** Page <title>: the page name, then the site name. */
-export const pageTitle = (name?: string) => (name ? `${name} · ${SITE_NAME}` : SITE_NAME);
+/** Home has no name of its own: its title says what the site makes, for a search result and an ad reviewer (REV1). */
+export const pageTitle = (name?: string) =>
+  name ? `${name} · ${SITE_NAME}` : `${SITE_NAME} · DSCR statements, CMA data, project reports and estimates`;
 
 /**
  * The policy pages (LEGAL1, D-BIZ-07), linked from every footer and held there by the site check. AI drafts, marked as
