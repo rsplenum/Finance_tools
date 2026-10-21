@@ -1,0 +1,16 @@
+{
+  "about": "A reply in the shape POST /api/draft returns, written by hand for fictional case R (Asha Packaging, tests/report-page.test.ts) with the notes in tests/narrative.test.ts; not the model's. Two sentences in it must be dropped: the market's last (a reputation and loyal customers) and the conclusion's first (a figure).",
+  "notes": {
+    "promoter": "Asha Rao, B.Com. Eight years in the stores of a packaging firm in Pune.",
+    "process": "Kraft paper from mills in Gujarat; corrugating, printing, die-cutting and stitching on two machines.",
+    "market": "Pharma and food units in Chakan MIDC, within 20 km; talks with 3 buyers."
+  },
+  "draft": {
+    "introduction": "Asha Packaging is a partnership firm that will make corrugated boxes at Plot 4, Example MIDC, Pune. It seeks a term loan from a bank to set up the unit.",
+    "products": "Asha Packaging will make corrugated boxes for packing goods. It will make them to the sizes its buyers ask for.",
+    "process": "The firm will buy kraft paper from mills in Gujarat. It will corrugate, print, die-cut and stitch the boxes on two machines.",
+    "market": "The firm plans to sell to pharma and food units in Chakan MIDC, within 20 km of the unit. It is in talks with 3 buyers. Asha Packaging is a reputed name with a loyal customer base.",
+    "promoter": "Mrs. Asha Rao holds a B.Com. degree. Asha Rao has worked for eight years in the stores of a packaging firm in Pune.",
+    "conclusion": "The project will cost Rs. 37.86 lakh and repay the loan in five years. The project sets out to make corrugated boxes for buyers near Pune, and the tables of this report set out its cost, how it is financed and how the loan is repaid."
+  }
+}

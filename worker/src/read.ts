@@ -7,6 +7,7 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { READ, promptLines, type Answer, type Line } from '../../engine/read';
+import { withinCaps } from './caps';
 
 export type ReadEnv = Env & { ANTHROPIC_API_KEY?: string };
 type Reply = (body: unknown, status: number, headers?: Record<string, string>) => Response;
@@ -53,16 +54,6 @@ export function linesOf(body: unknown): Line[] | string {
   return chars > READ.maxChars ? `more than ${READ.maxChars} characters` : (lines as Line[]);
 }
 
-const today = () => new Date().toISOString().slice(0, 10);
-/** Counts a read against the day's caps; false when either is spent. KV is not atomic, so a burst may pass a cap by a few. */
-async function withinCaps(env: ReadEnv, ip: string) {
-  const day = today(), keys = [`read:ip:${ip}:${day}`, `read:all:${day}`], caps = [Number(env.READ_PER_IP), Number(env.READ_PER_DAY)];
-  const used = await Promise.all(keys.map(async (k) => Number((await env.KV.get(k)) ?? 0)));
-  if (used.some((u, i) => !(u < caps[i]))) return false;
-  await Promise.all(keys.map((k, i) => env.KV.put(k, String(used[i] + 1), { expirationTtl: 2 * 86400 })));
-  return true;
-}
-
 export async function read(req: Request, env: ReadEnv, json: Reply): Promise<Response> {
   if (!env.ANTHROPIC_API_KEY) return json({ error: 'Reading statements is not switched on yet: type the figures.' }, 503);
   const size = Number(req.headers.get('content-length') ?? 0);
@@ -71,7 +62,7 @@ export async function read(req: Request, env: ReadEnv, json: Reply): Promise<Res
   try { body = await req.json(); } catch { return json({ error: 'not JSON' }, 400); }
   const lines = linesOf(body);
   if (typeof lines === 'string') return json({ error: lines }, 400);
-  if (!(await withinCaps(env, req.headers.get('cf-connecting-ip') ?? 'unknown')))
+  if (!(await withinCaps(env, 'read', req.headers.get('cf-connecting-ip') ?? 'unknown', [Number(env.READ_PER_IP), Number(env.READ_PER_DAY)])))
     return json({ error: 'Today’s reads are used up: type the figures, or try again tomorrow.' }, 429);
 
   const model = env.READ_MODEL;

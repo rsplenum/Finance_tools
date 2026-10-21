@@ -1,8 +1,8 @@
 /**
  * The project report as a document to download, written three times (site/src/doc/): page 1 the project at a glance
- * (the business, the cost of the project and how it is financed, the DSCR), signed; then the projected profit and loss,
- * balance sheet and cash flow; then the DSCR, break-even, the key ratios and working capital; and an annex with the term
- * loan's repayment, the figures entered and how the figures are worked out. Built from the page's state and preview only:
+ * (the business, the cost of the project and how it is financed, the DSCR), signed; the report's words once ticked
+ * (words.ts); then the projected profit and loss, balance sheet and cash flow; then the DSCR, break-even, the key ratios
+ * and working capital; and an annex with the term loan's repayment, the figures entered and how the figures are worked out. Built from the page's state and preview only:
  * the tables are the page's (model.ts), every figure the engine's, none computed here.
  */
 import { parseMonth } from '../../../engine/parse';
@@ -15,9 +15,11 @@ import { forDocument } from '../doc/doc';
 import { printable } from '../doc/pdf';
 import { monthText } from '../dscr/model';
 import { SITE_NAME } from '../site';
-import { ACTIVITY_CHOICES, AREA_CHOICES, CATEGORY_CHOICES, CGTMSE, HEADS, REPAYMENT_CHOICES, guaranteeOf, plainOf, statusText, tidyAmount, type ReportFacts, type ReportPreview, type ReportState, type ViewTable } from './model';
+import { ACTIVITY_CHOICES, AREA_CHOICES, CATEGORY_CHOICES, CGTMSE, HEADS, REPAYMENT_CHOICES, guaranteeOf, plainOf, statusText, tidyAmount, type ReportFacts, type ReportPreview, type ReportState, type ReportWords, type ViewTable } from './model';
+import { wordsNeeds, wordsPart } from './words';
 
-export function docNeeds(f: ReportFacts): string[] {
+/** What the document still needs of the page's own fields, then of the report's words (words.ts). */
+export function docNeeds(f: ReportFacts, w?: ReportWords): string[] {
   const needs: string[] = [];
   const ask = (t: string, what: string, wanted = true) => {
     if (!t.trim()) { if (wanted) needs.push(what); }
@@ -28,11 +30,11 @@ export function docNeeds(f: ReportFacts): string[] {
   ask(f.address, 'The business’s address');
   ask(f.lender, 'The lender', false);
   ask(f.preparedBy, 'Prepared by', false);
-  return needs;
+  return [...needs, ...wordsNeeds(w)];
 }
-export const allNeeds = (s: ReportState, p: ReportPreview) => [...p.needs, ...(p.short ? [p.short] : []), ...docNeeds(s.doc)];
+export const allNeeds = (s: ReportState, p: ReportPreview) => [...p.needs, ...(p.short ? [p.short] : []), ...docNeeds(s.doc, s.words)];
 export const docStatus = (s: ReportState, p: ReportPreview) => {
-  const own = docNeeds(s.doc).length;
+  const own = docNeeds(s.doc, s.words).length;
   return own && statusText(p) === 'Complete' ? forDocument(own) : statusText(p, own);
 };
 export function fileName(s: ReportState, p: ReportPreview, ext: string): string {
@@ -95,7 +97,7 @@ export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc 
   const v = p.view;
   if (!v || p.blocked) return undefined;
   const f = s.doc, needs = allNeeds(s, p), name = ok(f.name), by = ok(f.preparedBy), table = (id: string) => tableOf(v.tables.find((t) => t.id === id) as ViewTable);
-  const gid = guaranteeOf(s), who = BORROWERS.find((b) => b.id === s.borrower)?.label ?? '';
+  const gid = guaranteeOf(s), words = wordsPart(s.words), who = BORROWERS.find((b) => b.id === s.borrower)?.label ?? '';
   const facts: [string, string][][] = [[['Address', ok(f.address) || 'Still needed']], [['Constitution', who], ['Prepared on', dmy(today)]]];
   if (ok(f.lender)) facts.push([['Lender', ok(f.lender)]]);
   if (by) facts.push([['Prepared by', by]]);
@@ -118,6 +120,7 @@ export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc 
     creator: SITE_NAME,
     parts: [
       { name: 'Summary', blocks: first },
+      ...(words ? [words] : []),
       { name: 'Projections', blocks: [{ kind: 'title', text: 'Projected financial statements', small: true }, ...(v.tables.some((t) => t.id === 'sales') ? table('sales') : []), ...table('pl'), ...table('bs'), ...table('cf')] },
       { name: 'DSCR and ratios', blocks: [{ kind: 'title', text: 'DSCR, break-even, ratios and working capital', small: true }, ...table('dscr'), ...table('bep'), ...table('ratios'), ...table('wc')] },
       { name: 'Annex', blocks: [

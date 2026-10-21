@@ -1,0 +1,131 @@
+{
+  "title": "The project report's words as an AI draft",
+  "date": "2026-10-21",
+  "reviewBy": "2027-10-21",
+  "status": "Set by Claude at the owner's request (REP2, D-AI-01, D-AI-02): an AI drafts six short sections from the user's own inputs, in simple words; this file's checks drop any sentence that holds a figure the user did not type, or a claim a new business cannot have. Nothing goes in the document until the borrower ticks that the words are true.",
+  "source": "D-AI-01 (the owner's answer 3 in REP1, 20-10-2026) and Finline's report as the owner met it, finding 6 (docs/design-inputs/finline-2026-10-20.md): a business not yet started called reputable and well-established, with a strong market presence, a loyal customer base and CSR work with NGOs.",
+  "sections": [
+    {
+      "id": "introduction",
+      "label": "Introduction",
+      "from": "who runs the business, what it will do and where, its constitution, and the scheme it applies under"
+    },
+    {
+      "id": "products",
+      "label": "The products",
+      "from": "what the business will sell, from the products named and what it does"
+    },
+    {
+      "id": "process",
+      "label": "The process",
+      "from": "how the products are made or the service given, from the user's note on the process only",
+      "note": "process"
+    },
+    {
+      "id": "market",
+      "label": "The market",
+      "from": "who will buy and where, from the user's note on the market only",
+      "note": "market"
+    },
+    {
+      "id": "promoter",
+      "label": "The promoter",
+      "from": "the promoter's education and work so far, from the user's note on the promoter only",
+      "note": "promoter"
+    },
+    {
+      "id": "conclusion",
+      "label": "Conclusion",
+      "from": "what the project sets out to do, and that the report's tables set out its cost, its finance and how the loan is repaid; never whether it is viable"
+    }
+  ],
+  "notes": [
+    {
+      "id": "promoter",
+      "label": "The promoter",
+      "hint": "Name, education and work so far, in your words. Like “Asha Rao, B.Com; eight years in a packaging firm’s stores”."
+    },
+    {
+      "id": "process",
+      "label": "How it is made or done",
+      "hint": "The steps, the machines, where the materials come from."
+    },
+    {
+      "id": "market",
+      "label": "Who will buy, and where",
+      "hint": "The buyers and the places; any orders or talks already."
+    }
+  ],
+  "maxNote": 800,
+  "maxFact": 200,
+  "maxProducts": 20,
+  "maxSection": 1500,
+  "figures": {
+    "why": "a figure: the report's tables carry every figure",
+    "always": "(?:\\brs\\.?(?=\\s|\\d|$)|₹|%|\\bper ?cent\\b|\\blakhs?\\b|\\blacs?\\b|\\bcrores?\\b)"
+  },
+  "claims": [
+    {
+      "pattern": "\\breput(?:e|ed|ation|able)\\w*",
+      "why": "a reputation"
+    },
+    {
+      "pattern": "\\brenown\\w*|\\bwell[- ]known\\b|\\bfamous\\b|\\bhousehold name\\b",
+      "why": "a reputation"
+    },
+    {
+      "pattern": "\\b(?:well|long|firmly)[- ]established\\b|\\bestablished (?:player|name|brand|presence)\\b",
+      "why": "being established"
+    },
+    {
+      "pattern": "\\bloyal\\b|\\b(?:existing|established|strong|large|wide|growing) (?:customer base|clientele|customers|client base)\\b",
+      "why": "customers it does not have yet"
+    },
+    {
+      "pattern": "\\bmarket presence\\b|\\bpresence in the market\\b|\\bstrong presence\\b|\\bmarket share\\b",
+      "why": "a market presence"
+    },
+    {
+      "pattern": "\\bcsr\\b|\\bcorporate social\\b|\\bsocial responsibility\\b|\\bngos?\\b",
+      "why": "CSR work"
+    },
+    {
+      "pattern": "\\baward\\w*",
+      "why": "an award"
+    },
+    {
+      "pattern": "\\bmarket leader\\b|\\bindustry leader\\b|\\b(?:a|the) leading\\b|\\bleader in\\b",
+      "why": "being a leader"
+    },
+    {
+      "pattern": "\\btrusted\\b|\\bgoodwill\\b|\\btrack record\\b|\\bproven\\b",
+      "why": "a record it does not have yet"
+    }
+  ],
+  "abbreviations": [
+    "mr",
+    "mrs",
+    "ms",
+    "dr",
+    "smt",
+    "shri",
+    "sri",
+    "pvt",
+    "ltd",
+    "co",
+    "no",
+    "st",
+    "rs",
+    "e.g",
+    "i.e",
+    "vs",
+    "b.com",
+    "b.sc",
+    "b.a",
+    "m.com",
+    "m.sc",
+    "m.a",
+    "b.tech",
+    "m.tech"
+  ]
+}

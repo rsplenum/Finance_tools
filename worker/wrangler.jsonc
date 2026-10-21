@@ -18,12 +18,17 @@
   ],
   // Reading statements (D-UX-48): the model, its effort (empty for a model without one), reads per address and in all
   // per day (the owner pays for each), and the site origins allowed to call from another host (POST /e takes batches only from these too) ("." starts a subdomain suffix; never ".pages.dev", which admits anyone's site).
-  // The ANTHROPIC_API_KEY is a secret: `wrangler secret put ANTHROPIC_API_KEY`. Without it /read answers 503.
+  // Drafting the report's words (REP2, D-AI-02): the model, its effort, drafts per address and in all per day, apart from reads.
+  // The ANTHROPIC_API_KEY is a secret: `wrangler secret put ANTHROPIC_API_KEY`. Without it /read and /draft answer 503.
   "vars": {
     "READ_MODEL": "claude-opus-5-5",
     "READ_EFFORT": "medium",
     "READ_PER_IP": "10",
     "READ_PER_DAY": "50",
+    "DRAFT_MODEL": "claude-opus-5-5",
+    "DRAFT_EFFORT": "low",
+    "DRAFT_PER_IP": "3",
+    "DRAFT_PER_DAY": "50",
     "READ_ORIGINS": "https://finance-tools-9if.pages.dev,.finance-tools-9if.pages.dev"
   },
   "kv_namespaces": [

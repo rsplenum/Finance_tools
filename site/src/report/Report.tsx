@@ -15,6 +15,7 @@ import { isoDate, save, type FileKind } from '../download';
 import { monthText } from '../dscr/model';
 import { overdueNote, todayIso } from '../../../engine/review';
 import { docNeeds, docStatus, fileName, reportDoc } from './document';
+import { Words } from './Words';
 import {
   CGFMU, CGTMSE, MUDRA, PMEGP, REPORT_REVIEW_BY, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, NO_PRODUCT, REPAYMENT_CHOICES, SCHEME_CHOICES,
   COST_HEADS, MODE_CHOICES, SECURITY_CHOICES, SIMPLE_COST, WC_CHOICES, changedOf, headsSum, wcByOf, withMode, workedLine, type Mode,
@@ -497,7 +498,7 @@ function Result({ s, p, update, use, used, undo, keep, toCollateral, toBox, rese
 function Download({ s, p, update }: { s: ReportState; p: ReportPreview; update: Update }) {
   const f = s.doc, set = (patch: Partial<ReportFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
   const english = (t: string) => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
-  const own = docNeeds(f), ready = !!p.view && !p.blocked;
+  const own = docNeeds(f, s.words), ready = !!p.view && !p.blocked;
   const go = (kind: FileKind) => {
     const now = new Date();
     save(reportDoc(s, p, isoDate(now)), kind, fileName(s, p, kind), now);
@@ -516,6 +517,7 @@ function Download({ s, p, update }: { s: ReportState; p: ReportPreview; update: 
       {field('lender', 'Lender, if known')}
       {field('preparedBy', 'Prepared by, if any', 'Your name or your firm’s.')}
     </div>
+    <Words s={s} update={update} />
     <div class="mt-5">
         <p data-testid="rep-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{docStatus(s, p)}</p>
         {own.length > 0 && <ul data-testid="rep-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
