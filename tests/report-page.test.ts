@@ -310,6 +310,8 @@ describe('simple and expert modes', () => {
     const six = withMode({ ...e, loan: { ...e.loan, moratoriumMonths: '6' }, days: { ...e.days, debtors: '45' } }, 'simple');
     expect(changedOf(six)).toEqual(['A moratorium of 6 months', 'Days of debtors 45']);
     expect(assumptionsOf(six).map((a) => a.id)).not.toContain('simpleMoratorium');
+    const early = withMode({ ...EMPTY, mode: 'simple', borrower: 'firm', loan: { ...EMPTY.loan, ratePct: '10' } }, 'expert');
+    expect([early.loan.disbursed, early.loan.repayment, early.loan.moratoriumMonths, early.fixedGrowth, early.wcRate]).toEqual(['', undefined, '', '', '']);
   });
   it('the plan writes simple mode\'s own fields', () => {
     const l = { ...AS_TYPED, fixed: 33, instalments: 7 }, { s, changes } = applyPlan(S, l), want = withLevers(inputOf(S), l);

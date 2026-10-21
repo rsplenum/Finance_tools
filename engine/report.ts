@@ -21,6 +21,7 @@ export const METHOD = DATA.method;
 export type HeadId = (typeof DATA.heads)[number]['id'];
 /** Costs by head (expert mode, D-UX-112): those that vary with sales, as a % of sales; the rest in rupees a month. */
 export const COST_HEADS = DATA.costHeads;
+export const WORKING_CAPITAL = DATA.workingCapital;
 export type VariableHeadId = (typeof DATA.costHeads.variable)[number]['id'];
 export type FixedHeadId = (typeof DATA.costHeads.fixed)[number]['id'];
 export interface CostHeadsInput { variable?: Partial<Record<VariableHeadId, number>>; fixed?: Partial<Record<FixedHeadId, number>> }

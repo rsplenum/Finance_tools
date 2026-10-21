@@ -17,6 +17,7 @@ import { overdueNote, todayIso } from '../../../engine/review';
 import { docNeeds, docStatus, fileName, reportDoc } from './document';
 import {
   CGFMU, CGTMSE, MUDRA, PMEGP, REPORT_REVIEW_BY, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, NO_PRODUCT, REPAYMENT_CHOICES, SCHEME_CHOICES,
+  COST_HEADS, MODE_CHOICES, SECURITY_CHOICES, SIMPLE_COST, WC_CHOICES, changedOf, headsSum, wcByOf, withMode, workedLine, type Mode,
   ALONE, AS_TYPED, COLLATERAL_HINT, amountOf, applyPlan, assumptionsOf, boardOf, guaranteeOf, mudraLine, plainOf, planOf, preview, sameLevers, statusText, tarunAsked, tidyAmount, undoPlan, viableOf,
   type LeverId, type Levers, type PlanChange, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
   type ViableView, type ViewRow, type ViewTable,
@@ -30,24 +31,29 @@ const bad = (t: string, read: (t: string) => unknown) => !!t.trim() && read(t) =
 const notUnderstood = (t: string, read: (t: string) => unknown, example: string) => (bad(t, read) ? `Not understood. Type ${example}.` : undefined);
 /** A control that removes itself hands the focus on, after the render (WCAG 2.4.3; docs/DESIGN.md, Focus). */
 const focusNext = (sel: string) => requestAnimationFrame(() => document.querySelector<HTMLElement>(sel)?.focus());
-// The box that changes an assumption, if one does, and whether it sits under More options (review finding 8).
-const ASSUMED_BOX: Record<string, [string, boolean]> = { days: ['fld-days-stock', false], utilisation: ['fld-utilisation', true], price: ['fld-priceGrowth', true] };
-/** The box each of the engine's needs is typed in, by the first words of the need (engine/report.ts), and whether it sits
- * under More options: each missing figure is a link to its box (UX8, review finding 2). */
-const BOXES: [string, string, boolean?][] = [
+// The box that changes an assumption, if one does (review finding 8); in simple mode, it opens expert mode first.
+const ASSUMED_BOX: Record<string, string> = {
+  days: 'fld-days-stock', utilisation: 'fld-utilisation', price: 'fld-priceGrowth', simpleCost: 'fld-cost-land', simpleFunds: 'fld-unsecured', simpleDrawn: 'fld-tl-disbursed',
+  simpleMoratorium: 'fld-tl-moratorium', simpleFixedGrowth: 'fld-fixedGrowth', simpleWcRate: 'fld-wcRate',
+};
+/** The box each of the engine's needs is typed in, by the first words of the need (engine/report.ts, and model.ts's words
+ * in simple mode): each missing figure is a link to its box (UX8, review finding 2), in expert mode when only it has one. */
+const BOXES: [string, string][] = [
+  ['When you will start selling', 'fld-sellFrom'], ['Years to repay', 'fld-years'], ['Fixed costs a month', 'fld-fixedMonth'], ['What backs the loan', 'fld-security'],
+  ['The working-capital limit: worked', 'fld-wcBy'], ['The working-capital limit worked', 'fld-wcBy'], ['Costs by head', 'rep-heads'],
   ['Who the borrower', 'fld-borrower'], ['Cost of the project', 'cost'], ['The term loan: its amount', 'fld-tl-amount'],
   ['The term loan: its interest', 'fld-tl-rate'], ['The term loan: the month', 'fld-tl-disbursed'], ['The term loan: the moratorium', 'fld-tl-moratorium'],
   ['The term loan: the number', 'fld-tl-instalments'], ['The term loan: how', 'fld-tl-repayment'], ['Capital subsidy', 'fld-subsidy'],
-  ['Unsecured', 'fld-unsecured'], ['Sales in', 'fld-sales', true], ['Sales: growth', 'fld-salesGrowth', true], ['Use of the capacity', 'fld-utilisation', true], ['The price: growth', 'fld-priceGrowth', true],
+  ['Unsecured', 'fld-unsecured'], ['Sales in', 'fld-sales'], ['Sales: growth', 'fld-salesGrowth'], ['Use of the capacity', 'fld-utilisation'], ['The price: growth', 'fld-priceGrowth'],
   ['Months from', 'fld-monthsToStart'], ['PMEGP: the borrower', 'fld-category'], ['PMEGP: a town', 'fld-area'], ['PMEGP: manufacturing', 'fld-activity'],
   ['Materials', 'fld-variablePct'], ['Fixed costs in', 'fld-fixed'], ['Fixed costs: growth', 'fld-fixedGrowth'], ['Days of stock', 'fld-days-stock'],
   ['Days of debtors', 'fld-days-debtors'], ['Days of creditors', 'fld-days-creditors'], ['The working-capital limit sought', 'fld-wcLimit'],
-  ['The working-capital limit: its', 'fld-wcRate'], ['The collateral', 'fld-collateral', true],
-  ['Mudra: the term loan and', 'fld-tl-amount'], ['Mudra: the loans come', 'fld-tarun'], ['CGTMSE: the loans', 'fld-cgtmse', true], ['The guarantee fee', 'fld-feeRate', true],
+  ['The working-capital limit: its', 'fld-wcRate'], ['The collateral', 'fld-collateral'],
+  ['Mudra: the term loan and', 'fld-tl-amount'], ['Mudra: the loans come', 'fld-tarun'], ['CGTMSE: the loans', 'fld-cgtmse'], ['The guarantee fee', 'fld-feeRate'],
 ];
 // A product's line (D-UX-109): "Sales, line 2: the price a unit" is the price's box on the second line.
 const LINE_FACT: [string, string][] = [['what', 'name'], ['how many', 'units'], ['the price', 'price']];
-const boxOf = (need: string): [string, string, boolean?] | undefined => {
+const boxOf = (need: string): [string, string] | undefined => {
   const m = /^Sales, line (\d+): (.*)$/.exec(need), fact = m && LINE_FACT.find(([w]) => m[2].startsWith(w));
   return fact ? [need, `fld-product-${Number((m as RegExpExecArray)[1]) - 1}-${fact[1]}`] : BOXES.find(([w]) => need.startsWith(w));
 };
@@ -78,12 +84,21 @@ function arrived(p: ReportPreview) {
   return `still needs ${p.needs.length === 1 ? 'one thing' : `${p.needs.length} things`}, listed there.`;
 }
 
+/** The mode last picked on this device (D-UX-112): the page opens in simple mode until expert is picked. */
+const MODE_KEY = 'report-mode';
+const savedMode = (): Mode => { try { return localStorage.getItem(MODE_KEY) === 'expert' ? 'expert' : 'simple'; } catch { return 'simple'; } };
+const saveMode = (m: Mode) => { try { localStorage.setItem(MODE_KEY, m); } catch { /* the mode is a convenience */ } };
+
 export function ReportCalculator() {
-  const [s, setS] = useState<ReportState>(EMPTY);
-  const [more, setMore] = useState(false);
+  const [s, setS] = useState<ReportState>({ ...EMPTY, mode: 'simple' });
+  useEffect(() => { if (savedMode() === 'expert') setS((x) => withMode(x, 'expert')); }, []);
   const update: Update = (f) => setS(f);
   const p = useMemo(() => preview(s), [s]);
-  const typed = JSON.stringify(s) !== JSON.stringify(EMPTY);
+  const simple = s.mode === 'simple', blank = { ...EMPTY, mode: s.mode };
+  const typed = JSON.stringify(s) !== JSON.stringify(blank);
+  const toMode = (m: Mode) => { saveMode(m); update((x) => withMode(x, m)); };
+  // A box only expert mode has: switch to it, then focus the box.
+  const toExpert = (id: string) => (e: Event) => { e.preventDefault(); toMode('expert'); focusNext(`#${id}`); };
   // Clear all, with an undo until the next figure is typed (review finding 5), as on the CMA.
   const [cleared, setCleared] = useState<ReportState>();
   useEffect(() => { if (typed) setCleared(undefined); }, [typed]);
@@ -91,15 +106,15 @@ export function ReportCalculator() {
   const [used, setUsed] = useState<PlanChange[]>([]);
   const use = (l: Levers) => { const a = applyPlan(s, l); setS(a.s); setUsed(a.changes); };
   const undo = () => { setS((x) => undoPlan(x, used)); setUsed([]); };
-  const clear = () => { setCleared(s); setS(EMPTY); setUsed([]); focusNext('[data-testid="rep-clear-undo"]'); };
+  const clear = () => { setCleared(s); setS(blank); setUsed([]); focusNext('[data-testid="rep-clear-undo"]'); };
   const unclear = () => { if (cleared) setS(cleared); setCleared(undefined); focusNext('[data-testid="rep-clear"]'); };
-  // The security cover's row links to the collateral field under More options (review finding 4).
-  const toCollateral = (e: Event) => { e.preventDefault(); setMore(true); focusNext('#fld-collateral'); };
-  // A missing figure's link: to its box, opening More options first when it sits there.
+  // The security cover's row links to the collateral field (review finding 4); in simple mode, property is chosen first.
+  const toCollateral = (e: Event) => { e.preventDefault(); if (simple) update((x) => ({ ...x, security: 'property' })); focusNext('#fld-collateral'); };
+  // A missing figure's link: to its box, in expert mode when only it has one.
   const toBox = (need: string) => (e: Event) => {
     const b = boxOf(need);
-    if (!b?.[2]) return b && goTo(b[1])(e);
-    e.preventDefault(); setMore(true); focusNext(`#${b[1]}`);
+    if (!b) return;
+    return document.getElementById(b[1]) ? goTo(b[1])(e) : toExpert(b[1])(e);
   };
   const mark = (id: string, hint?: string) => { const c = used.find((u) => u.field === id); return c ? `Changed by the plan; it was ${c.was || 'empty'}.${hint ? ` ${hint}` : ''}` : hint; };
   // Each setter builds on the latest state (x), never on the one this render saw.
@@ -118,13 +133,19 @@ export function ReportCalculator() {
   const g = guaranteeOf(s);
   // From 1024 px the questions stand left and the answer panel right (UX8, D-UX-106); the report's tables, what it assumes
   // and the download run the full width below.
+  const hv = headsSum(s, 'variable'), hf = headsSum(s, 'fixed'), by = wcByOf(s), changed = changedOf(s), worked = workedLine(s);
+  const sum = (testid: string, text: string) => <p data-testid={testid} class="mt-2 self-end text-ink sm:col-span-1">{text}</p>;
+  const collateralBox = () => amount('fld-collateral', 'Collateral: its market value', s.collateral, (x, collateral) => ({ ...x, collateral }), `Property offered beside the project's assets. ${COLLATERAL_HINT}`);
+  // From 1024 px the questions stand left and the answer panel right (UX8, D-UX-106); the report's tables, what it assumes
+  // and the download run the full width below. Simple mode asks its dozen questions; expert mode every field (D-UX-112).
   return <div class="lg:grid lg:grid-cols-tool-grid lg:gap-x-10"><div class="lg:col-start-1 lg:row-start-1">
+    <Choice name="fld-mode" legend="How much to ask" options={MODE_CHOICES} value={s.mode ?? 'expert'} columns onChange={toMode} />
     <Choice name="fld-borrower" legend="Who is the borrower? It sets the tax." options={BORROWER_CHOICES} value={s.borrower} columns
       onChange={(borrower) => update((x) => ({ ...x, borrower }))} />
     <Section id="cost" title="Cost of the project">
       <p class={`mt-2 ${HINT}`}>Leave a head empty if the project has none. The margin for working capital is worked out and added.</p>
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
-        {HEADS.map((h) => <Fragment key={h.id}>{amount(`fld-cost-${h.id}`, h.label, s.cost[h.id], (x, t) => ({ ...x, cost: { ...x.cost, [h.id]: t } }))}</Fragment>)}
+        {HEADS.filter((h) => !simple || SIMPLE_COST.includes(h.id)).map((h) => <Fragment key={h.id}>{amount(`fld-cost-${h.id}`, h.label, s.cost[h.id], (x, t) => ({ ...x, cost: { ...x.cost, [h.id]: t } }))}</Fragment>)}
       </div>
     </Section>
     <Section id="finance" title="Means of finance">
@@ -151,23 +172,32 @@ export function ReportCalculator() {
       </div>}
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
         {amount('fld-tl-amount', s.scheme === 'pmegp' ? 'Term loan sanctioned' : 'Term loan', s.loan.amount, (x, t) => ({ ...x, loan: { ...x.loan, amount: t } }))}
-        {s.scheme !== 'pmegp' && amount('fld-subsidy', 'Capital subsidy, if any', s.subsidy, (x, subsidy) => ({ ...x, subsidy }))}
-        {amount('fld-unsecured', 'Unsecured loans, if any', s.unsecured, (x, unsecured) => ({ ...x, unsecured }))}
+        {!simple && s.scheme !== 'pmegp' && amount('fld-subsidy', 'Capital subsidy, if any', s.subsidy, (x, subsidy) => ({ ...x, subsidy }))}
+        {!simple && amount('fld-unsecured', 'Unsecured loans, if any', s.unsecured, (x, unsecured) => ({ ...x, unsecured }))}
       </div>
     </Section>
     <Section id="loan" title="The term loan">
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
         {percent('fld-tl-rate', 'Interest rate (% a year)', s.loan.ratePct, (x, ratePct) => ({ ...x, loan: { ...x.loan, ratePct } }), '%')}
-        <TextField id="fld-tl-disbursed" label="First drawn (month)" type="month" value={s.loan.disbursed}
-          said={s.loan.disbursed.trim() ? (parseMonth(s.loan.disbursed) ? monthText(parseMonth(s.loan.disbursed) as string) : 'Not understood. Type 2026-04 or Apr 2026.') : undefined}
-          onCommit={(disbursed) => update((x) => ({ ...x, loan: { ...x.loan, disbursed } }))} />
-        {percent('fld-tl-moratorium', 'Moratorium (months; 0 if none)', s.loan.moratoriumMonths, (x, moratoriumMonths) => ({ ...x, loan: { ...x.loan, moratoriumMonths } }), 'months')}
-        {percent('fld-tl-instalments', 'Number of instalments', s.loan.instalments, (x, instalments) => ({ ...x, loan: { ...x.loan, instalments } }))}
+        {simple ? percent('fld-years', 'Years to repay', s.years ?? '', (x, years) => ({ ...x, years }), 'years', undefined, 'By EMI every month, from the month you start selling.') : <>
+          <TextField id="fld-tl-disbursed" label="First drawn (month)" type="month" value={s.loan.disbursed}
+            said={s.loan.disbursed.trim() ? (parseMonth(s.loan.disbursed) ? monthText(parseMonth(s.loan.disbursed) as string) : 'Not understood. Type 2026-04 or Apr 2026.') : undefined}
+            onCommit={(disbursed) => update((x) => ({ ...x, loan: { ...x.loan, disbursed } }))} />
+          {percent('fld-tl-moratorium', 'Moratorium (months; 0 if none)', s.loan.moratoriumMonths, (x, moratoriumMonths) => ({ ...x, loan: { ...x.loan, moratoriumMonths } }), 'months')}
+          {percent('fld-tl-instalments', 'Number of instalments', s.loan.instalments, (x, instalments) => ({ ...x, loan: { ...x.loan, instalments } }))}
+        </>}
       </div>
-      <Choice name="fld-tl-repayment" legend="How it is repaid" options={REPAYMENT_CHOICES} value={s.loan.repayment}
-        onChange={(repayment) => update((x) => ({ ...x, loan: { ...x.loan, repayment } }))} />
+      {!simple && <Choice name="fld-tl-repayment" legend="How it is repaid" options={REPAYMENT_CHOICES} value={s.loan.repayment}
+        onChange={(repayment) => update((x) => ({ ...x, loan: { ...x.loan, repayment } }))} />}
+      {simple && s.scheme !== 'mudra' && <>
+        <Choice name="fld-security" legend="What backs the loan besides the project's own assets?" options={SECURITY_CHOICES} value={s.security}
+          onChange={(security) => update((x) => ({ ...x, security }))} />
+        {s.security === 'property' && <div class="mt-4 grid gap-4 sm:grid-cols-2">{collateralBox()}</div>}
+      </>}
     </Section>
     <Section id="operations" title="Sales and costs">
+      {!simple && <Choice name="fld-salesBy" legend="Sales come from" options={SALES_BY} value={s.salesBy} columns
+        onChange={(salesBy) => update((x) => ({ ...x, salesBy }))} />}
       {/* One line per product or service (D-UX-109): what it is, how many a month at full running, its price; they add up to sales. */}
       {s.salesBy === 'drivers' && <>
         {s.products.map((pr, k) => {
@@ -186,50 +216,70 @@ export function ReportCalculator() {
         <button type="button" data-testid="rep-product-add" class="mt-2 min-h-11 text-link underline underline-offset-4"
           onClick={() => update((x) => ({ ...x, products: [...x.products, NO_PRODUCT] }))}>Add another product or service</button>
       </>}
+      {simple && s.salesBy === 'typed' && <p class="mt-4 text-ink">Sales are typed by year in expert mode.</p>}
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
-        {percent('fld-monthsToStart', 'Months from the loan to the first sales (0 if at once)', s.monthsToStart, (x, monthsToStart) => ({ ...x, monthsToStart }), 'months')}
-        {percent('fld-variablePct', 'Materials and other variable costs (% of sales)', s.variablePct, (x, variablePct) => ({ ...x, variablePct }), '%')}
-        {amount('fld-fixed', 'Fixed costs in a full first year', s.fixed, (x, fixed) => ({ ...x, fixed }), 'Salaries, rent and other overheads.')}
-        {percent('fld-fixedGrowth', 'Fixed costs: growth a year (%)', s.fixedGrowth, (x, fixedGrowth) => ({ ...x, fixedGrowth }), '%')}
+        {simple ? <TextField id="fld-sellFrom" label="When will you start selling?" type="month" value={s.sellFrom ?? ''}
+            hint={'The moratorium runs until then.'}
+            said={s.sellFrom?.trim() ? (parseMonth(s.sellFrom) ? monthText(parseMonth(s.sellFrom) as string) : 'Not understood. Type 2027-03 or Mar 2027.') : undefined}
+            onCommit={(sellFrom) => update((x) => ({ ...x, sellFrom }))} />
+          : percent('fld-monthsToStart', 'Months from the loan to the first sales (0 if at once)', s.monthsToStart, (x, monthsToStart) => ({ ...x, monthsToStart }), 'months')}
+        {hv ? sum('rep-variable-sum', hv) : percent('fld-variablePct', 'Materials and other variable costs (% of sales)', s.variablePct, (x, variablePct) => ({ ...x, variablePct }), '%')}
+        {hf ? sum('rep-fixed-sum', hf) : simple ? amount('fld-fixedMonth', 'Fixed costs a month', s.fixedMonth ?? '', (x, fixedMonth) => ({ ...x, fixedMonth }), 'Salaries, rent and other overheads.')
+          : amount('fld-fixed', 'Fixed costs in a full first year', s.fixed, (x, fixed) => ({ ...x, fixed }), 'Salaries, rent and other overheads.')}
+        {!simple && percent('fld-fixedGrowth', 'Fixed costs: growth a year (%)', s.fixedGrowth, (x, fixedGrowth) => ({ ...x, fixedGrowth }), '%')}
       </div>
-      {/* Set off by its fill, never a border all round (F3), as on the DSCR. */}
-      <details id="more-options" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)} class="mt-6">
-        <summary class="flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link">More options: the use of the capacity, the price, typed sales, {s.scheme === 'mudra' ? 'the guarantee fee' : 'collateral, CGTMSE'}</summary>
-        <div class="pb-4">
-          <Choice name="fld-salesBy" legend="Sales come from" options={SALES_BY} value={s.salesBy} columns
-            onChange={(salesBy) => update((x) => ({ ...x, salesBy }))} />
-          <div class="mt-4 grid gap-4 sm:grid-cols-2">
-            {s.salesBy === 'drivers' ? <>
-              <TextField id="fld-utilisation" label="Use of the capacity by year (%)" unit="%" assumed={s.utilisation === EMPTY.utilisation} hint={mark('fld-utilisation', 'One a year from the first sales, like 60, 70, 80; the last holds after.')} value={s.utilisation}
-                onCommit={(utilisation) => update((x) => ({ ...x, utilisation }))} />
-              {percent('fld-priceGrowth', 'The price: growth a year (%)', s.priceGrowth, (x, priceGrowth) => ({ ...x, priceGrowth }), '%', EMPTY.priceGrowth)}
-            </> : <>
-              {amount('fld-sales', 'Sales in a full first year', s.sales, (x, sales) => ({ ...x, sales }))}
-              {percent('fld-salesGrowth', 'Sales: growth a year (%)', s.salesGrowth, (x, salesGrowth) => ({ ...x, salesGrowth }), '%')}
-            </>}
-            {s.scheme !== 'mudra' && amount('fld-collateral', 'Collateral: its market value', s.collateral, (x, collateral) => ({ ...x, collateral }), `Property offered beside the project's assets. ${COLLATERAL_HINT}`)}
-          </div>
-          {s.scheme !== 'mudra' && tick('fld-cgtmse', 'CGTMSE guarantees the loans', !!s.cgtmse, (x, cgtmse) => ({ ...x, cgtmse }),
-            `Its fee, ${CGTMSE.slabs[0].ratePct}% to ${CGTMSE.slabs[CGTMSE.slabs.length - 1].ratePct.toFixed(2)}% a year by the loans in all, goes into the projections as a finance cost.`)}
-          {s.scheme !== 'mudra' && s.cgtmse && <fieldset class="mt-4">
-            <legend class="font-medium text-ink">Concessions that apply, each {CGTMSE.concessionPct}% off the fee</legend>
-            {CGTMSE.groups.map((t, k) => <Fragment key={k}>{tick(`fld-concession-${k}`, t, !!s.concessions?.[k], (x, v) => ({ ...x, concessions: CGTMSE.groups.map((_, i) => (i === k ? v : !!x.concessions?.[i])) }))}</Fragment>)}
-          </fieldset>}
-          {g && <div class="mt-4 grid gap-4 sm:grid-cols-2">
-            {percent('fld-feeRate', 'The guarantee fee, if the lender quotes another rate (% a year)', s.feeRate, (x, feeRate) => ({ ...x, feeRate }), '%', undefined,
-              g === 'cgfmu' ? `Left empty, CGFMU's ${CGFMU.ratePct}% a year.` : 'Left empty, CGTMSE’s rate for the loans in all, less the concessions ticked.')}
-          </div>}
+      {!simple && <fieldset id="rep-heads" class="mt-6">
+        <legend class="font-medium text-ink">Costs by head, if you have them</legend>
+        <p class={`mt-1 ${HINT}`}>Each named in the profit and loss; a side with a head typed is added up from its heads.</p>
+        <div class="mt-2 grid gap-4 sm:grid-cols-2">
+          {COST_HEADS.variable.map((h) => <Fragment key={h.id}>{percent(`fld-head-${h.id}`, `${h.label} (% of sales)`, s.heads?.variable?.[h.id] ?? '',
+            (x, t) => ({ ...x, heads: { ...x.heads, variable: { ...x.heads?.variable, [h.id]: t } } }), '%', undefined, 'hint' in h ? h.hint : undefined)}</Fragment>)}
+          {COST_HEADS.fixed.map((h) => <Fragment key={h.id}>{amount(`fld-head-${h.id}`, `${h.label} a month`, s.heads?.fixed?.[h.id] ?? '',
+            (x, t) => ({ ...x, heads: { ...x.heads, fixed: { ...x.heads?.fixed, [h.id]: t } } }))}</Fragment>)}
         </div>
-      </details>
+      </fieldset>}
+      {!simple && <>
+      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+        {s.salesBy === 'drivers' ? <>
+          <TextField id="fld-utilisation" label="Use of the capacity by year (%)" unit="%" assumed={s.utilisation === EMPTY.utilisation} hint={mark('fld-utilisation', 'One a year from the first sales, like 60, 70, 80; the last holds after.')} value={s.utilisation}
+            onCommit={(utilisation) => update((x) => ({ ...x, utilisation }))} />
+          {percent('fld-priceGrowth', 'The price: growth a year (%)', s.priceGrowth, (x, priceGrowth) => ({ ...x, priceGrowth }), '%', EMPTY.priceGrowth)}
+        </> : <>
+          {amount('fld-sales', 'Sales in a full first year', s.sales, (x, sales) => ({ ...x, sales }))}
+          {percent('fld-salesGrowth', 'Sales: growth a year (%)', s.salesGrowth, (x, salesGrowth) => ({ ...x, salesGrowth }), '%')}
+        </>}
+        {s.scheme !== 'mudra' && collateralBox()}
+      </div>
+      {s.scheme !== 'mudra' && tick('fld-cgtmse', 'CGTMSE guarantees the loans', !!s.cgtmse, (x, cgtmse) => ({ ...x, cgtmse }),
+        `Its fee, ${CGTMSE.slabs[0].ratePct}% to ${CGTMSE.slabs[CGTMSE.slabs.length - 1].ratePct.toFixed(2)}% a year by the loans in all, goes into the projections as a finance cost.`)}
+      {s.scheme !== 'mudra' && s.cgtmse && <fieldset class="mt-4">
+        <legend class="font-medium text-ink">Concessions that apply, each {CGTMSE.concessionPct}% off the fee</legend>
+        {CGTMSE.groups.map((t, k) => <Fragment key={k}>{tick(`fld-concession-${k}`, t, !!s.concessions?.[k], (x, v) => ({ ...x, concessions: CGTMSE.groups.map((_, i) => (i === k ? v : !!x.concessions?.[i])) }))}</Fragment>)}
+      </fieldset>}
+      {g && <div class="mt-4 grid gap-4 sm:grid-cols-2">
+        {percent('fld-feeRate', 'The guarantee fee, if the lender quotes another rate (% a year)', s.feeRate, (x, feeRate) => ({ ...x, feeRate }), '%', undefined,
+          g === 'cgfmu' ? `Left empty, CGFMU's ${CGFMU.ratePct}% a year.` : 'Left empty, CGTMSE’s rate for the loans in all, less the concessions ticked.')}
+      </div>}
+      </>}
     </Section>
     <Section id="wc" title="Working capital">
+      <Choice name="fld-wcBy" legend="The working-capital limit (cash credit)" options={WC_CHOICES} value={by} columns
+        onChange={(wcBy) => update((x) => ({ ...x, wcBy }))} />
+      {worked && <p data-testid="rep-worked" class="mt-2 text-ink">{worked}</p>}
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
-        {amount('fld-wcLimit', 'Working-capital limit sought (0 if none)', s.wcLimit, (x, wcLimit) => ({ ...x, wcLimit }))}
-        {percent('fld-wcRate', 'Its interest rate (% a year)', s.wcRate, (x, wcRate) => ({ ...x, wcRate }), '%')}
-        {(['stock', 'debtors', 'creditors'] as const).map((k) => <Fragment key={k}>
-          {percent(`fld-days-${k}`, `Days of ${k}`, s.days[k], (x, t) => ({ ...x, days: { ...x.days, [k]: t } }), 'days', EMPTY.days[k])}
-        </Fragment>)}
+        {(simple ? by === 'typed' : by !== 'worked' && by !== 'none') && amount('fld-wcLimit', 'Working-capital limit sought', s.wcLimit, (x, wcLimit) => ({ ...x, wcLimit }))}
+        {!simple && <>
+          {percent('fld-wcRate', 'Its interest rate (% a year)', s.wcRate, (x, wcRate) => ({ ...x, wcRate }), '%')}
+          {(['stock', 'debtors', 'creditors'] as const).map((k) => <Fragment key={k}>
+            {percent(`fld-days-${k}`, `Days of ${k}`, s.days[k], (x, t) => ({ ...x, days: { ...x.days, [k]: t } }), 'days', EMPTY.days[k])}
+          </Fragment>)}
+        </>}
       </div>
+      {changed.length > 0 && <div data-testid="rep-changed" class="mt-6 rounded-card bg-surface px-4 py-3">
+        <p class="font-medium text-ink">Set in expert mode, and used:</p>
+        <ul class="mt-2 list-disc space-y-1 pl-5 text-ink">{changed.map((c) => <li key={c}>{c}</li>)}</ul>
+        <button type="button" data-testid="rep-to-expert" class="mt-2 min-h-11 text-link underline underline-offset-4" onClick={() => toMode('expert')}>Change them in expert mode</button>
+      </div>}
       {typed && <p data-testid="rep-arrived" class="mt-8 text-ink lg:hidden"><a href="#report" class="text-link underline underline-offset-4">The project report below</a> {arrived(p)}</p>}
     </Section>
     </div>
@@ -241,8 +291,8 @@ export function ReportCalculator() {
     <div class="lg:col-span-2 lg:row-start-2">
     {p.view && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
     <Ledger id="assumed" testid="rep-assumed" title="Assumed until changed" rows={assumptionsOf(s).map((a) => {
-      const [to, more] = ASSUMED_BOX[a.id] ?? [];
-      return { ...a, to, go: more ? (e: Event) => { e.preventDefault(); setMore(true); focusNext(`#${to}`); } : undefined };
+      const to = ASSUMED_BOX[a.id];
+      return { ...a, to, go: to && simple ? toExpert(to) : undefined };
     })} />
     <Download s={s} p={p} update={update} />
     </div>
@@ -339,7 +389,7 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
         {/* Met on the project's own assets, the cover reads once: no note, no ask (UX5b, the critic's finding 3). */}
         {c.id === 'securityCover' && (p.collateralNote || (!s.collateral.trim() && c.verdict !== 'meets')) && <p data-testid="rep-collateral-note" class={HINT}>
           {p.collateralNote}{!s.collateral.trim() && <>{p.collateralNote ? ' ' : ''}<a href="#fld-collateral" data-testid="rep-to-collateral" onClick={toCollateral}
-            class="text-link underline underline-offset-4">Type it under More options</a>.</>}</p>}
+            class="text-link underline underline-offset-4">Type its market value</a>.</>}</p>}
       </Bar>)}</ul>
       {/* How to read the bars, under them as a chart its key (UX9b, the UX9 critic). */}
       <p class={`mt-1 ${HINT}`}>Each ratio in its worst year; the line is its benchmark.</p>
@@ -399,7 +449,7 @@ function Result({ s, p, update, use, used, undo, keep, toCollateral, toBox, rese
   const v = p.view, verdict = verdictOf(p);
   const result = p.blocked ? 'blocked' : p.needs.length || p.short ? 'provisional' : 'ready';
   // Before the figures, the report's outline: its key figures with "—" for each not yet known, never 0 (UX8, review finding 2).
-  const first = p.needs.map(boxOf).find((b) => b && !b[2])?.[1];
+  const first = p.needs.map(boxOf).find(Boolean)?.[1];
   const key = v?.key ?? [{ label: 'Cost of the project' }, { label: 'Average DSCR', check: 'dscrAverage' }, { label: 'Lowest DSCR', check: 'dscrLowest' }];
   return <div class="lg:col-start-2 lg:row-start-1"><section id="report" aria-labelledby="report-h" class="answer-panel mt-10 lg:mt-4">
     <h2 id="report-h" class="sr-only">The project report</h2>
