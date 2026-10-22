@@ -295,6 +295,9 @@ html:has([data-header][data-away]:not(:focus-within)) [data-years-strip] { top: 
 [data-desk][data-intro] { background-image: none; --bad: var(--color-red-300); }
 .js [data-intro]:not([data-played]) :is([data-ln], [data-kv], [data-row], [data-mark]) { opacity: 0; }
 .js [data-intro]:not([data-played]) [data-bar] { transform: scaleX(0); }
+/* An explainer (HOME1c, Explainer.astro): its hub, ghosts and captions wait too; one caption shows at a time, the last at rest. */
+.js [data-intro]:not([data-played]) :is([data-x], [data-captions] li) { opacity: 0; }
+[data-captions] li:not([data-on]) { opacity: 0; }
 /* The hero's "how it works" (D-UX-115): blank until it draws, settles and pulses once on each visit. */
 .js [data-how]:not([data-played]) [data-box] { opacity: 0; }
 .js [data-how]:not([data-played]) [data-draw] { stroke-dashoffset: 1; }

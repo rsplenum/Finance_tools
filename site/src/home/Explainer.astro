@@ -1,0 +1,83 @@
+---
+/**
+ * A tool's explainer on home (HOME1c, D-UX-119, D-UX-120; docs/DESIGN-MOTION.md): the reference short's idiom on the ink
+ * desk, in five beats, each with its caption. The inputs hang on a spine that runs into the engine (÷: each year's cash
+ * over its repayments) and out to the years; a lens reads each year and stops on the weakest; brackets move to the input
+ * the change moves, whose new value lifts into its slot; the bars spring to the new reading and the lens checks the year
+ * that now decides. Every figure, word and label is story.ts's (the engine's); the bars' widths only scale each figure
+ * against the level. The HTML is the finished state, read whole by a screen reader and shown as it is without scripts or
+ * under reduced motion: each year at the new reading, a faint tick where it stood before, the two weakest years' sums and
+ * verdicts, and the five captions (only the last shown). home.ts plays it once, about 8.5 s, and offers it again.
+ */
+import type { Intro } from './story';
+
+interface Props { intro: Intro; class?: string }
+const { intro: i, class: cls = '' } = Astro.props;
+const x = i.explain!;
+// Where the level sits on a bar's track: half way for a ratio read "at least" (as Intro.astro).
+const top = x.level.n / 0.5;
+const pct = (n: number) => Math.min(100, (n / top) * 100);
+const LINE = 'left:50%';
+const mark = (meets: boolean) => (meets ? '✓' : '✕');
+const fw = Math.max(...x.rows.flatMap((r) => [r.now.text.length, r.was?.text.length ?? 0])) + 3;
+const SOFT = 'inline-flex min-h-11 items-center justify-center rounded-full bg-on-desk/10 px-4 py-2 text-sm font-medium text-on-desk hover:bg-on-desk/20';
+// Two inputs to a row only where both columns fit a wide line, as Intro.astro does.
+const shown: [string, string][] = x.inputs.map(([k, v], n) => [k, n === x.fix.at ? `${x.fix.was} → ${x.fix.now} ${x.fix.unit}` : v]);
+const col = (k: 0 | 1) => shown.filter((_, n) => n % 2 === k), wide = (xs: [string, string][], j: 0 | 1) => Math.max(0, ...xs.map((y) => y[j].length));
+const pairs = wide(col(0), 0) + wide(col(0), 1) + wide(col(1), 0) + wide(col(1), 1) + 5 <= 54;
+const weak = [{ w: x.was, at: x.fix.was }, { w: x.now, at: x.fix.now }];
+---
+<div data-intro={i.id} data-explain data-weak-was={x.was.row} data-weak-now={x.now.row} data-desk class={`overflow-hidden rounded-panel ${cls}`}>
+  <div class="flex h-16 items-center justify-between gap-3 border-b border-on-desk/15 py-1 pr-2 pl-4 sm:pl-6">
+    <p class="min-w-0 font-mono text-sm text-on-desk-muted">{i.title}</p>
+    <button type="button" data-show hidden class={SOFT}>Show it all</button>
+  </div>
+  <div data-stage class="relative px-4 py-5 font-mono text-sm leading-6 tabular-nums break-words sm:px-6 sm:text-base">
+    <svg data-wires aria-hidden="true" class="pointer-events-none absolute inset-0 size-full overflow-visible"></svg>
+    <dl data-inputs class={`grid grid-cols-kv gap-x-4 pl-10 ${pairs ? 'md:grid-cols-kv2 lg:grid-cols-kv xl:grid-cols-kv2' : ''}`}>
+      {x.inputs.map(([k, v], n) => (<><dt data-kv class="text-on-desk-muted">{k}</dt><dd data-kv data-fix={n === x.fix.at ? '' : undefined} class="relative min-w-0 text-on-desk">{n === x.fix.at
+        ? <><span data-was class="inline-block text-on-desk-muted">{x.fix.was}</span><span data-to class="inline-block overflow-hidden align-top whitespace-nowrap"><span aria-hidden="true">&nbsp;→&nbsp;</span><span class="sr-only">, then </span><span data-now class="inline-block">{x.fix.now}</span></span> {x.fix.unit}</>
+        : v}</dd></>))}
+    </dl>
+    <div class="mt-4 flex items-center gap-3">
+      <span data-hub data-x aria-hidden="true" class="grid size-10 shrink-0 place-items-center rounded-full border-2 border-marigold text-lg text-marigold">÷</span>
+      <p data-x class="text-on-desk-muted">worked out month by month</p>
+    </div>
+    <figure data-years class="mt-3 grid gap-y-0.5 pl-10 leading-5" style={`--lw:${Math.max(...x.rows.map((r) => r.label.length))}ch;--fw:${fw}ch`}>
+      <div data-row class="grid grid-cols-bars gap-x-3">
+        <span></span>
+        <span class="relative h-5"><span class="absolute top-0 whitespace-nowrap text-on-desk-muted" style={LINE}>{x.level.word} {x.level.text}</span></span>
+        <span></span>
+      </div>
+      {x.rows.map((r) => (
+        <div data-row data-year class="grid grid-cols-bars gap-x-3">
+          <span class="text-on-desk-muted">{r.label}</span>
+          <span class="relative self-stretch">
+            {r.was && <span data-ghost data-x aria-hidden="true" class="absolute inset-y-1 w-0.5 -translate-x-1/2 rounded-full bg-on-desk-muted" style={`left:${pct(r.was.n)}%`}></span>}
+            <span data-bar data-k={r.was ? (pct(r.was.n) / pct(r.now.n)).toFixed(4) : '0'} data-meets={r.was?.meets ? '' : undefined} class={`absolute inset-y-1.5 left-0 origin-left rounded-sm ${r.now.meets ? 'bg-on-desk' : 'bg-bad'}`} style={`width:${pct(r.now.n)}%`}></span>
+            <span aria-hidden="true" class="absolute -inset-y-0.5 border-l-2 border-dashed border-on-desk-muted" style={LINE}></span>
+          </span>
+          <span data-cell class="relative whitespace-nowrap text-right text-on-desk">
+            <span data-val>{r.now.text}</span><span data-mark aria-hidden="true" class={`ml-2 inline-block ${r.now.meets ? 'text-on-desk' : 'text-bad'}`}>{mark(r.now.meets)}</span>
+            <span class="sr-only">{r.now.meets ? ' meets' : ' misses'}{r.was ? `; at ${x.fix.was} ${x.fix.unit} ${r.was.text}, ${r.was.meets ? 'meets' : 'misses'}` : `; none at ${x.fix.was} ${x.fix.unit}`}</span>
+            {r.was && <span data-old aria-hidden="true" class={`absolute inset-y-0 right-0 opacity-0 ${r.was.meets ? '' : 'text-bad'}`}>{r.was.text}<span data-om class="ml-2 inline-block">{mark(r.was.meets)}</span></span>}
+          </span>
+        </div>
+      ))}
+    </figure>
+    <div class="mt-4 space-y-3">
+      {weak.map(({ w, at }) => (
+        <div data-ln data-sum class="leading-6">
+          <p class="flex flex-wrap items-center justify-between gap-x-3"><span class="text-on-desk-muted">at {at} {x.fix.unit}</span><span data-stamp class={`inline-block rounded-control border-2 border-current px-2 font-semibold tracking-wide ${w.meets ? 'text-marigold' : 'text-bad'}`}>{w.verdict}</span></p>
+          <p data-val class={w.meets ? 'text-marigold' : 'text-on-desk'}>{w.sum}</p>
+        </div>
+      ))}
+    </div>
+    <span data-lens aria-hidden="true" class="pointer-events-none absolute top-0 left-0 size-9 rounded-full border-2 border-on-desk opacity-0 shadow-[0_0_0_4px_rgb(0_0_0/0.25)] after:absolute after:top-full after:left-full after:h-2.5 after:w-1 after:-translate-x-1/2 after:-rotate-45 after:rounded-full after:bg-on-desk"></span>
+    <span data-brackets aria-hidden="true" class="pointer-events-none absolute top-0 left-0 opacity-0"><i class="absolute top-0 left-0 size-2.5 border-t-2 border-l-2 border-current"></i><i class="absolute top-0 right-0 size-2.5 border-t-2 border-r-2 border-current"></i><i class="absolute bottom-0 left-0 size-2.5 border-b-2 border-l-2 border-current"></i><i class="absolute right-0 bottom-0 size-2.5 border-r-2 border-b-2 border-current"></i></span>
+    <span data-pulse aria-hidden="true" class="pointer-events-none absolute top-0 left-0 size-2 rounded-full bg-marigold opacity-0 shadow-[0_0_10px_3px_var(--marigold)]"></span>
+  </div>
+  <ol data-captions class="grid border-t border-on-desk/15 px-4 py-3 text-sm text-on-desk sm:px-6 sm:text-base">
+    {x.captions.map((c, n) => <li data-on={n === x.captions.length - 1 ? '' : undefined} class="col-start-1 row-start-1">{c}</li>)}
+  </ol>
+</div>

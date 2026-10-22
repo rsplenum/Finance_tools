@@ -149,6 +149,21 @@ export interface Intro {
   /** A line the case adds beside the verdict, such as the CMA's limit. */
   aside?: string;
   go: { href: string; text: string };
+  /** The explainer's story in five beats (HOME1c, D-UX-119, D-UX-120): the DSCR's for now; the others type their terminal. */
+  explain?: Explainer;
+}
+/** A year's reading as typed (`was`, none where the loan has ended) and after the change (`now`). */
+export interface ExplainRow { label: string; was?: IntroBar; now: IntroBar }
+/** The weakest year's reading: its row, cash available over the debt service, and the verdict. */
+export interface ExplainWeak { row: number; sum: string; meets: boolean; verdict: string }
+/**
+ * Five beats, one caption each (the owner's script, HOME1c): the inputs, the calculation, the weakest year, the change
+ * tried, the outcome. The input the change moves is `fix`, shown as "was → now"; every figure is the engine's.
+ */
+export interface Explainer {
+  inputs: [string, string][]; fix: { at: number; was: string; now: string; unit: string };
+  level: Intro['level']; rows: ExplainRow[]; was: ExplainWeak; now: ExplainWeak;
+  captions: [string, string, string, string, string];
 }
 const tool = (href: string) => {
   const t = READY.find((r) => r.href === href);
@@ -174,8 +189,36 @@ const DSCR_INTRO: Intro = (() => {
     level, typed: phase(STORY_CASE, STORY_TYPED),
     fix: `› make it viable · term → ${STORY_FIXED.loan.instalments} instalments`, fixed: phase(STORY_FIXED, STORY_LONGER),
     go: { href: '/dscr/?case=home', text: 'Open the DSCR statement with this case' },
+    explain: dscrExplain(level),
   };
 })();
+
+/** The DSCR's five beats: case S at 60 instalments, its weakest year, then Make it viable's 80 and the year that decides. */
+function dscrExplain(level: Intro['level']): Explainer {
+  const l = STORY_CASE.loan, was = STORY_TYPED, now = STORY_LONGER;
+  const bar = (y: StoryFrame['years'][number]): IntroBar => ({ label: y.fy, text: y.dscr, n: y.n, judged: true, meets: y.meets });
+  const rows = now.years.map((y) => { const w = was.years.find((x) => x.fy === y.fy); return { label: y.fy, was: w && bar(w), now: bar(y) }; });
+  if (was.years.some((y) => !rows.some((r) => r.label === y.fy))) throw new Error('The longer term drops a year.');
+  if (was.years.every((y) => y.meets)) throw new Error('The story case has no year below the target.');
+  const weak = (s: State, f: StoryFrame): ExplainWeak => ({
+    row: rows.findIndex((r) => r.label === f.lowestYear), sum: dscrSum(s, f), meets: f.meets, verdict: f.meets ? 'Passes' : `Below target ${level.text}`,
+  });
+  const inputs: [string, string][] = [['borrower', 'A firm'], ['profit / yr', `Rs. ${STORY_CASE.cells.pbdit?.[0]}`], ['growth', `${STORY_CASE.rates.pbdit}%`],
+    ['EMIs now', 'None'], ['loan', `Rs. ${l.amount}`], ['rate', `${l.ratePct}%`], ['term', '']];
+  return {
+    inputs, fix: { at: inputs.length - 1, was: l.instalments, now: STORY_FIXED.loan.instalments, unit: 'instalments' },
+    level, rows, was: weak(STORY_CASE, was), now: weak(STORY_FIXED, now),
+    captions: [
+      'Seven answers about the business and its loan.',
+      'Each year’s cash is divided by that year’s repayments.',
+      `The weakest year, ${was.lowestYear}, is ${was.lowest}: below the target of ${level.text}.`,
+      `Make it viable tries a longer term: ${STORY_FIXED.loan.instalments} instalments.`,
+      now.meets ? `Every year now meets ${level.text}; the lowest, ${now.lowestYear}, is ${now.lowest}.`
+        : now.years.every((y) => y.meets) ? `Every year meets ${level.text}, but the average, ${now.average}, is below ${STORY_TARGET.average}.`
+          : `${now.lowestYear} is still ${now.lowest}, below ${level.text}.`,
+    ],
+  };
+}
 
 const REPORT_INTRO: Intro = (() => {
   const l = REPORT_CASE.loan, weak = reportSum(REPORT_CASE), fixed = reportSum(REPORT_FIXED);

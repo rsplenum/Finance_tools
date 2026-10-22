@@ -91,6 +91,30 @@ describe('the DSCR intro', () => {
     expect((year(60, 42)[0] / year(60, 42)[1]).toFixed(6)).toBe('1.002861');
     expect((year(80, 66)[0] / year(80, 66)[1]).toFixed(6)).toBe('1.205230');
   });
+  // The explainer (HOME1c, D-UX-120): the same figures as the intro, each year at both terms, and captions in the engine's words.
+  const x = d.explain!;
+  it('each year at 60 and at 80 instalments, as the intro has them', () => {
+    expect(x.rows.map((r) => r.label)).toEqual(['2026-27', '2027-28', '2028-29', '2029-30', '2030-31', '2031-32', '2032-33', '2033-34']);
+    expect(x.rows.flatMap((r) => (r.was ? [r.was.text] : []))).toEqual(d.typed.bars.map((b) => b.text));
+    expect(x.rows.map((r) => r.now.text)).toEqual(d.fixed.bars.map((b) => b.text));
+    expect(x.rows.map((r) => r.was?.meets)).toEqual([true, false, false, false, false, true, undefined, undefined]);
+    expect(x.inputs.length).toBe(7);
+    expect([x.fix.was, x.fix.now, x.inputs[x.fix.at][0]]).toEqual(['60', '80', 'term']);
+  });
+  it('the weakest year at each term, its sum and verdict the intro\'s; "Passes" only where the engine meets', () => {
+    expect([x.was.row, x.was.sum, x.was.verdict, x.was.meets]).toEqual([4, d.typed.sum, d.typed.verdict, false]);
+    expect([x.now.row, x.now.sum, x.now.verdict, x.now.meets]).toEqual([6, d.fixed.sum, d.fixed.verdict, true]);
+    expect([STORY_TYPED.meets, STORY_LONGER.meets]).toEqual([false, true]);
+  });
+  it('five captions, one a beat, the figures in them the engine\'s', () => {
+    expect(x.captions).toEqual([
+      'Seven answers about the business and its loan.',
+      'Each year’s cash is divided by that year’s repayments.',
+      'The weakest year, 2030-31, is 1.00: below the target of 1.20.',
+      'Make it viable tries a longer term: 80 instalments.',
+      'Every year now meets 1.20; the lowest, 2032-33, is 1.21.',
+    ]);
+  });
 });
 
 describe('the project report intro', () => {
