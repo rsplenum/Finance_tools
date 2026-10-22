@@ -55,7 +55,7 @@ Ratios: `node scripts/design-review.mjs --tokens` (every pair but `line` at leas
 - **Type**: F1 and F2; 16 px for body and fields (it stops phones zooming); 14 px (`text-sm`) for hints, second lines and table cells; 12 px (`text-xs`) only for labels in a chart. Figures in tables: `tabular-nums`, right-aligned (GOV.UK Table).
 - **Space**: Tailwind's 4 px scale; use 1, 2, 3, 4, 6, 8, 10, 12 (4 to 48 px). Related things sit closer than unrelated ones (Gestalt proximity).
 - **Radius**: `rounded-control` (6 px) for fields, `rounded-card` (8 px) for panels, `rounded-full` for buttons (F4) and status pills.
-- **Motion**: none needed to understand anything; F9; none under reduced motion (global.css).
+- **Motion**: never needed to understand anything; F9; the moves in `docs/DESIGN-MOTION.md`.
 
 ## Shared parts (`site/src/fields.tsx` and its neighbours)
 - **Field** (`TextField`, `INPUT`): label above, hint between label and field, the field 44 px tall with a 3:1 edge, the read-back or error under it. Never a placeholder as the label or the only hint (NN/g, "Placeholders in form fields are harmful", 2014); a format example ("like 12 L") may sit in the field only where a read-back under it confirms what was understood. An error says what is wrong and how to fix it, beside the field (GOV.UK).

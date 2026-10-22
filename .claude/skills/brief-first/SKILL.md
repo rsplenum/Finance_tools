@@ -26,6 +26,9 @@ Whenever the owner asks for something, give the tradeoffs they may not have cons
 
 Form, engine, result, download: working at 390 px and on `main` (through a small PR the owner merges) in the same session. Depth (more methods, modes, research, infrastructure) comes only when the next version needs it or the owner asks. Work that sits on an unmerged branch looks, to anyone reading `main`, like work never done: the outside review judged an empty `main` while the engine waited on a PR.
 
+- **Before and after first**: For a change to what the customer sees, publish a before and after the owner can open (today recorded beside the live proposal) before it goes into the docs; words alone drew "first show me" twice (HOME1).
+- **Say each thing once**: A page review asks what each section says that no other does, and a check counts each repeated block (HOME1).
+
 ## 4. Keep the default path to the contract
 
 - Ask only the contract's inputs by default. Everything else is an assumption shown in one line with a way to change it, or sits under one closed "More options".
