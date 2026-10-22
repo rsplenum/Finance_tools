@@ -17,7 +17,7 @@ Each: the friction it removes; its evidence.
 7. **Lines of 45 to 75 characters** for running text (`max-w-prose` or the page's `max-w-3xl` column). Friction: losing the line on the return sweep. Evidence: Bringhurst, *The Elements of Typographic Style*; WCAG 1.4.8 (AAA) caps at 80.
 8. **A reset always in reach**: Clear all, Undo after "Use this plan", every change reversible. Friction: fear of trying. Evidence: Nielsen's heuristic 3, "User control and freedom" (NN/g).
 9. **An answer within 100 ms** of leaving a field: the engine runs in the page, no spinner. Friction: waiting breaks the flow of thought. Evidence: Nielsen, "Response times: the 3 important limits" (NN/g, 1993).
-10. **Every element says something, or goes** (the owner, 18-10-2026): no shadow, gradient, blur, icon, box or space that tells nothing; each size, gap and colour from the maths in `docs/DESIGN-MATHS.md`. Evidence: Tufte's data-ink principle (1983).
+10. **Every element says something, or goes** (the owner, 18-10-2026): no shadow, gradient, blur, icon, box or space that tells nothing; each size, gap and colour from the maths in `docs/DESIGN-MATHS.md`; each section says what no other does (lesson 11, HOME1b). Evidence: Tufte's data-ink principle (1983).
 11. **No pure black behind white text in dark mode** (the canvas is a dark grey). Evidence: Material Design, "Dark theme" (a guideline).
 12. **Plain words on screen**, the owner's words; a CA's terms in the documents. Evidence: GOV.UK, "Writing for GOV.UK"; LESSONS-CARRIED §1.
 
@@ -36,12 +36,12 @@ The brief: `docs/design-reference/finsight.md`. *Tested*: by `scripts/forbidden-
 - **F10 Words or figures only once moved**: headings and counted figures are in the page, as the engine gave them, from the start. *Tested*.
 - **F11 A tool two taps away**: every tool in the top bar, in the first screen. *Tested*.
 - **F12 A one-line foot**: it links every tool, says what happens to the figures, the name large on a ledger rule. *Tested*.
-- **F13 Another order**: hero, story, tools, uses, figures, try, closing (D-UX-78). *Tested*.
+- **F13 Another order**: hero, tools, closing, each tool once in one block with one link (D-UX-117). *Tested*.
 - **F14 Anything from another site.** *Tested*.
 - **F15 A heavy page**: home 168 KB unzipped (14-10-2026, D-UX-81), cap 170 KB. *Tested*, printed.
 - **F16 Another's own**: the reference's words, images, footage, logo, font or code; a custom cursor; a hijacked scroll. The critic's.
 - **F17 Shadows**: only paper (`shadow-paper`) casts one. *Tested*.
-- **F18 Faint tags**: a tag under 4.5:1 on its fill as it comes into view, a fade counted, light and dark (D-UX-81). *Tested*.
+- **F18**: retired (D-UX-117).
 - **F19 Tab against the eye**: the next control in the page's order sits left in the same row, or above in the same column, at 360, 1024 or 1280 (WCAG 2.4.3; D-UX-81). *Tested*.
 
 Colour: ink, ledger red (the margin rule only, never a figure) and marigold (highlighter, ticks, glow), one highlight per screen; the critic's. Principle 6 yields: two ink pills may share a screen, never an accent fill; principle 10 yields for the glow (never behind a figure, still under reduced motion).

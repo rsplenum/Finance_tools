@@ -1,0 +1,65 @@
+---
+/**
+ * A tool's terminal intro on home (HOME1b, D-UX-114, D-UX-115; docs/DESIGN-MOTION.md, "Type"): one fictional case typed,
+ * its inputs resolving, the years' bars read against the level, the verdict stamped, then the change that passes and the
+ * bars, sum and verdict it gives. Every figure, word and label is the intro's own (site/src/home/story.ts, the engine's);
+ * the bars' widths only scale each figure against the level. The HTML is the finished state, read whole by a screen
+ * reader and shown as it is without scripts or under reduced motion; home.ts replays it once from the start when it first
+ * comes into view, and "Show it all" ends it at once.
+ */
+import type { Intro, IntroPhase } from './story';
+
+interface Props { intro: Intro; class?: string }
+const { intro: i, class: cls = '' } = Astro.props;
+// Where the level sits on a bar's track: half way for a ratio read "at least", four fifths for a budget read "at most".
+const at = i.level.at === 'least' ? 0.5 : 0.8, top = i.level.n / at;
+const width = (n: number) => `${Math.min(100, (n / top) * 100)}%`;
+const LINE = `left:${at * 100}%`;
+const levelText = `${i.level.word} ${i.level.text}`;
+const tracks = (p: IntroPhase) => `--lw:${Math.max(...p.bars.map((b) => b.label.length))}ch;--fw:${Math.max(...p.bars.map((b) => b.text.length)) + 3}ch`;
+const bar = (b: IntroPhase['bars'][number]) => (!b.judged ? 'bg-on-desk-muted/40' : b.meets ? 'bg-on-desk' : 'bg-bad');
+const phases: [IntroPhase, string | undefined][] = [[i.typed, i.aside], [i.fixed, undefined]];
+// Two inputs to a row only where both columns' longest name and value fit a wide terminal's line (about 60 characters),
+// so a value never wraps there; otherwise one to a row (the critic, HOME1b).
+const col = (k: 0 | 1) => i.inputs.filter((_, n) => n % 2 === k), wide = (xs: [string, string][], j: 0 | 1) => Math.max(0, ...xs.map((x) => x[j].length));
+const pairs = wide(col(0), 0) + wide(col(0), 1) + wide(col(1), 0) + wide(col(1), 1) + 5 <= 60;
+const SOFT = 'inline-flex min-h-11 items-center justify-center rounded-full bg-on-desk/10 px-4 py-2 text-sm font-medium text-on-desk hover:bg-on-desk/20';
+---
+<div data-intro={i.id} data-desk class={`overflow-hidden rounded-panel ${cls}`}>
+  <div class="flex h-16 items-center justify-between gap-3 border-b border-on-desk/15 py-1 pr-2 pl-4 sm:pl-6">
+    <p class="min-w-0 font-mono text-sm text-on-desk-muted">{i.title}</p>
+    <button type="button" data-show hidden class={SOFT}>Show it all</button>
+  </div>
+  <div data-screen tabindex="-1" class="space-y-2 px-4 py-4 font-mono text-sm leading-6 tabular-nums break-words sm:px-6 sm:py-5 sm:text-base">
+    <p data-ln aria-hidden="true" class="relative text-on-desk"><span data-type class="inline-block max-w-full">{i.command}</span><span data-cursor aria-hidden="true" class="absolute top-0 left-0 opacity-0">▍</span></p>
+    <dl class={`grid grid-cols-kv gap-x-4 ${pairs ? 'md:grid-cols-kv2 lg:grid-cols-kv xl:grid-cols-kv2' : ''}`}>
+      {i.inputs.map(([k, v]) => (<><dt data-kv class="text-on-desk-muted">{k}</dt><dd data-kv class="relative min-w-0 text-on-desk"><span data-val>{v}</span></dd></>))}
+    </dl>
+    <p data-ln class="text-on-desk-muted"><span data-type class="inline-block max-w-full">{i.working}</span></p>
+    {phases.map(([p, aside], k) => (
+      <>
+        {k === 1 && <p data-ln class="text-on-desk-muted"><span data-type class="inline-block max-w-full">{i.fix}</span></p>}
+        <figure data-ln data-chart class="grid gap-y-0.5 py-1 leading-5" style={tracks(p)}>
+          <div data-row class="grid grid-cols-bars gap-x-3">
+            <span></span>
+            <span class="relative h-5"><span class={`absolute top-0 whitespace-nowrap text-on-desk-muted ${at > 0.5 ? '-translate-x-full' : ''}`} style={LINE}>{levelText}</span></span>
+            <span></span>
+          </div>
+          {p.bars.map((b) => (
+            <div data-row class="grid grid-cols-bars gap-x-3">
+              <span class="text-on-desk-muted">{b.label}</span>
+              <span class="relative self-stretch">
+                <span data-bar class={`absolute inset-y-1.5 left-0 origin-left rounded-sm ${bar(b)}`} style={`width:${width(b.n)}`}></span>
+                <span aria-hidden="true" class="absolute -inset-y-0.5 border-l-2 border-dashed border-on-desk-muted" style={LINE}></span>
+              </span>
+              <span class={`whitespace-nowrap text-right ${b.judged ? 'text-on-desk' : 'text-on-desk-muted'}`}><span>{b.text}</span>{b.judged && <span data-mark aria-hidden="true" class={`ml-2 inline-block ${b.meets ? 'text-on-desk' : 'text-bad'}`}>{b.meets ? '✓' : '✕'}</span>}<span class="sr-only">{!b.judged ? ' not judged' : b.meets ? ' meets' : ' misses'}</span></span>
+            </div>
+          ))}
+        </figure>
+        <p data-ln data-scr class={`relative ${p.meets ? 'text-marigold' : 'text-on-desk'}`}><span data-val>{p.sum}</span></p>
+        <div><span data-ln data-stamp class={`inline-block rounded-control border-2 border-current px-2 font-semibold tracking-wide ${p.meets ? 'text-marigold' : 'text-bad'}`}>{p.verdict}</span></div>
+        {aside && <p data-ln class="text-on-desk-muted"><span data-type class="inline-block max-w-full">{aside}</span></p>}
+      </>
+    ))}
+  </div>
+</div>

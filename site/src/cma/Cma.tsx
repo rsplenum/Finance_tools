@@ -8,7 +8,8 @@
  * engine/cma-plan.ts only, via model.ts and levers.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
-import { AnswerBar, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote } from '../fields';
+import { AnswerBar, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote, useHomeCase, HomeCaseNote } from '../fields';
+import { CMA_HOME } from './home-case';
 import { printable } from '../doc/pdf';
 import { inr } from '../../../engine/util';
 import { isoDate, save, type FileKind } from '../download';
@@ -29,6 +30,7 @@ const bad = (t: string) => !!t.trim() && amountOf(t) === undefined;
 export function CmaCalculator() {
   const blank = () => emptyState(startYearOf(new Date()));
   const [s, setS] = useState<CmaState>(blank);
+  const home = useHomeCase(setS, () => CMA_HOME);
   // Clear all on a 131-field page, with an undo until the next figure is typed (review finding 7).
   const [cleared, setCleared] = useState<CmaState>();
   const typed = JSON.stringify(s) !== JSON.stringify(blank());
@@ -43,6 +45,7 @@ export function CmaCalculator() {
   // The answer beside the questions from 1024 px (UX8, D-UX-106); the forms, what is assumed and the downloads under both.
   return <div class="lg:grid lg:grid-cols-tool-grid lg:gap-x-10">
     <div class="lg:col-start-1 lg:row-start-1">
+    <HomeCaseNote on={home} />
     <p data-testid="cma-years" class={`mt-2 ${HINT}`}>
       Years: {cols.map((c) => `${c.fy} (${KIND[c.kind]})`).join(', ')}. Type in rupees, or like 12 L or 1.2 Cr. Leave the oldest years empty if the business is younger.
     </p>

@@ -2,19 +2,19 @@
   "pages": {
     "/": {
       "before": 27,
-      "shown": 524,
-      "all": 524,
+      "shown": 545,
+      "all": 545,
       "plan": null,
       "long": 0,
-      "abbr": 5,
+      "abbr": 4,
       "questions": 0,
-      "controls": 17,
+      "controls": 7,
       "answerAt": 0.6,
       "gap": null,
       "styles": 7,
-      "colours": 1,
+      "colours": 2,
       "outOfSight": null,
-      "codes": 0
+      "codes": 1
     },
     "/404.html": {
       "before": 13,
@@ -1145,7 +1145,11 @@
       "to": 582,
       "why": "D-AI-02",
       "date": "2026-10-21"
-    }
+    },
+    { "page": "/", "count": "shown", "from": 524, "to": 545, "why": "D-UX-117", "date": "2026-10-22" },
+    { "page": "/", "count": "all", "from": 524, "to": 545, "why": "D-UX-117", "date": "2026-10-22" },
+    { "page": "/", "count": "colours", "from": 1, "to": 2, "why": "D-UX-117", "date": "2026-10-22" },
+    { "page": "/", "count": "codes", "from": 0, "to": 1, "why": "D-UX-117", "date": "2026-10-22" }
   ],
   "fontProbe": 320.2
 }

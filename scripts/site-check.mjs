@@ -1304,6 +1304,24 @@ const REP_FIELDS = 'main input:not(#download input):not(#benchmarks input)';
 const CMA_FIELDS = 'main input:not([type="radio"]):not(#more-options input):not(#download input):not(#read input):not(#benchmarks input)';
 // A choice counts as one field, whatever its options (MV4: fresh or renewal).
 const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await page.locator('main fieldset:not(#more-options fieldset):has(input[type="radio"])').count();
+// Home (HOME1b, D-UX-114): each tool once, in one block with one button, which opens the tool filled with its intro's
+// fictional case; each tool says so above its answers and reads as the intro does (site/src/home/story.ts, its figures
+// worked by hand in tests/home-story.test.ts).
+{
+  const { ctx, page, v } = await open('/', { scheme: 'light' });
+  const blocks = await page.locator('#tools [data-tool]').evaluateAll((els) => els.map((e) => [e.dataset.tool, [...e.querySelectorAll('a[href]')].map((a) => a.getAttribute('href'))]));
+  if (blocks.map(([id]) => id).join() !== 'dscr,estimate,report,cma') v(`home shows the tool blocks ${blocks.map(([id]) => id).join(', ')}; want dscr, estimate, report, cma, each once`);
+  for (const [id, hrefs] of blocks) if (hrefs.length !== 1 || !hrefs[0].endsWith('?case=home')) v(`home's ${id} block has the links ${hrefs.join(', ')}; want one, opening the tool with the case`);
+  await ctx.close();
+}
+for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'], ['/estimate/', 'pl-summary', /· Pune · 1,000 sq ft · 2 BHK · Standard$/, 'the Pune flat'],
+  ['/project-report/', 'rep-status', 'Provisional: 1 still to answer', 'case R, its cash short in 2027-28 as at 70 lakh of sales'], ['/cma/', 'cma-status', 'Complete', 'case W']]) {
+  const { ctx, page, v } = await open(`${path}?case=home`, { scheme: 'light' });
+  if (!(await page.getByTestId('home-case').count())) v(`${path}?case=home does not say it is filled with the home page's case`);
+  await expectText(page, v, id, want, `${step} from home`);
+  await ctx.close();
+}
+
 // CMA data (C1, D-UX-46), fictional case K worked outside the engine in tests/cma.test.ts: sales 300 to 520 L over
 // 2023-24 to 2027-28. In 2027-28 the balance sheet totals 2,96,80,000 on both sides and the limit by the turnover method
 // is 1,04,00,000 (25% of 520 L less the 5% margin of 26 L, the net working capital of 23.8 L being less). The default

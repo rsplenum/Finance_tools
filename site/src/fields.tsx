@@ -331,3 +331,20 @@ export function InAppNote({ id }: { id: string }) {
       : <>Tap ⋯ or the share icon, then Open in Safari.</>}
   </p>;
 }
+
+/**
+ * A tool opened from home's intro (HOME1b, D-UX-114: `?case=home`) starts filled with that intro's fictional case, put in
+ * after the page wakes so the page served stays the blank one; the note says so for the visit.
+ */
+export function useHomeCase<T>(set: (s: T) => void, made: () => T) {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    let asked = false;
+    try { asked = new URLSearchParams(location.search).get('case') === 'home'; } catch { /* no address: the blank page */ }
+    if (asked) { set(made()); setOn(true); }
+  }, []);
+  return on;
+}
+export const HomeCaseNote = ({ on }: { on: boolean }) => on ? (
+  <p role="status" data-testid="home-case" class="mt-2 text-sm font-medium text-ink">Filled with the fictional case from the home page. Every figure is an example: change each to your own.</p>
+) : null;

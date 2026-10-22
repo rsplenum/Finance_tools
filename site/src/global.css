@@ -80,6 +80,8 @@
 @theme {
   --font-display: 'Figtree', ui-sans-serif, system-ui, sans-serif;
   --font-heading: 'Anek', 'Figtree', ui-sans-serif, system-ui, sans-serif;
+  /* Home's terminal intros (HOME1b, D-UX-115): the system's own mono, no font file. */
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --shadow-paper: 0 1px 2px oklch(0.16 0.05 270 / 0.28), 0 22px 44px -14px oklch(0.1 0.05 270 / 0.6);
   --font-weight-book: 450;
   --text-hero: clamp(2.75rem, 1.6rem + 4.6vw, 4.5rem);
@@ -173,7 +175,7 @@ body[data-look='new'] {
   --line: oklch(0.9 0.018 268);
   --link: oklch(0.45 0.17 268);
   --focus: oklch(0.5 0.19 268);
-  --desk: oklch(0.255 0.065 270);         /* the ink desk: the story, two ways in, the closing */
+  --desk: oklch(0.255 0.065 270);         /* the ink desk: the intros, the closing */
   --on-desk: oklch(0.975 0.012 85);
   --on-desk-muted: oklch(0.84 0.03 268);
   --desk-rule: oklch(0.975 0.012 85 / 0.07);
@@ -286,28 +288,16 @@ html:has(body[data-look='new']) { scroll-padding-top: 8.5rem; }
 [data-years-strip] { transition: top 0.25s ease-out; }
 html:has([data-header][data-away]:not(:focus-within)) [data-years-strip] { top: 0; }
 @media (min-width: 64rem) { [data-years-grid] :is(input, select) { scroll-margin-top: 3rem; } }
-/* The story's scratch paper (AG3, D-UX-77; Trailer.astro): ruled from the start, its double margin rule in red. */
-[data-paper] { --pm: 2.25rem; }
-@media (min-width: 40rem) { [data-paper] { --pm: 3.75rem; } }
-[data-paper]::before { content: ''; position: absolute; inset-block: 0; left: var(--pm); width: 5px; border-inline: 1px solid var(--margin); pointer-events: none; }
-/* The story's desk holds papers that carry their own margin, so it is ruled only, with no red rule of its own (D-UX-78). */
-[data-desk][data-story] { background-image: repeating-linear-gradient(to bottom, transparent 0 calc(2rem - 1px), var(--desk-rule) calc(2rem - 1px) 2rem); }
-/* From lg each trailer sits beside its words (AG3c): the name, the line on what the tool does and the buttons on the
-   left, the paper larger on the right, as the tools' pictures are; phones keep the paper under the name. */
-@media (min-width: 64rem) {
-  [data-reel] { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); grid-template-rows: 1fr auto auto auto 1fr; grid-template-areas: '. sheet' 'name sheet' 'what sheet' 'acts sheet' '. sheet'; column-gap: 3rem; align-items: start; }
-  [data-reel] > h3 { grid-area: name; }
-  [data-reel] > [data-what] { grid-area: what; margin-top: 1rem; }
-  [data-reel] > [data-acts] { grid-area: acts; display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
-  [data-reel] > [data-sheet] { grid-area: sheet; }
-}
-/* A trailer whose strokes are on their way stays blank; if they never come, its words show in type. */
-.js [data-src] [data-beat] { visibility: hidden; }
-/* Until a later trailer's strokes come, each pen line holds their box, so the sheet keeps its size when they do (AG3b). */
-.js [data-src] [data-beat] > span[style] { font-size: inherit; line-height: 1; width: var(--w); max-width: 100%; aspect-ratio: var(--r); overflow: hidden; }
-/* Without motion every trailer stands written: the first keeps its marker, the later ones a rule under the payoff, so a
-   screen holds one highlight (DESIGN.md, Colour). */
-html:not(.js) [data-reel] + [data-reel] [data-mark] { transform-box: fill-box; transform-origin: left bottom; transform: scaleY(0.2); }
+/* Home's terminal intros (HOME1b, D-UX-114, D-UX-115; site/src/home/Intro.astro): a screen on the ink desk, unruled,
+   since a ledger rule through a line of type reads as a crossed figure (lesson 6). The desk is ink in both themes, so a
+   result that does not meet takes the dark theme's error colour (7:1 on the desk). With scripts and motion allowed, an
+   intro waits blank until it plays once (home.ts); without them, or once played, its finished state is the HTML's own. */
+[data-desk][data-intro] { background-image: none; --bad: var(--color-red-300); }
+.js [data-intro]:not([data-played]) :is([data-ln], [data-kv], [data-row], [data-mark]) { opacity: 0; }
+.js [data-intro]:not([data-played]) [data-bar] { transform: scaleX(0); }
+/* The hero's "how it works" (D-UX-115): blank until it draws, settles and pulses once on each visit. */
+.js [data-how]:not([data-played]) [data-box] { opacity: 0; }
+.js [data-how]:not([data-played]) [data-draw] { stroke-dashoffset: 1; }
 /* The name at the foot: its letters drop and settle onto a ledger rule. */
 .js [data-wordmark] span { display: inline-block; opacity: 0; transform: translateY(-45%); transition: opacity 0.5s ease-out, transform 0.9s cubic-bezier(0.3, 1.45, 0.55, 1); transition-delay: calc(var(--i, 0) * 70ms); }
 .js [data-wordmark].settled span { opacity: 1; transform: none; }
@@ -320,6 +310,11 @@ html:not(.js) [data-reel] + [data-reel] [data-mark] { transform-box: fill-box; t
 
 /* A label column, then three figures (the DSCR's changes, UX6): named here so no class carries an arbitrary value. */
 @utility grid-cols-label { grid-template-columns: 4.5rem 1fr 1fr 1fr; }
+/* Home's intros (HOME1b): an input's name, then its value; a bar's label, its track and its figure, each row on the same
+   tracks (the widths in ch, set on the chart from its longest label and figure; a long label wraps past 38%). */
+@utility grid-cols-kv { grid-template-columns: auto minmax(0, 1fr); }
+@utility grid-cols-kv2 { grid-template-columns: auto auto auto minmax(0, 1fr); }
+@utility grid-cols-bars { grid-template-columns: min(var(--lw), 38%) minmax(0, 1fr) var(--fw); }
 /* The tool pages side by side from 1024 px (UX8, D-UX-106): the questions left, the answer right, pinned under the top
    bar and scrolling within itself when taller than the screen, with room for its sheet's shadow. */
 @utility grid-cols-tool { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
