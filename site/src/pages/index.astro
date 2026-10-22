@@ -1,142 +1,49 @@
 ---
 /**
- * The home page in FinSight's own look (AG2, D-UX-68 to D-UX-72; the brief: docs/design-reference/finsight.md): loose
- * figures put in order, so marks fall from the field and settle onto paper. In our order: a hero whose dashes fall into
- * ledger rows; the story on the ink desk, three trailers one after another, the DSCR's, the project report's and the
- * estimate's, each a fictional case written by a pen on a scratch paper once as it comes into view, under its tool's name
- * (site/src/home/story.ts, Trailer.astro; AG3, D-UX-77; AG3b, D-UX-78); the four tools, each with a line drawing on its
- * glow; who it is for; what happens to your figures; two ways in on the ink desk; the closing desk. The motion is
- * settle, tick and count only (site/src/home/home.ts), it ends by itself (WCAG 2.2.2), and without scripts or under
- * reduced motion everything stands where it rests. FinSight's rules (docs/DESIGN.md) are held by
- * scripts/forbidden-checks.mjs.
+ * The home page in FinSight's own look (AG2, D-UX-68 to D-UX-72), rebuilt without repetition (HOME1b, D-UX-114,
+ * D-UX-115): three sections, each saying what no other does. The hero: what the site gives, its two buttons and, under
+ * them, how it works (How.astro: your answers, worked out on this device with nothing sent, four papers for the lender). The tools: each of the four
+ * once, in one block with its name, what it gives, for whom, its terminal intro (Intro.astro, every figure the engine's,
+ * from site/src/home/story.ts) and one button that opens it with that case. The closing desk, with one button. The motion
+ * (site/src/home/home.ts, docs/DESIGN-MOTION.md) runs once, stops within 5 s, and without scripts or under reduced motion
+ * the page stands finished. FinSight's rules (docs/DESIGN.md) are held by scripts/forbidden-checks.mjs.
  */
 import Base from '../Base.astro';
-import Arrow from '../home/Arrow.astro';
-import Trailer from '../home/Trailer.astro';
-import Drawing from '../home/Drawing.astro';
-import { READY } from '../site';
-import { TRAILERS, STORY_TARGET, STORY_TYPED } from '../home/story';
+import How from '../home/How.astro';
+import Intro from '../home/Intro.astro';
+import { INTROS } from '../home/story';
 
 const WRAP = 'mx-auto max-w-7xl px-4 sm:px-8';
-const INK = 'inline-flex min-h-11 items-center justify-center rounded-full bg-ink px-6 py-2.5 font-medium text-canvas hover:bg-ink/85';
+const INK = 'inline-flex min-h-11 items-center justify-center rounded-full bg-ink px-6 py-2.5 text-center font-medium text-canvas hover:bg-ink/85';
 const SOFT = 'inline-flex min-h-11 items-center justify-center rounded-full bg-ink/5 px-6 py-2.5 font-medium text-ink hover:bg-ink/10';
-// On the ink desk: a pill in paper, and a soft one.
+// On the ink desk: a pill in paper.
 const DESK = 'inline-flex min-h-11 items-center justify-center rounded-full bg-on-desk px-6 py-2.5 font-medium text-desk hover:bg-on-desk/85';
-const DESK_SOFT = 'inline-flex min-h-11 items-center justify-center rounded-full bg-on-desk/10 px-6 py-2.5 font-medium text-on-desk hover:bg-on-desk/20';
-const H2 = 'text-balance text-section text-ink';
-// The two ways in gather into what each gives: the bars of the story as typed against the target, and a statement's rows.
-const GATHER = JSON.stringify(STORY_TYPED.years.map((y) => y.n));
-const CHIPS = ['DSCR statement', 'Repayment schedule', 'Room-by-room estimate', 'Bill of quantities', 'Projected balance sheet', 'Cash flow', 'Forms I to VI', 'Turnover-method limit', 'PDF', 'Excel', 'Word'];
-const USES = [
-  { who: 'A shop owner asking for a term loan', head: 'See whether the loan passes before the bank does', href: '/dscr/', go: 'Start a DSCR statement' },
-  { who: 'A family building a house', head: 'Know what each room costs at five levels before the quotes come', href: '/estimate/', go: 'Open the estimate' },
-  { who: 'A chartered accountant', head: 'A project report whose every figure is worked out twice', href: '/project-report/', go: 'Open the project report' },
-  { who: 'A business renewing its cash credit', head: 'Forms I to VI and the limit, from five years’ figures', href: '/cma/', go: 'Open CMA data' },
-];
-// Each trailer under its tool's name (D-UX-78), on one line (AG3c), and from lg beside the line on what the tool does;
-// its two buttons keep the page's order, Show then Try, so Tab follows the eye (F19).
-const REELS = TRAILERS.map((t) => { const tool = READY.find((r) => r.href === t.go.href); return { trailer: t, name: tool?.brief ?? tool?.name ?? '', what: tool?.what ?? '' }; });
-// The DSCR's questions are fixed (D-UX-10's seven); the other tools' depend on the case, so they show no count.
-const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
 ---
 <Base look="new" description="DSCR statements, construction estimates, project reports and CMA data in the format lenders expect, worked out in your browser.">
-  <section data-ag="hero" class="relative isolate">
-    <canvas data-field="hero" aria-hidden="true" class="absolute inset-0 -z-10 size-full"></canvas>
-    <div class={`${WRAP} flex flex-col items-center pt-16 pb-24 text-center sm:pt-32 lg:pt-44`}>
+  <section data-ag="hero">
+    <div class={`${WRAP} flex flex-col items-center pt-16 pb-16 text-center sm:pt-28 sm:pb-24 lg:pt-36`}>
       <h1 class="max-w-5xl text-balance text-hero text-ink">Loan documents lenders ask for, worked out in your browser</h1>
       <p data-answer class="mt-6 max-w-lg text-lead text-ink-muted">A DSCR statement, a construction estimate, a project report and CMA data, in the format lenders expect.</p>
       <div class="mt-10 flex flex-wrap justify-center gap-3">
         <a href="/dscr/" class={INK}>Start a DSCR statement</a>
         <a href="#tools" class={SOFT}>See the four tools</a>
       </div>
+      <How />
     </div>
   </section>
 
-  <section data-ag="story" class="py-16 lg:pb-0">
-    <div class={WRAP}>
-      <h2 data-settle class={`${H2} max-w-3xl`}>Three tools at work, each on a fictional case</h2>
-      <p data-settle class="mt-4 max-w-lg text-pretty text-lead text-ink-muted">Every figure below is worked out by the tool, as it would be for you.</p>
-    </div>
-    <div data-story data-desk class="mx-4 mt-10 rounded-panel px-3 py-8 sm:mx-8 sm:px-10 sm:py-12 lg:mx-0 lg:rounded-none lg:px-0 lg:py-16">
-      <div class="lg:mx-auto lg:max-w-7xl lg:px-8">
-        <div class="mx-auto flex min-h-11 max-w-xl items-center justify-end lg:max-w-none">
-          <button type="button" data-sound aria-pressed="false" hidden class={DESK_SOFT}>Pencil sound<span aria-hidden="true" data-state>&nbsp;· off</span></button>
+  <section id="tools" data-ag="tools" class={`${WRAP} space-y-20 py-16 sm:space-y-28 sm:py-24`}>
+    {INTROS.map((i) => (
+      <article data-tool={i.id} class="grid items-center gap-8 lg:grid-cols-5 lg:gap-12">
+        <div class="lg:col-span-2">
+          <h2 class="text-balance text-section text-ink">{i.name}</h2>
+          <p class="mt-4 max-w-lg text-lead text-ink">{i.gives}</p>
+          <p class="mt-3 max-w-lg text-lead text-ink-muted">{i.forWhom}</p>
+          <a href={i.go.href} class={`mt-8 ${INK}`}>{i.go.text}</a>
         </div>
-        {REELS.map((r, i) => (
-          <div data-reel class={`mx-auto mt-12 flex max-w-xl flex-wrap items-center gap-x-3 sm:mt-16 lg:max-w-none ${i ? 'lg:mt-24' : 'lg:mt-12'}`}>
-            <h3 class="min-w-0 basis-full text-title text-on-desk sm:basis-0 sm:grow">{r.name}</h3>
-            <p data-what class="hidden text-lead text-on-desk-muted lg:block">{r.what}</p>
-            <div data-acts class="contents">
-              <button type="button" data-show hidden class={`${DESK_SOFT} mt-3 min-w-40 shrink-0 sm:mt-0`}>Show it all</button>
-              <a href={r.trailer.go.href} class={`${DESK} order-last mt-8 lg:mt-0`}>{r.trailer.go.text}</a>
-            </div>
-            <div data-sheet class="mt-6 basis-full lg:mt-0"><Trailer trailer={r.trailer} lazy={i > 0} /></div>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <section id="tools" data-ag="tools" class={`${WRAP} py-16 sm:py-24`}>
-    <h2 data-settle class={`${H2} max-w-3xl`}>Four tools, one for each paper a lender asks for</h2>
-    <div class="mt-12 space-y-16 sm:space-y-24">
-      {READY.map((t) => (
-        <article data-settle class="grid items-center gap-8 lg:grid-cols-2 lg:gap-16">
-          <div>
-            {ASKS[t.href] && <p class="caps mb-3 text-ink-muted">{ASKS[t.href]}</p>}
-            <h3 class="text-title"><a href={t.href} class="text-ink hover:text-link">{t.name} <Arrow /></a></h3>
-            <p class="mt-4 max-w-lg text-lead text-ink">{t.what}</p>
-            <p class="mt-3 max-w-lg text-lead text-ink-muted">{t.gives}</p>
-          </div>
-          <div aria-hidden="true" data-glow class="flex min-h-64 items-center justify-center rounded-panel p-6 text-ink sm:p-10">
-            <Drawing href={t.href} />
-          </div>
-        </article>
-      ))}
-    </div>
-  </section>
-
-  <div class={WRAP}><div data-ledger aria-hidden="true"></div></div>
-
-  <section data-ag="uses" class={`${WRAP} py-16 sm:py-24`}>
-    <h2 data-settle class={`${H2} max-w-3xl`}>For whoever carries the papers to the lender</h2>
-    <p data-settle class="mt-4 max-w-lg text-lead text-ink-muted">Borrowers, families, chartered accountants and agents use the same figures.</p>
-    <ul class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {USES.map((u, i) => (
-        <li data-settle style={`--i:${i}`} class="flex flex-col rounded-panel bg-surface p-6 sm:min-h-64 sm:p-8">
-          <p class="text-sm font-medium text-ink-muted">{u.who}</p>
-          <h3 class="mt-4 text-balance text-title text-ink">{u.head}</h3>
-          <a href={u.href} class="mt-auto inline-flex min-h-11 items-center pt-6 font-medium text-ink hover:text-link">{u.go} <Arrow class="ml-2" /></a>
-        </li>
-      ))}
-    </ul>
-  </section>
-
-  <section data-ag="figures" class="py-20 text-center sm:py-32">
-    <ul data-tags aria-label="What the tools give" class="mx-auto flex max-w-5xl flex-wrap justify-center gap-3 px-4">
-      {CHIPS.map((c) => <li class="rounded-full bg-ink/5 px-4 py-2 font-medium text-ink">{c}</li>)}
-    </ul>
-    <div class={`${WRAP} mt-8`}><div data-ledger aria-hidden="true"></div></div>
-    <h2 data-settle class={`${WRAP} mt-12 max-w-5xl text-balance text-statement text-ink`}>Worked out in your browser, from rules with their sources and dates. What you type is not sent to us.</h2>
-  </section>
-
-  <section data-ag="try" class="px-4 py-12 sm:px-8 sm:py-16">
-    <div data-desk class="mx-auto grid max-w-7xl gap-16 rounded-panel px-6 py-14 sm:px-12 sm:py-20 lg:grid-cols-2">
-      <div class="pl-3 sm:pl-4">
-        <canvas data-gather="bars" data-values={GATHER} data-target={STORY_TARGET.minimum} aria-hidden="true" class="h-36 w-full max-w-md"></canvas>
-        <p class="mt-8 text-sm font-medium text-on-desk-muted">For borrowers</p>
-        <h2 class="mt-3 text-balance text-section text-on-desk">See whether your loan passes before you apply</h2>
-        <p class="mt-4 max-w-lg text-lead text-on-desk-muted">Seven answers give the DSCR statement and its verdict; Make it viable shows each change that would pass.</p>
-        <a href="/dscr/" class={`mt-8 ${DESK}`}>Start a DSCR statement</a>
-      </div>
-      <div class="pl-3 sm:pl-4">
-        <canvas data-gather="rows" aria-hidden="true" class="h-36 w-full max-w-md"></canvas>
-        <p class="mt-8 text-sm font-medium text-on-desk-muted">For CAs and DSAs</p>
-        <h2 class="mt-3 text-balance text-section text-on-desk">Papers in the format lenders expect</h2>
-        <p class="mt-4 max-w-lg text-lead text-on-desk-muted">A project report as PDF, Excel or Word, and the CMA's forms I to VI from five years' figures.</p>
-        <a href="/project-report/" class={`mt-8 ${DESK_SOFT}`}>Open the project report</a>
-      </div>
-    </div>
+        <Intro intro={i} class="lg:col-span-3" />
+      </article>
+    ))}
   </section>
 
   <section data-ag="closing" class="px-4 py-12 sm:px-8 sm:py-16">
@@ -145,7 +52,6 @@ const ASKS: Record<string, string> = { '/dscr/': '7 questions' };
       <h2 class="mx-auto max-w-4xl text-balance text-statement text-on-desk">Have the figures ready before you meet the lender</h2>
       <div class="mt-10 flex flex-wrap justify-center gap-3">
         <a href="/dscr/" class={DESK}>Start a DSCR statement</a>
-        <a href="#tools" class={DESK_SOFT}>See the four tools</a>
       </div>
     </div>
   </section>

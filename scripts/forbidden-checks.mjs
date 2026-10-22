@@ -9,16 +9,16 @@ import { openAt } from './design-checks.mjs';
 
 /** The pages in the new look: home, from UX3 the DSCR and CMA pages, from UX4 the estimate, the report, and from LEGAL1 the policy pages. */
 export const NEW_LOOK = ['/', '/dscr/', '/cma/', '/estimate/', '/project-report/', '/404.html', '/privacy/', '/terms/', '/not-advice/', '/refunds/', '/contact/'];
-/** F13: our order, the borrower's path (docs/design-reference/finsight.md, rule 10). */
-export const ORDER = ['hero', 'story', 'tools', 'uses', 'figures', 'try', 'closing'];
+/** F13: our order, the borrower's path (docs/design-reference/finsight.md, rule 10); from HOME1b three sections (D-UX-114). */
+export const ORDER = ['hero', 'tools', 'closing'];
 /**
  * F15: the page's weight as it loads, before compression (HTML, styles, scripts, the fonts), in KB: 160 measured 14-10-2026
  * (D-UX-72), AG1's 124 with Anek (27 KB, one weight cut to the signs the pages use) and the line drawings; 166 with
  * AG3b's three trailers, the two later ones fetched only as the reader nears them (D-UX-78); 168 with AG3c's trailers
- * beside their text (D-UX-81). A heavier page lowers
- * something else first.
+ * beside their text (D-UX-81); 156 with HOME1b's four terminal intros, the pen, its font and the trailers gone (D-UX-117).
+ * A heavier page lowers something else first.
  */
-export const WEIGHT_CAP = 170;
+export const WEIGHT_CAP = 160;
 
 const SITE = await readFile(new URL('../site/src/site.ts', import.meta.url), 'utf8');
 const TOOLS = [...SITE.matchAll(/status: 'Ready', href: '([^']+)'/g)].map((m) => m[1]);
@@ -64,6 +64,13 @@ function inPage({ tools, order, phone }) {
   // F6, F7, F13: the sections run wide and tall, in the reference's order.
   const secs = [...document.querySelectorAll('[data-ag]')];
   if (order && secs.map((s) => s.dataset.ag).join() !== order.join()) out.push(`F13 the sections are ${secs.map((s) => s.dataset.ag).join(', ')}`);
+  // F13 on home, lesson 11: each tool once, in one block with one link, which opens that tool (HOME1b, D-UX-114).
+  if (order) {
+    const blocks = [...document.querySelectorAll('[data-tool]')], to = blocks.map((b) => [...b.querySelectorAll('a[href]')].map((a) => new URL(a.href).pathname));
+    if (blocks.length !== tools.length || new Set(blocks.map((b) => b.dataset.tool)).size !== tools.length) out.push(`F13 home has ${blocks.length} tool blocks (want each of ${tools.length} once)`);
+    to.forEach((t, k) => { if (t.length !== 1) out.push(`F13 the ${blocks[k].dataset.tool} block has ${t.length} links (want one)`); });
+    for (const t of tools) if (to.flat().filter((x) => x === t).length !== 1) out.push(`F13 the tools' blocks link ${t} ${to.flat().filter((x) => x === t).length} times (want once)`);
+  }
   if (!phone) for (const s of secs) {
     const w = s.clientWidth - px(s, 'paddingLeft') - px(s, 'paddingRight'), h = s.getBoundingClientRect().height / innerHeight;
     if (w < 1100) out.push(`F6 the ${s.dataset.ag} section is ${Math.round(w)} px wide (want 1100 or more at 1280)`);
@@ -82,32 +89,11 @@ function inPage({ tools, order, phone }) {
   return out;
 }
 
-/**
- * Runs in the page: each tag of the row of what the tools give, its words against its fill as the eye meets them, any fade
- * counted (F18, AG3c). Colours come as oklch, so each is painted on a 1×1 canvas and read back (docs/GOTCHAS.md).
- */
-export function tagContrast() {
-  const g = Object.assign(document.createElement('canvas'), { width: 1, height: 1 }).getContext('2d', { willReadFrequently: true });
-  const rgba = (css) => { g.clearRect(0, 0, 1, 1); g.fillStyle = '#000'; g.fillStyle = css; g.fillRect(0, 0, 1, 1); const d = g.getImageData(0, 0, 1, 1).data; return [d[0], d[1], d[2], d[3] / 255]; };
-  const over = (top, under, a) => [0, 1, 2].map((i) => top[i] * a + under[i] * (1 - a));
-  const lum = (c) => c.map((v) => (v /= 255) <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0);
-  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
-  return [...document.querySelectorAll('[data-tags] li')].map((li) => {
-    // The fade of the tag and of what holds it, down to the first solid ground: the page under the row.
-    let op = 1, e = li, ground = null;
-    for (; e && !ground; e = e.parentElement) { const s = getComputedStyle(e), bg = rgba(s.backgroundColor); if (e !== li && bg[3] === 1) ground = bg; else op *= parseFloat(s.opacity); }
-    ground ??= [255, 255, 255, 1];
-    const s = getComputedStyle(li), fill = rgba(s.backgroundColor), ink = rgba(s.color);
-    const chip = over(fill, ground, fill[3]), word = over(ink, chip, ink[3]);
-    return { t: li.textContent.trim(), r: ratio(over(word, ground, op), over(chip, ground, op)) };
-  });
-}
-
 /** The headings and counted figures, the running animations and a picture of each field, to compare over time. */
 const still = (page) => page.evaluate(() => ({
   typed: [...document.querySelectorAll('h1, h2, [data-count]')].map((e) => e.textContent),
   running: document.getAnimations().filter((a) => a.playState === 'running').map((a) => `${a.constructor.name} on <${a.effect?.target?.tagName?.toLowerCase()}>`),
-  fields: [...document.querySelectorAll('canvas[data-field], canvas[data-gather]')].map((c) => c.toDataURL().length + ':' + c.toDataURL().slice(-64)),
+  fields: [...document.querySelectorAll('canvas[data-field]')].map((c) => c.toDataURL().length + ':' + c.toDataURL().slice(-64)),
 }));
 
 /**
@@ -125,6 +111,28 @@ export function tabAgainstEye() {
     const row = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > Math.min(a.height, b.height) / 2;
     const col = Math.min(a.right, b.right) - Math.max(a.left, b.left) > 0;
     if ((row && b.right <= a.left) || (col && !row && b.bottom <= a.top)) out.push(`"${els[i - 1].textContent.trim()}" then "${els[i].textContent.trim()}"`);
+  }
+  return out;
+}
+
+/**
+ * Runs in the page: home's diagram and intros that are not in their finished state (HOME1b, D-UX-115). With motion each
+ * must have played (`data-played`, every animation dropped); without it the HTML stands as it is. Either way every line,
+ * input, bar and mark shows whole, and "Show it all" is gone. Empty when the page has none, so only home is held here;
+ * the count of intros is F13's.
+ */
+export function unfinished() {
+  const out = [], js = document.documentElement.classList.contains('js');
+  for (const box of document.querySelectorAll('[data-intro], [data-how]')) {
+    const id = box.dataset.intro ?? 'how it works';
+    if (js && !box.hasAttribute('data-played')) out.push(`${id} has not played`);
+    if (box.getAnimations({ subtree: true }).length) out.push(`${id} still holds ${box.getAnimations({ subtree: true }).length} animations`);
+    const part = [...box.querySelectorAll('[data-ln], [data-kv], [data-row], [data-mark], [data-bar], [data-box], [data-draw]')].find((e) => {
+      const s = getComputedStyle(e);
+      return s.opacity !== '1' || (e.matches('[data-bar]') && s.transform !== 'none') || (e.matches('[data-draw]') && parseFloat(s.strokeDashoffset) > 0.001);
+    });
+    if (part) out.push(`${id}: <${part.tagName.toLowerCase()}> "${(part.textContent ?? '').trim().slice(0, 30)}" is not whole`);
+    if ([...box.querySelectorAll('[data-show]')].some((b) => !b.hidden)) out.push(`${id} still offers "Show it all"`);
   }
   return out;
 }
@@ -164,21 +172,10 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
     await rm.page.waitForTimeout(800);
     const b = await still(rm.page);
     if (b.running.length || a.fields.join() !== b.fields.join()) v('F9 something moves under reduced motion');
+    // ... and home's diagram and intros stand finished, as the HTML has them, with no "Show it all" (HOME1b, D-UX-115).
+    for (const x of (await rm.page.evaluate(unfinished)).slice(0, 3)) v(`F9 not finished under reduced motion: ${x}`);
     await rm.ctx.close();
-    // F18: the tag row reads as it comes into view, light and dark: 150 ms after its top enters the screen each tag's
-    // words stand at 4.5:1 on its fill, a fade counted (AG3c; the owner saw them faint while they settled one by one).
-    if (path === '/') for (const colorScheme of ['light', 'dark']) {
-      const tc = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme });
-      const tp = await tc.newPage();
-      await tp.goto(BASE + path);
-      await tp.evaluate(() => { const u = document.querySelector('[data-tags]'); if (u) scrollTo({ top: u.getBoundingClientRect().top + scrollY - innerHeight * 0.8, behavior: 'instant' }); });
-      await tp.waitForTimeout(150);
-      const tags = await tp.evaluate(tagContrast);
-      if (!tags.length) v('F18 no tag row ([data-tags] li) to measure');
-      for (const t of tags.filter((x) => x.r < 4.5).slice(0, 3)) v(`F18 the tag "${t.t}" reads ${t.r.toFixed(1)}:1 as it comes into view, ${colorScheme} (want 4.5)`);
-      await tc.close();
-    }
-    // F19: Tab follows the eye at 360 and where lg's layouts start and widen (AG3c: the trailers' buttons swapped at lg).
+    // F19: Tab follows the eye at 360 and where lg's layouts start and widen.
     for (const w of [360, 1024, 1280]) {
       const oc = await browser.newContext({ viewport: { width: w, height: 900 } });
       const op = await oc.newPage();
@@ -187,10 +184,9 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
       for (const m of (await op.evaluate(tabAgainstEye)).slice(0, 3)) v(`F19 Tab runs against the eye at ${w} px: ${m}`);
       await oc.close();
     }
-    // F9 on a phone and on a short screen (1280 at 400%): scrolled through, every block that settles or lands shows, every
-    // line of the story's three trailers is written in strokes, the two that come as the reader nears them included
-    // (D-UX-77, D-UX-78), and no two figures in a chart overlap (lesson 6). A block that waits for a share of its height
-    // never shows on a short one.
+    // F9 on a phone and on a short screen (1280 at 400%): scrolled through, every block that settles or lands shows, the
+    // hero's diagram and every tool's intro have played to their finished state (HOME1b, D-UX-115), and no two figures in
+    // a chart overlap (lesson 6). A block that waits for a share of its height never shows on a short one.
     for (const [w, h] of [[360, 740], [320, 256]]) {
       const sc = await browser.newContext({ viewport: { width: w, height: h } });
       const p = await sc.newPage();
@@ -199,11 +195,9 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
         for (let y = 0; y < document.body.scrollHeight; y += innerHeight / 2) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 100)); }
       });
       await p.waitForTimeout(5000);
+      const ends = await p.evaluate(unfinished);
       const r = await p.evaluate(() => {
         const hidden = [...document.querySelectorAll('[data-settle], [data-at]')].filter((e) => getComputedStyle(e).opacity !== '1')
-          .concat([...document.querySelectorAll('.js [data-trailer] [data-beat]')].filter((b) => getComputedStyle(b).opacity !== '1'
-            || getComputedStyle(b).visibility !== 'visible' || (b.dataset.beat !== 'card' && !b.querySelector('svg path'))
-            || [...b.querySelectorAll('path')].some((p) => parseFloat(getComputedStyle(p).strokeDashoffset) > 0.001)))
           .map((e) => `<${e.tagName.toLowerCase()}> "${(e.textContent ?? '').trim().slice(0, 30)}"`);
         const boxes = [...document.querySelectorAll('figure span, figure li')].filter((e) => e.childElementCount === 0 && e.textContent?.trim())
           .map((e) => ({ t: e.textContent.trim(), b: e.getBoundingClientRect() })).filter(({ b }) => b.width > 1 && b.height > 1);
@@ -215,6 +209,7 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
         return { hidden, overlaps };
       });
       for (const x of r.hidden.slice(0, 3)) v(`F9 still hidden after scrolling through at ${w}×${h}: ${x}`);
+      for (const x of ends.slice(0, 3)) v(`F9 not finished after scrolling through at ${w}×${h}: ${x}`);
       for (const x of r.overlaps.slice(0, 3)) v(`principle 5: chart figures overlap at ${w}×${h}: ${x}`);
       await sc.close();
     }

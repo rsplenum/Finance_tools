@@ -36,12 +36,12 @@ The brief: `docs/design-reference/finsight.md`. *Tested*: by `scripts/forbidden-
 - **F10 Words or figures only once moved**: headings and counted figures are in the page, as the engine gave them, from the start. *Tested*.
 - **F11 A tool two taps away**: every tool in the top bar, in the first screen. *Tested*.
 - **F12 A one-line foot**: it links every tool, says what happens to the figures, the name large on a ledger rule. *Tested*.
-- **F13 Another order**: hero, story, tools, uses, figures, try, closing (D-UX-78). *Tested*.
+- **F13 Another order**: hero, tools, closing, each tool once in one block with one link (D-UX-117). *Tested*.
 - **F14 Anything from another site.** *Tested*.
 - **F15 A heavy page**: home 168 KB unzipped (14-10-2026, D-UX-81), cap 170 KB. *Tested*, printed.
 - **F16 Another's own**: the reference's words, images, footage, logo, font or code; a custom cursor; a hijacked scroll. The critic's.
 - **F17 Shadows**: only paper (`shadow-paper`) casts one. *Tested*.
-- **F18 Faint tags**: a tag under 4.5:1 on its fill as it comes into view, a fade counted, light and dark (D-UX-81). *Tested*.
+- **F18 Faint tags**: retired with home's tags (HOME1b, D-UX-117).
 - **F19 Tab against the eye**: the next control in the page's order sits left in the same row, or above in the same column, at 360, 1024 or 1280 (WCAG 2.4.3; D-UX-81). *Tested*.
 
 Colour: ink, ledger red (the margin rule only, never a figure) and marigold (highlighter, ticks, glow), one highlight per screen; the critic's. Principle 6 yields: two ink pills may share a screen, never an accent fill; principle 10 yields for the glow (never behind a figure, still under reduced motion).
