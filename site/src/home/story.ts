@@ -162,7 +162,7 @@ const DSCR_INTRO: Intro = (() => {
   const l = STORY_CASE.loan, level = { n: Number(STORY_TARGET.minimum), text: STORY_TARGET.minimum, word: 'target', at: 'least' as const };
   const phase = (s: State, f: StoryFrame): IntroPhase => ({
     bars: f.years.map((y) => ({ label: y.fy, text: y.dscr, n: y.n, judged: true, meets: y.meets })),
-    sum: dscrSum(s, f), meets: f.meets, verdict: f.meets ? 'PASSES' : `BELOW TARGET ${level.text}`,
+    sum: dscrSum(s, f), meets: f.meets, verdict: f.meets ? 'Passes' : `Below target ${level.text}`,
   });
   return {
     id: 'dscr', name: tool('/dscr/').name, gives: 'Seven answers give the statement a lender reads, year by year, and whether the loan passes.',
@@ -183,7 +183,7 @@ const REPORT_INTRO: Intro = (() => {
   const level = { n: Number(weak.level), text: weak.level, word: 'level', at: 'least' as const };
   const phase = (r: ReturnType<typeof reportSum>): IntroPhase => ({
     bars: r.years.map((y) => ({ ...y, judged: true, meets: judge(y.n, level.n, 'least') })),
-    sum: r.text, meets: r.meets, verdict: r.meets ? 'PASSES' : `BELOW LEVEL ${level.text}`,
+    sum: r.text, meets: r.meets, verdict: r.meets ? 'Passes' : `Below level ${level.text}`,
   });
   return {
     id: 'report', name: tool('/project-report/').name, gives: 'What the project costs, how it is paid for and whether it can repay, every figure worked out twice.',
@@ -204,7 +204,7 @@ const ESTIMATE_INTRO: Intro = (() => {
   const level = { n: b.n, text: b.text, word: 'budget', at: 'most' as const };
   const phase = (t: ReturnType<typeof estimateTotal>, label: string): IntroPhase => {
     const meets = judge(t.n, b.n, 'most');
-    return { bars: [{ label, text: t.text, n: t.n, judged: true, meets }], sum: `total  ${t.text}`, meets, verdict: meets ? 'WITHIN BUDGET' : `OVER BUDGET ${b.text}` };
+    return { bars: [{ label, text: t.text, n: t.n, judged: true, meets }], sum: `total  ${t.text}`, meets, verdict: meets ? 'Within budget' : `Over budget ${b.text}` };
   };
   return {
     id: 'estimate', name: tool('/estimate/').brief ?? tool('/estimate/').name, gives: 'What the work should cost, room by room at five quality levels, before you collect quotes.',
@@ -222,7 +222,7 @@ const CMA_INTRO: Intro = (() => {
   const r = cmaRead(CMA_CASE), f = cmaRead(CMA_FIXED), level = { n: LEVEL_CR.n, text: LEVEL_CR.text, word: 'level', at: 'least' as const };
   const phase = (x: ReturnType<typeof cmaRead>): IntroPhase => ({
     bars: x.years.map((y) => ({ ...y, meets: judge(y.n, level.n, 'least') })),
-    sum: x.worst.sum, meets: x.meets, verdict: x.meets ? 'PASSES' : `BELOW LEVEL ${level.text}`,
+    sum: x.worst.sum, meets: x.meets, verdict: x.meets ? 'Passes' : `Below level ${level.text}`,
   });
   const v = CMA_CASE.figures;
   return {

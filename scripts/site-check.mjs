@@ -1315,7 +1315,7 @@ const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await
   await ctx.close();
 }
 for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'], ['/estimate/', 'pl-summary', /· Pune · 1,000 sq ft · 2 BHK · Standard$/, 'the Pune flat'],
-  ['/project-report/', 'rep-status', 'Complete', 'case R'], ['/cma/', 'cma-status', 'Complete', 'case W']]) {
+  ['/project-report/', 'rep-status', 'Provisional: 1 still to answer', 'case R, its cash short in 2027-28 as at 70 lakh of sales'], ['/cma/', 'cma-status', 'Complete', 'case W']]) {
   const { ctx, page, v } = await open(`${path}?case=home`, { scheme: 'light' });
   if (!(await page.getByTestId('home-case').count())) v(`${path}?case=home does not say it is filled with the home page's case`);
   await expectText(page, v, id, want, `${step} from home`);

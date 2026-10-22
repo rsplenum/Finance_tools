@@ -75,7 +75,7 @@ describe('the DSCR intro', () => {
   it('the seven inputs of the front door (D-UX-10), the sums and the verdicts', () => {
     expect(d.inputs.map(([, v]) => v)).toEqual(['A firm', 'Rs. 4,50,000', '0%', 'None', 'Rs. 12,00,000', '12%', '60 instalments (5 years)']);
     expect([d.typed.sum, d.typed.verdict, d.fixed.sum, d.fixed.verdict]).toEqual([
-      '2030-31  3,21,236 ÷ 3,20,320 = 1.00', 'BELOW TARGET 1.20', '2032-33  3,16,194 ÷ 2,62,351 = 1.21', 'PASSES']);
+      '2030-31  3,21,236 ÷ 3,20,320 = 1.00', 'Below target 1.20', '2032-33  3,16,194 ÷ 2,62,351 = 1.21', 'Passes']);
     expect(d.typed.bars.map((b) => b.meets)).toEqual([true, false, false, false, false, true]);
     expect(d.fix).toBe('› make it viable · term → 80 instalments');
   });
@@ -99,7 +99,7 @@ describe('the project report intro', () => {
     expect(REPORT_FIX).toEqual({ move: '+17.3%', sales: '82,11,000', from: '70,00,000' });
     for (const s of [REPORT_CASE, REPORT_FIXED]) expect(reportPreview(s).checks?.find((c) => c.id === 'dscrLowest')?.worst).toMatch(/ in 2026-27$/);
     expect([p.level.text, p.typed.sum, p.typed.verdict, p.fixed.sum, p.fixed.verdict]).toEqual([
-      '1.25', '2026-27  5,95,000 ÷ 7,27,083 = 0.82', 'BELOW LEVEL 1.25', '2026-27  9,09,099 ÷ 7,27,083 = 1.25', 'PASSES']);
+      '1.25', '2026-27  5,95,000 ÷ 7,27,083 = 0.82', 'Below level 1.25', '2026-27  9,09,099 ÷ 7,27,083 = 1.25', 'Passes']);
     expect(p.typed.bars.map((b) => b.text)).toEqual(['0.82', '1.02', '1.24', '1.54', '1.92']);
     expect(p.fixed.bars.map((b) => b.text)).toEqual(['1.25', '1.49', '1.81', '2.21', '2.73']);
   });
@@ -119,7 +119,7 @@ describe('the project report intro', () => {
 describe('the estimate intro', () => {
   const e = intro('estimate'), total = (t: string) => Number(t.replace(/[^\d]/g, ''));
   it('Standard everywhere over the budget, Basic bedrooms within it, each total the second computation\'s', () => {
-    expect([e.typed.sum, e.typed.verdict, e.fixed.sum, e.fixed.verdict]).toEqual(['total  12,47,185', 'OVER BUDGET 12,00,000', 'total  11,65,322', 'WITHIN BUDGET']);
+    expect([e.typed.sum, e.typed.verdict, e.fixed.sum, e.fixed.verdict]).toEqual(['total  12,47,185', 'Over budget 12,00,000', 'total  11,65,322', 'Within budget']);
     const [at, fixed] = [ESTIMATE_CASE, ESTIMATE_FIXED].map((s) => architectCheck(inputOf(s)).total);
     expect(Math.abs(total(e.typed.sum) - at)).toBeLessThanOrEqual(0.5);
     expect(Math.abs(total(e.fixed.sum) - fixed)).toBeLessThanOrEqual(0.5);
@@ -141,12 +141,12 @@ describe('the CMA intro, case W', () => {
     expect(c.typed.bars.map((b) => [b.label, b.text, b.judged])).toEqual([
       ['2023-24', (ca(0) / cl(0)).toFixed(2), false], ['2024-25', (ca(1) / cl(1)).toFixed(2), false], ['2025-26', (ca(2) / cl(2)).toFixed(2), false],
       ['2026-27', '1.04', true], ['2027-28', (ca(4) / cl(4)).toFixed(2), true]]);
-    expect([c.typed.sum, c.typed.verdict]).toEqual(['2026-27  97,90,000 ÷ 94,55,000 = 1.04', 'BELOW LEVEL 1.10']);
+    expect([c.typed.sum, c.typed.verdict]).toEqual(['2026-27  97,90,000 ÷ 94,55,000 = 1.04', 'Below level 1.10']);
   });
   it('the capital that meets it, by hand, and the ratio it gives', () => {
     expect(CMA_FIX.n).toBe(Math.ceil((cl(3) - ca(3) / 1.1) * 1e5 - 1e-6));
     expect(CMA_FIX.n).toBe(555000);
-    expect([c.fixed.sum, c.fixed.verdict]).toEqual(['2026-27  97,90,000 ÷ 89,00,000 = 1.10', 'PASSES']);
+    expect([c.fixed.sum, c.fixed.verdict]).toEqual(['2026-27  97,90,000 ÷ 89,00,000 = 1.10', 'Passes']);
     expect(c.fixed.bars.at(-1)?.text).toBe((ca(4) / (cl(4) - 5.55)).toFixed(2));
   });
   it('the turnover-method limit for the projection, by hand', () => {
