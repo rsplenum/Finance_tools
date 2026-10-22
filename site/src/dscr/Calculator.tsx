@@ -19,7 +19,8 @@ import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import DSCR_FILE from '../../../engine/data/dscr.json';
 import TAX_FILE from '../../../engine/data/tax.json';
-import { answerRule, AnswerBar, Why, BUTTON, CellInput, Claim, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick, InAppNote } from '../fields';
+import { answerRule, AnswerBar, Why, BUTTON, CellInput, Claim, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick, InAppNote, useHomeCase, HomeCaseNote } from '../fields';
+import { DSCR_HOME } from './home-case';
 import { printable } from '../doc/pdf';
 import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
 import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
@@ -42,6 +43,7 @@ const MUTED = 'text-ink-muted';
 export function DscrCalculator() {
   const start = () => frontDoor(isoDate(new Date()).slice(0, 7));
   const [s, setS] = useState<State>(start);
+  const home = useHomeCase(setS, () => DSCR_HOME);
   const [more, setMore] = useState(false);
   const update: Update = (f) => setS(f);
   const y = useMemo(() => yearsOf(s), [s]);
@@ -61,6 +63,7 @@ export function DscrCalculator() {
   </>;
   return <div class="lg:grid lg:grid-cols-tool lg:gap-x-12">
     <div class="lg:col-start-1 lg:row-start-1">
+      <HomeCaseNote on={home} />
       <ClearAll shown={JSON.stringify(s) !== JSON.stringify(start())} onClear={() => setS(start())} />
       {s.source === 'plan' && <FrontDoor s={s} update={update} openMore={openMore} was={was} />}
     </div>

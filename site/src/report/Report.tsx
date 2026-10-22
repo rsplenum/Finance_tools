@@ -7,7 +7,8 @@
 import { Fragment, type ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
-import { answerRule, AnswerBar, BUTTON, Choice, Claim, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote } from '../fields';
+import { answerRule, AnswerBar, BUTTON, Choice, Claim, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote, useHomeCase, HomeCaseNote } from '../fields';
+import { REPORT_HOME } from './home-case';
 import { Bar, Benchmarks, Lever, PlanLever, targetOf } from '../Board';
 import { benchmarkFields, inSentence, listed, withBenchmark } from '../board-model';
 import { printable } from '../doc/pdf';
@@ -93,6 +94,7 @@ const saveMode = (m: Mode) => { try { localStorage.setItem(MODE_KEY, m); } catch
 export function ReportCalculator() {
   const [s, setS] = useState<ReportState>({ ...EMPTY, mode: 'simple' });
   useEffect(() => { if (savedMode() === 'expert') setS((x) => withMode(x, 'expert')); }, []);
+  const home = useHomeCase(setS, () => REPORT_HOME);
   const update: Update = (f) => setS(f);
   const p = useMemo(() => preview(s), [s]);
   const simple = s.mode === 'simple', blank = { ...EMPTY, mode: s.mode };
@@ -140,6 +142,7 @@ export function ReportCalculator() {
   // From 1024 px the questions stand left and the answer panel right (UX8, D-UX-106); the report's tables, what it assumes
   // and the download run the full width below. Simple mode asks its dozen questions; expert mode every field (D-UX-112).
   return <div class="lg:grid lg:grid-cols-tool-grid lg:gap-x-10"><div class="lg:col-start-1 lg:row-start-1">
+    <HomeCaseNote on={home} />
     <Choice name="fld-mode" legend="How much to ask" options={MODE_CHOICES} value={s.mode ?? 'expert'} columns onChange={toMode} />
     <Choice name="fld-borrower" legend="Who is the borrower? It sets the tax." options={BORROWER_CHOICES} value={s.borrower} columns
       onChange={(borrower) => update((x) => ({ ...x, borrower }))} />
