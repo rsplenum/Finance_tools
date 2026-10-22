@@ -167,6 +167,8 @@ The test figures are model-worked until the owner confirms fictional cases A and
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 21-10-2026 | HOME1's motion compared and its handoff (D-UX-115, D-UX-116) | S | about 110 steps; the recordings took the most |
+| 21-10-2026 | REV1: every page reviewed, and AdSense's needs (D-BIZ-16) | M | about 50 steps; reading the videos as text (OCR) took the most |
 | 21-10-2026 | REP2: the report's words as an AI draft (D-AI-02) | M | about 90 steps, one compaction; the site check's mocks and the load counts took the most |
 | 21-10-2026 | REP3: simple and expert modes on the report (D-UX-112, D-UX-113) | M | about 150 steps, at M plus a quarter: two layouts of the form and the checks moved to them |
 | 21-10-2026 | SCH1: Mudra, CGFMU's and CGTMSE's fee, PMEGP's conditions in the report (D-DATA-24) | M | about 155 steps, past M plus a quarter: the fee worked twice and its page |
