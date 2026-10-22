@@ -5,8 +5,6 @@
  * - Each tool's terminal intro (Intro.astro) plays once when it first comes into view: the command typed, the inputs
  *   resolving, the bars read against the level, the verdict stamped, the change and its passing result, within 5 s;
  *   "Show it all" ends every intro at once. The HTML is the finished state: a played intro drops every animation and stands as is.
- * - The DSCR's explainer (Explainer.astro, HOME1c, D-UX-120) plays its five beats once in view, about 8.5 s (F9 widened for
- *   it), and its one button reads "Show it all" while it plays and "Play it again" after. Its wires stand still without motion.
  * - The closing desk's dashes fall onto their rows once, as it comes into view.
  * SVG strokes take the Web Animations API, since a class-triggered transition leaves them where they began (GOTCHAS,
  * AG3). Under reduced motion Base.astro leaves out the `js` mark, and nothing here runs: everything stands finished.
@@ -14,7 +12,6 @@
 export function start() {
   const motion = document.documentElement.classList.contains('js');
   for (const c of document.querySelectorAll<HTMLCanvasElement>('canvas[data-field]')) field(c, motion);
-  for (const b of document.querySelectorAll<HTMLElement>('[data-explain]')) wired(b);
   if (!motion) return;
   for (const h of document.querySelectorAll<HTMLElement>('[data-how]')) how(h);
   intros();
@@ -99,8 +96,8 @@ function run(host: HTMLElement) {
     for (const s of stops) s();
     for (const a of anims) a.cancel();
   };
-  const add = (el: Element, keys: Keyframe[], at: number, ms: number, easing = OUT, fill: FillMode = 'both') => {
-    const a = el.animate(keys, { delay: at, duration: ms, easing, fill });
+  const add = (el: Element, keys: Keyframe[], at: number, ms: number, easing = OUT) => {
+    const a = el.animate(keys, { delay: at, duration: ms, easing, fill: 'both' });
     anims.push(a);
     return a;
   };
@@ -254,205 +251,9 @@ function play(box: HTMLElement, all: () => void) {
 function intros() {
   const boxes = [...document.querySelectorAll<HTMLElement>('[data-intro]')], ends: (() => void)[] = [];
   const all = () => { seen.disconnect(); for (const e of ends) e(); for (const b of boxes) b.setAttribute('data-played', ''); };
-  // A page may ask the explainers to wait for their button (the HOME1c comparison: `data-start="click"` on <html>).
-  const click = document.documentElement.dataset.start === 'click';
   const seen = new IntersectionObserver((es) => {
-    for (const e of es) {
-      if (!e.isIntersecting) continue;
-      const box = e.target as HTMLElement;
-      seen.unobserve(box);
-      ends.push(box.hasAttribute('data-explain') ? explainer(box, all, true) : play(box, all));
-    }
+    for (const e of es) if (e.isIntersecting) { seen.unobserve(e.target); ends.push(play(e.target as HTMLElement, all)); }
   }, { rootMargin: '0px 0px -15% 0px' });
-  for (const b of boxes) {
-    if (click && b.hasAttribute('data-explain')) ends.push(explainer(b, all, false));
-    else seen.observe(b);
-  }
+  for (const b of boxes) seen.observe(b);
   addEventListener('beforeprint', all);
-}
-
-// ---- The explainers (HOME1c) ----
-
-/** The five beats' starts and the end, in ms (the owner's script, HOME1c, D-UX-120): inputs, calculation, the weakest
- *  year, the change, the outcome. Nothing moves after END (F9, widened from 5 s for the explainers). */
-const BEAT = [0, 1200, 2600, 4200, 5800], END = 8400;
-/** A spring for what lands: past its place by a little, then back (the short's "springs throughout"). */
-const SPRING = 'cubic-bezier(0.34, 1.45, 0.64, 1)';
-const R = 8; // the wires' corner, px
-
-/** Where an element sits in the stage, px. */
-const boxOf = (el: Element, stage: Element) => {
-  const a = el.getBoundingClientRect(), s = stage.getBoundingClientRect();
-  return { x: a.left - s.left, y: a.top - s.top, w: a.width, h: a.height, cx: a.left - s.left + a.width / 2, cy: a.top - s.top + a.height / 2 };
-};
-/** The text's own extent in a cell that may be wider than it. */
-const inkOf = (el: Element, stage: Element) => {
-  const r = document.createRange();
-  r.selectNodeContents(el);
-  const a = r.getBoundingClientRect(), s = stage.getBoundingClientRect();
-  return { x: a.left - s.left, y: a.top - s.top, w: a.width, h: a.height, cx: a.left - s.left + a.width / 2, cy: a.top - s.top + a.height / 2 };
-};
-
-/** The spine: each row of inputs runs down into the hub, and the hub out to each year. Drawn still, and again on resize. */
-function wires(box: HTMLElement) {
-  const stage = box.querySelector<HTMLElement>('[data-stage]'), svg = box.querySelector<SVGSVGElement>('[data-wires]'), hub = box.querySelector('[data-hub]');
-  if (!stage || !svg || !hub) return null;
-  const h = boxOf(hub, stage), x0 = h.cx;
-  const rows: ReturnType<typeof boxOf>[] = [];
-  for (const dt of box.querySelectorAll('[data-inputs] dt')) { const b = boxOf(dt, stage); if (!rows.some((x) => Math.abs(x.cy - b.cy) < 2)) rows.push(b); }
-  const years = [...box.querySelectorAll('[data-year]')].map((y) => boxOf(y, stage));
-  const ins = rows.map((b) => `M ${b.x - 6} ${b.cy} H ${x0 + R} Q ${x0} ${b.cy} ${x0} ${b.cy + R} V ${h.y}`);
-  const outs = years.map((b) => `M ${x0} ${h.y + h.h} V ${b.cy - R} Q ${x0} ${b.cy} ${x0 + R} ${b.cy} H ${b.x - 6}`);
-  svg.replaceChildren(...[...ins.map((d) => ['in', d]), ...outs.map((d) => ['out', d])].map(([k, d]) => {
-    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    p.setAttribute('d', d); p.setAttribute('fill', 'none'); p.setAttribute('stroke', 'currentColor'); p.setAttribute('stroke-width', '1.5');
-    p.setAttribute('class', 'text-on-desk-muted/60'); p.dataset.wire = k;
-    return p;
-  }));
-  return { ins, outs, x0, hub: h, rows };
-}
-function wired(box: HTMLElement) {
-  wires(box);
-  let w = 0;
-  new ResizeObserver(([e]) => {
-    if (Math.round(e.contentRect.width) === w) return;
-    w = Math.round(e.contentRect.width);
-    if (box.hasAttribute('data-played')) wires(box);
-  }).observe(box);
-}
-
-/**
- * Sets up one explainer: plays it now (`now`) or leaves it finished, and its one button stops it ("Show it all", which ends
- * every intro) or plays it again. Returns what ends it.
- */
-function explainer(box: HTMLElement, all: () => void, now: boolean) {
-  const show = box.querySelector<HTMLButtonElement>('[data-show]');
-  let end = () => undefined as void;
-  const label = (t: string) => { if (show) show.textContent = t; };
-  const go = () => { box.removeAttribute('data-played'); label('Show it all'); end = explain(box, () => label('Play it again')); };
-  if (show) {
-    show.hidden = false;
-    show.addEventListener('click', () => (box.hasAttribute('data-played') ? go() : all()));
-  }
-  if (now) go();
-  else { box.setAttribute('data-played', ''); label('Play it'); }
-  return () => end();
-}
-
-/** Plays the five beats once; `done` runs when it ends, played through or cut short. */
-function explain(box: HTMLElement, done: () => void) {
-  const stage = box.querySelector<HTMLElement>('[data-stage]')!, r = run(box), w = wires(box);
-  r.stops.push(done);
-  if (!w) { r.end(); return r.end; }
-  // A part's later moves fill forwards only: a later animation that filled backwards would hold it at its own start from 0.
-  const had = new WeakSet<Element>(), add = r.add;
-  r.add = (el, keys, at, ms, easing = OUT) => { const f: FillMode = had.has(el) ? 'forwards' : 'both'; had.add(el); return add(el, keys, at, ms, easing, f); };
-  const css = getComputedStyle(box), ink = css.getPropertyValue('--on-desk').trim(), red = css.getPropertyValue('--bad').trim(), gold = css.getPropertyValue('--marigold').trim();
-  const $ = <T extends Element = HTMLElement>(q: string, at: Element = box) => [...at.querySelectorAll<T & HTMLElement>(q)];
-  const show = (el: Element, at: number, ms = 200) => r.add(el, [{ opacity: 0 }, { opacity: 1 }], at, ms);
-  const settle = (el: Element, at: number) => r.add(el, [{ opacity: 0, transform: 'translateY(-8px)' }, { opacity: 1, transform: 'none' }], at, 500, SPRING);
-  // Measured before any animation holds a part at its start: the slot's width, the brackets' places, the rows and cells.
-  const fix = $('[data-fix]')[0], to = $('[data-to]')[0], slot = to?.scrollWidth ?? 0, fixH = fix?.getBoundingClientRect().height ?? 0, fixBox = fix && inkOf(fix, stage);
-  const years = $('[data-year]'), cells = years.map((y) => boxOf(y.querySelector('[data-cell]')!, stage)), rowsAt = years.map((y) => boxOf(y, stage));
-  const was = years.filter((y) => y.querySelector('[data-old]'));
-  const [sumWas, sumNow] = $('[data-sum]');
-  const weak = [Number(box.dataset.weakWas), Number(box.dataset.weakNow)];
-  const caps = $('[data-captions] li');
-  // Captions: each shows from its beat to the next; the last stays.
-  caps.forEach((c, k) => {
-    const from = BEAT[k], until = BEAT[k + 1] ?? END, ms = until - from, f = 200 / ms;
-    r.add(c, k === caps.length - 1 ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0 }, { opacity: 1, offset: f }, { opacity: 1, offset: 1 - f }, { opacity: 0 }], from, k === caps.length - 1 ? 200 : ms, 'linear');
-  });
-
-  // 1 · The inputs settle in turn, their wires draw down into the hub, one pulse runs it, and the hub rings.
-  $('[data-inputs] > *').forEach((el, k) => show(el, BEAT[0] + 45 * k, 260));
-  const wire = (p: SVGPathElement, at: number, ms: number) => { const n = p.getTotalLength(); r.add(p, [{ strokeDasharray: `${n}`, strokeDashoffset: n }, { strokeDasharray: `${n}`, strokeDashoffset: 0 }], at, ms); };
-  $<SVGPathElement>('[data-wire="in"]').forEach((p, k) => wire(p, 350 + 40 * k, 600));
-  const hub = $('[data-hub]')[0];
-  settle(hub, 700);
-  for (const el of $('[data-x]').filter((e) => e.matches('p'))) show(el, 800, 300);
-  const pulse = $('[data-pulse]')[0], ring = (at: number) => r.add(hub, [{ boxShadow: `0 0 0 0 ${gold}` }, { boxShadow: '0 0 0 12px transparent' }], at, 500, 'ease-out');
-  const run1 = (d: string, at: number, ms: number) => {
-    const dot = pulse.cloneNode() as HTMLElement;
-    dot.style.offsetPath = `path("${d}")`; dot.style.offsetRotate = '0deg';
-    stage.append(dot);
-    r.stops.push(() => dot.remove());
-    r.add(dot, [{ offsetDistance: '0%', opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 1, offset: 0.9 }, { offsetDistance: '100%', opacity: 0 }], at, ms, 'ease-in-out');
-  };
-  run1(w.ins[0], 750, 550);
-  ring(1250);
-
-  // 2 · The wires fan out to the years; each year's bar grows to its reading as typed, its figure settling.
-  $<SVGPathElement>('[data-wire="out"]').forEach((p, k) => wire(p, BEAT[1] + 100 + 30 * k, 450));
-  show($('[data-row]:not([data-year])')[0], BEAT[1] + 150);
-  const neutral = { backgroundColor: ink };
-  was.forEach((y, k) => {
-    const at = BEAT[1] + 300 + 110 * k, bar = y.querySelector('[data-bar]')!, kk = Number((bar as HTMLElement).dataset.k);
-    show(y, at, 160);
-    r.add(bar, [{ transform: 'scaleX(0)', ...neutral }, { transform: `scaleX(${kk})`, ...neutral }], at, 450, SPRING);
-  });
-
-  // 3 · The lens reads each year down the column, each judged as it passes, and comes back to the weakest; red brackets.
-  const lens = $('[data-lens]')[0], brackets = $('[data-brackets]')[0];
-  const lensAt = (c: { cx: number; cy: number }) => `translate(${c.cx - 18}px, ${c.cy - 18}px)`;
-  const stops = was.map((y) => cells[years.indexOf(y)]), step = 150, t3 = BEAT[2] + 100;
-  const wk = Math.max(0, weak[0]);
-  r.add(lens, [{ opacity: 0, transform: lensAt(stops[0]) }, { opacity: 1, transform: lensAt(stops[0]) }], t3, 200);
-  stops.forEach((c, k) => {
-    if (k) r.add(lens, [{ opacity: 1, transform: lensAt(stops[k - 1]) }, { opacity: 1, transform: lensAt(c) }], t3 + 200 + step * (k - 1), step, 'ease-in-out');
-    const y = was[k], misses = !y.querySelector('[data-bar]')!.hasAttribute('data-meets'), at = t3 + 200 + step * k;
-    r.add(y.querySelector('[data-old]')!, [{ opacity: 1, color: ink }, { opacity: 1, color: misses ? red : ink }], at, 120);
-    r.add(y.querySelector('[data-om]')!, [{ opacity: 0, transform: 'scale(1.6)' }, { opacity: 1, transform: 'none' }], at, 160);
-    if (misses) r.add(y.querySelector('[data-bar]')!, [{ backgroundColor: ink, transform: `scaleX(${(y.querySelector('[data-bar]') as HTMLElement).dataset.k})` }, { backgroundColor: red, transform: `scaleX(${(y.querySelector('[data-bar]') as HTMLElement).dataset.k})` }], at, 160);
-  });
-  const back = t3 + 200 + step * stops.length;
-  r.add(lens, [{ opacity: 1, transform: lensAt(stops.at(-1)!) }, { opacity: 1, transform: lensAt(cells[wk]) }], back, 400, SPRING);
-  const frame = (b: { x: number; y: number; w: number; h: number }, pad = 4) => ({ transform: `translate(${b.x - pad}px, ${b.y - pad}px)`, width: `${b.w + 2 * pad}px`, height: `${b.h + 2 * pad}px` });
-  const wide = (b: ReturnType<typeof frame>) => ({ ...b, opacity: 0 });
-  const rw = rowsAt[wk], loose = { x: rw.x - 10, y: rw.y - 8, w: rw.w + 20, h: rw.h + 16 };
-  const t3b = back + 350;
-  r.add(brackets, [{ ...wide(frame(loose)), color: red }, { ...frame(rw), opacity: 1, color: red }], t3b, 350, SPRING);
-  r.add(lens, [{ opacity: 1, transform: lensAt(cells[wk]) }, { opacity: 0, transform: lensAt(cells[wk]) }], BEAT[3], 250);
-  settle(sumWas, t3b + 250);
-
-  // 4 · The brackets move to the input the change moves; its old value lifts and the new one springs into the slot; a pulse
-  //     runs the new value through the hub to the years.
-  if (fix && fixBox && to) {
-    const b = { x: fixBox.x, y: fixBox.y, w: fixBox.w, h: fixBox.h };
-    r.add(brackets, [{ ...frame(rw), opacity: 1, color: red }, { ...frame(b), opacity: 1, color: gold }], BEAT[3] + 100, 500, SPRING);
-    const old = fix.querySelector('[data-was]')!, nu = fix.querySelector('[data-now]')!, lift = BEAT[3] + 650;
-    r.add(old, [{ color: ink, transform: 'none' }, { color: ink, transform: 'translateY(-6px)', offset: 0.4 }, { transform: 'none' }], lift, 450);
-    r.add(fix, [{ minHeight: `${fixH}px` }, { minHeight: `${fixH}px` }], 0, END); // the final line count held: nothing below moves
-    r.add(to, [{ maxWidth: '0px' }, { maxWidth: `${slot}px` }], lift + 200, 300);
-    r.add(nu, [{ opacity: 0, transform: 'translateY(-16px)' }, { opacity: 1, transform: 'none' }], lift + 350, 550, SPRING);
-    const near = w.rows.reduce((a, x, k) => (Math.abs(x.cy - fixBox.cy) < Math.abs(w.rows[a].cy - fixBox.cy) ? k : a), 0), d = w.ins[near];
-    run1(`${d} L ${w.x0} ${w.hub.y + w.hub.h} V ${rowsAt.at(-1)!.cy}`, lift + 900, 650);
-    ring(lift + 1200);
-  }
-
-  // 5 · Each bar springs to the new reading, leaving a tick where it stood; each figure gives way to the new one; the lens
-  //     goes to the year that now decides, marigold brackets, the sum and the verdict.
-  years.forEach((y, k) => {
-    const at = BEAT[4] + 90 * k, bar = y.querySelector<HTMLElement>('[data-bar]')!, kk = Number(bar.dataset.k), oldEl = y.querySelector('[data-old]');
-    const from = { transform: `scaleX(${kk})`, backgroundColor: oldEl && !bar.hasAttribute('data-meets') ? red : ink };
-    r.add(bar, [from, { transform: 'scaleX(1)', backgroundColor: bar.classList.contains('bg-bad') ? red : ink }], at, 600, SPRING);
-    if (!oldEl) show(y, at, 160);
-    for (const g of $('[data-ghost]', y)) show(g, at, 300);
-    if (oldEl) r.add(oldEl, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-8px)' }], at + 200, 250);
-    for (const el of $('[data-val], [data-mark]', y)) r.add(el, [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], at + 300, 300, SPRING);
-  });
-  const nk = Math.max(0, weak[1]), t5 = BEAT[4] + 90 * years.length + 500;
-  r.add(brackets, [{ ...frame(fixBox ?? rw), opacity: 1, color: gold }, { ...frame(fixBox ?? rw), opacity: 0, color: gold }], BEAT[4], 250);
-  r.add(lens, [{ opacity: 0, transform: lensAt(cells[nk]) }, { opacity: 1, transform: lensAt(cells[nk]) }], t5, 200);
-  const rn = rowsAt[nk];
-  r.add(brackets, [{ ...wide(frame({ x: rn.x - 10, y: rn.y - 8, w: rn.w + 20, h: rn.h + 16 })), color: gold }, { ...frame(rn), opacity: 1, color: gold }], t5 + 250, 350, SPRING);
-  settle(sumNow, t5 + 450);
-  r.add(lens, [{ opacity: 1, transform: lensAt(cells[nk]) }, { opacity: 0, transform: lensAt(cells[nk]) }], END - 700, 300);
-  r.add(brackets, [{ ...frame(rn), opacity: 1, color: gold }, { ...frame(rn), opacity: 0, color: gold }], END - 400, 400);
-  for (const s of [sumWas, sumNow]) {
-    const st = s.querySelector('[data-stamp]');
-    if (st) r.add(st, [{ opacity: 0, transform: 'scale(1.25)' }, { opacity: 1, transform: 'scale(0.96)', offset: 0.6 }, { opacity: 1, transform: 'none' }], (s === sumWas ? t3b + 450 : t5 + 650), 480);
-  }
-  void r.settled();
-  return r.end;
 }

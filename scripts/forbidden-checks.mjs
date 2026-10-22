@@ -118,8 +118,7 @@ export function tabAgainstEye() {
 /**
  * Runs in the page: home's diagram and intros that are not in their finished state (HOME1b, D-UX-115). With motion each
  * must have played (`data-played`, every animation dropped); without it the HTML stands as it is. Either way every line,
- * input, bar and mark shows whole (an explainer's spine, hub and ticks, and its last caption, too: HOME1c), and "Show it all"
- * is gone ("Play it again" may stay). Empty when the page has none, so only home is held here;
+ * input, bar and mark shows whole, and "Show it all" is gone. Empty when the page has none, so only home is held here;
  * the count of intros is F13's.
  */
 export function unfinished() {
@@ -128,12 +127,12 @@ export function unfinished() {
     const id = box.dataset.intro ?? 'how it works';
     if (js && !box.hasAttribute('data-played')) out.push(`${id} has not played`);
     if (box.getAnimations({ subtree: true }).length) out.push(`${id} still holds ${box.getAnimations({ subtree: true }).length} animations`);
-    const part = [...box.querySelectorAll('[data-ln], [data-kv], [data-row], [data-mark], [data-bar], [data-box], [data-draw], [data-x], [data-captions] li[data-on]')].find((e) => {
+    const part = [...box.querySelectorAll('[data-ln], [data-kv], [data-row], [data-mark], [data-bar], [data-box], [data-draw]')].find((e) => {
       const s = getComputedStyle(e);
       return s.opacity !== '1' || (e.matches('[data-bar]') && s.transform !== 'none') || (e.matches('[data-draw]') && parseFloat(s.strokeDashoffset) > 0.001);
     });
     if (part) out.push(`${id}: <${part.tagName.toLowerCase()}> "${(part.textContent ?? '').trim().slice(0, 30)}" is not whole`);
-    if ([...box.querySelectorAll('[data-show]')].some((b) => !b.hidden && b.textContent.trim() === 'Show it all')) out.push(`${id} still offers "Show it all"`);
+    if ([...box.querySelectorAll('[data-show]')].some((b) => !b.hidden)) out.push(`${id} still offers "Show it all"`);
   }
   return out;
 }
@@ -154,7 +153,7 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
     page.on('response', (r) => sizes.push(r.body().then((b) => b.length, () => 0)));
     await page.goto(BASE + path, { waitUntil: 'domcontentloaded' });
     const first = await still(page);
-    await page.waitForTimeout(10000);
+    await page.waitForTimeout(6000);
     const settled = await still(page);
     await page.waitForTimeout(1000);
     const later = await still(page);
@@ -162,8 +161,8 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
     if (path === '/') weight = kb;
     if (first.typed.join('|') !== settled.typed.join('|')) v('F10 a heading\'s words or a counted figure are not in the page from the start');
     if (await page.locator('[data-typed]').count()) v('F10 a heading still types itself');
-    if (settled.running.length) v(`F9 still moving 10 s after load: ${[...new Set(settled.running)].join(', ')}`);
-    if (settled.fields.join() !== later.fields.join()) v('F9 a field of dashes still moves 10 s after load');
+    if (settled.running.length) v(`F9 still moving 6 s after load: ${[...new Set(settled.running)].join(', ')}`);
+    if (settled.fields.join() !== later.fields.join()) v('F9 a field of dashes still moves 6 s after load');
     for (const h of hosts) if (h !== BASE) v(`F14 a request to ${h}`);
     if (path === '/' && kb > WEIGHT_CAP) v(`F15 the page weighs ${kb} KB as it loads (cap ${WEIGHT_CAP} KB)`);
     await ctx.close();
@@ -195,7 +194,7 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
       await p.evaluate(async () => {
         for (let y = 0; y < document.body.scrollHeight; y += innerHeight / 2) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 100)); }
       });
-      await p.waitForTimeout(9000);
+      await p.waitForTimeout(5000);
       const ends = await p.evaluate(unfinished);
       const r = await p.evaluate(() => {
         const hidden = [...document.querySelectorAll('[data-settle], [data-at]')].filter((e) => getComputedStyle(e).opacity !== '1')
