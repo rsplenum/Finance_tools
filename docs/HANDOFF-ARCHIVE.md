@@ -167,6 +167,9 @@ The test figures are model-worked until the owner confirms fictional cases A and
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 21-10-2026 | REP2: the report's words as an AI draft (D-AI-02) | M | about 90 steps, one compaction; the site check's mocks and the load counts took the most |
+| 21-10-2026 | REP3: simple and expert modes on the report (D-UX-112, D-UX-113) | M | about 150 steps, at M plus a quarter: two layouts of the form and the checks moved to them |
+| 21-10-2026 | SCH1: Mudra, CGFMU's and CGTMSE's fee, PMEGP's conditions in the report (D-DATA-24) | M | about 155 steps, past M plus a quarter: the fee worked twice and its page |
 | 20-10-2026 | SCH1's row and its sources: Mudra and CGFMU (D-DATA-23, D-UX-111); CGFMU's and CGTMSE's documents in `docs/inbox/` and their fees' basis; the owner's five fee answers | follow-up, none set | 115 steps after the last merge |
 | 04-10-2026 | D-TECH-29: this rule, HANDOFF trimmed | S, about 15 steps | 17 steps to the commit (1.9M tokens re-read), about 23 with the PR: over by half, since the compaction cost 3 steps of re-reading and measuring 2 |
 | 05-10-2026 | E2b: 84 library items read against their pages, each city's own sewer charge (D-DATA-10) | L, about 200 steps plus agents | 171 steps from its prompt to the docs, about 185 with the PR (`npm run cost` reads the whole conversation's log: E2b ran in the old one), 6 `fetcher` calls, 6 compactions: within budget; redos cost about 8 (a test naming one offender at a time, two test fixtures pinned to the library, What changed hiding the unpriced sewer) and wiring moved to W1 |
