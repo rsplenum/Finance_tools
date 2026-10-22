@@ -64,7 +64,7 @@ function inPage({ tools, order, phone }) {
   // F6, F7, F13: the sections run wide and tall, in the reference's order.
   const secs = [...document.querySelectorAll('[data-ag]')];
   if (order && secs.map((s) => s.dataset.ag).join() !== order.join()) out.push(`F13 the sections are ${secs.map((s) => s.dataset.ag).join(', ')}`);
-  // F13 on home, lesson 11: each tool once, in one block with one link, which opens that tool (HOME1b, D-UX-114).
+  // F13 on home, principle 10 (lesson 11): each tool once, in one block with one link, which opens that tool (HOME1b, D-UX-114).
   if (order) {
     const blocks = [...document.querySelectorAll('[data-tool]')], to = blocks.map((b) => [...b.querySelectorAll('a[href]')].map((a) => new URL(a.href).pathname));
     if (blocks.length !== tools.length || new Set(blocks.map((b) => b.dataset.tool)).size !== tools.length) out.push(`F13 home has ${blocks.length} tool blocks (want each of ${tools.length} once)`);
