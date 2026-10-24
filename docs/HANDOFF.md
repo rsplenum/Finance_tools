@@ -32,7 +32,7 @@ SEO2's row is in `docs/ROADMAP.md`: the checks chain runs it after TERMS1 once t
 ## Budgets and actuals
 | Date | Row | Budget | Actual |
 |---|---|---|---|
-| 24-10-2026 | SEC1: the Worker hardened, a byte cap, the answer checked, `/api/e` capped, Node pinned (D-TECH-61) | S, high | STEPS; the tests for each refusal took the most |
+| 24-10-2026 | SEC1: the Worker hardened, a byte cap, the answer checked, `/api/e` capped, Node pinned (D-TECH-61) | S, high | about 58 steps; two 12-minute verifies (the container's Chromium, then the privacy page's load) took the most |
 | 24-10-2026 | VID1: the video studio runs, and the timeline to Monday (D-TECH-58, D-TECH-59, D-BIZ-20) | none set: the owner's ask in the chat | about 220 steps; the two master renders (9 and 7 min) and the cut-text fix took the most |
 | 22-10-2026 | HOME1c: the DSCR explainer, rejected; CI once a commit (D-UX-121, D-UX-122, D-TECH-55) | L, Extra | about 156 steps; the frames, the comparison page and the 13-minute site check took the most |
 | 22-10-2026 | HOME1b: home in three parts, the four intros and `?case=home` (D-UX-117, D-UX-118) | L, Extra (+10%) | about 100 steps and two agents' 68; the designer's build and the critic's nine findings took the most |
