@@ -11,7 +11,8 @@ function envOf(db = true) {
     prepare: (sql: string) => ({ sql, bind: (...a: unknown[]) => ({ sql, a, run: async () => { runs.push([sql, ...a]); } }) }),
     batch: async (stmts: { a: unknown[] }[]) => { for (const s of stmts) rows.push(s.a); },
   };
-  return { env: { READ_ORIGINS: `${SITE},.finance-tools-9if.pages.dev`, ...(db ? { DB } : {}) } as unknown as Env, rows, runs };
+  const EVENTS_LIMIT = { limit: async () => ({ success: true }) };
+  return { env: { READ_ORIGINS: `${SITE},.finance-tools-9if.pages.dev`, EVENTS_LIMIT, ...(db ? { DB } : {}) } as unknown as Env, rows, runs };
 }
 const good = { v: 1, page: '/dscr/', from: '/', w: 'phone', visit: '0a1b2c3d', ev: [
   { e: 'open', t: 0 }, { e: 'field', f: 'fld-loanAmount', t: 4200 }, { e: 'result', f: 'dscr-status-ready', t: 61000 }, { e: 'download', f: 'pdf', t: 70000 },

@@ -73,7 +73,7 @@ describe('the DSCR with the longer repayment', () => {
 describe('the DSCR intro', () => {
   const d = intro('dscr');
   it('the seven inputs of the front door (D-UX-10), the sums and the verdicts', () => {
-    expect(d.inputs.map(([, v]) => v)).toEqual(['A firm', 'Rs. 4,50,000', '0%', 'None', 'Rs. 12,00,000', '12%', '60 instalments (5 years)']);
+    expect(d.inputs.map(([, v]) => v)).toEqual(['A firm', 'Rs. 4.5 lakh', '0%', 'None', 'Rs. 12 lakh', '12%', '60 instalments (5 years)']);
     expect([d.typed.sum, d.typed.verdict, d.fixed.sum, d.fixed.verdict]).toEqual([
       '2030-31  3,21,236 ÷ 3,20,320 = 1.00', 'Below target 1.20', '2032-33  3,16,194 ÷ 2,62,351 = 1.21', 'Passes']);
     expect(d.typed.bars.map((b) => b.meets)).toEqual([true, false, false, false, false, true]);
@@ -131,6 +131,10 @@ describe('the project report intro', () => {
     expect(p.typed.bars.map((b) => b.text)).toEqual(['0.82', '1.02', '1.24', '1.54', '1.92']);
     expect(p.fixed.bars.map((b) => b.text)).toEqual(['1.25', '1.49', '1.81', '2.21', '2.73']);
   });
+  it('its amounts in lakh (NUM1): 33,75,342 is 33.75342 lakh, rounded and said so; the sums in full', () => {
+    expect(p.inputs.map(([, v]) => v)).toEqual(['A firm', 'about Rs. 33.75 lakh', 'Rs. 25 lakh', '10%', '60 instalments', 'Rs. 70 lakh', '65% of sales', 'Rs. 18 lakh a year']);
+    expect(p.fix).toBe('› make it viable · sales +17.3% → Rs. 82.11 lakh');
+  });
   it('each sum within a rupee of the hand-worked first year', () => {
     const interest = (12 * 2500000 - 2500000 / 60 * 66) * 10 / 1200;
     const year1 = (sales: number) => {
@@ -146,8 +150,11 @@ describe('the project report intro', () => {
 
 describe('the estimate intro', () => {
   const e = intro('estimate'), total = (t: string) => Number(t.replace(/[^\d]/g, ''));
+  it('its budget in lakh (NUM1); the total’s bar in full, as its sum, so it fits at 320 px', () => {
+    expect([e.level.text, e.typed.bars[0].text, e.inputs.at(-1)?.[1]]).toEqual(['Rs. 12 lakh', '12,47,185', 'Rs. 12 lakh']);
+  });
   it('Standard everywhere over the budget, Basic bedrooms within it, each total the second computation\'s', () => {
-    expect([e.typed.sum, e.typed.verdict, e.fixed.sum, e.fixed.verdict]).toEqual(['total  12,47,185', 'Over budget 12,00,000', 'total  11,65,322', 'Within budget']);
+    expect([e.typed.sum, e.typed.verdict, e.fixed.sum, e.fixed.verdict]).toEqual(['total  12,47,185', 'Over budget Rs. 12 lakh', 'total  11,65,322', 'Within budget']);
     const [at, fixed] = [ESTIMATE_CASE, ESTIMATE_FIXED].map((s) => architectCheck(inputOf(s)).total);
     expect(Math.abs(total(e.typed.sum) - at)).toBeLessThanOrEqual(0.5);
     expect(Math.abs(total(e.fixed.sum) - fixed)).toBeLessThanOrEqual(0.5);
@@ -180,7 +187,11 @@ describe('the CMA intro, case W', () => {
   it('the turnover-method limit for the projection, by hand', () => {
     const lim = 0.25 * sales[4] - Math.max(0.05 * sales[4], ca(4) - cl(4));
     expect(lim).toBeCloseTo(62, 9);
-    expect(c.aside).toBe('› limit by the turnover method, 2027-28: Rs. 62,00,000');
+    expect(c.aside).toBe('› limit by the turnover method, 2027-28: Rs. 62 lakh');
+  });
+  it('its amounts in lakh and crore (NUM1): sales 200 and 310 lakh are 2 and 3.1 crore', () => {
+    expect(c.inputs.map(([, v]) => v).slice(2, 5)).toEqual(['Rs. 2 crore', 'Rs. 3.1 crore', 'Rs. 65 lakh']);
+    expect([CMA_FIX.n, c.fix]).toEqual([5_55_000, "› make it viable · capital +Rs. 5.55 lakh"]);
   });
 });
 
