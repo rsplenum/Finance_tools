@@ -25,6 +25,18 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "mcp__[Cc]laude[-_][Cc]ode[-_][Rr]emote__create_session",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-guard.mjs\"",
+            "timeout": 15
+          }
+        ]
+      }
     ]
   }
 }
