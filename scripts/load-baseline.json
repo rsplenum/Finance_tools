@@ -160,6 +160,22 @@
       "codes": 0,
       "outOfSight": null
     },
+    "/site-map/": {
+      "before": 11,
+      "shown": 113,
+      "all": 113,
+      "plan": null,
+      "long": 0,
+      "abbr": 2,
+      "questions": 0,
+      "controls": 10,
+      "answerAt": 0.3,
+      "gap": null,
+      "styles": 5,
+      "colours": 0,
+      "codes": 0,
+      "outOfSight": null
+    },
     "/terms/": {
       "before": 202,
       "shown": 342,

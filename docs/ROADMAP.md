@@ -37,7 +37,7 @@ After Monday, in this order: VID2 (the four stories as videos, from the same sce
 | 7 | **SEO4** The rest of the businesses (to about 60), the three loan tools, the internal links | M, high | as SEO2, at full count | — |
 | 8 | **LEGAL2** The lawyer's changes to the policy pages, `LEGAL_DRAFT` false; runs whenever the lawyer answers | S, high | the site check fails any draft mark left | the lawyer's read |
 | 9 | **RC1** Release check: every page by a critic at once, the five tests scored, the first funnels read, `noindex` still on, the network back to the allowed list | M, high | no blocker open; every check at 0 | your five tests' notes; LEGAL2 done |
-| 10 | **LAUNCH** The .com domain on Pages and the Worker's route, `noindex` off, Search Console, Web Analytics, the AdSense application | S, high | the site on its domain, indexed, the analytics counting | the domain bought, the lawyer's sign-off |
+| 10 | **LAUNCH** The .com domain on Pages and the Worker's route, `noindex` off, `site` in `site/astro.config.mjs` set to the domain and `/sitemap.xml` submitted in Search Console (D-TECH-65), Web Analytics, the AdSense application | S, high | the site on its domain, indexed, the analytics counting | the domain bought, the lawyer's sign-off |
 | 11 | **P1d Payment** (its row: `docs/HANDOFF-ARCHIVE.md`) and the price against Finline's | L, high | a paid document end to end in Razorpay's test mode, then live | Phase 0: the entity, GST, Razorpay and the price |
 
 The free tools launch at row 10; payment follows at row 11 when Phase 0 is done. After launch: three months of improving from the interaction data, then more Indian languages, then the US, Europe and South America (PROJECT.md).
