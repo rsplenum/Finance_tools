@@ -1344,8 +1344,8 @@ if (touched('/project-report/')) {
 const CMA_FIELDS = 'main input:not([type="radio"]):not(#more-options input):not(#download input):not(#read input):not(#benchmarks input)';
 // A choice counts as one field, whatever its options (MV4: fresh or renewal).
 const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await page.locator('main fieldset:not(#more-options fieldset):has(input[type="radio"])').count();
-// Home (HOME1b, D-UX-114): each tool once, in one block with one button, which opens the tool filled with its intro's
-// fictional case; each tool says so above its answers and reads as the intro does (site/src/home/story.ts, its figures
+// Home (HOME1b, D-UX-114): each tool once, in one block with one button, which opens the tool filled with its scene's
+// fictional case; each tool says so above its answers and reads as the scene does (site/src/home/story.ts, its figures
 // worked by hand in tests/home-story.test.ts).
 if (touched('/')) {
   const { ctx, page, v } = await open('/', { scheme: 'light' });

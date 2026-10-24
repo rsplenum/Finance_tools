@@ -6,11 +6,11 @@ Five moves:
 - **Settle**: a box arrives with a small overshoot, then rests, 500 to 700 ms.
 - **Pulse**: one marigold dot runs a line once, 600 to 800 ms, to show where something goes. It is the screen's one highlight.
 - **Stagger**: siblings start 100 to 150 ms apart, never all at once.
-- **Type**: a tool's terminal intro types one worked case, every figure from the engine.
+- **Type**: until HOME1e a tool's terminal intro typed one worked case; the scenes replaced it (D-UX-141).
 
 Rules for all five:
 - Each move runs once and never loops.
-- Everything stops within 5 s (F9); the DSCR's scene, five beats, within 13 s of coming into view (D-UX-125).
+- Everything stops within 5 s (F9); a tool's scene, five beats, within 13 s of coming into view (D-UX-125).
 - Nothing flashes more than three times a second.
 - Nothing moves under reduced motion; the page shows the finished state.
 - The page reads whole with "Show it all".
@@ -24,5 +24,7 @@ Home after HOME1b:
 - The closing panel keeps its dashes, without the pointer's stir.
 
 Home after HOME1d (D-UX-125): the DSCR's block is a scene in look C, the one place the glass and the dark ground come in (D-UX-122): the bank's question, the seven answers wired into the hub, every year's DSCR with a lens on the weakest, the term changed to 80 and the bars re-springing, then the statement for the lender. Springs are CSS `linear()` easings; it ends by cancelling every animation, leaving the HTML's last beat, with "Play it again" (site/src/home/scene.ts).
+
+Home after HOME1e (D-UX-135 to D-UX-144): all four tools tell their story as the DSCR's scene does, one component and one player (`ToolScene`, Scene.astro, scene.ts), the same five beats in 12.8 s: the question, the answers into the hub, the rows against the level with the lens on the weakest, one changed card and the rows re-springing, then the document. The estimate's rows are a running total by trade, each bar starting where the one before ends (it moves sideways as well as grows when the change lands); the CMA's audited years stand muted, not judged. Each scene plays once as it comes into view.
 
 Reference: the comparison at https://claude.ai/artifact/BRkgWAYyrJP3Sr2KRfiGqU (settles at 3.3 s).
