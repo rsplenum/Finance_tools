@@ -61,6 +61,7 @@ What the owner taught across projects, so a new project starts where the last on
 
 ## Claude Code on the web
 
+- One session per piece of work, started only from the owner's main conversation, never by another work session; three at most at once, or the usage limit stops them mid-work. A new session pushes its branch first so others see the claim; a branch and its PR belong to the session that made it, others only read and report.
 - One session at a time per checkout. Before a `git reset` or `checkout -B`, read `git status` and `git log origin/<branch>`: one reset dropped another session's commit.
 - WebFetch answers from a small model's summary, never the page's words: take no figure from it; read pages with a script, or an agent that quotes them.
 - A host the proxy blocks (403) is opened in the environment's settings, not worked round in code.

@@ -13,7 +13,8 @@
  * Then the design checks (DT1, scripts/design-checks.mjs): axe, contrast, field edges and focus at 3:1, target sizes, Tab
  * reach, 320 px and reduced motion on every page at 360 and 1280 px, light and dark, and the token ratchet.
  * Then the load measure (UX2b, scripts/load-measure.mjs): every page's counts against scripts/load-baseline.json.
- * Run after `npm run build`. CHROMIUM_PATH overrides the browser Playwright would use.
+ * Run after `npm run build`. CHROMIUM_PATH overrides the browser Playwright would use. `--quick` (CHK1, D-TECH-63) opens only
+ * the pages this branch's change touches (scripts/site-pages.mjs), and the motion and frame checks only when home is one.
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { join, sep } from 'node:path';
@@ -24,14 +25,24 @@ import { DIST, serveDist } from './serve-dist.mjs';
 import { designChecks } from './design-checks.mjs';
 import { loadCheck } from './load-measure.mjs';
 import { forbiddenChecks, WEIGHT_CAP } from './forbidden-checks.mjs';
+import { changedFiles, pagesFor } from './site-pages.mjs';
 
 const { BASE, server } = await serveDist();
 
-// Every built page, so a new page is checked without being listed here.
-const pages = (await readdir(DIST, { recursive: true }))
+// Every built page, so a new page is checked without being listed here; with --quick, those the change touches.
+const built = (await readdir(DIST, { recursive: true }))
   .filter((f) => f.endsWith('.html'))
   .map((f) => '/' + f.split(sep).join('/').replace(/(^|\/)index\.html$/, '$1'))
   .sort();
+const changed = process.argv.includes('--quick') ? changedFiles() : null;
+const pages = changed ? pagesFor(changed, built) : built;
+const quick = pages.length < built.length;
+const touched = (path) => pages.includes(path);
+if (!pages.length) {
+  console.log('site check: --quick, no page touched: 0 violations');
+  server.close();
+  process.exit(0);
+}
 
 const violations = [];
 
@@ -139,14 +150,14 @@ for (const path of pages) {
 }
 
 // No flash: the theme is set before any script file loads (the inline boot script alone).
-for (const [scheme, stored, want] of [['dark', undefined, true], ['light', 'dark', true], ['dark', 'light', false]]) {
+for (const [scheme, stored, want] of touched('/') ? [['dark', undefined, true], ['light', 'dark', true], ['dark', 'light', false]] : []) {
   const { ctx, v, isDark } = await open('/', { scheme, stored, blockScripts: true });
   if ((await isDark()) !== want) v(`theme before scripts is ${want ? 'light' : 'dark'}, want ${want ? 'dark' : 'light'}`);
   await ctx.close();
 }
 
 // Theme toggle: Auto → Light → Dark → Auto, and the choice survives a reload.
-{
+if (touched('/')) {
   const { ctx, page, v, isDark } = await open('/', { scheme: 'light' });
   const btn = page.getByTestId('theme-toggle');
   const expectState = async (label, dark, step) => {
@@ -247,7 +258,7 @@ async function layout(page, v, step) {
   for (const t of f.lowContrast) v(`${step}: low contrast: ${t}`);
 }
 
-{
+if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
   await openMore(page);
   // The page opens with the assumptions answered (D-UX-08): the start questions chosen, the loan asked at once, the target
@@ -366,7 +377,7 @@ async function layout(page, v, step) {
 }
 
 // The same filled page in dark mode.
-{
+if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'dark' });
   await openMore(page);
   await enterCaseA(page);
@@ -380,7 +391,7 @@ async function layout(page, v, step) {
 
 // A loan drawn in October: 2026-27 has interest only. The figures start in the loan's first year, as assumed and listed,
 // and the question offers the later year.
-{
+if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
   await openMore(page);
   await page.check('#fld-source-plan');
@@ -423,7 +434,7 @@ async function layout(page, v, step) {
 }
 
 // A few answers instead of every year: profit grows from one figure and one rate; the rest are one figure or None.
-{
+if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
   await openMore(page);
   await page.check('#fld-source-plan');
@@ -463,7 +474,7 @@ async function layout(page, v, step) {
 
 // The owner's quick path: the loan and this year's figures, everything else as assumed and listed (fictional case A′,
 // worked by hand in tests/dscr-page.test.ts).
-{
+if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
   await openMore(page);
   await leave(page, '#fld-loanAmount', '12 L');
@@ -554,7 +565,7 @@ async function layout(page, v, step) {
 // hand in tests/dscr-page.test.ts). A proprietor pays no tax on these profits; then EMIs of 20,000 a month running on and
 // 15,000 a month to June 2027 (4,20,000, 2,85,000, 2,40,000, 2,40,000 a year) and the new asset's 3,60,000 a year from
 // October 2026 (1,80,000 in 2026-27). Cash 6,30,000 against 7,61,000 in 2026-27: 0.83; average 33,80,500 / 26,91,000 = 1.26.
-{
+if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
   await openMore(page);
   await leave(page, '#fld-loanAmount', '12 L');
@@ -596,7 +607,7 @@ async function layout(page, v, step) {
 
 // Own yearly figures (tests/dscr.test.ts, "which years count"): the loan amount is not asked, and the year with no
 // instalment is not counted.
-{
+if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
   await openMore(page);
   await page.check('#fld-source-own');
@@ -625,7 +636,7 @@ async function layout(page, v, step) {
 
 // The front door (P1f, D-UX-10): eight fields, More options closed on load, and the results without opening it. A textbook
 // EMI: Rs. 10,00,000 at 12% for one year is Rs. 88,848.79 a month; 12 of them less the loan is Rs. 66,185 of interest.
-{
+if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
   if (await page.locator('#more-options').evaluate((d) => d.open)) v('More options is open on load');
   const texts = await page.locator('#front-door input[type="text"]').count(), radios = await page.locator('#front-door fieldset').count();
@@ -664,7 +675,7 @@ async function layout(page, v, step) {
 // Rs. 4,50,000 this year with no growth, Rs. 12,00,000 at 12% for 5 years). The bars with the cash short, the engine's
 // plan (20 more instalments), the borrower's most (all of it, then 10 more), "Use this plan" writing the loan and the
 // term only, and Undo; the front door still asks 8.
-{
+if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'dark' });
   await page.check('#fld-fd-borrower-firm');
   await leave(page, '#fld-fd-profit', '4.5 L');
@@ -705,7 +716,7 @@ async function layout(page, v, step) {
 // it changed, the strip, Compare, the rooms (a size and a level of one's own) and the item drawer; the downloads read
 // back. A 2BHK of 1,000 sq ft in Pune at Basic, worked by hand in tests/architect.test.ts and tests/library.test.ts: the
 // living room's floor is 303.03 sq ft of tiles at Rs. 111.65 = Rs. 33,833.
-for (const scheme of ['light', 'dark']) {
+for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
   const { ctx, page, v } = await open('/estimate/', { scheme });
   if (await page.locator('#typed-path').evaluate((d) => d.open)) v('the typed quotation is open on load');
   const questions = await page.locator('#six-questions [data-question]').count();
@@ -983,7 +994,7 @@ for (const scheme of ['light', 'dark']) {
 // interiors and a new G+1 house (before V1, about 810 and 1,360); only the flags that can change the decision show, and
 // no field but the document's own facts. T1 (D-UX-34): a line's and a section's Why?, closed, drawn only once its section is
 // opened, so none before any tap: what it is, why it costs what it does, what to check, with sources still as reported.
-{
+if (touched('/estimate/')) {
   const BUDGET = 400;
   const cases = [
     ['a 2 BHK flat\'s interiors', async (page) => {
@@ -1028,7 +1039,7 @@ for (const scheme of ['light', 'dark']) {
 // The construction estimate typed from a quotation (P2), the second path, by hand: excavation 45 cum × 350 = 15,750 and
 // RCC 28 cum × 9,500 = 2,66,000; works 2,81,750; GST at 18% 50,715; no contingency; total 3,32,465; per sq ft 3,32,465 ÷
 // 1,200 = 277.05.
-{
+if (touched('/estimate/')) {
   const { ctx, page, v } = await open('/estimate/', { scheme: 'light' });
   await page.locator('#typed-path > summary').click();
   await page.check('#fld-kind-construction');
@@ -1083,7 +1094,7 @@ for (const scheme of ['light', 'dark']) {
 // all. Expert mode asks every figure (54 with one product line).
 const REP_DEFAULT = 25;
 const REP_FIELDS = 'main input:not(#download input):not(#benchmarks input)';
-{
+if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
   if (!(await page.isChecked('#fld-mode-simple'))) v('the project report opens in expert mode');
   const fields = await page.locator(REP_FIELDS).count();
@@ -1204,7 +1215,7 @@ const REP_FIELDS = 'main input:not(#download input):not(#benchmarks input)';
 // loan; general category, a village, manufacturing. The margin money is 25% of PMEGP's cost of 31,23,424.66,
 // Rs. 7,80,856; cash at the end of 2026-27 is 42,793. With fixed costs of 25 L, the engine's cash (checked by
 // report-check.ts's own route) goes lowest in 2030-31, 49,07,813 short.
-{
+if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'dark' });
   await page.check('#fld-mode-expert');
   await page.check('#fld-borrower-firm');
@@ -1246,7 +1257,7 @@ const REP_FIELDS = 'main input:not(#download input):not(#benchmarks input)';
 // limit, 15 L in all, so Tarun Plus, only once a Tarun loan is ticked as repaid. CGFMU's fee in 2026-27 by hand: 1% of
 // 12,00,000 and of 3,00,000 for 12 months, 15,000. Above 20 L in all it stops. With no scheme and CGTMSE ticked, its slab
 // for 15 L is 0.55%: 6,600 on the term loan and 1,650 on the limit, 8,250.
-{
+if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
   for (const id of ['#fld-mode-expert', '#fld-borrower-firm', '#fld-scheme-mudra', '#fld-tl-repayment-monthly']) await page.check(id);
   for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-furniture', '2 L'], ['#fld-cost-preliminary', '1 L'],
@@ -1280,7 +1291,7 @@ const REP_FIELDS = 'main input:not(#download input):not(#benchmarks input)';
 // its materials at 70% 40,32,000; 75% of 30 days' debtors and stock, less 30 days' creditors:
 // (0.75 x 30 x 57,60,000 + (0.75 x 30 - 30) x 40,32,000) / 365 = 2,72,219, below the turnover method's 11,52,000.
 // The questions are in its own words; switching to expert mode writes what it assumed, and back, nothing is listed as changed.
-{
+if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
   const now = new Date(), sell = new Date(now.getFullYear(), now.getMonth() + 3, 1), month = `${sell.getFullYear()}-${String(sell.getMonth() + 1).padStart(2, '0')}`;
   for (const id of ['#fld-borrower-firm', '#fld-security-neither', '#fld-wcBy-worked']) await page.check(id);
@@ -1307,7 +1318,7 @@ const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await
 // Home (HOME1b, D-UX-114): each tool once, in one block with one button, which opens the tool filled with its intro's
 // fictional case; each tool says so above its answers and reads as the intro does (site/src/home/story.ts, its figures
 // worked by hand in tests/home-story.test.ts).
-{
+if (touched('/')) {
   const { ctx, page, v } = await open('/', { scheme: 'light' });
   const blocks = await page.locator('#tools [data-tool]').evaluateAll((els) => els.map((e) => [e.dataset.tool, [...e.querySelectorAll('a[href]')].map((a) => a.getAttribute('href'))]));
   if (blocks.map(([id]) => id).join() !== 'dscr,estimate,report,cma') v(`home shows the tool blocks ${blocks.map(([id]) => id).join(', ')}; want dscr, estimate, report, cma, each once`);
@@ -1315,7 +1326,8 @@ const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await
   await ctx.close();
 }
 for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'], ['/estimate/', 'pl-summary', /· Pune · 1,000 sq ft · 2 BHK · Standard$/, 'the Pune flat'],
-  ['/project-report/', 'rep-status', 'Provisional: 1 still to answer', 'case R, its cash short in 2027-28 as at 70 lakh of sales'], ['/cma/', 'cma-status', 'Complete', 'case W']]) {
+  ['/project-report/', 'rep-status', 'Provisional: 1 still to answer', 'case R, its cash short in 2027-28 as at 70 lakh of sales'], ['/cma/', 'cma-status', 'Complete', 'case W']]
+  .filter(([path]) => touched('/') || touched(path))) {
   const { ctx, page, v } = await open(`${path}?case=home`, { scheme: 'light' });
   if (!(await page.getByTestId('home-case').count())) v(`${path}?case=home does not say it is filled with the home page's case`);
   await expectText(page, v, id, want, `${step} from home`);
@@ -1327,7 +1339,7 @@ for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'
 // is 1,04,00,000 (25% of 520 L less the 5% margin of 26 L, the net working capital of 23.8 L being less). The default
 // path is the owner's short CMA: 25 heads for each of five years, the limit now and, from MV4 (D-UX-56), fresh or renewal:
 // 127 fields (D-UX-12's count).
-{
+if (touched('/cma/')) {
   const { ctx, page, v } = await open('/cma/', { scheme: 'light' });
   if (await page.locator('#more-options').evaluate((d) => d.open)) v('the CMA page opens with More options open');
   const fields = await cmaFields(page);
@@ -1373,7 +1385,7 @@ for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'
 // no collateral. It misses five levels; the plan counts the promoters' loans, raises 2027-28's sales 5.2% to 2,52,48,000
 // and asks collateral of 3,11,112, still short on the current ratio; with the promoters' most at 10 L it brings 5,45,455
 // of capital instead of the collateral and meets every level. "Use this plan" writes the cells; Undo puts them back.
-{
+if (touched('/cma/')) {
   const { ctx, page, v } = await open('/cma/', { scheme: 'light' });
   const M = { sales: [150, 165, 180, 200, 240], otherIncome: [0, 0, 0, 0, 0], materials: [103, 114, 126, 140, 170], otherDirect: [15, 17, 18, 20, 25],
     employees: [9, 10, 11, 12, 14], sga: [6, 7, 7, 8, 10], depreciation: [5, 5, 5, 5, 5], wcInterest: [7.5, 8, 8.5, 9, 12.5], tlInterest: [4.5, 4, 3.5, 3, 2.5],
@@ -1410,7 +1422,7 @@ for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'
 // Reading an audited statement (U1, D-UX-48): the fictional statement K (tests/fixtures/statement-k.ts), read on the
 // phone; a pretend Worker answers with the pointers tests/read.test.ts made, as an honest reader would. Only the text
 // lines may leave the page, all eight checks must tie, and nothing may reach the forms until the borrower ticks it.
-{
+if (touched('/cma/')) {
   const { ctx, page, v } = await open('/cma/', { scheme: 'dark' });
   const fixture = (f) => fileURLToPath(new URL(`../tests/fixtures/${f}`, import.meta.url));
   const answer = await readFile(fixture('statement-k.answer.json'), 'utf8');
@@ -1447,12 +1459,12 @@ for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'
 }
 
 // Review-by dates (Q2, D-DATA-19): nothing is flagged while in time; a year on, dscr.json's and tax.json's passed dates show beside their sources.
-{
+if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
   if (await page.getByTestId('review-due').count()) v('a source is flagged due for review on 02-10-2026');
   await ctx.close();
 }
-{
+if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light', at: '2027-10-01T10:00:00+05:30' });
   const due = await page.getByTestId('review-due').allTextContents();
   if (!due.includes('Due for review since 30-09-2027.')) v(`dscr.json's passed review-by date is not flagged on 01-10-2027 (seen: ${due.join(' | ') || 'none'})`);
@@ -1463,7 +1475,7 @@ for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'
 // its plan used, More options opened, a PDF and an Excel copy, a field marked wrong, then leaving: every batch has the
 // Worker's shape, holds each step, and holds none of the typed figures in any form. Built without the Worker's address
 // (as now), a page sends nothing.
-{
+if (touched('/dscr/')) {
   const { check } = await import('../worker/src/event-shape.ts');
   const events = [];
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light', events });
@@ -1508,7 +1520,7 @@ for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'
 }
 
 // Q1: in WhatsApp's own browser the downloads carry the way out to the phone's: on Android a link to the same page.
-{
+if (touched('/estimate/')) {
   const UA = 'Mozilla/5.0 (Linux; Android 13; SM-A145F; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/129.0.0.0 Mobile Safari/537.36 WhatsApp/2.24.21.80';
   const { ctx, page, v } = await open('/estimate/', { userAgent: UA });
   await page.check('#fld-work-renovate');
@@ -1526,15 +1538,15 @@ for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'
 }
 
 // The design team's measured checks (DT1, docs/DESIGN.md): every page at 360 and 1280 px, light and dark, 320 px, reduced motion.
-const design = await designChecks({ browser, BASE, pages, violations });
-const load = await loadCheck({ browser, BASE, pages, violations });
-const forbidden = await forbiddenChecks({ browser, BASE, violations });
+const design = await designChecks({ browser, BASE, pages, quick, violations });
+const load = await loadCheck({ browser, BASE, pages, quick, violations });
+const forbidden = await forbiddenChecks({ browser, BASE, pages, motion: touched('/'), violations });
 await browser.close();
 server.close();
-console.log(`site check: ${pages.length} pages at 390 px, light and dark: ${violations.length} violations`);
+console.log(`site check: ${pages.length} pages at 390 px, light and dark: ${violations.length} violations${quick ? ` (--quick: ${pages.join(' ')}; the full check before a PR)` : ''}`);
 console.log(`design checks: ${design.lines} findings measured (each held in scripts/design-baseline.json), ${design.tokens.rawColour} raw colour classes, ${design.tokens.arbitraryValue} arbitrary values${design.lower.length ? `; lower the baseline: ${design.lower.join(', ')}` : ''}${design.fixed ? `; ${design.fixed} known findings fixed, take them out of the baseline` : ''}`);
 console.log(`load measure: ${load.pages} pages against scripts/load-baseline.json, ${load.rose} counts rose, ${load.fell} fell${load.fonts ? '' : '; other fonts here than the baseline\'s, so the answer\'s place and the out-of-sight count are not compared'} (docs/LOAD-MEASURE.md)`);
-console.log(`FinSight's rules: ${forbidden.pages} page${forbidden.pages === 1 ? '' : 's'} in the new look (docs/DESIGN.md), F1 to F19; home weighs ${forbidden.weight} KB as it loads (cap ${WEIGHT_CAP} KB)`);
+console.log(`FinSight's rules: ${forbidden.pages} page${forbidden.pages === 1 ? '' : 's'} in the new look (docs/DESIGN.md), F1 to F19; ${forbidden.weight ? `home weighs ${forbidden.weight} KB as it loads (cap ${WEIGHT_CAP} KB)` : 'no motion, frame or weight check (home not touched)'}`);
 console.log(`downloads on a slow phone (CPU ×4): ${timings.length} timed, slowest ${Math.max(0, ...timings.map((t) => t[1]))} ms (cap ${SLOW_MS} ms)`);
 for (const x of violations) console.log(`  - ${x}`);
 // In CI each violation is also an annotation, readable where the job's log is not (UX4).

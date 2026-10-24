@@ -7,3 +7,4 @@ dist/
 .env.*
 *.local
 worker/worker-configuration.d.ts
+.claude/sessions-started.json

@@ -317,7 +317,7 @@ export async function countPage(browser, BASE, path, { text = false, effectsToo 
  * The site check's part: every built page against scripts/load-baseline.json. A count that rose, a count that fell, a page
  * without a baseline and a page whose answer is not marked are violations, each with the command that settles it.
  */
-export async function loadCheck({ browser, BASE, pages, violations }) {
+export async function loadCheck({ browser, BASE, pages, quick = false, violations }) {
   const base = JSON.parse(await readFile(BASELINE, 'utf8'));
   const fonts = (await fontProbe(browser, BASE)) === base.fontProbe;
   let rose = 0, fell = 0;
@@ -338,7 +338,7 @@ export async function loadCheck({ browser, BASE, pages, violations }) {
       }
     }
   }
-  for (const path of Object.keys(base.pages)) if (!pages.includes(path)) violations.push(`load: ${path} is in the baseline but not built (take it out of scripts/load-baseline.json)`);
+  if (!quick) for (const path of Object.keys(base.pages)) if (!pages.includes(path)) violations.push(`load: ${path} is in the baseline but not built (take it out of scripts/load-baseline.json)`);
   return { pages: pages.length, rose, fell, fonts };
 }
 

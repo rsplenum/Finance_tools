@@ -21,7 +21,7 @@ Each row (D-TECH-29, D-TECH-26) names a deliverable the owner can open, a budget
 SEO2's row is in `docs/ROADMAP.md`: the checks chain runs it after TERMS1 once the owner's five answers are recorded. After Monday (rows in `docs/ROADMAP.md`): VID2, COMP1, DTR1, SCOUT1, SEO3, SEO4, LEGAL2 (after PRIV1 and TERMS1, so the lawyer reads once), NAME3, LAUNCH, P1d.
 
 ## End of every session
-1. `npm run verify`: the checks, one line each, 0 violations. One line in `docs/DECISIONS.md` per decision.
+1. `npm run verify`: the checks, one line each, 0 violations (between steps, `-- --quick` checks only the pages the change touches, D-TECH-63; the full run before the PR). One line in `docs/DECISIONS.md` per decision.
 2. `npm run cost`: the session's steps and cost from its log; add a line to "Budgets and actuals" below, keeping the last ten. Then the tracker (its link above): this session's doc in `rows` (its state and steps), the next row's, and any answered item in `waiting`.
 3. Lessons (the `lessons` skill) only after a correction, redone work or a failure that could recur.
 4. This file: the state line and the next row (deliverable, budget, plan). A new trap goes to `docs/GOTCHAS.md`, a to-do for the owner to `docs/OWNER.md`. Commit, draft PR; the branch preview builds itself.
@@ -30,6 +30,7 @@ SEO2's row is in `docs/ROADMAP.md`: the checks chain runs it after TERMS1 once t
 ## Budgets and actuals
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 24-10-2026 | CHK1: `npm run verify -- --quick`, the site check on the touched pages only (D-TECH-63); D-TECH-62 rebased onto main | S, high | about 60 steps; the 12-minute full verify took the most. Quick: a doc 1 s, `/terms/` 13 s, the DSCR with home 163 s |
 | 24-10-2026 | HOME1d: the DSCR's five-beat scene in look C (D-UX-125 to D-UX-129) | L, Extra | about 115 steps; the frames at each beat and three 15-minute site checks took the most |
 | 24-10-2026 | NUM1: lakh and crore from the engine in home's intros and the estimate's headline (D-UX-152) | S, high | about 50 steps; two site checks (a sideways scroll at 320 px, then the words' raise) took the most |
 | 24-10-2026 | SEC1: the Worker hardened, a byte cap, the answer checked, `/api/e` capped, Node pinned (D-TECH-61) | S, high | about 58 steps; two 12-minute verifies (the container's Chromium, then the privacy page's load) took the most |

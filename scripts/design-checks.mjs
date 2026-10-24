@@ -371,7 +371,7 @@ export async function openAt(browser, url, { width = 'phone', scheme = 'light', 
  * token counts. A line already counted in the baseline's `known` (today's defects, the first review's findings) is
  * reported only when its count grows; every other line is a violation.
  */
-export async function designChecks({ browser, BASE, pages, violations }) {
+export async function designChecks({ browser, BASE, pages, quick = false, violations }) {
   const base = JSON.parse(await readFile(BASELINE, 'utf8'));
   const seen = new Map();
   const note = (key) => seen.set(key, (seen.get(key) ?? 0) + 1);
@@ -407,7 +407,8 @@ export async function designChecks({ browser, BASE, pages, violations }) {
   }
   const known = base.known ?? {};
   for (const [key, n] of seen) if (n > (known[key] ?? 0)) violations.push(`design: ${key}${n > 1 ? ` (${n} times)` : ''}`);
-  const gone = Object.keys(known).filter((k) => !seen.has(k) || seen.get(k) < known[k]);
+  // --quick: a known line is fixed only on a page that was opened ('/ ' is home's own prefix).
+  const gone = Object.keys(known).filter((k) => (!quick || pages.some((p) => k.startsWith(`${p} `))) && (!seen.has(k) || seen.get(k) < known[k]));
   const t = await tokenCounts();
   for (const k of ['rawColour', 'arbitraryValue']) if (t[k] > base[k]) violations.push(`design: ${t[k]} ${k === 'rawColour' ? 'raw colour classes' : 'arbitrary values'} in site/src, more than the ${base[k]} allowed (use the tokens in docs/DESIGN.md)`);
   const lower = ['rawColour', 'arbitraryValue'].filter((k) => t[k] < base[k]).map((k) => `${k} ${base[k]} → ${t[k]}`);
