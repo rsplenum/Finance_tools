@@ -15,6 +15,7 @@ const OWN = [
   [/^site\/src\/report\//, ['/project-report/', '/']],
   [/^site\/src\/cma\//, ['/cma/', '/']],
   [/^site\/src\/(Policy\.astro|policy\.ts)$/, POLICIES],
+  [/^site\/src\/privacy\.ts$/, ['/privacy/']],
   [/^site\/sitemap\.mjs$/, ['/site-map/']],
 ];
 // Never read by the build or the site check. docs/TRADEMARKS.md and tests/fixtures/ are (the brand notice, U1, REP2).

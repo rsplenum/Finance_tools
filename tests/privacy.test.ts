@@ -1,15 +1,12 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
-import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { CAP_DAYS as WORKER_CAP_DAYS } from '../worker/src/caps';
-import { KEEP_DAYS as WORKER_KEEP_DAYS } from '../worker/src/events';
 import { KINDS, WIDTHS } from '../worker/src/event-shape';
 import { CAP_DAYS, KEEP_DAYS, privacySections } from '../site/src/privacy';
 
 // Each fact the privacy page states, held against the code that makes it true (PRIV1, D-BIZ-07).
 const read = (p: string) => readFileSync(p, 'utf8');
-const filesOf = (dir: string): string[] => readdirSync(dir).flatMap((f) => {
-  const p = join(dir, f);
+const filesOf = (dir: string): string[] => readdirSync(dir).flatMap((f: string): string[] => {
+  const p = `${dir}/${f}`;
   return statSync(p).isDirectory() ? filesOf(p) : /\.(ts|tsx|astro|mjs)$/.test(f) ? [p] : [];
 });
 const site = filesOf('site/src'), worker = filesOf('worker/src');
@@ -23,8 +20,9 @@ describe('the privacy page against the code', () => {
     }
   });
   it('states the Worker’s own keeping times', () => {
-    expect(KEEP_DAYS).toBe(WORKER_KEEP_DAYS);
-    expect(CAP_DAYS).toBe(WORKER_CAP_DAYS);
+    // The Worker's modules need its own types, so their numbers are read from the source.
+    expect(read('worker/src/events.ts')).toContain(`export const KEEP_DAYS = ${KEEP_DAYS};`);
+    expect(read('worker/src/caps.ts')).toContain(`export const CAP_DAYS = ${CAP_DAYS};`);
     expect(read('worker/src/caps.ts')).toMatch(/expirationTtl: CAP_DAYS \* 86400/);
     const limit = read('worker/wrangler.jsonc').match(/"EVENTS_LIMIT".*"period": (\d+)/)?.[1];
     expect(limit).toBe('60');
