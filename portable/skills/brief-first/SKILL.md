@@ -18,6 +18,8 @@ Before designing, write down (and show the owner when it is new or unclear):
 
 The inputs the owner lists for a page are its default path: a ceiling, not a floor to build on. When the maths needs a fact the list lacks, prefer an assumption stated on the page over a new question. Ask first what narrows later questions (purpose, product, type), and take each fact once, shown elsewhere read-only.
 
+What the owner attaches (an analysis, a design document, a catalogue) is read in full before any question or choice; where it already answers a question or names a method, follow it over the repo's older notes and ask only what it leaves open. A draft the owner will judge is made with the owner's own tool for the job and from their catalogue where one exists; a hand-made stand-in is called that before the owner judges it.
+
 ## 2. Give the tradeoffs before building
 
 Give the tradeoffs the owner may not have considered: what an assumption does to the answer and in which direction, who is served and who is not, accuracy against the number of fields, and what it costs later (upkeep, a second layout, payment, legal). Where it applies, name the standing one: a professional's completeness against a customer's speed to an answer. Keep to the three to five that could change the decision, each with a recommendation; a survey of every option wastes the owner's tokens. Then build, unless the choice is genuinely theirs.
