@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FinSight — Motion Review and Visual QA</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#121d31;--text:#e8edf7;--muted:#aebbd1;--line:#2a3853;--accent:#f0b323}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:linear-gradient(180deg,#0b1020,#10192a 45%,#0b1020);color:var(--text);font:16px/1.68 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1000px;margin:auto;padding:28px 20px 70px}header{border-bottom:1px solid var(--line);padding:22px 0 28px}.eyebrow{color:var(--accent);font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:.78rem}
+h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.12;letter-spacing:-.04em;margin:.45rem 0}h2{font-size:clamp(1.4rem,3vw,2rem);line-height:1.25;margin:2rem 0 1rem}h3{font-size:1.3rem;color:#f4ca5c;margin:2rem 0 .6rem}h4{font-size:1.05rem;margin:1.25rem 0 .35rem;color:#fff}
+p,li{color:#d5deec}a{color:#f4ca5c;overflow-wrap:anywhere}.muted,small,figcaption{color:var(--muted)}section{padding:12px 0 28px;border-bottom:1px solid var(--line);margin-bottom:26px}
+.callout{border-left:4px solid var(--accent);background:#172239;padding:14px 18px;border-radius:0 12px 12px 0;margin:18px 0}.beat,.mini-card{border:1px solid var(--line);background:rgba(18,29,49,.9);border-radius:14px;padding:14px 17px;margin:14px 0}.beat small{color:var(--accent);font-weight:800;letter-spacing:.08em}
+.visuals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:20px 0}figure{margin:0;border:1px solid var(--line);background:var(--panel);border-radius:14px;overflow:hidden}figure img{width:100%;height:210px;object-fit:cover;display:block;background:#182239}figcaption{padding:10px 12px}
+table{border-collapse:collapse;width:100%;margin:18px 0}th,td{border:1px solid var(--line);padding:10px;text-align:left;vertical-align:top}th{background:#1a2740;color:white}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#070c16;border:1px solid var(--line);border-radius:12px;padding:15px;overflow-x:auto;font-size:.87rem;line-height:1.55}code{font-family:ui-monospace,Menlo,Consolas,monospace;color:#f5d67a}
+nav{border:1px solid var(--line);border-radius:14px;padding:14px 18px;background:rgba(18,29,49,.7)}nav a{text-decoration:none}footer{color:var(--muted);font-size:.9rem;margin-top:32px}
+@media(max-width:620px){main{padding:18px 13px 50px}.visuals{grid-template-columns:1fr}figure img{height:190px}th,td{padding:7px;font-size:.9rem}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}@media print{body{background:white;color:#111}p,li,td{color:#222}h1,h2,h3,h4{color:#111}section,.callout,.beat,.mini-card,figure,pre,nav{background:white;border-color:#ccc}}
+</style></head><body><main>
+<header><div class="eyebrow">FinSight · Product & Motion Review</div><h1>Motion Design Assessment & Visual QA Workflow</h1><p class="muted">Four consolidated responses: creative direction, inspection workflow, website access, and recording review.</p><p><a href="https://3529d0dc.finance-tools-9if.pages.dev/#tools" target="_blank" rel="noopener noreferrer">Open the FinSight preview ↗</a></p></header>
+<nav><strong>Contents</strong><ol><li><a href="#s1">Expert assessment and revised DSCR script</a></li><li><a href="#s2">How to fix visual inspection</a></li><li><a href="#s3">Website access check</a></li><li><a href="#s4">Screen recording review</a></li></ol></nav>
+<section id="s1"><div class="eyebrow">Response 1 of 4</div><section><h2 class="section-title">1. Expert assessment and revised DSCR script</h2>
+<h2>My expert assessment: the direction is right, but I would change the creative brief before implementation.</h2>
+<p>Having reviewed the attached <em>Analyzing Motion Graphics</em> PDF and the proposed DSCR animation script, my recommendation is to proceed with HOME1c—but treat it as a carefully designed motion narrative, not simply a more elaborate animation.</p>
+<div class="callout"><strong>The animation should explain the computation, not decorate it.</strong></div>
+<p>The reference uses connecting paths, moving pulses, a scanning magnifier, targeting brackets, kinetic text and components that lift and snap into place. These SaaS explainer techniques make invisible software processes understandable. FinSight can show where a ratio came from, which year is weakest, what causes the shortfall and what changes when an assumption is modified.</p>
+<h3>1. Verdict on Claude's six decisions</h3>
+<h4>Live animation from engine figures — Agree</h4><p>Use the same validated calculation result as the actual tool. Never maintain separate hard-coded financial values that can drift out of sync.</p>
+<h4>Marigold for motion, red for failure — Strongly agree</h4><p>Marigold indicates activity, analysis and attention; red indicates a genuine failed test or shortfall; green indicates a defined passing test.</p>
+<h4>Lightweight animation helper instead of GSAP — Agree, with a caveat</h4><p>SVG and CSS can handle line drawing, pulses, brackets, scanning and transitions. A small timeline utility is reasonable if testable and maintainable. Measure bundle cost; don't build a framework merely to avoid a dependency.</p>
+<h4>Stack the visual flow on narrow phones — Strongly agree</h4><p>Do not shrink a desktop diagram. Stack inputs, calculation engine, annual results and weakest-year analysis vertically, with connections redrawn for mobile.</p>
+<h4>Captions rather than voice — Agree</h4><p>Captions synchronise with figures, work silently and avoid voice-generation/localisation complexity. Make the captions available as ordinary text too.</p>
+<h4>Ten seconds of automatic animation — Revise</h4><p>Ten seconds is not inherently too long; automatically replaying a complex animation while people read is the risk. Start with a tightly choreographed sequence and test it.</p>
+<h3>Recommended duration and controls</h3>
+<p>Start with 7–9 seconds for the full DSCR story. Prefer deliberate playback; test viewport autoplay separately. Do not relax the five-second motion rule globally. Define a narrow educational-explainer exception if needed:</p>
+<ul><li>No perpetual looping or automatic restart on scroll-back.</li><li>Visible replay and pause controls.</li><li>Reduced-motion mode that presents the same final result without animation.</li></ul>
+<h3>2. Script: strong structure, four issues to resolve</h3>
+<p>The core sequence is <strong>inputs → calculation → target → shortfall → weakest year → intervention → improved result.</strong></p>
+<ul><li><strong>Too much in one sentence:</strong> use five short beats answering what is analysed, how it works, where the problem is, what can change, and what happens next.</li>
+<li><strong>Don't imply a longer term always fixes everything:</strong> recalculate the schedule and every year's DSCR; show the actual outcome, even if some years still fail. The result determines the animation, not the other way around.</li>
+<li><strong>Explain the shortfall:</strong> show cash available for debt service against debt service due, not just red rows.</li>
+<li><strong>Avoid competing effects:</strong> a lens, pulses, brackets, scan lines and glowing cards should not all demand attention simultaneously.</li></ul>
+<h3>3. Revised five-beat DSCR script</h3>
+<div class="beat"><small>BEAT 1 · 0–1.2 SECONDS</small><h4>The inputs</h4><p>“Start with the business and its proposed loan.” Data cards enter; connector lines draw toward the engine; one marigold pulse travels the path.</p><p><em>Motion:</em> trim-path drawing, staggered reveals, travelling pulse.</p></div>
+<div class="beat"><small>BEAT 2 · 1.2–2.6 SECONDS</small><h4>The calculation</h4><p>“Each year's cash flow is compared with its debt repayments.” Annual rows appear with cash-flow bars, debt-service markers and computed ratios.</p><p><em>Motion:</em> sequential reveal, numerical count-up, focus transition.</p></div>
+<div class="beat"><small>BEAT 3 · 2.6–4.2 SECONDS</small><h4>Find the weakest year</h4><p>“One year is the constraint.” The scan stops on the actual weakest year; red brackets identify a shortfall only if the target is missed.</p><p><em>Motion:</em> scan sweep, target brackets, controlled focus pull.</p></div>
+<div class="beat"><small>BEAT 4 · 4.2–5.8 SECONDS</small><h4>Test a change</h4><p>“Now test a longer repayment term.” The term value lifts and slots into place; the schedule recomputes and affected values update.</p><p><em>Motion:</em> corner brackets, spring-loaded slot-in, linked-value transition.</p></div>
+<div class="beat"><small>BEAT 5 · 5.8–8 SECONDS</small><h4>Show the outcome</h4><p>“See whether the revised schedule meets the target.” Ratios settle; the weakest year is checked first; only calculated results determine final status.</p><p><em>Motion:</em> spring settling, restrained result reveal, semantic status transition.</p></div>
+<p>These are proposed timings, not verified model results. If the scenario doesn't pass, the ending must show what remains below target. Finish on a stable, readable state.</p>
+<h3>4. Reference techniques and visual examples</h3>
+<p>Use SVG Bezier paths, trim-path drawing, spring entrances, travelling pulses, scanning and slot-in transitions selectively.</p>
+<div class="visuals">
+<figure><img src="https://images.openai.com/static-rsc-4/gelod7rfu6H2HK9fTfsNv3fLjAKliYe9vOBnXHaEhQ-652stNETa42-SAOYQXdzKmd_AYVypR2EjeUyrEXZfqileaolvO-Kk61MKD06YglyN-Tu_Kl2iUbIwCsPSOvXQjJ-ONTGOYrbHLC_c7IX_rbCFZp1iGbOTJDekQPG1aMlSLIaiDcIkYInIeox3gcPQ?purpose=fullsize" alt="Motion graphics reference"><figcaption>Drawn paths and travelling data</figcaption></figure>
+<figure><img src="https://images.openai.com/static-rsc-4/byBFIR2Wuqac1y71lgHHNpFBHsA7Xl_L0g0ZneCXWp2xXdDzvrBgz0KDPGQRTWhGUQHyM3qXgatFad1lgQFI-I4rLYdPWKWOUk5DrWbOlgoAmoZYmV71eK7Z2jZXQoefs-rPSUAXo9j01hL-T3haCIAIC4arp9jFxzzx4iqtW29JmS-R55paChaK9FCokCuf?purpose=fullsize" alt="Scanning interface reference"><figcaption>A purposeful scanning lens</figcaption></figure>
+<figure><img src="https://images.openai.com/static-rsc-4/wizqBToFT7LLDvxN_QqZa0cLYdOOVAzCYvuLOKQ9rASdDuHLMI1O7LJbvlolXD4Rtd3DxLiEfeO5_sK-up58IA7K1tCoKeBFB-bzk3NTrblK8ujvZMjb6Rcpg25DllqywB5phUwWlRM2ijsORopJwDy9PRTBVEAd9LEfyfWzT5gsIVnWYnMUuMPfVRIzfhj-?purpose=fullsize" alt="HUD targeting reference"><figcaption>Precision targeting</figcaption></figure>
+<figure><img src="https://images.openai.com/static-rsc-4/PW-5lCMrnrGJgCaC4HwrRxBxmE9r3I245lKDzAacSJnVDMLcueZD8CmfuncsSMynnjaHAshmZlu6xxO8VMzyB81vIX_U9CYGKyRNyBKRgz8FReupqm3ma-bo88HhlPqfBRtSNNgau7A_lMCUP8LtRQfnEQ5Qek3Q8N-yRTaWEGDyHSn-Eg9apuPBPJwU9nyO?purpose=fullsize" alt="Animated dashboard reference"><figcaption>Components that physically move</figcaption></figure>
+</div><p class="muted">These are visual references, not frames from the supplied video.</p>
+<p>Premium motion comes from causality, continuity, timing, hierarchy and restraint—not glow or effect density.</p>
+<h3>5. Engineering requirements</h3>
+<h4>Separate animation from the calculation engine</h4><p>Pass a typed, immutable snapshot of actual results to the animation. Never calculate financial outcomes in the animation itself.</p>
+<pre><code>type DscrAnimationSnapshot = {
+  annualResults: Array&lt;{
+    year: string;
+    cashAvailable: number;
+    debtService: number;
+    dscr: number | null;
+    meetsTarget: boolean | null;
+  }&gt;;
+  targetDscr: number;
+  weakestYear: string | null;
+  proposedTermMonths: number;
+  revisedAnnualResults: Array&lt;{
+    year: string;
+    dscr: number | null;
+    meetsTarget: boolean | null;
+  }&gt;;
+};</code></pre>
+<p>This is illustrative, not a claim these exact fields exist in the repository. Adapt it to actual engine types. No duplicated constants, invented intermediate results, or success stamp without evidence.</p>
+<h4>Build reusable motion primitives</h4><p><code>DrawnPath</code>, <code>FlowPulse</code>, <code>FocusBracket</code>, <code>ScanSweep</code>, <code>ValueTransition</code>, <code>SpringCard</code>, <code>NarrationCaption</code>, and <code>ResultReveal</code>. Keep the visual language consistent across DSCR, CMA, project reports and construction estimation, while tailoring the explanation to each tool.</p>
+<h4>Make the animation testable</h4><p>Use a deterministic finite state machine. Test completion, replay, changed inputs, reduced motion, keyboard navigation, 360px layout, invalid inputs and the absence of misleading success states. Measure bundle impact and frame performance.</p>
+<h3>6. Future interactive version</h3><p>After the first release is polished, offer “Try a different repayment term.” Recalculate the real model and update the weakest year, ratios and target comparison. First establish a high-quality reference implementation, then generalise.</p>
+<h3>7. Brief for Claude</h3>
+<p><strong>Objective:</strong> Build a technically accurate DSCR motion explainer inspired by the supplied video. Explain the calculation, reveal the weakest year, demonstrate a proposed change and communicate the recalculated result.</p>
+<ul><li>Use five beats: inputs → calculation → weakest year → proposed change → verified outcome.</li><li>Target 7–9 seconds; deliberate playback, pause and replay; no looping. Test viewport autoplay separately. Keep the global five-second rule except for a documented narrow educational-explainer exception.</li><li>Marigold for active paths, red for genuine shortfalls, green only for verified passes. Avoid constant motion, gratuitous glitch effects and excessive glow.</li><li>Read design rules, HANDOFF, motion reference and current implementation before editing.</li><li>Use real engine outputs and existing fixtures. Verify the 60-to-80-instalment scenario; change the story if the model disagrees.</li><li>Use reusable primitives and a deterministic timeline; keep a readable 360px mobile composition.</li><li>Respect reduced motion, provide pause/replay, accessible captions, stable final state, and measure bundle/mobile performance.</li><li>Prototype DSCR first, show a rendered preview, compare before/after, and run the full verification pipeline. Do not claim checks that weren't performed.</li></ul>
+<p><strong>Acceptance:</strong> causal motion, engine-accurate figures, correct weakest year, recalculated outcome, readable mobile composition, and sophistication through timing and precision.</p>
+<h3>Final recommendation</h3><p>Approve the work only when it achieves cinematic quality, explanatory quality and financial integrity. The guiding principle is: <strong>make the invisible computation visible.</strong></p>
+<p class="muted">Limitation at the time of this assessment: the attached analysis and script were reviewed, but a reliable rendered inspection of the Pages preview had not yet been obtained.</p>
+</section></section><section id="s2"><div class="eyebrow">Response 2 of 4</div><section><h2 class="section-title">2. How to fix the live-inspection limitation</h2>
+<h2>How to fix this</h2><p>Stop treating the live Pages URL as the only way to inspect the animation. Create a repeatable workflow to inspect the rendered page, observe motion over time, and compare it with the intended design.</p>
+<ol><li><strong>Access:</strong> Can the inspection environment open the Cloudflare preview?</li><li><strong>Observation:</strong> Can it capture the animation at the right moments, rather than only a static page?</li><li><strong>Verification:</strong> Do the visuals match the DSCR calculations and work on mobile?</li></ol>
+<h3>Recommended workflow</h3><div class="mini-card"><h4>1. Browser-based inspection</h4><p>Open the exact preview in a real browser, wait for the page to settle, capture desktop and mobile screenshots, and inspect console errors, failed requests and layout overflow.</p></div>
+<div class="mini-card"><h4>2. Capture motion</h4><p>Record the animation end-to-end or capture frames at fixed timestamps. A final screenshot cannot establish whether the path draws smoothly or the correct year is highlighted.</p></div>
+<div class="mini-card"><h4>3. Verify code and calculations</h4><p>Inspect the component, animation state machine and DSCR engine. Run the scenario and compare displayed values, weakest year and final status with calculation outputs.</p></div>
+<h3>Claude Code task prompt</h3><pre><code>Establish reliable visual inspection for FinSight.
+- Read CLAUDE.md, docs/HANDOFF.md, motion references, design rules and DSCR intro.
+- Identify framework, package manager, routes, and test commands.
+- Check for Playwright; add it only if appropriate and consistent with the repo.
+- Open local dev server and the target route; capture desktop/mobile screenshots.
+- Record console errors and failed network requests.
+- Find a test-only way to reset/control the timeline; capture beginning,
+  intermediate and final frames, plus video if supported.
+- Trace displayed values to the real calculation engine; test the initial case
+  and proposed term change; verify weakest year and final state.
+- Test reduced motion, replay and a narrow mobile viewport.
+- Deliver a README, repeatable test, artifacts and a report separating verified
+  findings from assumptions.
+- Never claim a test or visual inspection was performed unless it was.</code></pre>
+<h3>Run local first, then deployed preview</h3><ol><li>Run the app locally and open the DSCR route.</li><li>Capture desktop layout.</li><li>Reset and play the animation, capturing intermediate stages.</li><li>Repeat at 360px mobile width.</li><li>Repeat on the deployed Pages URL for deployment-specific issues.</li></ol>
+<p><strong>Important:</strong> a green automated test does not prove the animation looks premium; someone must inspect the artifacts.</p>
+<h3>Keep evidence types separate</h3><table><thead><tr><th>Evidence</th><th>What it establishes</th></tr></thead><tbody><tr><td>Screenshots/recording</td><td>What the user sees</td></tr><tr><td>Browser tests/logs</td><td>Page behavior and loading</td></tr><tr><td>Calculation tests/code</td><td>Financial truthfulness</td></tr></tbody></table>
+<p>Verify all three independently, then bring them together.</p>
+</section></section><section id="s3"><div class="eyebrow">Response 3 of 4</div><section><h2 class="section-title">3. Website access check</h2>
+<h2>Can I open this website?</h2><p><strong>Yes — I was able to open your website.</strong></p><p>I retrieved the page at the exact URL, including the <code>#tools</code> route, and inspected its page content.</p><p>The FinSight homepage showed four tools: DSCR statement, construction estimate, project report, and CMA data. The DSCR example included the 60-instalment scenario, proposed change to 80 instalments, and displayed “Passes” outcome.</p><div class="callout"><strong>Important distinction:</strong> page-content access does not prove the animation was visually inspected in a live browser, nor that each displayed figure is connected to the calculation engine.</div><p><a href="https://3529d0dc.finance-tools-9if.pages.dev/#tools" target="_blank" rel="noopener noreferrer">Open the FinSight preview ↗</a></p>
+</section></section><section id="s4"><div class="eyebrow">Response 4 of 4</div><section><h2 class="section-title">4. Uploaded screen recording</h2>
+<h2>Reviewing the uploaded screen recording</h2><p>The attached 31.5-second screen recording shows the FinSight website in a mobile browser, including the DSCR statement, construction estimate, project report and CMA data tools.</p><p>It gives us a useful basis for reviewing the rendered experience rather than only the proposed script. The next step is to assess the DSCR animation's pacing, visual clarity, transitions, and whether the change from 60 to 80 instalments is communicated convincingly. Mobile layout and financial-figure presentation are also relevant.</p><div class="callout"><strong>Limitation:</strong> a screen recording cannot establish whether displayed values are connected to the calculation engine. That requires checking the implementation and calculation logic.</div>
+</section></section>
+<footer><p>The linked reference images are remote and require an internet connection; they may fail if the image host changes or blocks access. All text and layout are embedded in this HTML file.</p></footer></main></body></html>
