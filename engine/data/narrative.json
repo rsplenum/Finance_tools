@@ -1,6 +1,7 @@
 {
   "title": "The project report's words as an AI draft",
   "date": "2026-10-21",
+  "sure": "illustrative",
   "reviewBy": "2027-10-21",
   "status": "Set by Claude at the owner's request (REP2, D-AI-01, D-AI-02): an AI drafts six short sections from the user's own inputs, in simple words; this file's checks drop any sentence that holds a figure the user did not type, or a claim a new business cannot have. Nothing goes in the document until the borrower ticks that the words are true.",
   "source": "D-AI-01 (the owner's answer 3 in REP1, 20-10-2026) and Finline's report as the owner met it, finding 6 (docs/design-inputs/finline-2026-10-20.md): a business not yet started called reputable and well-established, with a strong market presence, a loyal customer base and CSR work with NGOs.",

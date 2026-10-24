@@ -1,6 +1,7 @@
 {
   "title": "Tax by borrower",
   "date": "2026-10-01",
+  "sure": "cross-checked",
   "reviewBy": "2027-03-31",
   "status": "Rates for tax year 2026-27 (April 2026 to March 2027), the first under the Income-tax Act, 2025. Public summaries say the Finance Act, 2026 kept the rates of FY 2025-26. Secondary sources only, not yet checked against the Act or the Finance Act: the official sites (incometaxindia.gov.in, incometax.gov.in, indiabudget.gov.in, egazette.gov.in) could not be opened from the session of 01-10-2026, and on 12-10-2026 (Q2) incometaxindia.gov.in refused this session (403 from its edge) and indiacode.nic.in timed out, so the rates stay as public summaries give them until the owner confirms them against the Act and the Finance Act, 2026. On 12-10-2026 the owner sent pages of the Act: they confirm the company's 22% (section 200(1)), the proprietor's slabs (section 202(1)'s Table) and the rebate to Rs. 12 lakh of Rs. 60,000 with its relief above (section 156(2) and (3)). The owner's pages of the Finance Bill, 2026 (section 2, rates of income-tax) give the 4% Health and Education Cess on income-tax and surcharge for the tax year 2026-27 (section 2(16)), and agree with the firm's 12% surcharge above Rs. 1 crore (section 2(2)'s Table, Sl. No. 5, and the Rs. 1 crore relief threshold for a firm in section 2(12)); a Bill, not the Act as passed. On 12-10-2026 the owner sent Part III of the First Schedule of the Finance Bill, 2026 (its pages 128 to 134), the rates for the tax year 2026-27 under the Income-tax Act, 2025: the firm's 30% (Paragraph C) and its 12% surcharge above Rs. 1 crore with marginal relief (Paragraph F, Table 1, Sl. No. 4, and Table 2, Sl. No. 4) match, so the firm is checked, against the Bill as introduced. Part III's opening words leave out the surcharge on income taxed under sections 200 and 202, so the proprietor's surcharges (10%, 15%, 25%) and the company's 10% stay from public summaries until the Table of section 2(12) of the Finance Bill, 2026, which sets them, is sent. Later years are taken at the same rates. Tax is worked out on profit before tax, nil on a loss, and not rounded to the nearest Rs. 10 as a return is. The borrower's CA confirms it; any other rate can be typed.",
   "borrowers": [
@@ -16,7 +17,7 @@
       "source": "The slabs: the Table of section 202(1); the rebate and its relief: section 156(2)(a) and (b) and 156(3); both of the Income-tax Act, 2025 as amended by the Finance Act, 2026, read on the copy the owner sent on 12-10-2026. The surcharge: cleartax.in on surcharge and marginal relief; it agrees with Paragraph F, Table 1, Sl. No. 1 (i) to (iii) of Part III of the First Schedule of the Finance Bill, 2026, but Part III leaves out the surcharge on income taxed under section 202, so it is not yet checked against section 2(12) of the Bill, which sets it. The 4% cess: section 2(16) of the Finance Bill, 2026",
       "kind": "secondary",
       "date": "2026-10-01",
-      "verified": false
+      "sure": "cross-checked"
     },
     {
       "id": "firm",
@@ -29,7 +30,7 @@
       "source": "The 30%: Paragraph C (every firm, on the whole of the total income); the 12% above Rs. 1,00,00,000: Paragraph F, Table 1, Sl. No. 4 (every firm or local authority), with its relief from Rs. 1,00,00,000 in Table 2, Sl. No. 4; Part III of the First Schedule of the Finance Bill, 2026 as introduced, pages 128 to 134, read on the copy the owner sent on 12-10-2026. The 4% cess: section 2(16) of the same Bill. A Bill, not the Act as passed",
       "kind": "primary",
       "date": "2026-10-12",
-      "verified": true
+      "sure": "verified", "read": "2026-10-12"
     },
     {
       "id": "company",
@@ -42,7 +43,7 @@
       "source": "The 22%: section 200(1) of the Income-tax Act, 2025 as amended by the Finance Act, 2026, read on the copy the owner sent on 12-10-2026. The surcharge: taxmann.com and caalley.com rate charts for AY 2026-27; Part III of the First Schedule of the Finance Bill, 2026 leaves out the surcharge on income taxed under section 200, so it is not yet checked against section 2(12) of the Bill, which sets it. The 4% cess: section 2(16) of the Finance Bill, 2026",
       "kind": "secondary",
       "date": "2026-09-30",
-      "verified": false
+      "sure": "cross-checked"
     }
   ]
 }

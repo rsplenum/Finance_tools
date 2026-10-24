@@ -1,6 +1,7 @@
 {
   "title": "CMA data for a working-capital limit",
   "date": "2026-10-11",
+  "sure": "illustrative",
   "reviewBy": "2027-10-11",
   "status": "Set by Claude at the owner's request (C1, D-UX-46): the borrower's own figures, typed, for three audited years, this year's estimate and next year's projection; the limit by the turnover method for limits up to Rs. 5 crore. The turnover method's shares were read through search results only, from two banks' published MSME policies; their pages were refused here, so they are as reported, not checked against the page. Lenders apply their own norms.",
   "years": [
@@ -43,7 +44,7 @@
     "marginPct": 5,
     "maxLimit": 50000000,
     "source": "The turnover method for small enterprises (Nayak Committee, followed in RBI's guidance on MSE lending): working capital of 25% of the projected annual turnover, of which at least 5% comes from the borrower's own long-term funds and the bank finances the rest, at least 20%, for fund-based limits up to Rs. 5 crore; above that, the working-capital gap (second) method. As stated in Bandhan Bank's Policy for Lending to MSME (www.bandhan.bank.in, 2025-11) and Karnataka Bank's Financing MSME sector (karnatakabank.com, 2024-01), read through search results on 11-10-2026; both pages, and rbi.org.in, were refused from here",
-    "checked": false
+    "sure": "illustrative"
   },
   "assumptions": [
     { "id": "years", "what": "The years", "shown": "Financial years ending in March: the estimate is for the year now running, the projection for the next, and the three before the estimate are audited", "why": "Change the dates in the document if the figures are for other years" },

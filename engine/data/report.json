@@ -1,6 +1,7 @@
 {
   "title": "Project report",
   "date": "2026-10-02",
+  "sure": "illustrative",
   "reviewBy": "2027-10-02",
   "status": "How a project report for a term loan with working capital is worked out here, in the form chartered accountants commonly use for small and medium enterprises. Set by Claude at the owner's request (02-10-2026); the depreciation rates and the working-capital methods are as described in public sources, not checked against the primary texts from here.",
   "heads": [
@@ -20,7 +21,8 @@
     "turnoverNeedPct": 25,
     "turnoverBankPct": 20,
     "worked": "Worked out, the lower of the two on the first year of sales at its full rate: 75% of its stock and debtors less its creditors (the need), and the bank's 20% of its sales (the turnover method)",
-    "source": "The second method of lending (Tandon Committee): the bank finances up to 75% of current assets, less creditors. The turnover method for small enterprises (Nayak Committee, RBI): working capital of 25% of the year's sales, of which the bank finances 20%."
+    "source": "The second method of lending (Tandon Committee): the bank finances up to 75% of current assets, less creditors. The turnover method for small enterprises (Nayak Committee, RBI): working capital of 25% of the year's sales, of which the bank finances 20%.",
+    "sure": "review"
   },
   "costHeads": {
     "note": "Costs by head in expert mode (the owner's list, 21-10-2026, D-UX-112): those that vary with sales as a % of sales, the rest in rupees a month, growing together; each named in the profit and loss",
@@ -58,7 +60,7 @@
     "notice": "Fresh PMEGP applications are paused until the scheme is continued with revised guidelines (the PMEGP portal, October 2026); the figures here are the 2021-22 to 2025-26 guideline's and may change. The Rajya Sabha committee on industry recommended raising the Rs. 50 lakh manufacturing ceiling (report of 11-03-2026, pib.gov.in PRID 2238242).",
       "source": "PMEGP guidelines as revised by the Ministry of MSME's O.M. PMEGP/UdhyamReg./01/2023 of 07-12-2023 (docs/inbox/pmegp-guidelines-2023-12-07.pdf, read 20-10-2026), which supersedes the certified 2022 text (KVIC, https://www.kvic.gov.in/kvicres/update/pmegp/PMEGP_Guidelines_Certified_2022.pdf) with the same figures and adds Udyam registration before the margin money is adjusted: para 3.1 and its notes (shares and ceilings), 4.1 (land, education, existing units), 8.1 and 8.3 (the bank's share, working capital), 11.20 (the deposit). The guideline covers 2021-22 to 2025-26; no notice continuing it into 2026-27 was found on kvic.gov.in, and kviconline.gov.in does not answer this cloud",
       "date": "2026-10-20",
-      "checked": true,
+      "sure": "verified", "read": "2026-10-20",
       "rules": [
         "The margin money (subsidy) is a share of the project cost: 15% in a town and 25% in a village for the general category; 25% and 35% for the special categories.",
         "The project cost leaves out the land and includes the working capital; the subsidy is worked on at most Rs. 50 lakh for manufacturing and Rs. 20 lakh for a service, and the bank may lend above that without subsidy.",
@@ -89,7 +91,7 @@
       "apply": { "label": "JanSamarth", "url": "https://www.jansamarth.in/business-loan-pradhan-mantri-mudra-yojana-scheme" },
       "source": "MUDRA's Offerings page (mudra.org.in, saved 20-10-2026: docs/inbox/mudra-offerings-2026-10-20.pdf): Shishu up to Rs. 50,000, Kishor above 50,000 and up to 5 lakh, Tarun above 5 lakh and up to 10 lakh, Tarun Plus above 10 lakh and up to 20 lakh; a term loan and working capital up to 20 lakh a unit; loans up to 20 lakh collateral free, guaranteed by CGFMU, run by NCGTC. Tarun Plus only for those who have availed and repaid a Tarun loan: S.O. 4658(E) of 24-10-2024 (docs/inbox/cgfmu-tarun-plus-so4658-2024-10-24.pdf). JanSamarth as the portal for Mudra loans, with this address: PIB's explainer of 08-04-2026 (docs/inbox/mudra-pib-explainer-2026-04-08.pdf).",
       "date": "2026-10-21",
-      "checked": true,
+      "sure": "verified", "read": "2026-10-21",
       "rules": [
         "Mudra is a loan, not a subsidy: up to Rs. 20 lakh in all, the term loan and the working-capital limit together, at the bank's own rate of interest.",
         "Its level is by the amount: Shishu up to Rs. 50,000, Kishor up to Rs. 5 lakh, Tarun up to Rs. 10 lakh, and Tarun Plus up to Rs. 20 lakh, only for a borrower who has repaid a Tarun loan.",
@@ -103,7 +105,7 @@
       "ratePct": 1,
       "source": "CGFMU's FAQ of 18-02-2025, Q14 (docs/inbox/cgfmu-faq-2025-02-18.pdf): from 01-04-2023, the base year at 1% a year of the sanctioned amount, later years on the amount outstanding on 1 April, a working-capital account on its sanctioned amount every year; the bank may recover it from the borrower. The scheme charges the base year 'for the full year or the broken period i.e. till March 31' (S.O. 1443(E) of 18-04-2016, para 8(i)(a): docs/inbox/cgfmu-scheme-so1443-2016-04-18.pdf), worked here pro rata by months (the owner, 21-10-2026).",
       "date": "2026-10-21",
-      "checked": true
+      "sure": "verified", "read": "2026-10-21"
     },
     "cgtmse": {
       "label": "CGTMSE (the Credit Guarantee Fund Trust for Micro and Small Enterprises)",
@@ -121,7 +123,7 @@
       "bankMorePct": 70,
       "source": "CGTMSE's Fee Structure page and CGS-I as updated on 01-04-2026, para 8 and 8.1 and Annexure II (docs/inbox/cgtmse-fee-structure.pdf, docs/inbox/cgtmse-scheme-cgs1-2026-04-01.pdf): a standard rate a year by slab of the unit's whole cover, on the amount guaranteed for the first year, then on a term loan's outstanding at 31 December and a working-capital limit's present or expected outstanding; 10% off for each group, the concession taken first and rounded to two decimals; each bank pays 10% less or up to 70% more by its claims record, and may pass the fee on. CGTMSE's FAQ on the fee, Q6 (docs/inbox/cgtmse-faq-agf.pdf): the first fee for a year, the next pro rata to 31 March.",
       "date": "2026-10-21",
-      "checked": true
+      "sure": "verified", "read": "2026-10-21"
     }
   },
   "method": [

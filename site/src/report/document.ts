@@ -6,7 +6,9 @@
  * the tables are the page's (model.ts), every figure the engine's, none computed here.
  */
 import { parseMonth } from '../../../engine/parse';
-import { METHOD, MUDRA, PMEGP, REPORT_REVIEW_BY } from '../../../engine/report';
+import { sureLower, sureText, type Marked } from '../../../engine/sure';
+import RATIOS_FILE from '../../../engine/data/ratios.json';
+import { METHOD, MUDRA, PMEGP, REPORT_REVIEW_BY, WORKING_CAPITAL } from '../../../engine/report';
 import { GUARANTEES } from '../../../engine/guarantee';
 import { overdueNote, todayIso } from '../../../engine/review';
 import { BORROWERS } from '../../../engine/tax';
@@ -17,6 +19,19 @@ import { monthText } from '../dscr/model';
 import { SITE_NAME } from '../site';
 import { ACTIVITY_CHOICES, AREA_CHOICES, CATEGORY_CHOICES, CGTMSE, HEADS, REPAYMENT_CHOICES, guaranteeOf, plainOf, statusText, tidyAmount, type ReportFacts, type ReportPreview, type ReportState, type ReportWords, type ViewTable } from './model';
 import { wordsNeeds, wordsPart } from './words';
+
+/** How sure each rule the report rests on is (D-DATA-25, TRUST1): the tax by who the borrower is, the working-capital
+ *  method, the levels the ratios are read against, and the scheme and guarantee chosen. A mark never changes a figure. */
+const sureRules = (s: ReportState) => {
+  const who = BORROWERS.find((b) => b.id === s.borrower), gid = guaranteeOf(s);
+  return [
+    ...(who ? [`The tax for a ${who.label.toLowerCase()}: ${sureLower(who)}.`] : []),
+    `The working-capital method: ${sureLower(WORKING_CAPITAL as Marked)}.`,
+    `The levels the ratios are read against: ${sureLower(RATIOS_FILE as Marked)}; each lender sets its own.`,
+    ...(s.scheme === 'pmegp' ? [`PMEGP's rules: ${sureLower(PMEGP as Marked)}.`] : s.scheme === 'mudra' ? [`Mudra's rules: ${sureLower(MUDRA as Marked)}.`] : []),
+    ...(gid ? [`The guarantee fee (${gid.toUpperCase()}): ${sureLower(GUARANTEES[gid] as Marked)}.`] : []),
+  ];
+};
 
 /** What the document still needs of the page's own fields, then of the report's words (words.ts). */
 export function docNeeds(f: ReportFacts, w?: ReportWords): string[] {
@@ -127,11 +142,12 @@ export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc 
         { kind: 'title', text: 'Annex. The term loan, and the basis', small: true }, ...table('schedule'),
         { kind: 'heading', text: 'The figures entered' }, { kind: 'pairs', pairs: entered(s) },
         { kind: 'heading', text: 'How the figures are worked out' }, { kind: 'list', items: METHOD },
+        { kind: 'heading', text: 'How sure the rules are' }, { kind: 'list', items: sureRules(s) },
         ...(s.scheme === 'pmegp' ? [{ kind: 'heading', text: 'PMEGP: the rules used' } as Block, { kind: 'list', items: [...PMEGP.rules, PMEGP.ours,
-          `Source: ${PMEGP.source}. ${PMEGP.checked ? `Checked against PMEGP's guideline (2023) on ${dmy(PMEGP.date)}.` : `As read on ${dmy(PMEGP.date)}; not yet checked against KVIC's current guideline.`} ${overdueNote(REPORT_REVIEW_BY, todayIso())}`.trim()] } as Block,
+          `Source: ${PMEGP.source}. The guideline of 2023: ${sureLower(PMEGP as Marked)}. ${overdueNote(REPORT_REVIEW_BY, todayIso())}`.trim()] } as Block,
           { kind: 'heading', text: 'PMEGP: its conditions' } as Block, { kind: 'list', items: [...PMEGP.conditions, `${s.pmegpConfirmed ? 'Confirmed by the borrower' : 'Not yet confirmed by the borrower'}. Source: ${PMEGP.conditionsSource}`] } as Block] : []),
-        ...(s.scheme === 'mudra' ? [{ kind: 'heading', text: 'Mudra: the rules used' } as Block, { kind: 'list', items: [...MUDRA.rules, `Apply on ${MUDRA.apply.label}: ${MUDRA.apply.url}.`, `Source: ${MUDRA.source} Read on ${dmy(MUDRA.date)}.`] } as Block] : []),
-        ...(gid ? [{ kind: 'heading', text: `The guarantee fee: ${gid.toUpperCase()}` } as Block, { kind: 'list', items: [`Source: ${GUARANTEES[gid].source} Read on ${dmy(GUARANTEES[gid].date)}.`] } as Block] : []),
+        ...(s.scheme === 'mudra' ? [{ kind: 'heading', text: 'Mudra: the rules used' } as Block, { kind: 'list', items: [...MUDRA.rules, `Apply on ${MUDRA.apply.label}: ${MUDRA.apply.url}.`, `Source: ${MUDRA.source} ${sureText(MUDRA as Marked)}.`] } as Block] : []),
+        ...(gid ? [{ kind: 'heading', text: `The guarantee fee: ${gid.toUpperCase()}` } as Block, { kind: 'list', items: [`Source: ${GUARANTEES[gid].source} ${sureText(GUARANTEES[gid] as Marked)}.`] } as Block] : []),
       ] },
     ],
   };

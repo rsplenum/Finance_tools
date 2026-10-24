@@ -1,6 +1,7 @@
 {
   "title": "DSCR: how it is worked out",
   "date": "2026-09-30",
+  "sure": "review",
   "reviewBy": "2027-09-30",
   "status": "Written from general practice by Claude. Not yet checked against a public worked example or confirmed by the owner; no figures, formats or norms from any employer (D-BIZ-02).",
   "formula": "DSCR for a year = cash available for debt service ÷ debt service in that year.",
@@ -56,7 +57,7 @@
       "choice": { "interest": "term-loans", "leases": "no", "years": "repayment", "average": "totals" },
       "source": "How chartered accountants and banks work DSCR for term loans, as described in public articles (bankingfinance.in, finpab.com; docs/DSCR-RESEARCH.md); not a regulation, and not checked against a primary source",
       "date": "2026-09-30",
-      "verified": false
+      "sure": "cross-checked"
     },
     {
       "id": "rbi-2020",
@@ -64,7 +65,7 @@
       "choice": { "interest": "all-borrowings", "leases": "no", "years": "debt-service", "average": "totals" },
       "source": "RBI circular DOR.No.BP.BC/13/21.04.048/2020-21 of 7 September 2020: DSCR = (net cash accruals + interest and finance charges) ÷ (current portion of long-term debt + interest and finance charges), and the average over the period of the loan. Read through summaries; the circular itself could not be opened",
       "date": "2026-09-30",
-      "verified": false
+      "sure": "review"
     },
     {
       "id": "schedule-iii",
@@ -72,7 +73,7 @@
       "choice": { "interest": "all-borrowings", "leases": "yes", "years": "debt-service", "average": "totals" },
       "source": "ICAI Guidance Note on Schedule III: (profit after tax + non-cash operating expenses + interest) ÷ (interest and lease payments + principal repayments). It defines the yearly ratio only; the years counted and the average are this tool's. Read through summaries; the Guidance Note itself could not be opened",
       "date": "2026-09-30",
-      "verified": false
+      "sure": "review"
     }
   ],
   "benchmarks": [
@@ -82,7 +83,7 @@
       "value": 1.5,
       "source": "Commonly quoted in Indian lending; not checked against a published source. Each lender sets its own",
       "date": "2026-09-30",
-      "verified": false
+      "sure": "illustrative"
     },
     {
       "what": "Lowest year",
@@ -90,7 +91,7 @@
       "value": 1.2,
       "source": "Commonly quoted in Indian lending; not checked against a published source. Each lender sets its own",
       "date": "2026-09-30",
-      "verified": false
+      "sure": "illustrative"
     }
   ],
   "planning": {
@@ -118,6 +119,7 @@
     },
     "unknown": "EMIs a month on loans already running: all of a proprietor's, business and personal; a firm's, LLP's or company's own loans only",
     "source": "The owner's decision of 01-10-2026, D-POL-06",
+    "sure": "illustrative",
     "date": "2026-10-01"
   },
   "lender": {
