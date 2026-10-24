@@ -37,6 +37,7 @@ What the owner taught across projects, so a new project starts where the last on
 ## Checks
 
 - Run a project's checks through one script that prints each check's exit code and only a failing check's output (`npm run verify` or its like); every change passes it.
+- A check run that takes longer than a tool call may wait runs once, in the background with its output to a file, and is read from that file; never two runs chained in one call.
 - A test asserts that its fixture exists and is the one meant, picked by its full key, never a part of it; no expectations inside an `if`; a fixture picked for a property of the data (the cheapest, not yet checked) asserts that property first.
 - A data check over many items collects every offender and asserts the list is empty, so one run names them all.
 - Drive a page to reproduce a bug before fixing it. When a regression appears, test the commit before yours (a worktree at it) to learn whether it is new.
