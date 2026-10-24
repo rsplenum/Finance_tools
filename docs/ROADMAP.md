@@ -7,7 +7,9 @@ Sizes come from HANDOFF: S is about 60 steps, M about 120, L about 200. What is 
 ## Done
 VIS1 the vision (D-BIZ-11), REP1 sales by product and PMEGP checked (D-UX-109, D-DATA-22), LEGAL1 the policy pages (D-BIZ-07), Q1 downloads on any phone, DEP1 to DEP1c the Worker live (D-TECH-48 to 51), UX5 and UX6 the last of the look, SEO1 the pSEO plan (`docs/SEO-PLAN.md`, D-BIZ-08), UD1 interaction data, DT1 the design team, UX1 to UX4, AG1 to AG3c FinSight's look.
 
-## The timeline to Monday 26-10-2026, 09:00 IST (D-BIZ-20)
+## The timeline to Monday 26-10-2026, 09:00 IST (D-BIZ-20), now Saturday 31-10-2026 (D-BIZ-21)
+**Moved (D-BIZ-21):** the deadline is Saturday 31-10-2026 and cost is the key to last the week. The scope and the order below stand; the hours no longer bind. Each row keeps its budget; RC1 runs once, when every row is merged.
+
 Scope (the owner's answer, 24-10-2026): launch-ready plus the SEO pages, on `main` and live on the Pages site by Monday 09:00, `noindex` still on. Each row is a fresh session with one deliverable and a draft PR; the owner says "merge". Steps at about 50 an hour, so times are targets; a row more than a quarter over moves after Monday rather than holding RC1 back.
 
 | When (IST) | Home stream | Checks stream (chained: each session starts the next) | The owner |
