@@ -76,6 +76,35 @@ for (const f of (await readdir(DIST, { recursive: true })).filter((f) => f.endsW
   const text = html.replace(/<(script|style)[\s\S]*?<\/\1>/g, ' ').replace(/<[^>]+>/g, ' ');
   if (/[A-Z]{5}\d{4}[A-Z]/.test(text)) violations.push(`${path}: shows a PAN or a GSTIN, which stay off the site until payments (D-BIZ-07)`);
 }
+// MAP1: sitemap.xml lists every built page but 404 and nothing else, at the address in astro.config.mjs; robots.txt
+// points to it and blocks nothing (a blocked crawler never reads the noindex header); the /site-map/ page links every
+// built page but 404 and itself, and every page's footer links it. Read from the built files.
+{
+  const CONFIG = await readFile(fileURLToPath(new URL('../site/astro.config.mjs', import.meta.url)), 'utf8');
+  const site = CONFIG.match(/site: '([^']+)'/)?.[1]?.replace(/\/$/, '');
+  const xml = await readFile(join(DIST, 'sitemap.xml'), 'utf8').catch(() => '');
+  const robots = await readFile(join(DIST, 'robots.txt'), 'utf8').catch(() => '');
+  const want = built.filter((p) => p !== '/404.html');
+  const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+  if (!site) violations.push('MAP1: astro.config.mjs gives no `site` for the site map');
+  else if (!xml) violations.push('MAP1: the build wrote no sitemap.xml');
+  else {
+    const paths = locs.map((l) => (l.startsWith(site + '/') ? l.slice(site.length) : `(another address) ${l}`));
+    for (const p of want.filter((p) => !paths.includes(p))) violations.push(`MAP1: ${p} is missing from sitemap.xml`);
+    for (const p of paths.filter((p) => !want.includes(p))) violations.push(`MAP1: sitemap.xml lists ${p}, which is not a built page`);
+  }
+  if (!robots.includes(`Sitemap: ${site}/sitemap.xml`)) violations.push('MAP1: robots.txt does not point to the sitemap');
+  if (/^Disallow:\s*\S/m.test(robots)) violations.push('MAP1: robots.txt blocks a path, so crawlers would never read its noindex header');
+  const mapHtml = await readFile(join(DIST, 'site-map', 'index.html'), 'utf8').catch(() => '');
+  const mapMain = mapHtml.match(/<main[\s\S]*?<\/main>/)?.[0] ?? '';
+  if (!mapHtml) violations.push('MAP1: no /site-map/ page was built');
+  else for (const p of want.filter((p) => p !== '/site-map/' && !mapMain.includes(`href="${p}"`))) violations.push(`MAP1: the /site-map/ page does not link ${p}`);
+  for (const f of (await readdir(DIST, { recursive: true })).filter((f) => f.endsWith('.html'))) {
+    const html = await readFile(join(DIST, f), 'utf8');
+    const foot = html.match(/<footer[\s\S]*?<\/footer>/)?.[0] ?? '';
+    if (!/<a href="\/site-map\/"[^>]*data-site-map/.test(foot)) violations.push(`/${f}: the footer does not link the site map (MAP1)`);
+  }
+}
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 
 /** Opens a page at 390 px. `stored` is a saved theme choice; `blockScripts` loads the page without its script files. */

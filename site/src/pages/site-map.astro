@@ -1,0 +1,35 @@
+---
+/**
+ * The site map for people (MAP1), linked from every footer: every page in three groups (home, the tools, the policies), each tool with its line from
+ * site.ts. Laid out as a policy page (one column at reading width, in the new look). The site check fails a built page
+ * this page does not link; a new page joins a group here, or a new group.
+ */
+import Base from '../Base.astro';
+import { POLICIES, READY, SITE_NAME } from '../site';
+
+const groups = [
+  { h: 'Home', links: [{ href: '/', name: 'Home page', line: 'DSCR statements, construction estimates, project reports and CMA data in the format lenders expect.' }] },
+  { h: 'Tools', links: READY.map((t) => ({ href: t.href, name: t.name, line: t.what })) },
+  { h: 'Policies', links: POLICIES.map((p) => ({ href: p.href, name: p.name, line: undefined })) },
+];
+---
+<Base name="Site map" description={`Every page on ${SITE_NAME}: home, the tools and the policies.`} look="new">
+  <article class="mx-auto max-w-3xl px-4 pt-10 pb-16 sm:px-8 sm:pt-16">
+    <p class="caps text-ink-muted">{SITE_NAME}</p>
+    <h1 class="mt-4 text-hero text-ink">Site map</h1>
+    <p data-answer class="mt-6 max-w-lg text-lead text-ink-muted">Every page on {SITE_NAME}, in one list.</p>
+    {groups.map((g) => (
+      <section class="mt-10">
+        <h2 class="text-section text-ink">{g.h}</h2>
+        <ul class="mt-4 max-w-lg space-y-3">
+          {g.links.map((l) => (
+            <li>
+              <a href={l.href} class="inline-flex min-h-6 items-center font-medium text-ink hover:text-link">{l.name}</a>
+              {l.line && <p class="text-sm text-ink-muted">{l.line}</p>}
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </article>
+</Base>
