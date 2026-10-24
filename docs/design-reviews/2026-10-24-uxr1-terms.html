@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>UXR1 Terms of Reference</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@500;600&family=Figtree:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column on paper, a wide band for tables; ink and marigold as on the site. */
+:root{--paper:#fbfaf7;--sheet:#ffffff;--ink:#1d2350;--muted:#555b7d;--rule:#dcdde8;--mark:#c77d08;--mark-soft:#fdf1dc;--block:#a3261b;--block-soft:#fbe7e4;--sig:#8a5a00;--sig-soft:#fbf0d6;--pol:#2f5f8a;--pol-soft:#e6eff8;
+--display:"Anek Latin","Figtree",system-ui,sans-serif;--body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#15182b;--sheet:#1c2038;--ink:#e6e7f2;--muted:#a6a9c4;--rule:#33385a;--mark:#f0b04a;--mark-soft:#3a2e17;--block:#ff8a7d;--block-soft:#3d1f22;--sig:#f2c46b;--sig-soft:#3a3018;--pol:#8ec0ee;--pol-soft:#1d2e44;color-scheme:dark}}
+:root[data-theme="dark"]{--paper:#15182b;--sheet:#1c2038;--ink:#e6e7f2;--muted:#a6a9c4;--rule:#33385a;--mark:#f0b04a;--mark-soft:#3a2e17;--block:#ff8a7d;--block-soft:#3d1f22;--sig:#f2c46b;--sig-soft:#3a3018;--pol:#8ec0ee;--pol-soft:#1d2e44;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 var(--body)}
+.wrap{max-width:68rem;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 64px}
+.col{max-width:44rem}
+h1,h2,h3{font-family:var(--display);font-weight:600;line-height:1.15;text-wrap:balance}
+h1{font-size:clamp(1.9rem,5vw,2.8rem);margin:.2em 0 .3em;letter-spacing:-.01em}
+h2{font-size:1.5rem;margin:2.4em 0 .6em;padding-top:.8em;border-top:2px solid var(--ink)}
+h3{font-size:1.15rem;margin:1.6em 0 .4em}
+.eyebrow{font:600 .78rem/1 var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--mark)}
+.motto{font-family:var(--display);font-size:clamp(1.2rem,3vw,1.55rem);border-left:4px solid var(--mark);padding:.4em 0 .4em 1em;margin:1.4em 0;max-width:40rem}
+.lead{font-size:1.1rem;color:var(--muted)}
+a{color:inherit;text-decoration-color:var(--mark);text-underline-offset:3px}
+a:focus-visible,summary:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+code{font:.88em var(--mono);background:var(--mark-soft);padding:.05em .3em;border-radius:3px}
+.tbl{overflow-x:auto;margin:1em 0;border:1px solid var(--rule);background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;vertical-align:top;padding:.55em .7em;border-bottom:1px solid var(--rule)}
+th{font-family:var(--display);font-weight:600;background:var(--paper)}
+td:first-child{white-space:nowrap}
+.sev{display:inline-block;font:600 .72rem/1.5 var(--display);letter-spacing:.06em;text-transform:uppercase;padding:0 .5em;border-radius:3px}
+.sev.b{color:var(--block);background:var(--block-soft)}.sev.s{color:var(--sig);background:var(--sig-soft)}.sev.p{color:var(--pol);background:var(--pol-soft)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:12px}
+.card{background:var(--sheet);border:1px solid var(--rule);padding:14px 16px;min-width:0}
+.card h3{margin-top:0}
+ul,ol{padding-left:1.3em}li{margin:.25em 0}
+.meta{color:var(--muted);font-size:.9rem}
+details{background:var(--sheet);border:1px solid var(--rule);padding:.6em 1em;margin:.6em 0}
+summary{cursor:pointer;font-weight:600}
+pre{white-space:pre-wrap;font:.85rem/1.5 var(--mono);background:var(--paper);border:1px solid var(--rule);padding:.8em}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<p class="eyebrow">UXR1 · terms of reference · 24-10-2026</p>
+<h1>A critical review of the four tools' interface and experience</h1>
+<p class="lead col">What will be reviewed, through whose eyes, by what method, and how each finding is graded and evidenced. Written before the analysis begins, so the analysis cannot choose its own yardstick.</p>
+
+<p class="motto">“It is so simple to be difficult, but so difficult to be simple.”</p>
+
+<div class="col">
+<h2>1. The core statement, and how it is used</h2>
+<p>Every feature, hint, warning, option and caveat on these pages was added for a good reason. Each one alone is easy to add: that is how a tool becomes difficult. Making a tool simple means the opposite labour: deciding what the user does <em>not</em> need to see, say or do, and finding one control that does the work of three. The statement is therefore the test every finding is put to:</p>
+<ol>
+<li><strong>What did it cost to make this difficult?</strong> Usually nothing: a line of text, a second button, an extra field, a note “just in case”.</li>
+<li><strong>What would it cost to make it simple?</strong> A cut, a merge, a reword, a reorder: thought rather than code.</li>
+<li><strong>Who pays for the difficulty?</strong> The borrower on a phone pays in attention; the lender pays in doubt; the DSA pays in time per file.</li>
+</ol>
+<p>A finding is ranked high when the difficulty is large and the simple fix is cheap.</p>
+
+<h3>What “simple” means for each tool</h3>
+</div>
+<div class="grid">
+<div class="card"><h3>DSCR statement</h3><p>A borrower answers who they are and seven figures, sees one number with a plain verdict, and, if short, one way to make it work. Simple is: the answer and its verdict in one glance, the statement for the lender in one tap, nothing to learn before the first figure.</p></div>
+<div class="card"><h3>CMA</h3><p>An accountant's form of many heads and years. Simple cannot mean fewer facts; it means the order of a CA's own working paper, one place for each figure, totals that check themselves, and the ratios a lender reads, not a wall of rows on a phone.</p></div>
+<div class="card"><h3>Project report</h3><p>A long document built from a short interview. Simple is: a few plain questions, every assumption shown and changeable, the AI draft clearly a draft, and a report that reads as a lender expects, without the borrower having to know what a lender expects.</p></div>
+<div class="card"><h3>Construction estimate</h3><p>A house in a few answers (plot, floors, rooms, city). Simple is: a credible total and cost a sq ft at once, the architect's rules stated not hidden, and room-by-room depth only for those who tap for it.</p></div>
+</div>
+<div class="col">
+
+<h2>2. Scope</h2>
+<p><strong>In:</strong> the four tool pages (<code>/dscr/</code>, <code>/cma/</code>, <code>/project-report/</code>, <code>/estimate/</code>) and every component under <code>site/src/dscr</code>, <code>cma</code>, <code>report</code>, <code>estimate</code>, the shared parts (<code>fields.tsx</code>, <code>AmountField.tsx</code>, <code>Board.tsx</code>, <code>ToolHead.astro</code>, <code>Base.astro</code>, <code>ThemeToggle.astro</code>), the documents (<code>site/src/doc/</code> and each tool's <code>document.ts</code>), and home only where its scenes introduce a tool. Across the tools: consistency, the shared parts, and the journey from home to a downloaded document.</p>
+<p><strong>Out:</strong> the policy pages, the 404 and the site map (except as dead ends in the journey); engine maths and data values (figures are checked only against the engine's own output, never recomputed here); the explainer videos themselves (findings that touch them are noted for VID2).</p>
+<p><strong>Every state and path</strong>, each where it applies:</p>
+<ul>
+<li>First visit, empty: what is read before the first question, what the page asks first.</li>
+<li>The default path: only the owner's listed inputs (D-UX-10, D-UX-12), partly filled, then filled.</li>
+<li>“More options” and expert modes: opened, a value changed, closed again.</li>
+<li>Errors: an impossible value, a blank required field, text in a number field, a value out of range.</li>
+<li>Empty and provisional results: a fact missing, how the page says what is needed.</li>
+<li>Results: the answer, its verdict, what limits it, the plan when short.</li>
+<li>Downloads: PDF, Excel and Word, and the printout; what each says and whether it is fit to hand over.</li>
+<li>Back, reload and reopen: whether answers survive, whether the page says so.</li>
+</ul>
+
+<h2>3. The lenses: 360 degrees</h2>
+</div>
+<div class="tbl"><table>
+<thead><tr><th>Lens</th><th>The question it asks</th><th>How it is examined</th></tr></thead>
+<tbody>
+<tr><td>Borrower on a phone</td><td>Can someone who has never seen a DSCR finish on a 360 px screen, one thumb, in a few minutes, and know what to do next?</td><td>360×780, touch target sizes, keyboard types (<code>inputmode</code>), the scroll from last field to answer</td></tr>
+<tr><td>DSA</td><td>Can a DSA do ten files a day: fast entry, reuse, a document that looks professional with their client's name on it?</td><td>Desktop 1280, tab order, re-entry after reload, document headers</td></tr>
+<tr><td>Accountant (CA)</td><td>Does the CMA and the report follow the working paper a CA knows; can figures be checked, traced and edited?</td><td>Field order against the form's heads, the Excel copy's structure, the expert path</td></tr>
+<tr><td>Lender who receives the document</td><td>Does the PDF look like something to rely on: dated, sourced, assumptions stated, nothing that reads as a toy?</td><td>Text of each downloaded file, its first page, its caveats</td></tr>
+<tr><td>First-time visitor</td><td>Within ten seconds: what is this, is it for me, is it free, where do I start?</td><td>Words before the first question, the heading and the line under it, home's scene to the tool</td></tr>
+<tr><td>User with a disability (WCAG 2.2 AA)</td><td>Labels, names, errors announced, focus visible and not hidden, target size 24 px (2.5.8), contrast, motion, reflow at 320 px</td><td>axe in the site check, focus walk by keyboard, <code>aria-live</code> on results, reduced motion</td></tr>
+<tr><td>Slow network, low-end phone</td><td>How much is downloaded before the first field works; does the page answer within 100 ms of a field (principle 9)?</td><td>Transfer size of each page's scripts, a 4× CPU slowdown, time to interactive</td></tr>
+<tr><td>Light and dark</td><td>Does every state read in both, without a pure black ground (principle 11)?</td><td>Both schemes per state</td></tr>
+<tr><td>360 px and desktop</td><td>No sideways scroll; the answer beside the questions on a desktop (sticky panel, D-UX-106)</td><td>360, 1024, 1280</td></tr>
+<tr><td>Reader whose first language is not English</td><td>Short sentences, common words, terms explained once, numbers in lakh and crore (D-UX-152), no idiom</td><td>The load measure's word counts, long sentences, abbreviations; the writer's reading</td></tr>
+<tr><td>Trust and credibility</td><td>Who made this, how sure is each figure (D-DATA-26), what is a draft, what is unverified, does it look finished?</td><td>Marks of certainty, draft labels, “not advice” wording, dates and sources</td></tr>
+<tr><td>Cognitive load and wording</td><td>What must be held in mind, decoded or recalled; is anything said twice?</td><td>The load measure's twelve counts, Nielsen's heuristics, the repo's plain-words rule</td></tr>
+</tbody></table></div>
+<div class="col">
+
+<h2>4. Method</h2>
+<ol>
+<li><strong>A local build only</strong> (<code>npm run build</code>, served by <code>scripts/serve-dist.mjs</code>); no live website. If a website is truly needed, <code>npm run hosts</code> first and blocked hosts skipped.</li>
+<li><strong>The repo's own instruments first:</strong> <code>npm run design-review -- &lt;page&gt;</code> (every state at 360, light and dark, with measured defects), <code>npm run load</code> (the twelve load counts against the baseline), the site check's axe, field-count and F9 results.</li>
+<li><strong>A Playwright walk of my own</strong>, one script printing text only: the first screen's words, the order of questions, the error messages, what the result says, what changes on reload, the tab order, transfer sizes, and the text of each downloaded file. Screenshots only where text cannot answer a layout question, read once.</li>
+<li><strong>Reading the component</strong> only to find a cause, never to judge what the user sees.</li>
+<li><strong>Agents where they help:</strong> the <code>critic</code> for an independent pass on pages; the <code>writer</code> on wording against the load counts. Their findings are verified before they enter the report.</li>
+<li><strong>Yardsticks:</strong> Nielsen's ten heuristics; WCAG 2.2 AA; <code>docs/DESIGN.md</code>'s twelve principles and FinSight's rules; the repo's own rules: the default-path field ceiling (D-UX-10, D-UX-12), plain words, no defaults beyond <code>defaults.json</code> and <code>architect.json</code> (D-UX-08, D-UX-18), numbers only from the engine, never a missing fact defaulted, AI only as a marked draft (D-UX-44), the word “architect” never used for the tool (D-UX-18).</li>
+<li><strong>Figures on screen</strong> are compared only with the engine's own output for the same inputs, never computed here.</li>
+</ol>
+
+<h2>5. Severity, and the evidence each finding needs</h2>
+</div>
+<div class="tbl"><table>
+<thead><tr><th>Grade</th><th>Meaning</th><th>Examples</th></tr></thead>
+<tbody>
+<tr><td><span class="sev b">Blocker</span></td><td>Stops a user or misleads them: a WCAG A/AA failure, broken navigation, an unusable phone layout, an answer that is wrong, hidden or unclear in what it means, a document a lender would reject.</td><td>A result with no verdict; a required field with no label; a figure differing from the engine's</td></tr>
+<tr><td><span class="sev s">Significant</span></td><td>Slows or confuses on the default path; breaks a repo rule or a DESIGN principle; costs trust.</td><td>A question above the ceiling; jargon on the default path; two primary buttons</td></tr>
+<tr><td><span class="sev p">Polish</span></td><td>Consistency and finish.</td><td>Spacing, a label's case, an icon that says nothing</td></tr>
+</tbody></table></div>
+<div class="col">
+<p>Each finding records: <strong>page</strong>; <strong>state</strong>; <strong>width</strong> (360, 1024 or 1280); <strong>theme</strong>; <strong>what the user meets</strong>, in their terms; <strong>the evidence</strong> (a measured line, a quoted text, a count); <strong>the rule broken</strong> (WCAG criterion, Nielsen heuristic, DESIGN principle, D-id); and the <strong>difficulty against fix</strong> score below. A finding without evidence is dropped.</p>
+<p><strong>The core statement as a score.</strong> Each finding gets <em>Difficulty</em> 1–3 (how much it makes the tool hard: 3 stops or misleads, 1 is a small drag) and <em>Fix</em> 1–3 (3 is a wording or one-line change, 1 a redesign). Within each grade, findings are ranked by Difficulty × Fix: the highest are difficult things cheap to make simple.</p>
+
+<h2>6. Deliverables</h2>
+<ol>
+<li>These terms, committed before the analysis.</li>
+<li>The report (<code>docs/design-reviews/2026-10-24-uxr1-report.html</code>), published as a private Artifact: an overall verdict per tool against the core statement; findings ranked by grade and score, each with its evidence, a one- or two-line fix, the files it touches, its size (S/M/L); the fixes grouped into sessions of one deliverable each, as proposed rows for <code>docs/ROADMAP.md</code>; findings that touch the explainer videos named.</li>
+<li>Notes in <code>docs/rows/UXR1.md</code> only (D-TECH-66): decisions if any, owner items, cost, the handoff with the proposed rows and starter prompts.</li>
+</ol>
+
+<h2>7. Constraints</h2>
+<ul>
+<li>Review and report only: no site, engine or data code is changed, nothing is deleted.</li>
+<li>No shared doc is edited; another session's branch, PR #116, <code>docs/rows/VID2a.md</code> and the video storyboards are not touched.</li>
+<li>No bank-internal material; sample inputs are the repo's own fictional cases.</li>
+<li>Budget L (about 200 steps) at high effort; stop at 250 and hand off the rest.</li>
+</ul>
+<p class="meta">Prepared for the owner by the UXR1 session, 24-10-2026.</p>
+</div>
+</div>
+</body>
+</html>
