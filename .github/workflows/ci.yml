@@ -5,7 +5,7 @@ on:
   pull_request:
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04 # ubuntu-latest moves to 26.04 from 19-10-2026; Playwright 1.56 has no deps list for it (D-TECH-60)
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
