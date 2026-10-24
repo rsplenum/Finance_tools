@@ -16,7 +16,8 @@ export const ORDER = ['hero', 'tools', 'closing'];
  * (D-UX-72), AG1's 124 with Anek (27 KB, one weight cut to the signs the pages use) and the line drawings; 166 with
  * AG3b's three trailers, the two later ones fetched only as the reader nears them (D-UX-78); 168 with AG3c's trailers
  * beside their text (D-UX-81); 156 with HOME1b's four terminal intros, the pen, its font and the trailers gone (D-UX-117).
- * A heavier page lowers something else first.
+ * From HOME1d the DSCR's scene, below the first screen, is not counted (D-UX-122, D-UX-128). A heavier page lowers
+ * something else first.
  */
 export const WEIGHT_CAP = 160;
 
@@ -33,18 +34,18 @@ function inPage({ tools, order, phone }) {
   if (!getComputedStyle(document.body).fontFamily.startsWith('Figtree') || !document.fonts.check('16px Figtree')) out.push('F1 the page is not set in Figtree');
   for (const h of document.querySelectorAll('h1, h2')) if (!getComputedStyle(h).fontFamily.startsWith('Anek')) out.push(`F1 the heading "${name(h)}" is not in Anek`);
   if (!document.fonts.check('500 16px Anek')) out.push('F1 Anek is not loaded');
-  // F17: only paper casts a shadow (a page on the desk: the shadow-paper token).
-  for (const el of document.querySelectorAll('main *, footer *')) if (getComputedStyle(el).boxShadow !== 'none' && !el.matches('.shadow-paper') && shown(el)) out.push(`F17 a shadow on something that is not paper: <${el.tagName.toLowerCase()}> "${name(el)}"`);
+  // F17: only paper casts a shadow (a page on the desk: the shadow-paper token). The DSCR's scene is in look C, glass on navy (D-UX-124, D-UX-128).
+  for (const el of document.querySelectorAll('main *, footer *')) if (getComputedStyle(el).boxShadow !== 'none' && !el.matches('.shadow-paper') && !el.closest('[data-scene]') && shown(el)) out.push(`F17 a shadow on something that is not paper: <${el.tagName.toLowerCase()}> "${name(el)}"`);
   // F2: large headings.
   const h1 = document.querySelector('h1');
   if (!h1 || px(h1, 'fontSize') < (phone ? 40 : 64)) out.push(`F2 the h1 is ${h1 ? px(h1, 'fontSize') : 0} px (want ${phone ? 40 : 64} or more)`);
   // A folded section's one line and a heading kept for screen readers (1 px, sr-only) are not headings on show (UX8, D-UX-106).
   for (const h of document.querySelectorAll('main h2')) if (!h.closest('[data-folded]') && h.getBoundingClientRect().width > 1 && px(h, 'fontSize') < (phone ? 26 : 40)) out.push(`F2 the h2 "${name(h)}" is ${px(h, 'fontSize')} px`);
-  // F3: no boxed cards; panels are set off by their fill.
+  // F3: no boxed cards; panels are set off by their fill. Not in the DSCR's scene, whose glass has a hairline edge (D-UX-128).
   for (const el of document.querySelectorAll('main *, footer *')) {
     const s = getComputedStyle(el), r = el.getBoundingClientRect();
     const all = ['Top', 'Right', 'Bottom', 'Left'].every((k) => parseFloat(s[`border${k}Width`]) >= 1 && s[`border${k}Style`] !== 'none');
-    if (all && r.width > 40 && r.height > 40 && !el.matches('input, select, textarea, button, a') && shown(el)) out.push(`F3 a bordered box: <${el.tagName.toLowerCase()}> "${name(el)}"`);
+    if (all && r.width > 40 && r.height > 40 && !el.matches('input, select, textarea, button, a') && !el.closest('[data-scene]') && shown(el)) out.push(`F3 a bordered box: <${el.tagName.toLowerCase()}> "${name(el)}"`);
   }
   // F4, F5: a filled link or button is a pill, in ink, canvas or the stage's ink; never the accent.
   const probe = document.createElement('i');
@@ -118,21 +119,23 @@ export function tabAgainstEye() {
 /**
  * Runs in the page: home's diagram and intros that are not in their finished state (HOME1b, D-UX-115). With motion each
  * must have played (`data-played`, every animation dropped); without it the HTML stands as it is. Either way every line,
- * input, bar and mark shows whole, and "Show it all" is gone. Empty when the page has none, so only home is held here;
- * the count of intros is F13's.
+ * input, bar and mark shows whole, and "Show it all" is gone. The DSCR's scene (HOME1d, D-UX-125) ends on its last beat:
+ * every input card, the statement's lines and its files whole, its wires drawn; it may offer "Play it again". Empty when
+ * the page has none, so only home is held here; the count of intros is F13's.
  */
 export function unfinished() {
   const out = [], js = document.documentElement.classList.contains('js');
-  for (const box of document.querySelectorAll('[data-intro], [data-how]')) {
-    const id = box.dataset.intro ?? 'how it works';
+  for (const box of document.querySelectorAll('[data-intro], [data-how], [data-scene]')) {
+    const id = box.dataset.intro ?? (box.dataset.scene ? `${box.dataset.scene} scene` : 'how it works');
     if (js && !box.hasAttribute('data-played')) out.push(`${id} has not played`);
     if (box.getAnimations({ subtree: true }).length) out.push(`${id} still holds ${box.getAnimations({ subtree: true }).length} animations`);
-    const part = [...box.querySelectorAll('[data-ln], [data-kv], [data-row], [data-mark], [data-bar], [data-box], [data-draw]')].find((e) => {
+    const part = [...box.querySelectorAll('[data-ln], [data-kv], [data-row], [data-mark], [data-bar], [data-box], [data-draw], [data-card], [data-dl], [data-file]')].find((e) => {
       const s = getComputedStyle(e);
       return s.opacity !== '1' || (e.matches('[data-bar]') && s.transform !== 'none') || (e.matches('[data-draw]') && parseFloat(s.strokeDashoffset) > 0.001);
     });
     if (part) out.push(`${id}: <${part.tagName.toLowerCase()}> "${(part.textContent ?? '').trim().slice(0, 30)}" is not whole`);
     if ([...box.querySelectorAll('[data-show]')].some((b) => !b.hidden)) out.push(`${id} still offers "Show it all"`);
+    if (box.matches('[data-scene]') && js && box.querySelectorAll('[data-wires] path').length < 2) out.push(`${id}: its wires are not drawn`);
   }
   return out;
 }
@@ -157,7 +160,15 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
     const settled = await still(page);
     await page.waitForTimeout(1000);
     const later = await still(page);
-    const kb = Math.round((await Promise.all(sizes)).reduce((a, b) => a + b, 0) / 1024);
+    // The DSCR's scene sits below the first screen and is not counted: its markup and its scoped styles (D-UX-122, D-UX-128).
+    const below = await page.evaluate(() => {
+      const box = document.querySelector('[data-scene]'), cid = box && [...box.attributes].find((a) => a.name.startsWith('data-astro-cid-'))?.name;
+      if (!cid) return 0;
+      let css = 0;
+      for (const sheet of document.styleSheets) for (const r of sheet.cssRules) if (r.cssText.includes(cid)) css += r.cssText.length;
+      return box.outerHTML.length + css;
+    });
+    const kb = Math.round(((await Promise.all(sizes)).reduce((a, b) => a + b, 0) - below) / 1024);
     if (path === '/') weight = kb;
     if (first.typed.join('|') !== settled.typed.join('|')) v('F10 a heading\'s words or a counted figure are not in the page from the start');
     if (await page.locator('[data-typed]').count()) v('F10 a heading still types itself');
@@ -194,7 +205,8 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
       await p.evaluate(async () => {
         for (let y = 0; y < document.body.scrollHeight; y += innerHeight / 2) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 100)); }
       });
-      await p.waitForTimeout(5000);
+      // The DSCR's scene runs 12.8 s from when it comes into view (D-UX-125); the intros stop within 5 s.
+      await p.waitForTimeout(14000);
       const ends = await p.evaluate(unfinished);
       const r = await p.evaluate(() => {
         const hidden = [...document.querySelectorAll('[data-settle], [data-at]')].filter((e) => getComputedStyle(e).opacity !== '1')

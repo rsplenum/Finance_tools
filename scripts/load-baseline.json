@@ -2,19 +2,19 @@
   "pages": {
     "/": {
       "before": 27,
-      "shown": 545,
-      "all": 545,
+      "shown": 592,
+      "all": 592,
       "plan": null,
       "long": 0,
-      "abbr": 4,
+      "abbr": 5,
       "questions": 0,
       "controls": 7,
       "answerAt": 0.6,
       "gap": null,
-      "styles": 7,
+      "styles": 14,
       "colours": 2,
       "outOfSight": null,
-      "codes": 1
+      "codes": 3
     },
     "/404.html": {
       "before": 13,
@@ -1146,10 +1146,78 @@
       "why": "D-AI-02",
       "date": "2026-10-21"
     },
-    { "page": "/", "count": "shown", "from": 524, "to": 545, "why": "D-UX-117", "date": "2026-10-22" },
-    { "page": "/", "count": "all", "from": 524, "to": 545, "why": "D-UX-117", "date": "2026-10-22" },
-    { "page": "/", "count": "colours", "from": 1, "to": 2, "why": "D-UX-117", "date": "2026-10-22" },
-    { "page": "/", "count": "codes", "from": 0, "to": 1, "why": "D-UX-117", "date": "2026-10-22" }
+    {
+      "page": "/",
+      "count": "shown",
+      "from": 524,
+      "to": 545,
+      "why": "D-UX-117",
+      "date": "2026-10-22"
+    },
+    {
+      "page": "/",
+      "count": "all",
+      "from": 524,
+      "to": 545,
+      "why": "D-UX-117",
+      "date": "2026-10-22"
+    },
+    {
+      "page": "/",
+      "count": "colours",
+      "from": 1,
+      "to": 2,
+      "why": "D-UX-117",
+      "date": "2026-10-22"
+    },
+    {
+      "page": "/",
+      "count": "codes",
+      "from": 0,
+      "to": 1,
+      "why": "D-UX-117",
+      "date": "2026-10-22"
+    },
+    {
+      "page": "/",
+      "count": "shown",
+      "from": 545,
+      "to": 592,
+      "why": "D-UX-129 (set by hand: this container fonts differ from the baseline)",
+      "date": "2026-10-24"
+    },
+    {
+      "page": "/",
+      "count": "all",
+      "from": 545,
+      "to": 592,
+      "why": "D-UX-129 (set by hand: this container fonts differ from the baseline)",
+      "date": "2026-10-24"
+    },
+    {
+      "page": "/",
+      "count": "abbr",
+      "from": 4,
+      "to": 5,
+      "why": "D-UX-129 (set by hand: this container fonts differ from the baseline)",
+      "date": "2026-10-24"
+    },
+    {
+      "page": "/",
+      "count": "styles",
+      "from": 7,
+      "to": 14,
+      "why": "D-UX-129 (set by hand: this container fonts differ from the baseline)",
+      "date": "2026-10-24"
+    },
+    {
+      "page": "/",
+      "count": "codes",
+      "from": 1,
+      "to": 3,
+      "why": "D-UX-129 (set by hand: this container fonts differ from the baseline)",
+      "date": "2026-10-24"
+    }
   ],
   "fontProbe": 320.2
 }

@@ -1,0 +1,204 @@
+---
+/**
+ * The DSCR's story in look C (HOME1d, D-UX-122 to D-UX-125; docs/DESIGN-MOTION.md): five beats, the bank's question,
+ * the seven answers, every year worked out, the change that passes and the statement the borrower takes to the lender.
+ * Every figure, word and statement line is the scene's own (DSCR_SCENE in story.ts, the engine's and the document's);
+ * the bars' widths only scale each DSCR against the target. The HTML is the finished state, the last beat, read whole by a
+ * screen reader (the five captions as a list) and shown as it is without script or under reduced motion; scene.ts plays
+ * the beats once when the scene comes into view, through the Web Animations API alone, so the video studio can seek it
+ * (D-TECH-56).
+ */
+import type { DscrScene } from './story';
+
+interface Props { scene: DscrScene; class?: string }
+const { scene: s, class: cls = '' } = Astro.props;
+// The target sits at 45% of a bar's track; a taller DSCR (a part year's) is cut at the end, with a gap.
+const AT = 0.45, top = s.target.n / AT;
+const pct = (n: number) => Math.min(100, (n / top) * 100);
+const last = s.beats.length - 1;
+---
+<div data-scene="dscr" class={`scene ${cls}`}>
+  <div class="head">
+    <p class="kicker" aria-hidden="true">{s.beats.map((b, i) => <span data-beat-name={i}>{b.name} · {i + 1} of {s.beats.length}</span>)}</p>
+    <button type="button" data-replay hidden class="soft">Show it all</button>
+  </div>
+
+  <div data-stage class="stage">
+    <ul data-inputs class="inputs" aria-label="The seven answers">
+      {s.inputs.map((x) => (
+        <li data-card data-term={x.to ? '' : undefined} class={`card glass ${x.to ? 'wide' : ''}`}>
+          <span class="k">{x.k}</span>
+          {x.to ? (
+            <span class="v slot"><span data-was aria-hidden="true">{x.v}</span><span data-now>{x.to}</span></span>
+          ) : <span class="v">{x.v}</span>}
+          {x.to && ['tl', 'tr', 'bl', 'br'].map((c) => <i data-brk aria-hidden="true" class={`brk ${c}`}></i>)}
+        </li>
+      ))}
+    </ul>
+
+    <div data-hub class="hub" aria-hidden="true">
+      <svg viewBox="0 0 120 120" class="dialring"><circle data-dial cx="60" cy="60" r="57" pathLength="100" /></svg>
+      <span class="core"><b class="slot"><span data-was>{s.hub.from}</span><span data-now>{s.hub.to}</span></b><span>months</span><span class="lg-only">worked out</span></span>
+    </div>
+
+    <div class="right">
+      <div data-panel class="layer" aria-hidden="true">
+        <div class="panel glass">
+          <div class="row phead">
+            <span>DSCR, year by year</span>
+            <span class="track"><span class="tlabel" style={`left:${AT * 100}%`}>target {s.target.text}</span></span>
+            <span></span>
+          </div>
+          <div data-rows class="rows">
+            {s.years.map((y, i) => (
+              <div data-yr={i} class="row" data-weak-typed={i === s.weakest.typed ? '' : undefined} data-weak-fixed={i === s.weakest.fixed ? '' : undefined}>
+                <span class="fy">{y.fy}</span>
+                <span class="track">
+                  <i data-yb class={`bar ${y.fixed.n > top ? 'cut' : ''}`} style={`width:${pct(y.fixed.n)}%`}
+                    data-ratio={y.typed ? (pct(y.typed.n) / pct(y.fixed.n)).toFixed(4) : undefined} data-miss={y.typed && !y.typed.meets ? '' : undefined}></i>
+                  <i data-tl class="tline" style={`left:${AT * 100}%`}></i>
+                </span>
+                <span class="val slot">{y.typed && <span data-t class={y.typed.meets ? '' : 'miss'}>{y.typed.text}</span>}<span data-f>{y.fixed.text}</span></span>
+              </div>
+            ))}
+            <svg data-lens viewBox="0 0 48 48" class="lens"><circle cx="20" cy="20" r="15" /><path d="M31 31 L43 43" /></svg>
+            <span data-rframe class="rframe">{['tl', 'tr', 'bl', 'br'].map((c) => <i class={`brk ${c}`}></i>)}</span>
+          </div>
+        </div>
+        <p class="sum">
+          <span class="slot slabel"><span data-t>{s.sum.typed[0]}: cash available ÷ debt service</span><span data-f>{s.sum.fixed[0]}: cash available ÷ debt service</span></span>
+          <span class="slot sfig"><span data-t>{s.sum.typed[1].replace(/= ([\d.]+)$/, '= ')}<em class="miss">{s.sum.typed[1].match(/[\d.]+$/)?.[0]}</em></span><span data-f>{s.sum.fixed[1].replace(/= ([\d.]+)$/, '= ')}<em class="meet">{s.sum.fixed[1].match(/[\d.]+$/)?.[0]}</em></span></span>
+          <span class="slot chips"><span data-t class="chip miss">{s.chip.typed}</span><span data-f class="chip meet">{s.chip.fixed}</span></span>
+        </p>
+      </div>
+
+      <article data-doc class="layer doc glass">
+        <header class="dhead">
+          <svg viewBox="0 0 24 24" aria-hidden="true" class="page"><path d="M6 2.75h8l4.25 4.25V21.25H6z M14 2.75V7h4.25" /></svg>
+          <span><b>{s.statement.title}</b><span class="dsub">{s.statement.sub}</span></span>
+        </header>
+        <p data-dl class="verdict"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" /></svg>{s.statement.verdict}</p>
+        <div data-dl class="mini" aria-hidden="true">
+          {s.years.map((y) => <span class="mcol"><i data-mb style={`height:${pct(y.fixed.n)}%`} class={y.fixed.n > top ? 'cut' : ''}></i></span>)}
+          <i class="mline" style={`bottom:${AT * 100}%`}></i>
+        </div>
+        <ul class="lines">
+          {s.statement.lines.map((x) => (
+            <li data-dl><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3 3 7-7" /></svg><span><b>{x.head}</b> {x.text}</span></li>
+          ))}
+        </ul>
+        <p data-dl class="files">{s.statement.files.map((f) => <span data-file class="file">{f}</span>)}<span class="ready">{s.statement.ready}</span></p>
+      </article>
+    </div>
+  </div>
+
+  <div class="caption" aria-hidden="true">{s.beats.map((b, i) => <p data-cap={i}>{b.caption}</p>)}</div>
+  <ol class="sr-only">{s.beats.map((b) => <li>{b.name}: {b.caption}</li>)}</ol>
+  <ol class="rail" aria-hidden="true">{s.beats.map((b, i) => <li data-step={i} class={i === last ? 'now' : ''}><i></i><span>{b.name}</span></li>)}</ol>
+</div>
+
+<style>
+  /* Look C (D-UX-124): a matte navy ground, glass cards with 1 px borders, marigold the one accent, red only for a year
+     below the target. The scene stays dark in both themes, like the desk. */
+  .scene {
+    --g: oklch(0.17 0.045 268); --ink: oklch(0.975 0.012 85); --mute: oklch(0.8 0.03 268); --line: oklch(1 0 0 / 0.1);
+    --miss: oklch(0.72 0.16 22); --gold: var(--marigold); --glass: oklch(1 0 0 / 0.05);
+    position: relative; isolation: isolate; overflow: hidden; border-radius: 1.75rem; color: var(--ink);
+    background: radial-gradient(60% 50% at 18% 10%, oklch(0.32 0.09 270 / 0.55), transparent 70%),
+      radial-gradient(45% 40% at 62% 58%, oklch(0.55 0.1 76 / 0.16), transparent 70%), var(--g);
+    padding: 1.25rem 1rem 1.5rem; font-variant-numeric: tabular-nums lining-nums;
+  }
+  @media (min-width: 1024px) { .scene { padding: 2.5rem 2.5rem 2rem; } }
+  .glass { background: var(--glass); border: 1px solid var(--line); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
+  .slot { display: inline-grid; } .slot > * { grid-area: 1 / 1; }
+  [data-was], [data-t] { opacity: 0; }
+
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; min-height: 2.75rem; }
+  .kicker { display: grid; color: var(--mute); font-size: 1rem; } .kicker > * { grid-area: 1 / 1; }
+  .kicker > :not(:last-child) { opacity: 0; }
+  .soft { display: inline-flex; min-height: 2.75rem; align-items: center; border-radius: 999px; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; background: oklch(1 0 0 / 0.1); color: var(--ink); }
+  .soft:hover { background: oklch(1 0 0 / 0.18); }
+
+  .stage { position: relative; display: grid; gap: 1.25rem; margin-top: 1rem; }
+  @media (min-width: 1024px) { .stage { grid-template-columns: minmax(13rem, 17rem) 9.5rem minmax(0, 1fr); gap: 2.5rem; align-items: center; margin-top: 1.5rem; } }
+
+  .inputs { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  @media (min-width: 1024px) { .inputs { grid-template-columns: 1fr; gap: 0.625rem; } }
+  .card { position: relative; display: flex; flex-direction: column; border-radius: 1rem; padding: 0.5rem 0.875rem; min-width: 0; }
+  .card.wide { grid-column: 1 / -1; }
+  .k { color: var(--mute); font-size: 0.8125rem; line-height: 1.25rem; }
+  .v { font-weight: 600; font-size: 1rem; line-height: 1.5rem; }
+  .brk { position: absolute; width: 0.75rem; height: 0.75rem; border: 0 solid var(--gold); opacity: 0; }
+  .brk.tl { top: -0.3rem; left: -0.3rem; border-width: 2px 0 0 2px; } .brk.tr { top: -0.3rem; right: -0.3rem; border-width: 2px 2px 0 0; }
+  .brk.bl { bottom: -0.3rem; left: -0.3rem; border-width: 0 0 2px 2px; } .brk.br { bottom: -0.3rem; right: -0.3rem; border-width: 0 2px 2px 0; }
+
+  .hub { position: relative; z-index: 1; justify-self: center; display: grid; place-items: center; width: 7.5rem; aspect-ratio: 1; }
+  @media (min-width: 1024px) { .hub { width: 9.5rem; } }
+  .dialring { position: absolute; inset: 0; overflow: visible; }
+  .dialring circle { fill: oklch(0.24 0.05 268 / 0.9); stroke: var(--gold); stroke-opacity: 0.55; stroke-width: 1.5; stroke-dasharray: 70 4 10 4 8 4; transform-box: view-box; transform-origin: 50% 50%; }
+  .core { position: relative; display: grid; justify-items: center; color: var(--mute); font-size: 0.875rem; line-height: 1.25rem; }
+  .core b { color: var(--ink); font-size: 1.75rem; line-height: 2.25rem; font-weight: 600; }
+  .lg-only { display: none; } @media (min-width: 1024px) { .lg-only { display: block; } }
+
+  .right { position: relative; z-index: 1; display: grid; min-width: 0; } .layer { grid-area: 1 / 1; min-width: 0; }
+  [data-panel] { opacity: 0; }
+  .panel { border-radius: 1.25rem; padding: 0.75rem 0.875rem; }
+  @media (min-width: 1024px) { .panel { padding: 1rem 1.5rem; } }
+  .row { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr) 2.75rem; gap: 0.75rem; align-items: center; height: 2.5rem; }
+  @media (min-width: 1024px) { .row { grid-template-columns: 5.5rem minmax(0, 1fr) 3rem; gap: 1.25rem; height: 2.75rem; } }
+  .phead { height: 2rem; color: var(--mute); font-size: 0.875rem; } .phead > span:first-child { grid-column: 1 / 3; grid-row: 1; white-space: nowrap; }
+  .phead .track { grid-column: 2; grid-row: 1; height: 100%; } .tlabel { position: absolute; top: 0.25rem; transform: translateX(-50%); white-space: nowrap; color: var(--ink); }
+  .rows { position: relative; }
+  .fy { color: var(--mute); font-size: 0.9375rem; }
+  .track { position: relative; display: block; height: 0.5rem; border-radius: 999px; background: oklch(1 0 0 / 0.1); }
+  .phead .track { background: none; }
+  @media (max-width: 639px) { .phead { height: 3rem; } .phead > span:first-child { align-self: start; } .tlabel { top: auto; bottom: 0; } }
+  .bar { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: var(--ink); transform-origin: left; }
+  .bar.cut { -webkit-mask: linear-gradient(to right, #000 calc(100% - 0.875rem), transparent calc(100% - 0.875rem), transparent calc(100% - 0.5rem), #000 calc(100% - 0.5rem)); mask: linear-gradient(to right, #000 calc(100% - 0.875rem), transparent calc(100% - 0.875rem), transparent calc(100% - 0.5rem), #000 calc(100% - 0.5rem)); }
+  .tline { position: absolute; top: -1rem; bottom: -1rem; border-left: 1.5px dashed oklch(1 0 0 / 0.45); }
+  .val { justify-self: end; font-weight: 600; } .miss { color: var(--miss); } .meet { color: var(--gold); }
+  .lens { position: absolute; left: 0; top: 0; width: 3rem; height: 3rem; opacity: 0; fill: oklch(1 0 0 / 0.06); stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; pointer-events: none; }
+  .rframe { position: absolute; left: -0.5rem; right: -0.5rem; top: 0; height: 2.5rem; opacity: 0; border-radius: 0.5rem; background: oklch(0.72 0.16 22 / 0.14); }
+  @media (min-width: 1024px) { .rframe { height: 2.75rem; } }
+  .rframe .brk { opacity: 1; }
+  .sum { display: grid; gap: 0.125rem; margin-top: 0.75rem; padding-inline: 0.25rem; }
+  .slabel { color: var(--mute); font-size: 0.875rem; }
+  .sfig { font-size: 1.25rem; line-height: 1.75rem; font-weight: 600; } .sfig em { font-style: normal; }
+  @media (min-width: 1024px) { .sfig { font-size: 1.5rem; line-height: 2rem; } }
+  .chips { justify-self: start; margin-top: 0.375rem; }
+  .chip { justify-self: start; border: 1.5px solid currentColor; border-radius: 0.5rem; padding: 0 0.5rem; font-weight: 600; font-size: 0.9375rem; line-height: 1.75rem; }
+
+  .doc { position: relative; align-self: start; border-radius: 1.25rem; padding: 1rem; box-shadow: 0 24px 60px -24px oklch(0 0 0 / 0.6); }
+  @media (min-width: 1024px) { .doc { padding: 1.5rem 1.75rem; } }
+  .dhead { display: flex; gap: 0.75rem; align-items: flex-start; }
+  .dhead b { display: block; font-size: 1.125rem; line-height: 1.5rem; } .dsub { display: block; color: var(--mute); font-size: 0.875rem; }
+  .page { flex: none; width: 1.75rem; height: 1.75rem; fill: none; stroke: var(--gold); stroke-width: 1.5; stroke-linejoin: round; }
+  .doc svg:not(.page) { flex: none; width: 1rem; height: 1rem; margin-top: 0.25rem; fill: none; stroke: var(--gold); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .verdict { display: flex; gap: 0.5rem; margin-top: 0.875rem; font-weight: 600; }
+  .mini { position: relative; display: flex; align-items: flex-end; gap: 0.375rem; height: 3.5rem; margin: 0.875rem 0 0 1.5rem; }
+  .mcol { position: relative; flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center; }
+  .mcol i { width: 100%; max-width: 1.5rem; border-radius: 0.25rem 0.25rem 0 0; background: var(--ink); transform-origin: bottom; }
+  .mcol i.cut { -webkit-mask: linear-gradient(to top, #000 calc(100% - 0.75rem), transparent calc(100% - 0.75rem), transparent calc(100% - 0.4rem), #000 calc(100% - 0.4rem)); mask: linear-gradient(to top, #000 calc(100% - 0.75rem), transparent calc(100% - 0.75rem), transparent calc(100% - 0.4rem), #000 calc(100% - 0.4rem)); }
+  .mline { position: absolute; left: -0.25rem; right: -0.25rem; border-top: 1.5px dashed oklch(1 0 0 / 0.5); }
+  .lines { display: grid; gap: 0.5rem; margin-top: 1rem; font-size: 0.9375rem; line-height: 1.375rem; }
+  .lines li { display: flex; gap: 0.5rem; } .lines b { display: block; font-weight: 600; }
+  .files { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-top: 1rem; }
+  .file { border: 1px solid oklch(1 0 0 / 0.18); border-radius: 0.5rem; padding: 0.125rem 0.625rem; font-weight: 600; font-size: 0.875rem; background: oklch(1 0 0 / 0.06); }
+  .ready { margin-left: 0.25rem; color: var(--gold); font-weight: 600; }
+
+  .caption { display: grid; margin: 1.5rem auto 0; max-width: 48rem; text-align: center; font-family: var(--font-heading); font-weight: 500; font-size: 1.375rem; line-height: 1.875rem; text-wrap: balance; }
+  @media (min-width: 1024px) { .caption { margin-top: 2rem; font-size: 1.875rem; line-height: 2.375rem; } }
+  .caption > * { grid-area: 1 / 1; } .caption > :not(:last-child) { opacity: 0; }
+
+  .rail { position: relative; display: flex; justify-content: center; gap: 1.25rem; margin-top: 1.25rem; }
+  .rail li { position: relative; display: grid; justify-items: center; gap: 0.5rem; color: var(--mute); font-size: 0.875rem; }
+  .rail li i { width: 0.75rem; height: 0.75rem; border-radius: 999px; background: var(--gold); box-shadow: 0 0 0 0 transparent; }
+  .rail li.now i { transform: scale(1.35); }
+  [data-running] .rail li.now i { transform: none; }
+  .rail li span { display: none; }
+  @media (min-width: 1024px) {
+    .rail { justify-content: space-between; margin-top: 1.75rem; }
+    .rail::before { content: ''; position: absolute; left: 5rem; right: 5rem; top: 0.3125rem; height: 2px; background: oklch(1 0 0 / 0.14); }
+    .rail li { flex: 1; } .rail li span { display: block; } .rail li.now { color: var(--ink); font-weight: 600; } [data-running] .rail li.now { color: var(--mute); font-weight: inherit; }
+  }
+</style>

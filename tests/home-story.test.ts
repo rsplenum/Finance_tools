@@ -32,7 +32,7 @@ import { architectCheck } from '../engine/architect-check';
 import { inputOf } from '../site/src/estimate/plan-model';
 import { preview as reportPreview } from '../site/src/report/model';
 import { CMA_FIX, ESTIMATE_BUDGET, ESTIMATE_CASE, ESTIMATE_FIXED, INTROS, REPORT_CASE, REPORT_FIX, REPORT_FIXED } from '../site/src/home/story';
-import { STORY_CASE, STORY_FIX, STORY_FIXED, STORY_LONGER, STORY_TARGET, STORY_TYPED } from '../site/src/home/story';
+import { DSCR_SCENE, STORY_CASE, STORY_FIX, STORY_FIXED, STORY_LONGER, STORY_TARGET, STORY_TYPED } from '../site/src/home/story';
 import { READY } from '../site/src/site';
 
 const check = (s: typeof STORY_CASE) => { const c = dscrCaseOf(s)!; return planCheck(c.proj, c.loan, c.def); };
@@ -90,6 +90,34 @@ describe('the DSCR intro', () => {
     for (const [k, want] of [year(60, 42), year(80, 66)].entries()) sums[k].forEach((v, i) => expect(Math.abs(v - want[i])).toBeLessThanOrEqual(0.5));
     expect((year(60, 42)[0] / year(60, 42)[1]).toFixed(6)).toBe('1.002861');
     expect((year(80, 66)[0] / year(80, 66)[1]).toFixed(6)).toBe('1.205230');
+  });
+});
+
+// The scene (HOME1d, D-UX-125): the same case and change as the intro, the same hand-worked sums, and its statement
+// beat read off the document built for the case: 80 instalments in the schedule, the two computations 0.00 apart.
+describe('the DSCR scene', () => {
+  const s = DSCR_SCENE;
+  it('the seven inputs, the term changed to 80, and the target', () => {
+    expect(s.inputs.map((i) => i.v)).toEqual(['A firm', 'Rs. 4,50,000', '0%', 'None', 'Rs. 12,00,000', '12%', '60 instalments']);
+    expect(s.inputs.filter((i) => i.to).map((i) => i.to)).toEqual(['80 instalments']);
+    expect([s.target, s.hub]).toEqual([{ text: '1.20', n: 1.2, average: '1.50' }, { from: '60', to: '80' }]);
+  });
+  it('the weakest year before and after, as worked by hand', () => {
+    expect([s.sum.typed, s.sum.fixed]).toEqual([['2030-31', '3,21,236 ÷ 3,20,320 = 1.00'], ['2032-33', '3,16,194 ÷ 2,62,351 = 1.21']]);
+    expect([s.years[s.weakest.typed].fy, s.years[s.weakest.fixed].fy]).toEqual(['2030-31', '2032-33']);
+    expect(s.years.map((y) => y.typed?.text ?? '')).toEqual(['2.07', '1.09', '1.06', '1.03', '1.00', '1.94', '', '']);
+    expect(s.years.every((y) => y.fixed.meets)).toBe(true);
+  });
+  it('the statement beat: verdict, both computations, the basis, every instalment, the signature lines', () => {
+    expect(s.statement.verdict).toBe('Meets the target: the lowest year, 2032-33, is 1.21 against 1.20; the average is 1.51 against 1.50.');
+    expect(s.statement.lines.map((l) => l.head)).toEqual(['Worked out twice', 'Its basis', 'Every instalment', 'Ready to sign']);
+    expect(s.statement.lines.map((l) => l.text).join(' ')).toMatch(/difference 0\.00\..*dated 30-09-2026\..*all 80 months\./);
+    expect(s.statement.files).toEqual(['PDF', 'Excel', 'Word']);
+  });
+  it('five beats, each caption\'s figures the scene\'s own', () => {
+    expect(s.beats.map((b) => b.name)).toEqual(['The bank\'s question', 'Seven answers', 'Every year worked out', 'The change that passes', 'The statement for the lender']);
+    expect(s.beats[2].caption).toContain('2030-31, is 1.00 against the target 1.20');
+    expect(s.beats[3].caption).toContain('the weakest, 2032-33, is 1.21');
   });
 });
 
