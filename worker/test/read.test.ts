@@ -1,7 +1,7 @@
 /** POST /read (D-UX-48): off without the key, inputs checked, capped per address and per day, the AI's pointers passed on. */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import worker from '../src/index';
-import { SCHEMA, SYSTEM } from '../src/read';
+import { MAX_BYTES, SCHEMA, SYSTEM } from '../src/read';
 
 const answer = { yearsAt: { page: 1, line: 4 }, unitsAt: { page: 1, line: 3 }, placements: [{ head: 'sales', column: 'current', at: [{ page: 2, line: 3, n: 1 }] }], totals: [] };
 const kv = () => { const m = new Map<string, string>(); return { m, get: async (k: string) => m.get(k) ?? null, put: async (k: string, v: string) => void m.set(k, v) }; };
@@ -65,6 +65,20 @@ describe('read route', () => {
     expect((await post(env)).status).toBe(429); // the address's 2 are used
     expect((await post(env, { lines }, '/read', { 'cf-connecting-ip': '5.6.7.8' })).status).toBe(200);
     expect((await post(env, { lines }, '/read', { 'cf-connecting-ip': '9.9.9.9' })).status).toBe(429); // the day's 3 are used
+  });
+  it('refuses a body over the cap with no header, or with a header that lies (SEC1)', async () => {
+    const sent = mockApi();
+    const big = JSON.stringify({ lines: [{ page: 1, line: 1, text: 'x'.repeat(MAX_BYTES) }] });
+    const raw = (body: BodyInit, headers: Record<string, string> = {}) => worker.fetch(new Request('https://api.test/read', { method: 'POST', body, headers: { 'cf-connecting-ip': '1.2.3.4', ...headers }, duplex: 'half' } as RequestInit) as Parameters<typeof worker.fetch>[0], envOf());
+    expect((await raw(new Blob([big]).stream())).status).toBe(413);
+    expect((await raw(big, { 'content-length': '10' })).status).toBe(413);
+    expect(sent.length).toBe(0);
+  });
+  it('refuses pointers that stray from the schema (SEC1)', async () => {
+    for (const bad of [{ ...answer, totals: undefined }, { ...answer, placements: [{ head: 'salary', column: 'current', at: [] }] }, { ...answer, yearsAt: { page: 1.5, line: 4 } }, { ...answer, sum: 390 }]) {
+      mockApi({ stop_reason: 'end_turn', content: [{ type: 'text', text: JSON.stringify(bad) }] });
+      expect((await post(envOf())).status).toBe(502);
+    }
   });
   it('says the statement could not be read when the model stops short', async () => {
     mockApi({ stop_reason: 'max_tokens', content: [{ type: 'text', text: '{' }] });

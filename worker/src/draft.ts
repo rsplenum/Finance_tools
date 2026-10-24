@@ -7,17 +7,22 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { NARRATIVE, SCHEMA, SYSTEM, inputOf, promptOf } from '../../engine/narrative';
+import { textWithin } from './body';
 import { withinCaps } from './caps';
+import { parsedAs, type Schema } from './shape';
 import type { ReadEnv } from './read';
+
+/** The largest body read: the notes and facts at their caps, three bytes a character. */
+export const MAX_BYTES = (NARRATIVE.maxNote * 3 + NARRATIVE.maxFact * (5 + 3 * NARRATIVE.maxProducts)) * 3;
 
 type Reply = (body: unknown, status: number, headers?: Record<string, string>) => Response;
 
 export async function draft(req: Request, env: ReadEnv, json: Reply): Promise<Response> {
   if (!env.ANTHROPIC_API_KEY) return json({ error: 'Drafting the words is not switched on yet: write them yourself.' }, 503);
-  const size = Number(req.headers.get('content-length') ?? 0);
-  if (size > (NARRATIVE.maxNote * 3 + NARRATIVE.maxFact * (5 + 3 * NARRATIVE.maxProducts)) * 3) return json({ error: 'Too much to draft from: shorten the notes.' }, 413);
+  const text = await textWithin(req, MAX_BYTES);
+  if (text === null) return json({ error: 'Too much to draft from: shorten the notes.' }, 413);
   let body: unknown;
-  try { body = await req.json(); } catch { return json({ error: 'not JSON' }, 400); }
+  try { body = JSON.parse(text); } catch { return json({ error: 'not JSON' }, 400); }
   const input = inputOf(body);
   if (typeof input === 'string') return json({ error: input }, 400);
   if (!(await withinCaps(env, 'draft', req.headers.get('cf-connecting-ip') ?? 'unknown', [Number(env.DRAFT_PER_IP), Number(env.DRAFT_PER_DAY)])))
@@ -33,9 +38,10 @@ export async function draft(req: Request, env: ReadEnv, json: Reply): Promise<Re
       // Opus 5.5 may decline a request on policy grounds; the server then retries on its default fallback model.
       ...(model.startsWith('claude-opus') ? { fallbacks: 'default' as const, betas: ['server-side-fallback-2026-07-01' as const] } : {}),
     });
-    const text = msg.content.find((b) => b.type === 'text');
-    if (msg.stop_reason !== 'end_turn' || !text || text.type !== 'text') return json({ error: 'The words could not be drafted: write them yourself, or try again.' }, 502);
-    return json({ draft: JSON.parse(text.text) as unknown }, 200);
+    const out = msg.content.find((b) => b.type === 'text');
+    const words = msg.stop_reason === 'end_turn' && out?.type === 'text' ? parsedAs<Record<string, string>>(out.text, SCHEMA as Schema) : null;
+    if (!words) return json({ error: 'The words could not be drafted: write them yourself, or try again.' }, 502);
+    return json({ draft: words }, 200);
   } catch (e) {
     // Only the kind of failure is logged, never what was sent.
     console.error('draft failed', e instanceof Anthropic.APIError ? e.status : (e as Error)?.name);

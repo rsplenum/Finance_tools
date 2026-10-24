@@ -10,7 +10,7 @@ import { events, prune } from './events';
 import { draft } from './draft';
 import { read, type ReadEnv } from './read';
 
-const BINDINGS = ['DB', 'KV'] as const;
+const BINDINGS = ['DB', 'KV', 'EVENTS_LIMIT'] as const;
 
 export default {
   async fetch(req, env: ReadEnv): Promise<Response> {

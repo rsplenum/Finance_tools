@@ -4,6 +4,7 @@
  * agent, no headers. A batch from an origin not on READ_ORIGINS is refused. The site sends nothing until it is built
  * with PUBLIC_API_URL (or PUBLIC_EVENTS=on), so this answers only once the Worker is live.
  */
+import { textWithin } from './body';
 import { MAX_BYTES, check } from './event-shape';
 
 const INSERT = 'INSERT INTO events (at, visit, page, came, width, kind, name, ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
@@ -12,8 +13,12 @@ export const KEEP_DAYS = 400;
 
 export async function events(req: Request, env: Env, allowed: boolean): Promise<Response> {
   if (!allowed) return new Response(null, { status: 403 });
-  const text = await req.text();
-  if (text.length > MAX_BYTES) return new Response(null, { status: 413 });
+  // SEC1 (D-TECH-54, audit S3): the origin can be forged, so batches are also capped per address by Cloudflare's rate
+  // limiter, which holds its count in memory for a minute; nothing is stored. Without the binding nothing is taken.
+  if (!env.EVENTS_LIMIT) return new Response(null, { status: 503 });
+  if (!(await env.EVENTS_LIMIT.limit({ key: req.headers.get('cf-connecting-ip') ?? 'unknown' })).success) return new Response(null, { status: 429 });
+  const text = await textWithin(req, MAX_BYTES);
+  if (text === null) return new Response(null, { status: 413 });
   let body: unknown;
   try { body = JSON.parse(text); } catch { return new Response(null, { status: 400 }); }
   const r = check(body);

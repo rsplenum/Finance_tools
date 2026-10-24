@@ -1,13 +1,13 @@
-/** Health route: 200 when both bindings are present, 503 naming the missing one otherwise. */
+/** Health route: 200 when every binding are present, 503 naming the missing one otherwise. */
 import { describe, it, expect } from 'vitest';
 import worker from '../src/index';
 
-const bound = { DB: {}, KV: {} } as unknown as Env;
+const bound = { DB: {}, KV: {}, EVENTS_LIMIT: {} } as unknown as Env;
 const call = (path: string, env = bound, method = 'GET') =>
   worker.fetch(new Request(`https://api.test${path}`, { method }) as Parameters<typeof worker.fetch>[0], env);
 
 describe('health route', () => {
-  it('is ok with both bindings', async () => {
+  it('is ok with every binding', async () => {
     const r = await call('/health');
     expect(r.status).toBe(200);
     expect(r.headers.get('cache-control')).toBe('no-store');
@@ -16,7 +16,7 @@ describe('health route', () => {
   it('names a missing binding and is not ok', async () => {
     const r = await call('/health', { DB: {} } as unknown as Env);
     expect(r.status).toBe(503);
-    expect(await r.json()).toEqual({ ok: false, missing: ['KV'] });
+    expect(await r.json()).toEqual({ ok: false, missing: ['KV', 'EVENTS_LIMIT'] });
   });
   it('rejects other methods and unknown paths', async () => {
     expect((await call('/health', bound, 'POST')).status).toBe(405);

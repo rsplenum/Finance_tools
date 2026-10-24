@@ -55,7 +55,7 @@ export const POLICIES = [
 ] as const;
 export const LEGAL_DRAFT = true;
 /** The day the policies' words last changed; each page shows it. */
-export const POLICY_DATE = '18-10-2026';
+export const POLICY_DATE = '24-10-2026';
 /**
  * The owner's details (18-10-2026, D-BIZ-07), each shown in as few places as the policies need, as the owner asked: the
  * email, the grievance officer and the firm's town on the Contact page only, the courts' town in the terms only. The repo

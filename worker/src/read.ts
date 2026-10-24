@@ -7,11 +7,15 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { READ, promptLines, type Answer, type Line } from '../../engine/read';
+import { textWithin } from './body';
 import { withinCaps } from './caps';
+import { parsedAs, type Schema } from './shape';
 
 export type ReadEnv = Env & { ANTHROPIC_API_KEY?: string };
 type Reply = (body: unknown, status: number, headers?: Record<string, string>) => Response;
 
+/** The largest body read: three bytes a character covers any text the line and character caps allow, with its JSON. */
+export const MAX_BYTES = READ.maxChars * 3;
 const HEADS = Object.keys(READ.where), TOTALS = Object.keys(READ.totals);
 const int = { type: 'integer' };
 const obj = (properties: Record<string, unknown>) => ({ type: 'object', additionalProperties: false, required: Object.keys(properties), properties });
@@ -56,10 +60,10 @@ export function linesOf(body: unknown): Line[] | string {
 
 export async function read(req: Request, env: ReadEnv, json: Reply): Promise<Response> {
   if (!env.ANTHROPIC_API_KEY) return json({ error: 'Reading statements is not switched on yet: type the figures.' }, 503);
-  const size = Number(req.headers.get('content-length') ?? 0);
-  if (size > READ.maxChars * 3) return json({ error: 'The statement is too long to read: type the figures.' }, 413);
+  const text = await textWithin(req, MAX_BYTES);
+  if (text === null) return json({ error: 'The statement is too long to read: type the figures.' }, 413);
   let body: unknown;
-  try { body = await req.json(); } catch { return json({ error: 'not JSON' }, 400); }
+  try { body = JSON.parse(text); } catch { return json({ error: 'not JSON' }, 400); }
   const lines = linesOf(body);
   if (typeof lines === 'string') return json({ error: lines }, 400);
   if (!(await withinCaps(env, 'read', req.headers.get('cf-connecting-ip') ?? 'unknown', [Number(env.READ_PER_IP), Number(env.READ_PER_DAY)])))
@@ -75,9 +79,10 @@ export async function read(req: Request, env: ReadEnv, json: Reply): Promise<Res
       // Opus 5.5 may decline a request on policy grounds; the server then retries on its default fallback model.
       ...(model.startsWith('claude-opus') ? { fallbacks: 'default' as const, betas: ['server-side-fallback-2026-07-01' as const] } : {}),
     });
-    const text = msg.content.find((b) => b.type === 'text');
-    if (msg.stop_reason !== 'end_turn' || !text || text.type !== 'text') return json({ error: 'The statement could not be read: type the figures.' }, 502);
-    return json({ answer: JSON.parse(text.text) as Answer }, 200);
+    const out = msg.content.find((b) => b.type === 'text');
+    const answer = msg.stop_reason === 'end_turn' && out?.type === 'text' ? parsedAs<Answer>(out.text, SCHEMA as Schema) : null;
+    if (!answer) return json({ error: 'The statement could not be read: type the figures.' }, 502);
+    return json({ answer }, 200);
   } catch (e) {
     // Only the kind of failure is logged, never the statement.
     console.error('read failed', e instanceof Anthropic.APIError ? e.status : (e as Error)?.name);
