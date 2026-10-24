@@ -15,7 +15,7 @@ A lesson stops repeated work or a repeated mistake. It is never a rule about how
 
 ## 2. Write the row
 
-In the project's lessons log (`docs/LESSONS.md`; start it from the template in §6 if missing), one row each:
+In the project's lessons log (`docs/LESSONS.md`; start it from the template in §6 if missing), one row each. Where the project has each task's session write to its own notes file instead of the shared logs, the row and any trap go there:
 
 - **Context:** what we were doing and what set it off, in a few words. A rule without its context gets applied where it does not fit, or dropped as arbitrary.
 - **What happened:** the cost: rework, a red build, hours, tokens, the owner's words.
