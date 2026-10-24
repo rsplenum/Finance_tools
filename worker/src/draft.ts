@@ -7,17 +7,19 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { NARRATIVE, SCHEMA, SYSTEM, inputOf, promptOf } from '../../engine/narrative';
+import { capped } from './body';
 import { withinCaps } from './caps';
+import { answerOf } from './shape';
 import type { ReadEnv } from './read';
 
 type Reply = (body: unknown, status: number, headers?: Record<string, string>) => Response;
 
 export async function draft(req: Request, env: ReadEnv, json: Reply): Promise<Response> {
   if (!env.ANTHROPIC_API_KEY) return json({ error: 'Drafting the words is not switched on yet: write them yourself.' }, 503);
-  const size = Number(req.headers.get('content-length') ?? 0);
-  if (size > (NARRATIVE.maxNote * 3 + NARRATIVE.maxFact * (5 + 3 * NARRATIVE.maxProducts)) * 3) return json({ error: 'Too much to draft from: shorten the notes.' }, 413);
+  const raw = await capped(req, (NARRATIVE.maxNote * 3 + NARRATIVE.maxFact * (5 + 3 * NARRATIVE.maxProducts)) * 3);
+  if (raw === undefined) return json({ error: 'Too much to draft from: shorten the notes.' }, 413);
   let body: unknown;
-  try { body = await req.json(); } catch { return json({ error: 'not JSON' }, 400); }
+  try { body = JSON.parse(raw); } catch { return json({ error: 'not JSON' }, 400); }
   const input = inputOf(body);
   if (typeof input === 'string') return json({ error: input }, 400);
   if (!(await withinCaps(env, 'draft', req.headers.get('cf-connecting-ip') ?? 'unknown', [Number(env.DRAFT_PER_IP), Number(env.DRAFT_PER_DAY)])))
@@ -35,7 +37,10 @@ export async function draft(req: Request, env: ReadEnv, json: Reply): Promise<Re
     });
     const text = msg.content.find((b) => b.type === 'text');
     if (msg.stop_reason !== 'end_turn' || !text || text.type !== 'text') return json({ error: 'The words could not be drafted: write them yourself, or try again.' }, 502);
-    return json({ draft: JSON.parse(text.text) as unknown }, 200);
+    // A draft outside the schema is refused here, before the page sees it (SEC1).
+    const out = answerOf(text.text, SCHEMA);
+    if (!out) return json({ error: 'The words could not be drafted: write them yourself, or try again.' }, 502);
+    return json({ draft: out }, 200);
   } catch (e) {
     // Only the kind of failure is logged, never what was sent.
     console.error('draft failed', e instanceof Anthropic.APIError ? e.status : (e as Error)?.name);

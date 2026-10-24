@@ -9,7 +9,7 @@ const sections = [
   { h: 'What we count, never what you type', p: [
     'To make the tools better, we count which steps are used:',
     ['the page, and where the visit came from (our own pages, a search or elsewhere)', 'which field changed, by its name, never what is in it', 'parts opened, buttons tapped, whether a result was ready, a download’s format and an error shown', 'the time since the page opened, and the screen size as phone, tablet or desktop'],
-    'A random tag ties one visit’s steps together and is forgotten when you close the tab. We set no cookies, use no outside analytics and never record your screen. The counts are kept for 400 days, then deleted.',
+    'A random tag ties one visit’s steps together and is forgotten when you close the tab. We set no cookies, use no outside analytics and never record your screen. The counts are kept for 400 days, then deleted. So that no one can flood them, your internet address is held for one minute in Cloudflare’s memory to count how many batches it sends, then forgotten; it is never stored with the counts.',
     COUNTING ? 'This counting is on.' : 'This counting is not switched on yet; this page will say when it is.',
   ] },
   { h: 'When an AI reads a statement or drafts words for you', p: [
