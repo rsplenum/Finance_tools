@@ -750,7 +750,7 @@ for (const scheme of ['light', 'dark']) {
   await expectText(page, v, page.getByTestId('pl-assumed').locator(':scope > summary'), /^What the estimate assumes \(\d+\)$/, 'the assumptions behind one line with their count');
   await tap(page, 'pl-assumed');
   await expectText(page, v, 'pl-assumed-0', /^Rooms: Living and dining/, 'the assumptions');
-  await expectText(page, v, 'pl-rates', /^A planning estimate: rates as reported on \d\d-\d\d-\d{4} for Pune; \d+ of \d+ lines checked against their pages$/, 'the rates as reported, in one line by the total');
+  await expectText(page, v, 'pl-rates', /^A planning estimate: rates as reported on \d\d-\d\d-\d{4} for Pune; \d+ of \d+ lines verified at their pages$/, 'the rates as reported, in one line by the total');
 
   // The downloads, at the package as answered.
   await expectText(page, v, 'pl-doc-status', 'Figures complete; for the document, 2 still to answer', 'the planning estimate before its facts');
@@ -1013,7 +1013,7 @@ for (const scheme of ['light', 'dark']) {
     if (whys) v(`${label}: ${whys} Why? shown before any tap (want none)`);
     for (const c of why.cards) await tap(page, `pl-card-${c}`);
     // textContent runs the paragraphs together ("…wardrobeWhat it is: …"); on screen each is a line of its own.
-    const reported = `Sources: .+${why.own ? '; and our own rule' : ''}\\. (As reported, not yet checked|Checked against (its page|their pages))\\.$`;
+    const reported = `Sources: .+${why.own ? '; and our own rule' : ''}\\. (Needs review: as reported, not yet confirmed at its page|Verified at (its page|their pages))\\.$`;
     for (const [id, want] of [[why.line, new RegExp(`^ⓘ Why\\? .+What it is: .+Why it costs what it does: .+What to check: .+${reported}`)],
       [why.section[0], new RegExp(`^ⓘ Why\\? .+Where to spend, where to save${why.section[1]}: .+${reported}`)]]) {
       if (await page.getByTestId(id).evaluate((d) => d.open, null, { timeout: 3000 }).catch(() => true)) v(`${label}: ${id} missing, or open before a tap`);

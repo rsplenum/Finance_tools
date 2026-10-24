@@ -17,7 +17,7 @@ Each: the friction it removes; its evidence.
 7. **Lines of 45 to 75 characters** for running text (`max-w-prose` or the page's `max-w-3xl` column). Friction: losing the line on the return sweep. Evidence: Bringhurst, *The Elements of Typographic Style*; WCAG 1.4.8 (AAA) caps at 80.
 8. **A reset always in reach**: Clear all, Undo after "Use this plan", every change reversible. Friction: fear of trying. Evidence: Nielsen's heuristic 3, "User control and freedom" (NN/g).
 9. **An answer within 100 ms** of leaving a field: the engine runs in the page, no spinner. Friction: waiting breaks the flow of thought. Evidence: Nielsen, "Response times: the 3 important limits" (NN/g, 1993).
-10. **Every element says something, or goes** (the owner, 18-10-2026): no shadow, gradient, blur, icon, box or space that tells nothing; each size, gap and colour from the maths in `docs/DESIGN-MATHS.md`; each section says what no other does (lesson 11, HOME1b). Evidence: Tufte's data-ink principle (1983).
+10. **Every element says something, or goes** (the owner, 18-10-2026): no shadow, gradient, blur, icon, box or space that tells nothing; each size, gap and colour from the maths in `docs/DESIGN-MATHS.md`; each section or line says what no other does (lesson 11, HOME1b; TRUST1). Evidence: Tufte's data-ink principle (1983).
 11. **No pure black behind white text in dark mode** (the canvas is a dark grey). Evidence: Material Design, "Dark theme" (a guideline).
 12. **Plain words on screen**, the owner's words; a CA's terms in the documents. Evidence: GOV.UK, "Writing for GOV.UK"; LESSONS-CARRIED §1.
 

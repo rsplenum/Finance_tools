@@ -20,6 +20,7 @@ import { emisByYear, fromMonth, series, type RunningLoan } from '../../../engine
 import { parseAmount, parseMonth } from '../../../engine/parse';
 import { BORROWERS, borrowerOf, taxSummary } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
+import { SURE, leastSure, type Marked } from '../../../engine/sure';
 
 export type Source = 'own' | 'plan';
 /** A preset's id from the data file, or 'choose' to answer the four choices one by one. */
@@ -916,3 +917,27 @@ export const presetText = (id: string) => cap(OPTION_KEYS
 /** One rate typed for every year. */
 export const withTaxRate = (s: State, pct: string): State =>
   ({ ...s, modes: { ...s.modes, taxPct: 'same' }, cells: { ...s.cells, taxPct: [pct, ...(s.cells.taxPct ?? []).slice(1)] } });
+
+/** What the verdict rests on that came from our data, each with how sure it is (D-DATA-25, TRUST1): the method, the
+ *  target when it is the examples, the tax when it is worked out by who the borrower is. What the borrower typed is theirs. */
+export function dscrMarks(s: State): { what: string; mark: Marked; check: string }[] {
+  const out: { what: string; mark: Marked; check: string }[] = [];
+  const m = presetOf(s.method);
+  if (m) out.push({ what: 'the method', mark: m as Marked, check: 'ask your lender how it works DSCR out' });
+  const t = targetOf(s), a = EXAMPLE_TARGETS.average, n = EXAMPLE_TARGETS.minimum;
+  const ex = [t.average !== undefined && a && t.average === a.value && a, t.minimum !== undefined && n && t.minimum === n.value && n].filter(Boolean) as Marked[];
+  if (ex.length) out.push({ what: 'the target', mark: leastSure(ex), check: 'ask your lender for its own target' });
+  const b = s.source === 'plan' && s.modes.taxPct === 'borrower' ? borrowerOf(s.borrower) : undefined;
+  if (b) out.push({ what: 'the tax', mark: b, check: 'ask your CA to confirm the tax' });
+  return out;
+}
+
+/** One line of how sure: "How sure: the method, cross-checked; the target, illustrative." */
+export const sureLine = (ms: { what: string; mark: Marked }[]) =>
+  ms.length ? `How sure: ${ms.map((x) => `${x.what}, ${x.mark.sure === 'review' ? 'needs review' : x.mark.sure}${x.mark.sure === 'verified' && x.mark.read ? ` on ${x.mark.read.split('-').reverse().join('-')}` : ''}`).join('; ')}.` : '';
+
+/** The one thing to check next once nothing is still to answer: the least sure item the verdict rests on, else the figures typed. */
+export const checkNext = (ms: { what: string; mark: Marked; check: string }[]) => {
+  const worst = [...ms].sort((x, y) => SURE.indexOf(y.mark.sure) - SURE.indexOf(x.mark.sure))[0];
+  return `What to check next: ${worst && worst.mark.sure !== 'verified' ? worst.check : 'the figures you typed, against your accounts'}.`;
+};

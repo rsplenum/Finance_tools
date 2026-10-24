@@ -1,10 +1,11 @@
 {
   "title": "The default benchmark ratios",
   "date": "2026-10-11",
+  "sure": "illustrative",
   "reviewBy": "2027-10-11",
   "status": "The levels a project's ratios, and the CMA's estimated and projected years, are read against, each in its worst year (D-UX-51; how on the CMA: `cmaHow`, D-UX-56), and the values of the collateral (D-UX-52). The owner's figures (11-10-2026): only the benchmark level, no relaxation or deviation; each bank sets its own.",
   "source": "The owner's benchmarks, said to follow RBI; not yet checked against an RBI publication",
-  "verified": false,
+  "sure": "illustrative",
   "cases": {
     "fresh": "A fresh or enhanced loan",
     "renewal": "An existing loan on review or renewal"
@@ -23,16 +24,16 @@
     "rsvPct": 90,
     "dsvPct": 80,
     "source": "The owner's figures (11-10-2026): realisable sale value 90% of the market value, which MSME lenders use for security cover; distress sale value 80%, shown",
-    "verified": false
+    "sure": "illustrative"
   },
   "term": {
     "longestMonths": 180,
     "source": "The owner's figure (11-10-2026): an MSME term loan's longest, the moratorium included",
-    "verified": false
+    "sure": "illustrative"
   },
   "capacity": {
     "mostUsePct": 85,
     "source": "A placeholder (D-UX-52): the highest use of the capacity a plan assumes; type the business's own reason if higher",
-    "verified": false
+    "sure": "illustrative"
   }
 }
