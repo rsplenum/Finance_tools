@@ -5,7 +5,10 @@
  * them to the same cases worked by hand. Each intro's button opens its tool filled with the case (`?case=home`, the
  * cases in each tool's `home-case.ts`).
  */
-import { preview, type State } from '../dscr/model';
+import { dscrCaseOf, preview, type State } from '../dscr/model';
+import { statementDoc } from '../dscr/document';
+import { planCheck } from '../../../engine/dscr-check';
+import { todayIso } from '../../../engine/review';
 import { dscrViableOf } from '../dscr/levers';
 import { door, DSCR_HOME } from '../dscr/home-case';
 import { preview as reportPreview, viableOf, type ReportState } from '../report/model';
@@ -248,3 +251,72 @@ const CMA_INTRO: Intro = (() => {
 
 /** Home's tools in the order of the site's list (site.ts), each once (D-UX-114). */
 export const INTROS: Intro[] = READY.map((t) => [DSCR_INTRO, ESTIMATE_INTRO, REPORT_INTRO, CMA_INTRO].find((i) => tool(i.go.href.split('?')[0]).href === t.href) as Intro);
+
+// ---- The DSCR's scene in look C (HOME1d, D-UX-122 to D-UX-125): five beats, the whole story ----
+
+/** A year of the scene: its DSCR as typed (absent for a year the typed loan does not reach) and with the longer repayment. */
+export interface SceneYear { fy: string; typed?: { text: string; n: number; meets: boolean }; fixed: { text: string; n: number; meets: boolean } }
+/** One beat: its name on the rail and the caption under the picture, which is also the screen reader's text. */
+export interface SceneBeat { name: string; caption: string }
+export interface DscrScene {
+  inputs: { k: string; v: string; to?: string }[];
+  target: { text: string; n: number; average: string };
+  hub: { from: string; to: string };
+  years: SceneYear[];
+  /** The weakest year's index in `years`, as typed and with the longer repayment. */
+  weakest: { typed: number; fixed: number };
+  /** The weakest year's sum: the year, then cash available ÷ debt service = DSCR. */
+  sum: { typed: [string, string]; fixed: [string, string] };
+  chip: { typed: string; fixed: string };
+  /** The statement the borrower takes, each line read off the document built for the case (statementDoc). */
+  statement: { title: string; sub: string; verdict: string; lines: { head: string; text: string }[]; files: string[]; ready: string };
+  beats: SceneBeat[];
+}
+
+export const DSCR_SCENE: DscrScene = (() => {
+  const l = STORY_CASE.loan, f = STORY_FIXED.loan, T = STORY_TYPED, L = STORY_LONGER;
+  const target = { text: STORY_TARGET.minimum, n: Number(STORY_TARGET.minimum), average: STORY_TARGET.average };
+  if (T.meets || !L.meets || !L.years.every((y) => y.meets)) throw new Error('The scene needs a case that misses and a change that passes every year.');
+  if (T.years.some((y, i) => L.years[i]?.fy !== y.fy)) throw new Error('The longer repayment starts in another year.');
+  const years: SceneYear[] = L.years.map((y, i) => ({ fy: y.fy, fixed: { text: y.dscr, n: y.n, meets: y.meets },
+    ...(T.years[i] ? { typed: { text: T.years[i].dscr, n: T.years[i].n, meets: T.years[i].meets } } : {}) }));
+  const split = (t: string) => { const [fy, sum] = t.split(/ {2}/); return [fy, sum] as [string, string]; };
+  // The document as the borrower downloads it, made from the longer repayment: what the last beat shows is what it holds.
+  const p = preview(STORY_FIXED), doc = statementDoc(STORY_FIXED, p, todayIso());
+  const part = (name: string) => doc?.parts.find((x) => x.name === name);
+  const title = doc?.parts[0].blocks.find((b) => b.kind === 'title'), basis = part('Basis'), schedule = part('Repayment schedule');
+  const dated = basis?.blocks.flatMap((b) => (b.kind === 'text' ? [b.text.match(/Dated (\d\d-\d\d-\d{4})/)?.[1]] : [])).find(Boolean);
+  const months = p.schedule?.years.reduce((a, y) => a + y.months.length, 0);
+  const signed = doc?.parts[0].blocks.some((b) => b.kind === 'signature');
+  if (!doc || title?.kind !== 'title' || !title.sub || !dated || !schedule || months !== Number(f.instalments) || !signed || !part('Check')) throw new Error('The scene\'s statement lacks a part it shows.');
+  // Each year's DSCR worked the second way (engine/dscr-check.ts); the largest difference, as the statement rounds a DSCR.
+  const c = dscrCaseOf(STORY_FIXED), k = c && planCheck(c.proj, c.loan, c.def);
+  const diff = Math.max(...L.years.map((y, i) => Math.abs(y.n - Number(k?.rows[i]?.dscr))));
+  if (!k || !(diff < 0.005)) throw new Error('The two computations disagree on the scene\'s case.');
+  const lowT = T.years.findIndex((y) => y.fy === T.lowestYear), lowF = L.years.findIndex((y) => y.fy === L.lowestYear);
+  return {
+    inputs: [{ k: 'Borrower', v: 'A firm' }, { k: 'Profit a year', v: `Rs. ${STORY_CASE.cells.pbdit?.[0]}` }, { k: 'Growth', v: `${STORY_CASE.rates.pbdit}%` },
+      { k: 'EMIs now', v: 'None' }, { k: 'Loan', v: `Rs. ${l.amount}` }, { k: 'Rate', v: `${l.ratePct}%` },
+      { k: 'Term', v: `${l.instalments} instalments`, to: `${f.instalments} instalments` }],
+    target, hub: { from: l.instalments, to: f.instalments }, years, weakest: { typed: lowT, fixed: lowF },
+    sum: { typed: split(dscrSum(STORY_CASE, T)), fixed: split(dscrSum(STORY_FIXED, L)) },
+    chip: { typed: `Below target ${target.text}`, fixed: `Meets ${target.text}` },
+    statement: {
+      title: 'DSCR statement', sub: title.sub, verdict: L.verdict,
+      lines: [
+        { head: 'Worked out twice', text: `Every DSCR worked out a second way, and again by formula in the Excel copy: difference ${diff.toFixed(2)}.` },
+        { head: 'Its basis', text: `Annex 1: the rule used, with its source, dated ${dated}.` },
+        { head: 'Every instalment', text: `Annex 2: the repayment schedule, all ${months} months.` },
+        { head: 'Ready to sign', text: 'Signatory, date and place lines, in each copy.' },
+      ],
+      files: ['PDF', 'Excel', 'Word'], ready: 'Ready to take to your lender',
+    },
+    beats: [
+      { name: 'The bank\'s question', caption: `The bank asks: does the cash cover the instalments ${target.text} times in every year, and ${target.average} on average?` },
+      { name: 'Seven answers', caption: 'You type seven answers. Nothing more is asked.' },
+      { name: 'Every year worked out', caption: `The weakest year, ${T.lowestYear}, is ${T.lowest} against the target ${target.text}.` },
+      { name: 'The change that passes', caption: `Over ${f.instalments} instalments, every year clears ${target.text}; the weakest, ${L.lowestYear}, is ${L.lowest}.` },
+      { name: 'The statement for the lender', caption: 'The statement, ready to take to your lender: PDF, Excel and Word.' },
+    ],
+  };
+})();
