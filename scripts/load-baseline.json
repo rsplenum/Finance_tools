@@ -113,9 +113,9 @@
       "outOfSight": null
     },
     "/privacy/": {
-      "before": 524,
-      "shown": 582,
-      "all": 582,
+      "before": 537,
+      "shown": 595,
+      "all": 595,
       "plan": null,
       "long": 1,
       "abbr": 4,
@@ -1217,7 +1217,10 @@
       "to": 564,
       "why": "D-UX-152",
       "date": "2026-10-24"
-    }
+    },
+    { "page": "/privacy/", "count": "before", "from": 524, "to": 537, "why": "D-TECH-61", "date": "2026-10-24" },
+    { "page": "/privacy/", "count": "shown", "from": 582, "to": 595, "why": "D-TECH-61", "date": "2026-10-24" },
+    { "page": "/privacy/", "count": "all", "from": 582, "to": 595, "why": "D-TECH-61", "date": "2026-10-24" }
   ],
   "fontProbe": 320.2
 }

@@ -7,7 +7,9 @@
  */
 import Anthropic from '@anthropic-ai/sdk';
 import { READ, promptLines, type Answer, type Line } from '../../engine/read';
+import { capped } from './body';
 import { withinCaps } from './caps';
+import { answerOf } from './shape';
 
 export type ReadEnv = Env & { ANTHROPIC_API_KEY?: string };
 type Reply = (body: unknown, status: number, headers?: Record<string, string>) => Response;
@@ -56,10 +58,10 @@ export function linesOf(body: unknown): Line[] | string {
 
 export async function read(req: Request, env: ReadEnv, json: Reply): Promise<Response> {
   if (!env.ANTHROPIC_API_KEY) return json({ error: 'Reading statements is not switched on yet: type the figures.' }, 503);
-  const size = Number(req.headers.get('content-length') ?? 0);
-  if (size > READ.maxChars * 3) return json({ error: 'The statement is too long to read: type the figures.' }, 413);
+  const raw = await capped(req, READ.maxChars * 3);
+  if (raw === undefined) return json({ error: 'The statement is too long to read: type the figures.' }, 413);
   let body: unknown;
-  try { body = await req.json(); } catch { return json({ error: 'not JSON' }, 400); }
+  try { body = JSON.parse(raw); } catch { return json({ error: 'not JSON' }, 400); }
   const lines = linesOf(body);
   if (typeof lines === 'string') return json({ error: lines }, 400);
   if (!(await withinCaps(env, 'read', req.headers.get('cf-connecting-ip') ?? 'unknown', [Number(env.READ_PER_IP), Number(env.READ_PER_DAY)])))
@@ -77,7 +79,10 @@ export async function read(req: Request, env: ReadEnv, json: Reply): Promise<Res
     });
     const text = msg.content.find((b) => b.type === 'text');
     if (msg.stop_reason !== 'end_turn' || !text || text.type !== 'text') return json({ error: 'The statement could not be read: type the figures.' }, 502);
-    return json({ answer: JSON.parse(text.text) as Answer }, 200);
+    // An answer outside the schema is refused here, before the page sees it (SEC1).
+    const answer = answerOf(text.text, SCHEMA) as Answer | undefined;
+    if (!answer) return json({ error: 'The statement could not be read: type the figures.' }, 502);
+    return json({ answer }, 200);
   } catch (e) {
     // Only the kind of failure is logged, never the statement.
     console.error('read failed', e instanceof Anthropic.APIError ? e.status : (e as Error)?.name);
