@@ -66,9 +66,9 @@
     },
     "/dscr/": {
       "before": 45,
-      "shown": 990,
-      "all": 3487,
-      "plan": 3875,
+      "shown": 984,
+      "all": 3481,
+      "plan": 3869,
       "long": 0,
       "abbr": 5,
       "questions": 8,
@@ -1182,7 +1182,7 @@
       "page": "/dscr/",
       "count": "shown",
       "from": 960,
-      "to": 990,
+      "to": 984,
       "why": "D-UX-151",
       "date": "2026-10-24"
     },
@@ -1190,7 +1190,7 @@
       "page": "/dscr/",
       "count": "all",
       "from": 3445,
-      "to": 3487,
+      "to": 3481,
       "why": "D-UX-151",
       "date": "2026-10-24"
     },
@@ -1198,7 +1198,7 @@
       "page": "/dscr/",
       "count": "plan",
       "from": 3833,
-      "to": 3875,
+      "to": 3869,
       "why": "D-UX-151",
       "date": "2026-10-24"
     }
