@@ -90,7 +90,7 @@ describe('the project report to download', () => {
     expect(fileName(R, p, 'pdf')).toBe('Project report - Asha Packaging.pdf');
   });
   it('carries no assumptions list and no jargon beyond the tables\' own names', () => {
-    expect(text).not.toMatch(/assum|Tandon|Nayak|MPBF|checked/i);
+    expect(text).not.toMatch(/assum|Tandon|Nayak|MPBF|(?<!cross-)checked/i);
   });
   it('holds no figure the page did not show or the user did not type', () => {
     const sources = [JSON.stringify(p), JSON.stringify(R), JSON.stringify(DATA), '02-10-2026', SITE_NAME].join('\n'), figures = text.match(/\d+(?:,\d+)*(?:\.\d+)?/g) ?? [];
@@ -124,7 +124,7 @@ describe('the PMEGP report to download', () => {
     expect(text).toContain('Sales by product');
     expect(text).toContain('Months from the loan to the first sales: 3');
     expect(text).toContain('PMEGP: the rules used');
-    expect(text).toContain('Checked against PMEGP\'s guideline (2023) on 20-10-2026.');
+    expect(text).toContain('The guideline of 2023: verified at its source on 20-10-2026.');
     expect(docStatus(P, p)).toBe('Complete');
   });
 });

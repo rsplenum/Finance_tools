@@ -15,6 +15,7 @@ import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { monthText } from '../dscr/model';
 import { overdueNote, todayIso } from '../../../engine/review';
+import { sureLower, type Marked } from '../../../engine/sure';
 import { docNeeds, docStatus, fileName, reportDoc } from './document';
 import { Words } from './Words';
 import {
@@ -157,7 +158,7 @@ export function ReportCalculator() {
       <Choice name="fld-scheme" legend="A government scheme" options={SCHEME_CHOICES} value={s.scheme} columns
         onChange={(scheme) => update((x) => ({ ...x, scheme }))} />
       {s.scheme === 'pmegp' && <>
-        <p class={`mt-2 ${HINT}`}>The margin money is worked out by the scheme's rules, {PMEGP.checked ? `checked against PMEGP's guideline (2023) in ${monthText(PMEGP.date.slice(0, 7))}` : `as read in ${monthText(PMEGP.date.slice(0, 7))} and not yet checked against KVIC's guideline`}. {overdueNote(REPORT_REVIEW_BY, todayIso())}</p>
+        <p class={`mt-2 ${HINT}`}>The margin money is worked out by the scheme's rules, the guideline of 2023: {sureLower(PMEGP as Marked)}. {overdueNote(REPORT_REVIEW_BY, todayIso())}</p>
         <Choice name="fld-category" legend="The borrower's category" options={CATEGORY_CHOICES} value={s.category}
           onChange={(category) => update((x) => ({ ...x, category }))} />
         <Choice name="fld-area" legend="Where the unit is" options={AREA_CHOICES} value={s.area} columns

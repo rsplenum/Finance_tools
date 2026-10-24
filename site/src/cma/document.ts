@@ -8,6 +8,9 @@ import type { Block, Cell, Doc, Table } from '../doc/doc';
 import { forDocument } from '../doc/doc';
 import { printable } from '../doc/pdf';
 import { SITE_NAME } from '../site';
+import { sureLower, type Marked } from '../../../engine/sure';
+import CMA_FILE from '../../../engine/data/cma.json';
+import RATIOS_FILE from '../../../engine/data/ratios.json';
 import { ASSUMPTIONS, statusText, type CmaFacts, type CmaPreview, type CmaState, type ViewTable } from './model';
 
 export function docNeeds(f: CmaFacts): string[] {
@@ -73,7 +76,11 @@ export function cmaDoc(s: CmaState, p: CmaPreview, today: string): Doc | undefin
       { name: 'Forms II and III', blocks: [{ kind: 'title', text: 'Operating statement and balance sheet', small: true }, ...table('form2'), ...table('form3')] },
       { name: 'Forms IV to VI', blocks: [{ kind: 'title', text: 'Working capital, the limit and the funds flow', small: true }, ...table('form4'), ...table('form5'), ...table('form6')] },
       { name: 'Ratios', blocks: [{ kind: 'title', text: 'Ratios', small: true }, ...table('ratios'),
-        { kind: 'heading', text: 'Assumed until changed' }, { kind: 'list', items: ASSUMPTIONS.map((a) => `${a.what}: ${a.shown}. ${a.why}.`) }] },
+        { kind: 'heading', text: 'Assumed until changed' }, { kind: 'list', items: ASSUMPTIONS.map((a) => `${a.what}: ${a.shown}. ${a.why}.`) },
+        // How sure the rules are (D-DATA-25, TRUST1): a mark never changes a figure.
+        { kind: 'heading', text: 'How sure the rules are' }, { kind: 'list', items: [
+          `The turnover method's shares: ${sureLower(CMA_FILE.turnover as Marked)}; lenders apply their own norms.`,
+          `The levels the ratios are read against: ${sureLower(RATIOS_FILE as Marked)}; each lender sets its own.`] }] },
       { name: 'Check', blocks: [{ kind: 'title', text: 'Check', small: true }, ...tableOf(v.check)] },
     ],
   };
