@@ -8,8 +8,8 @@ import Base from './Base.astro';
 import { LEGAL_DRAFT, POLICY_DATE, SITE_NAME } from './site';
 import { words, type Section } from './policy';
 
-interface Props { title: string; description: string; lead: string; sections: Section[] }
-const { title, description, lead, sections } = Astro.props;
+interface Props { title: string; description: string; lead: string; sections: Section[]; date?: string }
+const { title, description, lead, sections, date = POLICY_DATE } = Astro.props;
 ---
 <Base name={title} description={description} look="new">
   <article class="mx-auto max-w-3xl px-4 pt-10 pb-16 sm:px-8 sm:pt-16">
@@ -17,7 +17,7 @@ const { title, description, lead, sections } = Astro.props;
     <h1 class="mt-4 text-hero text-ink">{title}</h1>
     <p data-answer class="mt-6 max-w-lg text-lead text-ink-muted" set:html={words(lead)} />
     {LEGAL_DRAFT && <p data-draft class="mt-6 max-w-lg rounded-card border-l-4 border-dashed border-ink bg-surface px-4 py-3 text-sm text-ink"><strong class="font-semibold">Draft for our lawyer to review.</strong> It says what {SITE_NAME} does today; its words may change before {SITE_NAME} takes any payment.</p>}
-    <p class="mt-4 text-sm text-ink-muted">Last changed {POLICY_DATE}</p>
+    <p class="mt-4 text-sm text-ink-muted">Last changed {date}</p>
     {sections.map((s) => (
       <section class="mt-10">
         <h2 class="text-section text-ink">{s.h}</h2>
