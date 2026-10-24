@@ -5,6 +5,8 @@
  * - Each tool's terminal intro (Intro.astro) plays once when it first comes into view: the command typed, the inputs
  *   resolving, the bars read against the level, the verdict stamped, the change and its passing result, within 5 s;
  *   "Show it all" ends every intro at once. The HTML is the finished state: a played intro drops every animation and stands as is.
+ * - The DSCR's scene in look C (Scene.astro, scene.ts, HOME1d) loads after the page and plays its five beats once when it
+ *   first comes into view, within 12.8 s; without motion it only draws its wires, finished.
  * - The closing desk's dashes fall onto their rows once, as it comes into view.
  * SVG strokes take the Web Animations API, since a class-triggered transition leaves them where they began (GOTCHAS,
  * AG3). Under reduced motion Base.astro leaves out the `js` mark, and nothing here runs: everything stands finished.
@@ -12,6 +14,7 @@
 export function start() {
   const motion = document.documentElement.classList.contains('js');
   for (const c of document.querySelectorAll<HTMLCanvasElement>('canvas[data-field]')) field(c, motion);
+  scenes(motion);
   if (!motion) return;
   for (const h of document.querySelectorAll<HTMLElement>('[data-how]')) how(h);
   intros();
@@ -256,4 +259,17 @@ function intros() {
   }, { rootMargin: '0px 0px -15% 0px' });
   for (const b of boxes) seen.observe(b);
   addEventListener('beforeprint', all);
+}
+
+/** The DSCR's scene: its code loads after the page, and it plays once when its top first comes into view (D-UX-125). */
+function scenes(motion: boolean) {
+  for (const root of document.querySelectorAll<HTMLElement>('[data-scene]')) {
+    if (!motion) { void import('./scene').then((m) => m.scene(root).still()); continue; }
+    const seen = new IntersectionObserver((es) => {
+      if (!es.some((e) => e.isIntersecting)) return;
+      seen.disconnect();
+      void import('./scene').then((m) => m.scene(root).play());
+    }, { rootMargin: '0px 0px -20% 0px' });
+    seen.observe(root);
+  }
 }
