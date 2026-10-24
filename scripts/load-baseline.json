@@ -113,9 +113,9 @@
       "outOfSight": null
     },
     "/privacy/": {
-      "before": 537,
-      "shown": 595,
-      "all": 595,
+      "before": 697,
+      "shown": 814,
+      "all": 814,
       "plan": null,
       "long": 1,
       "abbr": 4,
@@ -1296,6 +1296,30 @@
       "from": 1,
       "to": 3,
       "why": "D-UX-129 (set by hand, owner's word 24-10-2026: this container fonts differ from the baseline)",
+      "date": "2026-10-24"
+    },
+    {
+      "page": "/privacy/",
+      "count": "before",
+      "from": 537,
+      "to": 697,
+      "why": "D-BIZ-22",
+      "date": "2026-10-24"
+    },
+    {
+      "page": "/privacy/",
+      "count": "shown",
+      "from": 595,
+      "to": 814,
+      "why": "D-BIZ-22",
+      "date": "2026-10-24"
+    },
+    {
+      "page": "/privacy/",
+      "count": "all",
+      "from": 595,
+      "to": 814,
+      "why": "D-BIZ-22",
       "date": "2026-10-24"
     }
   ],

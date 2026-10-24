@@ -15,7 +15,7 @@ export const CAP_DAYS = 2;
 export const PRIVACY_DATE = '24-10-2026';
 
 /** What a draft of the report's words sends (engine/narrative.ts, NarrativeInput), in words. */
-export const DRAFT_SENDS = 'the business’s name, address, activity, constitution and scheme, its products, what the loan covers and how it is financed, and your notes';
+export const DRAFT_SENDS = 'the business’s name, address, activity, constitution, scheme and products, the loan’s uses and sources, and your notes';
 
 export interface PolicySection extends Section { src: string[] }
 
@@ -33,23 +33,23 @@ export const privacySections = (counting: boolean): PolicySection[] => [
   ] },
   { h: 'When an AI reads a statement or drafts words for you', src: ['site/src/cma/Read.tsx', 'worker/src/read.ts', 'site/src/report/Words.tsx', 'worker/src/draft.ts', 'engine/narrative.ts', 'worker/src/caps.ts'], p: [
     'On the CMA page you may choose to have an AI find the figures in an audited statement instead of typing them. Only then does the statement’s text leave your device: it goes to our server and on to Anthropic, the US company whose AI reads it, so it is handled outside India. The AI says where each figure is printed; your browser copies the figures, and none counts until you tick it.',
-    `On the project report you may choose to have the same AI draft the report’s words. Only then does this leave your device, by the same road: ${DRAFT_SENDS}. No figure goes.`,
+    `On the project report you may choose to have the same AI draft the report’s words. Only then does this go, by the same road. It sends ${DRAFT_SENDS}, but no figure.`,
     `We do not keep or log what is sent; Anthropic handles it under its own terms. To limit how many reads and drafts a day, your internet address is counted for ${CAP_DAYS} days, then forgotten. If you would rather nothing left your device, type the figures and write the words yourself.`,
   ] },
   { h: 'Who else sees your visit', src: ['worker/wrangler.jsonc', 'site/src/theme.ts', 'site/src/report/Report.tsx'], p: [
-    'Cloudflare hosts this site and our server, and may hold the counts outside India. Like any host, it receives your internet address and browser details when a page loads, under its own privacy policy. Our server’s error notes say only what kind of failure it was. From launch we will also use Cloudflare Web Analytics, which counts page views without cookies.',
+    'Cloudflare hosts this site and our server, and may hold the counts outside India. Like any host, it receives your internet address and browser details when a page loads. Its own privacy policy covers them. Our server’s error notes say only what kind of failure it was. From launch we will also use Cloudflare Web Analytics, which counts page views without cookies.',
     'Your browser remembers two choices on your device: light or dark, and the project report’s simple or expert view. It keeps nothing else for us. We show no ads today.',
   ] },
   { h: 'What this means under India’s data law', src: ['site/src/privacy.ts'], p: [
     'The Digital Personal Data Protection Act, 2023 and its 2025 Rules cover personal data: anything that names you or could. What we may hold of it, and why:',
     ['your internet address, for one minute to stop floods, or two days to cap the AI’s reads and drafts', 'what an AI read or draft sends, only while it is worked, to give you the figures’ places or the draft', 'what you write to us, to answer you'],
-    'We ask nothing else, and the counts above name no one. Choosing an AI read or draft is your consent to send it; you may stop at any time by typing instead, and nothing of it is kept to withdraw.',
+    'We ask nothing else, and the counts above name no one. Choosing an AI read or draft is your consent to send it. You may stop at any time by typing instead. Nothing of it is kept, so there is nothing to withdraw.',
   ] },
   { h: 'No accounts and no payments yet', src: ['site/src/site.ts'], p: [
     'You do not sign up, and we take no payments today. Before we do, this page will say what a payment shares and with whom.',
   ] },
   { h: 'Your rights', src: ['site/src/site.ts', 'site/src/pages/contact.astro'], p: [
-    'Write to us through the [Contact](/contact/) page to ask what we hold about you, to have it corrected or deleted, to name someone to act for you if you die or cannot act, or to complain. Our grievance officer is named there: the person who answers questions about your data. They will answer within {gap:how many days we take, 90 at most}.',
+    'Write to us through the [Contact](/contact/) page to ask what we hold about you, or to have it corrected or deleted. You may also name someone to act for you if you die or cannot act, or complain. Our grievance officer is named there: the person who answers questions about your data. They will answer within {gap:how many days we take, 90 at most}.',
     'If you are not satisfied with the answer, you may complain to the Data Protection Board of India. As we keep nothing that names you, most answers will be short.',
     'This site is meant for adults, 18 or over. When this page changes, the date at the top changes too.',
   ] },
