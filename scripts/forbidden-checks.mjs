@@ -137,9 +137,11 @@ export function unfinished() {
   return out;
 }
 
-export async function forbiddenChecks({ browser, BASE, violations }) {
+/** `pages` limits the pages read (the site check's --quick); `motion` false skips F9, F10, F14 and F15, which wait on the motion. */
+export async function forbiddenChecks({ browser, BASE, pages = NEW_LOOK, motion = true, violations }) {
   let weight = 0;
-  for (const path of NEW_LOOK) {
+  const look = NEW_LOOK.filter((p) => pages.includes(p));
+  for (const path of look) {
     const v = (m) => violations.push(`${path} FinSight's rules: ${m}`);
     for (const width of ['phone', 'desktop']) {
       const { ctx, page } = await openAt(browser, BASE + path, { width });
@@ -147,34 +149,36 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
       await ctx.close();
     }
     // F9, F10, F14, F15: the motion stops by itself, the words are whole from the start, nothing is fetched from elsewhere.
-    const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-    const page = await ctx.newPage(), hosts = new Set(), sizes = [];
-    page.on('request', (r) => hosts.add(new URL(r.url()).origin));
-    page.on('response', (r) => sizes.push(r.body().then((b) => b.length, () => 0)));
-    await page.goto(BASE + path, { waitUntil: 'domcontentloaded' });
-    const first = await still(page);
-    await page.waitForTimeout(6000);
-    const settled = await still(page);
-    await page.waitForTimeout(1000);
-    const later = await still(page);
-    const kb = Math.round((await Promise.all(sizes)).reduce((a, b) => a + b, 0) / 1024);
-    if (path === '/') weight = kb;
-    if (first.typed.join('|') !== settled.typed.join('|')) v('F10 a heading\'s words or a counted figure are not in the page from the start');
-    if (await page.locator('[data-typed]').count()) v('F10 a heading still types itself');
-    if (settled.running.length) v(`F9 still moving 6 s after load: ${[...new Set(settled.running)].join(', ')}`);
-    if (settled.fields.join() !== later.fields.join()) v('F9 a field of dashes still moves 6 s after load');
-    for (const h of hosts) if (h !== BASE) v(`F14 a request to ${h}`);
-    if (path === '/' && kb > WEIGHT_CAP) v(`F15 the page weighs ${kb} KB as it loads (cap ${WEIGHT_CAP} KB)`);
-    await ctx.close();
-    // Under reduced motion nothing moves at all.
-    const rm = await openAt(browser, BASE + path, { width: 'desktop', reducedMotion: 'reduce' });
-    const a = await still(rm.page);
-    await rm.page.waitForTimeout(800);
-    const b = await still(rm.page);
-    if (b.running.length || a.fields.join() !== b.fields.join()) v('F9 something moves under reduced motion');
-    // ... and home's diagram and intros stand finished, as the HTML has them, with no "Show it all" (HOME1b, D-UX-115).
-    for (const x of (await rm.page.evaluate(unfinished)).slice(0, 3)) v(`F9 not finished under reduced motion: ${x}`);
-    await rm.ctx.close();
+    if (motion) {
+      const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+      const page = await ctx.newPage(), hosts = new Set(), sizes = [];
+      page.on('request', (r) => hosts.add(new URL(r.url()).origin));
+      page.on('response', (r) => sizes.push(r.body().then((b) => b.length, () => 0)));
+      await page.goto(BASE + path, { waitUntil: 'domcontentloaded' });
+      const first = await still(page);
+      await page.waitForTimeout(6000);
+      const settled = await still(page);
+      await page.waitForTimeout(1000);
+      const later = await still(page);
+      const kb = Math.round((await Promise.all(sizes)).reduce((a, b) => a + b, 0) / 1024);
+      if (path === '/') weight = kb;
+      if (first.typed.join('|') !== settled.typed.join('|')) v('F10 a heading\'s words or a counted figure are not in the page from the start');
+      if (await page.locator('[data-typed]').count()) v('F10 a heading still types itself');
+      if (settled.running.length) v(`F9 still moving 6 s after load: ${[...new Set(settled.running)].join(', ')}`);
+      if (settled.fields.join() !== later.fields.join()) v('F9 a field of dashes still moves 6 s after load');
+      for (const h of hosts) if (h !== BASE) v(`F14 a request to ${h}`);
+      if (path === '/' && kb > WEIGHT_CAP) v(`F15 the page weighs ${kb} KB as it loads (cap ${WEIGHT_CAP} KB)`);
+      await ctx.close();
+      // Under reduced motion nothing moves at all.
+      const rm = await openAt(browser, BASE + path, { width: 'desktop', reducedMotion: 'reduce' });
+      const a = await still(rm.page);
+      await rm.page.waitForTimeout(800);
+      const b = await still(rm.page);
+      if (b.running.length || a.fields.join() !== b.fields.join()) v('F9 something moves under reduced motion');
+      // ... and home's diagram and intros stand finished, as the HTML has them, with no "Show it all" (HOME1b, D-UX-115).
+      for (const x of (await rm.page.evaluate(unfinished)).slice(0, 3)) v(`F9 not finished under reduced motion: ${x}`);
+      await rm.ctx.close();
+    }
     // F19: Tab follows the eye at 360 and where lg's layouts start and widen.
     for (const w of [360, 1024, 1280]) {
       const oc = await browser.newContext({ viewport: { width: w, height: 900 } });
@@ -184,6 +188,7 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
       for (const m of (await op.evaluate(tabAgainstEye)).slice(0, 3)) v(`F19 Tab runs against the eye at ${w} px: ${m}`);
       await oc.close();
     }
+    if (!motion) continue;
     // F9 on a phone and on a short screen (1280 at 400%): scrolled through, every block that settles or lands shows, the
     // hero's diagram and every tool's intro have played to their finished state (HOME1b, D-UX-115), and no two figures in
     // a chart overlap (lesson 6). A block that waits for a share of its height never shows on a short one.
@@ -214,5 +219,5 @@ export async function forbiddenChecks({ browser, BASE, violations }) {
       await sc.close();
     }
   }
-  return { pages: NEW_LOOK.length, weight };
+  return { pages: look.length, weight };
 }

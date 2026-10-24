@@ -2,7 +2,8 @@
  * Runs the checks every change needs (CLAUDE.md), in its order, and prints one line per check with
  * its exit code and the counts it reported, then the end of the output of any check that failed.
  * A session reads a few lines instead of six logs, and never runs a check again to learn its exit
- * code (D-TECH-26). Exits 1 when any check fails.
+ * code (D-TECH-26). Exits 1 when any check fails. `--quick` (CHK1, D-TECH-63) runs the site check only on the pages
+ * this branch's change touches (scripts/site-pages.mjs); the full check stays the default before a PR and in CI.
  */
 import { spawnSync } from 'node:child_process';
 
@@ -10,7 +11,7 @@ const checks = [
   ['tests', 'npm test'],
   ['typecheck', 'npm run typecheck'],
   ['build', 'npm run build'],
-  ['site check', 'npm run check:site'],
+  ...(process.argv.includes('--quick') ? [['site check --quick', 'npm run check:site -- --quick']] : [['site check', 'npm run check:site']]),
   ['simulation', 'npm run sim'],
   ['skill pack', 'node portable/pack.mjs --check'],
   ['cost guard', 'node .claude/hooks/cost-guard.mjs --self-test'],
