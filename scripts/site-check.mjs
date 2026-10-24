@@ -750,7 +750,7 @@ for (const scheme of ['light', 'dark']) {
   await expectText(page, v, page.getByTestId('pl-assumed').locator(':scope > summary'), /^What the estimate assumes \(\d+\)$/, 'the assumptions behind one line with their count');
   await tap(page, 'pl-assumed');
   await expectText(page, v, 'pl-assumed-0', /^Rooms: Living and dining/, 'the assumptions');
-  await expectText(page, v, 'pl-rates', /^A planning estimate: rates as reported on \d\d-\d\d-\d{4} for Pune; \d+ of \d+ lines verified at their pages, the rest need reviews$/, 'the rates as reported, in one line by the total');
+  await expectText(page, v, 'pl-rates', /^A planning estimate: rates as reported on \d\d-\d\d-\d{4} for Pune; \d+ of \d+ lines verified at their pages$/, 'the rates as reported, in one line by the total');
 
   // The downloads, at the package as answered.
   await expectText(page, v, 'pl-doc-status', 'Figures complete; for the document, 2 still to answer', 'the planning estimate before its facts');

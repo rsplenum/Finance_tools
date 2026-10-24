@@ -575,8 +575,8 @@ describe('V1 on the page: short by default', () => {
     expect(interiors.notes.map((f) => f.slice(0, 26))).toEqual(['The furniture is a sofa an', 'The soft furnishings are c']);
   });
   it('the rates as reported in one line by the total, for the city or another place', () => {
-    expect(interiors.ratesLine).toMatch(/^A planning estimate: rates as reported on \d\d-\d\d-\d{4} for Pune; \d+ of \d+ lines verified at their pages, the rest need review$/);
-    expect(view({ ...FLAT, city: 'other' }).ratesLine).toMatch(/for another place, at the six cities’ average; \d+ of \d+ lines verified at their pages, the rest need review$/);
+    expect(interiors.ratesLine).toMatch(/^A planning estimate: rates as reported on \d\d-\d\d-\d{4} for Pune; \d+ of \d+ lines verified at their pages$/);
+    expect(view({ ...FLAT, city: 'other' }).ratesLine).toMatch(/for another place, at the six cities’ average; \d+ of \d+ lines verified at their pages$/);
     expect([...interiors.flags, ...interiors.notes].some((f) => f.startsWith('Rates are as reported'))).toBe(false);
   });
   it('each section\'s amount in the package orders the list, steady while its slider moves', () => {
