@@ -432,8 +432,6 @@ function AnswerPanel({ s, p, update, use, used, undo, keep }: {
     {/* The answer as paper, there at once: it changes as the figures are typed (docs/DESIGN-SITE.md, tool pages). */}
     <div class="paper shadow-paper rounded-card p-4 sm:p-6">
     {/* The answer is the paper's heading (UX7): a flat claim, its rule solid once final and dashed while provisional. */}
-    {/* The verdict answers a question (audit A, TRUST1): asked in a muted line set in line with the verdict's words. */}
-    {p.verdict && <p data-testid="dscr-question" class={`pl-4 text-sm ${MUTED}`}>Does your projection meet this target?</p>}
     {p.verdict && <h3 data-testid="dscr-verdict" data-answer class={`text-title text-ink ${answerRule(!p.blocked && !p.needs.length)}`}><Claim text={p.verdict.text} /></h3>}
     <Counter id="dscr-status" result={result} text={statusText(p)} rule={!p.verdict} class={p.verdict ? 'mt-2' : ''}>
       {p.needs.length > 0 && <ul data-testid="dscr-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => {
@@ -441,10 +439,11 @@ function AnswerPanel({ s, p, update, use, used, undo, keep }: {
         return <li key={n}>{i < 0 ? n : <a href={`#${FRONT[i][2]}`} onClick={goTo(FRONT[i][2])} class="inline-flex min-h-6 items-center text-link">{FRONT[i][1]}</a>}</li>;
       })}</ul>}
     </Counter>
-    {/* The status's own next step (audit 7A): the first answer still needed, a link to its box where it has one. */}
-    {p.needs.length > 0 && (() => {
+    {/* The status's own next step (audit 7A): the first answer still needed, a link to its box where it has one; with one
+        left the list already says it, so the line goes (critic, TRUST1). */}
+    {p.needs.length > 1 && (() => {
       const n = p.needs[0], i = s.source === 'plan' ? frontAt(n, yearsOf(s).years[0]) : -1;
-      return <p data-testid="dscr-next" class="text-sm text-ink">Next: {i < 0 ? n
+      return <p data-testid="dscr-next" class="mt-1 pl-4 text-sm text-ink">Next: {i < 0 ? n
         : <a href={`#${FRONT[i][2]}`} onClick={goTo(FRONT[i][2])} class="inline-flex min-h-6 items-center text-link underline underline-offset-4">{FRONT[i][1]}</a>}</p>;
     })()}
     {p.blocked && <p data-testid="dscr-blocked" role="alert" class={`mt-4 ${answerRule(true)} text-ink`}>{p.blocked}</p>}
