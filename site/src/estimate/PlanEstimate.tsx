@@ -356,7 +356,7 @@ function Why({ id, about, title, w }: { id: string; about: string; title?: strin
       <p class={MUTED}>{w.sources.length
         ? <>Sources: {w.sources.map((x, i) => [i ? '; ' : '', x.url
           ? <a key={x.id} href={x.url} target="_blank" rel="noopener noreferrer" class={LINK}>{x.what}</a> : x.what])}
-          {w.own ? '; and our own rule' : ''}.{w.reported ? ' As reported, not yet checked.' : ` Checked against ${w.sources.length === 1 ? 'its page' : 'their pages'}.`}</>
+          {w.own ? '; and our own rule' : ''}.{w.reported ? ' Needs review: as reported, not yet confirmed at its page.' : ` Verified at ${w.sources.length === 1 ? 'its page' : 'their pages'}.`}</>
         : 'Our own rule, with its reason given.'}</p>
     </div>
   </details>;

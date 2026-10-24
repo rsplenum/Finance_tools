@@ -535,7 +535,7 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
     strip: levels.map((n, i) => ({ level: (i + 1) as Level, name: LEVEL_NAMES[i], total: lakhs(n), full: rupees(n), n, current: i + 1 === e.level })),
     bar, sections, ...(split ? { split } : {}), assumed, flags: e.flags.filter((f) => f.decides).map((f) => groupedFlag(f.text)), notes: e.flags.filter((f) => !f.decides).map((f) => groupedFlag(f.text)),
     unpriced: e.unpriced.map((u) => `${u.roomName}, ${u.name.toLowerCase()}: ${u.entryName}`),
-    ratesLine: `A planning estimate: rates as reported on ${dmy(e.ratesDate)} for ${listed ? city : 'another place, at the six cities’ average'}; ${e.lines.filter((l) => l.checked).length} of ${e.lines.length} lines checked against their pages${overdueNote(LIBRARY_REVIEW_BY, todayIso()) ? `. ${overdueNote(LIBRARY_REVIEW_BY, todayIso()).replace(/\.$/, '')}` : ''}`,
+    ratesLine: `A planning estimate: rates as reported on ${dmy(e.ratesDate)} for ${listed ? city : 'another place, at the six cities’ average'}; ${e.lines.filter((l) => l.checked).length} of ${e.lines.length} lines verified at their pages, the rest need review${overdueNote(LIBRARY_REVIEW_BY, todayIso()) ? `. ${overdueNote(LIBRARY_REVIEW_BY, todayIso()).replace(/\.$/, '')}` : ''}`,
     range: rangeOf(e, runs), ...rangeBarOf(e, runs), bill: billView(s, e),
     ratesDate: dmy(LIBRARY_DATE), sources: [...numbered.values()],
     classes: Object.entries(CLASSES).filter(([id]) => [...numbered.values()].some((x) => x.cls === id)).map(([id, means]) => ({ id, means })),
@@ -652,7 +652,7 @@ function lineView(s: PlanState, l: Line, no: string, sourceOf: (id: string) => S
 
 /** Whether a line's rate was read on its pages (E2), with the day. */
 export function checkedLine(l: LineView): string {
-  return l.checked ? `Checked against ${l.sources.length === 1 ? 'its page' : 'their pages'} on ${dmy(l.checked)}.` : 'As reported, not yet checked.';
+  return l.checked ? `Verified at ${l.sources.length === 1 ? 'its page' : 'their pages'} on ${dmy(l.checked)}.` : 'Needs review: as reported, not yet confirmed at its page.';
 }
 
 /** The notes behind a Why?, each under its label (T1); their sources apart from our own rule, in order of first use. */

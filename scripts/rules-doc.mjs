@@ -22,7 +22,7 @@ const list = (ids) => {
   const names = ids.map((id) => dscr.components[id].toLowerCase());
   return names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names.at(-1)}` : names.join('');
 };
-const checked = (x) => (x.verified ? 'checked' : 'not yet checked');
+const checked = (x) => ({ verified: `verified${x.read ? ` on ${date(x.read)}` : ''}`, 'cross-checked': 'cross-checked', illustrative: 'illustrative', review: 'needs review' })[x.sure];
 
 const out = [
   '# Rules',
@@ -53,8 +53,8 @@ for (const p of dscr.presets) {
   out.push(`- **${p.label}**: ${picks}. Source: ${p.source} (${date(p.date)}, ${checked(p)}).`);
 }
 out.push('', '### Benchmarks', '', 'Shown as examples only, never used unless chosen. Each lender sets its own.', '',
-  '| What | Value | Source | Date | Checked |', '|---|---|---|---|---|');
-for (const b of dscr.benchmarks) out.push(`| ${b.what} | ${b.value.toFixed(2)} | ${b.source} | ${date(b.date)} | ${b.verified ? 'yes' : 'no'} |`);
+  '| What | Value | Source | Date | How sure |', '|---|---|---|---|---|');
+for (const b of dscr.benchmarks) out.push(`| ${b.what} | ${b.value.toFixed(2)} | ${b.source} | ${date(b.date)} | ${b.sure} |`);
 out.push('', `### ${dscr.planning.label}`, '', ...dscr.planning.rules.map((r) => `- ${r}`), '');
 const emis = dscr.existingEmis;
 out.push(`### ${emis.question}`, '', `By who the borrower is (${emis.source.charAt(0).toLowerCase() + emis.source.slice(1)}).`, '', '| Borrower | Counted | Asked as |', '|---|---|---|');
@@ -66,9 +66,9 @@ const surcharge = (b) => b.surcharge.map(([from, pct]) => `${pct}% ${from ? `abo
 const rebate = (b) => (b.rebate ? `Up to ${rs(b.rebate.max)} on income up to ${rs(b.rebate.incomeUpTo)}; above that, the tax is at most the income above ${rs(b.rebate.incomeUpTo)}` : 'None');
 out.push(`## ${tax.title}`, '', `Dated ${date(tax.date)}. ${tax.status}`, '',
   'Who the borrower is sets the tax on profit before tax: the rates, less any rebate, then any surcharge (never more than the tax at its threshold plus the income above it: marginal relief), then the cess on both.', '',
-  '| Borrower | Rates | Rebate | Surcharge | Cess | Law | Sources | Date | Checked |', '|---|---|---|---|---|---|---|---|---|');
+  '| Borrower | Rates | Rebate | Surcharge | Cess | Law | Sources | Date | How sure |', '|---|---|---|---|---|---|---|---|---|');
 for (const b of tax.borrowers)
-  out.push(`| ${b.label}: ${b.who.charAt(0).toLowerCase() + b.who.slice(1)} | ${slabs(b)} | ${rebate(b)} | ${surcharge(b)} | ${b.cess}% | ${b.law} | ${b.source} (${b.kind}) | ${date(b.date)} | ${b.verified ? 'yes' : 'no'} |`);
+  out.push(`| ${b.label}: ${b.who.charAt(0).toLowerCase() + b.who.slice(1)} | ${slabs(b)} | ${rebate(b)} | ${surcharge(b)} | ${b.cess}% | ${b.law} | ${b.source} (${b.kind}) | ${date(b.date)} | ${b.sure} |`);
 out.push('');
 out.push(`## ${defaults.title}`, '', `Dated ${date(defaults.date)}. ${defaults.status}`, '', '| What | Assumed | Why |', '|---|---|---|');
 for (const a of defaults.assumptions) out.push(`| ${a.what} | ${a.shown} | ${a.why} |`);
@@ -87,14 +87,14 @@ out.push(report.depreciationSource, '', `Working capital: ${report.workingCapita
 out.push('**What the page assumes until you change it**', '', ...report.assumptions.map((a) => `- **${a.what}**: ${a.shown}. ${a.why}.`), '');
 out.push('**How the figures are worked out**', '', ...report.method.map((m) => `- ${m}`), '');
 // The lender's levels the project report and the CMA are read against (engine/ratios.ts, engine/cma-plan.ts, D-UX-51, D-UX-52, D-UX-56).
-out.push(`## ${ratios.title}`, '', `Dated ${date(ratios.date)}. ${ratios.status} Source: ${ratios.source}${ratios.verified ? '' : ' (unverified)'}.`, '');
+out.push(`## ${ratios.title}`, '', `Dated ${date(ratios.date)}. ${ratios.status} Source: ${ratios.source} (${ratios.sure}).`, '');
 out.push(`| Ratio | ${ratios.cases.fresh} | ${ratios.cases.renewal} | How |`, '|---|---|---|---|', ...ratios.ratios.map((r) => `| ${r.label} | ${r.at === 'least' ? 'at least' : 'at most'} ${r.fresh.toFixed(2)} | ${r.at === 'least' ? 'at least' : 'at most'} ${r.renewal.toFixed(2)} | ${r.how}; on the CMA, ${r.cmaHow} |`), '');
 out.push(`- **Collateral**: realisable sale value ${ratios.collateral.rsvPct}% and distress sale value ${ratios.collateral.dsvPct}% of the market value. ${ratios.collateral.source}.`,
   `- **The longest term**: ${ratios.term.longestMonths} months. ${ratios.term.source}.`, `- **Use of the capacity in a plan**: at most ${ratios.capacity.mostUsePct}%. ${ratios.capacity.source}.`, '');
 
 // CMA data (engine/cma.ts).
 out.push(`## ${cma.title}`, '', `Dated ${date(cma.date)}. ${cma.status}`, '');
-out.push(`**The turnover method**: working capital needed ${cma.turnover.needPct}% of the turnover; the borrower's margin at least ${cma.turnover.marginPct}%; the limit the lower of the need less the margin and the need less the net working capital; flagged above Rs. ${(cma.turnover.maxLimit / 1e7).toFixed(0)} crore. ${cma.turnover.checked ? '' : '(As reported, not checked against the page.) '}${cma.turnover.source}.`, '');
+out.push(`**The turnover method**: working capital needed ${cma.turnover.needPct}% of the turnover; the borrower's margin at least ${cma.turnover.marginPct}%; the limit the lower of the need less the margin and the need less the net working capital; flagged above Rs. ${(cma.turnover.maxLimit / 1e7).toFixed(0)} crore. (${cma.turnover.sure}) ${cma.turnover.source}.`, '');
 out.push('**The heads asked** (each year)', '', ...cma.heads.map((h) => `- Form ${h.form}: ${h.label}${h.hint ? ` (${h.hint})` : ''}`), '');
 out.push('**What the page assumes until you change it**', '', ...cma.assumptions.map((a) => `- **${a.what}**: ${a.shown}. ${a.why}.`), '');
 

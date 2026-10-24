@@ -6,6 +6,7 @@
  */
 import TAX from './data/tax.json';
 import { rs } from './util';
+import type { Sure } from './sure';
 
 /** The income from which a rate applies, and the rate (%). */
 export type Band = [number, number];
@@ -21,10 +22,11 @@ export interface Borrower {
   source: string;
   kind: string;
   date: string;
-  verified: boolean;
+  sure: Sure;
+  read?: string;
 }
 
-export const BORROWERS = TAX.borrowers as Borrower[];
+export const BORROWERS = TAX.borrowers as unknown as Borrower[];
 export const TAX_STATUS = TAX.status;
 export const borrowerOf = (id?: string) => BORROWERS.find((b) => b.id === id);
 

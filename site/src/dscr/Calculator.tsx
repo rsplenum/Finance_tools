@@ -15,6 +15,7 @@ import { AmountField } from '../AmountField';
 import { OPTIONS, PRESETS } from '../../../engine/dscr';
 import { LENDER } from '../../../engine/lender';
 import { parseMonth } from '../../../engine/parse';
+import { leastSure, sureText, type Marked } from '../../../engine/sure';
 import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import DSCR_FILE from '../../../engine/data/dscr.json';
@@ -25,8 +26,8 @@ import { printable } from '../doc/pdf';
 import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
 import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
 import {
-  BORROWER_CHOICES, EXAMPLE_TARGETS, GROUP_TITLES, NO_LENDER, OPTION_KEYS, amountOf, barText, choicesOf, emisAsk, frontDoor, loanRead, modeOf, monthText, numberOf,
-  parseFy, presetText, preview, rowValues, rowsOf, statusText, targetText, tidyAmount, withBorrower, withFrontNeeds, FRONT, frontAt, withPlanStart, withSource, yearsOf,
+  BORROWER_CHOICES, checkNext, dscrMarks, EXAMPLE_TARGETS, GROUP_TITLES, NO_LENDER, OPTION_KEYS, amountOf, barText, choicesOf, emisAsk, frontDoor, loanRead, modeOf, monthText, numberOf,
+  parseFy, presetText, preview, rowValues, rowsOf, statusText, sureLine, targetText, tidyAmount, withBorrower, withFrontNeeds, FRONT, frontAt, withPlanStart, withSource, yearsOf,
   type DocFacts, type LenderLine, type LenderText, type LenderView, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 import { applyDscrPlan, undoDscrPlan, type DscrChange, type DscrLevers } from './levers';
@@ -157,7 +158,7 @@ function Start({ s, update }: { s: State; update: Update }) {
     <div id="method" class="scroll-mt-4">
       <Choice name="fld-method" legend="How is DSCR worked out?" value={s.method} onChange={(v) => update((x) => ({ ...x, method: v }))}
         options={[
-          ...PRESETS.map((m) => ({ value: m.id, label: m.label, hint: <>{presetText(m.id)}.{!m.verified && <> Not yet checked.</>}</> })),
+          ...PRESETS.map((m) => ({ value: m.id, label: m.label, hint: <>{presetText(m.id)}. {sureText(m as Marked)}.</> })),
           { value: 'choose', label: 'Choose each of the four', hint: 'For a lender who works it out differently.' },
         ]} />
     </div>
@@ -400,7 +401,7 @@ function TargetSection({ s, update }: { s: State; update: Update }) {
       <button type="button" data-testid="use-examples" class={BUTTON} onClick={() => set({ average: targetText(a.value), minimum: targetText(m.value) })}>
         Use {targetText(a.value)} and {targetText(m.value)}
       </button>
-      <p class={HINT}>Commonly quoted examples, not a rule: each lender sets its own.{!(a.verified && m.verified) && ' Not yet checked against a published source.'}</p>
+      <p class={HINT}>Commonly quoted. {sureText(leastSure([a, m] as Marked[]))}; each lender sets its own.</p>
       <SourceNote what="Where the examples come from" reviewBy={DSCR_FILE.reviewBy}>{a.source}. Dated {showDate(a.date)}.</SourceNote>
     </div>}
   </Section>;
@@ -431,6 +432,8 @@ function AnswerPanel({ s, p, update, use, used, undo, keep }: {
     {/* The answer as paper, there at once: it changes as the figures are typed (docs/DESIGN-SITE.md, tool pages). */}
     <div class="paper shadow-paper rounded-card p-4 sm:p-6">
     {/* The answer is the paper's heading (UX7): a flat claim, its rule solid once final and dashed while provisional. */}
+    {/* The verdict answers a question (audit A, TRUST1): asked in a muted line set in line with the verdict's words. */}
+    {p.verdict && <p data-testid="dscr-question" class={`pl-4 text-sm ${MUTED}`}>Does your projection meet this target?</p>}
     {p.verdict && <h3 data-testid="dscr-verdict" data-answer class={`text-title text-ink ${answerRule(!p.blocked && !p.needs.length)}`}><Claim text={p.verdict.text} /></h3>}
     <Counter id="dscr-status" result={result} text={statusText(p)} rule={!p.verdict} class={p.verdict ? 'mt-2' : ''}>
       {p.needs.length > 0 && <ul data-testid="dscr-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => {
@@ -438,6 +441,12 @@ function AnswerPanel({ s, p, update, use, used, undo, keep }: {
         return <li key={n}>{i < 0 ? n : <a href={`#${FRONT[i][2]}`} onClick={goTo(FRONT[i][2])} class="inline-flex min-h-6 items-center text-link">{FRONT[i][1]}</a>}</li>;
       })}</ul>}
     </Counter>
+    {/* The status's own next step (audit 7A): the first answer still needed, a link to its box where it has one. */}
+    {p.needs.length > 0 && (() => {
+      const n = p.needs[0], i = s.source === 'plan' ? frontAt(n, yearsOf(s).years[0]) : -1;
+      return <p data-testid="dscr-next" class="text-sm text-ink">Next: {i < 0 ? n
+        : <a href={`#${FRONT[i][2]}`} onClick={goTo(FRONT[i][2])} class="inline-flex min-h-6 items-center text-link underline underline-offset-4">{FRONT[i][1]}</a>}</p>;
+    })()}
     {p.blocked && <p data-testid="dscr-blocked" role="alert" class={`mt-4 ${answerRule(true)} text-ink`}>{p.blocked}</p>}
     {!p.blocked && <dl class="mt-4 grid grid-cols-2 gap-3">
       <div class="rounded-control bg-surface p-3">
@@ -461,6 +470,14 @@ function AnswerPanel({ s, p, update, use, used, undo, keep }: {
         {m.fy}: {m.dscr}, {!m.counted ? 'not counted' : m.meets ? 'meets the target' : 'below the target'}
       </li>)}
     </ul>}
+    {/* Once nothing is still to answer (audit 7D): the one thing to check, and how sure what the verdict rests on is. */}
+    {p.verdict && !p.blocked && !p.needs.length && (() => {
+      const ms = dscrMarks(s), sure = sureLine(ms);
+      return <div class="mt-4 text-sm">
+        <p data-testid="dscr-check-next" class="text-ink">{checkNext(ms)}</p>
+        {sure && <p data-testid="dscr-sure" class={HINT}>{sure}</p>}
+      </div>;
+    })()}
     </div>
     {used.length > 0 && <div data-testid="dscr-used" role="status" class="mt-3 rounded-control border-l-4 border-ink bg-surface p-3">
       <p class="font-medium text-ink">The plan is used: these figures above changed.</p>
