@@ -2,8 +2,8 @@
   "pages": {
     "/": {
       "before": 27,
-      "shown": 545,
-      "all": 545,
+      "shown": 564,
+      "all": 564,
       "plan": null,
       "long": 0,
       "abbr": 4,
@@ -1200,6 +1200,22 @@
       "from": 3833,
       "to": 3869,
       "why": "D-UX-151",
+      "date": "2026-10-24"
+    },
+    {
+      "page": "/",
+      "count": "shown",
+      "from": 545,
+      "to": 564,
+      "why": "D-UX-152",
+      "date": "2026-10-24"
+    },
+    {
+      "page": "/",
+      "count": "all",
+      "from": 545,
+      "to": 564,
+      "why": "D-UX-152",
       "date": "2026-10-24"
     },
     { "page": "/privacy/", "count": "before", "from": 524, "to": 537, "why": "D-TECH-61", "date": "2026-10-24" },

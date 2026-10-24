@@ -14,7 +14,7 @@ import {
 import { overdueNote, todayIso } from '../../../engine/review';
 import { CLASSES, FT_PER_M, LIBRARY_DATE, LIBRARY_REVIEW_BY, NOTES, PER, SOURCE, SPEND_SAVE, SQFT_PER_SQM, namesBrand, type ItemKind, type Note, type Unit } from '../../../engine/library';
 import { parseAmount } from '../../../engine/parse';
-import { inr, rupeesWords } from '../../../engine/util';
+import { inr, lakhCrore, rupeesWords } from '../../../engine/util';
 
 export type Home = 'flat' | 'house';
 export type AreaUnit = 'sqft' | 'sqm';
@@ -349,11 +349,7 @@ export const rateWords = (n: number, u: Unit) => `Rs. ${rateText(n)} ${UNIT_RATE
 export const lakhs = (n: number) => inr(n / 1e5, 2);
 /** The headline (UX8, review finding 5): as precise as the estimate, lakh to one place, crore to two; under a lakh to the
  * rupee. The bill and the documents keep the rupee, and the page says so. */
-export function roundRupees(n: number): string {
-  if (n >= 1e7) return `Rs. ${inr(n / 1e7, 2)} crore`;
-  if (n >= 1e5) return `Rs. ${inr(n / 1e5, 1)} lakh`;
-  return `Rs. ${inr(n)}`;
-}
+export const roundRupees = (n: number) => lakhCrore(n, { places: 1, about: false });
 const dmy = (iso: string) => iso.split('-').reverse().join('-');
 /** The kinds of item, on screen and in the documents alike: "Appliances" already names a section, so the kind takes
  * its own word (UX4, review finding 5; the documents since UX5, D-UX-87). */

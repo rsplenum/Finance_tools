@@ -1,4 +1,5 @@
 /** Pure helpers: dates, finance, Indian formatting. No policy here. */
+import { parseAmount } from './parse';
 
 export function parseDate(s: string): Date {
   const [y, m, d] = s.split('-').map(Number);
@@ -77,6 +78,27 @@ export function inr(n: number | undefined, decimals = 0): string {
 }
 export const rs = (n?: number, d = 0) => (n === undefined ? '—' : `Rs. ${inr(n, d)}`);
 export const lakhs = (n?: number) => (n === undefined ? '—' : `Rs. ${(n / LAKH).toFixed(2)} Lakhs`);
+/** Lakh and crore for headings, verdicts and home's intros only (NUM1, D-UX-115); a lender reads full rupees (`rs`).
+ * From a lakh, lakh to `places` (two unless given), from a crore, crore to two, trailing zeros dropped; under a lakh the
+ * full rupee. A rounded figure says so with "about" unless `about` is false (a page that states its rounding itself).
+ * Worked twice: the text is read back by the input parser and must land within half a step of `n`, exact when it says
+ * so, or it throws rather than show a figure the two routes disagree on. 12,34,567 → 'about Rs. 12.35 lakh'. */
+export function lakhCrore(n: number, { places = 2, about = true }: { places?: number; about?: boolean } = {}): string {
+  if (!Number.isFinite(n)) throw new Error(`lakhCrore: ${n} is not a figure.`);
+  const a = Math.abs(n), sign = n < 0 ? '-' : '';
+  if (Math.round(a) < LAKH) {
+    const exact = Number.isInteger(a);
+    return `${about && !exact ? 'about ' : ''}${sign}Rs. ${inr(a)}`;
+  }
+  // The unit after rounding, so 99,99,999 is a crore, not 100 lakh.
+  const inLakh = +(a / LAKH).toFixed(places), crore = inLakh >= 100;
+  const unit = crore ? CRORE : LAKH, dp = crore ? 2 : places, step = unit / 10 ** dp;
+  const shown = +(a / unit).toFixed(dp), text = `${sign}${inr(shown, dp).replace(/\.?0+$/, '')} ${crore ? 'crore' : 'lakh'}`;
+  const back = parseAmount(text.replace(/,/g, ''));
+  const exact = back === n;
+  if (back === undefined || Math.abs(back - n) > step / 2 + 1e-6) throw new Error(`lakhCrore: ${text} does not read back as ${n}.`);
+  return `${about && !exact ? 'about ' : ''}${sign ? '-' : ''}Rs. ${text.replace(/^-/, '')}`;
+}
 /** Ratio as a percentage without float noise: 0.55 → '55%', 0.125 → '12.5%'. */
 export const pctOf = (ratio: number) => `${+(ratio * 100).toFixed(2)}%`;
 export const pct = (n?: number, d = 2) => (n === undefined ? '—' : `${n.toFixed(d)}%`);
