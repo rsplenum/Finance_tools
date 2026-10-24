@@ -167,6 +167,7 @@ The test figures are model-worked until the owner confirms fictional cases A and
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 22-10-2026 | HOME1b: home in three parts, the four intros and `?case=home` (D-UX-117, D-UX-118) | L, Extra (+10%) | about 100 steps and two agents' 68; the designer's build and the critic's nine findings took the most |
 | 22-10-2026 | AUD1: the outside audit checked (D-BIZ-18) | S | about 40 steps; checking 31 findings in the code took the most |
 | 21-10-2026 | HOME1's motion compared and its handoff (D-UX-115, D-UX-116) | S | about 110 steps; the recordings took the most |
 | 21-10-2026 | REV1: every page reviewed, and AdSense's needs (D-BIZ-16) | M | about 50 steps; reading the videos as text (OCR) took the most |
