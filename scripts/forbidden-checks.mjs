@@ -16,7 +16,8 @@ export const ORDER = ['hero', 'tools', 'closing'];
  * (D-UX-72), AG1's 124 with Anek (27 KB, one weight cut to the signs the pages use) and the line drawings; 166 with
  * AG3b's three trailers, the two later ones fetched only as the reader nears them (D-UX-78); 168 with AG3c's trailers
  * beside their text (D-UX-81); 156 with HOME1b's four terminal intros, the pen, its font and the trailers gone (D-UX-117).
- * From HOME1d the DSCR's scene, below the first screen, is not counted (D-UX-122, D-UX-128). A heavier page lowers
+ * From HOME1d the DSCR's scene, below the first screen, is not counted (D-UX-122, D-UX-128); from HOME1e none of the
+ * four tools' scenes is (D-UX-142). A heavier page lowers
  * something else first.
  */
 export const WEIGHT_CAP = 160;
@@ -34,14 +35,14 @@ function inPage({ tools, order, phone }) {
   if (!getComputedStyle(document.body).fontFamily.startsWith('Figtree') || !document.fonts.check('16px Figtree')) out.push('F1 the page is not set in Figtree');
   for (const h of document.querySelectorAll('h1, h2')) if (!getComputedStyle(h).fontFamily.startsWith('Anek')) out.push(`F1 the heading "${name(h)}" is not in Anek`);
   if (!document.fonts.check('500 16px Anek')) out.push('F1 Anek is not loaded');
-  // F17: only paper casts a shadow (a page on the desk: the shadow-paper token). The DSCR's scene is in look C, glass on navy (D-UX-124, D-UX-128).
+  // F17: only paper casts a shadow (a page on the desk: the shadow-paper token). The tools' scenes are in look C, glass on navy (D-UX-124, D-UX-128).
   for (const el of document.querySelectorAll('main *, footer *')) if (getComputedStyle(el).boxShadow !== 'none' && !el.matches('.shadow-paper') && !el.closest('[data-scene]') && shown(el)) out.push(`F17 a shadow on something that is not paper: <${el.tagName.toLowerCase()}> "${name(el)}"`);
   // F2: large headings.
   const h1 = document.querySelector('h1');
   if (!h1 || px(h1, 'fontSize') < (phone ? 40 : 64)) out.push(`F2 the h1 is ${h1 ? px(h1, 'fontSize') : 0} px (want ${phone ? 40 : 64} or more)`);
   // A folded section's one line and a heading kept for screen readers (1 px, sr-only) are not headings on show (UX8, D-UX-106).
   for (const h of document.querySelectorAll('main h2')) if (!h.closest('[data-folded]') && h.getBoundingClientRect().width > 1 && px(h, 'fontSize') < (phone ? 26 : 40)) out.push(`F2 the h2 "${name(h)}" is ${px(h, 'fontSize')} px`);
-  // F3: no boxed cards; panels are set off by their fill. Not in the DSCR's scene, whose glass has a hairline edge (D-UX-128).
+  // F3: no boxed cards; panels are set off by their fill. Not in the tools' scenes, whose glass has a hairline edge (D-UX-128).
   for (const el of document.querySelectorAll('main *, footer *')) {
     const s = getComputedStyle(el), r = el.getBoundingClientRect();
     const all = ['Top', 'Right', 'Bottom', 'Left'].every((k) => parseFloat(s[`border${k}Width`]) >= 1 && s[`border${k}Style`] !== 'none');
@@ -117,11 +118,11 @@ export function tabAgainstEye() {
 }
 
 /**
- * Runs in the page: home's diagram and intros that are not in their finished state (HOME1b, D-UX-115). With motion each
+ * Runs in the page: home's diagram and scenes that are not in their finished state (HOME1b, D-UX-115). With motion each
  * must have played (`data-played`, every animation dropped); without it the HTML stands as it is. Either way every line,
- * input, bar and mark shows whole, and "Show it all" is gone. The DSCR's scene (HOME1d, D-UX-125) ends on its last beat:
+ * input, bar and mark shows whole, and "Show it all" is gone. Each tool's scene (HOME1d, HOME1e; D-UX-125) ends on its last beat:
  * every input card, the statement's lines and its files whole, its wires drawn; it may offer "Play it again". Empty when
- * the page has none, so only home is held here; the count of intros is F13's.
+ * the page has none, so only home is held here; the count of tools is F13's.
  */
 export function unfinished() {
   const out = [], js = document.documentElement.classList.contains('js');
@@ -163,13 +164,14 @@ export async function forbiddenChecks({ browser, BASE, pages = NEW_LOOK, motion 
       const settled = await still(page);
       await page.waitForTimeout(1000);
       const later = await still(page);
-      // The DSCR's scene sits below the first screen and is not counted: its markup and its scoped styles (D-UX-122, D-UX-128).
+      // The tools' scenes sit below the first screen and are not counted: each one's markup, and their scoped styles once,
+      // since the four share one component (D-UX-122, D-UX-128, D-UX-142).
       const below = await page.evaluate(() => {
-        const box = document.querySelector('[data-scene]'), cid = box && [...box.attributes].find((a) => a.name.startsWith('data-astro-cid-'))?.name;
+        const boxes = [...document.querySelectorAll('[data-scene]')], cid = boxes[0] && [...boxes[0].attributes].find((a) => a.name.startsWith('data-astro-cid-'))?.name;
         if (!cid) return 0;
         let css = 0;
         for (const sheet of document.styleSheets) for (const r of sheet.cssRules) if (r.cssText.includes(cid)) css += r.cssText.length;
-        return box.outerHTML.length + css;
+        return boxes.reduce((a, b) => a + b.outerHTML.length, 0) + css;
       });
       const kb = Math.round(((await Promise.all(sizes)).reduce((a, b) => a + b, 0) - below) / 1024);
       if (path === '/') weight = kb;
@@ -186,7 +188,7 @@ export async function forbiddenChecks({ browser, BASE, pages = NEW_LOOK, motion 
       await rm.page.waitForTimeout(800);
       const b = await still(rm.page);
       if (b.running.length || a.fields.join() !== b.fields.join()) v('F9 something moves under reduced motion');
-      // ... and home's diagram and intros stand finished, as the HTML has them, with no "Show it all" (HOME1b, D-UX-115).
+      // ... and home's diagram and scenes stand finished, as the HTML has them, with no "Show it all" (HOME1b, D-UX-115).
       for (const x of (await rm.page.evaluate(unfinished)).slice(0, 3)) v(`F9 not finished under reduced motion: ${x}`);
       await rm.ctx.close();
     }
@@ -201,7 +203,7 @@ export async function forbiddenChecks({ browser, BASE, pages = NEW_LOOK, motion 
     }
     if (!motion) continue;
     // F9 on a phone and on a short screen (1280 at 400%): scrolled through, every block that settles or lands shows, the
-    // hero's diagram and every tool's intro have played to their finished state (HOME1b, D-UX-115), and no two figures in
+    // hero's diagram and every tool's scene have played to their finished state (HOME1b, D-UX-115), and no two figures in
     // a chart overlap (lesson 6). A block that waits for a share of its height never shows on a short one.
     for (const [w, h] of [[360, 740], [320, 256]]) {
       const sc = await browser.newContext({ viewport: { width: w, height: h } });
@@ -210,7 +212,7 @@ export async function forbiddenChecks({ browser, BASE, pages = NEW_LOOK, motion 
       await p.evaluate(async () => {
         for (let y = 0; y < document.body.scrollHeight; y += innerHeight / 2) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 100)); }
       });
-      // The DSCR's scene runs 12.8 s from when it comes into view (D-UX-125); the intros stop within 5 s.
+      // Each tool's scene runs 12.8 s from when it comes into view (D-UX-125); the last starts as the scroll reaches it.
       await p.waitForTimeout(14000);
       const ends = await p.evaluate(unfinished);
       const r = await p.evaluate(() => {

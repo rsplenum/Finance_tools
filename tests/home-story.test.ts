@@ -1,5 +1,5 @@
 /**
- * Home's four intros (HOME1b, D-UX-114; site/src/home/story.ts): each tool's fictional case, its figures the engine's,
+ * Home's four scenes (HOME1b, HOME1e; D-UX-114, D-UX-135; site/src/home/story.ts): each tool's fictional case, its figures the engine's,
  * held here to the same case worked by hand.
  * The DSCR, case S of tests/dscr-plan.test.ts typed into the front door (as typed: average 1.238074, lowest 1.002861 in
  * 2030-31; 80 EMIs: average 1.514052, lowest 1.205230 in 2032-33; 20 more EMIs), and the second computation, planCheck
@@ -31,12 +31,11 @@ import { dscrCaseOf } from '../site/src/dscr/model';
 import { architectCheck } from '../engine/architect-check';
 import { inputOf } from '../site/src/estimate/plan-model';
 import { preview as reportPreview } from '../site/src/report/model';
-import { CMA_FIX, ESTIMATE_BUDGET, ESTIMATE_CASE, ESTIMATE_FIXED, INTROS, REPORT_CASE, REPORT_FIX, REPORT_FIXED } from '../site/src/home/story';
+import { CMA_FIX, CMA_SCENE, ESTIMATE_BUDGET, ESTIMATE_CASE, ESTIMATE_FIXED, ESTIMATE_SCENE, INTROS, REPORT_CASE, REPORT_FIX, REPORT_FIXED, REPORT_SCENE, SCENES } from '../site/src/home/story';
 import { DSCR_SCENE, STORY_CASE, STORY_FIX, STORY_FIXED, STORY_LONGER, STORY_TARGET, STORY_TYPED } from '../site/src/home/story';
 import { READY } from '../site/src/site';
 
 const check = (s: typeof STORY_CASE) => { const c = dscrCaseOf(s)!; return planCheck(c.proj, c.loan, c.def); };
-const intro = (id: string) => INTROS.find((i) => i.id === id)!;
 const sumOf = (t: string) => t.match(/[\d,]+(?= ÷)|(?<=÷ )[\d,]+/g)!.map((v) => Number(v.replace(/,/g, '')));
 
 describe('the DSCR as typed', () => {
@@ -70,14 +69,24 @@ describe('the DSCR with the longer repayment', () => {
   });
 });
 
-describe('the DSCR intro', () => {
-  const d = intro('dscr');
-  it('the seven inputs of the front door (D-UX-10), the sums and the verdicts', () => {
-    expect(d.inputs.map(([, v]) => v)).toEqual(['A firm', 'Rs. 4.5 lakh', '0%', 'None', 'Rs. 12 lakh', '12%', '60 instalments (5 years)']);
-    expect([d.typed.sum, d.typed.verdict, d.fixed.sum, d.fixed.verdict]).toEqual([
-      '2030-31  3,21,236 ÷ 3,20,320 = 1.00', 'Below target 1.20', '2032-33  3,16,194 ÷ 2,62,351 = 1.21', 'Passes']);
-    expect(d.typed.bars.map((b) => b.meets)).toEqual([true, false, false, false, false, true]);
-    expect(d.fix).toBe('› make it viable · term → 80 instalments');
+// The scenes (HOME1d, HOME1e; D-UX-125, D-UX-135 to D-UX-139): the same cases and changes, the same hand-worked sums, and
+// each last beat read off the document built for the case.
+const sum = (x: { lead: string; result: string }) => `${x.lead}${x.result}`;
+
+describe('the DSCR scene', () => {
+  const s = DSCR_SCENE;
+  it('the seven inputs of the front door (D-UX-10) in lakh (NUM1), the term changed to 80, and the target', () => {
+    expect(s.inputs.map((i) => i.v)).toEqual(['A firm', 'Rs. 4.5 lakh', '0%', 'None', 'Rs. 12 lakh', '12%', '60 instalments']);
+    expect(s.inputs.filter((i) => i.to).map((i) => i.to)).toEqual(['80 instalments']);
+    expect([s.level.text, s.level.label, s.hub.from, s.hub.to]).toEqual(['1.20', 'target 1.20', '60', '80']);
+  });
+  it('the weakest year before and after, as worked by hand', () => {
+    expect([sum(s.sum.typed), sum(s.sum.fixed)]).toEqual(['3,21,236 ÷ 3,20,320 = 1.00', '3,16,194 ÷ 2,62,351 = 1.21']);
+    expect([s.sum.typed.head, s.sum.fixed.head]).toEqual(['2030-31: cash available ÷ debt service', '2032-33: cash available ÷ debt service']);
+    expect([s.rows[s.weakest.typed].label, s.rows[s.weakest.fixed].label]).toEqual(['2030-31', '2032-33']);
+    expect(s.rows.map((y) => y.typed?.text ?? '')).toEqual(['2.07', '1.09', '1.06', '1.03', '1.00', '1.94', '', '']);
+    expect(s.rows.map((y) => y.typed?.meets)).toEqual([true, false, false, false, false, true, undefined, undefined]);
+    expect(s.rows.every((y) => y.fixed.meets && y.judged)).toBe(true);
   });
   it('each sum within a rupee of the closed form', () => {
     const L = 1200000, r = 0.01;
@@ -86,27 +95,10 @@ describe('the DSCR intro', () => {
       const principal = B(from) - B(from + 12), interest = 12 * emi - principal, pbt = 450000 - interest;
       return [pbt - 0.312 * pbt + interest, interest + principal];
     };
-    const sums = [d.typed.sum, d.fixed.sum].map(sumOf);
+    const sums = [s.sum.typed, s.sum.fixed].map((x) => sumOf(sum(x)));
     for (const [k, want] of [year(60, 42), year(80, 66)].entries()) sums[k].forEach((v, i) => expect(Math.abs(v - want[i])).toBeLessThanOrEqual(0.5));
     expect((year(60, 42)[0] / year(60, 42)[1]).toFixed(6)).toBe('1.002861');
     expect((year(80, 66)[0] / year(80, 66)[1]).toFixed(6)).toBe('1.205230');
-  });
-});
-
-// The scene (HOME1d, D-UX-125): the same case and change as the intro, the same hand-worked sums, and its statement
-// beat read off the document built for the case: 80 instalments in the schedule, the two computations 0.00 apart.
-describe('the DSCR scene', () => {
-  const s = DSCR_SCENE;
-  it('the seven inputs, the term changed to 80, and the target', () => {
-    expect(s.inputs.map((i) => i.v)).toEqual(['A firm', 'Rs. 4,50,000', '0%', 'None', 'Rs. 12,00,000', '12%', '60 instalments']);
-    expect(s.inputs.filter((i) => i.to).map((i) => i.to)).toEqual(['80 instalments']);
-    expect([s.target, s.hub]).toEqual([{ text: '1.20', n: 1.2, average: '1.50' }, { from: '60', to: '80' }]);
-  });
-  it('the weakest year before and after, as worked by hand', () => {
-    expect([s.sum.typed, s.sum.fixed]).toEqual([['2030-31', '3,21,236 ÷ 3,20,320 = 1.00'], ['2032-33', '3,16,194 ÷ 2,62,351 = 1.21']]);
-    expect([s.years[s.weakest.typed].fy, s.years[s.weakest.fixed].fy]).toEqual(['2030-31', '2032-33']);
-    expect(s.years.map((y) => y.typed?.text ?? '')).toEqual(['2.07', '1.09', '1.06', '1.03', '1.00', '1.94', '', '']);
-    expect(s.years.every((y) => y.fixed.meets)).toBe(true);
   });
   it('the statement beat: verdict, both computations, the basis, every instalment, the signature lines', () => {
     expect(s.statement.verdict).toBe('Meets the target: the lowest year, 2032-33, is 1.21 against 1.20; the average is 1.51 against 1.50.');
@@ -121,19 +113,20 @@ describe('the DSCR scene', () => {
   });
 });
 
-describe('the project report intro', () => {
-  const p = intro('report');
+describe('the project report scene', () => {
+  const p = REPORT_SCENE;
   it('Make it viable\'s higher sales, the lowest year the first, short of its level and then meeting it', () => {
     expect(REPORT_FIX).toEqual({ move: '+17.3%', sales: '82,11,000', from: '70,00,000' });
     for (const s of [REPORT_CASE, REPORT_FIXED]) expect(reportPreview(s).checks?.find((c) => c.id === 'dscrLowest')?.worst).toMatch(/ in 2026-27$/);
-    expect([p.level.text, p.typed.sum, p.typed.verdict, p.fixed.sum, p.fixed.verdict]).toEqual([
-      '1.25', '2026-27  5,95,000 ÷ 7,27,083 = 0.82', 'Below level 1.25', '2026-27  9,09,099 ÷ 7,27,083 = 1.25', 'Passes']);
-    expect(p.typed.bars.map((b) => b.text)).toEqual(['0.82', '1.02', '1.24', '1.54', '1.92']);
-    expect(p.fixed.bars.map((b) => b.text)).toEqual(['1.25', '1.49', '1.81', '2.21', '2.73']);
+    expect([p.level.text, sum(p.sum.typed), p.chip.typed, sum(p.sum.fixed), p.chip.fixed]).toEqual([
+      '1.25', '5,95,000 ÷ 7,27,083 = 0.82', 'Below level 1.25', '9,09,099 ÷ 7,27,083 = 1.25', 'Meets 1.25']);
+    expect(p.rows.map((b) => b.typed?.text)).toEqual(['0.82', '1.02', '1.24', '1.54', '1.92']);
+    expect(p.rows.map((b) => b.fixed.text)).toEqual(['1.25', '1.49', '1.81', '2.21', '2.73']);
+    expect([p.weakest.typed, p.weakest.fixed]).toEqual([0, 0]);
   });
-  it('its amounts in lakh (NUM1): 33,75,342 is 33.75342 lakh, rounded and said so; the sums in full', () => {
-    expect(p.inputs.map(([, v]) => v)).toEqual(['A firm', 'about Rs. 33.75 lakh', 'Rs. 25 lakh', '10%', '60 instalments', 'Rs. 70 lakh', '65% of sales', 'Rs. 18 lakh a year']);
-    expect(p.fix).toBe('› make it viable · sales +17.3% → Rs. 82.11 lakh');
+  it('its amounts in lakh (NUM1); the sales the one card that changes', () => {
+    expect(p.inputs.map((i) => i.v)).toEqual(['Rs. 33 lakh', 'Rs. 25 lakh', '10%', '60 instalments', '65% of sales', 'Rs. 18 lakh a year', 'Rs. 70 lakh']);
+    expect(p.inputs.filter((i) => i.to).map((i) => i.to)).toEqual(['Rs. 82.11 lakh']);
   });
   it('each sum within a rupee of the hand-worked first year', () => {
     const interest = (12 * 2500000 - 2500000 / 60 * 66) * 10 / 1200;
@@ -141,29 +134,52 @@ describe('the project report intro', () => {
       const pbt = 0.35 * sales - 1800000 - 420000 - 20000 - interest - 55000, pat = pbt > 0 ? pbt * (1 - 0.312) : pbt;
       return [pat + 420000 + 20000 + interest, 500000 + interest];
     };
-    const sums = [p.typed.sum, p.fixed.sum].map(sumOf);
+    const sums = [p.sum.typed, p.sum.fixed].map((x) => sumOf(sum(x)));
     for (const [k, want] of [year1(7000000), year1(8211000)].entries()) sums[k].forEach((v, i) => expect(Math.abs(v - want[i])).toBeLessThanOrEqual(0.5));
     expect((year1(7000000)[0] / year1(7000000)[1]).toFixed(4)).toBe('0.8183');
     expect((year1(8211000)[0] / year1(8211000)[1]).toFixed(6)).toBe('1.250336');
   });
+  it('the report beat: every test met, read off the report built for the case', () => {
+    expect(p.statement.verdict).toMatch(/^Meets all eight tests a lender reads: the lowest DSCR is 1\.25 against 1\.25; the project costs about Rs\. 34\.75 lakh\.$/);
+    expect(reportPreview(REPORT_FIXED).checks?.map((c) => c.verdict)).toEqual(Array(8).fill('meets'));
+    expect(p.statement.files).toEqual(['PDF', 'Excel', 'Word']);
+  });
 });
 
-describe('the estimate intro', () => {
-  const e = intro('estimate'), total = (t: string) => Number(t.replace(/[^\d]/g, ''));
-  it('its budget in lakh (NUM1); the total’s bar in full, as its sum, so it fits at 320 px', () => {
-    expect([e.level.text, e.typed.bars[0].text, e.inputs.at(-1)?.[1]]).toEqual(['Rs. 12 lakh', '12,47,185', 'Rs. 12 lakh']);
+describe('the estimate scene', () => {
+  const e = ESTIMATE_SCENE, total = (t: string) => Number(t.replace(/[^\d]/g, '')), last = e.rows.length - 1;
+  it('its budget in lakh (NUM1); the two bedrooms the one card that changes', () => {
+    expect([e.level.text, e.level.at, e.inputs.find((i) => i.to)?.k, e.inputs.find((i) => i.to)?.to]).toEqual(['Rs. 12 lakh', 'most', 'The two bedrooms', 'Basic']);
   });
   it('Standard everywhere over the budget, Basic bedrooms within it, each total the second computation\'s', () => {
-    expect([e.typed.sum, e.typed.verdict, e.fixed.sum, e.fixed.verdict]).toEqual(['total  12,47,185', 'Over budget Rs. 12 lakh', 'total  11,65,322', 'Within budget']);
+    expect([e.rows[last].label, e.rows[last].typed?.text, e.rows[last].fixed.text, e.chip.typed, e.chip.fixed]).toEqual(
+      ['Total', '12,47,185', '11,65,322', 'Over budget Rs. 12 lakh', 'Within budget Rs. 12 lakh']);
     const [at, fixed] = [ESTIMATE_CASE, ESTIMATE_FIXED].map((s) => architectCheck(inputOf(s)).total);
-    expect(Math.abs(total(e.typed.sum) - at)).toBeLessThanOrEqual(0.5);
-    expect(Math.abs(total(e.fixed.sum) - fixed)).toBeLessThanOrEqual(0.5);
+    expect(Math.abs(total(sum(e.sum.typed)) - at)).toBeLessThanOrEqual(0.5);
+    expect(Math.abs(total(sum(e.sum.fixed)) - fixed)).toBeLessThanOrEqual(0.5);
     expect([at > ESTIMATE_BUDGET.n, fixed <= ESTIMATE_BUDGET.n]).toEqual([true, true]);
+    expect([e.weakest.typed, e.weakest.fixed]).toEqual([last, last]);
+  });
+  it('a running total: each trade starts where the one before ends, and the trades add up to the total', () => {
+    for (const k of ['typed', 'fixed'] as const) {
+      const trades = e.rows.slice(0, last).map((r) => r[k]!);
+      trades.forEach((t, i) => expect(t.from).toBe(i ? trades[i - 1].n : 0));
+      expect(Math.abs(trades.reduce((a, t) => a + total(t.text), 0) - total(e.rows[last][k]!.text))).toBeLessThanOrEqual(trades.length / 2);
+      expect(Math.abs(trades[trades.length - 1].n - e.rows[last][k]!.n)).toBeLessThanOrEqual(0.5);
+    }
+    // As typed, the trades that cross the budget are the last ones; after the change, none does.
+    const miss = e.rows.map((r) => !r.typed?.meets);
+    expect(miss.slice(miss.indexOf(true)).every(Boolean)).toBe(true);
+    expect(e.rows.every((r) => r.fixed.meets)).toBe(true);
+  });
+  it('the estimate beat: the second computation\'s difference, every item and the assumptions', () => {
+    expect(e.statement.lines.map((l) => l.text).join(' ')).toMatch(/difference Rs\. 0\..*each of the \d+ items/);
+    expect(e.statement.verdict).toBe('Rs. 11,65,322 in all, within the budget of Rs. 12 lakh, in figures and in words.');
   });
 });
 
-describe('the CMA intro, case W', () => {
-  const c = intro('cma');
+describe('the CMA scene, case W', () => {
+  const c = CMA_SCENE;
   const sales = [200, 220, 250, 280, 310], bank = [55.25, 58.45, 63.75, 68.65, 74.15], otherCl = [3, 3, 3.5, 3.5, 4], otherCa = [2, 2, 2.5, 2.5, 3];
   const ca = (k: number) => 0.33 * sales[k] + 3 + otherCa[k], cl = (k: number) => bank[k] + 0.08 * sales[k] + otherCl[k];
   it('each year balances, as the case is written', () => {
@@ -173,34 +189,42 @@ describe('the CMA intro, case W', () => {
   it('the current ratio by hand: the estimate below the fresh limit\'s 1.10, the audited years shown, not judged', () => {
     expect((ca(3) / cl(3)).toFixed(4)).toBe('1.0354');
     expect(c.level.text).toBe('1.10');
-    expect(c.typed.bars.map((b) => [b.label, b.text, b.judged])).toEqual([
-      ['2023-24', (ca(0) / cl(0)).toFixed(2), false], ['2024-25', (ca(1) / cl(1)).toFixed(2), false], ['2025-26', (ca(2) / cl(2)).toFixed(2), false],
-      ['2026-27', '1.04', true], ['2027-28', (ca(4) / cl(4)).toFixed(2), true]]);
-    expect([c.typed.sum, c.typed.verdict]).toEqual(['2026-27  97,90,000 ÷ 94,55,000 = 1.04', 'Below level 1.10']);
+    expect(c.rows.map((b) => [b.label, b.typed?.text, b.judged, b.tag])).toEqual([
+      ['2023-24', (ca(0) / cl(0)).toFixed(2), false, 'audited'], ['2024-25', (ca(1) / cl(1)).toFixed(2), false, 'audited'],
+      ['2025-26', (ca(2) / cl(2)).toFixed(2), false, 'audited'], ['2026-27', '1.04', true, undefined], ['2027-28', (ca(4) / cl(4)).toFixed(2), true, undefined]]);
+    expect([sum(c.sum.typed), c.sum.typed.head, c.chip.typed]).toEqual(['97,90,000 ÷ 94,55,000 = 1.04', '2026-27: current assets ÷ current liabilities', 'Below level 1.10']);
+    expect([c.weakest.typed, c.weakest.fixed]).toEqual([3, 3]);
   });
   it('the capital that meets it, by hand, and the ratio it gives', () => {
     expect(CMA_FIX.n).toBe(Math.ceil((cl(3) - ca(3) / 1.1) * 1e5 - 1e-6));
     expect(CMA_FIX.n).toBe(555000);
-    expect([c.fixed.sum, c.fixed.verdict]).toEqual(['2026-27  97,90,000 ÷ 89,00,000 = 1.10', 'Passes']);
-    expect(c.fixed.bars.at(-1)?.text).toBe((ca(4) / (cl(4) - 5.55)).toFixed(2));
+    expect([sum(c.sum.fixed), c.chip.fixed]).toEqual(['97,90,000 ÷ 89,00,000 = 1.10', 'Meets 1.10']);
+    expect(c.rows.at(-1)?.fixed.text).toBe((ca(4) / (cl(4) - 5.55)).toFixed(2));
+    expect(c.inputs.filter((i) => i.to).map((i) => i.to)).toEqual(['+Rs. 5.55 lakh']);
   });
   it('the turnover-method limit for the projection, by hand', () => {
     const lim = 0.25 * sales[4] - Math.max(0.05 * sales[4], ca(4) - cl(4));
     expect(lim).toBeCloseTo(62, 9);
-    expect(c.aside).toBe('› limit by the turnover method, 2027-28: Rs. 62 lakh');
+    expect(c.statement.verdict).toContain('the limit by the turnover method, 2027-28, is Rs. 62 lakh.');
   });
   it('its amounts in lakh and crore (NUM1): sales 200 and 310 lakh are 2 and 3.1 crore', () => {
-    expect(c.inputs.map(([, v]) => v).slice(2, 5)).toEqual(['Rs. 2 crore', 'Rs. 3.1 crore', 'Rs. 65 lakh']);
-    expect([CMA_FIX.n, c.fix]).toEqual([5_55_000, "› make it viable · capital +Rs. 5.55 lakh"]);
+    expect(c.inputs.map((i) => i.v).slice(3, 6)).toEqual(['Rs. 2 crore', 'Rs. 3.1 crore', 'Rs. 65 lakh']);
+    expect(c.statement.files).toEqual(['PDF', 'Excel']);
   });
 });
 
-describe('the four intros', () => {
+describe('the four tools', () => {
   it('each tool once, in the site\'s order, each button opening its tool with the case', () => {
     expect(INTROS.map((i) => i.go.href.split('?')[0])).toEqual(READY.map((t) => t.href));
     expect(INTROS.every((i) => i.go.href.endsWith('?case=home'))).toBe(true);
     expect(new Set(INTROS.map((i) => i.id)).size).toBe(4);
   });
-  it('each reads short of its level as typed and meets it after the change', () =>
-    expect(INTROS.map((i) => [i.typed.meets, i.fixed.meets])).toEqual(INTROS.map(() => [false, true])));
+  it('each scene: short of its level as typed, meeting it after one changed card, in five beats', () => {
+    for (const s of Object.values(SCENES)) {
+      const w = s.rows[s.weakest.typed], f = s.rows[s.weakest.fixed];
+      expect([s.id, w.typed?.meets, f.fixed.meets, s.inputs.filter((i) => i.to).length, s.beats.length]).toEqual([s.id, false, true, 1, 5]);
+      expect(s.rows.filter((r) => r.judged).every((r) => r.fixed.meets)).toBe(true);
+      expect(s.statement.lines[0].head).toBe('Worked out twice');
+    }
+  });
 });

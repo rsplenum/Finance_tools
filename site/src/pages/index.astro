@@ -3,16 +3,15 @@
  * The home page in FinSight's own look (AG2, D-UX-68 to D-UX-72), rebuilt without repetition (HOME1b, D-UX-114,
  * D-UX-115): three sections, each saying what no other does. The hero: what the site gives, its two buttons and, under
  * them, how it works (How.astro: your answers, worked out on this device with nothing sent, four papers for the lender). The tools: each of the four
- * once, in one block with its name, what it gives, for whom, its terminal intro (Intro.astro), or for the DSCR its
- * five-beat scene in look C (Scene.astro, HOME1d), every figure the engine's, from site/src/home/story.ts, and one button that opens it with that case. The closing desk, with one button. The motion
- * (site/src/home/home.ts, docs/DESIGN-MOTION.md) runs once, stops within 5 s (the DSCR's scene within 13 s, D-UX-125), and without scripts or under reduced motion
+ * once, in one block with its name, what it gives, for whom, its five-beat scene in look C (Scene.astro; HOME1d, HOME1e,
+ * D-UX-141), every figure the engine's and every document line the tool's own document's, from site/src/home/story.ts, and one button that opens it with that case. The closing desk, with one button. The motion
+ * (site/src/home/home.ts, docs/DESIGN-MOTION.md) runs once, stops within 13 s (D-UX-125), and without scripts or under reduced motion
  * the page stands finished. FinSight's rules (docs/DESIGN.md) are held by scripts/forbidden-checks.mjs.
  */
 import Base from '../Base.astro';
 import How from '../home/How.astro';
-import Intro from '../home/Intro.astro';
 import Scene from '../home/Scene.astro';
-import { DSCR_SCENE, INTROS } from '../home/story';
+import { INTROS, SCENES } from '../home/story';
 
 const WRAP = 'mx-auto max-w-7xl px-4 sm:px-8';
 const INK = 'inline-flex min-h-11 items-center justify-center rounded-full bg-ink px-6 py-2.5 text-center font-medium text-canvas hover:bg-ink/85';
@@ -34,7 +33,7 @@ const DESK = 'inline-flex min-h-11 items-center justify-center rounded-full bg-o
   </section>
 
   <section id="tools" data-ag="tools" class={`${WRAP} space-y-20 py-16 sm:space-y-28 sm:py-24`}>
-    {INTROS.map((i) => i.id === 'dscr' ? (
+    {INTROS.map((i) => (
       <article data-tool={i.id} class="grid gap-8 lg:gap-12">
         <div class="grid gap-6 lg:grid-cols-5 lg:items-end lg:gap-12">
           <div class="lg:col-span-3">
@@ -44,17 +43,7 @@ const DESK = 'inline-flex min-h-11 items-center justify-center rounded-full bg-o
           </div>
           <div class="lg:col-span-2 lg:justify-self-end"><a href={i.go.href} class={INK}>{i.go.text}</a></div>
         </div>
-        <Scene scene={DSCR_SCENE} />
-      </article>
-    ) : (
-      <article data-tool={i.id} class="grid items-center gap-8 lg:grid-cols-5 lg:gap-12">
-        <div class="lg:col-span-2">
-          <h2 class="text-balance text-section text-ink">{i.name}</h2>
-          <p class="mt-4 max-w-lg text-lead text-ink">{i.gives}</p>
-          <p class="mt-3 max-w-lg text-lead text-ink-muted">{i.forWhom}</p>
-          <a href={i.go.href} class={`mt-8 ${INK}`}>{i.go.text}</a>
-        </div>
-        <Intro intro={i} class="lg:col-span-3" />
+        <Scene scene={SCENES[i.id]} />
       </article>
     ))}
   </section>

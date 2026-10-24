@@ -1,6 +1,6 @@
 /**
- * The DSCR scene's motion (HOME1d, D-UX-125; Scene.astro, docs/DESIGN-MOTION.md): the five beats in 12.8 s, played once
- * when the scene comes into view, loaded after the page. Every move is a Web Animation (element.animate), never a timer or
+ * A tool's scene in motion (HOME1d, HOME1e; D-UX-125, D-UX-136; Scene.astro, docs/DESIGN-MOTION.md): the five beats in
+ * 12.8 s, the same for all four tools, played once when the scene comes into view, loaded after the page. Every move is a Web Animation (element.animate), never a timer or
  * a frame loop, so `document.getAnimations()` can pause and seek the whole scene (the video studio, D-TECH-56). Springs
  * are underdamped (damping ratio about 0.7, the brackets' snap about 0.45) and written as CSS `linear()` easings; cards
  * stagger by 60 ms; wires are flat-tangent curves drawn by their dash offset and lit by a marigold pulse (the owner's
@@ -140,7 +140,7 @@ function ripple(r: Run, hub: HTMLElement, at: number) {
 export function scene(root: HTMLElement) {
   const p = parts(root);
   let run: Run | undefined;
-  const css = getComputedStyle(root), ink = css.getPropertyValue('--ink').trim(), miss = css.getPropertyValue('--miss').trim();
+  const css = getComputedStyle(root), miss = css.getPropertyValue('--miss').trim();
 
   const end = () => {
     if (!run) return;
@@ -172,42 +172,50 @@ export function scene(root: HTMLElement) {
       r.window(label, B[i], B[i + 1] ?? WHOLE, { opacity: 1 }, { opacity: 0.55 });
     });
 
-    // 1. The bank's question: the year-by-year panel, empty, its target drawn down the tracks.
+    // 1. The question: the year-by-year panel, empty, its target drawn down the tracks.
     r.add(p.panel, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], 120, 500, SPRING);
     p.qa('[data-tl]').forEach((e, i) => r.add(e, [{ transform: 'scaleY(0)', transformOrigin: 'top' }, { transform: 'scaleY(1)', transformOrigin: 'top' }], 450 + i * 50, 380, OUT));
     r.add(p.q('.tlabel'), [{ opacity: 0 }, { opacity: 1 }], 600, 300);
     p.rows.forEach((row, i) => { if (!row.querySelector('[data-t]')) r.add(row.querySelector('.fy') as Element, [{ opacity: 0 }, { opacity: 1 }], B[3] + 2000 + i * 60, 250); });
 
-    // 2. Seven answers: the cards settle one after another, their wires draw into the hub and a pulse runs each.
+    // 2. The answers: the cards settle one after another, their wires draw into the hub and a pulse runs each.
     p.cards.forEach((c, i) => r.add(c, [{ opacity: 0, transform: across ? 'translateX(-20px) scale(0.96)' : 'translateY(14px) scale(0.96)' }, { opacity: 1, transform: 'none' }], B[1] + 100 + i * 60, 650, SPRING));
     w.ins.forEach((e, i) => r.add(e, DRAW, B[1] + 650 + i * 60, 500, EXPO));
     r.add(p.hub, [{ opacity: 0, transform: 'scale(0.6)' }, { opacity: 1, transform: 'none' }], B[1] + 900, 700, SPRING);
     w.ins.forEach((e, i) => pulse(r, w.svg, e, B[1] + 1350 + i * 60, 600));
     ripple(r, p.hub, B[1] + 2000);
 
-    // 3. Every year worked out: the dial turns, the years fill, the lens stops on the weakest and the brackets snap on it.
+    // 3. Everything worked out: the dial turns, the years fill, the lens stops on the weakest and the brackets snap on it.
     const dial = p.q('[data-dial]');
     r.add(dial, [{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], B[2], 1400, GLIDE);
-    w.outs.forEach((e, i) => r.add(e, DRAW, (i < 6 || !across ? B[2] + 300 : B[3] + 2000) + i * 50, 500, EXPO));
     const typedRows = p.rows.filter((row) => row.querySelector('[data-t]'));
+    w.outs.forEach((e, i) => r.add(e, DRAW, (i < typedRows.length || !across ? B[2] + 300 : B[3] + 2000) + i * 50, 500, EXPO));
     (across ? w.outs.slice(0, typedRows.length) : w.outs).forEach((e, i) => pulse(r, w.svg, e, B[2] + 500 + i * 50, 500));
     p.rows.forEach((row, i) => {
       const bar = row.querySelector('[data-yb]') as HTMLElement, t = row.querySelector('[data-t]'), f = row.querySelector('[data-f]') as Element;
-      const ratio = Number(bar.dataset.ratio), was = bar.hasAttribute('data-miss') ? miss : ink;
+      // A bar as typed is its share of the bar after the change, moved by its shift (a trade that starts later, D-UX-137);
+      // it ends in its own colour, so an audited year stays muted.
+      const own = getComputedStyle(bar).backgroundColor, was = bar.hasAttribute('data-miss') ? miss : own;
+      const typed = `translateX(${Number(bar.dataset.shift ?? 0) * 100}%) scaleX(${Number(bar.dataset.ratio ?? 1)})`, from = typed.replace(/scaleX\([^)]*\)/, 'scaleX(0)');
       if (t) {
-        r.add(bar, [{ transform: 'scaleX(0)', backgroundColor: was }, { transform: `scaleX(${ratio})`, backgroundColor: was }], B[2] + 600 + i * 60, 650, SPRING);
+        r.add(bar, [{ transform: from, backgroundColor: was }, { transform: typed, backgroundColor: was }], B[2] + 600 + i * 60, 650, SPRING);
         r.add(t, [{ opacity: 0 }, { opacity: 1 }], B[2] + 800 + i * 60, 250);
-        r.add(bar, [{ transform: `scaleX(${ratio})`, backgroundColor: was }, { transform: 'scaleX(1)', backgroundColor: ink }], B[3] + 1700 + i * 60, 750, SPRING);
+        r.add(bar, [{ transform: typed, backgroundColor: was }, { transform: 'translateX(0%) scaleX(1)', backgroundColor: own }], B[3] + 1700 + i * 60, 750, SPRING);
         r.add(t, [{ opacity: 1 }, { opacity: 0 }], B[3] + 1700 + i * 60, 250);
       } else r.add(bar, [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], B[3] + 2050 + i * 60, 750, SPRING);
       r.add(f, [{ opacity: 0 }, { opacity: 1 }], B[3] + 1850 + i * 60, 300);
     });
     // Geometry first, then the moves (GOTCHAS, HOME1c): each row's top within the rows' box, and where the lens rides.
     const top = (row: HTMLElement) => row.getBoundingClientRect().top - p.rowsBox.getBoundingClientRect().top;
-    const track = p.rows[0].querySelector('.track') as HTMLElement, lx = track.offsetLeft + track.offsetWidth * 0.45 - 20, rh = p.rows[0].offsetHeight;
+    // The lens rides the level's line, at the track's middle; the track's place within the row is the same on every row.
+    const track = p.rows[0].querySelector('.track') as HTMLElement, place = Number(root.dataset.place ?? 0.45);
+    // The glass's centre is at 20 of the lens's 48 units, on the line and on the track (a smaller lens on a phone's long rows).
+    const c = (p.lens.getBoundingClientRect().width * 20) / 48, lx = track.offsetLeft + track.offsetWidth * place - c, ty = track.offsetTop + track.offsetHeight / 2 - c;
     const weakT = p.rows.findIndex((x) => x.hasAttribute('data-weak-typed')), weakF = p.rows.findIndex((x) => x.hasAttribute('data-weak-fixed'));
-    const at = (i: number) => `translate(${lx}px, ${top(p.rows[i]) + rh / 2 - 22}px)`;
-    const glide: Keyframe[] = typedRows.slice(0, weakT + 1).map((_, i) => ({ transform: at(i) }));
+    const at = (i: number) => `translate(${lx}px, ${top(p.rows[i]) + ty}px)`;
+    // It reads the judged rows from the first down to the weakest (the CMA's audited years are not read).
+    const first = Math.max(0, p.rows.findIndex((x) => !x.querySelector('[data-yb].mute')));
+    const glide: Keyframe[] = p.rows.slice(first, Math.max(first, weakT) + 1).map((_, i) => ({ transform: at(first + i) }));
     r.add(p.lens, glide.length > 1 ? glide : [glide[0], glide[0]], B[2] + 1400, 1000, GLIDE);
     r.add(p.lens, [{ opacity: 0 }, { opacity: 1 }], B[2] + 1350, 250);
     r.add(p.lens, [{ transform: at(weakT) }, { transform: at(weakF) }], B[3] + 2300, 600, SPRING);
@@ -226,8 +234,8 @@ export function scene(root: HTMLElement) {
     r.add(figF, [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], B[3] + 2560, 400, SPRING);
     r.add(chipF, [{ opacity: 0, transform: 'scale(1.3)' }, { opacity: 1, transform: 'none' }], B[3] + 2700, 450, SNAP);
 
-    // 4. The change that passes: brackets snap onto the term, 60 lifts out leaving its slot dashed, 80 springs in, and the
-    //    hub and the years follow.
+    // 4. The change that passes: brackets snap onto the changed card, its old value lifts out leaving its slot dashed, the
+    //    new one springs in, and the hub and the rows follow.
     p.qa('[data-brk]', p.term).forEach((e, i) => {
       r.add(e, [{ opacity: 0, transform: 'scale(1.9)' }, { opacity: 1, transform: 'none' }], B[3] + 80 + i * 30, 420, SNAP);
       r.add(e, [{ opacity: 1 }, { opacity: 0 }], B[4], 300);
@@ -242,14 +250,17 @@ export function scene(root: HTMLElement) {
     r.add(termWas, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-16px)' }], B[3] + 350, 320, OUT);
     r.add(termNow, [{ opacity: 0, transform: 'translateY(-20px) scale(1.05)' }, { opacity: 1, transform: 'none' }], B[3] + 750, 550, SPRING);
     pulse(r, w.svg, w.ins[p.cards.indexOf(p.term)], B[3] + 1250, 450);
+    // The hub's count changes only where the change adds years (the DSCR's term).
     const [hubWas, hubNow] = [p.q('[data-was]', p.hub), p.q('[data-now]', p.hub)];
-    r.add(hubWas, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-10px)' }], B[3] + 1550, 250);
-    r.add(hubNow, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], B[3] + 1650, 450, SPRING);
+    if (hubWas && hubNow) {
+      r.add(hubWas, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-10px)' }], B[3] + 1550, 250);
+      r.add(hubNow, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], B[3] + 1650, 450, SPRING);
+    }
     r.add(dial, [{ transform: 'rotate(360deg)' }, { transform: 'rotate(720deg)' }], B[3] + 1550, 1000, GLIDE);
     ripple(r, p.hub, B[3] + 1650);
     (across ? w.outs : w.outs.slice(0, 1)).forEach((e, i) => pulse(r, w.svg, e, B[3] + 1800 + i * 50, 450));
 
-    // 5. The statement for the lender: the panel lifts away, the statement settles in its place and shows what it holds.
+    // 5. The document for the lender: the panel lifts away, the statement settles in its place and shows what it holds.
     r.add(p.panel, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-12px) scale(0.97)' }], B[4], 450, OUT);
     w.outs.forEach((e) => r.add(e, [{ opacity: 1 }, { opacity: 0 }], B[4], 300));
     r.add(p.doc, [{ opacity: 0, transform: 'translateY(26px) scale(0.96)' }, { opacity: 1, transform: 'none' }], B[4] + 250, 700, SPRING);

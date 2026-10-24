@@ -2,19 +2,19 @@
   "pages": {
     "/": {
       "before": 27,
-      "shown": 609,
-      "all": 609,
+      "shown": 797,
+      "all": 797,
       "plan": null,
       "long": 0,
-      "abbr": 5,
+      "abbr": 6,
       "questions": 0,
       "controls": 7,
       "answerAt": 0.6,
       "gap": null,
       "styles": 14,
-      "colours": 2,
+      "colours": 1,
       "outOfSight": null,
-      "codes": 3
+      "codes": 2
     },
     "/404.html": {
       "before": 13,
@@ -1280,6 +1280,30 @@
       "from": 1,
       "to": 3,
       "why": "D-UX-129 (set by hand, owner's word 24-10-2026: this container fonts differ from the baseline)",
+      "date": "2026-10-24"
+    },
+    {
+      "page": "/",
+      "count": "shown",
+      "from": 609,
+      "to": 797,
+      "why": "D-UX-143",
+      "date": "2026-10-24"
+    },
+    {
+      "page": "/",
+      "count": "all",
+      "from": 609,
+      "to": 797,
+      "why": "D-UX-143",
+      "date": "2026-10-24"
+    },
+    {
+      "page": "/",
+      "count": "abbr",
+      "from": 5,
+      "to": 6,
+      "why": "D-UX-143",
       "date": "2026-10-24"
     }
   ],
