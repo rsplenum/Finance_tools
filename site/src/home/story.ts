@@ -17,6 +17,8 @@ import { applyCmaPlan, cmaViableOf } from '../cma/levers';
 import { CMA_AS_TYPED, cmaViable } from '../../../engine/cma-plan';
 import { CMA_HOME } from '../cma/home-case';
 import { READY } from '../site';
+import { lakhCrore } from '../../../engine/util';
+import { parseAmount } from '../../../engine/parse';
 
 // ---- The DSCR: case S ----
 
@@ -156,6 +158,12 @@ const tool = (href: string) => {
   return t;
 };
 const judge = (n: number, level: number, at: 'least' | 'most') => (at === 'least' ? n >= level - 1e-9 : n <= level + 1e-9);
+/** An amount as typed or printed ("12,00,000", "18 L"), in lakh and crore for the intro (NUM1, D-UX-115); sums stay in full. */
+const lc = (typed: string | undefined) => {
+  const n = typed === undefined ? undefined : parseAmount(typed);
+  if (n === undefined) throw new Error(`The story has no amount in "${typed}".`);
+  return lakhCrore(n);
+};
 const yearsOf = (instalments: string) => `${Number(instalments) / 12} years`;
 
 const DSCR_INTRO: Intro = (() => {
@@ -168,8 +176,8 @@ const DSCR_INTRO: Intro = (() => {
     id: 'dscr', name: tool('/dscr/').name, gives: 'Seven answers give the statement a lender reads, year by year, and whether the loan passes.',
     forWhom: 'For a shop owner, a firm or its CA, before the bank sees it.',
     title: 'dscr · case S (fictional)', command: '$ dscr --case S',
-    inputs: [['borrower', 'A firm'], ['profit / yr', `Rs. ${STORY_CASE.cells.pbdit?.[0]}`], ['growth', `${STORY_CASE.rates.pbdit}%`], ['EMIs now', 'None'],
-      ['loan', `Rs. ${l.amount}`], ['rate', `${l.ratePct}%`], ['term', `${l.instalments} instalments (${yearsOf(l.instalments)})`]],
+    inputs: [['borrower', 'A firm'], ['profit / yr', lc(STORY_CASE.cells.pbdit?.[0])], ['growth', `${STORY_CASE.rates.pbdit}%`], ['EMIs now', 'None'],
+      ['loan', lc(l.amount)], ['rate', `${l.ratePct}%`], ['term', `${l.instalments} instalments (${yearsOf(l.instalments)})`]],
     working: `› working ${yearsOf(l.instalments)}, month by month`,
     level, typed: phase(STORY_CASE, STORY_TYPED),
     fix: `› make it viable · term → ${STORY_FIXED.loan.instalments} instalments`, fixed: phase(STORY_FIXED, STORY_LONGER),
@@ -189,28 +197,28 @@ const REPORT_INTRO: Intro = (() => {
     id: 'report', name: tool('/project-report/').name, gives: 'What the project costs, how it is paid for and whether it can repay, every figure worked out twice.',
     forWhom: 'For a business starting or growing a unit, and the CA who prepares its papers.',
     title: 'project report · case R (fictional)', command: '$ project-report --case R',
-    inputs: [['borrower', 'A firm'], ['project cost', `Rs. ${weak.cost}`],
-      ['loan', `Rs. ${l.amount}`], ['rate', `${l.ratePct}%`], ['term', `${l.instalments} instalments`], ['sales, year 1', `Rs. ${REPORT_FIX.from}`],
-      ['variable costs', `${REPORT_CASE.variablePct}% of sales`], ['fixed costs', `Rs. ${REPORT_CASE.fixed} a year`]],
+    inputs: [['borrower', 'A firm'], ['project cost', lc(weak.cost)],
+      ['loan', lc(l.amount)], ['rate', `${l.ratePct}%`], ['term', `${l.instalments} instalments`], ['sales, year 1', lc(REPORT_FIX.from)],
+      ['variable costs', `${REPORT_CASE.variablePct}% of sales`], ['fixed costs', `${lc(REPORT_CASE.fixed)} a year`]],
     working: '› working the projected accounts, year by year',
     level, typed: phase(weak),
-    fix: `› make it viable · sales ${REPORT_FIX.move} → Rs. ${REPORT_FIX.sales}`, fixed: phase(fixed),
+    fix: `› make it viable · sales ${REPORT_FIX.move} → ${lc(REPORT_FIX.sales)}`, fixed: phase(fixed),
     go: { href: '/project-report/?case=home', text: 'Open the project report with this case' },
   };
 })();
 
 const ESTIMATE_INTRO: Intro = (() => {
   const s = ESTIMATE_CASE, at = estimateTotal(s), fixed = estimateTotal(ESTIMATE_FIXED), b = ESTIMATE_BUDGET;
-  const level = { n: b.n, text: b.text, word: 'budget', at: 'most' as const };
+  const level = { n: b.n, text: lakhCrore(b.n), word: 'budget', at: 'most' as const };
   const phase = (t: ReturnType<typeof estimateTotal>, label: string): IntroPhase => {
     const meets = judge(t.n, b.n, 'most');
-    return { bars: [{ label, text: t.text, n: t.n, judged: true, meets }], sum: `total  ${t.text}`, meets, verdict: meets ? 'Within budget' : `Over budget ${b.text}` };
+    return { bars: [{ label, text: t.text, n: t.n, judged: true, meets }], sum: `total  ${t.text}`, meets, verdict: meets ? 'Within budget' : `Over budget ${level.text}` };
   };
   return {
     id: 'estimate', name: tool('/estimate/').brief ?? tool('/estimate/').name, gives: 'What the work should cost, room by room at five quality levels, before you collect quotes.',
     forWhom: 'For a family building, renovating or doing up interiors.',
     title: 'estimate · a Pune flat (fictional)', command: '$ estimate --flat pune',
-    inputs: [['work', 'Renovate'], ['home', 'A flat'], ['city', 'Pune'], ['carpet area', `${s.area} sq ft`], ['rooms', `${s.bhk}BHK`], ['level', at.level], ['budget', `Rs. ${b.text}`]],
+    inputs: [['work', 'Renovate'], ['home', 'A flat'], ['city', 'Pune'], ['carpet area', `${s.area} sq ft`], ['rooms', `${s.bhk}BHK`], ['level', at.level], ['budget', level.text]],
     working: '› pricing each room at the level chosen',
     level, typed: phase(at, `${at.level} everywhere`),
     fix: '› bring it within budget · Basic in the two bedrooms', fixed: phase(fixed, 'Basic bedrooms'),
@@ -229,11 +237,11 @@ const CMA_INTRO: Intro = (() => {
     id: 'cma', name: tool('/cma/').name, gives: 'Forms I to VI, the ratios and the limit by the turnover method, from five years’ figures.',
     forWhom: 'For a business asking for cash credit or renewing it, and its CA.',
     title: 'cma · case W (fictional)', command: '$ cma --case W',
-    inputs: [['business', 'Electrical goods, wholesale'], ['years', `${r.years[0].label} to ${r.years.at(-1)?.label}, 3 audited`], ['sales, first year', `Rs. ${v.a1.sales}`],
-      ['sales, projected', `Rs. ${v.proj.sales}`], ['limit now', `Rs. ${CMA_CASE.existingLimit}`], ['asking', 'A larger limit']],
+    inputs: [['business', 'Electrical goods, wholesale'], ['years', `${r.years[0].label} to ${r.years.at(-1)?.label}, 3 audited`], ['sales, first year', lc(v.a1.sales)],
+      ['sales, projected', lc(v.proj.sales)], ['limit now', lc(CMA_CASE.existingLimit)], ['asking', 'A larger limit']],
     working: '› working Forms I to VI and the ratios',
-    level, typed: phase(r), aside: `› limit by the turnover method, ${r.limit.fy}: Rs. ${r.limit.text}`,
-    fix: `› make it viable · capital ${CMA_FIX.move}`, fixed: phase(f),
+    level, typed: phase(r), aside: `› limit by the turnover method, ${r.limit.fy}: ${lc(r.limit.text)}`,
+    fix: `› make it viable · capital +${lakhCrore(CMA_FIX.n)}`, fixed: phase(f),
     go: { href: '/cma/?case=home', text: 'Open CMA data with this case' },
   };
 })();
