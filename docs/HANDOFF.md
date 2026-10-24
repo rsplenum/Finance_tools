@@ -30,6 +30,7 @@ SEO2's row is in `docs/ROADMAP.md`: the checks chain runs it after TERMS1 once t
 ## Budgets and actuals
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 24-10-2026 | CHK1: `npm run verify -- --quick`, the site check on the touched pages only (D-TECH-63); D-TECH-62 rebased onto main | S, high | about 60 steps; the 12-minute full verify took the most. Quick: a doc 1 s, `/terms/` 13 s, the DSCR with home 163 s |
 | 24-10-2026 | NUM1: lakh and crore from the engine in home's intros and the estimate's headline (D-UX-152) | S, high | about 50 steps; two site checks (a sideways scroll at 320 px, then the words' raise) took the most |
 | 24-10-2026 | SEC1: the Worker hardened, a byte cap, the answer checked, `/api/e` capped, Node pinned (D-TECH-61) | S, high | about 58 steps; two 12-minute verifies (the container's Chromium, then the privacy page's load) took the most |
 | 24-10-2026 | VID1: the video studio runs, and the timeline to Monday (D-TECH-58, D-TECH-59, D-BIZ-20) | none set: the owner's ask in the chat | about 220 steps; the two master renders (9 and 7 min) and the cut-text fix took the most |
