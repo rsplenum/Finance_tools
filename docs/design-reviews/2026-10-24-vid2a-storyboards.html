@@ -1,0 +1,315 @@
+<title>Four 30-second explainers</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Instrument+Serif&family=Cormorant+Garamond:wght@500;600&display=swap">
+<style>
+/* Layout: a working storyboard. Pick the look first (three stills of one moment), then four 30-second boards on one shared clock. */
+:root {
+  --bg: #F6F5F1; --surface: #FFFFFF; --ink: #171A22; --muted: #5E6472; --rule: #DEDBD2;
+  --accent: #B9800F; --accent-soft: #F6E7C3; --miss: #B23A2B;
+  --sans: 'Figtree', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --garamond: 'Cormorant Garamond', Garamond, Georgia, serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0E1118; --surface: #161A24; --ink: #EEF0F5; --muted: #9AA2B3; --rule: #283043;
+  --accent: #F0B53D; --accent-soft: #3A2F16; --miss: #F87171; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0E1118; --surface: #161A24; --ink: #EEF0F5; --muted: #9AA2B3; --rule: #283043;
+  --accent: #F0B53D; --accent-soft: #3A2F16; --miss: #F87171; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font: 400 16px/1.55 var(--sans);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 32px 64px; }
+main { max-width: 1080px; margin: 0 auto; display: grid; gap: 56px; }
+h1, h2, h3 { text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 800; letter-spacing: -0.02em; }
+h2 { font-size: clamp(22px, 3vw, 28px); font-weight: 700; letter-spacing: -0.01em; }
+h3 { font-size: 18px; font-weight: 700; }
+p { margin: 0; max-width: 68ch; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+.lead { color: var(--muted); font-size: 17px; }
+header { display: grid; gap: 14px; }
+.answers { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.answers span { font-size: 13px; padding: 5px 11px; border-radius: 999px; background: var(--surface); border: 1px solid var(--rule); }
+.answers b { font-weight: 700; }
+section { display: grid; gap: 20px; }
+.sechead { display: grid; gap: 8px; }
+
+/* ---- The three stills ---- */
+.stills { display: grid; gap: 28px; }
+.still { display: grid; gap: 12px; }
+.still figcaption { display: grid; gap: 4px; }
+.still figcaption .name { font-weight: 700; font-size: 17px; }
+.still figcaption .name em { font-style: normal; color: var(--accent); margin-right: 6px; }
+.still figcaption p { color: var(--muted); font-size: 15px; }
+.frame { container-type: inline-size; aspect-ratio: 16 / 9; max-width: 100%; border-radius: 10px; overflow: hidden; position: relative;
+  box-shadow: 0 1px 2px rgba(0,0,0,.08), 0 18px 40px -18px rgba(0,0,0,.35); }
+.fr { position: absolute; inset: 0; display: grid; grid-template-columns: 30% 1fr; grid-template-rows: auto 1fr auto; gap: 2.2cqw 3cqw; padding: 3.6cqw 4.4cqw 3.4cqw; }
+.fr .tag { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: baseline; font-size: 1.35cqw; letter-spacing: .12em; text-transform: uppercase; }
+.fr .q { align-self: center; display: grid; gap: 1.6cqw; }
+.fr .q .h { font-size: 3.5cqw; line-height: 1.08; }
+.fr .q .facts { display: grid; gap: .5cqw; font-size: 1.45cqw; }
+.fr .q .facts div { display: flex; justify-content: space-between; gap: 1cqw; padding-bottom: .5cqw; }
+.chart { position: relative; display: grid; grid-template-columns: repeat(8, 1fr); align-items: end; gap: 1.2cqw; padding: 2.4cqw 2cqw 0; }
+.col { position: relative; height: 100%; display: grid; align-items: end; }
+.col .bar { position: relative; height: var(--h); }
+.col .v { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--h) + .8cqw); font-size: 1.5cqw; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.col .yr { position: absolute; left: 50%; transform: translateX(-50%); top: calc(100% + 1cqw); font-size: 1.2cqw; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.col.empty .bar { height: 0; }
+.line { position: absolute; left: 0; right: 0; bottom: var(--at); height: 0; z-index: 2; }
+.line span { position: absolute; right: 0; bottom: .6cqw; font-size: 1.3cqw; white-space: nowrap; }
+.fr .cap { grid-column: 1 / -1; justify-self: center; font-size: 2cqw; padding: 1cqw 2.4cqw; margin-top: 2.6cqw; text-align: center; }
+
+/* Look A: look C, deeper */
+.la { background: radial-gradient(60% 80% at 75% 35%, #22305f 0%, rgba(11,16,32,0) 70%), radial-gradient(50% 60% at 10% 90%, #1a1f44 0%, rgba(11,16,32,0) 70%), #0B1020; color: #F3F4F8; font-family: var(--sans); }
+.la .tag { color: #9AA3B5; } .la .tag b { color: #F0B53D; font-weight: 700; }
+.la .q .h { font-weight: 800; letter-spacing: -0.02em; }
+.la .facts div { border-bottom: 1px solid rgba(255,255,255,.10); color: #C9CFDB; } .la .facts b { color: #F3F4F8; font-weight: 600; }
+.la .chart { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12); border-radius: 1.6cqw; backdrop-filter: blur(16px); padding-bottom: 3.6cqw; }
+.la .col .bar { background: linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.16)); border-radius: .8cqw .8cqw .2cqw .2cqw; }
+.la .col.miss .bar { background: linear-gradient(180deg, #F87171, rgba(248,113,113,.25)); box-shadow: 0 0 2.4cqw rgba(248,113,113,.45); }
+.la .col .v { color: #DCE1EA; font-weight: 600; } .la .col.miss .v { color: #F87171; font-weight: 800; font-size: 2.2cqw; }
+.la .col .yr { color: #9AA3B5; }
+.la .line { border-top: .25cqw solid #F0B53D; box-shadow: 0 0 1.2cqw rgba(240,181,61,.6); } .la .line span { color: #F0B53D; font-weight: 700; }
+.la .chart { margin-bottom: 2.4cqw; }
+.la .cap { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); border-radius: 999px; color: #F3F4F8; font-weight: 500; }
+
+/* Look B: the ledger, warm paper ruled like an account book */
+.lb { background: repeating-linear-gradient(180deg, rgba(0,0,0,0) 0 3.4cqw, rgba(58,96,150,.16) 3.4cqw calc(3.4cqw + 1px)), #F3EEE3; color: #1C2430; font-family: var(--sans); }
+.lb::before { content: ""; position: absolute; top: 0; bottom: 0; left: 3cqw; width: .7cqw; border-left: 1px solid rgba(178,58,43,.55); border-right: 1px solid rgba(178,58,43,.55); }
+.lb .tag { color: #6B6556; } .lb .tag b { color: #A0670A; font-weight: 700; }
+.lb .q .h { font-family: var(--serif); font-weight: 400; font-size: 4.2cqw; letter-spacing: -0.01em; }
+.lb .facts div { border-bottom: 1px dashed rgba(28,36,48,.25); color: #4A4F5A; } .lb .facts b { color: #1C2430; font-weight: 700; }
+.lb .chart { background: #FBF8F1; border: 1px solid #D9D1C0; border-radius: .6cqw; box-shadow: 0 .4cqw .8cqw rgba(28,36,48,.06), 0 2cqw 4cqw -1.2cqw rgba(28,36,48,.16); padding-bottom: 3.6cqw; margin-bottom: 2.4cqw; }
+.lb .col .bar { background: #1C2430; width: 46%; justify-self: center; }
+.lb .col.miss .bar { background: #B23A2B; }
+.lb .col .v { color: #1C2430; font-weight: 700; } .lb .col.miss .v { color: #B23A2B; font-family: var(--serif); font-weight: 400; font-size: 2.8cqw; }
+.lb .col .yr { color: #6B6556; }
+.lb .line { border-top: .22cqw solid #C98A12; } .lb .line span { color: #A0670A; font-weight: 700; }
+.lb .cap { background: #1C2430; color: #F3EEE3; border-radius: .5cqw; font-weight: 500; }
+
+/* Look C: gilded noir, gold hairlines and a serif voice */
+.lc { background: radial-gradient(70% 70% at 70% 40%, #1a1712 0%, rgba(13,13,17,0) 70%), #0D0D11; color: #F5F5F0; font-family: var(--garamond); }
+.lc .tag { color: #A39E8E; font-family: var(--sans); } .lc .tag b { color: #D4AF37; font-weight: 600; }
+.lc .q .h { font-weight: 500; font-size: 4.1cqw; letter-spacing: .005em; }
+.lc .facts { font-family: var(--sans); }
+.lc .facts div { border-bottom: 1px solid rgba(212,175,55,.22); color: #B9B4A6; } .lc .facts b { color: #F5F5F0; font-weight: 500; }
+.lc .chart { border-left: 1px solid rgba(212,175,55,.35); border-bottom: 1px solid rgba(212,175,55,.35); padding-bottom: 0; margin-bottom: 3.6cqw; }
+.lc .col .bar { width: 1px; justify-self: center; background: linear-gradient(180deg, #D4AF37, rgba(212,175,55,.25)); }
+.lc .col .bar::before { content: ""; position: absolute; top: -.7cqw; left: 50%; width: 1.3cqw; height: 1.3cqw; transform: translateX(-50%) rotate(45deg); background: #D4AF37; }
+.lc .col.empty .bar::before { display: none; }
+.lc .col.miss .bar { background: linear-gradient(180deg, #D98B7E, rgba(217,139,126,.2)); } .lc .col.miss .bar::before { background: #D98B7E; }
+.lc .col .v { color: #E9E4D2; font-size: 1.9cqw; bottom: calc(var(--h) + 1.6cqw); } .lc .col.miss .v { color: #D98B7E; font-size: 2.8cqw; font-weight: 600; }
+.lc .col .yr { color: #A39E8E; font-family: var(--sans); }
+.lc .line { border-top: 1px dashed #D4AF37; } .lc .line span { color: #D4AF37; font-family: var(--sans); font-weight: 600; }
+.lc .cap { font-size: 2.4cqw; font-style: italic; color: #F5F5F0; border-top: 1px solid rgba(212,175,55,.4); border-bottom: 1px solid rgba(212,175,55,.4); padding: .8cqw 3cqw; }
+
+/* ---- The shared clock ---- */
+.clock { display: grid; grid-template-columns: 3fr 5fr 11fr 7fr 4fr; gap: 3px; }
+.clock div { background: var(--surface); border: 1px solid var(--rule); padding: 10px 10px 9px; display: grid; gap: 2px; min-width: 0; }
+.clock div:first-child { border-radius: 8px 0 0 8px; } .clock div:last-child { border-radius: 0 8px 8px 0; }
+.clock .t { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.clock .n { font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
+.clock .pic { background: var(--accent-soft); border-color: var(--accent); }
+.rules { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+.rules div { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; font-size: 15px; display: grid; gap: 4px; }
+.rules b { font-size: 14px; }
+
+/* ---- The boards ---- */
+.board { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 22px clamp(16px, 3vw, 28px); display: grid; gap: 16px; }
+.board > header { display: grid; gap: 6px; }
+.board .idea { color: var(--muted); }
+.board .idea b { color: var(--ink); }
+.beats { display: grid; gap: 0; }
+.beat { display: grid; grid-template-columns: 74px minmax(0, 1fr) minmax(0, 1.1fr); gap: 16px; padding: 14px 0; border-top: 1px solid var(--rule); }
+.beat .when { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 14px; display: grid; align-content: start; gap: 2px; }
+.beat .when small { font-weight: 500; color: var(--muted); font-size: 12px; }
+.beat .see { font-size: 15px; }
+.beat .say { font-size: 15px; font-weight: 600; border-left: 3px solid var(--accent); padding-left: 12px; }
+.beat .say .src { display: block; font-weight: 400; font-size: 12px; color: var(--muted); margin-top: 4px; }
+.beat.pic .when { color: var(--accent); }
+.miss-t { color: var(--miss); font-weight: 700; }
+.next { display: grid; gap: 10px; }
+.next ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 72ch; }
+@media (max-width: 640px) {
+  .beat { grid-template-columns: 1fr; gap: 6px; }
+  .clock { grid-template-columns: 1fr; } .clock div, .clock div:first-child, .clock div:last-child { border-radius: 6px; }
+}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+
+<main>
+  <header>
+    <span class="eyebrow">VID2a · storyboard for the owner</span>
+    <h1>Four 30-second explainers</h1>
+    <p class="lead">Each video now tells a borrower what the tool is and why to use ours, not only how it works. All four keep one clock and one player. Each gets its own picture in the middle, so they stop looking alike. Every figure below comes from the engine (<code>site/src/home/story.ts</code>), the same cases home already shows.</p>
+    <div class="answers" aria-label="Your answers">
+      <span><b>Plays:</b> on each tool's page, and as an MP4 for WhatsApp and social posts</span>
+      <span><b>Sound:</b> captions only</span>
+      <span><b>Home:</b> keeps a short glimpse with "Watch in 30 s"</span>
+      <span><b>Scout:</b> after the videos</span>
+    </div>
+  </header>
+
+  <section aria-labelledby="look">
+    <div class="sechead">
+      <span class="eyebrow">Your pick, before any motion</span>
+      <h2 id="look">Three looks for the same moment</h2>
+      <p class="lead">The DSCR video at 0:12, when the bank's line finds the weakest year. Same figures, same layout; only the look changes. The portrait cut stacks the question above the chart.</p>
+    </div>
+    <div class="stills">
+      <figure class="still">
+        <div class="frame"><div class="fr la">
+          <div class="tag"><span>DSCR statement</span><b>0:12 / 0:30</b></div>
+          <div class="q"><div class="h">Can the cash cover the instalments every year?</div>
+            <div class="facts"><div><span>Profit a year</span><b>Rs. 4.5 lakh</b></div><div><span>Loan</span><b>Rs. 12 lakh at 12%</b></div><div><span>Term</span><b>60 instalments</b></div></div></div>
+          <div class="chart" role="img" aria-label="DSCR by year against the bank's line of 1.20; 2030-31 is lowest at 1.00">
+            <div class="line" style="--at:calc(1.20/2.4*100%)"><span>bank's line 1.20</span></div>
+            <div class="col" style="--h:calc(2.07/2.4*100%)"><div class="bar"></div><span class="v">2.07</span><span class="yr">2026-27</span></div>
+            <div class="col" style="--h:calc(1.09/2.4*100%)"><div class="bar"></div><span class="v">1.09</span><span class="yr">2027-28</span></div>
+            <div class="col" style="--h:calc(1.06/2.4*100%)"><div class="bar"></div><span class="v">1.06</span><span class="yr">2028-29</span></div>
+            <div class="col" style="--h:calc(1.03/2.4*100%)"><div class="bar"></div><span class="v">1.03</span><span class="yr">2029-30</span></div>
+            <div class="col miss" style="--h:calc(1.00/2.4*100%)"><div class="bar"></div><span class="v">1.00</span><span class="yr">2030-31</span></div>
+            <div class="col" style="--h:calc(1.94/2.4*100%)"><div class="bar"></div><span class="v">1.94</span><span class="yr">2031-32</span></div>
+            <div class="col empty"><div class="bar"></div><span class="yr">2032-33</span></div>
+            <div class="col empty"><div class="bar"></div><span class="yr">2033-34</span></div>
+          </div>
+          <div class="cap">The weakest year, 2030-31, is 1.00 against the target 1.20.</div>
+        </div></div>
+        <figcaption><span class="name"><em>A</em>Look C, deeper</span><p>Today's look, made richer: deeper glows, larger type, one glass panel, the bank's line in marigold, the miss in red. It keeps the brand home already shows. The risk is that it still reads like today's videos.</p></figcaption>
+      </figure>
+
+      <figure class="still">
+        <div class="frame"><div class="fr lb">
+          <div class="tag"><span>DSCR statement</span><b>0:12 / 0:30</b></div>
+          <div class="q"><div class="h">Can the cash cover the instalments every year?</div>
+            <div class="facts"><div><span>Profit a year</span><b>Rs. 4.5 lakh</b></div><div><span>Loan</span><b>Rs. 12 lakh at 12%</b></div><div><span>Term</span><b>60 instalments</b></div></div></div>
+          <div class="chart" role="img" aria-label="DSCR by year against the bank's line of 1.20; 2030-31 is lowest at 1.00">
+            <div class="line" style="--at:calc(1.20/2.4*100%)"><span>bank's line 1.20</span></div>
+            <div class="col" style="--h:calc(2.07/2.4*100%)"><div class="bar"></div><span class="v">2.07</span><span class="yr">2026-27</span></div>
+            <div class="col" style="--h:calc(1.09/2.4*100%)"><div class="bar"></div><span class="v">1.09</span><span class="yr">2027-28</span></div>
+            <div class="col" style="--h:calc(1.06/2.4*100%)"><div class="bar"></div><span class="v">1.06</span><span class="yr">2028-29</span></div>
+            <div class="col" style="--h:calc(1.03/2.4*100%)"><div class="bar"></div><span class="v">1.03</span><span class="yr">2029-30</span></div>
+            <div class="col miss" style="--h:calc(1.00/2.4*100%)"><div class="bar"></div><span class="v">1.00</span><span class="yr">2030-31</span></div>
+            <div class="col" style="--h:calc(1.94/2.4*100%)"><div class="bar"></div><span class="v">1.94</span><span class="yr">2031-32</span></div>
+            <div class="col empty"><div class="bar"></div><span class="yr">2032-33</span></div>
+            <div class="col empty"><div class="bar"></div><span class="yr">2033-34</span></div>
+          </div>
+          <div class="cap">The weakest year, 2030-31, is 1.00 against the target 1.20.</div>
+        </div></div>
+        <figcaption><span class="name"><em>B</em>The ledger</span><p>Warm paper ruled like an account book, with the red double margin. Ink bars, a serif voice and one paper card that lifts off the page. It looks like the papers a lender handles, and it is the furthest from today's videos. It needs a light version of the site's colours in the studio.</p></figcaption>
+      </figure>
+
+      <figure class="still">
+        <div class="frame"><div class="fr lc">
+          <div class="tag"><span>DSCR statement</span><b>0:12 / 0:30</b></div>
+          <div class="q"><div class="h">Can the cash cover the instalments every year?</div>
+            <div class="facts"><div><span>Profit a year</span><b>Rs. 4.5 lakh</b></div><div><span>Loan</span><b>Rs. 12 lakh at 12%</b></div><div><span>Term</span><b>60 instalments</b></div></div></div>
+          <div class="chart" role="img" aria-label="DSCR by year against the bank's line of 1.20; 2030-31 is lowest at 1.00">
+            <div class="line" style="--at:calc(1.20/2.4*100%)"><span>bank's line 1.20</span></div>
+            <div class="col" style="--h:calc(2.07/2.4*100%)"><div class="bar"></div><span class="v">2.07</span><span class="yr">2026-27</span></div>
+            <div class="col" style="--h:calc(1.09/2.4*100%)"><div class="bar"></div><span class="v">1.09</span><span class="yr">2027-28</span></div>
+            <div class="col" style="--h:calc(1.06/2.4*100%)"><div class="bar"></div><span class="v">1.06</span><span class="yr">2028-29</span></div>
+            <div class="col" style="--h:calc(1.03/2.4*100%)"><div class="bar"></div><span class="v">1.03</span><span class="yr">2029-30</span></div>
+            <div class="col miss" style="--h:calc(1.00/2.4*100%)"><div class="bar"></div><span class="v">1.00</span><span class="yr">2030-31</span></div>
+            <div class="col" style="--h:calc(1.94/2.4*100%)"><div class="bar"></div><span class="v">1.94</span><span class="yr">2031-32</span></div>
+            <div class="col empty"><div class="bar"></div><span class="yr">2032-33</span></div>
+            <div class="col empty"><div class="bar"></div><span class="yr">2033-34</span></div>
+          </div>
+          <div class="cap">The weakest year, 2030-31, is 1.00 against the target 1.20.</div>
+        </div></div>
+        <figcaption><span class="name"><em>C</em>Gilded noir</span><p>Near-black with gold hairlines, a serif voice and diamond-tipped stems: the most formal of the three, like an annual report. Slow dissolves and push-ins, never fast cuts. It is sophisticated, but at phone size small serif text and thin lines may be harder to read.</p></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section aria-labelledby="clock">
+    <div class="sechead">
+      <span class="eyebrow">One clock for all four</span>
+      <h2 id="clock">What every 30 seconds does</h2>
+    </div>
+    <div class="clock" role="list">
+      <div role="listitem"><span class="t">0–3 s</span><span class="n">The question</span></div>
+      <div role="listitem"><span class="t">3–8 s</span><span class="n">What it is</span></div>
+      <div role="listitem" class="pic"><span class="t">8–19 s</span><span class="n">The picture: the problem, then the change that passes</span></div>
+      <div role="listitem"><span class="t">19–26 s</span><span class="n">Why ours</span></div>
+      <div role="listitem"><span class="t">26–30 s</span><span class="n">The paper and one button</span></div>
+    </div>
+    <div class="rules">
+      <div><b>Why ours, shown, never claimed</b>Three proofs each document really has: worked out twice, its basis written down, worked out on your device. No "accepted by all banks", no price, no testimonials: we have none of those yet.</div>
+      <div><b>Different in the middle</b>The opening and the end card are shared. The 11 seconds in the middle use a picture of each tool's own world, so the four no longer look alike.</div>
+      <div><b>Captions carry it</b>No sound and no music. Every caption fits a muted phone in one or two lines, and every figure in a caption comes from <code>story.ts</code>, checked by the studio.</div>
+      <div><b>One player, as today</b>Built on home's scene player (Web Animations), so the studio can seek each frame. Portrait 1080×1920 and landscape 1920×1080 from the same scene.</div>
+    </div>
+  </section>
+
+  <section aria-labelledby="boards">
+    <div class="sechead">
+      <span class="eyebrow">The four boards</span>
+      <h2 id="boards">Beat by beat, with the words on screen</h2>
+      <p class="lead">"New words" are written for these videos and carry no figures. Every caption with a figure is the engine's own words from home's scenes.</p>
+    </div>
+
+    <article class="board" aria-labelledby="b-dscr">
+      <header><span class="eyebrow">DSCR statement</span><h3 id="b-dscr">The picture: the bank's line</h3>
+        <p class="idea"><b>Its world:</b> one line across eight years. Each year is a bar that must stand above the bank's line. The term stretches like a ribbon, and every bar rises.</p></header>
+      <div class="beats">
+        <div class="beat"><div class="when">0–3 s<small>The question</small></div><div class="see">Big type on an empty frame; the bank's line draws across under it.</div><div class="say">Your bank wants a DSCR statement. Will your figures pass?<span class="src">New words</span></div></div>
+        <div class="beat"><div class="when">3–8 s<small>What it is</small></div><div class="see">Seven answer cards drop in a row with a 60 ms stagger: A firm, Rs. 4.5 lakh, 0%, None, Rs. 12 lakh, 12%, 60 instalments.</div><div class="say">You type seven answers. Nothing more is asked.<span class="src">story.ts, beat 2</span></div></div>
+        <div class="beat pic"><div class="when">8–13 s<small>The problem</small></div><div class="see">The cards fold into eight year bars. The bank's line settles at 1.20; 2030-31 sinks below it and turns red: <span class="miss-t">1.00</span>. The sum appears beside it: 3,21,236 ÷ 3,20,320 = 1.00.</div><div class="say">The weakest year, 2030-31, is 1.00 against the target 1.20.<span class="src">story.ts, beat 3</span></div></div>
+        <div class="beat pic"><div class="when">13–19 s<small>The change</small></div><div class="see">The Term card turns from 60 to 80 instalments; the ribbon under the years lengthens to 2033-34, and every bar springs above the line. 2032-33 holds the lowest, 1.21 (3,16,194 ÷ 2,62,351).</div><div class="say">Over 80 instalments, every year clears 1.20; the weakest, 2032-33, is 1.21.<span class="src">story.ts, beat 4</span></div></div>
+        <div class="beat"><div class="when">19–26 s<small>Why ours</small></div><div class="see">Three proof cards, about 2.3 s each, lit from the statement's own lines.</div><div class="say">Every DSCR worked out a second way: difference 0.00. · The rule used, with its source and date. · Worked out on your device: your figures are not sent.<span class="src">The statement's lines (story.ts); the privacy line from home</span></div></div>
+        <div class="beat"><div class="when">26–30 s<small>The paper</small></div><div class="see">The statement lifts from the page: PDF, Excel, Word. The button and the name.</div><div class="say">The statement, ready to take to your lender: PDF, Excel and Word. · [Open the DSCR statement with this case]<span class="src">story.ts, beat 5; the button from home</span></div></div>
+      </div>
+    </article>
+
+    <article class="board" aria-labelledby="b-cma">
+      <header><span class="eyebrow">CMA data</span><h3 id="b-cma">The picture: the bank's six forms</h3>
+        <p class="idea"><b>Its world:</b> the forms a bank reads for a working-capital limit. Forms I to VI fan out and fill themselves; one gauge per year reads the current ratio.</p></header>
+      <div class="beats">
+        <div class="beat"><div class="when">0–3 s<small>The question</small></div><div class="see">Big type; a blank form slides in behind it.</div><div class="say">Asking your bank for a bigger limit? It reads your CMA data first.<span class="src">New words</span></div></div>
+        <div class="beat"><div class="when">3–8 s<small>What it is</small></div><div class="see">Five year tabs: three stamped "audited", two marked "ahead". Electrical goods; sales Rs. 2 crore in 2023-24, Rs. 3.1 crore in 2027-28; limit now Rs. 65 lakh.</div><div class="say">You type five years' figures: three from the audited accounts, two ahead.<span class="src">story.ts, beat 2</span></div></div>
+        <div class="beat pic"><div class="when">8–13 s<small>The problem</small></div><div class="see">Forms I to VI fan out and fill line by line. The year gauges settle; 2026-27 stops short of the 1.10 mark: <span class="miss-t">1.04</span> (97,90,000 ÷ 94,55,000).</div><div class="say">Forms I to VI worked out: the weakest year ahead, 2026-27, is 1.04 against 1.10.<span class="src">story.ts, beat 3</span></div></div>
+        <div class="beat pic"><div class="when">13–19 s<small>The change</small></div><div class="see">A block marked "+Rs. 5.55 lakh, promoters' capital" drops into the balance sheet; the 2026-27 gauge swings to 1.10 (97,90,000 ÷ 89,00,000).</div><div class="say">With Rs. 5.55 lakh more capital from the promoters, 2026-27 is 1.10.<span class="src">story.ts, beat 4</span></div></div>
+        <div class="beat"><div class="when">19–26 s<small>Why ours</small></div><div class="see">Three proof cards.</div><div class="say">Every figure worked out a second way; the Excel copy's Check sheet redoes the main ones by formula. · Each rule's level with how sure it is. · Worked out on your device.<span class="src">The CMA document's lines (story.ts)</span></div></div>
+        <div class="beat"><div class="when">26–30 s<small>The paper</small></div><div class="see">The six forms stack into one file: PDF and Excel. The limit, Rs. 62 lakh, on its cover line.</div><div class="say">The CMA data, ready to take to your bank: PDF and Excel. · [Open CMA data with this case]<span class="src">story.ts, beat 5 and the verdict</span></div></div>
+      </div>
+    </article>
+
+    <article class="board" aria-labelledby="b-report">
+      <header><span class="eyebrow">Project report</span><h3 id="b-report">The picture: the business's five years</h3>
+        <p class="idea"><b>Its world:</b> a business told forward. Sales flow in, costs flow out, and what is left must cover the instalment, year after year.</p></header>
+      <div class="beats">
+        <div class="beat"><div class="when">0–3 s<small>The question</small></div><div class="see">Big type; a road of five years draws to the right.</div><div class="say">Starting a business on a term loan? The lender wants a project report.<span class="src">New words</span></div></div>
+        <div class="beat"><div class="when">3–8 s<small>What it is</small></div><div class="see">Corrugated boxes: assets and set-up Rs. 33 lakh, loan Rs. 25 lakh at 10% over 60 instalments, costs 65% of sales plus Rs. 18 lakh a year, sales Rs. 70 lakh.</div><div class="say">You type what the project costs, the loan, and a year's sales and costs.<span class="src">story.ts, beat 2</span></div></div>
+        <div class="beat pic"><div class="when">8–13 s<small>The problem</small></div><div class="see">Year 1's cash pours toward the instalment and falls short: <span class="miss-t">0.82</span> (5,95,000 ÷ 7,27,083). The other years follow at 1.02, 1.24, 1.54 and 1.92.</div><div class="say">The first year, 2026-27, is 0.82 against 1.25.<span class="src">story.ts, beat 3</span></div></div>
+        <div class="beat pic"><div class="when">13–19 s<small>The change</small></div><div class="see">Sales rise to Rs. 82.11 lakh; the cash fills the instalment (9,09,099 ÷ 7,27,083 = 1.25) and eight test ticks light one by one.</div><div class="say">With sales of Rs. 82.11 lakh, 17.3% more, it is 1.25, and all eight tests pass.<span class="src">story.ts, beat 4</span></div></div>
+        <div class="beat"><div class="when">19–26 s<small>Why ours</small></div><div class="see">Three proof cards.</div><div class="say">Every figure worked out a second way, and shown only when both agree. · How each figure is worked out, in its annex. · Worked out on your device.<span class="src">The report's lines (story.ts)</span></div></div>
+        <div class="beat"><div class="when">26–30 s<small>The paper</small></div><div class="see">Profit and loss, balance sheet and cash flow bind into one report: PDF, Excel, Word.</div><div class="say">The project report, ready to take to your lender: PDF, Excel and Word. · [Open the project report with this case]<span class="src">story.ts, beat 5</span></div></div>
+      </div>
+    </article>
+
+    <article class="board" aria-labelledby="b-est">
+      <header><span class="eyebrow">Construction estimate</span><h3 id="b-est">The picture: the floor plan</h3>
+        <p class="idea"><b>Its world:</b> the home itself. A 2 BHK plan whose rooms fill with cost, and one meter against the family's budget.</p></header>
+      <div class="beats">
+        <div class="beat"><div class="when">0–3 s<small>The question</small></div><div class="see">Big type over a line drawing of a flat.</div><div class="say">Doing up your home? Know what the work costs before the quotes.<span class="src">New words</span></div></div>
+        <div class="beat"><div class="when">3–8 s<small>What it is</small></div><div class="see">Six answers: Renovate, a flat, Pune, 1,000 sq ft, 2 BHK, Standard. The budget meter appears: Rs. 12 lakh.</div><div class="say">You answer six questions. Nothing more is asked.<span class="src">story.ts, beat 2</span></div></div>
+        <div class="beat pic"><div class="when">8–13 s<small>The problem</small></div><div class="see">The rooms fill trade by trade (flooring, kitchen, bathrooms, doors and windows) and the meter climbs past the budget line: <span class="miss-t">Rs. 12,47,185</span>.</div><div class="say">96 items priced, trade by trade: at Standard the total is about Rs. 12.47 lakh, over the budget.<span class="src">story.ts, beat 3</span></div></div>
+        <div class="beat pic"><div class="when">13–19 s<small>The change</small></div><div class="see">The two bedrooms switch to Basic; their floors, walls and ceilings repaint, and the meter drops under the line: Rs. 11,65,322.</div><div class="say">Basic in the two bedrooms: about Rs. 11.65 lakh, within the budget.<span class="src">story.ts, beat 4</span></div></div>
+        <div class="beat"><div class="when">19–26 s<small>Why ours</small></div><div class="see">Three proof cards.</div><div class="say">The total worked out a second way. · Each of the 96 items with its quantity and rate. · Every assumption stated until you change it.<span class="src">The estimate's lines (story.ts)</span></div></div>
+        <div class="beat"><div class="when">26–30 s<small>The paper</small></div><div class="see">The estimate, in figures and in words: PDF, Excel, Word.</div><div class="say">The estimate, ready for quotes and your lender: PDF, Excel and Word. · [Open the estimate with this case]<span class="src">story.ts, beat 5</span></div></div>
+      </div>
+    </article>
+  </section>
+
+  <section class="next" aria-labelledby="next">
+    <h2 id="next">What you choose, and what comes next</h2>
+    <ol>
+      <li><b>Pick A, B or C</b>, or say what to change. Change any caption marked "new words" as you like.</li>
+      <li><b>VID2b</b> then builds the four videos at 30 s in the picked look, on one player: a draft of the DSCR first for your eye, then all four, in portrait and landscape. The studio checks every number against <code>story.ts</code>.</li>
+      <li>Each tool's page gets its video; home keeps the short glimpse with "Watch in 30 s".</li>
+      <li>The name on the end card stays the working name until the name is cleared.</li>
+    </ol>
+  </section>
+</main>
