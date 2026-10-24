@@ -167,6 +167,8 @@ The test figures are model-worked until the owner confirms fictional cases A and
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 24-10-2026 | TRUST1: how sure each figure is, four marks on every data file (D-DATA-26, D-DATA-27, D-UX-150, D-UX-151) | M, high | about 100 steps and two agents' 57; marking the data, the words' tests and the load counts took the most |
+| 22-10-2026 | HOME1c: the DSCR explainer, rejected; CI once a commit (D-UX-121, D-UX-122, D-TECH-55) | L, Extra | about 156 steps; the frames, the comparison page and the 13-minute site check took the most |
 | 22-10-2026 | HOME1b: home in three parts, the four intros and `?case=home` (D-UX-117, D-UX-118) | L, Extra (+10%) | about 100 steps and two agents' 68; the designer's build and the critic's nine findings took the most |
 | 22-10-2026 | AUD1: the outside audit checked (D-BIZ-18) | S | about 40 steps; checking 31 findings in the code took the most |
 | 21-10-2026 | HOME1's motion compared and its handoff (D-UX-115, D-UX-116) | S | about 110 steps; the recordings took the most |
