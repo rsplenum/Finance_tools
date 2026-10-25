@@ -82,8 +82,8 @@
     },
     "/estimate/": {
       "before": 54,
-      "shown": 392,
-      "all": 1605,
+      "shown": 377,
+      "all": 1590,
       "plan": 3446,
       "long": 1,
       "abbr": 2,
@@ -1447,22 +1447,6 @@
       "count": "before",
       "from": 39,
       "to": 54,
-      "why": "D-UX-163",
-      "date": "2026-10-25"
-    },
-    {
-      "page": "/estimate/",
-      "count": "shown",
-      "from": 377,
-      "to": 392,
-      "why": "D-UX-163",
-      "date": "2026-10-25"
-    },
-    {
-      "page": "/estimate/",
-      "count": "all",
-      "from": 1590,
-      "to": 1605,
       "why": "D-UX-163",
       "date": "2026-10-25"
     },
