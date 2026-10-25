@@ -1279,7 +1279,7 @@ if (touched('/project-report/')) {
   if (total[0] !== '14,40,000') v(`the PMEGP report's sales by product total ${total[0]} in 2026-27, want 14,40,000`);
   await leave(page, '#fld-fixed', '25 L');
   await expectText(page, v, 'rep-short', /^Cash goes below nil in 2030-31: Rs\. 49,07,813 short/, 'cash below nil');
-  await expectText(page, v, 'rep-status', '1 question left', 'the report with cash below nil');
+  await expectText(page, v, 'rep-status', '4 questions left', 'the report with cash below nil');
   await expectText(page, v, 'rep-misses', /^Misses \d+ of \d+ benchmarks: .*DSCR/, 'the DSCR below the level');
   await page.getByTestId('rep-viable').click();
   await expectText(page, v, 'rep-short-dscrLowest', /^Short by Rs\. [\d,]+ of cash to pay the loan in 20\d\d-\d\d\.$/, 'the lowest DSCR\'s shortfall in rupees');

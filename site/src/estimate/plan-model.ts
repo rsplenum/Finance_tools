@@ -161,7 +161,7 @@ export function planNeeds(s: PlanState): string[] {
   return needs;
 }
 /** The area question's words, by the kind (A3). */
-export const areaLabel = (kind?: WorkKind) => (kind === 'extend' ? 'Built-up area being added' : kind === 'build' ? 'Built-up area of all floors' : 'Carpet area, the floor inside the walls, as in your agreement');
+export const areaLabel = (kind?: WorkKind) => (kind === 'extend' ? 'Built-up area being added' : kind === 'build' ? 'Built-up area of all floors' : 'Carpet area, the floor inside the walls');
 
 // ---- Changes, as the page makes them ----
 
