@@ -46,7 +46,7 @@ export function Benchmarks({ fields, set, reset, pre }: { fields: BenchmarkField
   const changed = fields.some((f) => f.value.trim());
   return <details id="benchmarks" data-testid={`${pre}-benchmarks`} open={changed || undefined} class="mt-3">
     <summary class="cursor-pointer text-sm font-medium text-link underline underline-offset-4">Change the benchmarks</summary>
-    <p class={HINT}>Each bank sets its own. Each box holds the default; change only the ones your bank sets.</p>
+    <p class={HINT}>Each bank sets its own: change only the ones yours sets.</p>
     <div class="mt-2 grid gap-3 sm:grid-cols-2">{fields.map((f) => <TextField key={f.id} id={`fld-bm-${f.id}`} label={f.label} hint={f.hint}
       value={f.value} byDefault={f.byDefault} keepBlank onCommit={(t) => set(f.id, t)} inputMode="decimal" said={f.error} invalid={!!f.error} />)}</div>
     {changed && <button type="button" data-testid={`${pre}-benchmarks-reset`} class={`mt-3 ${BUTTON}`} onClick={reset}>Reset to defaults</button>}

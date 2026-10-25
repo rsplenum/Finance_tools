@@ -1155,7 +1155,7 @@ if (touched('/project-report/')) {
   await expectValue(page, v, '#fld-bm-dscrLowest', '1.25', 'the lowest DSCR\'s benchmark box filled with its default');
   await leave(page, '#fld-bm-dscrLowest', '1.5');
   if (await page.locator('#fld-bm-dscrLowest[data-changed="own"]').count() !== 1) v('a changed benchmark box is not marked changed (OR4)');
-  await expectText(page, v, 'fld-bm-dscrLowest-default', 'Default 1.25. Reset to the default', 'a changed benchmark says its default');
+  await expectText(page, v, 'fld-bm-dscrLowest-default', 'Default 1.25. Reset DSCR in the lowest year to the default', 'a changed benchmark says its default');
   await page.getByTestId('fld-bm-dscrLowest-reset').click();
   await expectValue(page, v, '#fld-bm-dscrLowest', '1.25', 'Reset puts the default back');
   if (await page.locator('#fld-bm-dscrLowest[data-changed]').count() || await page.getByTestId('rep-benchmarks-reset').count()) v('a reset benchmark still reads as changed (OR4)');

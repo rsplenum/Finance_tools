@@ -74,7 +74,7 @@ export interface BenchmarkField { id: RatioId; label: string; hint: string; valu
 /** A field per ratio, its default for the case in the box until changed (OR4); `c` unset, the fresh loan's. */
 export const benchmarkFields = (c: Case | undefined, t: BenchmarkText = {}): BenchmarkField[] => LEVELS.ratios.map((d) => {
   const id = d.id as RatioId, value = t[id] ?? '';
-  return { id, label: d.label, value, byDefault: d[c ?? 'fresh'].toFixed(2), hint: `This or ${d.at === 'least' ? 'more' : 'less'} meets it.`,
+  return { id, label: d.label, value, byDefault: d[c ?? 'fresh'].toFixed(2), hint: d.at === 'least' ? 'At least this.' : 'At most this.',
     ...(value.trim() && benchmarkOf(value) === undefined ? { error: 'Not understood. Type a figure above nil, as 1.25, or Reset for the default.' } : {}) };
 });
 /** The line under the heading once a benchmark is changed: which, and a looser one's warning. */
