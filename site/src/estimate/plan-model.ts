@@ -7,6 +7,7 @@
  * a room's size word (R1) is passed on as it is, Medium left out. Rooms added or taken out (R2) move the rooms' own sizes,
  * words, levels and items with them.
  */
+import { questionsLeft } from '../verdict';
 import {
   BATHS, BHKS, CITIES, EXTRAS, FLOORS, FLOORS_ADDED, LEVELS, PLOT_SIDE, R, ROOM_SIDE, SIZE_WORDS, bathsOf, bedroomsOf, billOf, WORK_KINDS, architect, architectNeeds, builds, changeOf, choicesFor, levelName, levelRuns, overPackage, planRooms, wordName,
   type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choice, type ExtraKind, type House, type Level, type LevelRuns, type Line, type RoomKind, type SizeWord, type Stage, type WorkKind,
@@ -682,7 +683,7 @@ function whereOf(ls: Line[], e: ArchitectEstimate): string {
 
 /** "Complete", or "Provisional: 2 still to answer". */
 export const statusText = (p: PlanPreview, more: string[] = []) =>
-  p.blocked ? 'No figures' : p.needs.length + more.length ? `Provisional: ${p.needs.length + more.length} still to answer` : 'Complete';
+  p.blocked ? 'No figures' : p.needs.length + more.length ? questionsLeft(p.needs.length + more.length) : 'Complete';
 
 // ---- The item drawer ----
 

@@ -3,6 +3,7 @@
  * Forms I to VI and the ratios as tables in words, with the engine's exact figures beside them for the Excel copy. Each
  * row the Excel copy's check sheet redoes is named (`ref`). Pure, no DOM. Figures: engine/cma.ts only.
  */
+import { questionsLeft } from '../verdict';
 import { ASSUMPTIONS, HEADS, TURNOVER, YEARS, cma, fyLabels, subtotalsOf, yearName, type Cma, type CmaInput, type CmaYear, type FlowYear, type HeadId, type Subtotals, type Turnover, type YearId, type YearKind } from '../../../engine/cma';
 import { parseAmount } from '../../../engine/parse';
 import { inr } from '../../../engine/util';
@@ -231,4 +232,4 @@ export function preview(s: CmaState): CmaPreview {
 }
 
 export const statusText = (p: CmaPreview, more = 0) =>
-  p.blocked ? 'No figures' : p.needs.length + more ? `Provisional: ${p.needs.length + more} still to answer` : 'Complete';
+  p.blocked ? 'No figures' : p.needs.length + more ? questionsLeft(p.needs.length + more) : 'Complete';

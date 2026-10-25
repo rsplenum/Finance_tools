@@ -105,7 +105,7 @@ describe('the words in the document', () => {
     const s = { ...R, words };
     expect(reportDoc(s, p, TODAY)!.parts.map((x) => x.name)).toEqual(['Summary', 'Projections', 'DSCR and ratios', 'Annex']);
     expect(wordsNeeds(words)).toEqual(['The report’s words: read them, then tick that they are true']);
-    expect(docStatus(s, p)).toBe('Figures complete; for the document, 1 still to answer');
+    expect(docStatus(s, p)).toBe('Figures complete; for the document, 1 question left');
     expect(fileName(s, p, 'pdf')).toBe('Project report - Asha Packaging (provisional).pdf');
   });
   it('ticked: a part after the summary, each section under its heading, with no figure but the user’s own', () => {

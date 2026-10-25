@@ -91,7 +91,7 @@ describe('the estimate to download', () => {
   });
   it('provisional while the property is missing, and said on every page', async () => {
     const s = { ...E, doc: { ...E.doc, property: '' } }, d = estimateDoc(s, preview(s), TODAY)!;
-    expect(docStatus(s, preview(s))).toBe('Figures complete; for the document, 1 still to answer');
+    expect(docStatus(s, preview(s))).toBe('Figures complete; for the document, 1 question left');
     for (const page of await pdfPages(pdfOf(d, MADE))) expect(page.split('\n')[0]).toBe('Estimate of cost · Asha Traders Provisional');
   });
 });

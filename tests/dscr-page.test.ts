@@ -64,7 +64,7 @@ describe('fictional case A from the loan terms', () => {
     expect(line(p, 'dscr')).toEqual(['1.20', '1.16', '1.33', '2.82']);
     expect(p.statement?.lines.filter((l) => l.kind === 'head').map((l) => l.label)).toEqual(['Profit', 'Cash available for debt service', 'Debt service']);
     expect([p.verdict, p.largest, p.fewest]).toEqual([undefined, undefined, undefined]);
-    expect(barText(p)).toBe('Average 1.45 · lowest 1.16 in 2027-28 · provisional: 1 still to answer');
+    expect(barText(p)).toBe('Average 1.45 · lowest 1.16 in 2027-28 · 1 question left');
   });
   it('says what limits the result and offers the loan that meets the target', () => {
     const p = preview({ ...CASE_A, target: TARGETS });

@@ -4,7 +4,7 @@
  * the assumptions in engine/data/defaults.json (the owner's request, D-UX-08), each listed with its reason until it is
  * changed (`assumedIn`); nothing else missing is filled in, and anything else missing is listed as needed.
  */
-import { verdictWords } from '../verdict';
+import { questionsLeft, verdictWords } from '../verdict';
 import DEFAULTS from '../../../engine/data/defaults.json';
 import DSCR from '../../../engine/data/dscr.json';
 import {
@@ -872,7 +872,7 @@ export function barText(p: Preview): string {
   const parts: string[] = [];
   if (p.average) parts.push(`Average ${p.average}`, `lowest ${p.lowest} in ${p.lowestYear}`);
   if (p.verdict) parts.push(p.verdict.meets ? 'meets the target' : 'below the target');
-  parts.push(p.needs.length ? `provisional: ${p.needs.length} still to answer` : statusText(p).toLowerCase());
+  parts.push(p.needs.length ? questionsLeft(p.needs.length) : statusText(p).toLowerCase());
   return cap(parts.join(' · '));
 }
 
@@ -897,7 +897,7 @@ export const withFrontNeeds = (s: State, p: Preview, first?: string): Preview =>
   return { ...p, needs: needs.map((n, i) => [n, i] as const).sort((a, b) => at(a[0]) - at(b[0]) || a[1] - b[1]).map(([n]) => n) };
 };
 export const statusText = (p: Preview) =>
-  p.blocked ? 'No figures' : p.needs.length ? `Provisional: ${p.needs.length} still to answer`
+  p.blocked ? 'No figures' : p.needs.length ? questionsLeft(p.needs.length)
     : p.assumed.length ? `Complete, on ${p.assumed.length} assumption${p.assumed.length > 1 ? 's' : ''}` : 'Complete';
 
 /** The commonly quoted targets from the data file, offered as examples and used only when chosen. */

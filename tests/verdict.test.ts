@@ -3,8 +3,7 @@
  * the words of `verdictWords`, and none of the old patterns is left in the site's code.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { VERDICT_PATTERN, verdictWords } from '../site/src/verdict';
 import { STORY_TYPED, STORY_LONGER } from '../site/src/home/story';
 
@@ -22,8 +21,8 @@ describe('the verdict words', () => {
     for (const v of [STORY_TYPED.verdict, STORY_LONGER.verdict]) expect(v.split(':')[0]).toMatch(VERDICT_PATTERN);
   });
   it('no old pattern is left in the site', () => {
-    const files = (d: string): string[] => readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? files(join(d, e.name)) : /\.(tsx?|astro)$/.test(e.name) ? [join(d, e.name)] : []);
-    const old = /Below the target|Meets the target:|Misses the benchmarks|Meets the benchmarks|Meets your benchmarks|It misses \$\{|It meets every \$\{/;
+    const files = (d: string): string[] => readdirSync(d).flatMap((f: string): string[] => { const p = `${d}/${f}`; return statSync(p).isDirectory() ? files(p) : /\.(tsx?|astro)$/.test(f) ? [p] : []; });
+    const old = /\} still to answer`|Below the target|Meets the target:|Misses the benchmarks|Meets the benchmarks|Meets your benchmarks|It misses \$\{|It meets every \$\{/;
     expect(files('site/src').filter((f) => old.test(readFileSync(f, 'utf8')))).toEqual([]);
   });
 });

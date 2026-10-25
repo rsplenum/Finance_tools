@@ -334,7 +334,7 @@ describe('the planning estimate to download', () => {
   });
   it('provisional while the owner\'s name is missing, and said on every page', async () => {
     const t = { ...s, doc: { ...s.doc, owner: '' } }, d = planDoc(t, planPreview(t), TODAY)!;
-    expect(planDocStatus(t, planPreview(t))).toBe('Figures complete; for the document, 1 still to answer');
+    expect(planDocStatus(t, planPreview(t))).toBe('Figures complete; for the document, 1 question left');
     for (const page of await pdfPages(pdfOf(d, MADE))) expect(page.split('\n')[0]).toBe('Planning estimate Provisional');
   });
 });

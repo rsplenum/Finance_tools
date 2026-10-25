@@ -3,7 +3,7 @@
  * report to tables in words, with the engine's exact figures beside them for the Excel copy. The page and the document
  * show the same tables. Pure, no DOM. Figures: engine/report.ts only (with dscr.ts for profit, tax and DSCR).
  */
-import { verdictWords } from '../verdict';
+import { questionsLeft, verdictWords } from '../verdict';
 import { ASSUMPTIONS, COST_HEADS, HEADS, costsOf, MUDRA, PMEGP, REPORT_REVIEW_BY, mudraLevel, mudraShort, projectReport, workedLimit, WORKING_CAPITAL, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
 import { parseAmount, parseMonth } from '../../../engine/parse';
 import { LEVELS, collateralNeeded, diagnose, type Levels, type RatioCheck } from '../../../engine/ratios';
@@ -509,7 +509,7 @@ export const COLLATERAL_HINT = `Its realisable sale value, ${LEVELS.collateral.r
 
 export const statusText = (p: ReportPreview, more = 0) => {
   const n = p.needs.length + (p.short ? 1 : 0) + more;
-  return p.blocked ? 'No figures' : n ? `Provisional: ${n} still to answer` : 'Complete';
+  return p.blocked ? 'No figures' : n ? questionsLeft(n) : 'Complete';
 };
 
 const years = (n: number, perYear: number) => {

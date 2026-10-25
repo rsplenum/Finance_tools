@@ -10,6 +10,7 @@
  * planning estimate to download; the bar at the bottom says what the
  * last change did. Figures: engine/architect.ts only, via plan-model.ts.
  */
+import { questionsLeft } from '../verdict';
 import { Fragment } from 'preact';
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, toAnswer, useAnswerPlace, InAppNote, useHomeCase, HomeCaseNote, useKept, KeptLine } from '../fields';
@@ -135,7 +136,7 @@ export function PlanEstimate() {
 const ASKED: [string, string][] = [['What the work', 'fld-work'], ['How many floors', 'fld-floors'], ['Flat or house', 'fld-home'], ['Which city', 'fld-city'],
   ['The built-up', 'fld-carpet'], ['The carpet', 'fld-carpet'], ['How many bedrooms', 'fld-bhk'], ['Which level', 'fld-level']];
 const askedIn = (need: string) => ASKED.find(([w]) => need.startsWith(w))?.[1];
-const stillText = (p: PlanPreview) => (p.blocked ? 'No figures' : `Provisional: ${p.needs.length} still to answer`);
+const stillText = (p: PlanPreview) => (p.blocked ? 'No figures' : questionsLeft(p.needs.length));
 
 /** Before the six answers, the estimate's outline (UX8, review finding 2): the total and the cost a sq ft as "—", never 0,
  * and one counter opening to a link to each question still to answer. */

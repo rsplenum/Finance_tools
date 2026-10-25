@@ -12,3 +12,7 @@ export function verdictWords(noun: VerdictNoun, total: number, missed: number, w
 
 /** The test's pattern: every verdict a tool shows starts this way. */
 export const VERDICT_PATTERN = /^(Meets|Misses) (the|both|all \d+|\d+ of \d+) (target|benchmark)s?(; \d+ not read yet)?$/;
+
+/** What is still to answer, in the same words in every tool (UXR3, UXR1's P4): "1 question left", "3 questions left";
+ * the word "provisional" stays only as the documents' mark. */
+export const questionsLeft = (n: number) => `${n} question${n === 1 ? '' : 's'} left`;
