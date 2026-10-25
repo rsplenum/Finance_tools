@@ -12,7 +12,7 @@
  */
 import { Fragment } from 'preact';
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, toAnswer, useAnswerPlace, InAppNote, useHomeCase, HomeCaseNote } from '../fields';
+import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, toAnswer, useAnswerPlace, InAppNote, useHomeCase, HomeCaseNote, useKept } from '../fields';
 import { ESTIMATE_HOME } from './home-case';
 import { printable } from '../doc/pdf';
 import { BRAND_NOTICE } from '../site';
@@ -58,6 +58,7 @@ const SHARE_COLOR: Record<string, string> = {
 export function PlanEstimate() {
   const [s, setS] = useState<PlanState>(EMPTY_PLAN);
   const home = useHomeCase(setS, () => ESTIMATE_HOME);
+  useKept('plan', s, setS, EMPTY_PLAN);
   const update: Update = (f) => setS(f);
   const p = useMemo(() => planPreview(s), [s]);
   const place = useAnswerPlace('pl-result');

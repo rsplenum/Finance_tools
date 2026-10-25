@@ -5,7 +5,7 @@
  * three downloads. Figures: engine/estimate.ts only, via model.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
-import { answerRule, BUTTON, Choice, FILLED, goTo, HINT, Section, SelectField, STATE, TextField, Tick, InAppNote } from '../fields';
+import { answerRule, BUTTON, Choice, FILLED, goTo, HINT, Section, SelectField, STATE, TextField, Tick, InAppNote, useKept } from '../fields';
 import { printable } from '../doc/pdf';
 import { isoDate, save, type FileKind } from '../download';
 import { docNeeds, docStatus, estimateDoc, fileName } from './document';
@@ -21,6 +21,7 @@ const bad = (t: string, read: (t: string) => unknown) => !!t.trim() && read(t) =
 
 export function EstimateCalculator() {
   const [s, setS] = useState<EstimateState>(EMPTY);
+  useKept('quote', s, setS, EMPTY);
   const update: Update = (f) => setS(f);
   const p = useMemo(() => preview(s), [s]);
   const q = useMemo(() => quoteView(s), [s]);

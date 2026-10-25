@@ -1566,6 +1566,45 @@ if (touched('/estimate/')) {
   await plain.ctx.close();
 }
 
+// Answers kept in the tab (UXR2, D-UX-157 to D-UX-162): each tool, typed into, reloaded and opened from home's fictional
+// case keeps its filled fields; Clear all empties the draft. A field is filled when it holds text, a choice or a tick.
+const filledCount = (page) => page.evaluate(() => [...document.querySelectorAll('main input, main select, main textarea')]
+  .filter((e) => (e.type === 'radio' || e.type === 'checkbox' ? e.checked : e.value.trim() !== '')).length);
+const KEPT = [
+  { path: '/dscr/', clear: ['clear-all', 'clear-yes'] },
+  { path: '/cma/', clear: ['cma-clear'] },
+  { path: '/project-report/', clear: ['rep-clear'] },
+  { path: '/estimate/', fill: async (page) => { await page.check('#fld-work-renovate'); await page.check('#fld-home-flat'); await page.selectOption('#fld-city', 'pune'); } },
+];
+for (const t of KEPT.filter((t) => touched(t.path))) {
+  const { ctx, page, v } = await open(t.path);
+  if (await page.getByTestId('kept-line').count() !== 1) v('UXR2: the line on what is kept shows not once');
+  const blank = await filledCount(page);
+  if (t.fill) await t.fill(page);
+  else {
+    const boxes = page.locator('main input[type="text"]:visible:not(#more-options input):not(#read input)');
+    for (let i = 0, n = Math.min(await boxes.count(), 4); i < n; i++) { await boxes.nth(i).fill('5'); await boxes.nth(i).press('Tab'); }
+  }
+  const typed = await filledCount(page);
+  if (typed <= blank) v(`UXR2: typing filled no field (${blank} → ${typed})`);
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForFunction(() => !document.querySelector('astro-island[ssr]'), null, { timeout: 10000 }).catch(() => {});
+  const back = await filledCount(page);
+  if (back !== typed) v(`UXR2: a reload kept ${back} of ${typed} filled fields`);
+  await page.goto(`${BASE}${t.path}?case=home`, { waitUntil: 'networkidle' });
+  await page.goto(BASE + t.path, { waitUntil: 'networkidle' });
+  await page.waitForFunction(() => !document.querySelector('astro-island[ssr]'), null, { timeout: 10000 }).catch(() => {});
+  if (await filledCount(page) !== typed) v('UXR2: a visit with home\'s fictional case changed the kept answers');
+  if (t.clear) {
+    for (const id of t.clear) await page.getByTestId(id).click({ timeout: 3000 }).catch(() => v(`UXR2: no ${id} to tap`));
+    await page.reload({ waitUntil: 'networkidle' });
+    await page.waitForFunction(() => !document.querySelector('astro-island[ssr]'), null, { timeout: 10000 }).catch(() => {});
+    const after = await filledCount(page);
+    if (after !== blank) v(`UXR2: after Clear all and a reload ${after} fields are filled, not ${blank}`);
+  }
+  await ctx.close();
+}
+
 // The design team's measured checks (DT1, docs/DESIGN.md): every page at 360 and 1280 px, light and dark, 320 px, reduced motion.
 const design = await designChecks({ browser, BASE, pages, quick, violations });
 const load = await loadCheck({ browser, BASE, pages, quick, violations });
