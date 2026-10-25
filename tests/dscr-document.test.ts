@@ -191,8 +191,8 @@ describe('the PDF, read back by pdf.js', () => {
     expect(lines.slice(box + 1, box + 3)).toEqual(["The borrower's name", 'The lender']);
     // The page still asks for a target (for its verdict); the document is complete without one.
     expect(preview(CASE_A).needs).toEqual(['A target DSCR for the average, the lowest year, or both']);
-    expect(docStatus(CASE_A, preview(CASE_A))).toBe('Figures complete; for the document, 2 questions left');
-    expect(docStatus({ ...CASE_A, doc: FACTS }, preview({ ...CASE_A, doc: FACTS }))).toBe('Complete');
+    expect(docStatus(CASE_A, preview(CASE_A))).toBe('2 questions left, for the document');
+    expect(docStatus({ ...CASE_A, doc: FACTS }, preview({ ...CASE_A, doc: FACTS }))).toBe('All answered');
     expect(fileName({ ...CASE_A, doc: FACTS }, preview({ ...CASE_A, doc: FACTS }), 'docx')).toBe('DSCR statement - Asha Traders.docx');
     const pages = await pdfPages(pdfOf(doc, MADE));
     for (const page of pages) expect(page.split('\n')[0]).toBe('DSCR statement Provisional');
@@ -526,6 +526,6 @@ describe('the address, the purpose and the GSTIN in the header (D2)', () => {
   it('a GSTIN without its shape is left out, and the document says so', () => {
     const { lines, p } = build({ ...MORE, doc: { ...MORE.doc, gstin: '27ABCDE1234' } });
     expect(lines.join('\n')).not.toContain('GSTIN:');
-    expect(docStatus({ ...MORE, doc: { ...MORE.doc, gstin: '27ABCDE1234' } }, p)).toBe('Figures complete; for the document, 1 question left');
+    expect(docStatus({ ...MORE, doc: { ...MORE.doc, gstin: '27ABCDE1234' } }, p)).toBe('1 question left, for the document');
   });
 });

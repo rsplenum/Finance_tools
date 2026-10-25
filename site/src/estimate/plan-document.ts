@@ -7,6 +7,7 @@
  */
 import type { Block, Cell, Doc, Figure, Table } from '../doc/doc';
 import { forDocument } from '../doc/doc';
+import { ALL_ANSWERED } from '../verdict';
 import { printable } from '../doc/pdf';
 import { BRAND_NOTICE, BRAND_NOTICE_SHORT, SITE_NAME } from '../site';
 import { statusText, type PlanFacts, type PlanPreview, type PlanState } from './plan-model';
@@ -28,7 +29,7 @@ export function planDocNeeds(f: PlanFacts): string[] {
 export const planAllNeeds = (s: PlanState, p: PlanPreview) => [...p.needs, ...planDocNeeds(s.doc)];
 export const planDocStatus = (s: PlanState, p: PlanPreview) => {
   const own = planDocNeeds(s.doc);
-  return own.length && statusText(p) === 'Complete' ? forDocument(own.length) : statusText(p, own);
+  return own.length && statusText(p) === ALL_ANSWERED ? forDocument(own.length) : statusText(p, own);
 };
 
 export function planFileName(s: PlanState, p: PlanPreview, ext: string): string {

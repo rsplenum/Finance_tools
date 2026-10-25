@@ -284,7 +284,7 @@ describe('the planning estimate to download', () => {
     expect(lines).toContain(`Total estimated cost | ${p.view!.total}`);
     expect(lines).toContain(`In words: ${p.view!.words}`);
     expect(lines).toContain(`Cost per sq ft: Rs. ${p.view!.perSqft} of carpet area`);
-    expect(planDocStatus(s, p)).toBe('Complete');
+    expect(planDocStatus(s, p)).toBe('All answered');
     expect(planFileName(s, p, 'pdf')).toBe('Planning estimate - Asha Rao.pdf');
   });
   it('Annex 1: every line under its section, with its level, quantity, unit, rate and amount; the living room\'s floor as worked by hand', () => {
@@ -334,7 +334,7 @@ describe('the planning estimate to download', () => {
   });
   it('provisional while the owner\'s name is missing, and said on every page', async () => {
     const t = { ...s, doc: { ...s.doc, owner: '' } }, d = planDoc(t, planPreview(t), TODAY)!;
-    expect(planDocStatus(t, planPreview(t))).toBe('Figures complete; for the document, 1 question left');
+    expect(planDocStatus(t, planPreview(t))).toBe('1 question left, for the document');
     for (const page of await pdfPages(pdfOf(d, MADE))) expect(page.split('\n')[0]).toBe('Planning estimate Provisional');
   });
 });

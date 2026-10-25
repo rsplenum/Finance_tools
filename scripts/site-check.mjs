@@ -352,12 +352,12 @@ if (touched('/dscr/')) {
   await page.getByTestId('use-examples').click();
   // Six assumptions still hold: the method, the target, and the new asset, working-capital interest, loans already running
   // and other non-cash charges as answered by the assumptions (tax, profit and depreciation were typed).
-  await expectText(page, v, 'dscr-status', 'Complete, on 7 assumptions', 'case A with the examples');
+  await expectText(page, v, 'dscr-status', 'All answered, on 7 assumptions', 'case A with the examples');
   await expectText(page, v, 'dscr-verdict', 'Misses 2 of 2 targets: the lowest year, 2027-28, is 1.16 against 1.25; the average is 1.45 against 1.50.', 'case A with the examples');
   await expectText(page, v, 'dscr-largest', 'The largest loan on these terms is Rs. 11,11,295, limited by the lowest year, 2027-28.', 'case A with the examples');
   await expectText(page, v, 'use-amount', 'Use Rs. 11,11,295', 'case A with the examples');
   await expectText(page, v, 'dscr-fewest', 'Even 14 instalments, the most the projections cover (to 2029-30), miss the target: the average is below the target. Add later years to try a longer repayment.', 'case A with the examples');
-  await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · below the target · complete, on 7 assumptions', 'case A with the examples');
+  await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · does not work yet: 2 ratios short · all answered, on 7 assumptions', 'case A with the examples');
 
   // Tables become cards on phones and stay tables on wider screens, without a sideways scroll either way.
   await layout(page, v, 'case A filled, a schedule year open, 390 px');
@@ -451,7 +451,7 @@ if (touched('/dscr/')) {
   await expectText(page, v, 'assumed-start', 'The first year of the figures: The year the loan is first drawn Change', 'the start assumption listed');
   await expectText(page, v, page.getByTestId('start-question').locator('p').first(), 'No instalment falls in 2026-27, only interest of Rs. 72,000. If operations start later, start your figures there: the interest before then is taken as paid from the project cost, not from profits.', 'the question about the first year');
   await page.check('#fld-start-2027-28');
-  await expectText(page, v, 'dscr-status', 'Complete, on 7 assumptions', 'figures starting in 2027-28');
+  await expectText(page, v, 'dscr-status', 'All answered, on 7 assumptions', 'figures starting in 2027-28');
   if (await page.getByTestId('assumed-start').count()) v('the start assumption is still listed after choosing 2027-28');
   await expectText(page, v, 'dscr-before-start', 'Left out: 2026-27, before your figures start. Its interest (Rs. 72,000) is taken as paid from the project cost (capitalised), not from profits.', 'figures starting in 2027-28');
   await expectValue(page, v, '#fld-pbdit-2027-28', '7,50,000', 'each figure stays under its year');
@@ -489,7 +489,7 @@ if (touched('/dscr/')) {
   await page.getByTestId('use-examples').click();
   // Eight assumptions hold: all but the tax rate (a company's tax is worked out); this year's depreciation typed once is
   // "as this year, every year".
-  await expectText(page, v, 'dscr-status', 'Complete, on 9 assumptions', 'a few answers');
+  await expectText(page, v, 'dscr-status', 'All answered, on 9 assumptions', 'a few answers');
   // Four fields for a five-year loan (profit and its rate, depreciation, working-capital interest; the tax from who the
   // borrower is), not five a line.
   const inputs = await page.locator('#figures input[type="text"]').count();
@@ -518,7 +518,7 @@ if (touched('/dscr/')) {
   await leave(page, '#fld-depreciation-2026-27', '1.5 L');
   await page.check('#fld-interestOther-same');
   await leave(page, '#fld-interestOther-2026-27', '50,000');
-  await expectText(page, v, 'dscr-status', 'Complete, on 10 assumptions', 'the quick path');
+  await expectText(page, v, 'dscr-status', 'All answered, on 10 assumptions', 'the quick path');
   await expectText(page, v, 'dscr-average', '1.16', 'the quick path');
   await expectText(page, v, 'dscr-lowest', '0.84', 'the quick path');
   await expectText(page, v, 'assumed-tax', 'Tax rate: 31.2% Change', 'the quick path');
@@ -528,7 +528,7 @@ if (touched('/dscr/')) {
   await layout(page, v, 'the quick path, 390 px');
 
   // The statement to download, at 390 px. Without the borrower's name and the lender it is provisional, and says so.
-  await expectText(page, v, 'doc-status', 'Figures complete; for the document, 2 questions left', 'the download before its facts');
+  await expectText(page, v, 'doc-status', '2 questions left, for the document', 'the download before its facts');
   const own = await page.getByTestId('doc-needs').locator('li').allTextContents();
   if (own.join('|') !== "The borrower's name|The lender") v(`the download asks for ${JSON.stringify(own)}`);
   const save = saver(page, v);
@@ -553,7 +553,7 @@ if (touched('/dscr/')) {
   await leave(page, '#fld-gstin', '27ABCDE1234');
   await expectText(page, v, 'fld-gstin-said', 'A GSTIN has 15 letters and digits, like 27ABCDE1234F1Z5.', 'a short GSTIN');
   await leave(page, '#fld-gstin', '');
-  await expectText(page, v, 'doc-status', 'Complete', 'the download with its facts');
+  await expectText(page, v, 'doc-status', 'All answered', 'the download with its facts');
   if (await page.getByTestId('doc-needs').count()) v('the download still lists needs once its facts are in');
   pdf = await save('download-pdf');
   if (pdf.name !== 'DSCR statement - Asha Traders.pdf') v(`the PDF is named "${pdf.name}"`);
@@ -654,7 +654,7 @@ if (touched('/dscr/')) {
   await expectText(page, v, 'dscr-status', '1 question left', 'own figures before None');
   await page.check('#fld-nonCash-none');
   await leave(page, '#fld-targetAverage', '1.5');
-  await expectText(page, v, 'dscr-status', 'Complete, on 2 assumptions', 'own figures');
+  await expectText(page, v, 'dscr-status', 'All answered, on 2 assumptions', 'own figures');
   await expectText(page, v, 'dscr-average', '1.23', 'own figures');
   await expectText(page, v, 'dscr-lowest', '1.14', 'own figures');
   await expectText(page, v, 'dscr-not-counted', 'Not counted: 2026-27 (no term-loan instalment).', 'own figures');
@@ -793,10 +793,10 @@ for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
   await expectText(page, v, 'pl-rates', /^A planning estimate: rates as reported on \d\d-\d\d-\d{4} for Pune; \d+ of \d+ lines verified at their pages$/, 'the rates as reported, in one line by the total');
 
   // The downloads, at the package as answered.
-  await expectText(page, v, 'pl-doc-status', 'Figures complete; for the document, 2 questions left', 'the planning estimate before its facts');
+  await expectText(page, v, 'pl-doc-status', '2 questions left, for the document', 'the planning estimate before its facts');
   await leave(page, '#fld-pl-owner', 'Asha Rao');
   await leave(page, '#fld-pl-property', 'Flat 4, Example Towers, Pune');
-  await expectText(page, v, 'pl-doc-status', 'Complete', 'the planning estimate with its facts');
+  await expectText(page, v, 'pl-doc-status', 'All answered', 'the planning estimate with its facts');
   const save = saver(page, v);
   const pdf = await save('pl-download-pdf');
   if (pdf.name !== 'Planning estimate - Asha Rao.pdf') v(`the planning estimate PDF is named "${pdf.name}"`);
@@ -1088,14 +1088,14 @@ if (touched('/estimate/')) {
   await leave(page, '#fld-gstPct', '18');
   await expectText(page, v, 'est-status', '1 question left', 'the estimate before contingency');
   await page.check('#fld-contingency-none');
-  await expectText(page, v, 'est-status', 'Complete', 'the estimate');
+  await expectText(page, v, 'est-status', 'All answered', 'the estimate');
   for (const [id, want] of [['est-works', '2,81,750'], ['est-gst', '50,715'], ['est-total', '3,32,465'], ['est-per-sqft', 'Rs. 277'], ['item-2-amount', 'Rs. 2,66,000']])
     await expectText(page, v, id, want, 'the estimate');
   await layout(page, v, 'the estimate filled, 390 px');
-  await expectText(page, v, 'est-doc-status', 'Figures complete; for the document, 2 questions left', 'the estimate before its facts');
+  await expectText(page, v, 'est-doc-status', '2 questions left, for the document', 'the estimate before its facts');
   await leave(page, '#fld-est-borrower', 'Asha Traders');
   await leave(page, '#fld-est-property', 'Plot 12, Example Nagar, Pune');
-  await expectText(page, v, 'est-doc-status', 'Complete', 'the estimate with its facts');
+  await expectText(page, v, 'est-doc-status', 'All answered', 'the estimate with its facts');
   const save = saver(page, v);
   const pdf = await save('est-download-pdf');
   if (pdf.name !== 'Estimate - Asha Traders.pdf') v(`the estimate PDF is named "${pdf.name}"`);
@@ -1137,7 +1137,7 @@ if (touched('/project-report/')) {
     await leave(page, id, value);
   await expectText(page, v, 'rep-status', '1 question left', 'the report before the repayment');
   await page.check('#fld-tl-repayment-monthly');
-  await expectText(page, v, 'rep-status', 'Figures complete; for the document, 3 questions left', 'the report, before its facts (UXR3, S4)');
+  await expectText(page, v, 'rep-status', '3 questions left, for the document', 'the report, before its facts (UXR3, S4)');
   await expectText(page, v, 'rep-key-0', 'Rs. 37,86,301', 'the cost of the project');
   const cells = async (table, label) => (await page.getByTestId(table).locator('tr', { has: page.locator('th', { hasText: label }) }).first().locator('td').allTextContents());
   for (const [table, label, want] of [['rep-pl', 'Profit after tax', '11,54,407'], ['rep-bs', 'Total liabilities', '55,81,804'], ['rep-bs', 'Total assets', '55,81,804'], ['rep-dscr', 'DSCR (A ÷ B)', '2.51']]) {
@@ -1205,11 +1205,11 @@ if (touched('/project-report/')) {
   await leave(page, '#fld-collateral', '');
   await leave(page, '#fld-wcLimit', '5 L');
   await layout(page, v, 'the report filled, 390 px');
-  await expectText(page, v, 'rep-doc-status', 'Figures complete; for the document, 3 questions left', 'the report before its facts');
+  await expectText(page, v, 'rep-doc-status', '3 questions left, for the document', 'the report before its facts');
   await leave(page, '#fld-rep-name', 'Asha Packaging');
   await leave(page, '#fld-rep-activity', 'Manufacture of corrugated boxes');
   await leave(page, '#fld-rep-address', 'Plot 4, Example MIDC, Pune');
-  await expectText(page, v, 'rep-doc-status', 'Complete', 'the report with its facts');
+  await expectText(page, v, 'rep-doc-status', 'All answered', 'the report with its facts');
   const save = saver(page, v);
   const pdf = await save('rep-download-pdf');
   if (pdf.name !== 'Project report - Asha Packaging.pdf') v(`the report PDF is named "${pdf.name}"`);
@@ -1237,9 +1237,9 @@ if (touched('/project-report/')) {
   await page.getByTestId('rep-words-draft').click();
   await expectText(page, v, 'rep-words-dropped', /^2 sentences were left out: ?“Asha Packaging is a reputed name/, 'the words: two sentences dropped');
   if (asked?.name !== 'Asha Packaging' || asked?.notes?.market !== reply.notes.market || /lakh|Rs\.|\d,\d/.test(JSON.stringify(asked))) v(`the words were drafted from ${JSON.stringify(asked).slice(0, 160)}`);
-  await expectText(page, v, 'rep-doc-status', 'Figures complete; for the document, 1 question left', 'the words drafted, not yet ticked');
+  await expectText(page, v, 'rep-doc-status', '1 question left, for the document', 'the words drafted, not yet ticked');
   await page.check('#fld-rep-words-true');
-  await expectText(page, v, 'rep-doc-status', 'Complete', 'the words ticked');
+  await expectText(page, v, 'rep-doc-status', 'All answered', 'the words ticked');
   await layout(page, v, 'the report’s words, 390 px');
   const worded = (await pdfPages((await save('rep-download-pdf')).bytes).catch((e) => [`(not read: ${e.message})`])).join('\n').replace(/\s+/g, ' ');
   if (!worded.includes('About the project') || !worded.includes('It is in talks with 3 buyers.') || /reputed|lakh/.test(worded)) v(`the report PDF holds its words as ${worded.slice(worded.indexOf('About'), 200)}`);
@@ -1268,7 +1268,7 @@ if (touched('/project-report/')) {
     ['#fld-product-1-name', 'Roasted peanuts'], ['#fld-product-1-units', '1,500'], ['#fld-product-1-price', '200'], ['#fld-monthsToStart', '3'], ['#fld-variablePct', '70'], ['#fld-fixed', '12 L'], ['#fld-fixedGrowth', '5'],
     ['#fld-wcLimit', '3 L'], ['#fld-wcRate', '11']])
     await leave(page, id, value);
-  await expectText(page, v, 'rep-status', /^Figures complete; for the document, \d+ questions? left$/, 'the PMEGP report');
+  await expectText(page, v, 'rep-status', /^\d+ questions? left, for the document$/, 'the PMEGP report');
   const tiles = await page.locator('main dl > div').allTextContents();
   if (!tiles.some((t) => t.startsWith('PMEGP margin money') && t.includes('Rs. 7,80,856'))) v(`the PMEGP report's tiles read ${JSON.stringify(tiles).slice(0, 200)}`);
   await page.getByTestId('rep-cf').evaluate((t) => t.closest('details').open = true);
@@ -1333,7 +1333,7 @@ if (touched('/project-report/')) {
   await expectText(page, v, 'rep-mudra-collateral', /^No collateral needed up to Rs\. 20,00,000: CGFMU .* Apply on JanSamarth\.$/, 'Mudra without collateral');
   await expectText(page, v, 'rep-needs', /Mudra: the loans come to Rs\. 15,00,000, above Tarun's/, 'Tarun Plus unticked');
   await page.check('#fld-tarun');
-  await expectText(page, v, 'rep-status', /^Figures complete; for the document, \d+ questions? left$/, 'the Mudra report');
+  await expectText(page, v, 'rep-status', /^\d+ questions? left, for the document$/, 'the Mudra report');
   await page.getByTestId('rep-pl').evaluate((t) => t.closest('details').open = true);
   const fee = (name) => page.getByTestId('rep-pl').locator('tr', { has: page.locator('th', { hasText: `Less: guarantee fee (${name})` }) }).first().locator('td').first();
   await expectText(page, v, fee('CGFMU'), '15,000', 'CGFMU\'s fee in 2026-27');
@@ -1390,7 +1390,7 @@ if (touched('/')) {
   await ctx.close();
 }
 for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'], ['/estimate/', 'pl-summary', /· Pune · 1,000 sq ft · 2 BHK · Standard$/, 'the Pune flat'],
-  ['/project-report/', 'rep-status', '1 question left', 'case R, its cash short in 2027-28 as at 70 lakh of sales'], ['/cma/', 'cma-status', 'Complete', 'case W']]
+  ['/project-report/', 'rep-status', '1 question left', 'case R, its cash short in 2027-28 as at 70 lakh of sales'], ['/cma/', 'cma-status', 'All answered', 'case W']]
   .filter(([path]) => touched('/') || touched(path))) {
   const { ctx, page, v } = await open(`${path}?case=home`, { scheme: 'light' });
   if (!(await page.getByTestId('home-case').count())) v(`${path}?case=home does not say it is filled with the home page's case`);
@@ -1411,7 +1411,7 @@ if (touched('/cma/')) {
   await expectText(page, v, 'cma-years', /^Years: 2023-24 \(audited\), 2024-25 \(audited\), 2025-26 \(audited\), 2026-27 \(estimate\), 2027-28 \(projection\)\./, 'the CMA years');
   await expectText(page, v, 'cma-status', '3 questions left', 'the empty CMA page');
   await page.getByTestId('cma-example').click();
-  await expectText(page, v, 'cma-status', 'Complete', 'the CMA example');
+  await expectText(page, v, 'cma-status', 'All answered', 'the CMA example');
   await expectText(page, v, 'cma-key-0', 'Rs. 1,04,00,000', 'the CMA limit');
   const flags = await page.getByTestId('cma-flags').locator('li').count();
   if (flags !== 3) v(`the CMA example shows ${flags} things to look at, want 3 (the growth and the two short margins)`);
@@ -1428,9 +1428,9 @@ if (touched('/cma/')) {
   await expectText(page, v, 'cma-move-sales', '8.4%', 'how far case K\'s sales can fall');
   await expectText(page, v, 'cma-text-sales', /to Rs\. 4,76,32,000 \(from Rs\. 5,20,00,000\)/, 'case K\'s sales at the edge');
   await layout(page, v, 'the CMA example, 390 px');
-  await expectText(page, v, 'cma-doc-status', 'Figures complete; for the document, 1 question left', 'the CMA document before its name');
+  await expectText(page, v, 'cma-doc-status', '1 question left, for the document', 'the CMA document before its name');
   await leave(page, '#fld-cma-name', 'K Steel Furniture Pvt Ltd');
-  await expectText(page, v, 'cma-doc-status', 'Complete', 'the CMA document');
+  await expectText(page, v, 'cma-doc-status', 'All answered', 'the CMA document');
   const save = saver(page, v);
   const pdf = await save('cma-download-pdf');
   if (pdf.name !== 'CMA data - K Steel Furniture Pvt Ltd.pdf') v(`the CMA PDF is named "${pdf.name}"`);

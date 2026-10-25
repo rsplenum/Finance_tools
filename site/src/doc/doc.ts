@@ -77,5 +77,5 @@ export function docText(d: Doc): string {
 }
 
 /** Beside the download buttons when the figures are complete and only the document's own facts are missing: not
- * "Provisional", which says the figures may change (CMA review finding 14, UX5). */
-export const forDocument = (n: number) => `Figures complete; for the document, ${questionsLeft(n)}`;
+ * "Provisional", which says the figures may change (CMA review finding 14, UX5); "1 question left, for the document" (OR3). */
+export const forDocument = (n: number) => `${questionsLeft(n)}, for the document`;

@@ -88,7 +88,7 @@ describe('the project report to download', () => {
     expect(lines).toContain('Total cost of the project | 37,86,301');
     expect(lines).toContain('For Asha Packaging');
     expect(doc.parts.map((x) => x.name)).toEqual(['Summary', 'Projections', 'DSCR and ratios', 'Annex']);
-    expect(docStatus(R, p)).toBe('Complete');
+    expect(docStatus(R, p)).toBe('All answered');
     expect(fileName(R, p, 'pdf')).toBe('Project report - Asha Packaging.pdf');
   });
   it('carries no assumptions list and no jargon beyond the tables\' own names', () => {
@@ -113,7 +113,7 @@ describe('the project report to download', () => {
   });
   it('provisional while the business\'s address is missing, and said on every page', async () => {
     const s = { ...R, doc: { ...R.doc, address: '' } }, d = reportDoc(s, preview(s), TODAY)!;
-    expect(docStatus(s, preview(s))).toBe('Figures complete; for the document, 1 question left');
+    expect(docStatus(s, preview(s))).toBe('1 question left, for the document');
     for (const page of await pdfPages(pdfOf(d, MADE))) expect(page.split('\n')[0]).toBe('Project report · Asha Packaging Provisional');
   });
 });
@@ -127,7 +127,7 @@ describe('the PMEGP report to download', () => {
     expect(text).toContain('Months from the loan to the first sales: 3');
     expect(text).toContain('PMEGP: the rules used');
     expect(text).toContain('The guideline of 2023: verified at its source on 20-10-2026.');
-    expect(docStatus(P, p)).toBe('Complete');
+    expect(docStatus(P, p)).toBe('All answered');
   });
 });
 
@@ -230,7 +230,7 @@ describe('the lender\'s levels and make it viable, in words', () => {
     expect(v?.lines.find((l) => l.id === 'wc')?.text).toBe('A working-capital limit of at most Rs. 18,97,831 (now Rs. 20,00,000), with no more margin from the promoters.');
   });
   it('a term past 180 months is named', () => {
-    expect(preview({ ...R, loan: { ...R.loan, moratoriumMonths: '12', instalments: '170' } }).longTerm).toBe('The term loan runs 182 months with its moratorium, beyond the 180 months an MSME term loan commonly runs at most.');
+    expect(preview({ ...R, loan: { ...R.loan, moratoriumMonths: '12', instalments: '170' } }).longTerm).toBe('The term loan runs 182 months, its holiday included: lenders commonly allow a small business at most 180.');
   });
 });
 

@@ -20,10 +20,11 @@ import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import DSCR_FILE from '../../../engine/data/dscr.json';
 import TAX_FILE from '../../../engine/data/tax.json';
-import { answerRule, AnswerBar, Why, BUTTON, CellInput, Claim, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick, InAppNote, useHomeCase, HomeCaseNote, useKept } from '../fields';
+import { answerRule, AnswerBar, Why, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick, InAppNote, Verdict, useHomeCase, HomeCaseNote, useKept } from '../fields';
 import { DSCR_HOME } from './home-case';
 import { printable } from '../doc/pdf';
 import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
+import { workWords } from '../verdict';
 import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
 import {
   ASSUMED, BORROWER_CHOICES, checkNext, dscrMarks, EXAMPLE_TARGETS, GROUP_TITLES, NO_LENDER, OPTION_KEYS, amountOf, barText, choicesOf, emisAsk, frontDoor, loanRead, modeOf, monthText, numberOf,
@@ -416,6 +417,14 @@ const boxFor = (s: State, p: Preview, from = 0, to = FRONT.length) => {
   return i === undefined ? undefined : FRONT[i][2];
 };
 
+/** "Answer it" beside the status (OR3, the owner's O7; it replaces audit 7A's "Next:" line): the first answer still needed
+ * that has a box. */
+function goOf(s: State, p: Preview) {
+  if (s.source !== 'plan') return undefined;
+  const at = p.needs.map((n) => frontAt(n, yearsOf(s).years[0])).find((i) => i >= 0);
+  return at === undefined ? undefined : { to: FRONT[at][2], what: FRONT[at][1], onClick: goTo(FRONT[at][2]) };
+}
+
 /**
  * The answer, pinned beside the questions from 1024 px (UX8, D-UX-106) and there from load: the verdict as the paper's
  * heading, one counter of what is still needed opening to its links, and the figures' outline with "—" for each one not
@@ -433,20 +442,13 @@ function AnswerPanel({ s, p, update, use, used, undo, keep }: {
     {/* The answer as paper, there at once: it changes as the figures are typed (docs/DESIGN-SITE.md, tool pages). */}
     <div class="paper shadow-paper rounded-card p-4 sm:p-6">
     {/* The answer is the paper's heading (UX7): a flat claim, its rule solid once final and dashed while provisional. */}
-    {p.verdict && <h3 data-testid="dscr-verdict" data-answer class={`text-title text-ink ${answerRule(!p.blocked && !p.needs.length)}`}><Claim text={p.verdict.text} /></h3>}
-    <Counter id="dscr-status" result={result} text={statusText(p)} rule={!p.verdict} class={p.verdict ? 'mt-2' : ''}>
+    {p.verdict && <Verdict id="dscr-verdict" work={workWords(p.verdict.missed)} text={p.verdict.text} rule={answerRule(!p.blocked && !p.needs.length)} />}
+    <Counter id="dscr-status" result={result} text={statusText(p)} rule={!p.verdict} class={p.verdict ? 'mt-2' : ''} plain={!!p.verdict} go={goOf(s, p)}>
       {p.needs.length > 0 && <ul data-testid="dscr-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => {
         const i = s.source === 'plan' ? frontAt(n, yearsOf(s).years[0]) : -1;
         return <li key={n}>{i < 0 ? n : <a href={`#${FRONT[i][2]}`} onClick={goTo(FRONT[i][2])} class="inline-flex min-h-6 items-center text-link">{FRONT[i][1]}</a>}</li>;
       })}</ul>}
     </Counter>
-    {/* The status's own next step (audit 7A): the first answer still needed, a link to its box where it has one; with one
-        left the list already says it, so the line goes (critic, TRUST1). */}
-    {p.needs.length > 1 && (() => {
-      const n = p.needs[0], i = s.source === 'plan' ? frontAt(n, yearsOf(s).years[0]) : -1;
-      return <p data-testid="dscr-next" class="mt-1 pl-4 text-sm text-ink">Next: {i < 0 ? n
-        : <a href={`#${FRONT[i][2]}`} onClick={goTo(FRONT[i][2])} class="inline-flex min-h-6 items-center text-link underline underline-offset-4">{FRONT[i][1]}</a>}</p>;
-    })()}
     {p.blocked && <p data-testid="dscr-blocked" role="alert" class={`mt-4 ${answerRule(true)} text-ink`}>{p.blocked}</p>}
     {!p.blocked && <dl class="mt-4 grid grid-cols-2 gap-3">
       <div class="rounded-control bg-surface p-3">

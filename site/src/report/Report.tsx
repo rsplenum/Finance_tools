@@ -7,8 +7,8 @@
 import { Fragment, type ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
-import { verdictWords } from '../verdict';
-import { answerRule, AnswerBar, BUTTON, Choice, Claim, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote, useHomeCase, HomeCaseNote, useKept } from '../fields';
+import { verdictWords, workWords } from '../verdict';
+import { answerRule, AnswerBar, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote, Verdict, useHomeCase, HomeCaseNote, useKept } from '../fields';
 import { REPORT_HOME } from './home-case';
 import { Bar, Benchmarks, Lever, PlanLever, targetOf } from '../Board';
 import { benchmarkFields, inSentence, listed, withBenchmark } from '../board-model';
@@ -20,7 +20,7 @@ import { sureLower, type Marked } from '../../../engine/sure';
 import { docNeeds, docStatus, fileName, reportDoc } from './document';
 import { Words } from './Words';
 import {
-  CGFMU, CGTMSE, MUDRA, PMEGP, REPORT_REVIEW_BY, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, NO_PRODUCT, REPAYMENT_CHOICES, SCHEME_CHOICES,
+  CGFMU, CGTMSE, MUDRA, PMEGP, PMEGP_SHED, REPORT_REVIEW_BY, pmegpConditions, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, NO_PRODUCT, REPAYMENT_CHOICES, SCHEME_CHOICES,
   COST_HEADS, MODE_CHOICES, SECURITY_CHOICES, SIMPLE_COST, WC_CHOICES, changedOf, headsSum, wcByOf, withMode, workedLine, type Mode,
   ALONE, AS_TYPED, COLLATERAL_HINT, amountOf, applyPlan, assumptionsOf, boardOf, fixView, guaranteeOf, mudraLine, plainOf, planOf, preview, sameLevers, statusText, tarunAsked, tidyAmount, undoPlan, viableOf,
   type LeverId, type Levers, type PlanChange, type FixView, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
@@ -51,7 +51,7 @@ const BOXES: [string, string][] = [
   ['Unsecured', 'fld-unsecured'], ['Sales in', 'fld-sales'], ['Sales: growth', 'fld-salesGrowth'], ['Use of the capacity', 'fld-utilisation'], ['The price: growth', 'fld-priceGrowth'],
   ['Months from', 'fld-monthsToStart'], ['PMEGP: the borrower', 'fld-category'], ['PMEGP: a town', 'fld-area'], ['PMEGP: manufacturing', 'fld-activity'],
   ['Materials', 'fld-variablePct'], ['Fixed costs in', 'fld-fixed'], ['Fixed costs: growth', 'fld-fixedGrowth'], ['Days of stock', 'fld-days-stock'],
-  ['Days of debtors', 'fld-days-debtors'], ['Days of creditors', 'fld-days-creditors'], ['The working-capital limit sought', 'fld-wcLimit'],
+  ['Days of debtors', 'fld-days-debtors'], ['Days of creditors', 'fld-days-creditors'], ['The working-capital limit you will ask for', 'fld-wcLimit'],
   ['The working-capital limit: its', 'fld-wcRate'], ['The collateral', 'fld-collateral'],
   ['Mudra: the term loan and', 'fld-tl-amount'], ['Mudra: the loans come', 'fld-tarun'], ['CGTMSE: the loans', 'fld-cgtmse'], ['The guarantee fee', 'fld-feeRate'],
 ];
@@ -61,17 +61,25 @@ const boxOf = (need: string): [string, string] | undefined => {
   const m = /^Sales, line (\d+): (.*)$/.exec(need), fact = m && LINE_FACT.find(([w]) => m[2].startsWith(w));
   return fact ? [need, `fld-product-${Number((m as RegExpExecArray)[1]) - 1}-${fact[1]}`] : BOXES.find(([w]) => need.startsWith(w));
 };
+/** "Answer it" beside the status (OR3, the owner's O7): the first question with a box, else the document's own facts. */
+function goOf(s: ReportState, p: ReportPreview, toBox: (need: string) => (e: Event) => void) {
+  const n = p.needs.find((x) => boxOf(x));
+  if (n) return { to: (boxOf(n) as [string, string])[1], what: n, onClick: toBox(n) };
+  if (!p.needs.length && p.view && !p.blocked && docNeeds(s.doc, s.words).length) return { to: 'download', what: 'the document' };
+  return undefined;
+}
 /** One tone a meaning (docs/DESIGN-SITE.md, Colours): good meets, warn provisional, bad misses. */
 
 /** The answer in words (review finding 3): the model's own sentence when a level misses; else what meets and what it cannot
  * read yet. Words only, from the model's checks; no figure. */
-function verdictOf(p: ReportPreview): { head: string; text: string; tone: 'good' | 'warn' | 'bad' } | undefined {
+function verdictOf(p: ReportPreview): { head: string; work: string; text: string; tone: 'good' | 'warn' | 'bad' } | undefined {
   if (!p.view || p.blocked) return undefined;
   const c = p.checks ?? [], named = (v: string) => c.filter((k) => k.verdict === v).map((k) => inSentence(k.label));
-  const wait = named('wait'), head = verdictWords('benchmark', c.length, named('misses').length, wait.length);
-  if (p.misses) return { head, text: p.misses, tone: 'bad' };
+  const wait = named('wait'), missed = named('misses').length, head = verdictWords('benchmark', c.length, missed, wait.length);
+  const work = workWords(missed, wait.length);
+  if (p.misses) return { head, work, text: p.misses, tone: 'bad' };
   const whose = p.benchmarks ? ', yours where you changed them' : '';
-  return wait.length ? { head, text: `${head}${whose}: ${listed(wait)}.`, tone: 'warn' } : { head, text: `${head}${whose}.`, tone: 'good' };
+  return wait.length ? { head, work, text: `${head}${whose}: ${listed(wait)}.`, tone: 'warn' } : { head, work, text: `${head}${whose}.`, tone: 'good' };
 }
 
 /** The answer bar's words (D-UX-84): the lowest DSCR as the model gives it, the verdict and the status, counting the
@@ -79,7 +87,7 @@ function verdictOf(p: ReportPreview): { head: string; text: string; tone: 'good'
 function barText(s: ReportState, p: ReportPreview) {
   if (p.blocked || !p.view) return statusText(p);
   const lowest = p.view.key.find((k) => k.check === 'dscrLowest');
-  const said = p.checks?.length ? verdictOf(p)?.head : undefined;
+  const said = p.checks?.length ? verdictOf(p)?.work : undefined;
   return [lowest && `Lowest DSCR ${lowest.value}`, said, docStatus(s, p)].filter(Boolean).join(' · ');
 }
 
@@ -154,7 +162,8 @@ export function ReportCalculator() {
     <Section id="cost" title="Cost of the project">
       <p class={`mt-2 ${HINT}`}>Leave a head empty if the project has none. The margin for working capital is worked out and added.</p>
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
-        {HEADS.filter((h) => !simple || SIMPLE_COST.includes(h.id)).map((h) => <Fragment key={h.id}>{amount(`fld-cost-${h.id}`, h.label, s.cost[h.id], (x, t) => ({ ...x, cost: { ...x.cost, [h.id]: t } }))}</Fragment>)}
+        {HEADS.filter((h) => !simple || SIMPLE_COST.includes(h.id)).map((h) => <Fragment key={h.id}>{amount(`fld-cost-${h.id}`, h.label, s.cost[h.id], (x, t) => ({ ...x, cost: { ...x.cost, [h.id]: t } }),
+          h.id === 'building' && s.scheme === 'pmegp' ? PMEGP_SHED : undefined)}</Fragment>)}
       </div>
     </Section>
     <Section id="finance" title="Means of finance">
@@ -169,9 +178,9 @@ export function ReportCalculator() {
           onChange={(area) => update((x) => ({ ...x, area }))} />
         <Choice name="fld-activity" legend="What it does" options={ACTIVITY_CHOICES} value={s.activity} columns
           onChange={(activity) => update((x) => ({ ...x, activity }))} />
-        <p class="mt-4 font-medium text-ink">The scheme finances the project only if each of these holds:</p>
-        <ul data-testid="rep-pmegp-conditions" class="mt-2 list-disc space-y-1 pl-5 text-ink">{PMEGP.conditions.map((c) => <li key={c}>{c}</li>)}</ul>
-        {tick('fld-pmegp-confirmed', 'Each of these holds for this project', !!s.pmegpConfirmed, (x, pmegpConfirmed) => ({ ...x, pmegpConfirmed }))}
+        <p class="mt-4 font-medium text-ink">PMEGP finances the project only if each of these holds:</p>
+        <ul data-testid="rep-pmegp-conditions" class="mt-2 list-disc space-y-1 pl-5 text-ink">{pmegpConditions(s).map((c) => <li key={c}>{c}</li>)}</ul>
+        {tick('fld-pmegp-confirmed', 'Each of these holds for my project', !!s.pmegpConfirmed, (x, pmegpConfirmed) => ({ ...x, pmegpConfirmed }))}
       </>}
       {s.scheme === 'mudra' && <div data-testid="rep-mudra">
         <p class={`mt-2 ${HINT}`}>Mudra lends up to Rs. {tidyAmount(String(MUDRA.mostInAll))} in all, the term loan and the working-capital limit together, at the bank's own rate: {MUDRA.levels.map((v) => `${v.label} up to Rs. ${tidyAmount(String(v.upTo))}`).join(', ')}.</p>
@@ -180,7 +189,7 @@ export function ReportCalculator() {
         {tarunAsked(s) && tick('fld-tarun', 'The borrower has taken and repaid a Tarun loan', !!s.tarunRepaid, (x, tarunRepaid) => ({ ...x, tarunRepaid }), `Only then Tarun Plus, above Rs. ${tidyAmount(String(MUDRA.levels[MUDRA.levels.length - 2].upTo))}.`)}
       </div>}
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
-        {amount('fld-tl-amount', s.scheme === 'pmegp' ? 'Term loan sanctioned' : 'Term loan', s.loan.amount, (x, t) => ({ ...x, loan: { ...x.loan, amount: t } }))}
+        {amount('fld-tl-amount', 'Term loan you will ask for', s.loan.amount, (x, t) => ({ ...x, loan: { ...x.loan, amount: t } }))}
         {!simple && s.scheme !== 'pmegp' && amount('fld-subsidy', 'Capital subsidy, if any', s.subsidy, (x, subsidy) => ({ ...x, subsidy }))}
         {!simple && amount('fld-unsecured', 'Unsecured loans, if any', s.unsecured, (x, unsecured) => ({ ...x, unsecured }))}
       </div>
@@ -228,7 +237,7 @@ export function ReportCalculator() {
       {simple && s.salesBy === 'typed' && <p class="mt-4 text-ink">Sales are typed by year in expert mode.</p>}
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
         {simple ? <TextField id="fld-sellFrom" label="When will you start selling?" type="month" value={s.sellFrom ?? ''}
-            hint={'The moratorium runs until then.'}
+            hint={'No instalments until then.'}
             said={s.sellFrom?.trim() ? (parseMonth(s.sellFrom) ? monthText(parseMonth(s.sellFrom) as string) : 'Not understood. Type 2027-03 or Mar 2027.') : undefined}
             onCommit={(sellFrom) => update((x) => ({ ...x, sellFrom }))} />
           : percent('fld-monthsToStart', 'Months from the loan to the first sales (0 if at once)', s.monthsToStart, (x, monthsToStart) => ({ ...x, monthsToStart }), 'months')}
@@ -276,7 +285,7 @@ export function ReportCalculator() {
         onChange={(wcBy) => update((x) => ({ ...x, wcBy }))} />
       {worked && <p data-testid="rep-worked" class="mt-2 text-ink">{worked}</p>}
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
-        {(simple ? by === 'typed' : by !== 'worked' && by !== 'none') && amount('fld-wcLimit', 'Working-capital limit sought', s.wcLimit, (x, wcLimit) => ({ ...x, wcLimit }))}
+        {(simple ? by === 'typed' : by !== 'worked' && by !== 'none') && amount('fld-wcLimit', 'Working-capital limit you will ask for', s.wcLimit, (x, wcLimit) => ({ ...x, wcLimit }))}
         {!simple && <>
           {percent('fld-wcRate', 'Its interest rate (% a year)', s.wcRate, (x, wcRate) => ({ ...x, wcRate }), '%')}
           {(['stock', 'debtors', 'creditors'] as const).map((k) => <Fragment key={k}>
@@ -500,9 +509,10 @@ function Result({ s, p, update, use, used, undo, keep, toCollateral, toBox, rese
         status (review finding 3); one tone a meaning, and the status plain when complete, never green under a miss. */}
     <div class="paper shadow-paper rounded-card p-4 sm:p-6">
       {/* The answer is the paper's heading (UX7): a flat claim, its rule solid once final and dashed while provisional. */}
-      {verdict && <h3 data-testid={p.misses ? 'rep-misses' : 'rep-verdict'} data-answer class={`text-title text-ink ${answerRule(!p.blocked && !p.needs.length)}`}><Claim text={verdict.text} /></h3>}
+      {verdict && <Verdict id={p.misses ? 'rep-misses' : 'rep-verdict'} work={verdict.work} text={verdict.text} rule={answerRule(!p.blocked && !p.needs.length)} />}
       {p.short && <p data-testid="rep-short" class="mt-3 text-sm font-medium text-bad">{p.short}</p>}
-      <Counter id="rep-status" result={result} text={v ? docStatus(s, p) : statusText(p)} rule={!verdict} answer={!verdict} class={verdict ? 'mt-2' : ''}>
+      <Counter id="rep-status" result={result} text={v ? docStatus(s, p) : statusText(p)} rule={!verdict} answer={!verdict} class={verdict ? 'mt-2' : ''}
+        plain={!!verdict} go={goOf(s, p, toBox)}>
         {p.needs.length > 0 && <ul data-testid="rep-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => {
           const b = boxOf(n);
           return <li key={n}>{b ? <a href={`#${b[1]}`} onClick={toBox(n)} class="inline-flex min-h-6 items-center text-link">{n}</a> : n}</li>;

@@ -16,7 +16,7 @@ import { isoDate, save, type FileKind } from '../download';
 import { cmaDoc, docNeeds, docStatus, fileName } from './document';
 import { ReadStatement } from './Read';
 import { Levels } from './Levels';
-import { verdictWords } from '../verdict';
+import { workWords } from '../verdict';
 import { CASE_CHOICES, COLLATERAL_HINT, applyCmaPlan, levelsOf, undoCmaPlan, type CmaChange, type CmaLevers } from './levers';
 import {
   ASSUMPTIONS, HEADS, amountOf, columnsOf, emptyState, exampleState, preview, startYearOf, statusText, subtotals, tidyAmount,
@@ -102,11 +102,11 @@ export function CmaCalculator() {
 }
 
 /** The answer bar's words (D-UX-84), as the report's: the limit, whether it meets a lender's levels, the status; never
- * "Complete" alone under a miss (UX5b critic, finding 1). */
+ * "All answered" alone under a miss (UX5b critic, finding 1); the verdict in plain words (OR3). */
 function barText(p: CmaPreview, s: CmaState) {
   if (!p.view) return statusText(p);
   const l = levelsOf(s), c = l?.checks;
-  const said = c && verdictWords('benchmark', c.length, c.filter((k) => k.verdict === 'misses').length, c.filter((k) => k.verdict === 'wait').length);
+  const said = c && workWords( c.filter((k) => k.verdict === 'misses').length, c.filter((k) => k.verdict === 'wait').length);
   return [`Limit ${p.view.key[0]?.value}`, said, statusText(p)].filter(Boolean).join(' · ');
 }
 
@@ -207,7 +207,8 @@ function Result({ s, p, update, use, used, undo, keep }: { s: CmaState; p: CmaPr
   return <div class="lg:col-start-2 lg:row-start-1"><section id="result" aria-labelledby="result-h" class="answer-panel mt-10 lg:mt-4">
     <h2 id="result-h" class="sr-only">The CMA data</h2>
     <div class="paper shadow-paper rounded-card p-4 sm:p-6">
-      <Counter id="cma-status" result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} text={statusText(p)} rule answer>
+      <Counter id="cma-status" result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} text={statusText(p)} rule answer plain={!!levelsOf(s)?.checks}
+        go={p.needs.length ? { to: 'cma-figures', what: p.needs[0] } : undefined}>
         {p.needs.length > 0 && <ul data-testid="cma-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">
           {p.needs.slice(0, 8).map((n) => <li key={n}>{n}</li>)}{p.needs.length > 8 && <li>and {p.needs.length - 8} more</li>}</ul>}
       </Counter>

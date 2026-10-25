@@ -3,7 +3,7 @@
  * report to tables in words, with the engine's exact figures beside them for the Excel copy. The page and the document
  * show the same tables. Pure, no DOM. Figures: engine/report.ts only (with dscr.ts for profit, tax and DSCR).
  */
-import { questionsLeft, verdictWords } from '../verdict';
+import { ALL_ANSWERED, questionsLeft, verdictWords } from '../verdict';
 import { ASSUMPTIONS, COST_HEADS, HEADS, costsOf, MUDRA, PMEGP, REPORT_REVIEW_BY, mudraLevel, mudraShort, projectReport, workedLimit, WORKING_CAPITAL, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
 import { parseAmount, parseMonth } from '../../../engine/parse';
 import { LEVELS, collateralNeeded, diagnose, type Levels, type RatioCheck } from '../../../engine/ratios';
@@ -113,6 +113,13 @@ export const CATEGORY_CHOICES: { value: Category; label: string }[] = [
   { value: 'general', label: 'General' }, { value: 'special', label: 'Special: SC, ST, OBC, minority, woman, ex-serviceman, a person with a disability and others the scheme names' },
 ];
 export const AREA_CHOICES: { value: Area; label: string }[] = [{ value: 'urban', label: 'A town or city' }, { value: 'rural', label: 'A village' }];
+/** PMEGP's conditions in plain words, only those that apply (OR3, the owner's O1): the trading one only for a trading
+ * business, which the report does not yet offer; the shed's stands under the building's box (`PMEGP_SHED`), not here. */
+// The document keeps the guideline's own words, which a lender reads (brief-first: a CA's terms for the document).
+type Condition = { text: string; guideline: string; when?: string };
+export const pmegpConditions = (s: { activity?: string }, words: 'text' | 'guideline' = 'text') =>
+  (PMEGP.conditions as Condition[]).filter((c) => !c.when || c.when === s.activity).map((c) => c[words]);
+export const PMEGP_SHED = (PMEGP.conditions as Condition[]).find((c) => c.when === 'shed')?.text ?? '';
 export const ACTIVITY_CHOICES: { value: Activity; label: string }[] = [{ value: 'manufacturing', label: 'Manufacturing' }, { value: 'service', label: 'A service' }];
 /** The assumptions listed on the page: the use of the capacity and the price only while sales come from the drivers. */
 // Each still standing, and the days only those not typed over (review finding 8: the ledger never lists a value changed).
@@ -166,7 +173,7 @@ const LIMIT_NEED = 'The working-capital limit: worked out, your own figure, or n
 const LIMIT_WAITS = 'The working-capital limit worked out: it waits for the sales, the costs and the days';
 /** The engine's needs as the page asks them: the limit's choice in both modes, simple mode's questions in its own. */
 export function needsWords(s: ReportState, needs: string[]): string[] {
-  const t = simpleTerms(s), by = wcByOf(s), words = needs.map((n) => (!n.startsWith('The working-capital limit sought') || by === 'typed' ? n : by === 'worked' ? LIMIT_WAITS : LIMIT_NEED));
+  const t = simpleTerms(s), by = wcByOf(s), words = needs.map((n) => (!n.startsWith('The working-capital limit you will ask for') || by === 'typed' ? n : by === 'worked' ? LIMIT_WAITS : LIMIT_NEED));
   if (!simple(s)) return words;
   const mapped = words.map((n) => { const w = SIMPLE_WORDS.find(([k]) => n.startsWith(k)); return w ? w[1] : n; })
     .filter((n): n is string => n !== undefined && !(t.toStart !== undefined && t.toStart < 0 && n === 'When you will start selling'));
@@ -352,7 +359,7 @@ export function viewOf(r: Report): ReportView {
       ...(sc ? [{ label: `PMEGP margin money, ${sc.ratePct}% of Rs. ${rupees(sc.base)}: a deposit for ${PMEGP.lockInYears} years, then set off against the loan`, values: [rupees(f.subsidy)], n: [f.subsidy] }]
         : f.subsidy ? [{ label: 'Capital subsidy', values: [rupees(f.subsidy)], n: [f.subsidy] }] : []),
       ...(f.unsecured ? [{ label: 'Unsecured loans', values: [rupees(f.unsecured)], n: [f.unsecured] }] : []),
-      { label: sc ? `Term loan: Rs. ${rupees(sc.sanctioned)} sanctioned, less the margin money` : r.mudra ? `Term loan under Mudra (${r.mudra.level.label}), with no collateral` : 'Term loan', values: [rupees(f.termLoan)], n: [f.termLoan] },
+      { label: sc ? `Term loan: Rs. ${rupees(sc.sanctioned)} applied for, less the margin money` : r.mudra ? `Term loan under Mudra (${r.mudra.level.label}), with no collateral` : 'Term loan', values: [rupees(f.termLoan)], n: [f.termLoan] },
       { label: 'Total means of finance', values: [rupees(f.total)], n: [f.total], kind: 'total' },
     ],
   };
@@ -453,7 +460,7 @@ export function viewOf(r: Report): ReportView {
       line(ys, 'Less: creditors', (y) => y.creditors), line(ys, 'Working-capital gap', (y) => y.gap, 'total'),
       line(ys, 'Bank finance, second method (75% of current assets less creditors)', (y) => y.mpbf),
       line(ys, 'By turnover: working capital, 25% of sales', (y) => y.turnoverNeed), line(ys, 'By turnover: bank finance, 20% of sales', (y) => y.turnoverBank),
-      line(ys, 'Limit sought', () => r.wcLimit, 'total'),
+      line(ys, 'Limit applied for', () => r.wcLimit, 'total'),
     ],
   };
   const schedule: ViewTable = {
@@ -499,7 +506,7 @@ export function preview(s: ReportState): ReportPreview {
     needs: [], view: viewOf(r), flags: r.scheme?.flags ?? [], checks,
     ...(d.misses.length ? { misses: `${verdictWords('benchmark', d.checks.length, d.misses.length, d.checks.filter((k) => k.meets === undefined).length)}: ${listed(d.misses.map(labelOf))}.` } : {}),
     ...(collateralNote ? { collateralNote } : {}), ...(own ? { benchmarks: own } : {}),
-    ...(d.term.months > d.term.longest ? { longTerm: `The term loan runs ${d.term.months} months with its moratorium, beyond the ${d.term.longest} months an MSME term loan commonly runs at most.` } : {}),
+    ...(d.term.months > d.term.longest ? { longTerm: `The term loan runs ${d.term.months} months, its holiday included: lenders commonly allow a small business at most ${d.term.longest}.` } : {}),
     ...(c ? { short: `Cash goes below nil in ${c.fy}: Rs. ${rupees(c.need)} short at its lowest. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.` } : {}),
   };
 }
@@ -509,7 +516,7 @@ export const COLLATERAL_HINT = `Its realisable sale value, ${LEVELS.collateral.r
 
 export const statusText = (p: ReportPreview, more = 0) => {
   const n = p.needs.length + (p.short ? 1 : 0) + more;
-  return p.blocked ? 'No figures' : n ? questionsLeft(n) : 'Complete';
+  return p.blocked ? 'No figures' : n ? questionsLeft(n) : ALL_ANSWERED;
 };
 
 const years = (n: number, perYear: number) => {

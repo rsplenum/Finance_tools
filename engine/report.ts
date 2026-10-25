@@ -77,7 +77,7 @@ export interface ReportInput {
   costHeads?: CostHeadsInput;
   /** Days of stock, debtors and creditors. */
   days?: { stock?: number; debtors?: number; creditors?: number };
-  /** The working-capital limit sought, and its interest rate (%). */
+  /** The working-capital limit asked for, and its interest rate (%). */
   wcLimit?: number; wcRatePct?: number;
   /** The collateral's market value (D-UX-52): its realisable sale value counts in the security cover. */
   collateral?: number;
@@ -250,7 +250,7 @@ export function reportNeeds(x: ReportInput): string[] {
   if (!isNum(x.fixedGrowthPct)) needs.push('Fixed costs: growth a year (%)');
   const d = x.days ?? {};
   for (const k of ['stock', 'debtors', 'creditors'] as const) if (!(isNum(d[k]) && (d[k] as number) >= 0 && (d[k] as number) <= 365)) needs.push(`Days of ${k}, 0 to 365`);
-  if (!(isNum(x.wcLimit) && x.wcLimit >= 0)) needs.push('The working-capital limit sought (0 if none)');
+  if (!(isNum(x.wcLimit) && x.wcLimit >= 0)) needs.push('The working-capital limit you will ask for (0 if none)');
   if (isNum(x.wcLimit) && x.wcLimit > 0 && !isNum(x.wcRatePct)) needs.push('The working-capital limit: its interest rate');
   if (x.collateral !== undefined && !(isNum(x.collateral) && x.collateral >= 0)) needs.push('The collateral\'s market value: a figure of 0 or more');
   return needs;
