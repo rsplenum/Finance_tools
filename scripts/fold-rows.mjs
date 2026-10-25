@@ -1,7 +1,7 @@
 /**
  * A row's notes (D-TECH-66): each row's session writes its decisions, traps, lessons, the owner's to-dos,
  * its cost line and its handoff to `docs/rows/<ROW>.md` only, so two sessions never edit the same lines of
- * the shared docs and their PRs stop conflicting. `npm run fold` (the main conversation, after a merge)
+ * the shared docs and their PRs stop conflicting. `npm run fold` (the main conversation, as it merges: D-TECH-69)
  * moves every notes file into the shared docs and prints each one's handoff to write into HANDOFF by hand.
  * `--check` (in verify) checks the notes' form, that no decision ID is taken twice, and that a branch
  * that adds a notes file leaves the shared docs alone.

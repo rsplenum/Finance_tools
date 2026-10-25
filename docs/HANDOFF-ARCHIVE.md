@@ -167,6 +167,7 @@ The test figures are model-worked until the owner confirms fictional cases A and
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 24-10-2026 | NUM1: lakh and crore from the engine in home's intros and the estimate's headline (D-UX-152) | S, high | about 50 steps; two site checks (a sideways scroll at 320 px, then the words' raise) took the most |
 | 24-10-2026 | SEC1: the Worker hardened, a byte cap, the answer checked, `/api/e` capped, Node pinned (D-TECH-61) | S, high | about 58 steps; two 12-minute verifies (the container's Chromium, then the privacy page's load) took the most |
 | 24-10-2026 | VID1: the video studio runs, and the timeline to Monday (D-TECH-58, D-TECH-59, D-BIZ-20) | none set: the owner's ask in the chat | about 220 steps; the two master renders (9 and 7 min) and the cut-text fix took the most |
 | 24-10-2026 | TRUST1: how sure each figure is, four marks on every data file (D-DATA-26, D-DATA-27, D-UX-150, D-UX-151) | M, high | about 100 steps and two agents' 57; marking the data, the words' tests and the load counts took the most |

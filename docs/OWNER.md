@@ -69,3 +69,13 @@ What only the owner can do or answer, moved out of `docs/HANDOFF.md` on 04-10-20
 - **For the scout** (D-TECH-67), in `rsplenum/video-studio`: Settings → Secrets and variables → Actions, add `ANTHROPIC_API_KEY`; set a monthly spending limit in the Anthropic console; Settings → Actions → General, turn on "Allow GitHub Actions to create and approve pull requests". No host needs allowing.
 - **Lowest-year DSCR target** (UXR3): `engine/data/dscr.json` says 1.20, `engine/data/ratios.json` says 1.25. One value, or name the lender norm each tool uses.
 - **Order of the rows UXR2–UXR7**, and whether VID2's screens wait for UXR3 and UXR4 (recommended: record the screens after both).
+- **Open the Worker's `/health`** (SEC1, D-TECH-61, merged): it should list nothing missing (`docs/CLOUDFLARE.md` §2, step 4).
+- **Which depreciation the balance sheet uses** (OR1 tradeoff 4, D-UX-177). The engine uses written-down value at Income Tax rates (building 10%, plant 15%). On case F (the OR1 figures: building Rs. 50 L, plant Rs. 2.5 Cr, loan Rs. 2.5 Cr at 9.3% over 15 years after a month's holiday), the fixed-asset cover's lowest year is:
+  - 0.4957 in 2035-36 on written-down value;
+  - 0.9358 in 2035-36 on straight line, at assumed Schedule II lives (building 30 years, plant 15 years, 5% left at the end; not yet checked against the Act).
+  - Both miss 1.20, and straight line misses from the first year (1.15). So the depreciation basis is not the cause: a 15-year loan on 83% of the fixed assets outlives the assets' value. A shorter term alone cannot fix it either: even at 3 years, the first year's cover is under 1.20. Both bases were worked two ways, by a closed form and year by year, and the two agree.
+  - Recommended: keep written-down value, which matches the tax and a lender's reading, and take the half-year rule in OR5.
+- **Least strain, or the term first** (D-UX-177). The fix gives way where the largest share given away is smallest: 10 years and Rs. 75 L more. Shortening the term first, as far as the DSCR allows, would pick 3 years and Rs. 5.4 L more, an instalment few businesses can carry. Recommended: least strain, as now.
+- **The shortest term a fix may propose** (D-UX-175). No floor yet: the lowest-year DSCR is the only bound. Recommended: a sourced floor in OR10, with the other levers' bounds.
+- **A shorter term on the plan's sliders** (O11). For now it is in the fix line only; the board's repayment slider only lengthens. Recommended: OR10's linked sliders take it.
+- **The fix is worked on the page's main thread.** It takes about 0.3 s once the figures rest. Recommended: keep it so; move it to a worker only if a slow phone shows the pause.
