@@ -11,11 +11,17 @@
  * - the lender's: a longer moratorium, then more instalments, the whole term within the longest (180 months), each the
  *   fewest that meet what it can reach without losing a level met;
  * - the collateral last, since it moves only the security cover: the market value that brings it to its level.
- * A step never trades a level already met for another. Pure, no DOM.
+ * A step never trades a level already met for another. When the plan so worked still misses a level, or asks the
+ * promoters for as much as the fix or more, it opens on the fix
+ * beside the miss instead (engine/fix.ts, OR2b, D-UX-182), so "Make it viable" agrees with "Use this": a shorter repayment
+ * and a smaller term loan, the promoters asked once for what more it needs when their most is not typed, and used only
+ * when within it when it is. The repayment may shorten on the board down to where the lowest-year DSCR stops meeting.
+ * Pure, no DOM.
  */
 import { collateralNeeded, diagnose, LEVELS, termMonths, type Diagnosis, type Levels, type RatioId } from './ratios';
 import { projectReport, type Report, type ReportInput } from './report';
 import type { Blocked, Needs } from './dscr';
+import { fixOf } from './fix';
 
 export const LEVER_IDS = ['wc', 'promoters', 'unsecured', 'fixed', 'sales', 'collateral', 'moratorium', 'instalments'] as const;
 export type LeverId = (typeof LEVER_IDS)[number];
@@ -50,8 +56,9 @@ export function withLevers(x: ReportInput, l: Levers): ReportInput {
 
 /** The limits the plan keeps to: the promoters' most in all (if given), sales in tenths of a per cent by the drivers
  * (every year at the most use; none when typed), the months the whole term may still grow, and the months an instalment
- * takes; and the least term loan the report takes (above PMEGP's margin money). */
-export interface Limits { promotersMost?: number; sales?: number; termRoom: number; monthsEach: number; leastLoan: number }
+ * takes; the least term loan the report takes (above PMEGP's margin money); and `fewest`, the instalments lever at its
+ * lowest (0 or less): the fewest instalments at which the lowest-year DSCR still meets, at the plan's other levers. */
+export interface Limits { promotersMost?: number; sales?: number; termRoom: number; monthsEach: number; leastLoan: number; fewest: number }
 export interface Plan {
   levers: Levers;
   limits: Limits;
@@ -60,8 +67,11 @@ export interface Plan {
   /** True when every ratio that can be read meets its level with the plan; `still`, those that miss. */
   works: boolean; still: RatioId[];
   report: Report; diagnosis: Diagnosis;
-  /** The promoters' money in all, as typed and with the plan. */
-  promoters: { now: number; plan: number };
+  /** The promoters' money in all, as typed and with the plan, and how much more the plan needs (0 or more). */
+  promoters: { now: number; plan: number; more: number };
+  /** True when the plan is the fix beside the miss (OR2b); `fixNeeds`, the promoters' money in all the fix takes, when it
+   * was passed over for being more than their most. */
+  fromFix: boolean; fixNeeds?: number;
 }
 export interface PlanInput {
   /** The most the promoters can bring in all, if the borrower gives it. */
@@ -149,6 +159,12 @@ export function makePlan(x: ReportInput, o: PlanInput = {}): Plan | Needs | Bloc
     return { ...l, [id]: hi };
   };
 
+  /** The collateral last: the market value that brings the security cover to its level. */
+  const withCollateral = (l: Levers): Levers => {
+    const u = at(l), need = u ? collateralNeeded(u.r, u.x, 'fresh', o.levels) : undefined, had = (x.collateral ?? 0) + l.collateral;
+    return need !== undefined && need > had + EPS && (x.collateral !== undefined || need > 0) ? { ...l, collateral: need - (x.collateral ?? 0) } : l;
+  };
+
   /** The plan in its order; `cap` bounds the term loan's cut when the promoters' most is passed with higher sales. */
   const solve = (cap: number): Levers => {
     let l = { ...start };
@@ -157,11 +173,7 @@ export function makePlan(x: ReportInput, o: PlanInput = {}): Plan | Needs | Bloc
     if (free('sales')) l = step(l, 'sales', sales ?? (100 - 1) * GRID, sales === undefined ? 'least' : 'fill');
     if (free('moratorium')) l = step(l, 'moratorium', termRoom(l), 'least', true);
     if (free('instalments')) l = step(l, 'instalments', Math.floor(termRoom(l) / monthsEach), 'least', true);
-    if (free('collateral')) {
-      const u = at(l), need = u ? collateralNeeded(u.r, u.x, 'fresh', o.levels) : undefined, had = (x.collateral ?? 0) + l.collateral;
-      if (need !== undefined && need > had + EPS && (x.collateral !== undefined || need > 0)) l = { ...l, collateral: need - (x.collateral ?? 0) };
-    }
-    return l;
+    return free('collateral') ? withCollateral(l) : l;
   };
 
   // Higher sales need more margin, which the promoters bring: past their most, the term loan's cut gives way by the
@@ -177,14 +189,34 @@ export function makePlan(x: ReportInput, o: PlanInput = {}): Plan | Needs | Bloc
     const u = at(l), v = l[id] && free(id) ? at({ ...l, [id]: 0 }) : undefined;
     if (u && v && [...u.met].every((m) => v.met.has(m))) l = { ...l, [id]: 0 };
   }
+  // With nothing held, the fix beside the miss (OR2b) when the plan still misses or asks the promoters for as much or
+  // more, and the promoters' most, if typed, covers it: so "Make it viable" agrees with "Use this".
+  let fromFix = false, fixNeeds: number | undefined;
+  const plain = at(l) as Run;
+  if (!Object.keys(held).length) {
+    const f = fixOf(x, o.levels)?.fixes[0];
+    if (f && (most === undefined || f.report.finance.promoter <= most + EPS) && (open(plain).length || plain.r.finance.promoter >= f.report.finance.promoter - EPS)) {
+      const k = withCollateral({ ...AS_TYPED, ...f.levers });
+      if (at(k) && !open(at(k) as Run).length) { l = k; fromFix = true; }
+    } else if (f && open(plain).length) fixNeeds = f.report.finance.promoter;
+  }
   const u = at(l) as Run;
+  // The fewest instalments the board may take: the lowest-year DSCR meets there (it falls as the instalments rise).
+  const n0 = x.loan.instalments as number, dscr = (v: number) => !!at({ ...l, instalments: v })?.met.has('dscrLowest');
+  let fewest = Math.min(0, l.instalments);
+  if (free('instalments') && dscr(l.instalments)) {
+    let a = 1 - n0, b = l.instalments;
+    if (dscr(a)) b = a;
+    else while (b - a > 1) { const m = Math.floor((a + b) / 2); if (dscr(m)) b = m; else a = m; }
+    fewest = Math.min(fewest, b);
+  }
   const atLimit = LEVER_IDS.filter((id) => l[id] > 0 && (
     id === 'promoters' || id === 'wc' ? most !== undefined && u.r.finance.promoter >= most - 1 :
     id === 'sales' ? sales !== undefined && l.sales >= sales :
     id === 'moratorium' || id === 'instalments' ? termRoom(l) < monthsEach : false));
   return {
-    levers: l, limits: { ...(most !== undefined ? { promotersMost: most } : {}), ...(sales !== undefined ? { sales } : {}), termRoom: termRoom(AS_TYPED), monthsEach, leastLoan },
-    atLimit, works: !u.d.misses.length, still: u.d.misses, report: u.r, diagnosis: u.d,
-    promoters: { now: base.finance.promoter, plan: u.r.finance.promoter },
+    levers: l, limits: { ...(most !== undefined ? { promotersMost: most } : {}), ...(sales !== undefined ? { sales } : {}), termRoom: termRoom(AS_TYPED), monthsEach, leastLoan, fewest },
+    atLimit, works: !u.d.misses.length, still: u.d.misses, report: u.r, diagnosis: u.d, fromFix, ...(fixNeeds !== undefined ? { fixNeeds } : {}),
+    promoters: { now: base.finance.promoter, plan: u.r.finance.promoter, more: Math.max(0, u.r.finance.promoter - base.finance.promoter) },
   };
 }

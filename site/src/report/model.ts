@@ -622,6 +622,12 @@ export interface PlanCard { id: LeverId; by: 'borrower' | 'lender'; head: string
 export interface PlanView {
   x: ReportInput; lv: Levels; levers: Levers; cards: PlanCard[]; limits: string; atLimit?: string;
   most?: number; promotersNow: number; leastLoan: number; termRoom: number; monthsEach: number; salesMost?: number;
+  /** The instalments lever at its lowest (0 or less): the lowest-year DSCR still meets there (OR2b). */
+  fewest: number;
+  /** When the plan is the fix and the promoters' most is not typed: the question its box asks, once (OR2b, D-UX-183). */
+  ask?: string;
+  /** When the fix was passed over: it needs more of the promoters' money than their most (OR2b). */
+  short?: string;
   /** On Mudra, when the promoters' most and Mudra's Rs. 20 lakh in all cannot fund the project (D-UX-111). */
   mudraShort?: string;
 }
@@ -634,18 +640,21 @@ export function planOf(s: ReportState, held: Partial<Levers> = {}): PlanView | u
   const L = q.limits, room = (x.loan.amount as number) - L.leastLoan;
   const show: Record<LeverId, boolean> = {
     wc: (x.wcLimit ?? 0) > 0, promoters: room >= 1, unsecured: room >= 1, fixed: (x.fixedCosts ?? 0) > 0, sales: L.sales !== 0,
-    collateral: x.collateral !== undefined || q.levers.collateral > 0, moratorium: L.termRoom >= 1, instalments: L.termRoom >= L.monthsEach,
+    collateral: x.collateral !== undefined || q.levers.collateral > 0, moratorium: L.termRoom >= 1, instalments: L.termRoom >= L.monthsEach || L.fewest < 0,
   };
+  const head = (id: LeverId) => (id !== 'instalments' || L.fewest >= 0 ? HEAD[id] : L.termRoom >= L.monthsEach ? 'A shorter or longer repayment' : 'A shorter repayment');
   const limited = [...new Set(q.atLimit.map((id) => LIMIT_OF[id]).filter(Boolean))];
   const r = x.scheme?.id === 'mudra' && most !== undefined ? projectReport(x) : undefined;
   const short = r && !('needs' in r) && !('blocked' in r) ? mudraShort(r, most as number) : undefined;
   return {
     ...(short !== undefined ? { mudraShort: `On Mudra, the promoters’ Rs. ${rupees(most as number)} and Mudra’s Rs. ${rupees(MUDRA.mostInAll)} in all leave Rs. ${rupees(short)} of the project unfunded. A loan to a small enterprise outside Mudra, which CGTMSE can guarantee, can be larger: choose None for the scheme, then a CGTMSE guarantee.` } : {}),
-    x, lv, levers: q.levers, cards: LEVER_IDS.filter((id) => show[id]).map((id) => ({ id, by: id === 'moratorium' || id === 'instalments' ? 'lender' : 'borrower', head: HEAD[id] })),
+    ...(q.fixNeeds !== undefined && most !== undefined ? { short: `The first change above that makes it work needs the promoters to bring Rs. ${upRupees(q.fixNeeds)} in all, more than the Rs. ${rupees(most)} they can.` } : {}),
+    ...(q.fromFix && most === undefined && q.promoters.more > 0 ? { ask: `This needs Rs. ${upRupees(q.promoters.more)} more from the promoters: can you bring it?` } : {}),
+    x, lv, levers: q.levers, cards: LEVER_IDS.filter((id) => show[id]).map((id) => ({ id, by: id === 'moratorium' || id === 'instalments' ? 'lender' : 'borrower', head: head(id) })),
     limits: `The limits kept: ${most !== undefined ? `the promoters bring at most Rs. ${rupees(most)} in all` : 'no more of the promoters’ money, since the most they can bring is not typed'}; ${L.sales === undefined
       ? 'sales with no limit known, so a lender will test them against the market' : `the use of the capacity at most ${LEVELS.capacity.mostUsePct}% in any year`}; the whole term within ${LEVELS.term.longestMonths} months; unsecured loans and fixed costs only as you set them.`,
     ...(limited.length ? { atLimit: `At the limit: ${listed(limited)}.` } : {}),
-    ...(most !== undefined ? { most } : {}), promotersNow: q.promoters.now, leastLoan: L.leastLoan, termRoom: L.termRoom, monthsEach: L.monthsEach,
+    ...(most !== undefined ? { most } : {}), promotersNow: q.promoters.now, leastLoan: L.leastLoan, termRoom: L.termRoom, monthsEach: L.monthsEach, fewest: L.fewest,
     ...(L.sales !== undefined ? { salesMost: L.sales } : {}),
   };
 }
@@ -668,9 +677,12 @@ export function boardOf(q: PlanView, l: Levers): BoardView {
     sales: { move: `+${pct(l.sales)}`, to: typed ? `${rs(y.sales)} in a full first year` : `The use of the capacity at ${uses(y.utilisationPct)}`, max: q.salesMost ?? Math.max(GRID_UP, q.levers.sales) },
     collateral: { move: `${rs(l.collateral)} more`, to: `A market value of ${rs(had + l.collateral)}`, max: Math.max(1000000, 2 * q.levers.collateral, had) },
     moratorium: { move: `+${l.moratorium} month${l.moratorium === 1 ? '' : 's'}`, to: `A moratorium of ${y.loan.moratoriumMonths} months`, max: q.termRoom - l.instalments * q.monthsEach },
-    instalments: { move: `+${l.instalments}`, to: `${y.loan.instalments} instalments`, max: Math.floor((q.termRoom - l.moratorium) / q.monthsEach) },
+    instalments: { move: l.instalments < 0 ? `${-l.instalments} fewer` : `+${l.instalments}`, to: `${y.loan.instalments} instalments`, max: Math.floor((q.termRoom - l.moratorium) / q.monthsEach), min: q.fewest },
   };
-  for (const id of LEVER_IDS) moves[id] = { ...moves[id], max: Math.max(0, moves[id].max, l[id]), ...(l[id] ? {} : { move: 'As typed' }) };
+  for (const id of LEVER_IDS) {
+    const m = moves[id];
+    moves[id] = { ...m, max: Math.max(0, m.max, l[id]), ...(m.min !== undefined ? { min: Math.min(0, m.min, l[id]) } : {}), ...(l[id] ? {} : { move: 'As typed' }) };
+  }
   const step: Record<LeverId, () => string> = {
     wc: () => `A working-capital limit of ${rs(y.wcLimit)} (now ${rs(x.wcLimit)}).`,
     promoters: () => `A term loan of ${rs(y.loan.amount)} (now ${rs(x.loan.amount)}), the promoters bringing the rest.`,
@@ -679,7 +691,7 @@ export function boardOf(q: PlanView, l: Levers): BoardView {
     sales: () => (typed ? `Sales of ${rs(y.sales)} in a full first year (now ${rs(x.sales)}), ${pct(l.sales)} higher.` : `The use of the capacity at ${uses(y.utilisationPct)} (now ${uses(x.utilisationPct)}).`),
     collateral: () => `Collateral with a market value of ${rs(had + l.collateral)} (now ${had ? rs(had) : 'none'}).`,
     moratorium: () => `A moratorium of ${y.loan.moratoriumMonths} months (now ${x.loan.moratoriumMonths}), if the lender agrees.`,
-    instalments: () => `${y.loan.instalments} instalments (now ${x.loan.instalments}), if the lender agrees.`,
+    instalments: () => `${y.loan.instalments} instalments (now ${x.loan.instalments})${l.instalments > 0 ? ', if the lender agrees' : ''}.`,
   };
   const steps = LEVER_IDS.filter((id) => l[id]).map((id) => step[id]()), r = projectReport(y);
   if ('needs' in r || 'blocked' in r) {

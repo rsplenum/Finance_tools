@@ -13,6 +13,7 @@ import { describe, it, expect } from 'vitest';
 import { projectReport, type Report, type ReportInput } from '../engine/report';
 import { diagnose } from '../engine/ratios';
 import { fixOf } from '../engine/fix';
+import { makePlan, withLevers, type Plan } from '../engine/plan';
 
 export const F: ReportInput = {
   taxBy: 'proprietor', cost: { building: 5000000, machinery: 25000000 },
@@ -67,5 +68,41 @@ describe('the fix beside the miss (OR2)', () => {
     expect(f.missed).toContain('currentRatio');
     expect(f.fixes).toEqual([]);
     expect(fixOf({ ...F, loan: { ...F.loan, amount: 10000000 } })).toBeUndefined();
+  });
+});
+
+// "Make it viable" on case F (OR2b, D-UX-182): the plan's own steps move nothing (no promoters' most typed, the term only
+// lengthening), so it opens on the fix beside the miss and agrees with "Use this". The fewest instalments the board takes
+// is where the lowest-year DSCR still meets: by the engine, 1.3570 at 12 instalments of Rs. 1,75,00,000 and 1.24998 at 11,
+// under 1.25, in 2026-27 (five instalments by 31 March); the larger term loan of 2.5 crore reaches its bound at 16.
+describe('"Make it viable" on case F (OR2b)', () => {
+  it('opens on the least strained fix and works: the promoters asked once for Rs. 75,00,000 more', () => {
+    const q = makePlan(F) as Plan, f = fixOf(F)!.fixes[0];
+    expect([q.fromFix, q.works, q.levers]).toEqual([true, true, f.levers]);
+    expect(q.promoters.more).toBe(7500000);
+    expect(q.promoters.plan).toBeCloseTo(f.report.finance.promoter, 6);
+  });
+
+  it('keeps the fix when the promoters can bring it, and passes it over, saying what it needs, when they cannot', () => {
+    expect((makePlan(F, { promotersMost: 20000000 }) as Plan).levers).toEqual(fixOf(F)!.fixes[0].levers);
+    const q = makePlan(F, { promotersMost: 10000000 }) as Plan;
+    expect([q.fromFix, q.works, q.still]).toEqual([false, false, ['facr']]);
+    expect(q.fixNeeds).toBeCloseTo(fixOf(F)!.fixes[0].report.finance.promoter, 6);
+    expect(q.report.finance.promoter).toBeLessThanOrEqual(10000000);
+  });
+
+  it('lets the repayment shorten down to where the lowest-year DSCR stops meeting', () => {
+    const q = makePlan(F) as Plan, dscr = (n: number) => {
+      const y = withLevers(F, { ...q.levers, instalments: n - 180 }), k = diagnose(projectReport(y) as Report, y).checks.find((c) => c.id === 'dscrLowest')!;
+      return [k.meets, (k.worst as number).toFixed(4)];
+    };
+    expect(q.limits.fewest).toBe(12 - 180);
+    expect([dscr(12), dscr(11)]).toEqual([[true, '1.3570'], [false, '1.2500']]);
+    expect((makePlan(F, { promotersMost: 10000000 }) as Plan).limits.fewest).toBe(16 - 180);
+  });
+
+  it('keeps to its own steps when no fix meets every level missed', () => {
+    // A lower price misses the current ratio too: no fix, the plan's own steps as before.
+    expect((makePlan({ ...F, products: [{ name: 'Widgets', unitsMonth: 10000, price: 600 }] }) as Plan).fromFix).toBe(false);
   });
 });

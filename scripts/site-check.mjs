@@ -1294,6 +1294,29 @@ if (touched('/project-report/')) {
   await ctx.close();
 }
 
+// Case F (OR2b, tests/fix.test.ts by hand): a building of 50 L and plant of 2.5 Cr, a 2.5 Cr loan at 9.3% over 15 years
+// after a month's holiday, misses only the fixed-asset cover. "Make it viable" opens on the fix beside the miss, 10 years
+// and 1,75,00,000, asks once for the promoters' 75 lakh more, and works; the repayment slider shortens to 12 instalments.
+if (touched('/project-report/')) {
+  const { ctx, page, v } = await open('/project-report/');
+  await page.check('#fld-mode-expert');
+  for (const id of ['#fld-borrower-proprietor', '#fld-tl-repayment-emi']) await page.check(id);
+  for (const [id, value] of [['#fld-cost-building', '50 L'], ['#fld-cost-machinery', '2.5 Cr'], ['#fld-tl-amount', '2.5 Cr'], ['#fld-tl-rate', '9.3'],
+    ['#fld-tl-disbursed', '2026-10'], ['#fld-tl-moratorium', '1'], ['#fld-tl-instalments', '180'], ['#fld-product-0-name', 'Widgets'], ['#fld-product-0-units', '10,000'],
+    ['#fld-product-0-price', '1,500'], ['#fld-monthsToStart', '1'], ['#fld-variablePct', '60'], ['#fld-fixed', '1.2 Cr'], ['#fld-fixedGrowth', '5'], ['#fld-wcLimit', '53 L'], ['#fld-wcRate', '9.3']])
+    await leave(page, id, value);
+  await expectText(page, v, 'rep-fix-0', 'Repay in 10 years instead of 15 years and borrow Rs. 1,75,00,000 instead of Rs. 2,50,00,000: the promoters bring Rs. 75,00,000 more.', 'case F\'s fix beside the miss');
+  await page.getByTestId('rep-viable').click();
+  await expectText(page, v, page.locator('label[for="fld-promotersMost"]'), 'This needs Rs. 75,00,000 more from the promoters: can you bring it?', 'the plan asks once for the promoters\' more');
+  await expectText(page, v, 'rep-plan-steps', 'A term loan of Rs. 1,75,00,000 (now Rs. 2,50,00,000), the promoters bringing the rest.120 instalments (now 180).', 'the plan agrees with "Use this"');
+  await expectText(page, v, 'rep-plan-line', 'With these changes: Meets every benchmark', 'case F made viable');
+  if (await page.locator('#rep-slider-instalments').getAttribute('min') !== '-168') v('the repayment slider does not shorten to 12 instalments, where the lowest-year DSCR stops meeting');
+  await leave(page, '#fld-promotersMost', '2 Cr');
+  await expectText(page, v, 'rep-plan-promoters', /within the Rs\. 2,00,00,000 they can\.$/, 'the promoters within their most');
+  await expectText(page, v, 'rep-plan-line', 'With these changes: Meets every benchmark', 'case F viable within the promoters\' most');
+  await ctx.close();
+}
+
 // Mudra (SCH1), case M of tests/report-page.test.ts on the default path: a 12 L term loan from April 2026 and a 3 L
 // limit, 15 L in all, so Tarun Plus, only once a Tarun loan is ticked as repaid. CGFMU's fee in 2026-27 by hand: 1% of
 // 12,00,000 and of 3,00,000 for 12 months, 15,000. Above 20 L in all it stops. With no scheme and CGTMSE ticked, its slab
