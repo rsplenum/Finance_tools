@@ -8,12 +8,13 @@ import { parseAmount, parseMonth } from '../../../engine/parse';
 import { LEVELS, collateralNeeded, diagnose, type Levels, type RatioCheck } from '../../../engine/ratios';
 import { makeViable, type Longer, type Outcome } from '../../../engine/viable';
 import { AS_TYPED, LEVER_IDS, makePlan, withLevers, type LeverId, type Levers } from '../../../engine/plan';
+import { fixOf } from '../../../engine/fix';
 import { BORROWERS } from '../../../engine/tax';
 import { inr } from '../../../engine/util';
 import { GUARANTEES } from '../../../engine/guarantee';
 import type { Draft, Dropped, NoteId } from '../../../engine/narrative';
 import {
-  inSentence, labelOf, listed, rowOf, upPct, upRupees, type BoardMove, type CheckRow, type ViableLine, type ViableView,
+  inSentence, labelOf, listed, ratioAt, rowOf, upPct, upRupees, type BoardMove, type CheckRow, type ViableLine, type ViableView,
   benchmarksNote, levelsOf, ratiosWord, type BenchmarkText,
 } from '../board-model';
 
@@ -571,6 +572,35 @@ export function viableOf(s: ReportState): ViableView | undefined {
     meets: v.meets, title: v.meets ? 'Every ratio meets a lender’s level: the room' : 'The levers: any one of these alone', lines,
     foot: `${ratiosWord(lv) === 'default benchmark ratios' ? 'The default benchmark ratios' : 'The benchmark ratios: yours where you changed them, else the defaults'}: a fresh or enhanced loan’s, said to follow RBI and not yet checked against an RBI publication; each bank sets its own. Each change is worked alone by the engine, the rest as typed. Change the figures above only to what the business can really reach: a lender tests sales against the market and the capacity.`,
   };
+}
+
+// ---- The fix beside the miss (OR2, D-UX-177): why it fails, in a line, and the repayment and the loan that fix it ----
+
+/** What each ratio falls behind when it misses: the cause the line names. */
+const CAUSE: Partial<Record<RatioCheck['id'], string>> = {
+  dscrLowest: 'the cash the business earns falls short of the instalments and interest due',
+  dscrAverage: 'the cash the business earns falls short of the instalments and interest due',
+  interestCover: 'the profit is thin against the interest',
+  currentRatio: 'the current assets are thin against the short-term debts',
+  tolTnw: 'the outside liabilities are large against the promoters’ own money',
+  debtEquity: 'the term loan is large against the promoters’ own money',
+  facr: 'the fixed assets, written down each year, lose value faster than the term loan is repaid',
+};
+/** `cause`: a sentence for each level missed (the security cover aside); `lead` and `fixes`: the changes that meet them
+ * all, each with the plan's levers for "Use this"; `none` when a shorter repayment and a smaller loan cannot. */
+export interface FixView { cause: string[]; lead?: string; fixes: { text: string; levers: Levers }[]; none?: string }
+
+export function fixView(s: ReportState): FixView | undefined {
+  const f = fixOf(inputOf(s), levelsOf(s.benchmarks));
+  if (!f) return undefined;
+  const cause = f.diagnosis.checks.filter((k) => f.missed.includes(k.id)).map((k) => (k.why ? `${k.label} fails: ${k.why}.`
+    : `${k.label} ${k.at === 'least' ? 'falls to' : 'rises to'} ${ratioAt(k.worst as number, k)}${k.fy ? ` in ${k.fy}` : ' over the loan'}, against its benchmark of ${k.level.toFixed(2)}: ${CAUSE[k.id]}.`));
+  const fixes = f.fixes.map(({ instalments: i, loan: l, levers }) => {
+    const term = i.needed < i.now ? `Repay in ${years(i.needed, i.perYear)} instead of ${years(i.now, i.perYear)}` : `Keep the repayment at ${years(i.now, i.perYear)}`;
+    return { text: `${term}${l.needed < l.now ? ` and borrow Rs. ${rupees(l.needed)} instead of Rs. ${rupees(l.now)}: the promoters bring Rs. ${upRupees(l.more)} more` : ''}.`, levers };
+  });
+  return fixes.length ? { cause, lead: fixes.length > 1 ? 'Either change makes it work:' : 'This change makes it work:', fixes }
+    : { cause, fixes, none: 'Neither a shorter repayment nor a smaller term loan meets it: “Make it viable” works out what else can.' };
 }
 
 // ---- The combined plan (MV3, D-UX-52): the levers together, as sliders on the board ----

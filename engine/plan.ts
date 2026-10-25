@@ -172,6 +172,11 @@ export function makePlan(x: ReportInput, o: PlanInput = {}): Plan | Needs | Bloc
     if (over <= EPS || l.promoters < 1) break;
     l = solve(Math.max(0, l.promoters - Math.ceil(over - EPS)));
   }
+  // A change the plan's levels do not need goes back to as typed, the last first (OR2: sales raised 41.7% met nothing).
+  for (const id of [...LEVER_IDS].reverse()) {
+    const u = at(l), v = l[id] && free(id) ? at({ ...l, [id]: 0 }) : undefined;
+    if (u && v && [...u.met].every((m) => v.met.has(m))) l = { ...l, [id]: 0 };
+  }
   const u = at(l) as Run;
   const atLimit = LEVER_IDS.filter((id) => l[id] > 0 && (
     id === 'promoters' || id === 'wc' ? most !== undefined && u.r.finance.promoter >= most - 1 :

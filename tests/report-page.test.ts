@@ -9,8 +9,9 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import { docStatus, fileName, reportDoc } from '../site/src/report/document';
-import { AS_TYPED, EMPTY, applyPlan, assumptionsOf, boardOf, changedOf, inputOf, planOf, preview, statusText, undoPlan, viableOf, withMode, type ReportState } from '../site/src/report/model';
+import { AS_TYPED, EMPTY, applyPlan, assumptionsOf, boardOf, changedOf, fixView, inputOf, planOf, preview, statusText, undoPlan, viableOf, withMode, type ReportState } from '../site/src/report/model';
 import { withLevers } from '../engine/plan';
+import { F } from './fix.test';
 import { benchmarkFields, levelsOf, withBenchmark } from '../site/src/board-model';
 import { SITE_NAME } from '../site/src/site';
 import { docxLines, pdfPages, workbook } from '../scripts/read-doc.mjs';
@@ -269,6 +270,38 @@ describe('the plan on the board, in words, used and undone', () => {
   });
 });
 
+// The fix beside the miss (OR2) on case F as typed on the page (tests/fix.test.ts works its figures by hand): the owner's
+// OR1 figures, only the fixed-asset cover missing.
+const FS: ReportState = {
+  ...EMPTY, borrower: 'proprietor', cost: { ...EMPTY.cost, building: '50 L', machinery: '2.5 Cr' },
+  loan: { amount: '2.5 Cr', ratePct: '9.3', disbursed: '2026-10', moratoriumMonths: '1', instalments: '180', repayment: 'emi' },
+  products: [{ name: 'Widgets', units: '10,000', price: '1,500' }], monthsToStart: '1', utilisation: '60, 70, 80', priceGrowth: '0',
+  variablePct: '60', fixed: '1.2 Cr', fixedGrowth: '5', wcLimit: '53 L', wcRate: '9.3',
+};
+describe('the fix beside the miss, in words, and used (OR2)', () => {
+  it('names the cause in a line, then the two fixes, the least strained first', () => {
+    expect(inputOf(FS)).toEqual(F);
+    const f = fixView(FS);
+    expect(f?.cause).toEqual(['Fixed-asset cover falls to 0.50 in 2035-36, against its benchmark of 1.20: the fixed assets, written down each year, lose value faster than the term loan is repaid.']);
+    expect(f?.lead).toBe('Either change makes it work:');
+    expect(f?.fixes.map((x) => x.text)).toEqual([
+      'Repay in 10 years instead of 15 years and borrow Rs. 1,75,00,000 instead of Rs. 2,50,00,000: the promoters bring Rs. 75,00,000 more.',
+      'Keep the repayment at 15 years and borrow Rs. 1,03,20,000 instead of Rs. 2,50,00,000: the promoters bring Rs. 1,46,80,000 more.']);
+  });
+  it('"Use this" writes the repayment and the loan, and then every level meets', () => {
+    for (const [k, was] of [[0, ['Term loan: 2.5 Cr → 1,75,00,000', 'Instalments: 180 → 120']], [1, ['Term loan: 2.5 Cr → 1,03,20,000']]] as const) {
+      const { s, changes } = applyPlan(FS, fixView(FS)!.fixes[k].levers);
+      expect(changes.map((c) => `${c.label}: ${c.was} → ${c.now}`)).toEqual(was);
+      expect([preview(s).misses, fixView(s)]).toEqual([undefined, undefined]);
+    }
+  });
+  it('says so when neither a shorter repayment nor a smaller loan meets it', () => {
+    const f = fixView({ ...FS, products: [{ name: 'Widgets', units: '10,000', price: '600' }] });
+    expect(f?.cause.some((c) => c.startsWith('Current ratio falls to ') && c.endsWith(': the current assets are thin against the short-term debts.'))).toBe(true);
+    expect([f?.fixes, f?.lead, f?.none]).toEqual([[], undefined, 'Neither a shorter repayment nor a smaller term loan meets it: “Make it viable” works out what else can.']);
+  });
+});
+
 // Simple mode (D-UX-112) on case P's products, the day being 15-10-2026: sales from January 2027, so the loan is drawn
 // this month with a moratorium of 3 months; 4 years to repay (48 EMIs); fixed costs 1,00,000 a month (12,00,000 a year)
 // growing 5%; the limit at the loan's rate, worked out: 96,00,000 a year at full running × 60% = 57,60,000; the need
@@ -281,6 +314,13 @@ describe('simple and expert modes', () => {
     ...EMPTY, mode: 'simple', borrower: 'firm', cost: { ...EMPTY.cost, building: '6 L', machinery: '20 L' }, products: P.products, sellFrom: '2027-01',
     variablePct: '70', fixedMonth: '1 L', loan: { ...EMPTY.loan, amount: '20 L', ratePct: '10' }, years: '4', wcBy: 'worked', security: 'neither', doc: P.doc,
   };
+  it('the fix writes whole years to repay in simple mode (OR2)', () => {
+    const T: ReportState = { ...FS, mode: 'simple', sellFrom: '2026-11', fixed: '', fixedMonth: '10 L', loan: { ...EMPTY.loan, amount: '2.5 Cr', ratePct: '9.3' }, years: '15', wcBy: 'typed', security: 'neither' };
+    const f = fixView(T)!, { s, changes } = applyPlan(T, f.fixes[0].levers);
+    expect(inputOf(T).loan).toEqual(F.loan);
+    expect(changes.map((c) => `${c.label}: ${c.was} → ${c.now}`)).toEqual(['Term loan: 2.5 Cr → 1,75,00,000', 'Instalments: 180 → 120']);
+    expect([s.years, preview(s).misses]).toEqual(['10', undefined]);
+  });
   it('simple mode fills what it assumes, and works the limit out', () => {
     const x = inputOf(S);
     expect(x.loan).toEqual({ amount: 2000000, ratePct: 10, disbursed: '2026-10', moratoriumMonths: 3, instalments: 48, frequency: 'monthly', style: 'emi' });

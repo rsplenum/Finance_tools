@@ -21,8 +21,8 @@ import { Words } from './Words';
 import {
   CGFMU, CGTMSE, MUDRA, PMEGP, REPORT_REVIEW_BY, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, NO_PRODUCT, REPAYMENT_CHOICES, SCHEME_CHOICES,
   COST_HEADS, MODE_CHOICES, SECURITY_CHOICES, SIMPLE_COST, WC_CHOICES, changedOf, headsSum, wcByOf, withMode, workedLine, type Mode,
-  ALONE, AS_TYPED, COLLATERAL_HINT, amountOf, applyPlan, assumptionsOf, boardOf, guaranteeOf, mudraLine, plainOf, planOf, preview, sameLevers, statusText, tarunAsked, tidyAmount, undoPlan, viableOf,
-  type LeverId, type Levers, type PlanChange, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
+  ALONE, AS_TYPED, COLLATERAL_HINT, amountOf, applyPlan, assumptionsOf, boardOf, fixView, guaranteeOf, mudraLine, plainOf, planOf, preview, sameLevers, statusText, tarunAsked, tidyAmount, undoPlan, viableOf,
+  type LeverId, type Levers, type PlanChange, type FixView, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
   type ViableView, type ViewRow, type ViewTable,
 } from './model';
 
@@ -369,6 +369,15 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
   };
   useEffect(() => { if (plan) replan(touched, lv); }, [s.promotersMost]);
   const b = useMemo(() => (plan ? boardOf(plan, lv) : undefined), [plan, lv]);
+  // The fix beside the miss (OR2) runs the report about a hundred times (a quarter of a second), so it is worked after
+  // the figures rest and paint, and shown only on the figures it was worked on, as the board is.
+  const [fixed, setFix] = useState<{ on: string; f: FixView | undefined }>();
+  useEffect(() => {
+    if (!p.misses) return;
+    const t = setTimeout(() => setFix({ on: base, f: fixView(s) }), 250);
+    return () => clearTimeout(t);
+  }, [base, !!p.misses]);
+  const fx = p.misses && fixed?.on === base ? fixed.f : undefined;
   const move = (id: LeverId, n: number) => { setLv((l) => ({ ...l, [id]: n })); if (!touched.includes(id)) setTouched([...touched, id]); };
   const onKey = new Set(p.view?.key.map((k) => k.check).filter(Boolean));
   const group = (by: 'borrower' | 'lender', title?: string) => {
@@ -387,10 +396,27 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
     </>;
   };
   const tone = (ok: boolean) => (ok ? 'text-good' : 'text-bad');
+  // Beside the miss when a level misses (O9: it sat under the bars); under them for the room when all meet.
+  const viable = !v && <button type="button" data-testid="rep-viable" class={`mt-4 ${BUTTON}`} onClick={() => {
+    const w = viableOf(s); if (w) setV({ on: base, v: w }); if (p.misses) replan([], AS_TYPED);
+    // The button removes itself, so the focus moves to what replaces it (WCAG 2.4.3; DESIGN-LESSONS lesson 1).
+    focusNext('[data-testid="rep-plan"], [data-testid="rep-viable-box"]');
+  }}>
+    {p.misses ? 'Make it viable' : 'How far can sales fall?'}</button>;
   return <div class="mt-6">
     {p.checks && <div data-testid="rep-checks">
       <h3 class="text-title text-ink">{p.misses ? 'Why it does not work yet' : `${p.checks.some((c) => c.verdict === 'wait') ? 'Against' : 'Meets'} the ${p.benchmarks ? '' : 'default '}benchmark ratios`}</h3>
       {p.benchmarks && <p data-testid="rep-benchmarks-note" class="mt-1 text-sm text-warn">{p.benchmarks}</p>}
+      {fx && <div data-testid="rep-fix" class="mt-2">
+        {fx.cause.map((c) => <p key={c} data-testid="rep-fix-cause" class="text-sm text-bad">{c}</p>)}
+        {fx.lead && <p class="mt-2 text-sm font-medium text-ink">{fx.lead}</p>}
+        {fx.fixes.length > 0 && <ul class="mt-1 space-y-2">{fx.fixes.map((x, k) => <li key={x.text} class="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span data-testid={`rep-fix-${k}`} class="text-sm text-ink">{x.text}</span>
+          <button type="button" data-testid={`rep-fix-use-${k}`} class={k ? BUTTON : FILLED} onClick={() => use(x.levers)}>Use this</button>
+        </li>)}</ul>}
+        {fx.none && <p data-testid="rep-fix-none" class="mt-1 text-sm text-ink">{fx.none}</p>}
+      </div>}
+      {p.misses && viable}
       <ul class="mt-1 divide-y divide-line">{p.checks.filter((c) => !onKey.has(c.id)).map((c) => <Bar key={c.id} c={c}>
         {/* Met on the project's own assets, the cover reads once: no note, no ask (UX5b, the critic's finding 3). */}
         {c.id === 'securityCover' && (p.collateralNote || (!s.collateral.trim() && c.verdict !== 'meets')) && <p data-testid="rep-collateral-note" class={HINT}>
@@ -403,12 +429,7 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
         set={(id, t) => update((u) => ({ ...u, benchmarks: withBenchmark(u.benchmarks, id, t) }))} />
     </div>}
     {p.longTerm && <p data-testid="rep-long-term" class="mt-2 text-sm text-bad">{p.longTerm}</p>}
-    {!v && <button type="button" data-testid="rep-viable" class={`mt-4 ${BUTTON}`} onClick={() => {
-      const w = viableOf(s); if (w) setV({ on: base, v: w }); if (p.misses) replan([], AS_TYPED);
-      // The button removes itself, so the focus moves to what replaces it (WCAG 2.4.3; DESIGN-LESSONS lesson 1).
-      focusNext('[data-testid="rep-plan"], [data-testid="rep-viable-box"]');
-    }}>
-      {p.misses ? 'Make it viable' : 'How far can sales fall?'}</button>}
+    {!p.misses && viable}
     {v && !plan && <div data-testid="rep-viable-box" tabIndex={-1} class="mt-6 border-t-2 border-ink pt-4">
       <h3 class="text-title text-ink">{v.title}</h3>
       {/* The title says "the room" once (review finding 10), so the borrower's group takes no heading of its own. */}
