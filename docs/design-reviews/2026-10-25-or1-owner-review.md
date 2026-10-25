@@ -60,8 +60,8 @@ Order recommended: OR2 first (the broken promise), then OR3 and OR4 (cheap, and 
 4. **The depreciation behind the fixed-asset cover**: written-down value at tax rates shrinks the net block fast and can fail this ratio on its own; straight-line book depreciation would not. Recommended: OR2 checks which the engine uses and puts the choice to you with the figures of both, before any change.
 5. **A confirm step is one more click**: recommended only before the report and its downloads; the live verdict stays as you type.
 
-## Waiting on the owner
-- "Years to repay": counted after the holiday (recommended: the way borrowers say it) or including it?
-- The bounds: what "sales 10x or 15x" measures (sales to the project cost, to the capacity, or to the first year?) and "interest 2%" (a floor on the rate, or 2 points below the typed rate?).
-- The order the levers give way in (tradeoff 3).
-- The order of the rows against Saturday 31-10 (D-BIZ-21).
+## The owner's answers (25-10-2026)
+- The loan's period is the holiday plus the repayment, two boxes and a read-back (D-UX-174).
+- The bounds: sales growth within the installed capacity, and an interest rate no lower than lenders charge over the repo rate, each sourced and overridable (D-UX-175).
+- The order: the lowest-hanging fruit first, worked out by the engine for each case (D-UX-176).
+- The timeline is off; the UI and UX come first, engines changed where needed (D-BIZ-24).
