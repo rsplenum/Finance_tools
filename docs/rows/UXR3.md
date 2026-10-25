@@ -10,6 +10,6 @@
 ## Owner
 - **VID2 scenes that change (listed, not edited):** the DSCR scene, every beat: target 1.25; the fix is +31 instalments, 91 months, 7 years 7 months; 9 year rows (2034-35 one instalment, DSCR 15.37); weakest year after the fix 2033-34 at 1.30; the new verdict words; the statement says "all 91 months". All four tool heads: the eyebrow is now the kind of document, new lines under the headings, "Building estimate". Status words "N questions left". CMA "Limit you have today" and its new Lender field. The report's and CMA's answer bars use the new verdict words.
 ## Cost
-| 25-10-2026 | UXR3: one vocabulary across the four tools | M | COST |
+| 25-10-2026 | UXR3: one vocabulary across the four tools | M | about 165 steps over about 0.7 working hours, one compaction (at 194k); two 15-minute quick verifies took the most; re-reading the context 72% |
 ## Handoff
 State line: UXR3 is built (D-UX-186 to D-UX-192): one lowest-year DSCR target (1.25), one verdict pattern, "N questions left", the kind of document over each tool, one label per shared input, one error pattern, plain hints for jargon. UXR3's row: done; OR3 (waited on UXR3) can start. Next: UXR4 (answer first, said once), its starter prompt in the UXR1 report.
