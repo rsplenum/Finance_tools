@@ -9,6 +9,6 @@
 - **Trading under PMEGP** (D-UX-193): the report offers manufacturing or a service only, so the trading condition never shows. Adding "Trading" needs its ceiling and share from the guideline; say if borrowers ask for it.
 - **VID2 and home scenes that change (listed, not edited):** the DSCR scene's verdict now has the head "Does not work yet: 1 ratio short" or "Works" above UXR3's line; the status reads "All answered" where it read "Complete"; the answer bar's middle part reads "does not work yet: N ratios short" or "works".
 ## Cost
-| 25-10-2026 | OR3: words for common people (O1, O2, O7, O8, O15) on the four tools | M | COST |
+| 25-10-2026 | OR3: words for common people (O1, O2, O7, O8, O15) on the four tools | M | about 80 steps over about 0.3 working hours, no compaction; the 15-minute quick verify and the load counts set by hand took the most; re-reading the context 69% |
 ## Handoff
 State line: OR3 is built (D-UX-193 to D-UX-197): PMEGP's conditions in plain words where they apply, nothing called sanctioned, "All answered" and "1 question left: answer it" apart from the verdict "Works" / "Does not work yet: 1 ratio short", never a tick beside a miss. OR3's row: done. Next: OR5 (the holiday and the repayment, compared), L, Extra; its plan in `docs/design-reviews/2026-10-25-or1-owner-review.md`, with the moratorium's words left by D-UX-197.
