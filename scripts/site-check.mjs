@@ -1570,11 +1570,15 @@ if (touched('/estimate/')) {
 // case keeps its filled fields; Clear all empties the draft. A field is filled when it holds text, a choice or a tick.
 const filledCount = (page) => page.evaluate(() => [...document.querySelectorAll('main input, main select, main textarea')]
   .filter((e) => (e.type === 'radio' || e.type === 'checkbox' ? e.checked : e.value.trim() !== '')).length);
+// What the tab holds (D-UX-173): only the five drafts (the estimate's two islands keep one each, D-UX-171), each small and
+// holding no document; nothing in localStorage but the theme and the report's mode (preferences, not answers).
+const DRAFT_KEY = /^draft:(dscr|cma|report|plan|quote):v1$/;
+const stored = (page) => page.evaluate(() => ({ s: Object.keys(sessionStorage).map((k) => [k, sessionStorage.getItem(k) ?? '']), l: Object.keys(localStorage) }));
 const KEPT = [
-  { path: '/dscr/', clear: ['clear-all', 'clear-yes'] },
-  { path: '/cma/', clear: ['cma-clear'] },
-  { path: '/project-report/', clear: ['rep-clear'] },
-  { path: '/estimate/', fill: async (page) => { await page.check('#fld-work-renovate'); await page.check('#fld-home-flat'); await page.selectOption('#fld-city', 'pune'); } },
+  { path: '/dscr/', key: 'dscr', clear: ['clear-all', 'clear-yes'] },
+  { path: '/cma/', key: 'cma', clear: ['cma-clear'] },
+  { path: '/project-report/', key: 'report', clear: ['rep-clear'] },
+  { path: '/estimate/', key: 'plan', fill: async (page) => { await page.check('#fld-work-renovate'); await page.check('#fld-home-flat'); await page.selectOption('#fld-city', 'pune'); } },
 ];
 for (const t of KEPT.filter((t) => touched(t.path))) {
   const { ctx, page, v } = await open(t.path);
@@ -1587,6 +1591,14 @@ for (const t of KEPT.filter((t) => touched(t.path))) {
   }
   const typed = await filledCount(page);
   if (typed <= blank) v(`UXR2: typing filled no field (${blank} → ${typed})`);
+  const held = await stored(page);
+  if (!held.s.some(([k]) => k === `draft:${t.key}:v1`)) v(`UXR2: typing kept no draft:${t.key}:v1`);
+  for (const [k, val] of held.s) {
+    if (k === 'seeded') continue;
+    if (!DRAFT_KEY.test(k)) v(`UXR2: the tab holds ${k}, not a draft`);
+    else if (val.length > 20000 || /data:|blob:|%PDF/.test(val)) v(`UXR2: ${k} holds more than typed answers (${val.length} characters)`);
+  }
+  if (held.l.some((k) => k !== 'app-theme' && k !== 'report-mode')) v(`UXR2: localStorage holds ${held.l.join(', ')}`);
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForFunction(() => !document.querySelector('astro-island[ssr]'), null, { timeout: 10000 }).catch(() => {});
   const back = await filledCount(page);
@@ -1601,6 +1613,7 @@ for (const t of KEPT.filter((t) => touched(t.path))) {
     await page.waitForFunction(() => !document.querySelector('astro-island[ssr]'), null, { timeout: 10000 }).catch(() => {});
     const after = await filledCount(page);
     if (after !== blank) v(`UXR2: after Clear all and a reload ${after} fields are filled, not ${blank}`);
+    if ((await stored(page)).s.some(([k]) => k === `draft:${t.key}:v1`)) v(`UXR2: Clear all left draft:${t.key}:v1 behind`);
   }
   await ctx.close();
 }
