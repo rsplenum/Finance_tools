@@ -90,10 +90,11 @@ describe('by the drivers: the use of the capacity, no year above 85%', () => {
     expect(withLevers(P, { ...AS_TYPED, sales: 100 }).utilisationPct).toEqual([66, 77, 85]);
     expect(withLevers(P, { ...AS_TYPED, sales: 33 }).utilisationPct).toEqual([61.98, 72.31, 82.64]);
   });
-  it('a weak case takes sales to the limit, then says what still misses', () => {
-    const p = makePlan({ ...P, price: 100 }) as Plan;
-    expect(p.levers.sales).toBe(417);
-    expect(p.atLimit).toContain('sales');
+  it('a weak case leaves sales as typed when the most meets no level more (OR2), then says what still misses', () => {
+    const x = { ...P, price: 100 }, p = makePlan(x) as Plan, y = withLevers(x, { ...AS_TYPED, sales: 417 });
+    expect(diagnose(projectReport(y) as Report, y).misses).toEqual(p.still);
+    expect(p.levers.sales).toBe(0);
+    expect(p.atLimit).not.toContain('sales');
     expect(p.works).toBe(false);
     expect(p.still.length).toBeGreaterThan(0);
   });
