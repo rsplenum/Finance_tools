@@ -12,7 +12,7 @@
  */
 import { diagnose, type Diagnosis, type Levels, type RatioId } from './ratios';
 import { projectReport, type Report, type ReportInput } from './report';
-import { AS_TYPED, type Levers } from './plan';
+import type { Levers } from './plan';
 
 export interface Fix {
   /** The repayment in instalments, as typed and with the fix (the same when the fix keeps it); a year's instalments. */
@@ -68,7 +68,7 @@ export function fixOf(x: ReportInput, lv?: Levels): Fixes | undefined {
     const a = largest(n), r = a === undefined ? undefined : run(a, n);
     const f = a === undefined || !r ? undefined : {
       instalments: { now: n0, needed: n, perYear }, loan: { now: tl, needed: a, more: r.finance.promoter - base.finance.promoter },
-      strain: Math.max((n0 - n) / n0, (tl - a) / tl), levers: { ...AS_TYPED, promoters: tl - a, instalments: n - n0 }, report: r,
+      strain: Math.max((n0 - n) / n0, (tl - a) / tl), levers: { wc: 0, unsecured: 0, fixed: 0, sales: 0, collateral: 0, moratorium: 0, promoters: tl - a, instalments: n - n0 }, report: r,
     };
     memo.set(n, f);
     return f;

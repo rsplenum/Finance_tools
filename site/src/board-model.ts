@@ -20,10 +20,11 @@ export interface CheckRow {
 }
 
 export const levelText = (c: RatioCheck) => `${c.level.toFixed(2)} or ${c.at === 'least' ? 'more' : 'less'}`;
-/** A ratio to two places, or four when two would read as meeting a level it misses (1.0996 against 1.10). */
+/** A ratio to two places, or four (or six) when fewer would read as meeting a level it misses (1.0996 against 1.10). */
 export const ratioAt = (x: number, c: RatioCheck) => {
-  const two = Number(x.toFixed(2)), reads = c.at === 'least' ? two >= c.level : two <= c.level;
-  return reads === !!c.meets ? x.toFixed(2) : x.toFixed(4);
+  // Two places, or as many more as it takes (1.24998 reads 1.2500 at four, against 1.25: OR2b's shorter repayment).
+  const reads = (p: number) => { const v = Number(x.toFixed(p)); return (c.at === 'least' ? v >= c.level : v <= c.level) === !!c.meets; };
+  return x.toFixed([2, 4, 6].find(reads) ?? 6);
 };
 /** A label inside a sentence: lower case, but DSCR stays DSCR. */
 export const inSentence = (label: string) => (/^[A-Z][A-Z]/.test(label) ? label : label[0].toLowerCase() + label.slice(1));

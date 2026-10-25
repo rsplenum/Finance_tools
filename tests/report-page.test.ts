@@ -298,6 +298,23 @@ describe('the fix beside the miss, in words, and used (OR2)', () => {
       expect([preview(s).misses, fixView(s)]).toEqual([undefined, undefined]);
     }
   });
+  it('"Make it viable" opens on the same fix, asks once for the promoters\' Rs. 75,00,000 more, and works (OR2b)', () => {
+    const q = planOf(FS)!, b = boardOf(q, q.levers);
+    expect(q.ask).toBe('This needs Rs. 75,00,000 more from the promoters: can you bring it?');
+    expect(q.levers).toEqual(fixView(FS)!.fixes[0].levers);
+    expect(b.steps).toEqual(['A term loan of Rs. 1,75,00,000 (now Rs. 2,50,00,000), the promoters bringing the rest.', '120 instalments (now 180).']);
+    expect([b.works, b.line, b.moves.instalments.move, b.moves.instalments.min]).toEqual([true, 'Meets every benchmark', '60 fewer', 12 - 180]);
+    expect(q.cards.find((c) => c.id === 'instalments')?.head).toBe('A shorter repayment');
+    // Typed, the box asks no more; within the most the plan stays; under it the plan says what the fix needs.
+    expect(planOf({ ...FS, promotersMost: '2 Cr' })?.ask).toBeUndefined();
+    expect(planOf({ ...FS, promotersMost: '2 Cr' })?.levers).toEqual(q.levers);
+    const short = planOf({ ...FS, promotersMost: '1 Cr' })!;
+    expect(short.short).toMatch(/^The first change above that makes it work needs the promoters to bring Rs\. 1,60,76,7\d\d in all, more than the Rs\. 1,00,00,000 they can\.$/);
+    expect(boardOf(short, short.levers).works).toBe(false);
+    // At the slider's end, 12 instalments, the lowest-year DSCR still meets; "Use this plan" writes the same as "Use this".
+    expect(boardOf(q, { ...q.levers, instalments: q.fewest }).checks?.find((c) => c.id === 'dscrLowest')?.verdict).toBe('meets');
+    expect(applyPlan(FS, q.levers).changes.map((c) => `${c.label}: ${c.was} → ${c.now}`)).toEqual(['Term loan: 2.5 Cr → 1,75,00,000', 'Instalments: 180 → 120']);
+  });
   it('says so when neither a shorter repayment nor a smaller loan meets it', () => {
     const f = fixView({ ...FS, products: [{ name: 'Widgets', units: '10,000', price: '600' }] });
     expect(f?.cause.some((c) => c.startsWith('Current ratio falls to ') && c.endsWith(': the current assets are thin against the short-term debts.'))).toBe(true);

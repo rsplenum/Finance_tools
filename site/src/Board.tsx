@@ -100,7 +100,7 @@ export function PlanLever({ id, head, m, value, alone, set, pre = 'rep', toggle 
         : <label for={`${pre}-slider-${id}`} class="font-medium text-ink">{head}</label>}
       <span data-testid={`${pre}-move-${id}`} class="shrink-0 text-lg font-semibold tabular-nums text-ink">{m.move}</span>
     </div>
-    {!toggle && m.max > 0 && <input id={`${pre}-slider-${id}`} type="range" min={m.min ?? 0} max={m.max} step={1} value={value} aria-valuetext={`${m.move}: ${m.to}`}
+    {!toggle && m.max > (m.min ?? 0) && <input id={`${pre}-slider-${id}`} type="range" min={m.min ?? 0} max={m.max} step={1} value={value} aria-valuetext={`${m.move}: ${m.to}`}
       onInput={(e) => set(Number((e.currentTarget as HTMLInputElement).value))} class="mt-2 h-6 w-full accent-ink" />}
     <p data-testid={`${pre}-to-${id}`} class="text-sm tabular-nums text-ink">{m.to}</p>
     {alone && <Said l={alone} alone pre={pre} />}

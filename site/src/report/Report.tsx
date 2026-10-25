@@ -440,7 +440,9 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
     {v && plan && b && <div data-testid="rep-plan" tabIndex={-1} class="mt-6 border-t-2 border-ink pt-4">
       <h3 class="text-title text-ink">The plan: the levers together</h3>
       <p class={HINT}>The engine’s plan, your changes first and the lender’s last. The sliders change none of the figures above until you use the plan.</p>
-      <TextField id="fld-promotersMost" class="mt-3" label="The most the promoters can bring in all, if known" hint="Without it, no more of their money is assumed."
+      {/* On the fix, the box asks once for what more the plan needs (OR2b); typed, it is the most again. */}
+      <TextField id="fld-promotersMost" class="mt-3" label={plan.ask ?? 'The most the promoters can bring in all, if known'}
+        hint={plan.ask ? 'Type the most they can bring in all. Until then, the plan takes it that they can.' : 'Without it, no more of their money is assumed.'}
         unit="Rs." inputMode="decimal" value={s.promotersMost} tidy={tidyAmount} invalid={bad(s.promotersMost, amountOf)}
         said={notUnderstood(s.promotersMost, amountOf, '10,00,000 or 10 L')} onCommit={(promotersMost) => update((x) => ({ ...x, promotersMost }))} />
       {b.steps.length
@@ -448,6 +450,7 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
         : <p data-testid="rep-plan-steps" class="mt-3 text-sm text-ink">No lever moves: nothing within its limit helps.</p>}
       {b.promoters && <p data-testid="rep-plan-promoters" class={`mt-1 text-sm ${b.over ? 'font-medium text-bad' : 'text-ink'}`}>{b.promoters}</p>}
       <p data-testid="rep-plan-verdict" class={`mt-2 text-sm font-medium ${tone(b.works)}`}>{b.verdict}</p>
+      {plan.short && !b.works && <p data-testid="rep-plan-short" class="mt-1 text-sm text-ink">{plan.short}</p>}
       {b.still.length > 0 && <ul data-testid="rep-plan-still" class="mt-0.5 list-disc space-y-0.5 pl-5 text-sm text-bad">{b.still.map((t) => <li key={t}>{t}</li>)}</ul>}
       <p data-testid="rep-plan-limits" class={HINT}>{plan.limits}{plan.atLimit ? ` ${plan.atLimit}` : ''}</p>
       {plan.mudraShort && <p data-testid="rep-mudra-short" class={`mt-2 ${STATE} text-warn`}>{plan.mudraShort}</p>}
