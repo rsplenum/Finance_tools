@@ -20,7 +20,7 @@ import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import DSCR_FILE from '../../../engine/data/dscr.json';
 import TAX_FILE from '../../../engine/data/tax.json';
-import { answerRule, AnswerBar, Why, BUTTON, CellInput, Claim, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick, InAppNote, useHomeCase, HomeCaseNote } from '../fields';
+import { answerRule, AnswerBar, Why, BUTTON, CellInput, Claim, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick, InAppNote, useHomeCase, HomeCaseNote, useKept } from '../fields';
 import { DSCR_HOME } from './home-case';
 import { printable } from '../doc/pdf';
 import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
@@ -45,6 +45,7 @@ export function DscrCalculator() {
   const start = () => frontDoor(isoDate(new Date()).slice(0, 7));
   const [s, setS] = useState<State>(start);
   const home = useHomeCase(setS, () => DSCR_HOME);
+  useKept('dscr', s, setS, start());
   const [more, setMore] = useState(false);
   const update: Update = (f) => setS(f);
   const y = useMemo(() => yearsOf(s), [s]);
