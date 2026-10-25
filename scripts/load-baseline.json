@@ -33,10 +33,10 @@
       "codes": 0
     },
     "/cma/": {
-      "before": 104,
-      "shown": 1333,
-      "all": 2362,
-      "plan": 2457,
+      "before": 119,
+      "shown": 1348,
+      "all": 2377,
+      "plan": 2472,
       "long": 2,
       "abbr": 5,
       "questions": 128,
@@ -65,10 +65,10 @@
       "outOfSight": null
     },
     "/dscr/": {
-      "before": 45,
-      "shown": 984,
-      "all": 3481,
-      "plan": 3869,
+      "before": 60,
+      "shown": 999,
+      "all": 3496,
+      "plan": 3884,
       "long": 0,
       "abbr": 5,
       "questions": 8,
@@ -81,9 +81,9 @@
       "codes": 0
     },
     "/estimate/": {
-      "before": 39,
-      "shown": 377,
-      "all": 1590,
+      "before": 54,
+      "shown": 392,
+      "all": 1605,
       "plan": 3446,
       "long": 1,
       "abbr": 2,
@@ -113,9 +113,9 @@
       "outOfSight": null
     },
     "/privacy/": {
-      "before": 697,
-      "shown": 814,
-      "all": 814,
+      "before": 717,
+      "shown": 834,
+      "all": 834,
       "plan": null,
       "long": 1,
       "abbr": 4,
@@ -129,10 +129,10 @@
       "outOfSight": null
     },
     "/project-report/": {
-      "before": 35,
-      "shown": 928,
-      "all": 3377,
-      "plan": 2937,
+      "before": 50,
+      "shown": 943,
+      "all": 3392,
+      "plan": 2952,
       "long": 0,
       "abbr": 6,
       "questions": 16,
@@ -1345,6 +1345,150 @@
       "to": 6,
       "why": "D-UX-143",
       "date": "2026-10-24"
+    },
+    {
+      "page": "/dscr/",
+      "count": "before",
+      "from": 45,
+      "to": 60,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/dscr/",
+      "count": "shown",
+      "from": 984,
+      "to": 999,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/dscr/",
+      "count": "all",
+      "from": 3481,
+      "to": 3496,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/dscr/",
+      "count": "plan",
+      "from": 3869,
+      "to": 3884,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/cma/",
+      "count": "before",
+      "from": 104,
+      "to": 119,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/cma/",
+      "count": "shown",
+      "from": 1333,
+      "to": 1348,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/cma/",
+      "count": "all",
+      "from": 2362,
+      "to": 2377,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/cma/",
+      "count": "plan",
+      "from": 2457,
+      "to": 2472,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/project-report/",
+      "count": "before",
+      "from": 35,
+      "to": 50,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/project-report/",
+      "count": "shown",
+      "from": 928,
+      "to": 943,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/project-report/",
+      "count": "all",
+      "from": 3377,
+      "to": 3392,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/project-report/",
+      "count": "plan",
+      "from": 2937,
+      "to": 2952,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/estimate/",
+      "count": "before",
+      "from": 39,
+      "to": 54,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/estimate/",
+      "count": "shown",
+      "from": 377,
+      "to": 392,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/estimate/",
+      "count": "all",
+      "from": 1590,
+      "to": 1605,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/privacy/",
+      "count": "before",
+      "from": 697,
+      "to": 717,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/privacy/",
+      "count": "shown",
+      "from": 814,
+      "to": 834,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/privacy/",
+      "count": "all",
+      "from": 814,
+      "to": 834,
+      "why": "D-UX-163",
+      "date": "2026-10-25"
     }
   ],
   "fontProbe": 320.2

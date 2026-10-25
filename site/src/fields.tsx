@@ -343,6 +343,10 @@ export function useHomeCase<T>(set: (s: T) => void, made: () => T) {
   return on;
 }
 
+/** The line on what is kept (D-UX-163): under each tool's lead; on the estimate, with its questions (D-UX-169). */
+export const KEPT_LINE = 'Your answers stay on this device. Closing the tab clears them. We never see them.';
+export const KeptLine = () => <p data-testid="kept-line" class="mt-2 max-w-prose text-sm text-ink-muted">{KEPT_LINE}</p>;
+
 /** The draft's version (D-UX-159): raise it when a tool's inputs change meaning, so an old draft is dropped. */
 const DRAFT_VERSION = 1;
 /** The keys of a blank state, nested, as one line: a draft made for other fields is dropped, never half-filled. */
