@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>UXR1 Tool Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wght@500;600&family=Figtree:wght@400;600&display=swap">
+<style>
+/* Layout: one reading column on paper, a wide band for tables; ink and marigold as on the site. */
+:root{--paper:#fbfaf7;--sheet:#ffffff;--ink:#1d2350;--muted:#555b7d;--rule:#dcdde8;--mark:#c77d08;--mark-soft:#fdf1dc;--block:#a3261b;--block-soft:#fbe7e4;--sig:#8a5a00;--sig-soft:#fbf0d6;--pol:#2f5f8a;--pol-soft:#e6eff8;
+--display:"Anek Latin","Figtree",system-ui,sans-serif;--body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#15182b;--sheet:#1c2038;--ink:#e6e7f2;--muted:#a6a9c4;--rule:#33385a;--mark:#f0b04a;--mark-soft:#3a2e17;--block:#ff8a7d;--block-soft:#3d1f22;--sig:#f2c46b;--sig-soft:#3a3018;--pol:#8ec0ee;--pol-soft:#1d2e44;color-scheme:dark}}
+:root[data-theme="dark"]{--paper:#15182b;--sheet:#1c2038;--ink:#e6e7f2;--muted:#a6a9c4;--rule:#33385a;--mark:#f0b04a;--mark-soft:#3a2e17;--block:#ff8a7d;--block-soft:#3d1f22;--sig:#f2c46b;--sig-soft:#3a3018;--pol:#8ec0ee;--pol-soft:#1d2e44;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 var(--body)}
+.wrap{max-width:68rem;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px 64px}
+.col{max-width:44rem}
+h1,h2,h3{font-family:var(--display);font-weight:600;line-height:1.15;text-wrap:balance}
+h1{font-size:clamp(1.9rem,5vw,2.8rem);margin:.2em 0 .3em;letter-spacing:-.01em}
+h2{font-size:1.5rem;margin:2.4em 0 .6em;padding-top:.8em;border-top:2px solid var(--ink)}
+h3{font-size:1.15rem;margin:1.6em 0 .4em}
+.eyebrow{font:600 .78rem/1 var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--mark)}
+.motto{font-family:var(--display);font-size:clamp(1.2rem,3vw,1.55rem);border-left:4px solid var(--mark);padding:.4em 0 .4em 1em;margin:1.4em 0;max-width:40rem}
+.lead{font-size:1.1rem;color:var(--muted)}
+a{color:inherit;text-decoration-color:var(--mark);text-underline-offset:3px}
+a:focus-visible,summary:focus-visible{outline:3px solid var(--mark);outline-offset:2px}
+code{font:.88em var(--mono);background:var(--mark-soft);padding:.05em .3em;border-radius:3px}
+.tbl{overflow-x:auto;margin:1em 0;border:1px solid var(--rule);background:var(--sheet)}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;vertical-align:top;padding:.55em .7em;border-bottom:1px solid var(--rule)}
+th{font-family:var(--display);font-weight:600;background:var(--paper)}
+td:first-child{white-space:nowrap}
+.sev{display:inline-block;font:600 .72rem/1.5 var(--display);letter-spacing:.06em;text-transform:uppercase;padding:0 .5em;border-radius:3px}
+.sev.b{color:var(--block);background:var(--block-soft)}.sev.s{color:var(--sig);background:var(--sig-soft)}.sev.p{color:var(--pol);background:var(--pol-soft)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:12px}
+.card{background:var(--sheet);border:1px solid var(--rule);padding:14px 16px;min-width:0}
+.card h3{margin-top:0}
+ul,ol{padding-left:1.3em}li{margin:.25em 0}
+.meta{color:var(--muted);font-size:.9rem}
+details{background:var(--sheet);border:1px solid var(--rule);padding:.6em 1em;margin:.6em 0}
+summary{cursor:pointer;font-weight:600}
+pre{white-space:pre-wrap;font:.85rem/1.5 var(--mono);background:var(--paper);border:1px solid var(--rule);padding:.8em}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<div class="col">
+<p class="eyebrow">UXR1 · Review of the four tools · 24-10-2026</p>
+<h1>So simple to be difficult</h1>
+<p class="motto">“It is so simple to be difficult but so difficult to be simple.”</p>
+<p class="lead">This review covers the DSCR, CMA, project report and construction estimate pages, built locally from <code>main</code> at 45602f0. They were checked in every state, at 320, 360 and 1280 px, in light and dark, by keyboard, on a slowed phone, after a reload, and in every file they download. The terms of reference are in <code>docs/design-reviews/2026-10-24-uxr1-terms.html</code>. Figures were compared only with what the engine printed; I computed none.</p>
+
+<h2>The verdict</h2>
+<p>The craft is sound: 0 measured defects on all four pages, no sideways scroll at 320 px, results and errors announced to screen readers, one filled button per screen, lakh and crore throughout, and complete downloads. What makes the tools difficult is not any one screen. It is what happens <em>between</em> screens and <em>between</em> tools:</p>
+<ul>
+<li><strong>The work does not survive.</strong> A reload, the back button, or a phone discarding the tab wipes every answer (one blocker).</li>
+<li><strong>The answer is said too often, and too late.</strong> The figure appears two to four times on screen, but on a phone the report and the CMA put it, or its download, after many screens of questions.</li>
+<li><strong>Four tools, four grammars.</strong> Each tool has its own words for a verdict, its own way to ask for more, its own place for Clear all, and its own set of downloads. The DSCR tool also uses a different lowest-year target from the other two (1.20 against 1.25).</li>
+</ul>
+<p>None of this needs new maths. Most of the fixes take something away: a repeated figure, a heading, a line before the first question, or a second word for the same thing. That is the difficult part of being simple.</p>
+
+<div class="grid">
+<div class="card"><h3>DSCR</h3><p class="meta">Nearest to simple</p><p>Eight questions; the answer is 2.1 screens down. It falls short in three places: an expert's way out comes before question 1, “meets the target” is printed on all six year rows, and the year cards run 4.3 screens before the download.</p></div>
+<div class="card"><h3>CMA</h3><p class="meta">Simple to read, difficult to finish</p><p>128 fields on one phone page, 14,198 px tall, with the download 17.2 screens down. A detour (“Or read your audited statement”) sits above the default path. 104 words come before the first question, against an aim of 40.</p></div>
+<div class="card"><h3>Project report</h3><p class="meta">Says “simple”, asks for more</p><p>It promises “About a dozen questions”, then shows 16 and says 13 are still to answer. On a phone the answer is 4.8 screens down. The page says Complete while the document says Provisional.</p></div>
+<div class="card"><h3>Estimate</h3><p class="meta">Quickest, heaviest</p><p>The answer is 0.9 screens down, but the headline gives three unlabelled amounts, and the same figure appears three ways (8.4 lakh, 8,40,271, 8.40). Its scripts weigh 581 kB, so it starts in 4.35 s on a slowed phone. It has no Clear all.</p></div>
+</div>
+
+<h2>Measured baseline (360 px)</h2>
+<div class="tbl"><table>
+<tr><th>Tool</th><th>Words before Q1</th><th>Words shown</th><th>Words in all</th><th>Questions</th><th>Answer at (screens)</th><th>Download at</th><th>JS</th><th>Usable on slow 3G + 4× CPU</th><th>Fields kept on reload</th></tr>
+<tr><td>DSCR</td><td>45</td><td>984</td><td>3481</td><td>8</td><td>2.1</td><td>9.6</td><td>257 kB</td><td>≈2.9 s</td><td>20 → 4</td></tr>
+<tr><td>CMA</td><td><strong>104</strong></td><td>1333</td><td>2362</td><td><strong>128</strong></td><td>1.7</td><td><strong>17.2</strong></td><td>229 kB</td><td>≈2.8 s</td><td>126 → 0</td></tr>
+<tr><td>Project report</td><td>35</td><td>928</td><td>3377</td><td>16</td><td><strong>4.9</strong></td><td>—</td><td>273 kB</td><td>≈2.9 s</td><td>22 → 5</td></tr>
+<tr><td>Estimate</td><td>39</td><td>377</td><td>1590</td><td>7</td><td>0.9</td><td>—</td><td><strong>581 kB</strong></td><td><strong>4.35 s</strong></td><td>9 → 0</td></tr>
+</table></div>
+<p class="meta">Sources: <code>npm run load</code>, <code>npm run design-review -- &lt;page&gt;</code>, and the scratch walk scripts. A screen is 780 px at 360 px wide. The fields still filled after a reload are only the defaults the page fills in itself.</p>
+
+<h2>How findings are ranked</h2>
+<p>Findings are ranked first by severity (the terms of reference §5). Within each grade they are ranked by <strong>score = Difficulty × Fix</strong>, highest first:</p>
+<ul>
+<li><strong>Difficulty</strong>: 3 = it stops a task or gives a wrong reading; 2 = it slows or confuses; 1 = it is friction.</li>
+<li><strong>Fix</strong>: 3 = a change of words or data, S; 2 = one component, S–M; 1 = a change of structure, M–L.</li>
+</ul>
+<p>A score of 9 means very difficult and cheap to fix, so do it first.</p>
+</div>
+
+<h2>Findings</h2>
+<div class="tbl"><table>
+<tr><th>#</th><th>Grade</th><th>Score</th><th>Finding and evidence</th><th>Fix</th><th>Files</th><th>Size</th><th>Row</th></tr>
+<tr><td>B1</td><td><span class="sev b">Blocker</span></td><td>3×2=6</td><td>A reload, back, or a phone discarding the tab loses every answer, on all four tools. Filled fields before → after a reload: CMA 126→0, report 22→5, DSCR 20→4, estimate 9→0. Only the report's mode is kept, in localStorage.</td><td>A shared <code>useDraft</code> hook in <code>fields.tsx</code> keeps the inputs in sessionStorage for each tool. Clear all empties it. Add one line on the page: “Kept only in this browser tab.”</td><td>fields.tsx, Calculator.tsx, Cma.tsx, Report.tsx, Estimate.tsx, PlanEstimate.tsx, privacy page</td><td>M</td><td>UXR2</td></tr>
+
+<tr><td>S1</td><td><span class="sev s">Significant</span></td><td>3×3=9</td><td>The same ratio has two targets. The lowest-year DSCR target is 1.20 in the DSCR tool (<code>engine/data/dscr.json:91</code>) but 1.25 in the report and the CMA (<code>engine/data/ratios.json:18</code>). The same borrower can “meet” in one tool and “miss” in another.</td><td>The owner picks one value, or says the two differ on purpose and the page names which lender norm each one is. Then change one data file and its tests.</td><td>engine/data/dscr.json or ratios.json, engine tests</td><td>S</td><td>UXR3</td></tr>
+<tr><td>S2</td><td><span class="sev s">Significant</span></td><td>3×3=9</td><td>The estimate's headline gives “Rs. 8.4 lakh / Rs. 6.5 lakh / Rs. 9 lakh” with no labels. Lower down, the same figure appears as 8.4 lakh, 8,40,271 and 8.40.</td><td>Label the figures “Likely · from · to”. Show one exact figure once; keep the rounded form only in the band.</td><td>estimate/Estimate.tsx, PlanEstimate.tsx</td><td>S</td><td>UXR4</td></tr>
+<tr><td>S3</td><td><span class="sev s">Significant</span></td><td>3×2=6</td><td>On a phone, the report's answer comes after five sections of inputs (the h2 at 4.8 screens). Clear all sits inside the result, at 3742 px.</td><td>Put a short answer card (lowest DSCR and the verdict) right after “How much to ask”, and make the band's ↓ the way in.</td><td>report/Report.tsx</td><td>S</td><td>UXR4</td></tr>
+<tr><td>S4</td><td><span class="sev s">Significant</span></td><td>3×2=6</td><td>The report's page says “Complete”, but when the address is empty its PDF says “Address: Still needed” and its file name ends “(provisional)”.</td><td>Count the document's fields in the page's status (“Complete — add the address for the document”), so the page and the file never disagree.</td><td>report/Report.tsx, report/document.ts</td><td>S</td><td>UXR3</td></tr>
+<tr><td>S5</td><td><span class="sev s">Significant</span></td><td>2×3=6</td><td>The verdict has a different wording in each tool: “Meets the target / Below the target” (DSCR); “Meets the benchmarks / Misses the benchmarks” (CMA); “Meets the benchmarks it reads”; “It meets every default benchmark ratio” (report).</td><td>One pattern everywhere: figure, then verdict, then status. For example, “Meets all 6 benchmarks checked”.</td><td>dscr/Calculator.tsx, cma/Cma.tsx, report/Report.tsx, report/words.ts, documents</td><td>S</td><td>UXR3 🎬</td></tr>
+<tr><td>S6</td><td><span class="sev s">Significant</span></td><td>2×3=6</td><td>The answer is said again and again. The sticky band stays visible while the answer card is on screen, so the figure shows twice, and three to four times on the estimate. The report gives its verdict twice in a row. The DSCR prints “meets the target” on each of its 6 year rows. The report says Rs. 5,21,507 twice in one sentence.</td><td>Hide the band while the card is in view (IntersectionObserver). Keep one verdict heading. Mark only the years that miss.</td><td>fields.tsx, Report.tsx, Calculator.tsx</td><td>S</td><td>UXR4 🎬</td></tr>
+<tr><td>S7</td><td><span class="sev s">Significant</span></td><td>2×3=6</td><td>An empty page already reads as a result: “Provisional: 13 still to answer” (report), 5 (DSCR) and 3 (CMA), before anything is typed.</td><td>Until something is typed, the band reads “13 questions”. After that it reads “N questions left”.</td><td>fields.tsx</td><td>S</td><td>UXR4</td></tr>
+<tr><td>S8</td><td><span class="sev s">Significant</span></td><td>2×3=6</td><td>The DSCR's first lines are a way out for experts (“Have year-by-year projections, a moratorium…? Use More options”). They come before “Who is the borrower?”.</td><td>Move that line under the last default field, next to More options.</td><td>dscr/Calculator.tsx</td><td>S</td><td>UXR5</td></tr>
+<tr><td>S9</td><td><span class="sev s">Significant</span></td><td>2×3=6</td><td>A detour comes before the CMA's default path: “Or read your audited statement” is a 28 px h2 with its own button, above “The limit now”.</td><td>Make it one line with a link under the intro, or move it below the year grid.</td><td>cma/Cma.tsx, cma/Read.tsx</td><td>S</td><td>UXR5</td></tr>
+<tr><td>S10</td><td><span class="sev s">Significant</span></td><td>2×3=6</td><td>On the CMA, the input “Limit now” sits beside the computed limit, and the input reads like a result.</td><td>Rename it “Limit you have today”, with its hint, and keep it apart from the answer.</td><td>cma/Cma.tsx</td><td>S</td><td>UXR3</td></tr>
+<tr><td>S11</td><td><span class="sev s">Significant</span></td><td>2×3=6</td><td>The report's headline and its PDF show “total A ÷ total B” under Average DSCR, which is the formula in place of a sentence.</td><td>Use plain words: “cash for repayment over all years ÷ all repayments”.</td><td>report/model.ts (≈406–468), report/document.ts</td><td>S</td><td>UXR3</td></tr>
+<tr><td>S12</td><td><span class="sev s">Significant</span></td><td>2×3=6</td><td>The report's simple mode promises “About a dozen questions” (<code>report/model.ts:175</code>), then shows 16 and says 13 are still to answer. The mode choice also comes before the first question.</td><td>Say the true count, and move the Simple/Expert choice to where “More options” sits on the other tools.</td><td>report/model.ts, report/Report.tsx</td><td>S</td><td>UXR5</td></tr>
+<tr><td>S13</td><td><span class="sev s">Significant</span></td><td>2×3=6</td><td>The line under each tool's heading lists the inputs, not what the borrower gets.</td><td>One line per tool: what you get, in what file, and roughly how long it takes.</td><td>pages/*.astro, ToolHead.astro</td><td>S</td><td>UXR3 🎬</td></tr>
+<tr><td>S14</td><td><span class="sev s">Significant</span></td><td>2×2=4</td><td>Jargon is not explained once on the default path: DSCR, CMA, EMI, moratorium, LLP, turnover method, Form II/III, CGTMSE, carpet area, benchmark.</td><td>Explain each term once, in a plain hint on its first use. No glossary page.</td><td>the four tool components, fields.tsx</td><td>M</td><td>UXR3</td></tr>
+<tr><td>S15</td><td><span class="sev s">Significant</span></td><td>2×2=4</td><td>The DSCR's “Year by year” takes 4.3 screens of cards, and the download sits at 9.6.</td><td>Show one compact list (year, DSCR, misses only) and put the repayment schedule in a closed section.</td><td>dscr/Calculator.tsx</td><td>S</td><td>UXR4</td></tr>
+<tr><td>S16</td><td><span class="sev s">Significant</span></td><td>2×2=4</td><td>Clear all differs on each tool. The DSCR asks twice; the CMA and the report offer undo; the estimate has none (only “Change”). It sits at 401 px (DSCR), 529 px (CMA) and 3742 px (report).</td><td>One Clear all with undo, under each tool's intro, in the same place on all four.</td><td>fields.tsx, the four components</td><td>S</td><td>UXR5</td></tr>
+<tr><td>S17</td><td><span class="sev s">Significant</span></td><td>2×2=4</td><td>The CMA, at 1280 px: the answer card starts half way down the first screen, under the drawing. Its first line is “Complete”, and the verdict lands at the fold.</td><td>Once there is a result, put the card above the drawing, with the verdict as its first line.</td><td>cma/Cma.tsx, Board.tsx</td><td>S</td><td>UXR6</td></tr>
+<tr><td>S18</td><td><span class="sev s">Significant</span></td><td>2×2=4</td><td>The estimate's page loads 581 kB of script (<code>_astro/shared.*.js</code> is 440 kB), so on a slowed phone it starts in 4.35 s, against ≈2.9 s for the other tools.</td><td>Split the library data out of the shared chunk and load it when the plan needs it.</td><td>estimate/shared.ts, plan-model.ts, astro config</td><td>M</td><td>UXR7</td></tr>
+<tr><td>S19</td><td><span class="sev s">Significant</span></td><td>2×1=2</td><td>“More options” works four different ways: More options (DSCR), a Simple/Expert radio (report), “More options: …” (CMA), and section drawers with the typed quotation at the bottom (estimate).</td><td>One closed “More options” in the same place under the last default field. The report's mode becomes that switch.</td><td>fields.tsx, the four components</td><td>M</td><td>UXR5</td></tr>
+<tr><td>S20</td><td><span class="sev s">Significant</span></td><td>3×1=3</td><td>The CMA puts 128 fields on one phone page, 14,198 px tall. Forms II and III alone run from 3.3 to 16.5 screens, and the download sits at 17.2.</td><td>On phones, open one year or form at a time, and add a “Jump to download” link in the answer card.</td><td>cma/Cma.tsx, Board.tsx</td><td>L</td><td>UXR6</td></tr>
+
+<tr><td>P1</td><td><span class="sev p">Polish</span></td><td>1×3=3</td><td>Labels differ across tools: Term (years) / Years to repay; Prepared by; Lender. The CMA asks for no lender at all.</td><td>Give each shared input one label.</td><td>the four components</td><td>S</td><td>UXR3</td></tr>
+<tr><td>P2</td><td><span class="sev p">Polish</span></td><td>1×3=3</td><td>Errors come in two patterns: “Not understood. Try…” and “Type…”.</td><td>Use one pattern: what is wrong, then an example.</td><td>fields.tsx, amount.ts</td><td>S</td><td>UXR3</td></tr>
+<tr><td>P3</td><td><span class="sev p">Polish</span></td><td>1×3=3</td><td>The “Tool N of 4” eyebrow tells the borrower nothing.</td><td>Remove it, or replace it with the tool's kind of document.</td><td>ToolHead.astro:15</td><td>S</td><td>UXR3 🎬</td></tr>
+<tr><td>P4</td><td><span class="sev p">Polish</span></td><td>1×3=3</td><td>“Provisional” is a hard word, and “How sure: … illustrative …” reads like a disclaimer.</td><td>Use “N questions left”, and say how sure in plain words.</td><td>fields.tsx, estimate</td><td>S</td><td>UXR3</td></tr>
+<tr><td>P5</td><td><span class="sev p">Polish</span></td><td>1×3=3</td><td>The estimate's h1, “Construction, renovation or interiors estimate”, runs to three lines at 360 px.</td><td>Shorten it to “Building estimate”, with the kinds of work named in the intro.</td><td>pages/estimate</td><td>S</td><td>UXR3 🎬</td></tr>
+<tr><td>P6</td><td><span class="sev p">Polish</span></td><td>1×3=3</td><td>The DSCR band takes two lines (77 px); the others take 45–57 px.</td><td>Shorten it: “DSCR 2.07 avg · 1.54 low · meets”.</td><td>dscr/Calculator.tsx</td><td>S</td><td>UXR4</td></tr>
+<tr><td>P7</td><td><span class="sev p">Polish</span></td><td>1×3=3</td><td>The estimate's Excel file says “prepared with FinSight” twice.</td><td>Say it once, in the footer.</td><td>estimate/document.ts</td><td>S</td><td>UXR5</td></tr>
+<tr><td>P8</td><td><span class="sev p">Polish</span></td><td>1×3=3</td><td>The report's month field is an aria-live region, so it announces “April 2026” on every change.</td><td>Take aria-live off the read-back.</td><td>report/Report.tsx</td><td>S</td><td>UXR5</td></tr>
+<tr><td>P9</td><td><span class="sev p">Polish</span></td><td>1×3=3</td><td>The DSCR's “Results” h2 is 16 px, against 28 px on the other tools' section h2s.</td><td>Use one heading scale.</td><td>dscr/Calculator.tsx</td><td>S</td><td>UXR5</td></tr>
+<tr><td>P10</td><td><span class="sev p">Polish</span></td><td>1×2=2</td><td>Downloads differ: the DSCR has PDF, Excel, Word and Print; the CMA has no Word and no Print; only the DSCR has Print.</td><td>Give every tool the same four, through the shared <code>download.ts</code>.</td><td>download.ts, cma/document.ts, report, estimate</td><td>M</td><td>UXR5</td></tr>
+<tr><td>P11</td><td><span class="sev p">Polish</span></td><td>1×2=2</td><td>Only the CMA has a worked-example button. Home's case covers the others only by link.</td><td>Add “Fill with the worked example” on all four, using each tool's <code>home-case.ts</code>.</td><td>the four components</td><td>S</td><td>UXR5</td></tr>
+<tr><td>P12</td><td><span class="sev p">Polish</span></td><td>1×2=2</td><td>The estimate's typed-quotation entry is hidden at the bottom of the page.</td><td>Add a one-line link to it under the intro.</td><td>estimate/Estimate.tsx</td><td>S</td><td>UXR5</td></tr>
+</table></div>
+<p class="meta">🎬 marks a finding that changes what the explainer videos show (see below). Checked and dropped: “as an architect would” is allowed by CLAUDE.md; the 16 px radio targets are inside larger labels; the estimate lists its assumptions behind one line with their count, by design (D-UX-32).</p>
+
+<div class="col">
+<h2>Proposed sessions</h2>
+<p>Each session has one deliverable the owner can open. In order:</p>
+<div class="tbl"><table>
+<tr><th>#</th><th>Row</th><th>Size</th><th>Done when (the quality bar)</th><th>Needs from the owner first</th></tr>
+<tr><td>1</td><td><strong>UXR2</strong> Answers kept on this device</td><td>M · high</td><td>On all four tools, a reload, back or a discarded tab brings every answer back. Clear all empties the draft. A check reloads each tool and counts the filled fields.</td><td>sessionStorage (this tab only) or localStorage (until cleared); the privacy line</td></tr>
+<tr><td>2</td><td><strong>UXR3</strong> One vocabulary</td><td>M · high, with the writer</td><td>Every item marked UXR3 above is fixed. A check lists the verdict strings and finds one pattern. The DSCR target is the same in every tool, or the difference is named on the page.</td><td>1.20 or 1.25; which video scenes to re-record</td></tr>
+<tr><td>3</td><td><strong>UXR4</strong> Answer first, said once</td><td>S–M · Extra</td><td>The band hides while the card is in view. Every figure appears once in the card. The report's answer is at ≤1.5 screens and the DSCR's download at ≤5 (load measure).</td><td>—</td></tr>
+<tr><td>4</td><td><strong>UXR5</strong> One shape for four tools</td><td>M · Extra</td><td>Clear all with undo, More options, the worked example, and the same four downloads sit in the same place on all four tools. Nothing comes before Q1 but the intro.</td><td>—</td></tr>
+<tr><td>5</td><td><strong>UXR6</strong> The CMA on a phone</td><td>L · Extra</td><td>One year or form is open at a time. The download is ≤3 screens from the answer. At 1280 px the verdict is above the fold. Words before Q1 ≤40.</td><td>—</td></tr>
+<tr><td>6</td><td><strong>UXR7</strong> The estimate loads fast</td><td>M · high</td><td>The estimate's first-load JS is ≤300 kB, and it is usable in ≤3 s on slow 3G with 4× CPU.</td><td>—</td></tr>
+</table></div>
+
+<h3>Starter prompts</h3>
+<details><summary>UXR2</summary><pre>Row UXR2 (M, high): answers kept on this device. Read docs/design-reviews/2026-10-24-uxr1-report.html (B1) and docs/rows/UXR1.md. Branch uxr2-drafts from main, push first. Owner's answer on storage: &lt;sessionStorage|localStorage&gt;. Add one shared draft hook in site/src/fields.tsx used by the four tools; Clear all empties it; one privacy line on each page. Add a check that reloads each tool and counts the filled fields. Delivers: the four tools on the preview, keeping answers. npm run verify, notes in docs/rows/UXR2.md, draft PR.</pre></details>
+<details><summary>UXR3</summary><pre>Row UXR3 (M, high, writer agent for the words): one vocabulary across the four tools. Read the UXR1 report (rows marked UXR3) and docs/rows/UXR1.md. Branch uxr3-words, push first. Owner's answer: lowest-year DSCR target &lt;1.20|1.25&gt;. Fix S1, S4, S5, S10, S11, S13, S14, P1–P5. Check what the VID2 storyboards show and list the scenes that change; do not edit them. Delivers: the four tools on the preview with one set of words.</pre></details>
+<details><summary>UXR4</summary><pre>Row UXR4 (S–M, Extra): answer first, said once. Read the UXR1 report (rows marked UXR4). Branch uxr4-say-once, push first. Fix S2, S3, S6, S7, S15, P6. Measure before and after with npm run load (answer at, download at). Delivers: the four tools on the preview, each figure shown once.</pre></details>
+<details><summary>UXR5</summary><pre>Row UXR5 (M, Extra): one shape for four tools. Read the UXR1 report (rows marked UXR5). Branch uxr5-one-shape, push first. Put Clear all with undo, More options, the worked example and the four downloads in the same place on all four tools (S8, S9, S12, S16, S19, P7–P12). Hold the default-field count (D-UX-12). Delivers: the four tools on the preview with one layout.</pre></details>
+<details><summary>UXR6</summary><pre>Row UXR6 (L, Extra): the CMA on a phone. Read the UXR1 report (S17, S20). Branch uxr6-cma-phone, push first. One year or form open at a time on phones; a jump to download; the verdict above the fold at 1280 px; words before Q1 ≤40. Delivers: the CMA on the preview at 360 px.</pre></details>
+<details><summary>UXR7</summary><pre>Row UXR7 (M, high): the estimate loads fast. Read the UXR1 report (S18). Branch uxr7-estimate-load, push first. Split the library data out of _astro/shared.*.js; first-load JS ≤300 kB; usable in ≤3 s on slow 3G + 4× CPU. Figures must not change: the estimate tests stay green. Delivers: the estimate on the preview.</pre></details>
+
+<h2>Where this touches the explainer videos</h2>
+<p>The 🎬 findings change what is on screen: the verdict words (S5), the band repeating the card (S6), the line under each heading (S13), the “Tool N of 4” eyebrow (P3) and the estimate's h1 (P5). The CMA and report layouts (S3, S9, S20) change the scrolling shots. A scene recorded now, from VID2a or VID2b, would show screens that UXR3–UXR6 then change.</p>
+<p><strong>Recommendation:</strong> keep the voice-over and storyboards, and record the screens after UXR3 and UXR4 merge. Both are cheap. I did not read or touch VID2's branch, PR #116, or its files.</p>
+
+<h2>Tradeoffs for the owner</h2>
+<ul>
+<li><strong>sessionStorage or localStorage.</strong> sessionStorage survives a reload and a discarded tab, but not closing the tab; it is the safer default on a shared office computer. localStorage keeps the work for days, but needs a visible “Forget my answers” control. I recommend sessionStorage.</li>
+<li><strong>1.20 or 1.25.</strong> One value is simplest. If lenders really differ, name the norm in the result rather than keep two silent targets. I recommend one value, with the lender norm as an assumption the user can change.</li>
+<li><strong>Order of the rows.</strong> UXR2 removes the only blocker. UXR3 and UXR4 are cheap, and they fix the video screens. UXR6 is the one L. I recommend UXR2 → UXR3 → UXR4 → UXR5 → UXR6 → UXR7.</li>
+<li><strong>Hiding the band.</strong> It shows the answer only once, but a user who scrolls back up loses sight of the figure for a moment. I recommend hiding it anyway: the card is on screen in that moment.</li>
+<li><strong>A worked example on every tool.</strong> It makes each tool easy to try, but it adds one button above the questions. I recommend a text link, not a button, so that “Download PDF” stays the only filled button.</li>
+</ul>
+
+<h2>What already works — keep it</h2>
+<ul>
+<li>0 measured defects on all four pages, and an axe-clean site check.</li>
+<li>No sideways scroll at 320 px and no console errors.</li>
+<li>Live regions announce results and errors, and every error sets aria-invalid with a message.</li>
+<li>One filled button per screen.</li>
+<li>Lakh and crore are used throughout.</li>
+<li>Home's fictional case opens in each tool and is marked as fictional.</li>
+<li>The downloads are complete, and the Excel files carry a Check sheet.</li>
+</ul>
+<p class="meta">Evidence scripts and their outputs stayed in the session scratchpad: walk.mjs, walk2.mjs, walk3.mjs, docs.mjs, dr-*.txt, load.txt, and the critic's m/ folder. The writer and critic agents' reports are folded into the findings above.</p>
+</div>
+</main>
+</body>
+</html>
