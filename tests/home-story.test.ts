@@ -44,7 +44,7 @@ describe('the DSCR as typed', () => {
       ['2026-27 2.07', '2027-28 1.09', '2028-29 1.06', '2029-30 1.03', '2030-31 1.00', '2031-32 1.94']));
   it('misses both levels, as worked by hand', () => {
     expect([STORY_TYPED.average, STORY_TYPED.lowest, STORY_TYPED.lowestYear, STORY_TYPED.meets]).toEqual(['1.24', '1.00', '2030-31', false]);
-    expect(STORY_TYPED.verdict).toBe('Below the target: the lowest year, 2030-31, is 1.00 against 1.20; the average is 1.24 against 1.50.');
+    expect(STORY_TYPED.verdict).toBe('Misses 2 of 2 targets: the lowest year, 2030-31, is 1.00 against 1.25; the average is 1.24 against 1.50.');
     expect(Math.min(...STORY_TYPED.years.map((y) => y.n))).toBeCloseTo(1.002861, 6);
   });
   it('the second computation agrees', () => {
@@ -52,20 +52,20 @@ describe('the DSCR as typed', () => {
     expect(k.average).toBeCloseTo(1.238074, 6);
     expect([k.minimum?.dscr.toFixed(6), k.minimum?.fy]).toEqual(['1.002861', '2030-31']);
     STORY_TYPED.years.forEach((y, i) => expect(y.n).toBeCloseTo(k.rows[i].dscr as number, 9));
-    expect(STORY_TARGET).toEqual({ minimum: '1.20', average: '1.50' });
+    expect(STORY_TARGET).toEqual({ minimum: '1.25', average: '1.50' });
   });
 });
 
 describe('the DSCR with the longer repayment', () => {
-  it('20 more EMIs, in the engine words of Make it viable', () => {
-    expect(STORY_FIX.move).toBe('+20 instalments');
-    expect(STORY_FIX.text).toBe('80 monthly instalments, 6 years 8 months in all, meet the target, if the lender agrees (at most 180 months).');
+  it('31 more EMIs, in the engine words of Make it viable', () => {
+    expect(STORY_FIX.move).toBe('+31 instalments');
+    expect(STORY_FIX.text).toBe('91 monthly instalments, 7 years 7 months in all, meet the target, if the lender agrees (at most 180 months).');
   });
   it('meets both levels, as worked by hand and by the second computation', () => {
-    expect([STORY_LONGER.average, STORY_LONGER.lowest, STORY_LONGER.lowestYear, STORY_LONGER.meets]).toEqual(['1.51', '1.21', '2032-33', true]);
+    expect([STORY_LONGER.average, STORY_LONGER.lowest, STORY_LONGER.lowestYear, STORY_LONGER.meets]).toEqual(['1.63', '1.30', '2033-34', true]);
     const k = check(STORY_FIXED);
-    expect(k.average).toBeCloseTo(1.514052, 6);
-    expect([k.minimum?.dscr.toFixed(6), k.minimum?.fy]).toEqual(['1.205230', '2032-33']);
+    expect(k.average).toBeCloseTo(1.627672, 6);
+    expect([k.minimum?.dscr.toFixed(6), k.minimum?.fy]).toEqual(['1.302918', '2033-34']);
   });
 });
 
@@ -75,17 +75,17 @@ const sum = (x: { lead: string; result: string }) => `${x.lead}${x.result}`;
 
 describe('the DSCR scene', () => {
   const s = DSCR_SCENE;
-  it('the seven inputs of the front door (D-UX-10) in lakh (NUM1), the term changed to 80, and the target', () => {
+  it('the seven inputs of the front door (D-UX-10) in lakh (NUM1), the term changed to 91, and the target', () => {
     expect(s.inputs.map((i) => i.v)).toEqual(['A firm', 'Rs. 4.5 lakh', '0%', 'None', 'Rs. 12 lakh', '12%', '60 instalments']);
-    expect(s.inputs.filter((i) => i.to).map((i) => i.to)).toEqual(['80 instalments']);
-    expect([s.level.text, s.level.label, s.hub.from, s.hub.to]).toEqual(['1.20', 'target 1.20', '60', '80']);
+    expect(s.inputs.filter((i) => i.to).map((i) => i.to)).toEqual(['91 instalments']);
+    expect([s.level.text, s.level.label, s.hub.from, s.hub.to]).toEqual(['1.25', 'target 1.25', '60', '91']);
   });
   it('the weakest year before and after, as worked by hand', () => {
-    expect([sum(s.sum.typed), sum(s.sum.fixed)]).toEqual(['3,21,236 ÷ 3,20,320 = 1.00', '3,16,194 ÷ 2,62,351 = 1.21']);
-    expect([s.sum.typed.head, s.sum.fixed.head]).toEqual(['2030-31: cash available ÷ debt service', '2032-33: cash available ÷ debt service']);
-    expect([s.rows[s.weakest.typed].label, s.rows[s.weakest.fixed].label]).toEqual(['2030-31', '2032-33']);
-    expect(s.rows.map((y) => y.typed?.text ?? '')).toEqual(['2.07', '1.09', '1.06', '1.03', '1.00', '1.94', '', '']);
-    expect(s.rows.map((y) => y.typed?.meets)).toEqual([true, false, false, false, false, true, undefined, undefined]);
+    expect([sum(s.sum.typed), sum(s.sum.fixed)]).toEqual(['3,21,236 ÷ 3,20,320 = 1.00', '3,14,983 ÷ 2,41,752 = 1.30']);
+    expect([s.sum.typed.head, s.sum.fixed.head]).toEqual(['2030-31: cash available ÷ debt service', '2033-34: cash available ÷ debt service']);
+    expect([s.rows[s.weakest.typed].label, s.rows[s.weakest.fixed].label]).toEqual(['2030-31', '2033-34']);
+    expect(s.rows.map((y) => y.typed?.text ?? '')).toEqual(['2.07', '1.09', '1.06', '1.03', '1.00', '1.94', '', '', '']);
+    expect(s.rows.map((y) => y.typed?.meets)).toEqual([true, false, false, false, false, true, undefined, undefined, undefined]);
     expect(s.rows.every((y) => y.fixed.meets && y.judged)).toBe(true);
   });
   it('each sum within a rupee of the closed form', () => {
@@ -96,20 +96,20 @@ describe('the DSCR scene', () => {
       return [pbt - 0.312 * pbt + interest, interest + principal];
     };
     const sums = [s.sum.typed, s.sum.fixed].map((x) => sumOf(sum(x)));
-    for (const [k, want] of [year(60, 42), year(80, 66)].entries()) sums[k].forEach((v, i) => expect(Math.abs(v - want[i])).toBeLessThanOrEqual(0.5));
+    for (const [k, want] of [year(60, 42), year(91, 78)].entries()) sums[k].forEach((v, i) => expect(Math.abs(v - want[i])).toBeLessThanOrEqual(0.5));
     expect((year(60, 42)[0] / year(60, 42)[1]).toFixed(6)).toBe('1.002861');
-    expect((year(80, 66)[0] / year(80, 66)[1]).toFixed(6)).toBe('1.205230');
+    expect((year(91, 78)[0] / year(91, 78)[1]).toFixed(6)).toBe('1.302918');
   });
   it('the statement beat: verdict, both computations, the basis, every instalment, the signature lines', () => {
-    expect(s.statement.verdict).toBe('Meets the target: the lowest year, 2032-33, is 1.21 against 1.20; the average is 1.51 against 1.50.');
+    expect(s.statement.verdict).toBe('Meets both targets: the lowest year, 2033-34, is 1.30 against 1.25; the average is 1.63 against 1.50.');
     expect(s.statement.lines.map((l) => l.head)).toEqual(['Worked out twice', 'Its basis', 'Every instalment', 'Ready to sign']);
-    expect(s.statement.lines.map((l) => l.text).join(' ')).toMatch(/difference 0\.00\..*dated 30-09-2026\..*all 80 months\./);
+    expect(s.statement.lines.map((l) => l.text).join(' ')).toMatch(/difference 0\.00\..*dated 30-09-2026\..*all 91 months\./);
     expect(s.statement.files).toEqual(['PDF', 'Excel', 'Word']);
   });
   it('five beats, each caption\'s figures the scene\'s own', () => {
     expect(s.beats.map((b) => b.name)).toEqual(['The bank\'s question', 'Seven answers', 'Every year worked out', 'The change that passes', 'The statement for the lender']);
-    expect(s.beats[2].caption).toContain('2030-31, is 1.00 against the target 1.20');
-    expect(s.beats[3].caption).toContain('the weakest, 2032-33, is 1.21');
+    expect(s.beats[2].caption).toContain('2030-31, is 1.00 against the target 1.25');
+    expect(s.beats[3].caption).toContain('the weakest, 2033-34, is 1.30');
   });
 });
 

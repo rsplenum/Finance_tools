@@ -1,7 +1,8 @@
 /**
  * Make it viable on the DSCR front door, as the page says it (site/src/dscr/levers.ts, MV5, D-UX-57): fictional case S of
  * tests/dscr-plan.test.ts typed into the front door (a firm; Rs. 4,50,000 this year, no growth; Rs. 12,00,000 at 12% for
- * 5 years, drawn in October 2026). Every figure is the engine's, worked by hand there.
+ * 5 years, drawn in October 2026), with the targets typed as worked there (1.50 and 1.20; the default lowest year is 1.25
+ * from UXR3). Every figure is the engine's, worked by hand there.
  */
 import { describe, it, expect } from 'vitest';
 import { frontDoor, preview, withBorrower, type State } from '../site/src/dscr/model';
@@ -11,7 +12,7 @@ import { dscrCaseOf } from '../site/src/dscr/model';
 const door = (pbdit: string, x: Partial<State> = {}): State => {
   const s = withBorrower(frontDoor('2026-10'), 'firm');
   return { ...s, cells: { ...s.cells, pbdit: [pbdit] }, modes: { ...s.modes, pbdit: 'grow' }, rates: { ...s.rates, pbdit: '0' },
-    loan: { ...s.loan, amount: '12,00,000', ratePct: '12', instalments: '60' }, ...x };
+    loan: { ...s.loan, amount: '12,00,000', ratePct: '12', instalments: '60' }, target: { average: '1.5', minimum: '1.2' }, ...x };
 };
 const S = door('4,50,000');
 

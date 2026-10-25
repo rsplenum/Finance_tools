@@ -16,6 +16,7 @@ import { isoDate, save, type FileKind } from '../download';
 import { cmaDoc, docNeeds, docStatus, fileName } from './document';
 import { ReadStatement } from './Read';
 import { Levels } from './Levels';
+import { verdictWords } from '../verdict';
 import { CASE_CHOICES, COLLATERAL_HINT, applyCmaPlan, levelsOf, undoCmaPlan, type CmaChange, type CmaLevers } from './levers';
 import {
   ASSUMPTIONS, HEADS, amountOf, columnsOf, emptyState, exampleState, preview, startYearOf, statusText, subtotals, tidyAmount,
@@ -104,8 +105,8 @@ export function CmaCalculator() {
  * "Complete" alone under a miss (UX5b critic, finding 1). */
 function barText(p: CmaPreview, s: CmaState) {
   if (!p.view) return statusText(p);
-  const l = levelsOf(s), n = l?.missCount;
-  const said = n === undefined ? undefined : n ? (n > 1 ? 'Misses the benchmarks' : 'Misses a benchmark') : l?.benchmarks ? 'Meets your benchmarks' : 'Meets the benchmarks';
+  const l = levelsOf(s), c = l?.checks;
+  const said = c && verdictWords('benchmark', c.length, c.filter((k) => k.verdict === 'misses').length, c.filter((k) => k.verdict === 'wait').length);
   return [`Limit ${p.view.key[0]?.value}`, said, statusText(p)].filter(Boolean).join(' · ');
 }
 

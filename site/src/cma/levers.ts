@@ -5,6 +5,7 @@
  * estimate's and the projection's columns, with an undo. Every figure comes from engine/cma-plan.ts; none of this goes into
  * the downloads.
  */
+import { verdictWords } from '../verdict';
 import { cma, type CmaInput, type Figures } from '../../../engine/cma';
 import {
   CMA_AS_TYPED, CMA_LEVER_IDS, cmaCollateralNeeded, cmaDiagnose, cmaViable, makeCmaPlan, withCmaLevers,
@@ -54,7 +55,7 @@ export function levelsOf(s: CmaState): LevelsView | undefined {
   const need = sc.meets ? undefined : cmaCollateralNeeded(r, x, c, lv), own = benchmarksNote(d.checks);
   return {
     checks: rowsOf(d.checks, s), foot: FOOT(c, lv), missCount: d.misses.length, ...(own ? { benchmarks: own } : {}),
-    ...(d.misses.length ? { misses: `It misses ${d.misses.length === 1 ? 'one' : d.misses.length} of the ${ratiosWord(lv)}: ${listed(d.misses.map(labelOf))}.` } : {}),
+    ...(d.misses.length ? { misses: `${verdictWords('benchmark', d.checks.length, d.misses.length, d.checks.filter((k) => k.meets === undefined).length)}: ${listed(d.misses.map(labelOf))}.` } : {}),
     ...(need === undefined || need === 0 ? {} : {
       collateralNote: `Security cover: collateral with a market value of ${rs(need)} or more brings it to ${sc.level.toFixed(2)}.`,
     }),

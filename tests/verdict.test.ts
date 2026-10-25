@@ -1,0 +1,29 @@
+/**
+ * One verdict pattern across the tools (UXR3, UXR1's S5): every verdict the DSCR, the CMA and the report show starts with
+ * the words of `verdictWords`, and none of the old patterns is left in the site's code.
+ */
+import { describe, it, expect } from 'vitest';
+import { readFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { VERDICT_PATTERN, verdictWords } from '../site/src/verdict';
+import { STORY_TYPED, STORY_LONGER } from '../site/src/home/story';
+
+describe('the verdict words', () => {
+  it('one pattern for a meet, a miss and a wait', () => {
+    const said = [
+      verdictWords('target', 1, 0), verdictWords('target', 2, 0), verdictWords('target', 1, 1), verdictWords('target', 2, 1),
+      verdictWords('benchmark', 8, 0), verdictWords('benchmark', 8, 3), verdictWords('benchmark', 8, 0, 2),
+    ];
+    expect(said).toEqual(['Meets the target', 'Meets both targets', 'Misses the target', 'Misses 1 of 2 targets',
+      'Meets all 8 benchmarks', 'Misses 3 of 8 benchmarks', 'Meets 6 of 8 benchmarks; 2 not read yet']);
+    for (const v of said) expect(v).toMatch(VERDICT_PATTERN);
+  });
+  it('the DSCR verdicts start with it', () => {
+    for (const v of [STORY_TYPED.verdict, STORY_LONGER.verdict]) expect(v.split(':')[0]).toMatch(VERDICT_PATTERN);
+  });
+  it('no old pattern is left in the site', () => {
+    const files = (d: string): string[] => readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? files(join(d, e.name)) : /\.(tsx?|astro)$/.test(e.name) ? [join(d, e.name)] : []);
+    const old = /Below the target|Meets the target:|Misses the benchmarks|Meets the benchmarks|Meets your benchmarks|It misses \$\{|It meets every \$\{/;
+    expect(files('site/src').filter((f) => old.test(readFileSync(f, 'utf8')))).toEqual([]);
+  });
+});

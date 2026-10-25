@@ -4,6 +4,7 @@
  * the assumptions in engine/data/defaults.json (the owner's request, D-UX-08), each listed with its reason until it is
  * changed (`assumedIn`); nothing else missing is filled in, and anything else missing is listed as needed.
  */
+import { verdictWords } from '../verdict';
 import DEFAULTS from '../../../engine/data/defaults.json';
 import DSCR from '../../../engine/data/dscr.json';
 import {
@@ -549,7 +550,7 @@ const limitedBy = (l: Limit) =>
 function verdictOf(st: Statement, t: Target): Preview['verdict'] {
   if (!st.minimum || st.average === undefined) return undefined; // no year counts; the engine's note says why
   const dry = shortfall(st, {});
-  if (dry) return { meets: false, text: `Below the target: ${limitText(dry)}.` };
+  if (dry) return { meets: false, text: `${verdictWords('target', 1, 1)}: ${limitText(dry)}.` };
   const parts: { ok: boolean; text: string }[] = [];
   if (t.minimum !== undefined)
     parts.push({ ok: !shortfall(st, { minimum: t.minimum }), text: `the lowest year, ${st.minimum.fy}, is ${ratioText(st.minimum.dscr, t.minimum)} against ${targetText(t.minimum)}` });
@@ -557,8 +558,8 @@ function verdictOf(st: Statement, t: Target): Preview['verdict'] {
     parts.push({ ok: !shortfall(st, { average: t.average }), text: `the average is ${ratioText(st.average, t.average)} against ${targetText(t.average)}` });
   const short = parts.filter((p) => !p.ok);
   return short.length
-    ? { meets: false, text: `Below the target: ${short.map((p) => p.text).join('; ')}.` }
-    : { meets: true, text: `Meets the target: ${parts.map((p) => p.text).join('; ')}.` };
+    ? { meets: false, text: `${verdictWords('target', parts.length, short.length)}: ${short.map((p) => p.text).join('; ')}.` }
+    : { meets: true, text: `${verdictWords('target', parts.length, 0)}: ${parts.map((p) => p.text).join('; ')}.` };
 }
 
 const lower = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);

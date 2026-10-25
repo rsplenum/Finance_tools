@@ -7,6 +7,7 @@
 import { Fragment, type ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
+import { verdictWords } from '../verdict';
 import { answerRule, AnswerBar, BUTTON, Choice, Claim, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote, useHomeCase, HomeCaseNote, useKept } from '../fields';
 import { REPORT_HOME } from './home-case';
 import { Bar, Benchmarks, Lever, PlanLever, targetOf } from '../Board';
@@ -64,19 +65,20 @@ const boxOf = (need: string): [string, string] | undefined => {
 
 /** The answer in words (review finding 3): the model's own sentence when a level misses; else what meets and what it cannot
  * read yet. Words only, from the model's checks; no figure. */
-function verdictOf(p: ReportPreview): { text: string; tone: 'good' | 'warn' | 'bad' } | undefined {
+function verdictOf(p: ReportPreview): { head: string; text: string; tone: 'good' | 'warn' | 'bad' } | undefined {
   if (!p.view || p.blocked) return undefined;
-  if (p.misses) return { text: p.misses, tone: 'bad' };
-  const wait = (p.checks ?? []).filter((c) => c.verdict === 'wait').map((c) => inSentence(c.label));
-  const which = p.benchmarks ? 'benchmark ratio, yours where you changed them,' : 'default benchmark ratio';
-  return wait.length ? { text: `It meets every ${which} it can read now; not yet read: ${listed(wait)}.`, tone: 'warn' } : { text: `It meets every ${which.replace(/,$/, '')}.`, tone: 'good' };
+  const c = p.checks ?? [], named = (v: string) => c.filter((k) => k.verdict === v).map((k) => inSentence(k.label));
+  const wait = named('wait'), head = verdictWords('benchmark', c.length, named('misses').length, wait.length);
+  if (p.misses) return { head, text: p.misses, tone: 'bad' };
+  const whose = p.benchmarks ? ', yours where you changed them' : '';
+  return wait.length ? { head, text: `${head}${whose}: ${listed(wait)}.`, tone: 'warn' } : { head, text: `${head}${whose}.`, tone: 'good' };
 }
 
 /** The answer bar's words (D-UX-84): the lowest DSCR as the model gives it, the verdict and the status. */
 function barText(p: ReportPreview) {
   if (p.blocked || !p.view) return statusText(p);
-  const lowest = p.view.key.find((k) => k.check === 'dscrLowest'), misses = (p.checks ?? []).filter((c) => c.verdict === 'misses');
-  const said = misses.length ? (misses.length > 1 ? 'Misses the benchmarks' : 'Misses a benchmark') : p.benchmarks ? 'Meets your benchmarks' : 'Meets the benchmarks it reads';
+  const lowest = p.view.key.find((k) => k.check === 'dscrLowest');
+  const said = p.checks?.length ? verdictOf(p)?.head : undefined;
   return [lowest && `Lowest DSCR ${lowest.value}`, said, statusText(p)].filter(Boolean).join(' · ');
 }
 

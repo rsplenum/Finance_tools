@@ -31,7 +31,7 @@ import { parseAmount } from '../../../engine/parse';
 // ---- The DSCR: case S ----
 
 export const STORY_CASE = DSCR_HOME;
-export const STORY_FIXED = door('80');
+export const STORY_FIXED = door('91');
 
 /** One reading of the DSCR story: each year's DSCR against the target, then the verdict, all in the engine's words. */
 export interface StoryFrame {

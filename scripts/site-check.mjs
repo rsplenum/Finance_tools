@@ -296,7 +296,7 @@ if (touched('/dscr/')) {
   await page.locator('#fld-loanAmount').waitFor({ timeout: 3000 }).catch(() => v('the loan is not asked at once'));
   await expectValue(page, v, '#fld-targetAverage', '1.50', 'the assumed target');
   // The method and the target read as one line (P1f).
-  await expectText(page, v, 'assumed-method', 'How DSCR is worked out, and the target: Common term-loan DSCR; average 1.50, lowest year 1.20 Change', 'the assumptions listed');
+  await expectText(page, v, 'assumed-method', 'How DSCR is worked out, and the target: Common term-loan DSCR; average 1.50, lowest year 1.25 Change', 'the assumptions listed');
 
   // The loan amount field, kept from P0: read back in figures and words while typing; long words wrap.
   const field = page.locator('#fld-loanAmount');
@@ -353,9 +353,9 @@ if (touched('/dscr/')) {
   // Six assumptions still hold: the method, the target, and the new asset, working-capital interest, loans already running
   // and other non-cash charges as answered by the assumptions (tax, profit and depreciation were typed).
   await expectText(page, v, 'dscr-status', 'Complete, on 7 assumptions', 'case A with the examples');
-  await expectText(page, v, 'dscr-verdict', 'Below the target: the lowest year, 2027-28, is 1.16 against 1.20; the average is 1.45 against 1.50.', 'case A with the examples');
-  await expectText(page, v, 'dscr-largest', 'The largest loan on these terms is Rs. 11,59,646, limited by the lowest year, 2027-28.', 'case A with the examples');
-  await expectText(page, v, 'use-amount', 'Use Rs. 11,59,646', 'case A with the examples');
+  await expectText(page, v, 'dscr-verdict', 'Misses 2 of 2 targets: the lowest year, 2027-28, is 1.16 against 1.25; the average is 1.45 against 1.50.', 'case A with the examples');
+  await expectText(page, v, 'dscr-largest', 'The largest loan on these terms is Rs. 11,11,295, limited by the lowest year, 2027-28.', 'case A with the examples');
+  await expectText(page, v, 'use-amount', 'Use Rs. 11,11,295', 'case A with the examples');
   await expectText(page, v, 'dscr-fewest', 'Even 14 instalments, the most the projections cover (to 2029-30), miss the target: the average is below the target. Add later years to try a longer repayment.', 'case A with the examples');
   await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · below the target · complete, on 7 assumptions', 'case A with the examples');
 
@@ -378,9 +378,9 @@ if (touched('/dscr/')) {
     use.click();
     setTimeout(() => ok(document.querySelector('#fld-loanAmount').value));
   }));
-  if (filled !== '11,59,646') v(`"Use Rs. 11,59,646" shows "${filled}" in the loan amount until the next paint`);
-  await expectText(page, v, 'amount-read', 'Rs. 11,59,646 (Rupees Eleven Lakh Fifty Nine Thousand Six Hundred and Forty Six Only)', 'after taking the largest loan');
-  await expectText(page, v, 'dscr-verdict', 'Meets the target: the lowest year, 2027-28, is 1.20 against 1.20; the average is 1.50 against 1.50.', 'after taking the largest loan');
+  if (filled !== '11,11,295') v(`"Use Rs. 11,11,295" shows "${filled}" in the loan amount until the next paint`);
+  await expectText(page, v, 'amount-read', 'Rs. 11,11,295 (Rupees Eleven Lakh Eleven Thousand Two Hundred and Ninety Five Only)', 'after taking the largest loan');
+  await expectText(page, v, 'dscr-verdict', 'Meets both targets: the lowest year, 2027-28, is 1.25 against 1.25; the average is 1.56 against 1.50.', 'after taking the largest loan');
   if (await page.getByTestId('use-amount').count()) v('the largest loan is still offered after it was taken');
 
   // A figure that is not understood is flagged and listed as still needed, never taken as zero.
@@ -568,7 +568,7 @@ if (touched('/dscr/')) {
   if (!pages[1]?.includes('Annex 1. The basis') || !pages[2]?.includes('Annex 2. Repayment schedule')) v('the annexes do not start pages 2 and 3');
   // What stays on the page only (D-DOC-03, and the owner on 02-10-2026): the assumptions, the verdict, the largest loan,
   // the fewest instalments, the lender's target, how far the method was checked, and the rules for building the figures.
-  const ONLY_ON_THE_PAGE = ['Assumed until changed', 'Below the target', 'The largest loan', 'The fewest instalments', 'target', 'checked', 'How the figures are built', 'Status'];
+  const ONLY_ON_THE_PAGE = ['Assumed until changed', 'Misses', 'The largest loan', 'The fewest instalments', 'target', 'checked', 'How the figures are built', 'Status'];
   for (const not of ONLY_ON_THE_PAGE) if (pages.join('\n').includes(not)) v(`the PDF says "${not}"`);
   const xlsx = await save('download-xlsx');
   if (xlsx.name !== 'DSCR statement - Asha Traders.xlsx') v(`the Excel copy is named "${xlsx.name}"`);
@@ -658,7 +658,7 @@ if (touched('/dscr/')) {
   await expectText(page, v, 'dscr-average', '1.23', 'own figures');
   await expectText(page, v, 'dscr-lowest', '1.14', 'own figures');
   await expectText(page, v, 'dscr-not-counted', 'Not counted: 2026-27 (no term-loan instalment).', 'own figures');
-  await expectText(page, v, 'dscr-verdict', 'Below the target: the lowest year, 2027-28, is 1.14 against 1.20; the average is 1.23 against 1.50.', 'own figures');
+  await expectText(page, v, 'dscr-verdict', 'Misses 2 of 2 targets: the lowest year, 2027-28, is 1.14 against 1.25; the average is 1.23 against 1.50.', 'own figures');
   await layout(page, v, 'own figures filled');
   await ctx.close();
 }
@@ -682,7 +682,7 @@ if (touched('/dscr/')) {
   if (!(await page.getByTestId('dscr-average').isVisible())) v('the front door: no average DSCR without opening More options');
   if (!(await page.getByTestId('dscr-marks').isVisible())) v('the front door: the years are not marked against the target');
   if (await page.locator('#more-options').evaluate((d) => d.open)) v('More options opened by itself');
-  await expectText(page, v, 'assumed-method', 'How DSCR is worked out, and the target: Common term-loan DSCR; average 1.50, lowest year 1.20 Change', 'the method and the target in one line');
+  await expectText(page, v, 'assumed-method', 'How DSCR is worked out, and the target: Common term-loan DSCR; average 1.50, lowest year 1.25 Change', 'the method and the target in one line');
   await expectText(page, v, 'part-2026-27', '6 of 12 instalments', 'the first part-year');
   await layout(page, v, 'the front door filled, 390 px');
   // D1 (D-UX-47): the lenders' lines beside the DSCR, their inputs only under More options; the front door still asks 8.
@@ -702,7 +702,7 @@ if (touched('/dscr/')) {
 
 // Make it viable on the front door (MV5, D-UX-57): fictional case S, worked by hand in tests/dscr-plan.test.ts (a firm,
 // Rs. 4,50,000 this year with no growth, Rs. 12,00,000 at 12% for 5 years). The bars with the cash short, the engine's
-// plan (20 more instalments), the borrower's most (all of it, then 10 more), "Use this plan" writing the loan and the
+// plan (31 more instalments at the 1.25 default, UXR3), the borrower's most (all of it, then 19 more), "Use this plan" writing the loan and the
 // term only, and Undo; the front door still asks 8.
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'dark' });
@@ -713,23 +713,23 @@ if (touched('/dscr/')) {
   await leave(page, '#fld-fd-rate', '12');
   await leave(page, '#fld-fd-years', '5');
   await expectText(page, v, 'dscr-short-average', 'Short by Rs. 4,19,502 of cash to pay the loan, in total over the loan.', 'case S');
-  await expectText(page, v, 'dscr-short-lowest', 'Short by Rs. 63,148 of cash to pay the loan in 2030-31.', 'case S');
+  await expectText(page, v, 'dscr-short-lowest', 'Short by Rs. 79,164 of cash to pay the loan in 2030-31.', 'case S');
   await page.getByTestId('dscr-viable').click();
-  await expectText(page, v, 'dscr-plan-steps', '80 monthly instalments, 6 years 8 months in all (now 5 years), if the lender agrees.', 'case S\'s plan');
+  await expectText(page, v, 'dscr-plan-steps', '91 monthly instalments, 7 years 7 months in all (now 5 years), if the lender agrees.', 'case S\'s plan');
   await expectText(page, v, 'dscr-plan-verdict', 'With these changes it meets the target.', 'case S\'s plan');
   await expectText(page, v, 'dscr-move-cut', 'As typed', 'case S\'s plan');
-  await expectText(page, v, 'dscr-text-cut', 'A loan of Rs. 9,78,928, the largest on these terms, meets the target: you bring the rest, or buy less.', 'case S, the loan alone');
-  await expectText(page, v, 'dscr-text-profit', /^This year’s profit before interest, depreciation and tax of Rs\. 5,51,624, /, 'case S, the profit alone');
+  await expectText(page, v, 'dscr-text-cut', 'A loan of Rs. 9,55,644, the largest on these terms, meets the target: you bring the rest, or buy less.', 'case S, the loan alone');
+  await expectText(page, v, 'dscr-text-profit', /^This year’s profit before interest, depreciation and tax of Rs\. 5,65,064, /, 'case S, the profit alone');
   await leave(page, '#fld-dscr-ownMost', '1 L');
   await expectText(page, v, 'dscr-plan-own', 'You bring Rs. 1,00,000 in place of the loan, within the Rs. 1,00,000 you can.', 'case S with 1 L of the borrower\'s own');
-  await expectText(page, v, 'dscr-move-more', '+10 instalments', 'case S with 1 L of the borrower\'s own');
+  await expectText(page, v, 'dscr-move-more', '+19 instalments', 'case S with 1 L of the borrower\'s own');
   await layout(page, v, 'case S\'s plan, 390 px');
   await page.getByTestId('dscr-plan-use').click();
   await expectValue(page, v, '#fld-fd-amount', '11,00,000', 'case S\'s plan used');
-  await expectValue(page, v, '#fld-fd-years', '5.83', 'case S\'s plan used');
+  await expectValue(page, v, '#fld-fd-years', '6.58', 'case S\'s plan used');
   await expectText(page, v, page.locator('#fld-fd-amount-hint'), 'Changed by the plan; it was 12,00,000.', 'case S\'s plan used');
   await expectText(page, v, page.locator('#fld-fd-years-hint'), 'Changed by the plan; it was 60 instalments.', 'case S\'s plan used');
-  await expectText(page, v, 'dscr-verdict', /^Meets the target/, 'case S\'s plan used');
+  await expectText(page, v, 'dscr-verdict', /^Meets both targets/, 'case S\'s plan used');
   if (await page.getByTestId('dscr-levels').count()) v('case S still shows why it does not work after its plan is used');
   await page.getByTestId('dscr-undo').click();
   await expectValue(page, v, '#fld-fd-amount', '12,00,000', 'case S\'s plan undone');
@@ -1280,7 +1280,7 @@ if (touched('/project-report/')) {
   await leave(page, '#fld-fixed', '25 L');
   await expectText(page, v, 'rep-short', /^Cash goes below nil in 2030-31: Rs\. 49,07,813 short/, 'cash below nil');
   await expectText(page, v, 'rep-status', 'Provisional: 1 still to answer', 'the report with cash below nil');
-  await expectText(page, v, 'rep-misses', /^It misses \S+ of the default benchmark ratios: .*DSCR/, 'the DSCR below the level');
+  await expectText(page, v, 'rep-misses', /^Misses \d+ of \d+ benchmarks: .*DSCR/, 'the DSCR below the level');
   await page.getByTestId('rep-viable').click();
   await expectText(page, v, 'rep-short-dscrLowest', /^Short by Rs\. [\d,]+ of cash to pay the loan in 20\d\d-\d\d\.$/, 'the lowest DSCR\'s shortfall in rupees');
   await expectText(page, v, 'rep-text-sales', /^Sales [\d.]+% higher in every year: Rs\. [\d,]+ in 20\d\d-\d\d instead of Rs\. [\d,]+\./, 'the sales that make it viable');
@@ -1462,7 +1462,7 @@ if (touched('/cma/')) {
   await page.locator('#fld-cma-case-fresh').check();
   await page.locator('#more-options').evaluate((d) => d.open = true);
   await leave(page, '#fld-cma-collateral', '0');
-  await expectText(page, v, 'cma-misses', /^It misses 5 of the default benchmark ratios: current ratio, total outside liabilities ÷ net worth, average DSCR, interest cover and security cover\.$/, 'case M fresh');
+  await expectText(page, v, 'cma-misses', /^Misses 5 of 8 benchmarks: current ratio, total outside liabilities ÷ net worth, average DSCR, interest cover and security cover\.$/, 'case M fresh');
   await expectText(page, v, 'cma-short-currentRatio', /Short by Rs\. 5,60,000 of current assets/, 'case M\'s current ratio');
   await page.getByTestId('cma-viable').click();
   await expectText(page, v, 'cma-plan-steps', /Sales of Rs\. 2,52,48,000 in 2027-28 \(now Rs\. 2,40,00,000\), 5\.2% higher.*Collateral with a market value of Rs\. 3,11,112/, 'case M\'s plan');
