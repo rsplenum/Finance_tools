@@ -260,7 +260,7 @@ export function ReportCalculator() {
         {s.scheme !== 'mudra' && collateralBox()}
       </div>
       {s.scheme !== 'mudra' && tick('fld-cgtmse', 'CGTMSE guarantees the loans', !!s.cgtmse, (x, cgtmse) => ({ ...x, cgtmse }),
-        `Its fee, ${CGTMSE.slabs[0].ratePct}% to ${CGTMSE.slabs[CGTMSE.slabs.length - 1].ratePct.toFixed(2)}% a year by the loans in all, goes into the projections as a finance cost.`)}
+        `A government scheme that guarantees small-business loans. Its fee, ${CGTMSE.slabs[0].ratePct}% to ${CGTMSE.slabs[CGTMSE.slabs.length - 1].ratePct.toFixed(2)}% a year by the loans in all, goes into the projections as a finance cost.`)}
       {s.scheme !== 'mudra' && s.cgtmse && <fieldset class="mt-4">
         <legend class="font-medium text-ink">Concessions that apply, each {CGTMSE.concessionPct}% off the fee</legend>
         {CGTMSE.groups.map((t, k) => <Fragment key={k}>{tick(`fld-concession-${k}`, t, !!s.concessions?.[k], (x, v) => ({ ...x, concessions: CGTMSE.groups.map((_, i) => (i === k ? v : !!x.concessions?.[i])) }))}</Fragment>)}
@@ -410,6 +410,7 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
     {p.checks && <div data-testid="rep-checks">
       <h3 class="text-title text-ink">{p.misses ? 'Why it does not work yet' : `${p.checks.some((c) => c.verdict === 'wait') ? 'Against' : 'Meets'} the ${p.benchmarks ? '' : 'default '}benchmark ratios`}</h3>
       {p.benchmarks && <p data-testid="rep-benchmarks-note" class="mt-1 text-sm text-warn">{p.benchmarks}</p>}
+      <p class={`mt-1 ${HINT}`}>A benchmark is a level lenders commonly look for.</p>
       {fx && <div data-testid="rep-fix" class="mt-2">
         {fx.cause.map((c) => <p key={c} data-testid="rep-fix-cause" class="text-sm text-bad">{c}</p>)}
         {fx.lead && <p class="mt-2 text-sm font-medium text-ink">{fx.lead}</p>}
