@@ -1274,7 +1274,9 @@ if (touched('/project-report/')) {
   await page.getByTestId('rep-viable').click();
   await expectText(page, v, 'rep-short-dscrLowest', /^Short by Rs\. [\d,]+ of cash to pay the loan in 20\d\d-\d\d\.$/, 'the lowest DSCR\'s shortfall in rupees');
   await expectText(page, v, 'rep-text-sales', /^Sales [\d.]+% higher in every year: Rs\. [\d,]+ in 20\d\d-\d\d instead of Rs\. [\d,]+\./, 'the sales that make it viable');
-  await expectText(page, v, 'rep-move-sales', /^\+[\d.]+%$/, 'how far sales must move');
+  // Sales at the use limit (41.7% higher) meet none of the six levels missed, so the plan gives them back (D-UX-178).
+  await expectText(page, v, 'rep-move-sales', 'As typed', 'the plan keeps sales that meet nothing as typed');
+  await expectText(page, v, 'rep-plan-steps', 'No lever moves: nothing within its limit helps.', 'the plan with no lever that helps');
   await expectText(page, v, 'rep-reach-sales', /^Out of reach at this capacity: it needs [\d.]+% of it\./, 'sales above full capacity marked out of reach');
   if (!(await page.getByTestId('rep-lever-promoters').count())) v('make it viable: no lever for a smaller loan');
   await expectText(page, v, 'rep-plan-limits', /the use of the capacity at most 85% in any year/, 'the plan\'s limits by the drivers');
