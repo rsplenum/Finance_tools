@@ -12,7 +12,7 @@
  */
 import { Fragment } from 'preact';
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, toAnswer, useAnswerPlace, InAppNote, useHomeCase, HomeCaseNote } from '../fields';
+import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, toAnswer, useAnswerPlace, InAppNote, useHomeCase, HomeCaseNote, useKept, KeptLine } from '../fields';
 import { ESTIMATE_HOME } from './home-case';
 import { printable } from '../doc/pdf';
 import { BRAND_NOTICE } from '../site';
@@ -58,6 +58,7 @@ const SHARE_COLOR: Record<string, string> = {
 export function PlanEstimate() {
   const [s, setS] = useState<PlanState>(EMPTY_PLAN);
   const home = useHomeCase(setS, () => ESTIMATE_HOME);
+  useKept('plan', s, setS, EMPTY_PLAN);
   const update: Update = (f) => setS(f);
   const p = useMemo(() => planPreview(s), [s]);
   const place = useAnswerPlace('pl-result');
@@ -88,6 +89,7 @@ export function PlanEstimate() {
   return <div class="lg:grid lg:grid-cols-tool lg:gap-x-12">
     <div class="lg:col-start-1 lg:row-start-1">
       <HomeCaseNote on={home} />
+      {(editing || !v) && <KeptLine />}
       {editing || !v
         ? <Questions s={s} update={update} p={p} toLevel={toLevel} done={v ? () => setEditing(false) : undefined} />
         : <div data-testid="pl-answers" class={`mt-6 flex flex-wrap items-center justify-between gap-2 ${CARD}`}>

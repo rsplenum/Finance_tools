@@ -12,7 +12,7 @@ export const KEEP_DAYS = 400;
 export const CAP_DAYS = 2;
 
 /** The day these words last changed. */
-export const PRIVACY_DATE = '24-10-2026';
+export const PRIVACY_DATE = '25-10-2026';
 
 /** What a draft of the report's words sends (engine/narrative.ts, NarrativeInput), in words. */
 export const DRAFT_SENDS = 'the business’s name, address, activity, constitution, scheme and products, the loan’s uses and sources, and your notes';
@@ -20,9 +20,9 @@ export const DRAFT_SENDS = 'the business’s name, address, activity, constituti
 export interface PolicySection extends Section { src: string[] }
 
 export const privacySections = (counting: boolean): PolicySection[] => [
-  { h: 'What you type stays on your device', src: ['site/src/events.ts', 'site/src/download.ts'], p: [
+  { h: 'What you type stays on your device', src: ['site/src/events.ts', 'site/src/download.ts', 'site/src/fields.tsx'], p: [
     'The figures, names and other details you type into a tool are worked out in your browser. They are not sent to us, and we cannot see them.',
-    'Downloads (PDF, Excel and Word) are made in your browser too. We do not keep what you type: close the page and it is gone.',
+    'Downloads (PDF, Excel and Word) are made in your browser too. Your answers stay on your device, only for this tab. Close the tab and they are gone.',
   ] },
   { h: 'What we count, never what you type', src: ['worker/src/event-shape.ts', 'worker/src/events.ts', 'worker/migrations/0001_events.sql', 'worker/wrangler.jsonc'], p: [
     'To make the tools better, we count which steps are used:',
@@ -36,9 +36,9 @@ export const privacySections = (counting: boolean): PolicySection[] => [
     `On the project report you may choose to have the same AI draft the report’s words. Only then does this go, by the same road. It sends ${DRAFT_SENDS}, but no figure.`,
     `We do not keep or log what is sent; Anthropic handles it under its own terms. To limit how many reads and drafts a day, your internet address is counted for ${CAP_DAYS} days, then forgotten. If you would rather nothing left your device, type the figures and write the words yourself.`,
   ] },
-  { h: 'Who else sees your visit', src: ['worker/wrangler.jsonc', 'site/src/theme.ts', 'site/src/report/Report.tsx'], p: [
+  { h: 'Who else sees your visit', src: ['worker/wrangler.jsonc', 'site/src/theme.ts', 'site/src/report/Report.tsx', 'site/src/fields.tsx'], p: [
     'Cloudflare hosts this site and our server, and may hold the counts outside India. Like any host, it receives your internet address and browser details when a page loads. Its own privacy policy covers them. Our server’s error notes say only what kind of failure it was. From launch we will also use Cloudflare Web Analytics, which counts page views without cookies.',
-    'Your browser remembers two choices on your device: light or dark, and the project report’s simple or expert view. It keeps nothing else for us. We show no ads today.',
+    'Your browser remembers two choices on your device: light or dark, and the project report’s simple or expert view. For this tab only, it also keeps your answers, and clears them when you close it. Uploaded documents and results are never kept. We show no ads today.',
   ] },
   { h: 'What this means under India’s data law', src: ['site/src/privacy.ts'], p: [
     'The Digital Personal Data Protection Act, 2023 and its 2025 Rules cover personal data: anything that names you or could. What we may hold of it, and why:',

@@ -7,8 +7,10 @@
  */
 import Drawing from './home/Drawing.astro';
 import { READY } from './site';
-interface Props { href: string; title: string; lead: string }
-const { href, title, lead } = Astro.props;
+import { KEPT_LINE } from './fields';
+/** `kept` false: the page puts the line on what is kept itself (the estimate, beside its questions). */
+interface Props { href: string; title: string; lead: string; kept?: boolean }
+const { href, title, lead, kept = true } = Astro.props;
 const n = READY.findIndex((t) => t.href === href) + 1;
 ---
 <div class="flex items-end justify-between gap-4">
@@ -19,3 +21,4 @@ const n = READY.findIndex((t) => t.href === href) + 1;
 </div>
 <h1 class="mt-4 text-hero text-ink">{title}</h1>
 <p class="mt-5 max-w-prose text-ink-muted">{lead}</p>
+{kept && <p data-testid="kept-line" class="mt-2 max-w-prose text-sm text-ink-muted">{KEPT_LINE}</p>}

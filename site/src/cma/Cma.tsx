@@ -8,7 +8,7 @@
  * engine/cma-plan.ts only, via model.ts and levers.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
-import { AnswerBar, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote, useHomeCase, HomeCaseNote } from '../fields';
+import { AnswerBar, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote, useHomeCase, HomeCaseNote, useKept } from '../fields';
 import { CMA_HOME } from './home-case';
 import { printable } from '../doc/pdf';
 import { inr } from '../../../engine/util';
@@ -31,6 +31,7 @@ export function CmaCalculator() {
   const blank = () => emptyState(startYearOf(new Date()));
   const [s, setS] = useState<CmaState>(blank);
   const home = useHomeCase(setS, () => CMA_HOME);
+  useKept('cma', s, setS, blank());
   // Clear all on a 131-field page, with an undo until the next figure is typed (review finding 7).
   const [cleared, setCleared] = useState<CmaState>();
   const typed = JSON.stringify(s) !== JSON.stringify(blank());

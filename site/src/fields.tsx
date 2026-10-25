@@ -336,14 +336,49 @@ export function InAppNote({ id }: { id: string }) {
  * A tool opened from home's intro (HOME1b, D-UX-114: `?case=home`) starts filled with that intro's fictional case, put in
  * after the page wakes so the page served stays the blank one; the note says so for the visit.
  */
+const homeAsked = () => { try { return new URLSearchParams(location.search).get('case') === 'home'; } catch { return false; } };
 export function useHomeCase<T>(set: (s: T) => void, made: () => T) {
   const [on, setOn] = useState(false);
-  useEffect(() => {
-    let asked = false;
-    try { asked = new URLSearchParams(location.search).get('case') === 'home'; } catch { /* no address: the blank page */ }
-    if (asked) { set(made()); setOn(true); }
-  }, []);
+  useEffect(() => { if (homeAsked()) { set(made()); setOn(true); } }, []);
   return on;
+}
+
+/** The line on what is kept (D-UX-163): under each tool's lead; on the estimate, with its questions (D-UX-169). */
+export const KEPT_LINE = 'Your answers stay on this device. Closing the tab clears them. We never see them.';
+export const KeptLine = () => <p data-testid="kept-line" class="mt-2 max-w-prose text-sm text-ink-muted">{KEPT_LINE}</p>;
+
+/** The draft's version (D-UX-159): raise it when a tool's inputs change meaning, so an old draft is dropped. */
+const DRAFT_VERSION = 1;
+/** The keys of a blank state, nested, as one line: a draft made for other fields is dropped, never half-filled. */
+const shapeOf = (x: unknown): string => Array.isArray(x) ? '[]'
+  : x && typeof x === 'object' ? `{${Object.keys(x).sort().map((k) => `${k}:${shapeOf((x as Record<string, unknown>)[k])}`).join(',')}}` : '';
+/**
+ * A tool's answers kept in this browser tab (UXR2, D-UX-157 to D-UX-161): what was typed comes back after a reload, Back
+ * or a phone dropping the tab, and goes when the tab closes. The state holds inputs only, never results or documents
+ * (D-UX-158, D-UX-160); a blank state, as after Clear all, empties the draft. A visit with home's fictional case is not
+ * kept and does not touch the draft (D-UX-162). Put back after the page wakes, so the page served stays the blank one.
+ */
+export function useKept<T>(tool: string, s: T, set: (s: T) => void, blank: T) {
+  const key = `draft:${tool}:v${DRAFT_VERSION}`, shape = shapeOf(blank), empty = JSON.stringify(blank);
+  const ready = useRef(false), off = useRef(false);
+  useEffect(() => {
+    off.current = homeAsked();
+    if (!off.current) {
+      try {
+        const d = JSON.parse(sessionStorage.getItem(key) ?? 'null') as { shape: string; s: T } | null;
+        if (d && d.shape === shape) set(d.s); else if (d) sessionStorage.removeItem(key);
+      } catch { /* no storage or a broken draft: the blank page */ }
+    }
+    ready.current = true;
+  }, []);
+  // Written as soon as the change is drawn, so a reload straight after the last field still finds it.
+  useLayoutEffect(() => {
+    if (!ready.current || off.current) return;
+    try {
+      if (JSON.stringify(s) === empty) sessionStorage.removeItem(key);
+      else sessionStorage.setItem(key, JSON.stringify({ shape, s }));
+    } catch { /* storage full or blocked: the answers stay for this view only */ }
+  }, [s]);
 }
 export const HomeCaseNote = ({ on }: { on: boolean }) => on ? (
   <p role="status" data-testid="home-case" class="mt-2 text-sm font-medium text-ink">Filled with the fictional case from the home page. Every figure is an example: change each to your own.</p>

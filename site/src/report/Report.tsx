@@ -7,7 +7,7 @@
 import { Fragment, type ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
-import { answerRule, AnswerBar, BUTTON, Choice, Claim, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote, useHomeCase, HomeCaseNote } from '../fields';
+import { answerRule, AnswerBar, BUTTON, Choice, Claim, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote, useHomeCase, HomeCaseNote, useKept } from '../fields';
 import { REPORT_HOME } from './home-case';
 import { Bar, Benchmarks, Lever, PlanLever, targetOf } from '../Board';
 import { benchmarkFields, inSentence, listed, withBenchmark } from '../board-model';
@@ -100,6 +100,7 @@ export function ReportCalculator() {
   const p = useMemo(() => preview(s), [s]);
   const simple = s.mode === 'simple', blank = { ...EMPTY, mode: s.mode };
   const typed = JSON.stringify(s) !== JSON.stringify(blank);
+  useKept('report', s, setS, blank);
   const toMode = (m: Mode) => { saveMode(m); update((x) => withMode(x, m)); };
   // A box only expert mode has: switch to it, then focus the box.
   const toExpert = (id: string) => (e: Event) => { e.preventDefault(); toMode('expert'); focusNext(`#${id}`); };
