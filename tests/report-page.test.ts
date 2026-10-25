@@ -13,6 +13,7 @@ import { AS_TYPED, EMPTY, applyPlan, assumptionsOf, boardOf, changedOf, fixView,
 import { withLevers } from '../engine/plan';
 import { F } from './fix.test';
 import { benchmarkFields, levelsOf, withBenchmark } from '../site/src/board-model';
+import { sameValue } from '../site/src/amount';
 import { SITE_NAME } from '../site/src/site';
 import { docxLines, pdfPages, workbook } from '../scripts/read-doc.mjs';
 
@@ -166,7 +167,9 @@ describe('changed benchmarks on the page (BEN1)', () => {
     expect(levelsOf({ tolTnw: '5:1', dscrLowest: ' 0.8 ', currentRatio: 'abc', facr: '0', interestCover: '' })).toEqual({ tolTnw: 5, dscrLowest: 0.8 });
     expect(withBenchmark(withBenchmark(undefined, 'dscrLowest', '1.1'), 'dscrLowest', ' ')).toBeUndefined();
     const f = benchmarkFields('renewal', { currentRatio: 'x' });
-    expect([f.length, f[0].hint, f[0].error?.slice(0, 15), f.find((d) => d.id === 'dscrLowest')?.hint]).toEqual([8, 'Default 1.00 or more', 'Not understood.', 'Default 1.25 or more']);
+    expect([f.length, f[0].byDefault, f[0].hint, f[0].error?.slice(0, 15), f.find((d) => d.id === 'dscrLowest')?.byDefault]).toEqual([8, '1.00', 'This or more meets it.', 'Not understood.', '1.25']);
+    // A box holds its default (OR4): the same figure typed back, however written, is the default.
+    expect([sameValue('1.2', '1.20'), sameValue('60,70, 80', '60, 70, 80'), sameValue('', '0'), sameValue('1.3', '1.25')]).toEqual([true, true, false, false]);
   });
   it('a looser benchmark flips the verdict, says its default and warns', () => {
     const p = preview({ ...weak, benchmarks: { dscrLowest: '0.8', currentRatio: '0.9' } });

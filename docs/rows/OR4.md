@@ -1,0 +1,11 @@
+# OR4
+## Decisions
+| D-UX-179 | 25-10-2026 | Every assumption box shows its default, filled (OR1's O10): one option on the site's text box, `byDefault`, used by all four tools. While the box holds the default it says "assumed" beside its unit; once changed it is tinted (`bg-warn-tint`), says "changed", and under it "Default 1.25. Reset". `keepBlank` keeps a blank in the state for the default (the benchmarks, the ceiling height), so drafts in the tab, the engine and the documents are untouched; the default typed back, however written ("1.2", "1.20"), counts as the default | the owner could not tell whether to fill every benchmark box or only the one they change; a filled box answers that, and a tinted one shows what they changed | U |
+| D-UX-180 | 25-10-2026 | Where OR4 applies: the benchmarks (report and CMA, 8 boxes), the report's assumed use of the capacity, price growth and days of stock, debtors and creditors, the DSCR's assumed target (average and lowest year, only on a page started from the assumptions) and the estimate's ceiling height. Not the report's simple-mode assumptions (no box on that path), nor the guarantee fee box (its default changes with the amount and the scheme, said in its hint), nor the estimate's GST and contingency (the user's own figures, no default) | an assumption with a box gets the part; a box without a default stays a question | U |
+| D-UX-181 | 25-10-2026 | The DSCR's target is not kept blank: a blank box there means "not asked" (the average, the lowest year or both), so a cleared target box shows tinted with its default and Reset, never refilled by itself | a box that refills on clearing would take away the choice of one target | U |
+## Owner
+- **The tint for a changed box** (D-UX-179): amber (`warn-tint`), the colour already used for "take note". A neutral grey would read as disabled; the plan's blue ring (cells the plan changed) as focus. Say if you want another.
+## Cost
+| 25-10-2026 | OR4: every assumption box filled with its default, tinted with its default and Reset once changed, on the four tools | S | STEPS |
+## Handoff
+State line: OR4 is built (D-UX-179 to D-UX-181): every assumption box holds its default, a changed one tinted with its default and Reset, on all four tools. OR4's row: done. Next of the owner's review: OR3 (waits on UXR3), then OR5.

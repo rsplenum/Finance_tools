@@ -1150,6 +1150,16 @@ if (touched('/project-report/')) {
   if (await page.getByTestId('rep-misses').count()) v('case R is said to miss a lender\'s level');
   await expectText(page, v, 'rep-check-dscrLowest', /^Lowest DSCR ?2\.51 ?in 2026-27 ?Meets · target 1\.25 or more$/, 'the lowest DSCR against its level, on its key figure');
   if (await page.getByTestId('rep-checks').getByText('DSCR in the lowest year').count() > await page.locator('#benchmarks').getByText('DSCR in the lowest year').count()) v('the lowest DSCR is shown twice: on its key figure and as a bar (review finding 9)');
+  // Every benchmark box holds its default (OR4, O10); a changed one is tinted, tagged, and says its default with a reset.
+  await page.locator('#benchmarks').evaluate((d) => d.open = true);
+  await expectValue(page, v, '#fld-bm-dscrLowest', '1.25', 'the lowest DSCR\'s benchmark box filled with its default');
+  await leave(page, '#fld-bm-dscrLowest', '1.5');
+  if (await page.locator('#fld-bm-dscrLowest[data-changed="own"]').count() !== 1) v('a changed benchmark box is not marked changed (OR4)');
+  await expectText(page, v, 'fld-bm-dscrLowest-default', 'Default 1.25. Reset to the default', 'a changed benchmark says its default');
+  await page.getByTestId('fld-bm-dscrLowest-reset').click();
+  await expectValue(page, v, '#fld-bm-dscrLowest', '1.25', 'Reset puts the default back');
+  if (await page.locator('#fld-bm-dscrLowest[data-changed]').count() || await page.getByTestId('rep-benchmarks-reset').count()) v('a reset benchmark still reads as changed (OR4)');
+  await page.locator('#benchmarks').evaluate((d) => d.open = false);
   await expectText(page, v, 'rep-check-securityCover', /Meets: [0-9.]+ in 20[0-9-]+ on the project’s own assets/, 'the security cover before the collateral, on the own assets');
   if (await page.getByTestId('rep-collateral-note').count()) v('the security cover met on the own assets still asks for the collateral (UX5b)');
   await page.getByTestId('rep-viable').click();

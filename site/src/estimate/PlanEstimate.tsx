@@ -564,7 +564,7 @@ function Assumed({ s, v, update }: { s: PlanState; v: PlanView; update: Update }
         <span class="font-medium">{a.what}:</span> {a.shown}
         {a.what === 'Ceiling height' && !height && <> <button type="button" data-testid="pl-height-change" class={LINK} onClick={() => setHeight(true)}>Change</button></>}
         {a.what === 'Ceiling height' && height && <TextField id="fld-height" class="mt-2 max-w-xs" label="Ceiling height, in metres" inputMode="decimal" value={s.height}
-          placeholder={`like ${RULE_HEIGHT}`} invalid={bad} said={bad ? `Type a height from 2 to 6 metres, like 3. Until then the estimate uses ${RULE_HEIGHT} m.` : undefined} onCommit={(t) => update((x) => ({ ...x, height: t }))} />}
+          byDefault={String(RULE_HEIGHT)} keepBlank invalid={bad} said={bad ? `Type a height from 2 to 6 metres, like 3. Until then the estimate uses ${RULE_HEIGHT} m.` : undefined} onCommit={(t) => update((x) => ({ ...x, height: t }))} />}
         {a.what === 'The plot' && plot && !plotOpen && !plot.own && !plot.bad && <> <button type="button" data-testid="pl-plot-change" class={LINK} onClick={() => setPlot(true)}>Change</button></>}
         {a.what === 'The plot' && plot && (plotOpen || plot.own || plot.bad) && <div class="mt-2 flex flex-wrap items-end gap-x-3 gap-y-2">
           {plotSide('l')}{plotSide('b')}

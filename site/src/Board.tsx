@@ -41,14 +41,14 @@ export const targetOf = (c: CheckRow) =>
   c.byDefault === undefined ? `target ${c.level}` : `your benchmark ${c.level} (default ${c.byDefault}${c.looser ? ', looser than a bank may accept' : ''})`;
 
 /** Change the benchmarks (BEN1, D-UX-101): closed under the card, never on the default path (D-UX-12), a field per ratio
- * with its default as the hint, and Reset to defaults. */
+ * filled with its default and tinted once changed (OR4), and Reset to defaults. */
 export function Benchmarks({ fields, set, reset, pre }: { fields: BenchmarkField[]; set: (id: string, t: string) => void; reset: () => void; pre: string }) {
   const changed = fields.some((f) => f.value.trim());
   return <details id="benchmarks" data-testid={`${pre}-benchmarks`} open={changed || undefined} class="mt-3">
     <summary class="cursor-pointer text-sm font-medium text-link underline underline-offset-4">Change the benchmarks</summary>
-    <p class={HINT}>Each bank sets its own. Leave a ratio blank for its default.</p>
+    <p class={HINT}>Each bank sets its own. Each box holds the default; change only the ones your bank sets.</p>
     <div class="mt-2 grid gap-3 sm:grid-cols-2">{fields.map((f) => <TextField key={f.id} id={`fld-bm-${f.id}`} label={f.label} hint={f.hint}
-      value={f.value} onCommit={(t) => set(f.id, t)} inputMode="decimal" said={f.error} invalid={!!f.error} />)}</div>
+      value={f.value} byDefault={f.byDefault} keepBlank onCommit={(t) => set(f.id, t)} inputMode="decimal" said={f.error} invalid={!!f.error} />)}</div>
     {changed && <button type="button" data-testid={`${pre}-benchmarks-reset`} class={`mt-3 ${BUTTON}`} onClick={reset}>Reset to defaults</button>}
   </details>;
 }

@@ -70,12 +70,12 @@ export function withBenchmark(t: BenchmarkText | undefined, id: string, text: st
 /** "default benchmark ratios" until one is changed (D-UX-99). */
 export const ratiosWord = (lv: Levels) => (Object.keys(lv).length ? 'benchmark ratios' : 'default benchmark ratios');
 const looser = (k: RatioCheck) => k.byDefault !== undefined && (k.at === 'least' ? k.level < k.byDefault : k.level > k.byDefault);
-export interface BenchmarkField { id: RatioId; label: string; hint: string; value: string; error?: string }
-/** A field per ratio, its default for the case as the hint; `c` unset, the fresh loan's. */
+export interface BenchmarkField { id: RatioId; label: string; hint: string; value: string; byDefault: string; error?: string }
+/** A field per ratio, its default for the case in the box until changed (OR4); `c` unset, the fresh loan's. */
 export const benchmarkFields = (c: Case | undefined, t: BenchmarkText = {}): BenchmarkField[] => LEVELS.ratios.map((d) => {
   const id = d.id as RatioId, value = t[id] ?? '';
-  return { id, label: d.label, value, hint: `Default ${d[c ?? 'fresh'].toFixed(2)} or ${d.at === 'least' ? 'more' : 'less'}`,
-    ...(value.trim() && benchmarkOf(value) === undefined ? { error: 'Not understood. Type a figure above nil, as 1.25, or leave it blank for the default.' } : {}) };
+  return { id, label: d.label, value, byDefault: d[c ?? 'fresh'].toFixed(2), hint: `This or ${d.at === 'least' ? 'more' : 'less'} meets it.`,
+    ...(value.trim() && benchmarkOf(value) === undefined ? { error: 'Not understood. Type a figure above nil, as 1.25, or Reset for the default.' } : {}) };
 });
 /** The line under the heading once a benchmark is changed: which, and a looser one's warning. */
 export function benchmarksNote(checks: RatioCheck[]): string | undefined {

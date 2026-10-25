@@ -1,4 +1,5 @@
 /** Form fields shared by the tool pages. A field keeps what is being typed to itself and hands it on only when it is left. */
+import { sameValue } from './amount';
 import type { ComponentChildren } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { overdueNote, todayIso } from '../../engine/review';
@@ -55,12 +56,16 @@ interface TextProps {
   inputMode?: 'decimal' | 'numeric' | 'text';
   /** Inside the box (UX9, review finding 6): "Rs." before the figure; any other, like "%" or "days", after it. */
   unit?: string;
-  /** A value the page assumes until changed (defaults.json), said in the box beside its unit, so it never passes for one typed. */
-  assumed?: boolean;
   /** The estimate's own; the tools' boxes take none, since an example in the box looks typed (review finding 6). */
   placeholder?: string;
+  /** The value the page assumes (OR4, O10): the box tagged "assumed" while it holds it, tinted and tagged "changed" once it
+   * does not, with the default and a reset under it. */
+  byDefault?: string;
+  /** The state keeps a blank for the default: the box shows the default while blank, and the default typed back is a blank. */
+  keepBlank?: boolean;
   class?: string;
 }
+
 
 /**
  * A box with its label above and one slot below (UX9, review finding 6): what was read or what is wrong, or else the
@@ -68,12 +73,16 @@ interface TextProps {
  * share a line however their labels wrap.
  */
 export function TextField(p: TextProps) {
-  const d = useDraft(p.value, p.onCommit, p.tidy);
+  const fixed = p.byDefault, shown = fixed !== undefined && p.keepBlank && !p.value.trim() ? fixed : p.value;
+  const commit = (t: string) => p.onCommit(fixed !== undefined && (sameValue(t, fixed) || (p.keepBlank && !t.trim())) ? (p.keepBlank ? '' : fixed) : t);
+  const d = useDraft(shown, commit, p.tidy);
+  const changed = fixed !== undefined && !sameValue(shown, fixed);
   // A read-back saying the text was not understood marks the field wrong too, for screen readers and the error count (UD1).
   const bad = p.invalid || /^Not understood/.test(p.said ?? '');
-  const pre = p.unit === 'Rs.', after = [pre ? '' : p.unit, p.assumed ? 'assumed' : ''].filter(Boolean).join(' · ');
+  const tag = changed ? 'changed' : fixed !== undefined ? 'assumed' : '';
+  const pre = p.unit === 'Rs.', after = [pre ? '' : p.unit, tag].filter(Boolean).join(' · ');
   const pad = `${pre ? 'pl-11' : 'pl-3'} ${!after ? 'pr-3' : after.length < 4 ? 'pr-10' : after.length < 10 ? 'pr-24' : 'pr-36'}`;
-  const slot = p.said ? 'said' : p.hint ? 'hint' : '', UNIT = 'pointer-events-none absolute inset-y-0 flex items-center text-ink-muted';
+  const slot = p.said ? 'said' : changed ? 'default' : p.hint ? 'hint' : '', UNIT = 'pointer-events-none absolute inset-y-0 flex items-center text-ink-muted';
   return <div class={`grid grid-rows-subgrid row-span-3 content-start gap-0 ${p.class ?? ''}`}>
     <label for={p.id} class={`${LABEL} self-end`}>{p.label}</label>
     <div class="relative mt-1">
@@ -81,10 +90,12 @@ export function TextField(p: TextProps) {
       {after && <span id={`${p.id}-unit`} class={`${UNIT} right-3 text-sm`}>{after}</span>}
       <input id={p.id} type={p.type ?? 'text'} inputMode={p.inputMode} autocomplete="off" spellcheck={false} enterkeyhint="done"
         placeholder={p.placeholder} aria-invalid={bad || undefined} aria-describedby={[pre && `${p.id}-pre`, after && `${p.id}-unit`, slot && `${p.id}-${slot}`].filter(Boolean).join(' ') || undefined}
-        {...d} class={`${INPUT.replace('px-3', pad)} ${bad ? BAD : BORDER}`} />
+        data-changed={changed ? 'own' : undefined} {...d} class={`${INPUT.replace('px-3', pad)} ${bad ? BAD : BORDER} ${changed ? 'bg-warn-tint' : ''}`} />
     </div>
     {/* The read-back, or the error beside its field in the error colour (GOV.UK Error message), tied to the field for a screen reader. */}
     {p.said ? <p id={`${p.id}-said`} data-testid={`${p.id}-said`} aria-live="polite" class={`mt-1 text-sm break-words ${bad ? 'text-bad' : 'text-ink-muted'}`}>{p.said}</p>
+      : changed ? <p id={`${p.id}-default`} data-testid={`${p.id}-default`} class={HINT}>Default {fixed}{p.unit && p.unit !== 'Rs.' ? ` ${p.unit}` : ''}.{' '}
+        <button type="button" data-testid={`${p.id}-reset`} class="text-link underline underline-offset-4" onClick={() => commit(fixed!)}>Reset<span class="sr-only"> {typeof p.label === 'string' ? p.label : ''} to the default</span></button></p>
       : p.hint && <p id={`${p.id}-hint`} class={HINT}>{p.hint}</p>}
   </div>;
 }

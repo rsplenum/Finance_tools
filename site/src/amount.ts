@@ -9,3 +9,9 @@ export function readBack(text: string): string {
   if (n <= 0) return 'Enter an amount above zero.';
   return `${rs(n)} (${rupeesWords(n)})`;
 }
+
+/** Two texts as one value: equal figures ("1.2" and "1.20"), or the same words but for spaces ("60, 70" and "60,70"). */
+export const sameValue = (a: string, b: string) => {
+  const x = a.replace(/\s+/g, ''), y = b.replace(/\s+/g, '');
+  return x === y || (x !== '' && y !== '' && Number(x) === Number(y));
+};
