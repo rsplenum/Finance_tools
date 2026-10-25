@@ -6,6 +6,6 @@
 ## Owner
 - **The tint for a changed box** (D-UX-179): amber (`warn-tint`), the colour already used for "take note". A neutral grey would read as disabled; the plan's blue ring (cells the plan changed) as focus. Say if you want another.
 ## Cost
-| 25-10-2026 | OR4: every assumption box filled with its default, tinted with its default and Reset once changed, on the four tools | S | STEPS |
+| 25-10-2026 | OR4: every assumption box filled with its default, tinted with its default and Reset once changed, on the four tools | S | about 60 steps over about 0.4 working hours, no compaction; two 16-minute quick verifies took the most; re-reading the context 69% |
 ## Handoff
 State line: OR4 is built (D-UX-179 to D-UX-181): every assumption box holds its default, a changed one tinted with its default and Reset, on all four tools. OR4's row: done. Next of the owner's review: OR3 (waits on UXR3), then OR5.
