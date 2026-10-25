@@ -128,7 +128,7 @@ export function ReportCalculator() {
       invalid={bad(value, amountOf)} said={notUnderstood(value, amountOf, '10,00,000 or 10 L')} onCommit={(t) => update((x) => set(x, t))} />;
   // A figure with its unit in the box and no example there (UX9, review finding 6); one the page assumes says so in the box.
   const percent = (id: string, label: string, value: string, set: (x: ReportState, t: string) => ReportState, unit?: string, assumed?: string, hint?: string) =>
-    <TextField id={id} label={label} unit={unit} assumed={!!assumed && value === assumed} hint={mark(id, hint)} inputMode="decimal" value={value}
+    <TextField id={id} label={label} unit={unit} byDefault={assumed || undefined} hint={mark(id, hint)} inputMode="decimal" value={value}
       invalid={bad(value, plainOf)} said={notUnderstood(value, plainOf, 'a number, like 10')} onCommit={(t) => update((x) => set(x, t))} />;
   const tick = (id: string, label: string, on: boolean, set: (x: ReportState, v: boolean) => ReportState, hint?: string) =>
     <label class="mt-4 flex items-start gap-2 text-ink">
@@ -247,7 +247,7 @@ export function ReportCalculator() {
       {!simple && <>
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
         {s.salesBy === 'drivers' ? <>
-          <TextField id="fld-utilisation" label="Use of the capacity by year (%)" unit="%" assumed={s.utilisation === EMPTY.utilisation} hint={mark('fld-utilisation', 'One a year from the first sales, like 60, 70, 80; the last holds after.')} value={s.utilisation}
+          <TextField id="fld-utilisation" label="Use of the capacity by year (%)" unit="%" byDefault={EMPTY.utilisation || undefined} hint={mark('fld-utilisation', 'One a year from the first sales, like 60, 70, 80; the last holds after.')} value={s.utilisation}
             onCommit={(utilisation) => update((x) => ({ ...x, utilisation }))} />
           {percent('fld-priceGrowth', 'The price: growth a year (%)', s.priceGrowth, (x, priceGrowth) => ({ ...x, priceGrowth }), '%', EMPTY.priceGrowth)}
         </> : <>

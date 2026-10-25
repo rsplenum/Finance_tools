@@ -26,7 +26,7 @@ import { printable } from '../doc/pdf';
 import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
 import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
 import {
-  BORROWER_CHOICES, checkNext, dscrMarks, EXAMPLE_TARGETS, GROUP_TITLES, NO_LENDER, OPTION_KEYS, amountOf, barText, choicesOf, emisAsk, frontDoor, loanRead, modeOf, monthText, numberOf,
+  ASSUMED, BORROWER_CHOICES, checkNext, dscrMarks, EXAMPLE_TARGETS, GROUP_TITLES, NO_LENDER, OPTION_KEYS, amountOf, barText, choicesOf, emisAsk, frontDoor, loanRead, modeOf, monthText, numberOf,
   parseFy, presetText, preview, rowValues, rowsOf, statusText, sureLine, targetText, tidyAmount, withBorrower, withFrontNeeds, FRONT, frontAt, withPlanStart, withSource, yearsOf,
   type DocFacts, type LenderLine, type LenderText, type LenderView, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
@@ -393,9 +393,9 @@ function TargetSection({ s, update }: { s: State; update: Update }) {
   return <Section id="target" title="The lender’s target">
     <p class={`mt-2 ${HINT}`}>The DSCR the lender asks for: the average, the lowest year, or both.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
-      <TextField id="fld-targetAverage" label="Average" hint="Like 1.50." inputMode="decimal" value={t.average}
+      <TextField id="fld-targetAverage" label="Average" hint="Like 1.50." inputMode="decimal" value={t.average} byDefault={s.assume ? ASSUMED.target.average : undefined}
         onCommit={(v) => set({ average: v })} said={notUnderstood(t.average, numberOf, '1.50')} />
-      <TextField id="fld-targetMinimum" label="Lowest year" hint="Like 1.20." inputMode="decimal" value={t.minimum}
+      <TextField id="fld-targetMinimum" label="Lowest year" hint="Like 1.20." inputMode="decimal" value={t.minimum} byDefault={s.assume ? ASSUMED.target.minimum : undefined}
         onCommit={(v) => set({ minimum: v })} said={notUnderstood(t.minimum, numberOf, '1.20')} />
     </div>
     {a && m && <div class="mt-4">
