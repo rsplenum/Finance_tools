@@ -10,7 +10,7 @@ import { inr } from '../../../engine/util';
 import { EXAMPLE } from './example';
 import type { BenchmarkText } from '../board-model';
 
-export interface CmaFacts { name: string; preparedBy: string }
+export interface CmaFacts { name: string; preparedBy: string; lender?: string }
 export type Grid = Record<YearId, Record<HeadId, string>>;
 /** `loanCase`: a fresh or enhanced limit, or a renewal, which sets a lender's levels (D-UX-51), unset until the borrower
  * says; `collateral`, its market value (More options); `promotersMost`, the most they can bring in all, for the plan. */
@@ -25,7 +25,7 @@ export interface CmaState {
 export const startYearOf = (d: Date) => d.getFullYear() - (d.getMonth() < 3 ? 1 : 0);
 const blankYear = () => Object.fromEntries(HEADS.map((h) => [h.id, ''])) as Record<HeadId, string>;
 export const emptyState = (startYear: number): CmaState => ({
-  startYear, figures: Object.fromEntries(YEARS.map((y) => [y.id, blankYear()])) as Grid, existingLimit: '', quasi: false, doc: { name: '', preparedBy: '' },
+  startYear, figures: Object.fromEntries(YEARS.map((y) => [y.id, blankYear()])) as Grid, existingLimit: '', quasi: false, doc: { name: '', preparedBy: '', lender: '' },
   loanCase: '', collateral: '', promotersMost: '',
 });
 /** Case K (tests/cma.test.ts), typed in for the years from `startYear`, to try the page. */

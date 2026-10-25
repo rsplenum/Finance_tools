@@ -17,6 +17,7 @@ export function docNeeds(f: CmaFacts): string[] {
   const needs: string[] = [];
   if (!f.name.trim()) needs.push('The business’s name');
   else if (!printable(f.name)) needs.push('The business’s name, in English letters');
+  if (f.lender?.trim() && !printable(f.lender)) needs.push('The lender, in English letters');
   if (f.preparedBy.trim() && !printable(f.preparedBy)) needs.push('Prepared by, in English letters');
   return needs;
 }
@@ -53,6 +54,7 @@ export function cmaDoc(s: CmaState, p: CmaPreview, today: string): Doc | undefin
   if (!v || p.blocked) return undefined;
   const needs = allNeeds(s, p), name = ok(s.doc.name), by = ok(s.doc.preparedBy), table = (id: string) => tableOf(v.tables.find((t) => t.id === id) as ViewTable);
   const facts: [string, string][][] = [[['Years', `${v.years[0]} to ${v.years[v.years.length - 1]}`], ['Prepared on', dmy(today)]]];
+  if (ok(s.doc.lender ?? '')) facts.push([['Lender', ok(s.doc.lender ?? '')]]);
   if (by) facts.push([['Prepared by', by]]);
   const first: Block[] = [
     { kind: 'title', text: name || 'CMA data', sub: `Credit monitoring arrangement data, ${v.years[0]} to ${v.years[v.years.length - 1]}` },

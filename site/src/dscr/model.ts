@@ -884,7 +884,7 @@ export const FRONT: [RegExp, string, string][] = [
   [/^(Growth in sales|Profit before interest, depreciation and tax: growth)/, 'Growth in sales a year (%)', 'fld-fd-growth'],
   [/^Loan amount$/, 'Loan amount', 'fld-fd-amount'],
   [/^Interest rate/, 'Interest rate (% a year)', 'fld-fd-rate'],
-  [/^Number of instalments$/, 'Term (years)', 'fld-fd-years'],
+  [/^Number of instalments$/, 'Years to repay', 'fld-fd-years'],
 ];
 export const frontAt = (n: string, first?: string) => FRONT.findIndex(([m], i) => m.test(n) && (i !== 1 || !first || !/\d{4}-\d{2}$/.test(n) || n.endsWith(first)));
 /** On the front door every missing fact shows at once: the profit and its growth before the loan's dates give the years. */

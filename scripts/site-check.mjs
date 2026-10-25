@@ -300,7 +300,7 @@ if (touched('/dscr/')) {
 
   // The loan amount field, kept from P0: read back in figures and words while typing; long words wrap.
   const field = page.locator('#fld-loanAmount');
-  for (const [typed, want] of [['70 L', 'Rs. 70,00,000 (Rupees Seventy Lakh Only)'], ['1.2 Cr', 'Rs. 1,20,00,000 (Rupees One Crore Twenty Lakh Only)'], ['seventy', 'Not understood. Try 70 L, 1.2 Cr or 70,00,000.']]) {
+  for (const [typed, want] of [['70 L', 'Rs. 70,00,000 (Rupees Seventy Lakh Only)'], ['1.2 Cr', 'Rs. 1,20,00,000 (Rupees One Crore Twenty Lakh Only)'], ['seventy', 'Not understood. Type 70 L, 1.2 Cr or 70,00,000.']]) {
     await field.fill(typed);
     await expectText(page, v, 'amount-read', want, `typed "${typed}"`);
   }
@@ -912,7 +912,7 @@ for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
   if (await page.getByTestId('pl-room-more-living').evaluate((d) => d.open)) v('a room\'s own size and level are open with nothing set');
   await page.getByTestId('pl-room-more-living').locator('summary').click();
   await leave(page, '#fld-room-living-l', '16');
-  await expectText(page, v, 'pl-room-bad-living', 'Type both sides. Until then the planned size is used.', 'one side of a room typed');
+  await expectText(page, v, 'pl-room-bad-living', 'One side is missing. Type both sides. Until then the planned size is used.', 'one side of a room typed');
   await leave(page, '#fld-room-living-b', '20');
   await expectText(page, v, 'pl-room-size-living', '20 × 16 ft · 320 sq ft · your size', 'the living room at its own size');
   await expectText(page, v, 'pl-what-changed', /^Living and dining to 16 × 20 ft: Rs\. [\d,]+ (more|less)$/, 'what the size changed');
@@ -1137,7 +1137,7 @@ if (touched('/project-report/')) {
     await leave(page, id, value);
   await expectText(page, v, 'rep-status', '1 question left', 'the report before the repayment');
   await page.check('#fld-tl-repayment-monthly');
-  await expectText(page, v, 'rep-status', 'Complete', 'the report');
+  await expectText(page, v, 'rep-status', 'Figures complete; for the document, 3 questions left', 'the report, before its facts (UXR3, S4)');
   await expectText(page, v, 'rep-key-0', 'Rs. 37,86,301', 'the cost of the project');
   const cells = async (table, label) => (await page.getByTestId(table).locator('tr', { has: page.locator('th', { hasText: label }) }).first().locator('td').allTextContents());
   for (const [table, label, want] of [['rep-pl', 'Profit after tax', '11,54,407'], ['rep-bs', 'Total liabilities', '55,81,804'], ['rep-bs', 'Total assets', '55,81,804'], ['rep-dscr', 'DSCR (A ÷ B)', '2.51']]) {
@@ -1268,7 +1268,7 @@ if (touched('/project-report/')) {
     ['#fld-product-1-name', 'Roasted peanuts'], ['#fld-product-1-units', '1,500'], ['#fld-product-1-price', '200'], ['#fld-monthsToStart', '3'], ['#fld-variablePct', '70'], ['#fld-fixed', '12 L'], ['#fld-fixedGrowth', '5'],
     ['#fld-wcLimit', '3 L'], ['#fld-wcRate', '11']])
     await leave(page, id, value);
-  await expectText(page, v, 'rep-status', 'Complete', 'the PMEGP report');
+  await expectText(page, v, 'rep-status', /^Figures complete; for the document, \d+ questions? left$/, 'the PMEGP report');
   const tiles = await page.locator('main dl > div').allTextContents();
   if (!tiles.some((t) => t.startsWith('PMEGP margin money') && t.includes('Rs. 7,80,856'))) v(`the PMEGP report's tiles read ${JSON.stringify(tiles).slice(0, 200)}`);
   await page.getByTestId('rep-cf').evaluate((t) => t.closest('details').open = true);
@@ -1333,7 +1333,7 @@ if (touched('/project-report/')) {
   await expectText(page, v, 'rep-mudra-collateral', /^No collateral needed up to Rs\. 20,00,000: CGFMU .* Apply on JanSamarth\.$/, 'Mudra without collateral');
   await expectText(page, v, 'rep-needs', /Mudra: the loans come to Rs\. 15,00,000, above Tarun's/, 'Tarun Plus unticked');
   await page.check('#fld-tarun');
-  await expectText(page, v, 'rep-status', 'Complete', 'the Mudra report');
+  await expectText(page, v, 'rep-status', /^Figures complete; for the document, \d+ questions? left$/, 'the Mudra report');
   await page.getByTestId('rep-pl').evaluate((t) => t.closest('details').open = true);
   const fee = (name) => page.getByTestId('rep-pl').locator('tr', { has: page.locator('th', { hasText: `Less: guarantee fee (${name})` }) }).first().locator('td').first();
   await expectText(page, v, fee('CGFMU'), '15,000', 'CGFMU\'s fee in 2026-27');

@@ -565,7 +565,7 @@ function Assumed({ s, v, update }: { s: PlanState; v: PlanView; update: Update }
         <span class="font-medium">{a.what}:</span> {a.shown}
         {a.what === 'Ceiling height' && !height && <> <button type="button" data-testid="pl-height-change" class={LINK} onClick={() => setHeight(true)}>Change</button></>}
         {a.what === 'Ceiling height' && height && <TextField id="fld-height" class="mt-2 max-w-xs" label="Ceiling height, in metres" inputMode="decimal" value={s.height}
-          byDefault={String(RULE_HEIGHT)} keepBlank invalid={bad} said={bad ? `Type a height from 2 to 6 metres, like 3. Until then the estimate uses ${RULE_HEIGHT} m.` : undefined} onCommit={(t) => update((x) => ({ ...x, height: t }))} />}
+          byDefault={String(RULE_HEIGHT)} keepBlank invalid={bad} said={bad ? `Not understood. Type a height from 2 to 6 metres, like 3. Until then the estimate uses ${RULE_HEIGHT} m.` : undefined} onCommit={(t) => update((x) => ({ ...x, height: t }))} />}
         {a.what === 'The plot' && plot && !plotOpen && !plot.own && !plot.bad && <> <button type="button" data-testid="pl-plot-change" class={LINK} onClick={() => setPlot(true)}>Change</button></>}
         {a.what === 'The plot' && plot && (plotOpen || plot.own || plot.bad) && <div class="mt-2 flex flex-wrap items-end gap-x-3 gap-y-2">
           {plotSide('l')}{plotSide('b')}
@@ -619,8 +619,8 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       {field('owner', 'Owner’s name')}
       {field('property', 'Property’s address')}
-      {field('lender', 'Lender, if known')}
-      {field('preparedBy', 'Prepared by', 'An engineer or architect who adopts it, with registration number. Leave empty for a planning estimate.')}
+      {field('lender', 'Lender', 'The bank or finance company, and the branch, if known.')}
+      {field('preparedBy', 'Prepared by', 'An engineer or architect who adopts it, with registration number, if any. Leave empty for a planning estimate.')}
     </div>
     <div class="mt-5">
       <p data-testid="pl-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{planDocStatus(s, p)}</p>

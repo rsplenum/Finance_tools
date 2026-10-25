@@ -74,12 +74,13 @@ function verdictOf(p: ReportPreview): { head: string; text: string; tone: 'good'
   return wait.length ? { head, text: `${head}${whose}: ${listed(wait)}.`, tone: 'warn' } : { head, text: `${head}${whose}.`, tone: 'good' };
 }
 
-/** The answer bar's words (D-UX-84): the lowest DSCR as the model gives it, the verdict and the status. */
-function barText(p: ReportPreview) {
+/** The answer bar's words (D-UX-84): the lowest DSCR as the model gives it, the verdict and the status, counting the
+ * document's own facts as its file does (UXR3, UXR1's S4). */
+function barText(s: ReportState, p: ReportPreview) {
   if (p.blocked || !p.view) return statusText(p);
   const lowest = p.view.key.find((k) => k.check === 'dscrLowest');
   const said = p.checks?.length ? verdictOf(p)?.head : undefined;
-  return [lowest && `Lowest DSCR ${lowest.value}`, said, statusText(p)].filter(Boolean).join(' · ');
+  return [lowest && `Lowest DSCR ${lowest.value}`, said, docStatus(s, p)].filter(Boolean).join(' · ');
 }
 
 /** Under the last input section (review finding 8): whether the report below has figures, linked to it. */
@@ -306,7 +307,7 @@ export function ReportCalculator() {
     </div>
     {/* The answer on every screen of the fields (D-UX-84), from load as on every tool (UX8, review finding 13): text, read
         out as it changes; only the arrow is a target, 44 px. From 1024 px the panel stands beside, so only the words stay. */}
-    <AnswerBar to="report" label="To the report" testid="rep-answer-bar" text={barText(p)} />
+    <AnswerBar to="report" label="To the report" testid="rep-answer-bar" text={barText(s, p)} />
   </div>;
 }
 
@@ -500,7 +501,7 @@ function Result({ s, p, update, use, used, undo, keep, toCollateral, toBox, rese
       {/* The answer is the paper's heading (UX7): a flat claim, its rule solid once final and dashed while provisional. */}
       {verdict && <h3 data-testid={p.misses ? 'rep-misses' : 'rep-verdict'} data-answer class={`text-title text-ink ${answerRule(!p.blocked && !p.needs.length)}`}><Claim text={verdict.text} /></h3>}
       {p.short && <p data-testid="rep-short" class="mt-3 text-sm font-medium text-bad">{p.short}</p>}
-      <Counter id="rep-status" result={result} text={statusText(p)} rule={!verdict} answer={!verdict} class={verdict ? 'mt-2' : ''}>
+      <Counter id="rep-status" result={result} text={v ? docStatus(s, p) : statusText(p)} rule={!verdict} answer={!verdict} class={verdict ? 'mt-2' : ''}>
         {p.needs.length > 0 && <ul data-testid="rep-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => {
           const b = boxOf(n);
           return <li key={n}>{b ? <a href={`#${b[1]}`} onClick={toBox(n)} class="inline-flex min-h-6 items-center text-link">{n}</a> : n}</li>;
@@ -545,8 +546,8 @@ function Download({ s, p, update }: { s: ReportState; p: ReportPreview; update: 
       {field('name', 'Business’s name')}
       {field('activity', 'What the business does', 'Like “Manufacture of corrugated boxes”.')}
       {field('address', 'Business’s address')}
-      {field('lender', 'Lender, if known')}
-      {field('preparedBy', 'Prepared by, if any', 'Your name or your firm’s.')}
+      {field('lender', 'Lender', 'The bank or finance company, and the branch, if known.')}
+      {field('preparedBy', 'Prepared by', 'Your name or your firm’s, if not the borrower.')}
     </div>
     <Words s={s} update={update} />
     <div class="mt-5">

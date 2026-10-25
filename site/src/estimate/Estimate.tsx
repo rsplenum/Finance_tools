@@ -185,7 +185,7 @@ function Download({ s, p, update }: { s: EstimateState; p: EstimatePreview; upda
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       {field('borrower', 'Borrower’s name')}
       {field('property', 'Property’s address')}
-      {field('lender', 'Lender, if known')}
+      {field('lender', 'Lender', 'The bank or finance company, and the branch, if known.')}
       {field('preparedBy', 'Prepared by', 'The engineer or architect, with registration number, if any.')}
     </div>
     {ready

@@ -572,7 +572,7 @@ function roomsOf(s: PlanState, e: ArchitectEstimate): RoomView[] {
   return e.rooms.map((r) => {
     const typed = s.rooms[r.id] ?? { l: '', b: '' }, p = planned.get(r.id) ?? r;
     const l = sideOf(typed.l, s.unit), b = sideOf(typed.b, s.unit), any = !!(typed.l.trim() || typed.b.trim());
-    const bad = !any ? undefined : l === null || b === null ? `Type each side from ${lo} to ${hi} ${unit}.` : l === undefined || b === undefined ? 'Type both sides.' : undefined;
+    const bad = !any ? undefined : l === null || b === null ? `Out of range. Type each side from ${lo} to ${hi} ${unit}.` : l === undefined || b === undefined ? 'One side is missing. Type both sides.' : undefined;
     return {
       id: r.id, name: r.name, size: `${side(r.l)} × ${side(r.b)} ${unit}`, area: ft ? `${inr(Math.round(r.sqm * SQFT_PER_SQM))} sq ft` : `${qtyText(r.sqm)} sq m`,
       typed: r.typed, level: r.level, word: r.word, l: typed.l, b: typed.b, planned: { l: side(p.l), b: side(p.b) }, ...(bad ? { bad } : {}),
@@ -599,7 +599,7 @@ function stageViews(st: Stage[]): StageView[] {
 function plotView(s: PlanState, h: House): PlotView {
   const ft = s.unit !== 'sqm', side = (m: number) => qtyText(ft ? m * FT_PER_M : m), m = R.house.plot, unit = sideUnit(s.unit);
   const [lo, hi] = plotRange(s.unit), l = plotSideOf(s.plot.l, s.unit), b = plotSideOf(s.plot.b, s.unit), any = !!(s.plot.l.trim() || s.plot.b.trim());
-  const bad = !any ? undefined : l === null || b === null ? `Type each side from ${lo} to ${hi} ${unit}.` : l === undefined || b === undefined ? 'Type both sides.' : undefined;
+  const bad = !any ? undefined : l === null || b === null ? `Out of range. Type each side from ${lo} to ${hi} ${unit}.` : l === undefined || b === undefined ? 'One side is missing. Type both sides.' : undefined;
   return { l: s.plot.l, b: s.plot.b, planned: { l: side(h.l + m.front + m.rear), b: side(h.b + 2 * m.side) }, own: h.plot.own, ...(bad ? { bad } : {}) };
 }
 

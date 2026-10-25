@@ -224,11 +224,11 @@ describe('a new house on the page (D-UX-23)', () => {
     expect(view(HOUSE).plot).toEqual({ l: '', b: '', planned: { l: '50.12', b: '34.85' }, own: false });
     const half = withPlotSide(HOUSE, 'l', '40'), both = withPlotSide(half, 'b', '30');
     expect(inputOf(half).plot).toBeUndefined();
-    expect(view(half).plot?.bad).toBe('Type both sides.');
+    expect(view(half).plot?.bad).toBe('One side is missing. Type both sides.');
     expect(inputOf(both).plot).toEqual({ l: 12.192, b: 9.144 });
     expect(view(both).plot?.own).toBe(true);
     expect(view(both).change?.text).toMatch(/^The plot to 40 × 30 ft: Rs\. [\d,]+ less$/);
-    expect(view(withPlotSide(both, 'b', '5')).plot?.bad).toBe('Type each side from 10 to 984 ft.');
+    expect(view(withPlotSide(both, 'b', '5')).plot?.bad).toBe('Out of range. Type each side from 10 to 984 ft.');
     expect(withUnit(both, 'sqm').plot).toEqual({ l: '12.19', b: '9.14' });
     expect(inputOf(withPlotReset(both)).plot).toBeUndefined();
     expect(inputOf({ ...FLAT, plot: { l: '40', b: '30' } }).plot).toBeUndefined();
@@ -397,7 +397,7 @@ describe('E3 on the page: the rooms, What changed, Compare and the movable secti
     expect(v.rooms.map((r) => r.id)).toEqual(['living', 'bedroom-1', 'bedroom-2', 'kitchen', 'bath-1', 'bath-2', 'passage', 'balcony']);
     expect(v.rooms[0]).toMatchObject({ name: 'Living and dining', size: '19.19 × 14.76 ft', area: '283 sq ft', typed: false, level: null, l: '', b: '', planned: { l: '19.19', b: '14.76' } });
     const half = withRoomSide(FLAT, 'living', 'l', '16', 'Living and dining'), sized = withRoomSide(half, 'living', 'b', '20', 'Living and dining');
-    expect([inputOf(half).rooms, view(half).rooms[0].bad, view(half).change]).toEqual([undefined, 'Type both sides.', undefined]);
+    expect([inputOf(half).rooms, view(half).rooms[0].bad, view(half).change]).toEqual([undefined, 'One side is missing. Type both sides.', undefined]);
     expect(inputOf(sized).rooms).toEqual({ living: { l: 16 * 0.3048, b: 20 * 0.3048 } });
     const sv = view(sized);
     expect(sv.rooms[0]).toMatchObject({ size: '20 × 16 ft', area: '320 sq ft', typed: true, l: '16', b: '20' });
@@ -407,7 +407,7 @@ describe('E3 on the page: the rooms, What changed, Compare and the movable secti
   });
   it('a side out of range is not passed on and the field says why; a new unit turns the sides typed into it', () => {
     const tiny = withRoomSide(withRoomSide(FLAT, 'living', 'l', '0.5', 'L'), 'living', 'b', '12', 'L');
-    expect([inputOf(tiny).rooms, view(tiny).rooms[0].bad]).toEqual([undefined, 'Type each side from 1 to 98 ft.']);
+    expect([inputOf(tiny).rooms, view(tiny).rooms[0].bad]).toEqual([undefined, 'Out of range. Type each side from 1 to 98 ft.']);
     const sized = withRoomSide(withRoomSide(FLAT, 'living', 'l', '16', 'L'), 'living', 'b', '20', 'L');
     expect(withUnit(sized, 'sqm').rooms.living).toEqual({ l: '4.88', b: '6.1' });
     expect(view({ ...withUnit(sized, 'sqm'), area: '92.9' }).rooms[0].size).toBe('6.1 × 4.88 m');

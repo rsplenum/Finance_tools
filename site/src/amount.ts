@@ -5,7 +5,7 @@ import { rs, rupeesWords } from '../../engine/util';
 export function readBack(text: string): string {
   if (!text.trim()) return '';
   const n = parseAmount(text);
-  if (n === undefined) return 'Not understood. Try 70 L, 1.2 Cr or 70,00,000.';
+  if (n === undefined) return 'Not understood. Type 70 L, 1.2 Cr or 70,00,000.';
   if (n <= 0) return 'Enter an amount above zero.';
   return `${rs(n)} (${rupeesWords(n)})`;
 }

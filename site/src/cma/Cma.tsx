@@ -255,7 +255,7 @@ function Download({ s, p, update }: { s: CmaState; p: CmaPreview; update: Update
     save(cmaDoc(s, p, isoDate(now)), kind, fileName(s, p, kind), now);
   };
   const field = (id: keyof CmaFacts, label: string, hint?: string) =>
-    <TextField id={`fld-cma-${id}`} label={label} hint={hint} value={f[id]} said={english(f[id])} invalid={!!english(f[id])} onCommit={(t) => set({ [id]: t })} />;
+    <TextField id={`fld-cma-${id}`} label={label} hint={hint} value={f[id] ?? ''} said={english(f[id] ?? '')} invalid={!!english(f[id] ?? '')} onCommit={(t) => set({ [id]: t })} />;
   // Before the forms show figures the section is one line (UX8, review finding 9).
   if (!ready) return <Folded id="download" title="Download the CMA data"><span data-testid="cma-doc-wait">{p.blocked
     ? 'No document while the two computations disagree.' : 'A PDF and an Excel copy, once the forms show figures.'}</span></Folded>;
@@ -263,7 +263,8 @@ function Download({ s, p, update }: { s: CmaState; p: CmaPreview; update: Update
     <p class={`mt-2 ${HINT}`}>A PDF for the lender and an Excel copy whose Check sheet redoes the main figures by formulas, made in your browser.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       {field('name', 'Business’s name')}
-      {field('preparedBy', 'Prepared by, if any', 'Your name or your firm’s.')}
+      {field('lender', 'Lender', 'The bank or finance company, and the branch, if known.')}
+      {field('preparedBy', 'Prepared by', 'Your name or your firm’s, if not the borrower.')}
     </div>
     {ready
       ? <div class="mt-5">
