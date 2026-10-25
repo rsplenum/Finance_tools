@@ -22,5 +22,5 @@ The state line's new words; this row's new text in the Next table, or "done"; th
 
 - A decision's ID comes from the range the row's line in `docs/HANDOFF.md` reserves; the check fails an ID that is already logged or in another notes file.
 - Until it is folded, a decision lives here: grep `docs/rows/` along with `docs/DECISIONS.md`.
-- The main conversation alone edits the shared docs. When the owner says "merge", it merges the PR, runs `npm run fold` on its own branch (each part goes to the end of its section, the cost line to the top of HANDOFF's table, keeping ten) and writes the printed handoffs into `docs/HANDOFF.md` by hand.
+- The main conversation alone edits the shared docs. When it merges a row's PR, it runs, in the same turn and unasked (D-TECH-69), `npm run fold` on its own branch from `main` (each part goes to the end of its section, the cost line to the top of HANDOFF's table, keeping ten) and writes the printed handoffs into `docs/HANDOFF.md` by hand, and merges that PR once CI is green. A row's session that merges its own PR never folds: its notes wait for the main conversation's next fold.
 - Bring `main` into a PR only just before it merges, not after every other merge.
