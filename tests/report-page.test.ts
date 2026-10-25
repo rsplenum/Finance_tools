@@ -73,7 +73,7 @@ describe('the project report page', () => {
     expect(preview({ ...P, category: undefined, area: undefined, activity: undefined }).needs.length).toBe(3);
     const q = preview({ ...P, fixed: '25 L' });
     expect(q.short).toBe('Cash goes below nil in 2030-31: Rs. 49,07,813 short at its lowest. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.');
-    expect(statusText(q)).toBe('Provisional: 1 still to answer');
+    expect(statusText(q)).toBe('1 question left');
   });
 });
 
@@ -113,7 +113,7 @@ describe('the project report to download', () => {
   });
   it('provisional while the business\'s address is missing, and said on every page', async () => {
     const s = { ...R, doc: { ...R.doc, address: '' } }, d = reportDoc(s, preview(s), TODAY)!;
-    expect(docStatus(s, preview(s))).toBe('Figures complete; for the document, 1 still to answer');
+    expect(docStatus(s, preview(s))).toBe('Figures complete; for the document, 1 question left');
     for (const page of await pdfPages(pdfOf(d, MADE))) expect(page.split('\n')[0]).toBe('Project report · Asha Packaging Provisional');
   });
 });
@@ -175,7 +175,7 @@ describe('changed benchmarks on the page (BEN1)', () => {
     const p = preview({ ...weak, benchmarks: { dscrLowest: '0.8', currentRatio: '0.9' } });
     expect(p.checks?.filter((c) => c.byDefault).map((c) => `${c.id} ${c.level} ${c.verdict} default ${c.byDefault} ${c.looser}`)).toEqual([
       'currentRatio 0.90 or more meets default 1.10 true', 'dscrLowest 0.80 or more meets default 1.25 true']);
-    expect(p.misses).toBe('It misses 2 of the benchmark ratios: average DSCR and interest cover.');
+    expect(p.misses).toBe('Misses 2 of 8 benchmarks: average DSCR and interest cover.');
     expect(p.benchmarks).toBe('Your benchmarks for current ratio and DSCR in the lowest year, in place of the defaults. Looser than the default for current ratio and DSCR in the lowest year: a pass here is one a bank may not give.');
     expect(preview(weak).benchmarks).toBeUndefined();
   });
@@ -191,7 +191,7 @@ describe('the lender\'s levels and make it viable, in words', () => {
       'DSCR in the lowest year | 1.25 or more | misses 0.82 in 2026-27', 'Interest cover | 1.50 or more | misses 0.74 in 2026-27',
       'Fixed-asset cover | 1.20 or more | meets 1.39 in 2026-27', 'Security cover | 1.20 or more | meets 1.49 in 2026-27 on the project’s own assets',
     ]);
-    expect([p.misses, p.collateralNote, p.longTerm]).toEqual(['It misses 4 of the default benchmark ratios: current ratio, average DSCR, DSCR in the lowest year and interest cover.',
+    expect([p.misses, p.collateralNote, p.longTerm]).toEqual(['Misses 4 of 8 benchmarks: current ratio, average DSCR, DSCR in the lowest year and interest cover.',
       undefined, undefined]);
     // The bars (the level at the middle) and the rupees short, rounded up from tests/viable.test.ts's hand figures.
     expect(p.checks?.map((c) => [c.id, c.bar.toFixed(1), c.short])).toEqual([

@@ -3,13 +3,14 @@
  * Forms I to VI and the ratios as tables in words, with the engine's exact figures beside them for the Excel copy. Each
  * row the Excel copy's check sheet redoes is named (`ref`). Pure, no DOM. Figures: engine/cma.ts only.
  */
+import { questionsLeft } from '../verdict';
 import { ASSUMPTIONS, HEADS, TURNOVER, YEARS, cma, fyLabels, subtotalsOf, yearName, type Cma, type CmaInput, type CmaYear, type FlowYear, type HeadId, type Subtotals, type Turnover, type YearId, type YearKind } from '../../../engine/cma';
 import { parseAmount } from '../../../engine/parse';
 import { inr } from '../../../engine/util';
 import { EXAMPLE } from './example';
 import type { BenchmarkText } from '../board-model';
 
-export interface CmaFacts { name: string; preparedBy: string }
+export interface CmaFacts { name: string; preparedBy: string; lender?: string }
 export type Grid = Record<YearId, Record<HeadId, string>>;
 /** `loanCase`: a fresh or enhanced limit, or a renewal, which sets a lender's levels (D-UX-51), unset until the borrower
  * says; `collateral`, its market value (More options); `promotersMost`, the most they can bring in all, for the plan. */
@@ -24,7 +25,7 @@ export interface CmaState {
 export const startYearOf = (d: Date) => d.getFullYear() - (d.getMonth() < 3 ? 1 : 0);
 const blankYear = () => Object.fromEntries(HEADS.map((h) => [h.id, ''])) as Record<HeadId, string>;
 export const emptyState = (startYear: number): CmaState => ({
-  startYear, figures: Object.fromEntries(YEARS.map((y) => [y.id, blankYear()])) as Grid, existingLimit: '', quasi: false, doc: { name: '', preparedBy: '' },
+  startYear, figures: Object.fromEntries(YEARS.map((y) => [y.id, blankYear()])) as Grid, existingLimit: '', quasi: false, doc: { name: '', preparedBy: '', lender: '' },
   loanCase: '', collateral: '', promotersMost: '',
 });
 /** Case K (tests/cma.test.ts), typed in for the years from `startYear`, to try the page. */
@@ -80,7 +81,7 @@ export function viewOf(r: Cma, quasi: boolean): CmaView {
   const formI: ViewTable = {
     id: 'form1', title: 'Form I. The working-capital limit', first: 'Limit', columns: ['Rupees'],
     rows: [
-      { label: 'Working-capital limit now, from all banks', values: [inr(r.existingLimit)], n: [r.existingLimit] },
+      { label: 'Limit you have today, from all banks', values: [inr(r.existingLimit)], n: [r.existingLimit] },
       { label: `Proposed: bank borrowing in the ${ys.at(-1)?.fy} balance sheet`, values: [inr(r.proposed)], n: [r.proposed] },
       { label: `Assessed by the turnover method for ${ys.at(-1)?.fy}`, values: [inr(r.limit)], n: [r.limit], kind: 'total' },
     ],
@@ -184,7 +185,7 @@ export function viewOf(r: Cma, quasi: boolean): CmaView {
     tables: [formI, formII, formIII, formIV, formV, formVI, ratiosT], check: checkOf(r, years), years,
     key: [
       { label: `Limit by the turnover method, ${last.fy}`, value: `Rs. ${inr(r.limit)}`, note: `${TURNOVER.needPct}% of the turnover less the larger of the ${TURNOVER.marginPct}% margin and the net working capital` },
-      { label: 'Limit now', value: `Rs. ${inr(r.existingLimit)}` },
+      { label: 'Limit you have today', value: `Rs. ${inr(r.existingLimit)}` },
       { label: `Current ratio, ${last.fy}`, value: ratio(last.currentRatio) },
     ],
     flags: r.flags.map((x) => x.text),
@@ -231,4 +232,4 @@ export function preview(s: CmaState): CmaPreview {
 }
 
 export const statusText = (p: CmaPreview, more = 0) =>
-  p.blocked ? 'No figures' : p.needs.length + more ? `Provisional: ${p.needs.length + more} still to answer` : 'Complete';
+  p.blocked ? 'No figures' : p.needs.length + more ? questionsLeft(p.needs.length + more) : 'Complete';

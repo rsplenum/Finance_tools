@@ -49,7 +49,7 @@ Shown as examples only, never used unless chosen. Each lender sets its own.
 | What | Value | Source | Date | How sure |
 |---|---|---|---|---|
 | Average DSCR | 1.50 | Commonly quoted in Indian lending; not checked against a published source. Each lender sets its own | 30-09-2026 | illustrative |
-| Lowest year | 1.20 | Commonly quoted in Indian lending; not checked against a published source. Each lender sets its own | 30-09-2026 | illustrative |
+| Lowest year | 1.25 | Commonly quoted in Indian lending; 1.25 chosen by the owner so all four tools use one target (25-10-2026); not checked against a published source. Each lender sets its own | 25-10-2026 | illustrative |
 
 ### When the engine builds the figures from the loan terms
 
@@ -95,7 +95,7 @@ Dated 02-10-2026. Set by Claude at the owner's request (30-09-2026: work everyth
 | What | Assumed | Why |
 |---|---|---|
 | How DSCR is worked out | Common term-loan DSCR | How chartered accountants and banks usually work it for term loans (docs/DSCR-RESEARCH.md) |
-| The lender's target | Average 1.50, lowest year 1.20 | The commonly quoted examples (benchmarks in dscr.json); each lender sets its own |
+| The lender's target | Average 1.50, lowest year 1.25 | The commonly quoted examples (benchmarks in dscr.json); each lender sets its own |
 | Tax rate | 31.2% | The rate for a firm or LLP, and the top rate for an individual with cess: on the careful side, since more tax gives a lower DSCR. Say who the borrower is to work out the tax for that borrower |
 | A proprietor's tax | The new regime's slab rates, on the business's profit as the only income | Other income would put the profit in higher slabs, and the old regime (with deductions) is not offered: type a rate if either applies |
 | Profit margin | As this year: profit before interest, depreciation and tax grows with sales | The only growth asked for is in sales |

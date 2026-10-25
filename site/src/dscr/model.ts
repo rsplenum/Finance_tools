@@ -4,6 +4,7 @@
  * the assumptions in engine/data/defaults.json (the owner's request, D-UX-08), each listed with its reason until it is
  * changed (`assumedIn`); nothing else missing is filled in, and anything else missing is listed as needed.
  */
+import { questionsLeft, verdictWords } from '../verdict';
 import DEFAULTS from '../../../engine/data/defaults.json';
 import DSCR from '../../../engine/data/dscr.json';
 import {
@@ -549,7 +550,7 @@ const limitedBy = (l: Limit) =>
 function verdictOf(st: Statement, t: Target): Preview['verdict'] {
   if (!st.minimum || st.average === undefined) return undefined; // no year counts; the engine's note says why
   const dry = shortfall(st, {});
-  if (dry) return { meets: false, text: `Below the target: ${limitText(dry)}.` };
+  if (dry) return { meets: false, text: `${verdictWords('target', 1, 1)}: ${limitText(dry)}.` };
   const parts: { ok: boolean; text: string }[] = [];
   if (t.minimum !== undefined)
     parts.push({ ok: !shortfall(st, { minimum: t.minimum }), text: `the lowest year, ${st.minimum.fy}, is ${ratioText(st.minimum.dscr, t.minimum)} against ${targetText(t.minimum)}` });
@@ -557,8 +558,8 @@ function verdictOf(st: Statement, t: Target): Preview['verdict'] {
     parts.push({ ok: !shortfall(st, { average: t.average }), text: `the average is ${ratioText(st.average, t.average)} against ${targetText(t.average)}` });
   const short = parts.filter((p) => !p.ok);
   return short.length
-    ? { meets: false, text: `Below the target: ${short.map((p) => p.text).join('; ')}.` }
-    : { meets: true, text: `Meets the target: ${parts.map((p) => p.text).join('; ')}.` };
+    ? { meets: false, text: `${verdictWords('target', parts.length, short.length)}: ${short.map((p) => p.text).join('; ')}.` }
+    : { meets: true, text: `${verdictWords('target', parts.length, 0)}: ${parts.map((p) => p.text).join('; ')}.` };
 }
 
 const lower = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
@@ -871,7 +872,7 @@ export function barText(p: Preview): string {
   const parts: string[] = [];
   if (p.average) parts.push(`Average ${p.average}`, `lowest ${p.lowest} in ${p.lowestYear}`);
   if (p.verdict) parts.push(p.verdict.meets ? 'meets the target' : 'below the target');
-  parts.push(p.needs.length ? `provisional: ${p.needs.length} still to answer` : statusText(p).toLowerCase());
+  parts.push(p.needs.length ? questionsLeft(p.needs.length) : statusText(p).toLowerCase());
   return cap(parts.join(' · '));
 }
 
@@ -883,7 +884,7 @@ export const FRONT: [RegExp, string, string][] = [
   [/^(Growth in sales|Profit before interest, depreciation and tax: growth)/, 'Growth in sales a year (%)', 'fld-fd-growth'],
   [/^Loan amount$/, 'Loan amount', 'fld-fd-amount'],
   [/^Interest rate/, 'Interest rate (% a year)', 'fld-fd-rate'],
-  [/^Number of instalments$/, 'Term (years)', 'fld-fd-years'],
+  [/^Number of instalments$/, 'Years to repay', 'fld-fd-years'],
 ];
 export const frontAt = (n: string, first?: string) => FRONT.findIndex(([m], i) => m.test(n) && (i !== 1 || !first || !/\d{4}-\d{2}$/.test(n) || n.endsWith(first)));
 /** On the front door every missing fact shows at once: the profit and its growth before the loan's dates give the years. */
@@ -896,7 +897,7 @@ export const withFrontNeeds = (s: State, p: Preview, first?: string): Preview =>
   return { ...p, needs: needs.map((n, i) => [n, i] as const).sort((a, b) => at(a[0]) - at(b[0]) || a[1] - b[1]).map(([n]) => n) };
 };
 export const statusText = (p: Preview) =>
-  p.blocked ? 'No figures' : p.needs.length ? `Provisional: ${p.needs.length} still to answer`
+  p.blocked ? 'No figures' : p.needs.length ? questionsLeft(p.needs.length)
     : p.assumed.length ? `Complete, on ${p.assumed.length} assumption${p.assumed.length > 1 ? 's' : ''}` : 'Complete';
 
 /** The commonly quoted targets from the data file, offered as examples and used only when chosen. */
@@ -932,9 +933,11 @@ export function dscrMarks(s: State): { what: string; mark: Marked; check: string
   return out;
 }
 
-/** One line of how sure: "How sure: the method, cross-checked; the target, illustrative." */
+/** How sure, in plain words (UXR3, UXR1's P4; the marks of D-DATA-26): "The method: two or more sources agree. The target:
+ * an example, not your lender's rule." */
+const PLAIN_SURE = { verified: 'checked at its source', 'cross-checked': 'two or more sources agree', illustrative: 'an example, not your lender’s rule', review: 'not yet confirmed at its source' } as const;
 export const sureLine = (ms: { what: string; mark: Marked }[]) =>
-  ms.length ? `How sure: ${ms.map((x) => `${x.what}, ${x.mark.sure === 'review' ? 'needs review' : x.mark.sure}${x.mark.sure === 'verified' && x.mark.read ? ` on ${x.mark.read.split('-').reverse().join('-')}` : ''}`).join('; ')}.` : '';
+  ms.map((x) => `${x.what.charAt(0).toUpperCase()}${x.what.slice(1)}: ${PLAIN_SURE[x.mark.sure]}${x.mark.sure === 'verified' && x.mark.read ? ` on ${x.mark.read.split('-').reverse().join('-')}` : ''}.`).join(' ');
 
 /** The one thing to check next once nothing is still to answer: the least sure item the verdict rests on, else the figures typed. */
 export const checkNext = (ms: { what: string; mark: Marked; check: string }[]) => {

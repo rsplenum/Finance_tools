@@ -7,6 +7,7 @@
  * a room's size word (R1) is passed on as it is, Medium left out. Rooms added or taken out (R2) move the rooms' own sizes,
  * words, levels and items with them.
  */
+import { questionsLeft } from '../verdict';
 import {
   BATHS, BHKS, CITIES, EXTRAS, FLOORS, FLOORS_ADDED, LEVELS, PLOT_SIDE, R, ROOM_SIDE, SIZE_WORDS, bathsOf, bedroomsOf, billOf, WORK_KINDS, architect, architectNeeds, builds, changeOf, choicesFor, levelName, levelRuns, overPackage, planRooms, wordName,
   type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choice, type ExtraKind, type House, type Level, type LevelRuns, type Line, type RoomKind, type SizeWord, type Stage, type WorkKind,
@@ -160,7 +161,7 @@ export function planNeeds(s: PlanState): string[] {
   return needs;
 }
 /** The area question's words, by the kind (A3). */
-export const areaLabel = (kind?: WorkKind) => (kind === 'extend' ? 'Built-up area being added' : kind === 'build' ? 'Built-up area of all floors' : 'Carpet area, as in your agreement');
+export const areaLabel = (kind?: WorkKind) => (kind === 'extend' ? 'Built-up area being added' : kind === 'build' ? 'Built-up area of all floors' : 'Carpet area, the floor inside the walls');
 
 // ---- Changes, as the page makes them ----
 
@@ -571,7 +572,7 @@ function roomsOf(s: PlanState, e: ArchitectEstimate): RoomView[] {
   return e.rooms.map((r) => {
     const typed = s.rooms[r.id] ?? { l: '', b: '' }, p = planned.get(r.id) ?? r;
     const l = sideOf(typed.l, s.unit), b = sideOf(typed.b, s.unit), any = !!(typed.l.trim() || typed.b.trim());
-    const bad = !any ? undefined : l === null || b === null ? `Type each side from ${lo} to ${hi} ${unit}.` : l === undefined || b === undefined ? 'Type both sides.' : undefined;
+    const bad = !any ? undefined : l === null || b === null ? `Out of range. Type each side from ${lo} to ${hi} ${unit}.` : l === undefined || b === undefined ? 'One side is missing. Type both sides.' : undefined;
     return {
       id: r.id, name: r.name, size: `${side(r.l)} × ${side(r.b)} ${unit}`, area: ft ? `${inr(Math.round(r.sqm * SQFT_PER_SQM))} sq ft` : `${qtyText(r.sqm)} sq m`,
       typed: r.typed, level: r.level, word: r.word, l: typed.l, b: typed.b, planned: { l: side(p.l), b: side(p.b) }, ...(bad ? { bad } : {}),
@@ -598,7 +599,7 @@ function stageViews(st: Stage[]): StageView[] {
 function plotView(s: PlanState, h: House): PlotView {
   const ft = s.unit !== 'sqm', side = (m: number) => qtyText(ft ? m * FT_PER_M : m), m = R.house.plot, unit = sideUnit(s.unit);
   const [lo, hi] = plotRange(s.unit), l = plotSideOf(s.plot.l, s.unit), b = plotSideOf(s.plot.b, s.unit), any = !!(s.plot.l.trim() || s.plot.b.trim());
-  const bad = !any ? undefined : l === null || b === null ? `Type each side from ${lo} to ${hi} ${unit}.` : l === undefined || b === undefined ? 'Type both sides.' : undefined;
+  const bad = !any ? undefined : l === null || b === null ? `Out of range. Type each side from ${lo} to ${hi} ${unit}.` : l === undefined || b === undefined ? 'One side is missing. Type both sides.' : undefined;
   return { l: s.plot.l, b: s.plot.b, planned: { l: side(h.l + m.front + m.rear), b: side(h.b + 2 * m.side) }, own: h.plot.own, ...(bad ? { bad } : {}) };
 }
 
@@ -682,7 +683,7 @@ function whereOf(ls: Line[], e: ArchitectEstimate): string {
 
 /** "Complete", or "Provisional: 2 still to answer". */
 export const statusText = (p: PlanPreview, more: string[] = []) =>
-  p.blocked ? 'No figures' : p.needs.length + more.length ? `Provisional: ${p.needs.length + more.length} still to answer` : 'Complete';
+  p.blocked ? 'No figures' : p.needs.length + more.length ? questionsLeft(p.needs.length + more.length) : 'Complete';
 
 // ---- The item drawer ----
 

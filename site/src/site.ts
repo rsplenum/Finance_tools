@@ -21,7 +21,7 @@ export const TOOLS: Tool[] = [
   { name: 'DSCR statement', short: 'DSCR', status: 'Ready', href: '/dscr/',
     what: 'How many times a business’s yearly earnings cover its loan repayments.',
     gives: 'Each year’s cover, the weakest year and the largest loan that passes, as PDF, Excel or Word.' },
-  { name: 'Construction, renovation or interiors estimate', short: 'Estimate', brief: 'Construction estimate', status: 'Ready', href: '/estimate/',
+  { name: 'Building estimate', short: 'Estimate', brief: 'Construction estimate', status: 'Ready', href: '/estimate/',
     what: 'What your building, renovation or interior work should cost, before you collect contractors’ quotes.',
     gives: 'Room by room at five quality levels, a check of each quote against reported prices, and a bill of quantities.' },
   { name: 'Project report', short: 'Project report', status: 'Ready', href: '/project-report/',

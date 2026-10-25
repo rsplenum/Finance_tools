@@ -17,9 +17,9 @@
       "what": "The lender's target",
       "value": {
         "average": 1.5,
-        "minimum": 1.2
+        "minimum": 1.25
       },
-      "shown": "Average 1.50, lowest year 1.20",
+      "shown": "Average 1.50, lowest year 1.25",
       "why": "The commonly quoted examples (benchmarks in dscr.json); each lender sets its own"
     },
     {

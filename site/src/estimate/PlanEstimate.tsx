@@ -10,6 +10,7 @@
  * planning estimate to download; the bar at the bottom says what the
  * last change did. Figures: engine/architect.ts only, via plan-model.ts.
  */
+import { questionsLeft } from '../verdict';
 import { Fragment } from 'preact';
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, toAnswer, useAnswerPlace, InAppNote, useHomeCase, HomeCaseNote, useKept, KeptLine } from '../fields';
@@ -135,7 +136,7 @@ export function PlanEstimate() {
 const ASKED: [string, string][] = [['What the work', 'fld-work'], ['How many floors', 'fld-floors'], ['Flat or house', 'fld-home'], ['Which city', 'fld-city'],
   ['The built-up', 'fld-carpet'], ['The carpet', 'fld-carpet'], ['How many bedrooms', 'fld-bhk'], ['Which level', 'fld-level']];
 const askedIn = (need: string) => ASKED.find(([w]) => need.startsWith(w))?.[1];
-const stillText = (p: PlanPreview) => (p.blocked ? 'No figures' : `Provisional: ${p.needs.length} still to answer`);
+const stillText = (p: PlanPreview) => (p.blocked ? 'No figures' : questionsLeft(p.needs.length));
 
 /** Before the six answers, the estimate's outline (UX8, review finding 2): the total and the cost a sq ft as "—", never 0,
  * and one counter opening to a link to each question still to answer. */
@@ -564,7 +565,7 @@ function Assumed({ s, v, update }: { s: PlanState; v: PlanView; update: Update }
         <span class="font-medium">{a.what}:</span> {a.shown}
         {a.what === 'Ceiling height' && !height && <> <button type="button" data-testid="pl-height-change" class={LINK} onClick={() => setHeight(true)}>Change</button></>}
         {a.what === 'Ceiling height' && height && <TextField id="fld-height" class="mt-2 max-w-xs" label="Ceiling height, in metres" inputMode="decimal" value={s.height}
-          byDefault={String(RULE_HEIGHT)} keepBlank invalid={bad} said={bad ? `Type a height from 2 to 6 metres, like 3. Until then the estimate uses ${RULE_HEIGHT} m.` : undefined} onCommit={(t) => update((x) => ({ ...x, height: t }))} />}
+          byDefault={String(RULE_HEIGHT)} keepBlank invalid={bad} said={bad ? `Not understood. Type a height from 2 to 6 metres, like 3. Until then the estimate uses ${RULE_HEIGHT} m.` : undefined} onCommit={(t) => update((x) => ({ ...x, height: t }))} />}
         {a.what === 'The plot' && plot && !plotOpen && !plot.own && !plot.bad && <> <button type="button" data-testid="pl-plot-change" class={LINK} onClick={() => setPlot(true)}>Change</button></>}
         {a.what === 'The plot' && plot && (plotOpen || plot.own || plot.bad) && <div class="mt-2 flex flex-wrap items-end gap-x-3 gap-y-2">
           {plotSide('l')}{plotSide('b')}
@@ -618,8 +619,8 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       {field('owner', 'Owner’s name')}
       {field('property', 'Property’s address')}
-      {field('lender', 'Lender, if known')}
-      {field('preparedBy', 'Prepared by', 'An engineer or architect who adopts it, with registration number. Leave empty for a planning estimate.')}
+      {field('lender', 'Lender', 'The bank or finance company, and the branch, if known.')}
+      {field('preparedBy', 'Prepared by', 'An engineer or architect who adopts it, with registration number, if any. Leave empty for a planning estimate.')}
     </div>
     <div class="mt-5">
       <p data-testid="pl-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{planDocStatus(s, p)}</p>

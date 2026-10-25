@@ -31,7 +31,7 @@ export function Levels({ s, update, use }: { s: CmaState; update: Update; use: (
       {lv.benchmarks && <p data-testid="cma-benchmarks-note" class="mt-1 text-sm text-warn">{lv.benchmarks}</p>}
       <ul class="mt-1 divide-y divide-line">{lv.checks.map((c) => <Bar key={c.id} c={c} pre="cma" />)}</ul>
       {/* How to read the bars, under them as on the report (UX9b, the UX9 critic). */}
-      <p class={`mt-1 ${HINT}`}>Each ratio in its worse year of the estimate and the projection; the line is its benchmark.</p>
+      <p class={`mt-1 ${HINT}`}>Each ratio in its worse year of the estimate and the projection; the line is its benchmark, a level lenders commonly look for.</p>
       <Benchmarks pre="cma" fields={benchmarkFields(s.loanCase || undefined, s.benchmarks)} reset={() => update((t) => ({ ...t, benchmarks: undefined }))}
         set={(id, t) => update((u) => ({ ...u, benchmarks: withBenchmark(u.benchmarks, id, t) }))} />
     </div>}

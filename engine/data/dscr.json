@@ -88,9 +88,9 @@
     {
       "what": "Lowest year",
       "target": "minimum",
-      "value": 1.2,
-      "source": "Commonly quoted in Indian lending; not checked against a published source. Each lender sets its own",
-      "date": "2026-09-30",
+      "value": 1.25,
+      "source": "Commonly quoted in Indian lending; 1.25 chosen by the owner so all four tools use one target (25-10-2026); not checked against a published source. Each lender sets its own",
+      "date": "2026-10-25",
       "sure": "illustrative"
     }
   ],

@@ -38,7 +38,7 @@ type Update = (f: (s: State) => State) => void;
 type Was = (key: DscrChange['key']) => string | undefined;
 const showDate = (iso: string) => iso.split('-').reverse().join('-');
 const notUnderstood = (text: string, read: (t: string) => unknown, example: string) =>
-  text.trim() && read(text) === undefined ? `Not understood. Try ${example}.` : undefined;
+  text.trim() && read(text) === undefined ? `Not understood. Type ${example}.` : undefined;
 const MUTED = 'text-ink-muted';
 
 export function DscrCalculator() {
@@ -113,7 +113,7 @@ function FrontDoor({ s, update, openMore, was }: { s: State; update: Update; ope
         onCommit={(t) => update((x) => ({ ...first('pbdit', t)(x), modes: { ...x.modes, pbdit: 'grow' } }))} />
       <TextField id="fld-fd-growth" label="Growth in sales a year (%)" unit="%" inputMode="decimal" hint="Like 10." value={s.rates.pbdit ?? ''}
         said={notUnderstood(s.rates.pbdit ?? '', numberOf, 'a number, like 10')} onCommit={(t) => update((x) => ({ ...x, rates: { ...x.rates, pbdit: t } }))} />
-      <TextField id="fld-fd-emis" label="EMIs already paid, a month" unit="Rs." hint={<>Leave empty if none.<Why id="fld-fd-emis-why">{emisAsk(s).replace(/\.?$/, '.')}</Why></>} inputMode="decimal" value={emi} tidy={tidyAmount}
+      <TextField id="fld-fd-emis" label="EMIs already paid, a month" unit="Rs." hint={<>EMI: each loan’s monthly instalment, interest included. Leave empty if none.<Why id="fld-fd-emis-why">{emisAsk(s).replace(/\.?$/, '.')}</Why></>} inputMode="decimal" value={emi} tidy={tidyAmount}
         said={amountSaid(emi)} onCommit={(t) => update((x) => (t.trim()
           ? { ...x, modes: { ...x.modes, otherLoans: 'emi' }, running: [{ emi: t, last: x.running[0]?.last ?? '' }, ...x.running.slice(1)] }
           : { ...x, modes: { ...x.modes, otherLoans: 'none' } }))} />
@@ -123,7 +123,7 @@ function FrontDoor({ s, update, openMore, was }: { s: State; update: Update; ope
         said={amountSaid(s.loan.amount)} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, amount: t } }))} />
       <TextField id="fld-fd-rate" label="Interest rate (% a year)" unit="%" inputMode="decimal" hint="Like 12." value={s.loan.ratePct}
         said={notUnderstood(s.loan.ratePct, numberOf, 'a number, like 12')} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, ratePct: t } }))} />
-      <TextField id="fld-fd-years" label="Term (years)" unit="years" hint={was('instalments') ? `${was('instalments')?.replace(/\.$/, '')} instalments.` : 'Like 5.'} inputMode="decimal" value={years}
+      <TextField id="fld-fd-years" label="Years to repay" unit="years" hint={was('instalments') ? `${was('instalments')?.replace(/\.$/, '')} instalments.` : 'Like 5.'} inputMode="decimal" value={years}
         said={notUnderstood(years, numberOf, 'a number, like 5')} onCommit={(t) => update((x) => {
           const n = numberOf(t), per = x.loan.repayment === 'quarterly' ? 4 : 12;
           return { ...x, loan: { ...x.loan, instalments: n === undefined ? t : String(Math.round(n * per)) } };
@@ -615,7 +615,7 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
         <div class="grid gap-4 sm:grid-cols-2">
           {field('borrower', 'Borrower’s name', 'Like Asha Traders.')}
           {field('lender', 'Lender', 'The bank or finance company, and the branch.')}
-          {field('preparedBy', 'Prepared by, if not the borrower', 'Your name or your firm’s; leave empty if the borrower prepares it.')}
+          {field('preparedBy', 'Prepared by', 'Your name or your firm’s, if not the borrower.')}
         </div>
         <details id="doc-more" class="mt-4">
           <summary class="flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link">Address, the loan’s purpose and GSTIN, if you want them on the statement</summary>

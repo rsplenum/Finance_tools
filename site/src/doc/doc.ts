@@ -1,3 +1,4 @@
+import { questionsLeft } from '../verdict';
 /**
  * A document to download, as plain blocks: built once from the page's words and the engine's figures, then written as a
  * PDF (pdf.ts), an Excel workbook (xlsx.ts) and a Word file (docx.ts). Nothing here computes a figure: a cell carries the
@@ -77,4 +78,4 @@ export function docText(d: Doc): string {
 
 /** Beside the download buttons when the figures are complete and only the document's own facts are missing: not
  * "Provisional", which says the figures may change (CMA review finding 14, UX5). */
-export const forDocument = (n: number) => `Figures complete; for the document, ${n} still to answer`;
+export const forDocument = (n: number) => `Figures complete; for the document, ${questionsLeft(n)}`;

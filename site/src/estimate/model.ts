@@ -2,6 +2,7 @@
  * The estimate page's logic, apart from the page (as dscr/model.ts): typed text to the engine's input, and its answer to
  * words, with the engine's exact figures beside them for the Excel copy. Pure, no DOM. Figures: engine/estimate.ts only.
  */
+import { questionsLeft } from '../verdict';
 import { KINDS, UNITS, estimate, type Estimate, type EstimateKind, type Item } from '../../../engine/estimate';
 import { R, architect, billOf, builds, levelName } from '../../../engine/architect';
 import { FAMILIES } from '../../../engine/library';
@@ -111,7 +112,7 @@ function viewOf(e: Estimate): EstimateView {
 
 /** "Complete", or "Provisional: 2 still to answer". */
 export const statusText = (p: EstimatePreview, more: string[] = []) =>
-  p.blocked ? 'No figures' : p.needs.length + more.length ? `Provisional: ${p.needs.length + more.length} still to answer` : 'Complete';
+  p.blocked ? 'No figures' : p.needs.length + more.length ? questionsLeft(p.needs.length + more.length) : 'Complete';
 
 // ---- Start from the bill, and each line against the library (E4b, D-UX-36). ----
 

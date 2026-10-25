@@ -3,6 +3,7 @@
  * report to tables in words, with the engine's exact figures beside them for the Excel copy. The page and the document
  * show the same tables. Pure, no DOM. Figures: engine/report.ts only (with dscr.ts for profit, tax and DSCR).
  */
+import { questionsLeft, verdictWords } from '../verdict';
 import { ASSUMPTIONS, COST_HEADS, HEADS, costsOf, MUDRA, PMEGP, REPORT_REVIEW_BY, mudraLevel, mudraShort, projectReport, workedLimit, WORKING_CAPITAL, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
 import { parseAmount, parseMonth } from '../../../engine/parse';
 import { LEVELS, collateralNeeded, diagnose, type Levels, type RatioCheck } from '../../../engine/ratios';
@@ -466,7 +467,7 @@ export function viewOf(r: Report): ReportView {
       ...(sc ? [{ label: 'PMEGP margin money', value: `Rs. ${rupees(sc.subsidy)}`, note: `${sc.ratePct}% of Rs. ${rupees(sc.base)}, set off after ${PMEGP.lockInYears} years` }] : []),
       ...(r.mudra ? [{ label: 'Mudra', value: r.mudra.level.label, note: `Rs. ${rupees(r.mudra.total)} in all, the term loan and the limit; no collateral up to Rs. ${rupees(r.mudra.collateralFreeUpTo)}` }] : []),
       ...(g ? [{ label: `Guarantee fee (${g.id.toUpperCase()})`, value: `${g.ratePct}% a year`, note: `Rs. ${rupees(g.total)} over the loan${g.beforeStart > 0.005 ? `, Rs. ${rupees(g.beforeStart)} of it before sales start` : ''}` }] : []),
-      ...(r.average !== undefined ? [{ label: 'Average DSCR', value: ratio(r.average), note: 'total A ÷ total B', check: 'dscrAverage' }] : []),
+      ...(r.average !== undefined ? [{ label: 'Average DSCR', value: ratio(r.average), note: 'cash for repayment over all years ÷ all repayments', check: 'dscrAverage' }] : []),
       ...(r.lowest ? [{ label: 'Lowest DSCR', value: ratio(r.lowest.dscr), note: `in ${r.lowest.fy}`, check: 'dscrLowest' }] : []),
     ],
   };
@@ -496,7 +497,7 @@ export function preview(s: ReportState): ReportPreview {
     : `Security cover: collateral with a market value of Rs. ${rupees(need)} or more brings it to ${sc.level.toFixed(2)}.`;
   return {
     needs: [], view: viewOf(r), flags: r.scheme?.flags ?? [], checks,
-    ...(d.misses.length ? { misses: `It misses ${d.misses.length === 1 ? 'one' : d.misses.length} of the ${ratiosWord(lv)}: ${listed(d.misses.map(labelOf))}.` } : {}),
+    ...(d.misses.length ? { misses: `${verdictWords('benchmark', d.checks.length, d.misses.length, d.checks.filter((k) => k.meets === undefined).length)}: ${listed(d.misses.map(labelOf))}.` } : {}),
     ...(collateralNote ? { collateralNote } : {}), ...(own ? { benchmarks: own } : {}),
     ...(d.term.months > d.term.longest ? { longTerm: `The term loan runs ${d.term.months} months with its moratorium, beyond the ${d.term.longest} months an MSME term loan commonly runs at most.` } : {}),
     ...(c ? { short: `Cash goes below nil in ${c.fy}: Rs. ${rupees(c.need)} short at its lowest. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.` } : {}),
@@ -508,7 +509,7 @@ export const COLLATERAL_HINT = `Its realisable sale value, ${LEVELS.collateral.r
 
 export const statusText = (p: ReportPreview, more = 0) => {
   const n = p.needs.length + (p.short ? 1 : 0) + more;
-  return p.blocked ? 'No figures' : n ? `Provisional: ${n} still to answer` : 'Complete';
+  return p.blocked ? 'No figures' : n ? questionsLeft(n) : 'Complete';
 };
 
 const years = (n: number, perYear: number) => {

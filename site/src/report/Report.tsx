@@ -7,6 +7,7 @@
 import { Fragment, type ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
+import { verdictWords } from '../verdict';
 import { answerRule, AnswerBar, BUTTON, Choice, Claim, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote, useHomeCase, HomeCaseNote, useKept } from '../fields';
 import { REPORT_HOME } from './home-case';
 import { Bar, Benchmarks, Lever, PlanLever, targetOf } from '../Board';
@@ -64,20 +65,22 @@ const boxOf = (need: string): [string, string] | undefined => {
 
 /** The answer in words (review finding 3): the model's own sentence when a level misses; else what meets and what it cannot
  * read yet. Words only, from the model's checks; no figure. */
-function verdictOf(p: ReportPreview): { text: string; tone: 'good' | 'warn' | 'bad' } | undefined {
+function verdictOf(p: ReportPreview): { head: string; text: string; tone: 'good' | 'warn' | 'bad' } | undefined {
   if (!p.view || p.blocked) return undefined;
-  if (p.misses) return { text: p.misses, tone: 'bad' };
-  const wait = (p.checks ?? []).filter((c) => c.verdict === 'wait').map((c) => inSentence(c.label));
-  const which = p.benchmarks ? 'benchmark ratio, yours where you changed them,' : 'default benchmark ratio';
-  return wait.length ? { text: `It meets every ${which} it can read now; not yet read: ${listed(wait)}.`, tone: 'warn' } : { text: `It meets every ${which.replace(/,$/, '')}.`, tone: 'good' };
+  const c = p.checks ?? [], named = (v: string) => c.filter((k) => k.verdict === v).map((k) => inSentence(k.label));
+  const wait = named('wait'), head = verdictWords('benchmark', c.length, named('misses').length, wait.length);
+  if (p.misses) return { head, text: p.misses, tone: 'bad' };
+  const whose = p.benchmarks ? ', yours where you changed them' : '';
+  return wait.length ? { head, text: `${head}${whose}: ${listed(wait)}.`, tone: 'warn' } : { head, text: `${head}${whose}.`, tone: 'good' };
 }
 
-/** The answer bar's words (D-UX-84): the lowest DSCR as the model gives it, the verdict and the status. */
-function barText(p: ReportPreview) {
+/** The answer bar's words (D-UX-84): the lowest DSCR as the model gives it, the verdict and the status, counting the
+ * document's own facts as its file does (UXR3, UXR1's S4). */
+function barText(s: ReportState, p: ReportPreview) {
   if (p.blocked || !p.view) return statusText(p);
-  const lowest = p.view.key.find((k) => k.check === 'dscrLowest'), misses = (p.checks ?? []).filter((c) => c.verdict === 'misses');
-  const said = misses.length ? (misses.length > 1 ? 'Misses the benchmarks' : 'Misses a benchmark') : p.benchmarks ? 'Meets your benchmarks' : 'Meets the benchmarks it reads';
-  return [lowest && `Lowest DSCR ${lowest.value}`, said, statusText(p)].filter(Boolean).join(' · ');
+  const lowest = p.view.key.find((k) => k.check === 'dscrLowest');
+  const said = p.checks?.length ? verdictOf(p)?.head : undefined;
+  return [lowest && `Lowest DSCR ${lowest.value}`, said, docStatus(s, p)].filter(Boolean).join(' · ');
 }
 
 /** Under the last input section (review finding 8): whether the report below has figures, linked to it. */
@@ -257,7 +260,7 @@ export function ReportCalculator() {
         {s.scheme !== 'mudra' && collateralBox()}
       </div>
       {s.scheme !== 'mudra' && tick('fld-cgtmse', 'CGTMSE guarantees the loans', !!s.cgtmse, (x, cgtmse) => ({ ...x, cgtmse }),
-        `Its fee, ${CGTMSE.slabs[0].ratePct}% to ${CGTMSE.slabs[CGTMSE.slabs.length - 1].ratePct.toFixed(2)}% a year by the loans in all, goes into the projections as a finance cost.`)}
+        `A government scheme that guarantees small-business loans. Its fee, ${CGTMSE.slabs[0].ratePct}% to ${CGTMSE.slabs[CGTMSE.slabs.length - 1].ratePct.toFixed(2)}% a year by the loans in all, goes into the projections as a finance cost.`)}
       {s.scheme !== 'mudra' && s.cgtmse && <fieldset class="mt-4">
         <legend class="font-medium text-ink">Concessions that apply, each {CGTMSE.concessionPct}% off the fee</legend>
         {CGTMSE.groups.map((t, k) => <Fragment key={k}>{tick(`fld-concession-${k}`, t, !!s.concessions?.[k], (x, v) => ({ ...x, concessions: CGTMSE.groups.map((_, i) => (i === k ? v : !!x.concessions?.[i])) }))}</Fragment>)}
@@ -304,7 +307,7 @@ export function ReportCalculator() {
     </div>
     {/* The answer on every screen of the fields (D-UX-84), from load as on every tool (UX8, review finding 13): text, read
         out as it changes; only the arrow is a target, 44 px. From 1024 px the panel stands beside, so only the words stay. */}
-    <AnswerBar to="report" label="To the report" testid="rep-answer-bar" text={barText(p)} />
+    <AnswerBar to="report" label="To the report" testid="rep-answer-bar" text={barText(s, p)} />
   </div>;
 }
 
@@ -407,6 +410,7 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
     {p.checks && <div data-testid="rep-checks">
       <h3 class="text-title text-ink">{p.misses ? 'Why it does not work yet' : `${p.checks.some((c) => c.verdict === 'wait') ? 'Against' : 'Meets'} the ${p.benchmarks ? '' : 'default '}benchmark ratios`}</h3>
       {p.benchmarks && <p data-testid="rep-benchmarks-note" class="mt-1 text-sm text-warn">{p.benchmarks}</p>}
+      <p class={`mt-1 ${HINT}`}>A benchmark is a level lenders commonly look for.</p>
       {fx && <div data-testid="rep-fix" class="mt-2">
         {fx.cause.map((c) => <p key={c} data-testid="rep-fix-cause" class="text-sm text-bad">{c}</p>)}
         {fx.lead && <p class="mt-2 text-sm font-medium text-ink">{fx.lead}</p>}
@@ -498,7 +502,7 @@ function Result({ s, p, update, use, used, undo, keep, toCollateral, toBox, rese
       {/* The answer is the paper's heading (UX7): a flat claim, its rule solid once final and dashed while provisional. */}
       {verdict && <h3 data-testid={p.misses ? 'rep-misses' : 'rep-verdict'} data-answer class={`text-title text-ink ${answerRule(!p.blocked && !p.needs.length)}`}><Claim text={verdict.text} /></h3>}
       {p.short && <p data-testid="rep-short" class="mt-3 text-sm font-medium text-bad">{p.short}</p>}
-      <Counter id="rep-status" result={result} text={statusText(p)} rule={!verdict} answer={!verdict} class={verdict ? 'mt-2' : ''}>
+      <Counter id="rep-status" result={result} text={v ? docStatus(s, p) : statusText(p)} rule={!verdict} answer={!verdict} class={verdict ? 'mt-2' : ''}>
         {p.needs.length > 0 && <ul data-testid="rep-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => {
           const b = boxOf(n);
           return <li key={n}>{b ? <a href={`#${b[1]}`} onClick={toBox(n)} class="inline-flex min-h-6 items-center text-link">{n}</a> : n}</li>;
@@ -543,8 +547,8 @@ function Download({ s, p, update }: { s: ReportState; p: ReportPreview; update: 
       {field('name', 'Business’s name')}
       {field('activity', 'What the business does', 'Like “Manufacture of corrugated boxes”.')}
       {field('address', 'Business’s address')}
-      {field('lender', 'Lender, if known')}
-      {field('preparedBy', 'Prepared by, if any', 'Your name or your firm’s.')}
+      {field('lender', 'Lender', 'The bank or finance company, and the branch, if known.')}
+      {field('preparedBy', 'Prepared by', 'Your name or your firm’s, if not the borrower.')}
     </div>
     <Words s={s} update={update} />
     <div class="mt-5">

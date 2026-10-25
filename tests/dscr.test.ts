@@ -4,6 +4,8 @@
  */
 import { describe, it, expect } from 'vitest';
 import DATA from '../engine/data/dscr.json';
+import RATIOS from '../engine/data/ratios.json';
+import DEFAULTS from '../engine/data/defaults.json';
 import {
   amortization, dscrStatement, fyRange, loanTimeline, maxLoanAmount, planStatement, shortestRepayment,
   type Amortization, type Definition, type Plan, type ProjectionYear, type Statement, type YearFigures,
@@ -265,5 +267,20 @@ describe('fictional case P: a proprietor with existing EMIs and a new asset', ()
     expect(planStatement([{ ...P[0], taxBy: 'trust' }, ...P.slice(1)], LOAN, COMMON)).toEqual({ needs: ['Who the borrower is, for the tax in 2026-27'] });
     expect(planStatement([{ ...P[0], existingEmis: undefined, assetIncome: undefined }, ...P.slice(1)], LOAN, COMMON))
       .toEqual({ needs: ['Extra income from the new asset for 2026-27', 'Existing EMIs (interest and principal) for 2026-27'] });
+  });
+});
+
+// UXR3 S1: one target for the same ratio in every tool (owner, 25-10-2026).
+describe('the DSCR targets agree across tools', () => {
+  it('the DSCR tool and the report/CMA use the same average and lowest-year targets', () => {
+    const b = (t: string) => DATA.benchmarks.find((x) => x.target === t)?.value;
+    const r = (id: string) => RATIOS.ratios.find((x) => x.id === id);
+    expect(b('minimum')).toBe(1.25);
+    const assumed = DEFAULTS.assumptions.find((x) => x.id === 'target')?.value as { average: number; minimum: number };
+    expect(assumed).toEqual({ average: b('average'), minimum: b('minimum') });
+    for (const [t, id] of [['minimum', 'dscrLowest'], ['average', 'dscrAverage']] as const) {
+      expect(r(id)?.fresh).toBe(b(t));
+      expect(r(id)?.renewal).toBe(b(t));
+    }
   });
 });

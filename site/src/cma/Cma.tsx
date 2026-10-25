@@ -16,6 +16,7 @@ import { isoDate, save, type FileKind } from '../download';
 import { cmaDoc, docNeeds, docStatus, fileName } from './document';
 import { ReadStatement } from './Read';
 import { Levels } from './Levels';
+import { verdictWords } from '../verdict';
 import { CASE_CHOICES, COLLATERAL_HINT, applyCmaPlan, levelsOf, undoCmaPlan, type CmaChange, type CmaLevers } from './levers';
 import {
   ASSUMPTIONS, HEADS, amountOf, columnsOf, emptyState, exampleState, preview, startYearOf, statusText, subtotals, tidyAmount,
@@ -57,9 +58,9 @@ export function CmaCalculator() {
         <button type="button" data-testid="cma-clear-undo" class={BUTTON} onClick={() => { setS(cleared); setCleared(undefined); }}>Undo</button></p>}
     </div>
     <ReadStatement s={s} update={update} />
-    <Section id="limit" title="The limit now">
+    <Section id="limit" title="The limit you have today">
       <div class="mt-4 max-w-sm">
-        <TextField id="fld-cma-existing" label="Working-capital limit you have now, from all banks (0 if none)" unit="Rs." inputMode="decimal" value={s.existingLimit}
+        <TextField id="fld-cma-existing" label="Limit you have today, from all banks (0 if none)" hint="The working-capital limit already sanctioned; the limit your figures support is worked out below." unit="Rs." inputMode="decimal" value={s.existingLimit}
           tidy={tidyAmount} invalid={bad(s.existingLimit)} said={bad(s.existingLimit) ? 'Not understood. Type 70,00,000 or 70 L.' : undefined}
           onCommit={(existingLimit) => update((x) => ({ ...x, existingLimit }))} />
       </div>
@@ -104,8 +105,8 @@ export function CmaCalculator() {
  * "Complete" alone under a miss (UX5b critic, finding 1). */
 function barText(p: CmaPreview, s: CmaState) {
   if (!p.view) return statusText(p);
-  const l = levelsOf(s), n = l?.missCount;
-  const said = n === undefined ? undefined : n ? (n > 1 ? 'Misses the benchmarks' : 'Misses a benchmark') : l?.benchmarks ? 'Meets your benchmarks' : 'Meets the benchmarks';
+  const l = levelsOf(s), c = l?.checks;
+  const said = c && verdictWords('benchmark', c.length, c.filter((k) => k.verdict === 'misses').length, c.filter((k) => k.verdict === 'wait').length);
   return [`Limit ${p.view.key[0]?.value}`, said, statusText(p)].filter(Boolean).join(' · ');
 }
 
@@ -201,7 +202,7 @@ function FormTable({ t }: { t: ViewTable }) {
  */
 function Result({ s, p, update, use, used, undo, keep }: { s: CmaState; p: CmaPreview; update: Update; use: (l: CmaLevers) => void; used: CmaChange[]; undo: () => void; keep: () => void }) {
   const v = p.view, last = columnsOf(s.startYear).at(-1)?.fy ?? '';
-  const outline = [`Limit by the turnover method, ${last}`, 'Limit now', `Current ratio, ${last}`];
+  const outline = [`Limit by the turnover method, ${last}`, 'Limit you have today', `Current ratio, ${last}`];
   const now = amountOf(s.existingLimit);
   return <div class="lg:col-start-2 lg:row-start-1"><section id="result" aria-labelledby="result-h" class="answer-panel mt-10 lg:mt-4">
     <h2 id="result-h" class="sr-only">The CMA data</h2>
@@ -254,7 +255,7 @@ function Download({ s, p, update }: { s: CmaState; p: CmaPreview; update: Update
     save(cmaDoc(s, p, isoDate(now)), kind, fileName(s, p, kind), now);
   };
   const field = (id: keyof CmaFacts, label: string, hint?: string) =>
-    <TextField id={`fld-cma-${id}`} label={label} hint={hint} value={f[id]} said={english(f[id])} invalid={!!english(f[id])} onCommit={(t) => set({ [id]: t })} />;
+    <TextField id={`fld-cma-${id}`} label={label} hint={hint} value={f[id] ?? ''} said={english(f[id] ?? '')} invalid={!!english(f[id] ?? '')} onCommit={(t) => set({ [id]: t })} />;
   // Before the forms show figures the section is one line (UX8, review finding 9).
   if (!ready) return <Folded id="download" title="Download the CMA data"><span data-testid="cma-doc-wait">{p.blocked
     ? 'No document while the two computations disagree.' : 'A PDF and an Excel copy, once the forms show figures.'}</span></Folded>;
@@ -262,7 +263,8 @@ function Download({ s, p, update }: { s: CmaState; p: CmaPreview; update: Update
     <p class={`mt-2 ${HINT}`}>A PDF for the lender and an Excel copy whose Check sheet redoes the main figures by formulas, made in your browser.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       {field('name', 'Business’s name')}
-      {field('preparedBy', 'Prepared by, if any', 'Your name or your firm’s.')}
+      {field('lender', 'Lender', 'The bank or finance company, and the branch, if known.')}
+      {field('preparedBy', 'Prepared by', 'Your name or your firm’s, if not the borrower.')}
     </div>
     {ready
       ? <div class="mt-5">

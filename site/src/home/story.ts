@@ -31,7 +31,7 @@ import { parseAmount } from '../../../engine/parse';
 // ---- The DSCR: case S ----
 
 export const STORY_CASE = DSCR_HOME;
-export const STORY_FIXED = door('80');
+export const STORY_FIXED = door('91');
 
 /** One reading of the DSCR story: each year's DSCR against the target, then the verdict, all in the engine's words. */
 export interface StoryFrame {
@@ -311,7 +311,7 @@ export const CMA_SCENE: ToolScene = (() => {
   return {
     id: 'cma', inputsLabel: 'The case\'s figures',
     inputs: [{ k: 'Business', v: 'Electrical goods' }, { k: 'Years', v: `${said(rows.length, true)}, from ${first}` }, { k: 'Audited', v: `${said(audited, true)} years` },
-      { k: `Sales, ${first}`, v: lc(v.a1.sales) }, { k: `Sales, ${last}`, v: lc(v.proj.sales) }, { k: 'Limit now', v: lc(CMA_CASE.existingLimit) },
+      { k: `Sales, ${first}`, v: lc(v.a1.sales) }, { k: `Sales, ${last}`, v: lc(v.proj.sales) }, { k: 'Limit you have today', v: lc(CMA_CASE.existingLimit) },
       { k: 'Promoters’ capital', v: 'As in the accounts', to: `+${lakhCrore(CMA_FIX.n)}` }],
     level, hub: { from: String(forms), to: String(forms), unit: 'forms', work: 'worked out' }, panel: 'Current ratio, year by year', rows,
     weakest: { typed: weakestOf(rows, 'typed', 'least'), fixed: weakestOf(rows, 'fixed', 'least') },
