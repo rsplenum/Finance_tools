@@ -58,9 +58,9 @@ export function CmaCalculator() {
         <button type="button" data-testid="cma-clear-undo" class={BUTTON} onClick={() => { setS(cleared); setCleared(undefined); }}>Undo</button></p>}
     </div>
     <ReadStatement s={s} update={update} />
-    <Section id="limit" title="The limit now">
+    <Section id="limit" title="The limit you have today">
       <div class="mt-4 max-w-sm">
-        <TextField id="fld-cma-existing" label="Working-capital limit you have now, from all banks (0 if none)" unit="Rs." inputMode="decimal" value={s.existingLimit}
+        <TextField id="fld-cma-existing" label="Limit you have today, from all banks (0 if none)" hint="The working-capital limit already sanctioned; the limit your figures support is worked out below." unit="Rs." inputMode="decimal" value={s.existingLimit}
           tidy={tidyAmount} invalid={bad(s.existingLimit)} said={bad(s.existingLimit) ? 'Not understood. Type 70,00,000 or 70 L.' : undefined}
           onCommit={(existingLimit) => update((x) => ({ ...x, existingLimit }))} />
       </div>
@@ -202,7 +202,7 @@ function FormTable({ t }: { t: ViewTable }) {
  */
 function Result({ s, p, update, use, used, undo, keep }: { s: CmaState; p: CmaPreview; update: Update; use: (l: CmaLevers) => void; used: CmaChange[]; undo: () => void; keep: () => void }) {
   const v = p.view, last = columnsOf(s.startYear).at(-1)?.fy ?? '';
-  const outline = [`Limit by the turnover method, ${last}`, 'Limit now', `Current ratio, ${last}`];
+  const outline = [`Limit by the turnover method, ${last}`, 'Limit you have today', `Current ratio, ${last}`];
   const now = amountOf(s.existingLimit);
   return <div class="lg:col-start-2 lg:row-start-1"><section id="result" aria-labelledby="result-h" class="answer-panel mt-10 lg:mt-4">
     <h2 id="result-h" class="sr-only">The CMA data</h2>

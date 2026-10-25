@@ -467,7 +467,7 @@ export function viewOf(r: Report): ReportView {
       ...(sc ? [{ label: 'PMEGP margin money', value: `Rs. ${rupees(sc.subsidy)}`, note: `${sc.ratePct}% of Rs. ${rupees(sc.base)}, set off after ${PMEGP.lockInYears} years` }] : []),
       ...(r.mudra ? [{ label: 'Mudra', value: r.mudra.level.label, note: `Rs. ${rupees(r.mudra.total)} in all, the term loan and the limit; no collateral up to Rs. ${rupees(r.mudra.collateralFreeUpTo)}` }] : []),
       ...(g ? [{ label: `Guarantee fee (${g.id.toUpperCase()})`, value: `${g.ratePct}% a year`, note: `Rs. ${rupees(g.total)} over the loan${g.beforeStart > 0.005 ? `, Rs. ${rupees(g.beforeStart)} of it before sales start` : ''}` }] : []),
-      ...(r.average !== undefined ? [{ label: 'Average DSCR', value: ratio(r.average), note: 'total A ÷ total B', check: 'dscrAverage' }] : []),
+      ...(r.average !== undefined ? [{ label: 'Average DSCR', value: ratio(r.average), note: 'cash for repayment over all years ÷ all repayments', check: 'dscrAverage' }] : []),
       ...(r.lowest ? [{ label: 'Lowest DSCR', value: ratio(r.lowest.dscr), note: `in ${r.lowest.fy}`, check: 'dscrLowest' }] : []),
     ],
   };

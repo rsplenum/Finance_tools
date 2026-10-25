@@ -81,7 +81,7 @@ export function viewOf(r: Cma, quasi: boolean): CmaView {
   const formI: ViewTable = {
     id: 'form1', title: 'Form I. The working-capital limit', first: 'Limit', columns: ['Rupees'],
     rows: [
-      { label: 'Working-capital limit now, from all banks', values: [inr(r.existingLimit)], n: [r.existingLimit] },
+      { label: 'Limit you have today, from all banks', values: [inr(r.existingLimit)], n: [r.existingLimit] },
       { label: `Proposed: bank borrowing in the ${ys.at(-1)?.fy} balance sheet`, values: [inr(r.proposed)], n: [r.proposed] },
       { label: `Assessed by the turnover method for ${ys.at(-1)?.fy}`, values: [inr(r.limit)], n: [r.limit], kind: 'total' },
     ],
@@ -185,7 +185,7 @@ export function viewOf(r: Cma, quasi: boolean): CmaView {
     tables: [formI, formII, formIII, formIV, formV, formVI, ratiosT], check: checkOf(r, years), years,
     key: [
       { label: `Limit by the turnover method, ${last.fy}`, value: `Rs. ${inr(r.limit)}`, note: `${TURNOVER.needPct}% of the turnover less the larger of the ${TURNOVER.marginPct}% margin and the net working capital` },
-      { label: 'Limit now', value: `Rs. ${inr(r.existingLimit)}` },
+      { label: 'Limit you have today', value: `Rs. ${inr(r.existingLimit)}` },
       { label: `Current ratio, ${last.fy}`, value: ratio(last.currentRatio) },
     ],
     flags: r.flags.map((x) => x.text),

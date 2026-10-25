@@ -933,9 +933,11 @@ export function dscrMarks(s: State): { what: string; mark: Marked; check: string
   return out;
 }
 
-/** One line of how sure: "How sure: the method, cross-checked; the target, illustrative." */
+/** How sure, in plain words (UXR3, UXR1's P4; the marks of D-DATA-26): "The method: two or more sources agree. The target:
+ * an example, not your lender's rule." */
+const PLAIN_SURE = { verified: 'checked at its source', 'cross-checked': 'two or more sources agree', illustrative: 'an example, not your lender’s rule', review: 'not yet confirmed at its source' } as const;
 export const sureLine = (ms: { what: string; mark: Marked }[]) =>
-  ms.length ? `How sure: ${ms.map((x) => `${x.what}, ${x.mark.sure === 'review' ? 'needs review' : x.mark.sure}${x.mark.sure === 'verified' && x.mark.read ? ` on ${x.mark.read.split('-').reverse().join('-')}` : ''}`).join('; ')}.` : '';
+  ms.map((x) => `${x.what.charAt(0).toUpperCase()}${x.what.slice(1)}: ${PLAIN_SURE[x.mark.sure]}${x.mark.sure === 'verified' && x.mark.read ? ` on ${x.mark.read.split('-').reverse().join('-')}` : ''}.`).join(' ');
 
 /** The one thing to check next once nothing is still to answer: the least sure item the verdict rests on, else the figures typed. */
 export const checkNext = (ms: { what: string; mark: Marked; check: string }[]) => {
