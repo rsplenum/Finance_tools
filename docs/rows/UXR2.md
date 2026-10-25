@@ -13,6 +13,6 @@
 ## Gotchas
 - **A tool's draft follows its state's shape** (UXR2, `useKept` in `site/src/fields.tsx`, D-UX-161): a new field in a tool's blank state drops every draft made before it, as meant. A field that keeps its name but changes meaning (a unit, lakh to rupees) does not change the shape: raise `DRAFT_VERSION`. Save in a layout effect: with `useEffect` a reload right after the last field lost it (the CMA kept 3 of 4).
 ## Cost
-| 25-10-2026 | UXR2: answers kept in the tab on the four tools, the privacy line and the reload check | M | COST |
+| 25-10-2026 | UXR2: answers kept in the tab on the four tools, the privacy line and the reload check | M | about 80 steps over about 0.8 working hours; re-reading the context 69%; the explainer and coherence rules (D-UX-166 to D-UX-170) recorded on the way |
 ## Handoff
 State line: UXR2 is built: the four tools keep their answers in the tab (D-UX-157 to D-UX-165); the estimate's Clear all waits for UXR1's one Clear all finding. Next table: UXR2 done. VID2b's brief takes D-UX-166 (the videos show, never claim) D-UX-167 (sophistication earned, not dressed up) and D-UX-168 (no premium-dark draft; D-UX-156's look C, #1 and the editorial entries remain). Order (D-UX-170): UXR3 to UXR5, then VID2b's build. Next row: UXR3 (M, high, writer agent), its starter prompt in `docs/design-reviews/2026-10-24-uxr1-report.html` ("Row UXR3"), after the owner's answer on the lowest-year DSCR target (1.20 or 1.25).
