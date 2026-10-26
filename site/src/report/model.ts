@@ -925,8 +925,18 @@ export function checkOf(s: ReportState, p: ReportPreview): CheckGroup[] {
     { id: 'sales', title: 'Production and sales', to: 'operations', lines: sales },
     { id: 'costs', title: 'Variable and fixed costs', to: 'operations', lines: costs },
     { id: 'wc', title: 'Working capital', to: 'wc', lines: wc },
+    { id: 'document', title: 'For the report’s first page', to: 'facts', lines: facts(s.doc) },
   ];
 }
+
+/** The report's first page in the check (D-UX-216): a fact it needs reads "Not given yet"; one it may leave out, only once typed. */
+const facts = (f: ReportFacts): CheckLine[] => [
+  { label: 'Business’s name', value: f.name.trim() || 'Not given yet' },
+  { label: 'What the business does', value: f.activity.trim() || 'Not given yet' },
+  { label: 'Business’s address', value: f.address.trim() || 'Not given yet' },
+  ...(f.lender.trim() ? [{ label: 'Lender', value: f.lender.trim() }] : []),
+  ...(f.preparedBy.trim() ? [{ label: 'Prepared by', value: f.preparedBy.trim() }] : []),
+];
 
 /** The check's key (OR8): the engine's input and the benchmarks; a change to either asks for the check again. The
  * document's own facts and words are not in it. */

@@ -492,6 +492,11 @@ describe('check and confirm (OR8)', () => {
     expect(lines({ ...S, wcBy: 'none' }).wc).toEqual(['The working-capital limit: None needed']);
     expect(lines({ ...S, scheme: 'mudra', loan: { ...S.loan, amount: '5 L' }, wcBy: 'typed', wcLimit: '1 L' }).business[2]).toBe('What backs the loan: A CGFMU guarantee, under Mudra, with no collateral');
   });
+  it('reads back the first page’s facts, a needed one not given said so, one that may be left out only once typed (D-UX-216)', () => {
+    expect(lines(P).document).toEqual(['Business’s name: Meera Foods', 'What the business does: Roasted snacks', 'Business’s address: Example village, Nashik']);
+    expect(lines({ ...S, doc: { name: '', activity: '', address: '', lender: 'Example Bank, Pune', preparedBy: '' } }).document)
+      .toEqual(['Business’s name: Not given yet', 'What the business does: Not given yet', 'Business’s address: Not given yet', 'Lender: Example Bank, Pune']);
+  });
   it('has nothing to read back before the report has figures', () => {
     expect(checkOf(EMPTY, preview(EMPTY))).toEqual([]);
   });
