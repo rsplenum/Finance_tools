@@ -30,7 +30,7 @@ export type Mode = 'simple' | 'expert';
 /** The working-capital limit: worked out by the engine, the borrower's own, or none (D-UX-112). */
 export type WcBy = 'worked' | 'typed' | 'none';
 /** What backs the loan beside the project's own assets, asked in simple mode (D-UX-112). */
-export type Security = 'property' | 'cgtmse' | 'neither';
+export type Security = 'property' | 'hybrid' | 'cgtmse' | 'neither';
 export interface ReportFacts { name: string; activity: string; address: string; lender: string; preparedBy: string }
 export interface ReportState {
   borrower?: string;
@@ -107,9 +107,11 @@ export const tarunAsked = (s: ReportState) => s.scheme === 'mudra' && (!!s.tarun
 export const guaranteeOf = (s: ReportState) => (s.scheme === 'mudra' ? 'cgfmu' : cgtmseOn(s) ? 'cgtmse' : undefined);
 const simple = (s: ReportState) => s.mode === 'simple';
 /** CGTMSE in simple mode is the backing chosen (with a property only when ticked in expert mode); in expert mode, the tick. */
-const cgtmseOn = (s: ReportState) => (simple(s) ? s.security === 'cgtmse' || (s.security === 'property' && !!s.cgtmse) : !!s.cgtmse);
+const cgtmseOn = (s: ReportState) => (simple(s) ? s.security === 'cgtmse' || s.security === 'hybrid' || (s.security === 'property' && !!s.cgtmse) : !!s.cgtmse);
+/** Property backs the loan, in full or in part (CGTMSE's hybrid security), so its market value is asked. */
+export const withProperty = (s: ReportState) => s.security === 'property' || s.security === 'hybrid';
 /** The collateral counted: in simple mode only with a property chosen; never on Mudra. */
-const collateralText = (s: ReportState) => (s.scheme === 'mudra' || (simple(s) && s.security !== 'property') ? '' : s.collateral);
+const collateralText = (s: ReportState) => (s.scheme === 'mudra' || (simple(s) && !withProperty(s)) ? '' : s.collateral);
 export const wcByOf = (s: ReportState): WcBy | undefined => s.wcBy ?? (s.wcLimit.trim() ? 'typed' : undefined);
 /** The limit the report uses: as typed, worked out, or none; undefined while it waits for a figure. */
 export const limitOf = (s: ReportState) => inputOf(s).wcLimit;
@@ -138,7 +140,7 @@ export function assumptionsOf(s: ReportState) {
     simpleDrawn: !s.loan.disbursed.trim(), simpleRepaid: !s.loan.repayment, simpleMoratorium: !s.loan.moratoriumMonths.trim(),
     simpleFixedGrowth: !s.fixedGrowth.trim(), simpleWcRate: !s.wcRate.trim() && limit,
     guaranteeFee: !!g && own, guaranteeFirst: !!g, cgtmseOther: g === 'cgtmse' && own, cgtmseRate: g === 'cgtmse' && own,
-    cgtmseWc: g === 'cgtmse' && limit, cgtmsePmegp: g === 'cgtmse' && s.scheme === 'pmegp',
+    cgtmseWc: g === 'cgtmse' && limit, cgtmsePmegp: g === 'cgtmse' && s.scheme === 'pmegp', cgtmseHybrid: g === 'cgtmse' && !!collateralText(s).trim(),
   };
   return ASSUMPTIONS.filter((a) => (shows[a.id] ?? true) && ('simple' in a ? simple(s) : true) && (s.salesBy === 'drivers' || (a.id !== 'utilisation' && a.id !== 'price'))
     && (a.id !== 'days' || days.length > 0) && (a.id !== 'utilisation' || s.utilisation === EMPTY.utilisation) && (a.id !== 'price' || s.priceGrowth === EMPTY.priceGrowth))
@@ -171,6 +173,7 @@ export function simpleNeeds(s: ReportState): string[] {
   if (s.sellFrom?.trim() && !t.sell) out.push('When you will start selling: a month, such as March 2027');
   else if (t.toStart !== undefined && t.toStart < 0) out.push('When you will start selling: the month the loan is first drawn or later');
   if (s.scheme !== 'mudra' && !s.security) out.push('What backs the loan besides the project\'s own assets');
+  if (s.scheme !== 'mudra' && s.security === 'hybrid' && !s.collateral.trim()) out.push('The collateral: its market value, for the part CGTMSE does not guarantee');
   return out;
 }
 const SIMPLE_WORDS: [string, string | undefined][] = [
@@ -195,6 +198,7 @@ export const MODE_CHOICES: { value: Mode; label: string; hint: string }[] = [
 export const WC_CHOICES: { value: WcBy; label: string }[] = [{ value: 'worked', label: 'Work it out for me' }, { value: 'typed', label: 'I will type my own' }, { value: 'none', label: 'None needed' }];
 export const SECURITY_CHOICES: { value: Security; label: string; hint?: string }[] = [
   { value: 'property', label: 'Property', hint: 'Its market value counts in the security cover' },
+  { value: 'hybrid', label: 'Property for part, CGTMSE for the rest', hint: 'CGTMSE guarantees what the property does not back; its fee is on that part only' },
   { value: 'cgtmse', label: 'A CGTMSE guarantee', hint: 'Its fee goes into the projections as a finance cost' }, { value: 'neither', label: 'Neither' }];
 export { COST_HEADS };
 /** The limit worked out, in words with the two figures it is the lower of (D-UX-112); figures from engine/report.ts. */
@@ -246,7 +250,7 @@ export function withMode(s: ReportState, mode: Mode): ReportState {
   if (mode === 'expert') {
     // Each assumption is written beside the answer it goes with, so the figures do not change; one not yet reached stays asked.
     const t = simpleTerms(s), keep = (a: string, b?: string) => (a.trim() || b === undefined ? a : b), has = (x?: string) => !!x?.trim(), wc = wcByOf(s);
-    const g = s.scheme === 'mudra' ? {} : s.security === 'property' ? {} : s.security ? { cgtmse: s.security === 'cgtmse', collateral: '' } : {};
+    const g = s.scheme === 'mudra' ? {} : s.security === 'property' ? {} : s.security === 'hybrid' ? { cgtmse: true } : s.security ? { cgtmse: s.security === 'cgtmse', collateral: '' } : {};
     return {
       ...s, ...g, mode, monthsToStart: t.toStart !== undefined && t.toStart >= 0 ? String(t.toStart) : s.monthsToStart,
       loan: { ...s.loan, disbursed: keep(s.loan.disbursed, has(s.sellFrom) ? t.drawn : undefined), moratoriumMonths: keep(s.loan.moratoriumMonths, t.toStart !== undefined && t.toStart >= 0 ? String(t.toStart) : undefined),
@@ -258,7 +262,7 @@ export function withMode(s: ReportState, mode: Mode): ReportState {
   }
   const drawn = parseMonth(s.loan.disbursed), toStart = plainOf(s.monthsToStart), n = plainOf(s.loan.instalments), f = amountOf(s.fixed);
   const sell = drawn && toStart !== undefined && Number.isInteger(toStart) ? addMonths(drawn, toStart) : s.sellFrom;
-  const security: Security | undefined = s.scheme === 'mudra' ? s.security : s.collateral.trim() ? 'property' : s.cgtmse ? 'cgtmse' : s.security ? 'neither' : undefined;
+  const security: Security | undefined = s.scheme === 'mudra' ? s.security : s.collateral.trim() ? (s.cgtmse ? 'hybrid' : 'property') : s.cgtmse ? 'cgtmse' : s.security ? 'neither' : undefined;
   return {
     ...s, mode, sellFrom: sell, monthsToStart: '', security,
     years: n !== undefined && Number.isFinite(n) ? String(+(n / 12).toFixed(2)) : s.years, fixedMonth: f !== undefined && Number.isFinite(f) ? figText(+(f / 12).toFixed(2)) : s.fixedMonth, fixed: '',
@@ -495,6 +499,8 @@ export function viewOf(r: Report): ReportView {
 export interface ReportPreview {
   needs: string[]; blocked?: string; view?: ReportView; short?: string; flags: string[];
   checks?: CheckRow[]; misses?: string; collateralNote?: string;
+  /** CGTMSE beside collateral (hybrid security, OR7): the part it guarantees, read back. */
+  hybrid?: string;
   /** Which benchmarks are the user's, and a looser one's warning (BEN1). */
   benchmarks?: string;
 }
@@ -514,9 +520,17 @@ export function preview(s: ReportState): ReportPreview {
   return {
     needs: [], view: viewOf(r), flags: r.scheme?.flags ?? [], checks,
     ...(d.misses.length ? { misses: `${verdictWords('benchmark', d.checks.length, d.misses.length, d.checks.filter((k) => k.meets === undefined).length)}: ${listed(d.misses.map(labelOf))}.` } : {}),
-    ...(collateralNote ? { collateralNote } : {}), ...(own ? { benchmarks: own } : {}),
+    ...(collateralNote ? { collateralNote } : {}), ...(own ? { benchmarks: own } : {}), ...(hybridLine(r) ? { hybrid: hybridLine(r) } : {}),
     ...(c ? { short: `Cash goes below nil in ${c.fy}: Rs. ${rupees(c.need)} short at its lowest. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.` } : {}),
   };
+}
+
+/** CGTMSE beside collateral, read back from the engine's figures: the part guaranteed and the part the property backs. */
+function hybridLine(r: Report): string | undefined {
+  const g = r.guarantee;
+  return g?.id === 'cgtmse' && g.collateral > 0
+    ? `CGTMSE guarantees Rs. ${rupees(g.guaranteed)} of the loans' Rs. ${rupees(g.cover)}; the property's Rs. ${rupees(g.collateral)} backs the rest, set against the term loan first. Its fee is on that part only.`
+    : undefined;
 }
 
 /** The loan period read back under its boxes (D-UX-174): the holiday and the repayment in all, each limit on it within or
@@ -810,7 +824,7 @@ const put = (s: ReportState, k: Key, t: string): ReportState => {
   }
   if (k === 'fixed' && simple(s)) return { ...s, fixedMonth: n === undefined ? t : figText(+(n / 12).toFixed(2)) };
   if (k === 'loan.instalments' && simple(s)) return { ...s, years: t.trim() ? String(+(+t / 12).toFixed(2)) : '' };
-  if (k === 'collateral' && simple(s)) return { ...s, collateral: t, security: 'property' };
+  if (k === 'collateral' && simple(s)) return { ...s, collateral: t, security: withProperty(s) ? s.security : 'property' };
   return k.startsWith('loan.') ? { ...s, loan: { ...s.loan, [k.slice(5)]: t } } : { ...s, [k]: t };
 };
 /** The same figure, give or take the paise a split into heads or months leaves. */

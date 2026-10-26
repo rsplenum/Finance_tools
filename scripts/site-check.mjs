@@ -1121,9 +1121,10 @@ if (touched('/estimate/')) {
 // (2), who the borrower is (3), building and machinery, the scheme (3), the loan, its rate and its years, what backs it (3),
 // one product's line (3), when selling starts, the variable costs' share, the fixed costs a month and the limit (3), 25 in
 // all; 26 from OR5 (D-UX-174), with the holiday before the first instalment beside the repayment period after it; 27 from
-// OR6 (D-UX-203), with what the product line is sold by, a pick counted as a field. Expert mode asks every figure (56 with
+// OR6 (D-UX-203), with what the product line is sold by, a pick counted as a field; 28 from OR7 (D-UX-206), what backs it
+// gaining a fourth radio, property for part and CGTMSE for the rest (a choice, not a question). Expert mode asks every figure (56 with
 // one product line, the stepped way among the four ways to repay).
-const REP_DEFAULT = 27;
+const REP_DEFAULT = 28;
 const REP_FIELDS = 'main input:not(#download input):not(#benchmarks input), main select:not(#download select):not(#benchmarks select)';
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
@@ -1377,6 +1378,13 @@ if (touched('/project-report/')) {
   await expectText(page, v, 'rep-worked', /^Worked out: Rs\. 2,72,219\. It is the lower of .*, Rs\. 2,72,219, .*, Rs\. 11,52,000\.$/, 'the limit worked out');
   if (await page.getByTestId('rep-needs').count()) v(`simple mode still asks: ${await page.getByTestId('rep-needs').textContent()}`);
   if (await page.locator('#fld-tl-disbursed, #fld-wcRate, #fld-fixedGrowth').count()) v('simple mode shows an expert field');
+  // Property for part, CGTMSE for the rest (OR7): its value asked, then the part guaranteed read back: the loans in all,
+  // 20 L and the limit's 2,72,219, less the property's 5 L.
+  await page.check('#fld-security-hybrid');
+  await expectText(page, v, 'rep-needs', /The collateral: its market value, for the part CGTMSE does not guarantee/, 'hybrid security, the property\'s value not yet typed');
+  await leave(page, '#fld-collateral', '5 L');
+  await expectText(page, v, 'rep-hybrid', 'CGTMSE guarantees Rs. 17,72,219 of the loans\' Rs. 22,72,219; the property\'s Rs. 5,00,000 backs the rest, set against the term loan first. Its fee is on that part only.', 'hybrid security');
+  await page.check('#fld-security-neither');
   // The holiday runs to the first sales until typed, and the period reads back in all (D-UX-174).
   if (await page.inputValue('#fld-tl-moratorium') !== '3') v(`the holiday's box reads ${await page.inputValue('#fld-tl-moratorium')}, want its default 3`);
   await expectText(page, v, 'rep-period', 'Loan period: 4 years 3 months in all: a holiday of 3 months, then 4 years of instalments. Within the 180 months lenders commonly allow a small business.', 'the loan period');

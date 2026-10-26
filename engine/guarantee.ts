@@ -20,12 +20,15 @@ export function cgtmseRate(cover: number, concessions: number): number | undefin
 
 export interface FeeIn {
   id: GuaranteeId; ratePct: number;
-  /** The term loan month by month as it is repaid (engine/loan.ts months), and the amount guaranteed: the sanctioned. */
-  months: MonthRow[]; guaranteed: number;
+  /** The term loan month by month as it is repaid (engine/loan.ts months), and the amount guaranteed: the sanctioned, less
+   * any collateral set against it under CGTMSE's hybrid security (`netted`, else 0), whose later bills are on the
+   * outstanding less it, never below nil (CGS-I, Annexure IV). */
+  months: MonthRow[]; guaranteed: number; netted: number;
   /** PMEGP's margin money, held as a deposit against the loan for `heldMonths` from the first draw and then set off: in
    * the outstanding until then (the upper figure). */
   held: number; heldMonths: number;
-  /** The working-capital limit, fully used from `start`, the month of the first sales. */
+  /** The working-capital limit guaranteed (less any collateral set against it), fully used from `start`, the month of the
+   * first sales. */
   limit: number; start: string;
   fys: string[];
 }
@@ -34,7 +37,8 @@ export interface FeeYear { fy: string; termLoan: number; workingCapital: number;
 /** The fee in each of `fys`, a month at a time. CGFMU: in the year of the first draw on the amount sanctioned, from that
  * month; later, a full year on what is outstanding on 1 April. CGTMSE: on the amount guaranteed for the first twelve
  * months, then on what was outstanding on the 31 December before each year (the amount guaranteed if not yet drawn), in
- * every month the loan runs. The limit: on the whole limit, every month from the first sales. */
+ * every month the loan runs; beside collateral, that outstanding less the collateral, nil once it is below. The limit: on
+ * the whole limit guaranteed, every month from the first sales. */
 export function guaranteeFee(x: FeeIn): FeeYear[] {
   const m = x.ratePct / 1200, drawn = x.months[0].month, drawFy = x.months[0].fy;
   const at = new Map(x.months.map((r, k) => [r.month, { r, k }]));
@@ -42,7 +46,7 @@ export function guaranteeFee(x: FeeIn): FeeYear[] {
   const outstanding = (ym: string) => { const a = at.get(ym) as { r: MonthRow; k: number }; return a.r.closing + (a.k < x.heldMonths ? x.held : 0); };
   const december = (fy: string) => {
     const ym = `${Number(fy.slice(0, 4)) - 1}-12`;
-    return ym < drawn ? x.guaranteed : at.has(ym) ? outstanding(ym) : 0;
+    return ym < drawn ? x.guaranteed : at.has(ym) ? Math.min(x.guaranteed, Math.max(0, outstanding(ym) - x.netted)) : 0;
   };
   return x.fys.map((fy) => {
     let termLoan = 0;

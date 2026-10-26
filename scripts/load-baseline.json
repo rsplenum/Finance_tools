@@ -130,9 +130,9 @@
     },
     "/project-report/": {
       "before": 57,
-      "shown": 1152,
-      "all": 3645,
-      "plan": 3180,
+      "shown": 1174,
+      "all": 3667,
+      "plan": 3192,
       "long": 0,
       "abbr": 6,
       "questions": 18,
@@ -1650,7 +1650,10 @@
     { "page": "/project-report/", "count": "shown", "from": 1149, "to": 1152, "why": "D-UX-205", "date": "2026-10-26" },
     { "page": "/project-report/", "count": "all", "from": 3642, "to": 3645, "why": "D-UX-205", "date": "2026-10-26" },
     { "page": "/project-report/", "count": "questions", "from": 17, "to": 18, "why": "D-UX-205", "date": "2026-10-26" },
-    { "page": "/project-report/", "count": "controls", "from": 47, "to": 48, "why": "D-UX-205", "date": "2026-10-26" }
+    { "page": "/project-report/", "count": "controls", "from": 47, "to": 48, "why": "D-UX-205", "date": "2026-10-26" },
+    { "page": "/project-report/", "count": "shown", "from": 1152, "to": 1174, "why": "D-UX-207", "date": "2026-10-26" },
+    { "page": "/project-report/", "count": "all", "from": 3645, "to": 3667, "why": "D-UX-207", "date": "2026-10-26" },
+    { "page": "/project-report/", "count": "plan", "from": 3180, "to": 3192, "why": "D-UX-207", "date": "2026-10-26" }
   ],
   "fontProbe": 320.2
 }

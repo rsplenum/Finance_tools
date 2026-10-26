@@ -121,7 +121,9 @@ export interface SchemeResult {
 export interface MudraResult { level: MudraLevel; total: number; collateralFreeUpTo: number; apply: { label: string; url: string } }
 /** The guarantee and its fee: the rate (the scheme's, or `typed`), the cover that sets CGTMSE's slab, the fee before the
  * first sales (in the cost of the project), over the whole loan, and in each year of it from its first draw. */
-export interface GuaranteeResult { id: GuaranteeId; label: string; ratePct: number; typed: boolean; cover: number; concessions: number; beforeStart: number; total: number; years: FeeYear[] }
+/** `cover`: the loans in all, which set CGTMSE's slab; `guaranteed`: the part guaranteed, the loans less `collateral`, the
+ * collateral's value set against them under CGTMSE's hybrid security (0 without collateral, and under CGFMU). */
+export interface GuaranteeResult { id: GuaranteeId; label: string; ratePct: number; typed: boolean; cover: number; guaranteed: number; collateral: number; concessions: number; beforeStart: number; total: number; years: FeeYear[] }
 export interface Report {
   start: string; scheme?: SchemeResult; mudra?: MudraResult; guarantee?: GuaranteeResult; interestBeforeStart: number;
   /** The year cash first goes lowest below nil, and the promoters' money more that keeps it at nil or above. */
@@ -241,6 +243,9 @@ export function reportNeeds(x: ReportInput): string[] {
     const most = GUARANTEES.cgtmse.slabs[GUARANTEES.cgtmse.slabs.length - 1].upTo;
     needs.push(`CGTMSE: the loans come to Rs. ${inr(l.amount + x.wcLimit)}, above the Rs. ${inr(most)} it guarantees in all; untick it`);
   }
+  // Beside collateral CGTMSE guarantees only the part it does not back (hybrid security): nothing, once it backs them all.
+  if (g?.cgtmse && x.scheme?.id !== 'mudra' && isNum(l.amount) && isNum(x.wcLimit) && isNum(x.collateral) && x.collateral >= l.amount + x.wcLimit)
+    needs.push(`CGTMSE: the collateral's market value of Rs. ${inr(x.collateral)} backs the loans' Rs. ${inr(l.amount + x.wcLimit)} in full, leaving nothing for CGTMSE to guarantee: leave CGTMSE out, or lower the collateral to the part it backs`);
   if (x.scheme?.id === 'pmegp') {
     const sc = x.scheme;
     if (!sc.category || !(sc.category in PMEGP.ownPct)) needs.push('PMEGP: the borrower\'s category');
@@ -335,10 +340,14 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   if (gid) {
     const cover = sanctioned + limit, concessions = gid === 'cgtmse' ? x.guarantee?.concessions ?? 0 : 0, typed = x.guarantee?.ratePct !== undefined;
     const ratePct = typed ? (x.guarantee?.ratePct as number) : gid === 'cgfmu' ? GUARANTEES.cgfmu.ratePct : (cgtmseRate(cover, concessions) as number);
-    const fee = { id: gid, ratePct, guaranteed: sanctioned, held: scheme ? scheme.subsidy : 0, heldMonths: PMEGP.lockInYears * 12, limit, start, fys: when.years };
+    // CGTMSE's hybrid security (CGS-I para 2(iv), 8.1, Annexure IV): beside collateral it guarantees only the part the
+    // collateral does not back, the collateral at its market value set against the term loan first (report.json's
+    // assumption cgtmseHybrid); the slab stays that of the loans in all (para 8, note 5).
+    const c = gid === 'cgtmse' && isNum(x.collateral) ? x.collateral : 0, onLoan = Math.min(c, sanctioned), onLimit = Math.min(limit, c - onLoan);
+    const fee = { id: gid, ratePct, guaranteed: sanctioned - onLoan, netted: onLoan, held: scheme ? scheme.subsidy : 0, heldMonths: PMEGP.lockInYears * 12, limit: limit - onLimit, start, fys: when.years };
     const byYear = guaranteeFee({ ...fee, months: debt.months }), again = guaranteeFeeCheck({ ...fee, loan: loan as LoanTerms });
     if (byYear.some((y, k) => !money(y.termLoan, again[k].termLoan) || !money(y.workingCapital, again[k].workingCapital))) return blocked('the guarantee fee');
-    guarantee = { id: gid, label: GUARANTEES[gid].label, ratePct, typed, cover, concessions, beforeStart: byYear.filter((y) => y.fy < first).reduce((t, y) => t + y.total, 0), total: byYear.reduce((t, y) => t + y.total, 0), years: byYear };
+    guarantee = { id: gid, label: GUARANTEES[gid].label, ratePct, typed, cover, guaranteed: fee.guaranteed + fee.limit, collateral: onLoan + onLimit, concessions, beforeStart: byYear.filter((y) => y.fy < first).reduce((t, y) => t + y.total, 0), total: byYear.reduce((t, y) => t + y.total, 0), years: byYear };
   }
   const feeBeforeStart = guarantee?.beforeStart ?? 0, feeOf = (fy: string) => guarantee?.years.find((y) => y.fy === fy)?.total ?? 0;
   const prelimAll = prelim + interestBeforeStart + feeBeforeStart, years = DATA.preliminaryYears;

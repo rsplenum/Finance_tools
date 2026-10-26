@@ -153,7 +153,7 @@ export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc 
           `Source: ${PMEGP.source}. The guideline of 2023: ${sureLower(PMEGP as Marked)}. ${overdueNote(REPORT_REVIEW_BY, todayIso())}`.trim()] } as Block,
           { kind: 'heading', text: 'PMEGP: its conditions' } as Block, { kind: 'list', items: [...pmegpConditions(s, 'guideline'), `${s.pmegpConfirmed ? 'Confirmed by the borrower' : 'Not yet confirmed by the borrower'}. Source: ${PMEGP.conditionsSource}`] } as Block] : []),
         ...(s.scheme === 'mudra' ? [{ kind: 'heading', text: 'Mudra: the rules used' } as Block, { kind: 'list', items: [...MUDRA.rules, `Apply on ${MUDRA.apply.label}: ${MUDRA.apply.url}.`, `Source: ${MUDRA.source} ${sureText(MUDRA as Marked)}.`] } as Block] : []),
-        ...(gid ? [{ kind: 'heading', text: `The guarantee fee: ${gid.toUpperCase()}` } as Block, { kind: 'list', items: [`Source: ${GUARANTEES[gid].source} ${sureText(GUARANTEES[gid] as Marked)}.`] } as Block] : []),
+        ...(gid ? [{ kind: 'heading', text: `The guarantee fee: ${gid.toUpperCase()}` } as Block, { kind: 'list', items: [...(p.hybrid ? [p.hybrid] : []), `Source: ${GUARANTEES[gid].source} ${sureText(GUARANTEES[gid] as Marked)}.`] } as Block] : []),
       ] },
     ],
   };

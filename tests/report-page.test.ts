@@ -45,7 +45,7 @@ describe('the project report page', () => {
     expect(p.needs).not.toContain('Days of stock, 0 to 365');
     expect(EMPTY.days).toEqual({ stock: '30', debtors: '30', creditors: '30' });
     expect(DATA.assumptions.map((a) => a.id)).toEqual(['simpleCost', 'simpleFunds', 'simpleDrawn', 'simpleRepaid', 'simpleMoratorium', 'simpleFixedGrowth', 'simpleWcRate', 'days', 'wcUsed', 'drawings', 'tax', 'utilisation', 'price',
-      'guaranteeFee', 'guaranteeFirst', 'cgtmseOther', 'cgtmseRate', 'cgtmseWc', 'cgtmsePmegp']);
+      'guaranteeFee', 'guaranteeFirst', 'cgtmseOther', 'cgtmseRate', 'cgtmseWc', 'cgtmseHybrid', 'cgtmsePmegp']);
     expect(assumptionsOf(EMPTY).length).toBe(6);
     expect(assumptionsOf({ ...EMPTY, salesBy: 'typed' }).map((a) => a.id)).toEqual(['days', 'wcUsed', 'drawings', 'tax']);
   });
@@ -366,6 +366,16 @@ describe('simple and expert modes', () => {
     expect(preview({ ...S, sellFrom: '2026-08' }).needs).toEqual(['When you will start selling: the month the loan is first drawn or later']);
     expect(inputOf({ ...S, security: 'cgtmse' }).guarantee).toEqual({ cgtmse: true, concessions: 0 });
     expect(inputOf({ ...S, security: 'neither', collateral: '30 L' }).collateral).toBeUndefined();
+    // Property for part, CGTMSE for the rest (OR7): the property's value asked, then both go to the engine.
+    expect(preview({ ...S, security: 'hybrid' }).needs).toEqual(['The collateral: its market value, for the part CGTMSE does not guarantee']);
+    const h: ReportState = { ...S, security: 'hybrid', collateral: '5 L' }, x = inputOf(h);
+    expect([x.collateral, x.guarantee]).toEqual([500000, { cgtmse: true, concessions: 0 }]);
+    expect(preview(h).hybrid).toMatch(/^CGTMSE guarantees Rs\. [\d,]+ of the loans' Rs\. [\d,]+; the property's Rs\. 5,00,000 backs the rest, set against the term loan first\. Its fee is on that part only\.$/);
+    expect(assumptionsOf(h).some((a) => a.id === 'cgtmseHybrid')).toBe(true);
+    expect(assumptionsOf({ ...S, security: 'cgtmse' }).some((a) => a.id === 'cgtmseHybrid')).toBe(false);
+    const e = withMode(h, 'expert');
+    expect([e.cgtmse, e.collateral, withMode(e, 'simple').security]).toEqual([true, '5 L', 'hybrid']);
+    expect(withMode({ ...e, cgtmse: false }, 'simple').security).toBe('property');
   });
   it('switching writes the answers into the expert fields and takes them back', () => {
     const e = withMode(S, 'expert');
