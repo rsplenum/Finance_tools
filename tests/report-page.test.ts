@@ -9,7 +9,9 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import { docStatus, fileName, reportDoc } from '../site/src/report/document';
-import { AS_TYPED, EMPTY, applyPlan, assumptionsOf, boardOf, changedOf, fixView, inputOf, planOf, preview, statusText, undoPlan, viableOf, withMode, type ReportState } from '../site/src/report/model';
+import { AS_TYPED, EMPTY, applyPlan, assumptionsOf, boardOf, changedOf, fixView, holidayAssumed, inputOf, periodLine, planOf, preview, repaymentView, statusText, undoPlan, viableOf, withMode, type ReportState } from '../site/src/report/model';
+import { compareRepayments } from '../engine/repayment';
+import { inr } from '../engine/util';
 import { withLevers } from '../engine/plan';
 import { F } from './fix.test';
 import { benchmarkFields, levelsOf, withBenchmark } from '../site/src/board-model';
@@ -41,7 +43,7 @@ describe('the project report page', () => {
     expect(p.needs[0]).toBe('Who the borrower is: it sets the tax');
     expect(p.needs).not.toContain('Days of stock, 0 to 365');
     expect(EMPTY.days).toEqual({ stock: '30', debtors: '30', creditors: '30' });
-    expect(DATA.assumptions.map((a) => a.id)).toEqual(['simpleCost', 'simpleFunds', 'simpleDrawn', 'simpleMoratorium', 'simpleFixedGrowth', 'simpleWcRate', 'days', 'wcUsed', 'drawings', 'tax', 'utilisation', 'price',
+    expect(DATA.assumptions.map((a) => a.id)).toEqual(['simpleCost', 'simpleFunds', 'simpleDrawn', 'simpleRepaid', 'simpleMoratorium', 'simpleFixedGrowth', 'simpleWcRate', 'days', 'wcUsed', 'drawings', 'tax', 'utilisation', 'price',
       'guaranteeFee', 'guaranteeFirst', 'cgtmseOther', 'cgtmseRate', 'cgtmseWc', 'cgtmsePmegp']);
     expect(assumptionsOf(EMPTY).length).toBe(6);
     expect(assumptionsOf({ ...EMPTY, salesBy: 'typed' }).map((a) => a.id)).toEqual(['days', 'wcUsed', 'drawings', 'tax']);
@@ -191,8 +193,7 @@ describe('the lender\'s levels and make it viable, in words', () => {
       'DSCR in the lowest year | 1.25 or more | misses 0.82 in 2026-27', 'Interest cover | 1.50 or more | misses 0.74 in 2026-27',
       'Fixed-asset cover | 1.20 or more | meets 1.39 in 2026-27', 'Security cover | 1.20 or more | meets 1.49 in 2026-27 on the project’s own assets',
     ]);
-    expect([p.misses, p.collateralNote, p.longTerm]).toEqual(['Misses 4 of 8 benchmarks: current ratio, average DSCR, DSCR in the lowest year and interest cover.',
-      undefined, undefined]);
+    expect([p.misses, p.collateralNote]).toEqual(['Misses 4 of 8 benchmarks: current ratio, average DSCR, DSCR in the lowest year and interest cover.', undefined]);
     // The bars (the level at the middle) and the rupees short, rounded up from tests/viable.test.ts's hand figures.
     expect(p.checks?.map((c) => [c.id, c.bar.toFixed(1), c.short])).toEqual([
       ['currentRatio', '42.5', 'Short by Rs. 1,44,139 of current assets (stock, debtors and cash) in 2026-27.'], ['tolTnw', '35.8', undefined], ['debtEquity', '31.1', undefined],
@@ -207,11 +208,11 @@ describe('the lender\'s levels and make it viable, in words', () => {
       ['borrower', 'Sales 17.3% higher in every year: Rs. 82,11,000 in 2026-27 instead of Rs. 70,00,000.'],
       ['borrower', 'A term loan of at most Rs. 9,35,779 (now Rs. 25,00,000), the promoters bringing Rs. 15,64,221 more.'],
       ['borrower', 'A working-capital limit of at most Rs. 3,80,877 (now Rs. 5,00,000), the promoters bringing Rs. 1,19,123 more as margin.'],
-      ['lender', expect.stringMatching(/^A moratorium of \d+ months \(now 0\), the whole term within 180 months\.$/)],
-      ['lender', expect.stringMatching(/^\d+ monthly instalments, .+ \(now 60\), the whole term within 180 months\.$/)],
+      ['lender', expect.stringMatching(/^A holiday of \d+ months before the first instalment \(now 0\), the whole loan within 180 months\.$/)],
+      ['lender', expect.stringMatching(/^\d+ monthly instalments, .+ \(now 60\), the whole loan within 180 months\.$/)],
     ]);
     expect(v?.lines.map((l) => [l.head, l.move])).toEqual([['Higher sales', '+17.3%'], ['A smaller term loan', 'Rs. 15,64,221 less'], ['A smaller working-capital limit', 'Rs. 1,19,123 less'],
-      ['A longer moratorium', expect.stringMatching(/^\+\d+ months?$/)], ['A longer repayment', expect.stringMatching(/^\+\d+ instalments?$/)]]);
+      ['A longer holiday', expect.stringMatching(/^\+\d+ months?$/)], ['A longer repayment', expect.stringMatching(/^\+\d+ instalments?$/)]]);
     expect(v?.lines[0].bars).toEqual({ now: expect.closeTo(7000000, 6), to: expect.closeTo(8211000, 6), nowText: 'Rs. 70,00,000', toText: 'Rs. 82,11,000' });
     expect([v?.lines[0].reach, v?.lines[2].fixes, v?.lines[2].still]).toEqual([undefined, ['current ratio'], ['average DSCR', 'DSCR in the lowest year', 'interest cover']]);
     expect(v?.lines[2].note).toMatch(/^Cash still goes below nil/);
@@ -229,8 +230,13 @@ describe('the lender\'s levels and make it viable, in words', () => {
     expect(v?.lines.find((l) => l.id === 'collateral')?.text).toBe('Collateral with a market value of Rs. 4,36,226 (now Rs. 3,00,000), for the security cover.');
     expect(v?.lines.find((l) => l.id === 'wc')?.text).toBe('A working-capital limit of at most Rs. 18,97,831 (now Rs. 20,00,000), with no more margin from the promoters.');
   });
-  it('a term past 180 months is named', () => {
-    expect(preview({ ...R, loan: { ...R.loan, moratoriumMonths: '12', instalments: '170' } }).longTerm).toBe('The term loan runs 182 months, its holiday included: lenders commonly allow a small business at most 180.');
+  it('reads the loan period back in all, and names one past 180 months (D-UX-174)', () => {
+    // 12 months' holiday and 170 monthly instalments: 182 months, 15 years 2 months; the instalments 14 years 2 months.
+    expect(periodLine({ ...R, loan: { ...R.loan, moratoriumMonths: '12', instalments: '170' } })).toEqual({
+      text: 'Loan period: 15 years 2 months in all: a holiday of 12 months, then 14 years 2 months of instalments.',
+      checks: [{ within: false, text: 'Longer than the 180 months lenders commonly allow a small business: a shorter holiday or repayment brings it within.' }] });
+    expect(periodLine(R)?.text).toBe('Loan period: 5 years in all: no holiday, 5 years of instalments.');
+    expect(periodLine({ ...R, loan: { ...R.loan, instalments: '' } })).toBeUndefined();
   });
 });
 
@@ -347,12 +353,12 @@ describe('simple and expert modes', () => {
     expect([x.monthsToStart, x.fixedCosts, x.fixedGrowthPct, x.wcRatePct, x.collateral, x.guarantee]).toEqual([3, 1200000, 5, 10, undefined, undefined]);
     expect(x.wcLimit?.toFixed(2)).toBe('272219.18');
     expect(preview(S).view).toBeDefined();
-    expect(assumptionsOf(S).map((a) => a.id).slice(0, 6)).toEqual(['simpleCost', 'simpleFunds', 'simpleDrawn', 'simpleMoratorium', 'simpleFixedGrowth', 'simpleWcRate']);
+    expect(assumptionsOf(S).map((a) => a.id).slice(0, 7)).toEqual(['simpleCost', 'simpleFunds', 'simpleDrawn', 'simpleRepaid', 'simpleMoratorium', 'simpleFixedGrowth', 'simpleWcRate']);
     expect(assumptionsOf({ ...S, mode: 'expert' }).map((a) => a.id)).not.toContain('simpleCost');
   });
   it('asks in its own words, and never assumes the backing', () => {
     const n = preview({ ...EMPTY, mode: 'simple' }).needs;
-    expect(n).toEqual(expect.arrayContaining(['When you will start selling', 'Years to repay', 'Fixed costs a month', 'The working-capital limit: worked out, your own figure, or none', 'What backs the loan besides the project\'s own assets']));
+    expect(n).toEqual(expect.arrayContaining(['When you will start selling', 'Repayment period after the holiday', 'Fixed costs a month', 'The working-capital limit: worked out, your own figure, or none', 'What backs the loan besides the project\'s own assets']));
     expect(n.filter((t) => /moratorium|first drawn|limit: its interest|Fixed costs: growth/.test(t))).toEqual([]);
     expect(preview({ ...S, security: undefined }).needs).toEqual(['What backs the loan besides the project\'s own assets']);
     expect(preview({ ...S, sellFrom: '2026-08' }).needs).toEqual(['When you will start selling: the month the loan is first drawn or later']);
@@ -368,7 +374,7 @@ describe('simple and expert modes', () => {
     expect([back.sellFrom, back.years, back.fixedMonth, back.loan.disbursed, back.loan.moratoriumMonths, back.fixedGrowth, back.wcRate]).toEqual(['2027-01', '4', '1,00,000', '', '', '', '']);
     expect([inputOf(back), changedOf(back)]).toEqual([inputOf(S), []]);
     const six = withMode({ ...e, loan: { ...e.loan, moratoriumMonths: '6' }, days: { ...e.days, debtors: '45' } }, 'simple');
-    expect(changedOf(six)).toEqual(['A moratorium of 6 months', 'Days of debtors 45']);
+    expect(changedOf(six)).toEqual(['Days of debtors 45']);
     expect(assumptionsOf(six).map((a) => a.id)).not.toContain('simpleMoratorium');
     const early = withMode({ ...EMPTY, mode: 'simple', borrower: 'firm', loan: { ...EMPTY.loan, ratePct: '10' } }, 'expert');
     expect([early.loan.disbursed, early.loan.repayment, early.loan.moratoriumMonths, early.fixedGrowth, early.wcRate]).toEqual(['', undefined, '', '', '']);
@@ -386,5 +392,21 @@ describe('simple and expert modes', () => {
     expect(labels.slice(labels.indexOf('Sales') + 1, labels.indexOf('Sales') + 9)).toEqual(['Less: materials', 'Less: power and fuel', 'Less: other variable costs',
       'Less: wages and salaries', 'Less: rent', 'Less: repairs and maintenance', 'Less: insurance', 'Less: admin and other overheads']);
     expect([row(p, 'pl', 'Less: materials')?.values[0], row(p, 'pl', 'Profit after tax')?.values[0]]).toEqual(['66,00,000', row(preview(R), 'pl', 'Profit after tax')?.values[0]]);
+  });
+  it('compares the ways to repay in the engine’s figures, and takes the one chosen (OR5)', () => {
+    // The figures are tests/repayment.test.ts's (worked by hand); here only their words, and the holiday's default.
+    const w = repaymentView(S)!, c = compareRepayments(inputOf(S))!;
+    expect(holidayAssumed(S)).toBe('3');
+    expect(w.rows.map((r) => [r.value, r.now])).toEqual([['monthly', false], ['emi', true], ['stepped', false]]);
+    expect(w.rows.map((r) => r.interest)).toEqual(c.ways.map((k) => `Rs. ${inr(k.interest)}`));
+    expect(w.rows[1].instalments).toBe(`Rs. ${inr(c.ways[1].first)} a month`);
+    expect(w.rows[2].label).toBe('Stepped: rising 10% a year');
+    expect(w.notes[0]).toMatch(/^A stepped instalment is level within each year and rises 10% a year\. The last year's is held to 2 times the first year's at most/);
+    const p = w.rows.find((r) => r.proposed);
+    expect(w.lead).toBe(p ? `${p.label} pays the least interest of the ways that meet every benchmark${p.now ? ': the way in use' : ''}.` : 'No way to repay meets every benchmark with the figures as typed.');
+    const st = { ...S, loan: { ...S.loan, repayment: 'stepped' as const } };
+    expect([inputOf(st).loan.style, repaymentView(st)!.rows.find((r) => r.now)?.value]).toEqual(['stepped', 'stepped']);
+    expect(assumptionsOf(st).map((a) => a.id)).not.toContain('simpleRepaid');
+    expect(changedOf(st)).toEqual([]);
   });
 });

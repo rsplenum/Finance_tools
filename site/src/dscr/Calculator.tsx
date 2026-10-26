@@ -14,6 +14,7 @@ import { useMemo, useState } from 'preact/hooks';
 import { AmountField } from '../AmountField';
 import { OPTIONS, PRESETS } from '../../../engine/dscr';
 import { LENDER } from '../../../engine/lender';
+import { STEPPED } from '../../../engine/loan';
 import { parseMonth } from '../../../engine/parse';
 import { leastSure, sureText, type Marked } from '../../../engine/sure';
 import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
@@ -104,7 +105,7 @@ function FrontDoor({ s, update, openMore, was }: { s: State; update: Update; ope
   const amountSaid = (t: string) => notUnderstood(t, amountOf, '5,00,000 or 5 L');
   const first = (key: string, t: string) => (x: State) => ({ ...x, cells: { ...x.cells, [key]: [t, ...(x.cells[key] ?? []).slice(1)] } });
   return <section id="front-door" aria-label="The loan and the business" class="mt-4">
-    <p class={HINT}>Have year-by-year projections, a moratorium, or a loan already drawn? <a href="#more-options" onClick={openMore}
+    <p class={HINT}>Have year-by-year projections, a holiday before the first instalment, or a loan already drawn? <a href="#more-options" onClick={openMore}
       class="text-link underline underline-offset-4">Use More options</a>.</p>
     <Choice name="fld-fd-borrower" legend="Who is the borrower?" columns value={s.borrower as string | undefined}
       options={BORROWER_CHOICES.map((b) => ({ value: b.id, label: b.label }))} onChange={(id) => update((x) => withBorrower(x, id))} />
@@ -124,14 +125,14 @@ function FrontDoor({ s, update, openMore, was }: { s: State; update: Update; ope
         said={amountSaid(s.loan.amount)} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, amount: t } }))} />
       <TextField id="fld-fd-rate" label="Interest rate (% a year)" unit="%" inputMode="decimal" hint="Like 12." value={s.loan.ratePct}
         said={notUnderstood(s.loan.ratePct, numberOf, 'a number, like 12')} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, ratePct: t } }))} />
-      <TextField id="fld-fd-years" label="Years to repay" unit="years" hint={was('instalments') ? `${was('instalments')?.replace(/\.$/, '')} instalments.` : 'Like 5.'} inputMode="decimal" value={years}
+      <TextField id="fld-fd-years" label="Repayment period (years)" unit="years" hint={was('instalments') ? `${was('instalments')?.replace(/\.$/, '')} instalments.` : 'Like 5.'} inputMode="decimal" value={years}
         said={notUnderstood(years, numberOf, 'a number, like 5')} onCommit={(t) => update((x) => {
           const n = numberOf(t), per = x.loan.repayment === 'quarterly' ? 4 : 12;
           return { ...x, loan: { ...x.loan, instalments: n === undefined ? t : String(Math.round(n * per)) } };
         })} />
     </div>
     {s.door && s.loan.disbursed === s.door.month && <p data-testid="fd-loan-note" class={`mt-3 ${HINT}`}>
-      The loan is taken as drawn in {monthText(s.door.month)} and repaid by EMI every month, with no moratorium. Change it under More options.</p>}
+      The loan is taken as drawn in {monthText(s.door.month)} and repaid by EMI every month, with no holiday before the first instalment. Change it under More options.</p>}
   </section>;
 }
 
@@ -187,14 +188,15 @@ function Loan({ s, update, y, p, was }: { s: State; update: Update; y: Years; p:
     <Choice name="fld-repayment" legend="How is it repaid?" value={l.repayment} onChange={(v) => set({ repayment: v })} options={[
       { value: 'emi', label: 'EMI every month', hint: 'The same amount each month, interest included.' },
       { value: 'monthly', label: 'Equal principal every month', hint: 'Interest on the balance on top, so the payment falls.' },
+      { value: 'stepped', label: 'Stepped every month', hint: `Less at first, rising ${STEPPED.stepPct}% each year; level within the year.` },
       { value: 'quarterly', label: 'Equal principal every quarter', hint: 'Interest on the balance is still paid every month.' },
     ]} />
     <div class="mt-6 grid gap-4 sm:grid-cols-2">
-      <TextField id="fld-moratoriumMonths" label="Moratorium, months" unit="months" inputMode="numeric" value={l.moratoriumMonths}
-        hint="Months before the first instalment, 0 if none; interest is still paid." onCommit={(t) => set({ moratoriumMonths: t })}
+      <TextField id="fld-moratoriumMonths" label="Holiday before the first instalment (months)" unit="months" inputMode="numeric" value={l.moratoriumMonths}
+        hint="Interest only, no instalments; 0 if none." onCommit={(t) => set({ moratoriumMonths: t })}
         said={notUnderstood(l.moratoriumMonths, numberOf, '6, or 0 if none')} />
       <TextField id="fld-instalments" label="Number of instalments" inputMode="numeric" value={l.instalments}
-        hint={was('instalments') ?? (l.repayment === 'quarterly' ? 'Quarterly instalments, after the moratorium.' : l.repayment ? 'Monthly instalments, after the moratorium.' : 'After the moratorium.')}
+        hint={was('instalments') ?? (l.repayment === 'quarterly' ? 'Quarterly instalments, after the holiday.' : l.repayment ? 'Monthly instalments, after the holiday.' : 'After the holiday.')}
         onCommit={(t) => set({ instalments: t })} said={notUnderstood(l.instalments, numberOf, '60')} />
     </div>
     {(read || p.schedule) && <div data-testid="loan-read" class="mt-4 space-y-1 rounded-md bg-surface px-3 py-2 text-sm text-ink">
@@ -244,7 +246,7 @@ function Figures({ s, update, rows, y, p }: { s: State; update: Update; rows: Ro
   return <Section id="figures" title={plan ? 'The business' : 'Yearly figures'}>
     {!years.length
       ? <p class={`mt-2 ${HINT}`}>{plan
-        ? 'Asked once the month first drawn, how it is repaid, the moratorium and the number of instalments are in.'
+        ? 'Asked once the month first drawn, how it is repaid, the holiday and the number of instalments are in.'
         : 'The years appear once the first year and the number of years are in.'}</p>
       : <>
         {plan && <BorrowerQuestion s={s} update={update} />}

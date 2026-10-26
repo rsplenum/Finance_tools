@@ -105,8 +105,8 @@ describe('what is still needed', () => {
   it('lists the loan terms first, and no years until the loan says which', () => {
     const p = preview({ ...START, source: 'plan', method: 'common' });
     expect(p.needs).toEqual([
-      'Loan amount', 'Interest rate (% a year)', 'Month the loan is drawn (like 2026-04)', 'Moratorium in months (0 if none)',
-      'Number of instalments', 'How the loan is repaid (EMI, or equal principal every month or quarter)',
+      'Loan amount', 'Interest rate (% a year)', 'Month the loan is drawn (like 2026-04)', 'Holiday before the first instalment, in months (0 if none)',
+      'Number of instalments', 'How the loan is repaid (EMI, equal principal every month or quarter, or stepped)',
       'A target DSCR for the average, the lowest year, or both',
     ]);
   });

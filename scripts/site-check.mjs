@@ -670,7 +670,7 @@ if (touched('/dscr/')) {
   if (await page.locator('#more-options').evaluate((d) => d.open)) v('More options is open on load');
   const texts = await page.locator('#front-door input[type="text"]').count(), radios = await page.locator('#front-door fieldset').count();
   if (texts + radios !== 8) v(`the front door asks ${texts + radios} fields (${texts} typed, ${radios} choices); the owner's list is 8`);
-  await expectText(page, v, 'fd-loan-note', 'The loan is taken as drawn in October 2026 and repaid by EMI every month, with no moratorium. Change it under More options.', 'the front door');
+  await expectText(page, v, 'fd-loan-note', 'The loan is taken as drawn in October 2026 and repaid by EMI every month, with no holiday before the first instalment. Change it under More options.', 'the front door');
   await page.check('#fld-fd-borrower-firm');
   await leave(page, '#fld-fd-profit', '5 L');
   await leave(page, '#fld-fd-growth', '10');
@@ -1120,8 +1120,9 @@ if (touched('/estimate/')) {
 // The inputs on the default path, radios included: 35 until REP3 (D-UX-112), when the page opened in simple mode: the mode
 // (2), who the borrower is (3), building and machinery, the scheme (3), the loan, its rate and its years, what backs it (3),
 // one product's line (3), when selling starts, the variable costs' share, the fixed costs a month and the limit (3), 25 in
-// all. Expert mode asks every figure (54 with one product line).
-const REP_DEFAULT = 25;
+// all; 26 from OR5 (D-UX-174), with the holiday before the first instalment beside the repayment period after it. Expert
+// mode asks every figure (55 with one product line, the stepped way among the four ways to repay).
+const REP_DEFAULT = 26;
 const REP_FIELDS = 'main input:not(#download input):not(#benchmarks input)';
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
@@ -1366,9 +1367,19 @@ if (touched('/project-report/')) {
     await leave(page, id, value);
   await expectText(page, v, 'rep-worked', /^Worked out: Rs\. 2,72,219\. It is the lower of .*, Rs\. 2,72,219, .*, Rs\. 11,52,000\.$/, 'the limit worked out');
   if (await page.getByTestId('rep-needs').count()) v(`simple mode still asks: ${await page.getByTestId('rep-needs').textContent()}`);
-  if (await page.locator('#fld-tl-moratorium, #fld-tl-disbursed, #fld-wcRate, #fld-fixedGrowth').count()) v('simple mode shows an expert field');
+  if (await page.locator('#fld-tl-disbursed, #fld-wcRate, #fld-fixedGrowth').count()) v('simple mode shows an expert field');
+  // The holiday runs to the first sales until typed, and the period reads back in all (D-UX-174).
+  if (await page.inputValue('#fld-tl-moratorium') !== '3') v(`the holiday's box reads ${await page.inputValue('#fld-tl-moratorium')}, want its default 3`);
+  await expectText(page, v, 'rep-period', 'Loan period: 4 years 3 months in all: a holiday of 3 months, then 4 years of instalments. Within the 180 months lenders commonly allow a small business.', 'the loan period');
+  // The ways to repay compared (OR5): the cheapest first, EMI in use; the stepped way taken stays through the switch.
+  const ways = await page.locator('[data-testid^="rep-way-"]:not([data-testid^="rep-way-use-"])').evaluateAll((es) => es.map((e) => e.dataset.testid));
+  if (ways.join() !== 'rep-way-monthly,rep-way-emi,rep-way-stepped') v(`the ways to repay read ${ways.join()}`);
+  if (!/In use/.test(await page.getByTestId('rep-way-emi').textContent())) v('EMI is not the way in use in simple mode');
   await layout(page, v, 'the report in simple mode, 390 px');
+  await page.getByTestId('rep-way-use-stepped').click();
+  if (!/In use/.test(await page.getByTestId('rep-way-stepped').textContent())) v('"Use this" did not take the stepped way');
   await page.check('#fld-mode-expert');
+  if (!(await page.isChecked('#fld-tl-repayment-stepped'))) v('expert mode after simple does not show the stepped way taken');
   const got = await Promise.all(['#fld-tl-moratorium', '#fld-tl-instalments', '#fld-monthsToStart', '#fld-fixed'].map((id) => page.inputValue(id)));
   if (got.join('|') !== '3|48|3|12,00,000') v(`expert mode after simple reads ${got.join('|')}, want 3|48|3|12,00,000`);
   await page.check('#fld-mode-simple');

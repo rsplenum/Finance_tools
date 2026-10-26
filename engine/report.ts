@@ -129,6 +129,9 @@ export interface Report {
   /** The collateral's market value, realisable sale value and distress sale value (engine/data/ratios.json). */
   collateral?: { market: number; rsv: number; dsv: number };
   wcLimit: number; years: ReportYear[]; average?: number; lowest?: { dscr: number; fy: string }; plan: Plan;
+  /** The term loan's interest over the whole loan and its first and last instalments, interest and principal together,
+   * from its repayment schedule (worked twice in amortization) (OR5). */
+  loanInterest: number; firstInstalment: number; lastInstalment: number;
 }
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -459,5 +462,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     finance: { termLoan, subsidy, unsecured, promoter, total: termLoan + subsidy + unsecured + promoter, promoterPct: (promoter / projectCost) * 100 },
     wcLimit: limit, years: out, ...(plan.statement.average !== undefined ? { average: plan.statement.average } : {}),
     ...(plan.statement.minimum ? { lowest: plan.statement.minimum } : {}), plan,
+    loanInterest: debt.totalInterest, firstInstalment: debt.months.find((m) => m.instalment === 1)?.paid ?? 0,
+    lastInstalment: debt.months.find((m) => m.instalment === loan.instalments)?.paid ?? 0,
   };
 }

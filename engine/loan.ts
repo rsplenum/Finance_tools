@@ -1,10 +1,12 @@
 /**
  * Term-loan schedule totalled by Indian financial year (April–March). Pure — no DOM. Conventions: engine/data/dscr.json
- * ("planning"). Checked by an independent computation in dscr-check.ts.
+ * ("planning", and "stepped" for the step). Checked by an independent computation in dscr-check.ts.
  */
+import DATA from './data/dscr.json';
 
 export type Frequency = 'monthly' | 'quarterly';
-export type RepaymentStyle = 'equal-principal' | 'emi';
+/** Equal instalments of principal, an EMI, or stepped: an instalment that rises by a step each year (OR5). */
+export type RepaymentStyle = 'equal-principal' | 'emi' | 'stepped';
 
 export interface LoanTerms {
   amount: number;
@@ -45,17 +47,58 @@ export function annuity(principal: number, r: number, n: number): number {
   return (principal * r * f) / (f - 1);
 }
 
+/** A stepped loan's instalments to a year: the step falls at the 13th, the 25th and so on. */
+export const STEP_EVERY = 12;
+export const STEPPED = DATA.stepped;
+
+/** Per rupee of the loan, the instalments' present value at a first instalment of 1, each year's `rise` times the
+ * year before's: a running sum (the check has the closed form). An EMI's is the annuity factor, at `rise` 1. */
+function stepFactor(n: number, r: number, rise: number): number {
+  let f = 0, v = 1, at = 1;
+  for (let k = 1; k <= n; k++) {
+    v /= 1 + r;
+    if (k > 1 && (k - 1) % STEP_EVERY === 0) at *= rise;
+    f += at * v;
+  }
+  return f;
+}
+
+/** A stepped loan's step, as a fraction a year: the data's, lowered so the last year's instalment is at most
+ * `lastToFirstMost` times the first year's and the first instalment at least its month's interest, then rounded down
+ * to a tenth of a percent (engine/data/dscr.json). 0 when the instalments fit in one year: it is an EMI. */
+export function stepOf(t: Pick<LoanTerms, 'ratePct' | 'instalments'>): number {
+  const years = Math.ceil(t.instalments / STEP_EVERY);
+  if (years < 2) return 0;
+  const r = t.ratePct / 1200;
+  // The first instalment is 1 ÷ the factor a rupee, and falls as the step rises; it covers the month's interest r while
+  // the factor is at most 1 ÷ r. At no interest the balance cannot grow.
+  const covers = (g: number) => r === 0 || stepFactor(t.instalments, r, 1 + g) * r <= 1;
+  let hi = Math.min(STEPPED.stepPct / 100, Math.pow(STEPPED.lastToFirstMost, 1 / (years - 1)) - 1);
+  if (!covers(hi)) {
+    let lo = 0;
+    for (let i = 0; i < 60; i++) { const m = (lo + hi) / 2; if (covers(m)) lo = m; else hi = m; }
+    hi = lo;
+  }
+  const g = Math.floor(hi * 1000 + 1e-9) / 1000;
+  return covers(g) ? g : g - 0.001;
+}
+
 /** Months from drawing the loan to the last instalment. */
 export const termMonths = (t: Pick<LoanTerms, 'moratoriumMonths' | 'instalments' | 'frequency'>) =>
   t.moratoriumMonths + t.instalments * PERIOD_MONTHS[t.frequency];
 
-/** The level instalment: the EMI, or the principal of each equal instalment. */
+/** The level instalment: the EMI, the principal of each equal instalment, or a stepped loan's first instalment. */
 export const levelInstalment = (t: LoanTerms) =>
-  t.style === 'emi' ? annuity(t.amount, t.ratePct / 1200, t.instalments) : t.amount / t.instalments;
+  t.style === 'emi' ? annuity(t.amount, t.ratePct / 1200, t.instalments)
+    : t.style === 'stepped' ? t.amount / stepFactor(t.instalments, t.ratePct / 1200, 1 + stepOf(t)) : t.amount / t.instalments;
+
+/** Instalment `k` (from 1) of an EMI or a stepped loan, interest and principal together. */
+const instalmentAt = (t: LoanTerms, level: number, step: number, k: number) =>
+  t.style === 'stepped' ? level * Math.pow(1 + step, Math.floor((k - 1) / STEP_EVERY)) : level;
 
 /** The loan month by month, from the month it is drawn to the last instalment. */
 export function months(t: LoanTerms): MonthRow[] {
-  const r = t.ratePct / 1200, p = PERIOD_MONTHS[t.frequency], level = levelInstalment(t);
+  const r = t.ratePct / 1200, p = PERIOD_MONTHS[t.frequency], level = levelInstalment(t), step = t.style === 'stepped' ? stepOf(t) : 0;
   const rows: MonthRow[] = [];
   let balance = t.amount;
   for (let k = 0; k < termMonths(t); k++) {
@@ -65,7 +108,7 @@ export function months(t: LoanTerms): MonthRow[] {
     if (since > 0 && since % p === 0) {
       instalment = since / p;
       // The last instalment clears what is left, so rounding in earlier months never leaves a balance.
-      principal = instalment === t.instalments ? balance : t.style === 'emi' ? level - interest : level;
+      principal = instalment === t.instalments ? balance : t.style === 'equal-principal' ? level : instalmentAt(t, level, step, instalment) - interest;
       balance -= principal;
     }
     rows.push({ month: `${year}-${String(month).padStart(2, '0')}`, fy: fyOf(year, month), opening, interest, principal, paid: interest + principal, closing: balance, ...(instalment ? { instalment } : {}) });

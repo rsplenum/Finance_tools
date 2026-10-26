@@ -88,7 +88,7 @@ function statementTable(st: StatementView): Table {
   };
 }
 
-const REPAID = { emi: 'EMI every month', monthly: 'Equal principal every month', quarterly: 'Equal principal every quarter' } as const;
+const REPAID = { emi: 'EMI every month', monthly: 'Equal principal every month', stepped: 'Stepped every month, rising each year', quarterly: 'Equal principal every quarter' } as const;
 
 /** The loan as entered, and as the engine reads it back (when the instalments fall, and what each is): two to a line. */
 function loanFacts(s: State, p: Preview, y: Years): [string, string][][] {
