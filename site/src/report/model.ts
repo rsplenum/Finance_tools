@@ -14,6 +14,7 @@ import { compareRepayments, periodOf, type Way } from '../../../engine/repayment
 import { STEPPED } from '../../../engine/loan';
 import { BORROWERS } from '../../../engine/tax';
 import { inr } from '../../../engine/util';
+import { soldBy } from '../../../engine/sold-by';
 import { GUARANTEES } from '../../../engine/guarantee';
 import type { Draft, Dropped, NoteId } from '../../../engine/narrative';
 import {
@@ -69,8 +70,9 @@ export interface ReportState {
 /** The notes as typed; the six sections, by AI from them (`ai`) or as the borrower writes; what the check left out; the tick. */
 export interface ReportWords { notes: Record<NoteId, string>; draft?: Draft; ai?: boolean; dropped?: Dropped[]; confirmed?: boolean }
 
-/** A product or service as typed: what it is, how many a month at full running, its price a unit. */
-export interface ProductRow { name: string; units: string; price: string }
+/** A product or service as typed: what it is, how many a month at full running, its price a unit, and what it is sold by
+ * (OR6; none is the piece, so a draft kept before the unit still opens). */
+export interface ProductRow { name: string; units: string; price: string; unit?: string }
 export const NO_PRODUCT: ProductRow = { name: '', units: '', price: '' };
 const DAYS = (ASSUMPTIONS.find((a) => a.id === 'days')?.value ?? {}) as Record<string, number>;
 const assumed = (id: string) => ASSUMPTIONS.find((a) => a.id === id)?.value;
@@ -304,7 +306,7 @@ function fieldsOf(s: ReportState): ReportInput {
     subsidy: s.scheme === 'pmegp' ? undefined : opt(s.subsidy), unsecured: opt(s.unsecured), collateral: opt(collateralText(s)),
     salesBy: s.salesBy, monthsToStart: plainOf(s.monthsToStart),
     ...(s.salesBy === 'typed' ? { sales: amountOf(s.sales), salesGrowthPct: plainOf(s.salesGrowth) } : {
-      products: s.products.map((p) => ({ name: p.name, unitsMonth: plainOf(p.units), price: amountOf(p.price) })),
+      products: s.products.map((p) => ({ name: p.name, unitsMonth: plainOf(p.units), price: amountOf(p.price), unit: soldBy(p.unit).id })),
       priceGrowthPct: plainOf(s.priceGrowth),
       utilisationPct: s.utilisation.split(/[,\s]+/).filter(Boolean).map((t) => plainOf(t) ?? NaN),
     }),
@@ -369,14 +371,15 @@ export function viewOf(r: Report): ReportView {
       { label: 'Total means of finance', values: [rupees(f.total)], n: [f.total], kind: 'total' },
     ],
   };
-  // Sales by product (D-UX-109): each line's units sold, price a unit and sales a year; the lines add up to the sales.
+  // Sales by product (D-UX-109): each line's units sold, price a unit and sales a year, in its own unit (OR6); the lines
+  // add up to the sales.
   const whole = (x: number) => (Math.abs(x - Math.round(x)) < 1e-6 ? inr(Math.round(x)) : inr(x, 2));
   const names = ys[0].products?.map((p) => p.name) ?? [];
   const sales: ViewTable | undefined = names.length ? {
     id: 'sales', title: 'Sales by product', first: 'Rupees', columns: years,
     rows: [...names.flatMap((name, i) => [head(name),
-      { label: 'Units sold', values: ys.map((y) => whole((y.products as NonNullable<ReportYear['products']>)[i].units)), n: ys.map((y) => (y.products as NonNullable<ReportYear['products']>)[i].units), fig: 'ratio' as const },
-      { label: 'Price a unit', values: ys.map((y) => whole((y.products as NonNullable<ReportYear['products']>)[i].price)), n: ys.map((y) => (y.products as NonNullable<ReportYear['products']>)[i].price) },
+      { label: soldBy(ys[0].products?.[i].unit).sold, values: ys.map((y) => whole((y.products as NonNullable<ReportYear['products']>)[i].units)), n: ys.map((y) => (y.products as NonNullable<ReportYear['products']>)[i].units), fig: 'ratio' as const },
+      { label: `Price ${soldBy(ys[0].products?.[i].unit).per}`, values: ys.map((y) => whole((y.products as NonNullable<ReportYear['products']>)[i].price)), n: ys.map((y) => (y.products as NonNullable<ReportYear['products']>)[i].price) },
       line(ys, 'Sales', (y) => (y.products as NonNullable<ReportYear['products']>)[i].sales)]),
     line(ys, 'Total sales', (y) => y.sales, 'total')],
   } : undefined;
@@ -606,7 +609,7 @@ export function viableOf(s: ReportState): ViableView | undefined {
       ...(u?.overFull ? { reach: { out: true, text: `Out of reach at this capacity: it needs ${upPct(top)}% of it. Only a higher price or a larger capacity can carry it.` } }
         : u?.overMost ? { reach: { out: false, text: `Above the ${LEVELS.capacity.mostUsePct}% use of the capacity a plan takes at most: give the reason it can.` } } : {}),
       note: [
-        sl.price && u ? `That is a price of Rs. ${(Math.ceil(sl.price.needed * 100 - 1e-6) / 100).toFixed(2)} a unit (now Rs. ${sl.price.now}) at the same use, or the use of the capacity at ${distinct.map((x) => `${upPct(x)}%`).join(', then ')} at the same price.`
+        sl.price && u ? `That is a price of Rs. ${(Math.ceil(sl.price.needed * 100 - 1e-6) / 100).toFixed(2)} ${soldBy(s.products[0]?.unit).per} (now Rs. ${sl.price.now}) at the same use, or the use of the capacity at ${distinct.map((x) => `${upPct(x)}%`).join(', then ')} at the same price.`
           : u ? `That is every price ${(sl.tenths / 10).toFixed(1)}% higher at the same use, or the use of the capacity at ${distinct.map((x) => `${upPct(x)}%`).join(', then ')} at the same prices.` : '',
         cashLeft(sl) ?? '',
       ].filter(Boolean).join(' ') || undefined });

@@ -1120,10 +1120,11 @@ if (touched('/estimate/')) {
 // The inputs on the default path, radios included: 35 until REP3 (D-UX-112), when the page opened in simple mode: the mode
 // (2), who the borrower is (3), building and machinery, the scheme (3), the loan, its rate and its years, what backs it (3),
 // one product's line (3), when selling starts, the variable costs' share, the fixed costs a month and the limit (3), 25 in
-// all; 26 from OR5 (D-UX-174), with the holiday before the first instalment beside the repayment period after it. Expert
-// mode asks every figure (55 with one product line, the stepped way among the four ways to repay).
-const REP_DEFAULT = 26;
-const REP_FIELDS = 'main input:not(#download input):not(#benchmarks input)';
+// all; 26 from OR5 (D-UX-174), with the holiday before the first instalment beside the repayment period after it; 27 from
+// OR6 (D-UX-203), with what the product line is sold by, a pick counted as a field. Expert mode asks every figure (56 with
+// one product line, the stepped way among the four ways to repay).
+const REP_DEFAULT = 27;
+const REP_FIELDS = 'main input:not(#download input):not(#benchmarks input), main select:not(#download select):not(#benchmarks select)';
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
   if (!(await page.isChecked('#fld-mode-simple'))) v('the project report opens in expert mode');
@@ -1262,6 +1263,12 @@ if (touched('/project-report/')) {
   await page.check('#fld-scheme-pmegp');
   for (const id of ['#fld-category-general', '#fld-area-rural', '#fld-activity-manufacturing', '#fld-tl-repayment-monthly', '#fld-pmegp-confirmed']) await page.check(id);
   await page.getByTestId('rep-product-add').click();
+  // Sold by (OR6, D-UX-203): the second line by the kg; its count and price take the unit's words, its sums the piece's.
+  await page.selectOption('#fld-product-1-unit', 'kg');
+  for (const [id, want] of [['fld-product-1-units', 'How many kg a month at full running'], ['fld-product-1-price', 'Price a kg'], ['fld-product-0-price', 'Price a piece']]) {
+    const said = (await page.locator(`label[for="${id}"]`).textContent())?.trim();
+    if (!said?.startsWith(want)) v(`the PMEGP report's ${id} reads "${said}", want "${want}" (OR6)`);
+  }
   if (await page.locator('#fld-subsidy').count()) v('the project report asks a capital subsidy beside PMEGP');
   for (const [id, value] of [['#fld-cost-land', '2 L'], ['#fld-cost-building', '6 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-preliminary', '50,000'],
     ['#fld-tl-amount', '24 L'], ['#fld-tl-rate', '10'], ['#fld-tl-disbursed', '2026-10'], ['#fld-tl-moratorium', '6'], ['#fld-tl-instalments', '48'],
@@ -1278,6 +1285,8 @@ if (touched('/project-report/')) {
   await page.getByTestId('rep-sales').evaluate((t) => t.closest('details').open = true);
   const total = await page.getByTestId('rep-sales').locator('tr', { has: page.locator('th', { hasText: 'Total sales' }) }).first().locator('td').allTextContents();
   if (total[0] !== '14,40,000') v(`the PMEGP report's sales by product total ${total[0]} in 2026-27, want 14,40,000`);
+  for (const want of ['Pieces sold', 'Kg sold', 'Price a kg'])
+    if (!(await page.getByTestId('rep-sales').locator('th', { hasText: want }).count())) v(`the PMEGP report's sales by product has no "${want}" row (OR6)`);
   await leave(page, '#fld-fixed', '25 L');
   await expectText(page, v, 'rep-short', /^Cash goes below nil in 2030-31: Rs\. 49,07,813 short/, 'cash below nil');
   await expectText(page, v, 'rep-status', '4 questions left', 'the report with cash below nil');

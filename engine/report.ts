@@ -11,6 +11,7 @@ import { fyOf, monthAfter, type LoanTerms } from './loan';
 import { monthsOf, series } from './project';
 import { GUARANTEES, cgtmseRate, guaranteeFee, type FeeYear, type GuaranteeId } from './guarantee';
 import { guaranteeFeeCheck, pmegpCheck, reportCheck, workedLimitCheck } from './report-check';
+import { soldBy } from './sold-by';
 import { borrowerOf } from './tax';
 import { inr } from './util';
 import RATIOS from './data/ratios.json';
@@ -43,11 +44,12 @@ export interface MudraInput { id: 'mudra'; tarunRepaid?: boolean }
 /** The guarantee on the loans: CGFMU's on a Mudra loan, always; on another loan CGTMSE's when ticked, with the number of
  * its concessions that apply (0 to 3). A rate typed from the sanction letter (% a year) takes the place of the scheme's. */
 export interface GuaranteeInput { cgtmse?: boolean; concessions?: number; ratePct?: number }
-/** A product or service sold (D-UX-109): what it is, how many a month at full running, and its price a unit. */
-export interface ProductInput { name?: string; unitsMonth?: number; price?: number }
+/** A product or service sold (D-UX-109): what it is, how many a month at full running, and its price a unit; `unit` is
+ * what it is sold by (an id in `SOLD_BY`, OR6), a word that changes no sum. */
+export interface ProductInput { name?: string; unitsMonth?: number; price?: number; unit?: string }
 /** A product's line in a year: the units sold (at the year's use of the capacity, for its months of sales), the price a
- * unit that year, and the sales; the lines add up to the year's sales. */
-export interface ProductYear { name: string; units: number; price: number; sales: number }
+ * unit that year, and the sales; the lines add up to the year's sales. `unit` as typed, passed through. */
+export interface ProductYear { name: string; units: number; price: number; sales: number; unit?: string }
 
 export interface ReportInput {
   /** Who the borrower is (an id in engine/data/tax.json): it sets the tax. */
@@ -212,8 +214,10 @@ export function reportNeeds(x: ReportInput): string[] {
       if (!x.products.length) needs.push('Sales: at least one product or service');
       x.products.forEach((p, k) => {
         if (!p.name?.trim()) needs.push(`Sales, line ${k + 1}: what is sold`);
-        if (!(isNum(p.unitsMonth) && p.unitsMonth > 0)) needs.push(`Sales, line ${k + 1}: how many a month at full running`);
-        if (!(isNum(p.price) && p.price > 0)) needs.push(`Sales, line ${k + 1}: the price a unit`);
+        // In the line's own unit (OR6) once it has one: "how many kg a month", "the price a kg".
+        const u = p.unit ? soldBy(p.unit) : undefined;
+        if (!(isNum(p.unitsMonth) && p.unitsMonth > 0)) needs.push(`Sales, line ${k + 1}: how many ${u ? `${u.many} ` : ''}a month at full running`);
+        if (!(isNum(p.price) && p.price > 0)) needs.push(`Sales, line ${k + 1}: the price ${u ? u.per : 'a unit'}`);
       });
     } else {
       if (!(isNum(x.capacity) && x.capacity > 0)) needs.push('Capacity: the units the business can make or serve in a year');
@@ -275,8 +279,8 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   const drivers = x.salesBy !== 'typed', u = x.utilisationPct ?? [];
   const util = drivers ? fys.map((_, k) => u[Math.min(k, u.length - 1)]) : [];
   // The products as units a year at full running (the capacity is one line); their sales at full running add up.
-  const lines = !drivers ? [] : x.products ? x.products.map((p) => ({ name: (p.name as string).trim(), perYear: 12 * (p.unitsMonth as number), price: p.price as number }))
-    : [{ name: '', perYear: x.capacity as number, price: x.price as number }];
+  const lines = !drivers ? [] : x.products ? x.products.map((p) => ({ name: (p.name as string).trim(), perYear: 12 * (p.unitsMonth as number), price: p.price as number, unit: p.unit }))
+    : [{ name: '', perYear: x.capacity as number, price: x.price as number, unit: undefined as string | undefined }];
   const full = lines.reduce((t, l) => t + l.perYear * l.price, 0), grow = (k: number) => Math.pow(1 + (x.priceGrowthPct as number) / 100, k);
   let runS: number[];
   if (drivers) runS = util.map((p, k) => (full * grow(k) * p) / 100);
@@ -385,7 +389,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     // sales) at the year's price; the lines must add up to the year's sales.
     const byProduct = drivers && x.products ? lines.map((l) => {
       const units = (((l.perYear * util[k]) / 100) * months[k]) / 12, price = l.price * grow(k);
-      return { name: l.name, units, price, sales: units * price };
+      return { name: l.name, units, price, sales: units * price, ...(l.unit ? { unit: l.unit } : {}) };
     }) : undefined;
     if (byProduct && !money(byProduct.reduce((t, l) => t + l.sales, 0), r.sales)) byProductOk = false;
     // The costs by head (D-UX-112): each side split in the shares typed, so the heads add up to the side's total.
