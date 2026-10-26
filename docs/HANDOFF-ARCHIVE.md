@@ -167,6 +167,7 @@ The test figures are model-worked until the owner confirms fictional cases A and
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 24-10-2026 | ROWS1: each row's notes in `docs/rows/`, folded by `npm run fold`, so PRs stop conflicting on the shared docs (D-TECH-66) | S | about 32 steps, no compaction; the full verify ran 18 min, the site check most of it |
 | 24-10-2026 | HOME1e: the CMA's, the estimate's and the report's stories as scenes in look C, one player for all four (D-UX-135 to D-UX-144) | L, Extra | about 110 steps; the frames at each beat on a slowed phone and three 14-minute site checks took the most |
 | 24-10-2026 | MAP1: `/sitemap.xml`, `robots.txt` and `/site-map/`, held by the site check (D-TECH-65) | S, high | about 40 steps; the 17-minute full verify took the most |
 | 24-10-2026 | CHK1: `npm run verify -- --quick`, the site check on the touched pages only (D-TECH-63); D-TECH-62 rebased onto main | S, high | about 60 steps; the 12-minute full verify took the most. Quick: a doc 1 s, `/terms/` 13 s, the DSCR with home 163 s |
