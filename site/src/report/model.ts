@@ -558,7 +558,7 @@ export function repaymentView(s: ReportState): RepaymentView | undefined {
     : !p ? 'No way to repay meets every benchmark with the figures as typed.'
       : `${p.label} pays the least interest of the ways that meet every benchmark${p.now ? ': the way in use' : ''}.`;
   const notes = [
-    ...(c.ways.some((w) => w.style === 'stepped') ? [`A stepped instalment is level within each year and rises ${STEPPED.stepPct}% a year, less where the last year's would pass ${STEPPED.lastToFirstMost} times the first year's: assumed until a lender sets its own.`] : []),
+    ...(c.ways.some((w) => w.style === 'stepped') ? [`A stepped instalment is level within each year and rises ${STEPPED.stepPct}% a year. The last year's is held to ${STEPPED.lastToFirstMost} times the first year's at most, until a lender sets its own.`] : []),
     ...(c.noStep === 'quarterly' ? ['An EMI and a stepped instalment are worked every month: choose monthly instalments to compare them.']
       : c.noStep === 'short' ? ['No stepped way: the instalments end within a year.'] : []),
   ];

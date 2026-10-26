@@ -401,7 +401,7 @@ describe('simple and expert modes', () => {
     expect(w.rows.map((r) => r.interest)).toEqual(c.ways.map((k) => `Rs. ${inr(k.interest)}`));
     expect(w.rows[1].instalments).toBe(`Rs. ${inr(c.ways[1].first)} a month`);
     expect(w.rows[2].label).toBe('Stepped: rising 10% a year');
-    expect(w.notes[0]).toMatch(/^A stepped instalment is level within each year and rises 10% a year, less where the last year's would pass 2 times the first year's/);
+    expect(w.notes[0]).toMatch(/^A stepped instalment is level within each year and rises 10% a year\. The last year's is held to 2 times the first year's at most/);
     const p = w.rows.find((r) => r.proposed);
     expect(w.lead).toBe(p ? `${p.label} pays the least interest of the ways that meet every benchmark${p.now ? ': the way in use' : ''}.` : 'No way to repay meets every benchmark with the figures as typed.');
     const st = { ...S, loan: { ...S.loan, repayment: 'stepped' as const } };
