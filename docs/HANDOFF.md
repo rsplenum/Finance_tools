@@ -29,6 +29,7 @@ A row's session writes 1 to 4 straight into the shared docs (`docs/DECISIONS.md`
 ## Budgets and actuals
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 26-10-2026 | OR6: sold by, a unit picked on each product line, its words on the count, the price, the sales table, the document and the questions; no sum moves | M, high | about 65 steps over about 0.3 working hours, no compaction; the 16-minute quick verify and the load counts set by hand took the most; re-reading the context 67% |
 | 26-10-2026 | Is running sessions in parallel worth it (measured from the logs), then D-TECH-70: one row at a time, no notes, no fold | none set: the owner's ask in the chat | about 30 steps over about 0.5 working hours, no compaction; the quick verify took the most; re-reading the context 47% |
 | 26-10-2026 | OR5: the holiday and the repayment period asked in simple mode, the loan period read back and checked, and EMI, equal principal and stepped compared with the cheapest that meets proposed | L, Extra | about 160 steps over about 0.6 working hours, three compactions (at 193k); the hand-worked case G and the report page's card took the most; re-reading the context 57% |
 | 25-10-2026 | UXR3: one vocabulary across the four tools | M | about 165 steps over about 0.7 working hours, one compaction (at 194k); two 15-minute quick verifies took the most; re-reading the context 72% |
