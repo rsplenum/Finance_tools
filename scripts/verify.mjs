@@ -17,7 +17,6 @@ const checks = [
   ['cost guard', 'node .claude/hooks/cost-guard.mjs --self-test'],
   ['session guard', 'node .claude/hooks/session-guard.mjs --self-test'],
   ['doc sizes', 'node scripts/doc-sizes.mjs'],
-  ['row notes', 'node scripts/fold-rows.mjs --check'],
   ['review dates', 'node scripts/review-dates.mjs'],
   ['rules doc', 'npm run rules-doc'],
 ];

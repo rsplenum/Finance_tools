@@ -266,12 +266,8 @@ async function fontProbe(browser, BASE) {
 }
 export const BASELINE = fileURLToPath(new URL('./load-baseline.json', import.meta.url));
 const DECISIONS = fileURLToPath(new URL('../docs/DECISIONS.md', import.meta.url));
-const ROWS = fileURLToPath(new URL('../docs/rows/', import.meta.url));
-// A decision is logged in docs/DECISIONS.md or, until it is folded, in a row's notes (D-TECH-66).
 async function logged(id) {
-  const notes = (await readdir(ROWS).catch(() => [])).filter((f) => f.endsWith('.md')).map((f) => ROWS + f);
-  for (const f of [DECISIONS, ...notes]) if ((await readFile(f, 'utf8')).includes(`| ${id} |`)) return true;
-  return false;
+  return (await readFile(DECISIONS, 'utf8')).includes(`| ${id} |`);
 }
 
 /** Every built page, as the site check lists them. */
@@ -355,7 +351,7 @@ async function main() {
   const [rPage, rCount, rWhy] = raise >= 0 ? args.slice(raise + 1, raise + 4) : [];
   if (raise >= 0) {
     if (!COUNTS.some(([k]) => k === rCount)) throw new Error(`--raise <page> <count> <D-id>: the count is one of ${COUNTS.map(([k]) => k).join(', ')}`);
-    if (!/^D-[A-Z]+-\d+$/.test(rWhy ?? '') || !(await logged(rWhy))) throw new Error(`--raise: ${rWhy} is not a decision in docs/DECISIONS.md or docs/rows/; write its line first`);
+    if (!/^D-[A-Z]+-\d+$/.test(rWhy ?? '') || !(await logged(rWhy))) throw new Error(`--raise: ${rWhy} is not a decision in docs/DECISIONS.md; write its line first`);
   }
   const only = raise >= 0 ? [rPage] : args.filter((a) => a.startsWith('/') && !a.startsWith('//'));
   const { BASE, server } = await serveDist();

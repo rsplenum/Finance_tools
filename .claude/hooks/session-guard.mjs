@@ -2,7 +2,7 @@
 // the call when the row in the new session's title already has a session:
 //   - a branch for the row is on GitHub (`sec1`, `sec1-worker`, `num1-numbering`): a session claimed it;
 //   - this container started a session for the same row in the last 12 hours;
-//   - three sessions were started here in the last 5 hours: more at once runs into the usage limit.
+//   - a session was started here in the last 3 hours: one row runs at a time (D-TECH-70).
 // `[owner-ok]` in the title lets the call through when the owner asked for it. A title with no row (an errand) passes.
 //   --self-test  its cases, run by `npm run verify`.
 // It reads the hook's JSON on stdin and never fails the session: any error lets the call through silently.
@@ -25,11 +25,10 @@ export function decide({ title = '', prompt = '' }, branches, ledger, now) {
   if (!row) return null;
   const id = row.toLowerCase();
   const claimed = branches.filter((b) => b === id || b.startsWith(`${id}-`));
-  const rule = 'One session per row, started only from the owner\'s main conversation (D-TECH-62). Tell the owner, and add [owner-ok] to the title only on their word.';
+  const rule = 'One session per row, one at a time (D-TECH-62, D-TECH-70). Tell the owner, and add [owner-ok] to the title only on their word.';
   if (claimed.length) return `${row} already has a branch on GitHub (${claimed.join(', ')}): a session owns it. Send that session a message or read its PR instead. ${rule}`;
   if (ledger.some((e) => e.row === row && now - e.at < 12 * HOUR)) return `${row} already got a session from here in the last 12 hours. ${rule}`;
-  const recent = ledger.filter((e) => now - e.at < 5 * HOUR).length;
-  if (recent >= 3) return `${recent} sessions were started from here in the last 5 hours; a fourth at once runs into the usage limit and stops them mid-work. ${rule}`;
+  if (ledger.some((e) => now - e.at < 3 * HOUR)) return `A session was started from here in the last 3 hours; start the next once it has finished. ${rule}`;
   return null;
 }
 
@@ -65,7 +64,8 @@ function selfTest() {
     ['a row from the prompt', decide({ title: 'Indian numbering', prompt: 'Budget S. NUM1: Indian numbering.' }, ['num1-numbering'], [], now), true],
     ['the same row twice from here', decide({ title: 'NUM1: numbering' }, [], [{ row: 'NUM1', at: now - HOUR }], now), true],
     ['the same row a day later', decide({ title: 'NUM1: numbering' }, [], [{ row: 'NUM1', at: now - 13 * HOUR }], now), false],
-    ['a fourth at once', decide({ title: 'MAP1: the site map' }, [], ['A1', 'B1', 'C1'].map((row) => ({ row, at: now - HOUR })), now), true],
+    ['a second at once', decide({ title: 'MAP1: the site map' }, [], [{ row: 'A1', at: now - HOUR }], now), true],
+    ['the next once the last is done', decide({ title: 'MAP1: the site map' }, [], [{ row: 'A1', at: now - 4 * HOUR }], now), false],
     ['the owner\'s word', decide({ title: 'SEC1 again [owner-ok]' }, ['sec1'], [], now), false],
     ['an errand without a row', decide({ title: 'fetch the RBI pages' }, ['sec1'], [], now), false],
   ];
