@@ -5,7 +5,8 @@
  * dscr.ts shows no figure unless both computations agree.
  */
 import TAX from './data/tax.json';
-import type { LoanTerms, YearDebt } from './loan';
+import DSCR from './data/dscr.json';
+import { stepOf, type LoanTerms, type YearDebt } from './loan';
 import type { Definition, ProjectionYear, YearFigures } from './dscr';
 import type { Borrower } from './tax';
 
@@ -20,13 +21,40 @@ function fyLabel(ym: string, k: number): string {
   return `${start}-${String(start + 1).slice(-2)}`;
 }
 
-/** The loan in closed form: the EMI, instalments paid before month k starts, and the balance after j instalments. */
+/** Σ q^y for y from a to b, in closed form. */
+const geo = (q: number, a: number, b: number) => (b < a ? 0 : Math.abs(q - 1) < 1e-15 ? b - a + 1 : (Math.pow(q, a) - Math.pow(q, b + 1)) / (1 - q));
+
+/** A stepped loan in closed form: 12 instalments a year, each year's `s` times the year before's. The balance after j
+ * instalments is the value then of the instalments still to come (the engine runs the balance forward instead): what is
+ * left of this year's, then the later full years as one geometric sum, then the last year's, discounted at the rate. */
+function steppedForm(t: LoanTerms, r: number) {
+  const n = t.instalments, years = Math.ceil(n / 12), g = stepOf(t), s = 1 + g, v = 1 / (1 + r), last = n - 12 * (years - 1);
+  const a = (count: number) => (r === 0 ? count : (1 - Math.pow(v, count)) / r);
+  /** The value after j instalments of the rest, at a first instalment of 1. */
+  const rest = (j: number) => {
+    const y0 = Math.floor(j / 12), here = Math.min(12, n - 12 * y0) - (j - 12 * y0);
+    let pv = Math.pow(s, y0) * a(here);
+    if (y0 + 1 <= years - 2) pv += a(12) * Math.pow(v, -j) * geo(s * Math.pow(v, 12), y0 + 1, years - 2);
+    if (y0 + 1 <= years - 1) pv += Math.pow(s, years - 1) * Math.pow(v, 12 * (years - 1) - j) * a(last);
+    return pv;
+  };
+  const first = t.amount / rest(0);
+  // The step's own limits, read here apart from loan.ts: at most the data's, the last year's instalment at most the
+  // multiple of the first year's, and the first instalment at least its month's interest. Broken, the instalment is no figure.
+  const ok = g >= 0 && g <= DSCR.stepped.stepPct / 100 + 1e-12 && Math.pow(s, years - 1) <= DSCR.stepped.lastToFirstMost + 1e-12 && first >= t.amount * r - 1e-9;
+  return { first: ok ? first : NaN, balance: (j: number) => first * rest(j) };
+}
+
+/** The loan in closed form: the EMI (or a stepped loan's first instalment), instalments paid before month k starts, and
+ * the balance after j instalments. */
 function closedForm(t: LoanTerms) {
   const r = t.ratePct / 1200, p = t.frequency === 'quarterly' ? 3 : 1, n = t.instalments, m = t.moratoriumMonths;
-  const emi = t.style !== 'emi' ? 0 : r === 0 ? t.amount / n : (t.amount * r) / (1 - Math.pow(1 + r, -n));
+  const stepped = t.style === 'stepped' ? steppedForm(t, r) : undefined;
+  const emi = stepped ? stepped.first : t.style !== 'emi' ? 0 : r === 0 ? t.amount / n : (t.amount * r) / (1 - Math.pow(1 + r, -n));
   const paidBefore = (k: number) => Math.min(n, Math.max(0, Math.floor((k - m) / p)));
   const balance = (j: number): number => {
     if (j >= n) return 0;
+    if (stepped) return stepped.balance(j);
     if (t.style === 'equal-principal') return (t.amount * (n - j)) / n;
     if (r === 0) return t.amount - emi * j;
     const g = Math.pow(1 + r, j);
@@ -35,8 +63,8 @@ function closedForm(t: LoanTerms) {
   return { r, n, months: m + n * p, emi, paidBefore, balance };
 }
 
-/** The level instalment in closed form: the EMI, or the loan ÷ the number of instalments. */
-export const levelCheck = (t: LoanTerms) => (t.style === 'emi' ? closedForm(t).emi : t.amount / t.instalments);
+/** The level instalment in closed form: the EMI, a stepped loan's first instalment, or the loan ÷ the number of instalments. */
+export const levelCheck = (t: LoanTerms) => (t.style === 'equal-principal' ? t.amount / t.instalments : closedForm(t).emi);
 
 export interface MonthCheck { month: string; opening: number; interest: number; principal: number; paid: number; closing: number }
 

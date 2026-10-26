@@ -10,6 +10,8 @@ import { LEVELS, collateralNeeded, diagnose, type Levels, type RatioCheck } from
 import { makeViable, type Longer, type Outcome } from '../../../engine/viable';
 import { AS_TYPED, LEVER_IDS, makePlan, withLevers, type LeverId, type Levers } from '../../../engine/plan';
 import { fixOf } from '../../../engine/fix';
+import { compareRepayments, periodOf, type Way } from '../../../engine/repayment';
+import { STEPPED } from '../../../engine/loan';
 import { BORROWERS } from '../../../engine/tax';
 import { inr } from '../../../engine/util';
 import { GUARANTEES } from '../../../engine/guarantee';
@@ -19,7 +21,7 @@ import {
   benchmarksNote, levelsOf, ratiosWord, type BenchmarkText,
 } from '../board-model';
 
-export type Repayment = 'emi' | 'monthly' | 'quarterly';
+export type Repayment = 'emi' | 'monthly' | 'stepped' | 'quarterly';
 export type Scheme = '' | 'pmegp' | 'mudra';
 /** Simple mode (where the page opens, D-UX-112) asks a dozen plain questions and assumes the rest, listed; expert mode
  * asks every field. A state without a mode is expert's. */
@@ -83,7 +85,8 @@ export const EMPTY: ReportState = {
 };
 export const BORROWER_CHOICES = BORROWERS.map((b) => ({ value: b.id, label: b.label }));
 export const REPAYMENT_CHOICES: { value: Repayment; label: string }[] = [
-  { value: 'emi', label: 'EMI every month' }, { value: 'monthly', label: 'Equal principal every month' }, { value: 'quarterly', label: 'Equal principal every quarter' },
+  { value: 'emi', label: 'EMI every month' }, { value: 'monthly', label: 'Equal principal every month' },
+  { value: 'stepped', label: 'Stepped: less at first, rising each year' }, { value: 'quarterly', label: 'Equal principal every quarter' },
 ];
 export const SCHEME_CHOICES: { value: Scheme; label: string }[] = [{ value: '', label: 'None' }, { value: 'pmegp', label: 'PMEGP' }, { value: 'mudra', label: 'Mudra' }];
 export const CGTMSE = GUARANTEES.cgtmse, CGFMU = GUARANTEES.cgfmu;
@@ -130,7 +133,7 @@ export function assumptionsOf(s: ReportState) {
   const g = guaranteeOf(s), own = !s.feeRate.trim(), limit = (limitOf(s) ?? 0) > 0;
   const shows: Record<string, boolean> = {
     simpleCost: HEADS.every((h) => SIMPLE_COST.includes(h.id) || !s.cost[h.id].trim()), simpleFunds: !s.unsecured.trim() && (s.scheme === 'pmegp' || !s.subsidy.trim()),
-    simpleDrawn: !s.loan.disbursed.trim() && (s.loan.repayment ?? 'emi') === 'emi', simpleMoratorium: !s.loan.moratoriumMonths.trim(),
+    simpleDrawn: !s.loan.disbursed.trim(), simpleRepaid: !s.loan.repayment, simpleMoratorium: !s.loan.moratoriumMonths.trim(),
     simpleFixedGrowth: !s.fixedGrowth.trim(), simpleWcRate: !s.wcRate.trim() && limit,
     guaranteeFee: !!g && own, guaranteeFirst: !!g, cgtmseOther: g === 'cgtmse' && own, cgtmseRate: g === 'cgtmse' && own,
     cgtmseWc: g === 'cgtmse' && limit, cgtmsePmegp: g === 'cgtmse' && s.scheme === 'pmegp',
@@ -157,6 +160,9 @@ function simpleTerms(s: ReportState) {
   return { drawn, sell, toStart, instalments: years === undefined ? undefined : Math.round(years * 12), fixed: month === undefined ? undefined : month * 12 };
 }
 
+/** The holiday simple mode assumes while its box is blank: the months to the first sales (D-UX-112), once they are known. */
+export const holidayAssumed = (s: ReportState) => { const t = simpleTerms(s).toStart; return t !== undefined && t >= 0 ? String(t) : undefined; };
+
 /** Simple mode's needs, in its words: its own questions in place of the expert fields they fill. */
 export function simpleNeeds(s: ReportState): string[] {
   const t = simpleTerms(s), out: string[] = [];
@@ -166,8 +172,8 @@ export function simpleNeeds(s: ReportState): string[] {
   return out;
 }
 const SIMPLE_WORDS: [string, string | undefined][] = [
-  ['Months from the loan to the first sales', 'When you will start selling'], ['The term loan: the number of instalments', 'Years to repay'],
-  ['Fixed costs in a full first year', 'Fixed costs a month'], ['The term loan: the moratorium', undefined], ['The working-capital limit: its interest rate', undefined],
+  ['Months from the loan to the first sales', 'When you will start selling'], ['The term loan: the number of instalments', 'Repayment period after the holiday'],
+  ['Fixed costs in a full first year', 'Fixed costs a month'], ['The working-capital limit: its interest rate', undefined],
 ];
 const LIMIT_NEED = 'The working-capital limit: worked out, your own figure, or none';
 const LIMIT_WAITS = 'The working-capital limit worked out: it waits for the sales, the costs and the days';
@@ -175,7 +181,9 @@ const LIMIT_WAITS = 'The working-capital limit worked out: it waits for the sale
 export function needsWords(s: ReportState, needs: string[]): string[] {
   const t = simpleTerms(s), by = wcByOf(s), words = needs.map((n) => (!n.startsWith('The working-capital limit you will ask for') || by === 'typed' ? n : by === 'worked' ? LIMIT_WAITS : LIMIT_NEED));
   if (!simple(s)) return words;
-  const mapped = words.map((n) => { const w = SIMPLE_WORDS.find(([k]) => n.startsWith(k)); return w ? w[1] : n; })
+  // The holiday left empty is the months to the first sales, asked as the selling month; typed, it is its own box.
+  const holiday: [string, string | undefined] = ['The term loan: the moratorium', s.loan.moratoriumMonths.trim() ? 'Holiday before the first instalment' : undefined];
+  const mapped = words.map((n) => { const w = [...SIMPLE_WORDS, holiday].find(([k]) => n.startsWith(k)); return w ? w[1] : n; })
     .filter((n): n is string => n !== undefined && !(t.toStart !== undefined && t.toStart < 0 && n === 'When you will start selling'));
   return [...new Set([...mapped, ...simpleNeeds(s)])];
 }
@@ -212,8 +220,6 @@ export function changedOf(s: ReportState): string[] {
   if (s.scheme !== 'pmegp' && s.subsidy.trim()) out.push(`A capital subsidy of Rs. ${s.subsidy}`);
   if (s.unsecured.trim()) out.push(`Unsecured loans of Rs. ${s.unsecured}`);
   if (s.loan.disbursed.trim()) out.push(`The loan first drawn in ${s.loan.disbursed}`);
-  if ((s.loan.repayment ?? 'emi') !== 'emi') out.push(`Repaid by ${(REPAYMENT_CHOICES.find((c) => c.value === s.loan.repayment) as { label: string }).label.toLowerCase()}`);
-  if (s.loan.moratoriumMonths.trim()) out.push(`A moratorium of ${s.loan.moratoriumMonths} months`);
   if (s.salesBy === 'typed') out.push('Sales typed by year, in place of the products');
   else {
     if (s.utilisation !== EMPTY.utilisation) out.push(`Use of the capacity by year: ${s.utilisation}%`);
@@ -254,7 +260,7 @@ export function withMode(s: ReportState, mode: Mode): ReportState {
   return {
     ...s, mode, sellFrom: sell, monthsToStart: '', security,
     years: n !== undefined && Number.isFinite(n) ? String(+(n / 12).toFixed(2)) : s.years, fixedMonth: f !== undefined && Number.isFinite(f) ? figText(+(f / 12).toFixed(2)) : s.fixedMonth, fixed: '',
-    loan: { ...s.loan, disbursed: drawn === thisMonth() ? '' : s.loan.disbursed, moratoriumMonths: s.loan.moratoriumMonths.trim() === s.monthsToStart.trim() ? '' : s.loan.moratoriumMonths, instalments: '' },
+    loan: { ...s.loan, ...(s.loan.repayment === 'emi' ? { repayment: undefined } : {}), disbursed: drawn === thisMonth() ? '' : s.loan.disbursed, moratoriumMonths: s.loan.moratoriumMonths.trim() === s.monthsToStart.trim() ? '' : s.loan.moratoriumMonths, instalments: '' },
     fixedGrowth: s.fixedGrowth.trim() === String(assumed('simpleFixedGrowth')) ? '' : s.fixedGrowth, wcRate: s.wcRate.trim() === s.loan.ratePct.trim() ? '' : s.wcRate,
   };
 }
@@ -293,7 +299,7 @@ function fieldsOf(s: ReportState): ReportInput {
     cost: Object.fromEntries(HEADS.map((h) => [h.id, opt(s.cost[h.id])]).filter(([, v]) => v !== undefined)),
     loan: {
       amount: amountOf(s.loan.amount), ratePct: plainOf(s.loan.ratePct), disbursed: parseMonth(s.loan.disbursed), moratoriumMonths: plainOf(s.loan.moratoriumMonths),
-      instalments: plainOf(s.loan.instalments), ...(r ? { frequency: r === 'quarterly' ? 'quarterly' : 'monthly', style: r === 'emi' ? 'emi' : 'equal-principal' } : {}),
+      instalments: plainOf(s.loan.instalments), ...(r ? { frequency: r === 'quarterly' ? 'quarterly' : 'monthly', style: r === 'emi' || r === 'stepped' ? r : 'equal-principal' } : {}),
     },
     subsidy: s.scheme === 'pmegp' ? undefined : opt(s.subsidy), unsecured: opt(s.unsecured), collateral: opt(collateralText(s)),
     salesBy: s.salesBy, monthsToStart: plainOf(s.monthsToStart),
@@ -482,10 +488,10 @@ export function viewOf(r: Report): ReportView {
 
 /** `short`: cash below nil, which keeps the report provisional; `flags`: the scheme's rules to look at, never a decision;
  * `checks`: each lender's ratio against its level, `misses` their summary when any misses, with "Make it viable" beside it
- * (D-UX-50, D-UX-52); `collateralNote`: what the security cover needs; `longTerm`: a term past the longest. */
+ * (D-UX-50, D-UX-52); `collateralNote`: what the security cover needs. */
 export interface ReportPreview {
   needs: string[]; blocked?: string; view?: ReportView; short?: string; flags: string[];
-  checks?: CheckRow[]; misses?: string; collateralNote?: string; longTerm?: string;
+  checks?: CheckRow[]; misses?: string; collateralNote?: string;
   /** Which benchmarks are the user's, and a looser one's warning (BEN1). */
   benchmarks?: string;
 }
@@ -506,9 +512,57 @@ export function preview(s: ReportState): ReportPreview {
     needs: [], view: viewOf(r), flags: r.scheme?.flags ?? [], checks,
     ...(d.misses.length ? { misses: `${verdictWords('benchmark', d.checks.length, d.misses.length, d.checks.filter((k) => k.meets === undefined).length)}: ${listed(d.misses.map(labelOf))}.` } : {}),
     ...(collateralNote ? { collateralNote } : {}), ...(own ? { benchmarks: own } : {}),
-    ...(d.term.months > d.term.longest ? { longTerm: `The term loan runs ${d.term.months} months, its holiday included: lenders commonly allow a small business at most ${d.term.longest}.` } : {}),
     ...(c ? { short: `Cash goes below nil in ${c.fy}: Rs. ${rupees(c.need)} short at its lowest. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.` } : {}),
   };
+}
+
+/** The loan period read back under its boxes (D-UX-174): the holiday and the repayment in all, each limit on it within or
+ * not (engine/repayment.ts); undefined until both are known. It says once what a loan past the longest is. */
+export function periodLine(s: ReportState): { text: string; checks: { text: string; within: boolean }[] } | undefined {
+  const p = periodOf(inputOf(s));
+  if (!p) return undefined;
+  const repaid = years(p.repayment, 12);
+  const text = `Loan period: ${years(p.months, 12)} in all: ${p.holiday ? `a holiday of ${p.holiday} month${p.holiday === 1 ? '' : 's'}, then` : 'no holiday,'} ${repaid} of instalments.`;
+  const checks = p.limits.map((l) => ({ within: l.within, text: l.by === 'pmegp'
+    ? `PMEGP repays over ${(l.least as number) / 12} to ${l.most / 12} years after the holiday: ${repaid} is ${l.within ? 'within' : 'outside'}.`
+    : l.within ? `Within the ${l.most} months lenders commonly allow a small business.`
+      : `Longer than the ${l.most} months lenders commonly allow a small business: a shorter holiday or repayment brings it within.` }));
+  // The scheme's own limit first.
+  return { text, checks: [...checks.filter((_, k) => p.limits[k].by === 'pmegp'), ...checks.filter((_, k) => p.limits[k].by !== 'pmegp')] };
+}
+
+/** A way to repay as the comparison shows it: the engine's figures in words, none worked out here. */
+export interface WayRow { value: Repayment; label: string; interest: string; instalments: string; lowest: string; verdict: string; meets: boolean; proposed: boolean; now: boolean }
+export interface RepaymentView { lead: string; rows: WayRow[]; notes: string[] }
+const valueOf = (w: Way): Repayment => (w.frequency === 'quarterly' ? 'quarterly' : w.style === 'equal-principal' ? 'monthly' : w.style);
+const stepText = (w: Way) => `${+(w.step * 100).toFixed(1)}%`;
+const wayLabel = (w: Way) => (w.style === 'stepped' ? `Stepped: rising ${stepText(w)} a year` : (REPAYMENT_CHOICES.find((c) => c.value === valueOf(w)) as { label: string }).label);
+/** The ways to repay compared (OR5, D-UX-198; engine/repayment.ts): each on the interest it pays over the loan and its
+ * lowest-year DSCR, the cheapest first, and the cheapest that misses no benchmark proposed. The way in use stays as
+ * typed (EMI in simple mode, an assumption listed) until the borrower takes another. */
+export function repaymentView(s: ReportState): RepaymentView | undefined {
+  const c = compareRepayments(inputOf(s), levelsOf(s.benchmarks));
+  if (!c) return undefined;
+  const rows = c.ways.map((w): WayRow => {
+    const low = w.checks.find((k) => k.id === 'dscrLowest'), every = w.frequency === 'quarterly' ? 'quarter' : 'month';
+    return {
+      value: valueOf(w), label: wayLabel(w), interest: `Rs. ${rupees(w.interest)}`, meets: !w.misses.length, proposed: w === c.proposed, now: w === c.now,
+      instalments: w.style === 'emi' ? `Rs. ${rupees(w.first)} a month` : w.style === 'stepped' ? `Rs. ${rupees(w.first)} a month in the first year, rising to Rs. ${rupees(w.last)}`
+        : `Rs. ${rupees(w.first)} the first ${every}, falling to Rs. ${rupees(w.last)}`,
+      lowest: w.lowest && low ? `${ratioAt(w.lowest.dscr, low)} in ${w.lowest.fy}` : '—',
+      verdict: w.misses.length ? `Misses ${listed(w.misses.map(labelOf))}` : 'Meets every benchmark',
+    };
+  });
+  const p = rows.find((r) => r.proposed);
+  const lead = rows.length === 1 ? 'One way to repay quarterly instalments: equal principal.'
+    : !p ? 'No way to repay meets every benchmark with the figures as typed.'
+      : `${p.label} pays the least interest of the ways that meet every benchmark${p.now ? ': the way in use' : ''}.`;
+  const notes = [
+    ...(c.ways.some((w) => w.style === 'stepped') ? [`A stepped instalment is level within each year and rises ${STEPPED.stepPct}% a year. The last year's is held to ${STEPPED.lastToFirstMost} times the first year's at most, until a lender sets its own.`] : []),
+    ...(c.noStep === 'quarterly' ? ['An EMI and a stepped instalment are worked every month: choose monthly instalments to compare them.']
+      : c.noStep === 'short' ? ['No stepped way: the instalments end within a year.'] : []),
+  ];
+  return { lead, rows, notes };
 }
 
 /** The collateral field's hint: what its values are (engine/data/ratios.json, the owner's figures). */
@@ -570,11 +624,11 @@ export function viableOf(s: ReportState): ViableView | undefined {
   const longest = LEVELS.term.longestMonths;
   const longer = (id: string, head: string, l: Longer, unit: string, text: string) =>
     push({ id, head, text, move: `+${l.needed - l.now} ${unit}${l.needed - l.now > 1 ? 's' : ''}`, bars: { now: l.now, to: l.needed, nowText: String(l.now), toText: String(l.needed) }, note: cashLeft(l), ...chips(l) }, 'lender');
-  if (v.moratorium) longer('moratorium', 'A longer moratorium', v.moratorium, 'month', `A moratorium of ${v.moratorium.needed} months (now ${v.moratorium.now}), the whole term within ${longest} months.`);
-  else if (v.moratoriumNone) push({ id: 'moratorium', head: 'A longer moratorium', text: v.moratoriumNone, ...none }, 'lender');
+  if (v.moratorium) longer('moratorium', 'A longer holiday', v.moratorium, 'month', `A holiday of ${v.moratorium.needed} months before the first instalment (now ${v.moratorium.now}), the whole loan within ${longest} months.`);
+  else if (v.moratoriumNone) push({ id: 'moratorium', head: 'A longer holiday', text: v.moratoriumNone, ...none }, 'lender');
   if (v.instalments) {
     const i = v.instalments, every = i.perYear === 4 ? 'quarterly' : 'monthly';
-    longer('repayment', 'A longer repayment', i, 'instalment', `${i.needed} ${every} instalments, ${years(i.needed, i.perYear)} (now ${i.now}), the whole term within ${longest} months.`);
+    longer('repayment', 'A longer repayment', i, 'instalment', `${i.needed} ${every} instalments, ${years(i.needed, i.perYear)} (now ${i.now}), the whole loan within ${longest} months.`);
   } else if (v.instalmentsNone) push({ id: 'repayment', head: 'A longer repayment', text: v.instalmentsNone, ...none }, 'lender');
   return {
     meets: v.meets, title: v.meets ? 'Every ratio meets a lender’s level: the room' : 'The levers: any one of these alone', lines,
@@ -615,7 +669,7 @@ export function fixView(s: ReportState): FixView | undefined {
 
 const HEAD: Record<LeverId, string> = {
   wc: 'A smaller working-capital limit', promoters: 'A smaller term loan', unsecured: 'More unsecured loans', fixed: 'Lower fixed costs',
-  sales: 'Higher sales', collateral: 'More collateral', moratorium: 'A longer moratorium', instalments: 'A longer repayment',
+  sales: 'Higher sales', collateral: 'More collateral', moratorium: 'A longer holiday', instalments: 'A longer repayment',
 };
 /** Each lever's card worked alone on MV2b's board (viableOf), by its id there. */
 export const ALONE: Partial<Record<LeverId, string>> = { wc: 'wc', promoters: 'loan', sales: 'sales', collateral: 'collateral', moratorium: 'moratorium', instalments: 'repayment' };
@@ -660,7 +714,7 @@ export function planOf(s: ReportState, held: Partial<Levers> = {}): PlanView | u
     ...(q.fromFix && most === undefined && q.promoters.more > 0 ? { ask: `This needs Rs. ${upRupees(q.promoters.more)} more from the promoters: can you bring it?` } : {}),
     x, lv, levers: q.levers, cards: LEVER_IDS.filter((id) => show[id]).map((id) => ({ id, by: id === 'moratorium' || id === 'instalments' ? 'lender' : 'borrower', head: head(id) })),
     limits: `The limits kept: ${most !== undefined ? `the promoters bring at most Rs. ${rupees(most)} in all` : 'no more of the promoters’ money, since the most they can bring is not typed'}; ${L.sales === undefined
-      ? 'sales with no limit known, so a lender will test them against the market' : `the use of the capacity at most ${LEVELS.capacity.mostUsePct}% in any year`}; the whole term within ${LEVELS.term.longestMonths} months; unsecured loans and fixed costs only as you set them.`,
+      ? 'sales with no limit known, so a lender will test them against the market' : `the use of the capacity at most ${LEVELS.capacity.mostUsePct}% in any year`}; the whole loan within ${LEVELS.term.longestMonths} months; unsecured loans and fixed costs only as you set them.`,
     ...(limited.length ? { atLimit: `At the limit: ${listed(limited)}.` } : {}),
     ...(most !== undefined ? { most } : {}), promotersNow: q.promoters.now, leastLoan: L.leastLoan, termRoom: L.termRoom, monthsEach: L.monthsEach, fewest: L.fewest,
     ...(L.sales !== undefined ? { salesMost: L.sales } : {}),
@@ -684,7 +738,7 @@ export function boardOf(q: PlanView, l: Levers): BoardView {
     fixed: { move: `${pct(l.fixed)} lower`, to: `${rs(y.fixedCosts)} in a full first year`, max: FIXED_MOST },
     sales: { move: `+${pct(l.sales)}`, to: typed ? `${rs(y.sales)} in a full first year` : `The use of the capacity at ${uses(y.utilisationPct)}`, max: q.salesMost ?? Math.max(GRID_UP, q.levers.sales) },
     collateral: { move: `${rs(l.collateral)} more`, to: `A market value of ${rs(had + l.collateral)}`, max: Math.max(1000000, 2 * q.levers.collateral, had) },
-    moratorium: { move: `+${l.moratorium} month${l.moratorium === 1 ? '' : 's'}`, to: `A moratorium of ${y.loan.moratoriumMonths} months`, max: q.termRoom - l.instalments * q.monthsEach },
+    moratorium: { move: `+${l.moratorium} month${l.moratorium === 1 ? '' : 's'}`, to: `A holiday of ${y.loan.moratoriumMonths} months`, max: q.termRoom - l.instalments * q.monthsEach },
     instalments: { move: l.instalments < 0 ? `${-l.instalments} fewer` : `+${l.instalments}`, to: `${y.loan.instalments} instalments`, max: Math.floor((q.termRoom - l.moratorium) / q.monthsEach), min: q.fewest },
   };
   for (const id of LEVER_IDS) {
@@ -698,7 +752,7 @@ export function boardOf(q: PlanView, l: Levers): BoardView {
     fixed: () => `Fixed costs of ${rs(y.fixedCosts)} in a full first year (now ${rs(x.fixedCosts)}), ${pct(l.fixed)} lower.`,
     sales: () => (typed ? `Sales of ${rs(y.sales)} in a full first year (now ${rs(x.sales)}), ${pct(l.sales)} higher.` : `The use of the capacity at ${uses(y.utilisationPct)} (now ${uses(x.utilisationPct)}).`),
     collateral: () => `Collateral with a market value of ${rs(had + l.collateral)} (now ${had ? rs(had) : 'none'}).`,
-    moratorium: () => `A moratorium of ${y.loan.moratoriumMonths} months (now ${x.loan.moratoriumMonths}), if the lender agrees.`,
+    moratorium: () => `A holiday of ${y.loan.moratoriumMonths} months before the first instalment (now ${x.loan.moratoriumMonths}), if the lender agrees.`,
     instalments: () => `${y.loan.instalments} instalments (now ${x.loan.instalments})${l.instalments > 0 ? ', if the lender agrees' : ''}.`,
   };
   const steps = LEVER_IDS.filter((id) => l[id]).map((id) => step[id]()), r = projectReport(y);
@@ -733,7 +787,7 @@ const WRITES: { key: Key; field: string; label: string; by: LeverId[] }[] = [
   { key: 'sales', field: 'fld-sales', label: 'Sales', by: ['sales'] },
   { key: 'utilisation', field: 'fld-utilisation', label: 'Use of the capacity', by: ['sales'] },
   { key: 'collateral', field: 'fld-collateral', label: 'Collateral', by: ['collateral'] },
-  { key: 'loan.moratoriumMonths', field: 'fld-tl-moratorium', label: 'Moratorium', by: ['moratorium'] },
+  { key: 'loan.moratoriumMonths', field: 'fld-tl-moratorium', label: 'Holiday', by: ['moratorium'] },
   { key: 'loan.instalments', field: 'fld-tl-instalments', label: 'Instalments', by: ['instalments'] },
 ];
 // The limit, fixed costs and instalments as the report uses them: worked out, added up from the heads or from simple

@@ -57,6 +57,7 @@ Shown as examples only, never used unless chosen. Each lender sets its own.
 - No principal is repaid during the moratorium; interest is still paid.
 - Instalment 1 falls at the end of the first month or quarter after the moratorium, and so on.
 - Equal instalments of principal: loan ÷ number of instalments. Equated monthly instalments (EMI): the exact EMI, not rounded (as Excel's PMT); banks round it up to the rupee, a difference under Rs. 1 a month. EMI is worked monthly only.
+- Stepped instalments (OR5): the instalment, interest and principal together, is the same each month of a repayment year (the first 12 instalments, the next 12, and so on) and rises by the step at each new year; the first is the one that repays the loan exactly by the last instalment, as an EMI is. The step is `stepped.stepPct`, lowered where needed so the last year's instalment is at most `stepped.lastToFirstMost` times the first year's and the first instalment at least its month's interest (the balance never grows), then rounded down to a tenth of a percent. One year of instalments has no step: it is an EMI. Worked monthly only.
 - Tax: set by who the borrower is (engine/data/tax.json), or a typed rate × profit before tax. Nil in a year with a loss. Losses carried forward are not set off, so tax may be overstated in the year after a loss (the DSCR errs low).
 - Profit before interest, depreciation and tax is taken after lease rentals.
 - Extra income from the new asset is added to profit before interest, depreciation and tax from the month the asset starts running: in that year a twelfth of the yearly figure for each month left to 31 March, then the whole yearly figure. It does not grow. Leaving it out errs low.
@@ -147,8 +148,9 @@ Working capital: The second method of lending (Tandon Committee): the bank finan
 
 - **The rest of the cost of the project**: None: no land, furniture, other fixed assets, contingency or preliminary expenses. Type them in expert mode if the project has them.
 - **Other funds**: No capital subsidy and no unsecured loans. Type them in expert mode if the project has them.
-- **The term loan**: First drawn this month, repaid by EMI every month. The usual for a term loan; type the month and the way it is repaid in expert mode.
-- **The moratorium**: Until the month you start selling. The owner's rule (D-UX-112): no instalment before the first sales; a lender may give more.
+- **The term loan**: First drawn this month. The usual for a term loan; type the month in expert mode.
+- **How the term loan is repaid**: By EMI every month. The usual for a term loan; the comparison of the ways to repay shows what each costs and proposes the cheapest that meets every benchmark (D-UX-198).
+- **The holiday before the first instalment**: Until the month you start selling. The owner's rule (D-UX-112): no instalment before the first sales; a lender may give more.
 - **Fixed costs: growth a year**: 5% a year. On the careful side: costs rise each year while the price is held where it is.
 - **The working-capital limit's rate**: The term loan's rate. Banks often price the two alike; type the sanction's rate in expert mode.
 - **Stock, debtors and creditors**: 30 days each: stock and creditors of the year's materials and other variable costs, debtors of the year's sales. A common level for a small business; type the business's own.

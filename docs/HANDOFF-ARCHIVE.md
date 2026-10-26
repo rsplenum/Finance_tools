@@ -167,6 +167,7 @@ The test figures are model-worked until the owner confirms fictional cases A and
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 24-10-2026 | PRIV1: the privacy page tied to code by a test, the DPDP parts, three gotchas (D-BIZ-22) | M, high | about 60 steps and an agent's 12; two 15-minute site checks (the word counts, then the full verify) took the most |
 | 24-10-2026 | ROWS1: each row's notes in `docs/rows/`, folded by `npm run fold`, so PRs stop conflicting on the shared docs (D-TECH-66) | S | about 32 steps, no compaction; the full verify ran 18 min, the site check most of it |
 | 24-10-2026 | HOME1e: the CMA's, the estimate's and the report's stories as scenes in look C, one player for all four (D-UX-135 to D-UX-144) | L, Extra | about 110 steps; the frames at each beat on a slowed phone and three 14-minute site checks took the most |
 | 24-10-2026 | MAP1: `/sitemap.xml`, `robots.txt` and `/site-map/`, held by the site check (D-TECH-65) | S, high | about 40 steps; the 17-minute full verify took the most |

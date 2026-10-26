@@ -29,7 +29,7 @@ function makeCase(rnd: () => number) {
   const int = (lo: number, hi: number) => lo + Math.floor(rnd() * (hi - lo + 1));
   const first = int(2025, 2030), years = int(2, 12), offset = int(0, 11), moratoriumMonths = int(0, 24);
   const frequency = pick(['monthly', 'quarterly'] as const);
-  const style = frequency === 'monthly' ? pick(['equal-principal', 'emi'] as const) : 'equal-principal';
+  const style = frequency === 'monthly' ? pick(['equal-principal', 'emi', 'stepped'] as const) : 'equal-principal';
   const most = Math.floor((years * 12 - offset - moratoriumMonths) / (frequency === 'monthly' ? 1 : 3));
   if (most < 1) return undefined;
   const drawn = new Date(Date.UTC(first, 3 + offset, 1));
