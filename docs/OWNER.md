@@ -2,7 +2,6 @@
 
 What only the owner can do or answer, moved out of `docs/HANDOFF.md` on 04-10-2026 so that what every session reads stays short (D-TECH-29). A session adds a line when it leaves the owner something to do, and its report says so.
 
-- **OR5's stepped instalment** (D-DATA-28, D-UX-198): it rises 10% a year and its last year's instalment is held to 2 times the first year's, our own placeholders (`engine/data/dscr.json` `stepped`). Say the step and the cap a lender would use (recommended: keep them until a lender names its own). And whether the DSCR page gets the same "Ways to repay" card as the report (recommended: yes, as its own small row after OR6).
 - **For Monday 26-10, 09:00 IST** (D-BIZ-20, the timeline in `docs/ROADMAP.md`): **tonight**, answer SEO2's five tradeoffs (below), open HOME1d's before and after and say go for HOME1e; **Sunday morning**, "merge" each green PR; **Sunday afternoon**, the five usability tests (below, about 2 hours); **Sunday evening**, merge the last ones and start RC1 (its starter prompt in `docs/HANDOFF.md`); **Monday 09:00**, merge RC1's fixes.
 - **A new timeline** (D-BIZ-24): once you have used the tools and the OR rows have fixed what you found.
 - **The environment's setup script** (D-TECH-56, D-TECH-58): ffmpeg is in and Playwright's Chromium comes with this environment, so VID1 needs nothing more here. On your own computer, `node studio.mjs setup --install` in `rsplenum/video-studio` installs what its phases need.
