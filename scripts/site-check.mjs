@@ -1368,6 +1368,13 @@ if (touched('/project-report/')) {
   await expectText(page, v, 'rep-worked', /^Worked out: Rs\. 2,72,219\. It is the lower of .*, Rs\. 2,72,219, .*, Rs\. 11,52,000\.$/, 'the limit worked out');
   if (await page.getByTestId('rep-needs').count()) v(`simple mode still asks: ${await page.getByTestId('rep-needs').textContent()}`);
   if (await page.locator('#fld-tl-disbursed, #fld-wcRate, #fld-fixedGrowth').count()) v('simple mode shows an expert field');
+  // Property for part, CGTMSE for the rest (OR7): its value asked, then the part guaranteed read back: the loans in all,
+  // 20 L and the limit's 2,72,219, less the property's 5 L.
+  await page.check('#fld-security-hybrid');
+  await expectText(page, v, 'rep-needs', /The collateral: its market value, for the part CGTMSE does not guarantee/, 'hybrid security, the property\'s value not yet typed');
+  await leave(page, '#fld-collateral', '5 L');
+  await expectText(page, v, 'rep-hybrid', 'CGTMSE guarantees Rs. 17,72,219 of the loans\' Rs. 22,72,219; the property\'s Rs. 5,00,000 backs the rest, set against the term loan first. Its fee is on that part only.', 'hybrid security');
+  await page.check('#fld-security-neither');
   // The holiday runs to the first sales until typed, and the period reads back in all (D-UX-174).
   if (await page.inputValue('#fld-tl-moratorium') !== '3') v(`the holiday's box reads ${await page.inputValue('#fld-tl-moratorium')}, want its default 3`);
   await expectText(page, v, 'rep-period', 'Loan period: 4 years 3 months in all: a holiday of 3 months, then 4 years of instalments. Within the 180 months lenders commonly allow a small business.', 'the loan period');

@@ -22,7 +22,7 @@ import { Words } from './Words';
 import {
   CGFMU, CGTMSE, MUDRA, PMEGP, PMEGP_SHED, REPORT_REVIEW_BY, pmegpConditions, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, NO_PRODUCT, REPAYMENT_CHOICES, SCHEME_CHOICES,
   COST_HEADS, MODE_CHOICES, SECURITY_CHOICES, SIMPLE_COST, WC_CHOICES, changedOf, headsSum, holidayAssumed, periodLine, repaymentView, wcByOf, withMode, workedLine, type Mode,
-  ALONE, AS_TYPED, COLLATERAL_HINT, amountOf, applyPlan, assumptionsOf, boardOf, fixView, guaranteeOf, mudraLine, plainOf, planOf, preview, sameLevers, statusText, tarunAsked, tidyAmount, undoPlan, viableOf,
+  ALONE, AS_TYPED, COLLATERAL_HINT, withProperty, amountOf, applyPlan, assumptionsOf, boardOf, fixView, guaranteeOf, mudraLine, plainOf, planOf, preview, sameLevers, statusText, tarunAsked, tidyAmount, undoPlan, viableOf,
   type LeverId, type Levers, type PlanChange, type FixView, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
   type ViableView, type ViewRow, type ViewTable,
 } from './model';
@@ -55,7 +55,7 @@ const BOXES: [string, string][] = [
   ['Materials', 'fld-variablePct'], ['Fixed costs in', 'fld-fixed'], ['Fixed costs: growth', 'fld-fixedGrowth'], ['Days of stock', 'fld-days-stock'],
   ['Days of debtors', 'fld-days-debtors'], ['Days of creditors', 'fld-days-creditors'], ['The working-capital limit you will ask for', 'fld-wcLimit'],
   ['The working-capital limit: its', 'fld-wcRate'], ['The collateral', 'fld-collateral'],
-  ['Mudra: the term loan and', 'fld-tl-amount'], ['Mudra: the loans come', 'fld-tarun'], ['CGTMSE: the loans', 'fld-cgtmse'], ['The guarantee fee', 'fld-feeRate'],
+  ['Mudra: the term loan and', 'fld-tl-amount'], ['Mudra: the loans come', 'fld-tarun'], ['CGTMSE: the loans', 'fld-cgtmse'], ['CGTMSE: the collateral', 'fld-collateral'], ['The guarantee fee', 'fld-feeRate'],
 ];
 // A product's line (D-UX-109): "Sales, line 2: the price a unit" is the price's box on the second line.
 const LINE_FACT: [string, string][] = [['what', 'name'], ['how many', 'units'], ['the price', 'price']];
@@ -128,7 +128,7 @@ export function ReportCalculator() {
   const clear = () => { setCleared(s); setS(blank); setUsed([]); focusNext('[data-testid="rep-clear-undo"]'); };
   const unclear = () => { if (cleared) setS(cleared); setCleared(undefined); focusNext('[data-testid="rep-clear"]'); };
   // The security cover's row links to the collateral field (review finding 4); in simple mode, property is chosen first.
-  const toCollateral = (e: Event) => { e.preventDefault(); if (simple) update((x) => ({ ...x, security: 'property' })); focusNext('#fld-collateral'); };
+  const toCollateral = (e: Event) => { e.preventDefault(); if (simple && !withProperty(s)) update((x) => ({ ...x, security: 'property' })); focusNext('#fld-collateral'); };
   // A missing figure's link: to its box, in expert mode when only it has one.
   const toBox = (need: string) => (e: Event) => {
     const b = boxOf(need);
@@ -154,6 +154,7 @@ export function ReportCalculator() {
   // and the download run the full width below.
   const hv = headsSum(s, 'variable'), hf = headsSum(s, 'fixed'), by = wcByOf(s), changed = changedOf(s), worked = workedLine(s);
   const sum = (testid: string, text: string) => <p data-testid={testid} class="mt-2 self-end text-ink sm:col-span-1">{text}</p>;
+  const hybridBack = p.hybrid && <p data-testid="rep-hybrid" aria-live="polite" class="mt-2 text-sm text-ink">{p.hybrid}</p>;
   const collateralBox = () => amount('fld-collateral', 'Collateral: its market value', s.collateral, (x, collateral) => ({ ...x, collateral }), `Property offered beside the project's assets. ${COLLATERAL_HINT}`);
   // From 1024 px the questions stand left and the answer panel right (UX8, D-UX-106); the report's tables, what it assumes
   // and the download run the full width below. Simple mode asks its dozen questions; expert mode every field (D-UX-112).
@@ -222,7 +223,8 @@ export function ReportCalculator() {
       {simple && s.scheme !== 'mudra' && <>
         <Choice name="fld-security" legend="What backs the loan besides the project's own assets?" options={SECURITY_CHOICES} value={s.security}
           onChange={(security) => update((x) => ({ ...x, security }))} />
-        {s.security === 'property' && <div class="mt-4 grid gap-4 sm:grid-cols-2">{collateralBox()}</div>}
+        {withProperty(s) && <div class="mt-4 grid gap-4 sm:grid-cols-2">{collateralBox()}</div>}
+        {s.security === 'hybrid' && hybridBack}
       </>}
     </Section>
     <Section id="operations" title="Sales and costs">
@@ -281,11 +283,12 @@ export function ReportCalculator() {
         {s.scheme !== 'mudra' && collateralBox()}
       </div>
       {s.scheme !== 'mudra' && tick('fld-cgtmse', 'CGTMSE guarantees the loans', !!s.cgtmse, (x, cgtmse) => ({ ...x, cgtmse }),
-        `A government scheme that guarantees small-business loans. Its fee, ${CGTMSE.slabs[0].ratePct}% to ${CGTMSE.slabs[CGTMSE.slabs.length - 1].ratePct.toFixed(2)}% a year by the loans in all, goes into the projections as a finance cost.`)}
+        `A government scheme that guarantees small-business loans. Its fee, ${CGTMSE.slabs[0].ratePct}% to ${CGTMSE.slabs[CGTMSE.slabs.length - 1].ratePct.toFixed(2)}% a year by the loans in all, goes into the projections as a finance cost. Beside collateral, it guarantees only the part the collateral does not back.`)}
       {s.scheme !== 'mudra' && s.cgtmse && <fieldset class="mt-4">
         <legend class="font-medium text-ink">Concessions that apply, each {CGTMSE.concessionPct}% off the fee</legend>
         {CGTMSE.groups.map((t, k) => <Fragment key={k}>{tick(`fld-concession-${k}`, t, !!s.concessions?.[k], (x, v) => ({ ...x, concessions: CGTMSE.groups.map((_, i) => (i === k ? v : !!x.concessions?.[i])) }))}</Fragment>)}
       </fieldset>}
+      {s.scheme !== 'mudra' && s.cgtmse && hybridBack}
       {g && <div class="mt-4 grid gap-4 sm:grid-cols-2">
         {percent('fld-feeRate', 'The guarantee fee, if the lender quotes another rate (% a year)', s.feeRate, (x, feeRate) => ({ ...x, feeRate }), '%', undefined,
           g === 'cgfmu' ? `Left empty, CGFMU's ${CGFMU.ratePct}% a year.` : 'Left empty, CGTMSE’s rate for the loans in all, less the concessions ticked.')}

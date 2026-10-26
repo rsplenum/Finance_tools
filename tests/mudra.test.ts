@@ -15,6 +15,15 @@
  * year, 1,320 in each of 2026-27 and 2027-28; October 2027 to March 2028 on the balance at 31 December 2026 (8 L):
  * 1,320; 2028-29 on 31 December 2027's 6.5 L (9 instalments paid) = 2,145; 2029-30 on 4.5 L = 1,485; 2030-31 on
  * 2.5 L = 825. Limit: 0.33% of 2 L = 660 a year, 165 in 2026-27. In all: 1,485; 3,300; 2,805; 2,145; 1,485.
+ *
+ * Hybrid security (OR7; CGS-I para 2(iv), 8.1 and Annexure IV): the same CGTMSE loans beside property with a market value
+ * of 5 L, set against the term loan first. The slab stays that of the loans in all, 10 L: 0.33%. Guaranteed: the term loan
+ * 8 L less 5 L = 3 L, the limit 2 L in full; 5 L in all. Term loan: the first twelve months on 3 L: 990 a year, 495 in
+ * each of 2026-27 and 2027-28; October 2027 to March 2028 on 31 December 2026's 8 L less 5 L = 3 L: 495, so 990 in
+ * 2027-28; 2028-29 on 6.5 L less 5 L = 1.5 L: 495; 2029-30 on 4.5 L, below the 5 L: nil, and the guarantee closes.
+ * Limit as before: 165, then 660 a year. In all: 660; 1,650; 1,155; 660; 660.
+ * Property of 9 L: 8 L against the term loan, none of it guaranteed, and 1 L against the limit, leaving 1 L of it
+ * guaranteed: 0.33% of 1 L = 330 a year, 82.50 in 2026-27. Property of 10 L backs the loans in full: nothing to guarantee.
  */
 import { describe, it, expect } from 'vitest';
 import { MUDRA, mudraShort, projectReport, reportNeeds, type Report, type ReportInput } from '../engine/report';
@@ -112,6 +121,23 @@ describe('CGTMSE when ticked', () => {
     close(fees(r), [2970, 6600, 5610, 4290, 2970]);
   });
   it('unticked, no fee', () => expect(report({ ...CGTMSE_M, guarantee: undefined }).guarantee).toBeUndefined());
+  it('beside property of 5 L (hybrid security): 3 L of the term loan and the 2 L limit guaranteed; 660; 1,650; 1,155; 660; 660 (worked by hand above)', () => {
+    const r = report({ ...CGTMSE_M, collateral: 500000 });
+    expect([r.guarantee?.ratePct, r.guarantee?.cover, r.guarantee?.guaranteed, r.guarantee?.collateral]).toEqual([0.33, 1000000, 500000, 500000]);
+    close(r.guarantee?.years.map((y) => y.termLoan) ?? [], [495, 990, 495, 0, 0]);
+    close(fees(r), [660, 1650, 1155, 660, 660]);
+    expect(report({ ...CGTMSE_M, collateral: 0 }).guarantee?.guaranteed).toBe(1000000);
+  });
+  it('beside property of 9 L: the term loan backed in full, 1 L of the limit guaranteed; 10 L backs them all and it stops', () => {
+    const r = report({ ...CGTMSE_M, collateral: 900000 });
+    expect([r.guarantee?.guaranteed, r.guarantee?.collateral]).toEqual([100000, 900000]);
+    close(fees(r), [82.5, 330, 330, 330, 330]);
+    expect(reportNeeds({ ...CGTMSE_M, collateral: 1000000 })).toContain('CGTMSE: the collateral\'s market value of Rs. 10,00,000 backs the loans\' Rs. 10,00,000 in full, leaving nothing for CGTMSE to guarantee: leave CGTMSE out, or lower the collateral to the part it backs');
+  });
+  it('beside property, the slab is still that of the loans in all (CGS-I para 8, note 5): 12 L in all at 0.50%, though 7 L is guaranteed', () => {
+    const r = report({ ...CGTMSE_M, wcLimit: 400000, collateral: 500000 });
+    expect([r.guarantee?.ratePct, r.guarantee?.cover, r.guarantee?.guaranteed]).toEqual([0.5, 1200000, 700000]);
+  });
   it('above Rs. 10 crore in all it stops', () => {
     const x = { ...CGTMSE_M, cost: { machinery: 150000000 }, loan: { ...CGTMSE_M.loan, amount: 100000000 } };
     expect(reportNeeds(x).some((n) => n.startsWith('CGTMSE: the loans come to Rs. 10,02,00,000, above the Rs. 10,00,00,000 it guarantees in all'))).toBe(true);
