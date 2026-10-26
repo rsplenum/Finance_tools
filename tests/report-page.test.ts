@@ -17,6 +17,7 @@ import { F } from './fix.test';
 import { benchmarkFields, levelsOf, withBenchmark } from '../site/src/board-model';
 import { sameValue } from '../site/src/amount';
 import { SITE_NAME } from '../site/src/site';
+import { SOLD_BY, soldBy } from '../engine/sold-by';
 import { docxLines, pdfPages, workbook } from '../scripts/read-doc.mjs';
 
 const TODAY = '2026-10-02', MADE = new Date('2026-10-02T10:00:00Z');
@@ -66,7 +67,7 @@ describe('the project report page', () => {
     const p = preview(P);
     expect([p.needs, p.flags, p.short]).toEqual([[], [DATA.schemes.pmegp.notice], undefined]);
     expect(p.view!.key.find((k) => k.label === 'PMEGP margin money')?.value).toBe('Rs. 7,80,856');
-    expect([row(p, 'sales', 'Units sold')?.values[0], row(p, 'sales', 'Total sales')?.values.slice(0, 2)]).toEqual(['4,500', ['14,40,000', '67,20,000']]);
+    expect([row(p, 'sales', 'Pieces sold')?.values[0], row(p, 'sales', 'Total sales')?.values.slice(0, 2)]).toEqual(['4,500', ['14,40,000', '67,20,000']]);
     expect(row(p, 'pl', 'Months of sales')?.values).toEqual(['3', '12', '12', '12', '12']);
     expect(row(p, 'pl', 'Use of the capacity')?.values).toEqual(['60%', '70%', '80%', '80%', '80%']);
     expect(row(p, 'cf', 'Cash at the end of the year')?.values[0]).toBe('42,793');
@@ -124,7 +125,7 @@ describe('the PMEGP report to download', () => {
   const p = preview(P), doc = reportDoc(P, p, TODAY)!, text = docText(doc);
   it('names the scheme, the drivers and the rules used, with their source and date', () => {
     expect(text).toContain('Scheme: PMEGP; general category; a village; manufacturing');
-    expect(text).toContain('Sales: Roasted chana: 2,500 a month at full running, at Rs. 200 a unit');
+    expect(text).toContain('Sales: Roasted chana: 2,500 pieces a month at full running, at Rs. 200 a piece');
     expect(text).toContain('Sales by product');
     expect(text).toContain('Months from the loan to the first sales: 3');
     expect(text).toContain('PMEGP: the rules used');
@@ -289,7 +290,8 @@ const FS: ReportState = {
 };
 describe('the fix beside the miss, in words, and used (OR2)', () => {
   it('names the cause in a line, then the two fixes, the least strained first', () => {
-    expect(inputOf(FS)).toEqual(F);
+    // The page sends each line's unit (OR6), the piece when none is picked; a word that changes no sum.
+    expect(inputOf(FS)).toEqual({ ...F, products: F.products?.map((p) => ({ ...p, unit: 'piece' })) });
     const f = fixView(FS);
     expect(f?.cause).toEqual(['Fixed-asset cover falls to 0.50 in 2035-36, against its benchmark of 1.20: the fixed assets, written down each year, lose value faster than the term loan is repaid.']);
     expect(f?.lead).toBe('Either change makes it work:');
@@ -408,5 +410,25 @@ describe('simple and expert modes', () => {
     expect([inputOf(st).loan.style, repaymentView(st)!.rows.find((r) => r.now)?.value]).toEqual(['stepped', 'stepped']);
     expect(assumptionsOf(st).map((a) => a.id)).not.toContain('simpleRepaid');
     expect(changedOf(st)).toEqual([]);
+  });
+});
+
+// What a line is sold by (OR6, D-UX-203): the count, the price, the sales table and the document take its words, and the
+// figures stay those of the piece; a line kept from before the unit is sold by the piece.
+describe('sold by (OR6)', () => {
+  it('a line sold by the kg: its words follow, its sums do not move', () => {
+    const kg = { ...FS, products: FS.products.map((p) => ({ ...p, unit: 'kg' })) };
+    const a = preview(FS), b = preview(kg);
+    const values = (p: ReturnType<typeof preview>) => p.view!.tables.find((t) => t.id === 'sales')!.rows.map((r) => r.values);
+    expect(values(b).length).toBeGreaterThan(2);
+    expect(values(b)).toEqual(values(a));
+    expect([row(b, 'sales', 'Kg sold')?.values[0], row(b, 'sales', 'Price a kg')?.values[0]]).toEqual([row(a, 'sales', 'Pieces sold')?.values[0], row(a, 'sales', 'Price a piece')?.values[0]]);
+    expect(preview({ ...kg, products: [{ ...kg.products[0], price: '' }] }).needs).toContain('Sales, line 1: the price a kg');
+    const pk = { ...P, products: P.products.map((p) => ({ ...p, unit: 'kg' })) };
+    expect(docText(reportDoc(pk, preview(pk), TODAY)!)).toContain('Sales: Roasted chana: 2,500 kg a month at full running, at Rs. 200 a kg');
+  });
+  it('every unit has its words, and an unknown or missing one is the piece', () => {
+    expect(SOLD_BY.map((u) => u.id)).toEqual(['piece', 'kg', 'tonne', 'litre', 'metre', 'sqft', 'hour', 'day', 'job', 'month']);
+    expect([soldBy().id, soldBy('furlong').id, soldBy('hour').per]).toEqual(['piece', 'piece', 'an hour']);
   });
 });
