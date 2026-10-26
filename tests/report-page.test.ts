@@ -9,7 +9,7 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import { docStatus, fileName, reportDoc } from '../site/src/report/document';
-import { AS_TYPED, EMPTY, applyPlan, assumptionsOf, boardOf, changedOf, fixView, holidayAssumed, inputOf, periodLine, planOf, preview, repaymentView, statusText, undoPlan, viableOf, withMode, type ReportState } from '../site/src/report/model';
+import { AS_TYPED, EMPTY, applyPlan, checkKey, checkOf, assumptionsOf, boardOf, changedOf, fixView, holidayAssumed, inputOf, periodLine, planOf, preview, repaymentView, statusText, undoPlan, viableOf, withMode, type ReportState } from '../site/src/report/model';
 import { compareRepayments } from '../engine/repayment';
 import { inr } from '../engine/util';
 import { withLevers } from '../engine/plan';
@@ -440,5 +440,49 @@ describe('sold by (OR6)', () => {
   it('every unit has its words, and an unknown or missing one is the piece', () => {
     expect(SOLD_BY.map((u) => u.id)).toEqual(['piece', 'kg', 'tonne', 'litre', 'metre', 'sqft', 'hour', 'day', 'job', 'month']);
     expect([soldBy().id, soldBy('furlong').id, soldBy('hour').per]).toEqual(['piece', 'piece', 'an hour']);
+  });
+});
+
+// Check and confirm (OR8, the owner's O13): what was collected, read back from the engine's input and its tables' words.
+// Case P's cost and finance lines are its tables' own (nothing added up on the page); the rest as typed, the capacity
+// use by year from the profit and loss (60, 70, 80 by default, the last held). Case S's worked limit is the 2,72,219.18
+// worked by hand above.
+describe('check and confirm (OR8)', () => {
+  const S: ReportState = {
+    ...EMPTY, mode: 'simple', borrower: 'firm', cost: { ...EMPTY.cost, building: '6 L', machinery: '20 L' }, products: P.products, sellFrom: '2027-01',
+    variablePct: '70', fixedMonth: '1 L', loan: { ...EMPTY.loan, amount: '20 L', ratePct: '10' }, years: '4', wcBy: 'worked', security: 'neither', doc: P.doc,
+  };
+  const lines = (s: ReportState) => Object.fromEntries(checkOf(s, preview(s)).map((g) => [g.id, g.lines.map((l) => `${l.label}: ${l.value}`)]));
+  it('reads back case P, its cost and finance from the tables', () => {
+    const p = preview(P), g = lines(P), table = (id: string) => p.view!.tables.find((t) => t.id === id)!.rows.map((r) => `${r.label}: Rs. ${r.values[0]}`);
+    expect(g.business).toEqual(['Who the borrower is: Partnership firm or LLP', 'A government scheme: PMEGP', 'What backs the loan: The project’s own assets only']);
+    expect(g.cost).toEqual(table('cost'));
+    expect(g.cost.at(-1)).toBe('Total cost of the project: Rs. 30,23,425');
+    expect(g.finance).toEqual(table('finance'));
+    expect(g.loan).toEqual(['Interest rate: 10% a year', 'Loan period: 4 years 6 months in all: a holiday of 6 months, then 4 years of instalments', 'How it is repaid: Equal principal every month']);
+    expect(g.sales).toEqual(['Roasted chana: 2,500 pieces a month at full running, at Rs. 200 a piece', 'Roasted peanuts: 1,500 pieces a month at full running, at Rs. 200 a piece',
+      'Use of the capacity: 60% in 2026-27, 70% in 2027-28, 80% from 2028-29']);
+    expect(g.costs).toEqual(['Materials and other variable costs: 70% of sales', 'Fixed costs: Rs. 12,00,000 in a full first year', 'Fixed costs: growth a year: 5%']);
+    expect(g.wc).toEqual(['The working-capital limit: Rs. 3,00,000, as typed', 'Its interest rate: 11% a year']);
+  });
+  it('reads back simple mode: the fixed costs a month, the limit worked out, what backs the loan', () => {
+    const g = lines(S);
+    expect(g.business[2]).toBe('What backs the loan: The project’s own assets only');
+    expect(g.loan[2]).toBe('How it is repaid: EMI every month');
+    expect(g.costs).toEqual(['Materials and other variable costs: 70% of sales', 'Fixed costs: Rs. 1,00,000 a month']);
+    expect(g.wc).toEqual(['The working-capital limit: Rs. 2,72,219, worked out', 'Its interest rate: 10% a year']);
+    expect(lines({ ...S, security: 'hybrid', collateral: '8 L' }).business.slice(2)).toEqual(['What backs the loan: Property for part, CGTMSE for the rest', 'The collateral’s market value: Rs. 8,00,000']);
+    expect(lines({ ...S, wcBy: 'none' }).wc).toEqual(['The working-capital limit: None needed']);
+    expect(lines({ ...S, scheme: 'mudra', loan: { ...S.loan, amount: '5 L' }, wcBy: 'typed', wcLimit: '1 L' }).business[2]).toBe('What backs the loan: A CGFMU guarantee, under Mudra, with no collateral');
+  });
+  it('has nothing to read back before the report has figures', () => {
+    expect(checkOf(EMPTY, preview(EMPTY))).toEqual([]);
+  });
+  it('asks again when a figure or a benchmark changes, not when the document’s facts or words do', () => {
+    const k = checkKey(S);
+    expect(checkKey({ ...S, loan: { ...S.loan, ratePct: '11' } })).not.toBe(k);
+    expect(checkKey({ ...S, benchmarks: withBenchmark(S.benchmarks, 'dscrAverage', '1.6') })).not.toBe(k);
+    expect(checkKey({ ...S, doc: { ...S.doc, name: 'Another name' } })).toBe(k);
+    expect(checkKey({ ...S, words: { notes: { promoter: 'x', process: '', market: '' }, confirmed: true } })).toBe(k);
   });
 });

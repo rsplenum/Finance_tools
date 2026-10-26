@@ -1126,6 +1126,14 @@ if (touched('/estimate/')) {
 // one product line, the stepped way among the four ways to repay).
 const REP_DEFAULT = 28;
 const REP_FIELDS = 'main input:not(#download input):not(#benchmarks input), main select:not(#download select):not(#benchmarks select)';
+// Check and confirm (OR8, D-UX-208): the report's tables and downloads wait for it; a change since asks again, so a flow
+// confirms before it reads them (already confirmed, it goes on).
+const confirmReport = async (page, v, why) => {
+  const yes = page.getByTestId('rep-confirm');
+  if (await yes.count()) await yes.click();
+  else if (!(await page.getByTestId('rep-confirmed').count())) return v(`the report has no check to confirm (${why})`);
+  await page.getByTestId('rep-confirmed').waitFor({ timeout: 5000 }).catch(() => v(`the report's check did not fold once confirmed (${why})`));
+};
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
   if (!(await page.isChecked('#fld-mode-simple'))) v('the project report opens in expert mode');
@@ -1142,6 +1150,13 @@ if (touched('/project-report/')) {
   await page.check('#fld-tl-repayment-monthly');
   await expectText(page, v, 'rep-status', '3 questions left, for the document', 'the report, before its facts (UXR3, S4)');
   await expectText(page, v, 'rep-key-0', 'Rs. 37,86,301', 'the cost of the project');
+  // Before the check (OR8, the owner's O13): what was collected and the benchmarks, the owner's line; no table, no download.
+  if (await page.getByTestId('rep-pl').count() || await page.getByTestId('rep-download-pdf').count()) v('the report shows its tables or downloads before its check (OR8)');
+  await expectText(page, v, 'rep-doc-wait', 'A PDF, an Excel copy and a Word copy, once you have checked your figures above.', 'the download before the check');
+  await expectText(page, v, 'rep-confirm-cost', /Total cost of the projectRs\. 37,86,301$/, 'the check: the cost of the project');
+  await expectText(page, v, 'rep-confirm-sales', /Sales in a full first yearRs\. 1,20,00,000Sales: growth a year10%$/, 'the check: the sales as typed');
+  await expectText(page, v, 'rep-confirm-benchmarks', /These are standard; a bank’s credit manager, a CA or a DSA may change them\..*Average DSCRTarget 1\.50 or more/, 'the check: the benchmarks');
+  await confirmReport(page, v, 'case R');
   const cells = async (table, label) => (await page.getByTestId(table).locator('tr', { has: page.locator('th', { hasText: label }) }).first().locator('td').allTextContents());
   for (const [table, label, want] of [['rep-pl', 'Profit after tax', '11,54,407'], ['rep-bs', 'Total liabilities', '55,81,804'], ['rep-bs', 'Total assets', '55,81,804'], ['rep-dscr', 'DSCR (A ÷ B)', '2.51']]) {
     if (table !== 'rep-dscr') await page.getByTestId(table).evaluate((t) => t.closest('details').open = true);
@@ -1191,6 +1206,9 @@ if (touched('/project-report/')) {
   await expectText(page, v, 'rep-move-sales', '+14.3%', 'back to the engine\'s plan');
   await page.getByTestId('rep-plan-use').click();
   await expectText(page, v, 'rep-used', /Term loan: 25,00,000 → 23,76,740.*Working-capital limit: 5,00,000 → 3,80,877.*Sales: 70,00,000 → 80,01,000/, 'the plan used');
+  // The figures changed since the check: it asks again; the tables stay, the downloads wait (OR8).
+  await expectText(page, v, 'rep-confirm-lapsed', 'Your figures changed since you checked them: check them again.', 'the check after the plan is used');
+  if (!(await page.getByTestId('rep-pl').count()) || await page.getByTestId('rep-download-pdf').count()) v('after a change the tables went, or the downloads stayed (OR8)');
   await expectText(page, v, page.locator('#fld-tl-amount-hint'), 'Changed by the plan; it was 25,00,000.', 'a field the plan changed, marked');
   if (await page.inputValue('#fld-wcLimit') !== '3,80,877') v('"Use this plan" did not write the limit');
   if (await page.getByTestId('rep-misses').count()) v('the plan used still misses a level');
@@ -1207,6 +1225,7 @@ if (touched('/project-report/')) {
   await layout(page, v, 'make it viable, 390 px');
   await leave(page, '#fld-collateral', '');
   await leave(page, '#fld-wcLimit', '5 L');
+  await confirmReport(page, v, 'case R, checked again');
   await layout(page, v, 'the report filled, 390 px');
   await expectText(page, v, 'rep-doc-status', '3 questions left, for the document', 'the report before its facts');
   await leave(page, '#fld-rep-name', 'Asha Packaging');
@@ -1278,8 +1297,9 @@ if (touched('/project-report/')) {
     ['#fld-wcLimit', '3 L'], ['#fld-wcRate', '11']])
     await leave(page, id, value);
   await expectText(page, v, 'rep-status', /^\d+ questions? left, for the document$/, 'the PMEGP report');
-  const tiles = await page.locator('main dl > div').allTextContents();
+  const tiles = await page.locator('#report dl > div').allTextContents();
   if (!tiles.some((t) => t.startsWith('PMEGP margin money') && t.includes('Rs. 7,80,856'))) v(`the PMEGP report's tiles read ${JSON.stringify(tiles).slice(0, 200)}`);
+  await confirmReport(page, v, 'the PMEGP report');
   await page.getByTestId('rep-cf').evaluate((t) => t.closest('details').open = true);
   const cash = await page.getByTestId('rep-cf').locator('tr', { has: page.locator('th', { hasText: 'Cash at the end of the year' }) }).first().locator('td').allTextContents();
   if (cash[0] !== '42,793') v(`the PMEGP report's cash at the end of 2026-27 shows ${cash[0]}, want 42,793`);
@@ -1345,6 +1365,7 @@ if (touched('/project-report/')) {
   await expectText(page, v, 'rep-needs', /Mudra: the loans come to Rs\. 15,00,000, above Tarun's/, 'Tarun Plus unticked');
   await page.check('#fld-tarun');
   await expectText(page, v, 'rep-status', /^\d+ questions? left, for the document$/, 'the Mudra report');
+  await confirmReport(page, v, 'the Mudra report');
   await page.getByTestId('rep-pl').evaluate((t) => t.closest('details').open = true);
   const fee = (name) => page.getByTestId('rep-pl').locator('tr', { has: page.locator('th', { hasText: `Less: guarantee fee (${name})` }) }).first().locator('td').first();
   await expectText(page, v, fee('CGFMU'), '15,000', 'CGFMU\'s fee in 2026-27');

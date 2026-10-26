@@ -17,6 +17,7 @@ import { inr } from '../../../engine/util';
 import { soldBy } from '../../../engine/sold-by';
 import { GUARANTEES } from '../../../engine/guarantee';
 import type { Draft, Dropped, NoteId } from '../../../engine/narrative';
+import type { CheckGroup, CheckLine } from '../CheckStep';
 import {
   inSentence, labelOf, listed, ratioAt, rowOf, upPct, upRupees, type BoardMove, type CheckRow, type ViableLine, type ViableView,
   benchmarksNote, levelsOf, ratiosWord, type BenchmarkText,
@@ -846,3 +847,71 @@ export function applyPlan(s: ReportState, l: Levers): { s: ReportState; changes:
 export const undoPlan = (s: ReportState, changes: PlanChange[]) => changes.reduce((t, c) => (same(get(t, c.key), c.now) ? put(t, c.key, c.was) : t), s);
 export const sameLevers = (a: Levers, b: Levers) => LEVER_IDS.every((id) => a[id] === b[id]);
 export { AS_TYPED, LEVER_IDS, inSentence, type BoardMove, type CheckRow, type LeverId, type Levers, type ViableLine, type ViableView };
+
+// ---- Check and confirm (OR8, the owner's O13) ----
+
+const rs = (n?: number) => (n === undefined || !Number.isFinite(n) ? '—' : `Rs. ${inr(n)}`);
+const num = (n?: number, unit = '') => (n === undefined || !Number.isFinite(n) ? '—' : `${Number.isInteger(n) ? inr(n) : inr(n, 2)}${unit}`);
+const labelIn = <T,>(cs: { value: T; label: string }[], v?: T) => cs.find((c) => c.value === v)?.label ?? '—';
+/** A row of the years' words, a run of the same at its end said once ("60% in 2026-27, 70% from 2027-28"). */
+const byYear = (values: string[], years: string[]) => {
+  let k = values.length - 1;
+  while (k > 0 && values[k - 1] === values[k]) k--;
+  return [...values.slice(0, k).map((t, i) => `${t} in ${years[i]}`), `${values[k]} ${k < values.length - 1 ? 'from' : 'in'} ${years[k]}`].join(', ');
+};
+
+/** What was collected, read back before the report (OR8): the engine's input as parsed and its tables' words, a group a
+ * section; nothing is added up here. The benchmarks are the page's (p.checks). */
+export function checkOf(s: ReportState, p: ReportPreview): CheckGroup[] {
+  const v = p.view;
+  if (!v) return [];
+  const x = inputOf(s), table = (id: string) => v.tables.find((t) => t.id === id);
+  const rows = (id: string) => (table(id)?.rows ?? []).filter((r) => r.kind !== 'head').map((r) => ({ label: r.label, value: `Rs. ${r.values[0]}` }));
+  const g = guaranteeOf(s), own = 'The project’s own assets only', backs = s.scheme === 'mudra' ? 'A CGFMU guarantee, under Mudra, with no collateral'
+    : simple(s) ? (s.security === 'neither' ? own : labelIn(SECURITY_CHOICES, s.security))
+      : [x.collateral ? 'Property' : '', g === 'cgtmse' ? 'a CGTMSE guarantee' : ''].filter(Boolean).join(' and ') || own;
+  const business: CheckLine[] = [
+    { label: 'Who the borrower is', value: labelIn(BORROWER_CHOICES, s.borrower) },
+    { label: 'A government scheme', value: labelIn(SCHEME_CHOICES, s.scheme) },
+    { label: 'What backs the loan', value: backs },
+    ...(x.collateral ? [{ label: 'The collateral’s market value', value: rs(x.collateral) }] : []),
+  ];
+  const period = periodLine(s)?.text.replace(/^Loan period: /, '').replace(/\.$/, '');
+  const way = s.loan.repayment ?? (simple(s) ? 'emi' : undefined);
+  const loan: CheckLine[] = [
+    { label: 'Interest rate', value: num(x.loan.ratePct, '% a year') },
+    ...(period ? [{ label: 'Loan period', value: period }] : []),
+    { label: 'How it is repaid', value: labelIn(REPAYMENT_CHOICES, way) },
+  ];
+  const use = table('pl')?.rows.find((r) => r.label === 'Use of the capacity');
+  const sales: CheckLine[] = x.salesBy === 'typed'
+    ? [{ label: 'Sales in a full first year', value: rs(x.sales) }, { label: 'Sales: growth a year', value: num(x.salesGrowthPct, '%') }]
+    : [...(x.products ?? []).map((r, i) => {
+      const u = soldBy(r.unit);
+      return { label: r.name?.trim() || `Line ${i + 1}`, value: `${num(r.unitsMonth, ` ${u.many}`)} a month at full running, at ${rs(r.price)} ${u.per}` };
+    }), ...(use ? [{ label: 'Use of the capacity', value: byYear(use.values, v.years) }] : [])];
+  const c = costsOf(x), fixedHeads = typedHeads(s.heads?.fixed).length > 0, month = simple(s) && !fixedHeads ? amountOf(s.fixedMonth ?? '') : undefined;
+  const costs: CheckLine[] = [
+    { label: 'Materials and other variable costs', value: num(c.variablePct, '% of sales') },
+    month !== undefined ? { label: 'Fixed costs', value: `${rs(month)} a month` } : { label: 'Fixed costs', value: `${rs(c.fixedCosts)} in a full first year` },
+    ...(simple(s) ? [] : [{ label: 'Fixed costs: growth a year', value: num(x.fixedGrowthPct, '%') }]),
+  ];
+  const by = wcByOf(s);
+  const wc: CheckLine[] = [
+    { label: 'The working-capital limit', value: by === 'none' ? 'None needed' : by === 'worked' ? `${rs(x.wcLimit)}, worked out` : `${rs(x.wcLimit)}, as typed` },
+    ...(by === 'none' ? [] : [{ label: 'Its interest rate', value: num(x.wcRatePct, '% a year') }]),
+  ];
+  return [
+    { id: 'business', title: 'The business', to: 'fld-borrower', lines: business },
+    { id: 'cost', title: 'Cost of the project', to: 'cost', lines: rows('cost') },
+    { id: 'finance', title: 'Means of finance', to: 'finance', lines: rows('finance') },
+    { id: 'loan', title: 'The term loan', to: 'loan', lines: loan },
+    { id: 'sales', title: 'Production and sales', to: 'operations', lines: sales },
+    { id: 'costs', title: 'Variable and fixed costs', to: 'operations', lines: costs },
+    { id: 'wc', title: 'Working capital', to: 'wc', lines: wc },
+  ];
+}
+
+/** The check's key (OR8): the engine's input and the benchmarks; a change to either asks for the check again. The
+ * document's own facts and words are not in it. */
+export const checkKey = (s: ReportState) => JSON.stringify([inputOf(s), s.benchmarks ?? null]);

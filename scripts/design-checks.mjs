@@ -336,6 +336,7 @@ export const STATES = {
     plan: async (page) => { await caseR(page); await page.getByTestId('rep-viable').click(); },
     download: async (page) => {
       await caseR(page);
+      await page.getByTestId('rep-confirm').click();
       await leave(page, '#fld-rep-name', 'Asha Packaging');
       await leave(page, '#fld-rep-activity', 'Manufacture of corrugated boxes');
       await page.locator('#download').scrollIntoViewIfNeeded();
