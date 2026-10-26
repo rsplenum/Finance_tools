@@ -1121,9 +1121,10 @@ if (touched('/estimate/')) {
 // (2), who the borrower is (3), building and machinery, the scheme (3), the loan, its rate and its years, what backs it (3),
 // one product's line (3), when selling starts, the variable costs' share, the fixed costs a month and the limit (3), 25 in
 // all; 26 from OR5 (D-UX-174), with the holiday before the first instalment beside the repayment period after it; 27 from
-// OR6 (D-UX-203), with what the product line is sold by, a pick counted as a field. Expert mode asks every figure (56 with
+// OR6 (D-UX-203), with what the product line is sold by, a pick counted as a field; 28 from OR7 (D-UX-206), what backs it
+// gaining a fourth radio, property for part and CGTMSE for the rest (a choice, not a question). Expert mode asks every figure (56 with
 // one product line, the stepped way among the four ways to repay).
-const REP_DEFAULT = 27;
+const REP_DEFAULT = 28;
 const REP_FIELDS = 'main input:not(#download input):not(#benchmarks input), main select:not(#download select):not(#benchmarks select)';
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
