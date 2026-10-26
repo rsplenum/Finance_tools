@@ -18,7 +18,7 @@ import { ALL_ANSWERED } from '../verdict';
 import { printable } from '../doc/pdf';
 import { monthText } from '../dscr/model';
 import { SITE_NAME } from '../site';
-import { ACTIVITY_CHOICES, AREA_CHOICES, CATEGORY_CHOICES, CGTMSE, HEADS, REPAYMENT_CHOICES, guaranteeOf, plainOf, pmegpConditions, statusText, tidyAmount, type ReportFacts, type ReportPreview, type ReportState, type ReportWords, type ViewTable } from './model';
+import { ACTIVITY_CHOICES, AREA_CHOICES, CATEGORY_CHOICES, CGTMSE, HEADS, REPAYMENT_CHOICES, guaranteeOf, plainOf, pmegpConditions, statusText, tidyAmount, withMode, type ReportFacts, type ReportPreview, type ReportState, type ReportWords, type ViewTable } from './model';
 import { wordsNeeds, wordsPart } from './words';
 
 /** How sure each rule the report rests on is (D-DATA-25, TRUST1): the tax by who the borrower is, the working-capital
@@ -82,7 +82,8 @@ function entered(s: ReportState): [string, string][] {
   const who = BORROWERS.find((b) => b.id === s.borrower);
   if (who) pairs.push(['Constitution', who.label]);
   for (const h of HEADS) if (s.cost[h.id].trim()) pairs.push([h.label, amount(s.cost[h.id])]);
-  const l = s.loan, rep = REPAYMENT_CHOICES.find((r) => r.value === l.repayment)?.label ?? '';
+  // Simple mode's loan as expert mode's fields hold it: its month, holiday and instalments as assumed or worked out.
+  const l = withMode(s, 'expert').loan, rep = REPAYMENT_CHOICES.find((r) => r.value === l.repayment)?.label ?? '';
   const month = parseMonth(l.disbursed), m = plainOf(l.moratoriumMonths);
   if (s.scheme === 'pmegp') {
     const label = <T,>(c: { value: T; label: string }[], v?: T) => c.find((o) => o.value === v)?.label ?? '';

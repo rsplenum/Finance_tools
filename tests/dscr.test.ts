@@ -145,7 +145,7 @@ describe('when the loan runs', () => {
   it('one monthly instalment falls in the month drawn; the amount, rate and type do not matter', () => {
     expect(loanTimeline({ disbursed: '2027-03', moratoriumMonths: 0, instalments: 1, frequency: 'monthly' }))
       .toEqual({ years: ['2026-27'], firstInstalment: '2027-03', lastInstalment: '2027-03' });
-    expect(loanTimeline({ ...LOAN, moratoriumMonths: undefined })).toEqual({ needs: ['Moratorium in months (0 if none)'] });
+    expect(loanTimeline({ ...LOAN, moratoriumMonths: undefined })).toEqual({ needs: ['Holiday before the first instalment, in months (0 if none)'] });
   });
   it('years run on across a century', () => {
     expect(fyRange('2098-99', 3)).toEqual(['2098-99', '2099-00', '2100-01']);

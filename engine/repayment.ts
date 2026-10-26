@@ -9,7 +9,7 @@
  */
 import REPORT from './data/report.json';
 import { stepOf, type Frequency, type RepaymentStyle } from './loan';
-import { diagnose, LEVELS, termMonths, type Levels, type RatioId } from './ratios';
+import { diagnose, LEVELS, termMonths, type Levels, type RatioCheck, type RatioId } from './ratios';
 import { projectReport, type Report, type ReportInput } from './report';
 
 export interface Way {
@@ -19,8 +19,8 @@ export interface Way {
   /** The yearly rise of a stepped instalment, as a fraction (0.1 for 10%); 0 for the others. */
   step: number;
   lowest?: { dscr: number; fy: string }; average?: number;
-  /** The benchmarks this way misses (engine/ratios.ts). */
-  misses: RatioId[];
+  /** The benchmarks this way misses, and each read (engine/ratios.ts). */
+  misses: RatioId[]; checks: RatioCheck[];
   report: Report;
 }
 export interface Ways {
@@ -46,11 +46,11 @@ export function compareRepayments(x: ReportInput, lv?: Levels): Ways | undefined
   const step = frequency === 'monthly' ? stepOf({ ratePct: x.loan.ratePct as number, instalments: n }) : 0;
   // An EMI and a stepped repayment are worked monthly only (engine/dscr.ts): quarterly instalments have one way, equal principal.
   const styles: RepaymentStyle[] = frequency === 'quarterly' ? ['equal-principal'] : ['emi', 'equal-principal', ...(step > 0 ? ['stepped' as const] : [])];
-  const wayOf = (style: RepaymentStyle, r: Report, y: ReportInput): Way => ({
-    style, frequency, interest: r.loanInterest, first: r.firstInstalment, last: r.lastInstalment, step: style === 'stepped' ? step : 0,
-    ...(r.lowest ? { lowest: r.lowest } : {}), ...(r.average !== undefined ? { average: r.average } : {}),
-    misses: diagnose(r, y, 'fresh', lv).misses, report: r,
-  });
+  const wayOf = (style: RepaymentStyle, r: Report, y: ReportInput): Way => {
+    const d = diagnose(r, y, 'fresh', lv);
+    return { style, frequency, interest: r.loanInterest, first: r.firstInstalment, last: r.lastInstalment, step: style === 'stepped' ? step : 0,
+      ...(r.lowest ? { lowest: r.lowest } : {}), ...(r.average !== undefined ? { average: r.average } : {}), misses: d.misses, checks: d.checks, report: r };
+  };
   const ways: Way[] = [];
   for (const style of styles) {
     if (style === x.loan.style) { ways.push(wayOf(style, base, x)); continue; }

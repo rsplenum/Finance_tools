@@ -88,7 +88,7 @@ export const LOAN_LABELS: Record<keyof LoanTerms, string> = {
   amount: 'Loan amount',
   ratePct: 'Interest rate (% a year)',
   disbursed: 'Month the loan is drawn (like 2026-04)',
-  moratoriumMonths: 'Moratorium in months (0 if none)',
+  moratoriumMonths: 'Holiday before the first instalment, in months (0 if none)',
   instalments: 'Number of instalments',
   frequency: 'How often instalments fall due (monthly or quarterly)',
   style: 'Instalment type (equal instalments of principal, EMI, or stepped)',

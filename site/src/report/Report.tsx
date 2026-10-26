@@ -21,7 +21,7 @@ import { docNeeds, docStatus, fileName, reportDoc } from './document';
 import { Words } from './Words';
 import {
   CGFMU, CGTMSE, MUDRA, PMEGP, PMEGP_SHED, REPORT_REVIEW_BY, pmegpConditions, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, NO_PRODUCT, REPAYMENT_CHOICES, SCHEME_CHOICES,
-  COST_HEADS, MODE_CHOICES, SECURITY_CHOICES, SIMPLE_COST, WC_CHOICES, changedOf, headsSum, wcByOf, withMode, workedLine, type Mode,
+  COST_HEADS, MODE_CHOICES, SECURITY_CHOICES, SIMPLE_COST, WC_CHOICES, changedOf, headsSum, holidayAssumed, periodLine, repaymentView, wcByOf, withMode, workedLine, type Mode,
   ALONE, AS_TYPED, COLLATERAL_HINT, amountOf, applyPlan, assumptionsOf, boardOf, fixView, guaranteeOf, mudraLine, plainOf, planOf, preview, sameLevers, statusText, tarunAsked, tidyAmount, undoPlan, viableOf,
   type LeverId, type Levers, type PlanChange, type FixView, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
   type ViableView, type ViewRow, type ViewTable,
@@ -40,10 +40,12 @@ const ASSUMED_BOX: Record<string, string> = {
   days: 'fld-days-stock', utilisation: 'fld-utilisation', price: 'fld-priceGrowth', simpleCost: 'fld-cost-land', simpleFunds: 'fld-unsecured', simpleDrawn: 'fld-tl-disbursed',
   simpleMoratorium: 'fld-tl-moratorium', simpleFixedGrowth: 'fld-fixedGrowth', simpleWcRate: 'fld-wcRate',
 };
+/** Of those, the boxes simple mode asks too (OR5: the holiday), reached without switching. */
+const IN_SIMPLE = new Set(['fld-tl-moratorium']);
 /** The box each of the engine's needs is typed in, by the first words of the need (engine/report.ts, and model.ts's words
  * in simple mode): each missing figure is a link to its box (UX8, review finding 2), in expert mode when only it has one. */
 const BOXES: [string, string][] = [
-  ['When you will start selling', 'fld-sellFrom'], ['Years to repay', 'fld-years'], ['Fixed costs a month', 'fld-fixedMonth'], ['What backs the loan', 'fld-security'],
+  ['When you will start selling', 'fld-sellFrom'], ['Repayment period after the holiday', 'fld-years'], ['Holiday before the first instalment', 'fld-tl-moratorium'], ['Fixed costs a month', 'fld-fixedMonth'], ['What backs the loan', 'fld-security'],
   ['The working-capital limit: worked', 'fld-wcBy'], ['The working-capital limit worked', 'fld-wcBy'], ['Costs by head', 'rep-heads'],
   ['Who the borrower', 'fld-borrower'], ['Cost of the project', 'cost'], ['The term loan: its amount', 'fld-tl-amount'],
   ['The term loan: its interest', 'fld-tl-rate'], ['The term loan: the month', 'fld-tl-disbursed'], ['The term loan: the moratorium', 'fld-tl-moratorium'],
@@ -109,6 +111,7 @@ export function ReportCalculator() {
   const home = useHomeCase(setS, () => REPORT_HOME);
   const update: Update = (f) => setS(f);
   const p = useMemo(() => preview(s), [s]);
+  const period = useMemo(() => periodLine(s), [s]);
   const simple = s.mode === 'simple', blank = { ...EMPTY, mode: s.mode };
   const typed = JSON.stringify(s) !== JSON.stringify(blank);
   useKept('report', s, setS, blank);
@@ -197,14 +200,23 @@ export function ReportCalculator() {
     <Section id="loan" title="The term loan">
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
         {percent('fld-tl-rate', 'Interest rate (% a year)', s.loan.ratePct, (x, ratePct) => ({ ...x, loan: { ...x.loan, ratePct } }), '%')}
-        {simple ? percent('fld-years', 'Years to repay', s.years ?? '', (x, years) => ({ ...x, years }), 'years', undefined, 'By EMI every month, from the month you start selling.') : <>
-          <TextField id="fld-tl-disbursed" label="First drawn (month)" type="month" value={s.loan.disbursed}
+        {/* The holiday and the repayment after it, read back in all (D-UX-174); in simple mode the holiday runs to the first
+            sales until typed (D-UX-112), and the way to repay is compared below the figures (OR5). */}
+        {simple ? <>
+          <TextField id="fld-tl-moratorium" label="Holiday before the first instalment (months)" unit="months" byDefault={holidayAssumed(s)} keepBlank
+            hint={mark('fld-tl-moratorium', 'Interest only; no instalments.')} inputMode="decimal" value={s.loan.moratoriumMonths} invalid={bad(s.loan.moratoriumMonths, plainOf)}
+            said={notUnderstood(s.loan.moratoriumMonths, plainOf, 'a number, like 6')} onCommit={(moratoriumMonths) => update((x) => ({ ...x, loan: { ...x.loan, moratoriumMonths } }))} />
+          {percent('fld-years', 'Repayment period after it (years)', s.years ?? '', (x, years) => ({ ...x, years }), 'years')}
+        </> : <>
+          <TextField id="fld-tl-disbursed" label="Month the loan is first drawn" type="month" value={s.loan.disbursed}
             said={s.loan.disbursed.trim() ? (parseMonth(s.loan.disbursed) ? monthText(parseMonth(s.loan.disbursed) as string) : 'Not understood. Type 2026-04 or Apr 2026.') : undefined}
             onCommit={(disbursed) => update((x) => ({ ...x, loan: { ...x.loan, disbursed } }))} />
-          {percent('fld-tl-moratorium', 'Moratorium (months; 0 if none)', s.loan.moratoriumMonths, (x, moratoriumMonths) => ({ ...x, loan: { ...x.loan, moratoriumMonths } }), 'months')}
+          {percent('fld-tl-moratorium', 'Holiday before the first instalment (months; 0 if none)', s.loan.moratoriumMonths, (x, moratoriumMonths) => ({ ...x, loan: { ...x.loan, moratoriumMonths } }), 'months')}
           {percent('fld-tl-instalments', 'Number of instalments', s.loan.instalments, (x, instalments) => ({ ...x, loan: { ...x.loan, instalments } }))}
         </>}
       </div>
+      {period && <p data-testid="rep-period" aria-live="polite" class="mt-2 text-sm text-ink">{period.text}{period.checks.map((c) =>
+        <span key={c.text} class={c.within ? '' : 'text-bad'}> {c.text}</span>)}</p>}
       {!simple && <Choice name="fld-tl-repayment" legend="How it is repaid" options={REPAYMENT_CHOICES} value={s.loan.repayment}
         onChange={(repayment) => update((x) => ({ ...x, loan: { ...x.loan, repayment } }))} />}
       {simple && s.scheme !== 'mudra' && <>
@@ -237,7 +249,7 @@ export function ReportCalculator() {
       {simple && s.salesBy === 'typed' && <p class="mt-4 text-ink">Sales are typed by year in expert mode.</p>}
       <div class="mt-4 grid gap-4 sm:grid-cols-2">
         {simple ? <TextField id="fld-sellFrom" label="When will you start selling?" type="month" value={s.sellFrom ?? ''}
-            hint={'No instalments until then.'}
+            hint={'The holiday before the first instalment runs until then, unless you type another.'}
             said={s.sellFrom?.trim() ? (parseMonth(s.sellFrom) ? monthText(parseMonth(s.sellFrom) as string) : 'Not understood. Type 2027-03 or Mar 2027.') : undefined}
             onCommit={(sellFrom) => update((x) => ({ ...x, sellFrom }))} />
           : percent('fld-monthsToStart', 'Months from the loan to the first sales (0 if at once)', s.monthsToStart, (x, monthsToStart) => ({ ...x, monthsToStart }), 'months')}
@@ -310,7 +322,7 @@ export function ReportCalculator() {
     {p.view && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
     <Ledger id="assumed" testid="rep-assumed" title="Assumed until changed" rows={assumptionsOf(s).map((a) => {
       const to = ASSUMED_BOX[a.id];
-      return { ...a, to, go: to && simple ? toExpert(to) : undefined };
+      return { ...a, to, go: to && simple && !IN_SIMPLE.has(to) ? toExpert(to) : undefined };
     })} />
     <Download s={s} p={p} update={update} />
     </div>
@@ -390,6 +402,8 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
     return () => clearTimeout(t);
   }, [base, !!p.misses]);
   const fx = p.misses && fixed?.on === base ? fixed.f : undefined;
+  // The ways to repay compared (OR5): three runs of the report, worked with the figures.
+  const ways = useMemo(() => (p.view ? repaymentView(s) : undefined), [base, !!p.view]);
   const move = (id: LeverId, n: number) => { setLv((l) => ({ ...l, [id]: n })); if (!touched.includes(id)) setTouched([...touched, id]); };
   const onKey = new Set(p.view?.key.map((k) => k.check).filter(Boolean));
   const group = (by: 'borrower' | 'lender', title?: string) => {
@@ -441,7 +455,21 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
       <Benchmarks pre="rep" fields={benchmarkFields('fresh', s.benchmarks)} reset={() => update((t) => ({ ...t, benchmarks: undefined }))}
         set={(id, t) => update((u) => ({ ...u, benchmarks: withBenchmark(u.benchmarks, id, t) }))} />
     </div>}
-    {p.longTerm && <p data-testid="rep-long-term" class="mt-2 text-sm text-bad">{p.longTerm}</p>}
+    {ways && <div data-testid="rep-repayment" tabIndex={-1} class="mt-6">
+      <h3 class="text-title text-ink">Ways to repay</h3>
+      <p data-testid="rep-repayment-lead" class="mt-1 text-sm text-ink">{ways.lead}</p>
+      <ul class="mt-1 divide-y divide-line">{ways.rows.map((r) => <li key={r.value} data-testid={`rep-way-${r.value}`} class="py-2">
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span class="text-sm font-medium text-ink">{r.label}</span>
+          {r.proposed && <span class="text-sm text-good">Proposed</span>}
+          {r.now ? <span class="text-sm text-ink-muted">In use</span> : <button type="button" data-testid={`rep-way-use-${r.value}`} class={r.proposed ? FILLED : BUTTON}
+            onClick={() => { update((x) => ({ ...x, loan: { ...x.loan, repayment: r.value } })); focusNext('[data-testid="rep-repayment"]'); }}>Use this</button>}
+        </div>
+        <p class="mt-1 text-sm text-ink">Interest over the loan {r.interest}; {r.instalments}.</p>
+        <p class={`text-sm ${r.meets ? 'text-good' : 'text-bad'}`}>Lowest-year DSCR {r.lowest}. {r.verdict}.</p>
+      </li>)}</ul>
+      {ways.notes.map((n) => <p key={n} class={HINT}>{n}</p>)}
+    </div>}
     {!p.misses && viable}
     {v && !plan && <div data-testid="rep-viable-box" tabIndex={-1} class="mt-6 border-t-2 border-ink pt-4">
       <h3 class="text-title text-ink">{v.title}</h3>

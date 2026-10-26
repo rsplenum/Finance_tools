@@ -14,7 +14,7 @@ import {
   type Target, type YearFigures, type Plan,
 } from '../../../engine/dscr';
 import { LENDER, auditedYear, cashCheck, promotersRepaid, stressTests, type AuditedInput, type LenderYear, type Summary } from '../../../engine/lender';
-import { PERIOD_MONTHS, fyOf, monthAfter, type LoanTerms } from '../../../engine/loan';
+import { PERIOD_MONTHS, fyOf, monthAfter, stepOf, type LoanTerms } from '../../../engine/loan';
 import type { DscrCase } from '../../../engine/dscr-plan';
 import { LEVELS } from '../../../engine/ratios';
 import { emisByYear, fromMonth, series, type RunningLoan } from '../../../engine/project';
@@ -27,7 +27,7 @@ export type Source = 'own' | 'plan';
 /** A preset's id from the data file, or 'choose' to answer the four choices one by one. */
 export type Method = string;
 /** One answer for two facts: an EMI is monthly; equal principal is monthly or quarterly. */
-export type Repayment = 'emi' | 'monthly' | 'quarterly';
+export type Repayment = 'emi' | 'monthly' | 'stepped' | 'quarterly';
 /**
  * How a row is filled: one figure for every year, a first year that grows or falls by a %, a figure for each year, or
  * none; EMIs a month (loans already running), a yearly figure from a month (the new asset), or by who the borrower is (tax).
@@ -303,12 +303,12 @@ export function loanInput(s: State): LoanInput {
     amount: amountOf(l.amount), ratePct: numberOf(l.ratePct), disbursed: parseMonth(l.disbursed),
     moratoriumMonths: numberOf(l.moratoriumMonths), instalments: numberOf(l.instalments),
     // An EMI is worked monthly only (docs/RULES.md), so one answer gives both the type and how often.
-    ...(r ? { style: r === 'emi' ? 'emi' : 'equal-principal', frequency: r === 'quarterly' ? 'quarterly' : 'monthly' } as const : {}),
+    ...(r ? { style: r === 'emi' || r === 'stepped' ? r : 'equal-principal', frequency: r === 'quarterly' ? 'quarterly' : 'monthly' } as const : {}),
   };
 }
 
 /** The one question for how the loan is repaid replaces the engine's two lines for it. */
-const REPAYMENT_NEED = 'How the loan is repaid (EMI, or equal principal every month or quarter)';
+const REPAYMENT_NEED = 'How the loan is repaid (EMI, equal principal every month or quarter, or stepped)';
 const oneRepaymentNeed = (needs: string[]) => {
   const two = [LOAN_LABELS.frequency, LOAN_LABELS.style];
   const at = needs.findIndex((n) => two.includes(n));
@@ -634,11 +634,14 @@ function money<K extends string>(from: Record<K, number>, keys: readonly K[]): M
   return { ...words, n: Object.fromEntries(keys.map((k) => [k, from[k]])) as Record<K, number> };
 }
 
+/** A stepped instalment's yearly rise (engine/loan.ts), as a percentage. */
+const stepWords = (step: number) => `${+(step * 100).toFixed(1)}%`;
 /** The repayment schedule in words and rupees: every month, grouped by financial year with the year's totals. */
-function scheduleView(a: Amortization, repayment?: Repayment): ScheduleView {
+function scheduleView(a: Amortization, repayment?: Repayment, step = 0): ScheduleView {
   return {
     level: repayment === 'emi'
       ? `EMI ${rs(a.level, 2)} a month, interest included; banks round it up to the next rupee.`
+      : repayment === 'stepped' ? `${rs(a.level, 2)} a month in the first year, interest included, rising ${stepWords(step)} a year.`
       : `Principal ${rupees(a.level)} a ${repayment === 'quarterly' ? 'quarter' : 'month'}, and interest on the balance every month.`,
     years: a.years.map((y) => ({
       fy: y.fy, ...money(y, ['interest', 'principal', 'closing'] as const),
@@ -687,10 +690,11 @@ export function preview(s: State): Preview {
   // The repayment schedule needs only the loan terms, so it is shown before the projections are in.
   const am = amortization(loan);
   if ('months' in am) {
-    p.schedule = scheduleView(am, s.loan.repayment);
+    const step = loan.style === 'stepped' ? stepOf(loan as LoanTerms) : 0;
+    p.schedule = scheduleView(am, s.loan.repayment, step);
     const first = am.months.find((m) => m.instalment), perYear = loan.frequency === 'quarterly' ? 4 : 12;
     p.loanLine = {
-      instalment: loan.style === 'emi' ? `EMI ${rs(am.level, 2)} a month` : `First instalment ${rs(first?.paid ?? 0)}, then less as the balance falls`,
+      instalment: loan.style === 'emi' ? `EMI ${rs(am.level, 2)} a month` : loan.style === 'stepped' ? `${rs(am.level, 2)} a month in the first year, rising ${stepWords(step)} a year` : `First instalment ${rs(first?.paid ?? 0)}, then less as the balance falls`,
       totalInterest: rs(am.totalInterest),
     };
     const count = new Map<string, number>();
@@ -885,7 +889,7 @@ export const FRONT: [RegExp, string, string][] = [
   [/^(Growth in sales|Profit before interest, depreciation and tax: growth)/, 'Growth in sales a year (%)', 'fld-fd-growth'],
   [/^Loan amount$/, 'Loan amount', 'fld-fd-amount'],
   [/^Interest rate/, 'Interest rate (% a year)', 'fld-fd-rate'],
-  [/^Number of instalments$/, 'Years to repay', 'fld-fd-years'],
+  [/^Number of instalments$/, 'Repayment period', 'fld-fd-years'],
 ];
 export const frontAt = (n: string, first?: string) => FRONT.findIndex(([m], i) => m.test(n) && (i !== 1 || !first || !/\d{4}-\d{2}$/.test(n) || n.endsWith(first)));
 /** On the front door every missing fact shows at once: the profit and its growth before the loan's dates give the years. */

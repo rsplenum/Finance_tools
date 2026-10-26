@@ -150,7 +150,7 @@ export function makeViable(x: ReportInput, lv?: Levels): Viability | Needs | Blo
     }
     return `${what} within ${longest} months meets none of the levels missed.`;
   };
-  const mor = longer(m0, m0 + room, (v) => ({ ...x, loan: { ...x.loan, moratoriumMonths: v } }), 'A longer moratorium');
+  const mor = longer(m0, m0 + room, (v) => ({ ...x, loan: { ...x.loan, moratoriumMonths: v } }), 'A longer holiday');
   if (typeof mor === 'string') out.moratoriumNone = mor; else out.moratorium = mor;
   const ins = longer(n0, n0 + Math.floor(room / step), (v) => ({ ...x, loan: { ...x.loan, instalments: v } }), 'A longer repayment');
   if (typeof ins === 'string') out.instalmentsNone = ins; else out.instalments = { ...ins, perYear };
