@@ -549,34 +549,50 @@ export function periodLine(s: ReportState): { text: string; checks: { text: stri
   return { text, checks: [...checks.filter((_, k) => p.limits[k].by === 'pmegp'), ...checks.filter((_, k) => p.limits[k].by !== 'pmegp')] };
 }
 
-/** A way to repay as the comparison shows it: the engine's figures in words, none worked out here. */
-export interface WayRow { value: Repayment; label: string; interest: string; instalments: string; lowest: string; verdict: string; meets: boolean; proposed: boolean; now: boolean }
+/** A way to repay as the comparison shows it: the engine's figures in words, none worked out here. `lines`: the ratios in
+ * question on this way, each with its tone. */
+export interface WayLine { text: string; meets?: boolean }
+export interface WayRow { value: Repayment; label: string; interest: string; instalments: string; lines: WayLine[]; meets: boolean; proposed: boolean; now: boolean; least: boolean }
 export interface RepaymentView { lead: string; rows: WayRow[]; notes: string[] }
 const valueOf = (w: Way): Repayment => (w.frequency === 'quarterly' ? 'quarterly' : w.style === 'equal-principal' ? 'monthly' : w.style);
 const stepText = (w: Way) => `${+(w.step * 100).toFixed(1)}%`;
 const wayLabel = (w: Way) => (w.style === 'stepped' ? `Stepped: rising ${stepText(w)} a year` : (REPAYMENT_CHOICES.find((c) => c.value === valueOf(w)) as { label: string }).label);
-/** The ways to repay compared (OR5, D-UX-198; engine/repayment.ts): each on the interest it pays over the loan and its
- * lowest-year DSCR, the cheapest first, and the cheapest that misses no benchmark proposed. The way in use stays as
- * typed (EMI in simple mode, an assumption listed) until the borrower takes another. */
+/** A ratio on one way, in the bars' words: its worst year's figure, then whether it meets its target. */
+function wayLine(k: RatioCheck): WayLine {
+  const r = rowOf(k), read = k.worst !== undefined && !k.why && !k.na ? `${k.label} ${r.worst}` : `${k.label}: ${inSentence(r.worst)}`;
+  return k.meets === undefined ? { text: `${read}.` } : { text: `${read}: ${k.meets ? 'meets' : 'misses'}, target ${r.level}.`, meets: k.meets };
+}
+/** The ways to repay compared (OR5, D-UX-198; engine/repayment.ts): each on the interest it pays over the loan and the
+ * ratios in question, the cheapest first, and the cheapest that misses no benchmark proposed. The ratios in question are
+ * those a way misses (the owner's ask: never the DSCR when it is not one of them); when every way meets them all, the
+ * lowest-year DSCR, the ratio the instalments move most. The way in use stays as typed (EMI in simple mode, an assumption
+ * listed) until the borrower takes another. */
 export function repaymentView(s: ReportState): RepaymentView | undefined {
   const c = compareRepayments(inputOf(s), levelsOf(s.benchmarks));
   if (!c) return undefined;
-  const rows = c.ways.map((w): WayRow => {
+  const missed = new Set(c.ways.flatMap((w) => w.misses)), asked = c.now.checks.map((k) => k.id).filter((id) => missed.has(id));
+  const rows = c.ways.map((w, i): WayRow => {
     const low = w.checks.find((k) => k.id === 'dscrLowest'), every = w.frequency === 'quarterly' ? 'quarter' : 'month';
+    const lowest = w.lowest && low ? `${ratioAt(w.lowest.dscr, low)} in ${w.lowest.fy}` : '—';
     return {
       value: valueOf(w), label: wayLabel(w), interest: `Rs. ${rupees(w.interest)}`, meets: !w.misses.length, proposed: w === c.proposed, now: w === c.now,
+      least: i === 0 && !c.proposed && c.ways.length > 1,
       instalments: w.style === 'emi' ? `Rs. ${rupees(w.first)} a month` : w.style === 'stepped' ? `Rs. ${rupees(w.first)} a month in the first year, rising to Rs. ${rupees(w.last)}`
         : `Rs. ${rupees(w.first)} the first ${every}, falling to Rs. ${rupees(w.last)}`,
-      lowest: w.lowest && low ? `${ratioAt(w.lowest.dscr, low)} in ${w.lowest.fy}` : '—',
-      verdict: w.misses.length ? `Misses ${listed(w.misses.map(labelOf))}` : 'Meets every benchmark',
+      lines: !asked.length ? [{ text: `Lowest-year DSCR ${lowest}. Meets every benchmark.`, meets: true }]
+        // More than two in question: the bars above show each, so a way says only what it misses.
+        : asked.length > 2 ? [w.misses.length ? { text: `Misses ${listed(w.misses.map(labelOf))}.`, meets: false } : { text: 'Meets every benchmark.', meets: true }]
+          : [...asked.map((id) => wayLine(w.checks.find((k) => k.id === id) as RatioCheck)), ...(w.misses.length ? [] : [{ text: 'Meets every benchmark.', meets: true }])],
     };
   });
-  const p = rows.find((r) => r.proposed);
+  const p = rows.find((r) => r.proposed), same = c.ways.every((w) => w.misses.join() === c.now.misses.join());
+  const them = asked.length > 2 ? `${asked.length} ratios` : listed(asked.map(labelOf));
   const lead = rows.length === 1 ? 'One way to repay quarterly instalments: equal principal.'
-    : !p ? 'No way to repay meets every benchmark with the figures as typed.'
-      : `${p.label} pays the least interest of the ways that meet every benchmark${p.now ? ': the way in use' : ''}.`;
+    : p ? `${p.label} pays the least interest of the ways that meet every benchmark${p.now ? ': the way in use' : ''}.`
+      : same ? `${them[0].toUpperCase()}${them.slice(1)} ${asked.length > 1 ? 'miss' : 'misses'} whichever way the loan is repaid: the ways differ in the interest and the instalments. What fixes ${asked.length > 1 ? 'them' : 'it'} is under “Why it does not work yet” above.`
+        : 'No way to repay meets every benchmark with the figures as typed.';
   const notes = [
-    ...(c.ways.some((w) => w.style === 'stepped') ? [`A stepped instalment is level within each year and rises ${STEPPED.stepPct}% a year. The last year's is held to ${STEPPED.lastToFirstMost} times the first year's at most, until a lender sets its own.`] : []),
+    ...(c.ways.some((w) => w.style === 'stepped') ? [`A stepped instalment is level within each year and rises each new year by up to ${STEPPED.stepPct}%. The last year's is held to ${STEPPED.lastToFirstMost} times the first year's at most, until a lender sets its own.`] : []),
     ...(c.noStep === 'quarterly' ? ['An EMI and a stepped instalment are worked every month: choose monthly instalments to compare them.']
       : c.noStep === 'short' ? ['No stepped way: the instalments end within a year.'] : []),
   ];
@@ -909,8 +925,18 @@ export function checkOf(s: ReportState, p: ReportPreview): CheckGroup[] {
     { id: 'sales', title: 'Production and sales', to: 'operations', lines: sales },
     { id: 'costs', title: 'Variable and fixed costs', to: 'operations', lines: costs },
     { id: 'wc', title: 'Working capital', to: 'wc', lines: wc },
+    { id: 'document', title: 'For the report’s first page', to: 'facts', lines: facts(s.doc) },
   ];
 }
+
+/** The report's first page in the check (D-UX-216): a fact it needs reads "Not given yet"; one it may leave out, only once typed. */
+const facts = (f: ReportFacts): CheckLine[] => [
+  { label: 'Business’s name', value: f.name.trim() || 'Not given yet' },
+  { label: 'What the business does', value: f.activity.trim() || 'Not given yet' },
+  { label: 'Business’s address', value: f.address.trim() || 'Not given yet' },
+  ...(f.lender.trim() ? [{ label: 'Lender', value: f.lender.trim() }] : []),
+  ...(f.preparedBy.trim() ? [{ label: 'Prepared by', value: f.preparedBy.trim() }] : []),
+];
 
 /** The check's key (OR8): the engine's input and the benchmarks; a change to either asks for the check again. The
  * document's own facts and words are not in it. */

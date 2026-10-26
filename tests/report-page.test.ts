@@ -288,6 +288,20 @@ const FS: ReportState = {
   products: [{ name: 'Widgets', units: '10,000', price: '1,500' }], monthsToStart: '1', utilisation: '60, 70, 80', priceGrowth: '0',
   variablePct: '60', fixed: '1.2 Cr', fixedGrowth: '5', wcLimit: '53 L', wcRate: '9.3',
 };
+describe('the ways to repay on a miss no way fixes (the owner, 26-10-2026)', () => {
+  it('says the way to repay cannot fix it, shows only the ratio in question, and marks the least interest', () => {
+    const w = repaymentView(FS)!;
+    expect(w.lead).toBe('Fixed-asset cover misses whichever way the loan is repaid: the ways differ in the interest and the instalments. What fixes it is under “Why it does not work yet” above.');
+    expect(w.rows.map((r) => [r.value, r.least, r.now])).toEqual([['monthly', true, false], ['emi', false, true], ['stepped', false, false]]);
+    // The figures are the engine's (each way's own fixed-asset cover); only the words are checked here.
+    for (const r of w.rows) {
+      expect(r.lines).toHaveLength(1);
+      expect(r.lines[0]).toMatchObject({ meets: false, text: expect.stringMatching(/^Fixed-asset cover \d\.\d\d in 20\d\d-\d\d: misses, target 1\.20 or more\.$/) });
+    }
+    expect(w.notes[0]).toBe("A stepped instalment is level within each year and rises each new year by up to 10%. The last year's is held to 2 times the first year's at most, until a lender sets its own.");
+  });
+});
+
 describe('the fix beside the miss, in words, and used (OR2)', () => {
   it('names the cause in a line, then the two fixes, the least strained first', () => {
     // The page sends each line's unit (OR6), the piece when none is picked; a word that changes no sum.
@@ -413,9 +427,12 @@ describe('simple and expert modes', () => {
     expect(w.rows.map((r) => r.interest)).toEqual(c.ways.map((k) => `Rs. ${inr(k.interest)}`));
     expect(w.rows[1].instalments).toBe(`Rs. ${inr(c.ways[1].first)} a month`);
     expect(w.rows[2].label).toBe('Stepped: rising 10% a year');
-    expect(w.notes[0]).toMatch(/^A stepped instalment is level within each year and rises 10% a year\. The last year's is held to 2 times the first year's at most/);
+    expect(w.notes[0]).toMatch(/^A stepped instalment is level within each year and rises each new year by up to 10%\. The last year's is held to 2 times the first year's at most/);
     const p = w.rows.find((r) => r.proposed);
-    expect(w.lead).toBe(p ? `${p.label} pays the least interest of the ways that meet every benchmark${p.now ? ': the way in use' : ''}.` : 'No way to repay meets every benchmark with the figures as typed.');
+    expect(p).toBeUndefined();
+    // Six ratios miss with each way (the owner, 26-10-2026): the way to repay cannot fix them, so it says so.
+    expect(w.lead).toBe('6 ratios miss whichever way the loan is repaid: the ways differ in the interest and the instalments. What fixes them is under “Why it does not work yet” above.');
+    expect(w.rows.every((r) => r.lines.length === 1 && /^Misses /.test(r.lines[0].text))).toBe(true);
     const st = { ...S, loan: { ...S.loan, repayment: 'stepped' as const } };
     expect([inputOf(st).loan.style, repaymentView(st)!.rows.find((r) => r.now)?.value]).toEqual(['stepped', 'stepped']);
     expect(assumptionsOf(st).map((a) => a.id)).not.toContain('simpleRepaid');
@@ -474,6 +491,11 @@ describe('check and confirm (OR8)', () => {
     expect(lines({ ...S, security: 'hybrid', collateral: '8 L' }).business.slice(2)).toEqual(['What backs the loan: Property for part, CGTMSE for the rest', 'The collateral’s market value: Rs. 8,00,000']);
     expect(lines({ ...S, wcBy: 'none' }).wc).toEqual(['The working-capital limit: None needed']);
     expect(lines({ ...S, scheme: 'mudra', loan: { ...S.loan, amount: '5 L' }, wcBy: 'typed', wcLimit: '1 L' }).business[2]).toBe('What backs the loan: A CGFMU guarantee, under Mudra, with no collateral');
+  });
+  it('reads back the first page’s facts, a needed one not given said so, one that may be left out only once typed (D-UX-216)', () => {
+    expect(lines(P).document).toEqual(['Business’s name: Meera Foods', 'What the business does: Roasted snacks', 'Business’s address: Example village, Nashik']);
+    expect(lines({ ...S, doc: { name: '', activity: '', address: '', lender: 'Example Bank, Pune', preparedBy: '' } }).document)
+      .toEqual(['Business’s name: Not given yet', 'What the business does: Not given yet', 'Business’s address: Not given yet', 'Lender: Example Bank, Pune']);
   });
   it('has nothing to read back before the report has figures', () => {
     expect(checkOf(EMPTY, preview(EMPTY))).toEqual([]);

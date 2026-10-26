@@ -31,7 +31,6 @@ import {
 
 type Update = (f: (s: ReportState) => ReportState) => void;
 const MUTED = 'text-ink-muted';
-const upper = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 const SALES_BY: { value: ReportState['salesBy']; label: string }[] = [
   { value: 'drivers', label: 'Each product: how many a month and its price' }, { value: 'typed', label: 'Sales I type, with their growth' }];
 const bad = (t: string, read: (t: string) => unknown) => !!t.trim() && read(t) === undefined;
@@ -68,14 +67,24 @@ const boxOf = (need: string): [string, string] | undefined => {
   const m = /^Sales, line (\d+): (.*)$/.exec(need), fact = m && LINE_FACT.find(([w]) => m[2].startsWith(w));
   return fact ? [need, `fld-product-${Number((m as RegExpExecArray)[1]) - 1}-${fact[1]}`] : BOXES.find(([w]) => need.startsWith(w));
 };
-/** "Answer it" beside the status (OR3, the owner's O7): the first question with a box, else the document's own facts. */
+/** The document's own facts and their boxes, among the questions (D-UX-216); the report's words land on the download. */
+const DOC_BOXES: [string, string][] = [['The business’s name', 'fld-rep-name'], ['What the business does', 'fld-rep-activity'],
+  ['The business’s address', 'fld-rep-address'], ['The lender', 'fld-rep-lender'], ['Prepared by', 'fld-rep-preparedBy']];
+const docBox = (need: string) => DOC_BOXES.find(([w]) => need.startsWith(w))?.[1];
+/** A fact the document still needs, a link to its box when it has one. */
+const docItem = (n: string) => {
+  const to = docBox(n);
+  return <li key={n}>{to ? <a href={`#${to}`} onClick={goTo(to)} class="inline-flex min-h-6 items-center text-link">{n}</a> : n}</li>;
+};
+/** "Answer it" beside the status (OR3, the owner's O7): the first question with a box, then the document's own facts,
+ * which stand among the questions (the owner: three left that could not be seen); all answered, the check until done. */
 function goOf(s: ReportState, p: ReportPreview, toBox: (need: string) => (e: Event) => void, ok: boolean) {
   const n = p.needs.find((x) => boxOf(x));
   if (n) return { to: (boxOf(n) as [string, string])[1], what: n, onClick: toBox(n) };
-  // The check before the document's facts (OR8): they sit in the download, which waits for it.
-  if (!p.needs.length && p.view && !p.blocked && !ok) return { to: 'check', what: 'check your figures' };
-  if (!p.needs.length && p.view && !p.blocked && docNeeds(s.doc, s.words).length) return { to: 'download', what: 'the document' };
-  return undefined;
+  if (p.needs.length || !p.view || p.blocked) return undefined;
+  const d = docNeeds(s.doc, s.words)[0], to = d && (docBox(d) ?? (ok ? 'download' : undefined));
+  if (to) return { to, what: d, onClick: goTo(to) };
+  return ok ? undefined : { to: 'check', label: 'check your figures' };
 }
 /** One tone a meaning (docs/DESIGN-SITE.md, Colours): good meets, warn provisional, bad misses. */
 
@@ -330,8 +339,10 @@ export function ReportCalculator() {
         <ul class="mt-2 list-disc space-y-1 pl-5 text-ink">{changed.map((c) => <li key={c}>{c}</li>)}</ul>
         <button type="button" data-testid="rep-to-expert" class="mt-2 min-h-11 text-link underline underline-offset-4" onClick={() => toMode('expert')}>Change them in expert mode</button>
       </div>}
-      {typed && <p data-testid="rep-arrived" class="mt-8 text-ink lg:hidden"><a href="#report" class="text-link underline underline-offset-4">The project report below</a> {arrived(p)}</p>}
     </Section>
+    <Facts s={s} update={update}>
+      {typed && <p data-testid="rep-arrived" class="mt-8 text-ink lg:hidden"><a href="#report" class="text-link underline underline-offset-4">The project report below</a> {arrived(p)}</p>}
+    </Facts>
     </div>
     <Result s={s} p={p} update={update} use={use} used={used} undo={undo} keep={() => setUsed([])} toCollateral={toCollateral} toBox={toBox} ok={ok}
       reset={typed
@@ -340,7 +351,7 @@ export function ReportCalculator() {
           <button type="button" data-testid="rep-clear-undo" class={BUTTON} onClick={unclear}>Undo</button></p>} />
     <div class="lg:col-span-2 lg:row-start-2">
     {p.view && !p.blocked && <CheckStep pre="rep" groups={checkOf(s, p)} to="benchmarks" state={ok ? 'done' : checked ? 'lapsed' : 'open'}
-      benchmarks={(p.checks ?? []).map((c) => ({ label: c.label, value: upper(targetOf(c)) }))}
+      benchmarks={(p.checks ?? []).map((c) => ({ label: c.label, value: c.byDefault === undefined ? c.level : `${c.level}, yours (default ${c.byDefault}${c.looser ? ', looser than a bank may accept' : ''})` }))}
       confirm={seen ? 'These are right' : 'These are right: show the report'} onConfirm={confirm} />}
     {p.view && (ok || seen) && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
     <Ledger id="assumed" testid="rep-assumed" title="Assumed until changed" rows={assumptionsOf(s).map((a) => {
@@ -485,11 +496,12 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
         <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span class="text-sm font-medium text-ink">{r.label}</span>
           {r.proposed && <span class="text-sm text-good">Proposed</span>}
+          {r.least && <span class="text-sm text-ink-muted">Least interest</span>}
           {r.now ? <span class="text-sm text-ink-muted">In use</span> : <button type="button" data-testid={`rep-way-use-${r.value}`} class={r.proposed ? FILLED : BUTTON}
             onClick={() => { update((x) => ({ ...x, loan: { ...x.loan, repayment: r.value } })); focusNext('[data-testid="rep-repayment"]'); }}>Use this</button>}
         </div>
         <p class="mt-1 text-sm text-ink">Interest over the loan {r.interest}; {r.instalments}.</p>
-        <p class={`text-sm ${r.meets ? 'text-good' : 'text-bad'}`}>Lowest-year DSCR {r.lowest}. {r.verdict}.</p>
+        {r.lines.map((l) => <p key={l.text} class={`text-sm ${l.meets === undefined ? 'text-ink-muted' : tone(l.meets)}`}>{l.text}</p>)}
       </li>)}</ul>
       {ways.notes.map((n) => <p key={n} class={HINT}>{n}</p>)}
     </div>}
@@ -540,7 +552,7 @@ function Result({ s, p, update, use, used, undo, keep, toCollateral, toBox, rese
   s: ReportState; p: ReportPreview; update: Update; use: (l: Levers) => void; used: PlanChange[]; undo: () => void; keep: () => void;
   toCollateral: (e: Event) => void; toBox: (need: string) => (e: Event) => void; reset: ComponentChildren; ok: boolean;
 }) {
-  const v = p.view, verdict = verdictOf(p);
+  const v = p.view, verdict = verdictOf(p), own = v && !p.blocked && !p.needs.length ? docNeeds(s.doc, s.words) : [];
   const result = p.blocked ? 'blocked' : p.needs.length || p.short ? 'provisional' : 'ready';
   // Before the figures, the report's outline: its key figures with "—" for each not yet known, never 0 (UX8, review finding 2).
   const first = p.needs.map(boxOf).find(Boolean)?.[1];
@@ -564,10 +576,11 @@ function Result({ s, p, update, use, used, undo, keep, toCollateral, toBox, rese
       {p.short && <p data-testid="rep-short" class="mt-3 text-sm font-medium text-bad">{p.short}</p>}
       <Counter id="rep-status" result={result} text={v ? docStatus(s, p) : statusText(p)} rule={!verdict} answer={!verdict} class={verdict ? 'mt-2' : ''}
         plain={!!verdict} go={goOf(s, p, toBox, ok)}>
-        {p.needs.length > 0 && <ul data-testid="rep-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => {
+        {/* One child, so the status stays one line when nothing is left (Counter reads any child as a list). */}
+        {p.needs.length > 0 ? <ul data-testid="rep-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => {
           const b = boxOf(n);
           return <li key={n}>{b ? <a href={`#${b[1]}`} onClick={toBox(n)} class="inline-flex min-h-6 items-center text-link">{n}</a> : n}</li>;
-        })}</ul>}
+        })}</ul> : own.length > 0 && <ul data-testid="rep-doc-left" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map(docItem)}</ul>}
       </Counter>
       {p.blocked && <p role="alert" class={`mt-3 ${answerRule(true)} text-ink`}>{p.blocked}</p>}
       {!p.blocked && <dl class="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-2">
@@ -589,21 +602,14 @@ function Result({ s, p, update, use, used, undo, keep, toCollateral, toBox, rese
   </section></div>;
 }
 
-function Download({ s, p, update, ok }: { s: ReportState; p: ReportPreview; update: Update; ok: boolean }) {
+/** The report's first page (D-UX-216): its own facts among the questions, before the check, so none is left unseen. They
+ * change no figure, so a change to one does not ask for the check again (`checkKey`). */
+function Facts({ s, update, children }: { s: ReportState; update: Update; children?: ComponentChildren }) {
   const f = s.doc, set = (patch: Partial<ReportFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
   const english = (t: string) => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
-  const own = docNeeds(f, s.words), ready = !!p.view && !p.blocked && ok;
-  const go = (kind: FileKind) => {
-    const now = new Date();
-    save(reportDoc(s, p, isoDate(now)), kind, fileName(s, p, kind), now);
-  };
   const field = (id: keyof ReportFacts, label: string, hint?: string) =>
     <TextField id={`fld-rep-${id}`} label={label} hint={hint} value={f[id]} said={english(f[id])} invalid={!!english(f[id])} onCommit={(t) => set({ [id]: t })} />;
-  // Before the report shows figures the section is one line (UX8, review finding 9).
-  if (!ready) return <Folded id="download" title="Download the project report"><span data-testid="rep-doc-wait">{p.blocked
-    ? 'No document while the two computations disagree.' : `A PDF, an Excel copy and a Word copy, once ${p.view ? 'you have checked your figures above' : 'the report shows figures'}.`}</span></Folded>;
-  return <Section id="download" title="Download the project report">
-    <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy and a Word copy to edit, made in your browser from the figures above.</p>
+  return <Section id="facts" title="For the report’s first page">
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       {field('name', 'Business’s name')}
       {field('activity', 'What the business does', 'Like “Manufacture of corrugated boxes”.')}
@@ -611,10 +617,25 @@ function Download({ s, p, update, ok }: { s: ReportState; p: ReportPreview; upda
       {field('lender', 'Lender', 'The bank or finance company, and the branch, if known.')}
       {field('preparedBy', 'Prepared by', 'Your name or your firm’s, if not the borrower.')}
     </div>
+    {children}
+  </Section>;
+}
+
+function Download({ s, p, update, ok }: { s: ReportState; p: ReportPreview; update: Update; ok: boolean }) {
+  const own = docNeeds(s.doc, s.words), ready = !!p.view && !p.blocked && ok;
+  const go = (kind: FileKind) => {
+    const now = new Date();
+    save(reportDoc(s, p, isoDate(now)), kind, fileName(s, p, kind), now);
+  };
+  // Before the report shows figures the section is one line (UX8, review finding 9).
+  if (!ready) return <Folded id="download" title="Download the project report"><span data-testid="rep-doc-wait">{p.blocked
+    ? 'No document while the two computations disagree.' : `A PDF, an Excel copy and a Word copy, once ${p.view ? 'you have checked your figures above' : 'the report shows figures'}.`}</span></Folded>;
+  return <Section id="download" title="Download the project report">
+    <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy and a Word copy to edit, made in your browser from the figures above.</p>
     <Words s={s} update={update} />
     <div class="mt-5">
         <p data-testid="rep-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{docStatus(s, p)}</p>
-        {own.length > 0 && <ul data-testid="rep-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
+        {own.length > 0 && <ul data-testid="rep-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map(docItem)}</ul>}
         <div class="mt-3 flex flex-wrap gap-2">
           <button type="button" data-testid="rep-download-pdf" class={FILLED} onClick={() => go('pdf')}>Download PDF</button>
           <button type="button" data-testid="rep-download-xlsx" class={BUTTON} onClick={() => go('xlsx')}>Download Excel</button>
