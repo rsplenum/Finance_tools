@@ -12,6 +12,7 @@ import { METHOD, MUDRA, PMEGP, REPORT_REVIEW_BY, WORKING_CAPITAL } from '../../.
 import { GUARANTEES } from '../../../engine/guarantee';
 import { overdueNote, todayIso } from '../../../engine/review';
 import { BORROWERS } from '../../../engine/tax';
+import { soldBy } from '../../../engine/sold-by';
 import type { Block, Cell, Doc, Table } from '../doc/doc';
 import { forDocument } from '../doc/doc';
 import { ALL_ANSWERED } from '../verdict';
@@ -98,7 +99,10 @@ function entered(s: ReportState): [string, string][] {
   if (s.collateral.trim()) pairs.push(['Collateral: market value', amount(s.collateral)]);
   if (s.salesBy === 'typed') pairs.push(['Sales in a full first year', `${amount(s.sales)}, growing ${plainOf(s.salesGrowth)}% a year`]);
   else {
-    for (const pr of s.products) pairs.push([`Sales: ${pr.name.trim()}`, `${pr.units.trim()} a month at full running, at Rs. ${tidyAmount(pr.price)} a unit`]);
+    for (const pr of s.products) {
+      const u = soldBy(pr.unit);
+      pairs.push([`Sales: ${pr.name.trim()}`, `${pr.units.trim()} ${u.many} a month at full running, at Rs. ${tidyAmount(pr.price)} ${u.per}`]);
+    }
     pairs.push(['The prices', `Growing ${plainOf(s.priceGrowth)}% a year`]);
     pairs.push(['Use of the capacity', `${s.utilisation.split(/[,\s]+/).filter(Boolean).join('%, ')}% by year from the first sales`]);
   }

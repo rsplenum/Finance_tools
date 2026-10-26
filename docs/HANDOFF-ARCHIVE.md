@@ -167,6 +167,10 @@ The test figures are model-worked until the owner confirms fictional cases A and
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 25-10-2026 | OR2: the fixed-asset cover's cause proved, and the fix beside the miss with "Use this" on the report page; the plan's prune | M | about 80 steps over about 0.6 working hours; re-reading the context 52%; one compaction |
+| 25-10-2026 | UXR2: answers kept in the tab on the four tools, the privacy line and the reload check | M | about 80 steps over about 0.8 working hours; re-reading the context 69%; the explainer and coherence rules (D-UX-166 to D-UX-170) recorded on the way |
+| 24-10-2026 | UXR1: terms of reference and the UI/UX review report of the four tools (Artifact https://claude.ai/artifact/SbLyB3sNM24wfMFvVUQHyc) | L | about 60 steps of 200, one compaction, 2 agents (critic, writer) 15% of the cost |
+| 24-10-2026 | VID2a: four 30-second storyboards and three look stills (D-UX-153 to D-UX-156, D-TECH-67, D-BIZ-23) | none set: the owner's ask in the chat | about 45 steps; reading the recording and the scenes' figures took the most |
 | 24-10-2026 | PRIV1: the privacy page tied to code by a test, the DPDP parts, three gotchas (D-BIZ-22) | M, high | about 60 steps and an agent's 12; two 15-minute site checks (the word counts, then the full verify) took the most |
 | 24-10-2026 | ROWS1: each row's notes in `docs/rows/`, folded by `npm run fold`, so PRs stop conflicting on the shared docs (D-TECH-66) | S | about 32 steps, no compaction; the full verify ran 18 min, the site check most of it |
 | 24-10-2026 | HOME1e: the CMA's, the estimate's and the report's stories as scenes in look C, one player for all four (D-UX-135 to D-UX-144) | L, Extra | about 110 steps; the frames at each beat on a slowed phone and three 14-minute site checks took the most |

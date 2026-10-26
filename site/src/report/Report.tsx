@@ -7,8 +7,9 @@
 import { Fragment, type ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
+import { SOLD_BY, soldBy } from '../../../engine/sold-by';
 import { verdictWords, workWords } from '../verdict';
-import { answerRule, AnswerBar, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote, Verdict, useHomeCase, HomeCaseNote, useKept } from '../fields';
+import { answerRule, AnswerBar, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, Section, SelectField, STATE, TextField, Tick, InAppNote, Verdict, useHomeCase, HomeCaseNote, useKept } from '../fields';
 import { REPORT_HOME } from './home-case';
 import { Bar, Benchmarks, Lever, PlanLever, targetOf } from '../Board';
 import { benchmarkFields, inSentence, listed, withBenchmark } from '../board-model';
@@ -57,6 +58,8 @@ const BOXES: [string, string][] = [
   ['The working-capital limit: its', 'fld-wcRate'], ['The collateral', 'fld-collateral'],
   ['Mudra: the term loan and', 'fld-tl-amount'], ['Mudra: the loans come', 'fld-tarun'], ['CGTMSE: the loans', 'fld-cgtmse'], ['CGTMSE: the collateral', 'fld-collateral'], ['The guarantee fee', 'fld-feeRate'],
 ];
+// What a line is sold by (OR6), its picks in the engine's order.
+const UNIT_PICKS = SOLD_BY.map((u) => ({ value: u.id, label: u.label }));
 // A product's line (D-UX-109): "Sales, line 2: the price a unit" is the price's box on the second line.
 const LINE_FACT: [string, string][] = [['what', 'name'], ['how many', 'units'], ['the price', 'price']];
 const boxOf = (need: string): [string, string] | undefined => {
@@ -234,12 +237,15 @@ export function ReportCalculator() {
       {s.salesBy === 'drivers' && <>
         {s.products.map((pr, k) => {
           const set = (f: keyof typeof pr) => (x: ReportState, t: string) => ({ ...x, products: x.products.map((q, i) => (i === k ? { ...q, [f]: t } : q)) });
+          const u = soldBy(pr.unit);
           return <fieldset key={k} data-testid={`rep-product-${k}`} class="mt-4">
             <legend class="font-medium text-ink">{s.products.length > 1 ? `Product or service ${k + 1}` : 'What it sells'}</legend>
-            <div class="mt-2 grid gap-4 sm:grid-cols-3">
+            {/* What it is sold by (OR6): the count and the price take its words; it changes no sum. */}
+            <div class="mt-2 grid gap-4 sm:grid-cols-2">
               <TextField id={`fld-product-${k}-name`} label="What it is" value={pr.name} onCommit={(t) => update((x) => set('name')(x, t))} />
-              {percent(`fld-product-${k}-units`, 'How many a month at full running', pr.units, set('units'))}
-              {amount(`fld-product-${k}-price`, 'Price a unit', pr.price, set('price'))}
+              <SelectField id={`fld-product-${k}-unit`} label="Sold by" value={u.id} options={UNIT_PICKS} onChange={(t) => update((x) => set('unit')(x, t))} />
+              {percent(`fld-product-${k}-units`, `How many ${u.many} a month at full running`, pr.units, set('units'))}
+              {amount(`fld-product-${k}-price`, `Price ${u.per}`, pr.price, set('price'))}
             </div>
             {k > 0 && <button type="button" data-testid={`rep-product-remove-${k}`} class="mt-2 min-h-11 text-link underline underline-offset-4"
               onClick={() => update((x) => ({ ...x, products: x.products.filter((_, i) => i !== k) }))}>Remove this line</button>}
