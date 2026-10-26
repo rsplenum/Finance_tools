@@ -20,16 +20,18 @@ import { overdueNote, todayIso } from '../../../engine/review';
 import { sureLower, type Marked } from '../../../engine/sure';
 import { docNeeds, docStatus, fileName, reportDoc } from './document';
 import { Words } from './Words';
+import { CheckStep } from '../CheckStep';
 import {
   CGFMU, CGTMSE, MUDRA, PMEGP, PMEGP_SHED, REPORT_REVIEW_BY, pmegpConditions, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, NO_PRODUCT, REPAYMENT_CHOICES, SCHEME_CHOICES,
   COST_HEADS, MODE_CHOICES, SECURITY_CHOICES, SIMPLE_COST, WC_CHOICES, changedOf, headsSum, holidayAssumed, periodLine, repaymentView, wcByOf, withMode, workedLine, type Mode,
   ALONE, AS_TYPED, COLLATERAL_HINT, withProperty, amountOf, applyPlan, assumptionsOf, boardOf, fixView, guaranteeOf, mudraLine, plainOf, planOf, preview, sameLevers, statusText, tarunAsked, tidyAmount, undoPlan, viableOf,
-  type LeverId, type Levers, type PlanChange, type FixView, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
+  checkKey, checkOf, type LeverId, type Levers, type PlanChange, type FixView, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
   type ViableView, type ViewRow, type ViewTable,
 } from './model';
 
 type Update = (f: (s: ReportState) => ReportState) => void;
 const MUTED = 'text-ink-muted';
+const upper = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 const SALES_BY: { value: ReportState['salesBy']; label: string }[] = [
   { value: 'drivers', label: 'Each product: how many a month and its price' }, { value: 'typed', label: 'Sales I type, with their growth' }];
 const bad = (t: string, read: (t: string) => unknown) => !!t.trim() && read(t) === undefined;
@@ -67,9 +69,11 @@ const boxOf = (need: string): [string, string] | undefined => {
   return fact ? [need, `fld-product-${Number((m as RegExpExecArray)[1]) - 1}-${fact[1]}`] : BOXES.find(([w]) => need.startsWith(w));
 };
 /** "Answer it" beside the status (OR3, the owner's O7): the first question with a box, else the document's own facts. */
-function goOf(s: ReportState, p: ReportPreview, toBox: (need: string) => (e: Event) => void) {
+function goOf(s: ReportState, p: ReportPreview, toBox: (need: string) => (e: Event) => void, ok: boolean) {
   const n = p.needs.find((x) => boxOf(x));
   if (n) return { to: (boxOf(n) as [string, string])[1], what: n, onClick: toBox(n) };
+  // The check before the document's facts (OR8): they sit in the download, which waits for it.
+  if (!p.needs.length && p.view && !p.blocked && !ok) return { to: 'check', what: 'check your figures' };
   if (!p.needs.length && p.view && !p.blocked && docNeeds(s.doc, s.words).length) return { to: 'download', what: 'the document' };
   return undefined;
 }
@@ -127,8 +131,15 @@ export function ReportCalculator() {
   // "Use this plan" (MV3): the fields it wrote, each marked with what it was, until undone or kept.
   const [used, setUsed] = useState<PlanChange[]>([]);
   const use = (l: Levers) => { const a = applyPlan(s, l); setS(a.s); setUsed(a.changes); };
+  // Check and confirm (OR8): the page's own state, never the draft's (a field there drops older drafts, useKept), so a
+  // reload asks again. The tables show once checked; a download only on the figures as checked.
+  const key = useMemo(() => checkKey(s), [s]);
+  const [checked, setChecked] = useState<string>();
+  const [seen, setSeen] = useState(false);
+  const ok = checked === key;
+  const confirm = () => { setChecked(key); setSeen(true); focusNext('[data-testid="rep-confirmed"] > summary'); };
   const undo = () => { setS((x) => undoPlan(x, used)); setUsed([]); };
-  const clear = () => { setCleared(s); setS(blank); setUsed([]); focusNext('[data-testid="rep-clear-undo"]'); };
+  const clear = () => { setCleared(s); setS(blank); setUsed([]); setChecked(undefined); setSeen(false); focusNext('[data-testid="rep-clear-undo"]'); };
   const unclear = () => { if (cleared) setS(cleared); setCleared(undefined); focusNext('[data-testid="rep-clear"]'); };
   // The security cover's row links to the collateral field (review finding 4); in simple mode, property is chosen first.
   const toCollateral = (e: Event) => { e.preventDefault(); if (simple && !withProperty(s)) update((x) => ({ ...x, security: 'property' })); focusNext('#fld-collateral'); };
@@ -322,18 +333,21 @@ export function ReportCalculator() {
       {typed && <p data-testid="rep-arrived" class="mt-8 text-ink lg:hidden"><a href="#report" class="text-link underline underline-offset-4">The project report below</a> {arrived(p)}</p>}
     </Section>
     </div>
-    <Result s={s} p={p} update={update} use={use} used={used} undo={undo} keep={() => setUsed([])} toCollateral={toCollateral} toBox={toBox}
+    <Result s={s} p={p} update={update} use={use} used={used} undo={undo} keep={() => setUsed([])} toCollateral={toCollateral} toBox={toBox} ok={ok}
       reset={typed
         ? <button type="button" data-testid="rep-clear" class={BUTTON} onClick={clear}>Clear all</button>
         : cleared && <p role="status" class="flex items-center gap-2 text-sm text-ink">Cleared.
           <button type="button" data-testid="rep-clear-undo" class={BUTTON} onClick={unclear}>Undo</button></p>} />
     <div class="lg:col-span-2 lg:row-start-2">
-    {p.view && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
+    {p.view && !p.blocked && <CheckStep pre="rep" groups={checkOf(s, p)} to="benchmarks" state={ok ? 'done' : checked ? 'lapsed' : 'open'}
+      benchmarks={(p.checks ?? []).map((c) => ({ label: c.label, value: upper(targetOf(c)) }))}
+      confirm={seen ? 'These are right' : 'These are right: show the report'} onConfirm={confirm} />}
+    {p.view && (ok || seen) && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
     <Ledger id="assumed" testid="rep-assumed" title="Assumed until changed" rows={assumptionsOf(s).map((a) => {
       const to = ASSUMED_BOX[a.id];
       return { ...a, to, go: to && simple && !IN_SIMPLE.has(to) ? toExpert(to) : undefined };
     })} />
-    <Download s={s} p={p} update={update} />
+    <Download s={s} p={p} update={update} ok={ok} />
     </div>
     {/* The answer on every screen of the fields (D-UX-84), from load as on every tool (UX8, review finding 13): text, read
         out as it changes; only the arrow is a target, 44 px. From 1024 px the panel stands beside, so only the words stay. */}
@@ -522,9 +536,9 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
   </div>;
 }
 
-function Result({ s, p, update, use, used, undo, keep, toCollateral, toBox, reset }: {
+function Result({ s, p, update, use, used, undo, keep, toCollateral, toBox, reset, ok }: {
   s: ReportState; p: ReportPreview; update: Update; use: (l: Levers) => void; used: PlanChange[]; undo: () => void; keep: () => void;
-  toCollateral: (e: Event) => void; toBox: (need: string) => (e: Event) => void; reset: ComponentChildren;
+  toCollateral: (e: Event) => void; toBox: (need: string) => (e: Event) => void; reset: ComponentChildren; ok: boolean;
 }) {
   const v = p.view, verdict = verdictOf(p);
   const result = p.blocked ? 'blocked' : p.needs.length || p.short ? 'provisional' : 'ready';
@@ -549,7 +563,7 @@ function Result({ s, p, update, use, used, undo, keep, toCollateral, toBox, rese
       {verdict && <Verdict id={p.misses ? 'rep-misses' : 'rep-verdict'} work={verdict.work} text={verdict.text} rule={answerRule(!p.blocked && !p.needs.length)} />}
       {p.short && <p data-testid="rep-short" class="mt-3 text-sm font-medium text-bad">{p.short}</p>}
       <Counter id="rep-status" result={result} text={v ? docStatus(s, p) : statusText(p)} rule={!verdict} answer={!verdict} class={verdict ? 'mt-2' : ''}
-        plain={!!verdict} go={goOf(s, p, toBox)}>
+        plain={!!verdict} go={goOf(s, p, toBox, ok)}>
         {p.needs.length > 0 && <ul data-testid="rep-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => {
           const b = boxOf(n);
           return <li key={n}>{b ? <a href={`#${b[1]}`} onClick={toBox(n)} class="inline-flex min-h-6 items-center text-link">{n}</a> : n}</li>;
@@ -575,10 +589,10 @@ function Result({ s, p, update, use, used, undo, keep, toCollateral, toBox, rese
   </section></div>;
 }
 
-function Download({ s, p, update }: { s: ReportState; p: ReportPreview; update: Update }) {
+function Download({ s, p, update, ok }: { s: ReportState; p: ReportPreview; update: Update; ok: boolean }) {
   const f = s.doc, set = (patch: Partial<ReportFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
   const english = (t: string) => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
-  const own = docNeeds(f, s.words), ready = !!p.view && !p.blocked;
+  const own = docNeeds(f, s.words), ready = !!p.view && !p.blocked && ok;
   const go = (kind: FileKind) => {
     const now = new Date();
     save(reportDoc(s, p, isoDate(now)), kind, fileName(s, p, kind), now);
@@ -587,7 +601,7 @@ function Download({ s, p, update }: { s: ReportState; p: ReportPreview; update: 
     <TextField id={`fld-rep-${id}`} label={label} hint={hint} value={f[id]} said={english(f[id])} invalid={!!english(f[id])} onCommit={(t) => set({ [id]: t })} />;
   // Before the report shows figures the section is one line (UX8, review finding 9).
   if (!ready) return <Folded id="download" title="Download the project report"><span data-testid="rep-doc-wait">{p.blocked
-    ? 'No document while the two computations disagree.' : 'A PDF, an Excel copy and a Word copy, once the report shows figures.'}</span></Folded>;
+    ? 'No document while the two computations disagree.' : `A PDF, an Excel copy and a Word copy, once ${p.view ? 'you have checked your figures above' : 'the report shows figures'}.`}</span></Folded>;
   return <Section id="download" title="Download the project report">
     <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy and a Word copy to edit, made in your browser from the figures above.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
