@@ -8,6 +8,3 @@ dist/
 *.local
 worker/worker-configuration.d.ts
 .claude/sessions-started.json
-
-# impeccable engine binary: the launcher downloads it to ~/.impeccable/bin on first run
-.claude/skills/impeccable/scripts/bin/
