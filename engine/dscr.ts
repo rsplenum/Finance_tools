@@ -91,7 +91,7 @@ export const LOAN_LABELS: Record<keyof LoanTerms, string> = {
   moratoriumMonths: 'Moratorium in months (0 if none)',
   instalments: 'Number of instalments',
   frequency: 'How often instalments fall due (monthly or quarterly)',
-  style: 'Instalment type (equal instalments of principal, or EMI)',
+  style: 'Instalment type (equal instalments of principal, EMI, or stepped)',
 };
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -172,8 +172,9 @@ function loanNeeds(l: LoanInput): string[] {
   if (!isNum(l.instalments)) needs.push(L.instalments);
   else if (!Number.isInteger(l.instalments) || l.instalments < 1) needs.push(`${L.instalments}, a whole number, one or more`);
   if (l.frequency !== 'monthly' && l.frequency !== 'quarterly') needs.push(L.frequency);
-  if (l.style !== 'equal-principal' && l.style !== 'emi') needs.push(L.style);
+  if (l.style !== 'equal-principal' && l.style !== 'emi' && l.style !== 'stepped') needs.push(L.style);
   else if (l.style === 'emi' && l.frequency === 'quarterly') needs.push('Monthly instalments for an EMI (it is worked monthly only), or equal instalments of principal');
+  else if (l.style === 'stepped' && l.frequency === 'quarterly') needs.push('Monthly instalments for a stepped repayment (it is worked monthly only), or equal instalments of principal');
   return needs;
 }
 
