@@ -14,10 +14,11 @@ import { overdueNote, todayIso } from '../../../engine/review';
 import { BORROWERS } from '../../../engine/tax';
 import type { Block, Cell, Doc, Table } from '../doc/doc';
 import { forDocument } from '../doc/doc';
+import { ALL_ANSWERED } from '../verdict';
 import { printable } from '../doc/pdf';
 import { monthText } from '../dscr/model';
 import { SITE_NAME } from '../site';
-import { ACTIVITY_CHOICES, AREA_CHOICES, CATEGORY_CHOICES, CGTMSE, HEADS, REPAYMENT_CHOICES, guaranteeOf, plainOf, statusText, tidyAmount, type ReportFacts, type ReportPreview, type ReportState, type ReportWords, type ViewTable } from './model';
+import { ACTIVITY_CHOICES, AREA_CHOICES, CATEGORY_CHOICES, CGTMSE, HEADS, REPAYMENT_CHOICES, guaranteeOf, plainOf, pmegpConditions, statusText, tidyAmount, type ReportFacts, type ReportPreview, type ReportState, type ReportWords, type ViewTable } from './model';
 import { wordsNeeds, wordsPart } from './words';
 
 /** How sure each rule the report rests on is (D-DATA-25, TRUST1): the tax by who the borrower is, the working-capital
@@ -50,7 +51,7 @@ export function docNeeds(f: ReportFacts, w?: ReportWords): string[] {
 export const allNeeds = (s: ReportState, p: ReportPreview) => [...p.needs, ...(p.short ? [p.short] : []), ...docNeeds(s.doc, s.words)];
 export const docStatus = (s: ReportState, p: ReportPreview) => {
   const own = docNeeds(s.doc, s.words).length;
-  return own && statusText(p) === 'Complete' ? forDocument(own) : statusText(p, own);
+  return own && statusText(p) === ALL_ANSWERED ? forDocument(own) : statusText(p, own);
 };
 export function fileName(s: ReportState, p: ReportPreview, ext: string): string {
   const name = s.doc.name.replace(/[\\/:*?"<>|\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60).trim();
@@ -90,7 +91,7 @@ function entered(s: ReportState): [string, string][] {
   if (s.scheme === 'mudra') pairs.push(['Scheme', `Mudra; ${s.tarunRepaid ? 'a Tarun loan taken and repaid' : 'no Tarun loan repaid'}`]);
   const g = guaranteeOf(s);
   if (g) pairs.push(['Guarantee', `${g === 'cgfmu' ? 'CGFMU' : 'CGTMSE'}${g === 'cgtmse' ? `; concessions: ${CGTMSE.groups.filter((_, k) => s.concessions?.[k]).map((t) => t.split(',')[0].toLowerCase()).join('; ') || 'none'}` : ''}${s.feeRate.trim() ? `; its fee at ${plainOf(s.feeRate)}% a year, as the lender quotes` : ''}`]);
-  pairs.push([s.scheme === 'pmegp' ? 'Term loan sanctioned' : 'Term loan', `${amount(l.amount)} at ${plainOf(l.ratePct)}% a year, first drawn in ${month ? monthText(month) : l.disbursed}; ${m ? `${m} months' moratorium` : 'no moratorium'}; ${plainOf(l.instalments)} instalments, ${rep.toLowerCase()}`]);
+  pairs.push([s.scheme === 'pmegp' ? 'Term loan applied for' : 'Term loan', `${amount(l.amount)} at ${plainOf(l.ratePct)}% a year, first drawn in ${month ? monthText(month) : l.disbursed}; ${m ? `${m} months' moratorium` : 'no moratorium'}; ${plainOf(l.instalments)} instalments, ${rep.toLowerCase()}`]);
   if (s.subsidy.trim()) pairs.push(['Capital subsidy', amount(s.subsidy)]);
   if (s.unsecured.trim()) pairs.push(['Unsecured loans', amount(s.unsecured)]);
   if (s.collateral.trim()) pairs.push(['Collateral: market value', amount(s.collateral)]);
@@ -104,7 +105,7 @@ function entered(s: ReportState): [string, string][] {
   pairs.push(['Materials and other variable costs', `${plainOf(s.variablePct)}% of sales`]);
   pairs.push(['Fixed costs in a full first year', `${amount(s.fixed)}, growing ${plainOf(s.fixedGrowth)}% a year`]);
   pairs.push(['Stock, debtors and creditors', `${plainOf(s.days.stock)}, ${plainOf(s.days.debtors)} and ${plainOf(s.days.creditors)} days`]);
-  pairs.push(['Working-capital limit sought', `${amount(s.wcLimit)}${plainOf(s.wcLimit) ? ` at ${plainOf(s.wcRate)}% a year` : ''}`]);
+  pairs.push(['Working-capital limit applied for', `${amount(s.wcLimit)}${plainOf(s.wcLimit) ? ` at ${plainOf(s.wcRate)}% a year` : ''}`]);
   return pairs;
 }
 
@@ -145,7 +146,7 @@ export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc 
         { kind: 'heading', text: 'How sure the rules are' }, { kind: 'list', items: sureRules(s) },
         ...(s.scheme === 'pmegp' ? [{ kind: 'heading', text: 'PMEGP: the rules used' } as Block, { kind: 'list', items: [...PMEGP.rules, PMEGP.ours,
           `Source: ${PMEGP.source}. The guideline of 2023: ${sureLower(PMEGP as Marked)}. ${overdueNote(REPORT_REVIEW_BY, todayIso())}`.trim()] } as Block,
-          { kind: 'heading', text: 'PMEGP: its conditions' } as Block, { kind: 'list', items: [...PMEGP.conditions, `${s.pmegpConfirmed ? 'Confirmed by the borrower' : 'Not yet confirmed by the borrower'}. Source: ${PMEGP.conditionsSource}`] } as Block] : []),
+          { kind: 'heading', text: 'PMEGP: its conditions' } as Block, { kind: 'list', items: [...pmegpConditions(s, 'guideline'), `${s.pmegpConfirmed ? 'Confirmed by the borrower' : 'Not yet confirmed by the borrower'}. Source: ${PMEGP.conditionsSource}`] } as Block] : []),
         ...(s.scheme === 'mudra' ? [{ kind: 'heading', text: 'Mudra: the rules used' } as Block, { kind: 'list', items: [...MUDRA.rules, `Apply on ${MUDRA.apply.label}: ${MUDRA.apply.url}.`, `Source: ${MUDRA.source} ${sureText(MUDRA as Marked)}.`] } as Block] : []),
         ...(gid ? [{ kind: 'heading', text: `The guarantee fee: ${gid.toUpperCase()}` } as Block, { kind: 'list', items: [`Source: ${GUARANTEES[gid].source} ${sureText(GUARANTEES[gid] as Marked)}.`] } as Block] : []),
       ] },

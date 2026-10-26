@@ -69,15 +69,15 @@ describe('fictional case A from the loan terms', () => {
   it('says what limits the result and offers the loan that meets the target', () => {
     const p = preview({ ...CASE_A, target: TARGETS });
     expect(p.needs).toEqual([]);
-    expect(p.verdict).toEqual({ meets: false, text: 'Misses 2 of 2 targets: the lowest year, 2027-28, is 1.16 against 1.20; the average is 1.45 against 1.50.' });
+    expect(p.verdict).toEqual({ meets: false, missed: 2, text: 'Misses 2 of 2 targets: the lowest year, 2027-28, is 1.16 against 1.20; the average is 1.45 against 1.50.' });
     expect(p.largest).toEqual({ text: 'The largest loan on these terms is Rs. 11,59,646, limited by the lowest year, 2027-28.', amount: 1159646 });
     // More instalments add interest, which pulls the average further below 1.50 within these four years.
     expect(p.fewest).toEqual({ text: 'Even 14 instalments, the most the projections cover (to 2029-30), miss the target: the average is below the target. Add later years to try a longer repayment.' });
-    expect(barText(p)).toBe('Average 1.45 · lowest 1.16 in 2027-28 · below the target · complete');
+    expect(barText(p)).toBe('Average 1.45 · lowest 1.16 in 2027-28 · does not work yet: 2 ratios short · all answered');
   });
   it('meets the target at the largest loan, with nothing more to offer', () => {
     const p = preview({ ...CASE_A, loan: { ...CASE_A.loan, amount: '11,59,646' }, target: TARGETS });
-    expect(p.verdict).toEqual({ meets: true, text: 'Meets both targets: the lowest year, 2027-28, is 1.20 against 1.20; the average is 1.50 against 1.50.' });
+    expect(p.verdict).toEqual({ meets: true, missed: 0, text: 'Meets both targets: the lowest year, 2027-28, is 1.20 against 1.20; the average is 1.50 against 1.50.' });
     expect(p.largest).toEqual({ text: 'The largest loan on these terms is Rs. 11,59,646, limited by the lowest year, 2027-28.' });
     expect(p.fewest).toEqual({ text: 'The fewest instalments for Rs. 11,59,646 are 12 quarterly.' });
   });
@@ -151,7 +151,7 @@ describe('own yearly figures', () => {
     expect(p.statement?.lines.some((l) => l.label === 'Profit')).toBe(false); // own figures start from profit after tax
     expect(line(p, 'available')).toEqual(['1,50,000', '1,60,000', '1,60,000']);
     expect(p.notCounted).toBe('Not counted: 2026-27 (no term-loan instalment).');
-    expect(p.verdict).toEqual({ meets: false, text: 'Misses the target: the average is 1.23 against 1.50.' });
+    expect(p.verdict).toEqual({ meets: false, missed: 1, text: 'Misses the target: the average is 1.23 against 1.50.' });
     expect(p.largest).toBeUndefined();
   });
   it('asks for the years before the figures', () => {
@@ -307,7 +307,7 @@ describe('this year\'s figures and sales growth; the rest assumed (the owner: "a
     expect(line(p, 'dscr')).toEqual(['1.17', '0.84', '0.98', '2.26']);
     expect([p.average, p.lowest, p.lowestYear, p.verdict?.meets]).toEqual(['1.16', '0.84', '2027-28', false]);
     expect(p.assumed.map((a) => a.id)).toEqual(['method', 'target', 'tax', 'margin', 'asset', 'depreciation', 'interest', 'otherLoans', 'nonCash', 'promoters']);
-    expect(statusText(p)).toBe('Complete, on 10 assumptions');
+    expect(statusText(p)).toBe('All answered, on 10 assumptions');
   });
   it('an assumption that is changed leaves the list', () => {
     const s = withTaxRate({ ...A2, target: { average: '1.25', minimum: '1.20' } }, '25.168');

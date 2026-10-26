@@ -6,6 +6,7 @@
  */
 import type { Block, Cell, Doc, Table } from '../doc/doc';
 import { forDocument } from '../doc/doc';
+import { ALL_ANSWERED } from '../verdict';
 import { printable } from '../doc/pdf';
 import { SITE_NAME } from '../site';
 import { sureLower, type Marked } from '../../../engine/sure';
@@ -24,7 +25,7 @@ export function docNeeds(f: CmaFacts): string[] {
 export const allNeeds = (s: CmaState, p: CmaPreview) => [...p.needs, ...docNeeds(s.doc)];
 export const docStatus = (s: CmaState, p: CmaPreview) => {
   const own = docNeeds(s.doc).length;
-  return own && statusText(p) === 'Complete' ? forDocument(own) : statusText(p, own);
+  return own && statusText(p) === ALL_ANSWERED ? forDocument(own) : statusText(p, own);
 };
 export function fileName(s: CmaState, p: CmaPreview, ext: string): string {
   const name = s.doc.name.replace(/[\\/:*?"<>|\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60).trim();

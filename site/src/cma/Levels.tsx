@@ -4,6 +4,7 @@
  * borrower's first and the lender's last. The sliders change nothing in the columns until "Use this plan". Figures:
  * engine/cma-plan.ts only, via levers.ts.
  */
+import { workWords } from '../verdict';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { Bar, Benchmarks, Lever, PlanLever } from '../Board';
 import { BUTTON, FILLED, HINT, TextField } from '../fields';
@@ -27,7 +28,8 @@ export function Levels({ s, update, use }: { s: CmaState; update: Update; use: (
   return <div data-testid="cma-levels" class="mt-4">
     {lv.ask && <p data-testid="cma-levels-ask" class="text-sm text-warn">{lv.ask}</p>}
     {lv.checks && <div data-testid="cma-checks">
-      <h3 class="text-title text-ink">{lv.misses ? 'Why it does not work yet' : `${lv.checks.some((c) => c.verdict === 'wait') ? 'Against' : 'Meets'} the ${lv.benchmarks ? '' : 'default '}benchmark ratios`}</h3>
+      <h3 data-testid="cma-work" class={`text-title ${lv.misses ? 'text-bad' : 'text-ink'}`}>{workWords(lv.checks.filter((c) => c.verdict === 'misses').length, lv.checks.filter((c) => c.verdict === 'wait').length)}</h3>
+      <p class={`mt-1 ${HINT}`}>Against the {lv.benchmarks ? 'benchmark ratios as you changed them' : 'default benchmark ratios'}.</p>
       {lv.benchmarks && <p data-testid="cma-benchmarks-note" class="mt-1 text-sm text-warn">{lv.benchmarks}</p>}
       <ul class="mt-1 divide-y divide-line">{lv.checks.map((c) => <Bar key={c.id} c={c} pre="cma" />)}</ul>
       {/* How to read the bars, under them as on the report (UX9b, the UX9 critic). */}

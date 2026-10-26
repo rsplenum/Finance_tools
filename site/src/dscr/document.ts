@@ -52,7 +52,7 @@ export function allNeeds(s: State, p: Preview): string[] {
   return [...p.needs.filter((n) => !target.has(n)), ...docNeeds(s.doc)];
 }
 
-/** "Complete", "Provisional: 2 still needed" counting the document's own facts, or, when only those are missing, that
+/** "All answered", "2 questions left" counting the document's own facts, or, when only those are missing, that
  * the figures are complete (CMA review finding 14, UX5); for beside the download buttons. */
 export const docStatus = (s: State, p: Preview) => {
   const all = allNeeds(s, p), own = docNeeds(s.doc).length;

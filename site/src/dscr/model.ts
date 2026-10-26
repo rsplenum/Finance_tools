@@ -4,7 +4,7 @@
  * the assumptions in engine/data/defaults.json (the owner's request, D-UX-08), each listed with its reason until it is
  * changed (`assumedIn`); nothing else missing is filled in, and anything else missing is listed as needed.
  */
-import { questionsLeft, verdictWords } from '../verdict';
+import { ALL_ANSWERED, questionsLeft, verdictWords, workWords } from '../verdict';
 import DEFAULTS from '../../../engine/data/defaults.json';
 import DSCR from '../../../engine/data/dscr.json';
 import {
@@ -454,7 +454,8 @@ export interface Preview {
   lowestYear?: string;
   notCounted?: string;
   notes: string[];
-  verdict?: { meets: boolean; text: string };
+  /** `missed`: how many of the targets fall short, for the plain head (OR3). */
+  verdict?: { meets: boolean; text: string; missed: number };
   /** Largest loan on these terms; `amount` when it differs from the one entered, to offer it. */
   largest?: { text: string; amount?: number };
   fewest?: { text: string; instalments?: number };
@@ -550,7 +551,7 @@ const limitedBy = (l: Limit) =>
 function verdictOf(st: Statement, t: Target): Preview['verdict'] {
   if (!st.minimum || st.average === undefined) return undefined; // no year counts; the engine's note says why
   const dry = shortfall(st, {});
-  if (dry) return { meets: false, text: `${verdictWords('target', 1, 1)}: ${limitText(dry)}.` };
+  if (dry) return { meets: false, missed: 1, text: `${verdictWords('target', 1, 1)}: ${limitText(dry)}.` };
   const parts: { ok: boolean; text: string }[] = [];
   if (t.minimum !== undefined)
     parts.push({ ok: !shortfall(st, { minimum: t.minimum }), text: `the lowest year, ${st.minimum.fy}, is ${ratioText(st.minimum.dscr, t.minimum)} against ${targetText(t.minimum)}` });
@@ -558,8 +559,8 @@ function verdictOf(st: Statement, t: Target): Preview['verdict'] {
     parts.push({ ok: !shortfall(st, { average: t.average }), text: `the average is ${ratioText(st.average, t.average)} against ${targetText(t.average)}` });
   const short = parts.filter((p) => !p.ok);
   return short.length
-    ? { meets: false, text: `${verdictWords('target', parts.length, short.length)}: ${short.map((p) => p.text).join('; ')}.` }
-    : { meets: true, text: `${verdictWords('target', parts.length, 0)}: ${parts.map((p) => p.text).join('; ')}.` };
+    ? { meets: false, missed: short.length, text: `${verdictWords('target', parts.length, short.length)}: ${short.map((p) => p.text).join('; ')}.` }
+    : { meets: true, missed: 0, text: `${verdictWords('target', parts.length, 0)}: ${parts.map((p) => p.text).join('; ')}.` };
 }
 
 const lower = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
@@ -871,12 +872,12 @@ export function barText(p: Preview): string {
   if (p.blocked) return 'No figures: the two computations disagree.';
   const parts: string[] = [];
   if (p.average) parts.push(`Average ${p.average}`, `lowest ${p.lowest} in ${p.lowestYear}`);
-  if (p.verdict) parts.push(p.verdict.meets ? 'meets the target' : 'below the target');
+  if (p.verdict) parts.push(workWords(p.verdict.missed).toLowerCase());
   parts.push(p.needs.length ? questionsLeft(p.needs.length) : statusText(p).toLowerCase());
   return cap(parts.join(' · '));
 }
 
-/** "Complete", or "Complete, on 7 assumptions" while any still holds. */
+/** "All answered", or "All answered, on 7 assumptions" while any still holds. */
 /** The front door's needs by the labels it shows, in its order, each linked to its field (design review 5, UX4). */
 export const FRONT: [RegExp, string, string][] = [
   [/^Who the borrower is/, 'Who is the borrower?', 'fld-fd-borrower'],
@@ -898,7 +899,7 @@ export const withFrontNeeds = (s: State, p: Preview, first?: string): Preview =>
 };
 export const statusText = (p: Preview) =>
   p.blocked ? 'No figures' : p.needs.length ? questionsLeft(p.needs.length)
-    : p.assumed.length ? `Complete, on ${p.assumed.length} assumption${p.assumed.length > 1 ? 's' : ''}` : 'Complete';
+    : p.assumed.length ? `${ALL_ANSWERED}, on ${p.assumed.length} assumption${p.assumed.length > 1 ? 's' : ''}` : ALL_ANSWERED;
 
 /** The commonly quoted targets from the data file, offered as examples and used only when chosen. */
 export const EXAMPLE_TARGETS = {

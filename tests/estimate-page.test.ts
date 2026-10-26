@@ -63,7 +63,7 @@ describe('the estimate to download', () => {
     expect(lines).toContain('Total of the works | 20,24,150');
     expect(lines).toContain('Total estimated cost | 20,84,875');
     expect(lines).toContain('Cost per sq ft: Rs. 1,737 of built-up area');
-    expect(docStatus(E, p)).toBe('Complete');
+    expect(docStatus(E, p)).toBe('All answered');
     expect(fileName(E, p, 'pdf')).toBe('Estimate - Asha Traders.pdf');
   });
   it('Annex 1: every item numbered under its head, with its quantity, unit, rate and amount, and each head\'s total', () => {
@@ -91,7 +91,7 @@ describe('the estimate to download', () => {
   });
   it('provisional while the property is missing, and said on every page', async () => {
     const s = { ...E, doc: { ...E.doc, property: '' } }, d = estimateDoc(s, preview(s), TODAY)!;
-    expect(docStatus(s, preview(s))).toBe('Figures complete; for the document, 1 question left');
+    expect(docStatus(s, preview(s))).toBe('1 question left, for the document');
     for (const page of await pdfPages(pdfOf(d, MADE))) expect(page.split('\n')[0]).toBe('Estimate of cost · Asha Traders Provisional');
   });
 });

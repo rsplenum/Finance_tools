@@ -16,3 +16,15 @@ export const VERDICT_PATTERN = /^(Meets|Misses) (the|both|all \d+|\d+ of \d+) (t
 /** What is still to answer, in the same words in every tool (UXR3, UXR1's P4): "1 question left", "3 questions left";
  * the word "provisional" stays only as the documents' mark. */
 export const questionsLeft = (n: number) => `${n} question${n === 1 ? '' : 's'} left`;
+
+/** The verdict's head in plain words (OR3, the owner's O8 and O15): "Works", "Does not work yet: 1 ratio short", or, while
+ * a ratio cannot be read, "Works so far: 1 ratio not read yet". It stands apart from the status, which says only whether
+ * every question is answered; the detail under it keeps the pattern above. */
+export function workWords(missed: number, waiting = 0): string {
+  const ratios = (n: number) => `${n} ratio${n === 1 ? '' : 's'}`;
+  if (missed) return `Does not work yet: ${ratios(missed)} short`;
+  return waiting ? `Works so far: ${ratios(waiting)} not read yet` : 'Works';
+}
+
+/** The status once every question is answered (OR3, the owner's O7 and O8): never "Complete" beside a miss. */
+export const ALL_ANSWERED = 'All answered';

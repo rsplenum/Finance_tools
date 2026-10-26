@@ -79,7 +79,7 @@ describe('a missing fact is never assumed', () => {
       'The term loan: the number of instalments', 'The term loan: how it is repaid', 'Capacity: the units the business can make or serve in a year',
       'Price a unit', 'Use of the capacity by year (%), each 0 to 100', 'The price: growth a year (%)', 'Months from the loan to the first sales (0 if at once)',
       'Materials and other variable costs, as a share of sales (%), below 100', 'Fixed costs in a full first year', 'Fixed costs: growth a year (%)',
-      'Days of stock, 0 to 365', 'Days of debtors, 0 to 365', 'Days of creditors, 0 to 365', 'The working-capital limit sought (0 if none)',
+      'Days of stock, 0 to 365', 'Days of debtors, 0 to 365', 'Days of creditors, 0 to 365', 'The working-capital limit you will ask for (0 if none)',
     ]);
   });
   it('says so when the loans come to more than the project', () => {

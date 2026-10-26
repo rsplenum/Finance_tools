@@ -70,12 +70,18 @@
       ],
       "ours": "The instalments are worked on the loan less the margin money, so the deposit clears that part of the loan when it is set off; ask the bank how it fixes them.",
       "conditions": [
-        "The project buys fixed assets: one without capital expenditure cannot be financed.",
-        "A ready-built, leased or rented shed counts in the project cost for at most 3 years.",
-        "Trading only as a sales outlet in the North-East, a district affected by left-wing extremism or the Andaman and Nicobar Islands, or selling Khadi, village-industry or PMEGP products, or backed by the unit's own manufacturing or service.",
-        "Only one person from a family (self and spouse) is financed under PMEGP.",
-        "The unit is registered on the Udyam portal before it is verified and the margin money is set off."
+        { "text": "The loan buys machinery, a building or other fixed assets: PMEGP does not finance a project without them.",
+          "guideline": "The project buys fixed assets: one without capital expenditure cannot be financed." },
+        { "when": "shed", "text": "Renting a ready-built shed? Up to 3 years' rent counts in the project cost, not the shed.",
+          "guideline": "A ready-built, leased or rented shed counts in the project cost for at most 3 years." },
+        { "when": "trading", "text": "A trading business gets PMEGP only as a sales outlet in the North-East, a district affected by left-wing extremism or the Andaman and Nicobar Islands; for Khadi, village-industry or PMEGP goods; or beside the unit's own making or service.",
+          "guideline": "Trading only as a sales outlet in the North-East, a district affected by left-wing extremism or the Andaman and Nicobar Islands, or selling Khadi, village-industry or PMEGP products, or backed by the unit's own manufacturing or service." },
+        { "text": "Only one person in a family (you, or your husband or wife) gets PMEGP.",
+          "guideline": "Only one person from a family (self and spouse) is financed under PMEGP." },
+        { "text": "The unit is registered on the Udyam portal: only then is the margin money set off against the loan.",
+          "guideline": "The unit is registered on the Udyam portal before it is verified and the margin money is set off." }
       ],
+      "conditionsNote": "Plain words for the page (OR3, the owner's O1), each beside the guideline's own; one with a \"when\" is shown only where it applies: the shed's under the building's box, the trading one only for a trading business, which the report does not yet offer.",
       "conditionsSource": "PMEGP guidelines as revised on 07-12-2023, para 4.1 (ii) to (vi) and its note (docs/inbox/pmegp-guidelines-2023-12-07.pdf, read 21-10-2026)."
     },
     "mudra": {

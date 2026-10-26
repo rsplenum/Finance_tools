@@ -105,13 +105,13 @@ describe('the words in the document', () => {
     const s = { ...R, words };
     expect(reportDoc(s, p, TODAY)!.parts.map((x) => x.name)).toEqual(['Summary', 'Projections', 'DSCR and ratios', 'Annex']);
     expect(wordsNeeds(words)).toEqual(['The report’s words: read them, then tick that they are true']);
-    expect(docStatus(s, p)).toBe('Figures complete; for the document, 1 question left');
+    expect(docStatus(s, p)).toBe('1 question left, for the document');
     expect(fileName(s, p, 'pdf')).toBe('Project report - Asha Packaging (provisional).pdf');
   });
   it('ticked: a part after the summary, each section under its heading, with no figure but the user’s own', () => {
     const s = { ...R, words: { ...words, confirmed: true } }, d = reportDoc(s, p, TODAY)!;
     expect(d.parts.map((x) => x.name)).toEqual(['Summary', 'About the project', 'Projections', 'DSCR and ratios', 'Annex']);
-    expect(docStatus(s, p)).toBe('Complete');
+    expect(docStatus(s, p)).toBe('All answered');
     const part = docText({ ...d, parts: [d.parts[1]] }).split('\n');
     expect(part).toContain('About the project');
     expect(part).toContain('The market');

@@ -165,6 +165,15 @@ export function Claim({ text }: { text: string }) {
   return <><span>{text.slice(0, at)}</span><span class="sr-only">:</span> <span class="mt-1 block font-display text-base font-normal first-letter:uppercase">{text.slice(at + 2)}</span></>;
 }
 
+/** The verdict as the paper's heading (OR3, the owner's O8 and O15): its plain head, "Works" or "Does not work yet: 1 ratio
+ * short", and under it the detail in the model's words, which keeps the tool's own test id. A tick only beside "Works". */
+export function Verdict(p: { id: string; work: string; text: string; rule: string }) {
+  const ok = p.work === 'Works', bad = p.work.startsWith('Does not');
+  return <h3 data-testid={`${p.id}-work`} data-answer class={`text-title ${bad ? 'text-bad' : 'text-ink'} ${p.rule}`}>
+    <span class="flex items-center gap-2">{ok && <Tick />}{p.work}</span><span class="sr-only">. </span>
+    <span data-testid={p.id} class="mt-1 block font-display text-base font-normal text-ink first-letter:uppercase">{p.text}</span></h3>;
+}
+
 /** Takes the focus to a box, so a link to a missing figure lands where it is typed: a field itself, or in a group of
  * them (a fieldset, a form's grid) the first one still empty. */
 export const goTo = (id: string) => (e: Event) => {
@@ -194,19 +203,30 @@ if (typeof window !== 'undefined') {
  * the list of links to each missing box; final or blocked, the state alone. `id` names the state for the tests and UD1;
  * `answer` marks it as the page's answer (the load measure's one) where no verdict stands above it.
  */
-export function Counter(p: { id: string; result: 'blocked' | 'provisional' | 'ready'; text: string; rule?: boolean; answer?: boolean; class?: string; children?: ComponentChildren }) {
+export function Counter(p: { id: string; result: 'blocked' | 'provisional' | 'ready'; text: string; rule?: boolean; answer?: boolean; class?: string; children?: ComponentChildren;
+  /** The verdict stands apart (OR3, the owner's O8): the status then carries no tick, so none stands beside a miss. */
+  plain?: boolean;
+  /** The first box still to answer (OR3, the owner's O7): "1 question left: answer it", the link to it. */
+  go?: { to: string; what?: string; onClick?: (e: Event) => void } }) {
   const tone = p.result === 'blocked' ? 'text-bad' : p.result === 'provisional' ? 'text-warn' : 'text-ink';
-  const state = <span data-testid={p.id} data-answer={p.answer || undefined} data-result={p.result} class={`${STATE} ${tone}`}>{p.result === 'ready' && <Tick />}{p.text}</span>;
+  const state = <span data-testid={p.id} data-answer={p.answer || undefined} data-result={p.result} class={`${STATE} ${tone}`}>{p.result === 'ready' && !p.plain && <Tick />}{p.text}</span>;
   const box = `${p.class ?? ''} ${p.rule ? answerRule(p.result === 'ready') : ''}`;
+  const go = p.go && <a data-testid={`${p.id}-go`} href={`#${p.go.to}`} onClick={p.go.onClick} aria-label={p.go.what ? `Answer it: ${p.go.what}` : undefined}
+    class="inline-flex min-h-11 items-center text-link underline underline-offset-4">answer it</a>;
   // The last answer, committed as Tab leaves its box, turns the list into the state alone and takes the summary away just
   // as Tab moves to it: the state takes the focus, so Tab goes on from there, not from the top (WCAG 2.4.3; UX8's critic).
   const summary = useRef<HTMLElement>(null), line = useRef<HTMLParagraphElement>(null), had = useRef(false);
   if (typeof document !== 'undefined') had.current = summary.current?.isConnected ?? false;
   useLayoutEffect(() => { if (had.current && !p.children && tabbing && document.activeElement === document.body) line.current?.focus(); });
-  if (!p.children) return <p ref={line} tabIndex={-1} class={box}>{state}</p>;
+  const which = <span class="text-sm text-link"><span class="group-open:hidden">Show which</span><span class="hidden group-open:inline">Hide</span></span>;
+  if (!p.children) return <p ref={line} tabIndex={-1} class={`${box} ${go ? 'flex flex-wrap items-center gap-x-1' : ''}`}>{state}{go && <><span aria-hidden="true" class={`-ml-1 text-sm font-medium ${tone}`}>:</span>{go}</>}</p>;
+  // With a link the state and "answer it" share a line above the list's own toggle: a link inside a summary would nest
+  // one control in another.
+  if (go) return <div class={box}><p class="flex flex-wrap items-center gap-x-1">{state}<span aria-hidden="true" class={`-ml-1 text-sm font-medium ${tone}`}>:</span>{go}</p>
+    <details class="group"><summary ref={summary} class="flex min-h-11 cursor-pointer items-center [&::-webkit-details-marker]:hidden">{which}</summary>
+      <div class="pb-1">{p.children}</div></details></div>;
   return <details class={`group ${box}`}>
-    <summary ref={summary} class="flex min-h-11 cursor-pointer flex-wrap items-center gap-x-2 [&::-webkit-details-marker]:hidden">{state}
-      <span class="text-sm text-link"><span class="group-open:hidden">Show which</span><span class="hidden group-open:inline">Hide</span></span></summary>
+    <summary ref={summary} class="flex min-h-11 cursor-pointer flex-wrap items-center gap-x-2 [&::-webkit-details-marker]:hidden">{state}{which}</summary>
     <div class="pb-1">{p.children}</div>
   </details>;
 }
@@ -287,7 +307,7 @@ export function AnswerBar(p: { to: string; label: string; testid: string; text: 
   </div>;
 }
 
-/** The line under an answer that says its state: the tick and "Complete" in ink, or what is still needed in the warning's
+/** The line under an answer that says its state: the tick and "All answered" in ink, or what is still needed in the warning's
  * words, or why there is none in the bad's; one colour a meaning, on text only. */
 export const STATE = 'flex items-start gap-1.5 text-sm font-medium';
 
