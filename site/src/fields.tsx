@@ -207,12 +207,14 @@ export function Counter(p: { id: string; result: 'blocked' | 'provisional' | 're
   /** The verdict stands apart (OR3, the owner's O8): the status then carries no tick, so none stands beside a miss. */
   plain?: boolean;
   /** The first box still to answer (OR3, the owner's O7): "1 question left: answer it", the link to it. */
-  go?: { to: string; what?: string; onClick?: (e: Event) => void } }) {
+  go?: { to: string; what?: string; onClick?: (e: Event) => void;
+    /** Its words when the box it lands on is not a question (the report's check, OR8): "answer it" by default. */
+    label?: string } }) {
   const tone = p.result === 'blocked' ? 'text-bad' : p.result === 'provisional' ? 'text-warn' : 'text-ink';
   const state = <span data-testid={p.id} data-answer={p.answer || undefined} data-result={p.result} class={`${STATE} ${tone}`}>{p.result === 'ready' && !p.plain && <Tick />}{p.text}</span>;
   const box = `${p.class ?? ''} ${p.rule ? answerRule(p.result === 'ready') : ''}`;
   const go = p.go && <a data-testid={`${p.id}-go`} href={`#${p.go.to}`} onClick={p.go.onClick} aria-label={p.go.what ? `Answer it: ${p.go.what}` : undefined}
-    class="inline-flex min-h-11 items-center text-link underline underline-offset-4">answer it</a>;
+    class="inline-flex min-h-11 items-center text-link underline underline-offset-4">{p.go.label ?? 'answer it'}</a>;
   // The last answer, committed as Tab leaves its box, turns the list into the state alone and takes the summary away just
   // as Tab moves to it: the state takes the focus, so Tab goes on from there, not from the top (WCAG 2.4.3; UX8's critic).
   const summary = useRef<HTMLElement>(null), line = useRef<HTMLParagraphElement>(null), had = useRef(false);

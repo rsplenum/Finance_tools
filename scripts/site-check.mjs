@@ -1149,14 +1149,19 @@ if (touched('/project-report/')) {
   await expectText(page, v, 'rep-status', '1 question left', 'the report before the repayment');
   await page.check('#fld-tl-repayment-monthly');
   await expectText(page, v, 'rep-status', '3 questions left, for the document', 'the report, before its facts (UXR3, S4)');
+  // The status's link says where it goes (the owner, 26-10-2026): the check first, then the document's first question.
+  await expectText(page, v, 'rep-status-go', 'check your figures first', 'the status link before the check');
   await expectText(page, v, 'rep-key-0', 'Rs. 37,86,301', 'the cost of the project');
   // Before the check (OR8, the owner's O13): what was collected and the benchmarks, the owner's line; no table, no download.
   if (await page.getByTestId('rep-pl').count() || await page.getByTestId('rep-download-pdf').count()) v('the report shows its tables or downloads before its check (OR8)');
   await expectText(page, v, 'rep-doc-wait', 'A PDF, an Excel copy and a Word copy, once you have checked your figures above.', 'the download before the check');
   await expectText(page, v, 'rep-confirm-cost', /Total cost of the projectRs\. 37,86,301$/, 'the check: the cost of the project');
   await expectText(page, v, 'rep-confirm-sales', /Sales in a full first yearRs\. 1,20,00,000Sales: growth a year10%$/, 'the check: the sales as typed');
-  await expectText(page, v, 'rep-confirm-benchmarks', /These are standard; a bank’s credit manager, a CA or a DSA may change them\..*Average DSCRTarget 1\.50 or more/, 'the check: the benchmarks');
+  await expectText(page, v, 'rep-confirm-benchmarks', /These are standard; a bank’s credit manager, a CA or a DSA may change them\.RatioTarget.*Average DSCR1\.50 or more/, 'the check: the benchmarks, a table');
   await confirmReport(page, v, 'case R');
+  await expectText(page, v, 'rep-status-go', 'answer it', 'the status link after the check');
+  await page.getByTestId('rep-status-go').click();
+  if (await page.evaluate(() => document.activeElement?.id) !== 'fld-rep-name') v('"answer it" does not land on the business\'s name (the owner, 26-10-2026)');
   const cells = async (table, label) => (await page.getByTestId(table).locator('tr', { has: page.locator('th', { hasText: label }) }).first().locator('td').allTextContents());
   for (const [table, label, want] of [['rep-pl', 'Profit after tax', '11,54,407'], ['rep-bs', 'Total liabilities', '55,81,804'], ['rep-bs', 'Total assets', '55,81,804'], ['rep-dscr', 'DSCR (A ÷ B)', '2.51']]) {
     if (table !== 'rep-dscr') await page.getByTestId(table).evaluate((t) => t.closest('details').open = true);

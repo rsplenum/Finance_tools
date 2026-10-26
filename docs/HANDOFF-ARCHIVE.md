@@ -167,6 +167,8 @@ The test figures are model-worked until the owner confirms fictional cases A and
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 26-10-2026 | OR5: the holiday and the repayment period asked in simple mode, the loan period read back and checked, and EMI, equal principal and stepped compared with the cheapest that meets proposed | L, Extra | about 160 steps over about 0.6 working hours, three compactions (at 193k); the hand-worked case G and the report page's card took the most; re-reading the context 57% |
+| 25-10-2026 | UXR3: one vocabulary across the four tools | M | about 165 steps over about 0.7 working hours, one compaction (at 194k); two 15-minute quick verifies took the most; re-reading the context 72% |
 | 25-10-2026 | OR3: words for common people (O1, O2, O7, O8, O15) on the four tools | M | about 80 steps over about 0.3 working hours, no compaction; the 15-minute quick verify and the load counts set by hand took the most; re-reading the context 69% |
 | 25-10-2026 | OR4: every assumption box filled with its default, tinted with its default and Reset once changed, on the four tools | S | about 60 steps over about 0.4 working hours, no compaction; two 16-minute quick verifies took the most; re-reading the context 69% |
 | 25-10-2026 | OR2b: "Make it viable" opens on the fix beside the miss on case F, asks once for the promoters' more, and the repayment shortens to the lowest-year DSCR bound | M | about 60 steps over about 0.2 working hours, no compaction; the 18-minute quick verify (site check on 12 pages) took the most; re-reading the context 64% |

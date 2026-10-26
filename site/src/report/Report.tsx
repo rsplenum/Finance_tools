@@ -31,7 +31,6 @@ import {
 
 type Update = (f: (s: ReportState) => ReportState) => void;
 const MUTED = 'text-ink-muted';
-const upper = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 const SALES_BY: { value: ReportState['salesBy']; label: string }[] = [
   { value: 'drivers', label: 'Each product: how many a month and its price' }, { value: 'typed', label: 'Sales I type, with their growth' }];
 const bad = (t: string, read: (t: string) => unknown) => !!t.trim() && read(t) === undefined;
@@ -68,14 +67,19 @@ const boxOf = (need: string): [string, string] | undefined => {
   const m = /^Sales, line (\d+): (.*)$/.exec(need), fact = m && LINE_FACT.find(([w]) => m[2].startsWith(w));
   return fact ? [need, `fld-product-${Number((m as RegExpExecArray)[1]) - 1}-${fact[1]}`] : BOXES.find(([w]) => need.startsWith(w));
 };
+/** The document's own facts and their boxes in the download; the report's words land on the section. */
+const DOC_BOXES: [string, string][] = [['The business’s name', 'fld-rep-name'], ['What the business does', 'fld-rep-activity'],
+  ['The business’s address', 'fld-rep-address'], ['The lender', 'fld-rep-lender'], ['Prepared by', 'fld-rep-preparedBy']];
 /** "Answer it" beside the status (OR3, the owner's O7): the first question with a box, else the document's own facts. */
 function goOf(s: ReportState, p: ReportPreview, toBox: (need: string) => (e: Event) => void, ok: boolean) {
   const n = p.needs.find((x) => boxOf(x));
   if (n) return { to: (boxOf(n) as [string, string])[1], what: n, onClick: toBox(n) };
-  // The check before the document's facts (OR8): they sit in the download, which waits for it.
-  if (!p.needs.length && p.view && !p.blocked && !ok) return { to: 'check', what: 'check your figures' };
-  if (!p.needs.length && p.view && !p.blocked && docNeeds(s.doc, s.words).length) return { to: 'download', what: 'the document' };
-  return undefined;
+  if (p.needs.length || !p.view || p.blocked) return undefined;
+  // The check before the document's facts (OR8): they sit in the download, which waits for it, so the link says where it
+  // goes (the owner: "answer it" that lands on the check reads as going somewhere else).
+  if (!ok) return { to: 'check', label: 'check your figures first' };
+  const d = docNeeds(s.doc, s.words)[0], to = d && (DOC_BOXES.find(([w]) => d.startsWith(w))?.[1] ?? 'download');
+  return to ? { to, what: d, onClick: goTo(to) } : undefined;
 }
 /** One tone a meaning (docs/DESIGN-SITE.md, Colours): good meets, warn provisional, bad misses. */
 
@@ -340,7 +344,7 @@ export function ReportCalculator() {
           <button type="button" data-testid="rep-clear-undo" class={BUTTON} onClick={unclear}>Undo</button></p>} />
     <div class="lg:col-span-2 lg:row-start-2">
     {p.view && !p.blocked && <CheckStep pre="rep" groups={checkOf(s, p)} to="benchmarks" state={ok ? 'done' : checked ? 'lapsed' : 'open'}
-      benchmarks={(p.checks ?? []).map((c) => ({ label: c.label, value: upper(targetOf(c)) }))}
+      benchmarks={(p.checks ?? []).map((c) => ({ label: c.label, value: c.byDefault === undefined ? c.level : `${c.level}, yours (default ${c.byDefault}${c.looser ? ', looser than a bank may accept' : ''})` }))}
       confirm={seen ? 'These are right' : 'These are right: show the report'} onConfirm={confirm} />}
     {p.view && (ok || seen) && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
     <Ledger id="assumed" testid="rep-assumed" title="Assumed until changed" rows={assumptionsOf(s).map((a) => {
@@ -485,11 +489,12 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
         <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span class="text-sm font-medium text-ink">{r.label}</span>
           {r.proposed && <span class="text-sm text-good">Proposed</span>}
+          {r.least && <span class="text-sm text-ink-muted">Least interest</span>}
           {r.now ? <span class="text-sm text-ink-muted">In use</span> : <button type="button" data-testid={`rep-way-use-${r.value}`} class={r.proposed ? FILLED : BUTTON}
             onClick={() => { update((x) => ({ ...x, loan: { ...x.loan, repayment: r.value } })); focusNext('[data-testid="rep-repayment"]'); }}>Use this</button>}
         </div>
         <p class="mt-1 text-sm text-ink">Interest over the loan {r.interest}; {r.instalments}.</p>
-        <p class={`text-sm ${r.meets ? 'text-good' : 'text-bad'}`}>Lowest-year DSCR {r.lowest}. {r.verdict}.</p>
+        {r.lines.map((l) => <p key={l.text} class={`text-sm ${l.meets === undefined ? 'text-ink-muted' : tone(l.meets)}`}>{l.text}</p>)}
       </li>)}</ul>
       {ways.notes.map((n) => <p key={n} class={HINT}>{n}</p>)}
     </div>}

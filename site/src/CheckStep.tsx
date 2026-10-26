@@ -21,26 +21,47 @@ const toBox = (id: string) => (e: Event) => {
   goTo(id)(e);
 };
 
-function Group({ pre, g, note }: { pre: string; g: CheckGroup; note?: string }) {
+function Group({ pre, g }: { pre: string; g: CheckGroup }) {
   return <div data-testid={`${pre}-confirm-${g.id}`} class="rounded-control bg-surface p-3">
     <div class="flex items-baseline justify-between gap-2">
       <h3 class="font-medium text-ink">{g.title}</h3>
       <a href={`#${g.to}`} onClick={toBox(g.to)} aria-label={`Change: ${g.title}`} class="inline-flex min-h-11 items-center text-sm text-link underline underline-offset-4">Change</a>
     </div>
-    {note && <p data-testid={`${pre}-confirm-standard`} class="text-sm text-ink-muted">{note}</p>}
     <dl class="mt-1 space-y-1.5">{g.lines.map((l) => <div key={l.label}>
       <dt class="text-sm text-ink-muted">{l.label}</dt><dd class="text-ink tabular-nums">{l.value}</dd>
     </div>)}</dl>
   </div>;
 }
 
-/** `benchmarks`: the ratios and their targets; `to`, the box that changes them; `confirm`, the button's words. */
+/** The benchmarks as a table (the owner: a list of label over value was not intuitive), a ratio a row and its target. */
+function Benchmarks({ pre, lines, to }: { pre: string; lines: CheckLine[]; to: string }) {
+  const title = 'The benchmarks it is judged against';
+  return <div data-testid={`${pre}-confirm-benchmarks`} class="rounded-control bg-surface p-3">
+    <div class="flex items-baseline justify-between gap-2">
+      <h3 class="font-medium text-ink">{title}</h3>
+      <a href={`#${to}`} onClick={toBox(to)} aria-label={`Change: ${title}`} class="inline-flex min-h-11 items-center text-sm text-link underline underline-offset-4">Change</a>
+    </div>
+    <p data-testid={`${pre}-confirm-standard`} class="text-sm text-ink-muted">{STANDARD}</p>
+    <table class="mt-2 w-full border-collapse text-sm">
+      <thead><tr class="border-b border-line">
+        <th scope="col" class="py-1.5 pr-3 text-left font-medium text-ink-muted">Ratio</th>
+        <th scope="col" class="py-1.5 text-right font-medium text-ink-muted">Target</th>
+      </tr></thead>
+      <tbody>{lines.map((l) => <tr key={l.label} class="border-b border-line last:border-b-0">
+        <th scope="row" class="py-1.5 pr-3 text-left font-normal text-ink">{l.label}</th>
+        <td class="py-1.5 text-right text-ink tabular-nums">{l.value}</td>
+      </tr>)}</tbody>
+    </table>
+  </div>;
+}
+
+/** `benchmarks`: the ratios and their targets ("1.10 or more"); `to`, the box that changes them; `confirm`, the button's words. */
 export function CheckStep({ pre, groups, benchmarks, to, state, confirm, onConfirm }: {
   pre: string; groups: CheckGroup[]; benchmarks: CheckLine[]; to: string; state: CheckState; confirm: string; onConfirm: () => void;
 }) {
   const list = <div class="mt-4 grid gap-3 sm:grid-cols-2">
     {groups.map((g) => <Group key={g.id} pre={pre} g={g} />)}
-    <Group pre={pre} g={{ id: 'benchmarks', title: 'The benchmarks it is judged against', to, lines: benchmarks }} note={STANDARD} />
+    <Benchmarks pre={pre} lines={benchmarks} to={to} />
   </div>;
   if (state === 'done') return <details id="check" data-testid={`${pre}-confirmed`} class="mt-10 border-t border-line pt-3">
     <summary class={`min-h-11 cursor-pointer ${STATE} items-center text-ink`}><Tick />Checked: what you gave and the benchmarks</summary>
