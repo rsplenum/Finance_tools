@@ -167,6 +167,8 @@ The test figures are model-worked until the owner confirms fictional cases A and
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 24-10-2026 | HOME1e: the CMA's, the estimate's and the report's stories as scenes in look C, one player for all four (D-UX-135 to D-UX-144) | L, Extra | about 110 steps; the frames at each beat on a slowed phone and three 14-minute site checks took the most |
+| 24-10-2026 | MAP1: `/sitemap.xml`, `robots.txt` and `/site-map/`, held by the site check (D-TECH-65) | S, high | about 40 steps; the 17-minute full verify took the most |
 | 24-10-2026 | CHK1: `npm run verify -- --quick`, the site check on the touched pages only (D-TECH-63); D-TECH-62 rebased onto main | S, high | about 60 steps; the 12-minute full verify took the most. Quick: a doc 1 s, `/terms/` 13 s, the DSCR with home 163 s |
 | 24-10-2026 | HOME1d: the DSCR's five-beat scene in look C (D-UX-125 to D-UX-129) | L, Extra | about 115 steps; the frames at each beat and three 15-minute site checks took the most |
 | 24-10-2026 | NUM1: lakh and crore from the engine in home's intros and the estimate's headline (D-UX-152) | S, high | about 50 steps; two site checks (a sideways scroll at 320 px, then the words' raise) took the most |
