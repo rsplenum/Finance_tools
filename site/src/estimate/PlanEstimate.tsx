@@ -219,9 +219,9 @@ function Answer({ v, toLevel }: { v: PlanView; toLevel: (l: Level) => void }) {
     <p data-testid="pl-rates" class={`mt-2 flex items-start gap-1.5 text-sm ${MUTED}`}><Tick />{v.ratesLine}</p>
     {/* Edged, never filled: the chosen level takes an edge in ink (UX7: the accent is for links alone) (principle 6; F4 asks a filled control to be a pill).
         The five totals read as a chart's labels: 12 px on a phone, where "Standard" at 14 px overflows its fifth of 360 px. */}
-    <div role="group" aria-label="The total at each level; choose one to switch the package" class="mt-4 grid grid-cols-5 gap-1">
+    <div role="group" aria-label="The total at each level; choose one to switch the package" class="-mx-1 mt-4 grid grid-cols-5 gap-0.5 sm:mx-0 sm:gap-1">
       {v.strip.map((x) => <button key={x.level} type="button" data-testid={`pl-strip-${x.level}`} aria-pressed={x.current} onClick={() => toLevel(x.level)}
-        class={`min-h-11 min-w-0 rounded-control px-0.5 text-center ${x.current ? 'border-2 border-ink py-1' : 'border border-edge py-1.25'}`}>
+        class={`min-h-11 min-w-0 rounded-control px-0 text-center ${x.current ? 'border-2 border-ink py-1' : 'border border-edge py-1.25'}`}>
         <span class={`block text-xs leading-tight sm:text-sm ${x.current ? "font-semibold" : ""} ${INK}`}>{x.name}</span>
         <span class={`block text-xs leading-tight tabular-nums sm:text-sm ${MUTED}`}>{x.total}<span class="sr-only"> (Rs. {x.full})</span></span>
       </button>)}
@@ -625,7 +625,7 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
     <div class="mt-5">
       <p data-testid="pl-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{planDocStatus(s, p)}</p>
       {own.length > 0 && <ul data-testid="pl-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
-      <div class="mt-3 flex flex-wrap gap-2">
+      <div class="mt-3 flex w-fit flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
         <button type="button" data-testid="pl-download-pdf" class={FILLED} onClick={() => go('pdf')}>Download PDF</button>
         <button type="button" data-testid="pl-download-xlsx" class={BUTTON} onClick={() => go('xlsx')}>Download Excel</button>
         <button type="button" data-testid="pl-download-docx" class={BUTTON} onClick={() => go('docx')}>Download Word</button>
@@ -634,7 +634,7 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
     </div>
     <div class="mt-5">
       <p class={HINT}>A bill of quantities for two or three contractors to quote like for like: each item, where it goes and how much, with the rates left blank.</p>
-      <div class="mt-3 flex flex-wrap gap-2">
+      <div class="mt-3 flex w-fit flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
         <button type="button" data-testid="pl-bill-pdf" class={BUTTON} onClick={() => bill('pdf')}>Bill as PDF</button>
         <button type="button" data-testid="pl-bill-xlsx" class={BUTTON} onClick={() => bill('xlsx')}>Bill as Excel</button>
         <button type="button" data-testid="pl-bill-docx" class={BUTTON} onClick={() => bill('docx')}>Bill as Word</button>
