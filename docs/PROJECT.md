@@ -3,7 +3,7 @@
 Study report: https://claude.ai/code/artifact/4bad29bb-5d80-4b27-9386-be3f2581c068 (private; the full case). What remains, in order: `docs/ROADMAP.md`.
 
 ## The promise
-The documents a lender asks a borrower for, right on the first submission, and every figure in them either the borrower's own or an assumption stated on the page. Never a figure made up to fill a gap; never a claim the business cannot make.
+The documents a lender asks a borrower for, right on the first submission, and every figure in them either the borrower's own or an assumption stated on the page. Never a figure made up to fill a gap; never a claim the business cannot make. And a service a borrower can use without help: questions in their own words, a plain reason when a figure falls short, the changes that would fix it, and as many rounds as they need until the plan works and they trust why.
 
 ## Whom we serve first
 **Borrowers preparing one file**: small businesses and self-employed people in India asking for an MSME, Mudra or PMEGP loan, or a loan to build or renovate. They find us through search, get the answer free and pay only for the document. **DSAs and accountants** come second, on a plan for many files, once the borrower's path has paid reports behind it. Bank staff are not customers; nothing is aimed at the customers of the owner's employer bank (D-BIZ-01).

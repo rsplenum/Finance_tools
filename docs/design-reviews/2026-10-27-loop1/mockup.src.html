@@ -1,0 +1,476 @@
+<title>FinSight DSCR rounds</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+@font-face { font-family: 'Figtree'; font-weight: 300 900; font-display: swap; src: url(data:font/woff2;base64,__FIGTREE__) format('woff2'); }
+@font-face { font-family: 'Anek'; font-weight: 500; font-stretch: 75% 125%; font-display: swap; src: url(data:font/woff2;base64,__ANEK__) format('woff2'); }
+/* Layout: answers first; once answered, the result takes the centre, the answers fold to a rail (a sheet on a phone),
+   and "Make it work" sits beside the result. FinSight's tokens, as on the site. */
+:root {
+  --canvas: oklch(1 0 0); --surface: oklch(0.972 0.008 268); --ink: oklch(0.255 0.06 268); --muted: oklch(0.46 0.045 268);
+  --line: oklch(0.9 0.018 268); --edge: oklch(0.55 0.045 268); --link: oklch(0.45 0.17 268); --focus: oklch(0.5 0.19 268);
+  --desk: oklch(0.255 0.065 270); --on-desk: oklch(0.975 0.012 85); --on-desk-muted: oklch(0.84 0.03 268);
+  --paper: oklch(1 0 0); --margin: oklch(0.56 0.2 27); --marigold: oklch(0.82 0.15 76); --marigold-soft: oklch(0.93 0.07 85);
+  --good: oklch(0.5 0.12 155); --good-soft: oklch(0.95 0.04 155); --miss: oklch(0.53 0.19 27); --miss-soft: oklch(0.96 0.03 27);
+  --field: oklch(1 0 0); --accent: oklch(0.255 0.06 268); --on-accent: oklch(1 0 0);
+  --shadow: 0 1px 2px oklch(0.16 0.05 270 / 0.18), 0 10px 24px -12px oklch(0.1 0.05 270 / 0.32);
+  --body: 'Figtree', ui-sans-serif, system-ui, sans-serif; --head: 'Anek', 'Figtree', ui-sans-serif, system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --canvas: oklch(0.205 0.045 270); --surface: oklch(0.25 0.05 270); --ink: oklch(0.965 0.012 85); --muted: oklch(0.84 0.03 268);
+  --line: oklch(0.34 0.05 270); --edge: oklch(0.7 0.04 268); --link: oklch(0.84 0.09 268); --focus: oklch(0.84 0.09 268);
+  --paper: oklch(0.29 0.05 270); --margin: oklch(0.66 0.19 27); --marigold-soft: oklch(0.42 0.08 76);
+  --good: oklch(0.78 0.13 155); --good-soft: oklch(0.33 0.05 155); --miss: oklch(0.74 0.15 27); --miss-soft: oklch(0.34 0.06 27);
+  --field: oklch(0.24 0.045 270); --accent: oklch(0.93 0.01 85); --on-accent: oklch(0.205 0.045 270); color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --canvas: oklch(0.205 0.045 270); --surface: oklch(0.25 0.05 270); --ink: oklch(0.965 0.012 85); --muted: oklch(0.84 0.03 268);
+  --line: oklch(0.34 0.05 270); --edge: oklch(0.7 0.04 268); --link: oklch(0.84 0.09 268); --focus: oklch(0.84 0.09 268);
+  --paper: oklch(0.29 0.05 270); --margin: oklch(0.66 0.19 27); --marigold-soft: oklch(0.42 0.08 76);
+  --good: oklch(0.78 0.13 155); --good-soft: oklch(0.33 0.05 155); --miss: oklch(0.74 0.15 27); --miss-soft: oklch(0.34 0.06 27);
+  --field: oklch(0.24 0.045 270); --accent: oklch(0.93 0.01 85); --on-accent: oklch(0.205 0.045 270); color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--surface); color: var(--ink); font: 400 16px/1.5 var(--body); margin: 0; }
+h1, h2, h3 { font-family: var(--head); font-weight: 500; text-wrap: balance; margin: 0; }
+.fig { font-family: var(--head); font-weight: 500; font-stretch: 125%; font-variant-numeric: tabular-nums lining-nums; }
+.caps { font-family: var(--head); font-stretch: 87.5%; letter-spacing: .06em; text-transform: uppercase; font-size: .8rem; color: var(--muted); }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.wrap { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* The desk: the tool head */
+.head { background: var(--desk); color: var(--on-desk); padding-block: 18px 22px; }
+.head .in { max-width: 1240px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: baseline; justify-content: space-between; }
+.head .mark { font-family: var(--head); font-size: 1.05rem; letter-spacing: .02em; }
+.head h1 { font-size: clamp(1.5rem, 5vw, 2.1rem); line-height: 1.15; width: 100%; }
+.head p { margin: 0; color: var(--on-desk-muted); max-width: 60ch; }
+.tag { display: inline-block; border: 1px dashed currentColor; border-radius: 999px; padding: 1px 10px; font-size: .78rem; }
+
+.layout { max-width: 1240px; margin: 0 auto; padding-block: 20px 64px; display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); }
+.stage-answer #centre, .stage-answer #change, .stage-answer #confirm, .stage-answer .edit-btn { display: none; }
+.stage-result #answers { display: none; }
+@media (min-width: 1024px) {
+  .stage-answer .layout { grid-template-columns: minmax(0, 640px); justify-content: center; }
+  .stage-result .layout { grid-template-columns: 240px minmax(0, 1fr) 360px; align-items: start; }
+  .stage-result #answers { display: block; position: sticky; top: 16px; }
+  .stage-result #change { position: sticky; top: 16px; }
+  .stage-result .edit-btn { display: none; }
+  .stage-result #answers .q-full { display: none; }
+  .stage-result #answers .q-rail { display: block; }
+}
+
+/* Paper: the only thing with a shadow */
+.paper { background: var(--paper); border-radius: 14px; box-shadow: var(--shadow); padding: 20px; min-width: 0; }
+
+/* Round 1: the answers */
+.q-list { display: grid; gap: 18px; margin-top: 14px; }
+.q label, .q legend { display: block; font-weight: 600; }
+.q .hint { color: var(--muted); font-size: .9rem; margin-top: 2px; }
+.q .box { display: flex; align-items: center; gap: 8px; margin-top: 6px; border: 1px solid var(--edge); border-radius: 10px; background: var(--field); padding: 0 12px; min-height: 48px; }
+.q .box span { color: var(--muted); }
+.q input[type=text] { border: 0; background: transparent; width: 100%; min-width: 0; padding: 10px 0; font-variant-numeric: tabular-nums; }
+.q input[type=text]:focus { outline: none; }
+.q .box:focus-within { outline: 3px solid var(--focus); outline-offset: 1px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.chip { border: 1px solid var(--edge); background: var(--field); border-radius: 999px; padding: 8px 14px; min-height: 44px; cursor: pointer; }
+.chip[aria-pressed=true] { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.more { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 12px; color: var(--muted); font-size: .92rem; }
+.more summary { cursor: pointer; color: var(--link); }
+.btn { border: 0; border-radius: 999px; background: var(--accent); color: var(--on-accent); padding: 12px 22px; min-height: 48px; font-weight: 600; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--link); border: 1px solid var(--edge); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.note { font-size: .85rem; color: var(--muted); }
+.q-rail { display: none; }
+.rail-group { border-top: 1px solid var(--line); padding-block: 10px; }
+.rail-group:first-of-type { border-top: 0; }
+.rail-group dt { font-size: .82rem; color: var(--muted); }
+.rail-group dd { margin: 0 0 6px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* The rounds trail */
+.trail { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 12px; }
+.trail button { flex: none; border: 1px solid var(--line); background: var(--canvas); border-radius: 10px; padding: 6px 12px; text-align: left; cursor: pointer; }
+.trail button[aria-current=true] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.trail .t1 { display: block; font-size: .75rem; color: var(--muted); }
+.trail .t2 { font-size: .95rem; }
+
+/* The answer card */
+.verdict { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 12px; font-weight: 600; font-size: .9rem; }
+.verdict.ok { background: var(--good-soft); color: var(--good); }
+.verdict.no { background: var(--miss-soft); color: var(--miss); }
+.answer h2 { font-size: clamp(1.25rem, 3.6vw, 1.6rem); line-height: 1.25; margin-top: 10px; }
+.hl { background: linear-gradient(transparent 52%, var(--marigold-soft) 52%, var(--marigold-soft) 92%, transparent 92%); padding-inline: 2px; }
+.meters { display: grid; gap: 14px; margin-top: 18px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.meter .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.meter .big { font-size: 1.9rem; line-height: 1; }
+.meter .of { color: var(--muted); font-size: .9rem; }
+.bar { position: relative; height: 10px; border-radius: 6px; background: var(--line); margin-top: 8px; }
+.bar i { position: absolute; inset: 0 auto 0 0; border-radius: 6px; background: var(--ink); }
+.bar.no i { background: var(--miss); }
+.bar b { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); }
+.why { margin-top: 16px; display: grid; gap: 8px; }
+.why p { margin: 0; max-width: 64ch; }
+.changed { margin-top: 14px; padding: 10px 12px; border-radius: 10px; background: var(--surface); font-size: .93rem; }
+.linkish { background: none; border: 0; padding: 0; color: var(--link); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; min-height: 32px; }
+
+/* Where a figure comes from */
+.from { margin-top: 14px; }
+.from table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+.from td { padding: 7px 0; vertical-align: top; border-bottom: 1px solid var(--line); }
+.from td.v { text-align: right; white-space: nowrap; padding-left: 10px; font-variant-numeric: tabular-nums; font-weight: 600; }
+.from tr.sum td { border-bottom: 2px solid var(--ink); font-weight: 700; }
+.from .src { display: block; color: var(--muted); font-size: .82rem; margin-top: 2px; }
+.kind { display: inline-block; font-size: .7rem; border-radius: 6px; padding: 0 6px; margin-right: 4px; border: 1px solid var(--edge); color: var(--muted); vertical-align: 1px; }
+.kind.you { border-color: var(--ink); color: var(--ink); }
+.kind.rule, .kind.bench { border-style: dashed; }
+
+/* Year by year: compact */
+.years { margin-top: 18px; }
+.years ol { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 4px; }
+.years li button { width: 100%; display: grid; grid-template-columns: 5.2em minmax(0, 1fr) 3.4em; gap: 10px; align-items: center; background: none; border: 0; padding: 6px 4px; border-radius: 8px; cursor: pointer; text-align: left; }
+.years li button[aria-pressed=true] { background: var(--surface); }
+.years .yb { position: relative; height: 14px; }
+.years .yb i { position: absolute; left: 0; top: 2px; bottom: 2px; border-radius: 4px; background: var(--edge); }
+.years .yb.no i { background: var(--miss); }
+.years .yb b { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--ink); }
+.years .yr { font-variant-numeric: tabular-nums; font-size: .9rem; }
+.years .part { color: var(--muted); font-size: .75rem; display: block; line-height: 1.1; }
+.years .d { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.years .d.no { color: var(--miss); }
+
+/* Make it work */
+#change h2 { font-size: 1.3rem; }
+.own { margin-top: 12px; padding: 12px; border-radius: 10px; background: var(--surface); }
+.own p { margin: 0; font-weight: 600; }
+.lever { margin-top: 18px; }
+.lever .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.lever .val { font-size: 1.35rem; }
+.who { font-size: .72rem; border-radius: 999px; padding: 1px 8px; white-space: nowrap; }
+.who.you { background: var(--marigold); color: oklch(0.255 0.06 268); }
+.who.moved { border: 1px solid var(--ink); }
+input[type=range] { width: 100%; margin: 10px 0 2px; accent-color: var(--ink); min-height: 32px; }
+.ends { display: flex; justify-content: space-between; font-size: .78rem; color: var(--muted); }
+.stop { margin-top: 6px; font-size: .86rem; color: var(--miss); }
+.live { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.live div { min-width: 0; }
+.live .k { font-size: .78rem; color: var(--muted); display: block; }
+.live .v { font-weight: 700; font-variant-numeric: tabular-nums; }
+.live .v.no { color: var(--miss); }
+.actions { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* Check and confirm */
+#confirm h2 { font-size: 1.3rem; }
+.check dl { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; margin: 12px 0 0; font-size: .93rem; }
+.check dt { color: var(--muted); }
+.check dd { margin: 0; text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.quote { margin-top: 14px; font-style: italic; color: var(--muted); }
+
+/* A phone: Edit answers as a sheet */
+.edit-btn { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; display: flex; justify-content: flex-end; }
+.sheet { position: fixed; inset: auto 0 0 0; z-index: 20; max-height: 86vh; overflow: auto; background: var(--paper); border-radius: 16px 16px 0 0; box-shadow: var(--shadow);
+  padding: 18px max(16px, env(safe-area-inset-right, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.scrim { position: fixed; inset: 0; z-index: 19; background: oklch(0.1 0.05 270 / .45); }
+@media (prefers-reduced-motion: no-preference) { .paper, .bar i, .years .yb i { transition: width .35s ease, background-color .2s; } }
+</style>
+
+<header class="head wrap">
+  <div class="in">
+    <span class="mark">FinSight</span>
+    <span class="tag">Mock-up · fictional figures · not advice</span>
+    <h1>Can the business repay the loan?</h1>
+    <p>Answer a few questions. See the bank's test in plain words, why it passes or falls short, and change the plan until it works.</p>
+  </div>
+</header>
+
+<div id="app" class="stage-answer">
+<div class="layout wrap">
+
+  <!-- Round 1: the answers (a rail once answered) -->
+  <section id="answers" aria-labelledby="answers-h">
+    <div class="paper">
+      <div class="q-full">
+        <span class="caps">Round 1 · your answers</span>
+        <h2 id="answers-h" style="font-size:1.35rem;margin-top:4px">A bakery run by its owner: a fictional case</h2>
+        <p class="note">The answers are filled in for this mock-up and cannot be changed here. In the tool you type your own.</p>
+        <form class="q-list" onsubmit="return false">
+          <fieldset class="q"><legend>Who is borrowing?</legend>
+            <div class="chips"><button type="button" class="chip" aria-pressed="true">Just me, in my own name</button><button type="button" class="chip" aria-pressed="false" disabled>A partnership firm</button><button type="button" class="chip" aria-pressed="false" disabled>A company</button></div>
+            <div class="hint">It sets the income tax.</div></fieldset>
+          <div class="q"><label for="q-earn">What the business earned this year, before loan interest, depreciation and tax</label>
+            <div class="box"><span>Rs.</span><input id="q-earn" type="text" readonly value="6,00,000"></div><div class="hint">From your last accounts. A CA calls it PBDIT.</div></div>
+          <div class="q"><label for="q-grow">How much you expect sales to grow each year</label>
+            <div class="box"><input id="q-grow" type="text" readonly value="8"><span>%</span></div><div class="hint">Earnings are taken to grow at the same pace.</div></div>
+          <div class="q"><label for="q-emi">Loan EMIs you already pay each month</label>
+            <div class="box"><span>Rs.</span><input id="q-emi" type="text" readonly value="5,000"></div><div class="hint">Leave empty if none.</div></div>
+          <div class="q"><label for="q-dep">Depreciation a year, if any</label>
+            <div class="box"><span>Rs.</span><input id="q-dep" type="text" readonly value="60,000"></div><div class="hint">Optional. It lowers the tax.</div></div>
+          <div class="q"><label for="q-amt">The loan you want</label>
+            <div class="box"><span>Rs.</span><input id="q-amt" type="text" readonly value="20,00,000"></div></div>
+          <div class="q"><label for="q-rate">Interest rate the bank quoted</label>
+            <div class="box"><input id="q-rate" type="text" readonly value="11.5"><span>% a year</span></div></div>
+          <div class="q"><label for="q-yrs">Years to repay</label>
+            <div class="box"><input id="q-yrs" type="text" readonly value="5"><span>years</span></div></div>
+        </form>
+        <details class="more"><summary>Taken as given (4), change under More options</summary>
+          <ul style="margin:8px 0 0;padding-left:18px">
+            <li>The loan is drawn this month, November 2026, with no holiday: EMIs start at once.</li>
+            <li>Your Rs. 5,000 of EMIs run all through the new loan.</li>
+            <li>Banks look for at least Rs. 1.25 earned for every Rs. 1 due in each year, and Rs. 1.50 on average. A bank may set others.</li>
+            <li>Income tax as a proprietor in the new regime.</li>
+          </ul></details>
+        <div class="actions"><button class="btn" id="go" type="button">See if the bank's test passes</button></div>
+      </div>
+      <div class="q-rail" aria-label="Your answers, folded">
+        <span class="caps">Your answers</span>
+        <dl id="rail-list"></dl>
+        <button class="linkish" type="button" data-edit>Change an answer</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- The result takes the centre -->
+  <section id="centre" aria-labelledby="card-h">
+    <div class="edit-btn"><button class="btn ghost" type="button" data-edit style="background:var(--canvas)">Edit answers</button></div>
+    <nav class="trail" id="trail" aria-label="Rounds"></nav>
+    <article class="paper answer" id="card"></article>
+  </section>
+
+  <!-- Make it work: linked sliders -->
+  <section id="change" aria-labelledby="change-h">
+    <div class="paper">
+      <span class="caps" id="change-eyebrow">Make it work</span>
+      <h2 id="change-h">Change the plan</h2>
+      <p class="note" id="change-lead" style="margin:6px 0 0"></p>
+      <div class="own">
+        <p>Could you put in more of your own money?</p>
+        <div class="chips" id="own"></div>
+        <div class="note" style="margin-top:6px">Only asked now, because one way to fix the plan needs it.</div>
+      </div>
+      <div id="levers"></div>
+      <div class="live" id="live" aria-live="polite"></div>
+      <div class="actions"><button class="btn" id="commit" type="button"></button></div>
+    </div>
+  </section>
+
+  <!-- Check and confirm -->
+  <section id="confirm" aria-labelledby="confirm-h" hidden>
+    <div class="paper check">
+      <span class="caps">Before the statement</span>
+      <h2 id="confirm-h">Check your figures</h2>
+      <dl id="check-list"></dl>
+      <p class="quote">These are standard; a bank's credit manager, a CA or a DSA may change them.</p>
+      <div class="actions"><button class="btn" id="confirm-go" type="button">These are right: show the statement</button></div>
+      <p class="note" id="confirm-after" hidden>The DSCR statement and its PDF, Excel and Word copies come here, built from this round's figures. Not part of the mock-up.</p>
+    </div>
+  </section>
+</div>
+</div>
+<div id="sheet-root"></div>
+
+<script>
+const D = __DATA__;
+const T = D.target, C = D.case;
+const inr = (x) => { const n = Math.round(Math.abs(x)), s = String(n); const last3 = s.slice(-3), rest = s.slice(0, -3);
+  return (x < 0 ? '−' : '') + (rest ? rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + last3 : last3); };
+const rs = (x) => 'Rs. ' + inr(x);
+const lakh = (x) => x % 100000 === 0 ? `Rs. ${x / 100000} lakh` : rs(x);
+const d2 = (x) => (Math.floor(x * 100) / 100).toFixed(2); // never rounds a miss up to the target
+const term = (k) => { const y = Math.floor(k / 12), m = k % 12; return [y && `${y} year${y > 1 ? 's' : ''}`, m && `${m} month${m > 1 ? 's' : ''}`].filter(Boolean).join(' ') || '0 months'; };
+const pct = (r) => `${(+r).toFixed(2).replace(/\.?0+$/, '')}%`;
+const monthsIn = (fy, k) => { // instalments falling in a financial year, from November 2026 (counting only)
+  const y0 = +fy.slice(0, 4); let n = 0; for (let i = 0; i < k; i++) { const m = 10 + i, yy = 2026 + Math.floor(m / 12), mm = m % 12; const f = mm < 3 ? yy - 1 : yy; if (f === y0) n++; } return n; };
+const S = { most: null, held: null, cur: null, rounds: [], view: 0, yearOpen: null, stop: '' };
+const G = () => D.grids[String(S.most ?? 0)];
+const typed = { amount: C.amount, instalments: C.instalments, ratePct: C.ratePct };
+const keyOf = { amount: (v) => String(v), instalments: (v) => String(v), rate: (v) => (+v).toFixed(2) };
+
+function low(p) { return p.rows.find((r) => r[0] === p.low.fy); }
+function card(i) {
+  const R = S.rounds[i], p = R.p, first = S.rounds[0].p, lr = low(p), ok = p.works;
+  const lowOk = p.low.d >= T.minimum, avgOk = p.avg >= T.average;
+  const misses = [!lowOk, !avgOk].filter(Boolean).length;
+  const w = (x) => Math.min(100, x / 2.5 * 100);
+  let why = '';
+  if (!lowOk) why += `<p>In ${p.low.fy}, ${p.low.fy === '2027-28' ? 'your first full year of payments, ' : ''}the business earns <b>${rs(lr[3])}</b> and <b>${rs(lr[6])}</b> goes to loans. Banks look for Rs. ${T.minimum.toFixed(2)} for every Rs. 1 due${i === 0 && D.round1.short.lowest ? `, so that year is <b>${rs(D.round1.short.lowest.amount)}</b> short` : ''}.</p>`;
+  if (!avgOk) why += `<p>Over the whole loan it earns Rs. ${d2(p.avg)} for every Rs. 1 due; banks look for ${T.average.toFixed(2)}${i === 0 && D.round1.short.average ? `: ${rs(D.round1.short.average)} short in all` : ''}.</p>`;
+  if (ok) why = `<p>Every year earns at least Rs. ${T.minimum.toFixed(2)} for each Rs. 1 due, and Rs. ${d2(p.avg)} on average over the loan.</p>`;
+  const ch = [];
+  if (i > 0) {
+    if (p.k !== first.k) ch.push(`repay over <b>${term(p.k)}</b> instead of ${term(first.k)}`);
+    if (p.a !== first.a) ch.push(`borrow <b>${rs(p.a)}</b> instead of ${rs(first.a)}: you put in ${rs(first.a - p.a)} more yourself`);
+    if (+p.r !== +first.r) ch.push(`at <b>${pct(p.r)}</b> instead of ${pct(first.r)}`);
+  }
+  const yOpen = S.yearOpen ?? p.low.fy;
+  return `
+    <span class="caps">Round ${i + 1}${i ? ' · after your change' : ' · as you answered'}</span>
+    <div style="margin-top:8px"><span class="verdict ${ok ? 'ok' : 'no'}">${ok ? 'Works' : `Does not work yet: ${misses} of 2 short`}</span> <span class="note">All answered</span></div>
+    <h2 id="card-h">In its tightest year, ${p.low.fy}, the business earns <span class="hl fig">Rs. ${d2(p.low.d)}</span> for every Rs. 1 of loan payments.</h2>
+    <div class="meters">
+      <div class="meter"><div class="row"><span>Tightest year, ${p.low.fy}</span><span><span class="big fig">${d2(p.low.d)}</span> <span class="of">needs ${T.minimum.toFixed(2)}</span></span></div>
+        <div class="bar ${lowOk ? '' : 'no'}" role="img" aria-label="${d2(p.low.d)} against ${T.minimum.toFixed(2)}"><i style="width:${w(p.low.d)}%"></i><b style="left:${w(T.minimum)}%"></b></div></div>
+      <div class="meter"><div class="row"><span>Average over the loan</span><span><span class="big fig">${d2(p.avg)}</span> <span class="of">needs ${T.average.toFixed(2)}</span></span></div>
+        <div class="bar ${avgOk ? '' : 'no'}" role="img" aria-label="${d2(p.avg)} against ${T.average.toFixed(2)}"><i style="width:${w(p.avg)}%"></i><b style="left:${w(T.average)}%"></b></div></div>
+    </div>
+    <div class="why"><span class="caps" style="margin-top:4px">${ok ? 'Why it works' : 'Why it falls short'}</span>${why}</div>
+    ${ch.length ? `<div class="changed">Changed from round 1: ${ch.join('; ')}. Interest over the loan: ${rs(p.interest)}, against ${rs(first.interest)} in round 1. EMI ${rs(p.emi)} a month.</div>` : `<div class="changed">EMI ${rs(p.emi)} a month for ${term(p.k)}. Interest over the loan: ${rs(p.interest)}.</div>`}
+    <div class="years"><span class="caps">Each year · tap one to see where its figure comes from</span>
+      <ol>${p.rows.map((r) => { const n = monthsIn(r[0], p.k), no = r[7] < T.minimum; return `<li><button type="button" data-year="${r[0]}" aria-pressed="${r[0] === yOpen}">
+        <span class="yr">${r[0]}${n && n < 12 ? `<span class="part">${n} of 12 EMIs</span>` : n === 0 ? '<span class="part">loan repaid</span>' : ''}</span>
+        <span class="yb ${no ? 'no' : ''}"><i style="width:${w(r[7])}%"></i><b style="left:${w(T.minimum)}%"></b></span>
+        <span class="d ${no ? 'no' : ''}">${d2(r[7])}</span></button></li>`; }).join('')}</ol>
+      <p class="note" style="margin:6px 0 0">The line marks ${T.minimum.toFixed(2)}, what banks look for each year. A year with only part of its EMIs reads high.</p>
+    </div>
+    ${from(p, yOpen)}
+    ${i === S.rounds.length - 1 && ok ? `<div class="actions"><button class="btn" type="button" id="to-check">This plan works: check my figures</button></div>` : ''}
+    ${i === S.rounds.length - 1 && !ok ? `<div class="actions"><a class="btn" href="#change" style="text-decoration:none;display:inline-flex;align-items:center">Change the plan</a></div>` : ''}`;
+}
+function from(p, fy) {
+  const r = p.rows.find((x) => x[0] === fy), j = p.rows.indexOf(r), n = monthsIn(fy, p.k);
+  return `<div class="from" id="from"><span class="caps">Where ${d2(r[7])} in ${fy} comes from</span>
+  <table><tbody>
+    <tr><td>Earnings before loan interest, depreciation and tax<span class="src"><span class="kind you">Your answer</span>${j === 0 ? `your ${rs(C.profit)} this year` : `your ${rs(C.profit)}, growing ${C.growthPct}% a year for ${j} year${j > 1 ? 's' : ''}`}</span></td><td class="v">${rs(r[1])}</td></tr>
+    <tr><td>less income tax<span class="src"><span class="kind rule">Rule</span>${r[2] ? 'a proprietor\'s slab rates, new regime, after interest and depreciation' : 'nil: a proprietor pays none on income up to Rs. 12 lakh (new regime rebate)'}</span></td><td class="v">${r[2] ? rs(r[2]) : 'nil'}</td></tr>
+    <tr class="sum"><td>Money to pay loans</td><td class="v">${rs(r[3])}</td></tr>
+    <tr><td>The new loan's EMIs<span class="src"><span class="kind">Worked out</span>${n} EMI${n === 1 ? '' : 's'} of ${rs(p.emi)}: ${rs(p.a)} at ${pct(p.r)} over ${term(p.k)}</span></td><td class="v">${rs(r[4])}</td></tr>
+    <tr><td>EMIs you already pay<span class="src"><span class="kind you">Your answer</span>${rs(C.emis)} a month, <span class="kind">Assumption</span>taken to run all year</span></td><td class="v">${rs(r[5])}</td></tr>
+    <tr class="sum"><td>Loan payments in the year</td><td class="v">${rs(r[6])}</td></tr>
+    <tr><td><b>Earned for every Rs. 1 due</b><span class="src">${rs(r[3])} ÷ ${rs(r[6])}. <span class="kind bench">Benchmark</span>banks look for ${T.minimum.toFixed(2)}; yours may set another.</span></td><td class="v fig" style="font-size:1.2rem">${d2(r[7])}</td></tr>
+  </tbody></table>
+  <p class="note" style="margin:8px 0 0">Depreciation (${rs(C.depreciation)}) is not money going out, so it is not taken away here; it only lowers the tax.</p></div>`;
+}
+
+const LEVERS = [
+  { id: 'instalments', label: 'Years to repay', min: 12, max: D.longest, step: 1, fmt: term, ends: ['1 year', '15 years'], why: 'The bank allows at most 15 years.' },
+  { id: 'amount', label: 'The loan', min: () => C.amount - (S.most ?? 0), max: C.amount, step: D.step, fmt: (a) => rs(a), ends: () => [rs(C.amount - (S.most ?? 0)), rs(C.amount)] },
+  { id: 'rate', label: 'Interest rate, if the bank offers less', min: D.rateFloor, max: 14, step: 0.25, fmt: pct, ends: [`${pct(D.rateFloor)} (lowest banks give)`, '14%'] },
+];
+const val = (p, id) => id === 'instalments' ? p.k : id === 'amount' ? p.a : p.r;
+function point(id, v) { return id ? G()[id][keyOf[id](v)] : G().open; }
+function nearestWorking(id, v) {
+  const g = G()[id]; let best = null, bd = Infinity;
+  for (const k in g) if (g[k].works) { const dd = Math.abs(+k - v); if (dd < bd) { bd = dd; best = +k; } }
+  return best;
+}
+function renderLevers() {
+  const p = S.cur, box = document.getElementById('levers');
+  box.innerHTML = LEVERS.map((L) => {
+    const min = typeof L.min === 'function' ? L.min() : L.min, ends = typeof L.ends === 'function' ? L.ends() : L.ends;
+    const off = L.id === 'amount' && !(S.most > 0), who = S.held === L.id ? '<span class="who you">You set this</span>' : p.moved.includes(L.id) ? '<span class="who moved">FinSight moved this</span>' : '';
+    return `<div class="lever"><div class="top"><label for="lv-${L.id}">${L.label}</label>${who}</div>
+      <div class="val fig" id="lv-${L.id}-v">${L.fmt(val(p, L.id))}</div>
+      <input type="range" id="lv-${L.id}" min="${min}" max="${L.max}" step="${L.step}" value="${val(p, L.id)}" ${off ? 'disabled' : ''} aria-describedby="lv-${L.id}-e">
+      <div class="ends" id="lv-${L.id}-e"><span>${ends[0]}</span><span>${ends[1]}</span></div>
+      ${off ? '<div class="note">Say above how much you could bring to move this.</div>' : ''}
+      ${L.id === 'amount' && S.most > 0 ? `<div class="note">You put in ${rs(C.amount - p.a)} more yourself.</div>` : ''}
+      ${L.id === 'rate' ? '<div class="note">FinSight never moves the rate: it is the bank\'s. Move it only if a bank offered you less. The lowest is a placeholder until sourced.</div>' : ''}
+      ${S.stop && S.stopId === L.id ? `<div class="stop" role="status">${S.stop}</div>` : ''}</div>`;
+  }).join('');
+  LEVERS.forEach((L) => {
+    const el = document.getElementById('lv-' + L.id);
+    el.addEventListener('input', () => slide(L.id, +el.value, false));
+    el.addEventListener('change', () => slide(L.id, +el.value, true));
+  });
+  renderLive();
+}
+function renderLive() {
+  const p = S.cur, lowOk = p.low.d >= T.minimum, avgOk = p.avg >= T.average;
+  document.getElementById('live').innerHTML = `
+    <div><span class="k">Tightest year, ${p.low.fy}</span><span class="v ${lowOk ? '' : 'no'}">${d2(p.low.d)} ${lowOk ? '✓' : '✗'}</span> <span class="note">of ${T.minimum.toFixed(2)}</span></div>
+    <div><span class="k">Average</span><span class="v ${avgOk ? '' : 'no'}">${d2(p.avg)} ${avgOk ? '✓' : '✗'}</span> <span class="note">of ${T.average.toFixed(2)}</span></div>
+    <div><span class="k">EMI a month</span><span class="v">${rs(p.emi)}</span></div>
+    <div><span class="k">Interest over the loan</span><span class="v">${rs(p.interest)}</span></div>`;
+  const b = document.getElementById('commit'); b.textContent = `See round ${S.rounds.length + 1}`; b.disabled = !p.works;
+}
+function slide(id, v, done) {
+  let p = point(id, v);
+  if (!p) return;
+  S.held = id; S.stop = ''; S.stopId = id;
+  if (!p.works) {
+    const lowTxt = `${p.low.fy} would earn Rs. ${d2(p.low.d)} for every Rs. 1 due`;
+    const own = S.most > 0 ? `all ${lakh(S.most)} of your own money` : 'none of your own money';
+    if (!done) { // while dragging: show the miss live, keep the finger where it is
+      S.cur = { ...S.cur, ...p, moved: p.moved }; document.getElementById(`lv-${id}-v`).textContent = LEVERS.find((L) => L.id === id).fmt(v); renderLive(); return;
+    }
+    const w = nearestWorking(id, v);
+    S.stop = `Stops at ${LEVERS.find((L) => L.id === id).fmt(w)}. At ${LEVERS.find((L) => L.id === id).fmt(v)}, ${id === 'instalments' ? `with ${own}` : id === 'amount' ? 'even repaid over the longest, 15 years' : `even repaid over the longest, 15 years, with ${own}`}, ${lowTxt}; banks look for ${T.minimum.toFixed(2)}.`;
+    p = point(id, w);
+  }
+  S.cur = p;
+  if (!done) { // update the others without rebuilding the slider under the finger
+    LEVERS.forEach((L) => { if (L.id !== id) { const el = document.getElementById('lv-' + L.id); el.value = val(p, L.id); }
+      document.getElementById(`lv-${L.id}-v`).textContent = L.fmt(val(p, L.id)); });
+    renderLive(); return;
+  }
+  renderLevers();
+}
+function setMost(m) {
+  S.most = m;
+  if (S.held) { let v = val(S.cur, S.held); if (S.held === 'amount') v = Math.max(v, C.amount - m); const p = point(S.held, v); S.cur = p.works ? p : point(S.held, nearestWorking(S.held, v)); }
+  else S.cur = G().open;
+  S.stop = ''; renderOwn(); renderLevers(); lead();
+}
+function renderOwn() {
+  const opts = [[0, 'No'], [100000, 'Up to Rs. 1 lakh'], [300000, 'Up to Rs. 3 lakh'], [500000, 'Up to Rs. 5 lakh']];
+  const box = document.getElementById('own');
+  box.innerHTML = opts.map(([m, t]) => `<button type="button" class="chip" data-most="${m}" aria-pressed="${S.most === m}">${t}</button>`).join('');
+  box.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => setMost(+b.dataset.most)));
+}
+function lead() {
+  const o = G().open, k = o.k !== C.instalments, a = o.a !== C.amount;
+  document.getElementById('change-lead').innerHTML = S.held ? 'Move any slider; the others follow to keep the plan working. The one you move stays where you put it.'
+    : `FinSight starts from the smallest change: ${[k && `repay over <b>${term(o.k)}</b> instead of ${term(C.instalments)}`, a && `borrow <b>${rs(o.a)}</b>`].filter(Boolean).join(' and ')}. Move any slider; the others follow.`;
+}
+function renderTrail() {
+  document.getElementById('trail').innerHTML = S.rounds.map((R, i) => `<button type="button" data-round="${i}" aria-current="${i === S.view}">
+    <span class="t1">Round ${i + 1}</span><span class="t2"><b class="fig">${d2(R.p.low.d)}</b> · ${R.p.works ? 'Works' : 'Not yet'}</span></button>`).join('');
+  document.querySelectorAll('[data-round]').forEach((b) => b.addEventListener('click', () => { S.view = +b.dataset.round; S.yearOpen = null; renderCard(); renderTrail(); }));
+}
+function renderCard() {
+  const el = document.getElementById('card'); el.innerHTML = card(S.view);
+  el.querySelectorAll('[data-year]').forEach((b) => b.addEventListener('click', () => { S.yearOpen = b.dataset.year; renderCard(); document.getElementById('from').scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }));
+  const tc = document.getElementById('to-check'); if (tc) tc.addEventListener('click', toCheck);
+}
+function renderRail() {
+  const p = S.rounds[S.rounds.length - 1]?.p ?? D.round1;
+  document.getElementById('rail-list').innerHTML = [
+    ['You', [['Borrower', 'Just me (proprietor)']]],
+    ['The business', [['Earned this year', rs(C.profit)], ['Growth a year', C.growthPct + '%'], ['EMIs already paid', rs(C.emis) + ' a month'], ['Depreciation', rs(C.depreciation)]]],
+    ['The loan', [['Amount', rs(p.a)], ['Rate', pct(p.r)], ['Repay over', term(p.k)]]],
+  ].map(([h, rows]) => `<div class="rail-group"><span class="caps">${h}</span><dl style="margin:4px 0 0">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl></div>`).join('');
+}
+function toCheck() {
+  const p = S.rounds[S.rounds.length - 1].p, sec = document.getElementById('confirm');
+  document.getElementById('check-list').innerHTML = [
+    ['Borrower', 'Just me (proprietor)'], ['Earned this year, before interest, depreciation and tax', rs(C.profit)], ['Growth a year', C.growthPct + '%'],
+    ['EMIs already paid', rs(C.emis) + ' a month'], ['Depreciation a year', rs(C.depreciation)], ['Loan', rs(p.a)], ['Interest rate', pct(p.r)], ['Repay over', term(p.k) + ', from November 2026'],
+    ['Each year, at least', `Rs. ${T.minimum.toFixed(2)} for every Rs. 1 due`], ['On average, at least', `Rs. ${T.average.toFixed(2)}`],
+  ].map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+  sec.hidden = false; sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function openSheet() {
+  const root = document.getElementById('sheet-root');
+  if (matchMedia('(min-width: 1024px)').matches) { // the rail opens in place on a desktop
+    document.querySelector('#answers .q-full').style.display = 'block'; document.querySelector('#answers .q-rail').style.display = 'none'; return;
+  }
+  root.innerHTML = `<div class="scrim" data-close></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Your answers">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 style="font-size:1.2rem">Your answers</h2><button class="btn ghost" type="button" data-close>Done</button></div>
+    <dl id="sheet-list"></dl><p class="note">In the tool each answer opens to change it, and the result follows as you type.</p></div>`;
+  document.getElementById('sheet-list').innerHTML = document.getElementById('rail-list').innerHTML;
+  root.querySelectorAll('[data-close]').forEach((b) => b.addEventListener('click', () => { root.innerHTML = ''; }));
+  root.querySelector('.sheet button').focus();
+}
+
+document.getElementById('go').addEventListener('click', () => {
+  S.rounds = [{ p: D.round1 }]; S.view = 0; S.most = null; S.cur = D.grids['0'].open;
+  document.getElementById('app').className = 'stage-result';
+  document.querySelector('#answers .q-full').style.display = ''; document.querySelector('#answers .q-rail').style.display = '';
+  renderTrail(); renderCard(); renderOwn(); renderLevers(); lead(); renderRail();
+  document.getElementById('centre').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+document.getElementById('commit').addEventListener('click', () => {
+  S.rounds.push({ p: S.cur }); S.view = S.rounds.length - 1; S.yearOpen = null;
+  renderTrail(); renderCard(); renderRail(); renderLive();
+  document.getElementById('centre').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+document.addEventListener('click', (e) => { if (e.target.closest('[data-edit]')) openSheet(); });
+document.getElementById('confirm-go').addEventListener('click', () => { document.getElementById('confirm-after').hidden = false; });
+</script>
