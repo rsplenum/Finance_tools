@@ -70,7 +70,7 @@ export function MakeItWork({ s, update, see, round }: { s: State; update: Update
         <h5 class="font-medium text-ink">{o.title}</h5>
         <dl class="mt-1 text-sm tabular-nums">{o.lines.map(([k, v]) => <div key={k} class="flex justify-between gap-2"><dt class="text-ink-muted">{k}</dt><dd class="text-right text-ink">{v}</dd></div>)}</dl>
         {o.more && <p class={HINT}>{o.more}</p>}
-        <button type="button" data-testid={`dscr-plan-from-${o.id}`} class={`mt-2 ${BUTTON}`} onClick={() => from(o.terms)}>Start from this plan</button>
+        <button type="button" data-testid={`dscr-plan-from-${o.id}`} class={`mt-2 scroll-mb-40 ${BUTTON}`} onClick={() => from(o.terms)}>Start from this plan</button>
       </li>)}</ul>
 
       <h4 class="mt-4 text-sm font-medium text-ink">Try it with your own hands</h4>
@@ -85,7 +85,7 @@ export function MakeItWork({ s, update, see, round }: { s: State; update: Update
           </div>
           <input id={`dscr-slider-${l.id}`} type="range" min={l.min} max={l.max} step={l.step} value={v} aria-valuetext={l.words(v)}
             onInput={(e) => move(l.id, Number((e.currentTarget as HTMLInputElement).value), false)}
-            onChange={(e) => move(l.id, Number((e.currentTarget as HTMLInputElement).value), true)} class="mt-2 h-6 w-full accent-ink" />
+            onChange={(e) => move(l.id, Number((e.currentTarget as HTMLInputElement).value), true)} class="mt-2 h-6 w-full scroll-mb-40 accent-ink" />
           <div class="flex justify-between text-xs text-ink-muted tabular-nums"><span>{l.ends[0]}</span><span>{l.ends[1]}</span></div>
           {l.id === 'ratePct' && <p class={HINT}>The rate is the bank’s to offer; moving it shows what a better rate would do, and it never moves on its own. It goes no lower than {LEVELS.rate.floorPct}%, RBI’s policy repo rate.</p>}
         </li>;
