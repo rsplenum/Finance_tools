@@ -166,3 +166,12 @@ export function dscrOptions(c: DscrCase, b: LinkBounds): DscrOption[] {
   }
   return [...longer, ...own, ...mix];
 }
+
+/**
+ * What the borrower could bring, asked only under "Make it work" as four choices sized to the loan (D-UX-227): none, then
+ * about 5%, 15% and 25% of it, in whole steps (Rs. 1, 3 and 5 lakh on a loan of Rs. 20 lakh, the mock-up's choices).
+ */
+export function ownChoices(amount: number, step: number): number[] {
+  const xs = [0.05, 0.15, 0.25].map((f) => Math.max(step, Math.round((amount * f) / step) * step)).filter((x) => x < amount);
+  return [0, ...xs.filter((x, i) => xs.indexOf(x) === i)];
+}
