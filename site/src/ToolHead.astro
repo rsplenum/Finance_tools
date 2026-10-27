@@ -3,7 +3,8 @@
  * A tool page's heading (UX5c, D-UX-94): Varsity's module head in FinSight's look. The kind of document it makes in caps
  * (UXR3, UXR1's P3: "Tool N of 4" told the borrower nothing), the tool's drawing from home on its glow (still: no script draws it here), the h1, and one
  * line that says what the borrower gets, in what files, and what it asks (UXR3, UXR1's S13). The drawing sits beside the
- * caps line, never beside the h1, so a long title keeps the full width at 360 px.
+ * caps line, never beside the h1, so a long title keeps the full width at 360 px. No line of one word: the caps and the
+ * title balanced, the lead and the kept line set pretty (D-UX-221, as home's D-UX-217).
  */
 import Drawing from './home/Drawing.astro';
 import { KEPT_LINE } from './fields';
@@ -12,11 +13,11 @@ interface Props { href: string; kind: string; title: string; lead: string; kept?
 const { href, kind, title, lead, kept = true } = Astro.props;
 ---
 <div class="flex items-end justify-between gap-4">
-  <p data-testid="tool-kind" class="caps text-ink-muted">{kind}</p>
+  <p data-testid="tool-kind" class="caps text-balance text-ink-muted">{kind}</p>
   <div aria-hidden="true" data-glow class="flex w-28 items-center justify-center rounded-panel p-2 text-ink sm:w-44 sm:p-3 lg:w-56">
     <Drawing href={href} />
   </div>
 </div>
-<h1 class="mt-4 text-hero text-ink">{title}</h1>
-<p class="mt-5 max-w-prose text-ink-muted">{lead}</p>
-{kept && <p data-testid="kept-line" class="mt-2 max-w-prose text-sm text-ink-muted">{KEPT_LINE}</p>}
+<h1 class="mt-4 text-hero text-balance text-ink">{title}</h1>
+<p class="mt-5 max-w-prose text-pretty text-ink-muted">{lead}</p>
+{kept && <p data-testid="kept-line" class="mt-2 max-w-prose text-sm text-pretty text-ink-muted">{KEPT_LINE}</p>}
