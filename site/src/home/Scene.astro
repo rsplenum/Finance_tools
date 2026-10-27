@@ -24,8 +24,8 @@ const typedAt = (r: ToolScene['rows'][number]) => {
   return { 'data-ratio': (t.width / f.width).toFixed(4), ...(t.left !== f.left ? { 'data-shift': ((t.left - f.left) / f.width).toFixed(4) } : {}) };
 };
 const missed = (f: { meets: boolean } | undefined, r: { judged: boolean }) => !!f && r.judged && !f.meets;
-// A year ("2027-28") never breaks at its hyphen: each is kept whole.
-const whole = (t: string) => t.split(/(\b\d{4}-\d{2}\b)/).map((x, i) => (i % 2 ? { y: x } : { t: x }));
+// A year ("2027-28") never breaks at its hyphen, nor a sum from its rupees and unit ("Rs. 18 lakh"): each is kept whole (D-UX-217).
+const whole = (t: string) => t.split(/(\b\d{4}-\d{2}\b|Rs\. \d[\d,]*(?:\.\d+)?(?: lakh| crore)?)/).map((x, i) => (i % 2 ? { y: x } : { t: x }));
 ---
 <div data-scene={s.id} data-place={AT} class:list={['scene', cls, { long }]}>
   <div class="head">
@@ -39,8 +39,8 @@ const whole = (t: string) => t.split(/(\b\d{4}-\d{2}\b)/).map((x, i) => (i % 2 ?
         <li data-card data-term={x.to ? '' : undefined} class={`card glass ${x.to ? 'wide' : ''}`}>
           <span class="k">{x.k}</span>
           {x.to ? (
-            <span class="v slot"><span data-was aria-hidden="true">{x.v}</span><span data-now>{x.to}</span></span>
-          ) : <span class="v">{x.v}</span>}
+            <span class="v slot"><span data-was aria-hidden="true">{whole(x.v).map((w) => w.y ? <span class="nw">{w.y}</span> : w.t)}</span><span data-now>{whole(x.to).map((w) => w.y ? <span class="nw">{w.y}</span> : w.t)}</span></span>
+          ) : <span class="v">{whole(x.v).map((w) => w.y ? <span class="nw">{w.y}</span> : w.t)}</span>}
           {x.to && ['tl', 'tr', 'bl', 'br'].map((c) => <i data-brk aria-hidden="true" class={`brk ${c}`}></i>)}
         </li>
       ))}
@@ -119,6 +119,8 @@ const whole = (t: string) => t.split(/(\b\d{4}-\d{2}\b)/).map((x, i) => (i % 2 ?
     padding: 1.25rem 1rem 1.5rem; font-variant-numeric: tabular-nums lining-nums;
   }
   @media (min-width: 1024px) { .scene { padding: 2.5rem 2.5rem 2rem; } }
+  /* On the night page the ground takes the desk's value, a step above the page, so the scene's edge holds (D-UX-219). */
+  :global(.dark) .scene { --g: var(--desk); }
   .glass { background: var(--glass); border: 1px solid var(--line); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
   .slot { display: inline-grid; } .slot > * { grid-area: 1 / 1; }
   [data-was], [data-t] { opacity: 0; }
@@ -136,8 +138,8 @@ const whole = (t: string) => t.split(/(\b\d{4}-\d{2}\b)/).map((x, i) => (i % 2 ?
   @media (min-width: 1024px) { .inputs { grid-template-columns: 1fr; gap: 0.625rem; } }
   .card { position: relative; display: flex; flex-direction: column; border-radius: 1rem; padding: 0.5rem 0.875rem; min-width: 0; }
   .card.wide { grid-column: 1 / -1; }
-  .k { color: var(--mute); font-size: 0.8125rem; line-height: 1.25rem; }
-  .v { font-weight: 600; font-size: 1rem; line-height: 1.5rem; }
+  .k { color: var(--mute); font-size: 0.8125rem; line-height: 1.25rem; text-wrap: balance; }
+  .v { font-weight: 600; font-size: 1rem; line-height: 1.5rem; text-wrap: balance; }
   .brk { position: absolute; width: 0.75rem; height: 0.75rem; border: 0 solid var(--gold); opacity: 0; }
   .brk.tl { top: -0.3rem; left: -0.3rem; border-width: 2px 0 0 2px; } .brk.tr { top: -0.3rem; right: -0.3rem; border-width: 2px 2px 0 0; }
   .brk.bl { bottom: -0.3rem; left: -0.3rem; border-width: 0 0 2px 2px; } .brk.br { bottom: -0.3rem; right: -0.3rem; border-width: 0 2px 2px 0; }
@@ -185,12 +187,12 @@ const whole = (t: string) => t.split(/(\b\d{4}-\d{2}\b)/).map((x, i) => (i % 2 ?
   }
   .sum { display: grid; gap: 0.125rem; margin-top: 0.75rem; padding-inline: 0.25rem; }
   .slabel { color: var(--mute); font-size: 0.875rem; }
-  .sfig { font-size: 1.25rem; line-height: 1.75rem; font-weight: 600; } .sfig em { font-style: normal; }
+  .sfig { font-size: 1.25rem; line-height: 1.75rem; font-weight: 600; text-wrap: balance; } .sfig em { font-style: normal; }
   @media (min-width: 1024px) { .sfig { font-size: 1.5rem; line-height: 2rem; } }
   .chips { justify-self: start; margin-top: 0.375rem; }
   .chip { justify-self: start; border: 1.5px solid currentColor; border-radius: 0.5rem; padding: 0 0.5rem; font-weight: 600; font-size: 0.9375rem; line-height: 1.75rem; }
 
-  .doc { position: relative; align-self: start; border-radius: 1.25rem; padding: 1rem; box-shadow: 0 24px 60px -24px oklch(0 0 0 / 0.6); }
+  .doc { position: relative; align-self: start; border-radius: 1.25rem; padding: 1rem; box-shadow: 0 24px 60px -24px oklch(0 0 0 / 0.6); text-wrap: pretty; }
   @media (min-width: 1024px) { .doc { padding: 1.5rem 1.75rem; } }
   .dhead { display: flex; gap: 0.75rem; align-items: flex-start; }
   .dhead b { display: block; font-size: 1.125rem; line-height: 1.5rem; } .dsub { display: block; color: var(--mute); font-size: 0.875rem; }
