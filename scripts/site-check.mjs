@@ -700,10 +700,12 @@ if (touched('/dscr/')) {
   await ctx.close();
 }
 
-// Make it viable on the front door (MV5, D-UX-57): fictional case S, worked by hand in tests/dscr-plan.test.ts (a firm,
-// Rs. 4,50,000 this year with no growth, Rs. 12,00,000 at 12% for 5 years). The bars with the cash short, the engine's
-// plan (31 more instalments at the 1.25 default, UXR3), the borrower's most (all of it, then 19 more), "Use this plan" writing the loan and the
-// term only, and Undo; the front door still asks 8.
+// Make it work on the front door (LOOP1b, D-UX-227 to D-UX-229): fictional case S, worked by hand in tests/dscr-plan.test.ts
+// (a firm, Rs. 4,50,000 this year with no growth, Rs. 12,00,000 at 12% for 5 years; the targets 1.50 and 1.25). The bars
+// with the cash short; up to Rs. 1,80,000 of the borrower's own; the plans with their cost, each EMI checked by its closed
+// form P·r ÷ (1 − (1 + r)^−n) (20,145.98 over 91, 20,962.39 for 10,20,000 over 67); the repayment let go short of what
+// works stops at the nearest that does, the loan following; the rate cut to 10% gives the loan back (20,905.97 for
+// 10,70,000 over 67); "See round 2" writes all three; round 1 restores the loan as typed; the front door still asks 8.
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'dark' });
   await page.check('#fld-fd-borrower-firm');
@@ -715,26 +717,38 @@ if (touched('/dscr/')) {
   await expectText(page, v, 'dscr-short-average', 'Short by Rs. 4,19,502 of cash to pay the loan, in total over the loan.', 'case S');
   await expectText(page, v, 'dscr-short-lowest', 'Short by Rs. 79,164 of cash to pay the loan in 2030-31.', 'case S');
   await page.getByTestId('dscr-viable').click();
-  await expectText(page, v, 'dscr-plan-steps', '91 monthly instalments, 7 years 7 months in all (now 5 years), if the lender agrees.', 'case S\'s plan');
-  await expectText(page, v, 'dscr-plan-verdict', 'With these changes it meets the target.', 'case S\'s plan');
-  await expectText(page, v, 'dscr-move-cut', 'As typed', 'case S\'s plan');
-  await expectText(page, v, 'dscr-text-cut', 'A loan of Rs. 9,55,644, the largest on these terms, meets the target: you bring the rest, or buy less.', 'case S, the loan alone');
-  await expectText(page, v, 'dscr-text-profit', /^This year’s profit before interest, depreciation and tax of Rs\. 5,65,064, /, 'case S, the profit alone');
-  await leave(page, '#fld-dscr-ownMost', '1 L');
-  await expectText(page, v, 'dscr-plan-own', 'You bring Rs. 1,00,000 in place of the loan, within the Rs. 1,00,000 you can.', 'case S with 1 L of the borrower\'s own');
-  await expectText(page, v, 'dscr-move-more', '+19 instalments', 'case S with 1 L of the borrower\'s own');
-  await layout(page, v, 'case S\'s plan, 390 px');
+  await page.check('#dscr-own-180000');
+  await expectText(page, v, 'dscr-plan-longer', /Repay over7 years 7 months.*Each instalmentRs\. 20,145\.98 a monthInterest over the loanRs\. 6,33,284Total you pay outRs\. 18,33,284/, 'case S, repay over longer');
+  await expectText(page, v, 'dscr-plan-mix', /Repay over5 years 7 monthsThe loanRs\. 10,20,000Your own moneyRs\. 1,80,000Each instalmentRs\. 20,962\.39 a monthInterest over the loanRs\. 3,84,480Total you pay outRs\. 15,84,480/, 'case S, some of both');
+  await expectText(page, v, 'dscr-plans-own-short', /^Your own money alone would need Rs\. [\d,]+ over 5 years, more than the Rs\. 1,80,000 you can bring\.$/, 'case S, own money alone');
+  if (await page.getByTestId('dscr-plan-best').count()) v('LOOP1b: a plan is marked best');
+  await layout(page, v, 'case S\'s plans, 390 px');
+  const slide = (id, x) => page.$eval(`#dscr-slider-${id}`, (el, x) => {
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, String(x));
+    el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true }));
+  }, x);
+  await slide('instalments', 66);
+  await expectText(page, v, 'dscr-move-instalments', '5 years 7 months', 'case S, the repayment let go at 66');
+  await expectText(page, v, 'dscr-move-amount', 'Rs. 10,20,000', 'case S, the loan following');
+  await expectText(page, v, 'dscr-badge-amount', 'Follows', 'case S, the loan following');
+  await expectText(page, v, 'dscr-plan-stop', 'Stopped at 5 years 7 months: at 5 years 6 months it does not meet the bank’s figures, even with the loan at Rs. 10,20,000.', 'case S, the stop');
+  await slide('ratePct', 10);
+  await expectText(page, v, 'dscr-move-instalments', '5 years 7 months', 'case S at 10%: the repayment stays');
+  await expectText(page, v, 'dscr-move-amount', 'Rs. 10,70,000', 'case S at 10%: the loan comes back');
+  await expectText(page, v, 'dscr-plan-line', /average 1\.62 · meets the bank’s figuresEMI Rs\. 20,905\.97 a month · interest over the loan Rs\. 3,30,700$/, 'case S at 10%');
   await page.getByTestId('dscr-plan-use').click();
-  await expectValue(page, v, '#fld-fd-amount', '11,00,000', 'case S\'s plan used');
-  await expectValue(page, v, '#fld-fd-years', '6.58', 'case S\'s plan used');
-  await expectText(page, v, page.locator('#fld-fd-amount-hint'), 'Changed by the plan; it was 12,00,000.', 'case S\'s plan used');
-  await expectText(page, v, page.locator('#fld-fd-years-hint'), 'Changed by the plan; it was 60 instalments.', 'case S\'s plan used');
-  await expectText(page, v, 'dscr-verdict', /^Meets both targets/, 'case S\'s plan used');
-  if (await page.getByTestId('dscr-levels').count()) v('case S still shows why it does not work after its plan is used');
-  await page.getByTestId('dscr-undo').click();
-  await expectValue(page, v, '#fld-fd-amount', '12,00,000', 'case S\'s plan undone');
-  await expectValue(page, v, '#fld-fd-years', '5', 'case S\'s plan undone');
-  if (await page.getByTestId('dscr-used').count()) v('Undo left the banner of the plan used');
+  await expectValue(page, v, '#fld-fd-amount', '10,70,000', 'case S, round 2');
+  await expectValue(page, v, '#fld-fd-years', '5.58', 'case S, round 2');
+  await expectValue(page, v, '#fld-fd-rate', '10', 'case S, round 2');
+  await expectText(page, v, page.locator('#fld-fd-amount-hint'), 'Round 1 had Rs. 12,00,000.', 'case S, round 2');
+  await expectText(page, v, page.locator('#fld-fd-years-hint'), 'Round 1 had 60 instalments.', 'case S, round 2');
+  await expectText(page, v, 'dscr-verdict', /^Meets both targets/, 'case S, round 2');
+  await expectText(page, v, 'dscr-round-2', /^Round 2 \(on the page now\)You repay over 5 years 7 months instead of 5 years; borrow Rs\. 10,70,000 instead of Rs\. 12,00,000: Rs\. 1,30,000 of your own money; at 10% instead of 12%\./, 'case S, round 2');
+  if (await page.getByTestId('dscr-levels').count()) v('case S still shows why it does not work in round 2');
+  await page.getByTestId('dscr-round-back-1').click();
+  await expectValue(page, v, '#fld-fd-amount', '12,00,000', 'case S, back to round 1');
+  await expectValue(page, v, '#fld-fd-years', '5', 'case S, back to round 1');
+  await expectText(page, v, 'dscr-round-1', /^Round 1 \(on the page now\)/, 'case S, back to round 1');
   const fields = await page.locator('#front-door input[type="text"]').count() + await page.locator('#front-door fieldset').count();
   if (fields !== 8) v(`MV5: the front door asks ${fields} fields; want 8`);
   await ctx.close();
@@ -1593,8 +1607,8 @@ if (touched('/dscr/')) {
   await ctx.close();
 }
 
-// Interaction data (UD1, D-TECH-37): the steps only, never what is typed. Case S typed on the front door, Make it viable,
-// its plan used, More options opened, a PDF and an Excel copy, a field marked wrong, then leaving: every batch has the
+// Interaction data (UD1, D-TECH-37): the steps only, never what is typed. Case S typed on the front door, Make it work,
+// a plan's round seen, More options opened, a PDF and an Excel copy, a field marked wrong, then leaving: every batch has the
 // Worker's shape, holds each step, and holds none of the typed figures in any form. Built without the Worker's address
 // (as now), a page sends nothing.
 if (touched('/dscr/')) {
@@ -1605,7 +1619,8 @@ if (touched('/dscr/')) {
   await page.check('#fld-fd-borrower-firm');
   for (const [sel, x] of Object.entries(typed)) await leave(page, sel, x);
   await page.getByTestId('dscr-viable').click();
-  await leave(page, '#fld-dscr-ownMost', '1.37 L');
+  await page.check('#dscr-own-180000');
+  await page.getByTestId('dscr-plan-from-mix').click();
   await page.getByTestId('dscr-plan-use').click();
   await openMore(page);
   for (const kind of ['pdf', 'xlsx']) {
@@ -1626,7 +1641,7 @@ if (touched('/dscr/')) {
   if (!steps.at(-1)?.startsWith('leave error-fld-')) v(`UD1: leaving does not name the last step, an error (seen: ${steps.at(-1)})`);
   // The figures as typed, in digits, and as the page shows them; the times are left out, being the page's own.
   const said = events.join('\n').replace(/"t":\d+/g, '');
-  for (const x of ['4.5 L', '450000', '4,50,000', '12 L', '1200000', '12,00,000', '12.25', '1.37 L', '137000', '1,37,000', '11,00,000', '1100000', '12345678', '1,23,45,678'])
+  for (const x of ['4.5 L', '450000', '4,50,000', '12 L', '1200000', '12,00,000', '12.25', '180000', '1,80,000', '12345678', '1,23,45,678'])
     if (said.includes(x)) v(`UD1: the typed or shown figure ${x} is in a batch`);
   if (await page.getByTestId('counted').count()) v('UD1: the footer says steps are counted on a build without the Worker');
   await ctx.close();

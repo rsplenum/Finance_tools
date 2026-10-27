@@ -32,12 +32,14 @@ import {
   parseFy, presetText, preview, rowValues, rowsOf, statusText, sureLine, targetText, tidyAmount, withBorrower, withFrontNeeds, FRONT, frontAt, withPlanStart, withSource, yearsOf,
   type DocFacts, type LenderLine, type LenderText, type LenderView, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
-import { applyDscrPlan, undoDscrPlan, type DscrChange, type DscrLevers } from './levers';
 import { Levels } from './Levels';
+import { Rounds } from './MakeItWork';
+import { roundKey, setupOf, writeTerms } from './rounds';
+import type { LinkTerms } from '../../../engine/dscr-linked';
 
 type Update = (f: (s: State) => State) => void;
-/** The plan's change to a field, said under it until kept or undone. */
-type Was = (key: DscrChange['key']) => string | undefined;
+/** What round 1 had in a field a later round changed, said under it while the rounds are kept. */
+type Was = (key: 'amount' | 'instalments') => string | undefined;
 const showDate = (iso: string) => iso.split('-').reverse().join('-');
 const notUnderstood = (text: string, read: (t: string) => unknown, example: string) =>
   text.trim() && read(text) === undefined ? `Not understood. Type ${example}.` : undefined;
@@ -54,15 +56,26 @@ export function DscrCalculator() {
   const p = useMemo(() => withFrontNeeds(s, preview(s), y.years[0]), [s, y]);
   const rows = useMemo(() => rowsOf(s), [s]);
   const openMore = () => setMore(true);
-  // "Use this plan" (MV5): the loan and the term written, with an undo while the change is fresh.
-  const [used, setUsed] = useState<DscrChange[]>([]);
-  const use = (l: DscrLevers) => { const a = applyDscrPlan(s, l); setS(a.s); setUsed(a.changes); };
-  const undo = () => { setS((x) => undoDscrPlan(x, used)); setUsed([]); };
-  const was = (key: DscrChange['key']) => { const c = used.find((u) => u.key === key); return c ? `Changed by the plan; it was ${c.was || 'empty'}.` : undefined; };
+  // The rounds (LOOP1b): "See round N" writes the loan's three answers; each round seen is kept, with round 1 the loan
+  // as typed, while nothing else changes, and a tap on one writes it back.
+  const [rounds, setRounds] = useState<{ on: string; list: LinkTerms[] }>();
+  const trail = rounds && rounds.on === roundKey(s) ? rounds.list : [];
+  const see = (t: LinkTerms) => {
+    const now = setupOf(s)?.typed;
+    if (!now) return;
+    const list = trail.length ? trail : [now];
+    if (!list.some((x) => x.amount === t.amount && x.instalments === t.instalments && x.ratePct === t.ratePct)) setRounds({ on: roundKey(s), list: [...list, t] });
+    else setRounds({ on: roundKey(s), list });
+    setS(writeTerms(s, t));
+  };
+  const back = (t: LinkTerms) => setS(writeTerms(s, t));
+  const first = trail.length > 1 ? trail[0] : undefined, typedNow = first && setupOf(s)?.typed;
+  const was: Was = (key) => (first && typedNow && first[key] !== typedNow[key]
+    ? `Round 1 had ${key === 'amount' ? rs(first.amount) : `${first.instalments} instalments`}.` : undefined);
   // The answer beside the questions from 1024 px (UX8, D-UX-106): its panel spans the front door and More options, and
   // the working, year by year, runs under both. On a phone the column keeps the old order.
   const results = <>
-    <AnswerPanel s={s} p={p} update={update} use={use} used={used} undo={undo} keep={() => setUsed([])} />
+    <AnswerPanel s={s} p={p} update={update} see={see} back={back} trail={trail} />
     {p.started && <Working s={s} p={p} openMore={openMore} />}
   </>;
   return <div class="lg:grid lg:grid-cols-tool lg:gap-x-12">
@@ -125,7 +138,7 @@ function FrontDoor({ s, update, openMore, was }: { s: State; update: Update; ope
         said={amountSaid(s.loan.amount)} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, amount: t } }))} />
       <TextField id="fld-fd-rate" label="Interest rate (% a year)" unit="%" inputMode="decimal" hint="Like 12." value={s.loan.ratePct}
         said={notUnderstood(s.loan.ratePct, numberOf, 'a number, like 12')} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, ratePct: t } }))} />
-      <TextField id="fld-fd-years" label="Repayment period (years)" unit="years" hint={was('instalments') ? `${was('instalments')?.replace(/\.$/, '')} instalments.` : 'Like 5.'} inputMode="decimal" value={years}
+      <TextField id="fld-fd-years" label="Repayment period (years)" unit="years" hint={was('instalments') ?? 'Like 5.'} inputMode="decimal" value={years}
         said={notUnderstood(years, numberOf, 'a number, like 5')} onCommit={(t) => update((x) => {
           const n = numberOf(t), per = x.loan.repayment === 'quarterly' ? 4 : 12;
           return { ...x, loan: { ...x.loan, instalments: n === undefined ? t : String(Math.round(n * per)) } };
@@ -432,8 +445,8 @@ function goOf(s: State, p: Preview) {
  * heading, one counter of what is still needed opening to its links, and the figures' outline with "—" for each one not
  * yet known, never 0 (review finding 2); then the plan used, why it misses and the largest loan or fewest instalments.
  */
-function AnswerPanel({ s, p, update, use, used, undo, keep }: {
-  s: State; p: Preview; update: Update; use: (l: DscrLevers) => void; used: DscrChange[]; undo: () => void; keep: () => void;
+function AnswerPanel({ s, p, update, see, back, trail }: {
+  s: State; p: Preview; update: Update; see: (t: LinkTerms) => void; back: (t: LinkTerms) => void; trail: LinkTerms[];
 }) {
   const largest = p.largest?.amount, fewest = p.fewest?.instalments;
   const result = p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready';
@@ -484,15 +497,8 @@ function AnswerPanel({ s, p, update, use, used, undo, keep }: {
       </div>;
     })()}
     </div>
-    {used.length > 0 && <div data-testid="dscr-used" role="status" class="mt-3 rounded-control border-l-4 border-ink bg-surface p-3">
-      <p class="font-medium text-ink">The plan is used: these figures above changed.</p>
-      <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink tabular-nums">{used.map((c) => <li key={c.key}>{c.label}: {c.was || 'none'} → {c.now}</li>)}</ul>
-      <div class="mt-2 flex flex-wrap gap-2">
-        <button type="button" data-testid="dscr-undo" class={BUTTON} onClick={undo}>Undo</button>
-        <button type="button" data-testid="dscr-keep" class={BUTTON} onClick={keep}>Keep these</button>
-      </div>
-    </div>}
-    {s.source === 'plan' && p.started && <Levels s={s} lender={p.lender} update={update} use={use} />}
+    {s.source === 'plan' && trail.length > 1 && <Rounds s={s} list={trail} back={back} />}
+    {s.source === 'plan' && p.started && <Levels s={s} lender={p.lender} update={update} see={see} round={trail.length ? trail.length + 1 : 2} />}
     {p.largest && <div class="mt-3 text-sm text-ink">
       <p data-testid="dscr-largest">{p.largest.text}</p>
       {largest !== undefined && <button type="button" data-testid="use-amount" class={`mt-1 ${BUTTON}`}

@@ -250,9 +250,9 @@ export const STATES = {
     // A fact missing: everything but the rate, so the result says what it still needs.
     provisional: async (page) => frontDoor(page, ['5 L', '10', '10 L', undefined, '5']),
     error: async (page) => { await frontDoor(page, ['seventy']); },
-    // Fictional case S (tests/dscr-plan.test.ts): short of the target, then Make it viable opened.
+    // Fictional case S (tests/dscr-plan.test.ts): short of the target, then Make it work opened with Rs. 1,80,000 of their own.
     short: async (page) => { await frontDoor(page, ['4.5 L', '0', '12 L', '12', '5']); },
-    plan: async (page) => { await frontDoor(page, ['4.5 L', '0', '12 L', '12', '5']); await page.getByTestId('dscr-viable').click(); },
+    plan: async (page) => { await frontDoor(page, ['4.5 L', '0', '12 L', '12', '5']); await page.getByTestId('dscr-viable').click(); await page.check('#dscr-own-180000'); },
     // A case that meets the target, then the download with the borrower and the lender named.
     result: async (page) => frontDoor(page, ['5 L', '10', '10 L', '12', '5']),
     download: async (page) => {

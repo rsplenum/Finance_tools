@@ -31,6 +31,14 @@
     "source": "The owner's figure (11-10-2026): an MSME term loan's longest, the moratorium included",
     "sure": "illustrative"
   },
+  "rate": {
+    "floorPct": 5.5,
+    "source": "RBI's policy repo rate, 5.50%, as its home page showed on 27-10-2026 (https://website.rbi.org.in/web/rbi, Current Rates; the Governor's Statement of 7 October 2026 the latest): lenders price over it (an external benchmark plus a spread), so no rate a lender offers is below it (the owner, 25-10-2026, D-UX-175). The lowest the rate slider goes; most lenders charge well above",
+    "date": "2026-10-27",
+    "read": "2026-10-27",
+    "reviewBy": "2026-12-31",
+    "sure": "verified"
+  },
   "capacity": {
     "mostUsePct": 85,
     "source": "A placeholder (D-UX-52): the highest use of the capacity a plan assumes; type the business's own reason if higher",
