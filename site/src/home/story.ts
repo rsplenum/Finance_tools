@@ -175,7 +175,7 @@ const REPORT_INTRO: Intro = {
   go: { href: '/project-report/?case=home', text: 'Open the project report with this case' },
 };
 const ESTIMATE_INTRO: Intro = {
-  id: 'estimate', name: tool('/estimate/').brief ?? tool('/estimate/').name, gives: 'What the work should cost, room by room at five quality levels, before you collect quotes.',
+  id: 'estimate', name: tool('/estimate/').name, gives: 'What the work should cost, room by room at five quality levels, before you collect quotes.',
   forWhom: 'For a family building, renovating or doing up interiors.',
   go: { href: '/estimate/?case=home', text: 'Open the estimate with this case' },
 };

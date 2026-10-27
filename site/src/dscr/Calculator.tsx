@@ -465,9 +465,10 @@ function AnswerPanel({ s, p, update, use, used, undo, keep }: {
         </dd>
       </div>
     </dl>}
-    {!p.blocked && s.source === 'plan' && <dl data-testid="dscr-loan-line" class="mt-3 grid grid-cols-2 gap-3 text-ink">
-      <div><dt class={`text-sm ${MUTED}`}>Each instalment</dt><dd data-testid="dscr-instalment" class="font-semibold tabular-nums">{p.loanLine?.instalment ?? dash('Each instalment', 3)}</dd></div>
-      <div><dt class={`text-sm ${MUTED}`}>Interest over the whole loan</dt><dd data-testid="dscr-total-interest" class="font-semibold tabular-nums">{p.loanLine?.totalInterest ?? dash('Interest over the whole loan', 3)}</dd></div>
+    {/* The labels share one row and sit on the figures, so a label on two lines at 360 px never drops its figure below the other (D-UX-222). */}
+    {!p.blocked && s.source === 'plan' && <dl data-testid="dscr-loan-line" class="mt-3 grid grid-cols-2 gap-x-3 text-ink">
+      <div class="row-span-2 grid grid-rows-subgrid gap-0"><dt class={`self-end text-sm ${MUTED}`}>Each instalment</dt><dd data-testid="dscr-instalment" class="font-semibold tabular-nums">{p.loanLine?.instalment ?? dash('Each instalment', 3)}</dd></div>
+      <div class="row-span-2 grid grid-rows-subgrid gap-0"><dt class={`self-end text-sm ${MUTED}`}>Interest over the whole loan</dt><dd data-testid="dscr-total-interest" class="font-semibold tabular-nums">{p.loanLine?.totalInterest ?? dash('Interest over the whole loan', 3)}</dd></div>
     </dl>}
     {p.marks && p.marks.length > 0 && <ul data-testid="dscr-marks" class="mt-4 flex flex-wrap gap-2 text-sm">
       {p.marks.map((m) => <li key={m.fy} data-testid={`mark-${m.fy}`} class={`rounded-full bg-surface px-2.5 py-0.5 ${!m.counted ? 'text-ink-muted' : m.meets ? 'text-good' : 'text-bad'}`}>

@@ -196,13 +196,13 @@ body[data-look='new'] {
 }
 .dark body[data-look='new'] {
   --canvas: oklch(0.205 0.045 270);       /* the page turns ink; not black (principle 11) */
+  /* The desk keeps its light value, a step above the page: below it (0.15) the desks sank into the night page (D-UX-219). */
   --surface: oklch(0.25 0.05 270);
   --ink: oklch(0.965 0.012 85);
   --ink-muted: oklch(0.84 0.03 268);
   --line: oklch(0.34 0.05 270);
   --link: oklch(0.84 0.09 268);
   --focus: var(--marigold);
-  --desk: oklch(0.15 0.04 270);
   --paper: oklch(0.93 0.01 85);           /* paper, a little dimmed */
   --margin: oklch(0.66 0.19 27);
   --spark-1: oklch(0.56 0.09 268);       /* quieter on the dark page: the field sits behind the words */

@@ -192,7 +192,7 @@ function Download({ s, p, update }: { s: EstimateState; p: EstimatePreview; upda
       ? <div class="mt-5">
         <p data-testid="est-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{docStatus(s, p)}</p>
         {own.length > 0 && <ul data-testid="est-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
-        <div class="mt-3 flex flex-wrap gap-2">
+        <div class="mt-3 flex w-fit flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
           <button type="button" data-testid="est-download-pdf" class={FILLED} onClick={() => go('pdf')}>Download PDF</button>
           <button type="button" data-testid="est-download-xlsx" class={BUTTON} onClick={() => go('xlsx')}>Download Excel</button>
           <button type="button" data-testid="est-download-docx" class={BUTTON} onClick={() => go('docx')}>Download Word</button>

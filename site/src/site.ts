@@ -15,13 +15,13 @@ export const BRAND_NOTICE = `${BRAND_NOTICE_SHORT} Each price comes from the sou
  * `gives`: what ours gives that a lender, DSA or accountant would want (about 15 words), only for a tool that works and
  * only what the engine does today (D-UX-65). `status`: Ready when the page works today.
  */
-export interface Tool { name: string; short?: string; brief?: string; what: string; gives?: string; status: 'Ready' | 'Later'; href?: string }
+export interface Tool { name: string; short?: string; what: string; gives?: string; status: 'Ready' | 'Later'; href?: string }
 
 export const TOOLS: Tool[] = [
   { name: 'DSCR statement', short: 'DSCR', status: 'Ready', href: '/dscr/',
     what: 'How many times a business’s yearly earnings cover its loan repayments.',
     gives: 'Each year’s cover, the weakest year and the largest loan that passes, as PDF, Excel or Word.' },
-  { name: 'Building estimate', short: 'Estimate', brief: 'Construction estimate', status: 'Ready', href: '/estimate/',
+  { name: 'Construction estimate', short: 'Estimate', status: 'Ready', href: '/estimate/',
     what: 'What your building, renovation or interior work should cost, before you collect contractors’ quotes.',
     gives: 'Room by room at five quality levels, a check of each quote against reported prices, and a bill of quantities.' },
   { name: 'Project report', short: 'Project report', status: 'Ready', href: '/project-report/',
