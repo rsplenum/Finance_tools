@@ -764,10 +764,12 @@ if (touched('/dscr/')) {
   if (!(await page.locator('#front-door').waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false))) v('OR9: Esc leaves the sheet open');
   await page.setViewportSize({ width: 1280, height: 900 });
   await expectText(page, v, 'dscr-rail', /The loanLoan amountRs\. 12,00,000Interest rate12% a yearRepay over5 years/, 'OR9, the rail at 1280 px');
-  await page.getByTestId('dscr-rail-change').click();
-  await leave(page, '#fld-fd-rate', '11');
-  await page.getByTestId('dscr-rail-done').click();
-  await expectText(page, v, 'dscr-rail', /Interest rate11% a year/, 'OR9, an answer changed in the rail');
+  if (await page.getByTestId('dscr-rail-change').waitFor({ timeout: 5000 }).then(() => true, () => false)) {
+    await page.getByTestId('dscr-rail-change').click();
+    await leave(page, '#fld-fd-rate', '11');
+    await page.getByTestId('dscr-rail-done').click();
+    await expectText(page, v, 'dscr-rail', /Interest rate11% a year/, 'OR9, an answer changed in the rail');
+  } else v(`OR9: no "Change an answer" at 1280 px; on the page: ${await page.evaluate(() => [...document.querySelectorAll('[data-testid^="dscr-rail"], [data-testid^="dscr-sheet"], [data-testid="dscr-edit"], #front-door, #preview')].map((e) => e.dataset.testid || e.id).join(', ') + ` (dialogs open ${document.querySelectorAll('dialog[open]').length}, wide ${matchMedia('(min-width: 64rem)').matches})`)}`);
   await ctx.close();
 }
 
