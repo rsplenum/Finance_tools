@@ -94,7 +94,7 @@ export function PlanEstimate() {
     <AnswersColumn f={f} pre="pl" groups={() => (v ? railOf(s, v) : [])} summary={v?.summary} rows={3}
       unfolded={<><HomeCaseNote on={home} /><KeptLine />{questions}</>}>{questions}</AnswersColumn>
     {/* The answer as paper, there from load as its outline, and the one sheet with a shadow (docs/DESIGN-SITE.md, tool pages). */}
-    <div class={f.fold ? 'lg:col-start-2 lg:row-start-1' : 'lg:col-start-2 lg:row-start-1 lg:row-end-3'}><section id="pl-result" aria-labelledby="pl-result-h" class={f.fold ? 'mt-4' : 'answer-panel mt-6 lg:mt-4'}>
+    <div class={f.fold ? 'lg:col-start-2 lg:row-start-1' : 'lg:col-start-2 lg:row-start-1 lg:row-end-3'}>{f.fold && <HomeCaseNote on={home} />}<section id="pl-result" aria-labelledby="pl-result-h" class={f.fold ? 'mt-4' : 'answer-panel mt-6 lg:mt-4'}>
       <h2 id="pl-result-h" tabIndex={-1} class="sr-only text-section">The estimate</h2>
       <div class="paper shadow-paper rounded-card p-3 sm:p-6">{v ? <Answer v={v} toLevel={toLevel} /> : <Outline p={p} />}</div>
     </section></div>
