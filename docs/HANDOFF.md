@@ -30,5 +30,5 @@ A row's session writes 1 to 4 straight into the shared docs (`docs/DECISIONS.md`
 ## Budgets and actuals
 | Date | Row | Budget | Actual |
 |---|---|---|---|
-| 28-10-2026 | LOOP1c: the answers fold to a rail (a sheet on a phone); Make it work as one shared part | L, Extra | ACTUAL |
+| 28-10-2026 | LOOP1c: the answers fold to a rail (a sheet on a phone); Make it work as one shared part | L, Extra | about 200 steps, one compaction; CI's headless shell needed three fixes to the sheet's Esc (a late close, then Esc before showModal) |
 | 27-10-2026 | LOOP1b: Make it work on the DSCR page (the slider moved stays, one follows; three plans with their cost; the rounds) | L, Extra | about 187 steps, two compactions; the non-monotone repayment cost a redo of the stop search |
