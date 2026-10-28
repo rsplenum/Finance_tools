@@ -97,7 +97,7 @@ export function DscrCalculator() {
   // One tree folded or not, each part in its own place, so folding never remounts the answer (Make it work keeps its state).
   return <div class={fold ? `lg:grid lg:gap-x-10 ${editing && wide ? 'lg:grid-cols-rail-open' : 'lg:grid-cols-rail'}` : 'lg:grid lg:grid-cols-tool lg:gap-x-12'}>
     <div class={fold ? 'hidden lg:col-start-1 lg:row-start-1 lg:row-end-4 lg:block' : 'lg:col-start-1 lg:row-start-1'}>
-      {fold ? <div class="lg:sticky lg:top-18 lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-y-auto lg:overscroll-contain lg:pt-4 lg:pb-10">
+      {fold ? <div class="lg:sticky lg:top-18 lg:max-h-rail lg:overflow-y-auto lg:overscroll-contain lg:pt-4 lg:pb-10">
         {editing && wide ? <AnswersOpen pre="dscr" onDone={done}>{door}</AnswersOpen> : <AnswersRail pre="dscr" groups={railOf(s)} onChange={() => setEditing(true)} />}
       </div> : <>
         <HomeCaseNote on={home} />

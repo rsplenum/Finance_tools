@@ -331,3 +331,8 @@ html:has([data-header][data-away]:not(:focus-within)) [data-years-strip] { top: 
 /* The answers folded to a rail beside the answer (OR9, LOOP1c), and open to change them. */
 @utility grid-cols-rail { grid-template-columns: 15rem minmax(0, 1fr); }
 @utility grid-cols-rail-open { grid-template-columns: 24rem minmax(0, 1fr); }
+/* The rail's box under the sticky header, scrolling on its own (D-UX-231). */
+@utility max-h-rail { max-height: calc(100dvh - 5.5rem); }
+/* The phone's answer sheet: most of the screen, its foot clear of the home bar (D-UX-231). */
+@utility max-h-sheet { max-height: 86dvh; }
+@utility pb-safe { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }

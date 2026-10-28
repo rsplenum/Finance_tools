@@ -742,6 +742,7 @@ if (touched('/dscr/')) {
   await expectText(page, v, 'dscr-plan-line', /average 1\.62 · meets the bank’s figuresEMI Rs\. 20,905\.97 a month · interest over the loan Rs\. 3,30,700$/, 'case S at 10%');
   await page.getByTestId('dscr-plan-use').click();
   await page.getByTestId('dscr-edit').click();
+  await page.locator('dialog[open] #front-door').waitFor();
   const fields = await page.locator('dialog[open] #front-door input[type="text"]').count() + await page.locator('dialog[open] #front-door fieldset').count();
   if (fields !== 8) v(`MV5, OR9: the sheet asks ${fields} fields; want 8`);
   await expectValue(page, v, '#fld-fd-amount', '10,70,000', 'case S, round 2');

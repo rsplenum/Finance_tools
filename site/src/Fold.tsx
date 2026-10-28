@@ -68,9 +68,9 @@ export function AnswersSheet({ pre, open, onClose, children }: { pre: string; op
   }, [open]);
   return <dialog ref={ref} data-testid={`${pre}-sheet`} aria-labelledby={`${pre}-sheet-h`} onClose={onClose}
     onClick={(e) => { if (e.target === ref.current) onClose(); }}
-    class="m-0 mt-auto max-h-[86dvh] w-full max-w-none overflow-y-auto overscroll-contain rounded-t-2xl bg-canvas p-0 text-ink shadow-paper backdrop:bg-ink/45">
+    class="m-0 mt-auto max-h-sheet w-full max-w-none overflow-y-auto overscroll-contain rounded-t-2xl bg-canvas p-0 text-ink shadow-paper backdrop:bg-ink/45">
     {/* The padding is inside, so a tap on the dialog itself is a tap on the scrim. */}
-    {open && <div class="px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-8">
+    {open && <div class="px-4 pt-4 pb-safe sm:px-8">
       <div class="flex items-center justify-between gap-2">
         <h2 id={`${pre}-sheet-h`} class="text-title text-ink">Your answers</h2>
         <button type="button" data-testid={`${pre}-sheet-done`} class={FILLED} onClick={onClose}>Done</button>
