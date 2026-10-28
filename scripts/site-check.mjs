@@ -759,6 +759,8 @@ if (touched('/dscr/')) {
   await page.getByTestId('dscr-edit').click();
   await expectValue(page, v, '#fld-fd-amount', '12,00,000', 'case S, back to round 1');
   await expectValue(page, v, '#fld-fd-years', '5', 'case S, back to round 1');
+  // Esc closes only an open dialog: on a slow runner it came before showModal (GOTCHAS).
+  await page.locator('dialog[open] #front-door').waitFor();
   await page.keyboard.press('Escape');
   // The answers leave the page once the sheet has closed (its close event may come a frame late, GOTCHAS).
   if (!(await page.locator('#front-door').waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false))) v('OR9: Esc leaves the sheet open');

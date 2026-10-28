@@ -5,7 +5,7 @@
  * part draws, works nothing out.
  */
 import type { ComponentChildren } from 'preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { BUTTON, FILLED } from './fields';
 
 export interface AnswerGroup { title: string; rows: [string, string][] }
@@ -60,7 +60,8 @@ export function EditAnswers({ pre, onOpen }: { pre: string; onOpen: () => void }
 /** The answers as a sheet from the foot of a phone's screen: a modal dialog, so the keys stay in it and Esc closes it. */
 export function AnswersSheet({ pre, open, onClose, children }: { pre: string; open: boolean; onClose: () => void; children: ComponentChildren }) {
   const ref = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
+  // Opened before the frame is drawn, so the answers never sit in a closed dialog where Esc cannot reach them.
+  useLayoutEffect(() => {
     const d = ref.current;
     if (!d) return;
     if (open && !d.open) d.showModal();
