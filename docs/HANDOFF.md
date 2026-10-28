@@ -31,3 +31,4 @@ A row's session writes 1 to 4 straight into the shared docs (`docs/DECISIONS.md`
 ## Budgets and actuals
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 28-10-2026 | UXR5b (PR #147) | L, about 200 steps | 167 steps, two compactions |
