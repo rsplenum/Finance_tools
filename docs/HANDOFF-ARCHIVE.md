@@ -167,6 +167,7 @@ The test figures are model-worked until the owner confirms fictional cases A and
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 27-10-2026 | LOOP1b: Make it work on the DSCR page (the slider moved stays, one follows; three plans with their cost; the rounds) | L, Extra | about 187 steps, two compactions; the non-monotone repayment cost a redo of the stop search |
 | 27-10-2026 | LOOP1: the DSCR page as rounds, a mock-up on fictional figures (the linked solver, D-UX-226) | L, Extra | 62 steps, one compaction; no build until the owner's word |
 | 27-10-2026 | POL2: the estimate (the download pills stacked on a phone, room in the level boxes) | L, Extra | about 45 steps; the owner picked two of four fixes |
 | 27-10-2026 | POL1: the owner's polish, home then the DSCR page (no one-word lines, the phone pills at one width, the dark desk, one name for the estimate; the tool head balanced, the instalment row aligned) | L, Extra | about 125 steps, one compaction; two 15-minute quick verifies and the review's screenshots took the most |
