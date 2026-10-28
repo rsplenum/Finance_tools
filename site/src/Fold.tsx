@@ -66,6 +66,10 @@ export function AnswersSheet({ pre, open, onClose, children }: { pre: string; op
     if (open && !d.open) d.showModal();
     if (!open && d.open) d.close();
   }, [open]);
+  // A sheet that goes (the window widened) after the browser closed it but before its close event came closes its answers too.
+  const last = useRef({ open, onClose });
+  last.current = { open, onClose };
+  useEffect(() => { const d = ref.current; return () => { if (last.current.open && d && !d.open) last.current.onClose(); }; }, []);
   // Esc fires cancel at once and close a little later, by then perhaps after the sheet has gone (a widened window).
   return <dialog ref={ref} data-testid={`${pre}-sheet`} aria-labelledby={`${pre}-sheet-h`} onCancel={onClose} onClose={onClose}
     onClick={(e) => { if (e.target === ref.current) onClose(); }}

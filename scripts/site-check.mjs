@@ -760,7 +760,8 @@ if (touched('/dscr/')) {
   await expectValue(page, v, '#fld-fd-amount', '12,00,000', 'case S, back to round 1');
   await expectValue(page, v, '#fld-fd-years', '5', 'case S, back to round 1');
   await page.keyboard.press('Escape');
-  if (await page.locator('dialog[open]').count()) v('OR9: Esc leaves the sheet open');
+  // The answers leave the page once the sheet has closed (its close event may come a frame late, GOTCHAS).
+  if (!(await page.locator('#front-door').waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false))) v('OR9: Esc leaves the sheet open');
   await page.setViewportSize({ width: 1280, height: 900 });
   await expectText(page, v, 'dscr-rail', /The loanLoan amountRs\. 12,00,000Interest rate12% a yearRepay over5 years/, 'OR9, the rail at 1280 px');
   await page.getByTestId('dscr-rail-change').click();
