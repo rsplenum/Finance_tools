@@ -12,6 +12,7 @@ import {
 import { moreRoom, type DscrCase } from '../../../engine/dscr-plan';
 import { LEVELS } from '../../../engine/ratios';
 import { inr } from '../../../engine/util';
+import type { Linked, RoundView as Round, Said } from '../MakeItWork';
 import { dscrCaseOf, type State } from './model';
 
 export const STEP = 10000;
@@ -45,7 +46,7 @@ export function figuresOf(st: Statement, t: Target): Figures {
   };
 }
 
-export interface Lever { id: LinkId; label: string; min: number; max: number; step: number; ends: [string, string]; words: (v: number) => string; values: number[] }
+export interface Lever { id: LinkId; label: string; min: number; max: number; step: number; ends: [string, string]; words: (v: number) => string; values: number[]; note?: string }
 export interface Setup { c: DscrCase; typed: LinkTerms; choices: { value: string; label: string }[]; levers: (most: number) => Lever[]; typedInterest?: number }
 const range = (lo: number, hi: number, step: number, d = 0) => { const xs: number[] = []; for (let i = 0; lo + i * step <= hi + 1e-9; i++) xs.push(Number((lo + i * step).toFixed(d))); return xs; };
 
@@ -63,7 +64,8 @@ export function setupOf(s: State): Setup | undefined {
           ends: [termOf(c, Math.min(first, typed.instalments)), termOf(c, longest)], values: range(Math.min(first, typed.instalments), longest, 1) },
       ];
       if (most > 0) a.push({ id: 'amount', label: 'The loan', min: floor, max: typed.amount, step: STEP, words: (x) => rs(x), ends: [rs(floor), rs(typed.amount)], values: range(floor, typed.amount, STEP) });
-      a.push({ id: 'ratePct', label: 'Interest rate', min: floorPct, max: top, step: 0.05, words: pct, ends: [pct(floorPct), pct(top)], values: range(floorPct, top, 0.05, 2) });
+      a.push({ id: 'ratePct', label: 'Interest rate', min: floorPct, max: top, step: 0.05, words: pct, ends: [pct(floorPct), pct(top)], values: range(floorPct, top, 0.05, 2),
+        note: `The rate is the bank’s to offer; moving it shows what a better rate would do, and it never moves on its own. It goes no lower than ${floorPct}%, RBI’s policy repo rate.` });
       return a;
     },
   };
@@ -93,6 +95,13 @@ export function optionsOf(u: Setup, most: number): OptionView[] {
   });
 }
 
+/** The figures as the shared part says them: each level in its tone, then whether the plan meets them. */
+export const saidOf = (f: Figures): Said => [
+  { text: `Lowest year ${f.lowest}${f.lowestFy ? ` (${f.lowestFy})` : ''}`, tone: f.lowOk ? 'ok' : 'bad' },
+  { text: `average ${f.average}`, tone: f.avgOk ? 'ok' : 'bad' },
+  { text: f.works ? 'meets the bank’s figures' : 'does not meet them yet', tone: f.works ? 'ok' : 'bad', strong: true },
+];
+
 export interface Live { terms: LinkTerms; follower?: Follower; fig: Figures; instalment: string; interest: string; stop?: string }
 /** The follower for a move of the rate: the lever the borrower set longest ago (`order` lists the last set last). */
 export const preferOf = (order: Follower[]): Follower => (order[order.length - 1] === 'instalments' ? 'amount' : 'instalments');
@@ -118,6 +127,24 @@ export function startOf(u: Setup, t: LinkTerms): Live | undefined {
   return 'statement' in r ? { terms: t, fig: figuresOf(r.statement, u.c.target), instalment: i?.text ?? '–', interest: i ? rs(i.interest) : '–' } : undefined;
 }
 
+/** The sliders' place: where they stand, each follower's home (its value as last set) and the order they were set in. */
+export interface Place { live: Live; homes: Homes; order: Follower[] }
+/** The DSCR page's Make it work for the shared part (site/src/MakeItWork.tsx). */
+export function linkedOf(u: Setup): Linked<LinkTerms, Place> {
+  return {
+    from: JSON.stringify(u.typed), question: 'Can you bring some of your own money into the project?', choices: u.choices,
+    plans: (most) => optionsOf(u, most), plansNote: (most, shown) => ownShortOf(u, most, shown as OptionView[]), levers: u.levers,
+    begin: (t) => { const l = startOf(u, t ?? u.typed); return l && { live: l, homes: t ? { amount: t.amount, instalments: t.instalments } : {}, order: [] }; },
+    move: (at, id, v, done, most) => {
+      const l = moveOf(u, most, { ...at.live.terms, [id]: v }, id as LinkId, at.homes, at.order, done);
+      if (!l) return undefined;
+      const f = id === 'ratePct' ? undefined : (id as Follower);
+      return { live: l, homes: done && f ? { ...at.homes, [f]: l.terms[f] } : at.homes, order: done && f ? [...at.order.filter((x) => x !== f), f] : at.order };
+    },
+    view: ({ live: l }) => ({ terms: l.terms, values: { ...l.terms }, follower: l.follower, figures: saidOf(l.fig), lines: [`${l.instalment} · interest over the loan ${l.interest}`], stop: l.stop }),
+  };
+}
+
 /** The loan's three answers written back, as the borrower would type them. */
 export function writeTerms(s: State, t: LinkTerms): State {
   return { ...s, loan: { ...s.loan, amount: inr(t.amount, Number.isInteger(t.amount) ? 0 : 2), instalments: String(t.instalments), ratePct: String(Number(t.ratePct.toFixed(2))) } };
@@ -140,4 +167,13 @@ export function roundOf(s: State, first?: LinkTerms): RoundView | undefined {
     if (t.ratePct !== first.ratePct) changed.push(`at ${pct(t.ratePct)} instead of ${pct(first.ratePct)}`);
   }
   return { terms: t, fig: v.fig, interest: v.interest, instalment: v.instalment, changed };
+}
+/** The rounds tried, as the shared part lists them: round 1 the loan as typed, each later one what it changed from it. */
+export function roundsOf(s: State, list: LinkTerms[]): Round<LinkTerms>[] {
+  const now = setupOf(s)?.typed, same = (a: LinkTerms, b?: LinkTerms) => !!b && a.amount === b.amount && a.instalments === b.instalments && a.ratePct === b.ratePct;
+  return list.flatMap((t, i) => {
+    const r = roundOf(writeTerms(s, t), i ? list[0] : undefined);
+    return r ? [{ terms: r.terms, now: same(r.terms, now), figures: saidOf(r.fig), lines: [`${r.instalment} · interest over the loan ${r.interest}`],
+      changed: i === 0 ? 'The loan as you typed it.' : r.changed.length ? `You ${r.changed.join('; ')}.` : 'As round 1.' }] : [];
+  });
 }

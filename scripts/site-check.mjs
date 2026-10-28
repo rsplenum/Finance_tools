@@ -706,6 +706,8 @@ if (touched('/dscr/')) {
 // form P·r ÷ (1 − (1 + r)^−n) (20,145.98 over 91, 20,962.39 for 10,20,000 over 67); the repayment let go short of what
 // works stops at the nearest that does, the loan following; the rate cut to 10% gives the loan back (20,905.97 for
 // 10,70,000 over 67); "See round 2" writes all three; round 1 restores the loan as typed; the front door still asks 8.
+// Make it work folds the answers (OR9, D-UX-231): on a phone to "Edit answers" and a sheet that holds the eight fields; from
+// 1024 px to a rail of the answers as typed, which opens in place to change them.
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'dark' });
   await page.check('#fld-fd-borrower-firm');
@@ -717,6 +719,8 @@ if (touched('/dscr/')) {
   await expectText(page, v, 'dscr-short-average', 'Short by Rs. 4,19,502 of cash to pay the loan, in total over the loan.', 'case S');
   await expectText(page, v, 'dscr-short-lowest', 'Short by Rs. 79,164 of cash to pay the loan in 2030-31.', 'case S');
   await page.getByTestId('dscr-viable').click();
+  if (await page.locator('#front-door').count()) v('OR9: Make it work leaves the answers unfolded');
+  if (!(await page.getByTestId('dscr-edit').isVisible())) v('OR9: no "Edit answers" on a phone once folded');
   await page.check('#dscr-own-180000');
   await expectText(page, v, 'dscr-plan-longer', /Repay over7 years 7 months.*Each instalmentRs\. 20,145\.98 a monthInterest over the loanRs\. 6,33,284Total you pay outRs\. 18,33,284/, 'case S, repay over longer');
   await expectText(page, v, 'dscr-plan-mix', /Repay over5 years 7 monthsThe loanRs\. 10,20,000Your own moneyRs\. 1,80,000Each instalmentRs\. 20,962\.39 a monthInterest over the loanRs\. 3,84,480Total you pay outRs\. 15,84,480/, 'case S, some of both');
@@ -737,20 +741,31 @@ if (touched('/dscr/')) {
   await expectText(page, v, 'dscr-move-amount', 'Rs. 10,70,000', 'case S at 10%: the loan comes back');
   await expectText(page, v, 'dscr-plan-line', /average 1\.62 · meets the bank’s figuresEMI Rs\. 20,905\.97 a month · interest over the loan Rs\. 3,30,700$/, 'case S at 10%');
   await page.getByTestId('dscr-plan-use').click();
+  await page.getByTestId('dscr-edit').click();
+  const fields = await page.locator('dialog[open] #front-door input[type="text"]').count() + await page.locator('dialog[open] #front-door fieldset').count();
+  if (fields !== 8) v(`MV5, OR9: the sheet asks ${fields} fields; want 8`);
   await expectValue(page, v, '#fld-fd-amount', '10,70,000', 'case S, round 2');
   await expectValue(page, v, '#fld-fd-years', '5.58', 'case S, round 2');
   await expectValue(page, v, '#fld-fd-rate', '10', 'case S, round 2');
   await expectText(page, v, page.locator('#fld-fd-amount-hint'), 'Round 1 had Rs. 12,00,000.', 'case S, round 2');
   await expectText(page, v, page.locator('#fld-fd-years-hint'), 'Round 1 had 60 instalments.', 'case S, round 2');
+  await page.getByTestId('dscr-sheet-done').click();
   await expectText(page, v, 'dscr-verdict', /^Meets both targets/, 'case S, round 2');
   await expectText(page, v, 'dscr-round-2', /^Round 2 \(on the page now\)You repay over 5 years 7 months instead of 5 years; borrow Rs\. 10,70,000 instead of Rs\. 12,00,000: Rs\. 1,30,000 of your own money; at 10% instead of 12%\./, 'case S, round 2');
   if (await page.getByTestId('dscr-levels').count()) v('case S still shows why it does not work in round 2');
   await page.getByTestId('dscr-round-back-1').click();
+  await expectText(page, v, 'dscr-round-1', /^Round 1 \(on the page now\)/, 'case S, back to round 1');
+  await page.getByTestId('dscr-edit').click();
   await expectValue(page, v, '#fld-fd-amount', '12,00,000', 'case S, back to round 1');
   await expectValue(page, v, '#fld-fd-years', '5', 'case S, back to round 1');
-  await expectText(page, v, 'dscr-round-1', /^Round 1 \(on the page now\)/, 'case S, back to round 1');
-  const fields = await page.locator('#front-door input[type="text"]').count() + await page.locator('#front-door fieldset').count();
-  if (fields !== 8) v(`MV5: the front door asks ${fields} fields; want 8`);
+  await page.keyboard.press('Escape');
+  if (await page.locator('dialog[open]').count()) v('OR9: Esc leaves the sheet open');
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expectText(page, v, 'dscr-rail', /The loanLoan amountRs\. 12,00,000Interest rate12% a yearRepay over5 years/, 'OR9, the rail at 1280 px');
+  await page.getByTestId('dscr-rail-change').click();
+  await leave(page, '#fld-fd-rate', '11');
+  await page.getByTestId('dscr-rail-done').click();
+  await expectText(page, v, 'dscr-rail', /Interest rate11% a year/, 'OR9, an answer changed in the rail');
   await ctx.close();
 }
 
@@ -1622,6 +1637,8 @@ if (touched('/dscr/')) {
   await page.check('#dscr-own-180000');
   await page.getByTestId('dscr-plan-from-mix').click();
   await page.getByTestId('dscr-plan-use').click();
+  await page.getByTestId('dscr-edit').click();
+  await page.locator('dialog[open]').getByText('Use More options').click();
   await openMore(page);
   for (const kind of ['pdf', 'xlsx']) {
     const saved = page.waitForEvent('download');
@@ -1636,7 +1653,7 @@ if (touched('/dscr/')) {
   const batches = events.map((b) => { try { return JSON.parse(b); } catch { return b; } });
   for (const b of batches) { const r = check(b); if (!r.ok) v(`UD1: a batch the Worker would refuse (${r.why}): ${String(JSON.stringify(b)).slice(0, 120)}`); }
   const steps = batches.flatMap((b) => b.ev ?? []).map((e) => (e.f ? `${e.e} ${e.f}` : e.e));
-  for (const want of ['open', 'field fld-fd-borrower', 'field fld-fd-amount', 'result dscr-status-ready', 'tap dscr-viable', 'tap dscr-plan-use',
+  for (const want of ['open', 'field fld-fd-borrower', 'field fld-fd-amount', 'result dscr-status-ready', 'tap dscr-viable', 'tap dscr-plan-use', 'tap dscr-edit',
     'more more-options', 'download pdf', 'download xlsx', 'error fld-fd-rate']) if (!steps.includes(want)) v(`UD1: no "${want}" in the batches (seen: ${steps.join(', ').slice(-300)})`);
   if (!steps.at(-1)?.startsWith('leave error-fld-')) v(`UD1: leaving does not name the last step, an error (seen: ${steps.at(-1)})`);
   // The figures as typed, in digits, and as the page shows them; the times are left out, being the page's own.

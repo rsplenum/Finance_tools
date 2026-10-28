@@ -10,7 +10,7 @@
  * to download: the document's own facts asked once, then a PDF, an Excel copy and a Word copy made in the browser (document.ts).
  * Figures: engine/dscr.ts only, via model.ts.
  */
-import { useMemo, useState } from 'preact/hooks';
+import { useEffect, useMemo, useState } from 'preact/hooks';
 import { AmountField } from '../AmountField';
 import { OPTIONS, PRESETS } from '../../../engine/dscr';
 import { LENDER } from '../../../engine/lender';
@@ -34,7 +34,8 @@ import {
 } from './model';
 import { Levels } from './Levels';
 import { Rounds } from './MakeItWork';
-import { roundKey, setupOf, writeTerms } from './rounds';
+import { roundKey, setupOf, termWords, writeTerms } from './rounds';
+import { AnswersOpen, AnswersRail, AnswersSheet, EditAnswers, useWide, type AnswerGroup } from '../Fold';
 import type { LinkTerms } from '../../../engine/dscr-linked';
 
 type Update = (f: (s: State) => State) => void;
@@ -55,7 +56,20 @@ export function DscrCalculator() {
   const y = useMemo(() => yearsOf(s), [s]);
   const p = useMemo(() => withFrontNeeds(s, preview(s), y.years[0]), [s, y]);
   const rows = useMemo(() => rowsOf(s), [s]);
-  const openMore = () => setMore(true);
+  // The answers fold once given (OR9, D-UX-231): "See the answer" or Make it work folds them to a rail beside the answer
+  // from 1024 px, which opens in place to change them, and on a phone to "Edit answers" and a sheet. While open to change,
+  // they stay folded even if an answer is emptied; closed with one missing, the page unfolds to show what is needed.
+  const [folded, setFolded] = useState(false), [editing, setEditing] = useState(false), wide = useWide();
+  const ready = s.source === 'plan' && p.started && !p.blocked && !p.needs.length;
+  const fold = folded && s.source === 'plan' && (ready || editing);
+  useEffect(() => { if (folded && !fold) setFolded(false); }, [folded, fold]);
+  const done = () => { setEditing(false); if (!ready) setFolded(false); };
+  const openMore = () => {
+    const was = fold;
+    setFolded(false); setEditing(false); setMore(true);
+    if (was) requestAnimationFrame(() => document.getElementById('more-options')?.scrollIntoView());
+  };
+  const toAnswer = () => { setFolded(true); setEditing(false); requestAnimationFrame(() => document.getElementById('preview')?.focus()); };
   // The rounds (LOOP1b): "See round N" writes the loan's three answers; each round seen is kept, with round 1 the loan
   // as typed, while nothing else changes, and a tap on one writes it back.
   const [rounds, setRounds] = useState<{ on: string; list: LinkTerms[] }>();
@@ -75,18 +89,27 @@ export function DscrCalculator() {
   // The answer beside the questions from 1024 px (UX8, D-UX-106): its panel spans the front door and More options, and
   // the working, year by year, runs under both. On a phone the column keeps the old order.
   const results = <>
-    <AnswerPanel s={s} p={p} update={update} see={see} back={back} trail={trail} />
-    {p.started && <Working s={s} p={p} openMore={openMore} />}
+    <AnswerPanel s={s} p={p} update={update} see={see} back={back} trail={trail} fold={fold} onPlan={() => { if (ready) setFolded(true); }} />
+    {p.started && <Working s={s} p={p} openMore={openMore} fold={fold} />}
   </>;
-  return <div class="lg:grid lg:grid-cols-tool lg:gap-x-12">
-    <div class="lg:col-start-1 lg:row-start-1">
-      <HomeCaseNote on={home} />
-      <ClearAll shown={JSON.stringify(s) !== JSON.stringify(start())} onClear={() => setS(start())} />
-      {s.source === 'plan' && <FrontDoor s={s} update={update} openMore={openMore} was={was} />}
+  const door = <FrontDoor s={s} update={update} openMore={openMore} was={was} onSee={ready && !fold ? toAnswer : undefined} />;
+  const bar = <AnswerBar to="preview" label="To the results" testid="answer-bar" text={barText(p)} />;
+  // One tree folded or not, each part in its own place, so folding never remounts the answer (Make it work keeps its state).
+  return <div class={fold ? `lg:grid lg:gap-x-10 ${editing && wide ? 'lg:grid-cols-rail-open' : 'lg:grid-cols-rail'}` : 'lg:grid lg:grid-cols-tool lg:gap-x-12'}>
+    <div class={fold ? 'hidden lg:col-start-1 lg:row-start-1 lg:row-end-4 lg:block' : 'lg:col-start-1 lg:row-start-1'}>
+      {fold ? <div class="lg:sticky lg:top-18 lg:max-h-[calc(100dvh-5.5rem)] lg:overflow-y-auto lg:overscroll-contain lg:pt-4 lg:pb-10">
+        {editing && wide ? <AnswersOpen pre="dscr" onDone={done}>{door}</AnswersOpen> : <AnswersRail pre="dscr" groups={railOf(s)} onChange={() => setEditing(true)} />}
+      </div> : <>
+        <HomeCaseNote on={home} />
+        <ClearAll shown={JSON.stringify(s) !== JSON.stringify(start())} onClear={() => setS(start())} />
+        {s.source === 'plan' && door}
+      </>}
     </div>
+    {fold ? <EditAnswers pre="dscr" onOpen={() => setEditing(true)} /> : null}
+    {fold && !wide ? <AnswersSheet pre="dscr" open={editing} onClose={done}>{door}</AnswersSheet> : null}
     {/* On the front door the answer comes before More options (review finding 12); with year-by-year figures, after them. */}
     {s.source === 'plan' && results}
-    <details id="more-options" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)} class="mt-12 lg:col-start-1 lg:row-start-2">
+    {fold ? null : <details id="more-options" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)} class="mt-12 lg:col-start-1 lg:row-start-2">
       <summary class="flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link">More options: the method, the loan in full, year-by-year figures</summary>
       <div class="pb-6">
         <Start s={s} update={update} />
@@ -97,19 +120,32 @@ export function DscrCalculator() {
           {s.source === 'plan' && <LenderSection s={s} update={update} y={y} />}
         </>}
       </div>
-    </details>
+    </details>}
     {s.source !== 'plan' && results}
-    {p.started && <div class="lg:col-span-2 lg:row-start-4"><DownloadSection s={s} p={p} update={update} /></div>}
+    {p.started && <div class={fold ? 'lg:col-start-2 lg:row-start-3' : 'lg:col-span-2 lg:row-start-4'}><DownloadSection s={s} p={p} update={update} /></div>}
     {/* The answer's echo is text; only the arrow is a target, 44 px, so a field under the bar can still be tapped (WCAG 2.5.8; UX3). */}
-    <AnswerBar to="preview" label="To the results" testid="answer-bar" text={barText(p)} />
+    {bar}
   </div>;
+}
+
+/** The front door's answers as the rail shows them: as typed (tidied), grouped as the mock-up had them (LOOP1). */
+function railOf(s: State): AnswerGroup[] {
+  const per = s.loan.repayment === 'quarterly' ? 3 : 1, k = numberOf(s.loan.instalments);
+  const emi = s.modes.otherLoans === 'emi' ? s.running[0]?.emi : undefined, dep = s.modes.depreciation === 'none' ? undefined : s.cells.depreciation?.[0];
+  const money = (t?: string) => (t?.trim() ? `Rs. ${t}` : 'None');
+  return [
+    { title: 'You', rows: [['Who is the borrower', BORROWER_CHOICES.find((b) => b.id === s.borrower)?.label ?? '–']] },
+    { title: 'The business', rows: [['Profit this year, before interest, depreciation and tax', money(s.cells.pbdit?.[0])], ['Growth in sales a year', `${s.rates.pbdit ?? ''}%`],
+      ['EMIs already paid', emi?.trim() ? `Rs. ${emi} a month` : 'None'], ['Depreciation a year', money(dep)]] },
+    { title: 'The loan', rows: [['Loan amount', money(s.loan.amount)], ['Interest rate', `${s.loan.ratePct}% a year`], ['Repay over', k === undefined ? '–' : termWords(k * per)]] },
+  ];
 }
 
 /**
  * The front door: the owner's eight inputs, written into the same state the detailed form uses, so More options shows
  * them too. Depreciation is optional (empty: none); EMIs already paid are one figure a month (empty: none).
  */
-function FrontDoor({ s, update, openMore, was }: { s: State; update: Update; openMore: () => void; was: Was }) {
+function FrontDoor({ s, update, openMore, was, onSee }: { s: State; update: Update; openMore: () => void; was: Was; onSee?: () => void }) {
   const perYear = s.loan.repayment === 'quarterly' ? 4 : 12, k = numberOf(s.loan.instalments);
   const years = k === undefined ? '' : String(+(k / perYear).toFixed(2));
   const emi = s.modes.otherLoans === 'emi' ? s.running[0]?.emi ?? '' : '';
@@ -117,12 +153,12 @@ function FrontDoor({ s, update, openMore, was }: { s: State; update: Update; ope
   // The field tidies what is typed (5 L → 5,00,000), so only what is not understood is said under it.
   const amountSaid = (t: string) => notUnderstood(t, amountOf, '5,00,000 or 5 L');
   const first = (key: string, t: string) => (x: State) => ({ ...x, cells: { ...x.cells, [key]: [t, ...(x.cells[key] ?? []).slice(1)] } });
-  return <section id="front-door" aria-label="The loan and the business" class="mt-4">
+  return <section id="front-door" aria-label="The loan and the business" class="mt-4 @container">
     <p class={HINT}>Have year-by-year projections, a holiday before the first instalment, or a loan already drawn? <a href="#more-options" onClick={openMore}
       class="text-link underline underline-offset-4">Use More options</a>.</p>
     <Choice name="fld-fd-borrower" legend="Who is the borrower?" columns value={s.borrower as string | undefined}
       options={BORROWER_CHOICES.map((b) => ({ value: b.id, label: b.label }))} onChange={(id) => update((x) => withBorrower(x, id))} />
-    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+    <div class="mt-4 grid gap-4 @md:grid-cols-2">
       <TextField id="fld-fd-profit" label="This year’s profit before interest, depreciation and tax" unit="Rs." inputMode="decimal" value={s.cells.pbdit?.[0] ?? ''}
         tidy={tidyAmount} said={amountSaid(s.cells.pbdit?.[0] ?? '')}
         onCommit={(t) => update((x) => ({ ...first('pbdit', t)(x), modes: { ...x.modes, pbdit: 'grow' } }))} />
@@ -146,6 +182,7 @@ function FrontDoor({ s, update, openMore, was }: { s: State; update: Update; ope
     </div>
     {s.door && s.loan.disbursed === s.door.month && <p data-testid="fd-loan-note" class={`mt-3 ${HINT}`}>
       The loan is taken as drawn in {monthText(s.door.month)} and repaid by EMI every month, with no holiday before the first instalment. Change it under More options.</p>}
+    {onSee && <button type="button" data-testid="dscr-fold" class={`mt-4 ${BUTTON}`} onClick={onSee}>See the answer</button>}
   </section>;
 }
 
@@ -445,14 +482,15 @@ function goOf(s: State, p: Preview) {
  * heading, one counter of what is still needed opening to its links, and the figures' outline with "—" for each one not
  * yet known, never 0 (review finding 2); then the plan used, why it misses and the largest loan or fewest instalments.
  */
-function AnswerPanel({ s, p, update, see, back, trail }: {
-  s: State; p: Preview; update: Update; see: (t: LinkTerms) => void; back: (t: LinkTerms) => void; trail: LinkTerms[];
+function AnswerPanel({ s, p, update, see, back, trail, fold, onPlan }: {
+  s: State; p: Preview; update: Update; see: (t: LinkTerms) => void; back: (t: LinkTerms) => void; trail: LinkTerms[]; fold: boolean; onPlan: () => void;
 }) {
   const largest = p.largest?.amount, fewest = p.fewest?.instalments;
   const result = p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready';
   const dash = (what: string, from?: number, to?: number) => <Dash what={what} to={boxFor(s, p, from, to)} />;
   // The panel pins inside a column that spans the questions' rows, so it never runs over the working below.
-  return <div class="lg:col-start-2 lg:row-start-1 lg:row-end-3"><section id="preview" aria-labelledby="preview-h" class="answer-panel mt-10 lg:mt-4">
+  // Folded (OR9), the answer takes the centre column and scrolls with the page.
+  return <div class={fold ? 'lg:col-start-2 lg:row-start-1' : 'lg:col-start-2 lg:row-start-1 lg:row-end-3'}><section id="preview" tabIndex={-1} aria-labelledby="preview-h" class={fold ? 'mt-4 outline-none' : 'answer-panel mt-10 outline-none lg:mt-4'}>
     <h2 id="preview-h" class="sr-only">Results</h2>
     {/* The answer as paper, there at once: it changes as the figures are typed (docs/DESIGN-SITE.md, tool pages). */}
     <div class="paper shadow-paper rounded-card p-4 sm:p-6">
@@ -498,7 +536,7 @@ function AnswerPanel({ s, p, update, see, back, trail }: {
     })()}
     </div>
     {s.source === 'plan' && trail.length > 1 && <Rounds s={s} list={trail} back={back} />}
-    {s.source === 'plan' && p.started && <Levels s={s} lender={p.lender} update={update} see={see} round={trail.length ? trail.length + 1 : 2} />}
+    {s.source === 'plan' && p.started && <Levels s={s} lender={p.lender} update={update} see={see} round={trail.length ? trail.length + 1 : 2} onOpen={onPlan} />}
     {p.largest && <div class="mt-3 text-sm text-ink">
       <p data-testid="dscr-largest">{p.largest.text}</p>
       {largest !== undefined && <button type="button" data-testid="use-amount" class={`mt-1 ${BUTTON}`}
@@ -514,14 +552,14 @@ function AnswerPanel({ s, p, update, see, back, trail }: {
 
 /** The working under the answer, full width from 1024 px: the lenders' tests, what is assumed, the statement year by year
  * and the repayment schedule. */
-function Working({ s, p, openMore }: { s: State; p: Preview; openMore: () => void }) {
+function Working({ s, p, openMore, fold }: { s: State; p: Preview; openMore: () => void; fold: boolean }) {
   // The method and the target read as one line (D-UX-10: shorter).
   const method = p.assumed.find((a) => a.id === 'method'), target = p.assumed.find((a) => a.id === 'target');
   const rows: LedgerRow[] = p.assumed.filter((a) => !(method && target && a.id === 'target')).map((a) => ({
     ...(a.id === 'method' && target ? { what: 'How DSCR is worked out, and the target', shown: `${a.shown}; ${target.shown.toLowerCase()}`, why: `${a.why}. The target: ${target.why}` } : a),
     id: a.id, to: a.where, go: (e: Event) => { e.preventDefault(); openMore(); requestAnimationFrame(() => goTo(a.where)(e)); },
   }));
-  return <section id="working" aria-label="How it is worked out" class="lg:col-span-2 lg:row-start-3">
+  return <section id="working" aria-label="How it is worked out" class={fold ? 'lg:col-start-2 lg:row-start-2' : 'lg:col-span-2 lg:row-start-3'}>
     {p.lender && <LenderLines v={p.lender} openMore={openMore} />}
     <Ledger id="assumed" testid="dscr-assumed" row="assumed-" title="Assumed until changed" rows={rows} />
     {p.statement && <StatementTable st={p.statement} parts={p.partYears} />}

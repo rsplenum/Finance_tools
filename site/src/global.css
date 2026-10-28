@@ -328,3 +328,6 @@ html:has([data-header][data-away]:not(:focus-within)) [data-years-strip] { top: 
   @media (width >= 64rem) { position: sticky; top: 4.5rem; max-height: calc(100dvh - 5.5rem); overflow-y: auto; overscroll-behavior: contain; margin-inline: -1rem; padding: 0 1rem 2.5rem; }
 }
 @utility grid-cols-label-wide { grid-template-columns: 6rem 1fr 1fr 1fr; }
+/* The answers folded to a rail beside the answer (OR9, LOOP1c), and open to change them. */
+@utility grid-cols-rail { grid-template-columns: 15rem minmax(0, 1fr); }
+@utility grid-cols-rail-open { grid-template-columns: 24rem minmax(0, 1fr); }
