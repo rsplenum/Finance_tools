@@ -15,6 +15,7 @@ import { Fragment } from 'preact';
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, toAnswer, useAnswerPlace, InAppNote, useHomeCase, HomeCaseNote, useKept, KeptLine } from '../fields';
 import { ESTIMATE_HOME } from './home-case';
+import { AnswersColumn, foldGrid, SeeAnswer, useFold, type AnswerGroup } from '../Fold';
 import { printable } from '../doc/pdf';
 import { BRAND_NOTICE } from '../site';
 import { isoDate, save, type FileKind } from '../download';
@@ -64,13 +65,10 @@ export function PlanEstimate() {
   const p = useMemo(() => planPreview(s), [s]);
   const place = useAnswerPlace('pl-result');
   sharePlan(s, { first: p.needs.map(askedIn).find(Boolean), left: p.needs.length });
-  const [editing, setEditing] = useState(true);
-  const folded = useRef(false), result = useRef<HTMLHeadingElement>(null);
-  // The questions fold into one line the first time the estimate works out (A8), and the answer takes the focus.
-  useLayoutEffect(() => {
-    if (p.view && !folded.current) { folded.current = true; setEditing(false); requestAnimationFrame(() => result.current?.focus()); }
-  }, [p.view]);
-  const v = p.view;
+  // The six answers fold the first time the estimate works out (A8), and the answer takes the focus: from 1024 px to the
+  // rail beside it, on a phone to "Edit answers" and its one line (OR9, LOOP1d); "See the answer" folds them again.
+  const v = p.view, f = useFold(!!v && !p.blocked, 'pl-result-h'), first = useRef(false);
+  useLayoutEffect(() => { if (v && !p.blocked && !first.current) { first.current = true; f.see(); } }, [v, p.blocked]);
   // A new package resets every section, item, brand and room level, so the tap can be undone from the bar (principle 8;
   // review finding 3); the level already chosen does nothing.
   const [undo, setUndo] = useState<{ before: PlanState; after: PlanState } | null>(null);
@@ -86,30 +84,26 @@ export function PlanEstimate() {
     // The Undo button goes, so the focus moves to the level chosen again (docs/DESIGN.md, Focus).
     requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid^="pl-strip-"][aria-pressed="true"]')?.focus());
   };
-  // From 1024 px the questions and the sections stand left and the answer panel right (UX8, D-UX-106).
-  return <div class="lg:grid lg:grid-cols-tool lg:gap-x-12">
-    <div class="lg:col-start-1 lg:row-start-1">
-      <HomeCaseNote on={home} />
-      {(editing || !v) && <KeptLine />}
-      {editing || !v
-        ? <Questions s={s} update={update} p={p} toLevel={toLevel} done={v ? () => setEditing(false) : undefined} />
-        : <div data-testid="pl-answers" class={`mt-6 flex flex-wrap items-center justify-between gap-2 ${CARD}`}>
-          <p data-testid="pl-summary" class={`min-w-0 ${INK}`}>{v.summary}</p>
-          <button type="button" data-testid="pl-change" class={BUTTON} onClick={() => setEditing(true)}>Change</button>
-        </div>}
-      {p.blocked && <p data-testid="pl-blocked" role="alert" class={`mt-4 ${answerRule(true)} py-2 text-sm text-ink`}>{p.blocked}</p>}
-    </div>
+  const questions = <>
+    <Questions s={s} update={update} p={p} toLevel={toLevel} see={v && !p.blocked && !f.fold ? f.see : undefined} />
+    {p.blocked && <p data-testid="pl-blocked" role="alert" class={`mt-4 ${answerRule(true)} py-2 text-sm text-ink`}>{p.blocked}</p>}
+  </>;
+  // From 1024 px the questions and the sections stand left and the answer panel right (UX8, D-UX-106); folded, the rail
+  // stands left and the answer and the sections take the rest. One tree folded or not (GOTCHAS, folding).
+  return <div class={foldGrid(f, 'lg:grid lg:grid-cols-tool lg:gap-x-12')}>
+    <AnswersColumn f={f} pre="pl" groups={() => (v ? railOf(s, v) : [])} summary={v?.summary} rows={3}
+      unfolded={<><HomeCaseNote on={home} /><KeptLine />{questions}</>}>{questions}</AnswersColumn>
     {/* The answer as paper, there from load as its outline, and the one sheet with a shadow (docs/DESIGN-SITE.md, tool pages). */}
-    <div class="lg:col-start-2 lg:row-start-1 lg:row-end-3"><section id="pl-result" aria-labelledby="pl-result-h" class="answer-panel mt-6 lg:mt-4">
-      <h2 id="pl-result-h" ref={result} tabIndex={-1} class="sr-only text-section">The estimate</h2>
+    <div class={f.fold ? 'lg:col-start-2 lg:row-start-1' : 'lg:col-start-2 lg:row-start-1 lg:row-end-3'}><section id="pl-result" aria-labelledby="pl-result-h" class={f.fold ? 'mt-4' : 'answer-panel mt-6 lg:mt-4'}>
+      <h2 id="pl-result-h" tabIndex={-1} class="sr-only text-section">The estimate</h2>
       <div class="paper shadow-paper rounded-card p-3 sm:p-6">{v ? <Answer v={v} toLevel={toLevel} /> : <Outline p={p} />}</div>
     </section></div>
-    {v && <div class="lg:col-start-1 lg:row-start-2">
+    {v && <div class={f.fold ? 'lg:col-start-2 lg:row-start-2' : 'lg:col-start-1 lg:row-start-2'}>
       <Sections s={s} v={v} update={update} />
       <Checks s={s} v={v} update={update} />
       <Rooms s={s} v={v} update={update} />
     </div>}
-    <div class="lg:col-span-2 lg:row-start-3">
+    <div class={f.fold ? 'lg:col-start-2 lg:row-start-3' : 'lg:col-span-2 lg:row-start-3'}>
       {v ? <Download s={s} p={p} update={update} />
         : <Folded id="pl-download" title="Download the planning estimate">A PDF, an Excel copy and a Word copy, once the six are answered.</Folded>}
     </div>
@@ -131,6 +125,12 @@ export function PlanEstimate() {
     </div>
   </div>;
 }
+
+/** The six answers as the rail shows them, in the words the estimate reads them back in (LOOP1d). */
+const railOf = (s: PlanState, v: PlanView): AnswerGroup[] => [
+  { title: 'The work', rows: [['What the work is', v.kind], [builds(s.kind) ? 'Floors' : 'Flat or house', v.home], ['City', v.city]] },
+  { title: 'The home', rows: [[v.areaName, v.area], ['Bedrooms', v.bhk], ['Level', v.level]] },
+];
 
 /** The question each of the engine's needs is answered in, by its first words (engine/architect.ts). */
 const ASKED: [string, string][] = [['What the work', 'fld-work'], ['How many floors', 'fld-floors'], ['Flat or house', 'fld-home'], ['Which city', 'fld-city'],
@@ -155,7 +155,7 @@ function Outline({ p }: { p: PlanPreview }) {
 }
 
 /** The six questions (A3): each in a block of its own, counted by the site check. */
-function Questions({ s, update, p, toLevel, done }: { s: PlanState; update: Update; p: PlanPreview; toLevel: (l: Level) => void; done?: () => void }) {
+function Questions({ s, update, p, toLevel, see }: { s: PlanState; update: Update; p: PlanPreview; toLevel: (l: Level) => void; see?: () => void }) {
   const badArea = plainOf(s.area) === null;
   return <div id="six-questions">
     <div data-question>
@@ -199,8 +199,8 @@ function Questions({ s, update, p, toLevel, done }: { s: PlanState; update: Upda
       <Choice name="fld-level" legend="Which level?" options={LEVEL_CHOICES} value={s.level ? String(s.level) : undefined} columns
         onChange={(l) => toLevel(Number(l) as Level)} />
     </div>
-    {done && <button type="button" data-testid="pl-done" class={`mt-6 ${BUTTON}`} onClick={done}>Done</button>}
-    {!done && p.needs.length === 6 && <p class={`mt-4 ${HINT}`}>The estimate appears as soon as the six are answered.</p>}
+    <SeeAnswer pre="pl" onSee={see} />
+    {p.needs.length === 6 && <p class={`mt-4 ${HINT}`}>The estimate appears as soon as the six are answered.</p>}
   </div>;
 }
 

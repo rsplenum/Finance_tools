@@ -984,9 +984,9 @@ for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
   await expectText(page, v, 'pl-what-changed', /^Bedroom 3 taken out, now 2 BHK: Rs\. [\d,]+ less/, 'a bedroom taken out');
   await layout(page, v, 'the rooms by buttons, 390 px');
   // Interiors: ten sections on, with Appliances, Smart home, Furniture and Soft furnishings, the movable items apart (D-UX-19).
-  await page.getByTestId('pl-change').click();
+  await page.getByTestId('pl-edit').click(); await page.waitForSelector('dialog[open]');
   await page.check('#fld-work-interiors');
-  await page.getByTestId('pl-done').click();
+  await page.getByTestId('pl-sheet-done').click();
   const onI = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
   const movable = await Promise.all(['appliances', 'smart', 'furniture', 'furnishings'].map((x) => page.isChecked(`#fld-on-${x}`)));
   if (onI !== 10 || movable.includes(false)) v(`interiors show ${onI} sections on, Appliances, Smart home, Furniture and Soft furnishings ${movable.join('/')}`);
@@ -995,14 +995,14 @@ for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
   // A new house (A3, D-UX-23): the second question asks the floors and the area is the built-up area, still six
   // questions; eighteen sections with thirteen on (E5: Outside works and Water), the structure the same at every level;
   // the PDF titled for construction, with its stages.
-  await page.getByTestId('pl-change').click();
+  await page.getByTestId('pl-edit').click(); await page.waitForSelector('dialog[open]');
   await page.check('#fld-work-build');
   const asked = await page.locator('#six-questions [data-question]').count(), floorsAsked = await page.locator('#fld-floors-2').count();
   if (asked !== 6 || floorsAsked !== 1 || (await page.locator('#fld-home-flat').count())) v(`a new house asks ${asked} questions (want 6), the floors ${floorsAsked ? '' : 'not '}among them`);
   await page.check('#fld-floors-2');
   await leave(page, '#fld-carpet', '2,000');
   await page.check('#fld-bhk-3');
-  await page.getByTestId('pl-done').click();
+  await page.getByTestId('pl-sheet-done').click();
   await expectText(page, v, 'pl-summary', /^Build a new house · G\+1 · Pune · 2,000 sq ft · 3 BHK · \w+$/, 'a new house, folded');
   const cardsB = await page.locator('[data-testid^="pl-card-"]').count(), onB = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
   if (cardsB !== 18 || onB !== 13) v(`a new house shows ${cardsB} sections with ${onB} on (want 18 and 13)`);
@@ -1034,14 +1034,14 @@ for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
   // E5b: a floor added on the house: the second question asks the floors being added, still six questions; seventeen
   // sections with twelve on (no outside works); the PDF titled for an extension, its stages from the old terrace taken
   // up to the overhead tank; no plot and no sewer to change.
-  await page.getByTestId('pl-change').click();
+  await page.getByTestId('pl-edit').click(); await page.waitForSelector('dialog[open]');
   await page.check('#fld-work-extend');
   const askedX = await page.locator('#six-questions [data-question]').count(), oneX = await page.locator('#fld-floors-1').count(), threeX = await page.locator('#fld-floors-3').count();
   if (askedX !== 6 || oneX !== 1 || threeX !== 0) v(`an extension asks ${askedX} questions (want 6), one floor ${oneX ? '' : 'not '}offered, a third ${threeX ? '' : 'not '}offered`);
   await page.check('#fld-floors-1');
   await leave(page, '#fld-carpet', '1,000');
   await page.check('#fld-bhk-2');
-  await page.getByTestId('pl-done').click();
+  await page.getByTestId('pl-sheet-done').click();
   await expectText(page, v, 'pl-summary', /^Add a floor or rooms · One floor added · Pune · 1,000 sq ft · 2 BHK · \w+$/, 'an extension, folded');
   const cardsX = await page.locator('[data-testid^="pl-card-"]').count(), onX = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
   if (cardsX !== 17 || onX !== 12) v(`an extension shows ${cardsX} sections with ${onX} on (want 17 and 12)`);
@@ -1311,6 +1311,23 @@ if (touched('/project-report/')) {
   if (!worded.includes('About the project') || !worded.includes('It is in talks with 3 buyers.') || /reputed|lakh/.test(worded)) v(`the report PDF holds its words as ${worded.slice(worded.indexOf('About'), 200)}`);
   const wordedDocx = await docxLines((await save('rep-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
   if (wordedDocx.messages.length || !wordedDocx.lines.includes('About the project') || !wordedDocx.lines.includes('The promoter')) v(`the report's Word copy lacks its words ${JSON.stringify(wordedDocx.messages).slice(0, 120)}`);
+  // UXR5 (LOOP1d, D-UX-233): all answered, "See the answer" folds the questions: on a phone to "Edit answers" and a sheet
+  // that holds them; from 1024 px to a rail of the answers as the check reads them, which opens in place.
+  if (!(await page.getByTestId('rep-fold').count())) v('UXR5: no "See the answer" on a report all answered');
+  else {
+    await page.getByTestId('rep-fold').click();
+    if (await page.locator('#fld-rep-name').count()) v('UXR5: "See the answer" leaves the report\'s questions unfolded');
+    await page.getByTestId('rep-edit').click();
+    await page.locator('dialog[open] #fld-rep-name').waitFor();
+    await page.keyboard.press('Escape');
+    await page.locator('#fld-rep-name').waitFor({ state: 'detached', timeout: 5000 }).catch(() => v('UXR5: Esc leaves the report\'s sheet open'));
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await expectText(page, v, 'rep-rail', /Total cost of the projectRs\. 37,86,301/, 'UXR5, the report\'s rail at 1280 px');
+    await page.getByTestId('rep-rail-change').click();
+    await page.locator('[data-testid="rep-rail-open"] #fld-rep-name').waitFor({ timeout: 5000 }).catch(() => v('UXR5: the report\'s rail does not open to its questions'));
+    await page.getByTestId('rep-rail-done').click();
+    await page.getByTestId('rep-rail').waitFor({ timeout: 5000 }).catch(() => v('UXR5: Done does not close the report\'s answers to the rail'));
+  }
   await ctx.close();
 }
 
@@ -1488,6 +1505,42 @@ for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'
   const { ctx, page, v } = await open(`${path}?case=home`, { scheme: 'light' });
   if (!(await page.getByTestId('home-case').count())) v(`${path}?case=home does not say it is filled with the home page's case`);
   await expectText(page, v, id, want, `${step} from home`);
+  await ctx.close();
+}
+// UXR5 (LOOP1d, D-UX-234): the estimate's answers folded from 1024 px to a rail in two groups, which opens in place.
+if (touched('/estimate/')) {
+  const { ctx, page, v } = await open('/estimate/?case=home', { scheme: 'light' });
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expectText(page, v, 'pl-rail', /^Your answersThe workWhat the work is.*Pune.*The homeBedrooms|The home.*Bedrooms.*Level/, 'UXR5, the estimate\'s rail at 1280 px');
+  await page.getByTestId('pl-rail-change').click();
+  await page.locator('[data-testid="pl-rail-open"] #six-questions').waitFor({ timeout: 5000 }).catch(() => v('UXR5: the estimate\'s rail does not open to its questions'));
+  await layout(page, v, 'the estimate\'s answers open in the rail, 1280 px');
+  await page.getByTestId('pl-rail-done').click();
+  await ctx.close();
+}
+// UXR5 (LOOP1d, D-UX-233): case W all answered, "See the answer" folds the CMA's questions: on a phone to "Edit answers"
+// and a sheet; from 1024 px to a rail of the limit, each year's net sales and balance sheet and the more options, which
+// opens in place with the years as cards; a link to an answer while folded opens them and lands on it.
+if (touched('/cma/')) {
+  const { ctx, page, v } = await open('/cma/?case=home', { scheme: 'dark' });
+  await expectText(page, v, 'cma-status', 'All answered', 'case W from home');
+  await page.getByTestId('cma-fold').click();
+  if (await page.locator('#cma-figures').count()) v('UXR5: "See the answer" leaves the CMA\'s figures unfolded');
+  await page.getByTestId('cma-edit').click();
+  await page.locator('dialog[open] #fld-cma-existing').waitFor();
+  await layout(page, v, 'the CMA\'s sheet, 390 px');
+  await page.keyboard.press('Escape');
+  await page.locator('#fld-cma-existing').waitFor({ state: 'detached', timeout: 5000 }).catch(() => v('UXR5: Esc leaves the CMA\'s sheet open'));
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expectText(page, v, 'cma-rail', /^Your answersThe limitLimit you have today.*Net sales.*Balance sheet.*Balances at Rs\. [\d,]+.*More options/, 'UXR5, the CMA\'s rail at 1280 px');
+  await page.getByTestId('cma-rail-change').click();
+  await page.locator('[data-testid="cma-rail-open"] #fld-cma-existing').waitFor({ timeout: 5000 }).catch(() => v('UXR5: the CMA\'s rail does not open to its questions'));
+  if (await page.locator('[data-testid="cma-rail-open"] [data-years-strip]').first().isVisible()) v('UXR5: the years run across in the CMA\'s open rail (want cards)');
+  await layout(page, v, 'the CMA\'s answers open in the rail, 1280 px');
+  await page.getByTestId('cma-rail-done').click();
+  await tap(page, 'cma-assumed');
+  await page.locator('[data-testid="cma-assumed"] a[href="#fld-cma-quasi"]').click();
+  await page.waitForFunction(() => document.activeElement?.id === 'fld-cma-quasi', null, { timeout: 5000 }).catch(() => v('UXR5: a link to a folded answer does not land on it (the CMA\'s promoters\' loans)'));
   await ctx.close();
 }
 

@@ -134,7 +134,8 @@ export interface Option<T extends string> { value: T; label: string; hint?: Comp
 export function Choice<T extends string>(p: { name: string; legend: string; options: Option<T>[]; value?: T; onChange: (v: T) => void; columns?: boolean }) {
   return <fieldset id={p.name} class="mt-6 min-w-0">
     <legend class={LABEL}>{p.legend}</legend>
-    <div class={`mt-2 grid gap-2 ${p.columns ? 'sm:grid-cols-2' : ''}`}>
+    {/* Two columns by its own width, not the window's, so it stacks in a narrow rail (UXR5). */}
+    <div class="mt-2 @container"><div class={`grid gap-2 ${p.columns ? '@md:grid-cols-2' : ''}`}>
       {p.options.map((o) => <label key={o.value} for={`${p.name}-${o.value}`}
         class="flex cursor-pointer items-start gap-3 rounded-card border border-edge bg-field p-3 has-checked:border-accent has-checked:bg-accent/10 new:border-0 new:bg-surface new:has-checked:bg-surface new:has-checked:outline-2 new:has-checked:outline-ink">
         <input type="radio" id={`${p.name}-${o.value}`} name={p.name} value={o.value} checked={p.value === o.value}
@@ -144,7 +145,7 @@ export function Choice<T extends string>(p: { name: string; legend: string; opti
           {o.hint && <span class="mt-0.5 block text-sm text-ink-muted">{o.hint}</span>}
         </span>
       </label>)}
-    </div>
+    </div></div>
   </fieldset>;
 }
 
@@ -174,14 +175,30 @@ export function Verdict(p: { id: string; work: string; text: string; rule: strin
     <span data-testid={p.id} class="mt-1 block font-display text-base font-normal text-ink first-letter:uppercase">{p.text}</span></h3>;
 }
 
+// While a tool's answers are folded away (OR9, UXR5), the one way to open them, so a link to an answer lands on it.
+let opener: (() => void) | undefined;
+/** Lets a link to an answer open the folded answers first; the returned function takes the way back. */
+export const opensAnswers = (open: () => void) => { opener = open; return () => { if (opener === open) opener = undefined; }; };
+
+/** Runs `then` on the element once it is in the page, opening a tool's folded answers first when it is among them. */
+export function reach(id: string, then: (el: HTMLElement) => void): boolean {
+  const now = document.getElementById(id);
+  if (now) { then(now); return true; }
+  if (!opener) return false;
+  opener();
+  let n = 0;
+  const look = () => { const el = document.getElementById(id); if (el) then(el); else if (++n < 30) requestAnimationFrame(look); };
+  requestAnimationFrame(look);
+  return true;
+}
+
 /** Takes the focus to a box, so a link to a missing figure lands where it is typed: a field itself, or in a group of
  * them (a fieldset, a form's grid) the first one still empty. */
 export const goTo = (id: string) => (e: Event) => {
-  const el = document.getElementById(id), boxes = el?.matches('input, select, textarea') ? [] : [...(el?.querySelectorAll('input, select, textarea') ?? [])] as HTMLInputElement[];
-  const to = boxes.length ? boxes.find((b) => b.type !== 'radio' && !b.value) ?? boxes[0] : el;
-  if (!to) return;
-  e.preventDefault();
-  (to as HTMLElement).focus();
+  if (reach(id, (el) => {
+    const boxes = el.matches('input, select, textarea') ? [] : [...el.querySelectorAll('input, select, textarea')] as HTMLInputElement[];
+    (boxes.length ? boxes.find((b) => b.type !== 'radio' && !b.value) ?? boxes[0] : el).focus();
+  })) e.preventDefault();
 };
 
 /** A figure not yet known (UX8, D-UX-106): "—", never 0, a link to the box that fills it when there is one. */

@@ -8,7 +8,8 @@
  * engine/cma-plan.ts only, via model.ts and levers.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
-import { AnswerBar, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote, useHomeCase, HomeCaseNote, useKept } from '../fields';
+import { AnswerBar, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote, useHomeCase, HomeCaseNote, useKept, reach } from '../fields';
+import { AnswersColumn, foldGrid, SeeAnswer, useFold, type AnswerGroup } from '../Fold';
 import { CMA_HOME } from './home-case';
 import { printable } from '../doc/pdf';
 import { inr } from '../../../engine/util';
@@ -45,9 +46,9 @@ export function CmaCalculator() {
   const undo = () => { setS((x) => undoCmaPlan(x, used)); setUsed([]); };
   const was = (field: string) => { const c = used.find((u) => u.field === field); return c ? `Changed by the plan; it was ${c.was || 'empty'}.` : undefined; };
   // The answer beside the questions from 1024 px (UX8, D-UX-106); the forms, what is assumed and the downloads under both.
-  return <div class="lg:grid lg:grid-cols-tool-grid lg:gap-x-10">
-    <div class="lg:col-start-1 lg:row-start-1">
-    <HomeCaseNote on={home} />
+  // Folded on "See the answer" (UXR5, LOOP1d): the answers to a rail beside the result, or a sheet on a phone.
+  const ready = !!p.view && !p.blocked && !p.needs.length, f = useFold(ready, 'result-h');
+  const top = <>
     <p data-testid="cma-years" class={`mt-2 ${HINT}`}>
       Years: {cols.map((c) => `${c.fy} (${KIND[c.kind]})`).join(', ')}. Type in rupees, or like 12 L or 1.2 Cr. Leave the oldest years empty if the business is younger.
     </p>
@@ -67,38 +68,57 @@ export function CmaCalculator() {
       <Choice name="fld-cma-case" legend="The limit you ask for" options={CASE_CHOICES} value={s.loanCase || undefined} columns
         onChange={(loanCase) => update((x) => ({ ...x, loanCase }))} />
     </Section>
-    </div>
-    <Result s={s} p={p} update={update} use={use} used={used} undo={undo} keep={() => setUsed([])} />
-    {/* The five years across the full width from 1024 px (UX9, review finding 3); the answer bar shows while the panel is out of view. */}
-    <div class="lg:col-span-2 lg:row-start-2">
-      <div id="cma-figures">
-        <Grid form="II" title="Profit and loss (Form II)" s={s} update={update} was={was} />
-        <Grid form="III" title="Balance sheet (Form III)" s={s} update={update} was={was} />
-      </div>
-      <details id="more-options" class="mt-12">
-        <summary class="flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link">More options: promoters’ loans, collateral</summary>
-        <div class="pt-4 pb-4">
-          <label class="flex items-start gap-2 text-ink">
-            <input id="fld-cma-quasi" type="checkbox" class="mt-1" checked={s.quasi} onChange={(e) => { const quasi = (e.currentTarget as HTMLInputElement).checked; update((x) => ({ ...x, quasi })); }} />
-            <span>Count unsecured loans from promoters as the owners’ funds<span class={`block text-sm ${MUTED}`}>{was('fld-cma-quasi') ?? 'Only when they stay in the business till the bank’s loan is repaid.'}</span></span>
-          </label>
-          <div class="mt-4 max-w-sm">
-            <TextField id="fld-cma-collateral" label="Collateral’s market value (0 if none)" hint={was('fld-cma-collateral') ?? COLLATERAL_HINT} unit="Rs." inputMode="decimal" value={s.collateral}
-              tidy={tidyAmount} invalid={bad(s.collateral)} said={bad(s.collateral) ? 'Not understood. Type 50,00,000 or 50 L.' : undefined}
-              onCommit={(collateral) => update((x) => ({ ...x, collateral }))} />
-          </div>
+  </>;
+  // The five years across from a box 52rem wide (UX9, review finding 3), so in the rail or the sheet each year is a card.
+  const figures = <div id="cma-figures" class="@container">
+    <Grid form="II" title="Profit and loss (Form II)" s={s} update={update} was={was} />
+    <Grid form="III" title="Balance sheet (Form III)" s={s} update={update} was={was} />
+    <details id="more-options" class="mt-12">
+      <summary class="flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link">More options: promoters’ loans, collateral</summary>
+      <div class="pt-4 pb-4">
+        <label class="flex items-start gap-2 text-ink">
+          <input id="fld-cma-quasi" type="checkbox" class="mt-1" checked={s.quasi} onChange={(e) => { const quasi = (e.currentTarget as HTMLInputElement).checked; update((x) => ({ ...x, quasi })); }} />
+          <span>Count unsecured loans from promoters as the owners’ funds<span class={`block text-sm ${MUTED}`}>{was('fld-cma-quasi') ?? 'Only when they stay in the business till the bank’s loan is repaid.'}</span></span>
+        </label>
+        <div class="mt-4 max-w-sm">
+          <TextField id="fld-cma-collateral" label="Collateral’s market value (0 if none)" hint={was('fld-cma-collateral') ?? COLLATERAL_HINT} unit="Rs." inputMode="decimal" value={s.collateral}
+            tidy={tidyAmount} invalid={bad(s.collateral)} said={bad(s.collateral) ? 'Not understood. Type 50,00,000 or 50 L.' : undefined}
+            onCommit={(collateral) => update((x) => ({ ...x, collateral }))} />
         </div>
-      </details>
-    </div>
-    <div class="lg:col-span-2 lg:row-start-3">
+      </div>
+    </details>
+    <SeeAnswer pre="cma" onSee={ready && !f.fold ? f.see : undefined} />
+  </div>;
+  return <div class={foldGrid(f, 'lg:grid lg:grid-cols-tool-grid lg:gap-x-10')}>
+    <AnswersColumn f={f} pre="cma" groups={() => railOf(s)} rows={2} unfolded={<><HomeCaseNote on={home} />{top}</>}>{top}{figures}</AnswersColumn>
+    <Result s={s} p={p} update={update} use={use} used={used} undo={undo} keep={() => setUsed([])} fold={f.fold} />
+    {f.fold ? null : <div class="lg:col-span-2 lg:row-start-2">{figures}</div>}
+    <div class={f.fold ? 'lg:col-start-2 lg:row-start-2' : 'lg:col-span-2 lg:row-start-3'}>
     {p.view && <Forms p={p} />}
     <Ledger id="assumed" testid="cma-assumed" title="Assumed until changed" rows={ASSUMPTIONS.map((a) => ({ ...a,
-      ...(a.id === 'quasi' ? { to: 'fld-cma-quasi', go: (e: Event) => { e.preventDefault(); (document.getElementById('more-options') as HTMLDetailsElement).open = true; document.getElementById('fld-cma-quasi')?.focus(); } } : {}) }))} />
+      ...(a.id === 'quasi' ? { to: 'fld-cma-quasi', go: (e: Event) => { e.preventDefault();
+        reach('more-options', (d) => { (d as HTMLDetailsElement).open = true; document.getElementById('fld-cma-quasi')?.focus(); }); } } : {}) }))} />
     <Download s={s} p={p} update={update} />
     </div>
     {/* The limit and its status on every screen of the forms (review finding 4), as the DSCR's answer bar, from load. */}
     <AnswerBar to="result" label="To the CMA data" testid="cma-answer-bar" text={barText(p, s)} />
   </div>;
+}
+
+/** The answers as typed, for the rail (UXR5): the limit, each year's net sales and whether its balance sheet balances
+ * (the same check as under Form III), and the two more options. */
+function railOf(s: CmaState): AnswerGroup[] {
+  const cols = columnsOf(s.startYear), typed = (t: string) => (t.trim() ? `Rs. ${t.trim()}` : '—');
+  const balance = (c: (typeof cols)[number]) => { const t = subtotals(s, c.id);
+    if (t.blocked || t.assets === undefined || t.liabilities === undefined) return '—';
+    const d = t.assets - t.liabilities;
+    return Math.abs(d) < 0.005 ? `Balances at ${rs(t.assets)}` : `Differs by ${rs(Math.abs(d))}`; };
+  return [
+    { title: 'The limit', rows: [['Limit you have today', typed(s.existingLimit)], ['The limit you ask for', CASE_CHOICES.find((c) => c.value === s.loanCase)?.label ?? '—']] },
+    { title: 'Net sales', rows: cols.map((c) => [`${c.fy} (${KIND[c.kind]})`, typed(s.figures[c.id].sales)]) },
+    { title: 'Balance sheet', rows: cols.map((c) => [c.fy, balance(c)]) },
+    { title: 'More options', rows: [['Promoters’ loans as the owners’ funds', s.quasi ? 'Yes' : 'No'], ['Collateral’s market value', typed(s.collateral)]] },
+  ];
 }
 
 /** The answer bar's words (D-UX-84), as the report's: the limit, whether it meets a lender's levels, the status; never
@@ -112,7 +132,7 @@ function barText(p: CmaPreview, s: CmaState) {
 
 /** Each column of a form spans its heads and its subtotals (11 + 2 and 14 + 3), so the rows line up across the years; the
  * years' line is the strip above them. */
-const SPAN = { II: 'lg:row-span-13', III: 'lg:row-span-17' } as const;
+const SPAN = { II: '@min-[52rem]:row-span-13', III: '@min-[52rem]:row-span-17' } as const;
 const SUBTOTALS = { II: ['Gross profit', 'Net profit'], III: ['Total liabilities', 'Total assets', 'Balance sheet'] } as const;
 /** How sure a year's figures are, drawn on its head (UX9, review finding 3): audited solid, the estimate dashed, the
  * projection dashed and lighter, as the answer's rule is solid once final (docs/DESIGN-SITE.md). */
@@ -128,19 +148,19 @@ function Grid({ form, title, s, update, was }: { form: 'II' | 'III'; title: stri
   const cols = columnsOf(s.startYear), heads = HEADS.filter((h) => h.form === form);
   const hint = (h: (typeof heads)[number]) => 'hint' in h && h.hint ? <span class={`block text-xs ${MUTED}`}>{h.hint}</span> : null;
   const sums = cols.map((c) => subtotals(s, c.id)), blocked = sums.find((t) => t.blocked)?.blocked;
-  const ROW = 'mt-2 flex items-center justify-between gap-3 lg:mt-0 lg:border-b lg:border-line lg:py-1';
+  const ROW = 'mt-2 flex items-center justify-between gap-3 @min-[52rem]:mt-0 @min-[52rem]:border-b @min-[52rem]:border-line @min-[52rem]:py-1';
   // From 1024 px the years' heads are one strip that stays under the top bar while the form is in view, so the eighteen
   // rows of Form III keep their years (UX9b, the UX9 critic); each year's group is named for a screen reader, and below
   // 1024 px each card carries its own head.
   const head = (c: (typeof cols)[number]) => <><span aria-hidden="true" class={`absolute inset-x-0 top-0 border-t-2 ${SURE[c.kind]}`} />{c.fy}</>;
   return <Section id={`form-${form}`} title={title}>
-    <div aria-hidden="true" data-years-strip data-testid={`cma-years-${form}`} class="sticky top-18 z-10 mt-3 hidden bg-canvas text-sm lg:grid lg:grid-cols-years lg:gap-x-3">
+    <div aria-hidden="true" data-years-strip data-testid={`cma-years-${form}`} class="sticky top-18 z-10 mt-3 hidden bg-canvas text-sm @min-[52rem]:grid @min-[52rem]:grid-cols-years @min-[52rem]:gap-x-3">
       <p class="flex items-end border-b border-line py-2 pr-3 font-medium text-ink-muted">Rs.</p>
       {cols.map((c) => <p key={c.id} class="relative flex flex-col items-end justify-end border-b border-line pt-2 pb-2 font-medium whitespace-nowrap text-ink-muted">
         {head(c)}<span class={`text-xs font-normal ${MUTED}`}>{KIND[c.kind]}</span></p>)}
     </div>
-    <div data-years-grid data-testid={`cma-input-${form}`} class="mt-3 space-y-3 text-sm lg:mt-0 lg:grid lg:grid-flow-col lg:grid-cols-years lg:gap-x-3 lg:space-y-0">
-      <div class={`max-lg:hidden lg:grid lg:grid-rows-subgrid ${SPAN[form]}`}>
+    <div data-years-grid data-testid={`cma-input-${form}`} class="mt-3 space-y-3 text-sm @min-[52rem]:mt-0 @min-[52rem]:grid @min-[52rem]:grid-flow-col @min-[52rem]:grid-cols-years @min-[52rem]:gap-x-3 @min-[52rem]:space-y-0">
+      <div class={`@max-[52rem]:hidden @min-[52rem]:grid @min-[52rem]:grid-rows-subgrid ${SPAN[form]}`}>
         {heads.map((h) => <p key={h.id} class="flex flex-col justify-center border-b border-line py-1.5 pr-3 text-ink">{h.label}{hint(h)}</p>)}
         {SUBTOTALS[form].map((l, i) => <p key={l} class={`flex items-center py-1.5 pr-3 font-semibold text-ink ${i ? '' : 'border-t border-t-ink/25'} border-b border-line`}>{l}</p>)}
       </div>
@@ -152,17 +172,17 @@ function Grid({ form, title, s, update, was }: { form: 'II' | 'III'; title: stri
             : Math.abs(d) < 0.005 ? <span data-testid={`cma-balance-${c.id}`} class={`${STATE} justify-end text-ink`}><Tick />Balances</span>
             : <span data-testid={`cma-balance-${c.id}`} class={`${STATE} justify-end text-warn`}>Differs by {rs(Math.abs(d))}</span>];
         return <div key={c.id} role="group" aria-label={`${c.fy}, ${KIND[c.kind]}`} data-testid={`cma-input-${form}-${c.id}`}
-          class={`rounded-card bg-surface p-3 lg:grid lg:grid-rows-subgrid ${SPAN[form]} lg:rounded-none lg:bg-transparent lg:p-0`}>
-          <p class="relative pt-2 font-medium text-ink lg:hidden">{head(c)}<span class={`ml-2 text-xs font-normal ${MUTED}`}>{KIND[c.kind]}</span></p>
+          class={`rounded-card bg-surface p-3 @min-[52rem]:grid @min-[52rem]:grid-rows-subgrid ${SPAN[form]} @min-[52rem]:rounded-none @min-[52rem]:bg-transparent @min-[52rem]:p-0`}>
+          <p class="relative pt-2 font-medium text-ink @min-[52rem]:hidden">{head(c)}<span class={`ml-2 text-xs font-normal ${MUTED}`}>{KIND[c.kind]}</span></p>
           {heads.map((h) => { const id = `fld-cma-${c.id}-${h.id}`, v = s.figures[c.id][h.id]; return <div key={h.id} class={ROW}>
-            <label for={id} class="text-ink lg:hidden">{h.label}{hint(h)}</label>
-            <div class="w-36 shrink-0 lg:w-full">
+            <label for={id} class="text-ink @min-[52rem]:hidden">{h.label}{hint(h)}</label>
+            <div class="w-36 shrink-0 @min-[52rem]:w-full">
               <CellInput id={id} name={`${h.label}, ${c.fy}`} value={v} decimal tidy={tidyAmount} invalid={bad(v)} changed={was(id)}
                 onCommit={(t) => update((x) => ({ ...x, figures: { ...x.figures, [c.id]: { ...x.figures[c.id], [h.id]: t } } }))} />
             </div>
           </div>; })}
-          {cells.map((x, i) => <div key={i} data-testid={`cma-sum-${form}-${c.id}-${i}`} class={`${ROW} py-1 tabular-nums ${i ? '' : 'border-t border-t-ink/25 pt-2 lg:pt-1'}`}>
-            <span class="font-semibold text-ink lg:hidden">{SUBTOTALS[form][i]}</span><span class="text-right font-semibold lg:w-full lg:px-2">{x}</span>
+          {cells.map((x, i) => <div key={i} data-testid={`cma-sum-${form}-${c.id}-${i}`} class={`${ROW} py-1 tabular-nums ${i ? '' : 'border-t border-t-ink/25 pt-2 @min-[52rem]:pt-1'}`}>
+            <span class="font-semibold text-ink @min-[52rem]:hidden">{SUBTOTALS[form][i]}</span><span class="text-right font-semibold @min-[52rem]:w-full @min-[52rem]:px-2">{x}</span>
           </div>)}
         </div>; })}
     </div>
@@ -200,12 +220,12 @@ function FormTable({ t }: { t: ViewTable }) {
  * needed, opening to the list; the limit, the limit now and the current ratio with "—" until known, never 0 (review
  * finding 2); then the plan used and the lender's levels.
  */
-function Result({ s, p, update, use, used, undo, keep }: { s: CmaState; p: CmaPreview; update: Update; use: (l: CmaLevers) => void; used: CmaChange[]; undo: () => void; keep: () => void }) {
+function Result({ s, p, update, use, used, undo, keep, fold }: { s: CmaState; p: CmaPreview; update: Update; use: (l: CmaLevers) => void; used: CmaChange[]; undo: () => void; keep: () => void; fold: boolean }) {
   const v = p.view, last = columnsOf(s.startYear).at(-1)?.fy ?? '';
   const outline = [`Limit by the turnover method, ${last}`, 'Limit you have today', `Current ratio, ${last}`];
   const now = amountOf(s.existingLimit);
-  return <div class="lg:col-start-2 lg:row-start-1"><section id="result" aria-labelledby="result-h" class="answer-panel mt-10 lg:mt-4">
-    <h2 id="result-h" class="sr-only">The CMA data</h2>
+  return <div class="lg:col-start-2 lg:row-start-1"><section id="result" aria-labelledby="result-h" class={fold ? 'mt-4' : 'answer-panel mt-10 lg:mt-4'}>
+    <h2 id="result-h" tabIndex={-1} class="sr-only">The CMA data</h2>
     <div class="paper shadow-paper rounded-card p-4 sm:p-6">
       <Counter id="cma-status" result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} text={statusText(p)} rule answer plain={!!levelsOf(s)?.checks}
         go={p.needs.length ? { to: 'cma-figures', what: p.needs[0] } : undefined}>

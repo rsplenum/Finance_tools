@@ -35,7 +35,7 @@ import {
 import { Levels } from './Levels';
 import { Rounds } from './MakeItWork';
 import { roundKey, setupOf, termWords, writeTerms } from './rounds';
-import { AnswersOpen, AnswersRail, AnswersSheet, EditAnswers, useWide, type AnswerGroup } from '../Fold';
+import { AnswersColumn, foldGrid, SeeAnswer, useFold, type AnswerGroup } from '../Fold';
 import type { LinkTerms } from '../../../engine/dscr-linked';
 
 type Update = (f: (s: State) => State) => void;
@@ -59,17 +59,13 @@ export function DscrCalculator() {
   // The answers fold once given (OR9, D-UX-231): "See the answer" or Make it work folds them to a rail beside the answer
   // from 1024 px, which opens in place to change them, and on a phone to "Edit answers" and a sheet. While open to change,
   // they stay folded even if an answer is emptied; closed with one missing, the page unfolds to show what is needed.
-  const [folded, setFolded] = useState(false), [editing, setEditing] = useState(false), wide = useWide();
   const ready = s.source === 'plan' && p.started && !p.blocked && !p.needs.length;
-  const fold = folded && s.source === 'plan' && (ready || editing);
-  useEffect(() => { if (folded && !fold) setFolded(false); }, [folded, fold]);
-  const done = () => { setEditing(false); if (!ready) setFolded(false); };
+  const f = useFold(ready, 'preview', s.source === 'plan'), fold = f.fold;
   const openMore = () => {
     const was = fold;
-    setFolded(false); setEditing(false); setMore(true);
+    f.unfold(); setMore(true);
     if (was) requestAnimationFrame(() => document.getElementById('more-options')?.scrollIntoView());
   };
-  const toAnswer = () => { setFolded(true); setEditing(false); requestAnimationFrame(() => document.getElementById('preview')?.focus()); };
   // The rounds (LOOP1b): "See round N" writes the loan's three answers; each round seen is kept, with round 1 the loan
   // as typed, while nothing else changes, and a tap on one writes it back.
   const [rounds, setRounds] = useState<{ on: string; list: LinkTerms[] }>();
@@ -89,24 +85,18 @@ export function DscrCalculator() {
   // The answer beside the questions from 1024 px (UX8, D-UX-106): its panel spans the front door and More options, and
   // the working, year by year, runs under both. On a phone the column keeps the old order.
   const results = <>
-    <AnswerPanel s={s} p={p} update={update} see={see} back={back} trail={trail} fold={fold} onPlan={() => { if (ready) setFolded(true); }} />
+    <AnswerPanel s={s} p={p} update={update} see={see} back={back} trail={trail} fold={fold} onPlan={f.keep} />
     {p.started && <Working s={s} p={p} openMore={openMore} fold={fold} />}
   </>;
-  const door = <FrontDoor s={s} update={update} openMore={openMore} was={was} onSee={ready && !fold ? toAnswer : undefined} />;
+  const door = <FrontDoor s={s} update={update} openMore={openMore} was={was} onSee={ready && !fold ? f.see : undefined} />;
   const bar = <AnswerBar to="preview" label="To the results" testid="answer-bar" text={barText(p)} />;
   // One tree folded or not, each part in its own place, so folding never remounts the answer (Make it work keeps its state).
-  return <div class={fold ? `lg:grid lg:gap-x-10 ${editing && wide ? 'lg:grid-cols-rail-open' : 'lg:grid-cols-rail'}` : 'lg:grid lg:grid-cols-tool lg:gap-x-12'}>
-    <div class={fold ? 'hidden lg:col-start-1 lg:row-start-1 lg:row-end-4 lg:block' : 'lg:col-start-1 lg:row-start-1'}>
-      {fold ? <div class="lg:sticky lg:top-18 lg:max-h-rail lg:overflow-y-auto lg:overscroll-contain lg:pt-4 lg:pb-10">
-        {editing && wide ? <AnswersOpen pre="dscr" onDone={done}>{door}</AnswersOpen> : <AnswersRail pre="dscr" groups={railOf(s)} onChange={() => setEditing(true)} />}
-      </div> : <>
-        <HomeCaseNote on={home} />
-        <ClearAll shown={JSON.stringify(s) !== JSON.stringify(start())} onClear={() => setS(start())} />
-        {s.source === 'plan' && door}
-      </>}
-    </div>
-    {fold ? <EditAnswers pre="dscr" onOpen={() => setEditing(true)} /> : null}
-    {fold && !wide ? <AnswersSheet pre="dscr" open={editing} onClose={done}>{door}</AnswersSheet> : null}
+  return <div class={foldGrid(f, 'lg:grid lg:grid-cols-tool lg:gap-x-12')}>
+    <AnswersColumn f={f} pre="dscr" groups={() => railOf(s)} rows={3} unfolded={<>
+      <HomeCaseNote on={home} />
+      <ClearAll shown={JSON.stringify(s) !== JSON.stringify(start())} onClear={() => setS(start())} />
+      {s.source === 'plan' && door}
+    </>}>{door}</AnswersColumn>
     {/* On the front door the answer comes before More options (review finding 12); with year-by-year figures, after them. */}
     {s.source === 'plan' && results}
     {fold ? null : <details id="more-options" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)} class="mt-12 lg:col-start-1 lg:row-start-2">
@@ -182,7 +172,7 @@ function FrontDoor({ s, update, openMore, was, onSee }: { s: State; update: Upda
     </div>
     {s.door && s.loan.disbursed === s.door.month && <p data-testid="fd-loan-note" class={`mt-3 ${HINT}`}>
       The loan is taken as drawn in {monthText(s.door.month)} and repaid by EMI every month, with no holiday before the first instalment. Change it under More options.</p>}
-    {onSee && <button type="button" data-testid="dscr-fold" class={`mt-4 ${BUTTON}`} onClick={onSee}>See the answer</button>}
+    <SeeAnswer pre="dscr" onSee={onSee} />
   </section>;
 }
 

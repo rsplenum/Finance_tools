@@ -9,7 +9,8 @@ import { useEffect, useMemo, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
 import { SOLD_BY, soldBy } from '../../../engine/sold-by';
 import { verdictWords, workWords } from '../verdict';
-import { answerRule, AnswerBar, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, Section, SelectField, STATE, TextField, Tick, InAppNote, Verdict, useHomeCase, HomeCaseNote, useKept } from '../fields';
+import { AnswersColumn, foldGrid, SeeAnswer, useFold } from '../Fold';
+import { answerRule, AnswerBar, BUTTON, reach, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, Section, SelectField, STATE, TextField, Tick, InAppNote, Verdict, useHomeCase, HomeCaseNote, useKept } from '../fields';
 import { REPORT_HOME } from './home-case';
 import { Bar, Benchmarks, Lever, PlanLever, targetOf } from '../Board';
 import { benchmarkFields, inSentence, listed, withBenchmark } from '../board-model';
@@ -133,7 +134,7 @@ export function ReportCalculator() {
   useKept('report', s, setS, blank);
   const toMode = (m: Mode) => { saveMode(m); update((x) => withMode(x, m)); };
   // A box only expert mode has: switch to it, then focus the box.
-  const toExpert = (id: string) => (e: Event) => { e.preventDefault(); toMode('expert'); focusNext(`#${id}`); };
+  const toExpert = (id: string) => (e: Event) => { e.preventDefault(); toMode('expert'); requestAnimationFrame(() => reach(id, (el) => el.focus())); };
   // Clear all, with an undo until the next figure is typed (review finding 5), as on the CMA.
   const [cleared, setCleared] = useState<ReportState>();
   useEffect(() => { if (typed) setCleared(undefined); }, [typed]);
@@ -151,12 +152,13 @@ export function ReportCalculator() {
   const clear = () => { setCleared(s); setS(blank); setUsed([]); setChecked(undefined); setSeen(false); focusNext('[data-testid="rep-clear-undo"]'); };
   const unclear = () => { if (cleared) setS(cleared); setCleared(undefined); focusNext('[data-testid="rep-clear"]'); };
   // The security cover's row links to the collateral field (review finding 4); in simple mode, property is chosen first.
-  const toCollateral = (e: Event) => { e.preventDefault(); if (simple && !withProperty(s)) update((x) => ({ ...x, security: 'property' })); focusNext('#fld-collateral'); };
+  const toCollateral = (e: Event) => { e.preventDefault(); if (simple && !withProperty(s)) update((x) => ({ ...x, security: 'property' })); requestAnimationFrame(() => reach('fld-collateral', (el) => el.focus())); };
   // A missing figure's link: to its box, in expert mode when only it has one.
   const toBox = (need: string) => (e: Event) => {
     const b = boxOf(need);
     if (!b) return;
-    return document.getElementById(b[1]) ? goTo(b[1])(e) : toExpert(b[1])(e);
+    // Folded, the box is among the answers: they open to it (OR9).
+    return document.getElementById(b[1]) || f.fold ? goTo(b[1])(e) : toExpert(b[1])(e);
   };
   const mark = (id: string, hint?: string) => { const c = used.find((u) => u.field === id); return c ? `Changed by the plan; it was ${c.was || 'empty'}.${hint ? ` ${hint}` : ''}` : hint; };
   // Each setter builds on the latest state (x), never on the one this render saw.
@@ -176,19 +178,27 @@ export function ReportCalculator() {
   // From 1024 px the questions stand left and the answer panel right (UX8, D-UX-106); the report's tables, what it assumes
   // and the download run the full width below.
   const hv = headsSum(s, 'variable'), hf = headsSum(s, 'fixed'), by = wcByOf(s), changed = changedOf(s), worked = workedLine(s);
-  const sum = (testid: string, text: string) => <p data-testid={testid} class="mt-2 self-end text-ink sm:col-span-1">{text}</p>;
+  const sum = (testid: string, text: string) => <p data-testid={testid} class="mt-2 self-end text-ink @md:col-span-1">{text}</p>;
   const hybridBack = p.hybrid && <p data-testid="rep-hybrid" aria-live="polite" class="mt-2 text-sm text-ink">{p.hybrid}</p>;
   const collateralBox = () => amount('fld-collateral', 'Collateral: its market value', s.collateral, (x, collateral) => ({ ...x, collateral }), `Property offered beside the project's assets. ${COLLATERAL_HINT}`);
   // From 1024 px the questions stand left and the answer panel right (UX8, D-UX-106); the report's tables, what it assumes
   // and the download run the full width below. Simple mode asks its dozen questions; expert mode every field (D-UX-112).
-  return <div class="lg:grid lg:grid-cols-tool-grid lg:gap-x-10"><div class="lg:col-start-1 lg:row-start-1">
-    <HomeCaseNote on={home} />
+  // The answers fold once the report is ready and "See the answer" is tapped (OR9, LOOP1d): to a rail beside it from
+  // 1024 px, on a phone to "Edit answers" and a sheet; Clear all waits among them (D-UX-232).
+  const ready = !!p.view && !p.blocked && !p.needs.length, f = useFold(ready, 'report-h');
+  const reset = typed
+    ? <button type="button" data-testid="rep-clear" class={BUTTON} onClick={clear}>Clear all</button>
+    : cleared && <p role="status" class="flex items-center gap-2 text-sm text-ink">Cleared.
+      <button type="button" data-testid="rep-clear-undo" class={BUTTON} onClick={unclear}>Undo</button></p>;
+  // The questions' grids take two columns by their own width, so they stack in the open rail (UXR5).
+  const door = <div class="@container">
+    {f.fold && reset && <div class="mt-4 flex flex-wrap items-center gap-2">{reset}</div>}
     <Choice name="fld-mode" legend="How much to ask" options={MODE_CHOICES} value={s.mode ?? 'expert'} columns onChange={toMode} />
     <Choice name="fld-borrower" legend="Who is the borrower? It sets the tax." options={BORROWER_CHOICES} value={s.borrower} columns
       onChange={(borrower) => update((x) => ({ ...x, borrower }))} />
     <Section id="cost" title="Cost of the project">
       <p class={`mt-2 ${HINT}`}>Leave a head empty if the project has none. The margin for working capital is worked out and added.</p>
-      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <div class="mt-4 grid gap-4 @md:grid-cols-2">
         {HEADS.filter((h) => !simple || SIMPLE_COST.includes(h.id)).map((h) => <Fragment key={h.id}>{amount(`fld-cost-${h.id}`, h.label, s.cost[h.id], (x, t) => ({ ...x, cost: { ...x.cost, [h.id]: t } }),
           h.id === 'building' && s.scheme === 'pmegp' ? PMEGP_SHED : undefined)}</Fragment>)}
       </div>
@@ -215,14 +225,14 @@ export function ReportCalculator() {
         <p data-testid="rep-mudra-collateral" class={`mt-2 ${HINT}`}>No collateral needed up to Rs. {tidyAmount(String(MUDRA.collateralFreeUpTo))}: {CGFMU.label.split(',')[0]} guarantees the loan, for a fee of {CGFMU.ratePct}% a year, in the projections as a finance cost. Apply on <a class="text-link underline underline-offset-4" href={MUDRA.apply.url} target="_blank" rel="noopener noreferrer">{MUDRA.apply.label}</a>.</p>
         {tarunAsked(s) && tick('fld-tarun', 'The borrower has taken and repaid a Tarun loan', !!s.tarunRepaid, (x, tarunRepaid) => ({ ...x, tarunRepaid }), `Only then Tarun Plus, above Rs. ${tidyAmount(String(MUDRA.levels[MUDRA.levels.length - 2].upTo))}.`)}
       </div>}
-      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <div class="mt-4 grid gap-4 @md:grid-cols-2">
         {amount('fld-tl-amount', 'Term loan you will ask for', s.loan.amount, (x, t) => ({ ...x, loan: { ...x.loan, amount: t } }))}
         {!simple && s.scheme !== 'pmegp' && amount('fld-subsidy', 'Capital subsidy, if any', s.subsidy, (x, subsidy) => ({ ...x, subsidy }))}
         {!simple && amount('fld-unsecured', 'Unsecured loans, if any', s.unsecured, (x, unsecured) => ({ ...x, unsecured }))}
       </div>
     </Section>
     <Section id="loan" title="The term loan">
-      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <div class="mt-4 grid gap-4 @md:grid-cols-2">
         {percent('fld-tl-rate', 'Interest rate (% a year)', s.loan.ratePct, (x, ratePct) => ({ ...x, loan: { ...x.loan, ratePct } }), '%')}
         {/* The holiday and the repayment after it, read back in all (D-UX-174); in simple mode the holiday runs to the first
             sales until typed (D-UX-112), and the way to repay is compared below the figures (OR5). */}
@@ -246,7 +256,7 @@ export function ReportCalculator() {
       {simple && s.scheme !== 'mudra' && <>
         <Choice name="fld-security" legend="What backs the loan besides the project's own assets?" options={SECURITY_CHOICES} value={s.security}
           onChange={(security) => update((x) => ({ ...x, security }))} />
-        {withProperty(s) && <div class="mt-4 grid gap-4 sm:grid-cols-2">{collateralBox()}</div>}
+        {withProperty(s) && <div class="mt-4 grid gap-4 @md:grid-cols-2">{collateralBox()}</div>}
         {s.security === 'hybrid' && hybridBack}
       </>}
     </Section>
@@ -261,7 +271,7 @@ export function ReportCalculator() {
           return <fieldset key={k} data-testid={`rep-product-${k}`} class="mt-4">
             <legend class="font-medium text-ink">{s.products.length > 1 ? `Product or service ${k + 1}` : 'What it sells'}</legend>
             {/* What it is sold by (OR6): the count and the price take its words; it changes no sum. */}
-            <div class="mt-2 grid gap-4 sm:grid-cols-2">
+            <div class="mt-2 grid gap-4 @md:grid-cols-2">
               <TextField id={`fld-product-${k}-name`} label="What it is" value={pr.name} onCommit={(t) => update((x) => set('name')(x, t))} />
               <SelectField id={`fld-product-${k}-unit`} label="Sold by" value={u.id} options={UNIT_PICKS} onChange={(t) => update((x) => set('unit')(x, t))} />
               {percent(`fld-product-${k}-units`, `How many ${u.many} a month at full running`, pr.units, set('units'))}
@@ -275,7 +285,7 @@ export function ReportCalculator() {
           onClick={() => update((x) => ({ ...x, products: [...x.products, NO_PRODUCT] }))}>Add another product or service</button>
       </>}
       {simple && s.salesBy === 'typed' && <p class="mt-4 text-ink">Sales are typed by year in expert mode.</p>}
-      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <div class="mt-4 grid gap-4 @md:grid-cols-2">
         {simple ? <TextField id="fld-sellFrom" label="When will you start selling?" type="month" value={s.sellFrom ?? ''}
             hint={'The holiday before the first instalment runs until then, unless you type another.'}
             said={s.sellFrom?.trim() ? (parseMonth(s.sellFrom) ? monthText(parseMonth(s.sellFrom) as string) : 'Not understood. Type 2027-03 or Mar 2027.') : undefined}
@@ -289,7 +299,7 @@ export function ReportCalculator() {
       {!simple && <fieldset id="rep-heads" class="mt-6">
         <legend class="font-medium text-ink">Costs by head, if you have them</legend>
         <p class={`mt-1 ${HINT}`}>Each named in the profit and loss; a side with a head typed is added up from its heads.</p>
-        <div class="mt-2 grid gap-4 sm:grid-cols-2">
+        <div class="mt-2 grid gap-4 @md:grid-cols-2">
           {COST_HEADS.variable.map((h) => <Fragment key={h.id}>{percent(`fld-head-${h.id}`, `${h.label} (% of sales)`, s.heads?.variable?.[h.id] ?? '',
             (x, t) => ({ ...x, heads: { ...x.heads, variable: { ...x.heads?.variable, [h.id]: t } } }), '%', undefined, 'hint' in h ? h.hint : undefined)}</Fragment>)}
           {COST_HEADS.fixed.map((h) => <Fragment key={h.id}>{amount(`fld-head-${h.id}`, `${h.label} a month`, s.heads?.fixed?.[h.id] ?? '',
@@ -297,7 +307,7 @@ export function ReportCalculator() {
         </div>
       </fieldset>}
       {!simple && <>
-      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <div class="mt-4 grid gap-4 @md:grid-cols-2">
         {s.salesBy === 'drivers' ? <>
           <TextField id="fld-utilisation" label="Use of the capacity by year (%)" unit="%" byDefault={EMPTY.utilisation || undefined} hint={mark('fld-utilisation', 'One a year from the first sales, like 60, 70, 80; the last holds after.')} value={s.utilisation}
             onCommit={(utilisation) => update((x) => ({ ...x, utilisation }))} />
@@ -315,7 +325,7 @@ export function ReportCalculator() {
         {CGTMSE.groups.map((t, k) => <Fragment key={k}>{tick(`fld-concession-${k}`, t, !!s.concessions?.[k], (x, v) => ({ ...x, concessions: CGTMSE.groups.map((_, i) => (i === k ? v : !!x.concessions?.[i])) }))}</Fragment>)}
       </fieldset>}
       {s.scheme !== 'mudra' && s.cgtmse && hybridBack}
-      {g && <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      {g && <div class="mt-4 grid gap-4 @md:grid-cols-2">
         {percent('fld-feeRate', 'The guarantee fee, if the lender quotes another rate (% a year)', s.feeRate, (x, feeRate) => ({ ...x, feeRate }), '%', undefined,
           g === 'cgfmu' ? `Left empty, CGFMU's ${CGFMU.ratePct}% a year.` : 'Left empty, CGTMSE’s rate for the loans in all, less the concessions ticked.')}
       </div>}
@@ -325,7 +335,7 @@ export function ReportCalculator() {
       <Choice name="fld-wcBy" legend="The working-capital limit (cash credit)" options={WC_CHOICES} value={by} columns
         onChange={(wcBy) => update((x) => ({ ...x, wcBy }))} />
       {worked && <p data-testid="rep-worked" class="mt-2 text-ink">{worked}</p>}
-      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <div class="mt-4 grid gap-4 @md:grid-cols-2">
         {(simple ? by === 'typed' : by !== 'worked' && by !== 'none') && amount('fld-wcLimit', 'Working-capital limit you will ask for', s.wcLimit, (x, wcLimit) => ({ ...x, wcLimit }))}
         {!simple && <>
           {percent('fld-wcRate', 'Its interest rate (% a year)', s.wcRate, (x, wcRate) => ({ ...x, wcRate }), '%')}
@@ -341,15 +351,16 @@ export function ReportCalculator() {
       </div>}
     </Section>
     <Facts s={s} update={update}>
-      {typed && <p data-testid="rep-arrived" class="mt-8 text-ink lg:hidden"><a href="#report" class="text-link underline underline-offset-4">The project report below</a> {arrived(p)}</p>}
+      {typed && !f.fold && <p data-testid="rep-arrived" class="mt-8 text-ink lg:hidden"><a href="#report" class="text-link underline underline-offset-4">The project report below</a> {arrived(p)}</p>}
     </Facts>
-    </div>
+    <SeeAnswer pre="rep" onSee={ready && !f.fold ? f.see : undefined} />
+  </div>;
+  return <div class={foldGrid(f, 'lg:grid lg:grid-cols-tool-grid lg:gap-x-10')}>
+    <AnswersColumn f={f} pre="rep" groups={() => checkOf(s, p).map((g) => ({ title: g.title, rows: g.lines.map((l) => [l.label, l.value] as [string, string]) }))}
+      rows={2} unfolded={<><HomeCaseNote on={home} />{door}</>}>{door}</AnswersColumn>
     <Result s={s} p={p} update={update} use={use} used={used} undo={undo} keep={() => setUsed([])} toCollateral={toCollateral} toBox={toBox} ok={ok}
-      reset={typed
-        ? <button type="button" data-testid="rep-clear" class={BUTTON} onClick={clear}>Clear all</button>
-        : cleared && <p role="status" class="flex items-center gap-2 text-sm text-ink">Cleared.
-          <button type="button" data-testid="rep-clear-undo" class={BUTTON} onClick={unclear}>Undo</button></p>} />
-    <div class="lg:col-span-2 lg:row-start-2">
+      reset={f.fold ? undefined : reset} fold={f.fold} />
+    <div class={f.fold ? 'lg:col-start-2 lg:row-start-2' : 'lg:col-span-2 lg:row-start-2'}>
     {p.view && !p.blocked && <CheckStep pre="rep" groups={checkOf(s, p)} to="benchmarks" state={ok ? 'done' : checked ? 'lapsed' : 'open'}
       benchmarks={(p.checks ?? []).map((c) => ({ label: c.label, value: c.byDefault === undefined ? c.level : `${c.level}, yours (default ${c.byDefault}${c.looser ? ', looser than a bank may accept' : ''})` }))}
       confirm={seen ? 'These are right' : 'These are right: show the report'} onConfirm={confirm} />}
@@ -548,17 +559,18 @@ function Viable({ s, p, update, use, toCollateral }: { s: ReportState; p: Report
   </div>;
 }
 
-function Result({ s, p, update, use, used, undo, keep, toCollateral, toBox, reset, ok }: {
+function Result({ s, p, update, use, used, undo, keep, toCollateral, toBox, reset, ok, fold }: {
   s: ReportState; p: ReportPreview; update: Update; use: (l: Levers) => void; used: PlanChange[]; undo: () => void; keep: () => void;
-  toCollateral: (e: Event) => void; toBox: (need: string) => (e: Event) => void; reset: ComponentChildren; ok: boolean;
+  toCollateral: (e: Event) => void; toBox: (need: string) => (e: Event) => void; reset: ComponentChildren; ok: boolean; fold: boolean;
 }) {
   const v = p.view, verdict = verdictOf(p), own = v && !p.blocked && !p.needs.length ? docNeeds(s.doc, s.words) : [];
   const result = p.blocked ? 'blocked' : p.needs.length || p.short ? 'provisional' : 'ready';
   // Before the figures, the report's outline: its key figures with "—" for each not yet known, never 0 (UX8, review finding 2).
   const first = p.needs.map(boxOf).find(Boolean)?.[1];
   const key = v?.key ?? [{ label: 'Cost of the project' }, { label: 'Average DSCR', check: 'dscrAverage' }, { label: 'Lowest DSCR', check: 'dscrLowest' }];
-  return <div class="lg:col-start-2 lg:row-start-1"><section id="report" aria-labelledby="report-h" class="answer-panel mt-10 lg:mt-4">
-    <h2 id="report-h" class="sr-only">The project report</h2>
+  // Folded (OR9), the answer takes the centre column and scrolls with the page.
+  return <div class="lg:col-start-2 lg:row-start-1"><section id="report" aria-labelledby="report-h" class={fold ? 'mt-4' : 'answer-panel mt-10 lg:mt-4'}>
+    <h2 id="report-h" tabIndex={-1} class="sr-only">The project report</h2>
     {reset && <div class="mb-3 flex flex-wrap items-center justify-end gap-2">{reset}</div>}
     {used.length > 0 && <div data-testid="rep-used" role="status" class="mb-3 rounded-control border-l-4 border-ink bg-surface p-3">
       <p class="font-medium text-ink">The plan is used: these figures changed.</p>
@@ -610,7 +622,7 @@ function Facts({ s, update, children }: { s: ReportState; update: Update; childr
   const field = (id: keyof ReportFacts, label: string, hint?: string) =>
     <TextField id={`fld-rep-${id}`} label={label} hint={hint} value={f[id]} said={english(f[id])} invalid={!!english(f[id])} onCommit={(t) => set({ [id]: t })} />;
   return <Section id="facts" title="For the report’s first page">
-    <div class="mt-4 grid gap-4 sm:grid-cols-2">
+    <div class="mt-4 grid gap-4 @md:grid-cols-2">
       {field('name', 'Business’s name')}
       {field('activity', 'What the business does', 'Like “Manufacture of corrugated boxes”.')}
       {field('address', 'Business’s address')}
