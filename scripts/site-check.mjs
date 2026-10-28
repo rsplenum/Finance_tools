@@ -396,12 +396,13 @@ if (touched('/dscr/')) {
   await page.check('#fld-borrowerType-company');
   await expectText(page, v, 'tax-by', 'Worked out each year for a company: 25.168%.', "the company's tax");
   if (await page.locator('#fld-taxPct-2026-27').count()) v('a tax rate is still asked after saying who the borrower is');
-  // Clear all asks first, then takes the page back to where it opened: the assumptions, and nothing typed.
-  await page.getByTestId('clear-all').click();
-  await page.getByTestId('clear-yes').click();
+  // Clear all in one tap takes the page back to where it opened, the assumptions and nothing typed, with an undo (UXR5b, S16).
+  await page.getByTestId('dscr-clear').click();
   await expectValue(page, v, '#fld-loanAmount', '', 'Clear all empties the loan');
   if (!(await page.isChecked('#fld-source-plan'))) v('Clear all did not go back to the assumptions');
   await expectValue(page, v, '#fld-targetAverage', '1.50', 'Clear all restores the assumed target');
+  await page.getByTestId('dscr-clear-undo').click();
+  if (!(await page.isChecked('#fld-borrowerType-company'))) v('Undo did not bring back what Clear all took (S16)');
   await ctx.close();
 }
 
@@ -670,7 +671,10 @@ if (touched('/dscr/')) {
   if (await page.locator('#more-options').evaluate((d) => d.open)) v('More options is open on load');
   const texts = await page.locator('#front-door input[type="text"]').count(), radios = await page.locator('#front-door fieldset').count();
   if (texts + radios !== 8) v(`the front door asks ${texts + radios} fields (${texts} typed, ${radios} choices); the owner's list is 8`);
-  await expectText(page, v, 'fd-loan-note', 'The loan is taken as drawn in October 2026 and repaid by EMI every month, with no holiday before the first instalment. Change it under More options.', 'the front door');
+  await expectText(page, v, 'fd-loan-note', 'The loan is taken as drawn in October 2026 and repaid by EMI every month, with no holiday before the first instalment.', 'the front door');
+  // S8 (UXR5b): the line to year-by-year projections stands under the last default field, not above the first.
+  if (!(await page.evaluate(() => { const m = document.querySelector('[data-testid="fd-more"]'), f = [...document.querySelectorAll('#front-door input')].at(-1);
+    return !!m && !!f && !!(f.compareDocumentPosition(m) & Node.DOCUMENT_POSITION_FOLLOWING); }))) v('S8: the line to More options is not under the last default field');
   await page.check('#fld-fd-borrower-firm');
   await leave(page, '#fld-fd-profit', '5 L');
   await leave(page, '#fld-fd-growth', '10');
@@ -1159,9 +1163,10 @@ if (touched('/estimate/')) {
 // OR6 (D-UX-203), with what the product line is sold by, a pick counted as a field; 28 from OR7 (D-UX-206), what backs it
 // gaining a fourth radio, property for part and CGTMSE for the rest (a choice, not a question); 33 from D-UX-216, the report's
 // first page (the business's name, what it does, its address, the lender, who prepared it) among the questions, before the
-// check, out of the download. Expert mode asks every figure (61 with one product line, the stepped way among the four ways to repay).
-const REP_DEFAULT = 33;
-const REP_FIELDS = 'main input:not(#download input):not(#benchmarks input), main select:not(#download select):not(#benchmarks select)';
+// check, out of the download; 31 from UXR5b (S12, D-UX-240), the mode's two radios moving under More options. Expert mode asks
+// every figure (61 with one product line, the stepped way among the four ways to repay).
+const REP_DEFAULT = 31;
+const REP_FIELDS = 'main input:not(#download input):not(#benchmarks input):not(#more-options input), main select:not(#download select):not(#benchmarks select):not(#more-options select)';
 // Check and confirm (OR8, D-UX-208): the report's tables and downloads wait for it; a change since asks again, so a flow
 // confirms before it reads them (already confirmed, it goes on).
 const confirmReport = async (page, v, why) => {
@@ -1175,8 +1180,9 @@ if (touched('/project-report/')) {
   if (!(await page.isChecked('#fld-mode-simple'))) v('the project report opens in expert mode');
   const fields = await page.locator(REP_FIELDS).count();
   if (fields !== REP_DEFAULT) v(`the project report asks ${fields} fields by default; it was ${REP_DEFAULT} (D-UX-49, D-UX-112)`);
+  if (!(await page.locator('#more-options #fld-mode-simple').count())) v('S12: the choice of how much to ask is not under More options');
   await page.check('#fld-borrower-firm');
-  await page.check('#fld-mode-expert');
+  await openMore(page); await page.check('#fld-mode-expert');
   await page.check('#fld-salesBy-typed');
   for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-furniture', '2 L'], ['#fld-cost-preliminary', '1 L'],
     ['#fld-tl-amount', '25 L'], ['#fld-tl-rate', '10'], ['#fld-tl-disbursed', '2026-04'], ['#fld-tl-moratorium', '0'], ['#fld-tl-instalments', '60'], ['#fld-monthsToStart', '0'],
@@ -1277,6 +1283,7 @@ if (touched('/project-report/')) {
   await leave(page, '#fld-rep-address', 'Plot 4, Example MIDC, Pune');
   await expectText(page, v, 'rep-doc-status', 'All answered', 'the report with its facts');
   const save = saver(page, v);
+  if (await page.getByTestId('rep-print').count() !== 1) v('UXR5 (P10): the report has no Print beside its downloads');
   const pdf = await save('rep-download-pdf');
   if (pdf.name !== 'Project report - Asha Packaging.pdf') v(`the report PDF is named "${pdf.name}"`);
   const pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
@@ -1343,7 +1350,7 @@ if (touched('/project-report/')) {
 // report-check.ts's own route) goes lowest in 2030-31, 49,07,813 short.
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'dark' });
-  await page.check('#fld-mode-expert');
+  await openMore(page); await page.check('#fld-mode-expert');
   await page.check('#fld-borrower-firm');
   await page.check('#fld-scheme-pmegp');
   for (const id of ['#fld-category-general', '#fld-area-rural', '#fld-activity-manufacturing', '#fld-tl-repayment-monthly', '#fld-pmegp-confirmed']) await page.check(id);
@@ -1395,7 +1402,7 @@ if (touched('/project-report/')) {
 // and 1,75,00,000, asks once for the promoters' 75 lakh more, and works; the repayment slider shortens to 12 instalments.
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/');
-  await page.check('#fld-mode-expert');
+  await openMore(page); await page.check('#fld-mode-expert');
   for (const id of ['#fld-borrower-proprietor', '#fld-tl-repayment-emi']) await page.check(id);
   for (const [id, value] of [['#fld-cost-building', '50 L'], ['#fld-cost-machinery', '2.5 Cr'], ['#fld-tl-amount', '2.5 Cr'], ['#fld-tl-rate', '9.3'],
     ['#fld-tl-disbursed', '2026-10'], ['#fld-tl-moratorium', '1'], ['#fld-tl-instalments', '180'], ['#fld-product-0-name', 'Widgets'], ['#fld-product-0-units', '10,000'],
@@ -1419,6 +1426,7 @@ if (touched('/project-report/')) {
 // for 15 L is 0.55%: 6,600 on the term loan and 1,650 on the limit, 8,250.
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
+  await openMore(page);
   for (const id of ['#fld-mode-expert', '#fld-borrower-firm', '#fld-scheme-mudra', '#fld-tl-repayment-monthly']) await page.check(id);
   for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-furniture', '2 L'], ['#fld-cost-preliminary', '1 L'],
     ['#fld-tl-amount', '12 L'], ['#fld-tl-rate', '10'], ['#fld-tl-disbursed', '2026-04'], ['#fld-tl-moratorium', '0'], ['#fld-tl-instalments', '60'],
@@ -1481,11 +1489,11 @@ if (touched('/project-report/')) {
   await layout(page, v, 'the report in simple mode, 390 px');
   await page.getByTestId('rep-way-use-stepped').click();
   if (!/In use/.test(await page.getByTestId('rep-way-stepped').textContent())) v('"Use this" did not take the stepped way');
-  await page.check('#fld-mode-expert');
+  await openMore(page); await page.check('#fld-mode-expert');
   if (!(await page.isChecked('#fld-tl-repayment-stepped'))) v('expert mode after simple does not show the stepped way taken');
   const got = await Promise.all(['#fld-tl-moratorium', '#fld-tl-instalments', '#fld-monthsToStart', '#fld-fixed'].map((id) => page.inputValue(id)));
   if (got.join('|') !== '3|48|3|12,00,000') v(`expert mode after simple reads ${got.join('|')}, want 3|48|3|12,00,000`);
-  await page.check('#fld-mode-simple');
+  await openMore(page); await page.check('#fld-mode-simple');
   if (await page.getByTestId('rep-changed').count()) v('back in simple mode, values are listed as changed that were not');
   await ctx.close();
 }
@@ -1592,6 +1600,9 @@ if (touched('/cma/')) {
   if (book.map((x) => x.sheet).join('|') !== 'Summary|Forms II and III|Forms IV to VI|Ratios|Check') v(`the CMA Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))}`);
   const formulas = ((await zipPart(xlsx, 'xl/worksheets/sheet5.xml')) ?? '').match(/<f>/g)?.length ?? 0;
   if (formulas !== 52) v(`the CMA Excel copy's Check sheet holds ${formulas} formulas, want 52`);
+  // The Word copy, as on the other tools (UXR5b, P10).
+  const word = await docxLines((await save('cma-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
+  if (word.messages.length || !word.lines.some((l) => l.includes('1,04,00,000'))) v(`the CMA Word copy reads back ${JSON.stringify(word.lines.slice(0, 4))} ${JSON.stringify(word.messages).slice(0, 120)}`);
   await ctx.close();
 }
 
@@ -1763,7 +1774,7 @@ const filledCount = (page) => page.evaluate(() => [...document.querySelectorAll(
 const DRAFT_KEY = /^draft:(dscr|cma|report|plan|quote):v1$/;
 const stored = (page) => page.evaluate(() => ({ s: Object.keys(sessionStorage).map((k) => [k, sessionStorage.getItem(k) ?? '']), l: Object.keys(localStorage) }));
 const KEPT = [
-  { path: '/dscr/', key: 'dscr', clear: ['clear-all', 'clear-yes'] },
+  { path: '/dscr/', key: 'dscr', clear: ['dscr-clear'] },
   { path: '/cma/', key: 'cma', clear: ['cma-clear'] },
   { path: '/project-report/', key: 'report', clear: ['rep-clear'] },
   { path: '/estimate/', key: 'plan', fill: async (page) => { await page.check('#fld-work-renovate'); await page.check('#fld-home-flat'); await page.selectOption('#fld-city', 'pune'); } },
@@ -1803,6 +1814,39 @@ for (const t of KEPT.filter((t) => touched(t.path))) {
     if (after !== blank) v(`UXR2: after Clear all and a reload ${after} fields are filled, not ${blank}`);
     if ((await stored(page)).s.some(([k]) => k === `draft:${t.key}:v1`)) v(`UXR2: Clear all left draft:${t.key}:v1 behind`);
   }
+  await ctx.close();
+}
+
+// UXR5's "Done when" (UXR5b, the UXR1 report): on all four tools nothing stands before the first question but the intro and
+// the start line (S16, P11, P12); one closed More options (S19); the worked example fills and says it is fictional; Clear all
+// takes it in one tap, with an undo; and the same four downloads (P10). The report's downloads wait for its check (OR8).
+const SAME = [['/dscr/', 'dscr', ''], ['/cma/', 'cma', 'cma-'], ['/project-report/', 'rep', 'rep-'], ['/estimate/', 'pl', 'pl-']];
+for (const [path, pre, dl] of SAME.filter(([p]) => touched(p))) for (const width of [390, 1280]) {
+  const { ctx, page, v } = await open(path);
+  if (width !== 390) await page.setViewportSize({ width, height: 900 });
+  const before = await page.evaluate((pre) => {
+    const tool = document.querySelector('main [data-tool]'), q = [...tool.querySelectorAll('fieldset, label, input, select')].find((e) => e.checkVisibility());
+    const sec = q?.closest('section'), out = [];
+    for (const el of tool.querySelectorAll('p, h2, h3, button, a, summary, ul')) {
+      if (!q || q.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) break;
+      if (el.contains(q) || !el.checkVisibility() || el.closest(`[data-testid="${pre}-start"]`) || el.matches('[data-testid="tool-kind"], [data-testid="kept-line"], h1 + p')) continue;
+      if (sec?.contains(el) && el.matches('h2, h3')) continue;
+      out.push(`${el.tagName.toLowerCase()} "${el.textContent.trim().slice(0, 40)}"`);
+    }
+    return q ? out : ['no question'];
+  }, pre);
+  if (before.length) v(`UXR5 at ${width} px: before the first question stands ${before.join(' | ')}`);
+  const more = await page.evaluate(() => [...document.querySelectorAll('main details')].filter((d) => /^More options/.test(d.querySelector(':scope > summary')?.textContent.trim() ?? '')).map((d) => d.open));
+  if (more.length !== 1 || more[0]) v(`UXR5 (S19): ${more.length} More options, ${more.filter(Boolean).length} open on load; one, closed, is meant`);
+  await page.getByTestId(`${pre}-example`).click();
+  if (!(await page.getByTestId('example-case').isVisible())) v('UXR5 (P11): the worked example fills without saying it is fictional');
+  if (pre !== 'rep') for (const id of [`${dl}download-pdf`, `${dl}download-xlsx`, `${dl}download-docx`, `${dl}print`]) {
+    if (await page.getByTestId(id).count() !== 1) v(`UXR5 (P10): no ${id} once the worked example is in`);
+  }
+  if (!(await page.getByTestId(`${pre}-clear`).isVisible())) await page.getByTestId(width < 1024 ? `${pre}-edit` : `${pre}-rail-change`).click({ timeout: 3000 }).catch(() => {});
+  await page.getByTestId(`${pre}-clear`).click({ timeout: 3000 }).catch(() => v(`UXR5 (S16): no ${pre}-clear to tap`));
+  await page.getByTestId(`${pre}-clear-undo`).click({ timeout: 3000 }).catch(() => v(`UXR5 (S16): Clear all gave no undo`));
+  if (!(await page.getByTestId('example-case').isVisible())) v('UXR5 (S16): Undo did not bring back the worked example');
   await ctx.close();
 }
 

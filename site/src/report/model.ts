@@ -25,7 +25,7 @@ import {
 
 export type Repayment = 'emi' | 'monthly' | 'stepped' | 'quarterly';
 export type Scheme = '' | 'pmegp' | 'mudra';
-/** Simple mode (where the page opens, D-UX-112) asks a dozen plain questions and assumes the rest, listed; expert mode
+/** Simple mode (where the page opens, D-UX-112) asks plain questions and assumes the rest, listed; expert mode
  * asks every field. A state without a mode is expert's. */
 export type Mode = 'simple' | 'expert';
 /** The working-capital limit: worked out by the engine, the borrower's own, or none (D-UX-112). */
@@ -195,7 +195,7 @@ export function needsWords(s: ReportState, needs: string[]): string[] {
 }
 
 export const MODE_CHOICES: { value: Mode; label: string; hint: string }[] = [
-  { value: 'simple', label: 'Simple', hint: 'About a dozen questions; the rest assumed and listed' }, { value: 'expert', label: 'Expert', hint: 'Every figure, and costs by head' }];
+  { value: 'simple', label: 'Simple', hint: 'The questions above; the rest assumed and listed' }, { value: 'expert', label: 'Expert', hint: 'Every figure, and the costs by head, asked among them' }];
 export const WC_CHOICES: { value: WcBy; label: string }[] = [{ value: 'worked', label: 'Work it out for me' }, { value: 'typed', label: 'I will type my own' }, { value: 'none', label: 'None needed' }];
 export const SECURITY_CHOICES: { value: Security; label: string; hint?: string }[] = [
   { value: 'property', label: 'Property', hint: 'Its market value counts in the security cover' },

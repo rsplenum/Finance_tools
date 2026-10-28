@@ -2,18 +2,20 @@
  * CMA data (C1): the borrower's figures typed in, heads down and years across (three audited years, the estimate for the
  * year now running and the projection for the next), and the working-capital limit now. Then Forms I to VI and the
  * ratios as the engine works them out, provisional while anything is missing; what it assumes; and the downloads.
- * Or the audited years read from the statement's PDF, each figure ticked by the borrower (Read.tsx, D-UX-48).
+ * Or the audited years read from the statement's PDF, each figure ticked by the borrower (Read.tsx, D-UX-48), below the
+ * years and reached from one link under the lead (UXR1's S9).
  * Whether the limit is fresh or a renewal sets a lender's levels, read as bars with "Make it viable" (Levels.tsx, MV4).
  * Promoters' loans as the owners' funds and the collateral sit under one closed "More options". Figures: engine/cma.ts and
  * engine/cma-plan.ts only, via model.ts and levers.ts.
  */
+import type { ComponentChildren } from 'preact';
 import { useMemo, useState } from 'preact/hooks';
-import { AnswerBar, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote, useHomeCase, HomeCaseNote, useKept, reach } from '../fields';
+import { AnswerBar, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote, useHomeCase, useKept, reach, useStart, StartLine, StartNotes, MoreOptions, LINK_BUTTON, goTo } from '../fields';
+import { Downloads } from '../Downloads';
 import { AnswersColumn, foldGrid, SeeAnswer, useFold, type AnswerGroup } from '../Fold';
 import { CMA_HOME } from './home-case';
 import { printable } from '../doc/pdf';
 import { inr } from '../../../engine/util';
-import { isoDate, save, type FileKind } from '../download';
 import { cmaDoc, docNeeds, docStatus, fileName } from './document';
 import { ReadStatement } from './Read';
 import { Levels } from './Levels';
@@ -34,31 +36,20 @@ export function CmaCalculator() {
   const [s, setS] = useState<CmaState>(blank);
   const home = useHomeCase(setS, () => CMA_HOME);
   useKept('cma', s, setS, blank());
-  // Clear all on a 131-field page, with an undo until the next figure is typed (review finding 7).
-  const [cleared, setCleared] = useState<CmaState>();
-  const typed = JSON.stringify(s) !== JSON.stringify(blank());
   const update: Update = (f) => setS(f);
   const p = useMemo(() => preview(s), [s]);
-  const cols = columnsOf(s.startYear);
   // "Use this plan" (MV4): the fields it wrote, each marked with what it was, until undone or kept.
   const [used, setUsed] = useState<CmaChange[]>([]);
   const use = (l: CmaLevers) => { const a = applyCmaPlan(s, l); setS(a.s); setUsed(a.changes); };
   const undo = () => { setS((x) => undoCmaPlan(x, used)); setUsed([]); };
+  // Clear all on a 131-field page, with an undo until the next figure is typed (review finding 7).
+  const c = useStart('cma', s, setS, blank, () => exampleState(s), () => setUsed([]));
   const was = (field: string) => { const c = used.find((u) => u.field === field); return c ? `Changed by the plan; it was ${c.was || 'empty'}.` : undefined; };
   // The answer beside the questions from 1024 px (UX8, D-UX-106); the forms, what is assumed and the downloads under both.
   // Folded on "See the answer" (UXR5, LOOP1d): the answers to a rail beside the result, or a sheet on a phone.
   const ready = !!p.view && !p.blocked && !p.needs.length, f = useFold(ready, 'result-h');
+  // Nothing before the first question but the intro and the start line (UXR5): the years' line heads Form II.
   const top = <>
-    <p data-testid="cma-years" class={`mt-2 ${HINT}`}>
-      Years: {cols.map((c) => `${c.fy} (${KIND[c.kind]})`).join(', ')}. Type in rupees, or like 12 L or 1.2 Cr. Leave the oldest years empty if the business is younger.
-    </p>
-    <div class="mt-3 flex flex-wrap items-center gap-2">
-      <button type="button" data-testid="cma-example" class={BUTTON} onClick={() => update((x) => exampleState(x))}>Fill with the worked example</button>
-      {typed && <button type="button" data-testid="cma-clear" class={BUTTON} onClick={() => { setCleared(s); setS(blank()); setUsed([]); }}>Clear all</button>}
-      {cleared && !typed && <p role="status" class="flex items-center gap-2 text-sm text-ink">Cleared.
-        <button type="button" data-testid="cma-clear-undo" class={BUTTON} onClick={() => { setS(cleared); setCleared(undefined); }}>Undo</button></p>}
-    </div>
-    <ReadStatement s={s} update={update} />
     <Section id="limit" title="The limit you have today">
       <div class="mt-4 max-w-sm">
         <TextField id="fld-cma-existing" label="Limit you have today, from all banks (0 if none)" hint="The working-capital limit already sanctioned; the limit your figures support is worked out below." unit="Rs." inputMode="decimal" value={s.existingLimit}
@@ -73,9 +64,8 @@ export function CmaCalculator() {
   const figures = <div id="cma-figures" class="@container">
     <Grid form="II" title="Profit and loss (Form II)" s={s} update={update} was={was} />
     <Grid form="III" title="Balance sheet (Form III)" s={s} update={update} was={was} />
-    <details id="more-options" class="mt-12">
-      <summary class="flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link">More options: promoters’ loans, collateral</summary>
-      <div class="pt-4 pb-4">
+    <MoreOptions what="promoters’ loans, collateral">
+      <div class="pt-2">
         <label class="flex items-start gap-2 text-ink">
           <input id="fld-cma-quasi" type="checkbox" class="mt-1" checked={s.quasi} onChange={(e) => { const quasi = (e.currentTarget as HTMLInputElement).checked; update((x) => ({ ...x, quasi })); }} />
           <span>Count unsecured loans from promoters as the owners’ funds<span class={`block text-sm ${MUTED}`}>{was('fld-cma-quasi') ?? 'Only when they stay in the business till the bank’s loan is repaid.'}</span></span>
@@ -86,12 +76,14 @@ export function CmaCalculator() {
             onCommit={(collateral) => update((x) => ({ ...x, collateral }))} />
         </div>
       </div>
-    </details>
+    </MoreOptions>
     <SeeAnswer pre="cma" onSee={ready && !f.fold ? f.see : undefined} />
+    <ReadStatement s={s} update={update} />
   </div>;
   return <div class={foldGrid(f, 'lg:grid lg:grid-cols-tool-grid lg:gap-x-10')}>
-    <AnswersColumn f={f} pre="cma" groups={() => railOf(s)} rows={2} unfolded={<><HomeCaseNote on={home} />{top}</>}>{top}{figures}</AnswersColumn>
-    <Result s={s} p={p} update={update} use={use} used={used} undo={undo} keep={() => setUsed([])} fold={f.fold} />
+    <AnswersColumn f={f} pre="cma" groups={() => railOf(s)} rows={2} unfolded={top} start={<StartLine c={c} home={home} fold={f.fold}>
+      <a href="#read" data-testid="cma-to-read" class={LINK_BUTTON} onClick={goTo('read')}>Read your audited statement</a></StartLine>}>{top}{figures}</AnswersColumn>
+    <Result s={s} p={p} update={update} use={use} used={used} undo={undo} keep={() => setUsed([])} fold={f.fold} note={f.fold && <StartNotes c={c} home={home} />} />
     {f.fold ? null : <div class="lg:col-span-2 lg:row-start-2">{figures}</div>}
     <div class={f.fold ? 'lg:col-start-2 lg:row-start-2' : 'lg:col-span-2 lg:row-start-3'}>
     {p.view && <Forms p={p} />}
@@ -154,6 +146,9 @@ function Grid({ form, title, s, update, was }: { form: 'II' | 'III'; title: stri
   // 1024 px each card carries its own head.
   const head = (c: (typeof cols)[number]) => <><span aria-hidden="true" class={`absolute inset-x-0 top-0 border-t-2 ${SURE[c.kind]}`} />{c.fy}</>;
   return <Section id={`form-${form}`} title={title}>
+    {form === 'II' && <p data-testid="cma-years" class={`mt-2 ${HINT}`}>
+      Years: {cols.map((c) => `${c.fy} (${KIND[c.kind]})`).join(', ')}. Type in rupees, or like 12 L or 1.2 Cr. Leave the oldest years empty if the business is younger.
+    </p>}
     <div aria-hidden="true" data-years-strip data-testid={`cma-years-${form}`} class="sticky top-18 z-10 mt-3 hidden bg-canvas text-sm @min-[52rem]:grid @min-[52rem]:grid-cols-years @min-[52rem]:gap-x-3">
       <p class="flex items-end border-b border-line py-2 pr-3 font-medium text-ink-muted">Rs.</p>
       {cols.map((c) => <p key={c.id} class="relative flex flex-col items-end justify-end border-b border-line pt-2 pb-2 font-medium whitespace-nowrap text-ink-muted">
@@ -220,11 +215,11 @@ function FormTable({ t }: { t: ViewTable }) {
  * needed, opening to the list; the limit, the limit now and the current ratio with "—" until known, never 0 (review
  * finding 2); then the plan used and the lender's levels.
  */
-function Result({ s, p, update, use, used, undo, keep, fold }: { s: CmaState; p: CmaPreview; update: Update; use: (l: CmaLevers) => void; used: CmaChange[]; undo: () => void; keep: () => void; fold: boolean }) {
+function Result({ s, p, update, use, used, undo, keep, fold, note }: { s: CmaState; p: CmaPreview; update: Update; use: (l: CmaLevers) => void; used: CmaChange[]; undo: () => void; keep: () => void; fold: boolean; note: ComponentChildren }) {
   const v = p.view, last = columnsOf(s.startYear).at(-1)?.fy ?? '';
   const outline = [`Limit by the turnover method, ${last}`, 'Limit you have today', `Current ratio, ${last}`];
   const now = amountOf(s.existingLimit);
-  return <div class="lg:col-start-2 lg:row-start-1"><section id="result" aria-labelledby="result-h" class={fold ? 'mt-4' : 'answer-panel mt-10 lg:mt-4'}>
+  return <div class="lg:col-start-2 lg:row-start-1">{note}<section id="result" aria-labelledby="result-h" class={fold ? 'mt-4' : 'answer-panel mt-10 lg:mt-4'}>
     <h2 id="result-h" tabIndex={-1} class="sr-only">The CMA data</h2>
     <div class="paper shadow-paper rounded-card p-4 sm:p-6">
       <Counter id="cma-status" result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} text={statusText(p)} rule answer plain={!!levelsOf(s)?.checks}
@@ -234,7 +229,8 @@ function Result({ s, p, update, use, used, undo, keep, fold }: { s: CmaState; p:
       </Counter>
       {p.blocked && <p class="mt-2 text-sm text-bad">{p.blocked}</p>}
       <dl class="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-        {(v?.key ?? outline.map((label) => ({ label, value: undefined, note: undefined }))).map((k, i) => <div key={k.label}>
+        {/* Folded, from 1024 px the rail beside gives today's limit: it is not said twice (D-UX-237). */}
+        {(v?.key ?? outline.map((label) => ({ label, value: undefined, note: undefined }))).map((k, i) => <div key={k.label} class={fold && i === 1 ? 'lg:hidden' : undefined}>
           <dt class={`text-sm ${MUTED}`}>{k.label}</dt>
           <dd data-testid={`cma-key-${i}`} class="figure text-2xl text-ink">{k.value ?? (i === 1 && now !== undefined ? `Rs. ${s.existingLimit}`
             : <Dash what={k.label} to={i === 1 ? 'fld-cma-existing' : 'cma-figures'} />)}</dd>
@@ -271,17 +267,13 @@ function Download({ s, p, update }: { s: CmaState; p: CmaPreview; update: Update
   const f = s.doc, set = (patch: Partial<CmaFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
   const english = (t: string) => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
   const own = docNeeds(f), ready = !!p.view && !p.blocked;
-  const go = (kind: FileKind) => {
-    const now = new Date();
-    save(cmaDoc(s, p, isoDate(now)), kind, fileName(s, p, kind), now);
-  };
   const field = (id: keyof CmaFacts, label: string, hint?: string) =>
     <TextField id={`fld-cma-${id}`} label={label} hint={hint} value={f[id] ?? ''} said={english(f[id] ?? '')} invalid={!!english(f[id] ?? '')} onCommit={(t) => set({ [id]: t })} />;
   // Before the forms show figures the section is one line (UX8, review finding 9).
   if (!ready) return <Folded id="download" title="Download the CMA data"><span data-testid="cma-doc-wait">{p.blocked
-    ? 'No document while the two computations disagree.' : 'A PDF and an Excel copy, once the forms show figures.'}</span></Folded>;
+    ? 'No document while the two computations disagree.' : 'A PDF, an Excel copy and a Word copy, once the forms show figures.'}</span></Folded>;
   return <Section id="download" title="Download the CMA data">
-    <p class={`mt-2 ${HINT}`}>A PDF for the lender and an Excel copy whose Check sheet redoes the main figures by formulas, made in your browser.</p>
+    <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy whose Check sheet redoes the figures, and a Word copy to edit, made in your browser.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       {field('name', 'Business’s name')}
       {field('lender', 'Lender', 'The bank or finance company, and the branch, if known.')}
@@ -291,10 +283,7 @@ function Download({ s, p, update }: { s: CmaState; p: CmaPreview; update: Update
       ? <div class="mt-5">
         <p data-testid="cma-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{docStatus(s, p)}</p>
         {own.length > 0 && <ul data-testid="cma-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
-        <div class="mt-3 flex flex-wrap gap-2">
-          <button type="button" data-testid="cma-download-pdf" class={FILLED} onClick={() => go('pdf')}>Download PDF</button>
-          <button type="button" data-testid="cma-download-xlsx" class={BUTTON} onClick={() => go('xlsx')}>Download Excel</button>
-        </div>
+        <Downloads pre="cma" doc={(today) => cmaDoc(s, p, today)} name={(kind) => fileName(s, p, kind)} />
         <InAppNote id="cma-in-app" />
       </div>
       : null}

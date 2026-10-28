@@ -7,7 +7,7 @@
 import { useMemo, useState } from 'preact/hooks';
 import { answerRule, BUTTON, Choice, FILLED, goTo, HINT, Section, SelectField, STATE, TextField, Tick, InAppNote, useKept } from '../fields';
 import { printable } from '../doc/pdf';
-import { isoDate, save, type FileKind } from '../download';
+import { Downloads } from '../Downloads';
 import { docNeeds, docStatus, estimateDoc, fileName } from './document';
 import {
   EMPTY, FAMILY_CHOICES, KIND_CHOICES, QUOTE_GST, QUOTE_RULE, QUOTE_WHY, UNIT_CHOICES, blankItem, fromBill, headsOf, plainOf, preview, quoteView, rateOf, statusText, tidyRate, withHead,
@@ -174,10 +174,6 @@ function Download({ s, p, update }: { s: EstimateState; p: EstimatePreview; upda
   const f = s.doc, set = (patch: Partial<EstimateFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
   const english = (t: string) => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
   const own = docNeeds(f), ready = !!p.view && !p.blocked;
-  const go = (kind: FileKind) => {
-    const now = new Date();
-    save(estimateDoc(s, p, isoDate(now)), kind, fileName(s, p, kind), now);
-  };
   const field = (id: keyof EstimateFacts, label: string, hint?: string) =>
     <TextField id={`fld-est-${id}`} label={label} hint={hint} value={f[id]} said={english(f[id])} invalid={!!english(f[id])} onCommit={(t) => set({ [id]: t })} />;
   return <Section id="download" title="Download the estimate">
@@ -192,11 +188,7 @@ function Download({ s, p, update }: { s: EstimateState; p: EstimatePreview; upda
       ? <div class="mt-5">
         <p data-testid="est-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{docStatus(s, p)}</p>
         {own.length > 0 && <ul data-testid="est-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
-        <div class="mt-3 flex w-fit flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
-          <button type="button" data-testid="est-download-pdf" class={FILLED} onClick={() => go('pdf')}>Download PDF</button>
-          <button type="button" data-testid="est-download-xlsx" class={BUTTON} onClick={() => go('xlsx')}>Download Excel</button>
-          <button type="button" data-testid="est-download-docx" class={BUTTON} onClick={() => go('docx')}>Download Word</button>
-        </div>
+        <Downloads pre="est" doc={(today) => estimateDoc(s, p, today)} name={(kind) => fileName(s, p, kind)} />
         <InAppNote id="est-in-app" />
       </div>
       : <p data-testid="est-doc-wait" class={`mt-4 ${HINT}`}>{p.blocked ? 'No document while the two computations disagree.' : 'The document can be made once the estimate shows figures.'}</p>}

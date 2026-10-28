@@ -167,6 +167,7 @@ The test figures are model-worked until the owner confirms fictional cases A and
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 28-10-2026 | LOOP1d: the fold on the report, the CMA and the estimate, one shape for four | L, Extra | about 110 steps, one compaction; a Python replace of an empty string grew a file to 770k lines (assert a match first) |
 | 28-10-2026 | LOOP1c: the answers fold to a rail (a sheet on a phone); Make it work as one shared part | L, Extra | about 200 steps, one compaction; CI's headless shell needed three fixes to the sheet's Esc (a late close, then Esc before showModal) |
 | 27-10-2026 | LOOP1b: Make it work on the DSCR page (the slider moved stays, one follows; three plans with their cost; the rounds) | L, Extra | about 187 steps, two compactions; the non-monotone repayment cost a redo of the stop search |
 | 27-10-2026 | LOOP1: the DSCR page as rounds, a mock-up on fictional figures (the linked solver, D-UX-226) | L, Extra | 62 steps, one compaction; no build until the owner's word |

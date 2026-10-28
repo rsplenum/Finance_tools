@@ -10,6 +10,7 @@
  * to download: the document's own facts asked once, then a PDF, an Excel copy and a Word copy made in the browser (document.ts).
  * Figures: engine/dscr.ts only, via model.ts.
  */
+import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { AmountField } from '../AmountField';
 import { OPTIONS, PRESETS } from '../../../engine/dscr';
@@ -21,10 +22,11 @@ import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import DSCR_FILE from '../../../engine/data/dscr.json';
 import TAX_FILE from '../../../engine/data/tax.json';
-import { answerRule, AnswerBar, Why, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick, InAppNote, Verdict, useHomeCase, HomeCaseNote, useKept } from '../fields';
+import { answerRule, AnswerBar, Why, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick, InAppNote, Verdict, useHomeCase, useKept, useStart, StartLine, StartNotes, MoreOptions } from '../fields';
+import { Downloads } from '../Downloads';
 import { DSCR_HOME } from './home-case';
 import { printable } from '../doc/pdf';
-import { isoDate, openPdf, save as saveFile, type FileKind } from '../download';
+import { isoDate } from '../download';
 import { workWords } from '../verdict';
 import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
 import {
@@ -51,6 +53,7 @@ export function DscrCalculator() {
   const [s, setS] = useState<State>(start);
   const home = useHomeCase(setS, () => DSCR_HOME);
   useKept('dscr', s, setS, start());
+  const c = useStart('dscr', s, setS, start, () => DSCR_HOME);
   const [more, setMore] = useState(false);
   const update: Update = (f) => setS(f);
   const y = useMemo(() => yearsOf(s), [s]);
@@ -85,23 +88,18 @@ export function DscrCalculator() {
   // The answer beside the questions from 1024 px (UX8, D-UX-106): its panel spans the front door and More options, and
   // the working, year by year, runs under both. On a phone the column keeps the old order.
   const results = <>
-    <AnswerPanel s={s} p={p} update={update} see={see} back={back} trail={trail} fold={fold} onPlan={f.keep} />
+    <AnswerPanel s={s} p={p} update={update} see={see} back={back} trail={trail} fold={fold} onPlan={f.keep} note={fold && <StartNotes c={c} home={home} />} />
     {p.started && <Working s={s} p={p} openMore={openMore} fold={fold} />}
   </>;
   const door = <FrontDoor s={s} update={update} openMore={openMore} was={was} onSee={ready && !fold ? f.see : undefined} />;
   const bar = <AnswerBar to="preview" label="To the results" testid="answer-bar" text={barText(p)} />;
   // One tree folded or not, each part in its own place, so folding never remounts the answer (Make it work keeps its state).
   return <div class={foldGrid(f, 'lg:grid lg:grid-cols-tool lg:gap-x-12')}>
-    <AnswersColumn f={f} pre="dscr" groups={() => railOf(s)} rows={3} unfolded={<>
-      <HomeCaseNote on={home} />
-      <ClearAll shown={JSON.stringify(s) !== JSON.stringify(start())} onClear={() => setS(start())} />
-      {s.source === 'plan' && door}
-    </>}>{door}</AnswersColumn>
+    <AnswersColumn f={f} pre="dscr" groups={() => railOf(s)} rows={3} start={<StartLine c={c} home={home} fold={fold} />}
+      unfolded={s.source === 'plan' && door}>{door}</AnswersColumn>
     {/* On the front door the answer comes before More options (review finding 12); with year-by-year figures, after them. */}
     {s.source === 'plan' && results}
-    {fold ? null : <details id="more-options" open={more} onToggle={(e) => setMore((e.currentTarget as HTMLDetailsElement).open)} class="mt-12 lg:col-start-1 lg:row-start-2">
-      <summary class="flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link">More options: the method, the loan in full, year-by-year figures</summary>
-      <div class="pb-6">
+    {fold ? null : <MoreOptions what="the method, the loan in full, year-by-year figures" open={more} onToggle={setMore} class="mt-12 lg:col-start-1 lg:row-start-2">
         <Start s={s} update={update} />
         {p.started && <>
           {s.source === 'plan' ? <Loan s={s} update={update} y={y} p={p} was={was} /> : <YearsSection s={s} update={update} y={y} />}
@@ -109,8 +107,7 @@ export function DscrCalculator() {
           <TargetSection s={s} update={update} />
           {s.source === 'plan' && <LenderSection s={s} update={update} y={y} />}
         </>}
-      </div>
-    </details>}
+    </MoreOptions>}
     {s.source !== 'plan' && results}
     {p.started && <div class={fold ? 'lg:col-start-2 lg:row-start-3' : 'lg:col-span-2 lg:row-start-4'}><DownloadSection s={s} p={p} update={update} /></div>}
     {/* The answer's echo is text; only the arrow is a target, 44 px, so a field under the bar can still be tapped (WCAG 2.5.8; UX3). */}
@@ -144,8 +141,6 @@ function FrontDoor({ s, update, openMore, was, onSee }: { s: State; update: Upda
   const amountSaid = (t: string) => notUnderstood(t, amountOf, '5,00,000 or 5 L');
   const first = (key: string, t: string) => (x: State) => ({ ...x, cells: { ...x.cells, [key]: [t, ...(x.cells[key] ?? []).slice(1)] } });
   return <section id="front-door" aria-label="The loan and the business" class="mt-4 @container">
-    <p class={HINT}>Have year-by-year projections, a holiday before the first instalment, or a loan already drawn? <a href="#more-options" onClick={openMore}
-      class="text-link underline underline-offset-4">Use More options</a>.</p>
     <Choice name="fld-fd-borrower" legend="Who is the borrower?" columns value={s.borrower as string | undefined}
       options={BORROWER_CHOICES.map((b) => ({ value: b.id, label: b.label }))} onChange={(id) => update((x) => withBorrower(x, id))} />
     <div class="mt-4 grid gap-4 @md:grid-cols-2">
@@ -171,24 +166,12 @@ function FrontDoor({ s, update, openMore, was, onSee }: { s: State; update: Upda
         })} />
     </div>
     {s.door && s.loan.disbursed === s.door.month && <p data-testid="fd-loan-note" class={`mt-3 ${HINT}`}>
-      The loan is taken as drawn in {monthText(s.door.month)} and repaid by EMI every month, with no holiday before the first instalment. Change it under More options.</p>}
+      The loan is taken as drawn in {monthText(s.door.month)} and repaid by EMI every month, with no holiday before the first instalment.</p>}
+    {/* The way out for experts under the last question, by More options (UXR1's S8): nothing but the lead before the first. */}
+    <p data-testid="fd-more" class={`mt-3 ${HINT}`}>Have year-by-year projections, a holiday before the first instalment, or a loan already drawn? <a href="#more-options" onClick={openMore}
+      class="text-link underline underline-offset-4">Use More options</a>.</p>
     <SeeAnswer pre="dscr" onSee={onSee} />
   </section>;
-}
-
-/** Start again, asked twice so that one stray tap never wipes the figures. */
-function ClearAll({ shown, onClear }: { shown: boolean; onClear: () => void }) {
-  const [asking, setAsking] = useState(false);
-  if (!shown) return null;
-  return <div class="mt-4 flex flex-wrap items-center justify-end gap-2 text-sm">
-    {asking
-      ? <>
-        <span class="text-ink">Clear everything you typed?</span>
-        <button type="button" data-testid="clear-yes" class={BUTTON} onClick={() => { setAsking(false); onClear(); }}>Yes, clear</button>
-        <button type="button" data-testid="clear-no" class={BUTTON} onClick={() => setAsking(false)}>No</button>
-      </>
-      : <button type="button" data-testid="clear-all" class={BUTTON} onClick={() => setAsking(true)}>Clear all</button>}
-  </div>;
 }
 
 function Start({ s, update }: { s: State; update: Update }) {
@@ -472,15 +455,15 @@ function goOf(s: State, p: Preview) {
  * heading, one counter of what is still needed opening to its links, and the figures' outline with "—" for each one not
  * yet known, never 0 (review finding 2); then the plan used, why it misses and the largest loan or fewest instalments.
  */
-function AnswerPanel({ s, p, update, see, back, trail, fold, onPlan }: {
-  s: State; p: Preview; update: Update; see: (t: LinkTerms) => void; back: (t: LinkTerms) => void; trail: LinkTerms[]; fold: boolean; onPlan: () => void;
+function AnswerPanel({ s, p, update, see, back, trail, fold, onPlan, note }: {
+  s: State; p: Preview; update: Update; see: (t: LinkTerms) => void; back: (t: LinkTerms) => void; trail: LinkTerms[]; fold: boolean; onPlan: () => void; note: ComponentChildren;
 }) {
   const largest = p.largest?.amount, fewest = p.fewest?.instalments;
   const result = p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready';
   const dash = (what: string, from?: number, to?: number) => <Dash what={what} to={boxFor(s, p, from, to)} />;
   // The panel pins inside a column that spans the questions' rows, so it never runs over the working below.
   // Folded (OR9), the answer takes the centre column and scrolls with the page.
-  return <div class={fold ? 'lg:col-start-2 lg:row-start-1' : 'lg:col-start-2 lg:row-start-1 lg:row-end-3'}><section id="preview" tabIndex={-1} aria-labelledby="preview-h" class={fold ? 'mt-4 outline-none' : 'answer-panel mt-10 outline-none lg:mt-4'}>
+  return <div class={fold ? 'lg:col-start-2 lg:row-start-1' : 'lg:col-start-2 lg:row-start-1 lg:row-end-3'}>{note}<section id="preview" tabIndex={-1} aria-labelledby="preview-h" class={fold ? 'mt-4 outline-none' : 'answer-panel mt-10 outline-none lg:mt-4'}>
     <h2 id="preview-h" class="sr-only">Results</h2>
     {/* The answer as paper, there at once: it changes as the figures are typed (docs/DESIGN-SITE.md, tool pages). */}
     <div class="paper shadow-paper rounded-card p-4 sm:p-6">
@@ -637,10 +620,6 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
   const english = (t = '') => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
   const gstinSaid = f.gstin?.trim() && !gstinOf(f.gstin) ? 'A GSTIN has 15 letters and digits, like 27ABCDE1234F1Z5.' : undefined;
   const own = docNeeds(f), provisional = allNeeds(s, p).length > 0, ready = !!p.statement && !p.blocked;
-  const save = (kind: FileKind) => {
-    const now = new Date();
-    saveFile(statementDoc(s, p, isoDate(now)), kind, fileName(s, p, kind), now);
-  };
   const field = (id: keyof DocFacts, label: string, hint?: string) =>
     <TextField id={`fld-${id}`} label={label} hint={hint} value={f[id] ?? ''} onCommit={(t) => set({ [id]: t })}
       said={english(f[id]) ?? (id === 'gstin' ? gstinSaid : undefined)} invalid={!!english(f[id]) || (id === 'gstin' && !!gstinSaid)} />;
@@ -670,12 +649,7 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
         </p>
         {provisional && <p class={HINT}>The document says so on every page and lists what is still needed{own.length ? ':' : '.'}</p>}
         {own.length > 0 && <ul data-testid="doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
-        <div class="mt-3 flex flex-wrap gap-2">
-          <button type="button" data-testid="download-pdf" class={FILLED} onClick={() => save('pdf')}>Download PDF</button>
-          <button type="button" data-testid="download-xlsx" class={BUTTON} onClick={() => save('xlsx')}>Download Excel</button>
-          <button type="button" data-testid="download-docx" class={BUTTON} onClick={() => save('docx')}>Download Word</button>
-          <button type="button" data-testid="print" class={BUTTON} onClick={() => { const now = new Date(); openPdf(statementDoc(s, p, isoDate(now)), now); }}>Print</button>
-        </div>
+        <Downloads pre="" doc={(today) => statementDoc(s, p, today)} name={(kind) => fileName(s, p, kind)} />
         <InAppNote id="in-app" />
         </div>
       </div>

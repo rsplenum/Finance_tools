@@ -58,12 +58,15 @@ const SPANS = { 2: 'lg:row-end-3', 3: 'lg:row-end-4' } as const;
 /**
  * The answers' place on the page, the first child of its grid: unfolded, the tool's own questions (`unfolded`); folded,
  * the rail from 1024 px, which opens in place to change them, and on a phone "Edit answers" and the sheet. `children`
- * are the fields to change them; `rows`, how many of the grid's rows the rail runs beside. Always three children, the
+ * are the fields to change them; `rows`, how many of the grid's rows the rail runs beside; `start`, the line above them. Always three children, the
  * absent ones holes, so the answer after them never remounts (GOTCHAS, folding).
  */
-export function AnswersColumn({ f, pre, groups, summary, rows, unfolded, children }: {
-  f: Fold; pre: string; groups: () => AnswerGroup[]; summary?: string; rows: 2 | 3; unfolded: ComponentChildren; children: ComponentChildren;
+export function AnswersColumn({ f, pre, groups, summary, rows, start, unfolded, children }: {
+  f: Fold; pre: string; groups: () => AnswerGroup[]; summary?: string; rows: 2 | 3; start?: ComponentChildren; unfolded: ComponentChildren; children: ComponentChildren;
 }) {
+  // The tool's start line (StartLine: the worked example, Clear all) heads its questions, folded or not (UXR5b, S16).
+  unfolded = <>{start}{unfolded}</>;
+  children = <>{start}{children}</>;
   return <>
     <div class={f.fold ? `hidden lg:col-start-1 lg:row-start-1 ${SPANS[rows]} lg:block` : 'lg:col-start-1 lg:row-start-1'}>
       {f.fold ? <div class="lg:sticky lg:top-18 lg:max-h-rail lg:overflow-y-auto lg:overscroll-contain lg:pt-4 lg:pb-10">
