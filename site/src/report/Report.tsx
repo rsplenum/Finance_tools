@@ -363,7 +363,7 @@ export function ReportCalculator() {
     <div class={f.fold ? 'lg:col-start-2 lg:row-start-2' : 'lg:col-span-2 lg:row-start-2'}>
     {p.view && !p.blocked && <CheckStep pre="rep" groups={checkOf(s, p)} to="benchmarks" state={ok ? 'done' : checked ? 'lapsed' : 'open'}
       benchmarks={(p.checks ?? []).map((c) => ({ label: c.label, value: c.byDefault === undefined ? c.level : `${c.level}, yours (default ${c.byDefault}${c.looser ? ', looser than a bank may accept' : ''})` }))}
-      confirm={seen ? 'These are right' : 'These are right: show the report'} onConfirm={confirm} />}
+      confirm={seen ? 'These are right' : 'These are right: show the report'} onConfirm={confirm} railed={f.fold} />}
     {p.view && (ok || seen) && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
     <Ledger id="assumed" testid="rep-assumed" title="Assumed until changed" rows={assumptionsOf(s).map((a) => {
       const to = ASSUMED_BOX[a.id];

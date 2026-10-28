@@ -21,8 +21,8 @@ const toBox = (id: string) => (e: Event) => {
   goTo(id)(e);
 };
 
-function Group({ pre, g }: { pre: string; g: CheckGroup }) {
-  return <div data-testid={`${pre}-confirm-${g.id}`} class="rounded-control bg-surface p-3">
+function Group({ pre, g, railed }: { pre: string; g: CheckGroup; railed?: boolean }) {
+  return <div data-testid={`${pre}-confirm-${g.id}`} class={`rounded-control bg-surface p-3${railed ? ' lg:hidden' : ''}`}>
     <div class="flex items-baseline justify-between gap-2">
       <h3 class="font-medium text-ink">{g.title}</h3>
       <a href={`#${g.to}`} onClick={toBox(g.to)} aria-label={`Change: ${g.title}`} class="inline-flex min-h-11 items-center text-sm text-link underline underline-offset-4">Change</a>
@@ -55,12 +55,14 @@ function Benchmarks({ pre, lines, to }: { pre: string; lines: CheckLine[]; to: s
   </div>;
 }
 
-/** `benchmarks`: the ratios and their targets ("1.10 or more"); `to`, the box that changes them; `confirm`, the button's words. */
-export function CheckStep({ pre, groups, benchmarks, to, state, confirm, onConfirm }: {
-  pre: string; groups: CheckGroup[]; benchmarks: CheckLine[]; to: string; state: CheckState; confirm: string; onConfirm: () => void;
+/** `benchmarks`: the ratios and their targets ("1.10 or more"); `to`, the box that changes them; `confirm`, the button's words;
+ * `railed`, the answers folded to the rail: from 1024 px the groups stand there only, never twice (the owner, D-UX-237). */
+export function CheckStep({ pre, groups, benchmarks, to, state, confirm, onConfirm, railed }: {
+  pre: string; groups: CheckGroup[]; benchmarks: CheckLine[]; to: string; state: CheckState; confirm: string; onConfirm: () => void; railed?: boolean;
 }) {
-  const list = <div class="mt-4 grid gap-3 sm:grid-cols-2">
-    {groups.map((g) => <Group key={g.id} pre={pre} g={g} />)}
+  const list = <div class={`mt-4 grid gap-3 sm:grid-cols-2${railed ? ' lg:grid-cols-1' : ''}`}>
+    {railed && <p data-testid={`${pre}-confirm-railed`} class={`hidden lg:block ${HINT}`}>What you gave is in your answers, beside.</p>}
+    {groups.map((g) => <Group key={g.id} pre={pre} g={g} railed={railed} />)}
     <Benchmarks pre={pre} lines={benchmarks} to={to} />
   </div>;
   if (state === 'done') return <details id="check" data-testid={`${pre}-confirmed`} class="mt-10 border-t border-line pt-3">

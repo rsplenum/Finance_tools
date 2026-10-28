@@ -1323,6 +1323,10 @@ if (touched('/project-report/')) {
     await page.locator('#fld-rep-name').waitFor({ state: 'detached', timeout: 5000 }).catch(() => v('UXR5: Esc leaves the report\'s sheet open'));
     await page.setViewportSize({ width: 1280, height: 900 });
     await expectText(page, v, 'rep-rail', /Total cost of the projectRs\. 37,86,301/, 'UXR5, the report\'s rail at 1280 px');
+    // The owner (D-UX-237): what the rail shows, the check beside it does not repeat; its benchmarks stay.
+    if (await page.locator('details#check').count()) await page.locator('details#check').evaluate((d) => { d.open = true; });
+    if (await page.getByTestId('rep-confirm-cost').isVisible()) v('D-UX-237: the check repeats the rail\'s answers at 1280 px');
+    if (!(await page.getByTestId('rep-confirm-railed').isVisible()) || !(await page.getByTestId('rep-confirm-benchmarks').isVisible())) v('D-UX-237: the check beside the rail lacks its pointer or its benchmarks');
     await page.getByTestId('rep-rail-change').click();
     await page.locator('[data-testid="rep-rail-open"] #fld-rep-name').waitFor({ timeout: 5000 }).catch(() => v('UXR5: the report\'s rail does not open to its questions'));
     await page.getByTestId('rep-rail-done').click();
