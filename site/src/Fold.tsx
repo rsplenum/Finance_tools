@@ -66,7 +66,8 @@ export function AnswersSheet({ pre, open, onClose, children }: { pre: string; op
     if (open && !d.open) d.showModal();
     if (!open && d.open) d.close();
   }, [open]);
-  return <dialog ref={ref} data-testid={`${pre}-sheet`} aria-labelledby={`${pre}-sheet-h`} onClose={onClose}
+  // Esc fires cancel at once and close a little later, by then perhaps after the sheet has gone (a widened window).
+  return <dialog ref={ref} data-testid={`${pre}-sheet`} aria-labelledby={`${pre}-sheet-h`} onCancel={onClose} onClose={onClose}
     onClick={(e) => { if (e.target === ref.current) onClose(); }}
     class="m-0 mt-auto max-h-sheet w-full max-w-none overflow-y-auto overscroll-contain rounded-t-2xl bg-canvas p-0 text-ink shadow-paper backdrop:bg-ink/45">
     {/* The padding is inside, so a tap on the dialog itself is a tap on the scrim. */}
