@@ -8,7 +8,7 @@ import { docText } from '../site/src/doc/doc';
 import { docxOf } from '../site/src/doc/docx';
 import { pdfOf } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
-import { docStatus, fileName, reportDoc } from '../site/src/report/document';
+import { allNeeds, docStatus, fileName, reportDoc } from '../site/src/report/document';
 import { AS_TYPED, EMPTY, applyPlan, checkKey, checkOf, assumptionsOf, boardOf, changedOf, fixView, holidayAssumed, inputOf, periodLine, planOf, preview, repaymentView, statusText, undoPlan, viableOf, withMode, type ReportState } from '../site/src/report/model';
 import { compareRepayments } from '../engine/repayment';
 import { inr } from '../engine/util';
@@ -72,11 +72,13 @@ describe('the project report page', () => {
     expect(row(p, 'pl', 'Use of the capacity')?.values).toEqual(['60%', '70%', '80%', '80%', '80%']);
     expect(row(p, 'cf', 'Cash at the end of the year')?.values[0]).toBe('42,793');
   });
-  it('PMEGP asks its three facts; cash below nil names the year and the amount, and keeps it provisional', () => {
+  it('PMEGP asks its three facts; cash below nil names the year and the amount, and keeps the document provisional', () => {
     expect(preview({ ...P, category: undefined, area: undefined, activity: undefined }).needs.length).toBe(3);
-    const q = preview({ ...P, fixed: '25 L' });
+    const t = { ...P, fixed: '25 L' }, q = preview(t);
     expect(q.short).toBe('Cash goes below nil in 2030-31: Rs. 49,07,813 short at its lowest. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.');
-    expect(statusText(q)).toBe('1 question left');
+    // A result, not a question (OR11's O1): out of the count, into the verdict; the file stays provisional (D-UX-49).
+    expect(statusText(q)).toBe('All answered');
+    expect(allNeeds(t, q)).toContain(q.short);
   });
 });
 

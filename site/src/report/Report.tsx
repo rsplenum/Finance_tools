@@ -19,7 +19,7 @@ import { isoDate, save, type FileKind } from '../download';
 import { monthText } from '../dscr/model';
 import { overdueNote, todayIso } from '../../../engine/review';
 import { sureLower, type Marked } from '../../../engine/sure';
-import { docNeeds, docStatus, fileName, reportDoc } from './document';
+import { allNeeds, docNeeds, docStatus, fileName, reportDoc } from './document';
 import { Words } from './Words';
 import { CheckStep } from '../CheckStep';
 import { Downloads } from '../Downloads';
@@ -86,7 +86,8 @@ function goOf(s: ReportState, p: ReportPreview, toBox: (need: string) => (e: Eve
   if (p.needs.length || !p.view || p.blocked) return undefined;
   const d = docNeeds(s.doc, s.words)[0], to = d && (docBox(d) ?? (ok ? 'download' : undefined));
   if (to) return { to, what: d, onClick: goTo(to) };
-  return ok ? undefined : { to: 'check', label: 'check your figures' };
+  // All answered, the check is a step of its own, not a question left (OR11's O1).
+  return ok ? undefined : { to: 'check', label: 'check your figures before the download' };
 }
 /** One tone a meaning (docs/DESIGN-SITE.md, Colours): good meets, warn provisional, bad misses. */
 
@@ -96,7 +97,7 @@ function verdictOf(p: ReportPreview): { head: string; work: string; text: string
   if (!p.view || p.blocked) return undefined;
   const c = p.checks ?? [], named = (v: string) => c.filter((k) => k.verdict === v).map((k) => inSentence(k.label));
   const wait = named('wait'), missed = named('misses').length, head = verdictWords('benchmark', c.length, missed, wait.length);
-  const work = workWords(missed, wait.length);
+  const work = workWords(missed, wait.length, !!p.short);
   if (p.misses) return { head, work, text: p.misses, tone: 'bad' };
   const whose = p.benchmarks ? ', yours where you changed them' : '';
   return wait.length ? { head, work, text: `${head}${whose}: ${listed(wait)}.`, tone: 'warn' } : { head, work, text: `${head}${whose}.`, tone: 'good' };
@@ -114,7 +115,7 @@ function barText(s: ReportState, p: ReportPreview) {
 /** Under the last input section (review finding 8): whether the report below has figures, linked to it. */
 function arrived(p: ReportPreview) {
   if (p.blocked) return 'has no figures: its two computations disagree.';
-  if (p.view) return p.short ? `has its figures. ${statusText(p)}.` : 'has its figures.';
+  if (p.view) return 'has its figures.';
   return `still needs ${p.needs.length === 1 ? 'one thing' : `${p.needs.length} things`}, listed there.`;
 }
 
@@ -371,7 +372,7 @@ export function ReportCalculator() {
     </div>
     {/* The answer on every screen of the fields (D-UX-84), from load as on every tool (UX8, review finding 13): text, read
         out as it changes; only the arrow is a target, 44 px. From 1024 px the panel stands beside, so only the words stay. */}
-    <AnswerBar to="report" label="To the report" testid="rep-answer-bar" text={barText(s, p)} />
+    <AnswerBar to="report" testid="rep-answer-bar" text={barText(s, p)} onSee={ready && !f.fold ? f.see : undefined} />
   </div>;
 }
 
@@ -562,7 +563,7 @@ function Result({ s, p, update, use, used, undo, keep, toCollateral, toBox, ok, 
   toCollateral: (e: Event) => void; toBox: (need: string) => (e: Event) => void; ok: boolean; fold: boolean; note: ComponentChildren;
 }) {
   const v = p.view, verdict = verdictOf(p), own = v && !p.blocked && !p.needs.length ? docNeeds(s.doc, s.words) : [];
-  const result = p.blocked ? 'blocked' : p.needs.length || p.short ? 'provisional' : 'ready';
+  const result = p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready';
   // Before the figures, the report's outline: its key figures with "—" for each not yet known, never 0 (UX8, review finding 2).
   const first = p.needs.map(boxOf).find(Boolean)?.[1];
   const key = v?.key ?? [{ label: 'Cost of the project' }, { label: 'Average DSCR', check: 'dscrAverage' }, { label: 'Lowest DSCR', check: 'dscrLowest' }];
@@ -640,7 +641,8 @@ function Download({ s, p, update, ok }: { s: ReportState; p: ReportPreview; upda
     <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy and a Word copy to edit, made in your browser from the figures above.</p>
     <Words s={s} update={update} />
     <div class="mt-5">
-        <p data-testid="rep-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{docStatus(s, p)}</p>
+        {/* No tick while the file is marked provisional, as with cash below nil (D-UX-49). */}
+        <p data-testid="rep-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!allNeeds(s, p).length && <Tick />}{docStatus(s, p)}</p>
         {own.length > 0 && <ul data-testid="rep-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map(docItem)}</ul>}
         <Downloads pre="rep" doc={(today) => reportDoc(s, p, today)} name={(kind) => fileName(s, p, kind)} />
         <InAppNote id="rep-in-app" />

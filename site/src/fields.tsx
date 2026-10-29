@@ -225,23 +225,25 @@ export function Counter(p: { id: string; result: 'blocked' | 'provisional' | 're
   plain?: boolean;
   /** The first box still to answer (OR3, the owner's O7): "1 question left: answer it", the link to it. */
   go?: { to: string; what?: string; onClick?: (e: Event) => void;
-    /** Its words when the box it lands on is not a question (the report's check, OR8): "answer it" by default. */
+    /** Its words when the box it lands on is not a question (the report's check, OR8): "answer it" by default. Such a
+     * step stands after a dot, not a colon (OR11's O1): "All answered · check your figures before the download". */
     label?: string } }) {
   const tone = p.result === 'blocked' ? 'text-bad' : p.result === 'provisional' ? 'text-warn' : 'text-ink';
   const state = <span data-testid={p.id} data-answer={p.answer || undefined} data-result={p.result} class={`${STATE} ${tone}`}>{p.result === 'ready' && !p.plain && <Tick />}{p.text}</span>;
   const box = `${p.class ?? ''} ${p.rule ? answerRule(p.result === 'ready') : ''}`;
   const go = p.go && <a data-testid={`${p.id}-go`} href={`#${p.go.to}`} onClick={p.go.onClick} aria-label={p.go.what ? `Answer it: ${p.go.what}` : undefined}
     class="inline-flex min-h-11 items-center text-link underline underline-offset-4">{p.go.label ?? 'answer it'}</a>;
+  const sep = <span aria-hidden="true" class={`${p.go?.label ? 'px-0.5' : '-ml-1'} text-sm font-medium ${tone}`}>{p.go?.label ? '·' : ':'}</span>;
   // The last answer, committed as Tab leaves its box, turns the list into the state alone and takes the summary away just
   // as Tab moves to it: the state takes the focus, so Tab goes on from there, not from the top (WCAG 2.4.3; UX8's critic).
   const summary = useRef<HTMLElement>(null), line = useRef<HTMLParagraphElement>(null), had = useRef(false);
   if (typeof document !== 'undefined') had.current = summary.current?.isConnected ?? false;
   useLayoutEffect(() => { if (had.current && !p.children && tabbing && document.activeElement === document.body) line.current?.focus(); });
   const which = <span class="text-sm text-link"><span class="group-open:hidden">Show which</span><span class="hidden group-open:inline">Hide</span></span>;
-  if (!p.children) return <p ref={line} tabIndex={-1} class={`${box} ${go ? 'flex flex-wrap items-center gap-x-1' : ''}`}>{state}{go && <><span aria-hidden="true" class={`-ml-1 text-sm font-medium ${tone}`}>:</span>{go}</>}</p>;
+  if (!p.children) return <p ref={line} tabIndex={-1} class={`${box} ${go ? 'flex flex-wrap items-center gap-x-1' : ''}`}>{state}{go && <>{sep}{go}</>}</p>;
   // With a link the state and "answer it" share a line above the list's own toggle: a link inside a summary would nest
   // one control in another.
-  if (go) return <div class={box}><p class="flex flex-wrap items-center gap-x-1">{state}<span aria-hidden="true" class={`-ml-1 text-sm font-medium ${tone}`}>:</span>{go}</p>
+  if (go) return <div class={box}><p class="flex flex-wrap items-center gap-x-1">{state}{sep}{go}</p>
     <details class="group"><summary ref={summary} class="flex min-h-11 cursor-pointer items-center [&::-webkit-details-marker]:hidden">{which}</summary>
       <div class="pb-1">{p.children}</div></details></div>;
   return <details class={`group ${box}`}>
@@ -317,14 +319,20 @@ export function useAnswerPlace(id: string) {
  * to it, shown while it is out of view (UX9b: an arrow to what is on screen leads nowhere) and on focus, so a Tab walk
  * still meets it, pointing up once it is above (D-UX-84, UX3: only the arrow is a target, so a field under the bar can be tapped).
  * From 1024 px the words come back while the panel is out of view, without the arrow: a control there and gone by
- * the scroll is one a Tab walk misses (UX9). */
-export function AnswerBar(p: { to: string; label: string; testid: string; text: string }) {
+ * the scroll is one a Tab walk misses (UX9). On a phone the arrow is "See the answer" (OR11's O2): once the answer is
+ * ready (`onSee`) it folds the questions too, the one way to the answer from anywhere in them. */
+export function AnswerBar(p: { to: string; testid: string; text: string; onSee?: () => void }) {
   const place = useAnswerPlace(p.to), out = place !== 'in';
   return <div class={`${out ? BAR.replace(' lg:sr-only', '') : BAR} lg:col-span-2`}>
     <p data-testid={p.testid} data-answer-echo aria-live="polite" class="flex-1 py-2 text-sm font-medium text-ink">{p.text}</p>
-    <a href={`#${p.to}`} aria-label={p.label} onClick={toAnswer} class={`${BAR_ARROW} ${out ? '' : 'pointer-events-none opacity-0 focus-visible:opacity-100'}`}><span aria-hidden="true">{place === 'above' ? '↑' : '↓'}</span></a>
+    <a href={`#${p.to}`} data-testid={`${p.testid}-see`} aria-label={SEE} onClick={seeOr(p.onSee)} class={`${BAR_ARROW} ${out ? '' : 'pointer-events-none opacity-0 focus-visible:opacity-100'}`}><span aria-hidden="true">{place === 'above' ? '↑' : '↓'}</span></a>
   </div>;
 }
+
+/** The name of the bars' arrow on every tool (OR11's O2), as the button it stands for from 1024 px. */
+export const SEE = 'See the answer';
+/** The arrow's tap: fold and land once the answer is ready, else the plain way to it. */
+export const seeOr = (see?: () => void) => (see ? (e: MouseEvent) => { e.preventDefault(); see(); } : toAnswer);
 
 /** The line under an answer that says its state: the tick and "All answered" in ink, or what is still needed in the warning's
  * words, or why there is none in the bad's; one colour a meaning, on text only. */
@@ -482,9 +490,12 @@ export function StartLine({ c, home, fold, children }: { c: Start; home?: boolea
  */
 export function MoreOptions(p: { what: string; open?: boolean; onToggle?: (open: boolean) => void; children: ComponentChildren; class?: string }) {
   return <details id="more-options" open={p.open} onToggle={p.onToggle && ((e) => p.onToggle?.((e.currentTarget as HTMLDetailsElement).open))} class={p.class ?? 'mt-12'}>
-    <summary class={MORE}>More options<span class="ml-1 font-normal text-ink-muted">: {p.what}</span></summary>
+    <summary class={MORE}><MoreName what={p.what} /></summary>
     <div class="pt-2 pb-6">{p.children}</div>
   </details>;
 }
 /** The summary's look, shared with the estimate's page, whose More options is its own island (pages/estimate.astro). */
 export const MORE = 'flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link';
+/** The summary's words as one run of text, so the name stays on one line and its colon beside it on a phone (OR11). */
+export const MoreName = ({ what }: { what: string }) =>
+  <span><span class="whitespace-nowrap">More options</span><span class="font-normal text-ink-muted">: {what}</span></span>;

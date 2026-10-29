@@ -19,10 +19,11 @@ export const questionsLeft = (n: number) => `${n} question${n === 1 ? '' : 's'} 
 
 /** The verdict's head in plain words (OR3, the owner's O8 and O15): "Works", "Does not work yet: 1 ratio short", or, while
  * a ratio cannot be read, "Works so far: 1 ratio not read yet". It stands apart from the status, which says only whether
- * every question is answered; the detail under it keeps the pattern above. */
-export function workWords(missed: number, waiting = 0): string {
+ * every question is answered; the detail under it keeps the pattern above. Cash below nil (the report's, OR11's O1) is a
+ * result, not a question, so it joins the verdict: "Does not work yet: 4 ratios short and cash below nil". */
+export function workWords(missed: number, waiting = 0, cashBelowNil = false): string {
   const ratios = (n: number) => `${n} ratio${n === 1 ? '' : 's'}`;
-  if (missed) return `Does not work yet: ${ratios(missed)} short`;
+  if (missed || cashBelowNil) return `Does not work yet: ${[missed && `${ratios(missed)} short`, cashBelowNil && 'cash below nil'].filter(Boolean).join(' and ')}`;
   return waiting ? `Works so far: ${ratios(waiting)} not read yet` : 'Works';
 }
 
