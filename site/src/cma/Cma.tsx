@@ -114,7 +114,7 @@ function railOf(s: CmaState): AnswerGroup[] {
 }
 
 /** The answer bar's words (D-UX-84), as the report's: the limit, whether it meets a lender's levels, the status; never
- * "All answered" alone under a miss (UX5b critic, finding 1); the verdict in plain words (OR3). */
+ * "All questions answered" alone under a miss (UX5b critic, finding 1); the verdict in plain words (OR3). */
 function barText(p: CmaPreview, s: CmaState) {
   if (!p.view) return statusText(p);
   const l = levelsOf(s), c = l?.checks;

@@ -111,7 +111,7 @@ describe('the words in the document', () => {
   it('ticked: a part after the summary, each section under its heading, with no figure but the user’s own', () => {
     const s = { ...R, words: { ...words, confirmed: true } }, d = reportDoc(s, p, TODAY)!;
     expect(d.parts.map((x) => x.name)).toEqual(['Summary', 'About the project', 'Projections', 'DSCR and ratios', 'Annex']);
-    expect(docStatus(s, p)).toBe('All answered');
+    expect(docStatus(s, p)).toBe('All questions answered');
     const part = docText({ ...d, parts: [d.parts[1]] }).split('\n');
     expect(part).toContain('About the project');
     expect(part).toContain('The market');

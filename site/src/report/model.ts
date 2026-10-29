@@ -498,7 +498,7 @@ export function viewOf(r: Report): ReportView {
  * `checks`: each lender's ratio against its level, `misses` their summary when any misses, with "Make it viable" beside it
  * (D-UX-50, D-UX-52); `collateralNote`: what the security cover needs. */
 export interface ReportPreview {
-  needs: string[]; blocked?: string; view?: ReportView; short?: string; flags: string[];
+  needs: string[]; blocked?: string; view?: ReportView; short?: string; runsOut?: string; flags: string[];
   checks?: CheckRow[]; misses?: string; collateralNote?: string;
   /** CGTMSE beside collateral (hybrid security, OR7): the part it guarantees, read back. */
   hybrid?: string;
@@ -507,6 +507,9 @@ export interface ReportPreview {
 }
 
 
+/** Cash running out in words (D-UX-247): the first year under nil, then the amount short at the lowest, and its year when later. */
+const runsOut = (c: NonNullable<Report['cashShort']>, rs: (n: number) => string) =>
+  `Cash runs out in ${c.first}: Rs. ${rs(c.need)} short at its lowest${c.fy === c.first ? '' : `, in ${c.fy}`}.`;
 export function preview(s: ReportState): ReportPreview {
   const x = inputOf(s), r = projectReport(x);
   if ('blocked' in r) return { needs: [], blocked: r.blocked, flags: [] };
@@ -522,7 +525,7 @@ export function preview(s: ReportState): ReportPreview {
     needs: [], view: viewOf(r), flags: r.scheme?.flags ?? [], checks,
     ...(d.misses.length ? { misses: `${verdictWords('benchmark', d.checks.length, d.misses.length, d.checks.filter((k) => k.meets === undefined).length)}: ${listed(d.misses.map(labelOf))}.` } : {}),
     ...(collateralNote ? { collateralNote } : {}), ...(own ? { benchmarks: own } : {}), ...(hybridLine(r) ? { hybrid: hybridLine(r) } : {}),
-    ...(c ? { short: `Cash goes below nil in ${c.fy}: Rs. ${rupees(c.need)} short at its lowest. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.` } : {}),
+    ...(c ? { runsOut: c.first, short: `${runsOut(c, rupees)} The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.` } : {}),
   };
 }
 
@@ -617,8 +620,8 @@ const years = (n: number, perYear: number) => {
 /** "Make it viable" (D-UX-50, D-UX-52) as a board (MV2b): the engine's changes (engine/viable.ts), each alone, the rest as
  * typed, the borrower's first, then the lender's. Each card: the lever, how far it moves (and a bar of now against needed),
  * the ratios it brings to their level and those it leaves short, and whether it is within reach. */
-/** Cash below nil that a change leaves. */
-const cashLeft = (o: Outcome) => (o.cashNeed ? `Cash still goes below nil: the promoters would need Rs. ${upRupees(o.cashNeed)} more.` : undefined);
+/** Cash running out that a change leaves. */
+const cashLeft = (o: Outcome) => (o.cashNeed ? `Cash still runs out: the promoters would need Rs. ${upRupees(o.cashNeed)} more.` : undefined);
 const chips = (o: Outcome) => ({ fixes: o.fixes.map(labelOf), still: o.still.map(labelOf) });
 
 export function viableOf(s: ReportState): ViableView | undefined {
@@ -799,7 +802,7 @@ export function boardOf(q: PlanView, l: Levers): BoardView {
   const d = diagnose(r, y, 'fresh', q.lv), checks = d.checks.map((k) => rowOf(k)), miss = checks.filter((c) => c.verdict === 'misses');
   const p = r.finance.promoter, over = q.most !== undefined && p > q.most + 1e-6, cash = r.cashShort;
   const still = [...miss.map((c) => `${c.label}: ${c.worst}, level ${c.level}.${c.short ? ` ${c.short}` : ''}`),
-    ...(cash ? [`Cash goes below nil in ${cash.fy}: Rs. ${upRupees(cash.need)} short at its lowest.`] : [])];
+    ...(cash ? [runsOut(cash, upRupees)] : [])];
   return {
     checks, works: !miss.length, still, steps, moves, over,
     verdict: miss.length ? `With these changes it still does not work as structured: it misses ${miss.length === 1 ? 'one' : miss.length} of the ${ratiosWord(q.lv)}.`

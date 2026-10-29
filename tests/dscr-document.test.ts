@@ -192,7 +192,7 @@ describe('the PDF, read back by pdf.js', () => {
     // The page still asks for a target (for its verdict); the document is complete without one.
     expect(preview(CASE_A).needs).toEqual(['A target DSCR for the average, the lowest year, or both']);
     expect(docStatus(CASE_A, preview(CASE_A))).toBe('2 questions left, for the document');
-    expect(docStatus({ ...CASE_A, doc: FACTS }, preview({ ...CASE_A, doc: FACTS }))).toBe('All answered');
+    expect(docStatus({ ...CASE_A, doc: FACTS }, preview({ ...CASE_A, doc: FACTS }))).toBe('All questions answered');
     expect(fileName({ ...CASE_A, doc: FACTS }, preview({ ...CASE_A, doc: FACTS }), 'docx')).toBe('DSCR statement - Asha Traders.docx');
     const pages = await pdfPages(pdfOf(doc, MADE));
     for (const page of pages) expect(page.split('\n')[0]).toBe('DSCR statement Provisional');

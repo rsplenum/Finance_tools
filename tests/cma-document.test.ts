@@ -23,7 +23,7 @@ describe('CMA document, case K', () => {
   const s = { ...exampleState(emptyState(2026)), doc: { name: 'K Steel Furniture Pvt Ltd', preparedBy: '' } };
   const d = cmaDoc(s, preview(s), '2026-10-11') as Doc;
   it('beside the download: complete with the name; without it, the figures complete and the name still needed (review finding 14)', () => {
-    expect(docStatus(s, preview(s))).toBe('All answered');
+    expect(docStatus(s, preview(s))).toBe('All questions answered');
     const t = { ...s, doc: { ...s.doc, name: '' } };
     expect(docStatus(t, preview(t))).toBe('1 question left, for the document');
   });

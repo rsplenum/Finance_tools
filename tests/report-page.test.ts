@@ -72,12 +72,15 @@ describe('the project report page', () => {
     expect(row(p, 'pl', 'Use of the capacity')?.values).toEqual(['60%', '70%', '80%', '80%', '80%']);
     expect(row(p, 'cf', 'Cash at the end of the year')?.values[0]).toBe('42,793');
   });
-  it('PMEGP asks its three facts; cash below nil names the year and the amount, and keeps the document provisional', () => {
+  it('PMEGP asks its three facts; cash running out names its first year and the amount, and keeps the document provisional', () => {
     expect(preview({ ...P, category: undefined, area: undefined, activity: undefined }).needs.length).toBe(3);
     const t = { ...P, fixed: '25 L' }, q = preview(t);
-    expect(q.short).toBe('Cash goes below nil in 2030-31: Rs. 49,07,813 short at its lowest. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.');
+    // The first year under nil read off the cash row: the first value with a minus (D-UX-247).
+    expect(row(q, 'cf', 'Cash at the end of the year')?.values).toEqual(['-2,82,207', '-15,51,259', '-26,23,082', '-37,13,335', '-49,07,813']);
+    expect(q.short).toBe('Cash runs out in 2026-27: Rs. 49,07,813 short at its lowest, in 2030-31. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.');
+    expect(q.runsOut).toBe('2026-27');
     // A result, not a question (OR11's O1): out of the count, into the verdict; the file stays provisional (D-UX-49).
-    expect(statusText(q)).toBe('All answered');
+    expect(statusText(q)).toBe('All questions answered');
     expect(allNeeds(t, q)).toContain(q.short);
   });
 });
@@ -93,7 +96,7 @@ describe('the project report to download', () => {
     expect(lines).toContain('Total cost of the project | 37,86,301');
     expect(lines).toContain('For Asha Packaging');
     expect(doc.parts.map((x) => x.name)).toEqual(['Summary', 'Projections', 'DSCR and ratios', 'Annex']);
-    expect(docStatus(R, p)).toBe('All answered');
+    expect(docStatus(R, p)).toBe('All questions answered');
     expect(fileName(R, p, 'pdf')).toBe('Project report - Asha Packaging.pdf');
   });
   it('carries no assumptions list and no jargon beyond the tables\' own names', () => {
@@ -132,7 +135,7 @@ describe('the PMEGP report to download', () => {
     expect(text).toContain('Months from the loan to the first sales: 3');
     expect(text).toContain('PMEGP: the rules used');
     expect(text).toContain('The guideline of 2023: verified at its source on 20-10-2026.');
-    expect(docStatus(P, p)).toBe('All answered');
+    expect(docStatus(P, p)).toBe('All questions answered');
   });
 });
 
@@ -218,7 +221,7 @@ describe('the lender\'s levels and make it viable, in words', () => {
       ['A longer holiday', expect.stringMatching(/^\+\d+ months?$/)], ['A longer repayment', expect.stringMatching(/^\+\d+ instalments?$/)]]);
     expect(v?.lines[0].bars).toEqual({ now: expect.closeTo(7000000, 6), to: expect.closeTo(8211000, 6), nowText: 'Rs. 70,00,000', toText: 'Rs. 82,11,000' });
     expect([v?.lines[0].reach, v?.lines[2].fixes, v?.lines[2].still]).toEqual([undefined, ['current ratio'], ['average DSCR', 'DSCR in the lowest year', 'interest cover']]);
-    expect(v?.lines[2].note).toMatch(/^Cash still goes below nil/);
+    expect(v?.lines[2].note).toMatch(/^Cash still runs out/);
     expect([v?.lines[3].fixes, v?.lines[3].still]).toEqual([['current ratio', 'average DSCR', 'DSCR in the lowest year'], ['interest cover', 'fixed-asset cover']]);
   });
   it('as typed, it meets and says how far sales can fall', () => {

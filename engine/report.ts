@@ -126,8 +126,9 @@ export interface MudraResult { level: MudraLevel; total: number; collateralFreeU
 export interface GuaranteeResult { id: GuaranteeId; label: string; ratePct: number; typed: boolean; cover: number; guaranteed: number; collateral: number; concessions: number; beforeStart: number; total: number; years: FeeYear[] }
 export interface Report {
   start: string; scheme?: SchemeResult; mudra?: MudraResult; guarantee?: GuaranteeResult; interestBeforeStart: number;
-  /** The year cash first goes lowest below nil, and the promoters' money more that keeps it at nil or above. */
-  cashShort?: { fy: string; lowest: number; need: number };
+  /** Cash below nil: `first` the first year under nil, `fy` the year at its lowest, and `need` the promoters' money more that
+   * keeps every year at nil or above (OR11a2, D-UX-247). */
+  cashShort?: { first: string; fy: string; lowest: number; need: number };
   cost: CostLine[]; fixedAssets: number; marginMoney: number; projectCost: number;
   finance: { termLoan: number; subsidy: number; unsecured: number; promoter: number; total: number; promoterPct: number };
   /** The collateral's market value, realisable sale value and distress sale value (engine/data/ratios.json). */
@@ -466,7 +467,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   return {
     start, ...(scheme ? { scheme } : {}), interestBeforeStart, ...(guarantee ? { guarantee } : {}),
     ...(x.scheme?.id === 'mudra' ? { mudra: { level: mudraLevel(sanctioned + limit) as MudraLevel, total: sanctioned + limit, collateralFreeUpTo: MUDRA.collateralFreeUpTo, apply: MUDRA.apply } } : {}),
-    ...(low.cash < -0.005 ? { cashShort: { fy: low.fy, lowest: low.cash, need: -low.cash } } : {}),
+    ...(low.cash < -0.005 ? { cashShort: { first: (out.find((y) => y.cash < -0.005) as ReportYear).fy, fy: low.fy, lowest: low.cash, need: -low.cash } } : {}),
     cost: [...HEADS.filter((h) => cost[h.id] > 0).map((h) => ({ id: h.id, label: h.label, amount: cost[h.id] })),
       ...(interestBeforeStart > 0 ? [{ id: 'idc' as const, label: 'Interest on the term loan before sales start', amount: interestBeforeStart }] : []),
       ...(feeBeforeStart > 0 ? [{ id: 'fee' as const, label: 'Guarantee fee before sales start', amount: feeBeforeStart }] : []),

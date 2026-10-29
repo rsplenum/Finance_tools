@@ -352,12 +352,12 @@ if (touched('/dscr/')) {
   await page.getByTestId('use-examples').click();
   // Six assumptions still hold: the method, the target, and the new asset, working-capital interest, loans already running
   // and other non-cash charges as answered by the assumptions (tax, profit and depreciation were typed).
-  await expectText(page, v, 'dscr-status', 'All answered, on 7 assumptions', 'case A with the examples');
+  await expectText(page, v, 'dscr-status', 'All questions answered, on 7 assumptions', 'case A with the examples');
   await expectText(page, v, 'dscr-verdict', 'Misses 2 of 2 targets: the lowest year, 2027-28, is 1.16 against 1.25; the average is 1.45 against 1.50.', 'case A with the examples');
   await expectText(page, v, 'dscr-largest', 'The largest loan on these terms is Rs. 11,11,295, limited by the lowest year, 2027-28.', 'case A with the examples');
   await expectText(page, v, 'use-amount', 'Use Rs. 11,11,295', 'case A with the examples');
   await expectText(page, v, 'dscr-fewest', 'Even 14 instalments, the most the projections cover (to 2029-30), miss the target: the average is below the target. Add later years to try a longer repayment.', 'case A with the examples');
-  await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · does not work yet: 2 ratios short · all answered, on 7 assumptions', 'case A with the examples');
+  await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · does not work yet: 2 ratios short · all questions answered, on 7 assumptions', 'case A with the examples');
 
   // Tables become cards on phones and stay tables on wider screens, without a sideways scroll either way.
   await layout(page, v, 'case A filled, a schedule year open, 390 px');
@@ -452,7 +452,7 @@ if (touched('/dscr/')) {
   await expectText(page, v, 'assumed-start', 'The first year of the figures: The year the loan is first drawn Change', 'the start assumption listed');
   await expectText(page, v, page.getByTestId('start-question').locator('p').first(), 'No instalment falls in 2026-27, only interest of Rs. 72,000. If operations start later, start your figures there: the interest before then is taken as paid from the project cost, not from profits.', 'the question about the first year');
   await page.check('#fld-start-2027-28');
-  await expectText(page, v, 'dscr-status', 'All answered, on 7 assumptions', 'figures starting in 2027-28');
+  await expectText(page, v, 'dscr-status', 'All questions answered, on 7 assumptions', 'figures starting in 2027-28');
   if (await page.getByTestId('assumed-start').count()) v('the start assumption is still listed after choosing 2027-28');
   await expectText(page, v, 'dscr-before-start', 'Left out: 2026-27, before your figures start. Its interest (Rs. 72,000) is taken as paid from the project cost (capitalised), not from profits.', 'figures starting in 2027-28');
   await expectValue(page, v, '#fld-pbdit-2027-28', '7,50,000', 'each figure stays under its year');
@@ -490,7 +490,7 @@ if (touched('/dscr/')) {
   await page.getByTestId('use-examples').click();
   // Eight assumptions hold: all but the tax rate (a company's tax is worked out); this year's depreciation typed once is
   // "as this year, every year".
-  await expectText(page, v, 'dscr-status', 'All answered, on 9 assumptions', 'a few answers');
+  await expectText(page, v, 'dscr-status', 'All questions answered, on 9 assumptions', 'a few answers');
   // Four fields for a five-year loan (profit and its rate, depreciation, working-capital interest; the tax from who the
   // borrower is), not five a line.
   const inputs = await page.locator('#figures input[type="text"]').count();
@@ -519,7 +519,7 @@ if (touched('/dscr/')) {
   await leave(page, '#fld-depreciation-2026-27', '1.5 L');
   await page.check('#fld-interestOther-same');
   await leave(page, '#fld-interestOther-2026-27', '50,000');
-  await expectText(page, v, 'dscr-status', 'All answered, on 10 assumptions', 'the quick path');
+  await expectText(page, v, 'dscr-status', 'All questions answered, on 10 assumptions', 'the quick path');
   await expectText(page, v, 'dscr-average', '1.16', 'the quick path');
   await expectText(page, v, 'dscr-lowest', '0.84', 'the quick path');
   await expectText(page, v, 'assumed-tax', 'Tax rate: 31.2% Change', 'the quick path');
@@ -554,7 +554,7 @@ if (touched('/dscr/')) {
   await leave(page, '#fld-gstin', '27ABCDE1234');
   await expectText(page, v, 'fld-gstin-said', 'A GSTIN has 15 letters and digits, like 27ABCDE1234F1Z5.', 'a short GSTIN');
   await leave(page, '#fld-gstin', '');
-  await expectText(page, v, 'doc-status', 'All answered', 'the download with its facts');
+  await expectText(page, v, 'doc-status', 'All questions answered', 'the download with its facts');
   if (await page.getByTestId('doc-needs').count()) v('the download still lists needs once its facts are in');
   pdf = await save('download-pdf');
   if (pdf.name !== 'DSCR statement - Asha Traders.pdf') v(`the PDF is named "${pdf.name}"`);
@@ -655,7 +655,7 @@ if (touched('/dscr/')) {
   await expectText(page, v, 'dscr-status', '1 question left', 'own figures before None');
   await page.check('#fld-nonCash-none');
   await leave(page, '#fld-targetAverage', '1.5');
-  await expectText(page, v, 'dscr-status', 'All answered, on 2 assumptions', 'own figures');
+  await expectText(page, v, 'dscr-status', 'All questions answered, on 2 assumptions', 'own figures');
   await expectText(page, v, 'dscr-average', '1.23', 'own figures');
   await expectText(page, v, 'dscr-lowest', '1.14', 'own figures');
   await expectText(page, v, 'dscr-not-counted', 'Not counted: 2026-27 (no term-loan instalment).', 'own figures');
@@ -835,7 +835,7 @@ for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
   await expectText(page, v, 'pl-doc-status', '2 questions left, for the document', 'the planning estimate before its facts');
   await leave(page, '#fld-pl-owner', 'Asha Rao');
   await leave(page, '#fld-pl-property', 'Flat 4, Example Towers, Pune');
-  await expectText(page, v, 'pl-doc-status', 'All answered', 'the planning estimate with its facts');
+  await expectText(page, v, 'pl-doc-status', 'All questions answered', 'the planning estimate with its facts');
   const save = saver(page, v);
   const pdf = await save('pl-download-pdf');
   if (pdf.name !== 'Planning estimate - Asha Rao.pdf') v(`the planning estimate PDF is named "${pdf.name}"`);
@@ -1127,14 +1127,14 @@ if (touched('/estimate/')) {
   await leave(page, '#fld-gstPct', '18');
   await expectText(page, v, 'est-status', '1 question left', 'the estimate before contingency');
   await page.check('#fld-contingency-none');
-  await expectText(page, v, 'est-status', 'All answered', 'the estimate');
+  await expectText(page, v, 'est-status', 'All questions answered', 'the estimate');
   for (const [id, want] of [['est-works', '2,81,750'], ['est-gst', '50,715'], ['est-total', '3,32,465'], ['est-per-sqft', 'Rs. 277'], ['item-2-amount', 'Rs. 2,66,000']])
     await expectText(page, v, id, want, 'the estimate');
   await layout(page, v, 'the estimate filled, 390 px');
   await expectText(page, v, 'est-doc-status', '2 questions left, for the document', 'the estimate before its facts');
   await leave(page, '#fld-est-borrower', 'Asha Traders');
   await leave(page, '#fld-est-property', 'Plot 12, Example Nagar, Pune');
-  await expectText(page, v, 'est-doc-status', 'All answered', 'the estimate with its facts');
+  await expectText(page, v, 'est-doc-status', 'All questions answered', 'the estimate with its facts');
   const save = saver(page, v);
   const pdf = await save('est-download-pdf');
   if (pdf.name !== 'Estimate - Asha Traders.pdf') v(`the estimate PDF is named "${pdf.name}"`);
@@ -1281,7 +1281,7 @@ if (touched('/project-report/')) {
   await leave(page, '#fld-rep-name', 'Asha Packaging');
   await leave(page, '#fld-rep-activity', 'Manufacture of corrugated boxes');
   await leave(page, '#fld-rep-address', 'Plot 4, Example MIDC, Pune');
-  await expectText(page, v, 'rep-doc-status', 'All answered', 'the report with its facts');
+  await expectText(page, v, 'rep-doc-status', 'All questions answered', 'the report with its facts');
   const save = saver(page, v);
   if (await page.getByTestId('rep-print').count() !== 1) v('UXR5 (P10): the report has no Print beside its downloads');
   const pdf = await save('rep-download-pdf');
@@ -1312,7 +1312,7 @@ if (touched('/project-report/')) {
   if (asked?.name !== 'Asha Packaging' || asked?.notes?.market !== reply.notes.market || /lakh|Rs\.|\d,\d/.test(JSON.stringify(asked))) v(`the words were drafted from ${JSON.stringify(asked).slice(0, 160)}`);
   await expectText(page, v, 'rep-doc-status', '1 question left, for the document', 'the words drafted, not yet ticked');
   await page.check('#fld-rep-words-true');
-  await expectText(page, v, 'rep-doc-status', 'All answered', 'the words ticked');
+  await expectText(page, v, 'rep-doc-status', 'All questions answered', 'the words ticked');
   await layout(page, v, 'the report’s words, 390 px');
   const worded = (await pdfPages((await save('rep-download-pdf')).bytes).catch((e) => [`(not read: ${e.message})`])).join('\n').replace(/\s+/g, ' ');
   if (!worded.includes('About the project') || !worded.includes('It is in talks with 3 buyers.') || /reputed|lakh/.test(worded)) v(`the report PDF holds its words as ${worded.slice(worded.indexOf('About'), 200)}`);
@@ -1384,12 +1384,16 @@ if (touched('/project-report/')) {
   for (const want of ['Pieces sold', 'Kg sold', 'Price a kg'])
     if (!(await page.getByTestId('rep-sales').locator('th', { hasText: want }).count())) v(`the PMEGP report's sales by product has no "${want}" row (OR6)`);
   await leave(page, '#fld-fixed', '25 L');
-  await expectText(page, v, 'rep-short', /^Cash goes below nil in 2030-31: Rs\. 49,07,813 short/, 'cash below nil');
-  // Cash below nil is a result, said by the verdict, never a question left (OR11a); the document stays provisional.
-  await expectText(page, v, 'rep-status', '3 questions left, for the document', 'the report with cash below nil');
+  // Cash running out names its first year, the amount at its lowest (OR11a2, D-UX-247); a result, said by the verdict,
+  // never a question left (OR11a); the document stays provisional.
+  await expectText(page, v, 'rep-short', /^Cash runs out in 2026-27: Rs\. 49,07,813 short at its lowest, in 2030-31\./, 'cash running out');
+  await expectText(page, v, 'rep-misses-work', /^Does not work yet: \d+ ratios? short and cash runs out in 2026-27$/, 'OR11a2: the first year cash runs out in the verdict');
+  await expectText(page, v, 'rep-status', '3 questions left, for the document', 'the report with cash running out');
   await expectText(page, v, 'rep-misses', /^Misses \d+ of \d+ benchmarks: .*DSCR/, 'the DSCR below the level');
   await page.getByTestId('rep-viable').click();
   await expectText(page, v, 'rep-short-dscrLowest', /^Short by Rs\. [\d,]+ of cash to pay the loan in 20\d\d-\d\d\.$/, 'the lowest DSCR\'s shortfall in rupees');
+  await confirmReport(page, v, 'the PMEGP report with cash running out');
+  await expectText(page, v, 'rep-doc-why', 'The file is marked provisional while cash runs out in 2026-27, as the answer says.', 'OR11a2: why the file is provisional');
   await expectText(page, v, 'rep-text-sales', /^Sales [\d.]+% higher in every year: Rs\. [\d,]+ in 20\d\d-\d\d instead of Rs\. [\d,]+\./, 'the sales that make it viable');
   // Sales at the use limit (41.7% higher) meet none of the six levels missed, so the plan gives them back (D-UX-178).
   await expectText(page, v, 'rep-move-sales', 'As typed', 'the plan keeps sales that meet nothing as typed');
@@ -1516,7 +1520,7 @@ if (touched('/')) {
   await ctx.close();
 }
 for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'], ['/estimate/', 'pl-summary', /· Pune · 1,000 sq ft · 2 BHK · Standard$/, 'the Pune flat'],
-  ['/project-report/', 'rep-status', 'All answered', 'case R, its cash short in 2027-28 as at 70 lakh of sales'], ['/cma/', 'cma-status', 'All answered', 'case W']]
+  ['/project-report/', 'rep-status', 'All questions answered', 'case R, its cash short in 2027-28 as at 70 lakh of sales'], ['/cma/', 'cma-status', 'All questions answered', 'case W']]
   .filter(([path]) => touched('/') || touched(path))) {
   const { ctx, page, v } = await open(`${path}?case=home`, { scheme: 'light' });
   if (!(await page.getByTestId('home-case').count())) v(`${path}?case=home does not say it is filled with the home page's case`);
@@ -1524,12 +1528,12 @@ for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'
   await ctx.close();
 }
 // OR11a (D-UX-245): case R all answered. The status counts only questions with a box, the check is a step of its own,
-// and cash below nil joins the verdict. On a phone the bar's arrow is "See the answer": it folds the questions and lands
+// and cash running out joins the verdict. On a phone the bar's arrow is "See the answer": it folds the questions and lands
 // the answer below the top bar; the button under the questions shows from 1024 px only.
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/?case=home', { scheme: 'light' });
   await expectText(page, v, 'rep-status-go', 'check your figures before the download', 'OR11a: the check as its own step');
-  await expectText(page, v, 'rep-misses-work', /^Does not work yet: \d+ ratios? short and cash below nil/, 'OR11a: cash below nil in the verdict');
+  await expectText(page, v, 'rep-misses-work', /^Does not work yet: \d+ ratios? short and cash runs out in 20\d\d-\d\d$/, 'OR11a: cash running out in the verdict');
   if (await page.getByTestId('rep-fold').isVisible()) v('OR11a: the button "See the answer" shows on a phone');
   await page.evaluate(() => scrollTo(0, 0));
   const see = page.getByTestId('rep-answer-bar-see');
@@ -1560,7 +1564,7 @@ if (touched('/estimate/')) {
 // opens in place with the years as cards; a link to an answer while folded opens them and lands on it.
 if (touched('/cma/')) {
   const { ctx, page, v } = await open('/cma/?case=home', { scheme: 'dark' });
-  await expectText(page, v, 'cma-status', 'All answered', 'case W from home');
+  await expectText(page, v, 'cma-status', 'All questions answered', 'case W from home');
   await page.evaluate(() => scrollTo(0, 0));
   await page.getByTestId('cma-answer-bar-see').click();
   if (await page.locator('#cma-figures').count()) v('UXR5: "See the answer" leaves the CMA\'s figures unfolded');
@@ -1595,7 +1599,7 @@ if (touched('/cma/')) {
   await expectText(page, v, 'cma-years', /^Years: 2023-24 \(audited\), 2024-25 \(audited\), 2025-26 \(audited\), 2026-27 \(estimate\), 2027-28 \(projection\)\./, 'the CMA years');
   await expectText(page, v, 'cma-status', '3 questions left', 'the empty CMA page');
   await page.getByTestId('cma-example').click();
-  await expectText(page, v, 'cma-status', 'All answered', 'the CMA example');
+  await expectText(page, v, 'cma-status', 'All questions answered', 'the CMA example');
   await expectText(page, v, 'cma-key-0', 'Rs. 1,04,00,000', 'the CMA limit');
   const flags = await page.getByTestId('cma-flags').locator('li').count();
   if (flags !== 3) v(`the CMA example shows ${flags} things to look at, want 3 (the growth and the two short margins)`);
@@ -1614,7 +1618,7 @@ if (touched('/cma/')) {
   await layout(page, v, 'the CMA example, 390 px');
   await expectText(page, v, 'cma-doc-status', '1 question left, for the document', 'the CMA document before its name');
   await leave(page, '#fld-cma-name', 'K Steel Furniture Pvt Ltd');
-  await expectText(page, v, 'cma-doc-status', 'All answered', 'the CMA document');
+  await expectText(page, v, 'cma-doc-status', 'All questions answered', 'the CMA document');
   const save = saver(page, v);
   const pdf = await save('cma-download-pdf');
   if (pdf.name !== 'CMA data - K Steel Furniture Pvt Ltd.pdf') v(`the CMA PDF is named "${pdf.name}"`);

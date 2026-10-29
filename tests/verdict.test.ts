@@ -34,10 +34,10 @@ describe('words for common people', () => {
   it('the verdict says whether it works, apart from the status', () => {
     expect([workWords(0), workWords(1), workWords(2), workWords(0, 1)])
       .toEqual(['Works', 'Does not work yet: 1 ratio short', 'Does not work yet: 2 ratios short', 'Works so far: 1 ratio not read yet']);
-    // Cash below nil is a result, not a question (OR11's O1): it joins the verdict, never the count.
-    expect([workWords(4, 0, true), workWords(0, 0, true), workWords(0, 1, true)])
-      .toEqual(['Does not work yet: 4 ratios short and cash below nil', 'Does not work yet: cash below nil', 'Does not work yet: cash below nil']);
-    expect(ALL_ANSWERED).toBe('All answered');
+    // Cash running out is a result, not a question (OR11's O1): it joins the verdict with its first year (D-UX-247).
+    expect([workWords(4, 0, '2027-28'), workWords(0, 0, '2027-28'), workWords(0, 1, '2027-28')]).toEqual(['Does not work yet: 4 ratios short and cash runs out in 2027-28',
+      'Does not work yet: cash runs out in 2027-28', 'Does not work yet: cash runs out in 2027-28']);
+    expect(ALL_ANSWERED).toBe('All questions answered');
   });
   it('PMEGP shows the conditions that apply: no trading one for a maker, the shed under the building', () => {
     const made = pmegpConditions({ activity: 'manufacturing' });
