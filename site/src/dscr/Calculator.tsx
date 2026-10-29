@@ -92,7 +92,7 @@ export function DscrCalculator() {
     {p.started && <Working s={s} p={p} openMore={openMore} fold={fold} />}
   </>;
   const door = <FrontDoor s={s} update={update} openMore={openMore} was={was} onSee={ready && !fold ? f.see : undefined} />;
-  const bar = <AnswerBar to="preview" label="To the results" testid="answer-bar" text={barText(p)} />;
+  const bar = <AnswerBar to="preview" testid="answer-bar" text={barText(p)} onSee={ready && !fold ? f.see : undefined} />;
   // One tree folded or not, each part in its own place, so folding never remounts the answer (Make it work keeps its state).
   return <div class={foldGrid(f, 'lg:grid lg:grid-cols-tool lg:gap-x-12')}>
     <AnswersColumn f={f} pre="dscr" groups={() => railOf(s)} rows={3} start={<StartLine c={c} home={home} fold={fold} />}

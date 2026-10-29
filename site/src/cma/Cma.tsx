@@ -93,7 +93,7 @@ export function CmaCalculator() {
     <Download s={s} p={p} update={update} />
     </div>
     {/* The limit and its status on every screen of the forms (review finding 4), as the DSCR's answer bar, from load. */}
-    <AnswerBar to="result" label="To the CMA data" testid="cma-answer-bar" text={barText(p, s)} />
+    <AnswerBar to="result" testid="cma-answer-bar" text={barText(p, s)} onSee={ready && !f.fold ? f.see : undefined} />
   </div>;
 }
 

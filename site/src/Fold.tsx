@@ -45,8 +45,17 @@ export function useFold(ready: boolean, answer: string, on = true) {
     /** Folds without moving the focus, as Make it work does from its own button. */
     keep: () => { if (ready) setFolded(true); },
     /** Folds and takes the focus to the answer. */
-    see: () => { setFolded(true); setEditing(false); requestAnimationFrame(() => document.getElementById(answer)?.focus()); },
+    see: () => { setFolded(true); setEditing(false); requestAnimationFrame(() => land(answer)); },
   };
+}
+
+/** Lands on the answer once folded (OR11's O2): the focus on its heading, and the top of what folding left (on a phone
+ * the Edit answers bar, from 1024 px the answer itself) at the page's top padding, so the sticky top bar never covers it. */
+function land(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.focus({ preventScroll: true });
+  ([...document.querySelectorAll<HTMLElement>('[data-fold-top]')].find((x) => x.getClientRects().length) ?? el).scrollIntoView({ block: 'start' });
 }
 
 /** The page's grid: the tool's own (`unfolded`), or the rail beside the answer, wider while open to change. */
@@ -78,9 +87,11 @@ export function AnswersColumn({ f, pre, groups, summary, rows, start, unfolded, 
   </>;
 }
 
-/** Under the answers once the answer is ready and they are not folded: the one way to fold them (a plain button, so one filled button a screen stays). */
+/** Under the answers once the answer is ready and they are not folded: the way to fold them to the rail, from 1024 px
+ * only (a plain button, so one filled button a screen stays). On a phone the answer sits right under it, so the answer
+ * bar's arrow, named the same, folds them instead (OR11's O2, the owner's pick). */
 export function SeeAnswer({ pre, onSee }: { pre: string; onSee?: () => void }) {
-  return onSee ? <button type="button" data-testid={`${pre}-fold`} class={`mt-4 ${BUTTON}`} onClick={onSee}>See the answer</button> : null;
+  return onSee ? <div class="hidden lg:block"><button type="button" data-testid={`${pre}-fold`} class={`mt-4 ${BUTTON}`} onClick={onSee}>See the answer</button></div> : null;
 }
 
 /** The answers as a rail: each group's labels over their values, then the one way back to change them. */
@@ -115,7 +126,7 @@ export function AnswersOpen({ pre, onDone, children }: { pre: string; onDone: ()
 /** On a phone, the one way to the answers: a button that stays at the top while the result scrolls, beside the answers
  * in one line where the tool has one (`summary`, the estimate's). */
 export function EditAnswers({ pre, summary, onOpen }: { pre: string; summary?: string; onOpen: () => void }) {
-  return <div class="sticky top-0 z-10 -mx-4 flex items-center justify-end gap-3 bg-canvas/90 px-4 py-2 backdrop-blur-sm sm:-mx-8 sm:px-8 lg:hidden">
+  return <div data-fold-top class="sticky top-0 z-10 -mx-4 flex items-center justify-end gap-3 bg-canvas/90 px-4 py-2 backdrop-blur-sm sm:-mx-8 sm:px-8 lg:hidden">
     {summary && <p data-testid={`${pre}-summary`} class="min-w-0 flex-1 text-sm text-ink line-clamp-2">{summary}</p>}
     <button type="button" data-testid={`${pre}-edit`} class={`shrink-0 ${BUTTON}`} onClick={onOpen}>Edit answers</button>
   </div>;

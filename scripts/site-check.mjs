@@ -1319,10 +1319,13 @@ if (touched('/project-report/')) {
   const wordedDocx = await docxLines((await save('rep-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
   if (wordedDocx.messages.length || !wordedDocx.lines.includes('About the project') || !wordedDocx.lines.includes('The promoter')) v(`the report's Word copy lacks its words ${JSON.stringify(wordedDocx.messages).slice(0, 120)}`);
   // UXR5 (LOOP1d, D-UX-233): all answered, "See the answer" folds the questions: on a phone to "Edit answers" and a sheet
-  // that holds them; from 1024 px to a rail of the answers as the check reads them, which opens in place.
-  if (!(await page.getByTestId('rep-fold').count())) v('UXR5: no "See the answer" on a report all answered');
+  // that holds them; from 1024 px to a rail of the answers as the check reads them, which opens in place. On a phone it is
+  // the answer bar's arrow (OR11a), shown once the answer is out of view.
+  if (await page.getByTestId('rep-fold').isVisible()) v('OR11a: the button "See the answer" shows on a phone, beside the bar\'s arrow');
+  await page.evaluate(() => scrollTo(0, 0));
+  if (!(await page.getByTestId('rep-answer-bar-see').isVisible())) v('UXR5: no "See the answer" on a report all answered');
   else {
-    await page.getByTestId('rep-fold').click();
+    await page.getByTestId('rep-answer-bar-see').click();
     if (await page.locator('#fld-rep-name').count()) v('UXR5: "See the answer" leaves the report\'s questions unfolded');
     await page.getByTestId('rep-edit').click();
     await page.locator('dialog[open] #fld-rep-name').waitFor();
@@ -1382,7 +1385,8 @@ if (touched('/project-report/')) {
     if (!(await page.getByTestId('rep-sales').locator('th', { hasText: want }).count())) v(`the PMEGP report's sales by product has no "${want}" row (OR6)`);
   await leave(page, '#fld-fixed', '25 L');
   await expectText(page, v, 'rep-short', /^Cash goes below nil in 2030-31: Rs\. 49,07,813 short/, 'cash below nil');
-  await expectText(page, v, 'rep-status', '4 questions left', 'the report with cash below nil');
+  // Cash below nil is a result, said by the verdict, never a question left (OR11a); the document stays provisional.
+  await expectText(page, v, 'rep-status', '3 questions left, for the document', 'the report with cash below nil');
   await expectText(page, v, 'rep-misses', /^Misses \d+ of \d+ benchmarks: .*DSCR/, 'the DSCR below the level');
   await page.getByTestId('rep-viable').click();
   await expectText(page, v, 'rep-short-dscrLowest', /^Short by Rs\. [\d,]+ of cash to pay the loan in 20\d\d-\d\d\.$/, 'the lowest DSCR\'s shortfall in rupees');
@@ -1512,11 +1516,32 @@ if (touched('/')) {
   await ctx.close();
 }
 for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'], ['/estimate/', 'pl-summary', /· Pune · 1,000 sq ft · 2 BHK · Standard$/, 'the Pune flat'],
-  ['/project-report/', 'rep-status', '1 question left', 'case R, its cash short in 2027-28 as at 70 lakh of sales'], ['/cma/', 'cma-status', 'All answered', 'case W']]
+  ['/project-report/', 'rep-status', 'All answered', 'case R, its cash short in 2027-28 as at 70 lakh of sales'], ['/cma/', 'cma-status', 'All answered', 'case W']]
   .filter(([path]) => touched('/') || touched(path))) {
   const { ctx, page, v } = await open(`${path}?case=home`, { scheme: 'light' });
   if (!(await page.getByTestId('home-case').count())) v(`${path}?case=home does not say it is filled with the home page's case`);
   await expectText(page, v, id, want, `${step} from home`);
+  await ctx.close();
+}
+// OR11a (D-UX-245): case R all answered. The status counts only questions with a box, the check is a step of its own,
+// and cash below nil joins the verdict. On a phone the bar's arrow is "See the answer": it folds the questions and lands
+// the answer below the top bar; the button under the questions shows from 1024 px only.
+if (touched('/project-report/')) {
+  const { ctx, page, v } = await open('/project-report/?case=home', { scheme: 'light' });
+  await expectText(page, v, 'rep-status-go', 'check your figures before the download', 'OR11a: the check as its own step');
+  await expectText(page, v, 'rep-misses-work', /^Does not work yet: \d+ ratios? short and cash below nil/, 'OR11a: cash below nil in the verdict');
+  if (await page.getByTestId('rep-fold').isVisible()) v('OR11a: the button "See the answer" shows on a phone');
+  await page.evaluate(() => scrollTo(0, 0));
+  const see = page.getByTestId('rep-answer-bar-see');
+  if ((await see.getAttribute('aria-label')) !== 'See the answer') v(`OR11a: the bar's arrow is named "${await see.getAttribute('aria-label')}", want "See the answer"`);
+  await see.click();
+  await page.waitForFunction(() => document.activeElement?.id === 'report-h', null, { timeout: 5000 }).catch(() => v('OR11a: the bar\'s arrow does not take the focus to the answer'));
+  if (!(await page.getByTestId('rep-edit').isVisible())) v('OR11a: the bar\'s arrow leaves the questions unfolded on a phone');
+  const [top, under] = await page.evaluate(() => [document.querySelector('[data-testid="rep-edit"]').getBoundingClientRect().top, document.querySelector('[data-header]').getBoundingClientRect().bottom]);
+  if (top < under - 1) v(`OR11a: the answer lands under the top bar (Edit answers at ${Math.round(top)} px, the bar's foot at ${Math.round(under)} px)`);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.reload();
+  if (!(await page.getByTestId('rep-fold').isVisible())) v('OR11a: no button "See the answer" under the questions at 1280 px');
   await ctx.close();
 }
 // UXR5 (LOOP1d, D-UX-234): the estimate's answers folded from 1024 px to a rail in two groups, which opens in place.
@@ -1536,7 +1561,8 @@ if (touched('/estimate/')) {
 if (touched('/cma/')) {
   const { ctx, page, v } = await open('/cma/?case=home', { scheme: 'dark' });
   await expectText(page, v, 'cma-status', 'All answered', 'case W from home');
-  await page.getByTestId('cma-fold').click();
+  await page.evaluate(() => scrollTo(0, 0));
+  await page.getByTestId('cma-answer-bar-see').click();
   if (await page.locator('#cma-figures').count()) v('UXR5: "See the answer" leaves the CMA\'s figures unfolded');
   await page.getByTestId('cma-edit').click();
   await page.locator('dialog[open] #fld-cma-existing').waitFor();

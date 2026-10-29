@@ -13,7 +13,7 @@
 import { questionsLeft } from '../verdict';
 import { Fragment } from 'preact';
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, toAnswer, useAnswerPlace, InAppNote, useHomeCase, useKept, KeptLine, useStart, StartLine, StartNotes, LINK_BUTTON } from '../fields';
+import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, SEE, seeOr, useAnswerPlace, InAppNote, useHomeCase, useKept, KeptLine, useStart, StartLine, StartNotes, LINK_BUTTON } from '../fields';
 import { ESTIMATE_HOME } from './home-case';
 import { AnswersColumn, foldGrid, SeeAnswer, useFold, type AnswerGroup } from '../Fold';
 import { printable } from '../doc/pdf';
@@ -133,7 +133,7 @@ export function PlanEstimate() {
       <div class="flex items-center gap-2 lg:sr-only">
         <p data-answer-echo aria-live="polite" class={`flex-1 py-2 text-sm font-medium ${INK}`}>{v
           ? <>Total <span data-testid="pl-sticky-total" class="whitespace-nowrap tabular-nums">{v.headline}</span></> : stillText(p)}</p>
-        <a href="#pl-result" aria-label="To the estimate" onClick={toAnswer} class={`${BAR_ARROW} ${place === 'in' ? 'pointer-events-none opacity-0 focus-visible:opacity-100' : ''}`}><span aria-hidden="true">{place === 'above' ? '↑' : '↓'}</span></a>
+        <a href="#pl-result" data-testid="pl-sticky-see" aria-label={SEE} onClick={seeOr(v && !p.blocked && !f.fold ? f.see : undefined)} class={`${BAR_ARROW} ${place === 'in' ? 'pointer-events-none opacity-0 focus-visible:opacity-100' : ''}`}><span aria-hidden="true">{place === 'above' ? '↑' : '↓'}</span></a>
       </div>
     </div>
   </div>;

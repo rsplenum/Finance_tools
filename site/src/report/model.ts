@@ -602,8 +602,10 @@ export function repaymentView(s: ReportState): RepaymentView | undefined {
 /** The collateral field's hint: what its values are (engine/data/ratios.json, the owner's figures). */
 export const COLLATERAL_HINT = `Its realisable sale value, ${LEVELS.collateral.rsvPct}% of it, counts in the security cover; its distress sale value, ${LEVELS.collateral.dsvPct}%, is shown.`;
 
+/** The status counts only questions with a box (OR11's O1): cash below nil is a result, said by the verdict, and keeps
+ * only the document provisional (D-UX-49, `allNeeds`). */
 export const statusText = (p: ReportPreview, more = 0) => {
-  const n = p.needs.length + (p.short ? 1 : 0) + more;
+  const n = p.needs.length + more;
   return p.blocked ? 'No figures' : n ? questionsLeft(n) : ALL_ANSWERED;
 };
 
