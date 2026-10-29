@@ -325,7 +325,8 @@ export async function loadCheck({ browser, BASE, pages, quick = false, violation
   const fonts = (await fontProbe(browser, BASE)) === base.fontProbe;
   let rose = 0, fell = 0;
   for (const path of pages) {
-    const { counts, defect } = await countPage(browser, BASE, path);
+    // What the colours count saw goes with its violation: a rise seen only on the runner cannot be read here (OR11c).
+    const { counts, defect, seen } = await countPage(browser, BASE, path, { text: true });
     if (defect) violations.push(`load: ${path}: ${defect}`);
     const was = base.pages[path];
     if (!was) { violations.push(`load: ${path} has no baseline (npm run load -- --lower ${path})`); continue; }
@@ -334,7 +335,7 @@ export async function loadCheck({ browser, BASE, pages, quick = false, violation
       if (now === then || (!fonts && LAYOUT.includes(k))) continue;
       if (now === null || then === null || now > then) {
         rose++;
-        violations.push(`load: ${path} ${name} rose from ${then ?? 'none'} to ${now ?? 'none'} (cut it, or a line in docs/DECISIONS.md and npm run load -- --raise ${path} ${k} <D-id>)`);
+        violations.push(`load: ${path} ${name} rose from ${then ?? 'none'} to ${now ?? 'none'} (cut it, or a line in docs/DECISIONS.md and npm run load -- --raise ${path} ${k} <D-id>)${k === 'colours' ? `; saw ${seen.match(/colours: (.*)/)?.[1]}` : ''}`);
       } else {
         fell++;
         violations.push(`load: ${path} ${name} fell from ${then} to ${now}: lower the baseline in this commit (npm run load -- --lower ${path})`);
