@@ -73,6 +73,16 @@ button, input { font: inherit; color: inherit; }
 .bar .t { position: absolute; inset-block: -3px; width: 2px; background: var(--ink); }
 .row .short { grid-column: 1 / -1; font-size: .85rem; color: var(--muted); }
 .cash { background: var(--miss-soft); border-color: transparent; }
+.years { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 6px; margin-top: 10px; position: relative; }
+.yr { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: .78rem; color: var(--muted); }
+.yr .col { position: relative; width: 100%; max-width: 44px; height: 84px; background: var(--surface); border-radius: 6px; }
+.yr .col span { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 6px; background: var(--good); }
+.yr.low .col span { background: var(--miss); }
+.yr .col i { position: absolute; left: -3px; right: -3px; height: 2px; background: var(--ink); }
+.yr b { font-family: var(--head); font-weight: 500; font-stretch: 125%; color: var(--ink); font-size: .9rem; }
+.yr.low b { color: var(--miss); }
+.way.slim { padding: 10px 14px; }
+.way.slim h4 { font-size: .95rem; }
 .cash h4 { color: var(--miss); }
 
 /* The ways */
@@ -114,7 +124,7 @@ details.nots summary { cursor: pointer; color: var(--link); }
 </style></head>
 <body>
 <header class="head wrap"><div class="in">
-  <span class="tag">Mock-up for your yes · OR11b · not the site</span>
+  <span class="tag">Mock-up for your yes · OR11b, after your review · not the site</span>
   <h1>Make it work, on the project report</h1>
   <p>One umbrella below the answer: what holds it back as a picture, the ways that keep your loan first, the ways that change it after, each with its own Use this. Every figure is the engine's, run on the case shown.</p>
   <div class="tabs" role="tablist" id="tabs"></div>
@@ -146,31 +156,34 @@ function bar(m) {
 }
 
 function holds(c) {
-  const groups = {};
-  c.misses.forEach((m) => (groups[m.cause] = groups[m.cause] || []).push(m));
+  const groups = {}, ms0 = c.misses.slice().sort((a, b) => (a.fy ? 0 : 1) - (b.fy ? 0 : 1));
+  ms0.forEach((m) => (groups[m.cause] = groups[m.cause] || []).push(m));
+  const low = c.misses.find((m) => m.id === 'dscrLowest'), ys = c.byYear.filter((y) => y.dscr !== null);
+  const top = low && Math.max(low.level * 1.6, ...ys.map((y) => Math.min(y.dscr, low.level * 2)));
+  const under = low ? ys.filter((y) => y.dscr < low.level).map((y) => y.fy) : [];
+  const strip = low ? `<div class="cause"><h4>Year by year, the DSCR against ${low.level.toFixed(2)}</h4><p class="why">${under.length > 1 ? `${under.length} of ${ys.length} years below it, ${list(under)}; the deepest is ${low.fy}.` : `Only ${low.fy} is below it.`} The bar is each year’s DSCR, the line its benchmark.</p>
+    <div class="years" style="--n:${ys.length}">${ys.map((y) => `<div class="yr${y.dscr < low.level ? ' low' : ''}"><b>${r2(y.dscr)}</b><div class="col"><span style="height:${Math.max(2, Math.min(100, (y.dscr / top) * 100))}%"></span><i style="bottom:${(low.level / top) * 100}%"></i></div>${y.fy}</div>`).join('')}</div></div>` : '';
   const rows = (ms) => ms.map((m) => `<div class="row"><span class="name">${m.label} <small>· ${m.fy ?? 'over the loan'}</small></span>
     <span class="val fig"><b>${r2(m.worst)}</b> <small>of ${m.level.toFixed(2)}</small></span>${bar(m)}
-    ${m.short ? `<span class="short">${rsUp(m.short.amount)} ${SHORT_OF[m.short.of]} ${m.fy ? 'in ' + m.fy : 'over the loan'} would meet it${m.worst < 0 ? '; below nil, the bar starts at nothing' : ''}.</span>` : ''}</div>`).join('');
+    ${m.short ? `<span class="short">${rsUp(m.short.amount)} ${SHORT_OF[m.short.of]} ${m.fy ? 'in ' + m.fy : `over the ${yrs(c.instalments)} together, not what holds it back`} would meet it${m.worst < 0 ? '; below nil, the bar starts at nothing' : ''}.</span>` : ''}</div>`).join('');
   return `<section class="block"><h3>What holds it back <span class="n">${c.misses.length} ratios, ${Object.keys(groups).length} causes</span></h3>
-    ${Object.entries(groups).map(([k, ms]) => `<div class="cause"><h4>${CAUSES[k][0]}</h4>${CAUSES[k][1] ? `<p class="why">${CAUSES[k][1]}</p>` : ''}${rows(ms)}</div>`).join('')}
+    ${strip}${Object.entries(groups).map(([k, ms]) => `<div class="cause"><h4>${CAUSES[k][0]}</h4>${CAUSES[k][1] ? `<p class="why">${CAUSES[k][1]}</p>` : ''}${rows(ms)}</div>`).join('')}
     ${c.cash ? `<div class="cause cash"><h4>Cash runs out in ${c.cash.first}</h4><p class="why" style="margin:2px 0 0">${rsUp(c.cash.need)} short at its lowest${c.cash.fy !== c.cash.first ? ', in ' + c.cash.fy : ''}. The file stays provisional until it is met.</p></div>` : ''}
   </section>`;
 }
 
 function homeKeep(c) {
   const k = c.keep, s = k.sales, b = k.best, n = c.misses.length;
-  const cap = (need, id) => `<div class="reach"><label for="${id}">At full use, what could the plant sell in a year? (Rs.)</label>
+  const cap = (need, id) => `<div class="reach"><label for="${id}">What can the plant sell in a year, running full? (Rs.)</label>
     <input id="${id}" inputmode="numeric" data-need="${need}" placeholder="e.g. 1.5 Cr">
-    <span class="said">This way needs a plant that sells at least <span class="fig">${rs(need)}</span> a year at full use, so the busiest year is at ${c.mostUse}% of it. Until you say, the answer stays provisional.</span></div>`;
+    <span class="said">Until you say, the answer stays provisional.</span></div>`;
   const ways = [
-    `<article class="way works"><h4>Sell more</h4><p class="move"><span class="fig">+${(s.tenths / 10).toFixed(1)}%</span> in every year: <span class="fig">${rs(s.needed)}</span> in ${s.fy} (now ${rs(s.now)}), growing ${c.growthPct}% a year as you typed.</p>
+    `<article class="way works"><h4>Sell more</h4><p class="move"><span class="fig">${rs(s.needed)}</span> of sales in ${s.fy} instead of ${rs(s.now)}, still growing ${c.growthPct}% a year: ${(s.tenths / 10).toFixed(1)}% more in every year.</p>
+      <p>Each rupee of sales leaves what is over its variable costs (${c.variablePct}% here), less tax: that is why ${rsUp(c.misses.find((m) => m.id === 'dscrLowest').short.amount)} of cash takes this much more sales.</p>
       <div class="chips">${chips(s.still, n)}<span class="chip ask">Asks the plant’s capacity</span></div>${cap(k.salesCapNeed, 'cap1')}${useBtn(`sales of ${rs(s.needed)} in ${s.fy}`)}</article>`,
-    `<article class="way works"><h4>Sell a little more and repay over ${yrs(b.instalments)}</h4><p class="move"><span class="fig">+${(b.tenths / 10).toFixed(1)}%</span> sales (<span class="fig">${rs(b.years[0].sales)}</span> in ${b.years[0].fy}) and <span class="fig">${b.instalments}</span> instalments instead of ${c.instalments}.</p>
+    `<article class="way works"><h4>Sell a little more and repay over ${yrs(b.instalments)}</h4><p class="move"><span class="fig">${rs(b.years[0].sales)}</span> of sales in ${b.years[0].fy} instead of ${rs(s.now)}, still growing ${c.growthPct}% a year (${(b.tenths / 10).toFixed(1)}% more in every year), and <span class="fig">${b.instalments}</span> instalments instead of ${c.instalments}.</p>
       <p>The longer repayment is the lender’s to give: ask for it.</p><div class="chips">${chips(b.still, n)}<span class="chip ask">Asks the plant’s capacity</span></div>${cap(b.capNeed, 'cap2')}${useBtn(`sales ${(b.tenths / 10).toFixed(1)}% higher and ${b.instalments} instalments`)}</article>`,
-    `<article class="way works"><h4>Spend less on materials and other variable costs</h4><p class="move"><span class="fig">${k.variable.pct.toFixed(1)}%</span> of sales (now ${c.variablePct}%).</p>
-      <p>No limit is known: change it only if the business really can, since a lender asks how.</p><div class="chips">${chips([], n)}</div>${useBtn(`variable costs at ${k.variable.pct.toFixed(1)}% of sales`)}</article>`,
-    `<article class="way works"><h4>Cut the fixed costs</h4><p class="move"><span class="fig">${rs(k.fixed.needed)}</span> a year (now ${rs(k.fixed.now)}), <span class="fig">${(k.fixed.tenths / 10).toFixed(1)}%</span> less.</p>
-      <p>Salaries, rent and overheads: as above, only if it can be done.</p><div class="chips">${chips([], n)}</div>${useBtn(`fixed costs of ${rs(k.fixed.needed)}`)}</article>`,
+    margin(c),
   ];
   const nots = [
     `<div class="not"><b>Faster growth</b> cannot help: the shortfall is in ${c.misses.find((m) => m.id === 'dscrLowest').fy}, the first year, before growth counts. Even 100% a year leaves ${list(k.growthAtMost.map((x) => LABEL[x]))} short.</div>`,
@@ -178,6 +191,29 @@ function homeKeep(c) {
   ];
   return `<section class="block"><h3>Keep the loan you asked for, ${rs(c.loan)}</h3><p class="sub">Each way fixes what holds it back. The most it can take is shown; you say what the business can reach.</p>
     <div class="ways">${ways.join('')}</div><details class="nots"><summary>Ways that do not reach here (${nots.length})</summary>${nots.join('')}</details></section>`;
+}
+
+// A better margin, one slim line (D-UX-250): the same sales at a lower variable cost, by price or buying, not fewer sold.
+const margin = (c) => `<article class="way slim"><h4>Or a better margin</h4><p>Variable costs at <span class="fig">${c.keep.variable.pct.toFixed(1)}%</span> of sales instead of ${c.variablePct}%, the same sales: a higher price, or materials bought cheaper or wasted less. A lender asks what backs it.</p>${useBtn(`variable costs at ${c.keep.variable.pct.toFixed(1)}% of sales`)}</article>`;
+
+// A new line by its capacity (D-UX-251): asked first; when it falls short, the line it would take.
+function fillKeep(c) {
+  const k = c.keep, f = c.fill, n = c.misses.length, y1 = f.use1.years[0];
+  return `<section class="block"><h3>Keep the loan you asked for, ${rs(c.loan)}</h3><p class="sub">The first year holds it back, while the line fills: each way mends that year, and the years after follow.</p>
+    <div class="ways">
+      <article class="way works"><h4>Fill faster in the first year</h4><p class="move"><span class="fig">${f.use1.pct.toFixed(1)}%</span> of the line in ${y1.fy} instead of ${c.use[0]}%: <span class="fig">${rs(y1.sales)}</span> of sales. Then ${f.use1.use.slice(1).map((u) => u + '%').join(', ')} as you typed.</p>
+        <p>A faster fill after the first year changes nothing here: the first year is the one short. A lender asks for the orders behind it.</p><div class="chips">${chips([], n)}</div>${useBtn(`${f.use1.pct.toFixed(1)}% use in ${y1.fy}`)}</article>
+      <article class="way"><h4>A larger line</h4><p class="move">This works if the line can make at least <span class="fig">${inr(f.capacity)}</span> boxes a year (yours: ${inr(c.capacity)}), filling as you typed.</p>
+        <div class="reach"><label for="cost4">What would the larger line cost? (Rs.)</label><input id="cost4" inputmode="numeric" placeholder="its machinery and building">
+        <span class="said">Worked at today’s cost of the project; the engine works it again with the cost you give. Provisional until then.</span></div>
+        <div class="chips"><span class="chip ask">Needs one answer: its cost</span></div>${useBtn('a line of ' + inr(f.capacity) + ' boxes a year', 'Give its cost first')}</article>
+      <article class="way works"><h4>Charge more</h4><p class="move"><span class="fig">Rs. ${f.price.toFixed(2)}</span> a box instead of Rs. ${c.price}, the fill as you typed.</p><p>A lender tests the price against the market.</p><div class="chips">${chips([], n)}</div>${useBtn(`a price of Rs. ${f.price.toFixed(2)}`)}</article>
+      ${margin(c)}
+    </div>
+    <details class="nots"><summary>Ways that do not reach here (2)</summary>
+      <div class="not"><b>Faster growth</b> of the price: even 100% a year leaves ${list(k.growthAtMost.map((x) => LABEL[x]))} short, as the first year comes before it counts.</div>
+      <div class="not"><b>Bring more of your own money and keep it in the business</b> mends the cushion and the cash, never the earnings.</div>
+    </details></section>`;
 }
 
 function pKeep(c) {
@@ -191,11 +227,9 @@ function pKeep(c) {
         <div class="reach"><label for="cost3">What would the larger plant cost? (Rs.)</label><input id="cost3" inputmode="numeric" placeholder="its machinery and building">
         <span class="said">Worked at today’s cost of the project: the larger plant’s cost changes the loan’s need and the depreciation, so the engine works it again once you give it. Provisional until then.</span></div>
         <div class="chips"><span class="chip ask">Needs one answer: its cost</span></div>${useBtn('a plant of ' + inr(a.capacity) + ' units a year', 'Give its cost first')}</article>
-      <article class="way works"><h4>Spend less on materials and other variable costs</h4><p class="move"><span class="fig">${k.variable.pct.toFixed(1)}%</span> of sales (now ${c.variablePct}%).</p>
-        <p>The engine’s figure, shown as it is: it would take a different business, which only you can judge.</p><div class="chips">${chips([], n)}</div>${useBtn(`variable costs at ${k.variable.pct.toFixed(1)}%`)}</article>
+      ${margin(c)}
     </div>
-    <details class="nots"><summary>Ways that do not reach here (3)</summary>
-      <div class="not"><b>Cut the fixed costs</b>: even with none at all it does not work.</div>
+    <details class="nots"><summary>Ways that do not reach here (2)</summary>
       <div class="not"><b>Faster growth</b> of the price: even 100% a year leaves ${list(k.growthAtMost.map((x) => LABEL[x]))} short; the first year, three months of sales, is before it counts.</div>
       <div class="not"><b>Bring more of your own money and keep it in the business</b> mends the cushion and the cash, never the earnings.</div>
     </details></section>`;
@@ -211,17 +245,29 @@ function change(c) {
   if (!ch.fixes.length && ch.loan) nots.push(`<div class="not"><b>Borrow less</b>: down to ${rs(ch.loan.largest)}, your own money ${rsUp(ch.loan.more)} more, it still leaves ${list(ch.loan.still.map((x) => LABEL[x]))} short.</div>`);
   if (ch.wc) nots.push(`<div class="not"><b>A smaller working-capital limit</b>, ${rs(ch.wc.largest)} (now ${rs(ch.wc.now)}), mends the ${list(ch.wc.fixes.map((x) => LABEL[x]))} only; ${list(ch.wc.still.map((x) => LABEL[x]))} stay short.</div>`);
   else if (ch.wcNone) nots.push(`<div class="not"><b>A smaller working-capital limit</b> meets none of them.</div>`);
-  if (ch.instalments) nots.push(`<div class="not"><b>A longer repayment</b> (the lender’s), ${ch.instalments.needed} instalments, or <b>a holiday</b> of ${ch.moratorium.needed} months: each leaves ${list(ch.instalments.still.map((x) => LABEL[x]))} short.</div>`);
+  if (ch.moratorium) nots.unshift(`<div class="not"><b>A holiday while ${c.fill ? 'the line fills' : 'the business finds its feet'}</b> (the lender’s), ${ch.moratorium.needed} months, mends the ${list(ch.moratorium.fixes.map((x) => LABEL[x]))}${ch.moratorium.still.includes('interestCover') ? `; interest cover stays short, as the business does not earn its interest in ${c.misses.find((m) => m.id === 'interestCover').fy}: only more sales that year or a smaller loan mend that` : ''}${ch.moratorium.still.filter((x) => x !== 'interestCover').length ? `, and it leaves ${list(ch.moratorium.still.filter((x) => x !== 'interestCover').map((x) => LABEL[x]))} short` : ''}.</div>`);
+  if (ch.instalments) nots.push(`<div class="not"><b>A longer repayment</b> (the lender’s), ${ch.instalments.needed} instalments: it leaves ${list(ch.instalments.still.map((x) => LABEL[x]))} short.</div>`);
   else nots.push(`<div class="not"><b>A longer repayment or a holiday</b> (the lender’s) within ${c.longest} months meets none of them.</div>`);
   return `<section class="block"><h3>Or change the loan</h3><p class="sub">If you would rather borrow less, or ask the lender for other terms.</p>
     ${ways.length ? `<div class="ways">${ways.join('')}</div>` : `<div class="none"><b>No change to the loan alone makes it work.</b> Combine one with a way above.</div>`}
     <details class="nots"${ways.length ? '' : ' open'}><summary>Changes that do not reach alone (${nots.length})</summary>${nots.join('')}</details></section>`;
 }
 
+const REVIEW = `<h2>What changed after your review (D-UX-250, D-UX-251)</h2><ul>
+  <li><b>The picture is year by year</b>: the DSCR of each year against its benchmark, the deepest year named. The average sits last, “over the 5 years together, not what holds it back”.</li>
+  <li><b>Sales in rupees</b>: “Rs. 76,37,000 in 2026-27 instead of Rs. 70,00,000, still growing 10% a year”; the per cent comes after, as “more in every year”.</li>
+  <li><b>Materials</b> are one slim line, a better margin on the same sales, with what a lender asks. <b>Fixed costs</b> are gone.</li>
+  <li><b>A new line filling up</b> is a tab of its own: the capacity is asked, and when it falls short the card says the line it would take. A holiday is the first of the loan’s terms, saying what it cannot mend.</li></ul>`;
 const NOTES = {
+  fill: `<h2>For you: a new line filling up</h2><ol>
+    <li>The worked example by its capacity: 5,00,000 boxes a year at Rs. 25 a box, filling 55%, 70%, 85%, the price 5% a year (fictional, all else as the worked example).</li>
+    <li>Paces of filling, tried in the engine: the first year is the one short, so any faster pace after it changes nothing; the card shows the one first-year use that does it, the later years as typed. Paces come back when the first year is not the short one.</li>
+    <li>The line it would take, 5,97,090 boxes, is said only because the 5,00,000 typed falls short, as you asked. Its cost is the one question left.</li>
+    <li>A holiday of 8 months mends the DSCR and the cushion; interest cover in 2026-27 needs sales that year or a smaller loan. The card says so.</li>
+    <li>An expansion (your business today plus a new line) works the same way: today’s sales keep their own growth, the new line adds its capacity × use × price. The engine takes it in its own row, before the build.</li></ol>`,
   home: `<h2>For you: the worked example</h2><ol>
     <li>The four red sentences and the two fix lines go. In their place, <b>What holds it back</b>: 4 ratios under 2 causes, a bar each from its value to its benchmark (the tick), and the rupees that would meet it. Cash runs out is its own row. The key figures above keep the values only; their “Short by Rs.” moves here (D-UX-237: said once).</li>
-    <li><b>Keep the loan</b> leads with four ways that each meet every ratio. Sales are typed, so no capacity is known: the sales ways ask it in the card (your pick 3), with the plant they need. Typed growth is read as more made, so the busiest year sets it.</li>
+    <li><b>Keep the loan</b> leads with two ways that each meet every ratio, then the better margin. Sales are typed, so no capacity is known: the sales ways ask it in the card (your pick 3), with the plant they need. Typed growth is read as more made, so the busiest year sets it.</li>
     <li>“Some of both” is new: +9.1% sales and 7 years, the lender asked for the longer repayment. A longer repayment alone (127 instalments) leaves interest cover short and loses fixed-asset cover; 7 years is where the least sales does it. Over 7 years the projection runs to 2032-33, so its plant must be larger than the first way’s.</li>
     <li><b>Change the loan</b> follows, with the two cuts the page offers today (the loan kept at 5 years first, as you asked: a shorter repayment reads harder). The separate Make it viable button and its board go; the sliders and Ways to repay stay below, under the same heading.</li></ol>`,
   p: `<h2>For you: a case where sales cannot reach</h2><ol>
@@ -237,14 +283,14 @@ const CHOICES = `<h2 style="margin-top:18px">Your choices before the build (OR11
   <li><b>How far a way may go</b>. Costs have no known limit, so a way like 28.3% variable costs shows. Recommended: show it, as the rules are silent (CLAUDE.md); the other way hides any cost cut beyond a share you name.</li>
   <li><b>A part-year in the first year</b>. Case P misses interest cover in a year of three months’ sales; every loan-side way trips on it. Recommended: keep the engine’s reading and flag it on the card; changing which years count is a rule (D-UX-51) for its own row.</li></ol>`;
 
-const CASES = [['home', 'Worked example'], ['p', 'Sales cannot reach']];
+const CASES = [['home', 'Worked example'], ['fill', 'A new line filling up'], ['p', 'Sales cannot reach']];
 function render(id) {
   const c = DATA[id];
   const verdict = `<section class="paper verdict"><span class="caps">The answer · ${c.name}</span><h2>Does not work yet: ${c.misses.length} ratios short and cash runs out in ${c.cash.first}</h2><p>A term loan of ${rs(c.loan)} over ${c.instalments} monthly instalments${c.moratorium ? ` after a ${c.moratorium}-month holiday` : ''}; the cost of the project ${rs(c.projectCost)}. The key figures, the check and the download sit here as today.</p></section>`;
   const mw = `<section class="paper mw"><h2>Make it work</h2><p class="lead">What holds it back, then the ways that fix it: the ones that keep your loan first. Use this writes a way into your answers, with an undo.</p>
-    ${holds(c)}${id === 'home' ? homeKeep(c) : pKeep(c)}${change(c)}
+    ${holds(c)}${id === 'home' ? homeKeep(c) : id === 'fill' ? fillKeep(c) : pKeep(c)}${change(c)}
     <div class="stub">Below, as today: Ways to repay and the sliders, under the same heading. They become the shared Make it work part once the report has a linked solver (D-UX-230, D-UX-232).</div></section>`;
-  document.getElementById('main').innerHTML = `<div class="stack">${verdict}${mw}</div><aside class="notes">${NOTES[id]}${CHOICES}</aside>`;
+  document.getElementById('main').innerHTML = `<div class="stack">${verdict}${mw}</div><aside class="notes">${REVIEW}${NOTES[id]}${CHOICES}</aside>`;
   document.querySelectorAll('#tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.id === id)));
 }
 document.getElementById('tabs').innerHTML = CASES.map(([id, t]) => `<button role="tab" data-id="${id}">${t}</button>`).join('');
@@ -261,7 +307,7 @@ document.addEventListener('input', (e) => {
   const t = i.value.trim().toLowerCase(), m = t.match(/^([\d.,]+)\s*(cr|crore|l|lakh)?$/), said = i.parentElement.querySelector('.said');
   if (!m) return;
   const v = parseFloat(m[1].replace(/,/g, '')) * (m[2] && m[2].startsWith('c') ? 1e7 : m[2] ? 1e5 : 1), need = +i.dataset.need;
-  said.textContent = v >= need ? `Within reach: the plant can carry this way at ${DATA.home.mostUse}% use or less in every year.` : `Short of the ${rs(need)} this way needs at full use: the plant would run above ${DATA.home.mostUse}% in its busiest year.`;
+  said.textContent = v >= need ? `Within reach: the plant carries this way at ${DATA.home.mostUse}% use or less in every year.` : `This works if the plant can sell at least ${rs(need)} a year running full, so its busiest year is at ${DATA.home.mostUse}% of it (a placeholder, lenders differ).`;
 });
 render('home');
 </script>
