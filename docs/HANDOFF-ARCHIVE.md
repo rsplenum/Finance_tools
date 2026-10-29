@@ -263,3 +263,6 @@ Budget rows moved from HANDOFF on 18-10-2026 (UX6):
 
 - From the state line, 20-10-2026 (moved by NAME1): REP1 (D-UX-109, D-DATA-22, merged) answered Finline: sales by product, PMEGP checked, the gap list in `docs/design-inputs/finline-2026-10-20.md`; the narrative and two modes are D-AI-01 and D-UX-110; Mudra (CGFMU) and "Make it viable" by the business are D-DATA-23 and D-UX-111, so SCH1 is ready, its fees' basis read (CGFMU's and CGTMSE's documents in `docs/inbox/`).
 - Also from the state line (moved by NAME1): DEP1b, DEP1c and Q1 (D-TECH-49 to 51) are merged;  LEGAL1 (the policy pages, D-BIZ-07, PR #85) is merged and waits on a lawyer's read.
+- Budget lines moved from HANDOFF by OR11a's handoff, 29-10-2026:
+| 28-10-2026 | UXR5b (PR #147) | L, about 200 steps | 167 steps, two compactions |
+| 29-10-2026 | Merge #147; OR11's analysis and rows | S, about 60 steps | about 58 steps |
