@@ -1540,7 +1540,7 @@ if (touched('/project-report/')) {
   const [top, under] = await page.evaluate(() => [document.querySelector('[data-testid="rep-edit"]').getBoundingClientRect().top, document.querySelector('[data-header]').getBoundingClientRect().bottom]);
   if (top < under - 1) v(`OR11a: the answer lands under the top bar (Edit answers at ${Math.round(top)} px, the bar's foot at ${Math.round(under)} px)`);
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.reload();
+  await page.goto(`${BASE}/project-report/?case=home`, { waitUntil: 'networkidle' });
   if (!(await page.getByTestId('rep-fold').isVisible())) v('OR11a: no button "See the answer" under the questions at 1280 px');
   await ctx.close();
 }
