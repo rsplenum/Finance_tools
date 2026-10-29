@@ -226,7 +226,7 @@ export function Counter(p: { id: string; result: 'blocked' | 'provisional' | 're
   /** The first box still to answer (OR3, the owner's O7): "1 question left: answer it", the link to it. */
   go?: { to: string; what?: string; onClick?: (e: Event) => void;
     /** Its words when the box it lands on is not a question (the report's check, OR8): "answer it" by default. Such a
-     * step stands after a dot, not a colon (OR11's O1): "All answered · check your figures before the download". */
+     * step stands after a dot, not a colon (OR11's O1): "All questions answered · check your figures before the download". */
     label?: string } }) {
   const tone = p.result === 'blocked' ? 'text-bad' : p.result === 'provisional' ? 'text-warn' : 'text-ink';
   const state = <span data-testid={p.id} data-answer={p.answer || undefined} data-result={p.result} class={`${STATE} ${tone}`}>{p.result === 'ready' && !p.plain && <Tick />}{p.text}</span>;
@@ -334,7 +334,7 @@ export const SEE = 'See the answer';
 /** The arrow's tap: fold and land once the answer is ready, else the plain way to it. */
 export const seeOr = (see?: () => void) => (see ? (e: MouseEvent) => { e.preventDefault(); see(); } : toAnswer);
 
-/** The line under an answer that says its state: the tick and "All answered" in ink, or what is still needed in the warning's
+/** The line under an answer that says its state: the tick and "All questions answered" in ink, or what is still needed in the warning's
  * words, or why there is none in the bad's; one colour a meaning, on text only. */
 export const STATE = 'flex items-start gap-1.5 text-sm font-medium';
 

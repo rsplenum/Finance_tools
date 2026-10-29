@@ -86,7 +86,7 @@ function goOf(s: ReportState, p: ReportPreview, toBox: (need: string) => (e: Eve
   if (p.needs.length || !p.view || p.blocked) return undefined;
   const d = docNeeds(s.doc, s.words)[0], to = d && (docBox(d) ?? (ok ? 'download' : undefined));
   if (to) return { to, what: d, onClick: goTo(to) };
-  // All answered, the check is a step of its own, not a question left (OR11's O1).
+  // All questions answered, the check is a step of its own, not a question left (OR11's O1).
   return ok ? undefined : { to: 'check', label: 'check your figures before the download' };
 }
 /** One tone a meaning (docs/DESIGN-SITE.md, Colours): good meets, warn provisional, bad misses. */
@@ -97,7 +97,7 @@ function verdictOf(p: ReportPreview): { head: string; work: string; text: string
   if (!p.view || p.blocked) return undefined;
   const c = p.checks ?? [], named = (v: string) => c.filter((k) => k.verdict === v).map((k) => inSentence(k.label));
   const wait = named('wait'), missed = named('misses').length, head = verdictWords('benchmark', c.length, missed, wait.length);
-  const work = workWords(missed, wait.length, !!p.short);
+  const work = workWords(missed, wait.length, p.runsOut);
   if (p.misses) return { head, work, text: p.misses, tone: 'bad' };
   const whose = p.benchmarks ? ', yours where you changed them' : '';
   return wait.length ? { head, work, text: `${head}${whose}: ${listed(wait)}.`, tone: 'warn' } : { head, work, text: `${head}${whose}.`, tone: 'good' };
@@ -641,8 +641,9 @@ function Download({ s, p, update, ok }: { s: ReportState; p: ReportPreview; upda
     <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy and a Word copy to edit, made in your browser from the figures above.</p>
     <Words s={s} update={update} />
     <div class="mt-5">
-        {/* No tick while the file is marked provisional, as with cash below nil (D-UX-49). */}
+        {/* No tick while the file is marked provisional, as when cash runs out (D-UX-49); a quiet line says why (D-UX-247). */}
         <p data-testid="rep-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!allNeeds(s, p).length && <Tick />}{docStatus(s, p)}</p>
+        {p.runsOut && <p data-testid="rep-doc-why" class={`mt-1 ${HINT}`}>The file is marked provisional while cash runs out in {p.runsOut}, as the answer says.</p>}
         {own.length > 0 && <ul data-testid="rep-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map(docItem)}</ul>}
         <Downloads pre="rep" doc={(today) => reportDoc(s, p, today)} name={(kind) => fileName(s, p, kind)} />
         <InAppNote id="rep-in-app" />

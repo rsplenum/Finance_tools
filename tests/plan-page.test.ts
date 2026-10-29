@@ -284,7 +284,7 @@ describe('the planning estimate to download', () => {
     expect(lines).toContain(`Total estimated cost | ${p.view!.total}`);
     expect(lines).toContain(`In words: ${p.view!.words}`);
     expect(lines).toContain(`Cost per sq ft: Rs. ${p.view!.perSqft} of carpet area`);
-    expect(planDocStatus(s, p)).toBe('All answered');
+    expect(planDocStatus(s, p)).toBe('All questions answered');
     expect(planFileName(s, p, 'pdf')).toBe('Planning estimate - Asha Rao.pdf');
   });
   it('Annex 1: every line under its section, with its level, quantity, unit, rate and amount; the living room\'s floor as worked by hand', () => {

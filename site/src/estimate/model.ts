@@ -110,7 +110,7 @@ function viewOf(e: Estimate): EstimateView {
   return { heads, totals, total: rupees(e.total), ...(e.perSqft !== undefined ? { perSqft: rupees(e.perSqft) } : {}), n: { total: e.total, ...(e.perSqft !== undefined ? { perSqft: e.perSqft } : {}) } };
 }
 
-/** "All answered", or "2 questions left". */
+/** "All questions answered", or "2 questions left". */
 export const statusText = (p: EstimatePreview, more: string[] = []) =>
   p.blocked ? 'No figures' : p.needs.length + more.length ? questionsLeft(p.needs.length + more.length) : ALL_ANSWERED;
 

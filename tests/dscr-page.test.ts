@@ -73,7 +73,7 @@ describe('fictional case A from the loan terms', () => {
     expect(p.largest).toEqual({ text: 'The largest loan on these terms is Rs. 11,59,646, limited by the lowest year, 2027-28.', amount: 1159646 });
     // More instalments add interest, which pulls the average further below 1.50 within these four years.
     expect(p.fewest).toEqual({ text: 'Even 14 instalments, the most the projections cover (to 2029-30), miss the target: the average is below the target. Add later years to try a longer repayment.' });
-    expect(barText(p)).toBe('Average 1.45 · lowest 1.16 in 2027-28 · does not work yet: 2 ratios short · all answered');
+    expect(barText(p)).toBe('Average 1.45 · lowest 1.16 in 2027-28 · does not work yet: 2 ratios short · all questions answered');
   });
   it('meets the target at the largest loan, with nothing more to offer', () => {
     const p = preview({ ...CASE_A, loan: { ...CASE_A.loan, amount: '11,59,646' }, target: TARGETS });
@@ -307,7 +307,7 @@ describe('this year\'s figures and sales growth; the rest assumed (the owner: "a
     expect(line(p, 'dscr')).toEqual(['1.17', '0.84', '0.98', '2.26']);
     expect([p.average, p.lowest, p.lowestYear, p.verdict?.meets]).toEqual(['1.16', '0.84', '2027-28', false]);
     expect(p.assumed.map((a) => a.id)).toEqual(['method', 'target', 'tax', 'margin', 'asset', 'depreciation', 'interest', 'otherLoans', 'nonCash', 'promoters']);
-    expect(statusText(p)).toBe('All answered, on 10 assumptions');
+    expect(statusText(p)).toBe('All questions answered, on 10 assumptions');
   });
   it('an assumption that is changed leaves the list', () => {
     const s = withTaxRate({ ...A2, target: { average: '1.25', minimum: '1.20' } }, '25.168');

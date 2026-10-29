@@ -184,10 +184,14 @@ describe('fictional case Q: sales start in the next year, above the ceiling, cas
     expect([a.months, ...two([a.sales, a.pat, a.cash, a.dscr])]).toEqual([11, '3300000.00', '15222.00', '62472.00', '1.11']);
     expect(q.cashShort).toBeUndefined();
   });
-  // With fixed costs of 15 lakh, cash goes lowest in 2030-31, at −12,40,707.74.
-  it('names the promoters\' money more that keeps cash at nil or above', () => {
+  // With fixed costs of 15 lakh, cash goes lowest in 2030-31, at −12,40,707.74. It runs out first in 2027-28 (OR11a2,
+  // D-UX-247), by hand: 11 months of fixed costs rise by 6,00,000 × 11/12 = 5,50,000; case Q's profit before tax of 22,125
+  // (15,222 after tax at 31.2%, tax 6,903) turns to a loss of 5,27,875 with no tax, so cash is 62,472 − 5,50,000 + 6,903
+  // = −4,80,625.
+  it('names the promoters\' money more that keeps cash at nil or above, and the first year under nil', () => {
     const s = projectReport({ ...CASE_Q, fixedCosts: 1500000 }) as Report;
     expect([s.cashShort?.fy, ...two([s.cashShort?.lowest, s.cashShort?.need])]).toEqual(['2030-31', '-1240707.74', '1240707.74']);
+    expect([s.cashShort?.first, two([s.years[0].cash])[0]]).toEqual(['2027-28', '-480625.00']);
   });
   it('asks the scheme\'s facts, and a loan above the margin money', () => {
     expect(reportNeeds({ ...CASE_Q, scheme: { id: 'pmegp' } })).toEqual(['PMEGP: the borrower\'s category', 'PMEGP: a town or a village', 'PMEGP: manufacturing or a service']);

@@ -681,7 +681,7 @@ function whereOf(ls: Line[], e: ArchitectEstimate): string {
   return `In ${named}${ls.some((l) => l.room === null) ? `, and for ${whole}` : ''}`;
 }
 
-/** "All answered", or "2 questions left". */
+/** "All questions answered", or "2 questions left". */
 export const statusText = (p: PlanPreview, more: string[] = []) =>
   p.blocked ? 'No figures' : p.needs.length + more.length ? questionsLeft(p.needs.length + more.length) : ALL_ANSWERED;
 

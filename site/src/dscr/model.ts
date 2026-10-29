@@ -881,7 +881,7 @@ export function barText(p: Preview): string {
   return cap(parts.join(' · '));
 }
 
-/** "All answered", or "All answered, on 7 assumptions" while any still holds. */
+/** "All questions answered", or "All questions answered, on 7 assumptions" while any still holds. */
 /** The front door's needs by the labels it shows, in its order, each linked to its field (design review 5, UX4). */
 export const FRONT: [RegExp, string, string][] = [
   [/^Who the borrower is/, 'Who is the borrower?', 'fld-fd-borrower'],
