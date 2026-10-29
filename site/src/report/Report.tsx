@@ -34,7 +34,8 @@ import {
 type Update = (f: (s: ReportState) => ReportState) => void;
 const MUTED = 'text-ink-muted';
 const SALES_BY: { value: ReportState['salesBy']; label: string }[] = [
-  { value: 'drivers', label: 'Each product: how many a month and its price' }, { value: 'typed', label: 'Sales I type, with their growth' }];
+  { value: 'drivers', label: 'Each product: how many a month and its price' }, { value: 'typed', label: 'Sales I type, with their growth' },
+  { value: 'expansion', label: 'Today\'s sales and a new line' }];
 const bad = (t: string, read: (t: string) => unknown) => !!t.trim() && read(t) === undefined;
 const notUnderstood = (t: string, read: (t: string) => unknown, example: string) => (bad(t, read) ? `Not understood. Type ${example}.` : undefined);
 /** A control that removes itself hands the focus on, after the render (WCAG 2.4.3; docs/DESIGN.md, Focus). */
@@ -55,6 +56,7 @@ const BOXES: [string, string][] = [
   ['The term loan: its interest', 'fld-tl-rate'], ['The term loan: the month', 'fld-tl-disbursed'], ['The term loan: the moratorium', 'fld-tl-moratorium'],
   ['The term loan: the number', 'fld-tl-instalments'], ['The term loan: how', 'fld-tl-repayment'], ['Capital subsidy', 'fld-subsidy'],
   ['Unsecured', 'fld-unsecured'], ['Sales in', 'fld-sales'], ['Sales: growth', 'fld-salesGrowth'], ['Use of the capacity', 'fld-utilisation'], ['The price: growth', 'fld-priceGrowth'],
+  ['Today\'s sales in', 'fld-sales'], ['Today\'s sales: growth', 'fld-salesGrowth'], ['The new line: its use', 'fld-utilisation'], ['The new line: its price\'s growth', 'fld-priceGrowth'],
   ['Months from', 'fld-monthsToStart'], ['PMEGP: the borrower', 'fld-category'], ['PMEGP: a town', 'fld-area'], ['PMEGP: manufacturing', 'fld-activity'],
   ['Materials', 'fld-variablePct'], ['Fixed costs in', 'fld-fixed'], ['Fixed costs: growth', 'fld-fixedGrowth'], ['Days of stock', 'fld-days-stock'],
   ['Days of debtors', 'fld-days-debtors'], ['Days of creditors', 'fld-days-creditors'], ['The working-capital limit you will ask for', 'fld-wcLimit'],
@@ -66,7 +68,7 @@ const UNIT_PICKS = SOLD_BY.map((u) => ({ value: u.id, label: u.label }));
 // A product's line (D-UX-109): "Sales, line 2: the price a unit" is the price's box on the second line.
 const LINE_FACT: [string, string][] = [['what', 'name'], ['how many', 'units'], ['the price', 'price']];
 const boxOf = (need: string): [string, string] | undefined => {
-  const m = /^Sales, line (\d+): (.*)$/.exec(need), fact = m && LINE_FACT.find(([w]) => m[2].startsWith(w));
+  const m = /^(?:Sales, line|The new line, product) (\d+): (.*)$/.exec(need), fact = m && LINE_FACT.find(([w]) => m[2].startsWith(w));
   return fact ? [need, `fld-product-${Number((m as RegExpExecArray)[1]) - 1}-${fact[1]}`] : BOXES.find(([w]) => need.startsWith(w));
 };
 /** The document's own facts and their boxes, among the questions (D-UX-216); the report's words land on the download. */
@@ -260,12 +262,13 @@ export function ReportCalculator() {
       {!simple && <Choice name="fld-salesBy" legend="Sales come from" options={SALES_BY} value={s.salesBy} columns
         onChange={(salesBy) => update((x) => ({ ...x, salesBy }))} />}
       {/* One line per product or service (D-UX-109): what it is, how many a month at full running, its price; they add up to sales. */}
-      {s.salesBy === 'drivers' && <>
+      {s.salesBy !== 'typed' && <>
         {s.products.map((pr, k) => {
           const set = (f: keyof typeof pr) => (x: ReportState, t: string) => ({ ...x, products: x.products.map((q, i) => (i === k ? { ...q, [f]: t } : q)) });
           const u = soldBy(pr.unit);
           return <fieldset key={k} data-testid={`rep-product-${k}`} class="mt-4">
-            <legend class="font-medium text-ink">{s.products.length > 1 ? `Product or service ${k + 1}` : 'What it sells'}</legend>
+            <legend class="font-medium text-ink">{s.salesBy === 'expansion' ? (s.products.length > 1 ? `The new line: product or service ${k + 1}` : 'What the new line sells')
+              : s.products.length > 1 ? `Product or service ${k + 1}` : 'What it sells'}</legend>
             {/* What it is sold by (OR6): the count and the price take its words; it changes no sum. */}
             <div class="mt-2 grid gap-4 @md:grid-cols-2">
               <TextField id={`fld-product-${k}-name`} label="What it is" value={pr.name} onCommit={(t) => update((x) => set('name')(x, t))} />
@@ -304,10 +307,14 @@ export function ReportCalculator() {
       </fieldset>}
       {!simple && <>
       <div class="mt-4 grid gap-4 @md:grid-cols-2">
-        {s.salesBy === 'drivers' ? <>
-          <TextField id="fld-utilisation" label="Use of the capacity by year (%)" unit="%" byDefault={EMPTY.utilisation || undefined} hint={mark('fld-utilisation', 'One a year from the first sales, like 60, 70, 80; the last holds after.')} value={s.utilisation}
+        {s.salesBy === 'expansion' && <>
+          {amount('fld-sales', 'Today\'s sales in a full first year', s.sales, (x, sales) => ({ ...x, sales }), 'What the business sells now, every month of each year, without the new line.')}
+          {percent('fld-salesGrowth', 'Today\'s sales: growth a year (%)', s.salesGrowth, (x, salesGrowth) => ({ ...x, salesGrowth }), '%')}
+        </>}
+        {s.salesBy !== 'typed' ? <>
+          <TextField id="fld-utilisation" label={s.salesBy === 'expansion' ? 'The new line\'s use by year (%)' : 'Use of the capacity by year (%)'} unit="%" byDefault={EMPTY.utilisation || undefined} hint={mark('fld-utilisation', 'One a year from the first sales, like 60, 70, 80; the last holds after.')} value={s.utilisation}
             onCommit={(utilisation) => update((x) => ({ ...x, utilisation }))} />
-          {percent('fld-priceGrowth', 'The price: growth a year (%)', s.priceGrowth, (x, priceGrowth) => ({ ...x, priceGrowth }), '%', EMPTY.priceGrowth)}
+          {percent('fld-priceGrowth', s.salesBy === 'expansion' ? 'The price: growth a year once the line is full (%)' : 'The price: growth a year (%)', s.priceGrowth, (x, priceGrowth) => ({ ...x, priceGrowth }), '%', EMPTY.priceGrowth)}
         </> : <>
           {amount('fld-sales', 'Sales in a full first year', s.sales, (x, sales) => ({ ...x, sales }))}
           {percent('fld-salesGrowth', 'Sales: growth a year (%)', s.salesGrowth, (x, salesGrowth) => ({ ...x, salesGrowth }), '%')}

@@ -513,3 +513,22 @@ describe('check and confirm (OR8)', () => {
     expect(checkKey({ ...S, words: { notes: { promoter: 'x', process: '', market: '' }, confirmed: true } })).toBe(k);
   });
 });
+
+// Case E (tests/expansion.test.ts) as typed on the page: case R selling 70 lakh today, beside a new line of 5,00,000
+// boxes a year at Rs. 25 used 55%, 70%, 85%, its first sales six months after the loan (D-UX-251 (a), OR11c).
+describe('today\'s sales and a new line, on the page', () => {
+  const E: ReportState = { ...R, salesBy: 'expansion', sales: '70 L', monthsToStart: '6', products: [{ name: 'Boxes', units: '41,666.67', price: '25', unit: '' }], utilisation: '55, 70, 85', priceGrowth: '5' };
+  it('asks both, and the tables show the sales in two', () => {
+    const x = inputOf(E);
+    expect([x.salesBy, x.sales, x.salesGrowthPct, x.utilisationPct]).toEqual(['expansion', 7000000, 10, [55, 70, 85]]);
+    const p = preview({ ...E, products: [{ name: 'Boxes', units: '50,000', price: '20.8333333', unit: '' }] });
+    expect(p.needs).toEqual([]);
+    expect(row(p, 'pl', 'Months of the new line\'s sales')?.values[0]).toBe('6');
+    expect(row(p, 'pl', 'The new line\'s use')?.values).toEqual(['55%', '70%', '85%', '85%', '85%']);
+    expect(row(p, 'pl', 'Today\'s sales')?.values.slice(0, 2)).toEqual(['70,00,000', '77,00,000']);
+    expect(row(p, 'sales', 'Today\'s sales')?.values[0]).toBe('70,00,000');
+  });
+  it('needs today\'s sales in the line\'s words', () => {
+    expect(preview({ ...E, sales: '' }).needs.join(' ')).toContain('Today\'s sales');
+  });
+});

@@ -29,7 +29,7 @@ export function narrativeOf(s: ReportState): NarrativeInput {
   return {
     name: s.doc.name.trim(), activity: s.doc.activity.trim(), address: s.doc.address.trim(),
     constitution: BORROWERS.find((b) => b.id === s.borrower)?.label ?? '', scheme,
-    products: s.salesBy === 'drivers' ? s.products.map((p) => p.name.trim()).filter(Boolean) : [],
+    products: s.salesBy !== 'typed' ? s.products.map((p) => p.name.trim()).filter(Boolean) : [],
     covers: HEADS.filter((h) => s.cost[h.id].trim() && !/^[0.,\s]*$/.test(s.cost[h.id])).map((h) => h.label),
     finance,
     notes: wordsOf(s).notes,
