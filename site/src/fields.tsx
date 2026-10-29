@@ -433,3 +433,58 @@ export function useKept<T>(tool: string, s: T, set: (s: T) => void, blank: T) {
 export const HomeCaseNote = ({ on }: { on: boolean }) => on ? (
   <p role="status" data-testid="home-case" class="mt-2 text-sm font-medium text-ink">Filled with the fictional case from the home page. Every figure is an example: change each to your own.</p>
 ) : null;
+
+/**
+ * The start of every tool, the same on all four (UXR5b; UXR1's S16 and P11): the worked example, which fills the tool
+ * with its fictional case (each tool's home-case.ts, the CMA's own example), and Clear all, one tap, with an Undo until
+ * the next answer. `also` runs on both, for what the tool keeps beside its answers (a plan's marks, a check).
+ */
+export function useStart<T>(pre: string, s: T, set: (s: T) => void, blank: () => T, example?: () => T, also?: () => void) {
+  const [cleared, setCleared] = useState<{ s: T; filled: boolean }>(), [filled, setFilled] = useState(false);
+  const typed = JSON.stringify(s) !== JSON.stringify(blank());
+  useEffect(() => { if (typed) setCleared(undefined); }, [typed]);
+  const focus = (id: string) => requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-testid="${pre}-${id}"]`)?.focus());
+  return {
+    pre, typed, filled: filled && typed, undoable: !!cleared && !typed,
+    fill: example && (() => { set(example()); setFilled(true); also?.(); }),
+    clear: () => { setCleared({ s, filled }); set(blank()); setFilled(false); also?.(); focus('clear-undo'); },
+    undo: () => { if (cleared) { set(cleared.s); setFilled(cleared.filled); } setCleared(undefined); focus('clear'); },
+  };
+}
+export type Start = ReturnType<typeof useStart>;
+/** A text link that is a button, 44 px tall (the worked example, a tool's other way in): one filled button a screen stays. */
+export const LINK_BUTTON = 'inline-flex min-h-11 items-center font-medium text-link underline underline-offset-4';
+
+/** The note on a fictional case while one fills the tool (P11): under the start line, or atop the answer once folded. */
+export const StartNotes = ({ c, home }: { c: Start; home?: boolean }) => <>
+  <HomeCaseNote on={!!home && c.typed && !c.filled} />
+  {c.filled && <p role="status" data-testid="example-case" class="mt-2 text-sm font-medium text-ink">Filled with a fictional worked example. Every figure is an example: change each to your own.</p>}
+</>;
+
+/** Under the tool's lead (S16): the worked example, the tool's other way in (`children`), Clear all or its Undo, and the
+ * notes while the answers are open; folded, the tool puts StartNotes atop its answer, where they stay in view. */
+export function StartLine({ c, home, fold, children }: { c: Start; home?: boolean; fold?: boolean; children?: ComponentChildren }) {
+  return <div data-testid={`${c.pre}-start`}>
+    <div class="mt-2 flex flex-wrap items-center gap-x-5 text-sm">
+      {c.fill && <button type="button" data-testid={`${c.pre}-example`} class={LINK_BUTTON} onClick={c.fill}>Fill with the worked example</button>}
+      {children}
+      {c.typed ? <button type="button" data-testid={`${c.pre}-clear`} class={LINK_BUTTON} onClick={c.clear}>Clear all</button>
+        : c.undoable && <p role="status" class="flex items-center gap-3 text-ink">Cleared.
+          <button type="button" data-testid={`${c.pre}-clear-undo`} class={BUTTON} onClick={c.undo}>Undo</button></p>}
+    </div>
+    {!fold && <StartNotes c={c} home={home} />}
+  </div>;
+}
+
+/**
+ * The one closed "More options", under the last question of the default path on every tool (UXR5b; UXR1's S19, D-UX-12):
+ * what it holds in a few words beside the name. `open` and `onToggle` for a tool that opens it from a link.
+ */
+export function MoreOptions(p: { what: string; open?: boolean; onToggle?: (open: boolean) => void; children: ComponentChildren; class?: string }) {
+  return <details id="more-options" open={p.open} onToggle={p.onToggle && ((e) => p.onToggle?.((e.currentTarget as HTMLDetailsElement).open))} class={p.class ?? 'mt-12'}>
+    <summary class={MORE}>More options<span class="ml-1 font-normal text-ink-muted">: {p.what}</span></summary>
+    <div class="pt-2 pb-6">{p.children}</div>
+  </details>;
+}
+/** The summary's look, shared with the estimate's page, whose More options is its own island (pages/estimate.astro). */
+export const MORE = 'flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link';

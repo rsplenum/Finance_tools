@@ -13,12 +13,13 @@
 import { questionsLeft } from '../verdict';
 import { Fragment } from 'preact';
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, toAnswer, useAnswerPlace, InAppNote, useHomeCase, HomeCaseNote, useKept, KeptLine } from '../fields';
+import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, toAnswer, useAnswerPlace, InAppNote, useHomeCase, useKept, KeptLine, useStart, StartLine, StartNotes, LINK_BUTTON } from '../fields';
 import { ESTIMATE_HOME } from './home-case';
 import { AnswersColumn, foldGrid, SeeAnswer, useFold, type AnswerGroup } from '../Fold';
 import { printable } from '../doc/pdf';
 import { BRAND_NOTICE } from '../site';
 import { isoDate, save, type FileKind } from '../download';
+import { Downloads } from '../Downloads';
 import { sharePlan } from './shared';
 import { billDoc, billFileName, planDoc, planDocNeeds, planDocStatus, planFileName } from './plan-document';
 import {
@@ -57,10 +58,21 @@ const SHARE_COLOR: Record<string, string> = {
   passage: 'bg-share-passage', walls: 'bg-share-walls',
 };
 
+/** The typed quotation, the estimate's More options at the foot of the page (its own island): opened, and its first box in focus (UXR1's P12). */
+function toTyped(e: Event) {
+  const d = document.getElementById('typed-path') as HTMLDetailsElement | null;
+  if (!d) return;
+  e.preventDefault();
+  d.open = true;
+  requestAnimationFrame(() => d.querySelector<HTMLElement>('summary')?.focus());
+  d.scrollIntoView();
+}
+
 export function PlanEstimate() {
   const [s, setS] = useState<PlanState>(EMPTY_PLAN);
   const home = useHomeCase(setS, () => ESTIMATE_HOME);
   useKept('plan', s, setS, EMPTY_PLAN);
+  const c = useStart('pl', s, setS, () => EMPTY_PLAN, () => ESTIMATE_HOME, () => setUndo(null));
   const update: Update = (f) => setS(f);
   const p = useMemo(() => planPreview(s), [s]);
   const place = useAnswerPlace('pl-result');
@@ -91,10 +103,11 @@ export function PlanEstimate() {
   // From 1024 px the questions and the sections stand left and the answer panel right (UX8, D-UX-106); folded, the rail
   // stands left and the answer and the sections take the rest. One tree folded or not (GOTCHAS, folding).
   return <div class={foldGrid(f, 'lg:grid lg:grid-cols-tool lg:gap-x-12')}>
-    <AnswersColumn f={f} pre="pl" groups={() => (v ? railOf(s, v) : [])} summary={v?.summary} rows={3}
-      unfolded={<><HomeCaseNote on={home} /><KeptLine />{questions}</>}>{questions}</AnswersColumn>
+    <AnswersColumn f={f} pre="pl" groups={() => (v ? railOf(s, v) : [])} summary={v?.summary} rows={3} start={<>{!f.fold && <KeptLine />}<StartLine c={c} home={home} fold={f.fold}>
+      <a href="#typed-path" data-testid="pl-to-typed" class={LINK_BUTTON} onClick={toTyped}>Have a contractor’s quotation?</a></StartLine></>}
+      unfolded={questions}>{questions}</AnswersColumn>
     {/* The answer as paper, there from load as its outline, and the one sheet with a shadow (docs/DESIGN-SITE.md, tool pages). */}
-    <div class={f.fold ? 'lg:col-start-2 lg:row-start-1' : 'lg:col-start-2 lg:row-start-1 lg:row-end-3'}>{f.fold && <HomeCaseNote on={home} />}<section id="pl-result" aria-labelledby="pl-result-h" class={f.fold ? 'mt-4' : 'answer-panel mt-6 lg:mt-4'}>
+    <div class={f.fold ? 'lg:col-start-2 lg:row-start-1' : 'lg:col-start-2 lg:row-start-1 lg:row-end-3'}>{f.fold && <StartNotes c={c} home={home} />}<section id="pl-result" aria-labelledby="pl-result-h" class={f.fold ? 'mt-4' : 'answer-panel mt-6 lg:mt-4'}>
       <h2 id="pl-result-h" tabIndex={-1} class="sr-only text-section">The estimate</h2>
       <div class="paper shadow-paper rounded-card p-3 sm:p-6">{v ? <Answer v={v} toLevel={toLevel} /> : <Outline p={p} />}</div>
     </section></div>
@@ -604,10 +617,6 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
   const f = s.doc, set = (patch: Partial<PlanFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
   const english = (t: string) => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
   const own = planDocNeeds(f);
-  const go = (kind: FileKind) => {
-    const now = new Date();
-    save(planDoc(s, p, isoDate(now)), kind, planFileName(s, p, kind), now);
-  };
   const bill = (kind: FileKind) => {
     const now = new Date();
     save(billDoc(s, p, isoDate(now)), kind, billFileName(s, kind), now);
@@ -615,7 +624,7 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
   const field = (id: keyof PlanFacts, label: string, hint?: string) =>
     <TextField id={`fld-pl-${id}`} label={label} hint={hint} value={f[id]} said={english(f[id])} invalid={!!english(f[id])} onCommit={(t) => set({ [id]: t })} />;
   return <Section id="pl-download" title="Download the planning estimate">
-    <p class={`mt-2 ${HINT}`}>A PDF for the lender, with Excel and Word copies to edit, made in your browser: every item and what the estimate assumes.</p>
+    <p class={`mt-2 ${HINT}`}>A PDF for the lender, Excel and Word copies to edit, made in your browser: every item and what it assumes.</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       {field('owner', 'Owner’s name')}
       {field('property', 'Property’s address')}
@@ -625,11 +634,7 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
     <div class="mt-5">
       <p data-testid="pl-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{planDocStatus(s, p)}</p>
       {own.length > 0 && <ul data-testid="pl-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
-      <div class="mt-3 flex w-fit flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
-        <button type="button" data-testid="pl-download-pdf" class={FILLED} onClick={() => go('pdf')}>Download PDF</button>
-        <button type="button" data-testid="pl-download-xlsx" class={BUTTON} onClick={() => go('xlsx')}>Download Excel</button>
-        <button type="button" data-testid="pl-download-docx" class={BUTTON} onClick={() => go('docx')}>Download Word</button>
-      </div>
+      <Downloads pre="pl" doc={(today) => planDoc(s, p, today)} name={(kind) => planFileName(s, p, kind)} />
       <InAppNote id="pl-in-app" />
     </div>
     <div class="mt-5">

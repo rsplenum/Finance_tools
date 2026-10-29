@@ -223,6 +223,9 @@ const caseRSimple = async (page) => {
 // Fictional case R (tests/plan.test.ts, scripts/site-check.mjs) in expert mode, every fact but the repayment unless `repayment`.
 const caseR = async (page, repayment = true) => {
   await page.check('#fld-borrower-firm');
+  // The mode sits under More options (UXR5b, S12).
+  const more = page.locator('#more-options');
+  if (!(await more.evaluate((d) => d.open))) await more.locator(':scope > summary').click();
   await page.check('#fld-mode-expert');
   await page.check('#fld-salesBy-typed');
   for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-furniture', '2 L'], ['#fld-cost-preliminary', '1 L'],

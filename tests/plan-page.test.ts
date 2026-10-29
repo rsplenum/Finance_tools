@@ -278,7 +278,7 @@ describe('the planning estimate to download', () => {
   const p = planPreview(s), doc = planDoc(s, p, TODAY)!, lines = docText(doc).split('\n');
   it('page 1: the title by the kind, the facts, the abstract by section and the total in figures and words, signed', () => {
     expect(lines.slice(3, 11)).toEqual([
-      'Estimate of cost of renovation', `Planning estimate prepared with ${SITE_NAME} on 03-10-2026.`,
+      'Estimate of cost of renovation', 'Planning estimate, 03-10-2026.',
       'Owner: Asha Rao', 'Property: Flat 4, Example Towers, Pune', 'Work: Repair or renovate, flat, 2 BHK', 'Carpet area: 1,000 sq ft (92.9 sq m)', 'City: Pune', 'Level: Basic',
     ]);
     expect(lines).toContain(`Total estimated cost | ${p.view!.total}`);

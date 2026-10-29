@@ -72,7 +72,7 @@ export function planDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
     ],
   };
   const blocks: Block[] = [
-    { kind: 'title', text: v.title, sub: `Planning estimate prepared with ${SITE_NAME} on ${dmy(today)}.` },
+    { kind: 'title', text: v.title, sub: `Planning estimate, ${dmy(today)}.` }, // the site's name once, in the footer (UXR1's P7)
     { kind: 'facts', lines: facts },
   ];
   if (needs.length) blocks.push({ kind: 'box', title: `Provisional: ${needs.length} still needed`, items: needs });
@@ -189,7 +189,7 @@ export function billDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
     ...(owner ? { author: owner } : {}),
     creator: SITE_NAME,
     parts: [{ name: 'Bill of quantities', blocks: [
-      { kind: 'title', text: 'Bill of quantities', sub: `For quotations: ${v.title.toLowerCase()}. Prepared with ${SITE_NAME} on ${dmy(today)}.` },
+      { kind: 'title', text: 'Bill of quantities', sub: `For quotations: ${v.title.toLowerCase()}, ${dmy(today)}.` },
       { kind: 'facts', lines: facts },
       { kind: 'text', text: `Please quote a rate for supplying and fixing each item, with its wastage, and the amount for its quantity, and say whether your rates include GST. ${branded(v) ? 'Where brands are named, any make of the same quality will do: write the make you offer.' : 'Write the make you offer.'} Leave a line blank if you do not quote for it.` },
       ...brandNotice(v, BRAND_NOTICE_SHORT),
