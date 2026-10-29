@@ -132,7 +132,7 @@
       "before": 66,
       "shown": 1024,
       "all": 1523,
-      "plan": 1494,
+      "plan": 1500,
       "long": 0,
       "abbr": 8,
       "questions": 22,
@@ -1725,7 +1725,8 @@
     { "page": "/cma/", "count": "plan", "from": 2540, "to": 2542, "why": "D-UX-248", "date": "2026-10-29" },
     { "page": "/dscr/", "count": "shown", "from": 1026, "to": 1028, "why": "D-UX-248", "date": "2026-10-29" },
     { "page": "/dscr/", "count": "all", "from": 3538, "to": 3540, "why": "D-UX-248", "date": "2026-10-29" },
-    { "page": "/dscr/", "count": "plan", "from": 2038, "to": 2040, "why": "D-UX-248", "date": "2026-10-29" }
+    { "page": "/dscr/", "count": "plan", "from": 2038, "to": 2040, "why": "D-UX-248", "date": "2026-10-29" },
+    { "page": "/project-report/", "count": "plan", "from": 1494, "to": 1500, "why": "D-UX-253", "date": "2026-10-29" }
   ],
   "fontProbe": 320.2
 }

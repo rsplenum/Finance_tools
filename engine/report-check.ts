@@ -14,7 +14,10 @@ export interface ReportCheckIn {
   cost: Record<string, number>; promoter: number; subsidy: number; unsecured: number; limit: number;
   /** A full year's sales at each year's rate (typed), or the drivers to work it out afresh; the months of sales a year. */
   run: number[]; months: number[];
-  drivers?: { capacity?: number; price?: number; products?: { unitsMonth: number; price: number }[]; utilisationPct: number[]; priceGrowthPct: number };
+  /** `fullAt`: the year (from 0) after which the price grows, the new line's last typed use in an expansion, else 0. */
+  drivers?: { capacity?: number; price?: number; products?: { unitsMonth: number; price: number }[]; utilisationPct: number[]; priceGrowthPct: number; fullAt?: number };
+  /** An expansion's sales today (a full first year) and their growth: sold every month of each year, beside the new line. */
+  today?: { sales: number; growthPct: number };
   variablePct: number; fixed: number[]; days: { stock: number; debtors: number; creditors: number };
   pat: number[]; tlInterest: number[]; wcInterest: number[];
   /** The guarantee fee a year, a finance cost (none without a guarantee). */
@@ -35,10 +38,12 @@ export function reportCheck(x: ReportCheckIn): ReportCheckYear[] {
       depreciation += c * r * Math.pow(1 - r, k);
       netBlock += c * Math.pow(1 - r, k + 1);
     }
-    // By the drivers: each product's units a year at the year's use, times its price that year, summed; else as typed.
-    const d = x.drivers, priced = (units: number, price: number) => units * (d as NonNullable<typeof d>).utilisationPct[k] / 100 * price * (1 + (d as NonNullable<typeof d>).priceGrowthPct / 100) ** k;
-    const run = !d ? x.run[k] : d.products ? d.products.reduce((t, p) => t + priced(p.unitsMonth * 12, p.price), 0) : priced(d.capacity as number, d.price as number);
-    const sales = (run * x.months[k]) / 12, runVariable = run * (x.variablePct / 100);
+    // By the drivers: each product's units a year at the year's use, times its price that year, summed; else as typed. An
+    // expansion adds today's sales, compounded afresh, for the whole year.
+    const d = x.drivers, priced = (units: number, price: number) => units * (d as NonNullable<typeof d>).utilisationPct[k] / 100 * price * (1 + (d as NonNullable<typeof d>).priceGrowthPct / 100) ** Math.max(0, k - (d?.fullAt ?? 0));
+    const line = !d ? x.run[k] : d.products ? d.products.reduce((t, p) => t + priced(p.unitsMonth * 12, p.price), 0) : priced(d.capacity as number, d.price as number);
+    const today = x.today ? x.today.sales * (1 + x.today.growthPct / 100) ** k : 0, run = today + line;
+    const sales = today + (line * x.months[k]) / 12, runVariable = run * (x.variablePct / 100);
     const stock = (x.days.stock / 365) * runVariable, debtors = (x.days.debtors / 365) * run, creditors = (x.days.creditors / 365) * runVariable;
     const netWorth = x.promoter + x.subsidy + profits, termLoan = debt.get(fy) ?? 0, left = prelim * Math.max(0, 1 - (k + 1) / n);
     const cash = netWorth + x.unsecured + termLoan + x.limit + creditors - netBlock - left - stock - debtors;

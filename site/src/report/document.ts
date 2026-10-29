@@ -99,12 +99,13 @@ function entered(s: ReportState): [string, string][] {
   if (s.collateral.trim()) pairs.push(['Collateral: market value', amount(s.collateral)]);
   if (s.salesBy === 'typed') pairs.push(['Sales in a full first year', `${amount(s.sales)}, growing ${plainOf(s.salesGrowth)}% a year`]);
   else {
+    if (s.salesBy === 'expansion') pairs.push(['Today\'s sales in a full first year', `${amount(s.sales)}, growing ${plainOf(s.salesGrowth)}% a year`]);
     for (const pr of s.products) {
       const u = soldBy(pr.unit);
       pairs.push([`Sales: ${pr.name.trim()}`, `${pr.units.trim()} ${u.many} a month at full running, at Rs. ${tidyAmount(pr.price)} ${u.per}`]);
     }
-    pairs.push(['The prices', `Growing ${plainOf(s.priceGrowth)}% a year`]);
-    pairs.push(['Use of the capacity', `${s.utilisation.split(/[,\s]+/).filter(Boolean).join('%, ')}% by year from the first sales`]);
+    pairs.push(['The prices', `Growing ${plainOf(s.priceGrowth)}% a year${s.salesBy === 'expansion' ? ' once the new line is full' : ''}`]);
+    pairs.push([s.salesBy === 'expansion' ? 'The new line\'s use' : 'Use of the capacity', `${s.utilisation.split(/[,\s]+/).filter(Boolean).join('%, ')}% by year from the first sales`]);
   }
   pairs.push(['Months from the loan to the first sales', `${plainOf(s.monthsToStart)}`]);
   pairs.push(['Materials and other variable costs', `${plainOf(s.variablePct)}% of sales`]);

@@ -40,8 +40,9 @@ export interface ReportState {
   subsidy: string; unsecured: string;
   /** The collateral's market value (D-UX-52), when property backs the loan. */
   collateral: string;
-  /** Sales from one line per product, its use and the prices (the default, D-UX-109), or typed in expert mode. */
-  salesBy: 'drivers' | 'typed'; products: ProductRow[]; utilisation: string; priceGrowth: string; monthsToStart: string;
+  /** Sales from one line per product, its use and the prices (the default, D-UX-109), or typed in expert mode, or in expert
+   * mode today's sales (`sales`, `salesGrowth`) beside a new line by its products (D-UX-251 (a)). */
+  salesBy: 'drivers' | 'typed' | 'expansion'; products: ProductRow[]; utilisation: string; priceGrowth: string; monthsToStart: string;
   scheme: Scheme; category?: Category; area?: Area; activity?: Activity;
   /** PMEGP's conditions confirmed; on Mudra, a Tarun loan repaid (only then Tarun Plus, above Rs. 10 lakh). */
   pmegpConfirmed?: boolean; tarunRepaid?: boolean;
@@ -143,7 +144,7 @@ export function assumptionsOf(s: ReportState) {
     guaranteeFee: !!g && own, guaranteeFirst: !!g, cgtmseOther: g === 'cgtmse' && own, cgtmseRate: g === 'cgtmse' && own,
     cgtmseWc: g === 'cgtmse' && limit, cgtmsePmegp: g === 'cgtmse' && s.scheme === 'pmegp', cgtmseHybrid: g === 'cgtmse' && !!collateralText(s).trim(),
   };
-  return ASSUMPTIONS.filter((a) => (shows[a.id] ?? true) && ('simple' in a ? simple(s) : true) && (s.salesBy === 'drivers' || (a.id !== 'utilisation' && a.id !== 'price'))
+  return ASSUMPTIONS.filter((a) => (shows[a.id] ?? true) && ('simple' in a ? simple(s) : true) && (s.salesBy !== 'typed' || (a.id !== 'utilisation' && a.id !== 'price'))
     && (a.id !== 'days' || days.length > 0) && (a.id !== 'utilisation' || s.utilisation === EMPTY.utilisation) && (a.id !== 'price' || s.priceGrowth === EMPTY.priceGrowth))
     .map((a) => (a.id === 'days' && days.length < 3 ? { ...a, shown: days.map((k) => `${k} ${EMPTY.days[k]} days`).join(', ') }
       : a.id === 'simpleFunds' && s.scheme === 'pmegp' ? { ...a, shown: 'No unsecured loans' } : a));
@@ -229,6 +230,7 @@ export function changedOf(s: ReportState): string[] {
   if (s.loan.disbursed.trim()) out.push(`The loan first drawn in ${s.loan.disbursed}`);
   if (s.salesBy === 'typed') out.push('Sales typed by year, in place of the products');
   else {
+    if (s.salesBy === 'expansion') out.push('Today\'s sales beside a new line');
     if (s.utilisation !== EMPTY.utilisation) out.push(`Use of the capacity by year: ${s.utilisation}%`);
     if (s.priceGrowth !== EMPTY.priceGrowth) out.push(`Prices growing ${s.priceGrowth}% a year`);
   }
@@ -310,7 +312,8 @@ function fieldsOf(s: ReportState): ReportInput {
     },
     subsidy: s.scheme === 'pmegp' ? undefined : opt(s.subsidy), unsecured: opt(s.unsecured), collateral: opt(collateralText(s)),
     salesBy: s.salesBy, monthsToStart: plainOf(s.monthsToStart),
-    ...(s.salesBy === 'typed' ? { sales: amountOf(s.sales), salesGrowthPct: plainOf(s.salesGrowth) } : {
+    ...(s.salesBy !== 'drivers' ? { sales: amountOf(s.sales), salesGrowthPct: plainOf(s.salesGrowth) } : {}),
+    ...(s.salesBy === 'typed' ? {} : {
       products: s.products.map((p) => ({ name: p.name, unitsMonth: plainOf(p.units), price: amountOf(p.price), unit: soldBy(p.unit).id })),
       priceGrowthPct: plainOf(s.priceGrowth),
       utilisationPct: s.utilisation.split(/[,\s]+/).filter(Boolean).map((t) => plainOf(t) ?? NaN),
@@ -386,13 +389,15 @@ export function viewOf(r: Report): ReportView {
       { label: soldBy(ys[0].products?.[i].unit).sold, values: ys.map((y) => whole((y.products as NonNullable<ReportYear['products']>)[i].units)), n: ys.map((y) => (y.products as NonNullable<ReportYear['products']>)[i].units), fig: 'ratio' as const },
       { label: `Price ${soldBy(ys[0].products?.[i].unit).per}`, values: ys.map((y) => whole((y.products as NonNullable<ReportYear['products']>)[i].price)), n: ys.map((y) => (y.products as NonNullable<ReportYear['products']>)[i].price) },
       line(ys, 'Sales', (y) => (y.products as NonNullable<ReportYear['products']>)[i].sales)]),
-    line(ys, 'Total sales', (y) => y.sales, 'total')],
+    ...(ys[0].today !== undefined ? [line(ys, 'Today\'s sales', (y) => y.today as number)] : []), line(ys, 'Total sales', (y) => y.sales, 'total')],
   } : undefined;
   const pl: ViewTable = {
     id: 'pl', title: 'Projected profit and loss', first: 'Rupees', columns: years,
     rows: [
-      ...(ys.some((y) => y.months < 12) ? [{ label: 'Months of sales', values: ys.map((y) => String(y.months)), n: ys.map((y) => y.months), fig: 'ratio' as const }] : []),
-      ...(ys.some((y) => y.utilisationPct !== undefined) ? [ratios(ys, 'Use of the capacity', (y) => y.utilisationPct, (x) => (x === undefined ? '—' : `${x}%`))] : []),
+      ...(ys.some((y) => y.months < 12) ? [{ label: ys[0].today !== undefined ? 'Months of the new line\'s sales' : 'Months of sales', values: ys.map((y) => String(y.months)), n: ys.map((y) => y.months), fig: 'ratio' as const }] : []),
+      ...(ys.some((y) => y.utilisationPct !== undefined) ? [ratios(ys, ys[0].today !== undefined ? 'The new line\'s use' : 'Use of the capacity', (y) => y.utilisationPct, (x) => (x === undefined ? '—' : `${x}%`))] : []),
+      // An expansion's sales in two (D-UX-251 (a)): today's business, the whole year, and the new line, for its months.
+      ...(ys[0].today !== undefined ? [line(ys, 'Today\'s sales', (y) => y.today as number), line(ys, 'The new line\'s sales', (y) => y.line as number)] : []),
       line(ys, 'Sales', (y) => y.sales), ...costRows(ys),
       line(ys, 'Profit before interest, depreciation and tax', (y) => y.pbdit, 'total'),
       line(ys, 'Less: depreciation', (y) => y.depreciation), line(ys, 'Less: preliminary expenses written off', (y) => y.preliminary),
@@ -860,7 +865,7 @@ export function applyPlan(s: ReportState, l: Levers): { s: ReportState; changes:
     sales: () => fig(y.sales), utilisation: () => (y.utilisationPct ?? []).join(', '), collateral: () => fig(y.collateral),
     'loan.moratoriumMonths': () => String(y.loan.moratoriumMonths), 'loan.instalments': () => String(y.loan.instalments),
   };
-  const changes = WRITES.filter((w) => w.by.some((id) => l[id]) && (w.key === 'sales' ? s.salesBy === 'typed' : w.key !== 'utilisation' || s.salesBy === 'drivers'))
+  const changes = WRITES.filter((w) => w.by.some((id) => l[id]) && (w.key === 'sales' ? s.salesBy === 'typed' : w.key !== 'utilisation' || s.salesBy !== 'typed'))
     .map((w) => ({ key: w.key, field: (simple(s) && SIMPLE_FIELD[w.key]) || w.field, label: w.label, was: get(s, w.key), now: text[w.key]() })).filter((c) => !same(c.was, c.now));
   return { s: changes.reduce((t, c) => put(t, c.key, c.now), s), changes };
 }
@@ -904,10 +909,11 @@ export function checkOf(s: ReportState, p: ReportPreview): CheckGroup[] {
     ...(period ? [{ label: 'Loan period', value: period }] : []),
     { label: 'How it is repaid', value: labelIn(REPAYMENT_CHOICES, way) },
   ];
-  const use = table('pl')?.rows.find((r) => r.label === 'Use of the capacity');
+  const use = table('pl')?.rows.find((r) => r.label === 'Use of the capacity' || r.label === 'The new line\'s use');
   const sales: CheckLine[] = x.salesBy === 'typed'
     ? [{ label: 'Sales in a full first year', value: rs(x.sales) }, { label: 'Sales: growth a year', value: num(x.salesGrowthPct, '%') }]
-    : [...(x.products ?? []).map((r, i) => {
+    : [...(x.salesBy === 'expansion' ? [{ label: 'Today\'s sales in a full first year', value: rs(x.sales) }, { label: 'Today\'s sales: growth a year', value: num(x.salesGrowthPct, '%') }] : []),
+      ...(x.products ?? []).map((r, i) => {
       const u = soldBy(r.unit);
       return { label: r.name?.trim() || `Line ${i + 1}`, value: `${num(r.unitsMonth, ` ${u.many}`)} a month at full running, at ${rs(r.price)} ${u.per}` };
     }), ...(use ? [{ label: 'Use of the capacity', value: byYear(use.values, v.years) }] : [])];

@@ -62,8 +62,11 @@ export interface ReportInput {
   unsecured?: number;
   /** Sales by the capacity (units a year) × its use (% by year of sales, the last repeating) × the price a unit, growing
    * by `priceGrowthPct` a year; or, with `salesBy: 'typed'`, a full year's sales and their growth a year (%). `products`,
-   * one line each (units a month at full running and the price), take the place of the capacity and the price. */
-  salesBy?: 'drivers' | 'typed';
+   * one line each (units a month at full running and the price), take the place of the capacity and the price. With
+   * `salesBy: 'expansion'` (D-UX-251 (a)), a business already selling adds a new line: today's sales (`sales` in a full
+   * first year, growing `salesGrowthPct` a year, sold every month of each year) plus the line by the drivers, its price
+   * growing only once it is full, from the year after its use reaches the last typed. */
+  salesBy?: 'drivers' | 'typed' | 'expansion';
   capacity?: number; price?: number; products?: ProductInput[]; utilisationPct?: number[]; priceGrowthPct?: number;
   sales?: number; salesGrowthPct?: number;
   /** Months from the term loan's first draw to the first sales (0 if at once). */
@@ -94,6 +97,8 @@ export interface ReportYear {
   fy: string;
   /** Months of sales in the year, the use of the capacity and the sales by product (by drivers only). */
   months: number; utilisationPct?: number; products?: ProductYear[];
+  /** In an expansion, the year's sales split: today's business (a whole year) and the new line (its months); they add up to `sales`. */
+  today?: number; line?: number;
   sales: number; variable: number; fixed: number;
   /** The variable and fixed costs by head, when they were given by head: they add up to `variable` and `fixed`. */
   heads?: { variable: HeadAmount[]; fixed: HeadAmount[] };
@@ -176,10 +181,10 @@ function splitOf<K extends string>(h: Partial<Record<K, number>> | undefined, si
  * it needs is missing. */
 function firstRun(x: ReportInput): number | undefined {
   if (x.salesBy === 'typed') return isNum(x.sales) ? x.sales : undefined;
-  const u = x.utilisationPct?.[0];
+  const u = x.utilisationPct?.[0], today = x.salesBy === 'expansion' ? x.sales : 0;
   const lines = x.products ? x.products.map((p) => [12 * (p.unitsMonth as number), p.price as number]) : [[x.capacity as number, x.price as number]];
   const full = lines.reduce((t, [n, p]) => t + n * p, 0);
-  return isNum(full) && isNum(u) ? (full * u) / 100 : undefined;
+  return isNum(full) && isNum(u) && isNum(today) ? today + (full * u) / 100 : undefined;
 }
 
 /** The working-capital limit worked out (D-UX-112): the lower of the need by the second method of lending (75% of the
@@ -209,26 +214,34 @@ export function reportNeeds(x: ReportInput): string[] {
   if (!(isNum(l.instalments) && l.instalments > 0)) needs.push('The term loan: the number of instalments');
   if (!l.frequency || !l.style) needs.push('The term loan: how it is repaid');
   for (const [v, what] of [[x.subsidy, 'Capital subsidy'], [x.unsecured, 'Unsecured loans']] as const) if (v !== undefined && !(isNum(v) && v >= 0)) needs.push(`${what}: a figure of 0 or more`);
+  const expansion = x.salesBy === 'expansion';
   if (x.salesBy === 'typed') {
     if (!isNum(x.sales)) needs.push('Sales in a full first year');
     if (!isNum(x.salesGrowthPct)) needs.push('Sales: growth a year (%)');
-  } else {
+  }
+  if (expansion) {
+    if (!(isNum(x.sales) && x.sales >= 0)) needs.push('Today\'s sales in a full first year, 0 or more');
+    if (!isNum(x.salesGrowthPct)) needs.push('Today\'s sales: growth a year (%)');
+  }
+  if (x.salesBy !== 'typed') {
+    // An expansion asks the same of its new line, in the line's words.
+    const sold = expansion ? 'The new line, product' : 'Sales, line';
     if (x.products) {
-      if (!x.products.length) needs.push('Sales: at least one product or service');
+      if (!x.products.length) needs.push(expansion ? 'The new line: at least one product or service' : 'Sales: at least one product or service');
       x.products.forEach((p, k) => {
-        if (!p.name?.trim()) needs.push(`Sales, line ${k + 1}: what is sold`);
+        if (!p.name?.trim()) needs.push(`${sold} ${k + 1}: what is sold`);
         // In the line's own unit (OR6) once it has one: "how many kg a month", "the price a kg".
         const u = p.unit ? soldBy(p.unit) : undefined;
-        if (!(isNum(p.unitsMonth) && p.unitsMonth > 0)) needs.push(`Sales, line ${k + 1}: how many ${u ? `${u.many} ` : ''}a month at full running`);
-        if (!(isNum(p.price) && p.price > 0)) needs.push(`Sales, line ${k + 1}: the price ${u ? u.per : 'a unit'}`);
+        if (!(isNum(p.unitsMonth) && p.unitsMonth > 0)) needs.push(`${sold} ${k + 1}: how many ${u ? `${u.many} ` : ''}a month at full running`);
+        if (!(isNum(p.price) && p.price > 0)) needs.push(`${sold} ${k + 1}: the price ${u ? u.per : 'a unit'}`);
       });
     } else {
-      if (!(isNum(x.capacity) && x.capacity > 0)) needs.push('Capacity: the units the business can make or serve in a year');
-      if (!(isNum(x.price) && x.price > 0)) needs.push('Price a unit');
+      if (!(isNum(x.capacity) && x.capacity > 0)) needs.push(expansion ? 'The new line: the units it can make or serve in a year' : 'Capacity: the units the business can make or serve in a year');
+      if (!(isNum(x.price) && x.price > 0)) needs.push(expansion ? 'The new line: its price a unit' : 'Price a unit');
     }
     const u = x.utilisationPct ?? [];
-    if (!u.length || !u.every((p) => isNum(p) && p >= 0 && p <= 100)) needs.push('Use of the capacity by year (%), each 0 to 100');
-    if (!isNum(x.priceGrowthPct)) needs.push('The price: growth a year (%)');
+    if (!u.length || !u.every((p) => isNum(p) && p >= 0 && p <= 100)) needs.push(expansion ? 'The new line: its use by year (%), each 0 to 100' : 'Use of the capacity by year (%), each 0 to 100');
+    if (!isNum(x.priceGrowthPct)) needs.push(expansion ? 'The new line: its price\'s growth a year once full (%)' : 'The price: growth a year (%)');
   }
   if (!(isNum(x.monthsToStart) && Number.isInteger(x.monthsToStart) && x.monthsToStart >= 0)) needs.push('Months from the loan to the first sales (0 if at once)');
   if (x.scheme?.id === 'mudra' && isNum(l.amount) && isNum(x.wcLimit)) {
@@ -281,20 +294,25 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   if (!n || !isFy(first)) return { needs: ['Months from the loan to the first sales: sales would start after the loan is repaid'] };
   const months = fys.map((fy) => monthsOf(fy).filter((ym) => ym >= start).length);
   // A full year's sales at each year's rate, from the drivers or as typed; a year's own figure is a twelfth of its rate for
-  // each month of sales in it.
-  const drivers = x.salesBy !== 'typed', u = x.utilisationPct ?? [];
+  // each month of sales in it. In an expansion today's business sells every month of each year; only its new line starts
+  // late (D-UX-251 (a)).
+  const drivers = x.salesBy !== 'typed', expansion = x.salesBy === 'expansion', u = x.utilisationPct ?? [];
   const util = drivers ? fys.map((_, k) => u[Math.min(k, u.length - 1)]) : [];
   // The products as units a year at full running (the capacity is one line); their sales at full running add up.
   const lines = !drivers ? [] : x.products ? x.products.map((p) => ({ name: (p.name as string).trim(), perYear: 12 * (p.unitsMonth as number), price: p.price as number, unit: p.unit }))
     : [{ name: '', perYear: x.capacity as number, price: x.price as number, unit: undefined as string | undefined }];
-  const full = lines.reduce((t, l) => t + l.perYear * l.price, 0), grow = (k: number) => Math.pow(1 + (x.priceGrowthPct as number) / 100, k);
-  let runS: number[];
-  if (drivers) runS = util.map((p, k) => (full * grow(k) * p) / 100);
-  else {
-    const typed = series({ kind: 'grow', first: x.sales, pct: x.salesGrowthPct }, n, 'Sales', first);
+  // A new business's price grows from its second year of sales; a new line's only once full, from the year after its use
+  // reaches the last typed, so that its sales do not grow twice while it fills (D-UX-251 (a)).
+  const fullAt = expansion ? u.length - 1 : 0;
+  const full = lines.reduce((t, l) => t + l.perYear * l.price, 0), grow = (k: number) => Math.pow(1 + (x.priceGrowthPct as number) / 100, Math.max(0, k - fullAt));
+  const lineS = drivers ? util.map((p, k) => (full * grow(k) * p) / 100) : [];
+  let today: number[] = [];
+  if (!drivers || expansion) {
+    const typed = series({ kind: 'grow', first: x.sales, pct: x.salesGrowthPct }, n, expansion ? 'Today\'s sales' : 'Sales', first);
     if (!Array.isArray(typed)) return typed;
-    runS = typed;
+    today = typed;
   }
+  const runS = !drivers ? today : expansion ? lineS.map((s, k) => today[k] + s) : lineS;
   const costs = costsOf(x);
   const fixedS = series({ kind: 'grow', first: costs.fixedCosts, pct: x.fixedGrowthPct }, n, 'Fixed costs', first);
   if (!Array.isArray(fixedS)) return fixedS;
@@ -356,7 +374,9 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   // Profit before interest, depreciation and tax; depreciation on the written-down value, head by head.
   const wdv = new Map(HEADS.filter((h) => h.id !== 'preliminary').map((h) => [h.id, cost[h.id]]));
   const rows = fys.map((fy, k) => {
-    const sales = part(runS[k], k), variable = (sales * v) / 100, fixed = part(fixedS[k], k);
+    // An expansion's business runs all year: today's sales and the fixed costs whole, the new line for its months.
+    const line = expansion ? part(lineS[k], k) : 0, sales = expansion ? today[k] + line : part(runS[k], k), variable = (sales * v) / 100;
+    const fixed = expansion ? fixedS[k] : part(fixedS[k], k);
     let depreciation = 0;
     for (const h of HEADS) {
       if (h.id === 'preliminary') continue;
@@ -364,7 +384,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
       wdv.set(h.id, (wdv.get(h.id) as number) - d);
       depreciation += d;
     }
-    return { fy, sales, variable, fixed, pbdit: sales - variable - fixed, depreciation, preliminary: k < years ? prelimAll / years : 0, wcInterest: part((limit * wcRate) / 100, k), guaranteeFee: feeOf(fy) };
+    return { fy, ...(expansion ? { today: today[k], line } : {}), sales, variable, fixed, pbdit: sales - variable - fixed, depreciation, preliminary: k < years ? prelimAll / years : 0, wcInterest: part((limit * wcRate) / 100, k), guaranteeFee: feeOf(fy) };
   });
   const proj: ProjectionYear[] = rows.map((r) => ({
     fy: r.fy, pbdit: r.pbdit, assetIncome: 0, depreciation: r.depreciation, nonCash: r.preliminary, interestOther: r.wcInterest + r.guaranteeFee,
@@ -401,7 +421,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
       const units = (((l.perYear * util[k]) / 100) * months[k]) / 12, price = l.price * grow(k);
       return { name: l.name, units, price, sales: units * price, ...(l.unit ? { unit: l.unit } : {}) };
     }) : undefined;
-    if (byProduct && !money(byProduct.reduce((t, l) => t + l.sales, 0), r.sales)) byProductOk = false;
+    if (byProduct && !money(byProduct.reduce((t, l) => t + l.sales, 0), r.line ?? r.sales)) byProductOk = false;
     // The costs by head (D-UX-112): each side split in the shares typed, so the heads add up to the side's total.
     const heads = { variable: splitOf(x.costHeads?.variable, 'variable', r.variable), fixed: splitOf(x.costHeads?.fixed, 'fixed', r.fixed) };
     const headed = heads.variable.length + heads.fixed.length > 0;
@@ -425,7 +445,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     const interest = p.interestTL + r.wcInterest + r.guaranteeFee, currentAssets = lv.stock + lv.debtors;
     const security = netBlock + currentAssets, secured = tlLeft + limit;
     out.push({
-      fy: r.fy, months: months[k], ...(drivers ? { utilisationPct: util[k] } : {}), ...(byProduct ? { products: byProduct } : {}), sales: r.sales, variable: r.variable, fixed: r.fixed, ...(headed ? { heads } : {}), pbdit: r.pbdit, depreciation: r.depreciation, preliminary: r.preliminary,
+      fy: r.fy, months: months[k], ...(drivers ? { utilisationPct: util[k] } : {}), ...(byProduct ? { products: byProduct } : {}), ...(expansion ? { today: r.today, line: r.line } : {}), sales: r.sales, variable: r.variable, fixed: r.fixed, ...(headed ? { heads } : {}), pbdit: r.pbdit, depreciation: r.depreciation, preliminary: r.preliminary,
       tlInterest: p.interestTL, wcInterest: r.wcInterest, guaranteeFee: r.guaranteeFee, pbt: p.pbt, tax: p.tax, pat: p.pat,
       capital: promoter, subsidy, retained, netWorth, unsecured, termLoan: tlLeft, wcLoan: limit, creditors: lv.creditors, liabilities,
       grossBlock: fixedAssets, accumulated, netBlock, preliminaryLeft, stock: lv.stock, debtors: lv.debtors, cash, assets, flow,
@@ -450,7 +470,8 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   const check = reportCheck({
     cost: { ...cost, preliminary: prelimAll }, promoter, subsidy, unsecured, limit, run: runS, months, variablePct: v, fixed: rows.map((r) => r.fixed), days,
     ...(drivers ? { drivers: { ...(x.products ? { products: x.products.map((p) => ({ unitsMonth: p.unitsMonth as number, price: p.price as number })) } : { capacity: x.capacity as number, price: x.price as number }),
-      utilisationPct: util, priceGrowthPct: x.priceGrowthPct as number } } : {}),
+      utilisationPct: util, priceGrowthPct: x.priceGrowthPct as number, fullAt } } : {}),
+    ...(expansion ? { today: { sales: x.sales as number, growthPct: x.salesGrowthPct as number } } : {}),
     pat: plan.profit.map((p) => p.pat), tlInterest: plan.profit.map((p) => p.interestTL), wcInterest: rows.map((r) => r.wcInterest),
     fee: fys.map((fy) => guarantee?.years.find((y) => y.fy === fy)?.total ?? 0), loan: loan as LoanTerms, fys,
   });
