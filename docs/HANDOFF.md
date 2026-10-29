@@ -32,3 +32,4 @@ A row's session writes 1 to 4 straight into the shared docs (`docs/DECISIONS.md`
 | Date | Row | Budget | Actual |
 |---|---|---|---|
 | 29-10-2026 | OR11a (`or11a-status`), then its handoff (`or11a-handoff`) | M, about 120 steps | about 110 steps, one compaction |
+| 29-10-2026 | OR11a2 (`or11a2-cash`, PR #151) | S, about 60 steps | about 62 steps, no compaction |

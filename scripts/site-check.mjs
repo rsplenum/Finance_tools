@@ -1387,7 +1387,7 @@ if (touched('/project-report/')) {
   // Cash running out names its first year, the amount at its lowest (OR11a2, D-UX-247); a result, said by the verdict,
   // never a question left (OR11a); the document stays provisional.
   await expectText(page, v, 'rep-short', /^Cash runs out in 2026-27: Rs\. 49,07,813 short at its lowest, in 2030-31\./, 'cash running out');
-  await expectText(page, v, 'rep-misses-work', /^Does not work yet: \d+ ratios? short and cash runs out in 2026-27$/, 'OR11a2: the first year cash runs out in the verdict');
+  await expectText(page, v, 'rep-misses-work', /^Does not work yet: \d+ ratios? short and cash runs out in 2026-27\./, 'OR11a2: the first year cash runs out in the verdict');
   await expectText(page, v, 'rep-status', '3 questions left, for the document', 'the report with cash running out');
   await expectText(page, v, 'rep-misses', /^Misses \d+ of \d+ benchmarks: .*DSCR/, 'the DSCR below the level');
   await page.getByTestId('rep-viable').click();
@@ -1533,7 +1533,7 @@ for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/?case=home', { scheme: 'light' });
   await expectText(page, v, 'rep-status-go', 'check your figures before the download', 'OR11a: the check as its own step');
-  await expectText(page, v, 'rep-misses-work', /^Does not work yet: \d+ ratios? short and cash runs out in 20\d\d-\d\d$/, 'OR11a: cash running out in the verdict');
+  await expectText(page, v, 'rep-misses-work', /^Does not work yet: \d+ ratios? short and cash runs out in 20\d\d-\d\d\./, 'OR11a: cash running out in the verdict');
   if (await page.getByTestId('rep-fold').isVisible()) v('OR11a: the button "See the answer" shows on a phone');
   await page.evaluate(() => scrollTo(0, 0));
   const see = page.getByTestId('rep-answer-bar-see');
