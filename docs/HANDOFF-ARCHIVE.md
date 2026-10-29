@@ -266,3 +266,5 @@ Budget rows moved from HANDOFF on 18-10-2026 (UX6):
 - Budget lines moved from HANDOFF by OR11a's handoff, 29-10-2026:
 | 28-10-2026 | UXR5b (PR #147) | L, about 200 steps | 167 steps, two compactions |
 | 29-10-2026 | Merge #147; OR11's analysis and rows | S, about 60 steps | about 58 steps |
+| 29-10-2026 | OR11a (`or11a-status`), then its handoff (`or11a-handoff`) | M, about 120 steps | about 110 steps, one compaction |
+| 29-10-2026 | OR11a2 (`or11a2-cash`, PR #151) | S, about 60 steps | about 62 steps, no compaction |
