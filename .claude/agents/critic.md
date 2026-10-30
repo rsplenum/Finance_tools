@@ -14,6 +14,8 @@ How to review a page:
 
 Judge each state (empty, partly filled, provisional, error, result, short of the target with its plan, the download; on a page whose parts load or move as it scrolls, also the page scrolled through slowly and fast, and again once its motion has ended, measuring whether anything below jumps) against the principles, in this order: is the answer first; does the default path ask only the owner's fields; is each control beside the figure it changes; are labels on the chart or table; is there one accent and one filled button a screen; is a reset in reach; do the words read plainly; does anything carry no meaning.
 
+Three things the site check does not measure (UXA1): every hint can be typed on the keypad its field opens (`inputmode="decimal"` on an iPhone gives digits and a point, no comma, no letters); prose at 1280 stays within about 75 characters a line, notes at a line height of 1.5; fields for the borrower's own name, address, phone or e-mail carry the matching `autocomplete`, never `off`.
+
 Rank each finding:
 - **Blocker**: an accessibility failure (any measured WCAG A or AA defect), broken navigation, an unusable phone layout, or an answer that is wrong or hidden. Always a blocker, whatever its size.
 - **Significant**: slows or confuses a user on the default path; breaks a principle of DESIGN.md.
