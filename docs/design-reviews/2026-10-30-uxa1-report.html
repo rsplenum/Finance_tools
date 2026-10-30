@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UXA1 checklist trial</title>
+<style>
+:root{--paper:#fbfaf7;--sheet:#fff;--ink:#1d2350;--muted:#555b7d;--rule:#dcdde8;--sig:#8a5a00;--sig-soft:#fbf0d6;--pol:#2f5f8a;--pol-soft:#e6eff8;--ok:#2e6b3a;--ok-soft:#e5f2e7;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--paper:#15182b;--sheet:#1c2038;--ink:#e6e7f2;--muted:#a6a9c4;--rule:#33385a;--sig:#f2c46b;--sig-soft:#3a3018;--pol:#8ec0ee;--pol-soft:#1d2e44;--ok:#8fd19b;--ok-soft:#1e3324;color-scheme:dark}}
+:root[data-theme="dark"]{--paper:#15182b;--sheet:#1c2038;--ink:#e6e7f2;--muted:#a6a9c4;--rule:#33385a;--sig:#f2c46b;--sig-soft:#3a3018;--pol:#8ec0ee;--pol-soft:#1d2e44;--ok:#8fd19b;--ok-soft:#1e3324;color-scheme:dark}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:46rem;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:1.6rem;line-height:1.25;margin:0 0 4px}h2{font-size:1.2rem;margin:32px 0 8px}
+.sub{color:var(--muted);margin:0 0 24px}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;margin:12px 0}
+.tag{display:inline-block;font-size:.8rem;font-weight:600;border-radius:4px;padding:1px 8px;margin-right:6px}
+.sig{background:var(--sig-soft);color:var(--sig)}.pol{background:var(--pol-soft);color:var(--pol)}.ok{background:var(--ok-soft);color:var(--ok)}
+table{width:100%;border-collapse:collapse;font-size:.95rem}td,th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--rule);vertical-align:top}
+.wrap{overflow-x:auto}code{font-size:.9em;overflow-wrap:anywhere}
+</style>
+</head>
+<body>
+<main>
+<h1>Trying the UI/UX Pro Max checklist</h1>
+<p class="sub">UXA1, 30-10-2026. The skill's UX rules, checked against the four tools at 360 and 1280 px. Only what UXR1 and our site checks don't already cover. Nothing was installed in the repo.</p>
+
+<h2>Verdict: worth three lines, not a skill</h2>
+<p>The skill has 119 UX rules. About 75 apply to a website. Our site checks already enforce about 20 of those on every pull request: contrast, focus, 24 px targets, 44 px phone controls, Tab order, sticky band over the focus, 320 px reflow, reduced motion and axe. The tools passed every other rule that could be checked, apart from the three below. Its colours, fonts and styles were not used: for finance it suggests glassy panels on black, against <code>docs/DESIGN.md</code>.</p>
+<p><b>Recommendation:</b> keep nothing installed. Add the three checks below as three lines in the critic agent's list. That's all of the skill that turned out to be useful.</p>
+
+<h2>New findings (not in UXR1)</h2>
+
+<div class="card"><span class="tag sig">Significant</span><b>The hint asks for "5 L", but the phone keypad has no L.</b>
+<p>Every money field on all four tools opens the number keypad (<code>inputmode="decimal"</code>). The error hint says "Type 5,00,000 or 5 L". An iPhone's number keypad has only digits and a decimal point, with no comma and no letters. Android's usually has a comma but no letters. So on a phone, the hint suggests a format you can't type. Checked at 360 px on <code>/dscr/</code>, <code>/cma/</code>, <code>/project-report/</code> and <code>/estimate/</code> (the estimate's hint is "like 850", so it's fine).</p>
+<p><b>Fix (recommended):</b> keep the number keypad, because it's faster for most people, and change the hint to one a phone can type, such as "Type 500000; we'll write it as 5,00,000". The engine already accepts plain digits. <b>Other option:</b> drop the number keypad so "5 L" can be typed, but then every money field opens the letter keyboard. <b>Goes to:</b> UXR3 (one vocabulary), since it also sets the hint pattern (UXR1 P2).</p></div>
+
+<div class="card"><span class="tag pol">Polish</span><b>Notes run to 100–137 characters per line on a desktop.</b>
+<p>At 1280 px, the CMA's notes run 101, 104 and 137 characters per line, and the DSCR's and report's lines under the heading run about 87. The rule is 65–75. These are 14 px notes with a 20 px line height (1.43), below the rule's 1.5. Long, tight lines are harder to read.</p>
+<p><b>Fix:</b> cap prose at <code>max-w-prose</code> (65ch) inside the wide cards, and use a 1.5 line height for notes. <b>Goes to:</b> UXR5 or whichever row takes the CMA's desktop layout (UXR1 S17).</p></div>
+
+<div class="card"><span class="tag pol">Polish</span><b>The report's business name and address block the phone's autofill.</b>
+<p>On <code>/project-report/</code>, "Business's name", "Business's address", "What the business does" and "Prepared by" carry <code>autocomplete="off"</code>. A phone could fill the name and address from the borrower's saved details.</p>
+<p><b>Fix:</b> use <code>autocomplete="organization"</code> and <code>"street-address"</code> on those two fields. Leave the others off. <b>Goes to:</b> the next row that touches the report's form.</p></div>
+
+<h2>Checked and fine</h2>
+<div class="wrap"><table>
+<tr><th>Rule</th><th>What we saw</th></tr>
+<tr><td><span class="tag ok">Pass</span>Field text 16 px or more on a phone</td><td>All 170 fields. iPhone won't zoom in when a field is tapped.</td></tr>
+<tr><td><span class="tag ok">Pass</span>Error next to the field, linked and announced</td><td><code>aria-invalid</code>, <code>aria-describedby</code> on the error, and a live region on all four tools.</td></tr>
+<tr><td><span class="tag ok">Pass</span>Skip link</td><td>On all four tools.</td></tr>
+<tr><td><span class="tag ok">Pass</span>Long numbers don't break the layout</td><td>A 22-digit amount at 360 px: no sideways scroll.</td></tr>
+<tr><td><span class="tag ok">Pass</span>Mobile viewport height</td><td>No <code>100vh</code> or <code>h-screen</code> in the site.</td></tr>
+<tr><td><span class="tag ok">Pass</span>Number format</td><td>Indian grouping and lakh/crore (NUM1).</td></tr>
+</table></div>
+
+<h2>Not checked, or doesn't apply</h2>
+<p>Rules for apps (haptics, pull to refresh, swipe), for passwords, search and bulk edit: the tools have none of these. Already covered by UXR1 or queued: answers lost on reload (B1, fixed in UXR2), "Clear all" confirmation (S16), required fields and the "N questions left" count (S7). Busy state while a PDF is being made: not tested here; worth a look when the downloads are next touched.</p>
+</main>
+</body>
+</html>
