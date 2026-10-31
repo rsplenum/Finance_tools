@@ -268,3 +268,5 @@ Budget rows moved from HANDOFF on 18-10-2026 (UX6):
 | 29-10-2026 | Merge #147; OR11's analysis and rows | S, about 60 steps | about 58 steps |
 | 29-10-2026 | OR11a (`or11a-status`), then its handoff (`or11a-handoff`) | M, about 120 steps | about 110 steps, one compaction |
 | 29-10-2026 | OR11a2 (`or11a2-cash`, PR #151) | S, about 60 steps | about 62 steps, no compaction |
+| 29-10-2026 | OR11b (`or11b-plan`), the mock-up, redone after the owner's review | M, about 120 steps | about 75 steps, one compaction |
+| 29-10-2026 | OR11c (`or11c-line`), today's sales and a new line in the engine | M, about 120 steps | about 60 steps, no compaction |
