@@ -129,15 +129,36 @@ function how(host: HTMLElement) {
   void r.settled();
 }
 
-/** Each tool's scene: its code loads after the page, and it plays once when its top first comes into view (D-UX-125). */
+/** Below 1024 px a scene is one frame that fits the screen under the header (HOME1f, D-UX-255): its canvas, of one size, is
+ *  scaled to the frame (--k), and a layer taller than its place is scaled down to fit it (--fit, which the site check holds). */
+function fit(root: HTMLElement) {
+  const canvas = root.querySelector<HTMLElement>('[data-canvas]'), frame = canvas?.parentElement, header = document.querySelector<HTMLElement>('[data-header]');
+  if (!canvas || !frame) return;
+  const layers = [...root.querySelectorAll<HTMLElement>('[data-panel], [data-doc]')], phone = matchMedia('(max-width: 1023px)');
+  const set = () => {
+    if (!phone.matches) { for (const k of ['--hdr', '--k']) root.style.removeProperty(k); for (const l of layers) l.style.removeProperty('--fit'); return; }
+    if (header) root.style.setProperty('--hdr', `${header.offsetHeight}px`);
+    root.style.setProperty('--k', String(frame.clientWidth / canvas.offsetWidth));
+    for (const l of layers) l.style.setProperty('--fit', String(Math.min(1, (l.parentElement?.clientHeight ?? 0) / l.offsetHeight) || 1));
+  };
+  set();
+  const ro = new ResizeObserver(set);
+  for (const e of [root, ...layers]) ro.observe(e);
+}
+
+/** Each tool's scene: its code loads after the page, and it plays once when its top first comes into view (D-UX-125); below
+ *  1024 px, where it is one frame, once three quarters of it are in view (HOME1f). Without motion it stands finished, and on a
+ *  phone it waits for a tap on its play button. */
 function scenes(motion: boolean) {
+  const phone = matchMedia('(max-width: 1023px)').matches;
   for (const root of document.querySelectorAll<HTMLElement>('[data-scene]')) {
+    fit(root);
     if (!motion) { void import('./scene').then((m) => m.scene(root).still()); continue; }
     const seen = new IntersectionObserver((es) => {
-      if (!es.some((e) => e.isIntersecting)) return;
+      if (!es.some((e) => e.isIntersecting && (!phone || e.intersectionRatio >= 0.75 || e.intersectionRect.height >= 0.75 * innerHeight))) return;
       seen.disconnect();
       void import('./scene').then((m) => m.scene(root).play());
-    }, { rootMargin: '0px 0px -20% 0px' });
+    }, phone ? { threshold: [0, 0.25, 0.5, 0.6, 0.7, 0.75, 0.8, 0.9, 1] } : { rootMargin: '0px 0px -20% 0px' });
     seen.observe(root);
   }
 }
