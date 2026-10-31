@@ -36,8 +36,9 @@ function inPage({ after, open, text, limit = 25 }) {
   // Questions: fields, a radio group once, a row of pressed buttons once.
   const FIELD = 'input:not([type=hidden],[type=button],[type=submit],[type=reset]), select, textarea, button[aria-pressed]';
   const seen = new Set(), questions = [];
+  // A video's seek bar (home's scenes, D-UX-257) is a control, not a question.
   for (const el of main.querySelectorAll(FIELD)) {
-    if (!shownControl(el)) continue;
+    if (!shownControl(el) || el.matches('[data-seek]')) continue;
     const key = el.type === 'radio' ? `r:${el.name}` : el.matches('[aria-pressed]') ? el.parentElement : el;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -87,6 +88,9 @@ function inPage({ after, open, text, limit = 25 }) {
   // Visual codes: text styles (size and weight), and colours that are not grey, merged within 15 degrees of hue.
   const styles = new Map();
   for (const x of nodes) { const s = getComputedStyle(x.n.parentElement); const k = `${parseFloat(s.fontSize)}px ${+s.fontWeight >= 600 ? 'bold' : 'regular'}`; styles.set(k, (styles.get(k) ?? 0) + 1); }
+  // A colour still easing from one token to the next reads as neither: Chrome gives it as oklab(), a mix (the runner saw
+  // a brown at 46 degrees on the report, HOME1f). End every running transition first, so each colour is a token's own.
+  for (const a of document.getAnimations()) if (a instanceof CSSTransition) a.finish();
   const hues = new Map();
   // Tailwind 4 gives oklch(); a canvas turns any colour, its see-through part taken off, into sRGB.
   const cv = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
