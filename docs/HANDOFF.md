@@ -30,4 +30,4 @@ A row's session writes 1 to 4 straight into the shared docs (`docs/DECISIONS.md`
 ## Budgets and actuals
 | Date | Row | Budget | Actual |
 |---|---|---|---|
-| 31-10-2026 | HOME1f | M, Extra | about 100 steps, 0.8 h, 2 compactions |
+| 31-10-2026 | HOME1f | M, Extra | 125 steps, 1.0 h, 2 compactions |
