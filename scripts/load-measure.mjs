@@ -88,6 +88,9 @@ function inPage({ after, open, text, limit = 25 }) {
   // Visual codes: text styles (size and weight), and colours that are not grey, merged within 15 degrees of hue.
   const styles = new Map();
   for (const x of nodes) { const s = getComputedStyle(x.n.parentElement); const k = `${parseFloat(s.fontSize)}px ${+s.fontWeight >= 600 ? 'bold' : 'regular'}`; styles.set(k, (styles.get(k) ?? 0) + 1); }
+  // A colour still easing from one token to the next reads as neither: Chrome gives it as oklab(), a mix (the runner saw
+  // a brown at 46 degrees on the report, HOME1f). End every running transition first, so each colour is a token's own.
+  for (const a of document.getAnimations()) if (a instanceof CSSTransition) a.finish();
   const hues = new Map();
   // Tailwind 4 gives oklch(); a canvas turns any colour, its see-through part taken off, into sRGB.
   const cv = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
