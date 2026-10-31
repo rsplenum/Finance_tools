@@ -36,8 +36,9 @@ function inPage({ after, open, text, limit = 25 }) {
   // Questions: fields, a radio group once, a row of pressed buttons once.
   const FIELD = 'input:not([type=hidden],[type=button],[type=submit],[type=reset]), select, textarea, button[aria-pressed]';
   const seen = new Set(), questions = [];
+  // A video's seek bar (home's scenes, D-UX-257) is a control, not a question.
   for (const el of main.querySelectorAll(FIELD)) {
-    if (!shownControl(el)) continue;
+    if (!shownControl(el) || el.matches('[data-seek]')) continue;
     const key = el.type === 'radio' ? `r:${el.name}` : el.matches('[aria-pressed]') ? el.parentElement : el;
     if (seen.has(key)) continue;
     seen.add(key);
