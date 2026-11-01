@@ -1,6 +1,6 @@
 # Working on this repo (for AI agents and developers)
 
-- The lens on all work (owner, D-TECH-75; Claude judges its meaning per context): we are creators, not imitators. It is so simple to be difficult, so difficult to be simple: we do the hard work so ours is simple to use, adapting what exists to our needs or reimagining it to break new ground.
+- The lens on all work (owner, D-TECH-75; Claude judges its meaning per context): we are creators, not imitators. It is so simple to be difficult, so difficult to be simple: we do the hard work so our product is simple to use, adapting what exists to our needs or reimagining it to break new ground.
 - Start with `docs/HANDOFF.md` (the state and the Next table) and grep `docs/GOTCHAS.md` for the files you will touch, then only the parts of `docs/DECISIONS.md` you need (indexed). `docs/PROJECT.md` has the what/why. `docs/LESSONS-CARRIED.md` holds the lessons from the owner's earlier project: read §1 and §8 once per session.
 - Keep token use low (owner's request): grep before reading, text assertions over screenshots, independent commands together in one step, many pages through one script that prints only what is needed, since every step re-reads the whole context (D-TECH-23); end each session by HANDOFF's list (lessons, the next row, a starter prompt).
 - Every session has one deliverable and a budget set before it starts (owner's request, D-TECH-29): its row in `docs/HANDOFF.md` names what the owner will open or download, its size (S, M or L) and its plan, and preparing the next row is part of the session that ends. Stop at the budget plus a quarter and hand off the rest; `npm run cost` gives the actual for HANDOFF's table. New work starts in a new session; a quick ask may stay while the cache is warm. On a cost guard warning (D-TECH-32) tell the owner once and follow their word; on a big result, print less next time. A file every session reads whole stays short, its size capped by a check.
@@ -20,7 +20,7 @@
 - No bank-internal material, circulars or customer data in this repo. Sample data anonymised; secrets only in environment settings.
 - Legal condition (D-BIZ-01): market across India on the internet, but never sell directly to the customers of the owner's employer bank. No pages, campaigns or outreach aimed at them, and none of that bank's material.
 - The estimate works "as an architect would", but never calls the tool, a page or a document an architect: the Architects Act 1972, s. 37, keeps the title to registered architects (D-UX-18).
-- Build for Cloudflare Pages + Workers from day one (D-TECH-02); every branch gets a preview deploy.
+- Build for Cloudflare Pages + Workers (D-TECH-02); every branch gets a preview deploy.
 
 ## Compact Instructions
 When compacting, keep: the owner's latest request in their words; the branch, the PR's number and state, and what is committed, pushed or only on disk; decisions, figures and errors met this session that are not yet in `docs/`; the next step. Leave out what a new session reads anyway: CLAUDE.md, the skills and `docs/` (name the file), file contents and tool output (name the path), and finished work (give the commit).

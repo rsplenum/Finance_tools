@@ -9,7 +9,7 @@ What the owner taught across projects, so a new project starts where the last on
 
 ## The lens on all work
 
-The owner's guiding principle, in their words: "We are creators, not imitators and our guiding principle is, It is so simple to be difficult but so difficult to be simple. So we do the difficult work to keep our simple to use, because simplicity is the highest form of sophistication and it requires genuine hard, smart, creative work to take something that is available today to either make it our own by adapting it to to our situation, tailor it to our needs OR to reimagine it to break new ground to creates something of our own".
+The owner's guiding principle, in their words: "We are creators, not imitators and our guiding principle is, It is so simple to be difficult but so difficult to be simple. So we do the difficult work to keep our product simple to use, because simplicity is the highest form of sophistication and it requires genuine hard, smart, creative work to take something that is available today to either make it our own by adapting it to to our situation, tailor it to our needs OR to reimagine it to break new ground to creates something of our own".
 
 The owner made Claude the arbiter of what it means in each context. Start from this reading:
 - Simple to use, not simple to build: the hard work stays ours, never the user's, and simple never means diluted: a fact that changes the answer stays.
