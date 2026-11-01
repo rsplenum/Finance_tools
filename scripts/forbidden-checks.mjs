@@ -141,6 +141,57 @@ export function unfinished() {
   return out;
 }
 
+/**
+ * Runs in the page (HOME1f, D-UX-255): below 1024 px a tool's scene is one frame that fits the screen under the header.
+ * The scene is held at each time in `times` (ms; every shot of every beat) and must then be no taller than the screen
+ * less the header, show every line of text it shows whole inside its frame and none over another, and scale no layer
+ * below 0.9 to fit (--fit, home.ts). A line counts as shown at an opacity of half or more, its ancestors' and their
+ * `filter: opacity()` included (the camera, scene.ts). Returns what fails.
+ */
+export function sceneFrame([id, times]) {
+  const root = document.querySelector(`[data-scene="${id}"]`), out = [];
+  if (!root) return [`there is no ${id} scene`];
+  const header = document.querySelector('[data-header]'), room = innerHeight - (header ? header.getBoundingClientRect().height : 0);
+  const canvas = root.querySelector('[data-canvas]'), anims = root.getAnimations({ subtree: true });
+  const shown = (e) => {
+    let o = 1;
+    for (let x = e; x && x !== root.parentElement; x = x.parentElement) {
+      const s = getComputedStyle(x);
+      if (s.visibility !== 'visible' && x === e) return 0;
+      o *= parseFloat(s.opacity);
+      const f = /opacity\(([\d.]+)(%?)\)/.exec(s.filter);
+      if (f) o *= parseFloat(f[1]) / (f[2] ? 100 : 1);
+    }
+    return o;
+  };
+  const say = (n) => `"${n.textContent.trim().slice(0, 28)}"`;
+  for (const t of times) {
+    for (const a of anims) { a.pause(); a.currentTime = t; }
+    const h = root.getBoundingClientRect().height;
+    if (h > room + 0.5) out.push(`${id} at ${t} ms is ${Math.round(h)} px tall; the screen under the header has ${Math.round(room)} px`);
+    for (const l of root.querySelectorAll('[data-panel], [data-doc]')) {
+      const k = parseFloat(getComputedStyle(l).getPropertyValue('--fit') || '1');
+      if (k < 0.9) out.push(`${id}'s ${l.matches('[data-doc]') ? 'document' : 'panel'} is scaled to ${k.toFixed(2)} to fit its frame (0.9 at least)`);
+    }
+    const frame = canvas?.parentElement?.getBoundingClientRect(), lines = [];
+    const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: (n) => n.textContent.trim() && !n.parentElement.closest('.sr-only') ? 1 : 2 });
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      if (shown(n.parentElement) < 0.5) continue;
+      const r = document.createRange();
+      r.selectNodeContents(n);
+      for (const b of r.getClientRects()) if (b.width > 1 && b.height > 1) lines.push({ n, b, inFrame: canvas?.contains(n) });
+    }
+    for (const { n, b, inFrame } of lines) if (inFrame && frame && (b.left < frame.left - 1 || b.right > frame.right + 1 || b.top < frame.top - 1 || b.bottom > frame.bottom + 1)) out.push(`${id} at ${t} ms: ${say(n)} is cut off by the frame`);
+    for (let i = 0; i < lines.length; i++) for (let j = i + 1; j < lines.length; j++) {
+      const A = lines[i].b, B = lines[j].b;
+      if (lines[i].n === lines[j].n) continue;
+      const x = Math.min(A.right, B.right) - Math.max(A.left, B.left), y = Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top);
+      if (x > 2 && y > 0.3 * Math.min(A.height, B.height)) out.push(`${id} at ${t} ms: ${say(lines[i].n)} and ${say(lines[j].n)} overlap`);
+    }
+  }
+  return [...new Set(out)];
+}
+
 /** `pages` limits the pages read (the site check's --quick); `motion` false skips F9, F10, F14 and F15, which wait on the motion. */
 export async function forbiddenChecks({ browser, BASE, pages = NEW_LOOK, motion = true, violations }) {
   let weight = 0;

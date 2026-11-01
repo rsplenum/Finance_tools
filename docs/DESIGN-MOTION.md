@@ -12,7 +12,7 @@ Rules for all five:
 - Each move runs once and never loops.
 - Everything stops within 5 s (F9); a tool's scene, five beats, within 13 s of coming into view (D-UX-125).
 - Nothing flashes more than three times a second.
-- Nothing moves under reduced motion; the page shows the finished state.
+- Nothing moves under reduced motion; the page shows the finished state (on a phone a scene waits for a tap on its play button, D-UX-257).
 - The page reads whole with "Show it all".
 - Every move is a Web Animations API animation, never a requestAnimationFrame loop or a timer that changes state, so `document.getAnimations()` can pause and seek it (the video studio does).
 
@@ -26,5 +26,7 @@ Home after HOME1b:
 Home after HOME1d (D-UX-125): the DSCR's block is a scene in look C, the one place the glass and the dark ground come in (D-UX-122): the bank's question, the seven answers wired into the hub, every year's DSCR with a lens on the weakest, the term changed to 80 and the bars re-springing, then the statement for the lender. Springs are CSS `linear()` easings; it ends by cancelling every animation, leaving the HTML's last beat, with "Play it again" (site/src/home/scene.ts).
 
 Home after HOME1e (D-UX-135 to D-UX-144): all four tools tell their story as the DSCR's scene does, one component and one player (`ToolScene`, Scene.astro, scene.ts), the same five beats in 12.8 s: the question, the answers into the hub, the rows against the level with the lens on the weakest, one changed card and the rows re-springing, then the document. The estimate's rows are a running total by trade, each bar starting where the one before ends (it moves sideways as well as grows when the change lands); the CMA's audited years stand muted, not judged. Each scene plays once as it comes into view.
+
+Home after HOME1f (D-UX-256 to D-UX-258): below 1024 px each scene is a video in one portrait frame that fits the screen under the header, one shot at a time (the panel, the answers with the hub, the years, the change on its card, the years again, the document), with play, pause and a seek bar; no wires on a phone. The desktop is as it was.
 
 Reference: the comparison at https://claude.ai/artifact/BRkgWAYyrJP3Sr2KRfiGqU (settles at 3.3 s).

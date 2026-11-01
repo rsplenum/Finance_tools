@@ -7,8 +7,8 @@
  * analysis, D-UX-123). The HTML is the finished state: at the end every animation is cancelled and the page stands as built.
  */
 
-/** When each beat starts, in ms, and the whole (F9 waits for it, D-UX-125). */
-const BEAT = [0, 1600, 4000, 7000, 9800], WHOLE = 12800;
+/** When each beat starts, in ms, and the whole (F9 waits for it, D-UX-125); the phone's seek bar marks the beats (Scene.astro). */
+export const BEAT = [0, 1600, 4000, 7000, 9800], WHOLE = 12800;
 
 /** A damped spring from 0 to 1 sampled into a CSS `linear()` easing; it settles within the animation's duration. */
 function spring(zeta: number, n = 40) {
@@ -42,7 +42,8 @@ function parts(root: HTMLElement) {
     stage: q('[data-stage]'), inputs: q('[data-inputs]'), cards: qa('[data-card]'), term: q('[data-term]'),
     hub: q('[data-hub]'), panel: q('[data-panel]'), rows: qa('[data-yr]'), rowsBox: q('[data-rows]'), doc: q('[data-doc]'),
     lens: q('[data-lens]'), frame: q('[data-rframe]'), button: q<HTMLButtonElement>('[data-replay]'),
-    names: qa('[data-beat-name]'), caps: qa('[data-cap]'), steps: qa('[data-step]'), q, qa,
+    names: qa('[data-beat-name]'), caps: qa('[data-cap]'), steps: qa('[data-step]'), right: q('.right'),
+    pp: q<HTMLButtonElement>('[data-pp]'), bar: q('[data-seekbar]'), fill: q('[data-fill]'), seek: q<HTMLInputElement>('[data-seek]'), q, qa,
   };
 }
 type Parts = ReturnType<typeof parts>;
@@ -55,8 +56,10 @@ function geometry(p: Parts) {
   const hout = across ? { x: hub.r - 2, y: hub.t + hub.h / 2 } : { x: hub.l + hub.w / 2, y: hub.b - 2 };
   const box = r(p.inputs), panel = r(p.panel.firstElementChild as Element), doc = r(p.doc);
   const ins = p.cards.map((c) => { const k = r(c); return curve(across ? { x: k.r, y: k.t + k.h / 2 } : { x: k.l + k.w / 2, y: box.b }, hin, across); });
-  const outs = across ? p.rows.map((row) => { const k = r(row); return curve(hout, { x: panel.l, y: k.t + k.h / 2 }, true); }) : [curve(hout, { x: panel.l + panel.w / 2, y: panel.t }, false)];
-  const toDoc = curve(hout, across ? { x: doc.l, y: doc.t + Math.min(72, doc.h / 2) } : { x: doc.l + doc.w / 2, y: doc.t }, across);
+  // Below 1024 px the scene is a video of one shot at a time (HOME1f): the answers' wires stay for their pulses, unseen,
+  // and nothing joins the hub to the years or the statement, which never share the frame with it.
+  const outs = across ? p.rows.map((row) => { const k = r(row); return curve(hout, { x: panel.l, y: k.t + k.h / 2 }, true); }) : [];
+  const toDoc = across ? curve(hout, { x: doc.l, y: doc.t + Math.min(72, doc.h / 2) }, true) : null;
   return { w: o.width, h: o.height, across, ins, outs, toDoc };
 }
 
@@ -79,7 +82,7 @@ function wires(p: Parts, final: boolean) {
     svg.append(e);
     return e;
   };
-  const ins = g.ins.map((d) => path(d, 'in')), outs = final ? [] : g.outs.map((d) => path(d, 'out')), toDoc = path(g.toDoc, 'doc');
+  const ins = g.ins.map((d) => path(d, 'in')), outs = final ? [] : g.outs.map((d) => path(d, 'out')), toDoc = g.toDoc ? path(g.toDoc, 'doc') : null;
   p.stage.prepend(svg);
   return { svg, ins, outs, toDoc, across: g.across };
 }
@@ -100,16 +103,18 @@ class Run {
     this.anims.push(a);
     return a;
   }
-  /** Shown from `from` to `to` within the whole, faded in and out over 160 ms; the last beat's stays. */
-  window(el: Element, from: number, to: number, on: Keyframe = { opacity: 1 }, off: Keyframe = { opacity: 0 }) {
-    const f = (t: number) => Math.min(1, Math.max(0, t / WHOLE));
-    const kf: Keyframe[] = [{ ...off, offset: 0 }];
-    if (from > 0) kf.push({ ...off, offset: f(from) });
-    kf.push({ ...on, offset: f(from + 160) });
-    if (to < WHOLE) kf.push({ ...on, offset: f(to) }, { ...off, offset: f(to + 160) });
-    kf.push({ ...(to < WHOLE ? off : on), offset: 1 });
+  /** Shown in each span (from, to) within the whole, faded in and out over 160 ms; a span that reaches the end stays. */
+  shots(el: Element, spans: [number, number][], on: Keyframe = { opacity: 1 }, off: Keyframe = { opacity: 0 }) {
+    const f = (t: number) => Math.min(1, Math.max(0, t / WHOLE)), kf: Keyframe[] = [{ ...off, offset: 0 }];
+    for (const [from, to] of spans) {
+      if (from > 0) kf.push({ ...off, offset: f(from) });
+      kf.push({ ...on, offset: f(from + 160) });
+      if (to < WHOLE) kf.push({ ...on, offset: f(to) }, { ...off, offset: f(to + 160) });
+    }
+    kf.push({ ...(spans[spans.length - 1][1] < WHOLE ? off : on), offset: 1 });
     return this.add(el, kf, 0, WHOLE, 'linear');
   }
+  window(el: Element, from: number, to: number, on?: Keyframe, off?: Keyframe) { return this.shots(el, [[from, to]], on, off); }
   make<T extends Element>(el: T) { this.made.push(el); return el; }
 }
 
@@ -139,8 +144,35 @@ function ripple(r: Run, hub: HTMLElement, at: number) {
 /** The scene's controller: plays it, ends it on "Show it all", and plays it again. */
 export function scene(root: HTMLElement) {
   const p = parts(root);
-  let run: Run | undefined;
+  let run: Run | undefined, paused = false, held = false;
   const css = getComputedStyle(root), miss = css.getPropertyValue('--miss').trim();
+
+  // The phone's player (HOME1f): play and pause, a seek bar and "Play it again". Every move stays a Web Animation, so a
+  // pause pauses them all and a seek sets their time; the first animation is the first beat's name, which runs the whole.
+  const now = () => Number(run?.anims[0]?.currentTime ?? WHOLE);
+  const sync = () => {
+    const t = Math.min(WHOLE, now()), state = !run ? (root.hasAttribute('data-played') ? 'again' : 'play') : paused ? 'play' : 'pause';
+    p.pp.dataset.state = state;
+    p.pp.setAttribute('aria-label', state === 'pause' ? 'Pause' : state === 'again' ? 'Play it again' : 'Play');
+    let i = 0;
+    BEAT.forEach((b, j) => { if (t >= b) i = j; });
+    p.seek.value = String(t);
+    p.seek.setAttribute('aria-valuetext', p.names[i]?.textContent ?? '');
+    p.pp.hidden = p.bar.hidden = false;
+  };
+  const pause = () => {
+    if (!run) return;
+    for (const a of run.anims) a.pause();
+    paused = true;
+    sync();
+  };
+  // A finished animation rewinds to its start on play(), so each keeps its time (GOTCHAS, HOME1f).
+  const resume = () => {
+    if (!run) return;
+    for (const a of run.anims) { const t = a.currentTime; a.play(); a.currentTime = t; }
+    paused = false;
+    sync();
+  };
 
   const end = () => {
     if (!run) return;
@@ -153,6 +185,8 @@ export function scene(root: HTMLElement) {
     root.setAttribute('data-played', '');
     p.button.textContent = 'Play it again';
     p.button.hidden = false;
+    paused = held = false;
+    sync();
   };
 
   const play = () => {
@@ -165,6 +199,15 @@ export function scene(root: HTMLElement) {
     // The beat's name, its caption and its place on the rail.
     p.names.forEach((e, i) => r.window(e, B[i], B[i + 1] ?? WHOLE));
     p.caps.forEach((e, i) => r.window(e, B[i] + 120, B[i + 1] ?? WHOLE, { opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(8px)' }));
+    // Below 1024 px one frame holds one shot at a time (HOME1f, D-UX-255): the question, the answers with the hub, the years,
+    // the change on its card, the years again and the document; the seek bar fills over the whole.
+    if (!across) {
+      const cut = B[3] + 1600, cards: [number, number][] = [[B[1], B[2]], [B[3], cut]];
+      r.shots(p.inputs, cards);
+      r.shots(p.hub, cards, { filter: 'opacity(1)' }, { filter: 'opacity(0)' });
+      r.shots(p.right, [[0, B[1]], [B[2], B[3]], [cut, WHOLE]]);
+      r.add(p.fill, [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], 0, WHOLE, 'linear');
+    }
     p.steps.forEach((e, i) => {
       const dot = e.querySelector('i') as HTMLElement, label = e.querySelector('span') as HTMLElement;
       r.add(dot, [{ opacity: 0.3, transform: 'scale(1)' }, { opacity: 1, transform: 'scale(1.35)' }], B[i], 450, SNAP);
@@ -205,12 +248,14 @@ export function scene(root: HTMLElement) {
       } else r.add(bar, [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], B[3] + 2050 + i * 60, 750, SPRING);
       r.add(f, [{ opacity: 0 }, { opacity: 1 }], B[3] + 1850 + i * 60, 300);
     });
-    // Geometry first, then the moves (GOTCHAS, HOME1c): each row's top within the rows' box, and where the lens rides.
-    const top = (row: HTMLElement) => row.getBoundingClientRect().top - p.rowsBox.getBoundingClientRect().top;
+    // Geometry first, then the moves (GOTCHAS, HOME1c): each row's top within the rows' box, and where the lens rides. On a
+    // phone the canvas and the panel are scaled (--k, --fit; GOTCHAS, HOME1f), so a rect's measures go back to the panel's own.
+    const s = across ? 1 : (Number(css.getPropertyValue('--k')) || 1) * (Number(getComputedStyle(p.panel).getPropertyValue('--fit')) || 1);
+    const top = (row: HTMLElement) => (row.getBoundingClientRect().top - p.rowsBox.getBoundingClientRect().top) / s;
     // The lens rides the level's line, at the track's middle; the track's place within the row is the same on every row.
     const track = p.rows[0].querySelector('.track') as HTMLElement, place = Number(root.dataset.place ?? 0.45);
     // The glass's centre is at 20 of the lens's 48 units, on the line and on the track (a smaller lens on a phone's long rows).
-    const c = (p.lens.getBoundingClientRect().width * 20) / 48, lx = track.offsetLeft + track.offsetWidth * place - c, ty = track.offsetTop + track.offsetHeight / 2 - c;
+    const c = (p.lens.getBoundingClientRect().width * 20) / 48 / s, lx = track.offsetLeft + track.offsetWidth * place - c, ty = track.offsetTop + track.offsetHeight / 2 - c;
     const weakT = p.rows.findIndex((x) => x.hasAttribute('data-weak-typed')), weakF = p.rows.findIndex((x) => x.hasAttribute('data-weak-fixed'));
     const at = (i: number) => `translate(${lx}px, ${top(p.rows[i]) + ty}px)`;
     // It reads the judged rows from the first down to the weakest (the CMA's audited years are not read).
@@ -264,8 +309,10 @@ export function scene(root: HTMLElement) {
     r.add(p.panel, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-12px) scale(0.97)' }], B[4], 450, OUT);
     w.outs.forEach((e) => r.add(e, [{ opacity: 1 }, { opacity: 0 }], B[4], 300));
     r.add(p.doc, [{ opacity: 0, transform: 'translateY(26px) scale(0.96)' }, { opacity: 1, transform: 'none' }], B[4] + 250, 700, SPRING);
-    r.add(w.toDoc, DRAW, B[4] + 450, 550, EXPO);
-    pulse(r, w.svg, w.toDoc, B[4] + 800, 500);
+    if (w.toDoc) {
+      r.add(w.toDoc, DRAW, B[4] + 450, 550, EXPO);
+      pulse(r, w.svg, w.toDoc, B[4] + 800, 500);
+    }
     p.qa('[data-dl]', p.doc).forEach((e, i) => r.add(e, [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], B[4] + 650 + i * 160, 500, SPRING));
     p.qa('[data-mb]', p.doc).forEach((e, i) => r.add(e, [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], B[4] + 850 + i * 50, 550, SPRING));
     p.qa('.lines svg, .verdict svg', p.doc).forEach((e, i) => r.add(e, [{ opacity: 0, transform: 'scale(0.4)' }, { opacity: 1, transform: 'none' }], B[4] + 750 + i * 160, 380, SNAP));
@@ -274,10 +321,22 @@ export function scene(root: HTMLElement) {
 
     p.button.textContent = 'Show it all';
     p.button.hidden = false;
+    paused = held = false;
+    sync();
     void Promise.all(r.anims.map((a) => a.finished)).then(() => { if (run === r) end(); }, () => undefined);
   };
 
   p.button.addEventListener('click', () => (run ? end() : play()));
+  p.pp.addEventListener('click', () => (!run ? play() : paused ? resume() : pause()));
+  // A seek holds the video still at that time; a video that was playing plays on when the seek is let go.
+  p.seek.addEventListener('keydown', () => { if (run) p.seek.value = String(now()); });
+  p.seek.addEventListener('input', () => {
+    const t = Number(p.seek.value);
+    if (!run) { play(); pause(); } else if (!paused) { held = true; pause(); }
+    for (const a of run?.anims ?? []) a.currentTime = t;
+    sync();
+  });
+  p.seek.addEventListener('change', () => { if (held) { held = false; resume(); } });
   addEventListener('beforeprint', end);
   // A change of width moves every wire: a run ends at once, and the finished wires are drawn again.
   let width = root.offsetWidth;
@@ -287,5 +346,5 @@ export function scene(root: HTMLElement) {
     if (run) end();
     else if (root.querySelector('svg[data-wires]')) wires(p, true);
   }).observe(root);
-  return { play, end, still: () => wires(p, true) };
+  return { play, end, still: () => { wires(p, true); sync(); } };
 }
