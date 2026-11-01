@@ -212,8 +212,10 @@ const sixQuestions = async (page, level = true) => {
 // 15,000 boxes a month at Rs. 100, variable costs 65%, fixed costs 1 L a month, the limit worked out, nothing behind the
 // loan; selling from three months after this month, so that it holds on any date. It meets every default benchmark, as
 // case R does, so the answer state reads the same kind of answer as before simple mode.
+/** The day every page's clock is fixed to (openAt); a case that works out a month from "now" reads this, never the real date. */
+export const FIXED_AT = '2026-10-02T10:00:00+05:30';
 const caseRSimple = async (page) => {
-  const now = new Date(), sell = new Date(now.getFullYear(), now.getMonth() + 3, 1);
+  const now = new Date(FIXED_AT), sell = new Date(now.getFullYear(), now.getMonth() + 3, 1);
   for (const id of ['#fld-borrower-firm', '#fld-security-neither', '#fld-wcBy-worked']) await page.check(id);
   for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-tl-amount', '20 L'], ['#fld-tl-rate', '10'], ['#fld-years', '5'],
     ['#fld-product-0-name', 'Boxes'], ['#fld-product-0-units', '15,000'], ['#fld-product-0-price', '100'],
@@ -364,7 +366,7 @@ export const SITE_STATES = ['error', 'plan', 'download'];
 export async function openAt(browser, url, { width = 'phone', scheme = 'light', reducedMotion = 'no-preference' } = {}) {
   const ctx = await browser.newContext({ viewport: WIDTHS[width] ?? width, colorScheme: scheme, reducedMotion });
   const page = await ctx.newPage();
-  await page.clock.setFixedTime(new Date('2026-10-02T10:00:00+05:30'));
+  await page.clock.setFixedTime(new Date(FIXED_AT));
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.waitForFunction(() => !document.querySelector('astro-island[ssr]'), null, { timeout: 10000 }).catch(() => {});
   return { ctx, page };

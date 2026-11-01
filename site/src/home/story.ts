@@ -257,10 +257,9 @@ export const DSCR_SCENE: ToolScene = (() => {
   // The document as the borrower downloads it, made from the longer repayment: what the last beat shows is what it holds.
   const p = preview(STORY_FIXED), doc = statementDoc(STORY_FIXED, p, todayIso());
   const title = doc?.parts[0].blocks.find((b) => b.kind === 'title'), basis = partOf(doc, 'Basis'), schedule = partOf(doc, 'Repayment schedule');
-  const dated = basis?.blocks.flatMap((b) => (b.kind === 'text' ? [b.text.match(/Dated (\d\d-\d\d-\d{4})/)?.[1]] : [])).find(Boolean);
   const months = p.schedule?.years.reduce((a, y) => a + y.months.length, 0);
   const signed = blocksOf(doc, 'signature').length > 0;
-  if (!doc || title?.kind !== 'title' || !title.sub || !dated || !schedule || months !== Number(f.instalments) || !signed || !partOf(doc, 'Check')) throw new Error('The scene\'s statement lacks a part it shows.');
+  if (!doc || title?.kind !== 'title' || !title.sub || !basis || !schedule || months !== Number(f.instalments) || !signed || !partOf(doc, 'Check')) throw new Error('The scene\'s statement lacks a part it shows.');
   // Each year's DSCR worked the second way (engine/dscr-check.ts); the largest difference, as the statement rounds a DSCR.
   const c = dscrCaseOf(STORY_FIXED), k = c && planCheck(c.proj, c.loan, c.def);
   const diff = Math.max(...L.years.map((y, i) => Math.abs(y.n - Number(k?.rows[i]?.dscr))));
@@ -279,7 +278,6 @@ export const DSCR_SCENE: ToolScene = (() => {
       title: 'DSCR statement', sub: title.sub, verdict: L.verdict,
       lines: [
         { head: 'Worked out twice', text: `Every DSCR worked out a second way, and again by formula in the Excel copy: difference ${diff.toFixed(2)}.` },
-        { head: 'Its basis', text: `Annex 1: the rule used, with its source, dated ${dated}.` },
         { head: 'Every instalment', text: `Annex 2: the repayment schedule, all ${months} months.` },
         { head: 'Ready to sign', text: 'Signatory, date and place lines, in each copy.' },
       ],

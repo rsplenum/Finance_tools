@@ -102,8 +102,9 @@ describe('the DSCR scene', () => {
   });
   it('the statement beat: verdict, both computations, the basis, every instalment, the signature lines', () => {
     expect(s.statement.verdict).toBe('Meets both targets: the lowest year, 2033-34, is 1.30 against 1.25; the average is 1.63 against 1.50.');
-    expect(s.statement.lines.map((l) => l.head)).toEqual(['Worked out twice', 'Its basis', 'Every instalment', 'Ready to sign']);
-    expect(s.statement.lines.map((l) => l.text).join(' ')).toMatch(/difference 0\.00\..*dated 30-09-2026\..*all 91 months\./);
+    expect(s.statement.lines.map((l) => l.head)).toEqual(['Worked out twice', 'Every instalment', 'Ready to sign']);
+    expect(s.statement.lines.map((l) => l.text).join(' ')).toMatch(/difference 0\.00\..*all 91 months\./);
+    expect(s.statement.lines.map((l) => l.text).join(' ')).not.toMatch(/dated/i);
     expect(s.statement.files).toEqual(['PDF', 'Excel', 'Word']);
   });
   it('five beats, each caption\'s figures the scene\'s own', () => {
