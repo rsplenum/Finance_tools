@@ -24,7 +24,7 @@ function spring(zeta: number, n = 40) {
 const LINEAR_OK = typeof CSS !== 'undefined' && CSS.supports('transition-timing-function', 'linear(0, 1)');
 const SPRING = LINEAR_OK ? spring(0.7) : 'cubic-bezier(0.34, 1.4, 0.64, 1)';
 const SNAP = LINEAR_OK ? spring(0.45) : 'cubic-bezier(0.34, 1.8, 0.64, 1)';
-const EXPO = 'cubic-bezier(0.16, 1, 0.3, 1)', OUT = 'cubic-bezier(0.2, 0.7, 0.3, 1)', GLIDE = 'cubic-bezier(0.45, 0, 0.2, 1)';
+const EXPO = 'cubic-bezier(0.16, 1, 0.3, 1)', OUT = 'cubic-bezier(0.2, 0.7, 0.3, 1)';
 const SVG = 'http://www.w3.org/2000/svg';
 /** A wire drawn from its start to its end (pathLength 1). */
 const DRAW: Keyframe[] = [{ strokeDasharray: '1', strokeDashoffset: '1' }, { strokeDasharray: '1', strokeDashoffset: '0' }];
@@ -43,7 +43,7 @@ function parts(root: HTMLElement) {
   return {
     stage: q('[data-stage]'), inputs: q('[data-inputs]'), cards: qa('[data-card]'), term: q('[data-term]'),
     hub: q('[data-hub]'), panel: q('[data-panel]'), rows: qa('[data-yr]'), rowsBox: q('[data-rows]'), doc: q('[data-doc]'),
-    lens: q('[data-lens]'), frame: q('[data-rframe]'), button: q<HTMLButtonElement>('[data-replay]'),
+    frame: q('[data-rframe]'), button: q<HTMLButtonElement>('[data-replay]'),
     names: qa('[data-beat-name]'), caps: qa('[data-cap]'), steps: qa('[data-step]'), right: q('.right'),
     pp: q<HTMLButtonElement>('[data-pp]'), bar: q('[data-seekbar]'), fill: q('[data-fill]'), seek: q<HTMLInputElement>('[data-seek]'), q, qa,
   };
@@ -135,14 +135,6 @@ function pulse(r: Run, svg: SVGSVGElement, path: SVGPathElement, at: number, ms:
   r.add(dot, kf, at, ms, 'cubic-bezier(0.4, 0, 0.3, 1)');
 }
 
-/** A ring that leaves the hub once. */
-function ripple(r: Run, hub: HTMLElement, at: number) {
-  const e = r.make(document.createElement('span'));
-  Object.assign(e.style, { position: 'absolute', inset: '0', borderRadius: '999px', border: '1.5px solid var(--marigold)', pointerEvents: 'none' });
-  hub.append(e);
-  r.add(e, [{ opacity: 0.8, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(1.55)' }], at, 750, 'ease-out');
-}
-
 /** The scene's controller: plays it, ends it on "Show it all", and plays it again. */
 export function scene(root: HTMLElement) {
   const p = parts(root);
@@ -228,11 +220,8 @@ export function scene(root: HTMLElement) {
     w.ins.forEach((e, i) => r.add(e, DRAW, B[1] + 650 + i * 60, 500, EXPO));
     r.add(p.hub, [{ opacity: 0, transform: 'scale(0.6)' }, { opacity: 1, transform: 'none' }], B[1] + 900, 700, SPRING);
     w.ins.forEach((e, i) => pulse(r, w.svg, e, B[1] + 1350 + i * 60, 600));
-    ripple(r, p.hub, B[1] + 2000);
 
-    // 3. Everything worked out: the dial turns, the years fill, the lens stops on the weakest and the brackets snap on it.
-    const dial = p.q('[data-dial]');
-    r.add(dial, [{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], B[2], 1400, GLIDE);
+    // 3. Everything worked out: the years fill and the brackets snap on the weakest.
     const typedRows = p.rows.filter((row) => row.querySelector('[data-t]'));
     w.outs.forEach((e, i) => r.add(e, DRAW, (i < typedRows.length || !across ? B[2] + 300 : C + 400) + i * 50, 500, EXPO));
     (across ? w.outs.slice(0, typedRows.length) : w.outs).forEach((e, i) => pulse(r, w.svg, e, B[2] + 500 + i * 50, 500));
@@ -250,23 +239,11 @@ export function scene(root: HTMLElement) {
       } else r.add(bar, [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], C + 450 + i * 60, 750, SPRING);
       r.add(f, [{ opacity: 0 }, { opacity: 1 }], C + 250 + i * 60, 300);
     });
-    // Geometry first, then the moves (GOTCHAS, HOME1c): each row's top within the rows' box, and where the lens rides. On a
-    // phone the canvas and the panel are scaled (--k, --fit; GOTCHAS, HOME1f), so a rect's measures go back to the panel's own.
+    // Geometry first, then the moves (GOTCHAS, HOME1c): each row's top within the rows' box. On a phone the canvas and the
+    // panel are scaled (--k, --fit; GOTCHAS, HOME1f), so a rect's measures go back to the panel's own.
     const s = across ? 1 : (Number(css.getPropertyValue('--k')) || 1) * (Number(getComputedStyle(p.panel).getPropertyValue('--fit')) || 1);
     const top = (row: HTMLElement) => (row.getBoundingClientRect().top - p.rowsBox.getBoundingClientRect().top) / s;
-    // The lens rides the level's line, at the track's middle; the track's place within the row is the same on every row.
-    const track = p.rows[0].querySelector('.track') as HTMLElement, place = Number(root.dataset.place ?? 0.45);
-    // The glass's centre is at 20 of the lens's 48 units, on the line and on the track (a smaller lens on a phone's long rows).
-    const c = (p.lens.getBoundingClientRect().width * 20) / 48 / s, lx = track.offsetLeft + track.offsetWidth * place - c, ty = track.offsetTop + track.offsetHeight / 2 - c;
     const weakT = p.rows.findIndex((x) => x.hasAttribute('data-weak-typed')), weakF = p.rows.findIndex((x) => x.hasAttribute('data-weak-fixed'));
-    const at = (i: number) => `translate(${lx}px, ${top(p.rows[i]) + ty}px)`;
-    // It reads the judged rows from the first down to the weakest (the CMA's audited years are not read).
-    const first = Math.max(0, p.rows.findIndex((x) => !x.querySelector('[data-yb].mute')));
-    const glide: Keyframe[] = p.rows.slice(first, Math.max(first, weakT) + 1).map((_, i) => ({ transform: at(first + i) }));
-    r.add(p.lens, glide.length > 1 ? glide : [glide[0], glide[0]], B[2] + 1400, 1000, GLIDE);
-    r.add(p.lens, [{ opacity: 0 }, { opacity: 1 }], B[2] + 1350, 250);
-    r.add(p.lens, [{ transform: at(weakT) }, { transform: at(weakF) }], C + 700, 600, SPRING);
-    r.add(p.lens, [{ opacity: 1 }, { opacity: 0 }], B[4], 300);
     const fT = `translateY(${top(p.rows[weakT])}px)`, fF = `translateY(${top(p.rows[weakF])}px)`;
     r.add(p.frame, [{ opacity: 0, transform: `${fT} scale(1.08)` }, { opacity: 1, transform: fT }], B[2] + 2350, 450, SNAP);
     r.add(p.frame, [{ transform: fT, backgroundColor: 'oklch(0.72 0.16 22 / 0.14)' }, { transform: fF, backgroundColor: 'oklch(0.82 0.15 76 / 0.12)' }], C + 700, 600, SPRING);
@@ -303,8 +280,6 @@ export function scene(root: HTMLElement) {
       r.add(hubWas, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-10px)' }], B[3] + 1550, 250);
       r.add(hubNow, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], B[3] + 1650, 450, SPRING);
     }
-    r.add(dial, [{ transform: 'rotate(360deg)' }, { transform: 'rotate(720deg)' }], B[3] + 1550, 1000, GLIDE);
-    ripple(r, p.hub, B[3] + 1650);
     (across ? w.outs : w.outs.slice(0, 1)).forEach((e, i) => pulse(r, w.svg, e, C + 200 + i * 50, 450));
 
     // 5. The document for the lender: the panel lifts away, the statement settles in its place and shows what it holds.
@@ -316,7 +291,6 @@ export function scene(root: HTMLElement) {
       pulse(r, w.svg, w.toDoc, B[4] + 800, 500);
     }
     p.qa('[data-dl]', p.doc).forEach((e, i) => r.add(e, [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], B[4] + 650 + i * 160, 500, SPRING));
-    p.qa('[data-mb]', p.doc).forEach((e, i) => r.add(e, [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }], B[4] + 850 + i * 50, 550, SPRING));
     p.qa('.lines svg, .verdict svg', p.doc).forEach((e, i) => r.add(e, [{ opacity: 0, transform: 'scale(0.4)' }, { opacity: 1, transform: 'none' }], B[4] + 750 + i * 160, 380, SNAP));
     p.qa('[data-file]', p.doc).forEach((e, i) => r.add(e, [{ opacity: 0, transform: 'translateY(-14px)' }, { opacity: 1, transform: 'none' }], B[4] + 1700 + i * 90, 500, SPRING));
     r.add(p.q('.ready', p.doc), [{ opacity: 0 }, { opacity: 1 }], B[4] + 2050, 400);
