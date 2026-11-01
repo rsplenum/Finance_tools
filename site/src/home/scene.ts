@@ -24,7 +24,7 @@ function spring(zeta: number, n = 40) {
 const LINEAR_OK = typeof CSS !== 'undefined' && CSS.supports('transition-timing-function', 'linear(0, 1)');
 const SPRING = LINEAR_OK ? spring(0.7) : 'cubic-bezier(0.34, 1.4, 0.64, 1)';
 const SNAP = LINEAR_OK ? spring(0.45) : 'cubic-bezier(0.34, 1.8, 0.64, 1)';
-const EXPO = 'cubic-bezier(0.16, 1, 0.3, 1)', OUT = 'cubic-bezier(0.2, 0.7, 0.3, 1)';
+const EXPO = 'cubic-bezier(0.16, 1, 0.3, 1)', OUT = 'cubic-bezier(0.2, 0.7, 0.3, 1)', GLIDE = 'cubic-bezier(0.45, 0, 0.2, 1)';
 const SVG = 'http://www.w3.org/2000/svg';
 /** A wire drawn from its start to its end (pathLength 1). */
 const DRAW: Keyframe[] = [{ strokeDasharray: '1', strokeDashoffset: '1' }, { strokeDasharray: '1', strokeDashoffset: '0' }];
@@ -43,7 +43,7 @@ function parts(root: HTMLElement) {
   return {
     stage: q('[data-stage]'), inputs: q('[data-inputs]'), cards: qa('[data-card]'), term: q('[data-term]'),
     hub: q('[data-hub]'), panel: q('[data-panel]'), rows: qa('[data-yr]'), rowsBox: q('[data-rows]'), doc: q('[data-doc]'),
-    frame: q('[data-rframe]'), button: q<HTMLButtonElement>('[data-replay]'),
+    lens: q('[data-lens]'), frame: q('[data-rframe]'), button: q<HTMLButtonElement>('[data-replay]'),
     names: qa('[data-beat-name]'), caps: qa('[data-cap]'), steps: qa('[data-step]'), right: q('.right'),
     pp: q<HTMLButtonElement>('[data-pp]'), bar: q('[data-seekbar]'), fill: q('[data-fill]'), seek: q<HTMLInputElement>('[data-seek]'), q, qa,
   };
@@ -135,6 +135,48 @@ function pulse(r: Run, svg: SVGSVGElement, path: SVGPathElement, at: number, ms:
   r.add(dot, kf, at, ms, 'cubic-bezier(0.4, 0, 0.3, 1)');
 }
 
+/** A ring that leaves the hub once: marigold as the count lands, red as the weakest year is found (D-UX-261). */
+function ripple(r: Run, hub: HTMLElement, at: number, colour = 'var(--marigold)', grow = 1.55) {
+  const e = r.make(document.createElement('span'));
+  Object.assign(e.style, { position: 'absolute', inset: '0', borderRadius: '999px', border: `1.5px solid ${colour}`, pointerEvents: 'none' });
+  hub.append(e);
+  r.add(e, [{ opacity: 0.8, transform: 'scale(1)' }, { opacity: 0, transform: `scale(${grow})` }], at, 750, 'ease-out');
+}
+
+/** The scene's mood (D-UX-261): a light behind the glass that is cool while the answers come in, turns red when the weakest
+ *  year is found, and warms to marigold as the change clears it and the document is made. Keyed on the whole's clock. */
+function mood(r: Run, root: HTMLElement, steps: [number, string][]) {
+  const e = r.make(document.createElement('span'));
+  Object.assign(e.style, {
+    position: 'absolute', inset: '0', zIndex: '-1', pointerEvents: 'none',
+    backgroundImage: 'radial-gradient(55% 50% at 68% 42%, currentColor, transparent 70%), radial-gradient(40% 45% at 22% 78%, currentColor, transparent 70%)',
+  });
+  root.append(e);
+  r.add(e, steps.map(([t, color]) => ({ color, offset: Math.min(1, t / WHOLE) })), 0, WHOLE, 'ease-in-out');
+}
+
+/** Sparks thrown from a point (x, y) in the host's own pixels: the moment the weakest year clears the level. */
+function sparks(r: Run, host: HTMLElement, x: number, y: number, at: number) {
+  for (let i = 0; i < 14; i++) {
+    const e = r.make(document.createElement('i')), a = (i / 14) * Math.PI * 2 + 0.2, d = i % 2 ? 46 : 30, sz = i % 3 ? 4 : 6;
+    Object.assign(e.style, { position: 'absolute', left: '0', top: '0', width: `${sz}px`, height: `${sz}px`, margin: `${-sz / 2}px`, borderRadius: '999px', background: 'var(--marigold)', boxShadow: '0 0 8px var(--marigold)', pointerEvents: 'none' });
+    host.append(e);
+    const from = `translate(${x}px, ${y}px)`, to = `translate(${x + Math.cos(a) * d}px, ${y + Math.sin(a) * d - 8}px) scale(0.2)`;
+    r.add(e, [{ opacity: 0, transform: `${from} scale(0.4)` }, { opacity: 1, transform: from, offset: 0.12 }, { opacity: 0, transform: to }], at + (i % 4) * 25, 900, EXPO);
+  }
+}
+
+/** A band of light that sweeps once across a card: the statement, done. */
+function sheen(r: Run, card: HTMLElement, at: number) {
+  const e = r.make(document.createElement('span'));
+  Object.assign(e.style, {
+    position: 'absolute', inset: '0', borderRadius: 'inherit', pointerEvents: 'none', backgroundRepeat: 'no-repeat', backgroundSize: '300% 100%',
+    backgroundImage: 'linear-gradient(105deg, transparent 42%, oklch(1 0 0 / 0.16) 50%, transparent 58%)',
+  });
+  card.append(e);
+  r.add(e, [{ backgroundPosition: '100% 0' }, { backgroundPosition: '0% 0' }], at, 1400, GLIDE);
+}
+
 /** The scene's controller: plays it, ends it on "Show it all", and plays it again. */
 export function scene(root: HTMLElement) {
   const p = parts(root);
@@ -220,8 +262,11 @@ export function scene(root: HTMLElement) {
     w.ins.forEach((e, i) => r.add(e, DRAW, B[1] + 650 + i * 60, 500, EXPO));
     r.add(p.hub, [{ opacity: 0, transform: 'scale(0.6)' }, { opacity: 1, transform: 'none' }], B[1] + 900, 700, SPRING);
     w.ins.forEach((e, i) => pulse(r, w.svg, e, B[1] + 1350 + i * 60, 600));
+    ripple(r, p.hub, B[1] + 2000);
 
-    // 3. Everything worked out: the years fill and the brackets snap on the weakest.
+    // 3. Everything worked out: the dial turns, the years fill, the lens stops on the weakest and the brackets snap on it.
+    const dial = p.q('[data-dial]');
+    r.add(dial, [{ transform: 'rotate(0deg)' }, { transform: 'rotate(360deg)' }], B[2], 1400, GLIDE);
     const typedRows = p.rows.filter((row) => row.querySelector('[data-t]'));
     w.outs.forEach((e, i) => r.add(e, DRAW, (i < typedRows.length || !across ? B[2] + 300 : C + 400) + i * 50, 500, EXPO));
     (across ? w.outs.slice(0, typedRows.length) : w.outs).forEach((e, i) => pulse(r, w.svg, e, B[2] + 500 + i * 50, 500));
@@ -239,14 +284,44 @@ export function scene(root: HTMLElement) {
       } else r.add(bar, [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], C + 450 + i * 60, 750, SPRING);
       r.add(f, [{ opacity: 0 }, { opacity: 1 }], C + 250 + i * 60, 300);
     });
-    // Geometry first, then the moves (GOTCHAS, HOME1c): each row's top within the rows' box. On a phone the canvas and the
-    // panel are scaled (--k, --fit; GOTCHAS, HOME1f), so a rect's measures go back to the panel's own.
+    // Geometry first, then the moves (GOTCHAS, HOME1c): each row's top within the rows' box, and where the lens rides. On a
+    // phone the canvas and the panel are scaled (--k, --fit; GOTCHAS, HOME1f), so a rect's measures go back to the panel's own.
     const s = across ? 1 : (Number(css.getPropertyValue('--k')) || 1) * (Number(getComputedStyle(p.panel).getPropertyValue('--fit')) || 1);
     const top = (row: HTMLElement) => (row.getBoundingClientRect().top - p.rowsBox.getBoundingClientRect().top) / s;
+    // The lens rides the level's line, at the track's middle; the track's place within the row is the same on every row.
+    const track = p.rows[0].querySelector('.track') as HTMLElement, place = Number(root.dataset.place ?? 0.45);
+    // The glass's centre is at 20 of the lens's 48 units, on the line and on the track (a smaller lens on a phone's long rows).
+    const c = (p.lens.getBoundingClientRect().width * 20) / 48 / s, lx = track.offsetLeft + track.offsetWidth * place - c, ty = track.offsetTop + track.offsetHeight / 2 - c;
     const weakT = p.rows.findIndex((x) => x.hasAttribute('data-weak-typed')), weakF = p.rows.findIndex((x) => x.hasAttribute('data-weak-fixed'));
+    const at = (i: number) => `translate(${lx}px, ${top(p.rows[i]) + ty}px)`;
+    // It reads the judged rows from the first down to the weakest (the CMA's audited years are not read).
+    const first = Math.max(0, p.rows.findIndex((x) => !x.querySelector('[data-yb].mute')));
+    const glide: Keyframe[] = p.rows.slice(first, Math.max(first, weakT) + 1).map((_, i) => ({ transform: at(first + i) }));
+    r.add(p.lens, glide.length > 1 ? glide : [glide[0], glide[0]], B[2] + 1400, 1000, GLIDE);
+    r.add(p.lens, [{ opacity: 0 }, { opacity: 1 }], B[2] + 1350, 250);
+    r.add(p.lens, [{ transform: at(weakT) }, { transform: at(weakF) }], C + 700, 600, SPRING);
+    r.add(p.lens, [{ opacity: 1 }, { opacity: 0 }], B[4], 300);
     const fT = `translateY(${top(p.rows[weakT])}px)`, fF = `translateY(${top(p.rows[weakF])}px)`;
     r.add(p.frame, [{ opacity: 0, transform: `${fT} scale(1.08)` }, { opacity: 1, transform: fT }], B[2] + 2350, 450, SNAP);
     r.add(p.frame, [{ transform: fT, backgroundColor: 'oklch(0.72 0.16 22 / 0.14)' }, { transform: fF, backgroundColor: 'oklch(0.82 0.15 76 / 0.12)' }], C + 700, 600, SPRING);
+    // The feeling (D-UX-261). Found: the weakest year shudders, the panel leans in, the hub's ring goes red and beats twice.
+    // Cleared: sparks leave the level where the weakest year now crosses it, the brackets glow and the ring turns marigold.
+    const T = B[2] + 2350, R = C + 700, gold = css.getPropertyValue('--gold').trim();
+    r.add(p.rows[weakT], [0, -4, 4, -3, 2, 0].map((x) => ({ transform: `translateX(${x}px)` })), T + 80, 480, 'ease-out');
+    r.add(p.panel, [{ transform: 'none' }, { transform: 'scale(1.02)', offset: 0.25 }, { transform: 'scale(1.02)', offset: 0.75 }, { transform: 'none' }], T - 150, 2600, GLIDE);
+    r.add(dial, [{ stroke: gold, strokeOpacity: 0.55 }, { stroke: miss, strokeOpacity: 1 }], T, 350);
+    r.add(dial, [{ stroke: miss, strokeOpacity: 1 }, { stroke: gold, strokeOpacity: 0.9 }], R, 500);
+    r.add(dial, [{ filter: 'drop-shadow(0 0 0 transparent)' }, { filter: `drop-shadow(0 0 12px ${gold})`, offset: 0.3 }, { filter: 'drop-shadow(0 0 3px transparent)' }], R, 1600);
+    r.add(p.hub, [{ transform: 'none' }, { transform: 'scale(1.07)', offset: 0.15 }, { transform: 'none', offset: 0.35 }, { transform: 'scale(1.05)', offset: 0.5 }, { transform: 'none', offset: 0.7 }, { transform: 'none' }], T + 100, 1100, 'ease-out');
+    ripple(r, p.hub, T + 100, miss, 1.4);
+    ripple(r, p.hub, T + 420, miss, 1.4);
+    sparks(r, p.rowsBox, lx + c, top(p.rows[weakF]) + ty + c, R + 250);
+    r.add(p.frame, [{ boxShadow: '0 0 0 0 transparent' }, { boxShadow: `0 0 26px -2px ${gold}`, offset: 0.3 }, { boxShadow: '0 0 0 0 transparent' }], R + 250, 1400);
+    mood(r, root, [
+      [0, 'oklch(0.5 0.14 268 / 0)'], [B[1], 'oklch(0.5 0.14 268 / 0.32)'], [B[2], 'oklch(0.5 0.12 250 / 0.3)'],
+      [T, 'oklch(0.58 0.19 22 / 0.4)'], [B[3], 'oklch(0.58 0.17 22 / 0.24)'], [R, 'oklch(0.75 0.16 76 / 0.36)'],
+      [B[4], 'oklch(0.78 0.15 80 / 0.44)'], [WHOLE, 'oklch(0.78 0.15 80 / 0.4)'],
+    ]);
     // The weakest year's sum, and the chip under it.
     const [labelT, figT, chipT] = p.qa('.sum [data-t]'), [labelF, figF, chipF] = p.qa('.sum [data-f]');
     r.add(labelT, [{ opacity: 0 }, { opacity: 1 }], B[2] + 2450, 250);
@@ -280,6 +355,8 @@ export function scene(root: HTMLElement) {
       r.add(hubWas, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-10px)' }], B[3] + 1550, 250);
       r.add(hubNow, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], B[3] + 1650, 450, SPRING);
     }
+    r.add(dial, [{ transform: 'rotate(360deg)' }, { transform: 'rotate(720deg)' }], B[3] + 1550, 1000, GLIDE);
+    ripple(r, p.hub, B[3] + 1650);
     (across ? w.outs : w.outs.slice(0, 1)).forEach((e, i) => pulse(r, w.svg, e, C + 200 + i * 50, 450));
 
     // 5. The document for the lender: the panel lifts away, the statement settles in its place and shows what it holds.
@@ -294,6 +371,16 @@ export function scene(root: HTMLElement) {
     p.qa('.lines svg, .verdict svg', p.doc).forEach((e, i) => r.add(e, [{ opacity: 0, transform: 'scale(0.4)' }, { opacity: 1, transform: 'none' }], B[4] + 750 + i * 160, 380, SNAP));
     p.qa('[data-file]', p.doc).forEach((e, i) => r.add(e, [{ opacity: 0, transform: 'translateY(-14px)' }, { opacity: 1, transform: 'none' }], B[4] + 1700 + i * 90, 500, SPRING));
     r.add(p.q('.ready', p.doc), [{ opacity: 0 }, { opacity: 1 }], B[4] + 2050, 400);
+    // The seal (D-UX-261): a ring stamps out of the verdict's tick as it lands, and light sweeps the finished statement.
+    const tick = p.q('.verdict svg', p.doc) as unknown as SVGSVGElement | null;
+    if (tick) {
+      const ring = r.make(document.createElementNS(SVG, 'circle'));
+      for (const [k, v] of Object.entries({ cx: '8', cy: '8', r: '7', fill: 'none', stroke: 'var(--marigold)', 'stroke-width': '1.5' })) ring.setAttribute(k, v);
+      ring.setAttribute('style', 'transform-box: fill-box; transform-origin: center; opacity: 0');
+      tick.append(ring);
+      r.add(ring, [{ opacity: 0.9, transform: 'scale(0.6)' }, { opacity: 0, transform: 'scale(2.6)' }], B[4] + 950, 800, 'ease-out');
+    }
+    sheen(r, p.doc, B[4] + 2400);
 
     p.button.textContent = 'Show it all';
     p.button.hidden = false;
