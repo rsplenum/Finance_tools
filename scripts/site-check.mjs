@@ -128,7 +128,8 @@ async function open(path, { scheme = 'light', stored, blockScripts = false, at =
   }
   const res = await page.goto(BASE + path, { waitUntil: 'networkidle' });
   if (res?.status() !== 200) v(`HTTP ${res?.status()}`);
-  if (!blockScripts) await page.waitForFunction(() => !document.querySelector('astro-island[ssr]'), null, { timeout: 10000 })
+  // An island behind a closed line wakes when it is opened (client:visible, the typed quotation, UXR7).
+  if (!blockScripts) await page.waitForFunction(() => ![...document.querySelectorAll('astro-island[ssr]')].some((i) => !i.closest('details:not([open])')), null, { timeout: 10000 })
     .catch(() => v('an interactive part did not start'));
   const isDark = () => page.evaluate(() => document.documentElement.classList.contains('dark'));
   return { page, ctx, v, isDark };

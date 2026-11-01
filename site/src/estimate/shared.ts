@@ -5,12 +5,13 @@
  * finding 7: the button knows before the click whether the bill can be made).
  */
 import { useEffect, useState } from 'preact/hooks';
-import type { PlanState } from './plan-model';
+import type { PlanState } from './plan-state';
 
 let latest: PlanState | null = null, first: string | undefined, left = 0;
 const heard = new Set<() => void>();
 export const sharePlan = (s: PlanState, ask: { first?: string; left: number }) => {
-  if (latest === s && left === ask.left) return;
+  // Never at build: the page's HTML would carry one build's state into the typed path (seen while it wakes, UXR7).
+  if (typeof window === 'undefined' || (latest === s && left === ask.left)) return;
   latest = s; first = ask.first; left = ask.left;
   queueMicrotask(() => heard.forEach((f) => f()));
 };

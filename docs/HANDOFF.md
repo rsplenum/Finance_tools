@@ -36,4 +36,4 @@ A row's session writes 1 to 4 straight into the shared docs (`docs/DECISIONS.md`
 | 01-11-2026 | D-TECH-75 (the lens on all work, a quick ask) | S, high | see `npm run cost` |
 | 01-11-2026 | OR11d | L, Extra | about 215 steps, 0.8 h, 4 compactions |
 | 01-11-2026 | UXR6 | L, Extra | 196 steps, 0.9 h, 2 compactions (with merging #161 and the owner's three fixes from the preview) |
-| 01-11-2026 | UXR7 | M, high | about 110 steps, 0.6 h, 1 compaction |
+| 01-11-2026 | UXR7 | M, high | about 145 steps, 1.3 h, 1 compaction (two full site checks: `fields.tsx` is shared) |

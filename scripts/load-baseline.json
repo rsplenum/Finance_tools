@@ -72,7 +72,7 @@
       "long": 0,
       "abbr": 5,
       "questions": 8,
-      "controls": 33,
+      "controls": 35,
       "answerAt": 2.2,
       "gap": 0,
       "styles": 9,
@@ -88,7 +88,7 @@
       "long": 1,
       "abbr": 2,
       "questions": 7,
-      "controls": 37,
+      "controls": 39,
       "answerAt": 0.9,
       "gap": 0,
       "styles": 6,
@@ -1732,7 +1732,9 @@
     { "page": "/cma/", "count": "shown", "from": 722, "to": 727, "why": "D-UX-271", "date": "2026-11-01" },
     { "page": "/cma/", "count": "all", "from": 1845, "to": 1850, "why": "D-UX-271", "date": "2026-11-01" },
     { "page": "/cma/", "count": "plan", "from": 1940, "to": 1946, "why": "D-UX-271", "date": "2026-11-01" },
-    { "page": "/cma/", "count": "controls", "from": 57, "to": 63, "why": "D-UX-271", "date": "2026-11-01" }
+    { "page": "/cma/", "count": "controls", "from": 57, "to": 63, "why": "D-UX-271", "date": "2026-11-01" },
+    { "page": "/dscr/", "count": "controls", "from": 33, "to": 35, "why": "D-UX-275", "date": "2026-11-01" },
+    { "page": "/estimate/", "count": "controls", "from": 37, "to": 39, "why": "D-UX-275", "date": "2026-11-01" }
   ],
   "fontProbe": 320.2
 }

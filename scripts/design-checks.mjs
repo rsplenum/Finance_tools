@@ -374,7 +374,8 @@ export async function openAt(browser, url, { width = 'phone', scheme = 'light', 
   const page = await ctx.newPage();
   await page.clock.setFixedTime(new Date(FIXED_AT));
   await page.goto(url, { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => !document.querySelector('astro-island[ssr]'), null, { timeout: 10000 }).catch(() => {});
+  // An island behind a closed line wakes when it is opened (client:visible, the typed quotation, UXR7).
+  await page.waitForFunction(() => ![...document.querySelectorAll('astro-island[ssr]')].some((i) => !i.closest('details:not([open])')), null, { timeout: 10000 }).catch(() => {});
   return { ctx, page };
 }
 
