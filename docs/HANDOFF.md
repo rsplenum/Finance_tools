@@ -33,3 +33,4 @@ A row's session writes 1 to 4 straight into the shared docs (`docs/DECISIONS.md`
 | 01-11-2026 | D-UX-259 (videos slowed, a quick ask) | S, high | see `npm run cost` |
 | 01-11-2026 | D-UX-260 (videos' decoration removed, a quick ask) | S, high | see `npm run cost` |
 | 01-11-2026 | D-UX-261 (videos' cool back, a feeling added, a quick ask) | S, high | see `npm run cost` |
+| 01-11-2026 | OR11d | L, Extra | about 215 steps, 0.8 h, 4 compactions |
