@@ -13,7 +13,7 @@ import { describe, it, expect } from 'vitest';
 import { projectReport, type Report, type ReportInput } from '../engine/report';
 import { diagnose } from '../engine/ratios';
 import { fixOf } from '../engine/fix';
-import { makePlan, withLevers, type Plan } from '../engine/plan';
+import { AS_TYPED, makePlan, withLevers, type Plan } from '../engine/plan';
 
 export const F: ReportInput = {
   taxBy: 'proprietor', cost: { building: 5000000, machinery: 25000000 },
@@ -71,38 +71,27 @@ describe('the fix beside the miss (OR2)', () => {
   });
 });
 
-// "Make it viable" on case F (OR2b, D-UX-182): the plan's own steps move nothing (no promoters' most typed, the term only
-// lengthening), so it opens on the fix beside the miss and agrees with "Use this". The fewest instalments the board takes
-// is where the lowest-year DSCR still meets: by the engine, 1.3570 at 12 instalments of Rs. 1,75,00,000 and 1.24998 at 11,
-// under 1.25, in 2026-27 (five instalments by 31 March); the larger term loan of 2.5 crore reaches its bound at 16.
-describe('"Make it viable" on case F (OR2b)', () => {
-  it('opens on the least strained fix and works: the promoters asked once for Rs. 75,00,000 more', () => {
-    const q = makePlan(F) as Plan, f = fixOf(F)!.fixes[0];
-    expect([q.fromFix, q.works, q.levers]).toEqual([true, true, f.levers]);
+// The sliders on case F (OR11d): the board opens as typed, the fix no longer standing in for the plan (D-UX-182 retired);
+// held at the fix's levers, it agrees with "Use this". The fewest instalments the board takes is where the lowest-year DSCR
+// still meets (the instalments free, the loan held at the fix's): by the engine, 1.3570 at 12 instalments of Rs. 1,75,00,000 and 1.24998 at 11, under 1.25, in 2026-27 (five
+// instalments by 31 March); the term loan as typed, 2.5 crore, reaches its bound at 16.
+describe('The sliders on case F (OR11d)', () => {
+  it('open as typed, and held at the fix work: the promoters bring Rs. 75,00,000 more', () => {
+    const f = fixOf(F)!.fixes[0];
+    expect((makePlan(F, { typed: true }) as Plan).levers).toEqual(AS_TYPED);
+    const q = makePlan(F, { typed: true, held: f.levers }) as Plan;
+    expect([q.works, q.levers]).toEqual([true, f.levers]);
     expect(q.promoters.more).toBe(7500000);
     expect(q.promoters.plan).toBeCloseTo(f.report.finance.promoter, 6);
   });
 
-  it('keeps the fix when the promoters can bring it, and passes it over, saying what it needs, when they cannot', () => {
-    expect((makePlan(F, { promotersMost: 20000000 }) as Plan).levers).toEqual(fixOf(F)!.fixes[0].levers);
-    const q = makePlan(F, { promotersMost: 10000000 }) as Plan;
-    expect([q.fromFix, q.works, q.still]).toEqual([false, false, ['facr']]);
-    expect(q.fixNeeds).toBeCloseTo(fixOf(F)!.fixes[0].report.finance.promoter, 6);
-    expect(q.report.finance.promoter).toBeLessThanOrEqual(10000000);
-  });
-
-  it('lets the repayment shorten down to where the lowest-year DSCR stops meeting', () => {
-    const q = makePlan(F) as Plan, dscr = (n: number) => {
-      const y = withLevers(F, { ...q.levers, instalments: n - 180 }), k = diagnose(projectReport(y) as Report, y).checks.find((c) => c.id === 'dscrLowest')!;
+  it('let the repayment shorten down to where the lowest-year DSCR stops meeting', () => {
+    const f = fixOf(F)!.fixes[0], q = makePlan(F, { typed: true, held: { promoters: f.levers.promoters } }) as Plan, dscr = (n: number) => {
+      const y = withLevers(F, { ...f.levers, instalments: n - 180 }), k = diagnose(projectReport(y) as Report, y).checks.find((c) => c.id === 'dscrLowest')!;
       return [k.meets, (k.worst as number).toFixed(4)];
     };
     expect(q.limits.fewest).toBe(12 - 180);
     expect([dscr(12), dscr(11)]).toEqual([[true, '1.3570'], [false, '1.2500']]);
-    expect((makePlan(F, { promotersMost: 10000000 }) as Plan).limits.fewest).toBe(16 - 180);
-  });
-
-  it('keeps to its own steps when no fix meets every level missed', () => {
-    // A lower price misses the current ratio too: no fix, the plan's own steps as before.
-    expect((makePlan({ ...F, products: [{ name: 'Widgets', unitsMonth: 10000, price: 600 }] }) as Plan).fromFix).toBe(false);
+    expect((makePlan(F, { typed: true }) as Plan).limits.fewest).toBe(16 - 180);
   });
 });
