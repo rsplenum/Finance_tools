@@ -86,6 +86,13 @@ export interface ReportInput {
   wcLimit?: number; wcRatePct?: number;
   /** The collateral's market value (D-UX-52): its realisable sale value counts in the security cover. */
   collateral?: number;
+  /** The promoters' money kept in the business as cash at the start, beyond their share of the project (OR11d): it adds
+   * to the capital and the opening cash, never to the project's cost or its means of finance. */
+  cashAtStart?: number;
+  /** An expansion's loans already running (OR11c's first tradeoff): their instalments a year, interest and principal
+   * together, counted in full in every year's debt service, as the DSCR statement counts existing EMIs. Today's balance
+   * sheet is not asked, so these loans stand outside the balance sheet and the cash flow. */
+  existingEmis?: number;
 }
 
 export interface CostLine { id: HeadId | 'margin' | 'idc' | 'fee'; label: string; amount: number }
@@ -135,7 +142,7 @@ export interface Report {
    * keeps every year at nil or above (OR11a2, D-UX-247). */
   cashShort?: { first: string; fy: string; lowest: number; need: number };
   cost: CostLine[]; fixedAssets: number; marginMoney: number; projectCost: number;
-  finance: { termLoan: number; subsidy: number; unsecured: number; promoter: number; total: number; promoterPct: number };
+  finance: { termLoan: number; subsidy: number; unsecured: number; promoter: number; total: number; promoterPct: number; kept: number };
   /** The collateral's market value, realisable sale value and distress sale value (engine/data/ratios.json). */
   collateral?: { market: number; rsv: number; dsv: number };
   wcLimit: number; years: ReportYear[]; average?: number; lowest?: { dscr: number; fy: string }; plan: Plan;
@@ -279,6 +286,8 @@ export function reportNeeds(x: ReportInput): string[] {
   if (!(isNum(x.wcLimit) && x.wcLimit >= 0)) needs.push('The working-capital limit you will ask for (0 if none)');
   if (isNum(x.wcLimit) && x.wcLimit > 0 && !isNum(x.wcRatePct)) needs.push('The working-capital limit: its interest rate');
   if (x.collateral !== undefined && !(isNum(x.collateral) && x.collateral >= 0)) needs.push('The collateral\'s market value: a figure of 0 or more');
+  if (x.cashAtStart !== undefined && !(isNum(x.cashAtStart) && x.cashAtStart >= 0)) needs.push('Your own money kept in the business: a figure of 0 or more');
+  if (x.existingEmis !== undefined && !(isNum(x.existingEmis) && x.existingEmis >= 0)) needs.push('Today\'s loans: their instalments a year, a figure of 0 or more');
   return needs;
 }
 
@@ -388,7 +397,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   });
   const proj: ProjectionYear[] = rows.map((r) => ({
     fy: r.fy, pbdit: r.pbdit, assetIncome: 0, depreciation: r.depreciation, nonCash: r.preliminary, interestOther: r.wcInterest + r.guaranteeFee,
-    otherLoansInterest: 0, otherLoansPrincipal: 0, existingEmis: 0, taxBy: x.taxBy,
+    otherLoansInterest: 0, otherLoansPrincipal: 0, existingEmis: expansion ? x.existingEmis ?? 0 : 0, taxBy: x.taxBy,
   }));
   const plan = planStatement(proj, loan, DSCR_METHOD, first > when.years[0] ? first : undefined);
   if (!('statement' in plan)) return plan;
@@ -397,6 +406,8 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   const projectCost = fixedAssets + prelimAll + marginMoney;
   const subsidy = scheme ? scheme.subsidy : x.subsidy ?? 0, unsecured = x.unsecured ?? 0, termLoan = loan.amount as number, promoter = projectCost - termLoan - subsidy - unsecured;
   if (promoter < 0) return { needs: ['The term loan, subsidy and unsecured loans come to more than the cost of the project'] };
+  // The capital: the promoters' share of the project and the money they keep in the business as cash (OR11d).
+  const kept = x.cashAtStart ?? 0, capital = promoter + kept;
   if (scheme) {
     // The promoters' own share of PMEGP's project cost: what they bring, less the land and the interest before the first
     // sales, which that cost leaves out.
@@ -429,7 +440,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     const principal = d?.principal ?? 0, tlLeft = d?.closing ?? 0;
     retained += p.pat; accumulated += r.depreciation; written += r.preliminary;
     const flow: Flow = {
-      capital: k ? 0 : promoter, subsidy: k ? 0 : subsidy, unsecured: k ? 0 : unsecured, termLoan: k ? 0 : termLoan,
+      capital: k ? 0 : capital, subsidy: k ? 0 : subsidy, unsecured: k ? 0 : unsecured, termLoan: k ? 0 : termLoan,
       pat: p.pat, depreciation: r.depreciation, preliminary: r.preliminary, wcLoan: k ? 0 : limit, creditors: lv.creditors - prev.creditors, sources: 0,
       fixedAssets: k ? 0 : fixedAssets, preliminarySpent: k ? 0 : prelimAll, stock: lv.stock - prev.stock, debtors: lv.debtors - prev.debtors, repaid: principal, uses: 0,
       net: 0, opening: cash, closing: 0,
@@ -439,7 +450,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     flow.net = flow.sources - flow.uses;
     cash += flow.net;
     flow.closing = cash;
-    const netWorth = promoter + subsidy + retained, netBlock = fixedAssets - accumulated, preliminaryLeft = prelimAll - written;
+    const netWorth = capital + subsidy + retained, netBlock = fixedAssets - accumulated, preliminaryLeft = prelimAll - written;
     const liabilities = netWorth + unsecured + tlLeft + limit + lv.creditors, assets = netBlock + preliminaryLeft + lv.stock + lv.debtors + cash;
     const fixedAll = r.fixed + r.depreciation + r.preliminary + p.interestTL + r.wcInterest + r.guaranteeFee, contribution = r.sales - r.variable;
     const interest = p.interestTL + r.wcInterest + r.guaranteeFee, currentAssets = lv.stock + lv.debtors;
@@ -447,7 +458,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     out.push({
       fy: r.fy, months: months[k], ...(drivers ? { utilisationPct: util[k] } : {}), ...(byProduct ? { products: byProduct } : {}), ...(expansion ? { today: r.today, line: r.line } : {}), sales: r.sales, variable: r.variable, fixed: r.fixed, ...(headed ? { heads } : {}), pbdit: r.pbdit, depreciation: r.depreciation, preliminary: r.preliminary,
       tlInterest: p.interestTL, wcInterest: r.wcInterest, guaranteeFee: r.guaranteeFee, pbt: p.pbt, tax: p.tax, pat: p.pat,
-      capital: promoter, subsidy, retained, netWorth, unsecured, termLoan: tlLeft, wcLoan: limit, creditors: lv.creditors, liabilities,
+      capital, subsidy, retained, netWorth, unsecured, termLoan: tlLeft, wcLoan: limit, creditors: lv.creditors, liabilities,
       grossBlock: fixedAssets, accumulated, netBlock, preliminaryLeft, stock: lv.stock, debtors: lv.debtors, cash, assets, flow,
       available: st.available, service: st.service, principal, ...(st.dscr !== undefined ? { dscr: st.dscr } : {}), counted: st.counted, contribution, fixedAll,
       ...(contribution > 0 ? { bepPct: (fixedAll / contribution) * 100, bepSales: (r.sales * fixedAll) / contribution, cashBepPct: ((fixedAll - r.depreciation - r.preliminary) / contribution) * 100 } : {}),
@@ -468,7 +479,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   const unbalanced = out.find((y) => !money(y.assets, y.liabilities));
   if (unbalanced) return blocked(`the balance sheet for ${unbalanced.fy}`);
   const check = reportCheck({
-    cost: { ...cost, preliminary: prelimAll }, promoter, subsidy, unsecured, limit, run: runS, months, variablePct: v, fixed: rows.map((r) => r.fixed), days,
+    cost: { ...cost, preliminary: prelimAll }, promoter: capital, subsidy, unsecured, limit, run: runS, months, variablePct: v, fixed: rows.map((r) => r.fixed), days,
     ...(drivers ? { drivers: { ...(x.products ? { products: x.products.map((p) => ({ unitsMonth: p.unitsMonth as number, price: p.price as number })) } : { capacity: x.capacity as number, price: x.price as number }),
       utilisationPct: util, priceGrowthPct: x.priceGrowthPct as number, fullAt } } : {}),
     ...(expansion ? { today: { sales: x.sales as number, growthPct: x.salesGrowthPct as number } } : {}),
@@ -494,7 +505,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
       ...(feeBeforeStart > 0 ? [{ id: 'fee' as const, label: 'Guarantee fee before sales start', amount: feeBeforeStart }] : []),
       ...(marginMoney > 0 ? [{ id: 'margin' as const, label: 'Margin for working capital', amount: marginMoney }] : [])],
     fixedAssets, marginMoney, projectCost, ...(collateral ? { collateral } : {}),
-    finance: { termLoan, subsidy, unsecured, promoter, total: termLoan + subsidy + unsecured + promoter, promoterPct: (promoter / projectCost) * 100 },
+    finance: { termLoan, subsidy, unsecured, promoter, total: termLoan + subsidy + unsecured + promoter, promoterPct: (promoter / projectCost) * 100, kept },
     wcLimit: limit, years: out, ...(plan.statement.average !== undefined ? { average: plan.statement.average } : {}),
     ...(plan.statement.minimum ? { lowest: plan.statement.minimum } : {}), plan,
     loanInterest: debt.totalInterest, firstInstalment: debt.months.find((m) => m.instalment === 1)?.paid ?? 0,

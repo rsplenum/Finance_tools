@@ -6,10 +6,10 @@
 import { ALL_ANSWERED, questionsLeft, verdictWords } from '../verdict';
 import { ASSUMPTIONS, COST_HEADS, HEADS, costsOf, MUDRA, PMEGP, REPORT_REVIEW_BY, mudraLevel, mudraShort, projectReport, workedLimit, WORKING_CAPITAL, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
 import { parseAmount, parseMonth } from '../../../engine/parse';
-import { LEVELS, collateralNeeded, diagnose, type Levels, type RatioCheck } from '../../../engine/ratios';
+import { LEVELS, collateralNeeded, diagnose, type Levels, type RatioCheck, type RatioId } from '../../../engine/ratios';
 import { makeViable, type Longer, type Outcome } from '../../../engine/viable';
 import { AS_TYPED, LEVER_IDS, makePlan, withLevers, type LeverId, type Levers } from '../../../engine/plan';
-import { fixOf } from '../../../engine/fix';
+import { makeWork, plantMachinery, type Cause, type Change, type Way as WorkWay, type WayId } from '../../../engine/work';
 import { compareRepayments, periodOf, type Way } from '../../../engine/repayment';
 import { STEPPED } from '../../../engine/loan';
 import { BORROWERS } from '../../../engine/tax';
@@ -54,6 +54,14 @@ export interface ReportState {
   wcLimit: string; wcRate: string;
   /** The most the promoters can bring in all, on the plan's board only (MV3): not an input of the report. */
   promotersMost: string;
+  /** The promoters' money kept in the business as cash at the start, beyond their share of the project (OR11d); and in
+   * an expansion, today's loans' instalments a year (OR11c's (1)): expert mode's, both blank by default. */
+  cashAtStart?: string; existingEmis?: string;
+  /** Make it work's questions, inside their cards (D-UX-251 (b)): the plant's sales a year running full and the larger
+   * plant's cost. Not inputs of the report. */
+  plantSales?: string; plantCost?: string;
+  /** A question a way used left open (D-UX-252 (1)): listed with what is needed until answered. */
+  pending?: 'plantSales' | 'plantCost';
   /** The benchmarks the user changed (BEN1), as typed; a ratio left out takes its default. Not an input of the report. */
   benchmarks?: BenchmarkText;
   doc: ReportFacts;
@@ -227,6 +235,7 @@ export function changedOf(s: ReportState): string[] {
   if (others.length) out.push(`The cost of the project: ${others.map((h) => `${h.label.toLowerCase()} Rs. ${s.cost[h.id]}`).join(', ')}`);
   if (s.scheme !== 'pmegp' && s.subsidy.trim()) out.push(`A capital subsidy of Rs. ${s.subsidy}`);
   if (s.unsecured.trim()) out.push(`Unsecured loans of Rs. ${s.unsecured}`);
+  if (s.cashAtStart?.trim()) out.push(`Rs. ${s.cashAtStart} of your own money kept in the business`);
   if (s.loan.disbursed.trim()) out.push(`The loan first drawn in ${s.loan.disbursed}`);
   if (s.salesBy === 'typed') out.push('Sales typed by year, in place of the products');
   else {
@@ -310,7 +319,8 @@ function fieldsOf(s: ReportState): ReportInput {
       amount: amountOf(s.loan.amount), ratePct: plainOf(s.loan.ratePct), disbursed: parseMonth(s.loan.disbursed), moratoriumMonths: plainOf(s.loan.moratoriumMonths),
       instalments: plainOf(s.loan.instalments), ...(r ? { frequency: r === 'quarterly' ? 'quarterly' : 'monthly', style: r === 'emi' || r === 'stepped' ? r : 'equal-principal' } : {}),
     },
-    subsidy: s.scheme === 'pmegp' ? undefined : opt(s.subsidy), unsecured: opt(s.unsecured), collateral: opt(collateralText(s)),
+    subsidy: s.scheme === 'pmegp' ? undefined : opt(s.subsidy), unsecured: opt(s.unsecured), cashAtStart: opt(s.cashAtStart ?? ''),
+    ...(s.salesBy === 'expansion' ? { existingEmis: opt(s.existingEmis ?? '') } : {}), collateral: opt(collateralText(s)),
     salesBy: s.salesBy, monthsToStart: plainOf(s.monthsToStart),
     ...(s.salesBy !== 'drivers' ? { sales: amountOf(s.sales), salesGrowthPct: plainOf(s.salesGrowth) } : {}),
     ...(s.salesBy === 'typed' ? {} : {
@@ -377,6 +387,7 @@ export function viewOf(r: Report): ReportView {
       ...(f.unsecured ? [{ label: 'Unsecured loans', values: [rupees(f.unsecured)], n: [f.unsecured] }] : []),
       { label: sc ? `Term loan: Rs. ${rupees(sc.sanctioned)} applied for, less the margin money` : r.mudra ? `Term loan under Mudra (${r.mudra.level.label}), with no collateral` : 'Term loan', values: [rupees(f.termLoan)], n: [f.termLoan] },
       { label: 'Total means of finance', values: [rupees(f.total)], n: [f.total], kind: 'total' },
+      ...(f.kept ? [{ label: 'Besides, the promoters’ money kept in the business as cash at the start', values: [rupees(f.kept)], n: [f.kept] }] : []),
     ],
   };
   // Sales by product (D-UX-109): each line's units sold, price a unit and sales a year, in its own unit (OR6); the lines
@@ -521,13 +532,14 @@ export function preview(s: ReportState): ReportPreview {
   if ('needs' in r) return { needs: needsWords(s, r.needs), flags: [] };
   const asks = simple(s) ? simpleNeeds(s) : [];
   if (asks.length) return { needs: asks, flags: [] };
+  const open = s.pending ? [PENDING[s.pending].need] : [];
   const lv = levelsOf(s.benchmarks), c = r.cashShort, d = diagnose(r, x, 'fresh', lv), checks = d.checks.map((k) => rowOf(k)), own = benchmarksNote(d.checks);
   const sc = d.checks.find((k) => k.id === 'securityCover') as RatioCheck, need = sc.meets ? undefined : collateralNeeded(r, x, 'fresh', lv);
   const collateralNote = need === undefined ? undefined : need === 0
     ? `Security cover: the project’s own assets reach ${sc.level.toFixed(2)} without collateral.`
     : `Security cover: collateral with a market value of Rs. ${rupees(need)} or more brings it to ${sc.level.toFixed(2)}.`;
   return {
-    needs: [], view: viewOf(r), flags: r.scheme?.flags ?? [], checks,
+    needs: open, view: viewOf(r), flags: r.scheme?.flags ?? [], checks,
     ...(d.misses.length ? { misses: `${verdictWords('benchmark', d.checks.length, d.misses.length, d.checks.filter((k) => k.meets === undefined).length)}: ${listed(d.misses.map(labelOf))}.` } : {}),
     ...(collateralNote ? { collateralNote } : {}), ...(own ? { benchmarks: own } : {}), ...(hybridLine(r) ? { hybrid: hybridLine(r) } : {}),
     ...(c ? { runsOut: c.first, short: `${runsOut(c, rupees)} The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.` } : {}),
@@ -597,7 +609,7 @@ export function repaymentView(s: ReportState): RepaymentView | undefined {
   const them = asked.length > 2 ? `${asked.length} ratios` : listed(asked.map(labelOf));
   const lead = rows.length === 1 ? 'One way to repay quarterly instalments: equal principal.'
     : p ? `${p.label} pays the least interest of the ways that meet every benchmark${p.now ? ': the way in use' : ''}.`
-      : same ? `${them[0].toUpperCase()}${them.slice(1)} ${asked.length > 1 ? 'miss' : 'misses'} whichever way the loan is repaid: the ways differ in the interest and the instalments. What fixes ${asked.length > 1 ? 'them' : 'it'} is under “Why it does not work yet” above.`
+      : same ? `${them[0].toUpperCase()}${them.slice(1)} ${asked.length > 1 ? 'miss' : 'misses'} whichever way the loan is repaid: the ways differ in the interest and the instalments. What fixes ${asked.length > 1 ? 'them' : 'it'} is under “Make it work” above.`
         : 'No way to repay meets every benchmark with the figures as typed.';
   const notes = [
     ...(c.ways.some((w) => w.style === 'stepped') ? [`A stepped instalment is level within each year and rises each new year by up to ${STEPPED.stepPct}%. The last year's is held to ${STEPPED.lastToFirstMost} times the first year's at most, until a lender sets its own.`] : []),
@@ -680,33 +692,97 @@ export function viableOf(s: ReportState): ViableView | undefined {
   };
 }
 
-// ---- The fix beside the miss (OR2, D-UX-177): why it fails, in a line, and the repayment and the loan that fix it ----
+// ---- Make it work (OR11d, D-UX-249 to D-UX-252): what holds the loan back, then the ways that make it work alone ----
 
-/** What each ratio falls behind when it misses: the cause the line names. */
-const CAUSE: Partial<Record<RatioCheck['id'], string>> = {
-  dscrLowest: 'the cash the business earns falls short of the instalments and interest due',
-  dscrAverage: 'the cash the business earns falls short of the instalments and interest due',
-  interestCover: 'the profit is thin against the interest',
-  currentRatio: 'the current assets are thin against the short-term debts',
-  tolTnw: 'the outside liabilities are large against the promoters’ own money',
-  debtEquity: 'the term loan is large against the promoters’ own money',
-  facr: 'the fixed assets, written down each year, lose value faster than the term loan is repaid',
+const CAUSE_WORDS: Record<Cause, [string, string]> = {
+  earns: ['Earns too little for this loan', 'The cash and the profit fall short of the instalments and the interest.'],
+  cushion: ['A thin short-term cushion', 'Stock, debtors and cash are thin against the short-term debts.'],
+  own: ['Too little of the promoters’ own money', 'The debts are large against what the promoters have put in.'],
+  assets: ['The assets wear out faster than the loan is repaid', 'The fixed assets, written down each year, lose value faster than the term loan is repaid.'],
 };
-/** `cause`: a sentence for each level missed (the security cover aside); `lead` and `fixes`: the changes that meet them
- * all, each with the plan's levers for "Use this"; `none` when a shorter repayment and a smaller loan cannot. */
-export interface FixView { cause: string[]; lead?: string; fixes: { text: string; levers: Levers }[]; none?: string }
+/** The ways that change the loan; the rest keep it as asked. */
+const LOAN_WAYS = new Set<WayId>(['fix', 'wc', 'moratorium', 'instalments', 'loan']);
+/** A question a card asks (D-UX-251 (b)): the plant's sales at full running, or the larger plant's cost. */
+export interface WorkAsk { id: 'plantSales' | 'plantCost'; label: string; hint: string; value: string; note: string }
+export interface WorkCard {
+  id: WayId; key: string; head: string; text: string; notes: string[]; fixes: string[]; still: string[]; reaches: boolean; ask?: WorkAsk;
+  /** The figures Use this writes. */
+  change: Change;
+}
+export interface WorkView {
+  held: { cause: Cause; head: string; text: string; rows: CheckRow[] }[]; misses: number;
+  years: { fy: string; dscr: string; meets: boolean; months: number }[]; dscrLevel: string;
+  cash?: string; amount: string;
+  keep: WorkCard[]; keepNot: WorkCard[]; useCannot?: string;
+  change: WorkCard[]; changeNot: WorkCard[]; changeNone?: string;
+}
+/** A ratio to two places, or to four where two would contradict its verdict (1.2496 against 1.25). */
+const ratioText = (v: number, level: number) => { const t = v.toFixed(2); return (+t >= level) === (v >= level - 1e-9) ? t : v.toFixed(4); };
+const pctOf = (n: number) => `${+n.toFixed(2)}%`;
+const usesOf = (u?: number[]) => (u ?? []).map(pctOf).join(', ');
+const priceText = (n: number) => `Rs. ${inr(n, Number.isInteger(n) ? 0 : 2)}`;
 
-export function fixView(s: ReportState): FixView | undefined {
-  const f = fixOf(inputOf(s), levelsOf(s.benchmarks));
-  if (!f) return undefined;
-  const cause = f.diagnosis.checks.filter((k) => f.missed.includes(k.id)).map((k) => (k.why ? `${k.label} fails: ${k.why}.`
-    : `${k.label} ${k.at === 'least' ? 'falls to' : 'rises to'} ${ratioAt(k.worst as number, k)}${k.fy ? ` in ${k.fy}` : ' over the loan'}, against its benchmark of ${k.level.toFixed(2)}: ${CAUSE[k.id]}.`));
-  const fixes = f.fixes.map(({ instalments: i, loan: l, levers }) => {
-    const term = i.needed < i.now ? `Repay in ${years(i.needed, i.perYear)} instead of ${years(i.now, i.perYear)}` : `Keep the repayment at ${years(i.now, i.perYear)}`;
-    return { text: `${term}${l.needed < l.now ? ` and borrow Rs. ${rupees(l.needed)} instead of Rs. ${rupees(l.now)}: the promoters bring Rs. ${upRupees(l.more)} more` : ''}.`, levers };
+/** Make it work on the page: none while the report has no figures, or misses nothing (the security cover aside) and its cash
+ * stays at nil or above. */
+export function workView(s: ReportState): WorkView | undefined {
+  const x = inputOf(s), lv = levelsOf(s.benchmarks), sales = amountOf(s.plantSales ?? ''), cost = amountOf(s.plantCost ?? '');
+  const w = makeWork(x, { levels: lv, ...(sales !== undefined && sales > 0 ? { plantSales: sales } : {}), ...(cost !== undefined && cost > 0 ? { plantCost: cost } : {}) });
+  if ('needs' in w || 'blocked' in w || (w.meets && !w.cash)) return undefined;
+  const rs = (n?: number) => `Rs. ${rupees(n ?? 0)}`, label = (ids: RatioId[]) => ids.map(labelOf);
+  const perYear = x.loan.frequency === 'quarterly' ? 4 : 12, n0 = x.loan.instalments as number, prods = x.products ?? [];
+  const unit = soldBy(s.products[0]?.unit), first = w.years[0], most = LEVELS.capacity.mostUsePct;
+  const at85 = (c: Change) => (c.utilisationPct ? `, with the use of the capacity at ${most}% in every year (now ${usesOf(x.utilisationPct)})` : '');
+  const each = (c: Change, f: 'price' | 'unitsMonth') => (c.products ?? []).map((p, i) => {
+    const name = prods[i]?.name?.trim() || (prods.length > 1 ? `Product ${i + 1}` : ''), u = soldBy(prods[i]?.unit);
+    const now = prods[i]?.[f] as number, to = p[f];
+    return `${name ? `${name}: ` : ''}${f === 'price' ? `${priceText(to)} ${u.per} (now ${priceText(now)})` : `${inr(to)} ${u.many} a month at full running (now ${inr(now)})`}`;
+  }).join('; ');
+  const words: Record<WayId, (c: Change) => [string, string]> = {
+    sales: (c) => ['Sell more', `${x.salesBy === 'expansion' ? 'Today’s sales' : 'Sales'} of ${rs(c.sales)} in a full first year (now ${rs(x.sales)}).`],
+    salesLonger: (c) => [`Sell a little more and repay over ${years(c.instalments as number, perYear)}`,
+      `Sales of ${rs(c.sales)} in a full first year (now ${rs(x.sales)}), and ${c.instalments} instalments (now ${n0}), if the lender agrees.`],
+    use1: (c) => ['Fill faster in the first year', `The use of the capacity at ${pctOf((c.utilisationPct ?? [])[0])} in the first year (now ${pctOf((x.utilisationPct ?? [])[0])}), the later years as typed: ${usesOf(c.utilisationPct)}.`],
+    use: (c) => ['Fill faster', `The use of the capacity at ${usesOf(c.utilisationPct)} (now ${usesOf(x.utilisationPct)}).`],
+    price: (c) => [c.utilisationPct ? `Charge more, and run at ${most}%` : 'Charge more', `${prods.length > 1 ? 'Every price higher: ' : 'A price of '}${each(c, 'price')}${at85(c)}.`],
+    capacity: (c) => [`${x.salesBy === 'expansion' ? 'A larger line' : 'A larger plant'}${c.utilisationPct ? `, run at ${most}%` : ''}`, `${each(c, 'unitsMonth')}${at85(c)}.`],
+    growth: (c) => ['Grow faster', c.salesGrowthPct !== undefined ? `Sales growing ${pctOf(c.salesGrowthPct)} a year (now ${pctOf(x.salesGrowthPct as number)}).`
+      : `The price growing ${pctOf(c.priceGrowthPct as number)} a year (now ${pctOf(x.priceGrowthPct as number)}).`],
+    cash: (c) => ['Keep more of your own money in the business', `${rs(c.cashAtStart)} of the promoters’ money kept in the business as cash at the start${x.cashAtStart ? ` (now ${rs(x.cashAtStart)})` : ''}, beyond their share of the project.`],
+    variable: (c) => ['Or a better margin', `Materials and other variable costs at ${pctOf(c.variablePct as number)} of sales (now ${pctOf(costsOf(x).variablePct as number)}).`],
+    fix: (c) => [c.instalments !== undefined ? `Borrow less and repay in ${years(c.instalments, perYear)}` : 'Borrow less',
+      `A term loan of ${rs(c.amount)} (now ${rs(x.loan.amount)})${c.instalments !== undefined ? `, repaid in ${years(c.instalments, perYear)} instead of ${years(n0, perYear)}` : ''}.`],
+    loan: (c) => ['Borrow less', `A term loan of ${rs(c.amount)} (now ${rs(x.loan.amount)}).`],
+    wc: (c) => ['A smaller working-capital limit', `A working-capital limit of ${rs(c.wcLimit)} (now ${rs(x.wcLimit)}).`],
+    moratorium: (c) => ['A longer holiday', `A holiday of ${c.moratoriumMonths} months before the first instalment (now ${x.loan.moratoriumMonths}), if the lender agrees.`],
+    instalments: (c) => ['A longer repayment', `${c.instalments} instalments, ${years(c.instalments as number, perYear)} (now ${n0}), if the lender agrees.`],
+  };
+  const askOf = (a: NonNullable<WorkWay['ask']>): WorkAsk => (a.id === 'plantSales' ? {
+    id: a.id, label: 'What can the plant sell in a year, running full? (Rs.)', hint: `At most ${most}% of it in the busiest year.`, value: s.plantSales ?? '',
+    note: a.given === undefined ? `It needs a plant that sells ${`Rs. ${upRupees(a.need)}`} a year running full: give what yours can, and the report stays provisional until then.`
+      : a.within ? `Within the plant: it needs Rs. ${upRupees(a.need)} a year running full.` : `Beyond the plant: it needs Rs. ${upRupees(a.need)} a year running full, more than the ${rs(a.given)} it can sell.`,
+  } : {
+    id: a.id, label: 'What would the larger plant cost? (Rs.)', hint: 'Its machinery and building in all.', value: s.plantCost ?? '',
+    note: a.given === undefined ? 'Until it is given, the figures use today’s plant’s cost, and the report stays provisional.' : 'The machinery takes what the larger plant adds; the promoters bring their share of it.',
   });
-  return fixes.length ? { cause, lead: fixes.length > 1 ? 'Either change makes it work:' : 'This change makes it work:', fixes }
-    : { cause, fixes, none: 'Neither a shorter repayment nor a smaller term loan meets it: “Make it viable” works out what else can.' };
+  const card = (v: WorkWay, k: number): WorkCard => {
+    const [head, text] = words[v.id](v.change), notes: string[] = [];
+    if (v.promotersMore !== undefined && v.promotersMore >= 0.5 && v.id !== 'cash') notes.push(`The promoters bring Rs. ${upRupees(v.promotersMore)} more.`);
+    if (v.cashNeed) notes.push(`Cash still runs out: the promoters would need Rs. ${upRupees(v.cashNeed)} more at the start.`);
+    // A part first year (D-UX-252 (5)): kept as the engine reads it, and said on the card that moves it.
+    if (v.id === 'use1' && first && first.months < 12) notes.push(`${first.fy} has ${first.months} month${first.months === 1 ? '' : 's'} of sales: its use counts for those months only. Whether a part year counts is the lender’s rule.`);
+    return { id: v.id, key: `${v.id}-${k}`, head, text, notes, fixes: label(v.fixes), still: label(v.still), reaches: !v.still.length, change: v.change, ...(v.ask ? { ask: askOf(v.ask) } : {}) };
+  };
+  const dl = w.diagnosis.checks.find((c) => c.id === 'dscrLowest')?.level;
+  const cards = (ws: WorkWay[]) => ws.map(card), notOf = (loan: boolean) => cards(w.not.filter((v) => LOAN_WAYS.has(v.id) === loan));
+  const uc = w.useCannot;
+  return {
+    held: w.held.map((h) => ({ cause: h.cause, head: CAUSE_WORDS[h.cause][0], text: CAUSE_WORDS[h.cause][1], rows: h.checks.map((c) => rowOf(c)) })), misses: w.missed.length,
+    years: dl === undefined ? [] : w.years.filter((y) => y.dscr !== undefined).map((y) => ({ fy: y.fy, months: y.months, dscr: ratioText(y.dscr as number, dl), meets: (y.dscr as number) >= dl - 1e-9 })),
+    dscrLevel: dl === undefined ? '' : dl.toFixed(2), ...(w.cash ? { cash: runsOut(w.cash, upRupees) } : {}), amount: rs(x.loan.amount),
+    keep: cards(w.keep), keepNot: notOf(false), change: cards(w.change), changeNot: notOf(true),
+    ...(uc ? { useCannot: `More use of the capacity cannot carry it alone: even ${most}% in every year leaves ${listed(label(uc.still).map(inSentence))} short${uc.needed ? `; at the same price it would need ${usesOf(uc.needed.map((n) => Math.ceil(n * 10 - 1e-6) / 10))}` : ''}.` } : {}),
+    ...(w.change.length ? {} : { changeNone: 'No change to the loan alone makes it work. Combine one with a way above.' }),
+  };
 }
 
 // ---- The combined plan (MV3, D-UX-52): the levers together, as sliders on the board ----
@@ -730,18 +806,15 @@ export interface PlanView {
   most?: number; promotersNow: number; leastLoan: number; termRoom: number; monthsEach: number; salesMost?: number;
   /** The instalments lever at its lowest (0 or less): the lowest-year DSCR still meets there (OR2b). */
   fewest: number;
-  /** When the plan is the fix and the promoters' most is not typed: the question its box asks, once (OR2b, D-UX-183). */
-  ask?: string;
-  /** When the fix was passed over: it needs more of the promoters' money than their most (OR2b). */
-  short?: string;
   /** On Mudra, when the promoters' most and Mudra's Rs. 20 lakh in all cannot fund the project (D-UX-111). */
   mudraShort?: string;
 }
 
-/** The plan, with the levers in `held` kept as the borrower set them; none while the report has no figures. */
+/** The sliders under Make it work (OR11d): the levers as typed, those in `held` as the borrower set them, with their
+ * limits; none while the report has no figures. */
 export function planOf(s: ReportState, held: Partial<Levers> = {}): PlanView | undefined {
   const x = inputOf(s), m = amountOf(s.promotersMost), most = m !== undefined && Number.isFinite(m) && m >= 0 ? m : undefined;
-  const lv = levelsOf(s.benchmarks), q = makePlan(x, { ...(most !== undefined ? { promotersMost: most } : {}), held, levels: lv });
+  const lv = levelsOf(s.benchmarks), q = makePlan(x, { ...(most !== undefined ? { promotersMost: most } : {}), held, levels: lv, typed: true });
   if ('needs' in q || 'blocked' in q) return undefined;
   const L = q.limits, room = (x.loan.amount as number) - L.leastLoan;
   const show: Record<LeverId, boolean> = {
@@ -754,8 +827,6 @@ export function planOf(s: ReportState, held: Partial<Levers> = {}): PlanView | u
   const short = r && !('needs' in r) && !('blocked' in r) ? mudraShort(r, most as number) : undefined;
   return {
     ...(short !== undefined ? { mudraShort: `On Mudra, the promoters’ Rs. ${rupees(most as number)} and Mudra’s Rs. ${rupees(MUDRA.mostInAll)} in all leave Rs. ${rupees(short)} of the project unfunded. A loan to a small enterprise outside Mudra, which CGTMSE can guarantee, can be larger: choose None for the scheme, then a CGTMSE guarantee.` } : {}),
-    ...(q.fixNeeds !== undefined && most !== undefined ? { short: `The first change above that makes it work needs the promoters to bring Rs. ${upRupees(q.fixNeeds)} in all, more than the Rs. ${rupees(most)} they can.` } : {}),
-    ...(q.fromFix && most === undefined && q.promoters.more > 0 ? { ask: `This needs Rs. ${upRupees(q.promoters.more)} more from the promoters: can you bring it?` } : {}),
     x, lv, levers: q.levers, cards: LEVER_IDS.filter((id) => show[id]).map((id) => ({ id, by: id === 'moratorium' || id === 'instalments' ? 'lender' : 'borrower', head: head(id) })),
     limits: `The limits kept: ${most !== undefined ? `the promoters bring at most Rs. ${rupees(most)} in all` : 'no more of the promoters’ money, since the most they can bring is not typed'}; ${L.sales === undefined
       ? 'sales with no limit known, so a lender will test them against the market' : `the use of the capacity at most ${LEVELS.capacity.mostUsePct}% in any year`}; the whole loan within ${LEVELS.term.longestMonths} months; unsecured loans and fixed costs only as you set them.`,
@@ -821,8 +892,11 @@ export function boardOf(q: PlanView, l: Levers): BoardView {
 const GRID_UP = 1000;
 
 /** A field "Use this plan" writes: its place in the state, its input on the page, its name in the banner (MV3). */
-type Key = 'loan.amount' | 'unsecured' | 'wcLimit' | 'fixed' | 'sales' | 'utilisation' | 'collateral' | 'loan.moratoriumMonths' | 'loan.instalments';
-export interface PlanChange { key: Key; field: string; label: string; was: string; now: string }
+type Key = 'loan.amount' | 'unsecured' | 'wcLimit' | 'fixed' | 'sales' | 'utilisation' | 'collateral' | 'loan.moratoriumMonths' | 'loan.instalments'
+  // Make it work's ways (OR11d) write these too, and mark a question they leave open (`pending`, D-UX-252 (1)).
+  | 'salesGrowth' | 'priceGrowth' | 'variablePct' | 'cashAtStart' | 'cost.machinery' | 'pending' | `product.${number}.price` | `product.${number}.units`;
+/** `text`: the banner's words when a was-and-now would not read (a question left open). */
+export interface PlanChange { key: Key; field: string; label: string; was: string; now: string; text?: string }
 const WRITES: { key: Key; field: string; label: string; by: LeverId[] }[] = [
   { key: 'loan.amount', field: 'fld-tl-amount', label: 'Term loan', by: ['promoters', 'unsecured'] },
   { key: 'unsecured', field: 'fld-unsecured', label: 'Unsecured loans', by: ['unsecured'] },
@@ -837,7 +911,14 @@ const WRITES: { key: Key; field: string; label: string; by: LeverId[] }[] = [
 // The limit, fixed costs and instalments as the report uses them: worked out, added up from the heads or from simple
 // mode's own questions, which "Use this plan" writes back in their place (D-UX-112).
 const SIMPLE_FIELD: Partial<Record<Key, string>> = { fixed: 'fld-fixedMonth', 'loan.instalments': 'fld-years' };
-const get = (s: ReportState, k: Key) => {
+const productKey = (k: Key) => { const m = /^product\.(\d+)\.(price|units)$/.exec(k); return m ? { i: +m[1], f: m[2] as 'price' | 'units' } : undefined; };
+const get = (s: ReportState, k: Key): string => {
+  const pk = productKey(k);
+  if (pk) return s.products[pk.i]?.[pk.f] ?? '';
+  if (k === 'cost.machinery') return s.cost.machinery;
+  if (k === 'pending') return s.pending ?? '';
+  if (k === 'cashAtStart') return s.cashAtStart ?? '';
+  if (k === 'variablePct' && typedHeads(s.heads?.variable).length) { const v = costsOf(inputOf(s)).variablePct; return v === undefined ? '' : String(v); }
   if (k === 'wcLimit' && wcByOf(s) !== 'typed') return figText(limitOf(s) ?? 0);
   if (k === 'fixed' && (simple(s) || typedHeads(s.heads?.fixed).length)) { const f = costsOf(inputOf(s)).fixedCosts; return f === undefined ? '' : figText(f); }
   if (k === 'loan.instalments' && simple(s)) { const n = inputOf(s).loan.instalments; return n === undefined ? '' : String(n); }
@@ -846,6 +927,13 @@ const get = (s: ReportState, k: Key) => {
 const put = (s: ReportState, k: Key, t: string): ReportState => {
   const n = amountOf(t), f = typedHeads(s.heads?.fixed), month = f.reduce((a, [, h]) => a + (amountOf(h) ?? 0), 0);
   if (k === 'wcLimit') return { ...s, wcLimit: t, ...(wcByOf(s) === 'typed' ? {} : { wcBy: 'typed' as const }) };
+  const pk = productKey(k);
+  if (pk) return { ...s, products: s.products.map((p, i) => (i === pk.i ? { ...p, [pk.f]: t } : p)) };
+  if (k === 'cost.machinery') return { ...s, cost: { ...s.cost, machinery: t } };
+  if (k === 'pending') return { ...s, pending: (t || undefined) as ReportState['pending'] };
+  // Variable costs typed by head: each head scaled by as much, so they add up to the figure (as fixed costs, D-UX-112).
+  const v = typedHeads(s.heads?.variable), vs = v.length ? costsOf(inputOf(s)).variablePct : undefined, vn = plainOf(t);
+  if (k === 'variablePct' && vs && vn !== undefined) return { ...s, heads: { ...s.heads, variable: Object.fromEntries(v.map(([id, h]) => [id, String(+(((plainOf(h) ?? 0) * vn) / vs).toFixed(4))])) } };
   if (k === 'fixed' && f.length && month > 0 && n !== undefined) {
     return { ...s, heads: { ...s.heads, fixed: Object.fromEntries(f.map(([id, h]) => [id, figText(+(((amountOf(h) ?? 0) * n) / (12 * month)).toFixed(2))])) } };
   }
@@ -860,17 +948,61 @@ const same = (a: string, b: string) => a === b || Math.abs((amountOf(a) ?? NaN) 
 /** "Use this plan": the plan's figures (engine/plan.ts's withLevers) written into the fields, and what each was. */
 export function applyPlan(s: ReportState, l: Levers): { s: ReportState; changes: PlanChange[] } {
   const y = withLevers(inputOf(s), l), fig = (n?: number) => inr(n ?? 0, Number.isInteger(n) ? 0 : 2);
-  const text: Record<Key, () => string> = {
+  const text: Partial<Record<Key, () => string>> = {
     'loan.amount': () => fig(y.loan.amount), unsecured: () => fig(y.unsecured), wcLimit: () => fig(y.wcLimit), fixed: () => fig(y.fixedCosts),
     sales: () => fig(y.sales), utilisation: () => (y.utilisationPct ?? []).join(', '), collateral: () => fig(y.collateral),
     'loan.moratoriumMonths': () => String(y.loan.moratoriumMonths), 'loan.instalments': () => String(y.loan.instalments),
   };
   const changes = WRITES.filter((w) => w.by.some((id) => l[id]) && (w.key === 'sales' ? s.salesBy === 'typed' : w.key !== 'utilisation' || s.salesBy !== 'typed'))
-    .map((w) => ({ key: w.key, field: (simple(s) && SIMPLE_FIELD[w.key]) || w.field, label: w.label, was: get(s, w.key), now: text[w.key]() })).filter((c) => !same(c.was, c.now));
+    .map((w) => ({ key: w.key, field: (simple(s) && SIMPLE_FIELD[w.key]) || w.field, label: w.label, was: get(s, w.key), now: (text[w.key] as () => string)() })).filter((c) => !same(c.was, c.now));
   return { s: changes.reduce((t, c) => put(t, c.key, c.now), s), changes };
 }
 /** Undo: each field the plan wrote back as it was, unless it has been changed since. */
 export const undoPlan = (s: ReportState, changes: PlanChange[]) => changes.reduce((t, c) => (same(get(t, c.key), c.now) ? put(t, c.key, c.was) : t), s);
+/** A question Make it work leaves open (D-UX-252 (1)): its words in the needs, its box's label and hint. */
+export const PENDING: Record<NonNullable<ReportState['pending']>, { need: string; label: string; hint: string }> = {
+  plantSales: { need: 'The plant: what it can sell in a year, running full (Rs.)', label: 'What can the plant sell in a year, running full? (Rs.)', hint: `The way you used needs the busiest year at most ${LEVELS.capacity.mostUsePct}% of it.` },
+  plantCost: { need: 'The larger plant: its cost of machinery and building (Rs.)', label: 'What would the larger plant cost? (Rs.)', hint: 'Its machinery and building in all: the machinery takes what it adds.' },
+};
+
+/** "Use this" on a way of Make it work (OR11d): its figures written into the answers, each with what it was, for the
+ * banner and its undo; a question the card left open is marked, so the report stays provisional (D-UX-252 (1)). */
+export function applyWay(s: ReportState, card: { change: Change; ask?: { id: 'plantSales' | 'plantCost'; value: string } }): { s: ReportState; changes: PlanChange[] } {
+  const c = card.change, ex = s.salesBy === 'expansion', heads = typedHeads(s.heads?.variable).length > 0;
+  const w: [Key, string, string, string | undefined][] = [];
+  const add = (k: Key, field: string, label: string, v: string | undefined) => { if (v !== undefined) w.push([k, field, label, v]); };
+  add('sales', 'fld-sales', ex ? 'Today’s sales' : 'Sales', c.sales === undefined ? undefined : figText(c.sales));
+  add('utilisation', 'fld-utilisation', 'Use of the capacity', c.utilisationPct?.join(', '));
+  (c.products ?? []).forEach((p, i) => {
+    const name = s.products[i]?.name.trim() || `line ${i + 1}`;
+    add(`product.${i}.units`, `fld-product-${i}-units`, `Units a month, ${name}`, String(p.unitsMonth));
+    add(`product.${i}.price`, `fld-product-${i}-price`, `Price, ${name}`, figText(p.price));
+  });
+  add('salesGrowth', 'fld-salesGrowth', 'Sales: growth a year', c.salesGrowthPct === undefined ? undefined : String(c.salesGrowthPct));
+  add('priceGrowth', 'fld-priceGrowth', 'The price: growth a year', c.priceGrowthPct === undefined ? undefined : String(c.priceGrowthPct));
+  add('variablePct', heads ? 'rep-heads' : 'fld-variablePct', 'Variable costs (% of sales)', c.variablePct === undefined ? undefined : String(c.variablePct));
+  add('cashAtStart', 'fld-cashAtStart', 'Your own money kept in the business', c.cashAtStart === undefined ? undefined : figText(c.cashAtStart));
+  add('cost.machinery', 'fld-cost-machinery', 'Machinery', c.machinery === undefined ? undefined : figText(c.machinery));
+  add('loan.amount', 'fld-tl-amount', 'Term loan', c.amount === undefined ? undefined : figText(c.amount));
+  add('loan.instalments', simple(s) ? 'fld-years' : 'fld-tl-instalments', 'Instalments', c.instalments === undefined ? undefined : String(c.instalments));
+  add('loan.moratoriumMonths', 'fld-tl-moratorium', 'Holiday', c.moratoriumMonths === undefined ? undefined : String(c.moratoriumMonths));
+  add('wcLimit', 'fld-wcLimit', 'Working-capital limit', c.wcLimit === undefined ? undefined : figText(c.wcLimit));
+  const changes: PlanChange[] = w.map(([key, field, label, now]) => ({ key, field, label, was: get(s, key), now: now as string })).filter((x) => !same(x.was, x.now));
+  const a = card.ask;
+  if (a && !a.value.trim() && s.pending !== a.id) changes.push({ key: 'pending', field: 'fld-pending', label: 'A question left', was: s.pending ?? '', now: a.id, text: `A question left: ${PENDING[a.id].label}` });
+  return { s: changes.reduce((t, x) => put(t, x.key, x.now), s), changes };
+}
+/** The answer to the question left open: the plant's sales are kept beside the report; the larger plant's cost sets the
+ * machinery (engine/work.ts's plantMachinery), a change the banner lists and its undo takes back. Not understood, it
+ * stays open. */
+export function answerPending(s: ReportState, t: string): { s: ReportState; changes: PlanChange[] } {
+  const n = amountOf(t);
+  if (!s.pending || n === undefined || !Number.isFinite(n) || n <= 0) return { s, changes: [] };
+  if (s.pending === 'plantSales') return { s: { ...s, plantSales: t, pending: undefined }, changes: [] };
+  const now = figText(plantMachinery(inputOf(s), n)), was = get(s, 'cost.machinery');
+  return { s: { ...put(s, 'cost.machinery', now), plantCost: t, pending: undefined },
+    changes: same(was, now) ? [] : [{ key: 'cost.machinery', field: 'fld-cost-machinery', label: 'Machinery', was, now }] };
+}
 export const sameLevers = (a: Levers, b: Levers) => LEVER_IDS.every((id) => a[id] === b[id]);
 export { AS_TYPED, LEVER_IDS, inSentence, type BoardMove, type CheckRow, type LeverId, type Levers, type ViableLine, type ViableView };
 
