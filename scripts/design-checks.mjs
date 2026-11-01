@@ -194,7 +194,12 @@ export async function measure(page, { phone, keys = true } = {}) {
   return lines;
 }
 
-const leave = async (page, sel, value) => { await page.fill(sel, value); await page.press(sel, 'Tab'); };
+// A CMA year's boxes are hidden on a phone until its year is picked (UXR6): the year's button first.
+const leave = async (page, sel, value) => {
+  const y = /^#fld-cma-(a1|a2|a3|est|proj)-/.exec(sel)?.[1];
+  if (y && !(await page.locator(sel).isVisible())) await page.getByTestId(`cma-year-${y}`).click();
+  await page.fill(sel, value); await page.press(sel, 'Tab');
+};
 const frontDoor = async (page, [profit, growth, amount, rate, years]) => {
   await page.check('#fld-fd-borrower-firm');
   for (const [id, v] of [['profit', profit], ['growth', growth], ['amount', amount], ['rate', rate], ['years', years]]) if (v !== undefined) await leave(page, `#fld-fd-${id}`, v);
@@ -283,7 +288,7 @@ export const STATES = {
     // Fictional case M (tests/cma-plan.test.ts), fresh, the collateral left empty: it misses four levels and the security
     // cover, 1.17 on its own assets, waits for the collateral (DESIGN-LESSONS 11: the case that breaks, UX5c).
     missed: async (page) => {
-      for (const [h, xs] of Object.entries(CASE_M)) for (const [i, y] of ['a1', 'a2', 'a3', 'est', 'proj'].entries()) await leave(page, `#fld-cma-${y}-${h}`, `${xs[i]} L`);
+      for (const [i, y] of ['a1', 'a2', 'a3', 'est', 'proj'].entries()) for (const [h, xs] of Object.entries(CASE_M)) await leave(page, `#fld-cma-${y}-${h}`, `${xs[i]} L`);
       await leave(page, '#fld-cma-existing', '60 L');
       await page.check('#fld-cma-case-fresh');
     },
