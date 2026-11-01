@@ -13,7 +13,7 @@
 import { questionsLeft } from '../verdict';
 import { Fragment } from 'preact';
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, SEE, seeOr, useAnswerPlace, InAppNote, useHomeCase, useKept, KeptLine, useStart, StartLine, StartNotes, LINK_BUTTON } from '../fields';
+import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, docLink, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, SEE, seeOr, useAnswerPlace, InAppNote, useHomeCase, useKept, KeptLine, useStart, StartLine, StartNotes, LINK_BUTTON } from '../fields';
 import { ESTIMATE_HOME } from './home-case';
 import { AnswersColumn, foldGrid, SeeAnswer, useFold, type AnswerGroup } from '../Fold';
 import { printable } from '../doc/pdf';
@@ -23,11 +23,12 @@ import { Downloads } from '../Downloads';
 import { sharePlan } from './shared';
 import { billDoc, billFileName, planDoc, planDocNeeds, planDocStatus, planFileName } from './plan-document';
 import {
-  BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORD_CHOICES, WORK_CHOICES, areaLabel, builds, checkedLine, floorsQuestion, drawerView, heightOf, plainOf, planPreview, sideUnit,
+  BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORD_CHOICES, WORK_CHOICES, areaLabel, builds, checkedLine, floorsQuestion, heightOf, plainOf, sideUnit,
   withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withExtra, withBathAdded, withBathTakenOut, withBedroomAdded, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit,
-  type AreaUnit, type DrawerView, type LineView, type PlanFacts, type PlanPreview, type PlanState, type PlanView, type RoomView, type RungView, type SectionView, type WhyView,
-  drawerBrands, groupKey,
-} from './plan-model';
+  type AreaUnit, type PlanFacts, type PlanState, groupKey,
+} from './plan-state';
+import type { DrawerView, LineView, PlanPreview, PlanView, RoomView, RungView, SectionView, WhyView } from './plan-model';
+import { previewOf, useWork, WORKING, type Work } from './plan-work';
 import type { Bhk, ExtraKind, Level } from '../../../engine/architect';
 
 type Update = (f: (s: PlanState) => PlanState) => void;
@@ -74,7 +75,7 @@ export function PlanEstimate() {
   useKept('plan', s, setS, EMPTY_PLAN);
   const c = useStart('pl', s, setS, () => EMPTY_PLAN, () => ESTIMATE_HOME, () => setUndo(null));
   const update: Update = (f) => setS(f);
-  const p = useMemo(() => planPreview(s), [s]);
+  const work = useWork(), p = useMemo(() => previewOf(s, work), [s, work]);
   const place = useAnswerPlace('pl-result');
   sharePlan(s, { first: p.needs.map(askedIn).find(Boolean), left: p.needs.length });
   // The six answers fold the first time the estimate works out (A8), and the answer takes the focus: from 1024 px to the
@@ -149,7 +150,7 @@ const railOf = (s: PlanState, v: PlanView): AnswerGroup[] => [
 const ASKED: [string, string][] = [['What the work', 'fld-work'], ['How many floors', 'fld-floors'], ['Flat or house', 'fld-home'], ['Which city', 'fld-city'],
   ['The built-up', 'fld-carpet'], ['The carpet', 'fld-carpet'], ['How many bedrooms', 'fld-bhk'], ['Which level', 'fld-level']];
 const askedIn = (need: string) => ASKED.find(([w]) => need.startsWith(w))?.[1];
-const stillText = (p: PlanPreview) => (p.blocked ? 'No figures' : questionsLeft(p.needs.length));
+const stillText = (p: PlanPreview) => (p.blocked ? 'No figures' : p.working ? WORKING : questionsLeft(p.needs.length));
 
 /** Before the six answers, the estimate's outline (UX8, review finding 2): the total and the cost a sq ft as "—", never 0,
  * and one counter opening to a link to each question still to answer. */
@@ -272,7 +273,8 @@ function Sections({ s, v, update }: { s: PlanState; v: PlanView; update: Update 
   // The open drawer, and its other levels opened or closed by a tap: the brand notice follows what they show (D-BIZ-05).
   const [groups, setGroups] = useState<Record<string, boolean>>({});
   const setGroup = (k: string, o: boolean) => setGroups((m) => (m[k] === o ? m : { ...m, [k]: o }));
-  const d = useMemo(() => (open ? drawerView(s, v, open) : undefined), [open, s, v]);
+  const w = useWork() as Work;
+  const d = useMemo(() => (open ? w.drawerView(s, v, open) : undefined), [open, s, v]);
   const width = new Map(v.bar.map((b) => [b.id, b.width]));
   const list = [...v.sections.filter((x) => x.on).sort((a, b) => b.pkg - a.pkg), ...v.sections.filter((x) => !x.on)];
   return <Section id="pl-sections" title="By section">
@@ -315,7 +317,7 @@ function Sections({ s, v, update }: { s: PlanState; v: PlanView; update: Update 
                 {x.lines.map((l) => <Item key={l.key} s={s} l={l} open={open === l.key} d={open === l.key ? d : undefined} groups={groups} setGroup={setGroup} toggle={() => setOpen((k) => (k === l.key ? null : l.key))} update={update} />)}
               </ol>}
               {/* The brand notice where a brand shows in the section, in the items' own type (D-BIZ-03): a line's item names one, or the open drawer shows one (D-BIZ-05). Closed with the answer, so V1's count is unchanged. */}
-              {x.on && opened[x.id] && x.lines.length > 0 && (x.brands || (!!d && drawerBrands(x.lines.find((l) => l.key === d.key), d, groups))) && <p data-testid={`pl-brand-notice-${x.id}`} class={`mt-2 text-sm ${INK}`}>{BRAND_NOTICE}</p>}
+              {x.on && opened[x.id] && x.lines.length > 0 && (x.brands || (!!d && w.drawerBrands(x.lines.find((l) => l.key === d.key), d, groups))) && <p data-testid={`pl-brand-notice-${x.id}`} class={`mt-2 text-sm ${INK}`}>{BRAND_NOTICE}</p>}
             </div>
           </details>
         </li>;
@@ -613,6 +615,9 @@ function Checks({ s, v, update }: { s: PlanState; v: PlanView; update: Update })
 }
 
 /** The document's own facts, asked once, then the planning estimate as a PDF, an Excel copy and a Word copy. */
+/** The estimate's missing facts, each a link to its box (UXR7, as on the CMA and the report). */
+const DOC_LINK = docLink([['The owner', 'fld-pl-owner'], ['The property', 'fld-pl-property'], ['The lender', 'fld-pl-lender'],
+  ['Prepared by', 'fld-pl-preparedBy']]);
 function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Update }) {
   const f = s.doc, set = (patch: Partial<PlanFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
   const english = (t: string) => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
@@ -633,7 +638,7 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
     </div>
     <div class="mt-5">
       <p data-testid="pl-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{planDocStatus(s, p)}</p>
-      {own.length > 0 && <ul data-testid="pl-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
+      {own.length > 0 && <ul data-testid="pl-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink">{own.map(DOC_LINK)}</ul>}
       <Downloads pre="pl" doc={(today) => planDoc(s, p, today)} name={(kind) => planFileName(s, p, kind)} />
       <InAppNote id="pl-in-app" />
     </div>

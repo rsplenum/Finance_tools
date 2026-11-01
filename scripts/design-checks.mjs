@@ -322,6 +322,7 @@ export const STATES = {
     // The typed quotation (scripts/site-check.mjs, P2): two lines, GST at 18%, no contingency yet.
     typed: async (page) => {
       await page.locator('#typed-path > summary').click();
+      await page.waitForSelector('#typed-path astro-island:not([ssr])', { state: 'attached' }); // client:visible (UXR7)
       await page.check('#fld-kind-construction');
       await leave(page, '#fld-area', '1,200');
       await page.selectOption('#fld-item-1-head', 'earthwork');

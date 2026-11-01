@@ -8,6 +8,7 @@
  * and where to save (T1, notes.json): words for the page's Why?, never an amount.
  */
 import { earliest } from './review';
+import { CFT_PER_CUM, FT_PER_M, SQFT_PER_SQM } from './units';
 import SOURCES from './data/sources.json';
 import LABOUR from './data/library/labour.json';
 import CIVIL from './data/library/civil.json';
@@ -104,10 +105,8 @@ export function ladder(family: Family, level: number): string | null {
   return family.levels?.[level - 1] ?? null;
 }
 
-/** Exact conversions from 1 ft = 0.3048 m. */
-export const SQFT_PER_SQM = 1 / (0.3048 * 0.3048);
-export const FT_PER_M = 1 / 0.3048;
-export const CFT_PER_CUM = 1 / (0.3048 * 0.3048 * 0.3048);
+/** Exact conversions from 1 ft = 0.3048 m (engine/units.ts). */
+export { SQFT_PER_SQM, FT_PER_M, CFT_PER_CUM };
 const AREA: Unit[] = ['sqft', 'sqm'], LENGTH: Unit[] = ['rft', 'm'];
 /** How many of `to` make one `from`; only between units of the same kind. */
 export function per(from: Unit, to: Unit): number {

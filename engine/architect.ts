@@ -15,11 +15,19 @@
  * engine/data/library/ with its source. architect-check.ts works every figure a second way; nothing is returned unless
  * both agree.
  */
-import RULES from './data/architect.json';
+import {
+  R, LEVELS, SECTIONS, WORK_KINDS, CITIES, SIZE_WORDS, BHKS, FLOORS, FLOORS_ADDED, builds, ROOM_SIDE, EXTRAS, BATHS, PLOT_SIDE, cityFactor, wordOf, sizeAt, bedroomsOf, bathsOf, houseOf, architectNeeds, wordName, levelName,
+  LEVEL_NAMES, WORD_AT, isNum,
+} from './architect-rules';
 import { CFT_PER_CUM, choices, ENTRIES, FAMILIES, FT_PER_M, LIBRARY_DATE, LIBRARY_STATUS, ladder, per, price, SQFT_PER_SQM, type Entry, type Family, type ItemKind, type Unit } from './library';
 import { inr } from './util';
 import { architectCheck, checkRate, type ArchitectCheck } from './architect-check';
 import type { Blocked, Needs } from './dscr';
+
+// The rules the questions need, apart so the page can ask before the library loads (UXR7).
+export {
+  R, LEVELS, SECTIONS, WORK_KINDS, CITIES, SIZE_WORDS, BHKS, FLOORS, FLOORS_ADDED, builds, ROOM_SIDE, EXTRAS, BATHS, PLOT_SIDE, cityFactor, wordOf, sizeAt, bedroomsOf, bathsOf, houseOf, architectNeeds, wordName, levelName,
+} from './architect-rules';
 
 export type WorkKind = 'build' | 'extend' | 'renovate' | 'interiors';
 export type Bhk = '1RK' | '1' | '2' | '3' | '4' | '5';
@@ -91,23 +99,6 @@ export interface Rules {
   };
   templates: Record<'flat' | RoomKind, Slot[]>;
 }
-export const R = RULES as unknown as Rules;
-export const LEVELS = R.levels;
-export const SECTIONS = R.sections;
-export const WORK_KINDS = R.kinds;
-export const CITIES = R.cities.list;
-/** The four size words, in order (R1). */
-export const SIZE_WORDS = R.sizes.words;
-const WORD_AT = new Map(R.sizes.words.map((w) => [w.id, w.at]));
-export const BHKS: { id: Bhk; label: string }[] = [
-  { id: '1RK', label: '1 RK' }, { id: '1', label: '1 BHK' }, { id: '2', label: '2 BHK' }, { id: '3', label: '3 BHK' }, { id: '4', label: '4 BHK' }, { id: '5', label: '5 BHK' },
-];
-/** A new house's floors (A3): the ground floor only, or up to three more. */
-export const FLOORS: { n: number; label: string }[] = [{ n: 1, label: 'Ground only' }, { n: 2, label: 'G+1' }, { n: 3, label: 'G+2' }, { n: 4, label: 'G+3' }];
-/** An extension's floors being added on top (E5b): one or two. */
-export const FLOORS_ADDED: { n: number; label: string }[] = R.house.extension.floors.map((n) => ({ n, label: n === 1 ? 'One floor' : 'Two floors' }));
-/** Whether a kind of work builds a house's floors: a new house, or an extension's floors on top. */
-export const builds = (kind?: WorkKind) => kind === 'build' || kind === 'extend';
 
 export interface ArchitectInput {
   kind?: WorkKind;
@@ -146,14 +137,6 @@ export interface ArchitectInput {
   /** For a new house: the city's sewer reaches the plot, so a sewer connection takes the septic tank's place. */
   sewer?: boolean;
 }
-/** The sides a room's own size can take, in metres. */
-export const ROOM_SIDE = { min: 0.3, max: 30 };
-/** The rooms a home may add (R2b), in the order they are planned and offered. */
-export const EXTRAS: ExtraKind[] = R.extras.map((x) => x.kind);
-/** How many bathrooms a home can take (R2). */
-export const BATHS = { min: 1, max: 8 };
-/** The sides a plot can take, in metres. */
-export const PLOT_SIDE = { min: 3, max: 300 };
 
 export interface Room {
   id: string; kind: RoomKind; name: string; master: boolean; attached: boolean; sqm: number; l: number; b: number;
@@ -221,11 +204,9 @@ export interface ArchitectEstimate {
  */
 export interface LevelRange { low: number; high: number; lines: number; of: number }
 
-const LEVEL_NAMES = R.levels.map((l) => l.name);
 // To the paisa, half up, an exact half kept from floating point (as library.ts).
 const r2 = (x: number) => Math.round(x * 100 + 1e-6) / 100;
 const f2 = (x: number) => x.toFixed(2);
-const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const AREA_RULES = ['floor', 'floor-skirting', 'paint', 'feature', 'cladding', 'false-ceiling', 'bath-tiles', 'dado', 'wp-bath', 'wp-balcony', 'counter-top', 'wardrobe', 'loft', 'windows', 'shower-screen', 'protect', 'carpet', 'making-good', 'old-terrace', 'built-up', 'plinth', 'terrace', 'exterior-walls', 'stair-finish', 'stair-walls', 'compound-paint', 'gate', 'paving'];
 const LENGTH_RULES = ['cove', 'counter-run', 'stair-railing', 'compound-wall'];
 const VOLUME_RULES = ['sump', 'tank', 'septic'];
@@ -234,29 +215,11 @@ export type Dimension = 'area' | 'length' | 'count' | 'material' | 'volume';
 export const dimensionOf = (rule: string): Dimension => (AREA_RULES.includes(rule) || rule.startsWith('unit:') ? 'area' : LENGTH_RULES.includes(rule) ? 'length' : rule.startsWith('struct:') ? 'material' : VOLUME_RULES.includes(rule) ? 'volume' : 'count');
 const UNIT_OF: Record<Dimension, Unit[]> = { area: ['sqft', 'sqm'], length: ['rft', 'm'], count: ['nos', 'set', 'lot'], material: ['bag', 'kg', 'cum', 'nos'], volume: ['litre'] };
 
-/** The city's factor: the middle of its construction cost against the average of the listed cities' middles. Null for a place not listed. */
-export function cityFactor(id: string): number | null {
-  const c = R.cities.list.find((x) => x.id === id);
-  if (!c) return null;
-  const mids = R.cities.list.map((x) => (x.cost[0] + x.cost[1]) / 2);
-  return (c.cost[0] + c.cost[1]) / 2 / (mids.reduce((t, m) => t + m, 0) / mids.length);
-}
 
-/** A size word, or Medium for none or one not known. */
-export const wordOf = (w: string | undefined): SizeWord => (w !== undefined && WORD_AT.has(w as SizeWord) ? (w as SizeWord) : 'medium');
-/** A room's size on its reported range at a size word, in sq ft: the bottom plus the word's share of the range's width (R1). */
-export const sizeAt = (range: [number, number], w: SizeWord) => range[0] + (WORD_AT.get(w) as number) * (range[1] - range[0]);
 
 /** A planned room before its size: its id, kind, name and reported range; a bathroom's bedroom when it is attached to one. */
 interface Planned { id: string; kind: RoomKind; name: string; range: [number, number]; master: boolean; of: string | null }
 
-/** The ids of a BHK's bedrooms, the main one first: bedroom-1, bedroom-2… */
-export const bedroomsOf = (bhk: Bhk): string[] => R.programmes[bhk].rooms.filter((r) => r.kind === 'bedroom').map((_, i) => `bedroom-${i + 1}`);
-/** The programme's bathrooms (R2): each the id of the bedroom it is attached to (the main bedroom's for one marked attached), or null. */
-export function bathsOf(bhk: Bhk): (string | null)[] {
-  const p = R.programmes[bhk], main = p.rooms.filter((r) => r.kind === 'bedroom').findIndex((r) => r.master);
-  return p.rooms.filter((r) => r.kind === 'bath').map((r) => (r.attached ? `bedroom-${main + 1}` : null));
-}
 
 /**
  * A BHK's rooms before their sizes (R2): the living room, the bedrooms and the kitchen as the programme has them, then the
@@ -310,20 +273,6 @@ export function ownRooms(rooms: Room[], input: Pick<ArchitectInput, 'rooms' | 'r
   });
 }
 
-/**
- * A new house's outline from its built-up area (sq m) and floors: each floor a rectangle of the rule's proportions, its
- * outer walls one brick thick, and a stair well on each floor, the top one rising to a cabin on the terrace. The carpet
- * area left for the rooms is the built-up area less the outer walls' and the stairs' footprints (A5, A13). The plot is
- * the user's, or the outline with the rule's margins round it (E5).
- */
-export function houseOf(builtSqm: number, floors: number, H: number, own?: { l: number; b: number }, added = false): House {
-  const s = R.house, t = R.openings.walls.external / 1000, m = s.plot;
-  const footprint = builtSqm / floors, l = Math.sqrt(footprint * s.shape.aspect), b = footprint / l;
-  const wall = 2 * t * (l + b) - 4 * t * t, stair = s.stair.w * s.stair.l;
-  const pl = own ? Math.max(own.l, own.b) : l + m.front + m.rear, pb = own ? Math.min(own.l, own.b) : b + 2 * m.side;
-  const plot = { l: pl, b: pb, sqm: pl * pb, own: !!own, fits: l <= pl + 1e-9 && b <= pb + 1e-9 };
-  return { floors, added, builtSqm, footprint, l, b, wall, stair, carpetSqm: builtSqm - floors * (wall + stair), floorToFloor: H + s.slab.m, cabin: stair, plot };
-}
 
 /**
  * Doors and windows: each in its own room's wall, a door's other side named; enough windows for a tenth of a habitable room's
@@ -353,42 +302,6 @@ export function planOpenings(rooms: Room[]): Opening[] {
   return out;
 }
 
-/** What the estimate needs before it can be worked out, in the order asked. */
-export function architectNeeds(input: ArchitectInput): string[] {
-  const needs: string[] = [];
-  const build = builds(input.kind), extend = input.kind === 'extend', most = extend ? Math.max(...R.house.extension.floors) : FLOORS.length;
-  const floorsOk = isNum(input.floors) && Number.isInteger(input.floors) && input.floors >= 1 && input.floors <= most;
-  if (!input.kind || !(input.kind in R.kinds)) needs.push('What the work is: build a new house, add a floor or rooms, repair or renovate, or interiors');
-  if (build && !floorsOk) needs.push(extend ? 'How many floors are being added' : 'How many floors');
-  if (!input.city) needs.push('Which city');
-  const areaOk = isNum(input.area) && input.area > 0;
-  if (!areaOk) needs.push(extend ? 'The built-up area being added' : build ? 'The built-up area of all floors' : 'The carpet area');
-  if (!input.bhk || !(input.bhk in R.programmes)) needs.push('How many bedrooms');
-  if (!input.level || !(input.level >= 1 && input.level <= 5)) needs.push('Which level');
-  const heightOk = input.heightM === undefined || (input.heightM >= 2 && input.heightM <= 6);
-  if (!heightOk) needs.push('A ceiling height from 2 to 6 m');
-  const side = (x: unknown) => isNum(x) && x >= ROOM_SIDE.min && x <= ROOM_SIDE.max;
-  if (Object.values(input.rooms ?? {}).some((x) => !side(x?.l) || !side(x?.b))) needs.push(`Each side of a room from ${ROOM_SIDE.min} to ${ROOM_SIDE.max} m`);
-  if (Object.values(input.roomLevels ?? {}).some((x) => ![1, 2, 3, 4, 5].includes(x))) needs.push('A room\'s level from 1 to 5');
-  if (Object.values(input.roomWords ?? {}).some((x) => !WORD_AT.has(x))) needs.push(`A room\'s size: ${R.sizes.words.map((w) => w.name).join(', ').replace(/, ([^,]*)$/, ' or $1')}`);
-  if (input.baths !== undefined && input.bhk && input.bhk in R.programmes) {
-    const beds = new Set(bedroomsOf(input.bhk)), of = Array.isArray(input.baths) ? input.baths.filter((x) => x !== null) : [];
-    const ok = Array.isArray(input.baths) && input.baths.length >= BATHS.min && input.baths.length <= BATHS.max
-      && of.every((x) => typeof x === 'string' && beds.has(x)) && new Set(of).size === of.length;
-    if (!ok) needs.push(`Bathrooms from ${BATHS.min} to ${BATHS.max}, each common or attached to one of the home\'s bedrooms, one to a bedroom`);
-  }
-  if (input.balcony !== undefined && typeof input.balcony !== 'boolean') needs.push('The balcony: in or out');
-  if (input.extras !== undefined && !(Array.isArray(input.extras) && input.extras.every((x) => EXTRAS.includes(x)) && new Set(input.extras).size === input.extras.length))
-    needs.push(`The added rooms: ${R.extras.map((x) => x.name.toLowerCase()).join(', ')}, each at most once`);
-  const plotSide = (x: unknown) => isNum(x) && x >= PLOT_SIDE.min && x <= PLOT_SIDE.max;
-  if (input.plot && (!plotSide(input.plot.l) || !plotSide(input.plot.b))) needs.push(`Each side of the plot from ${PLOT_SIDE.min} to ${PLOT_SIDE.max} m`);
-  if (build && floorsOk && areaOk && heightOk) {
-    const sqm = input.areaUnit === 'sqm' ? (input.area as number) : (input.area as number) / SQFT_PER_SQM;
-    const h = houseOf(sqm, input.floors as number, input.heightM ?? R.height.m, undefined, extend);
-    if (h.carpetSqm < sqm / 2) needs.push(`A larger built-up area: the outer walls and stairs of ${h.floors} floor${h.floors > 1 ? 's' : ''} take more than half of it`);
-  }
-  return needs;
-}
 
 /**
  * The estimate, or what is needed, or blocked when the two computations disagree. With `banded`, also its range by the
@@ -551,8 +464,6 @@ export function bandOf(fam: Family, level: Level, units: Unit[]): string[] {
 // The library does not change while the page runs, so each family's choices at a level are found once.
 const BANDS = new Map<string, string[]>();
 
-/** A size word's name: "Above medium". */
-export const wordName = (w: SizeWord) => R.sizes.words.find((x) => x.id === w)?.name ?? '';
 /** Whether any room has a size word other than Medium. */
 const worded = (rooms: Room[]) => rooms.some((r) => r.word !== null && r.word !== 'medium');
 /** The Code's minimum for a kind of room in sq m, or 0 where it sets none (the passage, the balcony, a pooja room, a utility, a store); a study is habitable. */
@@ -1009,7 +920,6 @@ function disagreement(e: ArchitectEstimate, c: ArchitectCheck): string {
   return '';
 }
 
-export const levelName = (n: number) => LEVEL_NAMES[n - 1] ?? '';
 
 /**
  * Each section's amount less the same section in the package (every slider, room level and own item set aside), for "Rs. X more

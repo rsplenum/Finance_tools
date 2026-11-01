@@ -22,7 +22,7 @@ import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import DSCR_FILE from '../../../engine/data/dscr.json';
 import TAX_FILE from '../../../engine/data/tax.json';
-import { answerRule, AnswerBar, Why, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick, InAppNote, Verdict, useHomeCase, useKept, useStart, StartLine, StartNotes, MoreOptions } from '../fields';
+import { answerRule, AnswerBar, Why, BUTTON, CellInput, Choice, Counter, Dash, docLink, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick, InAppNote, Verdict, useHomeCase, useKept, useStart, StartLine, StartNotes, MoreOptions } from '../fields';
 import { Downloads } from '../Downloads';
 import { DSCR_HOME } from './home-case';
 import { printable } from '../doc/pdf';
@@ -615,6 +615,9 @@ function LenderSection({ s, update, y }: { s: State; update: Update; y: Years })
 }
 
 /** The statement to download: first what only the document needs, asked once; then the PDF, the Excel copy and the Word copy. */
+/** The statement's missing facts, each a link to its box (UXR7, as on the CMA and the report). */
+const DOC_LINK = docLink([['The borrower', 'fld-borrower'], ['The lender', 'fld-lender'], ['Prepared by', 'fld-preparedBy'],
+  ['The address', 'fld-address'], ['The loan', 'fld-purpose'], ['The GSTIN', 'fld-gstin']]);
 function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Update }) {
   const f = s.doc, set = (patch: Partial<DocFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
   const english = (t = '') => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
@@ -648,7 +651,7 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
           {!provisional && <Tick />}{docStatus(s, p)}
         </p>
         {provisional && <p class={HINT}>The document says so on every page and lists what is still needed{own.length ? ':' : '.'}</p>}
-        {own.length > 0 && <ul data-testid="doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
+        {own.length > 0 && <ul data-testid="doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map(DOC_LINK)}</ul>}
         <Downloads pre="" doc={(today) => statementDoc(s, p, today)} name={(kind) => fileName(s, p, kind)} />
         <InAppNote id="in-app" />
         </div>
