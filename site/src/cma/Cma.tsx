@@ -163,12 +163,13 @@ function Grid({ form, title, s, update, was, year, pick }: { form: 'II' | 'III';
         <span class="@max-[52rem]:hidden">Years: {cols.map((c) => `${c.fy} (${KIND[c.kind]})`).join(', ')}. </span>Type in rupees, or like 12 L or 1.2 Cr. Leave the oldest years empty if the business is younger.
       </p>
       <KeptLine />
-      <div role="group" aria-label="The year shown" data-testid="cma-year-pick" class="mt-4 grid grid-cols-5 gap-1 @min-[52rem]:hidden">
-        {cols.map((c) => <button key={c.id} type="button" aria-current={c.id === year ? 'true' : undefined} data-testid={`cma-year-${c.id}`} onClick={() => pick(c.id)}
-          class={`flex min-h-11 flex-col items-center justify-center rounded-full px-0.5 text-sm font-medium whitespace-nowrap tabular-nums ${c.id === year ? 'bg-surface text-ink' : 'text-ink-muted hover:text-ink'}`}>
-          {c.fy}<span aria-hidden="true" class={`mt-1 w-8 border-t-2 ${SURE[c.kind]}`} /><span class="sr-only">, {KIND[c.kind]}</span></button>)}
-      </div>
     </>}
+    {/* The years' buttons head both forms, so the balance sheet changes year where it is (the owner, 01-11-2026). */}
+    <div role="group" aria-label="The year shown" data-testid={form === 'II' ? 'cma-year-pick' : 'cma-year-pick-III'} class="mt-4 grid grid-cols-5 gap-1 @min-[52rem]:hidden">
+      {cols.map((c) => <button key={c.id} type="button" aria-current={c.id === year ? 'true' : undefined} data-testid={form === 'II' ? `cma-year-${c.id}` : `cma-year-III-${c.id}`} onClick={() => pick(c.id)}
+        class={`flex min-h-11 flex-col items-center justify-center rounded-full px-0.5 text-sm font-medium whitespace-nowrap tabular-nums ${c.id === year ? 'bg-surface text-ink' : 'text-ink-muted hover:text-ink'}`}>
+        {c.fy}<span aria-hidden="true" class={`mt-1 w-8 border-t-2 ${SURE[c.kind]}`} /><span class="sr-only">, {KIND[c.kind]}</span></button>)}
+    </div>
     <div aria-hidden="true" data-years-strip data-testid={`cma-years-${form}`} class="sticky top-18 z-10 mt-3 hidden bg-canvas text-sm @min-[52rem]:grid @min-[52rem]:grid-cols-years @min-[52rem]:gap-x-3">
       <p class="flex items-end border-b border-line py-2 pr-3 font-medium text-ink-muted">Rs.</p>
       {cols.map((c) => <p key={c.id} class="relative flex flex-col items-end justify-end border-b border-line pt-2 pb-2 font-medium whitespace-nowrap text-ink-muted">
@@ -291,6 +292,12 @@ function Forms({ p, wide }: { p: CmaPreview; wide: boolean }) {
   </section>;
 }
 
+/** A fact the document still needs, a link to its box, as on the report (D-UX-216; the owner, 01-11-2026). */
+const DOC_BOXES: [string, keyof CmaFacts][] = [['The business’s name', 'name'], ['The lender', 'lender'], ['Prepared by', 'preparedBy']];
+const docItem = (n: string) => {
+  const to = `fld-cma-${DOC_BOXES.find(([w]) => n.startsWith(w))?.[1] ?? 'name'}`;
+  return <li key={n}><a href={`#${to}`} onClick={goTo(to)} class="inline-flex min-h-6 items-center text-link">{n}</a></li>;
+};
 function Download({ s, p, update }: { s: CmaState; p: CmaPreview; update: Update }) {
   const f = s.doc, set = (patch: Partial<CmaFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
   const english = (t: string) => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
@@ -310,7 +317,7 @@ function Download({ s, p, update }: { s: CmaState; p: CmaPreview; update: Update
     {ready
       ? <div class="mt-5">
         <p data-testid="cma-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{docStatus(s, p)}</p>
-        {own.length > 0 && <ul data-testid="cma-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
+        {own.length > 0 && <ul data-testid="cma-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map(docItem)}</ul>}
         <Downloads pre="cma" doc={(today) => cmaDoc(s, p, today)} name={(kind) => fileName(s, p, kind)} />
         <InAppNote id="cma-in-app" />
       </div>

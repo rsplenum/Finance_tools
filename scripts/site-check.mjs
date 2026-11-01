@@ -1663,6 +1663,8 @@ if (touched('/cma/')) {
   if (await shown() !== 'a1 a1') v(`UXR6: the CMA on a phone shows the years ${await shown()}, want a1 a1`);
   await page.getByTestId('cma-year-est').click();
   if (await shown() !== 'est est' || await page.getByTestId('cma-year-est').getAttribute('aria-current') !== 'true') v(`UXR6: the CMA's estimate button shows ${await shown()}, want est est and itself current`);
+  await page.getByTestId('cma-year-III-a3').click();
+  if (await shown() !== 'a3 a3' || await page.getByTestId('cma-year-a3').getAttribute('aria-current') !== 'true') v(`the CMA's balance-sheet year buttons show ${await shown()}, want a3 a3 with Form II's in step`);
   await page.locator('[data-testid="cma-key-0"] a').click();
   await page.waitForFunction(() => document.activeElement?.id === 'fld-cma-a1-sales', null, { timeout: 3000 }).catch(() => {});
   if (await shown() !== 'a1 a1' || await focused() !== 'fld-cma-a1-sales') v(`UXR6: the CMA's link to a missing figure lands on ${await focused()} with ${await shown()} shown, want fld-cma-a1-sales`);
@@ -1687,6 +1689,13 @@ if (touched('/cma/')) {
   await expectText(page, v, 'cma-move-sales', '8.4%', 'how far case K\'s sales can fall');
   await expectText(page, v, 'cma-text-sales', /to Rs\. 4,76,32,000 \(from Rs\. 5,20,00,000\)/, 'case K\'s sales at the edge');
   await layout(page, v, 'the CMA example, 390 px');
+  const viable = page.getByTestId('cma-viable');
+  if (await viable.textContent() !== 'Close' || await viable.getAttribute('aria-expanded') !== 'true') v('the CMA\'s "How far can sales fall?" does not stay as "Close" once open');
+  await viable.click();
+  if (await page.getByTestId('cma-viable-box').count() || await viable.textContent() !== 'How far can sales fall?') v('the CMA\'s "Close" does not close the room');
+  await viable.click();
+  await page.getByTestId('cma-doc-needs').getByRole('link', { name: 'The business’s name' }).click();
+  await page.waitForFunction(() => document.activeElement?.id === 'fld-cma-name', null, { timeout: 3000 }).catch(() => v('the CMA document\'s "The business’s name" does not land on its box'));
   await expectText(page, v, 'cma-doc-status', '1 question left, for the document', 'the CMA document before its name');
   await leave(page, '#fld-cma-name', 'K Steel Furniture Pvt Ltd');
   await expectText(page, v, 'cma-doc-status', 'All questions answered', 'the CMA document');
