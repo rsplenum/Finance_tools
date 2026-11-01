@@ -7,6 +7,16 @@ description: How the owner wants work done in any repo - tokens, effort, tradeof
 
 What the owner taught across projects, so a new project starts where the last one ended. The owner is the person the work is for. Where a repo's CLAUDE.md or its own skills say otherwise, they win. `carried.md` in this folder indexes the lessons behind these rules, with the context each arose in.
 
+## The lens on all work
+
+The owner's guiding principle, in their words: "We are creators, not imitators and our guiding principle is, It is so simple to be difficult but so difficult to be simple. So we do the difficult work to keep our simple to use, because simplicity is the highest form of sophistication and it requires genuine hard, smart, creative work to take something that is available today to either make it our own by adapting it to to our situation, tailor it to our needs OR to reimagine it to break new ground to creates something of our own".
+
+The owner made Claude the arbiter of what it means in each context. Start from this reading:
+- Simple to use, not simple to build: the hard work stays ours, never the user's, and simple never means diluted: a fact that changes the answer stays.
+- Take what exists (a method, a format others expect, a library, a pattern) and make it ours, adapted to our case or reimagined; never copy it as it is, nor rebuild from nothing only to differ.
+- It decides how, never what is allowed: the repo's rules and the law stand.
+- Where it changes a choice, say in one line how it was read, so the owner can overrule.
+
 ## Tokens: every step re-reads the whole context
 
 - One deliverable per session, each in a new session, with a budget set before it starts (S about 60 steps, M about 120, L about 200; stop at the budget plus a quarter) and ended by the handoff below; preparing the next session's row is part of the one that ends. Measure each session's actual and keep it next to its budget. When new work is asked in an old conversation, say once that a new session costs less.
