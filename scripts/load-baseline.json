@@ -33,14 +33,14 @@
       "codes": 0
     },
     "/cma/": {
-      "before": 81,
-      "shown": 1419,
-      "all": 2447,
-      "plan": 2542,
+      "before": 37,
+      "shown": 727,
+      "all": 1850,
+      "plan": 1946,
       "long": 2,
       "abbr": 5,
-      "questions": 128,
-      "controls": 150,
+      "questions": 28,
+      "controls": 63,
       "answerAt": 12,
       "gap": 0,
       "styles": 7,
@@ -1728,7 +1728,11 @@
     { "page": "/dscr/", "count": "plan", "from": 2038, "to": 2040, "why": "D-UX-248", "date": "2026-10-29" },
     { "page": "/project-report/", "count": "plan", "from": 1494, "to": 1500, "why": "D-UX-253", "date": "2026-10-29" },
     { "page": "/", "count": "controls", "from": 7, "to": 15, "why": "D-UX-257", "date": "2026-10-31" },
-    { "page": "/project-report/", "count": "plan", "from": 1500, "to": 1520, "why": "D-UX-265", "date": "2026-11-01" }
+    { "page": "/project-report/", "count": "plan", "from": 1500, "to": 1520, "why": "D-UX-265", "date": "2026-11-01" },
+    { "page": "/cma/", "count": "shown", "from": 722, "to": 727, "why": "D-UX-271", "date": "2026-11-01" },
+    { "page": "/cma/", "count": "all", "from": 1845, "to": 1850, "why": "D-UX-271", "date": "2026-11-01" },
+    { "page": "/cma/", "count": "plan", "from": 1940, "to": 1946, "why": "D-UX-271", "date": "2026-11-01" },
+    { "page": "/cma/", "count": "controls", "from": 57, "to": 63, "why": "D-UX-271", "date": "2026-11-01" }
   ],
   "fontProbe": 320.2
 }

@@ -4,7 +4,6 @@
  * borrower's first and the lender's last. The sliders change nothing in the columns until "Use this plan". Figures:
  * engine/cma-plan.ts only, via levers.ts.
  */
-import { workWords } from '../verdict';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { Bar, Benchmarks, Lever, PlanLever } from '../Board';
 import { BUTTON, FILLED, HINT, TextField } from '../fields';
@@ -28,8 +27,6 @@ export function Levels({ s, update, use }: { s: CmaState; update: Update; use: (
   return <div data-testid="cma-levels" class="mt-4">
     {lv.ask && <p data-testid="cma-levels-ask" class="text-sm text-warn">{lv.ask}</p>}
     {lv.checks && <div data-testid="cma-checks">
-      <h3 data-testid="cma-work" class={`text-title ${lv.misses ? 'text-bad' : 'text-ink'}`}>{workWords(lv.checks.filter((c) => c.verdict === 'misses').length, lv.checks.filter((c) => c.verdict === 'wait').length)}</h3>
-      <p class={`mt-1 ${HINT}`}>Against the {lv.benchmarks ? 'benchmark ratios as you changed them' : 'default benchmark ratios'}.</p>
       {lv.benchmarks && <p data-testid="cma-benchmarks-note" class="mt-1 text-sm text-warn">{lv.benchmarks}</p>}
       <ul class="mt-1 divide-y divide-line">{lv.checks.map((c) => <Bar key={c.id} c={c} pre="cma" />)}</ul>
       {/* How to read the bars, under them as on the report (UX9b, the UX9 critic). */}
@@ -38,7 +35,6 @@ export function Levels({ s, update, use }: { s: CmaState; update: Update; use: (
         set={(id, t) => update((u) => ({ ...u, benchmarks: withBenchmark(u.benchmarks, id, t) }))} />
     </div>}
     {lv.collateralNote && <p data-testid="cma-collateral-note" class={`mt-1 ${HINT}`}>{lv.collateralNote}</p>}
-    {lv.misses && <p data-testid="cma-misses" class="mt-2 text-sm text-bad">{lv.misses}</p>}
     {lv.checks && <Viable s={s} misses={!!lv.misses} update={update} use={use} />}
   </div>;
 }
@@ -52,7 +48,7 @@ function Viable({ s, misses, update, use }: { s: CmaState; misses: boolean; upda
   const [touched, setTouched] = useState<CmaLeverId[]>([]);
   const base = useMemo(() => JSON.stringify({ ...s, promotersMost: '', doc: undefined }), [s]);
   // Read at render, not reset in an effect after paint, which could undo a tap made just after a figure changed (UX6).
-  const v = worked?.on === base ? worked.v : undefined, plan = planned?.on === base ? planned.plan : undefined;
+  const open = worked?.on === base, v = open ? worked.v : undefined, plan = planned?.on === base ? planned.plan : undefined;
   const replan = (ids: CmaLeverId[], at: CmaLevers) => {
     const q = cmaPlanOf(s, Object.fromEntries(ids.map((id) => [id, at[id]])));
     setPlan({ on: base, plan: q }); setTouched(ids); if (q) setLv(q.levers);
@@ -77,12 +73,12 @@ function Viable({ s, misses, update, use }: { s: CmaState; misses: boolean; upda
   };
   const bad = !!s.promotersMost.trim() && amountOf(s.promotersMost) === undefined;
   return <>
-    {!v && <button type="button" data-testid="cma-viable" class={`mt-2 ${BUTTON}`} onClick={() => {
+    {/* The button stays and closes what it opened (the owner, 01-11-2026: it disappeared after clicking). */}
+    <button type="button" data-testid="cma-viable" aria-expanded={open} class={`mt-2 ${BUTTON}`} onClick={() => {
+      if (open) { setV(undefined); setPlan(undefined); return; }
       setV({ on: base, v: cmaViableOf(s) }); if (misses) replan([], CMA_AS_TYPED);
-      // The button removes itself, so the focus moves to what replaces it (WCAG 2.4.3; DESIGN-LESSONS lesson 1).
-      requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-testid="cma-plan"], [data-testid="cma-viable-box"]')?.focus());
     }}>
-      {misses ? 'Make it viable' : 'How far can sales fall?'}</button>}
+      {open ? 'Close' : misses ? 'Make it viable' : 'How far can sales fall?'}</button>
     {v && !plan && <div data-testid="cma-viable-box" tabIndex={-1} class="mt-2">
       <p class="font-medium text-ink">{v.title}</p>
       {group('borrower', v.meets ? 'The room' : 'Your changes')}

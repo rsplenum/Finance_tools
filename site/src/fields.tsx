@@ -197,7 +197,10 @@ export function reach(id: string, then: (el: HTMLElement) => void): boolean {
 export const goTo = (id: string) => (e: Event) => {
   if (reach(id, (el) => {
     const boxes = el.matches('input, select, textarea') ? [] : [...el.querySelectorAll('input, select, textarea')] as HTMLInputElement[];
-    (boxes.length ? boxes.find((b) => b.type !== 'radio' && !b.value) ?? boxes[0] : el).focus();
+    const box = boxes.length ? boxes.find((b) => b.type !== 'radio' && !b.value) ?? boxes[0] : el;
+    // A box hidden with its year (the CMA on a phone, UXR6) asks its page to show it, then takes the focus once drawn.
+    if (box.getClientRects().length) box.focus();
+    else { box.dispatchEvent(new Event('reveal', { bubbles: true })); requestAnimationFrame(() => requestAnimationFrame(() => box.focus())); }
   })) e.preventDefault();
 };
 
