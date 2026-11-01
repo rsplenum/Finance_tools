@@ -263,8 +263,8 @@ export async function forbiddenChecks({ browser, BASE, pages = NEW_LOOK, motion 
       await p.evaluate(async () => {
         for (let y = 0; y < document.body.scrollHeight; y += innerHeight / 2) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 100)); }
       });
-      // Each tool's scene runs 12.8 s from when it comes into view (D-UX-125); the last starts as the scroll reaches it.
-      await p.waitForTimeout(14000);
+      // Each tool's scene runs 32.5 s from when it comes into view (D-UX-259); the last starts as the scroll reaches it.
+      await p.waitForTimeout((await p.locator('[data-scene]').count()) ? 34000 : 14000);
       const ends = await p.evaluate(unfinished);
       const r = await p.evaluate(() => {
         const hidden = [...document.querySelectorAll('[data-settle], [data-at]')].filter((e) => getComputedStyle(e).opacity !== '1')

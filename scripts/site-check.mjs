@@ -1519,7 +1519,7 @@ if (touched('/')) {
   for (const [id, hrefs] of blocks) if (hrefs.length !== 1 || !hrefs[0].endsWith('?case=home')) v(`home's ${id} block has the links ${hrefs.join(', ')}; want one, opening the tool with the case`);
   await ctx.close();
   // HOME1f (D-UX-255): on a phone each scene is one frame that fits the screen at every shot of every beat (scene.ts: the
-  // beats start at 0, 1.6, 4, 7 and 9.8 s, the change's cards give way to the years at 8.6 s, and the whole is 12.8 s).
+  // beats start at 0, 5, 11, 18 and 26.5 s, the change's cards give way to the years at 22 s, and the whole is 32.5 s; D-UX-259).
   for (const [w, h] of [[360, 640], [390, 844]]) {
     const fc = await browser.newContext({ viewport: { width: w, height: h } }), fp = await fc.newPage();
     await fp.goto(BASE + '/', { waitUntil: 'load' });
@@ -1527,7 +1527,7 @@ if (touched('/')) {
       await fp.locator(`[data-scene="${id}"]`).evaluate((e) => e.scrollIntoView({ block: 'center' }));
       const runs = await fp.waitForFunction((id) => document.querySelector(`[data-scene="${id}"]`)?.hasAttribute('data-running'), id, { timeout: 8000 }).then(() => true, () => false);
       if (!runs) { v(`at ${w}×${h} the ${id} scene does not start when it is in view`); continue; }
-      for (const m of (await fp.evaluate(sceneFrame, [id, [1450, 3850, 6850, 8450, 9650, 12790]])).slice(0, 4)) v(`at ${w}×${h}: ${m}`);
+      for (const m of (await fp.evaluate(sceneFrame, [id, [4850, 10850, 17850, 21850, 26350, 32490]])).slice(0, 4)) v(`at ${w}×${h}: ${m}`);
     }
     await fc.close();
   }

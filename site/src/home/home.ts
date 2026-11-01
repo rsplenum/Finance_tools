@@ -3,7 +3,7 @@
  * - The hero's "how it works" (How.astro) plays on each visit: the boxes settle one after another, the lines draw, and one
  *   marigold pulse runs from your answers to the papers, all within 2.7 s.
  * - Each tool's scene in look C (Scene.astro, scene.ts; HOME1d, HOME1e) loads after the page and plays its five beats once
- *   when it first comes into view, within 12.8 s; without motion it only draws its wires, finished.
+ *   when it first comes into view, within 32.5 s; without motion it only draws its wires, finished.
  * - The closing desk's dashes fall onto their rows once, as it comes into view.
  * SVG strokes take the Web Animations API, since a class-triggered transition leaves them where they began (GOTCHAS,
  * AG3). Under reduced motion Base.astro leaves out the `js` mark, and nothing here runs: everything stands finished.
