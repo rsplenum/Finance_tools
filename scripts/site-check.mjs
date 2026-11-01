@@ -242,7 +242,12 @@ const saver = (page, v) => async (id) => {
   const path = await file.path();
   return { name: file.suggestedFilename(), bytes: path ? await readFile(path) : Buffer.alloc(0) };
 };
-const leave = async (page, sel, value) => { await page.fill(sel, value); await page.press(sel, 'Tab'); };
+// A CMA year's boxes are hidden on a phone until its year is picked (UXR6): the year's button first.
+const leave = async (page, sel, value) => {
+  const y = /^#fld-cma-(a1|a2|a3|est|proj)-/.exec(sel)?.[1];
+  if (y && !(await page.locator(sel).isVisible())) await page.getByTestId(`cma-year-${y}`).click();
+  await page.fill(sel, value); await page.press(sel, 'Tab');
+};
 /** The detailed form sits under the closed "More options" (P1f): the flows below open it first. */
 const openMore = async (page) => {
   const more = page.locator('#more-options');
@@ -1613,12 +1618,20 @@ if (touched('/cma/')) {
   await page.evaluate(() => scrollTo(0, 0));
   await page.getByTestId('cma-answer-bar-see').click();
   if (await page.locator('#cma-figures').count()) v('UXR5: "See the answer" leaves the CMA\'s figures unfolded');
+  // UXR6 (UXR1's S20): folded on a phone, the download within three screens of the answer, Forms I to VI closed.
+  const gap = await page.evaluate(() => (document.getElementById('download').getBoundingClientRect().top - document.getElementById('result').getBoundingClientRect().top) / innerHeight);
+  if (gap > 3) v(`UXR6: the CMA's download is ${gap.toFixed(1)} screens below its answer on a phone, want 3 at most`);
+  if (await page.locator('#cma-forms details[open]').count()) v('UXR6: a form of the CMA opens by itself on a phone');
   await page.getByTestId('cma-edit').click();
   await page.locator('dialog[open] #fld-cma-existing').waitFor();
   await layout(page, v, 'the CMA\'s sheet, 390 px');
   await page.keyboard.press('Escape');
   await page.locator('#fld-cma-existing').waitFor({ state: 'detached', timeout: 5000 }).catch(() => v('UXR5: Esc leaves the CMA\'s sheet open'));
   await page.setViewportSize({ width: 1280, height: 900 });
+  // UXR6 (UXR1's S17): the verdict is the answer card's first line, above the fold at 1280 px.
+  await page.evaluate(() => scrollTo(0, 0));
+  const head = await page.locator('#result .paper > :first-child').first().evaluate((e) => ({ id: e.dataset.testid, end: e.getBoundingClientRect().bottom }));
+  if (!/^cma-(verdict|misses)-work$/.test(head.id ?? '') || head.end > 900) v(`UXR6: the CMA's card opens with ${head.id} ending at ${Math.round(head.end)} px, want its verdict above the fold at 1280 px`);
   await expectText(page, v, 'cma-rail', /^Your answersThe limitLimit you have today.*Net sales.*Balance sheet.*Balances at Rs\. [\d,]+.*More options/, 'UXR5, the CMA\'s rail at 1280 px');
   await page.getByTestId('cma-rail-change').click();
   await page.locator('[data-testid="cma-rail-open"] #fld-cma-existing').waitFor({ timeout: 5000 }).catch(() => v('UXR5: the CMA\'s rail does not open to its questions'));
@@ -1643,9 +1656,22 @@ if (touched('/cma/')) {
   if (fields !== 127) v(`the CMA page asks ${fields} fields by default; the owner's short CMA is 127 (25 heads × 5 years, the limit now, fresh or renewal)`);
   await expectText(page, v, 'cma-years', /^Years: 2023-24 \(audited\), 2024-25 \(audited\), 2025-26 \(audited\), 2026-27 \(estimate\), 2027-28 \(projection\)\./, 'the CMA years');
   await expectText(page, v, 'cma-status', '3 questions left', 'the empty CMA page');
+  // UXR6 (UXR1's S20): on a phone one year's card a form, picked by its button; a link to a box in another year opens
+  // that year and lands on the box; "Next year" goes on to the next one's first box.
+  const shown = () => page.evaluate(() => ['II', 'III'].map((f) => [...document.querySelectorAll(`[data-testid^="cma-input-${f}-"]`)].filter((e) => e.checkVisibility()).map((e) => e.dataset.testid.split('-').at(-1)).join('+')).join(' '));
+  const focused = () => page.evaluate(() => document.activeElement?.id);
+  if (await shown() !== 'a1 a1') v(`UXR6: the CMA on a phone shows the years ${await shown()}, want a1 a1`);
+  await page.getByTestId('cma-year-est').click();
+  if (await shown() !== 'est est' || await page.getByTestId('cma-year-est').getAttribute('aria-current') !== 'true') v(`UXR6: the CMA's estimate button shows ${await shown()}, want est est and itself current`);
+  await page.locator('[data-testid="cma-key-0"] a').click();
+  await page.waitForFunction(() => document.activeElement?.id === 'fld-cma-a1-sales', null, { timeout: 3000 }).catch(() => {});
+  if (await shown() !== 'a1 a1' || await focused() !== 'fld-cma-a1-sales') v(`UXR6: the CMA's link to a missing figure lands on ${await focused()} with ${await shown()} shown, want fld-cma-a1-sales`);
+  await page.getByTestId('cma-next-year').click();
+  await page.waitForFunction(() => document.activeElement?.id === 'fld-cma-a2-sales', null, { timeout: 3000 }).catch(() => v('UXR6: the CMA\'s "Next year" does not land on 2024-25\'s net sales'));
   await page.getByTestId('cma-example').click();
   await expectText(page, v, 'cma-status', 'All questions answered', 'the CMA example');
   await expectText(page, v, 'cma-key-0', 'Rs. 1,04,00,000', 'the CMA limit');
+  if (await page.getByTestId('cma-to-download').getAttribute('href') !== '#download') v('UXR6: the CMA\'s answer card has no jump to the download');
   const flags = await page.getByTestId('cma-flags').locator('li').count();
   if (flags !== 3) v(`the CMA example shows ${flags} things to look at, want 3 (the growth and the two short margins)`);
   await page.getByTestId('cma-form3').evaluate((t) => t.closest('details').open = true);
@@ -1692,7 +1718,7 @@ if (touched('/cma/')) {
     tax: [0, 0, 0.25, 0.75, 0.25], drawings: [0, 0, 0.75, 1.25, 0.75], capital: [20, 20, 20, 20, 20], reserves: [4, 4, 4, 5, 5], promoterLoans: [10, 10, 10, 10, 10],
     termLoans: [36, 32, 28, 24, 20], tlDue12: [4, 4, 4, 4, 4], bankWc: [55, 60, 65, 70, 80], creditors: [24, 26, 28, 30, 34], otherCl: [2, 2, 2, 2, 2],
     netBlock: [55, 50, 45, 40, 35], nonCurrent: [10, 10, 10, 10, 10], stock: [32, 35, 38, 40, 48], debtors: [24, 26, 28, 30, 36], cash: [3, 3, 3, 3, 2], otherCa: [27, 30, 33, 38, 40] };
-  for (const [h, xs] of Object.entries(M)) for (const [i, y] of ['a1', 'a2', 'a3', 'est', 'proj'].entries()) await leave(page, `#fld-cma-${y}-${h}`, `${xs[i]} L`);
+  for (const [i, y] of ['a1', 'a2', 'a3', 'est', 'proj'].entries()) for (const [h, xs] of Object.entries(M)) await leave(page, `#fld-cma-${y}-${h}`, `${xs[i]} L`);
   await leave(page, '#fld-cma-existing', '60 L');
   await expectText(page, v, 'cma-levels-ask', /whether the limit is fresh or enhanced, or a renewal/, 'case M before fresh or renewal');
   await page.locator('#fld-cma-case-fresh').check();

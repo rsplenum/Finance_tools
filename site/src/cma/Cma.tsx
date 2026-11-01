@@ -10,7 +10,7 @@
  */
 import type { ComponentChildren } from 'preact';
 import { useMemo, useState } from 'preact/hooks';
-import { AnswerBar, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, HINT, Ledger, Section, STATE, TextField, Tick, InAppNote, useHomeCase, useKept, reach, useStart, StartLine, StartNotes, MoreOptions, LINK_BUTTON, goTo } from '../fields';
+import { AnswerBar, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, HINT, KeptLine, Ledger, Section, STATE, TextField, Tick, InAppNote, Verdict, answerRule, useHomeCase, useKept, reach, useStart, StartLine, StartNotes, MoreOptions, LINK_BUTTON, goTo } from '../fields';
 import { Downloads } from '../Downloads';
 import { AnswersColumn, foldGrid, SeeAnswer, useFold, type AnswerGroup } from '../Fold';
 import { CMA_HOME } from './home-case';
@@ -19,7 +19,8 @@ import { inr } from '../../../engine/util';
 import { cmaDoc, docNeeds, docStatus, fileName } from './document';
 import { ReadStatement } from './Read';
 import { Levels } from './Levels';
-import { workWords } from '../verdict';
+import { verdictWords, workWords } from '../verdict';
+import type { YearId } from '../../../engine/cma';
 import { CASE_CHOICES, COLLATERAL_HINT, applyCmaPlan, levelsOf, undoCmaPlan, type CmaChange, type CmaLevers } from './levers';
 import {
   ASSUMPTIONS, HEADS, amountOf, columnsOf, emptyState, exampleState, preview, startYearOf, statusText, subtotals, tidyAmount,
@@ -40,7 +41,11 @@ export function CmaCalculator() {
   const p = useMemo(() => preview(s), [s]);
   // "Use this plan" (MV4): the fields it wrote, each marked with what it was, until undone or kept.
   const [used, setUsed] = useState<CmaChange[]>([]);
-  const use = (l: CmaLevers) => { const a = applyCmaPlan(s, l); setS(a.s); setUsed(a.changes); };
+  // Where the box is narrow (a phone, the sheet, the rail), one year's card a form at a time (UXR6, UXR1's S20).
+  const [year, setYear] = useState<YearId>('a1');
+  const yearOf = (id: string) => columnsOf(s.startYear).find((c) => id.startsWith(`fld-cma-${c.id}-`))?.id;
+  const use = (l: CmaLevers) => { const a = applyCmaPlan(s, l); setS(a.s); setUsed(a.changes);
+    const y = a.changes.map((c) => yearOf(c.field)).find(Boolean); if (y) setYear(y); };
   const undo = () => { setS((x) => undoCmaPlan(x, used)); setUsed([]); };
   // Clear all on a 131-field page, with an undo until the next figure is typed (review finding 7).
   const c = useStart('cma', s, setS, blank, () => exampleState(s), () => setUsed([]));
@@ -50,9 +55,9 @@ export function CmaCalculator() {
   const ready = !!p.view && !p.blocked && !p.needs.length, f = useFold(ready, 'result-h');
   // Nothing before the first question but the intro and the start line (UXR5): the years' line heads Form II.
   const top = <>
-    <Section id="limit" title="The limit you have today">
+    <Section id="limit" title="The limit">
       <div class="mt-4 max-w-sm">
-        <TextField id="fld-cma-existing" label="Limit you have today, from all banks (0 if none)" hint="The working-capital limit already sanctioned; the limit your figures support is worked out below." unit="Rs." inputMode="decimal" value={s.existingLimit}
+        <TextField id="fld-cma-existing" label="Limit you have today, from all banks" hint="The working-capital limit already sanctioned, or 0 if none; the limit your figures support is worked out below." unit="Rs." inputMode="decimal" value={s.existingLimit}
           tidy={tidyAmount} invalid={bad(s.existingLimit)} said={bad(s.existingLimit) ? 'Not understood. Type 70,00,000 or 70 L.' : undefined}
           onCommit={(existingLimit) => update((x) => ({ ...x, existingLimit }))} />
       </div>
@@ -61,9 +66,11 @@ export function CmaCalculator() {
     </Section>
   </>;
   // The five years across from a box 52rem wide (UX9, review finding 3), so in the rail or the sheet each year is a card.
-  const figures = <div id="cma-figures" class="@container">
-    <Grid form="II" title="Profit and loss (Form II)" s={s} update={update} was={was} />
-    <Grid form="III" title="Balance sheet (Form III)" s={s} update={update} was={was} />
+  // A link to a box in a year not shown (goTo, the needs' list) asks for it here first.
+  const reveal = { onreveal: (e: Event) => { const y = yearOf((e.target as HTMLElement).id); if (y) setYear(y); } };
+  const figures = <div id="cma-figures" class="@container" {...reveal}>
+    <Grid form="II" title="Profit and loss (Form II)" s={s} update={update} was={was} year={year} pick={setYear} />
+    <Grid form="III" title="Balance sheet (Form III)" s={s} update={update} was={was} year={year} pick={setYear} />
     <MoreOptions what="promoters’ loans, collateral">
       <div class="pt-2">
         <label class="flex items-start gap-2 text-ink">
@@ -86,7 +93,7 @@ export function CmaCalculator() {
     <Result s={s} p={p} update={update} use={use} used={used} undo={undo} keep={() => setUsed([])} fold={f.fold} note={f.fold && <StartNotes c={c} home={home} />} />
     {f.fold ? null : <div class="lg:col-span-2 lg:row-start-2">{figures}</div>}
     <div class={f.fold ? 'lg:col-start-2 lg:row-start-2' : 'lg:col-span-2 lg:row-start-3'}>
-    {p.view && <Forms p={p} />}
+    {p.view && <Forms p={p} wide={f.wide} />}
     <Ledger id="assumed" testid="cma-assumed" title="Assumed until changed" rows={ASSUMPTIONS.map((a) => ({ ...a,
       ...(a.id === 'quasi' ? { to: 'fld-cma-quasi', go: (e: Event) => { e.preventDefault();
         reach('more-options', (d) => { (d as HTMLDetailsElement).open = true; document.getElementById('fld-cma-quasi')?.focus(); }); } } : {}) }))} />
@@ -136,8 +143,12 @@ const rs = (n: number) => `Rs. ${inr(n, Number.isInteger(n) ? 0 : 2)}`;
  * year at a time down its column, so Tab follows the eye at every width (F19); the cells keep `px-2` and `min-w-28`, so
  * a typed figure is never cut (finding 1). Under each year its subtotals from the engine, "—" until their figures are in,
  * and once the balance sheet's are, whether it balances. */
-function Grid({ form, title, s, update, was }: { form: 'II' | 'III'; title: string; s: CmaState; update: Update; was: (field: string) => string | undefined }) {
+function Grid({ form, title, s, update, was, year, pick }: { form: 'II' | 'III'; title: string; s: CmaState; update: Update; was: (field: string) => string | undefined; year: YearId; pick: (y: YearId) => void }) {
   const cols = columnsOf(s.startYear), heads = HEADS.filter((h) => h.form === form);
+  // "Next year" under the balance sheet: that year's first box, the years' buttons in view above it.
+  const next = cols[cols.findIndex((c) => c.id === year) + 1];
+  const onNext = (y: YearId) => { pick(y); requestAnimationFrame(() => { document.querySelector('[data-testid="cma-year-pick"]')?.scrollIntoView({ block: 'start' });
+    document.getElementById(`fld-cma-${y}-${HEADS[0].id}`)?.focus({ preventScroll: true }); }); };
   const hint = (h: (typeof heads)[number]) => 'hint' in h && h.hint ? <span class={`block text-xs ${MUTED}`}>{h.hint}</span> : null;
   const sums = cols.map((c) => subtotals(s, c.id)), blocked = sums.find((t) => t.blocked)?.blocked;
   const ROW = 'mt-2 flex items-center justify-between gap-3 @min-[52rem]:mt-0 @min-[52rem]:border-b @min-[52rem]:border-line @min-[52rem]:py-1';
@@ -146,9 +157,18 @@ function Grid({ form, title, s, update, was }: { form: 'II' | 'III'; title: stri
   // 1024 px each card carries its own head.
   const head = (c: (typeof cols)[number]) => <><span aria-hidden="true" class={`absolute inset-x-0 top-0 border-t-2 ${SURE[c.kind]}`} />{c.fy}</>;
   return <Section id={`form-${form}`} title={title}>
-    {form === 'II' && <p data-testid="cma-years" class={`mt-2 ${HINT}`}>
-      Years: {cols.map((c) => `${c.fy} (${KIND[c.kind]})`).join(', ')}. Type in rupees, or like 12 L or 1.2 Cr. Leave the oldest years empty if the business is younger.
-    </p>}
+    {form === 'II' && <>
+      {/* Where one year shows at a time its buttons name the years, so the line does not (UXR6). */}
+      <p data-testid="cma-years" class={`mt-2 ${HINT}`}>
+        <span class="@max-[52rem]:hidden">Years: {cols.map((c) => `${c.fy} (${KIND[c.kind]})`).join(', ')}. </span>Type in rupees, or like 12 L or 1.2 Cr. Leave the oldest years empty if the business is younger.
+      </p>
+      <KeptLine />
+      <div role="group" aria-label="The year shown" data-testid="cma-year-pick" class="mt-4 grid grid-cols-5 gap-1 @min-[52rem]:hidden">
+        {cols.map((c) => <button key={c.id} type="button" aria-current={c.id === year ? 'true' : undefined} data-testid={`cma-year-${c.id}`} onClick={() => pick(c.id)}
+          class={`flex min-h-11 flex-col items-center justify-center rounded-full px-0.5 text-sm font-medium whitespace-nowrap tabular-nums ${c.id === year ? 'bg-surface text-ink' : 'text-ink-muted hover:text-ink'}`}>
+          {c.fy}<span aria-hidden="true" class={`mt-1 w-8 border-t-2 ${SURE[c.kind]}`} /><span class="sr-only">, {KIND[c.kind]}</span></button>)}
+      </div>
+    </>}
     <div aria-hidden="true" data-years-strip data-testid={`cma-years-${form}`} class="sticky top-18 z-10 mt-3 hidden bg-canvas text-sm @min-[52rem]:grid @min-[52rem]:grid-cols-years @min-[52rem]:gap-x-3">
       <p class="flex items-end border-b border-line py-2 pr-3 font-medium text-ink-muted">Rs.</p>
       {cols.map((c) => <p key={c.id} class="relative flex flex-col items-end justify-end border-b border-line pt-2 pb-2 font-medium whitespace-nowrap text-ink-muted">
@@ -167,7 +187,7 @@ function Grid({ form, title, s, update, was }: { form: 'II' | 'III'; title: stri
             : Math.abs(d) < 0.005 ? <span data-testid={`cma-balance-${c.id}`} class={`${STATE} justify-end text-ink`}><Tick />Balances</span>
             : <span data-testid={`cma-balance-${c.id}`} class={`${STATE} justify-end text-warn`}>Differs by {rs(Math.abs(d))}</span>];
         return <div key={c.id} role="group" aria-label={`${c.fy}, ${KIND[c.kind]}`} data-testid={`cma-input-${form}-${c.id}`}
-          class={`rounded-card bg-surface p-3 @min-[52rem]:grid @min-[52rem]:grid-rows-subgrid ${SPAN[form]} @min-[52rem]:rounded-none @min-[52rem]:bg-transparent @min-[52rem]:p-0`}>
+          class={`rounded-card bg-surface p-3 ${c.id === year ? '' : '@max-[52rem]:hidden'} @min-[52rem]:grid @min-[52rem]:grid-rows-subgrid ${SPAN[form]} @min-[52rem]:rounded-none @min-[52rem]:bg-transparent @min-[52rem]:p-0`}>
           <p class="relative pt-2 font-medium text-ink @min-[52rem]:hidden">{head(c)}<span class={`ml-2 text-xs font-normal ${MUTED}`}>{KIND[c.kind]}</span></p>
           {heads.map((h) => { const id = `fld-cma-${c.id}-${h.id}`, v = s.figures[c.id][h.id]; return <div key={h.id} class={ROW}>
             <label for={id} class="text-ink @min-[52rem]:hidden">{h.label}{hint(h)}</label>
@@ -182,14 +202,16 @@ function Grid({ form, title, s, update, was }: { form: 'II' | 'III'; title: stri
         </div>; })}
     </div>
     {blocked && <p class="mt-2 text-sm text-bad">{blocked}</p>}
+    {form === 'III' && next && <p class="mt-2 @min-[52rem]:hidden"><button type="button" data-testid="cma-next-year" class={LINK_BUTTON} onClick={() => onNext(next.id)}>Next year: {next.fy}</button></p>}
   </Section>;
 }
 
 /** One of the forms, its years across; it scrolls sideways inside itself on a phone. */
-function FormTable({ t }: { t: ViewTable }) {
+function FormTable({ t, wide }: { t: ViewTable; wide: boolean }) {
   const cols = t.columns.length + 1;
   // A sheet lying flat: only the answer's casts the shadow (UX8, D-UX-106).
-  return <details open={t.id === 'form1' || t.id === 'form5'} class="paper mt-4 rounded-card">
+  // Forms I and V open from 1024 px; on a phone all six closed, so the download is near the answer (UXR6, S20).
+  return <details open={wide && (t.id === 'form1' || t.id === 'form5')} class="paper mt-4 rounded-card">
     <summary class="flex min-h-11 cursor-pointer items-center px-4 py-2 font-medium text-ink">{t.title}</summary>
     <div class="overflow-x-auto px-4 pb-4" tabIndex={0} role="region" aria-label={t.title}>
       <table data-testid={`cma-${t.id}`} class="w-full border-collapse text-sm">
@@ -219,10 +241,15 @@ function Result({ s, p, update, use, used, undo, keep, fold, note }: { s: CmaSta
   const v = p.view, last = columnsOf(s.startYear).at(-1)?.fy ?? '';
   const outline = [`Limit by the turnover method, ${last}`, 'Limit you have today', `Current ratio, ${last}`];
   const now = amountOf(s.existingLimit);
+  // The verdict is the card's first line (UXR6, UXR1's S17), so at 1280 px it is above the fold; the levels under it.
+  const lv = v && !p.blocked ? levelsOf(s) : undefined, checks = lv?.checks;
+  const count = (k: string) => checks?.filter((c) => c.verdict === k).length ?? 0;
   return <div class="lg:col-start-2 lg:row-start-1">{note}<section id="result" aria-labelledby="result-h" class={fold ? 'mt-4' : 'answer-panel mt-10 lg:mt-4'}>
     <h2 id="result-h" tabIndex={-1} class="sr-only">The CMA data</h2>
     <div class="paper shadow-paper rounded-card p-4 sm:p-6">
-      <Counter id="cma-status" result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} text={statusText(p)} rule answer plain={!!levelsOf(s)?.checks}
+      {lv?.checks && <Verdict id={lv.misses ? 'cma-misses' : 'cma-verdict'} work={workWords(count('misses'), count('wait'))} rule={answerRule(!p.needs.length)}
+        text={lv.misses ?? `${verdictWords('benchmark', lv.checks.length, 0, count('wait'))}${lv.benchmarks ? ', as you changed them' : ''}.`} />}
+      <Counter id="cma-status" result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} text={statusText(p)} rule={!checks} answer={!checks} plain={!!checks} class={checks ? 'mt-2' : ''}
         go={p.needs.length ? { to: 'cma-figures', what: p.needs[0] } : undefined}>
         {p.needs.length > 0 && <ul data-testid="cma-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">
           {p.needs.slice(0, 8).map((n) => <li key={n}>{n}</li>)}{p.needs.length > 8 && <li>and {p.needs.length - 8} more</li>}</ul>}
@@ -237,6 +264,7 @@ function Result({ s, p, update, use, used, undo, keep, fold, note }: { s: CmaSta
           {k.note && <dd class={`text-sm ${MUTED}`}>{k.note}</dd>}
         </div>)}
       </dl>
+      {v && !p.blocked && <p class="mt-3"><a href="#download" data-testid="cma-to-download" class="inline-flex min-h-11 items-center font-medium text-link">Go to the download</a></p>}
     </div>
     {used.length > 0 && <div data-testid="cma-used" role="status" class="mt-3 rounded-control border-l-4 border-ink bg-surface p-3">
       <p class="font-medium text-ink">The plan is used: these figures above changed.</p>
@@ -251,7 +279,7 @@ function Result({ s, p, update, use, used, undo, keep, fold, note }: { s: CmaSta
 }
 
 /** The forms under the answer, full width from 1024 px: what to look at, then Forms I to VI and the ratios. */
-function Forms({ p }: { p: CmaPreview }) {
+function Forms({ p, wide }: { p: CmaPreview; wide: boolean }) {
   const v = p.view;
   if (!v) return null;
   return <section id="cma-forms" aria-label="Forms I to VI">
@@ -259,7 +287,7 @@ function Forms({ p }: { p: CmaPreview }) {
       <h3 class="text-title text-ink">To look at</h3>
       <ul data-testid="cma-flags" class="mt-1 max-w-prose list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{v.flags.map((f) => <li key={f}>{f}</li>)}</ul>
     </div>}
-    {v.tables.map((t) => <FormTable key={t.id} t={t} />)}
+    {v.tables.map((t) => <FormTable key={t.id} t={t} wide={wide} />)}
   </section>;
 }
 
