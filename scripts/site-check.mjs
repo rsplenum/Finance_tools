@@ -22,7 +22,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { docxLines, docxPart, pdfPages, workbook, zipPart } from './read-doc.mjs';
 import { DIST, serveDist } from './serve-dist.mjs';
-import { designChecks } from './design-checks.mjs';
+import { designChecks, FIXED_AT } from './design-checks.mjs';
 import { loadCheck } from './load-measure.mjs';
 import { forbiddenChecks, sceneFrame, WEIGHT_CAP } from './forbidden-checks.mjs';
 import { changedFiles, pagesFor } from './site-pages.mjs';
@@ -108,7 +108,7 @@ for (const f of (await readdir(DIST, { recursive: true })).filter((f) => f.endsW
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
 
 /** Opens a page at 390 px. `stored` is a saved theme choice; `blockScripts` loads the page without its script files. */
-async function open(path, { scheme = 'light', stored, blockScripts = false, at = '2026-10-02T10:00:00+05:30', events, userAgent } = {}) {
+async function open(path, { scheme = 'light', stored, blockScripts = false, at = FIXED_AT, events, userAgent } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, colorScheme: scheme, userAgent });
   // Interaction data (UD1): `events` collects each batch the page sends, as the live Worker would get it.
   if (events) {
@@ -1470,7 +1470,7 @@ if (touched('/project-report/')) {
 // The questions are in its own words; switching to expert mode writes what it assumed, and back, nothing is listed as changed.
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
-  const now = new Date(), sell = new Date(now.getFullYear(), now.getMonth() + 3, 1), month = `${sell.getFullYear()}-${String(sell.getMonth() + 1).padStart(2, '0')}`;
+  const now = new Date(FIXED_AT), sell = new Date(now.getFullYear(), now.getMonth() + 3, 1), month = `${sell.getFullYear()}-${String(sell.getMonth() + 1).padStart(2, '0')}`;
   for (const id of ['#fld-borrower-firm', '#fld-security-neither', '#fld-wcBy-worked']) await page.check(id);
   await page.getByTestId('rep-product-add').click();
   for (const [id, value] of [['#fld-cost-building', '6 L'], ['#fld-cost-machinery', '20 L'], ['#fld-tl-amount', '20 L'], ['#fld-tl-rate', '10'], ['#fld-years', '4'],
