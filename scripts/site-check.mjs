@@ -1011,7 +1011,7 @@ for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
   const cardsK = await page.locator('[data-testid^="pl-card-"]').count(), onK = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
   if (cardsK !== 8 || onK !== 6) v(`the kitchen alone shows ${cardsK} sections with ${onK} on (want 8 and 6)`);
   await expectText(page, v, page.getByTestId('pl-per-sqft').locator('..'), /a sq ft of the kitchen’s floor$/, 'the kitchen\'s cost a sq ft');
-  await expectText(page, v, page.getByTestId('pl-rooms').locator('summary'), 'The kitchen: size it, give it its own level', 'the kitchen\'s one room');
+  await expectText(page, v, page.getByTestId('pl-rooms').locator(':scope > summary'), 'The kitchen: size it, give it its own level', 'the kitchen\'s one room');
   await layout(page, v, 'the kitchen alone, 390 px');
   await page.getByTestId('pl-edit').click(); await page.waitForSelector('dialog[open]');
   await page.check('#fld-work-paint');
