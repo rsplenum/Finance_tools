@@ -67,7 +67,7 @@ A second count, taken from the built HTML by a separate script, gives the same w
 
 ## 5. The check (UX2b, D-UX-63)
 - `scripts/load-baseline.json` holds every built page's counts, and the site check measures every built page against it (`scripts/load-measure.mjs`, `loadCheck`). A count that rose fails; so does a count that fell, until the baseline is lowered in the same commit (`npm run load -- --lower <page>`, which also adds a new page), so the baseline is always today's page and no slack builds up for a later rise.
-- A count rises only with a line in `docs/DECISIONS.md` naming why (the owner's ask, or a principle such as a reset in reach): `npm run load -- --raise <page> <count> <D-id>` checks the line exists, writes the new count and keeps the rise in the baseline's `raised` list.
+- A count rises only with a line in `docs/DECISIONS.md` naming why (the owner's ask, or a principle such as a reset in reach): `npm run load -- --raise <page> <count> <D-id>` checks the line exists, writes the new count and keeps the rise in the baseline's `raised` list. It and `--lower` work in any container: where the fonts differ from the baseline's probe they write every count but the three that hang on where text wraps (the answer's place, the gap, the out of sight), and a raise of one of those refuses (D-TECH-79).
 - `npm run load` prints the table with an aim row from the sources (40 words before the first question, no long sentences, the answer within 1 screen, nothing out of sight). The aims fail nothing until the tests back them.
 - No total score: a total lets one load be traded for another and hides which one grew.
 - Every page's answer state must hold one `data-answer` mark with words in it; a page without one fails.
