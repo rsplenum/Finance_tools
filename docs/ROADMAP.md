@@ -73,6 +73,7 @@ Agreed 13-10-2026 from the owner's request and two outside reviews. AI agents ha
 - Left out: the reviews' quiz and simulation patterns, written for another site; a human designer for the logo waits until the name is settled.
 
 ## After launch, only if the interaction data asks for it
+A 25-second cut of the four films: not now (D-UX-292); its own row, with its own clock and checks, when a place to show it asks for one, never the 30-second master sped up.
 D3, the borrower's one-page checklist (D-DOC-11; its starter prompt is in HANDOFF-ARCHIVE, 12-10-2026). The CMA's second method above ₹5 crore and Form IV. U1 on the DSCR, an ITR or a CA's provisional figures. The schemes: CGTMSE's fee, MUDRA's limits, Stand-Up India and PMEGP from KVIC. The next four cities (D-DATA-13). More Make it viable levers (D-UX-50). Notes for kitchens, bathrooms and flooring. Design mode (D-UX-31). A sterner DSCR in own-figures mode. A paid API for lenders (parked, SWOT 10-10-2026).
 
 ## Rows waiting on the owner (from `docs/HANDOFF.md`, 21-10-2026; ABOUT1 and SEO2 on 22-10-2026)

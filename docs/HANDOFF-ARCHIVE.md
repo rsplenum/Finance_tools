@@ -270,3 +270,8 @@ Budget rows moved from HANDOFF on 18-10-2026 (UX6):
 | 29-10-2026 | OR11a2 (`or11a2-cash`, PR #151) | S, about 60 steps | about 62 steps, no compaction |
 | 29-10-2026 | OR11b (`or11b-plan`), the mock-up, redone after the owner's review | M, about 120 steps | about 75 steps, one compaction |
 | 29-10-2026 | OR11c (`or11c-line`), today's sales and a new line in the engine | M, about 120 steps | about 60 steps, no compaction |
+| 31-10-2026 | HOME1f | M, Extra | 125 steps, 1.0 h, 2 compactions |
+| 01-11-2026 | D-UX-259 (videos slowed, a quick ask) | S, high | see `npm run cost` |
+| 01-11-2026 | D-UX-260 (videos' decoration removed, a quick ask) | S, high | see `npm run cost` |
+| 01-11-2026 | D-UX-261 (videos' cool back, a feeling added, a quick ask) | S, high | see `npm run cost` |
+| 01-11-2026 | D-TECH-75 (the lens on all work, a quick ask) | S, high | see `npm run cost` |
