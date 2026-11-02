@@ -5,7 +5,7 @@
  * three downloads. Figures: engine/estimate.ts only, via model.ts.
  */
 import { useMemo, useState } from 'preact/hooks';
-import { answerRule, BUTTON, Choice, FILLED, goTo, HINT, Section, SelectField, STATE, TextField, Tick, InAppNote, useKept } from '../fields';
+import { answerRule, BUTTON, Choice, docLink, FILLED, goTo, HINT, Section, SelectField, STATE, TextField, Tick, InAppNote, useKept } from '../fields';
 import { printable } from '../doc/pdf';
 import { Downloads } from '../Downloads';
 import { docNeeds, docStatus, estimateDoc, fileName } from './document';
@@ -170,6 +170,9 @@ function Result({ p }: { p: EstimatePreview }) {
 }
 
 /** The document's own facts, asked once, then the PDF, the Excel copy and the Word copy. */
+/** The quotation's missing facts, each a link to its box (UXR7, as on the CMA and the report). */
+const DOC_LINK = docLink([['The borrower', 'fld-est-borrower'], ['The property', 'fld-est-property'], ['The lender', 'fld-est-lender'],
+  ['Prepared by', 'fld-est-preparedBy']]);
 function Download({ s, p, update }: { s: EstimateState; p: EstimatePreview; update: Update }) {
   const f = s.doc, set = (patch: Partial<EstimateFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
   const english = (t: string) => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
@@ -187,7 +190,7 @@ function Download({ s, p, update }: { s: EstimateState; p: EstimatePreview; upda
     {ready
       ? <div class="mt-5">
         <p data-testid="est-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{docStatus(s, p)}</p>
-        {own.length > 0 && <ul data-testid="est-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink">{own.map((n) => <li key={n}>{n}</li>)}</ul>}
+        {own.length > 0 && <ul data-testid="est-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink">{own.map(DOC_LINK)}</ul>}
         <Downloads pre="est" doc={(today) => estimateDoc(s, p, today)} name={(kind) => fileName(s, p, kind)} />
         <InAppNote id="est-in-app" />
       </div>

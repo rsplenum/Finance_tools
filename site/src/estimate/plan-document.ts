@@ -10,7 +10,8 @@ import { forDocument } from '../doc/doc';
 import { ALL_ANSWERED } from '../verdict';
 import { printable } from '../doc/pdf';
 import { BRAND_NOTICE, BRAND_NOTICE_SHORT, SITE_NAME } from '../site';
-import { statusText, type PlanFacts, type PlanPreview, type PlanState } from './plan-model';
+import { statusText, type PlanFacts, type PlanState } from './plan-state';
+import type { PlanPreview } from './plan-model';
 
 /** What the document needs that the page does not ask: the owner's name and the property, in letters the PDF prints. */
 export function planDocNeeds(f: PlanFacts): string[] {

@@ -283,6 +283,19 @@ export async function builtPages() {
 const frames = (page) => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
 
 /** One page's counts (nil where a count does not apply), its first question's place in screens, a defect in its marks, and what the counts saw. */
+/** Wakes the islands behind a closed line (client:visible: the typed quotation, UXR7) so their words are counted as a
+ * person who opens it reads them; the returned function closes those lines and puts the scroll back. */
+async function wake(page) {
+  const n = await page.evaluate(() => {
+    const ds = [...document.querySelectorAll('main details:not([open])')].filter((d) => d.querySelector('astro-island[ssr]'));
+    window.__woke = { ds, y: scrollY };
+    for (const d of ds) { d.open = true; const i = d.querySelector('astro-island[ssr]'); (i.firstElementChild ?? d).scrollIntoView({ block: 'center' }); } // an island has no box of its own
+    return ds.length;
+  });
+  if (n) await page.waitForFunction(() => !document.querySelector('main astro-island[ssr]'), null, { timeout: 10000 }).catch(() => {});
+  return () => page.evaluate(() => { const w = window.__woke; for (const d of w.ds) d.open = false; scrollTo(0, w.y); });
+}
+
 export async function countPage(browser, BASE, path, { text = false, effectsToo = true } = {}) {
   const state = STATES[path]?.result, plan = STATES[path]?.plan;
   // Each page is read still, under reduced motion: as a reader finds it once its motion has played (a heading typed in
@@ -298,7 +311,9 @@ export async function countPage(browser, BASE, path, { text = false, effectsToo 
     await frames(page);
   }
   const at = await page.evaluate(inPage, { after: !!state, text, limit: LONG });
+  let back = await wake(page);
   const { wordsAll } = await page.evaluate(inPage, { open: true });
+  await back();
   const eff = state && effectsToo ? await effects(page) : null;
   await ctx.close();
   // The plan: text that shows only after a button, counted with every closed part opened (count 3's guard).
@@ -307,7 +322,9 @@ export async function countPage(browser, BASE, path, { text = false, effectsToo 
     ({ ctx, page } = await open());
     await plan(page);
     await frames(page);
+    back = await wake(page);
     ({ wordsAll: wordsPlan } = await page.evaluate(inPage, { open: true }));
+    await back();
     await ctx.close();
   }
   const screens = (px) => (px === null ? null : Math.round(px / 78) / 10);

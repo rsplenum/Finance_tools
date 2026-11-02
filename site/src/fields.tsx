@@ -198,10 +198,19 @@ export const goTo = (id: string) => (e: Event) => {
   if (reach(id, (el) => {
     const boxes = el.matches('input, select, textarea') ? [] : [...el.querySelectorAll('input, select, textarea')] as HTMLInputElement[];
     const box = boxes.length ? boxes.find((b) => b.type !== 'radio' && !b.value) ?? boxes[0] : el;
+    // A box behind a closed disclosure (the DSCR statement's address, purpose and GSTIN, UXR7) opens it first.
+    for (let d = box.closest('details'); d; d = d.parentElement?.closest('details') ?? null) d.open = true;
     // A box hidden with its year (the CMA on a phone, UXR6) asks its page to show it, then takes the focus once drawn.
     if (box.getClientRects().length) box.focus();
     else { box.dispatchEvent(new Event('reveal', { bubbles: true })); requestAnimationFrame(() => requestAnimationFrame(() => box.focus())); }
   })) e.preventDefault();
+};
+
+/** A fact a document still needs, a link to its box (D-UX-216, D-UX-273; UXR7 on the DSCR and both estimates): `boxes`
+ * pairs a need's first words with its box's id; a need with no box stays plain words. */
+export const docLink = (boxes: [string, string][]) => (n: string) => {
+  const to = boxes.find(([w]) => n.startsWith(w))?.[1];
+  return <li key={n}>{to ? <a href={`#${to}`} onClick={goTo(to)} class="inline-flex min-h-6 items-center text-link">{n}</a> : n}</li>;
 };
 
 /** A figure not yet known (UX8, D-UX-106): "—", never 0, a link to the box that fills it when there is one. */

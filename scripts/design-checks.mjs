@@ -322,6 +322,7 @@ export const STATES = {
     // The typed quotation (scripts/site-check.mjs, P2): two lines, GST at 18%, no contingency yet.
     typed: async (page) => {
       await page.locator('#typed-path > summary').click();
+      await page.waitForSelector('#typed-path astro-island:not([ssr])', { state: 'attached' }); // client:visible (UXR7)
       await page.check('#fld-kind-construction');
       await leave(page, '#fld-area', '1,200');
       await page.selectOption('#fld-item-1-head', 'earthwork');
@@ -373,7 +374,8 @@ export async function openAt(browser, url, { width = 'phone', scheme = 'light', 
   const page = await ctx.newPage();
   await page.clock.setFixedTime(new Date(FIXED_AT));
   await page.goto(url, { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => !document.querySelector('astro-island[ssr]'), null, { timeout: 10000 }).catch(() => {});
+  // An island behind a closed line wakes when it is opened (client:visible, the typed quotation, UXR7).
+  await page.waitForFunction(() => ![...document.querySelectorAll('astro-island[ssr]')].some((i) => !i.closest('details:not([open])')), null, { timeout: 10000 }).catch(() => {});
   return { ctx, page };
 }
 

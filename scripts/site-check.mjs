@@ -128,7 +128,8 @@ async function open(path, { scheme = 'light', stored, blockScripts = false, at =
   }
   const res = await page.goto(BASE + path, { waitUntil: 'networkidle' });
   if (res?.status() !== 200) v(`HTTP ${res?.status()}`);
-  if (!blockScripts) await page.waitForFunction(() => !document.querySelector('astro-island[ssr]'), null, { timeout: 10000 })
+  // An island behind a closed line wakes when it is opened (client:visible, the typed quotation, UXR7).
+  if (!blockScripts) await page.waitForFunction(() => ![...document.querySelectorAll('astro-island[ssr]')].some((i) => !i.closest('details:not([open])')), null, { timeout: 10000 })
     .catch(() => v('an interactive part did not start'));
   const isDark = () => page.evaluate(() => document.documentElement.classList.contains('dark'));
   return { page, ctx, v, isDark };
@@ -558,6 +559,10 @@ if (touched('/dscr/')) {
   await page.locator('#doc-more summary').click();
   await leave(page, '#fld-gstin', '27ABCDE1234');
   await expectText(page, v, 'fld-gstin-said', 'A GSTIN has 15 letters and digits, like 27ABCDE1234F1Z5.', 'a short GSTIN');
+  // Its need links to its box, opening the closed line on the way (UXR7, as on the CMA and the report).
+  await page.locator('#doc-more summary').click();
+  await page.getByTestId('doc-needs').getByRole('link', { name: /^The GSTIN/ }).click();
+  await page.waitForFunction(() => document.activeElement?.id === 'fld-gstin', null, { timeout: 3000 }).catch(() => v('the statement\'s "The GSTIN" does not open its line and land on its box'));
   await leave(page, '#fld-gstin', '');
   await expectText(page, v, 'doc-status', 'All questions answered', 'the download with its facts');
   if (await page.getByTestId('doc-needs').count()) v('the download still lists needs once its facts are in');
@@ -838,6 +843,8 @@ for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
 
   // The downloads, at the package as answered.
   await expectText(page, v, 'pl-doc-status', '2 questions left, for the document', 'the planning estimate before its facts');
+  await page.getByTestId('pl-doc-needs').getByRole('link', { name: 'The property’s address' }).click();
+  await page.waitForFunction(() => document.activeElement?.id === 'fld-pl-property', null, { timeout: 3000 }).catch(() => v('the planning estimate\'s "The property’s address" does not land on its box'));
   await leave(page, '#fld-pl-owner', 'Asha Rao');
   await leave(page, '#fld-pl-property', 'Flat 4, Example Towers, Pune');
   await expectText(page, v, 'pl-doc-status', 'All questions answered', 'the planning estimate with its facts');
@@ -882,6 +889,7 @@ for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
   // above it, past the 20% allowed. "Door" fits more than one family, so it is not matched until the main door is picked;
   // its band at Basic, laminated, Rs. 5,830.85–32,323.42 each.
   await page.locator('#typed-path > summary').click();
+  await page.waitForSelector('#typed-path astro-island:not([ssr])', { state: 'attached' }); // client:visible (UXR7)
   await page.getByTestId('from-bill').click();
   const billLines = billBook[0]?.data.filter((r) => typeof r[0] === 'string' && /^\d+\.\d+$/.test(r[0])).length ?? 0;
   const checks = await page.locator('[data-testid^="item-"][data-testid$="-check"]').allTextContents();
@@ -1115,6 +1123,7 @@ if (touched('/estimate/')) {
 if (touched('/estimate/')) {
   const { ctx, page, v } = await open('/estimate/', { scheme: 'light' });
   await page.locator('#typed-path > summary').click();
+  await page.waitForSelector('#typed-path astro-island:not([ssr])', { state: 'attached' }); // client:visible (UXR7)
   await page.check('#fld-kind-construction');
   await leave(page, '#fld-area', '1,200');
   await page.selectOption('#fld-item-1-head', 'earthwork');
@@ -1137,6 +1146,8 @@ if (touched('/estimate/')) {
     await expectText(page, v, id, want, 'the estimate');
   await layout(page, v, 'the estimate filled, 390 px');
   await expectText(page, v, 'est-doc-status', '2 questions left, for the document', 'the estimate before its facts');
+  await page.getByTestId('est-doc-needs').getByRole('link', { name: "The borrower's name" }).click();
+  await page.waitForFunction(() => document.activeElement?.id === 'fld-est-borrower', null, { timeout: 3000 }).catch(() => v('the estimate\'s "The borrower\'s name" does not land on its box'));
   await leave(page, '#fld-est-borrower', 'Asha Traders');
   await leave(page, '#fld-est-property', 'Plot 12, Example Nagar, Pune');
   await expectText(page, v, 'est-doc-status', 'All questions answered', 'the estimate with its facts');
