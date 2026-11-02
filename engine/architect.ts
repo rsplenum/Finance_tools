@@ -16,7 +16,7 @@
  * both agree.
  */
 import {
-  R, LEVELS, SECTIONS, WORK_KINDS, CITIES, SIZE_WORDS, BHKS, FLOORS, FLOORS_ADDED, builds, ROOM_SIDE, EXTRAS, BATHS, PLOT_SIDE, cityFactor, wordOf, sizeAt, bedroomsOf, bathsOf, houseOf, architectNeeds, wordName, levelName,
+  R, LEVELS, SECTIONS, WORK_KINDS, PARTS, partOf, CITIES, SIZE_WORDS, BHKS, FLOORS, FLOORS_ADDED, builds, ROOM_SIDE, EXTRAS, BATHS, PLOT_SIDE, cityFactor, wordOf, sizeAt, bedroomsOf, bathsOf, houseOf, architectNeeds, wordName, levelName,
   LEVEL_NAMES, WORD_AT, isNum,
 } from './architect-rules';
 import { CFT_PER_CUM, choices, ENTRIES, FAMILIES, FT_PER_M, LIBRARY_DATE, LIBRARY_STATUS, ladder, per, price, SQFT_PER_SQM, type Entry, type Family, type ItemKind, type Unit } from './library';
@@ -26,10 +26,12 @@ import type { Blocked, Needs } from './dscr';
 
 // The rules the questions need, apart so the page can ask before the library loads (UXR7).
 export {
-  R, LEVELS, SECTIONS, WORK_KINDS, CITIES, SIZE_WORDS, BHKS, FLOORS, FLOORS_ADDED, builds, ROOM_SIDE, EXTRAS, BATHS, PLOT_SIDE, cityFactor, wordOf, sizeAt, bedroomsOf, bathsOf, houseOf, architectNeeds, wordName, levelName,
+  R, LEVELS, SECTIONS, WORK_KINDS, PARTS, partOf, CITIES, SIZE_WORDS, BHKS, FLOORS, FLOORS_ADDED, builds, ROOM_SIDE, EXTRAS, BATHS, PLOT_SIDE, cityFactor, wordOf, sizeAt, bedroomsOf, bathsOf, houseOf, architectNeeds, wordName, levelName,
 } from './architect-rules';
 
 export type WorkKind = 'build' | 'extend' | 'renovate' | 'interiors';
+/** One part of the home renovated on its own (D-UX-276): its rooms, or every room's walls and ceilings. */
+export type Part = 'kitchen' | 'bathrooms' | 'paint';
 export type Bhk = '1RK' | '1' | '2' | '3' | '4' | '5';
 export type Level = 1 | 2 | 3 | 4 | 5;
 export type RoomKind = 'living' | 'bedroom' | 'kitchen' | 'bath' | 'passage' | 'balcony' | ExtraKind;
@@ -54,6 +56,9 @@ export interface Rules {
   /** A section with `kinds` is shown only for those kinds of work. */
   sections: { id: string; name: string; slider: boolean; kinds?: WorkKind[] }[];
   kinds: Record<WorkKind, { label: string; on: string[]; why: string }>;
+  /** One part renovated on its own: the kinds of room it takes (null, every room), its sections on, and the whole home's
+   * families it keeps, each measured over its rooms (D-UX-276). */
+  parts: Record<Part, { label: string; name: string; rooms: RoomKind[] | null; on: string[]; shown?: string[]; whole: string[]; why: string }>;
   programmes: Record<Bhk, Programme>;
   bathrooms: { rule: string } & Sourced;
   extras: ExtraRoom[];
@@ -102,6 +107,8 @@ export interface Rules {
 
 export interface ArchitectInput {
   kind?: WorkKind;
+  /** With repair or renovate only: one part of the home on its own (D-UX-276). */
+  part?: Part;
   property?: 'flat' | 'house';
   /** For a new house: its floors, 1 (the ground floor only) to 4 (G+3); for an extension, the floors being added on top, 1 or 2. */
   floors?: number;
@@ -177,10 +184,11 @@ export interface Stage { id: string; name: string; what: string; amount: number;
 /** A part of the carpet area: a room, the passage, or the inside walls (id 'walls'); its share of the carpet area. */
 export interface RoomShare { id: string; name: string; kind: RoomKind | 'walls'; share: number }
 export interface ArchitectEstimate {
-  kind: WorkKind; property: 'flat' | 'house'; city: string; cityName: string; cityFactor: number; bhk: Bhk; level: Level; heightM: number;
+  kind: WorkKind; part: Part | null; property: 'flat' | 'house'; city: string; cityName: string; cityFactor: number; bhk: Bhk; level: Level; heightM: number;
   carpetSqm: number; carpetSqft: number;
-  /** A new house's outline, and the area the cost a sq ft is of: the built-up area for a new house, else the carpet area. */
-  house: House | null; per: 'built-up' | 'carpet';
+  /** A new house's outline, and the area the cost a sq ft is of: the built-up area for a new house, the floor of the kitchen
+   * or the bathrooms done on their own, else the carpet area. */
+  house: House | null; per: 'built-up' | 'carpet' | 'kitchen' | 'bathrooms';
   rooms: Room[]; openings: Opening[]; lines: Line[]; unpriced: Unpriced[];
   /** The rooms and the passage (not the balcony), and what the carpet area leaves for them after the inside walls; sq m. */
   roomsSqm: number; plannedSqm: number;
@@ -349,15 +357,28 @@ export function strip(input: ArchitectInput, check: typeof architectCheck = arch
 }
 
 interface Ctx {
-  input: ArchitectInput; kind: WorkKind; home: 'flat' | 'house'; H: number; carpetSqm: number; rooms: Room[]; openings: Opening[];
+  input: ArchitectInput; kind: WorkKind; part: Part | null; home: 'flat' | 'house'; H: number; carpetSqm: number; rooms: Room[];
+  /** The rooms the work is in: all of them, or a part's own (D-UX-276). */
+  scope: Room[]; openings: Opening[];
   /** A section's level, in a room when given: the room's own level, else the section's slider, else the package (A4). */
   on: (section: string) => boolean; levelOf: (section: string, r?: Room | null) => Level; house: House | null; bhk: Bhk;
 }
 /** Whether a section is shown for a kind of work. */
-export const sectionFor = (section: string, kind: WorkKind) => { const k = R.sections.find((x) => x.id === section)?.kinds; return !k || k.includes(kind); };
+export const sectionFor = (section: string, kind: WorkKind, part?: Part | null) => {
+  const k = R.sections.find((x) => x.id === section)?.kinds;
+  return (!k || k.includes(kind)) && (!part || (PART_SECTIONS.get(part) as Set<string>).has(section));
+};
+/** The sections a part can reach: those of its rooms' slots and of the whole home's families it keeps, for a renovation;
+ * of those only its own list when it has one (painting reaches every room but shows two). */
+const PART_SECTIONS = new Map((Object.keys(R.parts) as Part[]).map((p) => {
+  const x = R.parts[p], kinds = x.rooms ?? (Object.keys(R.templates).filter((k) => k !== 'flat') as RoomKind[]);
+  const slots = [...kinds.flatMap((k) => R.templates[k]), ...R.templates.flat.filter((t) => x.whole.includes(t.family))];
+  const reach = new Set(slots.filter((t) => !t.kinds || t.kinds.includes('renovate')).map((t) => t.section));
+  return [p, x.shown ? new Set(x.shown.filter((s) => reach.has(s))) : reach];
+}));
 
 function work(input: ArchitectInput, banded = false): ArchitectEstimate {
-  const kind = input.kind as WorkKind, bhk = input.bhk as Bhk, level = input.level as Level;
+  const kind = input.kind as WorkKind, bhk = input.bhk as Bhk, level = input.level as Level, part = partOf(input);
   const home = builds(kind) || input.property === 'house' ? 'house' : 'flat', whole = `Whole ${home}`;
   const typedSqm = input.areaUnit === 'sqm' ? (input.area as number) : (input.area as number) / SQFT_PER_SQM;
   const factor = cityFactor(input.city as string);
@@ -366,10 +387,12 @@ function work(input: ArchitectInput, banded = false): ArchitectEstimate {
   const house = builds(kind) ? houseOf(typedSqm, input.floors as number, H, kind === 'build' ? input.plot : undefined, kind === 'extend') : null;
   const carpetSqm = house ? house.carpetSqm : typedSqm;
   const rooms = ownRooms(planRooms(bhk, carpetSqm, input.roomWords, input), input), openings = planOpenings(rooms);
-  const on = (s: string) => sectionFor(s, kind) && (input.sections?.[s] ?? R.kinds[kind].on.includes(s));
+  // A part takes its rooms only, and of the whole home's lines the ones it keeps, measured over those rooms (D-UX-276).
+  const P = part ? R.parts[part] : null, scope = P?.rooms ? rooms.filter((r) => (P.rooms as RoomKind[]).includes(r.kind)) : rooms;
+  const on = (s: string) => sectionFor(s, kind, part) && (input.sections?.[s] ?? (P ?? R.kinds[kind]).on.includes(s));
   const slider = (s: string) => R.sections.find((x) => x.id === s)?.slider ?? false;
   const levelOf = (s: string, r?: Room | null): Level => (slider(s) ? r?.level ?? input.sliders?.[s] ?? level : level);
-  const ctx: Ctx = { input, kind, home, H, carpetSqm, rooms, openings, on, levelOf, house, bhk };
+  const ctx: Ctx = { input, kind, part, home, H, carpetSqm, rooms, scope, openings, on, levelOf, house, bhk };
 
   const lines: Line[] = [], unpriced: Unpriced[] = [], band = { low: 0, high: 0, lines: 0 };
   // Each choice's rate once a run (L1): the rooms share their families.
@@ -415,19 +438,21 @@ function work(input: ArchitectInput, banded = false): ArchitectEstimate {
     }
     band.low += low; band.high += high; band.lines += n > 1 ? 1 : 0;
   };
-  for (const r of rooms) for (const slot of R.templates[r.kind]) place(slot, r);
-  for (const slot of R.templates.flat) place(slot, null);
+  for (const r of scope) for (const slot of R.templates[r.kind]) place(slot, r);
+  for (const slot of R.templates.flat) if (!P || P.whole.includes(slot.family)) place(slot, null);
 
-  const sections: SectionTotal[] = R.sections.filter((s) => sectionFor(s.id, kind)).map((s) => {
+  const sections: SectionTotal[] = R.sections.filter((s) => sectionFor(s.id, kind, part)).map((s) => {
     const ls = lines.filter((l) => l.section === s.id);
     return { id: s.id, name: s.name, on: on(s.id), slider: s.slider, level: s.slider ? levelOf(s.id) : null, amount: r2(ls.reduce((t, l) => t + l.amount, 0)), lines: ls.length };
   });
-  const byRoom = [...rooms.map((r) => ({ room: r.id as string | null, name: r.name })), { room: null, name: whole }]
+  const byRoom = [...scope.map((r) => ({ room: r.id as string | null, name: r.name })), { room: null, name: whole }]
     .map((x) => ({ ...x, amount: r2(lines.filter((l) => l.room === x.room).reduce((t, l) => t + l.amount, 0)) }));
   const total = r2(sections.reduce((t, s) => t + s.amount, 0));
   const carpetSqft = carpetSqm * SQFT_PER_SQM;
   const roomsSqm = rooms.filter((r) => r.kind !== 'balcony').reduce((t, r) => t + r.sqm, 0), plannedSqm = carpetSqm * (1 - R.shares.walls.value);
-  const perSqft = r2(total / (house ? house.builtSqm * SQFT_PER_SQM : carpetSqft));
+  // The kitchen or the bathrooms on their own: the cost a sq ft of their floor; painting, of the carpet area as a renovation's.
+  const partSqft = P?.rooms ? scope.reduce((t, r) => t + r.sqm, 0) * SQFT_PER_SQM : 0;
+  const perSqft = r2(total / (house ? house.builtSqm * SQFT_PER_SQM : partSqft || carpetSqft));
   const split = { fixed: 0, movable: 0, appliance: 0 } as Record<ItemKind, number>;
   for (const l of lines) split[l.kind] = r2(split[l.kind] + l.amount);
   const cityName = R.cities.list.find((c) => c.id === input.city)?.name ?? 'Other';
@@ -439,8 +464,8 @@ function work(input: ArchitectInput, banded = false): ArchitectEstimate {
   ];
   const below = belowCode(rooms);
   return {
-    kind, property: home, city: input.city as string, cityName, cityFactor: city, bhk, level, heightM: H, carpetSqm, carpetSqft,
-    house, per: house ? 'built-up' : 'carpet',
+    kind, part, property: home, city: input.city as string, cityName, cityFactor: city, bhk, level, heightM: H, carpetSqm, carpetSqft,
+    house, per: house ? 'built-up' : partSqft ? (part as 'kitchen' | 'bathrooms') : 'carpet',
     rooms, openings, lines, unpriced, roomsSqm, plannedSqm, sections, byRoom, total, perSqft, split, stages, shares, below,
     assumptions: assumptions(ctx, bhk, cityName, factor), flags: flags(ctx, bhk, carpetSqft, lines, unpriced, factor, perSqft, roomsSqm, plannedSqm, below), ratesDate: LIBRARY_DATE,
     ...(banded ? { range: { low: r2(band.low), high: r2(band.high), lines: band.lines, of: lines.length } } : {}),
@@ -562,18 +587,24 @@ function measure(rule: string, r: Room | null, lv: Level, ctx: Ctx): { base: num
   if (r === null) {
     if (ctx.house) { const m = measureHouse(rule, ctx.house, ctx); if (m) return m; }
     if (rule === 'one') return { base: 1, how: `One for the ${ctx.home}` };
-    if (rule === 'carpet') return { base: ctx.carpetSqm, how: `The carpet area: ${t(ctx.carpetSqm)} sq m` };
+    // A part's own rooms (D-UX-276), named as such; else the whole home's.
+    const own = ctx.scope !== ctx.rooms, of = ctx.part === 'kitchen' ? 'the kitchen' : 'the bathrooms';
+    if (rule === 'carpet') {
+      if (!own) return { base: ctx.carpetSqm, how: `The carpet area: ${t(ctx.carpetSqm)} sq m` };
+      const a = ctx.scope.reduce((s, x) => s + x.sqm, 0);
+      return { base: a, how: `The floor of ${of}: ${t(a)} sq m` };
+    }
     if (rule === 'protect') {
-      const a = ctx.rooms.filter((x) => x.kind !== 'bath' && x.kind !== 'balcony').reduce((s, x) => s + x.sqm, 0);
-      return { base: a, how: `The floors of the rooms, the passage and the kitchen: ${t(a)} sq m` };
+      const a = ctx.scope.filter((x) => x.kind !== 'bath' && x.kind !== 'balcony').reduce((s, x) => s + x.sqm, 0);
+      return { base: a, how: own ? `The floor of ${of}: ${t(a)} sq m` : `The floors of the rooms, the passage and the kitchen: ${t(a)} sq m` };
     }
     if (rule === 'making-good') {
-      const walls = ctx.rooms.filter((x) => x.kind !== 'balcony').reduce((s, x) => s + perimeter(x) * H, 0);
-      return { base: walls * R.makingGood.share, how: `${R.makingGood.share * 100}% of the walls' ${t(walls)} sq m` };
+      const walls = ctx.scope.filter((x) => x.kind !== 'balcony').reduce((s, x) => s + perimeter(x) * H, 0);
+      return { base: walls * R.makingGood.share, how: own ? `${R.makingGood.share * 100}% of the walls of ${of}, ${t(walls)} sq m` : `${R.makingGood.share * 100}% of the walls' ${t(walls)} sq m` };
     }
     if (rule === 'debris') {
-      const baths = ctx.on('bathrooms') && ctx.kind === 'renovate' ? ctx.rooms.filter((x) => x.kind === 'bath').length : 0;
-      const floorSqft = ctx.on('flooring') && ctx.kind === 'renovate' ? ctx.rooms.filter((x) => x.kind !== 'bath').reduce((s, x) => s + x.sqm, 0) * SQFT_PER_SQM : 0;
+      const baths = ctx.on('bathrooms') && ctx.kind === 'renovate' ? ctx.scope.filter((x) => x.kind === 'bath').length : 0;
+      const floorSqft = ctx.on('flooring') && ctx.kind === 'renovate' ? ctx.scope.filter((x) => x.kind !== 'bath').reduce((s, x) => s + x.sqm, 0) * SQFT_PER_SQM : 0;
       const lots = baths + Math.ceil(floorSqft / R.debris.sqftPerLot - 1e-9);
       return { base: lots, how: `${baths} for the bathrooms and ${lots - baths} for ${Math.round(floorSqft)} sq ft of floor taken up` };
     }
@@ -784,7 +815,7 @@ function assumptions(ctx: Ctx, bhk: Bhk, cityName: string, factor: number | null
     { what: 'Rooms', shown: rooms, why: `${p.why}${addedWhy}${words} ${R.shares.passage.why} ${R.shares.walls.why}${own}`, src: [...new Set([...p.src, ...added.flatMap((x) => x.src), ...R.shares.passage.src, ...(words ? R.sizes.src : [])])] },
     { what: 'Bathrooms', shown: `${baths}${ctx.input.baths ? ', as you chose' : ''}`, why: R.bathrooms.why, src: R.bathrooms.src },
     { what: 'Ceiling height', shown: `${f2(ctx.H)} m`, why: R.height.why, src: R.height.src },
-    { what: 'Sections', shown: on, why: R.kinds[ctx.kind].why, src: ['own'] },
+    { what: 'Sections', shown: on, why: ctx.part ? R.parts[ctx.part].why : R.kinds[ctx.kind].why, src: ['own'] },
     { what: 'City', shown: factor === null ? `${cityName}: no city figure, so the rates are used as they are` : `${cityName}: labour and fitted rates × ${factor.toFixed(3)}`, why: R.cities.why, src: R.cities.src },
     { what: 'Rates', shown: `As reported on ${LIBRARY_DATE.split('-').reverse().join('-')}, the middle of each range`, why: LIBRARY_STATUS, src: [] },
     { what: 'Doors and windows', shown: `Main door 1000 mm, bedroom doors 900 mm, bathroom doors 750 mm${added.map((x) => `, ${x.kind === 'utility' ? 'the utility\'s opening' : `the ${x.name.toLowerCase()}'s door`} ${R.openings[x.kind].w} mm`).join('')}, all 2100 mm high; 4 × 4 ft windows, at least a tenth of each room's floor`, why: `${R.openings.windowShare.why}`, src: [...new Set([...R.openings.main.src, ...added.flatMap((x) => R.openings[x.kind].src), ...R.openings.windowShare.src])] },
@@ -842,7 +873,7 @@ function flags(ctx: Ctx, bhk: Bhk, carpetSqft: number, lines: Line[], unpriced: 
   if (ctx.rooms.some((r) => r.typed) && sqft(roomsSqm) !== sqft(plannedSqm)) check(`With your sizes the rooms and the passage come to ${sqft(roomsSqm)} sq ft, against the ${sqft(plannedSqm)} sq ft the carpet area leaves for them after the inside walls: check the sizes, or the carpet area.`, inRooms);
   if (ctx.on('furniture')) note(`The furniture is ${ctx.rooms.some((r) => r.kind === 'living') ? 'a sofa and a dining set for the living room, and ' : ''}a bed and a mattress for each bedroom; side tables, ${ctx.rooms.some((r) => r.kind === 'study') ? 'a chair for the study\'s desk' : 'a study desk'}, rugs and bed linen are not in yet.`, section('furniture'));
   if (ctx.on('furnishings')) note(`The soft furnishings are curtains for each window of ${ctx.rooms.some((r) => r.kind === 'living') ? 'the living room and ' : ''}the bedrooms${ctx.rooms.some((r) => r.kind === 'study') ? ' and the study' : ''}; blinds and cushions are not in yet.`, section('furnishings'));
-  if (ctx.home === 'house' && !ctx.house) note('A house: its rooms inside are worked out as a flat\'s of the same carpet area and bedrooms. The terrace, the outside walls, the compound and the water tank are not in this estimate yet.', total);
+  if (ctx.home === 'house' && !ctx.house && !ctx.part) note('A house: its rooms inside are worked out as a flat\'s of the same carpet area and bedrooms. The terrace, the outside walls, the compound and the water tank are not in this estimate yet.', total);
   if (ctx.house) {
     const h = ctx.house, riser = h.floorToFloor / (2 * (R.house.stair.treads + 1)), unit = ctx.input.areaUnit === 'sqm' ? 'm' : 'ft';
     const side = (x: number) => (unit === 'm' ? f2(x) : f2(x * FT_PER_M));
@@ -875,9 +906,10 @@ function flags(ctx: Ctx, bhk: Bhk, carpetSqft: number, lines: Line[], unpriced: 
   const typical = R.programmes[bhk].typical, slack = R.checks.areaSlack / 100;
   if (typical && (carpetSqft < typical[0] * (1 - slack) || carpetSqft > typical[1] * (1 + slack))) (ctx.house ? note : check)(`A ${BHKS.find((b) => b.id === bhk)?.label} is usually ${typical[0]}–${typical[1]} sq ft of carpet area; yours is ${Math.round(carpetSqft)}.`, total);
   // The paint against the carpet area checks the sizes typed; with the rooms as planned (and a house's stair walls) it is a note.
+  // Its range is a whole home's renovation: a part on its own (D-UX-276) paints some rooms, or keeps the bathrooms' tiles, so it is not checked.
   const paint = lines.filter((l) => l.family === 'paint').reduce((s, l) => s + l.qty, 0);
   const ratio = paint / carpetSqft, [lo, hi] = R.checks.paintRatio;
-  if (paint > 0 && (ratio < lo || ratio > hi)) (ctx.rooms.some((r) => r.typed) ? check : note)(`The walls and ceilings to paint come to ${ratio.toFixed(2)} times the carpet area, outside the usual ${lo}–${hi}: check the room sizes.`, sum((l) => l.family === 'paint'));
+  if (!ctx.part && paint > 0 && (ratio < lo || ratio > hi)) (ctx.rooms.some((r) => r.typed) ? check : note)(`The walls and ceilings to paint come to ${ratio.toFixed(2)} times the carpet area, outside the usual ${lo}–${hi}: check the room sizes.`, sum((l) => l.family === 'paint'));
   if (factor === null) check('No city figure for your city: the rates are used as they are.', total);
   // An item with no rate is not in any amount: it comes after the flags with one.
   for (const u of unpriced) check(`${u.roomName}, ${u.name.toLowerCase()}: ${u.entryName} has no rate yet, so it is left out of the total.`, 0);

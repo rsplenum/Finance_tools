@@ -105,6 +105,7 @@ const levelName = (n) => A.levels[n - 1].name;
 out.push(`## ${A.title}`, '', `Dated ${date(A.date)}. ${A.status}`, '', '**The five levels**', '', '| On screen | Your word | What it means |', '|---|---|---|',
   ...A.levels.map((l) => `| ${l.name} | ${l.owner} | ${l.means} |`), '');
 out.push('**Sections on for each kind of work**', '', ...Object.values(A.kinds).map((k) => `- **${k.label}**: ${k.on.map((id) => A.sections.find((x) => x.id === id).name).join(', ')}. ${k.why}`), '');
+out.push('**One part on its own** (a renovation of only these rooms; D-UX-276)', '', ...Object.values(A.parts).map((p) => `- **${p.name}** (${p.rooms ? p.rooms.map((r) => (r === 'bath' ? 'bathroom' : r)).join(', ') : 'every room'}): on ${p.on.map((id) => A.sections.find((x) => x.id === id).name).join(', ')}${p.shown ? '; only these shown' : ''}; of the whole home, ${p.whole.join(', ')}. ${p.why}`), '');
 out.push('**The rooms for each BHK** (each room\'s reported range in sq ft; only the sizes\' proportions are used, shared out over your carpet area)', '', '| BHK | Rooms | Balcony | Usual carpet area | Why |', '|---|---|---|---|---|');
 for (const [id, p] of Object.entries(A.programmes))
   out.push(`| ${id === '1RK' ? '1 RK' : `${id} BHK`} | ${p.rooms.map((r) => `${r.name} ${r.range[0]}–${r.range[1]}`).join('; ')} | ${p.balcony || 'none'} | ${p.typical ? `${p.typical[0]}–${p.typical[1]}` : '—'} | ${p.why}${cite(p.src)} |`);

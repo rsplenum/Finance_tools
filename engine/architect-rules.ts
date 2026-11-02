@@ -6,12 +6,16 @@
  */
 import RULES from './data/architect.json';
 import { SQFT_PER_SQM } from './units';
-import type { ArchitectInput, Bhk, ExtraKind, House, Rules, SizeWord, WorkKind } from './architect';
+import type { ArchitectInput, Bhk, ExtraKind, House, Part, Rules, SizeWord, WorkKind } from './architect';
 
 export const R = RULES as unknown as Rules;
 export const LEVELS = R.levels;
 export const SECTIONS = R.sections;
 export const WORK_KINDS = R.kinds;
+/** The parts of a home renovated on their own (D-UX-276), in the question's order. */
+export const PARTS = (Object.keys(R.parts) as Part[]).map((id) => ({ id, ...R.parts[id] }));
+/** The part an estimate is of: only with repair or renovate, and only a known one. */
+export const partOf = (input: Pick<ArchitectInput, 'kind' | 'part'>): Part | null => (input.kind === 'renovate' && input.part && input.part in R.parts ? input.part : null);
 export const CITIES = R.cities.list;
 /** The four size words, in order (R1). */
 export const SIZE_WORDS = R.sizes.words;
@@ -81,6 +85,7 @@ export function architectNeeds(input: ArchitectInput): string[] {
   const build = builds(input.kind), extend = input.kind === 'extend', most = extend ? Math.max(...R.house.extension.floors) : FLOORS.length;
   const floorsOk = isNum(input.floors) && Number.isInteger(input.floors) && input.floors >= 1 && input.floors <= most;
   if (!input.kind || !(input.kind in R.kinds)) needs.push('What the work is: build a new house, add a floor or rooms, repair or renovate, or interiors');
+  if (input.part !== undefined && !partOf(input)) needs.push(`One part with repair or renovate: ${PARTS.map((x) => x.label.toLowerCase()).join(', ').replace(/, ([^,]*)$/, ' or $1')}`);
   if (build && !floorsOk) needs.push(extend ? 'How many floors are being added' : 'How many floors');
   if (!input.city) needs.push('Which city');
   const areaOk = isNum(input.area) && input.area > 0;

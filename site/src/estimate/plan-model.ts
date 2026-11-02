@@ -9,8 +9,8 @@
  * this file, with the library and the working, loads after the questions (plan-work.ts, UXR7).
  */
 import {
-  BATHS, CITIES, EXTRAS, FLOORS, FLOORS_ADDED, R, billOf, WORK_KINDS, architect, changeOf, choicesFor, levelName, levelRuns, overPackage, planRooms,
-  type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choice, type ExtraKind, type House, type Level, type LevelRuns, type Line, type RoomKind, type SizeWord, type Stage, type WorkKind,
+  BATHS, CITIES, EXTRAS, FLOORS, FLOORS_ADDED, PARTS, R, billOf, WORK_KINDS, architect, changeOf, choicesFor, levelName, levelRuns, overPackage, planRooms,
+  type ArchitectEstimate, type ArchitectInput, type Bhk, type Change, type Choice, type ExtraKind, type House, type Level, type LevelRuns, type Line, type Part, type RoomKind, type SizeWord, type Stage, type WorkKind,
 } from '../../../engine/architect';
 import { overdueNote, todayIso } from '../../../engine/review';
 import { CLASSES, FT_PER_M, LIBRARY_DATE, LIBRARY_REVIEW_BY, NOTES, PER, SOURCE, SPEND_SAVE, SQFT_PER_SQM, namesBrand, type ItemKind, type Note, type Unit } from '../../../engine/library';
@@ -44,6 +44,11 @@ const KIND_WORD: Record<ItemKind, string> = { fixed: 'Fixed works', movable: 'Mo
 /** The engine writes the carpet area in a flag as a bare number ("yours is 1000"); on screen it is grouped as every figure is (UX4, finding 10). */
 const groupedFlag = (t: string) => t.replace(/\byours is (\d{4,})\b/g, (_, n: string) => `yours is ${inr(Number(n))}`);
 export const TITLE: Record<WorkKind, string> = { build: 'Estimate of cost of construction', extend: 'Estimate of cost of an extension', renovate: 'Estimate of cost of renovation', interiors: 'Estimate of cost of interiors and furnishing' };
+/** A part on its own (D-UX-276): its document's title, and what its cost a sq ft is of. */
+const PART_TITLE: Record<Part, string> = { kitchen: 'Estimate of cost of kitchen renovation', bathrooms: 'Estimate of cost of bathroom renovation', paint: 'Estimate of cost of painting' };
+const PER_NAME: Record<ArchitectEstimate['per'], string> = { 'built-up': 'Built-up area', carpet: 'Carpet area', kitchen: 'The kitchen’s floor', bathrooms: 'The bathrooms’ floors' };
+/** A part's rooms, or null for every room. */
+const partRooms = (e: ArchitectEstimate) => (e.part ? PARTS.find((x) => x.id === e.part)?.rooms ?? null : null);
 
 /** A source, numbered in order of first use; `cls` is its class (1 to 4, R or O) in sources.json. */
 export interface SourceView { id: string; no: number; what: string; url: string; cls: string }
@@ -111,6 +116,8 @@ export interface PlanView {
   summary: string; title: string; kind: string; home: string; city: string; area: string; bhk: string; level: string;
   /** "Carpet area", or "Built-up area" for a new house: the area typed and the one the cost a sq ft is of. */
   areaName: string;
+  /** What the cost a sq ft is of: the area, or a part's own floor (D-UX-276). */
+  perName: string;
   total: string; perSqft: string; words: string; n: { total: number; perSqft: number };
   /** The total as the headline shows it, rounded (UX8): `roundRupees`. */
   headline: string;
@@ -204,16 +211,16 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
   // The area as typed: the carpet area, or a new house's built-up area.
   const sqm = e.house ? e.house.builtSqm : e.carpetSqm, sqft = e.house ? e.house.builtSqm * SQFT_PER_SQM : e.carpetSqft;
   const area = s.unit === 'sqm' ? `${qtyText(sqm)} sq m (${qtyText(sqft)} sq ft)` : `${qtyText(sqft)} sq ft (${qtyText(sqm)} sq m)`;
-  const kind = WORK_KINDS[e.kind].label, bhk = BHK_CHOICES.find((b) => b.value === e.bhk)?.label ?? e.bhk;
+  const kind = e.part ? (PARTS.find((x) => x.id === e.part)?.name ?? WORK_KINDS[e.kind].label) : WORK_KINDS[e.kind].label, bhk = BHK_CHOICES.find((b) => b.value === e.bhk)?.label ?? e.bhk;
   const home = e.house ? (e.house.added ? `${FLOORS_ADDED[e.house.floors - 1].label} added` : FLOORS[e.house.floors - 1].label) : e.property === 'house' ? 'House' : 'Flat';
   const roomsNote = e.flags.find((f) => f.text.startsWith('With your sizes'))?.text;
   return {
     rooms: roomsOf(s, e), ...(roomsNote ? { roomsNote } : {}), shares: sharesOf(e),
-    add: { bedroom: e.bhk !== '5', bath: e.rooms.filter((r) => r.kind === 'bath').length < BATHS.max, balcony: R.programmes[e.bhk].balcony > 0 && s.balcony === false, extras: R.extras.filter((x) => !s.extras?.includes(x.kind)).map((x) => ({ kind: x.kind, name: x.name })) }, compare: compareOf(e, runs, sections), ...(change ? { change: changeText(change) } : {}),
+    add: addOf(s, e), compare: compareOf(e, runs, sections), ...(change ? { change: changeText(change) } : {}),
     ...(e.stages ? { stages: stageViews(e.stages), loan: e.house?.added ? 'extension' as const : 'construction' as const } : {}), ...(e.house && !e.house.added ? { plot: plotView(s, e.house) } : {}),
     // Each answer kept on one line (no-break spaces inside it), so a phone wraps only between answers.
     summary: [kind, home, city, s.unit === 'sqm' ? `${qtyText(sqm)} sq m` : `${qtyText(sqft)} sq ft`, bhk, pkg].map((x) => x.replace(/ /g, '\u00a0')).join(' · '),
-    title: TITLE[e.kind], kind, home, city, area, bhk, level: pkg, areaName: e.per === 'built-up' ? 'Built-up area' : 'Carpet area',
+    title: e.part ? PART_TITLE[e.part] : TITLE[e.kind], kind, home, city, area, bhk, level: pkg, areaName: e.house ? 'Built-up area' : 'Carpet area', perName: PER_NAME[e.per],
     total: rupees(e.total), perSqft: rupees(e.perSqft), words: rupeesWords(e.total), n: { total: e.total, perSqft: e.perSqft }, headline: roundRupees(e.total),
     strip: levels.map((n, i) => ({ level: (i + 1) as Level, name: LEVEL_NAMES[i], total: lakhs(n), full: rupees(n), n, current: i + 1 === e.level })),
     bar, sections, ...(split ? { split } : {}), assumed, flags: e.flags.filter((f) => f.decides).map((f) => groupedFlag(f.text)), notes: e.flags.filter((f) => !f.decides).map((f) => groupedFlag(f.text)),
@@ -249,13 +256,23 @@ function rangeBarOf(e: ArchitectEstimate, runs: LevelRuns): { rangeBar?: PlanVie
     text: `At ${levelName(e.level)}${pkg}: the cheapest choice in each item to the dearest; ${r.lines} of the ${r.of} items offer one.` } };
 }
 
-/** The rooms as planned or sized, in the page's unit, each with its own level. */
+/** The rooms that can be added (R2); a part's own kind of room only (D-UX-276). */
+function addOf(s: PlanState, e: ArchitectEstimate): PlanView['add'] {
+  const only = partRooms(e), may = (k: RoomKind) => !only || only.includes(k);
+  return {
+    bedroom: may('bedroom') && e.bhk !== '5', bath: may('bath') && e.rooms.filter((r) => r.kind === 'bath').length < BATHS.max,
+    balcony: may('balcony') && R.programmes[e.bhk].balcony > 0 && s.balcony === false,
+    extras: R.extras.filter((x) => may(x.kind) && !s.extras?.includes(x.kind)).map((x) => ({ kind: x.kind, name: x.name })),
+  };
+}
+
+/** The rooms as planned or sized, in the page's unit, each with its own level; a part's own only (D-UX-276). */
 function roomsOf(s: PlanState, e: ArchitectEstimate): RoomView[] {
   const ft = s.unit !== 'sqm', side = (m: number) => qtyText(ft ? m * FT_PER_M : m), unit = sideUnit(s.unit);
   const planned = new Map(planRooms(e.bhk, e.carpetSqm, s.roomWords, { baths: s.baths, balcony: s.balcony, extras: s.extras }).map((r) => [r.id, r]));
   const baths = e.rooms.filter((r) => r.kind === 'bath').length;
-  const [lo, hi] = sideRange(s.unit);
-  return e.rooms.map((r) => {
+  const [lo, hi] = sideRange(s.unit), only = partRooms(e);
+  return e.rooms.filter((r) => !only || only.includes(r.kind)).map((r) => {
     const typed = s.rooms[r.id] ?? { l: '', b: '' }, p = planned.get(r.id) ?? r;
     const l = sideOf(typed.l, s.unit), b = sideOf(typed.b, s.unit), any = !!(typed.l.trim() || typed.b.trim());
     const bad = !any ? undefined : l === null || b === null ? `Out of range. Type each side from ${lo} to ${hi} ${unit}.` : l === undefined || b === undefined ? 'One side is missing. Type both sides.' : undefined;
