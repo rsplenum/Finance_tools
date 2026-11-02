@@ -33,4 +33,4 @@ A row's session writes 1 to 4 straight into the shared docs (`docs/DECISIONS.md`
 | 02-11-2026 | VID2b (the export, the DSCR middle in two looks, the films' corrected script and prompts) | L, Extra | about 125 steps, counted from #166's merge (the log holds earlier rows) |
 | 02-11-2026 | VID2 review (`vid2-review`: the owner's seven points on the script and prompts) | M, high | about 45 steps, 0.2 h, no compaction |
 | 02-11-2026 | VID3 path (the owner's reference films, analysis and pack read and measured; `docs/video/VID3-path.md`) | M, Extra | about 60 steps, 0.5 h, 1 compaction |
-| 02-11-2026 | VID3a (three seed stills, the studio's `measure` and `still`, the gap table) | M, Extra | about 60 steps, 0.3 h, no compaction |
+| 02-11-2026 | VID3a (three seed stills, the studio's `measure` and `still`, the gap table) | M, Extra | about 65 steps, 0.3 h, 1 compaction |
