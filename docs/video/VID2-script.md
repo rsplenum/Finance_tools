@@ -2,7 +2,8 @@
 
 The owner's script of 02-11-2026, corrected against the repo as the owner asked ("write the corrected versions as
 recommended", D-UX-277). It decides the story, the picture and the words; `VID2-prompts.md` (beside this file) decides
-how three sessions build it (D-TECH-81). Each change from the owner's draft is listed at the end with its decision.
+how three sessions build it (D-TECH-81). Each change from the owner's draft, and from the owner's review of the same
+day, is listed at the end with its decision.
 
 **Production master:** 30 seconds, silent, caption-led (D-UX-153)
 **Deliverables:** portrait 1080 × 1920 and landscape 1920 × 1080 for each tool, then the films on the site (D-UX-288)
@@ -26,7 +27,7 @@ its document (D-UX-279).
 The emotional sequence is:
 
 1. **Orientation:** a question the viewer recognises.
-2. **Comprehension:** the tool's own working takes shape from the viewer's answers, and one line says how little is asked.
+2. **Comprehension:** the tool's own working takes shape from the viewer's answers, and one line says what it works out.
 3. **Tension:** the data appears; one weak point is unmistakable.
 4. **Agency:** one input changes and the same calculation is run again.
 5. **Resolution:** the new result is legible, and the actual document takes shape.
@@ -46,10 +47,10 @@ The four films share this clock (D-UX-154, D-UX-280). Only the tool's question, 
 | Time | Chapter | Picture and movement | On-screen copy |
 |---|---|---|---|
 | 0–3 s | **The question** | Begin in near-stillness. The question enters with a measured rise; one fine marigold rule resolves beneath it. No logo animation, no title card. | The tool's question (below). |
-| 3–8 s | **What it is** | The question contracts into the eyebrow and stays there to 19 s. The tool's own working takes shape from the viewer's answers (section 3); the eye moves from the answers to what the tool works out. | The tool's `beats[1].caption` (D-UX-283). |
+| 3–8 s | **What it is** | The question contracts into the eyebrow and stays there to 19 s. The tool's own working takes shape from the viewer's answers (section 3); the eye moves from the answers to what the tool works out. | The tool's `what` (`site/src/site.ts`); `beats[1].name` labels the answers (D-UX-289). |
 | 8–19 s | **The picture: find → change → clear** | The five-second middle (section 4), its start times stretched 2.2×, each movement at its own speed (D-UX-280). | `beats[2]` and `beats[3]`: name as the headline, caption beneath. |
-| 19–26 s | **The proof** | The chart resolves into the document. Its own lines build up one by one and stay (section 5). No flight through a fake interface. | The statement's `lines`, and the on-device line (D-UX-284). |
-| 26–30 s | **The paper and one action** | The finished document rests in a glass card; the real formats; one button-like CTA settles beneath. The end frame holds long enough to read. | `statement.title`, `statement.files`, the CTA (below). |
+| 19–26 s | **The proof** | The chart panel turns into the paper as one object: its bars, level and rows leave, its frame becomes the sheet, its heading becomes the title. The statement's lines build up on it one by one and stay (section 5). No second sheet, no small tables, no flight through a fake interface (D-UX-290). | `statement.title` and `statement.sub`, the statement's `lines`, and the on-device line (D-UX-284). |
+| 26–30 s | **The paper and one action** | The same paper, finished: its signatory area and the real formats; one button-like CTA settles beneath. The end frame holds long enough to read. | `statement.ready`, `statement.files`, the CTA (below). |
 
 ### The question and the action
 
@@ -64,16 +65,18 @@ under each film carries a real link with the same words (D-UX-285, D-UX-288).
 | **Project report** | "Can this project support the borrowing it needs?" | "Start a project report" |
 | **Estimate** | "Can this home stay within the budget?" | "Start a construction estimate" |
 
-The CTA is drawn in the MP4 and is not a link; the accessible link is on the page (D-UX-288). The owner's "what it is"
-sentences are not used: the working in the picture shows what the tool is, and `beats[1]` says how little is asked,
-which is the proof of "I can use this without being a finance expert" (D-UX-166, D-UX-283). If the owner later wants the
-"what" said in words, the source is the tool's `what` line in `site/src/site.ts`, never a new sentence.
+The CTA is drawn in the MP4 and is not a link; the accessible link is on the page (D-UX-288). At 3–8 s the line is the
+tool's `what` as `site/src/site.ts` gives it, the site's own sentence, never the draft's "what it is" sentences or a new
+one; `beats[1].name` ("Seven answers" for the DSCR) heads the answers, so the frame says what the tool works out and
+shows how little is asked, the proof of "I can use this without being a finance expert" (D-UX-166, D-UX-289, which
+replaces D-UX-283). In portrait at 22 px the longer `what` lines take three lines: the one line allowed three.
 
 ## 3. What it is (3–8 s): each tool's own working
 
 Built only from what the tool's scene exports (D-UX-279): the answers (`inputs`, each `k` and `v`; the one with `to`
 shows its typed `v` here and changes only in the middle), the hub (`hub`: `from`, `unit`, `work`) and the names of the
-working's parts. No drawing the data does not hold.
+working's parts. No drawing the data does not hold. The answers are headed by `beats[1].name`, and the tool's `what`
+sits beneath the working as the chapter's one line (D-UX-289).
 
 - **DSCR:** the seven answers gather into the hub ("worked out" over the term's months), and the years' labels of the
   typed case line up, empty, as the panel's rows. Only the typed case's years: the longer term's years arrive in the
@@ -91,7 +94,8 @@ At 8 s the working's rows become the panel's rows, so the picture continues inst
 
 Built first as a standalone, seekable **5,000 ms** scene for each tool (VID2c). Its content is read from the tool's
 generated `scene.json`; the animation code may calculate geometry, positions and interpolation from the `n` values, but
-never supplies, retypes or computes a figure that is shown.
+never supplies, retypes or computes a figure that is shown. Each text it shows names the field it comes from, and a check
+holds the two equal (section 9, D-TECH-83).
 
 ### Composition
 
@@ -214,28 +218,39 @@ checking a draft.
 
 This section shows the work; it never announces that the product is trustworthy (D-UX-155, D-UX-166).
 
-**19–26 s, the proof:** the chart resolves into a clean document sheet built from the generated statement. Its items
-enter in order, one after another, and stay, so all are on screen together before 26 s; each shows its `head` large and
-its `text` beneath, and the last enters by 24 s so it holds at least 2 s:
+**19 s, one object:** the chart panel turns into the paper; it is never replaced by a second sheet (D-UX-290). The
+bars, the level line, the rows, the change card, the chip and the sum leave; the panel's glass frame moves and grows into
+the sheet, and its heading (`panel`) gives way in place to `statement.title`, with `statement.sub` beneath. The question
+leaves the eyebrow as the title arrives. The eye stays on one object from 8 s to 30 s.
+
+**19–26 s, the proof:** the statement's items build up on the paper in order, one after another, and stay, so all are
+on screen together before 26 s; each shows its `head` large and its `text` beneath, ruled apart, and the last enters by
+24 s so it holds at least 2 s:
 
 1. "Worked out twice", with its difference.
 2. The tool's substance: every instalment, Forms I to VI, five years ahead, or every item.
 3. The basis or the assumptions, where the statement has them (the DSCR statement has none since D-UX-259).
 4. Home's own words, "Worked out on this device" (the label in `site/src/home/How.astro`), read from one source that
-   home and the export share, never retyped (D-UX-284).
+   home and the export share, never retyped (D-UX-284). It enters under the paper, not on it: it says where the work
+   is done, not what the paper says.
 
-The "Ready to sign" line belongs to the paper (26–30 s), as its signatory area. Never "bank-approved", "accepted
+**No small tables:** the paper carries only these items, each at the film's type sizes (nothing under 22 logical px).
+No miniature table, no rows of tiny figures, no grey bars standing for text, nothing drawn to look like a document's
+pages: what the paper says is what the viewer can read (D-UX-290).
+
+The "Ready to sign" line belongs to the paper's end (26–30 s), as its signatory area. Never "bank-approved", "accepted
 everywhere", "guaranteed", "best", "error-free", a comparison, a testimonial, a price or a saving.
 
-**26–30 s, the paper and one action:** `statement.title`, the paper's small line (`statement.sub`), only the formats in
-`statement.files`, and the one CTA from section 2. The paper looks inspectable: its title, several ruled sections, a
-visible working or check area, and a restrained signatory area where the document has one. No made-up contents and no
-official seal. The CTA settles by 27.5 s and the frame holds still to 30 s.
+**26–30 s, the paper and one action:** the same paper, finished: its signatory area (`statement.ready`), only the
+formats in `statement.files`, and the one CTA from section 2 beneath it. No made-up contents and no official seal. The
+CTA settles by 27.5 s and the frame holds still to 30 s; the last frame is the still the site shows before a tap
+(D-UX-288).
 
-## 6. No 25-second cut, for now
+## 6. A 25-second cut: not now
 
-The 30-second master is the only cut (D-UX-287). A shorter one, if ever needed, is its own row with its own clock and
-checks, never the 30-second master sped up.
+Not now, rather than never (D-UX-292, which revises D-UX-287): the 30-second master is the only cut for the present. A
+shorter one, when a place to show it asks for one, is its own row with its own clock and checks, never the 30-second
+master sped up; it waits in `docs/ROADMAP.md` with the work after launch.
 
 ## 7. Look and typography
 
@@ -263,15 +278,19 @@ checks, never the 30-second master sped up.
 
 ## 9. On-screen copy rules
 
-- Each text beat is one sentence or one phrase, one or two lines.
-- The question and the CTA carry no digit.
+- Each text beat is one sentence or one phrase, one or two lines; the tool's `what` at 3–8 s may take three in portrait
+  (D-UX-289).
+- The question, the `what` and the CTA carry no digit.
+- Every text on screen names the field of the scene's file it comes from, and shows that field whole: each number must
+  equal the number in its named field, not merely appear somewhere in `figures`, so a value from the wrong row or the
+  wrong state fails (D-TECH-83).
 - Every numeric token on screen is in the scene's `figures`: years, decimals, percentages, amounts, sums, levels, tags,
   counts, the card's values, and any digit inside a label, including one shown for a single frame.
 - No number typed into HTML, CSS `content`, SVG text or a JavaScript string to put it on screen. Geometry may use numeric
   constants; shown text may not.
 - Exact values as the source gives them: no reformatting, rounding, abbreviating or localising in the scene.
 - No placeholder zero: a missing value is absent, or a dash the source itself gives.
-- `beats[1]` to `beats[3]` and the statement's lines are used word for word.
+- `beats[1].name`, `beats[2]`, `beats[3]`, the tool's `what` and the statement's lines are used word for word.
 
 ## 10. Review standard
 
@@ -285,6 +304,21 @@ Without pausing, a muted viewer can answer:
 - What document is produced?
 
 If a viewer cannot find the level, the weakest row or the changed input, simplify the scene before adding motion.
+
+### The scorecard
+
+Each draft and each film, in each orientation, is scored on five things before it is shown to the owner (D-UX-291): by
+the session that made it, on the contact sheet and the frames at phone size, with one line of evidence each; then by
+the owner, whose score decides. Each scores 2 (as this script asks), 1 (works, with a fix named) or 0 (fails). A film is
+ready at 2 on all five, with the six questions above answered.
+
+| | What a 2 looks like | What fails |
+|---|---|---|
+| **Composition** | The chart is the centre of gravity; values line up down the rows; the panel fills its column; nothing floats in empty space; the outer 5% is clear | A small dashboard in empty space; a column that crowds or starves the chart; text competing with the values |
+| **Type at phone size** | Seen 295 px wide (a portrait film on a 360 × 640 phone, under the header), every line reads at a glance: the headline first, then the values, then the caption | A line that needs a pause or a squint; weak contrast on the navy; a value lost beside its bar |
+| **Motion** | Each movement shows a cause or its effect, settles cleanly and has a job; one celebratory moment, at the clear; the eye is led, never chased | Movement for its own sake; two things competing for the eye; a spring that wobbles past reading time |
+| **Transitions** | Each chapter grows out of the last: the question into the eyebrow, the working's rows into the panel's, the panel into the paper as one object | A cut, a second sheet, a flight through an interface, a jump in scale between the failed and the cleared state |
+| **Ending** | The paper and the CTA settled by 27.5 s and still to 30 s; the last frame reads on its own as the site's still | A frame still moving at the end; a CTA that arrives late; a last frame that needs the film to make sense |
 
 ## Changes from the owner's draft of 02-11-2026
 
@@ -305,3 +339,17 @@ If a viewer cannot find the level, the weakest row or the changed input, simplif
 | No 25-second cut for now | Its clock contradicted "do not accelerate" and doubles the checks | D-UX-287 |
 | The films on the site: their own row | The draft ended at the MP4s; D-UX-153 puts them on each tool's page | D-UX-288 |
 | The supplied MP4's paragraph dropped | No later session can find that file; the drafts are in the studio (`videos/dscr-middle-c`) | D-UX-277 |
+
+## Changes from the owner's review of 02-11-2026
+
+The owner reviewed this script and its prompts the same day; each point is applied as agreed ("as recommended").
+
+| Change | Where | Decision |
+|---|---|---|
+| At 3–8 s the line is the tool's `what` from `site/src/site.ts`; `beats[1].name` labels the answers | Sections 2, 3, 9; prompts §2.2, §2.3, §3.2 | D-UX-289 (replaces D-UX-283) |
+| Each number on screen names its source field and must equal it; the exporter's test proves each `meets` against `n` and the level, and that `weakest` is the weakest | Sections 4, 9; prompts §0.2, §0.5, §1.2, §1.3 | D-TECH-83 |
+| No level pinned for the films; each film on the site keeps its rendered data, and CI fails when a fresh export differs | Prompts §0.2, §3.2 | D-TECH-84 |
+| The chart panel turns into the paper at 19 s as one object; no small tables on it | Sections 2, 5; prompts §2.3 | D-UX-290 |
+| The scorecard: composition, type at phone size, motion, transitions, ending | Section 10; prompts §0.7, §1.5, §2.4 | D-UX-291 |
+| A 25-second cut: not now, rather than no | Section 6; `docs/ROADMAP.md` | D-UX-292 (revises D-UX-287) |
+| Each row first checks every path and decision number named in it (`scripts/doc-refs.mjs`) | Prompts §0.1 | D-TECH-85 |
