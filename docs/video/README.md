@@ -12,4 +12,4 @@ The motion reviews stay here, under `docs/design-reviews/`: `2026-10-22-motion-r
 
 The four 30-second films (VID2c to VID2e): `VID2-script.md` is the production script and `VID2-prompts.md`
 the three rows' prompts, both the owner's drafts corrected against the repo (D-UX-277 to D-UX-288,
-D-TECH-80, D-TECH-81).
+D-TECH-80 to D-TECH-82).

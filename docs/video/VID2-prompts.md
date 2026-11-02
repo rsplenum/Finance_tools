@@ -164,6 +164,19 @@ VID2b's draft (`scenes/dscr-middle/`, `videos/dscr-middle-c/`). No website is re
 
 ### 1.3 The studio's checks, before any scene relies on them (D-TECH-80)
 
+First, the studio's CI (D-TECH-82), so every studio PR runs the checks this row builds. Today it has none: no
+`.github/workflows/`, its PRs checked by hand with `npm test`.
+
+- `.github/workflows/ci.yml`, run on `pull_request` only, not on every push: the repo is private, so each run counts
+  against the account's monthly Actions minutes.
+- `runs-on: ubuntu-24.04`, never `ubuntu-latest` (Finance_tools' GOTCHAS: 26.04 broke Playwright's install).
+- Node from a new `.node-version`; `npm ci` from a committed `package-lock.json` (there is none today).
+- `npx playwright install --with-deps chromium` at the pinned 1.56.1, then `npm test`.
+- The tests include one that scans each `scenes/<tool>-middle/` in both sizes from its committed `scene.json`. It
+  seeks and measures in Chromium but encodes no video: no ffmpeg in CI, no renders (the tests already pass
+  `encode: false`).
+- The studio PR's check is green before the row ends, as Finance_tools' is (D-TECH-68).
+
 1. In `lib/render.mjs`, check every rendered frame, not every fourth, for figures (0.5, item 1), and on every frame for
    the frame, text over text and size (items 2 to 4); write the failures with their time and their text into the report.
    Keep it fast enough: one measurement per frame, in the page, returning only failures.
