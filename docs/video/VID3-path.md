@@ -70,8 +70,10 @@ sound. The machinery is not the gap: the studio already seeks every frame, rende
 
 ## 4. Not taken, and why
 
-- **Image and video models, and ChatGPT for art direction.** A session cannot run them, they drift
-  from frame to frame, they need licences, and the references look drawn in code. Every frame is drawn
+- **Image and video models, and ChatGPT for art direction.** A session has none of its own: using one
+  means a paid outside service, a key in the environment's settings and an allowed host. They drift
+  from frame to frame, so no render comes back the same; their licences vary; and the references look
+  drawn in code. Every frame is drawn
   in code (HTML, SVG, canvas) from the engine's figures; one made asset at most, later, if an idea
   needs it.
 - **Blender, Three.js, WebGL.** The references reach their level flat.
