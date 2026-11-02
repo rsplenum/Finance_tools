@@ -139,8 +139,23 @@ export function architectCheck(input: ArchitectInput, banded = false): Architect
     if (s.kind === 'store') put('store', s.id, exists('passage') ? 'passage' : null);
   }
 
-  const shown = (sec: string) => { const only = Q.sections.find((x) => x.id === sec)?.kinds; return only === undefined || only.includes(kind); };
-  const sectionOn = (sec: string) => shown(sec) && (input.sections?.[sec] ?? Q.kinds[kind].on.includes(sec));
+  // One part on its own (D-UX-276): looked up afresh, its kinds of room as a set, the whole home's families it keeps, and
+  // a section shown only when some slot of those rooms or families that a renovation takes is in it.
+  const job = kind === 'renovate' && typeof input.part === 'string' ? Q.parts[input.part] : undefined;
+  const roomKinds = job && job.rooms ? new Set<string>(job.rooms) : null;
+  const inJob = (s: Space) => roomKinds === null || roomKinds.has(s.kind);
+  const keeps = (family: string) => !job || job.whole.indexOf(family) >= 0;
+  const reaches = (sec: string) => {
+    if (!job) return true;
+    if (job.shown && job.shown.indexOf(sec) < 0) return false;
+    for (const [k, slots] of Object.entries(Q.templates)) {
+      if (k === 'flat' ? false : roomKinds !== null && !roomKinds.has(k)) continue;
+      for (const t of slots) if (t.section === sec && (k !== 'flat' || keeps(t.family)) && (t.kinds === undefined || t.kinds.indexOf('renovate') >= 0)) return true;
+    }
+    return false;
+  };
+  const shown = (sec: string) => { const only = Q.sections.find((x) => x.id === sec)?.kinds; return (only === undefined || only.includes(kind)) && reaches(sec); };
+  const sectionOn = (sec: string) => shown(sec) && (input.sections?.[sec] ?? (job ? job.on : Q.kinds[kind].on).includes(sec));
   const sliding = (sec: string) => !!Q.sections.find((x) => x.id === sec)?.slider;
   const levelAt = (sec: string, s: Space | null = null) => {
     if (!sliding(sec)) return level;
@@ -215,12 +230,12 @@ export function architectCheck(input: ArchitectInput, banded = false): Architect
         if (rule === 'rwh') return 1;
       }
       if (rule === 'one') return 1;
-      if (rule === 'carpet') return carpet;
-      if (rule === 'protect') return spaces.reduce((a, x) => a + (x.kind === 'bath' || x.kind === 'balcony' ? 0 : x.sqm), 0);
-      if (rule === 'making-good') return spaces.reduce((a, x) => a + (x.kind === 'balcony' ? 0 : wallRun(x) * H), 0) * Q.makingGood.share;
+      if (rule === 'carpet') return roomKinds === null ? carpet : spaces.reduce((a, x) => a + (inJob(x) ? x.sqm : 0), 0);
+      if (rule === 'protect') return spaces.reduce((a, x) => a + (!inJob(x) || x.kind === 'bath' || x.kind === 'balcony' ? 0 : x.sqm), 0);
+      if (rule === 'making-good') return spaces.reduce((a, x) => a + (!inJob(x) || x.kind === 'balcony' ? 0 : wallRun(x) * H), 0) * Q.makingGood.share;
       if (rule === 'debris') {
-        const nb = sectionOn('bathrooms') && kind === 'renovate' ? spaces.filter((x) => x.kind === 'bath').length : 0;
-        const takenUp = sectionOn('flooring') && kind === 'renovate' ? spaces.reduce((a, x) => a + (x.kind === 'bath' ? 0 : x.sqm), 0) / SQ_FOOT : 0;
+        const nb = sectionOn('bathrooms') && kind === 'renovate' ? spaces.filter((x) => x.kind === 'bath' && inJob(x)).length : 0;
+        const takenUp = sectionOn('flooring') && kind === 'renovate' ? spaces.reduce((a, x) => a + (x.kind === 'bath' || !inJob(x) ? 0 : x.sqm), 0) / SQ_FOOT : 0;
         return nb + Math.ceil(takenUp / Q.debris.sqftPerLot - 1e-9);
       }
       throw new Error(rule);
@@ -349,8 +364,8 @@ export function architectCheck(input: ArchitectInput, banded = false): Architect
     const where = s ? s.id : 'flat';
     bySpace.set(where, [...(bySpace.get(where) ?? []), { section: slot.section, amount, kind: FAMILIES.get(slot.family)?.kind ?? 'fixed', takeUp: slot.qty === 'old-terrace' || slot.qty === 'debris' }]);
   };
-  for (const s of spaces) for (const slot of Q.templates[s.kind]) visit(slot, s);
-  for (const slot of Q.templates.flat) visit(slot, null);
+  for (const s of spaces) if (inJob(s)) for (const slot of Q.templates[s.kind]) visit(slot, s);
+  for (const slot of Q.templates.flat) if (keeps(slot.family)) visit(slot, null);
 
   // Room by room first, then the sections and the split from the same rows, then the total from the rooms.
   const sections = new Map<string, number>(), split: Record<ItemKind, number> = { fixed: 0, movable: 0, appliance: 0 };

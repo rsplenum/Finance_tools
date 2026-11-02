@@ -23,8 +23,8 @@ import { Downloads } from '../Downloads';
 import { sharePlan } from './shared';
 import { billDoc, billFileName, planDoc, planDocNeeds, planDocStatus, planFileName } from './plan-document';
 import {
-  BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORD_CHOICES, WORK_CHOICES, areaLabel, builds, checkedLine, floorsQuestion, heightOf, plainOf, sideUnit,
-  withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withExtra, withBathAdded, withBathTakenOut, withBedroomAdded, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit,
+  BHK_CHOICES, CITY_CHOICES, EMPTY_PLAN, HOME_CHOICES, LEVEL_CHOICES, LEVEL_NAMES, RULE_HEIGHT, WORD_CHOICES, WORK_CHOICES, PART_CHOICES, areaLabel, builds, checkedLine, floorsQuestion, heightOf, plainOf, sideUnit,
+  withItem, withKind, withPart, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withExtra, withBathAdded, withBathTakenOut, withBedroomAdded, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit,
   type AreaUnit, type PlanFacts, type PlanState, groupKey,
 } from './plan-state';
 import type { DrawerView, LineView, PlanPreview, PlanView, RoomView, RungView, SectionView, WhyView } from './plan-model';
@@ -173,7 +173,17 @@ function Questions({ s, update, p, toLevel, see }: { s: PlanState; update: Updat
   const badArea = plainOf(s.area) === null;
   return <div id="six-questions">
     <div data-question>
-      <Choice name="fld-work" legend="What is the work?" options={WORK_CHOICES} value={s.kind} columns onChange={(k) => update((x) => withKind(x, k))} />
+      <Choice name="fld-work" legend="What is the work?" options={WORK_CHOICES} value={s.part ? undefined : s.kind} columns onChange={(k) => update((x) => withKind(x, k))} />
+      {/* One part of a renovation on its own, a quiet row under the four kinds: the same question, so one name (D-UX-276). */}
+      <fieldset id="fld-part" class="mt-3 min-w-0">
+        <legend class={`text-sm ${MUTED}`}>Or just one part</legend>
+        <div class="mt-1.5 flex flex-wrap gap-2">
+          {PART_CHOICES.map((c) => <label key={c.value} for={`fld-work-${c.value}`} class={CHIP}>
+            <input type="radio" id={`fld-work-${c.value}`} name="fld-work" value={c.value} checked={s.part === c.value} onChange={() => update((x) => withPart(x, c.value))} class={RADIO} />
+            {c.label}
+          </label>)}
+        </div>
+      </fieldset>
     </div>
     <div data-question>
       {builds(s.kind)
@@ -227,7 +237,7 @@ function Answer({ v, toLevel }: { v: PlanView; toLevel: (l: Level) => void }) {
     <div data-answer class={answerRule(true)}>
       <p data-testid="pl-total" data-result={'ready'} class={`figure text-section ${INK}`}>{v.headline}</p>
       {v.rangeBar ? <Range r={v.rangeBar} /> : v.range.text && <p data-testid="pl-range" class={`mt-1 text-sm ${INK}`}>{v.range.text}</p>}
-      <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="whitespace-nowrap tabular-nums">Rs. {v.perSqft}</span> a sq ft of {v.areaName.toLowerCase()}</p>
+      <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="whitespace-nowrap tabular-nums">Rs. {v.perSqft}</span> a sq ft of {v.perName.toLowerCase()}</p>
       <p data-testid="pl-exact" class={`mt-1 text-sm ${MUTED}`}>Exact: <span class="whitespace-nowrap tabular-nums">Rs. {v.total}</span>, as in the bill and the documents.</p>
     </div>
     <p data-testid="pl-rates" class={`mt-2 flex items-start gap-1.5 text-sm ${MUTED}`}><Tick />{v.ratesLine}</p>
@@ -502,6 +512,13 @@ function Shares({ v }: { v: PlanView }) {
  * attached to a bedroom; each room's size by four buttons (Compact, Medium, Above medium, Spacious) or typed, and its own
  * level. Closed until opened: not on the default path.
  */
+/** The rooms' one line: what can be done to them, a part's own in its words (D-UX-276). */
+const roomsLine = (s: PlanState, v: PlanView) => {
+  const n = v.rooms.length;
+  if (s.part === 'kitchen') return n === 1 ? 'The kitchen: size it, give it its own level' : `${n} rooms: size each, give one its own level`;
+  if (s.part === 'bathrooms') return n === 1 ? '1 bathroom: add one, size it, give it its own level' : `${n} bathrooms: add or take out one, size each, give one its own level`;
+  return `${n} rooms: add or take out a room, size each, give one its own level`;
+};
 function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) {
   const unit = sideUnit(s.unit);
   const levels = [{ value: '', label: 'As the sections' }, ...LEVEL_CHOICES.map((l) => ({ value: l.value, label: l.label }))];
@@ -511,7 +528,7 @@ function Rooms({ s, v, update }: { s: PlanState; v: PlanView; update: Update }) 
     value={r[which]} placeholder={r.planned[which]} invalid={!!r.bad} onCommit={(t) => update((x) => withRoomSide(x, r.id, which, t, r.name))} />;
   return <Section id="pl-rooms" title="Rooms">
     <details data-testid="pl-rooms" class="mt-2">
-      <summary class={SUMMARY}>{v.rooms.length} rooms: add or take out a room, size each, give one its own level</summary>
+      <summary class={SUMMARY}>{roomsLine(s, v)}</summary>
       <p class={`mt-3 text-sm ${MUTED}`}>The rooms share the carpet area: a room made larger takes its extra from the others, and a size you type moves no other room. To make them all larger, change the area.</p>
       <Shares v={v} />
       {v.roomsNote && <p data-testid="pl-rooms-note" class="mt-3 text-sm text-warn">{v.roomsNote}</p>}

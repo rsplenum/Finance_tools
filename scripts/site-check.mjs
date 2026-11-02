@@ -1000,6 +1000,25 @@ for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
   await page.getByTestId('pl-room-out-bedroom-3').click();
   await expectText(page, v, 'pl-what-changed', /^Bedroom 3 taken out, now 2 BHK: Rs\. [\d,]+ less/, 'a bedroom taken out');
   await layout(page, v, 'the rooms by buttons, 390 px');
+  // One part on its own (D-UX-276): a chip under the four kinds, the same question; the kitchen's eight sections with
+  // six on, its one room, its cost a sq ft of its own floor; painting's two sections; still six questions.
+  await page.getByTestId('pl-edit').click(); await page.waitForSelector('dialog[open]');
+  await page.check('#fld-work-kitchen');
+  const partAsked = await page.locator('#six-questions [data-question]').count(), wholeToo = await page.isChecked('#fld-work-renovate');
+  if (partAsked !== 6 || wholeToo) v(`with a part the estimate asks ${partAsked} questions (want 6)${wholeToo ? ' and Repair or renovate stays chosen' : ''}`);
+  await page.getByTestId('pl-sheet-done').click();
+  await expectText(page, v, 'pl-summary', /^Just the kitchen · Flat · Pune · 1,000 sq ft · 2 BHK · /, 'the kitchen alone');
+  const cardsK = await page.locator('[data-testid^="pl-card-"]').count(), onK = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
+  if (cardsK !== 8 || onK !== 6) v(`the kitchen alone shows ${cardsK} sections with ${onK} on (want 8 and 6)`);
+  await expectText(page, v, page.getByTestId('pl-per-sqft').locator('..'), /a sq ft of the kitchen’s floor$/, 'the kitchen\'s cost a sq ft');
+  await expectText(page, v, page.getByTestId('pl-rooms').locator('summary'), 'The kitchen: size it, give it its own level', 'the kitchen\'s one room');
+  await layout(page, v, 'the kitchen alone, 390 px');
+  await page.getByTestId('pl-edit').click(); await page.waitForSelector('dialog[open]');
+  await page.check('#fld-work-paint');
+  await page.getByTestId('pl-sheet-done').click();
+  await expectText(page, v, 'pl-summary', /^Just painting · /, 'painting alone');
+  const cardsP = await page.locator('[data-testid^="pl-card-"]').count();
+  if (cardsP !== 2) v(`painting alone shows ${cardsP} sections (want 2)`);
   // Interiors: ten sections on, with Appliances, Smart home, Furniture and Soft furnishings, the movable items apart (D-UX-19).
   await page.getByTestId('pl-edit').click(); await page.waitForSelector('dialog[open]');
   await page.check('#fld-work-interiors');

@@ -6,9 +6,9 @@
  */
 import { ALL_ANSWERED, questionsLeft } from '../verdict';
 import {
-  BATHS, BHKS, CITIES, EXTRAS, FLOORS, FLOORS_ADDED, LEVELS, PLOT_SIDE, R, ROOM_SIDE, SIZE_WORDS, bathsOf, bedroomsOf, WORK_KINDS, architectNeeds, builds, wordName,
+  BATHS, BHKS, CITIES, EXTRAS, FLOORS, FLOORS_ADDED, LEVELS, PLOT_SIDE, R, ROOM_SIDE, SIZE_WORDS, bathsOf, bedroomsOf, WORK_KINDS, PARTS, architectNeeds, builds, wordName,
 } from '../../../engine/architect-rules';
-import type { ArchitectInput, Bhk, ExtraKind, Level, SizeWord, WorkKind } from '../../../engine/architect';
+import type { ArchitectInput, Bhk, ExtraKind, Level, Part, SizeWord, WorkKind } from '../../../engine/architect';
 import { parseAmount } from '../../../engine/parse';
 import { inr } from '../../../engine/util';
 import type { ChoiceGroup, LineView, PlanPreview } from './plan-model';
@@ -18,6 +18,8 @@ export type AreaUnit = 'sqft' | 'sqm';
 export interface PlanFacts { owner: string; property: string; lender: string; preparedBy: string }
 export interface PlanState {
   kind?: WorkKind; home?: Home;
+  /** One part of a renovation on its own (D-UX-276): the kitchen, the bathrooms or the painting. */
+  part?: Part;
   /** A new house's floors, asked instead of flat or house (A3). */
   floors?: number;
   city?: string;
@@ -66,6 +68,8 @@ export const WORK_CHOICES: { value: WorkKind; label: string; hint: string }[] = 
   { value: 'renovate', label: WORK_KINDS.renovate.label, hint: 'Floors, walls, bathrooms, kitchen, doors, wiring and plumbing renewed' },
   { value: 'interiors', label: WORK_KINDS.interiors.label, hint: 'Wardrobes, kitchen, ceilings, lights, paint and appliances in a finished home' },
 ];
+/** The parts a renovation can be asked for on its own, under the first question (D-UX-276). */
+export const PART_CHOICES: { value: Part; label: string }[] = PARTS.map((x) => ({ value: x.id, label: x.label }));
 export const HOME_CHOICES: { value: Home; label: string; hint?: string }[] = [
   { value: 'flat', label: 'Flat' },
   { value: 'house', label: 'House', hint: 'The rooms inside, worked out as for a flat' },
@@ -140,7 +144,7 @@ function roomSizes(s: PlanState): Record<string, { l: number; b: number }> {
 export function inputOf(s: PlanState): ArchitectInput {
   const area = plainOf(s.area), h = heightOf(s.height), rooms = roomSizes(s), plot = s.kind === 'build' ? plotOf(s) : undefined, floors = builds(s.kind) && s.floors;
   return {
-    kind: s.kind, property: builds(s.kind) ? 'house' : s.home, ...(floors ? { floors } : {}),
+    kind: s.kind, ...(s.kind === 'renovate' && s.part ? { part: s.part } : {}), property: builds(s.kind) ? 'house' : s.home, ...(floors ? { floors } : {}),
     city: s.city, ...(typeof area === 'number' ? { area } : {}), areaUnit: s.unit, bhk: s.bhk, level: s.level,
     sections: s.sections, sliders: s.sliders, items: s.items, ...(typeof h === 'number' ? { heightM: h } : {}),
     ...(Object.keys(rooms).length ? { rooms } : {}), ...(Object.keys(s.roomLevels).length ? { roomLevels: s.roomLevels } : {}),
@@ -171,8 +175,10 @@ function noted(s: PlanState, next: PlanState, what: string): PlanState {
 }
 const sectionName = (id: string) => R.sections.find((x) => x.id === id)?.name ?? id;
 
-/** A new kind: its own sections on (D-UX-19); the sliders and items stay. */
-export const withKind = (s: PlanState, kind: WorkKind): PlanState => ({ ...s, kind, sections: {}, ...(kind === 'extend' && (s.floors ?? 0) > FLOORS_ADDED.length ? { floors: undefined } : {}) });
+/** A new kind: its own sections on (D-UX-19); the sliders and items stay. A whole kind leaves a part. */
+export const withKind = (s: PlanState, kind: WorkKind): PlanState => ({ ...s, kind, part: undefined, sections: {}, ...(kind === 'extend' && (s.floors ?? 0) > FLOORS_ADDED.length ? { floors: undefined } : {}) });
+/** One part on its own (D-UX-276): a renovation, with the part's own sections on. */
+export const withPart = (s: PlanState, part: Part): PlanState => ({ ...s, kind: 'renovate', part, sections: {} });
 /** A new package, from question 6 or the strip: every section and room at that level again. */
 export const withLevel = (s: PlanState, level: Level): PlanState =>
   noted(s, { ...s, level, sliders: {}, items: {}, brands: {}, roomLevels: {} }, `Every section to ${LEVEL_NAMES[level - 1]}`);

@@ -81,7 +81,7 @@ export function planDoc(s: PlanState, p: PlanPreview, today: string): Doc | unde
   blocks.push({ kind: 'text', text: `In words: ${v.words}` });
   blocks.push({ kind: 'figures', items: [
     { label: 'Total estimated cost', value: `Rs. ${v.total}` },
-    { label: 'Cost per sq ft', value: `Rs. ${v.perSqft}`, note: `of ${v.areaName.toLowerCase()}` },
+    { label: 'Cost per sq ft', value: `Rs. ${v.perSqft}`, note: `of ${v.perName.toLowerCase()}` },
   ] });
   if (v.split) blocks.push({ kind: 'table', table: { columns: [{ label: 'Of the total' }, { label: 'Rupees' }], rows: v.split.map((x) => ({ cells: [{ text: x.label }, cell(x.amount, x.n)] })) } });
   // A new house: its stages for a construction loan are an annex of their own, so page 1 stays the signed abstract.
