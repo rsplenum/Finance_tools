@@ -23,7 +23,10 @@ and `-paper`, 6 s drafts).
 | Things to read at once | 1 to 3 | 1 to 4 | about 25 |
 | Colours covering 90% | 3: white, navy ink, one violet | 7: white, black, one blue, greys | 14 (look C's glows), 5 (paper) |
 | Dark frames | none | 16%: one black frame as punctuation | all (C), none (paper) |
-| Sound | a bed under every second, mean −17 dB | a bed under every second, mean −20.5 dB | none (R5) |
+| Sound | a bed under every second, mean −20.5 dB (−19.5 LUFS) | a bed under every second, mean −17 dB (−14.3 LUFS) | none (R5) |
+
+The sound row was corrected in VID3a (D-TECH-89): the two films' levels had been swapped. The studio's
+`measure` now prints this table itself (`VID3a-stills.md` §3).
 
 ## 2. What makes them work
 
