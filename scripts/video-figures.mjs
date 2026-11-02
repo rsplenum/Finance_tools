@@ -16,10 +16,12 @@ try {
   const extra = tool === 'dscr' ? { fix: s.STORY_FIX, average: { target: s.STORY_TARGET.average, typed: s.STORY_TYPED.average, fixed: s.STORY_LONGER.average } } : {};
   const strings = [];
   const walk = (v) => (typeof v === 'string' ? strings.push(v) : v && typeof v === 'object' && Object.values(v).forEach(walk));
-  walk({ scene, extra });
+  // The change's tag (D-UX-282): the engine's own string for the DSCR and the report, none for the others.
+  const changeTag = s.CHANGE_TAG[tool] ?? null;
+  walk({ scene, extra, changeTag });
   const figures = [...new Set(strings.filter((x) => /\d/.test(x)))];
   fs.mkdirSync(path.dirname(path.resolve(out)), { recursive: true });
-  fs.writeFileSync(out, JSON.stringify({ from: 'Finance_tools site/src/home/story.ts', tool, scene, ...extra, figures }, null, 1) + '\n');
+  fs.writeFileSync(out, JSON.stringify({ from: 'Finance_tools site/src/home/story.ts', tool, scene, ...extra, changeTag, figures }, null, 1) + '\n');
   console.log(`${tool}: ${scene.rows.length} rows, ${figures.length} strings with figures -> ${out}`);
 } finally {
   await vite.close();

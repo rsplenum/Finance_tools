@@ -435,3 +435,6 @@ export const ESTIMATE_SCENE: ToolScene = (() => {
 
 /** Home's scenes by tool. */
 export const SCENES: Record<Intro['id'], ToolScene> = { dscr: DSCR_SCENE, cma: CMA_SCENE, report: REPORT_SCENE, estimate: ESTIMATE_SCENE };
+/** The change's tag in the films (D-UX-282): the engine's own string, or none. The CMA's new value already is the
+ *  difference and the estimate's change is words, so neither has one. scripts/video-figures.mjs exports it. */
+export const CHANGE_TAG: Record<Intro['id'], string | null> = { dscr: STORY_FIX.move, report: REPORT_FIX.move, cma: null, estimate: null };

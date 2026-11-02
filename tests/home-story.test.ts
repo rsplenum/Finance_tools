@@ -31,7 +31,7 @@ import { dscrCaseOf } from '../site/src/dscr/model';
 import { architectCheck } from '../engine/architect-check';
 import { inputOf } from '../site/src/estimate/plan-model';
 import { preview as reportPreview } from '../site/src/report/model';
-import { CMA_FIX, CMA_SCENE, ESTIMATE_BUDGET, ESTIMATE_CASE, ESTIMATE_FIXED, ESTIMATE_SCENE, INTROS, REPORT_CASE, REPORT_FIX, REPORT_FIXED, REPORT_SCENE, SCENES } from '../site/src/home/story';
+import { CHANGE_TAG, CMA_FIX, CMA_SCENE, ESTIMATE_BUDGET, ESTIMATE_CASE, ESTIMATE_FIXED, ESTIMATE_SCENE, INTROS, REPORT_CASE, REPORT_FIX, REPORT_FIXED, REPORT_SCENE, SCENES } from '../site/src/home/story';
 import { DSCR_SCENE, STORY_CASE, STORY_FIX, STORY_FIXED, STORY_LONGER, STORY_TARGET, STORY_TYPED } from '../site/src/home/story';
 import { READY } from '../site/src/site';
 
@@ -227,5 +227,17 @@ describe('the four tools', () => {
       expect(s.rows.filter((r) => r.judged).every((r) => r.fixed.meets)).toBe(true);
       expect(s.statement.lines[0].head).toBe('Worked out twice');
     }
+  });
+});
+
+describe("the films' change tag (D-UX-282)", () => {
+  it('is the engine\'s own string for the DSCR and the report, and none for the CMA and the estimate', () => {
+    // A second computation: the DSCR's change is 91 − 60 = 31 more instalments, the report's 82,11,000 ÷ 70,00,000 − 1 = 17.3%.
+    expect(CHANGE_TAG.dscr).toBe(`+${91 - 60} instalments`);
+    expect(CHANGE_TAG.dscr).toBe(STORY_FIX.move);
+    expect(CHANGE_TAG.report).toBe(`+${((8211000 / 7000000 - 1) * 100).toFixed(1)}%`);
+    expect(CHANGE_TAG.report).toBe(REPORT_FIX.move);
+    expect(CHANGE_TAG.cma).toBeNull();
+    expect(CHANGE_TAG.estimate).toBeNull();
   });
 });
