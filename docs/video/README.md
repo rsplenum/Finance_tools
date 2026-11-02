@@ -9,3 +9,7 @@ D-UX-124); never a terminal look (D-UX-122).
 
 The motion reviews stay here, under `docs/design-reviews/`: `2026-10-22-motion-reference.md`,
 `2026-10-22-motion-analysis.html` and `2026-10-22-motion-review.html`.
+
+The four 30-second films (VID2c to VID2e): `VID2-script.md` is the production script and `VID2-prompts.md`
+the three rows' prompts, both the owner's drafts corrected against the repo (D-UX-277 to D-UX-288,
+D-TECH-80, D-TECH-81).
