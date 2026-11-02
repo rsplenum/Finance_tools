@@ -9,6 +9,8 @@
  *   node scripts/load-measure.mjs [/dscr/ ...] [--text] [--no-effects]   the counts as a table, the aims under it
  *   node scripts/load-measure.mjs --lower [/dscr/ ...]                   writes the counts that fell, and new pages
  *   node scripts/load-measure.mjs --raise /dscr/ controls D-UX-63        writes one count that rose, with its decision
+ * Both work in any container (D-TECH-74): where the fonts differ from the baseline's probe, they write every count but the
+ * three that hang on where text wraps (LAYOUT), and a raise of one of those refuses.
  * --text also prints what the counts saw: the long sentences, the abbreviations, the text styles, the colours and the
  * controls whose figures move out of sight (the writer's and the critic's input). --no-effects skips the slowest count.
  * Run after `npm run build`.
@@ -354,6 +356,8 @@ export async function loadCheck({ browser, BASE, pages, quick = false, violation
     for (const [k, name] of COUNTS) {
       const [now, then] = [counts[k], was[k]];
       if (now === then || (!fonts && LAYOUT.includes(k))) continue;
+      // A page added where the fonts differed has no reading of the counts that hang on them yet.
+      if (then === undefined) { violations.push(`load: ${path} ${name} has no reading yet (npm run load -- --lower ${path})`); continue; }
       if (now === null || then === null || now > then) {
         rose++;
         violations.push(`load: ${path} ${name} rose from ${then ?? 'none'} to ${now ?? 'none'} (cut it, or a line in docs/DECISIONS.md and npm run load -- --raise ${path} ${k} <D-id>)${k === 'colours' ? `; saw ${seen.match(/colours: (.*)/)?.[1]}` : ''}`);
@@ -388,6 +392,7 @@ async function main() {
     if (r.defect) notes.push(`\n${path}: ${r.defect}`);
     if (text) notes.push(r.seen);
   }
+  const probe = lower || raise >= 0 ? await fontProbe(browser, BASE) : null;
   await browser.close();
   server.close();
   const head = ['Page', ...COUNTS.map(([k, name]) => (k === 'before' ? 'Words before Q1 (Q1 at, screens)' : name))];
@@ -397,14 +402,13 @@ async function main() {
   if (notes.length) console.log(notes.join('\n'));
   if (!lower && raise < 0) return;
   const base = JSON.parse(await readFile(BASELINE, 'utf8').catch(() => '{"pages":{},"raised":[]}'));
-  const { BASE: B2, server: s2 } = await serveDist(), b2 = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
-  const probe = await fontProbe(b2, B2);
-  await b2.close();
-  s2.close();
-  if (base.fontProbe === undefined) base.fontProbe = probe;
-  else if (base.fontProbe !== probe) throw new Error(`the fonts here differ from the baseline's (a line ${probe} px wide, not ${base.fontProbe}): write the baseline where it was written, a session's container`);
+  base.fontProbe ??= probe;
+  // Where the fonts differ, the counts that hang on them are left as they are (D-TECH-74); the rest are the same here.
+  const fonts = base.fontProbe === probe, differ = `the fonts here differ from the baseline's (a line ${probe} px wide, not ${base.fontProbe})`;
+  const writes = (k) => fonts || !LAYOUT.includes(k);
   const changed = [];
   if (raise >= 0) {
+    if (!writes(rCount)) throw new Error(`--raise: ${rCount} hangs on where text wraps and ${differ}: raise it where they match`);
     const [then, now] = [base.pages[rPage]?.[rCount], measured[rPage]?.[rCount]];
     if (!(now > then || (then === null && now !== null))) throw new Error(`--raise: ${rPage} ${rCount} is ${now ?? 'none'}, not above ${then ?? 'none'}`);
     base.pages[rPage][rCount] = now;
@@ -413,8 +417,8 @@ async function main() {
   } else {
     if (skipEffects) throw new Error('--lower measures every count: leave out --no-effects');
     for (const [path, counts] of Object.entries(measured)) {
-      if (!base.pages[path]) { base.pages[path] = counts; changed.push(`${path} added`); continue; }
-      for (const [k] of COUNTS) {
+      if (!base.pages[path]) { base.pages[path] = Object.fromEntries(Object.entries(counts).filter(([k]) => writes(k))); changed.push(`${path} added`); continue; }
+      for (const [k] of COUNTS.filter(([k]) => writes(k))) {
         const [then, now] = [base.pages[path][k], counts[k]];
         // A count new to the measure takes its first reading.
         if (then === undefined || (now !== null && then !== null && now < then)) { base.pages[path][k] = now; changed.push(`${path} ${k} ${then} → ${now}`); }
@@ -424,6 +428,7 @@ async function main() {
   base.pages = Object.fromEntries(Object.entries(base.pages).sort(([a], [b]) => a.localeCompare(b)));
   await writeFile(BASELINE, JSON.stringify(base, null, 2) + '\n');
   console.log(`scripts/load-baseline.json: ${changed.join(', ') || 'nothing to change'}`);
+  if (!fonts) console.log(`${differ}: ${LAYOUT.join(', ')} left as they are`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) await main();
