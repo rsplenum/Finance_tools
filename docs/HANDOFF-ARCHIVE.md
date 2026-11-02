@@ -232,6 +232,8 @@ The test figures are model-worked until the owner confirms fictional cases A and
 | 19-10-2026 | Q1: every download timed with the CPU ×4 in the site check, capped at 1.5 s (slowest 303 ms here); the way out of WhatsApp's and other apps' own browsers under the five tools' download buttons (D-TECH-51) | S, about 60 steps, high | about 55 steps by `npm run cost` with the PR, no compaction; the slowest download 303 ms at CPU ×4 here; the WhatsApp step needed the six answers before the downloads show |
 | 20-10-2026 | SEO1: the pSEO plan (`docs/SEO-PLAN.md`, D-BIZ-08), about 86 pages in seven types from the owner's Keyword Planner export, autocomplete and 12 competitors' sitemaps; the by-business pages wait on model profile PDFs | M, about 120 steps, high | about 35 steps by `npm run cost` with the PR, no compaction, one fetcher; all 33 hosts open but six refusing this cloud |
 | 20-10-2026 | REP1: the owner's four answers recorded (D-UX-109, D-DATA-22, D-AI-01, D-UX-110) and the gap list against Finline; the report's sales one line per product, worked twice, hand-checked (case P by two lines); PMEGP checked against KVIC's 2022 guideline, all five figures the same; PR #93 | M, about 120 steps, Extra | about 95 steps by `npm run cost` with the PR, one compaction, one fetcher; the load baseline by hand (other fonts) |
+| 01-11-2026 | OR11d | L, Extra | about 215 steps, 0.8 h, 4 compactions |
+| 01-11-2026 | UXR6 | L, Extra | 196 steps, 0.9 h, 2 compactions (with merging #161 and the owner's three fixes from the preview) |
 
 ## Rows set aside
 Set aside by the owner on 10-10-2026 until the business entity, GST and Razorpay account are ready (D-UX-42):

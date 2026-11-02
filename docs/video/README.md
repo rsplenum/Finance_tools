@@ -13,3 +13,9 @@ The motion reviews stay here, under `docs/design-reviews/`: `2026-10-22-motion-r
 The four 30-second films (VID2c to VID2e): `VID2-script.md` is the production script and `VID2-prompts.md`
 the three rows' prompts, both the owner's drafts corrected against the repo (D-UX-277 to D-UX-288,
 D-TECH-80 to D-TECH-82).
+
+The path to the reference films' level (VID3, D-UX-293): `VID3-path.md`: the two films measured, what
+makes them work, the film grammar F1 to F8 (proposed, D-UX-294), the studio's upgrades (D-TECH-86), three
+seeds for the DSCR film and the rows VID3a to VID3g, which replace VID2c to VID2e. `VID2-script.md` and
+`VID2-prompts.md` stay for what VID2 settled and VID3 does not change (the questions, the buttons, the
+checks).
