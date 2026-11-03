@@ -153,6 +153,6 @@ They differ in idea, not colour. Each claim is checked against the engine and th
 | VID3b | The picked idea in five style frames (hook, problem, signature, proof, ending), both sizes; its tempo, beat sheet and type; the owner says yes | M, Extra |
 | VID3c | The kit (beat clock, type, blur, checks) and the signature five seconds in motion, silent and with sound; VID2c's carried work | L, Extra |
 | VID3d | The DSCR film, 30 s, both sizes, the silent master and the social copy, scored (D-UX-291) and measured: the benchmark; stop and judge | M, Extra |
-| VID3e | The CMA film, 30 s, both sizes, both masters, built straight as the film in its own world on the studio's camera (no stills or frames first: D-UX-307, D-UX-309, D-UX-310) | L, Extra |
+| VID3e | (D-UX-312: the DSCR film again as a story takes VID3e; the CMA film follows it.) The CMA film, 30 s, both sizes, both masters, built straight as the film in its own world on the studio's camera (no stills or frames first: D-UX-307, D-UX-309, D-UX-310) | L, Extra |
 | VID3f | The report and estimate films the same way, one row each if the budget asks | L, Extra |
 | VID3g | All four on their tool pages (D-UX-288) and the social copies | M, high |
