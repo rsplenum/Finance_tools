@@ -292,3 +292,4 @@ Budget rows moved from HANDOFF on 18-10-2026 (UX6):
 | 02-11-2026 | VID3a (three seed stills, the studio's `measure` and `still`, the gap table) | M, Extra | about 65 steps, 0.3 h, 1 compaction |
 | 02-11-2026 | VID3b (seed A in five style frames, both sizes; tempo, beat sheet and type) | M, Extra | about 55 steps, 0.2 h, 1 compaction |
 | 02-11-2026 | VID3c (the kit: beat clock, cue sheet, mask reveal, word swap, fill, motion blur, every-frame checks; the signature in motion, both sizes, silent and with effects) | L, Extra | about 185 steps, 0.8 h, 3 compactions |
+| 03-11-2026 | VID3e (Gate 1 of the DSCR film: the brief, two rounds of three directors and a fresh reviewer each, the page; branched from CD2, unmerged) | M, Extra | about 60 steps, 0.6 h, 0 compactions; 8 agents, 70% of the cost |
