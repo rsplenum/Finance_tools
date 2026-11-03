@@ -241,6 +241,10 @@ State at 02-11-2026: **the UI and UX come first and every timeline is off (D-BIZ
 | 02-11-2026 | LOAD1 | S, high | about 30 steps, 0.2 h, no compaction |
 | 02-11-2026 | VID2b (the export, the DSCR middle in two looks, the films' corrected script and prompts) | L, Extra | about 125 steps, counted from #166's merge (the log holds earlier rows) |
 | 02-11-2026 | VID2 review (`vid2-review`: the owner's seven points on the script and prompts) | M, high | about 45 steps, 0.2 h, no compaction |
+| 03-11-2026 | RULES1 (the rules rewritten: rule 1 plain words for Rahul, bold first, recommend don't survey; VID3d replaced) | S, high | about 25 steps, 0.4 h, 0 compactions |
+| 03-11-2026 | VID3d (the DSCR film in one world: `world.js` with a camera, depth and a lens shift; a sound bed under every second; both sizes, silent masters and social copies; the kit dropped) | L, Extra | about 245 steps, 1.3 h and about 1.5 h of master renders, 1 compaction |
+| 03-11-2026 | CD1 (why VID3d came out as a chart, now the studio's `films/CD1-diagnosis.md`; the creative department: a skill, seven agents, the reviewer's twelve questions; the film gate; no sound until a plan has Rahul's yes; the leftover master render stopped) | M, Extra | about 75 steps, 0.4 h, 1 compaction |
+| 03-11-2026 | CD2 (the creative department moved to the studio: its skill, seven agents, the film gate with 15 cases, `films/`, the diagnosis; the sound bed's code deleted; R5 "no sound without a plan Rahul approved"; studio PRs #6 and #7 closed; a small hook here runs the studio's gate) | M, high | about 85 steps, 0.3 h, 1 compaction |
 
 ## Rows set aside
 Set aside by the owner on 10-10-2026 until the business entity, GST and Razorpay account are ready (D-UX-42):
