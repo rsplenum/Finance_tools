@@ -234,6 +234,10 @@ The test figures are model-worked until the owner confirms fictional cases A and
 | 20-10-2026 | REP1: the owner's four answers recorded (D-UX-109, D-DATA-22, D-AI-01, D-UX-110) and the gap list against Finline; the report's sales one line per product, worked twice, hand-checked (case P by two lines); PMEGP checked against KVIC's 2022 guideline, all five figures the same; PR #93 | M, about 120 steps, Extra | about 95 steps by `npm run cost` with the PR, one compaction, one fetcher; the load baseline by hand (other fonts) |
 | 01-11-2026 | OR11d | L, Extra | about 215 steps, 0.8 h, 4 compactions |
 | 01-11-2026 | UXR6 | L, Extra | 196 steps, 0.9 h, 2 compactions (with merging #161 and the owner's three fixes from the preview) |
+| 02-11-2026 | D-UX-276 (the estimate's parts, the owner's ask; #164 merged first) | M, high | about 115 steps, 0.6 h, 1 compaction |
+| 02-11-2026 | LOAD1 | S, high | about 30 steps, 0.2 h, no compaction |
+| 02-11-2026 | VID2b (the export, the DSCR middle in two looks, the films' corrected script and prompts) | L, Extra | about 125 steps, counted from #166's merge (the log holds earlier rows) |
+| 02-11-2026 | VID2 review (`vid2-review`: the owner's seven points on the script and prompts) | M, high | about 45 steps, 0.2 h, no compaction |
 
 ## Rows set aside
 Set aside by the owner on 10-10-2026 until the business entity, GST and Razorpay account are ready (D-UX-42):
