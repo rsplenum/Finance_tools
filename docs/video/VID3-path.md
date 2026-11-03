@@ -82,7 +82,8 @@ sound. The machinery is not the gap: the studio already seeks every frame, rende
 - **Blender, Three.js, WebGL.** The references reach their level flat.
 - ~~**Eight AI roles, seven documents, eight stages, seven gates.**~~ Overturned by CD1 (D-UX-313): the
   four gates checked how a film was made, never whether its idea was worth making. Films now pass the
-  `creative-department` skill's seven roles and three gates before and after production.
+  `creative-department` skill's seven roles and three gates before and after production, in the studio
+  (CD2, D-TECH-102).
 - **A second scorecard.** D-UX-291's stays, with §6's measures beside it.
 - **"Premium international SaaS".** The market is India (D-BIZ-01); the viewer is a borrower or a DSA
   on a phone.
@@ -154,8 +155,9 @@ They differ in idea, not colour. Each claim is checked against the engine and th
 | VID3b | The picked idea in five style frames (hook, problem, signature, proof, ending), both sizes; its tempo, beat sheet and type; the owner says yes | M, Extra |
 | VID3c | The kit (beat clock, type, blur, checks) and the signature five seconds in motion, silent and with sound; VID2c's carried work | L, Extra |
 | VID3d | The DSCR film, 30 s, both sizes, the silent master and the social copy, scored (D-UX-291) and measured: the benchmark; stop and judge | M, Extra |
-| CD1 | Why VID3d came out as a chart, and the department that stops it (`CD1-diagnosis.md`, D-UX-313 to 315, D-TECH-101) | M, Extra |
-| VID3e | The DSCR film, Gate 1 (`creative-department` stages 0 and 1): the brief, three concepts from three directors, the reviewer's verdicts; Rahul picks one or none. No code, no render | M, Extra |
+| CD1 | Why VID3d came out as a chart, and the department that stops it (the studio's `films/CD1-diagnosis.md`, D-UX-313 to 315, D-TECH-101) | M, Extra |
+| CD2 | The department moved into the studio with its gate and `films/`; the bed deleted; studio PRs #6 and #7 closed (D-TECH-102) | M, high |
+| VID3e | The DSCR film, Gate 1, in the studio (`creative-department` stages 0 and 1, `films/dscr-film/`): the brief, three concepts from three directors, the reviewer's verdicts; Rahul picks one or none. No code, no render | M, Extra |
 | VID3f | The DSCR film, Gate 2: the story, the world, the sound plan, the boards, the animatic, the reviewer's verdict; Rahul's greenlight or not | M, Extra |
 | VID3g | The DSCR film, production on the greenlight, then Gate 3 on the cut | L, Extra |
 | VID3h | The CMA, report and estimate films, each through the department, one row per gate as the budget asks | L, Extra |
