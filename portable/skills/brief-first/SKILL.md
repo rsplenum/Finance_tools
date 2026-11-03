@@ -1,11 +1,13 @@
 ---
 name: brief-first
-description: Take on anything the owner asks to build or change so it matches what they pictured - their words, the tradeoffs, a thin version they can click, done when they say it feels simple.
+description: Take on anything the owner asks to build or change - their words, one recommendation in plain words, the bold version built for real and shown early, done when they say it is better and feels simple.
 ---
 
 # Brief first
 
-Past work went wrong in one repeated way: each request grew into a bigger system (methods, modes, research, notes) while the page the owner could try got longer and arrived late. An outside review called one tool "haywire": the owner had pictured seven inputs and a table to print, and got ten fields, method choices and notes. The maths was right; the product was not what was asked. This skill keeps the next thing small, asked for and clickable.
+Past work went wrong in one repeated way: each request grew into a bigger system (methods, modes, research, notes) while the page the owner could try got longer and arrived late. An outside review called one tool "haywire": the owner had pictured seven inputs and a table to print, and got ten fields, method choices and notes. The maths was right; the product was not what was asked.
+
+Then the opposite failure: that lesson was read as "keep every change small". Asks to make a look, a page or a film better got small changes to what existed, chains of approval steps (a path, stills, frames and a kit, four sessions before anything moved) and lists of tradeoffs to sort; the owner saw "PowerPoint style" and "like what we have is so sacred". Small is for the questions a user answers; the ambition stays big. This skill keeps the questions few and the work bold, asked for and clickable.
 
 ## 1. Write the contract in the owner's words
 
@@ -20,16 +22,17 @@ The inputs the owner lists for a page are its default path: a ceiling, not a flo
 
 What the owner attaches (an analysis, a design document, a catalogue) is read in full before any question or choice; where it already answers a question or names a method, follow it over the repo's older notes and ask only what it leaves open. A draft the owner will judge is made with the owner's own tool for the job and from their catalogue where one exists; a hand-made stand-in is called that before the owner judges it.
 
-## 2. Give the tradeoffs before building
+## 2. Recommend, then build
 
-Give the tradeoffs the owner may not have considered: what an assumption does to the answer and in which direction, who is served and who is not, accuracy against the number of fields, and what it costs later (upkeep, a second layout, payment, legal). Where it applies, name the standing one: a professional's completeness against a customer's speed to an answer. Keep to the three to five that could change the decision, each with a recommendation; a survey of every option wastes the owner's tokens. Then build, unless the choice is genuinely theirs.
+Say in a line or two, in plain words, what you will build and why, then build it. Name a tradeoff only when it could flip the owner's decision, at most two, each with your pick: what an assumption does to the answer, who is served and who is not, what it costs later (upkeep, payment, legal). Where it applies, the one that most often matters is a professional's completeness against a customer's speed to an answer. Never hand the owner a list to sort or a questionnaire on details. Ask only what is truly theirs: money, law, their customers, their name.
 
-## 3. Ship the thinnest version that works end to end
+## 3. Build the bold version for real, and show it early
 
-Form, calculation, result, download: working at 390 px and on `main` (through a small PR the owner merges) in the same session. Depth (more methods, modes, research, infrastructure) comes only when the next version needs it or the owner asks. Work that sits on an unmerged branch looks, to anyone reading `main`, like work never done.
+Make the real thing end to end in the same session: for a tool, form, calculation, result and download, working at 390 px and on `main` (through a PR the owner merges); for a look or a film, the thing itself, moving, in its world, with its sound. Rough is fine; a step toward it is not: no plan, stills, frames or kit for approval before something real exists. Depth in plumbing (more methods, modes, research, tooling) comes only when the next version needs it; ambition in what the user sees comes first. Work that sits on an unmerged branch looks, to anyone reading `main`, like work never done.
 
 - **Before and after first**: For a change to what the customer sees, publish a before and after the owner can open (today recorded beside the live proposal) before it goes into the docs; words alone drew "first show me" twice (HOME1).
-- **A new look is new**: Asked for a look at a reference's level, start from the reference's visual language, never today's frame with effects added, and show one still of it before building motion (HOME1c: "you just spruced up the Hollywood hacker"). Motion is new too: before building tools around a film, show a few seconds of its hardest move as it will move, in its world and with its sound (VID3c: "still look like powerpoint presentation slides with sound effects").
+- **Bold first**: For a look, a page, a flow or a film, start from the reference's world or a fresh idea, never today's version with effects added. What exists is a draft, not a rule: replace it when something serves the user better, and scale back only on the owner's word ("you just spruced up the Hollywood hacker"; "like what we have is so sacred").
+- **Motion is new too**: before any tooling for a film, show a few seconds of its hardest move as it will move, in its world and with its sound ("still look like powerpoint presentation slides with sound effects").
 - **Say each thing once**: A page review asks what each section says that no other does, and a check counts each repeated block (HOME1).
 
 ## 4. Keep the default path to the contract
