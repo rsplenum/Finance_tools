@@ -287,3 +287,4 @@ Budget rows moved from HANDOFF on 18-10-2026 (UX6):
 | 02-11-2026 | VID3 path (the owner's reference films, analysis and pack read and measured; `docs/video/VID3-path.md`) | M, Extra | about 60 steps, 0.5 h, 1 compaction |
 | 02-11-2026 | VID3a (three seed stills, the studio's `measure` and `still`, the gap table) | M, Extra | about 65 steps, 0.3 h, 1 compaction |
 | 02-11-2026 | VID3b (seed A in five style frames, both sizes; tempo, beat sheet and type) | M, Extra | about 55 steps, 0.2 h, 1 compaction |
+| 02-11-2026 | VID3c (the kit: beat clock, cue sheet, mask reveal, word swap, fill, motion blur, every-frame checks; the signature in motion, both sizes, silent and with effects) | L, Extra | about 185 steps, 0.8 h, 3 compactions |
