@@ -62,6 +62,7 @@ The owner made Claude the arbiter of what it means in each context. Start from t
 - `docs/DECISIONS.md`: one line per decision, with an ID by area (such as POL, UX, TECH, DOC, DATA, AI, BIZ), the date, what and where, why, and who decided, so later sessions do not decide it again.
 - `docs/HANDOFF.md`, short and current, its size capped by a check (about 10 KB): the state and the next rows, each with its deliverable, budget, plan and the effort to start at. History, traps and what waits on the owner go to files read only by grep. End each session with a starter prompt the owner can paste into a new one.
 - Recount a figure from the data just before writing it into a doc, by a script that says what it counts; where a generated doc can print it, print it there and cite that.
+- Work goes in the repo where its subject lives; a gate travels with what it guards, and another repo keeps only a door to it.
 - The `lessons` skill at the end of each session.
 - Draft PRs; the owner says "merge" once they have tried it. No hourly PR check-ins unless asked.
 

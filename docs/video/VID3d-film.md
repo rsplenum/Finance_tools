@@ -1,6 +1,6 @@
 # VID3d: the DSCR film, 30 seconds, in one world
 
-> **Rejected** (D-UX-312): "It illustrates a calculation. It doesn't tell a story." Kept as the record of what was built, and as the case the creative department was made from: `CD1-diagnosis.md` says why it failed, and its §3 is the reviewer's calibration. Its sound (a noise bed that read as wind) is out (D-UX-314). Nothing here is a model for the next film.
+> **Rejected** (D-UX-312): "It illustrates a calculation. It doesn't tell a story." Kept as the record of what was built, and as the case the creative department was made from: the studio's `films/CD1-diagnosis.md` says why it failed, and its §3 is the reviewer's calibration. Its scene, cue sheet and sound live only on the studio's branch `vid3d-film` (PR #7, closed unmerged in CD2, its bed's code deleted). Its sound (a noise bed that read as wind) is out (D-UX-314). Nothing here is a model for the next film.
 
 03-11-2026. Rahul's word (D-UX-309): start from the film's idea and the reference films' language
 (`VID3-path.md` §2), not from the site's chart or VID3c's kit; a new picture layer with a camera, depth and
