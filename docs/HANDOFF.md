@@ -30,3 +30,4 @@ A row's session writes 1 to 4 straight into the shared docs (`docs/DECISIONS.md`
 |---|---|---|---|
 | 02-11-2026 | VID3c (the kit: beat clock, cue sheet, mask reveal, word swap, fill, motion blur, every-frame checks; the signature in motion, both sizes, silent and with effects) | L, Extra | about 185 steps, 0.8 h, 3 compactions |
 | 03-11-2026 | RULES1 (the rules rewritten: rule 1 plain words for Rahul, bold first, recommend don't survey; VID3d replaced) | S, high | about 25 steps, 0.4 h, 0 compactions |
+| 03-11-2026 | VID3d (the DSCR film in one world: `world.js` with a camera, depth and a lens shift; a sound bed under every second; both sizes, silent masters and social copies; the kit dropped) | L, Extra | about 245 steps, 1.3 h and about 1.5 h of master renders, 1 compaction |
