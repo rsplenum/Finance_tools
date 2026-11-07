@@ -4,8 +4,8 @@
  * header and footer on every page with its number, and each part from a new page. Word letters are not limited to
  * Latin. A stored zip (zip.ts); no library. Pure: bytes in memory, no DOM.
  */
-import type { Block, Doc, Row, Table } from './doc';
-import { WIDTH, measure } from './pdf';
+import type { Block, Cover, Doc, Row, Table } from './doc';
+import { WIDTH, measure, sectionPages } from './pdf';
 import { zip } from './zip';
 
 const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
@@ -17,14 +17,14 @@ const xml = (t: string) => t.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g
 
 /** Points to twentieths of a point (twips); the page's text is as wide as the PDF's. */
 const tw = (pt: number) => Math.round(pt * 20);
-const TEXT_W = tw(WIDTH), MUTED = '545454', SHADE = 'ECECEC', SIZE = 19; // half-points: 9.5 pt, as the PDF
+const TEXT_W = tw(WIDTH), MUTED = '545454', SHADE = 'ECECEC', NAVY = '1C335C', SIZE = 19; // half-points: 9.5 pt, as the PDF
 
 // ---- Runs and paragraphs ----
 
-interface Run { bold?: boolean; size?: number; color?: string }
-/** A run of text; its properties in the schema's order (bold, colour, size). */
+interface Run { bold?: boolean; size?: number; color?: string; spacing?: number }
+/** A run of text; its properties in the schema's order (bold, colour, letter spacing, size). */
 function run(text: string, r: Run = {}): string {
-  const props = `${r.bold ? '<w:b/>' : ''}${r.color ? `<w:color w:val="${r.color}"/>` : ''}${r.size ? `<w:sz w:val="${r.size}"/><w:szCs w:val="${r.size}"/>` : ''}`;
+  const props = `${r.bold ? '<w:b/>' : ''}${r.color ? `<w:color w:val="${r.color}"/>` : ''}${r.spacing ? `<w:spacing w:val="${r.spacing}"/>` : ''}${r.size ? `<w:sz w:val="${r.size}"/><w:szCs w:val="${r.size}"/>` : ''}`;
   return `<w:r>${props ? `<w:rPr>${props}</w:rPr>` : ''}<w:t xml:space="preserve">${xml(text)}</w:t></w:r>`;
 }
 interface Para { style?: string; keepNext?: boolean; pageBreak?: boolean; before?: number; after?: number; hanging?: number; right?: boolean }
@@ -86,9 +86,38 @@ function figuresTable(t: Table): string {
 
 // ---- Blocks ----
 
-/** One block; `newPage` for the first block of every part after the first. */
-function block(b: Block, newPage: boolean): string {
+/** A page break of its own. */
+const pageBreak = '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
+
+/** The cover: the kind of document, the name large, what it is for, its facts, any mark; then a new page. */
+function cover(c: Cover): string {
+  const key = tw(110);
+  return spacer(2400) + para(run(c.kicker.toUpperCase(), { bold: true, size: 20, color: NAVY, spacing: 40 }), { after: 240 })
+    + para(run(c.title, { bold: true, size: 60 }), { after: 120 })
+    + (c.sub ? para(run(c.sub, { size: 28, color: MUTED }), { after: 360 }) : '')
+    + c.lines.map((l) => para(run(l, { size: 22 }), { after: 80 })).join('')
+    + spacer(1600)
+    + table([key, TEXT_W - key], c.facts.map(([k, v], i) => row(cell(para(run(k, { size: 20, color: MUTED }), { before: 40, after: 60 }), { width: key, ...(i ? {} : { top: RULE }) })
+      + cell(para(run(v, { size: 20 }), { before: 40, after: 60 }), { width: TEXT_W - key, ...(i ? {} : { top: RULE }) }))), 0)
+    + (c.mark ? spacer(240) + block({ kind: 'box', title: c.mark.title, items: [c.mark.text] }, false, []) : '')
+    + pageBreak;
+}
+
+/** The contents as a Word field over the Heading 1 paragraphs, showing the PDF's pages until Word updates it (F9). */
+function contents(title: string, entries: [string, number][]): string {
+  const f = (type: string) => `<w:r><w:fldChar w:fldCharType="${type}"/></w:r>`;
+  const lines = entries.map(([t, page], i) => para((i ? '' : f('begin') + '<w:r><w:instrText xml:space="preserve"> TOC \\o "1-1" \\h \\z \\u </w:instrText></w:r>' + f('separate'))
+    + run(t, { bold: /^\d/.test(t) }) + '<w:r><w:tab/></w:r>' + run(String(page)), { style: 'TOC1' }));
+  return para(run(title), { style: 'TOCHeading' }) + lines.join('') + `<w:p>${f('end')}</w:p>`;
+}
+
+/** One block; `newPage` for the first block of every part after the first; `entries`, the contents' lines. */
+function block(b: Block, newPage: boolean, entries: [string, number][]): string {
   switch (b.kind) {
+    case 'cover':
+      return cover(b);
+    case 'contents':
+      return contents(b.title, entries);
     case 'title':
       return para(run(b.text), { style: b.small ? 'Heading1' : 'Title', pageBreak: newPage })
         + (b.sub ? para(run(b.sub, { size: 21, color: MUTED }), { after: 160 }) : '');
@@ -123,7 +152,8 @@ function block(b: Block, newPage: boolean): string {
       return table([TEXT_W], [row(cell(para(run(b.title, { bold: true }), { before: 80, after: 40 }) + b.items.map((i) => bullet(i)).join('') + para('', { after: 40 }),
         { width: TEXT_W, fill: 'FFF4DC', top: 'w:sz="6" w:space="0" w:color="D99E33"', bottom: 'w:sz="6" w:space="0" w:color="D99E33"' }))], 160) + spacer(160);
     case 'table':
-      return spacer(80) + figuresTable(b.table) + spacer(80);
+      return spacer(80) + (b.table.unit ? para(run(b.table.unit, { size: 15, color: MUTED }), { keepNext: true, right: true, after: 40 }) : '')
+        + figuresTable(b.table) + spacer(80);
     case 'signature':
       // Kept together on one page, with room to sign above "Authorised signatory".
       return b.lines.map((l, i) => para(run(l), { keepNext: i < b.lines.length - 1, before: i === 0 ? 480 : i === 2 ? 480 : 120, after: 0 })).join('');
@@ -132,12 +162,15 @@ function block(b: Block, newPage: boolean): string {
 
 // ---- The package ----
 
-const STYLES = `${HEAD}<w:styles xmlns:w="${W}">
+/** The styles; a document of numbered sections has its Heading 1 in navy over a rule, and the contents' styles. */
+const STYLES = (sectioned: boolean) => `${HEAD}<w:styles xmlns:w="${W}">
 <w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="Arial" w:cs="Arial"/><w:sz w:val="${SIZE}"/><w:szCs w:val="${SIZE}"/><w:lang w:val="en-IN"/></w:rPr></w:rPrDefault>
 <w:pPrDefault><w:pPr><w:spacing w:after="0" w:line="252" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>
 <w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style>
 <w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:after="40"/></w:pPr><w:rPr><w:b/><w:sz w:val="34"/><w:szCs w:val="34"/></w:rPr></w:style>
-<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:after="200"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/>${sectioned ? `<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="3" w:color="${NAVY}"/></w:pBdr>` : ''}<w:spacing w:after="200"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/>${sectioned ? `<w:color w:val="${NAVY}"/>` : ''}<w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr></w:style>
+${sectioned ? `<w:style w:type="paragraph" w:styleId="TOCHeading"><w:name w:val="TOC Heading"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:pPr><w:keepNext/><w:spacing w:after="360"/></w:pPr><w:rPr><w:b/><w:sz w:val="34"/><w:szCs w:val="34"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="TOC1"><w:name w:val="toc 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:pPr><w:tabs><w:tab w:val="right" w:leader="dot" w:pos="${TEXT_W}"/></w:tabs><w:spacing w:after="200"/></w:pPr><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:style>` : ''}
 <w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="200" w:after="100"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:style>
 <w:style w:type="table" w:default="1" w:styleId="TableNormal"><w:name w:val="Normal Table"/><w:tblPr><w:tblInd w:w="0" w:type="dxa"/><w:tblCellMar><w:top w:w="0" w:type="dxa"/><w:left w:w="108" w:type="dxa"/><w:bottom w:w="0" w:type="dxa"/><w:right w:w="108" w:type="dxa"/></w:tblCellMar></w:tblPr></w:style>
 </w:styles>`;
@@ -154,9 +187,14 @@ const tab = (size: number) => `<w:r><w:rPr><w:sz w:val="${size}"/></w:rPr><w:tab
 
 /** The document as a Word file. */
 export function docxOf(doc: Doc, made: Date): Uint8Array<ArrayBuffer> {
-  const body = doc.parts.filter((p) => !p.sheetOnly).map((part, i) => part.blocks.map((b, k) => block(b, i > 0 && k === 0)).join('')).join('');
-  const sect = `<w:sectPr><w:headerReference w:type="default" r:id="rId2"/><w:footerReference w:type="default" r:id="rId3"/>`
-    + `<w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1200" w:right="840" w:bottom="1200" w:left="840" w:header="600" w:footer="560" w:gutter="0"/></w:sectPr>`;
+  // A part that flows runs on under the one before it; a cover's page has no header or footer (`titlePg`).
+  const entries = doc.parts.some((p) => p.section) ? sectionPages(doc) : [], covered = doc.parts.some((p) => p.blocks.some((b) => b.kind === 'cover'));
+  const body = doc.parts.filter((p) => !p.sheetOnly).map((part, i) => (i && part.flow ? spacer(360) : '')
+    + part.blocks.map((b, k) => block(b, i > 0 && k === 0 && !part.flow, entries)).join('')).join('');
+  const sect = `<w:sectPr><w:headerReference w:type="default" r:id="rId2"/>${covered ? '<w:headerReference w:type="first" r:id="rId4"/>' : ''}`
+    + `<w:footerReference w:type="default" r:id="rId3"/>${covered ? '<w:footerReference w:type="first" r:id="rId5"/>' : ''}`
+    + `<w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1200" w:right="840" w:bottom="1200" w:left="840" w:header="600" w:footer="560" w:gutter="0"/>${covered ? '<w:titlePg/>' : ''}</w:sectPr>`;
+  const blank = (kind: 'hdr' | 'ftr') => `${HEAD}<w:${kind} xmlns:w="${W}" xmlns:r="${R}"><w:p/></w:${kind}>`;
   const enc = (t: string) => new TextEncoder().encode(t);
   return zip([
     { name: '[Content_Types].xml', data: enc(`${HEAD}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">`
@@ -165,6 +203,8 @@ export function docxOf(doc: Doc, made: Date): Uint8Array<ArrayBuffer> {
       + '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>'
       + '<Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>'
       + '<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>'
+      + (covered ? '<Override PartName="/word/header2.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>'
+        + '<Override PartName="/word/footer2.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>' : '')
       + '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>') },
     { name: '_rels/.rels', data: enc(`${HEAD}<Relationships xmlns="${PKG}"><Relationship Id="rId1" Type="${R}/officeDocument" Target="word/document.xml"/>`
       + `<Relationship Id="rId2" Type="${PKG}/metadata/core-properties" Target="docProps/core.xml"/></Relationships>`) },
@@ -174,10 +214,13 @@ export function docxOf(doc: Doc, made: Date): Uint8Array<ArrayBuffer> {
       + `<dcterms:created xsi:type="dcterms:W3CDTF">${made.toISOString().slice(0, 19)}Z</dcterms:created></cp:coreProperties>`) },
     { name: 'word/_rels/document.xml.rels', data: enc(`${HEAD}<Relationships xmlns="${PKG}">`
       + `<Relationship Id="rId1" Type="${R}/styles" Target="styles.xml"/><Relationship Id="rId2" Type="${R}/header" Target="header1.xml"/>`
-      + `<Relationship Id="rId3" Type="${R}/footer" Target="footer1.xml"/></Relationships>`) },
+      + `<Relationship Id="rId3" Type="${R}/footer" Target="footer1.xml"/>`
+      + (covered ? `<Relationship Id="rId4" Type="${R}/header" Target="header2.xml"/><Relationship Id="rId5" Type="${R}/footer" Target="footer2.xml"/>` : '')
+      + '</Relationships>') },
     { name: 'word/document.xml', data: enc(`${HEAD}<w:document xmlns:w="${W}" xmlns:r="${R}"><w:body>${body}${sect}</w:body></w:document>`) },
-    { name: 'word/styles.xml', data: enc(STYLES) },
+    { name: 'word/styles.xml', data: enc(STYLES(entries.length > 0)) },
     { name: 'word/header1.xml', data: enc(band('hdr', doc.header, doc.mark ? `${tab(15)}${run(doc.mark, { bold: true, size: 15 })}` : '')) },
     { name: 'word/footer1.xml', data: enc(band('ftr', doc.footer, `${tab(15)}${run('Page ', { size: 15, color: MUTED })}${field('PAGE')}${run(' of ', { size: 15, color: MUTED })}${field('NUMPAGES')}`)) },
+    ...(covered ? [{ name: 'word/header2.xml', data: enc(blank('hdr')) }, { name: 'word/footer2.xml', data: enc(blank('ftr')) }] : []),
   ], made);
 }

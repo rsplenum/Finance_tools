@@ -103,29 +103,31 @@ describe('the words in the document', () => {
   const p = preview(R), words = drafted(R.words!, REPLY.draft, SENT);
   it('drafted but not ticked: left out, and the document provisional until ticked', () => {
     const s = { ...R, words };
-    expect(reportDoc(s, p, TODAY)!.parts.map((x) => x.name)).toEqual(['Summary', 'Projections', 'DSCR and ratios', 'Annex']);
+    const d = reportDoc(s, p, TODAY)!;
+    expect(d.parts.map((x) => x.name)).toEqual(['Cover', '1 At a glance', '2 Business', '3 Cost and finance', '4 Basis', '5 Statements', '6 DSCR and ratios', '7 Repayment', 'Annex', 'Declaration']);
+    expect(docText({ ...d, parts: [d.parts[2]] })).not.toMatch(/The market/);
     expect(wordsNeeds(words)).toEqual(['The report’s words: read them, then tick that they are true']);
     expect(docStatus(s, p)).toBe('1 question left, for the document');
     expect(fileName(s, p, 'pdf')).toBe('Project report - Asha Packaging (provisional).pdf');
   });
-  it('ticked: a part after the summary, each section under its heading, with no figure but the user’s own', () => {
+  it('ticked: in section 2, each under its numbered heading, with no figure but the user’s own', () => {
     const s = { ...R, words: { ...words, confirmed: true } }, d = reportDoc(s, p, TODAY)!;
-    expect(d.parts.map((x) => x.name)).toEqual(['Summary', 'About the project', 'Projections', 'DSCR and ratios', 'Annex']);
+    expect(d.parts.map((x) => x.name)).toEqual(['Cover', '1 At a glance', '2 Business', '3 Cost and finance', '4 Basis', '5 Statements', '6 DSCR and ratios', '7 Repayment', 'Annex', 'Declaration']);
     expect(docStatus(s, p)).toBe('All questions answered');
-    const part = docText({ ...d, parts: [d.parts[1]] }).split('\n');
-    expect(part).toContain('About the project');
-    expect(part).toContain('The market');
-    expect(part).toContain('The process');
-    const said = d.parts[1].blocks.map((b) => ('text' in b ? b.text : '')).join(' ');
+    const part = docText({ ...d, parts: [d.parts[2]] }).split('\n');
+    expect(part).toContain('2. Promoters and the business');
+    expect(part.some((l) => /^2\.\d The market$/.test(l))).toBe(true);
+    expect(part.some((l) => /^2\.\d The process$/.test(l))).toBe(true);
+    const said = d.parts[2].blocks.filter((b) => b.kind === 'text').map((b) => ('text' in b ? b.text : '')).join(' ');
     expect(said).not.toMatch(/reputed|loyal|lakh|Rs\./);
     expect(said.match(/\d+/g)).toEqual(['4', '20', '3']);
   });
   it('a section the borrower empties stays out; words not in English letters are asked for', () => {
     const s = { ...R, words: { ...words, confirmed: true, draft: { ...words.draft!, market: '', products: 'डिब्बे बनाएगी।' } } };
     const d = reportDoc(s, p, TODAY)!;
-    expect(docText({ ...d, parts: [d.parts[0]] })).toMatch(/The report’s words, in English letters/);
+    expect(docText({ ...d, parts: [d.parts[1]] })).toMatch(/The report’s words, in English letters/);
     expect(wordsNeeds(s.words)).toEqual(['The report’s words, in English letters']);
     const ok = { ...s, words: { ...s.words, draft: { ...s.words.draft, products: 'Boxes.' } } }, d2 = reportDoc(ok, p, TODAY)!;
-    expect(docText({ ...d2, parts: [d2.parts[1]] }).split('\n')).not.toContain('The market');
+    expect(docText({ ...d2, parts: [d2.parts[2]] })).not.toMatch(/The market/);
   });
 });

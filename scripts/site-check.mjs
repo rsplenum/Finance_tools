@@ -1339,9 +1339,9 @@ if (touched('/project-report/')) {
   const pdf = await save('rep-download-pdf');
   if (pdf.name !== 'Project report - Asha Packaging.pdf') v(`the report PDF is named "${pdf.name}"`);
   const pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
-  if (!pages[0].includes('Total cost of the project 37,86,301') || !pages.join('\n').includes('Total assets 55,81,804')) v('the report PDF does not read back its cost and its balance sheet');
+  if (!/1\. The project at a glance[ .]*3/.test(pages[1] ?? '') || !pages.join('\n').includes('Total cost of the project 37,86,301') || !pages.join('\n').includes('Total assets 55,81,804')) v('the report PDF does not read back its contents, its cost and its balance sheet');
   const book = await workbook((await save('rep-download-xlsx')).bytes).catch((e) => v(`the report's Excel copy is not read: ${e.message}`)) ?? [];
-  if (book.map((x) => x.sheet).join('|') !== 'Summary|Projections|DSCR and ratios|Annex') v(`the report's Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))}`);
+  if (book.map((x) => x.sheet).join('|') !== 'Cover|1 At a glance|2 Business|3 Cost and finance|4 Basis|5 Statements|6 DSCR and ratios|7 Repayment|Annex|Declaration') v(`the report's Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))}`);
   const { lines, messages } = await docxLines((await save('rep-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
   if (messages.length || !lines.some((l) => l.startsWith('Total assets | 55,81,804'))) v(`the report's Word copy reads back ${JSON.stringify(lines.slice(0, 4))} ${JSON.stringify(messages).slice(0, 120)}`);
   // REP2 (D-AI-02): the words, one closed fold. Off, the boxes open to write in; then a reply written by hand for case R
@@ -1367,9 +1367,9 @@ if (touched('/project-report/')) {
   await expectText(page, v, 'rep-doc-status', 'All questions answered', 'the words ticked');
   await layout(page, v, 'the report’s words, 390 px');
   const worded = (await pdfPages((await save('rep-download-pdf')).bytes).catch((e) => [`(not read: ${e.message})`])).join('\n').replace(/\s+/g, ' ');
-  if (!worded.includes('About the project') || !worded.includes('It is in talks with 3 buyers.') || /reputed|lakh/.test(worded)) v(`the report PDF holds its words as ${worded.slice(worded.indexOf('About'), 200)}`);
+  if (!worded.includes('2. Promoters and the business') || !worded.includes('It is in talks with 3 buyers.') || /reputed|lakh/.test(worded)) v(`the report PDF holds its words as ${worded.slice(worded.indexOf('2. Promoters'), 200)}`);
   const wordedDocx = await docxLines((await save('rep-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
-  if (wordedDocx.messages.length || !wordedDocx.lines.includes('About the project') || !wordedDocx.lines.includes('The promoter')) v(`the report's Word copy lacks its words ${JSON.stringify(wordedDocx.messages).slice(0, 120)}`);
+  if (wordedDocx.messages.length || !wordedDocx.lines.some((l) => /^2\.\d The promoter$/.test(l))) v(`the report's Word copy lacks its words ${JSON.stringify(wordedDocx.messages).slice(0, 120)}`);
   // UXR5 (LOOP1d, D-UX-233): all answered, "See the answer" folds the questions: on a phone to "Edit answers" and a sheet
   // that holds them; from 1024 px to a rail of the answers as the check reads them, which opens in place. On a phone it is
   // the answer bar's arrow (OR11a), shown once the answer is out of view.

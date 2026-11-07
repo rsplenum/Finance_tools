@@ -43,7 +43,7 @@ const plain = (h) => h.replace(/<\/p>\s*<p>/g, ' ').replace(/<[^>]+>/g, '')
  * joined by " | " (a cell's paragraphs by spaces). `messages`: anything mammoth could not read.
  */
 export async function docxLines(bytes) {
-  const { value: html, messages } = await mammoth.convertToHtml({ buffer: Buffer.from(bytes) }, { styleMap: ["p[style-name='Title'] => h1:fresh"] });
+  const { value: html, messages } = await mammoth.convertToHtml({ buffer: Buffer.from(bytes) }, { styleMap: ["p[style-name='Title'] => h1:fresh", "p[style-name='TOC Heading'] => p:fresh", "p[style-name='toc 1'] => p:fresh"] });
   const lines = [];
   for (const [, tr, , inner] of html.matchAll(/<tr>(.*?)<\/tr>|<(p|h\d)>(.*?)<\/\2>/g)) {
     if (tr !== undefined) lines.push([...tr.matchAll(/<t[dh][^>]*>(.*?)<\/t[dh]>/g)].map((c) => plain(c[1])).join(' | '));

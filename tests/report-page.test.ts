@@ -88,15 +88,22 @@ describe('the project report page', () => {
 
 describe('the project report to download', () => {
   const p = preview(R), doc = reportDoc(R, p, TODAY)!, text = docText(doc), lines = text.split('\n');
-  it('page 1: the business, the project at a glance, the cost and the finance, signed', () => {
-    expect(lines.slice(3, 8)).toEqual([
-      'Asha Packaging', 'Project report: Manufacture of corrugated boxes, 2026-27 to 2030-31', 'Address: Plot 4, Example MIDC, Pune',
-      'Constitution: Partnership firm or LLP', 'Prepared on: 02-10-2026',
+  it('a cover, the contents, then sections 1 to 7, the annex and the declaration, signed', () => {
+    expect(lines.slice(3, 11)).toEqual([
+      'Project report', 'Asha Packaging', 'Manufacture of corrugated boxes', 'Term loan of Rs. 25,00,000 and a working-capital limit of Rs. 5,00,000',
+      'Projections for 2026-27 to 2030-31', 'Address: Plot 4, Example MIDC, Pune', 'Constitution: Partnership firm or LLP', 'Prepared on: 02-10-2026',
+    ]);
+    expect(lines.slice(11, 21)).toEqual([
+      'Contents', '1. The project at a glance', '2. Promoters and the business', '3. Cost of the project and means of finance',
+      '4. The basis of the projections', '5. Projected financial statements', '6. DSCR, break-even, ratios and working capital',
+      '7. Repayment of the term loan', 'Annex. How the figures are worked out, and the rules’ sources', 'Declaration',
     ]);
     expect(lines).toContain('Cost of the project: Rs. 37,86,301');
     expect(lines).toContain('Total cost of the project | 37,86,301');
+    expect(lines).toContain('Amounts in rupees; DSCR in times');
     expect(lines).toContain('For Asha Packaging');
-    expect(doc.parts.map((x) => x.name)).toEqual(['Summary', 'Projections', 'DSCR and ratios', 'Annex']);
+    expect(text).not.toMatch(/FinSight|website|this page|tick|click/i);
+    expect(doc.parts.map((x) => x.name)).toEqual(['Cover', '1 At a glance', '2 Business', '3 Cost and finance', '4 Basis', '5 Statements', '6 DSCR and ratios', '7 Repayment', 'Annex', 'Declaration']);
     expect(docStatus(R, p)).toBe('All questions answered');
     expect(fileName(R, p, 'pdf')).toBe('Project report - Asha Packaging.pdf');
   });
@@ -104,26 +111,32 @@ describe('the project report to download', () => {
     expect(text).not.toMatch(/assum|Tandon|Nayak|MPBF|(?<!cross-)checked/i);
   });
   it('holds no figure the page did not show or the user did not type', () => {
-    const sources = [JSON.stringify(p), JSON.stringify(R), JSON.stringify(DATA), '02-10-2026', SITE_NAME].join('\n'), figures = text.match(/\d+(?:,\d+)*(?:\.\d+)?/g) ?? [];
+    const sources = [JSON.stringify(p), JSON.stringify(R), JSON.stringify(DATA), '02-10-2026', SITE_NAME].join('\n');
+    // Section numbers (1., 5.1, section 4) are the document's own, not figures.
+    const figures = text.replace(/^(?:\d+\.)+\d* |^\d+ (?=[A-Z])|section \d+/gm, '').match(/\d+(?:,\d+)*(?:\.\d+)?/g) ?? [];
     expect(figures.length).toBeGreaterThan(300);
     expect(figures.filter((f) => !sources.includes(f))).toEqual([]);
   });
   it('the PDF, the Excel copy and the Word copy read back the same', async () => {
     const pages = await pdfPages(pdfOf(doc, MADE));
-    expect(pages[0]).toContain('Total cost of the project 37,86,301');
+    expect(pages[0]).toContain('Asha Packaging');
+    expect(pages[1]).toMatch(/1\. The project at a glance[ .]*3/);
+    expect(pages.join('\n')).toContain('Total cost of the project 37,86,301');
     expect(pages.join('\n')).toContain('Total assets 55,81,804');
     const book = await workbook(xlsxOf(doc, MADE));
-    expect(book.map((x) => x.sheet)).toEqual(['Summary', 'Projections', 'DSCR and ratios', 'Annex']);
-    const pat = book[1].data.find((r) => r[0] === 'Profit after tax')?.filter((c) => c !== null);
+    expect(book.map((x) => x.sheet)).toEqual(doc.parts.map((x) => x.name));
+    const pat = book[5].data.find((r) => r[0] === 'Profit after tax')?.filter((c) => c !== null);
     expect((pat?.[1] as number).toFixed(2)).toBe('1154406.67');
     const { lines: word, messages } = await docxLines(docxOf(doc, MADE));
     expect(messages).toEqual([]);
     expect(word.some((l) => l.startsWith('Total assets | 55,81,804'))).toBe(true);
   });
-  it('provisional while the business\'s address is missing, and said on every page', async () => {
+  it('provisional while the business\'s address is missing, and said on the cover and every page after', async () => {
     const s = { ...R, doc: { ...R.doc, address: '' } }, d = reportDoc(s, preview(s), TODAY)!;
     expect(docStatus(s, preview(s))).toBe('1 question left, for the document');
-    for (const page of await pdfPages(pdfOf(d, MADE))) expect(page.split('\n')[0]).toBe('Project report · Asha Packaging Provisional');
+    const pages = await pdfPages(pdfOf(d, MADE));
+    expect(pages[0]).toContain('Provisional: 1 still needed');
+    for (const page of pages.slice(1)) expect(page.split('\n')[0]).toBe('Asha Packaging · Project report Provisional');
   });
 });
 
