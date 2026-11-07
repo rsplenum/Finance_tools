@@ -368,7 +368,7 @@ export const REPORT_SCENE: ToolScene = (() => {
       lines: [
         { head: 'Worked out twice', text: 'Every figure worked out a second way, and shown only when both agree.' },
         { head: `${said(rows.length, true)} years ahead`, text: 'Profit and loss, balance sheet and cash flow, with break-even and the key ratios.' },
-        { head: 'Its basis', text: 'The figures entered, the loan’s repayment, and an annex of how each is worked out.' },
+        { head: 'Its basis', text: 'The figures entered, the repayment, and an annex of the method.' },
         { head: 'Ready to sign', text: 'Signatory, date and place lines, in each copy.' },
       ],
       files: ['PDF', 'Excel', 'Word'], ready: 'Ready to take to your lender',
