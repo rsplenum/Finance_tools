@@ -2,8 +2,8 @@
   "pages": {
     "/": {
       "before": 27,
-      "shown": 678,
-      "all": 678,
+      "shown": 676,
+      "all": 676,
       "plan": null,
       "long": 0,
       "abbr": 5,
@@ -1674,67 +1674,494 @@
       "why": "D-UX-216",
       "date": "2026-10-26"
     },
-    { "page": "/dscr/", "count": "plan", "from": 3910, "to": 3921, "why": "D-UX-196", "date": "2026-10-25" },
-    { "page": "/project-report/", "count": "all", "from": 3431, "to": 3435, "why": "D-UX-196", "date": "2026-10-25" },
-    { "page": "/project-report/", "count": "plan", "from": 2998, "to": 3004, "why": "D-UX-196", "date": "2026-10-25" },
-    { "page": "/project-report/", "count": "controls", "from": 43, "to": 44, "why": "D-UX-195", "date": "2026-10-25" },
-    { "page": "/project-report/", "count": "shown", "from": 981, "to": 1149, "why": "D-UX-202", "date": "2026-10-26" },
-    { "page": "/project-report/", "count": "all", "from": 3435, "to": 3642, "why": "D-UX-202", "date": "2026-10-26" },
-    { "page": "/project-report/", "count": "plan", "from": 3004, "to": 3180, "why": "D-UX-202", "date": "2026-10-26" },
-    { "page": "/project-report/", "count": "questions", "from": 16, "to": 17, "why": "D-UX-202", "date": "2026-10-26" },
-    { "page": "/project-report/", "count": "controls", "from": 44, "to": 47, "why": "D-UX-202", "date": "2026-10-26" },
-    { "page": "/dscr/", "count": "before", "from": 70, "to": 74, "why": "D-UX-202", "date": "2026-10-26" },
-    { "page": "/dscr/", "count": "shown", "from": 1018, "to": 1026, "why": "D-UX-202", "date": "2026-10-26" },
-    { "page": "/dscr/", "count": "all", "from": 3517, "to": 3538, "why": "D-UX-202", "date": "2026-10-26" },
-    { "page": "/dscr/", "count": "plan", "from": 3921, "to": 3942, "why": "D-UX-202", "date": "2026-10-26" },
-    { "page": "/project-report/", "count": "shown", "from": 1149, "to": 1152, "why": "D-UX-205", "date": "2026-10-26" },
-    { "page": "/project-report/", "count": "all", "from": 3642, "to": 3645, "why": "D-UX-205", "date": "2026-10-26" },
-    { "page": "/project-report/", "count": "questions", "from": 17, "to": 18, "why": "D-UX-205", "date": "2026-10-26" },
-    { "page": "/project-report/", "count": "controls", "from": 47, "to": 48, "why": "D-UX-205", "date": "2026-10-26" },
-    { "page": "/project-report/", "count": "shown", "from": 1152, "to": 1174, "why": "D-UX-207", "date": "2026-10-26" },
-    { "page": "/project-report/", "count": "all", "from": 3645, "to": 3667, "why": "D-UX-207", "date": "2026-10-26" },
-    { "page": "/project-report/", "count": "plan", "from": 3180, "to": 3192, "why": "D-UX-207", "date": "2026-10-26" },
-    { "page": "/project-report/", "count": "abbr", "from": 6, "to": 8, "why": "D-UX-212", "date": "2026-10-26" },
-    { "page": "/dscr/", "count": "shown", "from": 1026, "to": 1029, "why": "D-UX-231", "date": "2026-10-28" },
-    { "page": "/dscr/", "count": "all", "from": 3538, "to": 3541, "why": "D-UX-231", "date": "2026-10-28" },
-    { "page": "/dscr/", "count": "controls", "from": 32, "to": 33, "why": "D-UX-231", "date": "2026-10-28" },
-    { "page": "/cma/", "count": "shown", "from": 1391, "to": 1394, "why": "D-UX-233", "date": "2026-10-28" },
-    { "page": "/cma/", "count": "all", "from": 2419, "to": 2422, "why": "D-UX-233", "date": "2026-10-28" },
-    { "page": "/cma/", "count": "plan", "from": 2514, "to": 2517, "why": "D-UX-233", "date": "2026-10-28" },
-    { "page": "/cma/", "count": "controls", "from": 147, "to": 148, "why": "D-UX-233", "date": "2026-10-28" },
-    { "page": "/estimate/", "count": "shown", "from": 378, "to": 379, "why": "D-UX-233", "date": "2026-10-28" },
-    { "page": "/estimate/", "count": "all", "from": 1591, "to": 1592, "why": "D-UX-233", "date": "2026-10-28" },
-    { "page": "/estimate/", "count": "plan", "from": 3447, "to": 3448, "why": "D-UX-233", "date": "2026-10-28" },
-    { "page": "/project-report/", "count": "shown", "from": 1031, "to": 1034, "why": "D-UX-233", "date": "2026-10-28" },
-    { "page": "/project-report/", "count": "all", "from": 1506, "to": 1509, "why": "D-UX-233", "date": "2026-10-28" },
-    { "page": "/project-report/", "count": "plan", "from": 1477, "to": 1480, "why": "D-UX-233", "date": "2026-10-28" },
-    { "page": "/project-report/", "count": "controls", "from": 44, "to": 45, "why": "D-UX-233", "date": "2026-10-28" },
-    { "page": "/cma/", "count": "shown", "from": 1394, "to": 1420, "why": "D-UX-238", "date": "2026-10-28" },
-    { "page": "/cma/", "count": "all", "from": 2422, "to": 2448, "why": "D-UX-238", "date": "2026-10-28" },
-    { "page": "/cma/", "count": "plan", "from": 2517, "to": 2543, "why": "D-UX-238", "date": "2026-10-28" },
-    { "page": "/cma/", "count": "controls", "from": 148, "to": 151, "why": "D-UX-241", "date": "2026-10-28" },
-    { "page": "/dscr/", "count": "controls", "from": 33, "to": 34, "why": "D-UX-241", "date": "2026-10-28" },
-    { "page": "/estimate/", "count": "before", "from": 48, "to": 57, "why": "D-UX-238", "date": "2026-10-28" },
-    { "page": "/estimate/", "count": "controls", "from": 36, "to": 37, "why": "D-UX-238", "date": "2026-10-28" },
-    { "page": "/project-report/", "count": "before", "from": 57, "to": 66, "why": "D-UX-238", "date": "2026-10-28" },
-    { "page": "/project-report/", "count": "all", "from": 1509, "to": 1526, "why": "D-UX-240", "date": "2026-10-28" },
-    { "page": "/project-report/", "count": "plan", "from": 1480, "to": 1497, "why": "D-UX-240", "date": "2026-10-28" },
-    { "page": "/project-report/", "count": "controls", "from": 45, "to": 46, "why": "D-UX-240", "date": "2026-10-28" },
-    { "page": "/cma/", "count": "shown", "from": 1417, "to": 1419, "why": "D-UX-248", "date": "2026-10-29" },
-    { "page": "/cma/", "count": "all", "from": 2445, "to": 2447, "why": "D-UX-248", "date": "2026-10-29" },
-    { "page": "/cma/", "count": "plan", "from": 2540, "to": 2542, "why": "D-UX-248", "date": "2026-10-29" },
-    { "page": "/dscr/", "count": "shown", "from": 1026, "to": 1028, "why": "D-UX-248", "date": "2026-10-29" },
-    { "page": "/dscr/", "count": "all", "from": 3538, "to": 3540, "why": "D-UX-248", "date": "2026-10-29" },
-    { "page": "/dscr/", "count": "plan", "from": 2038, "to": 2040, "why": "D-UX-248", "date": "2026-10-29" },
-    { "page": "/project-report/", "count": "plan", "from": 1494, "to": 1500, "why": "D-UX-253", "date": "2026-10-29" },
-    { "page": "/", "count": "controls", "from": 7, "to": 15, "why": "D-UX-257", "date": "2026-10-31" },
-    { "page": "/project-report/", "count": "plan", "from": 1500, "to": 1520, "why": "D-UX-265", "date": "2026-11-01" },
-    { "page": "/cma/", "count": "shown", "from": 722, "to": 727, "why": "D-UX-271", "date": "2026-11-01" },
-    { "page": "/cma/", "count": "all", "from": 1845, "to": 1850, "why": "D-UX-271", "date": "2026-11-01" },
-    { "page": "/cma/", "count": "plan", "from": 1940, "to": 1946, "why": "D-UX-271", "date": "2026-11-01" },
-    { "page": "/cma/", "count": "controls", "from": 57, "to": 63, "why": "D-UX-271", "date": "2026-11-01" },
-    { "page": "/dscr/", "count": "controls", "from": 33, "to": 35, "why": "D-UX-275", "date": "2026-11-01" },
-    { "page": "/estimate/", "count": "controls", "from": 37, "to": 39, "why": "D-UX-275", "date": "2026-11-01" }
+    {
+      "page": "/dscr/",
+      "count": "plan",
+      "from": 3910,
+      "to": 3921,
+      "why": "D-UX-196",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/project-report/",
+      "count": "all",
+      "from": 3431,
+      "to": 3435,
+      "why": "D-UX-196",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/project-report/",
+      "count": "plan",
+      "from": 2998,
+      "to": 3004,
+      "why": "D-UX-196",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/project-report/",
+      "count": "controls",
+      "from": 43,
+      "to": 44,
+      "why": "D-UX-195",
+      "date": "2026-10-25"
+    },
+    {
+      "page": "/project-report/",
+      "count": "shown",
+      "from": 981,
+      "to": 1149,
+      "why": "D-UX-202",
+      "date": "2026-10-26"
+    },
+    {
+      "page": "/project-report/",
+      "count": "all",
+      "from": 3435,
+      "to": 3642,
+      "why": "D-UX-202",
+      "date": "2026-10-26"
+    },
+    {
+      "page": "/project-report/",
+      "count": "plan",
+      "from": 3004,
+      "to": 3180,
+      "why": "D-UX-202",
+      "date": "2026-10-26"
+    },
+    {
+      "page": "/project-report/",
+      "count": "questions",
+      "from": 16,
+      "to": 17,
+      "why": "D-UX-202",
+      "date": "2026-10-26"
+    },
+    {
+      "page": "/project-report/",
+      "count": "controls",
+      "from": 44,
+      "to": 47,
+      "why": "D-UX-202",
+      "date": "2026-10-26"
+    },
+    {
+      "page": "/dscr/",
+      "count": "before",
+      "from": 70,
+      "to": 74,
+      "why": "D-UX-202",
+      "date": "2026-10-26"
+    },
+    {
+      "page": "/dscr/",
+      "count": "shown",
+      "from": 1018,
+      "to": 1026,
+      "why": "D-UX-202",
+      "date": "2026-10-26"
+    },
+    {
+      "page": "/dscr/",
+      "count": "all",
+      "from": 3517,
+      "to": 3538,
+      "why": "D-UX-202",
+      "date": "2026-10-26"
+    },
+    {
+      "page": "/dscr/",
+      "count": "plan",
+      "from": 3921,
+      "to": 3942,
+      "why": "D-UX-202",
+      "date": "2026-10-26"
+    },
+    {
+      "page": "/project-report/",
+      "count": "shown",
+      "from": 1149,
+      "to": 1152,
+      "why": "D-UX-205",
+      "date": "2026-10-26"
+    },
+    {
+      "page": "/project-report/",
+      "count": "all",
+      "from": 3642,
+      "to": 3645,
+      "why": "D-UX-205",
+      "date": "2026-10-26"
+    },
+    {
+      "page": "/project-report/",
+      "count": "questions",
+      "from": 17,
+      "to": 18,
+      "why": "D-UX-205",
+      "date": "2026-10-26"
+    },
+    {
+      "page": "/project-report/",
+      "count": "controls",
+      "from": 47,
+      "to": 48,
+      "why": "D-UX-205",
+      "date": "2026-10-26"
+    },
+    {
+      "page": "/project-report/",
+      "count": "shown",
+      "from": 1152,
+      "to": 1174,
+      "why": "D-UX-207",
+      "date": "2026-10-26"
+    },
+    {
+      "page": "/project-report/",
+      "count": "all",
+      "from": 3645,
+      "to": 3667,
+      "why": "D-UX-207",
+      "date": "2026-10-26"
+    },
+    {
+      "page": "/project-report/",
+      "count": "plan",
+      "from": 3180,
+      "to": 3192,
+      "why": "D-UX-207",
+      "date": "2026-10-26"
+    },
+    {
+      "page": "/project-report/",
+      "count": "abbr",
+      "from": 6,
+      "to": 8,
+      "why": "D-UX-212",
+      "date": "2026-10-26"
+    },
+    {
+      "page": "/dscr/",
+      "count": "shown",
+      "from": 1026,
+      "to": 1029,
+      "why": "D-UX-231",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/dscr/",
+      "count": "all",
+      "from": 3538,
+      "to": 3541,
+      "why": "D-UX-231",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/dscr/",
+      "count": "controls",
+      "from": 32,
+      "to": 33,
+      "why": "D-UX-231",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/cma/",
+      "count": "shown",
+      "from": 1391,
+      "to": 1394,
+      "why": "D-UX-233",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/cma/",
+      "count": "all",
+      "from": 2419,
+      "to": 2422,
+      "why": "D-UX-233",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/cma/",
+      "count": "plan",
+      "from": 2514,
+      "to": 2517,
+      "why": "D-UX-233",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/cma/",
+      "count": "controls",
+      "from": 147,
+      "to": 148,
+      "why": "D-UX-233",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/estimate/",
+      "count": "shown",
+      "from": 378,
+      "to": 379,
+      "why": "D-UX-233",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/estimate/",
+      "count": "all",
+      "from": 1591,
+      "to": 1592,
+      "why": "D-UX-233",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/estimate/",
+      "count": "plan",
+      "from": 3447,
+      "to": 3448,
+      "why": "D-UX-233",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/project-report/",
+      "count": "shown",
+      "from": 1031,
+      "to": 1034,
+      "why": "D-UX-233",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/project-report/",
+      "count": "all",
+      "from": 1506,
+      "to": 1509,
+      "why": "D-UX-233",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/project-report/",
+      "count": "plan",
+      "from": 1477,
+      "to": 1480,
+      "why": "D-UX-233",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/project-report/",
+      "count": "controls",
+      "from": 44,
+      "to": 45,
+      "why": "D-UX-233",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/cma/",
+      "count": "shown",
+      "from": 1394,
+      "to": 1420,
+      "why": "D-UX-238",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/cma/",
+      "count": "all",
+      "from": 2422,
+      "to": 2448,
+      "why": "D-UX-238",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/cma/",
+      "count": "plan",
+      "from": 2517,
+      "to": 2543,
+      "why": "D-UX-238",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/cma/",
+      "count": "controls",
+      "from": 148,
+      "to": 151,
+      "why": "D-UX-241",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/dscr/",
+      "count": "controls",
+      "from": 33,
+      "to": 34,
+      "why": "D-UX-241",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/estimate/",
+      "count": "before",
+      "from": 48,
+      "to": 57,
+      "why": "D-UX-238",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/estimate/",
+      "count": "controls",
+      "from": 36,
+      "to": 37,
+      "why": "D-UX-238",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/project-report/",
+      "count": "before",
+      "from": 57,
+      "to": 66,
+      "why": "D-UX-238",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/project-report/",
+      "count": "all",
+      "from": 1509,
+      "to": 1526,
+      "why": "D-UX-240",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/project-report/",
+      "count": "plan",
+      "from": 1480,
+      "to": 1497,
+      "why": "D-UX-240",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/project-report/",
+      "count": "controls",
+      "from": 45,
+      "to": 46,
+      "why": "D-UX-240",
+      "date": "2026-10-28"
+    },
+    {
+      "page": "/cma/",
+      "count": "shown",
+      "from": 1417,
+      "to": 1419,
+      "why": "D-UX-248",
+      "date": "2026-10-29"
+    },
+    {
+      "page": "/cma/",
+      "count": "all",
+      "from": 2445,
+      "to": 2447,
+      "why": "D-UX-248",
+      "date": "2026-10-29"
+    },
+    {
+      "page": "/cma/",
+      "count": "plan",
+      "from": 2540,
+      "to": 2542,
+      "why": "D-UX-248",
+      "date": "2026-10-29"
+    },
+    {
+      "page": "/dscr/",
+      "count": "shown",
+      "from": 1026,
+      "to": 1028,
+      "why": "D-UX-248",
+      "date": "2026-10-29"
+    },
+    {
+      "page": "/dscr/",
+      "count": "all",
+      "from": 3538,
+      "to": 3540,
+      "why": "D-UX-248",
+      "date": "2026-10-29"
+    },
+    {
+      "page": "/dscr/",
+      "count": "plan",
+      "from": 2038,
+      "to": 2040,
+      "why": "D-UX-248",
+      "date": "2026-10-29"
+    },
+    {
+      "page": "/project-report/",
+      "count": "plan",
+      "from": 1494,
+      "to": 1500,
+      "why": "D-UX-253",
+      "date": "2026-10-29"
+    },
+    {
+      "page": "/",
+      "count": "controls",
+      "from": 7,
+      "to": 15,
+      "why": "D-UX-257",
+      "date": "2026-10-31"
+    },
+    {
+      "page": "/project-report/",
+      "count": "plan",
+      "from": 1500,
+      "to": 1520,
+      "why": "D-UX-265",
+      "date": "2026-11-01"
+    },
+    {
+      "page": "/cma/",
+      "count": "shown",
+      "from": 722,
+      "to": 727,
+      "why": "D-UX-271",
+      "date": "2026-11-01"
+    },
+    {
+      "page": "/cma/",
+      "count": "all",
+      "from": 1845,
+      "to": 1850,
+      "why": "D-UX-271",
+      "date": "2026-11-01"
+    },
+    {
+      "page": "/cma/",
+      "count": "plan",
+      "from": 1940,
+      "to": 1946,
+      "why": "D-UX-271",
+      "date": "2026-11-01"
+    },
+    {
+      "page": "/cma/",
+      "count": "controls",
+      "from": 57,
+      "to": 63,
+      "why": "D-UX-271",
+      "date": "2026-11-01"
+    },
+    {
+      "page": "/dscr/",
+      "count": "controls",
+      "from": 33,
+      "to": 35,
+      "why": "D-UX-275",
+      "date": "2026-11-01"
+    },
+    {
+      "page": "/estimate/",
+      "count": "controls",
+      "from": 37,
+      "to": 39,
+      "why": "D-UX-275",
+      "date": "2026-11-01"
+    }
   ],
   "fontProbe": 320.2
 }

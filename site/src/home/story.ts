@@ -344,9 +344,11 @@ export const REPORT_SCENE: ToolScene = (() => {
   const average = p.checks?.find((c) => c.id === 'dscrAverage')?.level.split(' ')[0], tests = p.checks ?? [];
   if (weak.meets || !fixed.meets || !average || !tests.length || tests.some((c) => c.verdict !== 'meets')) throw new Error('The report scene needs a case that misses and sales that pass every test.');
   const rows = yearRows(weak.years, fixed.years, level.n, 'least');
-  const doc = reportDoc(REPORT_FIXED, p, todayIso()), title = doc?.parts[0].blocks.find((b) => b.kind === 'title');
-  const heads = blocksOf(doc, 'heading').map((h) => h.text), has = (h: string) => heads.includes(h);
-  if (!doc || title?.kind !== 'title' || !title.sub?.startsWith('Project report: ') || !partOf(doc, 'Annex') || !blocksOf(doc, 'signature').length || !doc.footer?.includes(TWICE)
+  const doc = reportDoc(REPORT_FIXED, p, todayIso()), cover = blocksOf(doc, 'cover')[0], period = cover?.lines.find((x) => x.startsWith('Projections for '));
+  // Its sections and their headings, without their numbers (DOC1: 5.1 Projected profit and loss).
+  const heads = [...blocksOf(doc, 'heading'), ...blocksOf(doc, 'title')].map((h) => h.text.replace(/^(?:\d+\.)+\d* /, '')), has = (h: string) => heads.includes(h);
+  const twice = blocksOf(doc, 'list').some((b) => b.items.some((x) => /^Every figure in this report is worked out twice/.test(x)));
+  if (!doc || !cover?.sub || !period || !partOf(doc, 'Annex') || !blocksOf(doc, 'signature').length || !twice
     || !['Projected profit and loss', 'Projected balance sheet, at each year end', 'Projected cash flow', 'Repayment of the term loan', 'How the figures are worked out'].every(has))
     throw new Error('The report scene\'s document lacks a part it shows.');
   const what = 'cash available ÷ debt service', c = REPORT_CASE.cost, typedCost = ['building', 'machinery', 'furniture', 'preliminary'] as const;
@@ -361,12 +363,12 @@ export const REPORT_SCENE: ToolScene = (() => {
     sum: { typed: sumOf(weak.text, what), fixed: sumOf(fixed.text, what) },
     chip: { typed: `Below level ${level.text}`, fixed: `Meets ${level.text}` },
     statement: {
-      title: 'Project report', sub: title.sub.replace(/^Project report: /, ''),
+      title: 'Project report', sub: `${cover.sub}, ${period.replace(/^Projections for /, '')}`,
       verdict: `Meets all ${said(tests.length)} tests a lender reads: the lowest DSCR is ${fixed.dscr} against ${level.text}; the project costs ${lc(fixed.cost)}.`,
       lines: [
         { head: 'Worked out twice', text: 'Every figure worked out a second way, and shown only when both agree.' },
         { head: `${said(rows.length, true)} years ahead`, text: 'Profit and loss, balance sheet and cash flow, with break-even and the key ratios.' },
-        { head: 'Its basis', text: 'Annex: the loan’s repayment, the figures entered and how each is worked out.' },
+        { head: 'Its basis', text: 'The figures entered, the repayment, and an annex of the method.' },
         { head: 'Ready to sign', text: 'Signatory, date and place lines, in each copy.' },
       ],
       files: ['PDF', 'Excel', 'Word'], ready: 'Ready to take to your lender',

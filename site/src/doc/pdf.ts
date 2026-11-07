@@ -5,7 +5,7 @@
  * for the width. Pure: bytes in memory, no DOM. Text is WinAnsi (Latin letters); `printable` says whether a user's text
  * prints as typed.
  */
-import type { Block, Doc, Row, Table } from './doc';
+import type { Block, Cover, Doc, Part, Row, Table } from './doc';
 
 // ---- Letters: WinAnsi codes, and Helvetica widths in thousandths of the size (Adobe's AFM files) ----
 
@@ -98,7 +98,7 @@ export function wrap(t: string, font: Font, size: number, max: number): string[]
 // ---- Pages ----
 
 export const PAGE_W = 595.28, PAGE_H = 841.89, LEFT = 42, WIDTH = PAGE_W - 2 * LEFT, TOP = PAGE_H - 60, BOTTOM = 60;
-const INK = '0.1 g', MUTED = '0.33 g', SHADE = '0.925 g';
+const INK = '0.1 g', MUTED = '0.33 g', SHADE = '0.925 g', NAVY = '0.11 0.2 0.36 rg', NAVY_LINE = '0.11 0.2 0.36 RG';
 const num = (x: number) => String(Math.round(x * 100) / 100);
 const esc = (codes: number[]) => codes.map((c) =>
   c === 40 || c === 41 || c === 92 ? `\\${String.fromCharCode(c)}` : c < 32 || c > 126 ? `\\${c.toString(8).padStart(3, '0')}` : String.fromCharCode(c)).join('');
@@ -106,14 +106,21 @@ const esc = (codes: number[]) => codes.map((c) =>
 class Layout {
   pages: string[][] = [];
   y = TOP;
+  /** Pages without the running header and footer (a cover). */
+  bare = new Set<number>();
+  /** Where the contents' lines go, drawn once every part's page is known. */
+  contents?: { page: number; ys: number[] };
+  /** A document of numbered sections: an annex's (small) title in navy over a rule, kept with what follows. */
+  sectioned = false;
   /** A new layout, or one that draws on pages already laid out. */
   constructor(pages?: string[][]) { if (pages) this.pages = pages; else this.newPage(); }
   newPage() { this.pages.push([]); this.y = TOP; }
   get ops() { return this.pages[this.pages.length - 1]; }
   /** A new page unless `h` more points fit on this one. */
   room(h: number) { if (this.y - h < BOTTOM && this.y < TOP) this.newPage(); }
-  text(x: number, baseline: number, t: string, font: Font, size: number, color = INK) {
-    this.ops.push(`BT ${color} /F${font === 'B' ? 2 : 1} ${num(size)} Tf ${num(x)} ${num(baseline)} Td (${esc(encode(t))}) Tj ET`);
+  /** `spacing`: extra points between letters (a cover's kicker). */
+  text(x: number, baseline: number, t: string, font: Font, size: number, color = INK, spacing = 0) {
+    this.ops.push(`BT ${color} /F${font === 'B' ? 2 : 1} ${num(size)} Tf${spacing ? ` ${num(spacing)} Tc` : ''} ${num(x)} ${num(baseline)} Td (${esc(encode(t))}) Tj${spacing ? ' 0 Tc' : ''} ET`);
   }
   right(x: number, baseline: number, t: string, font: Font, size: number, color = INK) {
     this.text(x - textWidth(t, font, size), baseline, t, font, size, color);
@@ -140,12 +147,57 @@ const SIZE = 9.5, LH = SIZE * 1.38;
 /** A table this short (its header and rows) is kept on one page, with its heading; a longer one runs on. */
 const KEEP = (TOP - BOTTOM) * 0.6;
 
-/** One block from the cursor down; `next` lets a heading stay with the table after it. */
-function block(L: Layout, b: Block, next?: Block) {
+/** The cover: the kind of document, the name large, what it is for, and its facts at the foot; then a new page. */
+function cover(L: Layout, c: Cover) {
+  L.bare.add(L.pages.length - 1);
+  L.shade(0, PAGE_H, PAGE_W, 10, NAVY);
+  let y = PAGE_H - 170;
+  L.text(LEFT, y, c.kicker.toUpperCase(), 'B', 10, NAVY, 2);
+  y -= 16;
+  L.ops.push(`${NAVY_LINE} 2 w ${num(LEFT)} ${num(y)} m ${num(LEFT + 46)} ${num(y)} l S`);
+  y -= 22;
+  for (const line of wrap(c.title, 'B', 30, WIDTH)) { L.text(LEFT, y - 26, line, 'B', 30); y -= 37; }
+  if (c.sub) for (const line of wrap(c.sub, 'R', 14, WIDTH)) { L.text(LEFT, y - 16, line, 'R', 14, MUTED); y -= 20; }
+  y -= 18;
+  for (const t of c.lines) for (const line of wrap(t, 'R', 11, WIDTH)) { L.text(LEFT, y - 11, line, 'R', 11); y -= 16; }
+  // The facts at the foot, above any mark: a rule, then each name and its value.
+  const key = 110, rows = c.facts.map(([k, v]) => ({ k, v: wrap(v, 'R', 10, WIDTH - key) }));
+  const markH = c.mark ? 18 + 13 * (1 + wrap(c.mark.text, 'R', 9.5, WIDTH - 24).length) : 0;
+  let f = BOTTOM + 20 + (markH ? markH + 22 : 0) + rows.reduce((a, r) => a + r.v.length * 14 + 5, 0);
+  L.rule(LEFT, LEFT + WIDTH, f + 12, 0.6, 0.6);
+  for (const r of rows) {
+    L.text(LEFT, f - 10, r.k, 'R', 10, MUTED);
+    r.v.forEach((t, i) => L.text(LEFT + key, f - 10 - i * 14, t, 'R', 10));
+    f -= r.v.length * 14 + 5;
+  }
+  if (c.mark) {
+    const top = BOTTOM + 20 + markH, lines = wrap(c.mark.text, 'R', 9.5, WIDTH - 24);
+    L.ops.push(`1 0.96 0.86 rg 0.85 0.62 0.2 RG 0.8 w ${num(LEFT)} ${num(top - markH)} ${num(WIDTH)} ${num(markH)} re B`);
+    L.text(LEFT + 12, top - 9 - 10, c.mark.title, 'B', 10.5);
+    lines.forEach((t, i) => L.text(LEFT + 12, top - 9 - 10 - 15 - i * 13, t, 'R', 9.5));
+  }
+  L.newPage();
+}
+
+/** One block from the cursor down; `next` lets a heading stay with the table after it; `entries`, the contents' lines. */
+function block(L: Layout, b: Block, next: Block | undefined, entries: string[]) {
   switch (b.kind) {
+    case 'cover':
+      cover(L, b);
+      return;
+    case 'contents': {
+      L.text(LEFT, L.y - 17, b.title, 'B', 17);
+      L.y -= 40;
+      L.contents = { page: L.pages.length - 1, ys: entries.map((_, i) => L.y - 11 - i * 24) };
+      L.y -= entries.length * 24;
+      return;
+    }
     case 'title': {
       const size = b.small ? 14 : 17;
-      for (const line of wrap(b.text, 'B', size, WIDTH)) { L.text(LEFT, L.y - size, line, 'B', size); L.y -= size * 1.3; }
+      const navy = b.small && L.sectioned;
+      if (navy) L.room(size * 1.3 + 90);
+      for (const line of wrap(b.text, 'B', size, WIDTH)) { L.text(LEFT, L.y - size, line, 'B', size, navy ? NAVY : INK); L.y -= size * 1.3; }
+      if (navy) { L.y -= 1; L.ops.push(`${NAVY_LINE} 0.8 w ${num(LEFT)} ${num(L.y)} m ${num(LEFT + WIDTH)} ${num(L.y)} l S`); L.y -= 6; }
       L.y -= 3;
       if (b.sub) L.lines(wrap(b.sub, 'R', 10.5, WIDTH), LEFT, 10.5, 'R', MUTED);
       L.y -= 8;
@@ -301,7 +353,7 @@ const rowHeight = (t: Table, r: Row, m: ReturnType<typeof measure>, width: numbe
 /** The height of one group of columns: the header and every row. */
 function groupHeight(t: Table): number {
   const m = measure(t);
-  return m.headerH + 8 + t.rows.reduce((a, r) => a + rowHeight(t, r, m, WIDTH), 0);
+  return m.headerH + 8 + (t.unit ? 11 : 0) + t.rows.reduce((a, r) => a + rowHeight(t, r, m, WIDTH), 0);
 }
 
 function table(L: Layout, t: Table) {
@@ -313,6 +365,7 @@ function table(L: Layout, t: Table) {
     const rights: number[] = [];
     g.reduce((x, j) => { rights.push(x + colW[j] + extra); return x + colW[j] + extra; }, LEFT + keyW);
     const end = rights[rights.length - 1];
+    if (t.unit) { L.room(m.headerH + 3 * lh + 11); L.right(end, L.y - 7.5, t.unit, 'R', 7.5, MUTED); L.y -= 11; }
     const header = () => {
       const h = m.headerH - 2;
       L.room(h + 2 * lh);
@@ -368,17 +421,44 @@ const utf16 = (t: string) => `<FEFF${[...t].map((ch) => {
 }).join('').toUpperCase()}>`;
 const pdfDate = (d: Date) => `D:${d.toISOString().replace(/[-:T]/g, '').slice(0, 14)}Z`;
 
+/** The document laid out: its pages, and the page each part starts on. */
+function lay(doc: Doc) {
+  const L = new Layout(), parts = doc.parts.filter((p) => !p.sheetOnly), sections = parts.filter((p) => p.section), starts = new Map<Part, number>();
+  L.sectioned = sections.length > 0;
+  parts.forEach((part, i) => {
+    if (i && part.flow) { L.y -= 22; L.room(160); }
+    else if (i && L.y < TOP) L.newPage();
+    starts.set(part, L.pages.length - 1);
+    part.blocks.forEach((b, k) => block(L, b, part.blocks[k + 1], sections.map((x) => x.section as string)));
+  });
+  return { L, sections, starts };
+}
+
+/** The contents' lines with the PDF page each starts on (the Word copy's contents field shows them until Word updates it). */
+export function sectionPages(doc: Doc): [string, number][] {
+  const { sections, starts } = lay(doc);
+  return sections.map((x) => [x.section as string, (starts.get(x) ?? 0) + 1]);
+}
+
 /** The document as a PDF file. */
 export function pdfOf(doc: Doc, made: Date): Uint8Array<ArrayBuffer> {
-  const L = new Layout();
-  doc.parts.filter((p) => !p.sheetOnly).forEach((part, i) => {
-    if (i && L.y < TOP) L.newPage();
-    part.blocks.forEach((b, k) => block(L, b, part.blocks[k + 1]));
-  });
-  // What every page carries: the header (cut to one line before its mark), the footer and the page number.
+  const { L, sections, starts } = lay(doc);
+  // The contents' lines: each section, a leader of dots, and the page it starts on.
+  if (L.contents) {
+    const at = new Layout([L.pages[L.contents.page]]), ys = L.contents.ys;
+    sections.forEach((x, i) => {
+      const page = String((starts.get(x) ?? 0) + 1), t = x.section as string, top = /^\d/.test(t);
+      at.text(LEFT, ys[i], t, top ? 'B' : 'R', 11);
+      const from = LEFT + textWidth(t, top ? 'B' : 'R', 11) + 8, to = LEFT + WIDTH - textWidth(page, 'R', 11) - 8, dot = textWidth('.', 'R', 11) + 2.2;
+      if (to > from) at.text(from, ys[i], '.'.repeat(Math.floor((to - from) / dot)), 'R', 11, MUTED, 2.2);
+      at.right(LEFT + WIDTH, ys[i], page, 'R', 11);
+    });
+  }
+  // What every page carries but a cover: the header (cut to one line before its mark), the footer and the page number.
   const n = L.pages.length, foot = wrap(doc.footer, 'R', 7.5, WIDTH - 70).slice(0, 2);
   const head = wrap(doc.header, 'R', 8, WIDTH - (doc.mark ? textWidth(doc.mark, 'B', 8) + 20 : 0))[0];
   L.pages.forEach((ops, i) => {
+    if (L.bare.has(i)) return;
     const at = new Layout([ops]);
     at.text(LEFT, PAGE_H - 36, head, 'R', 8, MUTED);
     if (doc.mark) at.right(LEFT + WIDTH, PAGE_H - 36, doc.mark, 'B', 8);

@@ -1,12 +1,11 @@
 /**
  * The report's words (REP2, D-AI-01, D-AI-02), apart from the page: the user's own inputs as words for the AI (never a
- * figure of the project), its answer checked (engine/narrative.ts), what the document still needs, and the words as a
- * part of the document once the borrower ticks them as true. Pure, no DOM.
+ * figure of the project), its answer checked (engine/narrative.ts), what the document still needs, and the words as
+ * sections of the document once the borrower ticks them as true. Pure, no DOM.
  */
 import { NOTES, SECTIONS, checkDraft, type NarrativeInput, type NoteId } from '../../../engine/narrative';
 import { BORROWERS } from '../../../engine/tax';
 import { PMEGP } from '../../../engine/report';
-import type { Block, Part } from '../doc/doc';
 import { printable } from '../doc/pdf';
 import { AREA_CHOICES, CATEGORY_CHOICES, HEADS, guaranteeOf, type ReportState, type ReportWords } from './model';
 
@@ -50,13 +49,11 @@ export function wordsNeeds(w?: ReportWords): string[] {
   return SECTIONS.every((x) => printable(w.draft?.[x.id] ?? '')) ? [] : ['The report’s words, in English letters'];
 }
 
-/** The words as a part of the document, each section with its heading; only once ticked, and a section left empty is left out. */
-export function wordsPart(w?: ReportWords): Part | undefined {
-  if (!w?.confirmed || !written(w)) return undefined;
-  const blocks: Block[] = [{ kind: 'title', text: 'About the project', small: true }];
-  for (const x of SECTIONS) {
+/** The words as sections of the document, each with its heading; only once ticked, and a section left empty is left out. */
+export function wordsSections(w?: ReportWords): [string, string][] {
+  if (!w?.confirmed || !written(w)) return [];
+  return SECTIONS.flatMap((x): [string, string][] => {
     const t = w.draft?.[x.id].trim();
-    if (t) blocks.push({ kind: 'heading', text: x.label }, { kind: 'text', text: t });
-  }
-  return { name: 'About the project', blocks };
+    return t ? [[x.label, t]] : [];
+  });
 }

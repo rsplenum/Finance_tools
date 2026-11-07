@@ -26,7 +26,9 @@ const NUMBER_FORMATS = [164, 165, 2, 166, 1, 0];
 
 // Fonts: plain, bold, the title, muted, an annex's title, a key figure. Fills: none, gray125 (required), shaded, amber.
 // Borders: none, a rule above, a rule below, rules above and below.
-const FONTS = ['<sz val="11"/>', '<b/><sz val="11"/>', '<b/><sz val="16"/>', '<sz val="10"/><color rgb="FF545454"/>', '<b/><sz val="13"/>', '<b/><sz val="14"/>']
+// Then a cover's kicker, a cover's title, and a link to a sheet.
+const FONTS = ['<sz val="11"/>', '<b/><sz val="11"/>', '<b/><sz val="16"/>', '<sz val="10"/><color rgb="FF545454"/>', '<b/><sz val="13"/>', '<b/><sz val="14"/>',
+  '<b/><sz val="10"/><color rgb="FF1C335C"/>', '<b/><sz val="22"/>', '<u/><sz val="11"/><color rgb="FF1C335C"/>']
   .map((f) => `<font>${f}<name val="Calibri"/><family val="2"/></font>`);
 const FILLS = ['<patternFill patternType="none"/>', '<patternFill patternType="gray125"/>',
   '<patternFill patternType="solid"><fgColor rgb="FFECECEC"/><bgColor indexed="64"/></patternFill>',
@@ -49,6 +51,7 @@ const S = {
 };
 /** A figure's style: its number format, plain, in bold under a rule (a total), or in bold between two (a ratio). */
 const NUMBER = NUMBER_FORMATS.map((fmt) => [style({ fmt }), style({ fmt, font: 1, border: 1 }), style({ fmt, font: 1, border: 3 })]);
+const C = { kicker: style({ font: 6 }), title: style({ font: 7 }), link: style({ font: 8 }), unit: style({ font: 3, align: 'right' }) };
 
 const STYLES = () => `${HEAD}<styleSheet xmlns="${MAIN}">
 <numFmts count="${FORMATS.length}">${FORMATS.map((f, i) => `<numFmt numFmtId="${164 + i}" formatCode="${xml(f)}"/>`).join('')}</numFmts>
@@ -71,7 +74,7 @@ type XCell = { text: string; style: number } | { value: number; style: number; f
  * A row of cells. `across`: its first cell runs across every column of the sheet, wrapped (its height estimated); `span`:
  * a fact, its value across the columns after its name; `table`: a table's row, which sets the columns' widths.
  */
-interface XRow { cells: XCell[]; across?: boolean; span?: number; size?: number; table?: boolean; ref?: string }
+interface XRow { cells: XCell[]; across?: boolean; span?: number; size?: number; table?: boolean; ref?: string; link?: string; tall?: number }
 
 /** Column letters: 0 → A, 26 → AA. */
 const column = (i: number): string => (i < 26 ? String.fromCharCode(65 + i) : column(Math.floor(i / 26) - 1) + column(i % 26));
@@ -83,13 +86,27 @@ function numberCell(c: Cell, kind?: Row['kind']): XCell {
   return { value: f.value === 0 ? 0 : f.value, style: NUMBER[NUMBER_FORMATS.indexOf(fmt)][k], ...(f.formula ? { formula: f.formula } : {}) };
 }
 
-/** The rows of one sheet, from a part's blocks: text across the sheet, facts as name and value, tables across. */
-function sheetRows(blocks: Block[], notes: string[] = []): XRow[] {
+/** The rows of one sheet, from a part's blocks: text across the sheet, facts as name and value, tables across; `links`, the contents' lines and their sheets. */
+function sheetRows(blocks: Block[], notes: string[] = [], links: [string, string][] = []): XRow[] {
   const rows: XRow[] = [], blank = () => rows.push({ cells: [] });
   const line = (text: string, s: number = S.wrap, size = 11) => rows.push({ cells: [{ text, style: s }], across: true, size });
   const fact = (k: string, v: string) => rows.push({ cells: [{ text: k, style: S.mutedWrap }, { text: v, style: S.wrap }], span: 1 });
   for (const b of blocks) {
-    if (b.kind === 'title') {
+    if (b.kind === 'cover') {
+      rows.push({ cells: [{ text: b.kicker.toUpperCase(), style: C.kicker }] }, { cells: [{ text: b.title, style: C.title }], tall: 30 });
+      if (b.sub) line(b.sub, S.mutedWrap, 10);
+      for (const n of notes.splice(0)) line(n, S.mutedWrap, 10);
+      blank();
+      for (const l of b.lines) line(l);
+      blank();
+      for (const [k, v] of b.facts) fact(k, v);
+      if (b.mark) { blank(); line(b.mark.title, S.boxTitle); line(b.mark.text, S.boxItem); }
+      blank();
+    } else if (b.kind === 'contents') {
+      rows.push({ cells: [{ text: b.title, style: S.annex }] });
+      for (const [t, sheet] of links) rows.push({ cells: [{ text: t, style: C.link }], link: sheet });
+      blank();
+    } else if (b.kind === 'title') {
       rows.push({ cells: [{ text: b.text, style: b.small ? S.annex : S.title }] });
       if (b.sub) line(b.sub, S.mutedWrap, 10);
       for (const n of notes.splice(0)) line(n, S.mutedWrap, 10);
@@ -107,6 +124,7 @@ function sheetRows(blocks: Block[], notes: string[] = []): XRow[] {
     else {
       const t = b.table, width = t.columns.length;
       blank();
+      if (t.unit) rows.push({ cells: [...Array.from({ length: width - 1 }, () => ({ style: S.plain })), { text: t.unit, style: C.unit }] });
       rows.push({ cells: t.columns.map((c, i) => ({ text: c.sub ? `${c.label} (${c.sub})` : c.label, style: i && !c.wrap ? S.headRight : S.headLeft })), table: true });
       for (const r of t.rows) rows.push({ cells: tableRow(r, width, t.columns), table: r.kind !== 'head', ...(r.ref ? { ref: r.ref } : {}) });
     }
@@ -135,7 +153,7 @@ function widths(rows: XRow[]): number[] {
 
 /** One sheet: no gridlines, A4 one page wide (landscape when its table is wide), the document's header and footer. */
 function sheetXml(doc: Doc, rows: XRow[], shared: (t: string) => number, formula: (f: string, col: string) => string): string {
-  const w = widths(rows), last = w.length - 1, merges: string[] = [];
+  const w = widths(rows), last = w.length - 1, merges: string[] = [], links: string[] = [];
   const total = w.reduce((a, x) => a + x, 0);
   const data = rows.map((r, i) => {
     const n = i + 1;
@@ -150,7 +168,9 @@ function sheetXml(doc: Doc, rows: XRow[], shared: (t: string) => number, formula
       from >= 0 ? chars(r.cells[from], w.slice(from), r.size === 10) : 1,
       r.span !== undefined ? chars(r.cells[0], [w[0]], true) : 1,
       r.table ? chars(r.cells[0], [w[0]], false) : 1);
-    if (lines > 1) ht = ` ht="${(lines * (r.size === 10 && from >= 0 ? 13.2 : 14.6) + 1.2).toFixed(1)}" customHeight="1"`;
+    if (r.link) links.push(`<hyperlink ref="A${n}" location="${xml(`'${r.link.replace(/'/g, "''")}'!A1`)}" display="${xml(r.link)}"/>`);
+    if (r.tall) ht = ` ht="${r.tall}" customHeight="1"`;
+    else if (lines > 1) ht = ` ht="${(lines * (r.size === 10 && from >= 0 ? 13.2 : 14.6) + 1.2).toFixed(1)}" customHeight="1"`;
     const cells = r.cells.map((c, j) => {
       const ref = `${column(j)}${n}`;
       if ('value' in c) return `<c r="${ref}" s="${c.style}">${c.formula ? `<f>${xml(formula(c.formula, column(j)))}</f>` : ''}<v>${c.value}</v></c>`;
@@ -166,6 +186,7 @@ function sheetXml(doc: Doc, rows: XRow[], shared: (t: string) => number, formula
     + `<cols>${w.map((x, i) => `<col min="${i + 1}" max="${i + 1}" width="${x}" customWidth="1"/>`).join('')}</cols>`
     + `<sheetData>${data}</sheetData>`
     + (merges.length ? `<mergeCells count="${merges.length}">${merges.map((m) => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>` : '')
+    + (links.length ? `<hyperlinks>${links.join('')}</hyperlinks>` : '')
     + '<pageMargins left="0.5" right="0.5" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>'
     + `<pageSetup paperSize="9" orientation="${total > 120 ? 'landscape' : 'portrait'}" fitToWidth="1" fitToHeight="0"/>`
     + `<headerFooter><oddHeader>&amp;L&amp;8${hf(doc.header)}${doc.mark ? `&amp;R&amp;8&amp;B${hf(doc.mark)}` : ''}</oddHeader>`
@@ -183,7 +204,8 @@ export function xlsxOf(doc: Doc, made: Date): Uint8Array<ArrayBuffer> {
   };
   // The footer the PDF prints on every page is also said once, under the first title, with the note about the cells.
   const names = doc.parts.map((p) => p.name.replace(/[[\]:*?/\\]/g, ' ').slice(0, 31));
-  const all = doc.parts.map((part, i) => sheetRows(part.blocks, i ? [] : [doc.footer, doc.workbookNote ?? ''].filter(Boolean)));
+  const links = doc.parts.flatMap((p, i) => (p.section && !p.sheetOnly ? [[p.section, names[i]] as [string, string]] : []));
+  const all = doc.parts.map((part, i) => sheetRows(part.blocks, i ? [] : [doc.footer, doc.workbookNote ?? ''].filter(Boolean), links));
   // A formula's {ref} or {Part!ref} becomes the cell in this column of the row so named; {ref@3}, in the table's column 3.
   const rowOf = all.map((rows) => new Map(rows.flatMap((r, i) => (r.ref ? [[r.ref, i + 1] as const] : []))));
   const resolve = (part: number) => (f: string, col: string) => f.replace(/\{(?:([^!}]+)!)?([^}@]+)(?:@(\d+))?\}/g, (_, sheet: string | undefined, ref: string, at?: string) => {

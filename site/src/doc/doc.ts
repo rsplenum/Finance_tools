@@ -22,12 +22,19 @@ export interface Row { cells: Cell[]; kind?: RowKind; ref?: string }
 /** `wrap`: a column of words, left-aligned and wrapped, taking this share of the width the other columns leave. */
 export interface Column { label: string; sub?: string; wrap?: number }
 /** The first column names each row, and is repeated when the other columns are split across pages. */
-export interface Table { columns: Column[]; rows: Row[]; size?: 'small' }
+/** `unit`: what its figures are in ("Amount in rupees"), said above the table at the right. */
+export interface Table { columns: Column[]; rows: Row[]; size?: 'small'; unit?: string }
 
 /** A figure in a shaded strip: its name, the figure, and a note under it. */
 export interface KeyFigure { label: string; value: string; note?: string }
 
+/** A cover page: no running header or footer on it, and the next block starts a new page. */
+export interface Cover { kicker: string; title: string; sub?: string; lines: string[]; facts: [string, string][]; mark?: { title: string; text: string } }
+
 export type Block =
+  | ({ kind: 'cover' } & Cover)
+  /** The parts with a `section`, in order, each with its page in the PDF; a contents field in the Word copy; links in the Excel copy. */
+  | { kind: 'contents'; title: string }
   /** `small` for the title of an annex. */
   | { kind: 'title'; text: string; sub?: string; small?: boolean }
   | { kind: 'heading'; text: string }
@@ -42,7 +49,13 @@ export type Block =
   | { kind: 'signature'; lines: string[] };
 
 /** A part is a sheet in the Excel copy, and starts a new page in the PDF and the Word copy; `sheetOnly` (a check sheet of formulas) is in the Excel copy alone. */
-export interface Part { name: string; blocks: Block[]; sheetOnly?: boolean }
+export interface Part {
+  name: string; blocks: Block[]; sheetOnly?: boolean;
+  /** Its line in the contents (like "1. The project at a glance"). */
+  section?: string;
+  /** Runs on under the part before it, in the PDF and the Word copy, rather than from a new page. */
+  flow?: boolean;
+}
 
 export interface Doc {
   title: string;
@@ -63,14 +76,16 @@ export function docText(d: Doc): string {
   const out: string[] = [d.header, d.mark ?? '', d.footer, d.workbookNote ?? ''];
   const cells = (r: Row) => r.cells.map((c) => c.text).join(' | ');
   for (const part of d.parts) for (const b of part.blocks) {
-    if (b.kind === 'title') out.push(b.text, b.sub ?? '');
+    if (b.kind === 'cover') out.push(b.kicker, b.title, b.sub ?? '', ...b.lines, ...b.facts.map(([k, v]) => `${k}: ${v}`), ...(b.mark ? [b.mark.title, b.mark.text] : []));
+    else if (b.kind === 'contents') out.push(b.title, ...d.parts.filter((x) => x.section && !x.sheetOnly).map((x) => x.section as string));
+    else if (b.kind === 'title') out.push(b.text, b.sub ?? '');
     else if (b.kind === 'heading' || b.kind === 'text') out.push(b.text);
     else if (b.kind === 'list') out.push(...b.items);
     else if (b.kind === 'pairs') out.push(...b.pairs.map(([k, v]) => `${k}: ${v}`));
     else if (b.kind === 'facts') out.push(...b.lines.flat().map(([k, v]) => `${k}: ${v}`));
     else if (b.kind === 'figures') out.push(...b.items.map((f) => `${f.label}: ${f.value}${f.note ? ` ${f.note}` : ''}`));
     else if (b.kind === 'box') out.push(b.title, ...b.items);
-    else if (b.kind === 'table') out.push(b.table.columns.map((c) => c.label + (c.sub ? ` (${c.sub})` : '')).join(' | '), ...b.table.rows.map(cells));
+    else if (b.kind === 'table') out.push(b.table.unit ?? '', b.table.columns.map((c) => c.label + (c.sub ? ` (${c.sub})` : '')).join(' | '), ...b.table.rows.map(cells));
     else out.push(...b.lines);
   }
   return out.filter(Boolean).join('\n');
