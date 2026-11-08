@@ -27,12 +27,12 @@ function run(text: string, r: Run = {}): string {
   const props = `${r.bold ? '<w:b/>' : ''}${r.color ? `<w:color w:val="${r.color}"/>` : ''}${r.spacing ? `<w:spacing w:val="${r.spacing}"/>` : ''}${r.size ? `<w:sz w:val="${r.size}"/><w:szCs w:val="${r.size}"/>` : ''}`;
   return `<w:r>${props ? `<w:rPr>${props}</w:rPr>` : ''}<w:t xml:space="preserve">${xml(text)}</w:t></w:r>`;
 }
-interface Para { style?: string; keepNext?: boolean; pageBreak?: boolean; before?: number; after?: number; hanging?: number; right?: boolean }
+interface Para { style?: string; keepNext?: boolean; pageBreak?: boolean; before?: number; after?: number; hanging?: number; right?: boolean; gap?: number }
 /** A paragraph; its properties in the schema's order (style, keep with next, page break, spacing, indent, alignment). */
 function para(runs: string, p: Para = {}): string {
   const props = (p.style ? `<w:pStyle w:val="${p.style}"/>` : '') + (p.keepNext ? '<w:keepNext/>' : '') + (p.pageBreak ? '<w:pageBreakBefore/>' : '')
     + (p.before !== undefined || p.after !== undefined ? `<w:spacing${p.before !== undefined ? ` w:before="${p.before}"` : ''}${p.after !== undefined ? ` w:after="${p.after}"` : ''}/>` : '')
-    + (p.hanging ? `<w:ind w:left="${p.hanging}" w:hanging="${p.hanging}"/>` : '') + (p.right ? '<w:jc w:val="right"/>' : '');
+    + (p.hanging || p.gap ? `<w:ind${p.hanging ? ` w:left="${p.hanging}" w:hanging="${p.hanging}"` : ''}${p.gap ? ` w:right="${p.gap}"` : ''}/>` : '') + (p.right ? '<w:jc w:val="right"/>' : '');
   return `<w:p>${props ? `<w:pPr>${props}</w:pPr>` : ''}${runs}</w:p>`;
 }
 /** An empty paragraph only `after` twips tall (its mark in a 4-point font): space between blocks. */
@@ -57,6 +57,8 @@ function table(widths: number[], rows: string[], pad = 100): string {
 }
 const row = (cells: string, opts: { header?: boolean } = {}) => `<w:tr><w:trPr><w:cantSplit/>${opts.header ? '<w:tblHeader/>' : ''}</w:trPr>${cells}</w:tr>`;
 
+/** The space kept between a label and its value where a table has no padding: a long label wraps, never runs into the value. */
+const LABEL_GAP = 160;
 const RULE = 'w:sz="4" w:space="0" w:color="8C8C8C"', HEAVY = 'w:sz="8" w:space="0" w:color="4D4D4D"', UNDER = 'w:sz="6" w:space="0" w:color="595959"';
 
 /** A table of figures, split into the PDF's column groups, the first column repeated; its header repeats on each page. */
@@ -97,7 +99,7 @@ function cover(c: Cover): string {
     + (c.sub ? para(run(c.sub, { size: 28, color: MUTED }), { after: 360 }) : '')
     + c.lines.map((l) => para(run(l, { size: 22 }), { after: 80 })).join('')
     + spacer(1600)
-    + table([key, TEXT_W - key], c.facts.map(([k, v], i) => row(cell(para(run(k, { size: 20, color: MUTED }), { before: 40, after: 60 }), { width: key, ...(i ? {} : { top: RULE }) })
+    + table([key, TEXT_W - key], c.facts.map(([k, v], i) => row(cell(para(run(k, { size: 20, color: MUTED }), { before: 40, after: 60, gap: LABEL_GAP }), { width: key, ...(i ? {} : { top: RULE }) })
       + cell(para(run(v, { size: 20 }), { before: 40, after: 60 }), { width: TEXT_W - key, ...(i ? {} : { top: RULE }) }))), 0)
     + (c.mark ? spacer(240) + block({ kind: 'box', title: c.mark.title, items: [c.mark.text] }, false, []) : '')
     + pageBreak;
@@ -129,13 +131,13 @@ function block(b: Block, newPage: boolean, entries: [string, number][]): string 
       return b.items.map((i) => bullet(i, b.small ? { size: 16, color: MUTED } : {})).join('') + spacer(60);
     case 'pairs': {
       const key = tw(132);
-      return table([key, TEXT_W - key], b.pairs.map(([k, v]) => row(cell(para(run(k, { color: MUTED }), { after: 40 }), { width: key })
+      return table([key, TEXT_W - key], b.pairs.map(([k, v]) => row(cell(para(run(k, { color: MUTED }), { after: 40, gap: LABEL_GAP }), { width: key })
         + cell(para(run(v), { after: 40 }), { width: TEXT_W - key }))), 0) + spacer(120);
     }
     case 'facts': {
       // Four columns: a name and its value, twice; a fact alone runs across the three after its name.
       const key = tw(78), value = Math.round(TEXT_W / 2) - key, widths = [key, value, key, TEXT_W - 2 * key - value];
-      const pair = (k: string, v: string, span: number, width: number) => cell(para(run(k, { color: MUTED }), { after: 40 }), { width: key })
+      const pair = (k: string, v: string, span: number, width: number) => cell(para(run(k, { color: MUTED }), { after: 40, gap: LABEL_GAP }), { width: key })
         + cell(para(run(v), { after: 40 }), { width, span });
       return table(widths, b.lines.map((line) => row(line.length > 1
         ? pair(line[0][0], line[0][1], 1, widths[1]) + pair(line[1][0], line[1][1], 1, widths[3])

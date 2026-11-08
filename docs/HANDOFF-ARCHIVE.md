@@ -248,6 +248,9 @@ The owner's two reference films set the bar and the VID3 path (`docs/video/VID3-
 | 03-11-2026 | VID3d (the DSCR film in one world: `world.js` with a camera, depth and a lens shift; a sound bed under every second; both sizes, silent masters and social copies; the kit dropped) | L, Extra | about 245 steps, 1.3 h and about 1.5 h of master renders, 1 compaction |
 | 03-11-2026 | CD1 (why VID3d came out as a chart, now the studio's `films/CD1-diagnosis.md`; the creative department: a skill, seven agents, the reviewer's twelve questions; the film gate; no sound until a plan has Rahul's yes; the leftover master render stopped) | M, Extra | about 75 steps, 0.4 h, 1 compaction |
 | 03-11-2026 | CD2 (the creative department moved to the studio: its skill, seven agents, the film gate with 15 cases, `films/`, the diagnosis; the sound bed's code deleted; R5 "no sound without a plan Rahul approved"; studio PRs #6 and #7 closed; a small hook here runs the studio's gate) | M, high | about 85 steps, 0.3 h, 1 compaction |
+| 03-11-2026 | VID3f-2 (Gate 2 finished on *Cold Feet*: 15 boards, the 30 s animatic, the reviewer's Develop at 11/12, Rahul's page) | S, Extra | 58 steps, 0.4 h, 1 compaction; 3 agents, 48 steps, 58% of the cost; over S with the agents |
+| 03-11-2026 | The motion-studio course and the lessons of Rahul's films recorded in the studio (quick asks, D-TECH-105, D-TECH-106) | none set: quick asks | 96 steps, 0.7 h, 1 compaction; no agents |
+| 04-11-2026 | VID4b (the portfolio film's survey, comparison and script beside 16 real shots; three rounds, two fresh reviewers, Greenlight to Rahul; Rahul's page) | M, Extra | 124 steps, 0.5 h, 1 compaction; 3 agents, 32% of the cost |
 
 ## Rows set aside
 Set aside by the owner on 10-10-2026 until the business entity, GST and Razorpay account are ready (D-UX-42):
