@@ -4,8 +4,8 @@
  * axe-core (WCAG 2.2 A and AA); the edges of fields at 3:1 and a visible focus at 3:1 (WCAG 1.4.11, 2.4.7); targets of
  * 24 by 24 px (2.5.8) and, at 360 px, fields and buttons filled with the accent 44 px tall; every control reached by Tab (2.1.1) and, once focused, not hidden under a sticky band (2.4.11); no
  * sideways scroll at 320 px (1.4.10); nothing moving under reduced motion (2.3.3). `tokenCounts` counts the raw colour
- * classes and arbitrary values in site/src: a ratchet against scripts/design-baseline.json until UX2 to UX4 bring both to
- * nil. A count held in the baseline may fall, never grow; when it falls, lower the baseline in the same commit.
+ * classes and arbitrary values in site/src against scripts/design-baseline.json: a rise is reported as the look, never a
+ * violation (LOOSE1, D-TECH-110). The accessibility findings stay violations.
  * `measure` is also what scripts/design-review.mjs prints for each state of a page.
  */
 import { readFile, readdir } from 'node:fs/promises';
@@ -384,7 +384,7 @@ export async function openAt(browser, url, { width = 'phone', scheme = 'light', 
  * token counts. A line already counted in the baseline's `known` (today's defects, the first review's findings) is
  * reported only when its count grows; every other line is a violation.
  */
-export async function designChecks({ browser, BASE, pages, quick = false, violations }) {
+export async function designChecks({ browser, BASE, pages, quick = false, violations, look = violations }) {
   const base = JSON.parse(await readFile(BASELINE, 'utf8'));
   const seen = new Map();
   const note = (key) => seen.set(key, (seen.get(key) ?? 0) + 1);
@@ -423,7 +423,7 @@ export async function designChecks({ browser, BASE, pages, quick = false, violat
   // --quick: a known line is fixed only on a page that was opened ('/ ' is home's own prefix).
   const gone = Object.keys(known).filter((k) => (!quick || pages.some((p) => k.startsWith(`${p} `))) && (!seen.has(k) || seen.get(k) < known[k]));
   const t = await tokenCounts();
-  for (const k of ['rawColour', 'arbitraryValue']) if (t[k] > base[k]) violations.push(`design: ${t[k]} ${k === 'rawColour' ? 'raw colour classes' : 'arbitrary values'} in site/src, more than the ${base[k]} allowed (use the tokens in docs/DESIGN.md)`);
+  for (const k of ['rawColour', 'arbitraryValue']) if (t[k] > base[k]) look.push(`design: ${t[k]} ${k === 'rawColour' ? 'raw colour classes' : 'arbitrary values'} in site/src, more than the ${base[k]} allowed (use the tokens in docs/DESIGN.md)`);
   const lower = ['rawColour', 'arbitraryValue'].filter((k) => t[k] < base[k]).map((k) => `${k} ${base[k]} → ${t[k]}`);
   return { lines: seen.size, fixed: gone.length, lower, tokens: t };
 }

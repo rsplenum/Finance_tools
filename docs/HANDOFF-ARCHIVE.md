@@ -251,6 +251,9 @@ The owner's two reference films set the bar and the VID3 path (`docs/video/VID3-
 | 03-11-2026 | VID3f-2 (Gate 2 finished on *Cold Feet*: 15 boards, the 30 s animatic, the reviewer's Develop at 11/12, Rahul's page) | S, Extra | 58 steps, 0.4 h, 1 compaction; 3 agents, 48 steps, 58% of the cost; over S with the agents |
 | 03-11-2026 | The motion-studio course and the lessons of Rahul's films recorded in the studio (quick asks, D-TECH-105, D-TECH-106) | none set: quick asks | 96 steps, 0.7 h, 1 compaction; no agents |
 | 04-11-2026 | VID4b (the portfolio film's survey, comparison and script beside 16 real shots; three rounds, two fresh reviewers, Greenlight to Rahul; Rahul's page) | M, Extra | 124 steps, 0.5 h, 1 compaction; 3 agents, 32% of the cost |
+| 07-11-2026 | The v6 plan from Rahul's twelve notes on v5 (quick ask): the brief, DOC1, VID6a, VID6b | none set: quick ask | about 25 steps |
+| 07-11-2026 | DOC1 (the project report's paper: cover, contents, numbered sections, units, annex, declaration, in PDF, Word and Excel) | L, Extra | 109 steps logged, 0.3 h, 2 compactions; 1 agent, 3% of the cost; within L |
+| 07-11-2026 | VID6a (the v6 tour's stage script, a clean 4 min 37 s animatic, Gate 2: reject the cut, re-cut as VID6a2; the two cuts planned) | L, Extra | 158 steps, 1.1 h, 2 compactions; 1 agent, 10% of the cost; within L |
 
 ## Rows set aside
 Set aside by the owner on 10-10-2026 until the business entity, GST and Razorpay account are ready (D-UX-42):
@@ -302,3 +305,9 @@ Budget rows moved from HANDOFF on 18-10-2026 (UX6):
 
 Budget line moved from HANDOFF on 04-11-2026:
 | 03-11-2026 | VID3f (Gate 2's development on *Cold Feet*: Rahul's pick asked and recorded, the beats, the world and key frame, the sound plan and its scratch; the rest handed to VID3f-2 on Rahul's word) | M, Extra | about 40 steps, 0.5 h of work and a 1.6 h wait, 0 compactions; 3 agents |
+
+## Rows parked on 09-11-2026 (D-BIZ-28)
+| # | Deliverable | Budget | Starter prompt |
+|---|---|---|---|
+| VID6c | **Parked (D-BIZ-28).** **The phone cut of the v6 tour** (D-UX-335), after the master (D-UX-339): the same script and captions on the site's own 390 px layout, upright 9:16, captions larger; the home page's film slot loads one cut by `matchMedia`, never both. The stage gets a portrait window and each cue's camera re-fitted where the phone layout stacks differently; then Gate 2 and Rahul's page. Trap: a 16:9 frame shrunk is not a phone cut | L, Extra | "Work from `vid6c-phone` in both repos (from `vid6b-master` until it merges). Read both CLAUDE.md files, the `creative-department` skill, `script-v6b.md`, D-UX-335 and D-UX-339. VID6c: the phone cut. Finish per Finance_tools HANDOFF." |
+| POL3 | **Parked (D-BIZ-28).** The owner's polish, a page a round as POL1: the project report, then the CMA page. Each page in every state at 360 and 1280, light and dark (`design-review.mjs --only <state> --shots`), then the owner says what to keep, then only those fixes; no word or figure without asking. Traps: the tool head is shared (D-UX-221); full-page shots draw the sticky bars mid-page (GOTCHAS) | L, Extra | "/impeccable polish the website, one page per round: the project report, then the CMA page. Read docs/HANDOFF.md (POL3), docs/DESIGN.md and PRODUCT.md first. Size L, at Extra. Keep the FinSight look (F1–F16); no figure or copy changed without asking; ask me what to keep before each page. Finish per HANDOFF." |
