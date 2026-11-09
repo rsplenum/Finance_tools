@@ -111,6 +111,7 @@ Why they did not land: the job was never fixed. A hero film has five seconds to 
 6. Your picks kept in one file with their pictures, read by every design session, so no session starts from nothing.
 
 ## Rahul's to decide
+Answered 09-11-2026: Rahul said yes to all four (D-BIZ-28). Who and when for the five people is still open.
 1. Yes to the builder as the one big move (rows 2 to 5)?
 2. Five people before more polish (row 6): who and when?
 3. The films: stop the long road, take rows 9 and 10?
