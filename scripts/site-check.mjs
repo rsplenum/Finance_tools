@@ -1285,12 +1285,12 @@ if (touched('/project-report/')) {
   // sliders open on the figures as typed (D-UX-182 retired).
   await leave(page, '#fld-sales', '70 L');
   await expectText(page, v, 'rep-cause-earns', /^Earns too little for this loan/, 'Make it work: the cause');
-  await expectText(page, v, 'rep-work-keep-h', 'Keep the loan you asked for, Rs. 25,00,000', 'Make it work: the loan kept');
+  await expectText(page, v, 'rep-work-one-h', 'Or change one thing', 'Make it work: the ways that pass alone (FIX1)');
   await expectText(page, v, 'rep-work-text-sales-0', 'Sales of Rs. 82,11,000 in a full first year (now Rs. 70,00,000).', 'Make it work: more sales');
   await expectText(page, v, 'rep-work-chips-sales-0', 'Meets all 4', 'Make it work: the way meets every level missed');
   await expectText(page, v, 'rep-work-ask-sales-0', 'It needs a plant that sells Rs. 1,41,43,206 a year running full: give what yours can, and the report stays provisional until then.', 'the plant asked inside its card');
   await expectText(page, v, 'rep-work-text-fix-0', 'A term loan of Rs. 9,35,000 (now Rs. 25,00,000).', 'Make it work: a smaller loan, by fix.ts');
-  if (await page.getByTestId('rep-work-not').evaluate((d) => d.open).catch(() => true)) v('the ways that do not reach are missing or open (D-UX-252 (3))');
+  if (await page.getByTestId('rep-work-not').count() || await page.getByTestId('rep-work-change-not').count()) v('the ways that do not reach are still listed (FIX1, D-UX-352)');
   if (await page.locator('[data-testid^="rep-short-"]').count()) v('a key figure still says its shortfall in rupees (D-UX-237)');
   if (await page.getByTestId('rep-checks').getByText('Interest cover').count() > await page.locator('#benchmarks').getByText('Interest cover').count()) v('a ratio under a cause is listed again below it (D-UX-237)');
   await page.getByTestId('rep-work-use-sales-0').click();
@@ -1307,7 +1307,7 @@ if (touched('/project-report/')) {
   if ([await page.inputValue('#fld-tl-amount'), await page.inputValue('#fld-sales')].join() !== '25,00,000,70,00,000') v('Undo did not put the figures back');
   await expectText(page, v, 'rep-work-ask-sales-0', 'Within the plant: it needs Rs. 1,41,43,206 a year running full.', 'the plant\'s sales, answered, read on the card');
   await page.getByTestId('rep-levers').click();
-  await expectText(page, v, 'rep-plan-steps', 'No slider moved yet: every figure as you typed it.', 'the sliders open as typed (OR11d)');
+  if (await page.getByTestId('rep-plan-steps').count()) v('the sliders open with a step said before one is moved (OR11d, FIX1)');
   await expectText(page, v, 'rep-plan-line', /^With these changes: Misses 4: /, 'the sliders\' verdict as typed');
   await page.focus('#rep-slider-sales');
   await page.keyboard.press('ArrowRight');
@@ -1400,8 +1400,9 @@ if (touched('/project-report/')) {
 // preliminary 50,000; 24 L sanctioned at 10% from October 2026, six months' moratorium, 48 monthly instalments; two
 // lines, roasted chana 2,500 a month and roasted peanuts 1,500 a month, both at Rs. 200; sales three months after the
 // loan; general category, a village, manufacturing. The margin money is 25% of PMEGP's cost of 31,23,424.66,
-// Rs. 7,80,856; cash at the end of 2026-27 is 42,793. With fixed costs of 25 L, the engine's cash (checked by
-// report-check.ts's own route) goes lowest in 2030-31, 49,07,813 short.
+// Rs. 7,80,856; cash at the end of 2026-27 is 83,271 (tests/report.test.ts by hand, the part first year by D-UX-350).
+// With fixed costs of 25 L, the engine's cash (checked by report-check.ts's own route) goes lowest in 2030-31,
+// 48,67,334 short (tests/report-page.test.ts).
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'dark' });
   await openMore(page); await page.check('#fld-mode-expert');
@@ -1428,7 +1429,7 @@ if (touched('/project-report/')) {
   await confirmReport(page, v, 'the PMEGP report');
   await page.getByTestId('rep-cf').evaluate((t) => t.closest('details').open = true);
   const cash = await page.getByTestId('rep-cf').locator('tr', { has: page.locator('th', { hasText: 'Cash at the end of the year' }) }).first().locator('td').allTextContents();
-  if (cash[0] !== '42,793') v(`the PMEGP report's cash at the end of 2026-27 shows ${cash[0]}, want 42,793`);
+  if (cash[0] !== '83,271') v(`the PMEGP report's cash at the end of 2026-27 shows ${cash[0]}, want 83,271`);
   await page.getByTestId('rep-sales').evaluate((t) => t.closest('details').open = true);
   const total = await page.getByTestId('rep-sales').locator('tr', { has: page.locator('th', { hasText: 'Total sales' }) }).first().locator('td').allTextContents();
   if (total[0] !== '14,40,000') v(`the PMEGP report's sales by product total ${total[0]} in 2026-27, want 14,40,000`);
@@ -1437,18 +1438,17 @@ if (touched('/project-report/')) {
   await leave(page, '#fld-fixed', '25 L');
   // Cash running out names its first year, the amount at its lowest (OR11a2, D-UX-247); a result, said by the verdict,
   // never a question left (OR11a); the document stays provisional.
-  await expectText(page, v, 'rep-short', /^Cash runs out in 2026-27: Rs\. 49,07,813 short at its lowest, in 2030-31\./, 'cash running out');
+  await expectText(page, v, 'rep-short', /^Cash runs out in 2026-27: Rs\. 48,67,334 short at its lowest, in 2030-31\./, 'cash running out');
   await expectText(page, v, 'rep-misses-work', /^Does not work yet: \d+ ratios? short and cash runs out in 2026-27\./, 'OR11a2: the first year cash runs out in the verdict');
   await expectText(page, v, 'rep-status', '3 questions left, for the document', 'the report with cash running out');
   await expectText(page, v, 'rep-misses', /^Misses \d+ of \d+ benchmarks: .*DSCR/, 'the DSCR below the level');
   // Make it work (OR11d, D-UX-251): more use cannot carry it; a higher price or a larger plant at 85% use can, the plant's
   // cost asked inside its card; no change of the loan alone. The larger plant's cost of 40 L, less the building's 6 L,
   // is machinery of 34 L.
-  await expectText(page, v, 'rep-work-use-cannot', /^More use of the capacity cannot carry it alone: even 85% in every year leaves .* short; at the same price it would need /, 'more use out of reach');
+  await expectText(page, v, 'rep-work-use-cannot', /^More use of the capacity cannot carry it alone: even 85% in every year leaves [^;]* short\.$/, 'more use out of reach, never a use above 100% (FIX1)');
   await expectText(page, v, 'rep-work-text-price-0', /^Every price higher: Roasted chana: Rs\. [\d,.]+ a piece \(now Rs\. 200\); Roasted peanuts: Rs\. [\d,.]+ a kg \(now Rs\. 200\), with the use of the capacity at 85% in every year/, 'the price, in each line\'s unit');
   await expectText(page, v, 'rep-work-chips-price-0', 'Meets all 6', 'the price meets every level missed');
   await expectText(page, v, page.locator('label[for="fld-plantCost-capacity-1"]'), 'What would the larger plant cost? (Rs.)', 'the plant\'s cost asked inside its card');
-  await expectText(page, v, 'rep-work-change-none', 'No change to the loan alone makes it work. Combine one with a way above.', 'no change of the loan alone');
   if (await page.locator('[data-testid^="rep-short-"]').count()) v('a key figure still says its shortfall in rupees (D-UX-237)');
   await page.getByTestId('rep-work-use-capacity-1').click();
   await expectText(page, v, 'rep-needs', /The larger plant: its cost of machinery and building \(Rs\.\)/, 'the plant\'s cost left open keeps it provisional');
@@ -1460,7 +1460,6 @@ if (touched('/project-report/')) {
   await confirmReport(page, v, 'the PMEGP report with cash running out');
   await expectText(page, v, 'rep-doc-why', 'The file is marked provisional while cash runs out in 2026-27, as the answer says.', 'OR11a2: why the file is provisional');
   await page.getByTestId('rep-levers').click();
-  await expectText(page, v, 'rep-plan-steps', 'No slider moved yet: every figure as you typed it.', 'the sliders as typed');
   if (!(await page.getByTestId('rep-lever-promoters').count())) v('the sliders: none for a smaller loan');
   await expectText(page, v, 'rep-plan-limits', /the use of the capacity at most 85% in any year/, 'the sliders\' limits by the drivers');
   await layout(page, v, 'the PMEGP report, 390 px, dark');
@@ -1469,7 +1468,7 @@ if (touched('/project-report/')) {
 
 // Case F (OR2b, tests/fix.test.ts by hand): a building of 50 L and plant of 2.5 Cr, a 2.5 Cr loan at 9.3% over 15 years
 // after a month's holiday, misses only the fixed-asset cover. Make it work keeps no loan as asked, and changes it by
-// fix.ts: 1,03,20,000 over the 15 years, or 1,75,00,000 over 10; the sliders as typed shorten to 16 instalments.
+// fix.ts: 1,11,40,000 over the 15 years, or 1,72,20,000 over 11 (D-UX-350); the sliders as typed shorten to 17 instalments.
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/');
   await openMore(page); await page.check('#fld-mode-expert');
@@ -1479,18 +1478,58 @@ if (touched('/project-report/')) {
     ['#fld-product-0-price', '1,500'], ['#fld-monthsToStart', '1'], ['#fld-variablePct', '60'], ['#fld-fixed', '1.2 Cr'], ['#fld-fixedGrowth', '5'], ['#fld-wcLimit', '53 L'], ['#fld-wcRate', '9.3']])
     await leave(page, id, value);
   await expectText(page, v, 'rep-cause-assets', /^The assets wear out faster than the loan is repaid/, 'case F\'s cause');
-  await expectText(page, v, 'rep-work-keep-none', 'No change alone keeps the loan as asked.', 'case F: no way keeps the loan');
-  await expectText(page, v, 'rep-work-text-fix-0', 'A term loan of Rs. 1,03,20,000 (now Rs. 2,50,00,000).', 'case F: the smaller loan over 15 years');
-  await expectText(page, v, 'rep-work-text-fix-1', 'A term loan of Rs. 1,75,00,000 (now Rs. 2,50,00,000), repaid in 10 years instead of 15 years.', 'case F: the smaller loan over 10 years');
+  await expectText(page, v, 'rep-work-text-fix-0', 'A term loan of Rs. 1,11,40,000 (now Rs. 2,50,00,000).', 'case F: the smaller loan over 15 years');
+  await expectText(page, v, 'rep-work-text-fix-1', 'A term loan of Rs. 1,72,20,000 (now Rs. 2,50,00,000), repaid in 11 years instead of 15 years.', 'case F: the smaller loan over 11 years');
   await page.getByTestId('rep-work-use-fix-1').click();
-  await expectText(page, v, 'rep-used', /Term loan: [^→]+ → 1,75,00,000.*Instalments: 180 → 120/, 'case F\'s change used');
+  await expectText(page, v, 'rep-used', /Term loan: [^→]+ → 1,72,20,000.*Instalments: 180 → 132/, 'case F\'s change used');
   if (await page.getByTestId('rep-misses').count()) v('case F still misses after Use this');
   await page.getByTestId('rep-undo').click();
   await page.getByTestId('rep-levers').click();
-  await expectText(page, v, 'rep-plan-steps', 'No slider moved yet: every figure as you typed it.', 'case F\'s sliders as typed');
-  if (await page.locator('#rep-slider-instalments').getAttribute('min') !== '-164') v('the repayment slider does not shorten to 16 instalments, where the lowest-year DSCR stops meeting as typed');
+  if (await page.locator('#rep-slider-instalments').getAttribute('min') !== '-163') v('the repayment slider does not shorten to 17 instalments, where the term loan as typed reaches its bound (tests/fix.test.ts)');
   await leave(page, '#fld-promotersMost', '2 Cr');
   await expectText(page, v, 'rep-plan-promoters', /within the Rs\. 2,00,00,000 they can\.$/, 'the promoters within their most');
+  await ctx.close();
+}
+
+// Fix it for me (FIX1, D-UX-346, D-UX-351) on fictional Sample Metals (tests/fixtures/solve-part-year.json; the plans
+// by hand in tests/solve.test.ts, the page's words in tests/report-page.test.ts): a new unit whose first year holds
+// three months of sales misses five of eight checks and cash runs out. One tap gives the plans that pass: Earn more
+// (the use at 85% in every year, the price at Rs. 251.25) and Balanced (a loan of Rs. 54,66,000, a limit of
+// Rs. 18,00,000, the use from 80.5%); Borrow less alone leaves interest cover short, so it is not offered. Use this
+// plan writes it, every check then passes, and Undo gives the answers back.
+if (touched('/project-report/')) {
+  const { ctx, page, v } = await open('/project-report/');
+  await openMore(page); await page.check('#fld-mode-expert');
+  for (const id of ['#fld-borrower-firm', '#fld-tl-repayment-monthly']) await page.check(id);
+  for (const [id, value] of [['#fld-cost-building', '30 L'], ['#fld-cost-machinery', '60 L'], ['#fld-cost-furniture', '5 L'], ['#fld-cost-preliminary', '2 L'],
+    ['#fld-tl-amount', '75 L'], ['#fld-tl-rate', '11'], ['#fld-tl-disbursed', '2026-06'], ['#fld-tl-moratorium', '6'], ['#fld-tl-instalments', '72'],
+    ['#fld-product-0-name', 'Castings'], ['#fld-product-0-units', '10,000'], ['#fld-product-0-price', '250'], ['#fld-monthsToStart', '7'], ['#fld-utilisation', '50, 65, 80'],
+    ['#fld-priceGrowth', '0'], ['#fld-variablePct', '68'], ['#fld-fixed', '36 L'], ['#fld-fixedGrowth', '5'], ['#fld-days-debtors', '45'], ['#fld-wcLimit', '20 L'], ['#fld-wcRate', '11.5']])
+    await leave(page, id, value);
+  await expectText(page, v, 'rep-misses', /^Misses 5 of 8 benchmarks: /, 'FIX1: the case as typed');
+  await expectText(page, v, 'rep-short', /^Cash runs out in 2026-27: /, 'FIX1: cash runs out as typed');
+  await page.getByTestId('rep-fix').click();
+  await expectText(page, v, 'rep-fix-moves-earnMore', /^Use of the capacity by year: 50%, 65%, 80% → 85%, 85%, 85%\s*Price: Rs\. 250 → Rs\. 251\.25$/, 'FIX1: Earn more');
+  await expectText(page, v, 'rep-fix-moves-balanced', /^Term loan: Rs\. 75,00,000 → Rs\. 54,66,000\s*Working-capital limit: Rs\. 20,00,000 → Rs\. 18,00,000\s*Use of the capacity by year: 50%, 65%, 80% → 80\.5%, 85%, 85%$/, 'FIX1: Balanced');
+  await expectText(page, v, 'rep-fix-passes-balanced', 'Passes all 8 checks, and cash never runs out', 'FIX1: a plan passes every check');
+  await expectText(page, v, 'rep-fix-brings-balanced', /^You bring Rs\. [\d,]+ more\.$/, 'FIX1: what the promoters bring');
+  if (await page.getByTestId('rep-fix-plan-borrowLess').count()) v('FIX1: a plan that leaves a check short is offered');
+  await layout(page, v, 'Fix it for me, the plans');
+  await page.getByTestId('rep-fix-use-balanced').click();
+  await expectText(page, v, 'rep-used-counts', 'Before: 3 of 8. Now: 8 of 8.', 'FIX1: the checks before and now');
+  await expectText(page, v, 'rep-used', /Term loan: [^→]+ → 54,66,000/, 'FIX1: the plan written under the undo');
+  await expectText(page, v, 'rep-verdict', /./, 'FIX1: the verdict once the plan is used');
+  if (await page.getByTestId('rep-misses').count() || await page.getByTestId('rep-short').count() || await page.getByTestId('rep-work').count()) v('FIX1: the plan used still misses a check, runs out of cash or shows Make it work');
+  if (await page.inputValue('#fld-tl-amount') !== '54,66,000') v(`FIX1: the plan wrote a term loan of ${await page.inputValue('#fld-tl-amount')}, want 54,66,000`);
+  await page.getByTestId('rep-undo').click();
+  if (!['75 L', '75,00,000'].includes(await page.inputValue('#fld-tl-amount')) || await page.inputValue('#fld-utilisation') !== '50, 65, 80') v('FIX1: Undo did not put the answers back');
+  await expectText(page, v, 'rep-misses', /^Misses 5 of 8 benchmarks: /, 'FIX1: the case back as typed after Undo');
+  // No plan within the limits: one card, the nearest, with what stays short and a button to its box.
+  await leave(page, '#fld-variablePct', '97');
+  await page.getByTestId('rep-fix').click();
+  await expectText(page, v, 'rep-fix-nearest', /^The nearest.* stays short/, 'FIX1: the nearest when no plan passes');
+  await page.getByTestId('rep-fix-nearest').locator('a').first().click();
+  if (!(await page.evaluate(() => /^fld-/.test(document.activeElement?.id ?? '')))) v('FIX1: the nearest plan\'s button does not reach its box');
   await ctx.close();
 }
 

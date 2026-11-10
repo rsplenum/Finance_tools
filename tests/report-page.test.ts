@@ -9,12 +9,14 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import { allNeeds, docStatus, fileName, reportDoc } from '../site/src/report/document';
-import { AS_TYPED, EMPTY, PENDING, applyPlan, applyWay, answerPending, checkKey, checkOf, assumptionsOf, boardOf, changedOf, holidayAssumed, inputOf, periodLine, planOf, preview, repaymentView, statusText, undoPlan, viableOf, withMode, workView, type ReportState } from '../site/src/report/model';
+import { AS_TYPED, EMPTY, PENDING, applyPlan, applySolution, applyWay, answerPending, checkKey, checkOf, assumptionsOf, boardOf, changedOf, holidayAssumed, inputOf, periodLine, planOf, preview, repaymentView, solvedOf, statusText, undoPlan, viableOf, withMode, workView, type ReportState } from '../site/src/report/model';
 import { compareRepayments } from '../engine/repayment';
 import { inr } from '../engine/util';
 import { makePlan, withLevers } from '../engine/plan';
 import { REPORT_HOME } from '../site/src/report/home-case';
 import { F } from './fix.test';
+import SAMPLE from './fixtures/solve-part-year.json';
+import { projectReport, type Report, type ReportInput } from '../engine/report';
 import { benchmarkFields, levelsOf, withBenchmark } from '../site/src/board-model';
 import { sameValue } from '../site/src/amount';
 import { SITE_NAME } from '../site/src/site';
@@ -554,5 +556,60 @@ describe('today\'s sales and a new line, on the page', () => {
   });
   it('needs today\'s sales in the line\'s words', () => {
     expect(preview({ ...E, sales: '' }).needs.join(' ')).toContain('Today\'s sales');
+  });
+});
+
+// Fix it for me (FIX1, D-UX-351) on fictional Sample Metals (tests/fixtures/solve-part-year.json), typed as text. The
+// plans are engine/solve.ts's, worked by hand in tests/solve.test.ts: Earn more is the use at 85% in every year with the
+// price at Rs. 251.25; Balanced is a loan of Rs. 54,66,000, a limit of Rs. 18,00,000 and the use from 80.5%; Borrow
+// less leaves interest cover short in the part first year, so it is not offered. What the promoters bring more is read
+// here a second way: the project's cost less the term loan, after against before.
+const SM: ReportState = {
+  ...EMPTY, borrower: 'firm', cost: { ...EMPTY.cost, building: '30 L', machinery: '60 L', furniture: '5 L', preliminary: '2 L' },
+  loan: { amount: '75 L', ratePct: '11', disbursed: '2026-06', moratoriumMonths: '6', instalments: '72', repayment: 'monthly' },
+  products: [{ name: 'Castings', units: '10,000', price: '250' }], monthsToStart: '7', utilisation: '50, 65, 80', priceGrowth: '0',
+  variablePct: '68', fixed: '36 L', fixedGrowth: '5', days: { stock: '30', debtors: '45', creditors: '30' }, wcLimit: '20 L', wcRate: '11.5',
+};
+describe('Fix it for me on the page (FIX1)', () => {
+  const own = (s: ReportState) => { const r = projectReport(inputOf(s)) as Report; return r.projectCost - (inputOf(s).loan.amount as number); };
+  it('types the fixture: the same sales, profit and cash in every year', () => {
+    const fig = (x: ReportInput) => (projectReport(x) as Report).years.map((y) => [y.sales, y.pat, y.cash].map((n) => n.toFixed(2)));
+    expect(fig(inputOf(SM))).toEqual(fig(SAMPLE.input as ReportInput));
+    expect([preview(SM).misses, preview(SM).runsOut]).toEqual(['Misses 5 of 8 benchmarks: current ratio, total outside liabilities ÷ net worth, average DSCR, DSCR in the lowest year and interest cover.', '2026-27']);
+  });
+  it('offers the plans that pass, each move as was → becomes', () => {
+    const v = solvedOf(SM)!;
+    expect(v.nearest).toBeUndefined();
+    expect(v.plans.map((c) => [c.id, c.title, c.lines, c.passes, c.counts])).toEqual([
+      ['earnMore', 'Earn more', ['Use of the capacity by year: 50%, 65%, 80% → 85%, 85%, 85%', 'Price: Rs. 250 → Rs. 251.25'], 'Passes all 8 checks, and cash never runs out', 'Before: 3 of 8. Now: 8 of 8.'],
+      ['balanced', 'Balanced', ['Term loan: Rs. 75,00,000 → Rs. 54,66,000', 'Working-capital limit: Rs. 20,00,000 → Rs. 18,00,000', 'Use of the capacity by year: 50%, 65%, 80% → 80.5%, 85%, 85%'], 'Passes all 8 checks, and cash never runs out', 'Before: 3 of 8. Now: 8 of 8.']]);
+    for (const c of v.plans) {
+      const more = Math.ceil(own(applySolution(SM, c).s) - own(SM) - 1e-6);
+      expect(c.brings).toBe(`You bring Rs. ${inr(more)} more.`);
+    }
+  });
+  it('Use this plan writes the figures as typed text, every check then passes, and the undo gives back the answers', () => {
+    const v = solvedOf(SM)!;
+    const wrote = v.plans.map((c) => {
+      const { s, changes } = applySolution(SM, c), p = preview(s);
+      expect([p.misses, p.short, p.checks?.filter((k) => k.verdict !== 'meets').length]).toEqual([undefined, undefined, 0]);
+      expect(undoPlan(s, changes)).toEqual(SM);
+      return changes.map((k) => `${k.label}: ${k.was} → ${k.now}`);
+    });
+    expect(wrote).toEqual([['Use of the capacity: 50, 65, 80 → 85, 85, 85', 'Price, Castings: 250 → 251.25'],
+      ['Use of the capacity: 50, 65, 80 → 80.5, 85, 85', 'Term loan: 75 L → 54,66,000', 'Working-capital limit: 20 L → 18,00,000']]);
+  });
+  it('keeps within the most the promoters can bring, and names what the nearest leaves short when none passes', () => {
+    // The promoters bring Rs. 26,81,250 now (the cost of Rs. 1,01,81,250 less the loan); Earn more asks Rs. 11,59,555 more.
+    expect(solvedOf({ ...SM, promotersMost: '40 L' })?.plans.map((c) => [c.id, c.brings])).toEqual([['earnMore', 'You bring Rs. 11,59,555 more.']]);
+    expect(solvedOf({ ...SM, promotersMost: '35 L' })).toEqual({ plans: [], nearest: { still: [{ text: 'Interest cover stays short', field: 'fld-utilisation', box: 'Use of the capacity' }] } });
+    const none = solvedOf({ ...SM, variablePct: '97' })!;
+    expect(none.plans).toEqual([]);
+    expect(none.nearest?.still.every((t) => /^[A-Z].* stays short$|^Cash still runs out in 20\d\d-\d\d$/.test(t.text) && t.field.startsWith('fld-') && !!t.box)).toBe(true);
+    expect(none.nearest?.still.length).toBeGreaterThan(0);
+  });
+  it('gives none when every check already passes or the figures are not all there', () => {
+    expect(solvedOf(applySolution(SM, solvedOf(SM)!.plans[0]).s)).toEqual({ plans: [], nearest: { still: [] } });
+    expect(solvedOf({ ...SM, fixed: '' })).toBeUndefined();
   });
 });

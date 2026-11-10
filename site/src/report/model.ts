@@ -10,6 +10,7 @@ import { LEVELS, collateralNeeded, diagnose, type Levels, type RatioCheck, type 
 import { makeViable, type Longer, type Outcome } from '../../../engine/viable';
 import { AS_TYPED, LEVER_IDS, makePlan, withLevers, type LeverId, type Levers } from '../../../engine/plan';
 import { makeWork, plantMachinery, type Cause, type Change, type Way as WorkWay, type WayId } from '../../../engine/work';
+import { SOLVE, solve, type PlanId, type Solution } from '../../../engine/solve';
 import { compareRepayments, periodOf, type Way } from '../../../engine/repayment';
 import { STEPPED } from '../../../engine/loan';
 import { BORROWERS } from '../../../engine/tax';
@@ -992,6 +993,76 @@ export function applyWay(s: ReportState, card: { change: Change; ask?: { id: 'pl
   if (a && !a.value.trim() && s.pending !== a.id) changes.push({ key: 'pending', field: 'fld-pending', label: 'A question left', was: s.pending ?? '', now: a.id, text: `A question left: ${PENDING[a.id].label}` });
   return { s: changes.reduce((t, x) => put(t, x.key, x.now), s), changes };
 }
+// ---- Fix it for me (FIX1, D-UX-346, D-UX-351): whole plans that pass, from engine/solve.ts ----
+
+/** A plan as a card: each move as "was → becomes", what the promoters bring, the checks it passes, and the figures "Use
+ * this plan" writes; `counts` is the strip once it is used. */
+export interface FixCard { id: PlanId; title: string; lines: string[]; brings?: string; passes: string; counts: string; change: Change }
+/** The plans that pass; or, when none does, the nearest and what it leaves short, each with the box that moves it. */
+export interface FixView { plans: FixCard[]; nearest?: { still: { text: string; field: string; box: string }[] } }
+const FIX_BOX: Record<RatioId, [string, string]> = {
+  currentRatio: ['fld-wcLimit', 'Working-capital limit'], tolTnw: ['fld-tl-amount', 'Term loan'], debtEquity: ['fld-tl-amount', 'Term loan'], facr: ['fld-tl-amount', 'Term loan'],
+  dscrAverage: ['', ''], dscrLowest: ['', ''], interestCover: ['', ''], securityCover: ['fld-collateral', 'The collateral'],
+};
+/** A plan's moves as the figures Use this writes (engine/work.ts's Change), read off the plan's own inputs. */
+const changeOf = (p: Solution): Change => {
+  const y = p.input, has = (id: string) => p.moves.some((m) => m.id === id);
+  return {
+    ...(has('loan') ? { amount: y.loan.amount } : {}), ...(has('cash') ? { cashAtStart: y.cashAtStart } : {}), ...(has('wc') ? { wcLimit: y.wcLimit } : {}),
+    ...(has('moratorium') ? { moratoriumMonths: y.loan.moratoriumMonths } : {}), ...(has('instalments') ? { instalments: y.loan.instalments } : {}),
+    ...(has('use') ? { utilisationPct: y.utilisationPct } : {}), ...(has('priceGrowth') ? { priceGrowthPct: y.priceGrowthPct } : {}),
+    ...(has('price') ? { products: (y.products ?? []).map((q) => ({ unitsMonth: q.unitsMonth as number, price: q.price as number })) } : {}),
+  };
+};
+let fixed: { on: string; v: FixView | undefined } | undefined;
+/** Fix it for me on the page: none while the report has no figures or already works. Each plan is written into the
+ * answers as typed text and run again; one that no longer passes there is not offered. Worked once for the same answers. */
+export function solvedOf(s: ReportState): FixView | undefined {
+  const on = JSON.stringify(s);
+  if (fixed?.on === on) return fixed.v;
+  const x = inputOf(s), lv = levelsOf(s.benchmarks), most = amountOf(s.promotersMost);
+  const q = solve(x, { levels: lv, ...(most !== undefined && most >= 0 ? { promotersMost: most } : {}) });
+  const view = (): FixView | undefined => {
+    if ('needs' in q || 'blocked' in q) return undefined;
+    const read = (d: { checks: RatioCheck[] }) => d.checks.filter((c) => c.meets !== undefined), met = (d: { checks: RatioCheck[] }) => d.checks.filter((c) => c.meets).length;
+    const before = `${met(q.base.diagnosis)} of ${read(q.base.diagnosis).length}`, names = s.products.map((r, i) => r.name.trim() || `line ${i + 1}`);
+    const months = (n: number) => `${n} month${n === 1 ? '' : 's'}`, money = (n: number) => (n ? `Rs. ${figText(n)}` : 'none');
+    const plans = q.plans.filter((p) => p.works).flatMap((p): FixCard[] => {
+      const change = changeOf(p), y = inputOf(applyWay(s, { change }).s), r = projectReport(y);
+      if ('needs' in r || 'blocked' in r) return [];
+      const d = diagnose(r, y, 'fresh', lv);
+      if (d.misses.length || r.cashShort) return [];
+      const lines = p.moves.flatMap((m): string[] => {
+        switch (m.id) {
+          case 'loan': return [`Term loan: ${money(m.from)} → ${money(m.to)}`];
+          case 'cash': return [`Your own money kept in the business: ${money(m.from)} → ${money(m.to)}`];
+          case 'wc': return [`Working-capital limit: ${money(m.from)} → ${money(m.to)}`];
+          case 'moratorium': return [`Holiday before the first instalment: ${months(m.from)} → ${months(m.to)}`];
+          case 'instalments': return [`Instalments: ${m.from} → ${m.to}`];
+          case 'use': return [`Use of the capacity by year: ${usesOf(x.utilisationPct)} → ${usesOf(y.utilisationPct)}`];
+          case 'price': return (y.products ?? []).map((n, i) => `Price${names.length > 1 ? `, ${names[i]}` : ''}: ${priceText(x.products?.[i]?.price as number)} → ${priceText(n.price as number)}`);
+          default: return [`Prices rise a year: ${pctOf(m.from)} → ${pctOf(m.to)}`];
+        }
+      });
+      const more = r.finance.promoter + r.finance.kept - p.promoters.now, n = read(d).length;
+      return [{ id: p.id, title: SOLVE.plans.find((k) => k.id === p.id)?.label ?? p.id, lines, change,
+        ...(Math.abs(more) >= 0.5 ? { brings: more > 0 ? `You bring Rs. ${upRupees(more)} more.` : `You bring Rs. ${rupees(-more)} less.` } : {}),
+        passes: `Passes all ${n} checks${q.base.report.cashShort ? ', and cash never runs out' : ''}`, counts: `Before: ${before}. Now: ${met(d)} of ${n}.` }];
+    });
+    if (plans.length) return { plans };
+    const near = q.plans.find((p) => !p.works), sales: [string, string] = s.salesBy === 'typed' ? ['fld-sales', 'Sales'] : ['fld-utilisation', 'Use of the capacity'];
+    const still = near ? [
+      ...near.still.map((id) => { const [field, box] = FIX_BOX[id][0] ? FIX_BOX[id] : sales; const n = labelOf(id); return { text: `${n[0].toUpperCase()}${n.slice(1)} stays short`, field, box }; }),
+      ...(near.runsOut ? [{ text: `Cash still runs out in ${near.runsOut}`, field: 'fld-cashAtStart', box: 'Your own money kept in the business' }] : []),
+    ] : [];
+    return { plans: [], nearest: { still } };
+  };
+  fixed = { on, v: view() };
+  return fixed.v;
+}
+/** "Use this plan": the plan's figures written into the answers, with what each was, for the banner and its undo. */
+export const applySolution = (s: ReportState, card: FixCard) => applyWay(s, { change: card.change });
+
 /** The answer to the question left open: the plant's sales are kept beside the report; the larger plant's cost sets the
  * machinery (engine/work.ts's plantMachinery), a change the banner lists and its undo takes back. Not understood, it
  * stays open. */
