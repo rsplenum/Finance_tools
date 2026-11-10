@@ -89,7 +89,9 @@ describe('a missing fact is never assumed', () => {
 
 /**
  * Fictional cases P and Q (D-UX-49: sales from the drivers, the months to the first sales, PMEGP), worked apart from the
- * engine by a short script from first principles (the scheme's rules as engine/data/report.json reads them):
+ * engine by a short script from first principles (the scheme's rules as engine/data/report.json reads them; worked again
+ * on 10-11-2026 for the fair part year, D-UX-350: interest before the first sales goes to the project's cost month by
+ * month, and a first year of sales under 180 days takes half the depreciation):
  * P, a firm making 50,000 units a year at Rs. 200, used 60%, 70%, then 80%; land 2 lakh, building 6 lakh, plant 20 lakh,
  * preliminary 50,000; a loan of 24 lakh sanctioned at 10%, drawn October 2026, 6 months' moratorium, 48 monthly
  * instalments of equal principal; sales from January 2027 (3 months on); variable costs 70%; fixed costs 12 lakh a full
@@ -107,27 +109,30 @@ describe('fictional case P: drivers, three months of sales in the first year, PM
   const p = projectReport(CASE_P) as Report, sc = p.scheme;
   // A full year at 60%: 60,00,000; variable 42,00,000; stock and creditors 3,45,205.48, debtors 4,93,150.68; the margin
   // 4,93,150.68 − 3,00,000 = 1,93,150.68. PMEGP's cost: 26,00,000 + 50,000 + 1,93,150.68 + 3,00,000 = 31,43,150.68; the
-  // margin money 25% of it, 7,85,787.67; the loan repaid 24,00,000 − 7,85,787.67 = 16,14,212.33. The project
-  // 30,43,150.68; the promoters 30,43,150.68 − 24,00,000 = 6,43,150.68, their own share (less the land) 14.10%;
+  // margin money 25% of it, 7,85,787.67; the loan repaid 24,00,000 − 7,85,787.67 = 16,14,212.33. Its interest before
+  // January 2027 (October to December) is 16,14,212.33 × 10/1200 × 3 = 40,355.31, in the project of 30,83,505.99; the
+  // promoters 30,83,505.99 − 24,00,000 = 6,83,505.99, their own share (less the land and that interest) 14.10%;
   // working capital 15.69% of PMEGP's cost.
   it('the margin money and the loan it is set off against', () => {
     expect(p.years.map((y) => y.fy)).toEqual(['2026-27', '2027-28', '2028-29', '2029-30', '2030-31']);
     expect(two([p.marginMoney, sc?.cost, sc?.subsidy, p.finance.termLoan, p.projectCost, p.finance.promoter, sc?.ownPct, sc?.workingCapitalPct]))
-      .toEqual(['193150.68', '3143150.68', '785787.67', '1614212.33', '3043150.68', '643150.68', '14.10', '15.69']);
-    expect([sc?.ratePct, sc?.flags, p.interestBeforeStart, p.cashShort]).toEqual([25, [PMEGP.notice], 0, undefined]);
+      .toEqual(['193150.68', '3143150.68', '785787.67', '1614212.33', '3083505.99', '683505.99', '14.10', '15.69']);
+    expect([sc?.ratePct, sc?.flags, p.interestBeforeStart.toFixed(2), p.cashShort]).toEqual([25, [PMEGP.notice], '40355.31', undefined]);
   });
-  // 2026-27, three months: sales 15,00,000, fixed 3,00,000, depreciation 3,60,000 (a full year), write-off 10,000; term
-  // loan interest 16,14,212.33 × 10/1200 × 6 = 80,710.62; cash credit 33,000 × 3/12 = 8,250; a loss of 3,08,960.62, no
-  // tax; cash 61,039.38. 2027-28: sales 70,00,000, fixed 12,60,000, interest 1,42,925.05, tax 1,07,663.38, profit after
-  // tax 2,37,411.57, cash 1,31,706.09, DSCR 1.2797.
+  // 2026-27, three months (90 days of sales): sales 15,00,000, fixed 3,00,000, depreciation 1,80,000 (half of 3,60,000),
+  // write-off (50,000 + 40,355.31) ÷ 5 = 18,071.06; term loan interest January to March 16,14,212.33 × 10/1200 × 3 =
+  // 40,355.31; cash credit 33,000 × 3/12 = 8,250; a loss of 96,676.37, no tax; cash 1,01,394.69; DSCR (−96,676.37 +
+  // 1,80,000 + 18,071.06 + 40,355.31) ÷ 40,355.31 = 3.5125. 2027-28: sales 70,00,000, fixed 12,60,000, depreciation
+  // 3,34,500 (on what the half year left), interest 1,42,925.05, tax 97,189.21, profit after tax 2,14,314.68, cash
+  // 1,82,535.57, DSCR 1.2989.
   it('the years, by the months of sales', () => {
     expect(p.years.map((y) => y.months)).toEqual([3, 12, 12, 12, 12]);
     expect(p.years.map((y) => y.utilisationPct)).toEqual([60, 70, 80, 80, 80]);
     const [a, b] = p.years;
     expect(two([a.sales, a.fixed, a.depreciation, a.preliminary, a.tlInterest, a.wcInterest, a.pbt, a.tax, a.cash]))
-      .toEqual(['1500000.00', '300000.00', '360000.00', '10000.00', '80710.62', '8250.00', '-308960.62', '0.00', '61039.38']);
-    expect(two([b.sales, b.fixed, b.tlInterest, b.tax, b.pat, b.cash])).toEqual(['7000000.00', '1260000.00', '142925.05', '107663.38', '237411.57', '131706.09']);
-    expect(p.years.map((y) => y.dscr?.toFixed(4))).toEqual(['1.7563', '1.2797', '1.6521', '1.6455', '1.6362']);
+      .toEqual(['1500000.00', '300000.00', '180000.00', '18071.06', '40355.31', '8250.00', '-96676.37', '0.00', '101394.69']);
+    expect(two([b.sales, b.fixed, b.tlInterest, b.tax, b.pat, b.cash])).toEqual(['7000000.00', '1260000.00', '142925.05', '97189.21', '214314.68', '182535.57']);
+    expect(p.years.map((y) => y.dscr?.toFixed(4))).toEqual(['3.5125', '1.2989', '1.6706', '1.6634', '1.6538']);
     for (const y of p.years) expect(Math.abs(y.assets - y.liabilities)).toBeLessThan(0.01);
   });
 });
@@ -137,9 +142,10 @@ describe('fictional case P: drivers, three months of sales in the first year, PM
  * lines instead of the capacity: roasted chana, 2,500 packs a month at full running at Rs. 200, and roasted peanuts, 1,500
  * at Rs. 200; 96,00,000 a year at full running. At 60%: 57,60,000, variable 40,32,000; stock and creditors 3,31,397.26,
  * debtors 4,73,424.66; the margin 1,73,424.66. PMEGP's cost 31,23,424.66, the margin money 7,80,856.16, the loan repaid
- * 16,19,143.84; the project 30,23,424.66, the promoters 6,23,424.66, their own share 13.56%. 2026-27 (three months):
- * chana 4,500 packs, 9,00,000; peanuts 2,700 packs, 5,40,000; sales 14,40,000; term loan interest 80,957.19; a loss of
- * 3,27,207.19; cash 42,792.81. 2027-28 at 70%: chana 21,000 packs, 42,00,000; peanuts 12,600, 25,20,000.
+ * 16,19,143.84, its interest before the first sales 40,478.60; the project 30,63,903.25, the promoters 6,63,903.25, their
+ * own share 13.56%. 2026-27 (three months): chana 4,500 packs, 9,00,000; peanuts 2,700 packs, 5,40,000; sales 14,40,000;
+ * term loan interest 40,478.60; a loss of 1,14,824.32; cash 83,271.40. 2027-28 at 70%: chana 21,000 packs, 42,00,000;
+ * peanuts 12,600, 25,20,000.
  */
 const CASE_P_LINES: ReportInput = { ...CASE_P, capacity: undefined, price: undefined,
   products: [{ name: 'Roasted chana', unitsMonth: 2500, price: 200 }, { name: 'Roasted peanuts', unitsMonth: 1500, price: 200 }] };
@@ -147,10 +153,10 @@ describe('fictional case P by products: the lines add up to sales', () => {
   const p = projectReport(CASE_P_LINES) as Report, sc = p.scheme, [a, b] = p.years;
   it('works the margin money, the year and each line', () => {
     expect(two([p.marginMoney, sc?.cost, sc?.subsidy, p.finance.termLoan, p.projectCost, p.finance.promoter, sc?.ownPct]))
-      .toEqual(['173424.66', '3123424.66', '780856.16', '1619143.84', '3023424.66', '623424.66', '13.56']);
+      .toEqual(['173424.66', '3123424.66', '780856.16', '1619143.84', '3063903.25', '663903.25', '13.56']);
     expect(a.products?.map((l) => [l.name, l.units.toFixed(2), l.price.toFixed(2), l.sales.toFixed(2)]))
       .toEqual([['Roasted chana', '4500.00', '200.00', '900000.00'], ['Roasted peanuts', '2700.00', '200.00', '540000.00']]);
-    expect(two([a.sales, a.tlInterest, a.pbt, a.cash])).toEqual(['1440000.00', '80957.19', '-327207.19', '42792.81']);
+    expect(two([a.sales, a.tlInterest, a.pbt, a.cash])).toEqual(['1440000.00', '40478.60', '-114824.32', '83271.40']);
     expect(b.products?.map((l) => [l.units.toFixed(2), l.sales.toFixed(2)])).toEqual([['21000.00', '4200000.00'], ['12600.00', '2520000.00']]);
   });
   it('asks each line\'s three facts, by its number', () => {
@@ -164,8 +170,9 @@ describe('fictional case P by products: the lines add up to sales', () => {
 // units at Rs. 150; variable 55%; fixed 9 lakh; 26 lakh sanctioned at 10%, drawn October 2026, 9 months' moratorium, 48
 // monthly instalments; sales from May 2027 (7 months on). PMEGP's cost 33,95,890.41 is above the Rs. 20 lakh ceiling, so
 // the margin money is 25% of 20 lakh, 5,00,000, and the loan repaid 21,00,000; its interest before May 2027 (October to
-// March) is 21,00,000 × 10/1200 × 6 = 1,05,000, in the project of 35,00,890.41. 2027-28 has 11 months: sales 33,00,000,
-// profit after tax 15,222, cash 62,472, DSCR 1.1058.
+// April) is 21,00,000 × 10/1200 × 7 = 1,22,500, in the project of 35,18,390.41. 2027-28 has 11 months of sales, a full
+// year's depreciation: sales 33,00,000, interest from May 1,79,375, write-off (1,00,000 + 1,22,500) ÷ 5 = 44,500, profit
+// before tax 36,125, after tax 24,854, cash 75,604, DSCR 1.1319.
 const CASE_Q: ReportInput = {
   taxBy: 'firm', cost: { building: 1000000, machinery: 2000000, preliminary: 100000 },
   loan: { amount: 2600000, ratePct: 10, disbursed: '2026-10', moratoriumMonths: 9, instalments: 48, frequency: 'monthly', style: 'equal-principal' },
@@ -177,21 +184,21 @@ describe('fictional case Q: sales start in the next year, above the ceiling, cas
   it('leaves out the year before sales and pays its interest from the project', () => {
     expect(q.years.map((y) => y.fy)).toEqual(['2027-28', '2028-29', '2029-30', '2030-31', '2031-32']);
     expect(two([q.interestBeforeStart, q.scheme?.cost, q.scheme?.subsidy, q.finance.termLoan, q.projectCost, q.finance.promoter, q.scheme?.ownPct]))
-      .toEqual(['105000.00', '3395890.41', '500000.00', '2100000.00', '3500890.41', '900890.41', '23.44']);
-    expect(q.cost.find((c) => c.id === 'idc')?.amount).toBe(105000);
+      .toEqual(['122500.00', '3395890.41', '500000.00', '2100000.00', '3518390.41', '918390.41', '23.44']);
+    expect(q.cost.find((c) => c.id === 'idc')?.amount).toBeCloseTo(122500, 6);
     expect(q.scheme?.flags).toEqual([PMEGP.notice, 'The project cost of Rs. 33,95,890 is above PMEGP\'s Rs. 20,00,000 for a service: the margin money is worked on Rs. 20,00,000, and the bank may lend the rest without it.']);
     const a = q.years[0];
-    expect([a.months, ...two([a.sales, a.pat, a.cash, a.dscr])]).toEqual([11, '3300000.00', '15222.00', '62472.00', '1.11']);
+    expect([a.months, ...two([a.sales, a.pat, a.cash, a.dscr])]).toEqual([11, '3300000.00', '24854.00', '75604.00', '1.13']);
     expect(q.cashShort).toBeUndefined();
   });
-  // With fixed costs of 15 lakh, cash goes lowest in 2030-31, at −12,40,707.74. It runs out first in 2027-28 (OR11a2,
-  // D-UX-247), by hand: 11 months of fixed costs rise by 6,00,000 × 11/12 = 5,50,000; case Q's profit before tax of 22,125
-  // (15,222 after tax at 31.2%, tax 6,903) turns to a loss of 5,27,875 with no tax, so cash is 62,472 − 5,50,000 + 6,903
-  // = −4,80,625.
+  // With fixed costs of 15 lakh, cash goes lowest in 2030-31, at −12,21,023.74. It runs out first in 2027-28 (OR11a2,
+  // D-UX-247), by hand: 11 months of fixed costs rise by 6,00,000 × 11/12 = 5,50,000; case Q's profit before tax of 36,125
+  // (24,854 after tax at 31.2%, tax 11,271) turns to a loss of 5,13,875 with no tax, so cash is 75,604 − 5,50,000 + 11,271
+  // = −4,63,125.
   it('names the promoters\' money more that keeps cash at nil or above, and the first year under nil', () => {
     const s = projectReport({ ...CASE_Q, fixedCosts: 1500000 }) as Report;
-    expect([s.cashShort?.fy, ...two([s.cashShort?.lowest, s.cashShort?.need])]).toEqual(['2030-31', '-1240707.74', '1240707.74']);
-    expect([s.cashShort?.first, two([s.years[0].cash])[0]]).toEqual(['2027-28', '-480625.00']);
+    expect([s.cashShort?.fy, ...two([s.cashShort?.lowest, s.cashShort?.need])]).toEqual(['2030-31', '-1221023.74', '1221023.74']);
+    expect([s.cashShort?.first, two([s.years[0].cash])[0]]).toEqual(['2027-28', '-463125.00']);
   });
   it('asks the scheme\'s facts, and a loan above the margin money', () => {
     expect(reportNeeds({ ...CASE_Q, scheme: { id: 'pmegp' } })).toEqual(['PMEGP: the borrower\'s category', 'PMEGP: a town or a village', 'PMEGP: manufacturing or a service']);

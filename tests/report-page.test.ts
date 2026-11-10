@@ -71,14 +71,15 @@ describe('the project report page', () => {
     expect([row(p, 'sales', 'Pieces sold')?.values[0], row(p, 'sales', 'Total sales')?.values.slice(0, 2)]).toEqual(['4,500', ['14,40,000', '67,20,000']]);
     expect(row(p, 'pl', 'Months of sales')?.values).toEqual(['3', '12', '12', '12', '12']);
     expect(row(p, 'pl', 'Use of the capacity')?.values).toEqual(['60%', '70%', '80%', '80%', '80%']);
-    expect(row(p, 'cf', 'Cash at the end of the year')?.values[0]).toBe('42,793');
+    expect(row(p, 'cf', 'Cash at the end of the year')?.values[0]).toBe('83,271');
   });
   it('PMEGP asks its three facts; cash running out names its first year and the amount, and keeps the document provisional', () => {
     expect(preview({ ...P, category: undefined, area: undefined, activity: undefined }).needs.length).toBe(3);
     const t = { ...P, fixed: '25 L' }, q = preview(t);
-    // The first year under nil read off the cash row: the first value with a minus (D-UX-247).
-    expect(row(q, 'cf', 'Cash at the end of the year')?.values).toEqual(['-2,82,207', '-15,51,259', '-26,23,082', '-37,13,335', '-49,07,813']);
-    expect(q.short).toBe('Cash runs out in 2026-27: Rs. 49,07,813 short at its lowest, in 2030-31. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.');
+    // The first year under nil read off the cash row: the first value with a minus (D-UX-247). Each year is Rs. 40,479
+    // above the figures before D-UX-350: the interest before the first sales, now in the project's cost, comes from the promoters.
+    expect(row(q, 'cf', 'Cash at the end of the year')?.values).toEqual(['-2,41,729', '-15,10,780', '-25,82,604', '-36,72,856', '-48,67,334']);
+    expect(q.short).toBe('Cash runs out in 2026-27: Rs. 48,67,334 short at its lowest, in 2030-31. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.');
     expect(q.runsOut).toBe('2026-27');
     // A result, not a question (OR11's O1): out of the count, into the verdict; the file stays provisional (D-UX-49).
     expect(statusText(q)).toBe('All questions answered');
@@ -332,15 +333,15 @@ describe('Make it work on the page, used and undone (OR11d)', () => {
     expect(w.held.map((h) => [h.cause, h.head, h.rows.map((r) => r.id)])).toEqual([['assets', 'The assets wear out faster than the loan is repaid', ['facr']]]);
     expect([w.misses, w.cash, w.amount, w.keep, w.dscrLevel]).toEqual([1, undefined, 'Rs. 2,50,00,000', [], '1.25']);
     expect(w.keepNot.map((c) => [c.id, c.still])).toEqual([['price', ['fixed-asset cover']], ['capacity', ['fixed-asset cover']], ['growth', ['fixed-asset cover']], ['cash', ['fixed-asset cover']]]);
-    // tests/fix.test.ts by hand: Rs. 1,03,20,000 over the typed 15 years, or Rs. 1,75,00,000 over 10.
+    // tests/fix.test.ts by hand: Rs. 1,11,40,000 over the typed 15 years, or Rs. 1,72,20,000 over 11.
     expect(w.change.map((c) => [c.head, c.text, c.notes, c.reaches])).toEqual([
-      ['Borrow less', 'A term loan of Rs. 1,03,20,000 (now Rs. 2,50,00,000).', ['The promoters bring Rs. 1,46,80,000 more.'], true],
-      ['Borrow less and repay in 10 years', 'A term loan of Rs. 1,75,00,000 (now Rs. 2,50,00,000), repaid in 10 years instead of 15 years.', ['The promoters bring Rs. 75,00,000 more.'], true]]);
+      ['Borrow less', 'A term loan of Rs. 1,11,40,000 (now Rs. 2,50,00,000).', ['The promoters bring Rs. 1,37,52,585 more.'], true],
+      ['Borrow less and repay in 11 years', 'A term loan of Rs. 1,72,20,000 (now Rs. 2,50,00,000), repaid in 11 years instead of 15 years.', ['The promoters bring Rs. 77,19,705 more.'], true]]);
     expect([w.changeNone, w.changeNot.map((c) => c.id)]).toEqual([undefined, ['wc']]);
   });
   it('Use this writes the way, every level then meets, and the undo gives back the figures as typed', () => {
     const w = workView(FS)!;
-    for (const [k, was] of [[0, ['Term loan: 2.5 Cr → 1,03,20,000']], [1, ['Term loan: 2.5 Cr → 1,75,00,000', 'Instalments: 180 → 120']]] as const) {
+    for (const [k, was] of [[0, ['Term loan: 2.5 Cr → 1,11,40,000']], [1, ['Term loan: 2.5 Cr → 1,72,20,000', 'Instalments: 180 → 132']]] as const) {
       const { s, changes } = applyWay(FS, w.change[k]);
       expect(changes.map((c) => `${c.label}: ${c.was} → ${c.now}`)).toEqual(was);
       expect([preview(s).misses, preview(s).needs, workView(s)]).toEqual([undefined, [], undefined]);
@@ -387,8 +388,8 @@ describe('simple and expert modes', () => {
     const T: ReportState = { ...FS, mode: 'simple', sellFrom: '2026-11', fixed: '', fixedMonth: '10 L', loan: { ...EMPTY.loan, amount: '2.5 Cr', ratePct: '9.3' }, years: '15', wcBy: 'typed', security: 'neither' };
     const { s, changes } = applyWay(T, workView(T)!.change[1]);
     expect(inputOf(T).loan).toEqual(F.loan);
-    expect(changes.map((c) => `${c.label}: ${c.was} → ${c.now}`)).toEqual(['Term loan: 2.5 Cr → 1,75,00,000', 'Instalments: 180 → 120']);
-    expect([s.years, preview(s).misses]).toEqual(['10', undefined]);
+    expect(changes.map((c) => `${c.label}: ${c.was} → ${c.now}`)).toEqual(['Term loan: 2.5 Cr → 1,72,20,000', 'Instalments: 180 → 132']);
+    expect([s.years, preview(s).misses]).toEqual(['11', undefined]);
   });
   it('simple mode fills what it assumes, and works the limit out', () => {
     const x = inputOf(S);
@@ -457,8 +458,9 @@ describe('simple and expert modes', () => {
     expect(w.notes[0]).toMatch(/^A stepped instalment is level within each year and rises each new year by up to 10%\. The last year's is held to 2 times the first year's at most/);
     const p = w.rows.find((r) => r.proposed);
     expect(p).toBeUndefined();
-    // Six ratios miss with each way (the owner, 26-10-2026): the way to repay cannot fix them, so it says so.
-    expect(w.lead).toBe('6 ratios miss whichever way the loan is repaid: the ways differ in the interest and the instalments. What fixes them is under “Make it work” above.');
+    // Three ratios miss with each way (six before D-UX-350 took the interest before the first sales to the project's
+    // cost and half the depreciation in a first year under 180 days): the way to repay cannot fix them, so it says so.
+    expect(w.lead).toBe('3 ratios miss whichever way the loan is repaid: the ways differ in the interest and the instalments. What fixes them is under “Make it work” above.');
     expect(w.rows.every((r) => r.lines.length === 1 && /^Misses /.test(r.lines[0].text))).toBe(true);
     const st = { ...S, loan: { ...S.loan, repayment: 'stepped' as const } };
     expect([inputOf(st).loan.style, repaymentView(st)!.rows.find((r) => r.now)?.value]).toEqual(['stepped', 'stepped']);
@@ -501,7 +503,7 @@ describe('check and confirm (OR8)', () => {
     const p = preview(P), g = lines(P), table = (id: string) => p.view!.tables.find((t) => t.id === id)!.rows.map((r) => `${r.label}: Rs. ${r.values[0]}`);
     expect(g.business).toEqual(['Who the borrower is: Partnership firm or LLP', 'A government scheme: PMEGP', 'What backs the loan: The project’s own assets only']);
     expect(g.cost).toEqual(table('cost'));
-    expect(g.cost.at(-1)).toBe('Total cost of the project: Rs. 30,23,425');
+    expect(g.cost.at(-1)).toBe('Total cost of the project: Rs. 30,63,903');
     expect(g.finance).toEqual(table('finance'));
     expect(g.loan).toEqual(['Interest rate: 10% a year', 'Loan period: 4 years 6 months in all: a holiday of 6 months, then 4 years of instalments', 'How it is repaid: Equal principal every month']);
     expect(g.sales).toEqual(['Roasted chana: 2,500 pieces a month at full running, at Rs. 200 a piece', 'Roasted peanuts: 1,500 pieces a month at full running, at Rs. 200 a piece',

@@ -26,13 +26,16 @@ describe('fictional case E, today\'s sales and a new line', () => {
     expect(e.years.map((y) => rs(y.sales))).toEqual([10437500, 16450000, 19095000, 20473250, 21962762.5]);
   });
   // 2026-27: variable 65% = 67,84,375; fixed 18,00,000 for the whole year (the business runs all year); PBDIT 18,53,125.
-  // Less depreciation 4,20,000, preliminary 20,000, term-loan interest 2,27,083.33 (as case R: the loan is the same) and
-  // working-capital interest for the line's six months, 5,00,000 × 11% × 6/12 = 27,500: PBT 11,58,541.67; tax at 31.2%
-  // 3,61,465; PAT 7,97,076.67. DSCR (7,97,076.67 + 4,20,000 + 20,000 + 2,27,083.33) ÷ 7,27,083.33 = 14,64,160 ÷
-  // 7,27,083.33 = 2.0137.
+  // The loan is case R's, 2,27,083.33 of interest in the year: April to September, before the line sells, is paid from
+  // the project's cost (D-UX-350): 25,00,000 × 10/1200 × 6 less the five months' principal behind it, 1,25,000 −
+  // 41,666.67 × 15 × 10/1200 = 1,19,791.67; the year bears October to March, 1,07,291.67. Less depreciation 4,20,000
+  // (182 days of sales: a full year's), preliminary (1,00,000 + 1,19,791.67) ÷ 5 = 43,958.33, that interest and
+  // working-capital interest for the line's six months, 5,00,000 × 11% × 6/12 = 27,500: PBT 12,54,375; tax at 31.2%
+  // 3,91,365; PAT 8,63,010. DSCR (8,63,010 + 4,20,000 + 43,958.33 + 1,07,291.67) ÷ (1,07,291.67 + 5,00,000) =
+  // 14,34,260 ÷ 6,07,291.67 = 2.3617.
   it('the first year\'s profit and DSCR', () => {
-    expect([y1.variable, y1.fixed, y1.pbdit, y1.wcInterest, y1.pbt, y1.tax, y1.pat].map(rs)).toEqual([6784375, 1800000, 1853125, 27500, 1158541.67, 361465, 797076.67]);
-    expect([y1.available.toFixed(2), y1.dscr?.toFixed(4)]).toEqual(['1464160.00', '2.0137']);
+    expect([y1.variable, y1.fixed, y1.pbdit, y1.wcInterest, y1.pbt, y1.tax, y1.pat].map(rs)).toEqual([6784375, 1800000, 1853125, 27500, 1254375, 391365, 863010]);
+    expect([y1.available.toFixed(2), y1.dscr?.toFixed(4)]).toEqual(['1434260.00', '2.3617']);
   });
   // Working capital on the whole business's first-year rate, 70,00,000 + 68,75,000 = 1,38,75,000: debtors 30 days
   // 11,40,410.96, stock and creditors 30 days of its 65% 7,41,267.12 each; the margin 11,40,410.96 − 5,00,000 = 6,40,410.96.

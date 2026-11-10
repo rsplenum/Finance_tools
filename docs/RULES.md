@@ -140,7 +140,7 @@ Dated 02-10-2026. How a project report for a term loan with working capital is w
 | Contingency on fixed assets | 15% on the written-down value |
 | Preliminary and pre-operative expenses | written off over 5 years |
 
-Written-down value at the income-tax rates (Income-tax Rules, 1962, Appendix I): buildings 10%, plant and machinery 15%, furniture 10%; other fixed assets and the contingency on them at the plant-and-machinery rate. A full year's depreciation in the first year.
+Written-down value at the income-tax rates (Income-tax Rules, 1962, Appendix I): buildings 10%, plant and machinery 15%, furniture 10%; other fixed assets and the contingency on them at the plant-and-machinery rate. A first year of sales shorter than 180 days takes half the year's rate, as the income-tax rule gives an asset put to use for less than 180 days (Income-tax Act, 1961, s. 32(1), second proviso; the assets taken as put to use when sales begin; the owner's answer of 10-11-2026 that the part first year is judged, D-UX-350); otherwise a full year's.
 
 Working capital: The second method of lending (Tandon Committee): the bank finances up to 75% of current assets, less creditors. The turnover method for small enterprises (Nayak Committee, RBI): working capital of 25% of the year's sales, of which the bank finances 20%.
 

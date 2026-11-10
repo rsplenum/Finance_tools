@@ -11,6 +11,7 @@ import { fyOf, monthAfter, type LoanTerms } from './loan';
 import { monthsOf, series } from './project';
 import { GUARANTEES, cgtmseRate, guaranteeFee, type FeeYear, type GuaranteeId } from './guarantee';
 import { guaranteeFeeCheck, pmegpCheck, reportCheck, workedLimitCheck } from './report-check';
+import { monthsCheck } from './dscr-check';
 import { soldBy } from './sold-by';
 import { borrowerOf } from './tax';
 import { inr } from './util';
@@ -356,10 +357,17 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   }
   const loan: LoanInput = scheme ? { ...x.loan, amount: sanctioned - scheme.subsidy } : x.loan;
 
-  // Interest before the first sales is paid from the cost of the project and written off with the preliminary expenses.
+  // Interest before the first sales is paid from the cost of the project and written off with the preliminary expenses,
+  // month by month: the year sales begin bears only the interest from their first month (the owner's answer of
+  // 10-11-2026, D-UX-350). `early` is the part of it that falls in that year.
   const debt = amortization(loan);
   if (!('years' in debt)) return debt;
-  const interestBeforeStart = debt.years.filter((d) => d.fy < first).reduce((t, d) => t + d.interest, 0);
+  const interestBeforeStart = debt.months.reduce((t, m) => t + (m.month < start ? m.interest : 0), 0);
+  const early = debt.months.reduce((t, m) => t + (m.month < start && m.fy === first ? m.interest : 0), 0);
+  // A first year of sales shorter than 180 days takes half the year's depreciation (report.json, depreciationSource).
+  const [sy, sm] = start.split('-').map(Number), marchEnd = Date.UTC(sm >= 4 ? sy + 1 : sy, 3, 1), DAY = 86400000;
+  const daysOfSales = Math.round((marchEnd - Date.UTC(sy, sm - 1, 1)) / DAY), FIRST = DATA.firstYearDepreciation;
+  const firstShare = daysOfSales < FIRST.belowDays ? FIRST.sharePct / 100 : 1;
 
   // The guarantee fee (SCH1): CGFMU's on a Mudra loan, CGTMSE's when ticked; a finance cost each year, and before the first
   // sales paid from the cost of the project with the interest then. Worked twice: guarantee.ts and report-check.ts.
@@ -389,7 +397,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     let depreciation = 0;
     for (const h of HEADS) {
       if (h.id === 'preliminary') continue;
-      const d = ((wdv.get(h.id) as number) * h.depreciationPct) / 100;
+      const d = ((wdv.get(h.id) as number) * h.depreciationPct * (k ? 1 : firstShare)) / 100;
       wdv.set(h.id, (wdv.get(h.id) as number) - d);
       depreciation += d;
     }
@@ -399,9 +407,13 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     fy: r.fy, pbdit: r.pbdit, assetIncome: 0, depreciation: r.depreciation, nonCash: r.preliminary, interestOther: r.wcInterest + r.guaranteeFee,
     otherLoansInterest: 0, otherLoansPrincipal: 0, existingEmis: expansion ? x.existingEmis ?? 0 : 0, taxBy: x.taxBy,
   }));
+  if (early > 0) proj[0].interestFromCost = early;
   const plan = planStatement(proj, loan, DSCR_METHOD, first > when.years[0] ? first : undefined);
   if (!('statement' in plan)) return plan;
-  if (!money(plan.beforeStart.reduce((t, d) => t + d.interest, 0), interestBeforeStart)) return blocked('the interest before the first sales');
+  // Worked a second way: the whole years before from the statement's own schedule, the months of the first year from the
+  // loan in closed form (dscr-check.ts).
+  const earlyCheck = monthsCheck(loan as LoanTerms).reduce((t, m) => t + (m.month < start && m.month >= `${first.slice(0, 4)}-04` ? m.interest : 0), 0);
+  if (!money(plan.beforeStart.reduce((t, d) => t + d.interest, 0) + earlyCheck, interestBeforeStart)) return blocked('the interest before the first sales');
 
   const projectCost = fixedAssets + prelimAll + marginMoney;
   const subsidy = scheme ? scheme.subsidy : x.subsidy ?? 0, unsecured = x.unsecured ?? 0, termLoan = loan.amount as number, promoter = projectCost - termLoan - subsidy - unsecured;
@@ -479,7 +491,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   const unbalanced = out.find((y) => !money(y.assets, y.liabilities));
   if (unbalanced) return blocked(`the balance sheet for ${unbalanced.fy}`);
   const check = reportCheck({
-    cost: { ...cost, preliminary: prelimAll }, promoter: capital, subsidy, unsecured, limit, run: runS, months, variablePct: v, fixed: rows.map((r) => r.fixed), days,
+    cost: { ...cost, preliminary: prelimAll }, promoter: capital, subsidy, unsecured, limit, run: runS, months, start, variablePct: v, fixed: rows.map((r) => r.fixed), days,
     ...(drivers ? { drivers: { ...(x.products ? { products: x.products.map((p) => ({ unitsMonth: p.unitsMonth as number, price: p.price as number })) } : { capacity: x.capacity as number, price: x.price as number }),
       utilisationPct: util, priceGrowthPct: x.priceGrowthPct as number, fullAt } } : {}),
     ...(expansion ? { today: { sales: x.sales as number, growthPct: x.salesGrowthPct as number } } : {}),

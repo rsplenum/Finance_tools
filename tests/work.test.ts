@@ -33,14 +33,15 @@ const dscrR = (s: number, v: number) => {
   const pbt = s * (1 - v / 100) - 1800000 - 420000 - 20000 - 227083.33 - 55000;
   return (pbt - (pbt > 0 ? pbt * 0.312 : 0) + 420000 + 20000 + 227083.33) / 727083.33;
 };
-/** Case P's 2026-27 by hand (sales for three months from January 2027; the loan drawn in October, six months' interest on
- * the loan less PMEGP's margin money, kept aside; the limit's interest for three months): interest cover = EBIT ÷
- * interest. The margin money is 25% of the project cost without land, which holds a year's debtors at the running rate,
- * 30 days of sales (stock and creditors, 30 days of the 70% variable cost each, cancel). */
-const icP = (units: number, price: number) => {
-  const run = units * 0.85 * price, ebit = (run * 3) / 12 * 0.3 - 300000 - 360000 - 10000;
-  const subsidy = 0.25 * (2650000 + (run * 30) / 365), interest = (2400000 - subsidy) * 0.1 * 6 / 12 + 300000 * 0.11 * 3 / 12;
-  return ebit / interest;
+/** Case P's 2026-27 by hand (sales for three months from January 2027, under 180 days, so half the year's depreciation
+ * of 3,60,000; the loan drawn in October: its interest on the loan less PMEGP's margin money, kept aside, is three months
+ * in the project's cost, written off with the 50,000 of preliminary expenses over five years, and three months in the
+ * year, D-UX-350; the limit's interest for three months): interest cover = EBIT ÷ interest. The margin money is 25% of
+ * PMEGP's cost, without land and that interest, which holds a year's debtors at the running rate, 30 days of sales
+ * (stock and creditors, 30 days of the variable cost each, cancel). `use` is the first year's, `v` the variable cost. */
+const icP = (units: number, price: number, use = 85, v = 70) => {
+  const run = (units * use * price) / 100, loan = ((2400000 - 0.25 * (2650000 + (run * 30) / 365)) * 0.1 * 3) / 12;
+  return (((run * 3) / 12) * (1 - v / 100) - 300000 - 180000 - (50000 + loan) / 5) / (loan + (300000 * 0.11 * 3) / 12);
 };
 
 describe('Make it work on case R at Rs. 70,00,000 (D-UX-249, D-UX-250)', () => {
@@ -102,26 +103,29 @@ describe('Make it work on case R at Rs. 70,00,000 (D-UX-249, D-UX-250)', () => {
 
 describe('Make it work on case P at Rs. 150 a unit (D-UX-249: the price and the plant, by hand)', () => {
   const w = work(P);
-  it('says more use cannot reach, then a price of Rs. 249.83 at 85% use', () => {
+  it('says more use cannot reach, then a price of Rs. 178.70 at 85% use', () => {
     expect(w.useCannot?.still).toEqual(['dscrAverage', 'dscrLowest', 'interestCover']);
     const p = way(w.keep, 'price');
-    expect(p.change).toEqual({ utilisationPct: [85, 85, 85], price: 249.83 });
-    expect([icP(50000, 249.83).toFixed(5), icP(50000, 249.82).toFixed(5)]).toEqual(['1.50010', '1.49972']);
-    expect(check(withChange(P, p.change), 'interestCover')).toBeCloseTo(icP(50000, 249.83), 9);
-    expect(check({ ...P, utilisationPct: [85, 85, 85], price: 249.82 }, 'interestCover')).toBeCloseTo(icP(50000, 249.82), 9);
+    expect(p.change).toEqual({ utilisationPct: [85, 85, 85], price: 178.7 });
+    expect([icP(50000, 178.7).toFixed(5), icP(50000, 178.69).toFixed(5)]).toEqual(['1.50042', '1.49974']);
+    expect(check(withChange(P, p.change), 'interestCover')).toBeCloseTo(icP(50000, 178.7), 9);
+    expect(check({ ...P, utilisationPct: [85, 85, 85], price: 178.69 }, 'interestCover')).toBeCloseTo(icP(50000, 178.69), 9);
   });
 
-  it('or a plant of 83,276 units a year at 85% use, its cost asked', () => {
+  it('or a plant of 59,565 units a year at 85% use, its cost asked', () => {
     const c = way(w.keep, 'capacity');
-    expect([c.change, c.ask]).toEqual([{ utilisationPct: [85, 85, 85], capacity: 83276 }, { id: 'plantCost' }]);
-    expect([icP(83276, 150).toFixed(5), icP(83275, 150).toFixed(5)]).toEqual(['1.50003', '1.49991']);
-    expect(check(withChange(P, c.change), 'interestCover')).toBeCloseTo(icP(83276, 150), 9);
+    expect([c.change, c.ask]).toEqual([{ utilisationPct: [85, 85, 85], capacity: 59565 }, { id: 'plantCost' }]);
+    expect([icP(59565, 150).toFixed(5), icP(59564, 150).toFixed(5)]).toEqual(['1.50008', '1.49988']);
+    expect(check(withChange(P, c.change), 'interestCover')).toBeCloseTo(icP(59565, 150), 9);
   });
 
-  it('has no change of the loan that meets alone: a smaller loan leaves interest cover short in the part first year', () => {
+  it('has no change of the loan that meets alone: three months at 60% use earn less than their own costs, whatever the loan', () => {
     expect(w.change).toEqual([]);
     expect(way(w.not, 'loan').still).toEqual(['interestCover']);
-    expect(way(w.keep, 'variable').change).toEqual({ variablePct: 28.3 });
+    // By hand at the typed 60%: 11,25,000 of sales × 30% = 3,37,500 against 3,00,000 fixed and 1,80,000 depreciation.
+    expect(icP(50000, 150, 60)).toBeLessThan(0);
+    expect(way(w.keep, 'variable').change).toEqual({ variablePct: 49.1 });
+    expect([icP(50000, 150, 60, 49.1).toFixed(5), icP(50000, 150, 60, 49.2).toFixed(5)]).toEqual(['1.50681', '1.48402']);
   });
 });
 
@@ -156,8 +160,9 @@ describe('the promoters\' money kept in the business, and an expansion\'s loans 
   it('today\'s loans add their instalments to every year\'s debt service, and only for an expansion', () => {
     const line: ReportInput = { ...CASE_R, salesBy: 'expansion', sales: 7000000, salesGrowthPct: 10, capacity: 500000, price: 25, utilisationPct: [55, 70, 85], priceGrowthPct: 5, monthsToStart: 6 };
     const e = projectReport({ ...line, existingEmis: 240000 }) as Report;
-    // tests/expansion.test.ts: 2026-27's cash for the loan 14,64,160 against 7,27,083.33; with 2,40,000 a year more.
-    expect(e.years[0].dscr).toBeCloseTo(1464160 / (727083.33 + 240000), 6);
+    // tests/expansion.test.ts: 2026-27's cash for the loan 14,34,260 against 6,07,291.67 (the interest of April to
+    // September, 1,19,791.67, is in the project's cost, D-UX-350); with 2,40,000 a year more.
+    expect(e.years[0].dscr).toBeCloseTo(1434260 / (607291.67 + 240000), 6);
     expect((projectReport({ ...R, existingEmis: 240000 }) as Report).years[0].dscr).toBe((projectReport(R) as Report).years[0].dscr);
   });
 });

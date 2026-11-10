@@ -43,9 +43,13 @@ describe('the repayment compared (OR5)', () => {
 
   it('proposes the cheapest that misses nothing: equal principal misses the lowest-year DSCR, so EMI', () => {
     const w = compareRepayments(G(33000000))!, [ep, emi, st] = w.ways;
-    expect(ep.lowest!.dscr.toFixed(4)).toBe('1.2371');
+    // The month of interest before the first sales (April 2027: 2,50,00,000 × 0.775% = 1,93,750) is in the project's
+    // cost and written off over five years (D-UX-350): 38,750 less profit in 2028-29 takes it under Rs. 1 crore, where
+    // the surcharge steps down, so the cash available is 1,23,06,074.78 over the hand-worked 99,15,625 = 1.2411.
+    expect(12306074.78 / BY_HAND['equal-principal'].service).toBeCloseTo(ep.lowest!.dscr, 8);
+    expect(ep.lowest!.dscr.toFixed(4)).toBe('1.2411');
     expect(ep.misses).toEqual(['dscrLowest']);
-    expect(emi.lowest!.dscr.toFixed(4)).toBe('1.2853');
+    expect(emi.lowest!.dscr.toFixed(4)).toBe('1.2867');
     expect(emi.misses).toEqual([]);
     // Stepped leaves more of the loan outstanding, so the plant's net block covers it less: 1.185 against 1.20.
     expect(st.misses).toEqual(['facr']);
