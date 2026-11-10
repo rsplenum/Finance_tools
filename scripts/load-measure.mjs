@@ -3,12 +3,12 @@
  * its source, what it misses and how it could be gamed: docs/LOAD-MEASURE.md. Opens each built page at 360 by 780 px, light,
  * as it loads, in its answer state (the `result` state of scripts/design-checks.mjs, or as it loads on a page without
  * one) and in its plan state, and takes its counts. Each page marks its answer `data-answer` (words, not only a figure)
- * and a sticky echo of it `data-answer-echo`. The site check fails when a count differs from scripts/load-baseline.json:
- * a rise needs a decision, a fall a lower baseline in the same commit.
+ * and a sticky echo of it `data-answer-echo`. The site check reports a count that differs from scripts/load-baseline.json
+ * and never fails on it (LOOSE1, D-TECH-110), but for a rise in questions (rule 17), which needs a decision.
  *
  *   node scripts/load-measure.mjs [/dscr/ ...] [--text] [--no-effects]   the counts as a table, the aims under it
- *   node scripts/load-measure.mjs --lower [/dscr/ ...]                   writes the counts that fell, and new pages
- *   node scripts/load-measure.mjs --raise /dscr/ controls D-UX-63        writes one count that rose, with its decision
+ *   node scripts/load-measure.mjs --lower [/dscr/ ...]                   writes the counts as they stand, and new pages; never more questions
+ *   node scripts/load-measure.mjs --raise /dscr/ questions D-UX-63       writes a count that rose, with its decision (questions need it)
  * Both work in any container (D-TECH-74): where the fonts differ from the baseline's probe, they write every count but the
  * three that hang on where text wraps (LAYOUT), and a raise of one of those refuses.
  * --text also prints what the counts saw: the long sentences, the abbreviations, the text styles, the colours and the
@@ -340,34 +340,36 @@ export async function countPage(browser, BASE, path, { text = false, effectsToo 
 }
 
 /**
- * The site check's part: every built page against scripts/load-baseline.json. A count that rose, a count that fell, a page
- * without a baseline and a page whose answer is not marked are violations, each with the command that settles it.
+ * The site check's part: every built page against scripts/load-baseline.json. The counts are the look and are reported,
+ * never a violation (LOOSE1, D-TECH-110): a count that rose or fell, a page without a baseline, a page whose answer is
+ * not marked. One stays a gate: a page that asks more questions than its baseline (CLAUDE.md, rule 17).
  */
-export async function loadCheck({ browser, BASE, pages, quick = false, violations }) {
+export async function loadCheck({ browser, BASE, pages, quick = false, violations, look = violations }) {
   const base = JSON.parse(await readFile(BASELINE, 'utf8'));
   const fonts = (await fontProbe(browser, BASE)) === base.fontProbe;
   let rose = 0, fell = 0;
   for (const path of pages) {
-    // What the colours count saw goes with its violation: a rise seen only on the runner cannot be read here (OR11c).
+    // What the colours count saw goes with its line: a rise seen only on the runner cannot be read here (OR11c).
     const { counts, defect, seen } = await countPage(browser, BASE, path, { text: true });
-    if (defect) violations.push(`load: ${path}: ${defect}`);
+    if (defect) look.push(`load: ${path}: ${defect}`);
     const was = base.pages[path];
-    if (!was) { violations.push(`load: ${path} has no baseline (npm run load -- --lower ${path})`); continue; }
+    if (!was) { look.push(`load: ${path} has no baseline (npm run load -- --lower ${path})`); continue; }
     for (const [k, name] of COUNTS) {
       const [now, then] = [counts[k], was[k]];
       if (now === then || (!fonts && LAYOUT.includes(k))) continue;
       // A page added where the fonts differed has no reading of the counts that hang on them yet.
-      if (then === undefined) { violations.push(`load: ${path} ${name} has no reading yet (npm run load -- --lower ${path})`); continue; }
+      if (then === undefined) { look.push(`load: ${path} ${name} has no reading yet (npm run load -- --lower ${path})`); continue; }
       if (now === null || then === null || now > then) {
         rose++;
-        violations.push(`load: ${path} ${name} rose from ${then ?? 'none'} to ${now ?? 'none'} (cut it, or a line in docs/DECISIONS.md and npm run load -- --raise ${path} ${k} <D-id>)${k === 'colours' ? `; saw ${seen.match(/colours: (.*)/)?.[1]}` : ''}`);
+        if (k === 'questions') violations.push(`load: ${path} asks ${now ?? 'none'} questions, ${then ?? 'none'} before (rule 17: cut it, or a line in docs/DECISIONS.md and npm run load -- --raise ${path} ${k} <D-id>)`);
+        else look.push(`load: ${path} ${name} rose from ${then ?? 'none'} to ${now ?? 'none'}${k === 'colours' ? `; saw ${seen.match(/colours: (.*)/)?.[1]}` : ''}`);
       } else {
         fell++;
-        violations.push(`load: ${path} ${name} fell from ${then} to ${now}: lower the baseline in this commit (npm run load -- --lower ${path})`);
+        look.push(`load: ${path} ${name} fell from ${then} to ${now} (npm run load -- --lower ${path} writes it)`);
       }
     }
   }
-  if (!quick) for (const path of Object.keys(base.pages)) if (!pages.includes(path)) violations.push(`load: ${path} is in the baseline but not built (take it out of scripts/load-baseline.json)`);
+  if (!quick) for (const path of Object.keys(base.pages)) if (!pages.includes(path)) look.push(`load: ${path} is in the baseline but not built (take it out of scripts/load-baseline.json)`);
   return { pages: pages.length, rose, fell, fonts };
 }
 
@@ -420,8 +422,9 @@ async function main() {
       if (!base.pages[path]) { base.pages[path] = Object.fromEntries(Object.entries(counts).filter(([k]) => writes(k))); changed.push(`${path} added`); continue; }
       for (const [k] of COUNTS.filter(([k]) => writes(k))) {
         const [then, now] = [base.pages[path][k], counts[k]];
-        // A count new to the measure takes its first reading.
-        if (then === undefined || (now !== null && then !== null && now < then)) { base.pages[path][k] = now; changed.push(`${path} ${k} ${then} → ${now}`); }
+        // A count new to the measure takes its first reading; a look count is written as it stands (LOOSE1, D-TECH-110);
+        // questions only when they fell: a rise is rule 17's, by --raise with its decision.
+        if (then === undefined || (now !== then && (k !== 'questions' || (now !== null && then !== null && now < then)))) { base.pages[path][k] = now; changed.push(`${path} ${k} ${then} → ${now}`); }
       }
     }
   }

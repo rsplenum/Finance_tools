@@ -193,14 +193,17 @@ export function sceneFrame([id, times]) {
 }
 
 /** `pages` limits the pages read (the site check's --quick); `motion` false skips F9, F10, F14 and F15, which wait on the motion. */
-export async function forbiddenChecks({ browser, BASE, pages = NEW_LOOK, motion = true, violations }) {
+export async function forbiddenChecks({ browser, BASE, pages = NEW_LOOK, motion = true, violations, look: seen = violations }) {
   let weight = 0;
   const look = NEW_LOOK.filter((p) => pages.includes(p));
   for (const path of look) {
     const v = (m) => violations.push(`${path} FinSight's rules: ${m}`);
+    // The look (F1 to F8, F10 to F13, F17) is reported, never a violation (LOOSE1, D-TECH-110). Motion that stops (F9), nothing
+    // fetched from elsewhere (F14), the weight (F15) and Tab's order (F19) stay violations: accessibility, privacy, a slow phone.
+    const t = (m) => seen.push(`${path} FinSight's look: ${m}`);
     for (const width of ['phone', 'desktop']) {
       const { ctx, page } = await openAt(browser, BASE + path, { width });
-      for (const m of await page.evaluate(inPage, { tools: TOOLS, order: path === '/' ? ORDER : null, phone: width === 'phone' })) v(`${m} (${width})`);
+      for (const m of await page.evaluate(inPage, { tools: TOOLS, order: path === '/' ? ORDER : null, phone: width === 'phone' })) t(`${m} (${width})`);
       await ctx.close();
     }
     // F9, F10, F14, F15: the motion stops by itself, the words are whole from the start, nothing is fetched from elsewhere.
@@ -226,8 +229,8 @@ export async function forbiddenChecks({ browser, BASE, pages = NEW_LOOK, motion 
       });
       const kb = Math.round(((await Promise.all(sizes)).reduce((a, b) => a + b, 0) - below) / 1024);
       if (path === '/') weight = kb;
-      if (first.typed.join('|') !== settled.typed.join('|')) v('F10 a heading\'s words or a counted figure are not in the page from the start');
-      if (await page.locator('[data-typed]').count()) v('F10 a heading still types itself');
+      if (first.typed.join('|') !== settled.typed.join('|')) t('F10 a heading\'s words or a counted figure are not in the page from the start');
+      if (await page.locator('[data-typed]').count()) t('F10 a heading still types itself');
       if (settled.running.length) v(`F9 still moving 6 s after load: ${[...new Set(settled.running)].join(', ')}`);
       if (settled.fields.join() !== later.fields.join()) v('F9 a field of dashes still moves 6 s after load');
       for (const h of hosts) if (h !== BASE) v(`F14 a request to ${h}`);

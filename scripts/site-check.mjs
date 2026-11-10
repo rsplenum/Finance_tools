@@ -13,6 +13,8 @@
  * Then the design checks (DT1, scripts/design-checks.mjs): axe, contrast, field edges and focus at 3:1, target sizes, Tab
  * reach, 320 px and reduced motion on every page at 360 and 1280 px, light and dark, and the token ratchet.
  * Then the load measure (UX2b, scripts/load-measure.mjs): every page's counts against scripts/load-baseline.json.
+ * The look is reported and never fails the check (LOOSE1, D-TECH-110): the load counts but a rise in questions, the token
+ * counts, FinSight's look (F1 to F8, F10 to F13, F17), the estimate's word budget and the CMA's three screens.
  * Run after `npm run build`. CHROMIUM_PATH overrides the browser Playwright would use. `--quick` (CHK1, D-TECH-63) opens only
  * the pages this branch's change touches (scripts/site-pages.mjs), and the motion and frame checks only when home is one.
  */
@@ -45,6 +47,9 @@ if (!pages.length) {
 }
 
 const violations = [];
+// LOOSE1 (D-TECH-110): the look is reported, never a gate. A taste count (words, styles, colours, the word baselines,
+// FinSight's look) goes here and prints under the result; money, law, the field count and accessibility stay violations.
+const look = [];
 
 // D-BIZ-03: the brand notice, word for word as rule 4 of docs/TRADEMARKS.md gives it, read below on the planning estimate
 // and in its six downloads; and, by rule 1, no logo or product image: site/public and the built site hold no image but the favicon.
@@ -1114,7 +1119,7 @@ if (touched('/estimate/')) {
     await expectText(page, v, 'pl-total', /^Rs\. [\d,]+\.\d+ (lakh|crore)$/, label);
     await expectText(page, v, 'pl-range', /^At (Standard|Luxury)( as a package)?: the cheapest choice in each item to the dearest; /, `${label}: the level's range`);
     const words = await page.locator('main').evaluate((m) => (m.innerText.match(/\S+/g) ?? []).length);
-    if (words > BUDGET) v(`${label}: ${words} words shown with the answer (budget ${BUDGET})`);
+    if (words > BUDGET) look.push(`/estimate/ V1: ${label}: ${words} words shown with the answer (budget ${BUDGET})`);
     const shown = await page.locator('[data-testid="pl-flags"] li').count();
     if (shown !== flags) v(`${label}: ${shown} flags with the answer (want ${flags})`);
     const fields = await page.locator('main').evaluate((m) => [...m.querySelectorAll('input, select, textarea')].filter((e) => e.checkVisibility() && !e.closest('#pl-download')).length);
@@ -1650,7 +1655,7 @@ if (touched('/cma/')) {
   if (await page.locator('#cma-figures').count()) v('UXR5: "See the answer" leaves the CMA\'s figures unfolded');
   // UXR6 (UXR1's S20): folded on a phone, the download within three screens of the answer, Forms I to VI closed.
   const gap = await page.evaluate(() => (document.getElementById('download').getBoundingClientRect().top - document.getElementById('result').getBoundingClientRect().top) / innerHeight);
-  if (gap > 3) v(`UXR6: the CMA's download is ${gap.toFixed(1)} screens below its answer on a phone, want 3 at most`);
+  if (gap > 3) look.push(`/cma/ UXR6: the CMA's download is ${gap.toFixed(1)} screens below its answer on a phone, want 3 at most`);
   if (await page.locator('#cma-forms details[open]').count()) v('UXR6: a form of the CMA opens by itself on a phone');
   await page.getByTestId('cma-edit').click();
   await page.locator('dialog[open] #fld-cma-existing').waitFor();
@@ -1991,17 +1996,20 @@ for (const [path, pre, dl] of SAME.filter(([p]) => touched(p))) for (const width
 }
 
 // The design team's measured checks (DT1, docs/DESIGN.md): every page at 360 and 1280 px, light and dark, 320 px, reduced motion.
-const design = await designChecks({ browser, BASE, pages, quick, violations });
-const load = await loadCheck({ browser, BASE, pages, quick, violations });
-const forbidden = await forbiddenChecks({ browser, BASE, pages, motion: touched('/'), violations });
+const design = await designChecks({ browser, BASE, pages, quick, violations, look });
+const load = await loadCheck({ browser, BASE, pages, quick, violations, look });
+const forbidden = await forbiddenChecks({ browser, BASE, pages, motion: touched('/'), violations, look });
 await browser.close();
 server.close();
-console.log(`site check: ${pages.length} pages at 390 px, light and dark: ${violations.length} violations${quick ? ` (--quick: ${pages.join(' ')}; the full check before a PR)` : ''}`);
-console.log(`design checks: ${design.lines} findings measured (each held in scripts/design-baseline.json), ${design.tokens.rawColour} raw colour classes, ${design.tokens.arbitraryValue} arbitrary values${design.lower.length ? `; lower the baseline: ${design.lower.join(', ')}` : ''}${design.fixed ? `; ${design.fixed} known findings fixed, take them out of the baseline` : ''}`);
+console.log(`site check: ${pages.length} pages at 390 px, light and dark: ${violations.length} violations; the look: ${look.length} reported, never a gate${quick ? ` (--quick: ${pages.join(' ')}; the full check before a PR)` : ''}`);
+console.log(`design checks: ${design.lines} findings measured (each held in scripts/design-baseline.json), ${design.tokens.rawColour} raw colour classes, ${design.tokens.arbitraryValue} arbitrary values${design.lower.length ? `; the baseline can come down: ${design.lower.join(', ')}` : ''}${design.fixed ? `; ${design.fixed} known findings fixed, take them out of the baseline` : ''}`);
 console.log(`load measure: ${load.pages} pages against scripts/load-baseline.json, ${load.rose} counts rose, ${load.fell} fell${load.fonts ? '' : '; other fonts here than the baseline\'s, so the answer\'s place and the out-of-sight count are not compared'} (docs/LOAD-MEASURE.md)`);
 console.log(`FinSight's rules: ${forbidden.pages} page${forbidden.pages === 1 ? '' : 's'} in the new look (docs/DESIGN.md), F1 to F19; ${forbidden.weight ? `home weighs ${forbidden.weight} KB as it loads (cap ${WEIGHT_CAP} KB)` : 'no motion, frame or weight check (home not touched)'}`);
 console.log(`downloads on a slow phone (CPU ×4): ${timings.length} timed, slowest ${Math.max(0, ...timings.map((t) => t[1]))} ms (cap ${SLOW_MS} ms)`);
 for (const x of violations) console.log(`  - ${x}`);
+if (look.length) console.log('the look, reported (D-TECH-110: Rahul judges it, no check fails on it):');
+for (const x of look) console.log(`  ~ ${x}`);
 // In CI each violation is also an annotation, readable where the job's log is not (UX4).
 if (process.env.GITHUB_ACTIONS) for (const x of violations) console.log(`::error title=site check::${String(x).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
+if (process.env.GITHUB_ACTIONS) for (const x of look) console.log(`::notice title=the look (reported)::${String(x).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
 process.exit(violations.length ? 1 : 0);

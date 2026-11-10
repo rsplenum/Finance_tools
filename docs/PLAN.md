@@ -19,7 +19,7 @@ Sizes as in HANDOFF (S about 60 steps, M about 120, L about 200). Each is one fr
 
 | # | Row | Size | Rahul opens | Done when |
 |---|---|---|---|---|
-| 1 | **LOOSE1** Free the look from the checks before rebuilding: the taste counts (words, styles, colours, the word baselines) become a report, not a gate; money, law, the field count and accessibility stay gates. Delete `tests/zz-tmp.test.ts`. Nothing in `engine/` or its tests is touched | S, high | the PR's list of what moved | `npm run verify` green; each moved check named |
+| 1 | **LOOSE1** (done 09-11-2026, D-TECH-110) Free the look from the checks before rebuilding: the taste counts (words, styles, colours, the word baselines) become a report, not a gate; money, law, the field count and accessibility stay gates. Delete `tests/zz-tmp.test.ts`. Nothing in `engine/` or its tests is touched | S, high | the PR's list of what moved | `npm run verify` green; each moved check named |
 | 2 | **BUILD1** The project report as the builder, real and clickable, with the live paper; saved on the device as it is typed; the worked example a project that passes | L, Extra | the preview on a phone and a desktop | Rahul says it is better |
 | 3 | **WORDS1** Plain words on all four tools and home: one short line a question; sources, dates and reasons move to one "How this is worked out" part and the paper's annex; no internal codes; every string in one file per page, ready for Hindi. Targets: words shown at most half of today's | M, high | before and after, page by page | Rahul says it reads simply |
 | 4 | **BUILD2** The same builder for the DSCR, the CMA and the estimate | L, Extra | the preview | Rahul says it is better |

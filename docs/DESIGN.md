@@ -47,7 +47,7 @@ The brief: `docs/design-reference/finsight.md`. *Tested*: by `scripts/forbidden-
 Colour: ink, ledger red (the margin rule only, never a figure) and marigold (highlighter, ticks, glow), one highlight per screen; the critic's. Principle 6 yields: two ink pills may share a screen, never an accent fill; principle 10 yields for the glow (never behind a figure, still under reduced motion).
 
 ## Tokens (`site/src/global.css`)
-A token is a role, needing no `dark:` twin. New work uses tokens only: the site check counts raw palette classes (`text-slate-600`) and arbitrary values (`text-[11px]`) and fails if either grows (`scripts/design-baseline.json`); both stand at nil from UX6.
+A token is a role, needing no `dark:` twin. New work uses tokens only: the site check counts raw palette classes (`text-slate-600`) and arbitrary values (`text-[11px]`) and reports a rise (`scripts/design-baseline.json`); both stand at nil from UX6.
 
 Tokens and their use: `canvas` the page; `surface` a panel set off from it; `field` inside a field; `ink` / `ink-muted` text / hints and second lines; `line` dividers that only group (never a control's edge); `edge` a field's edge; `accent` / `on-accent` / `accent-hover` the chosen option (on the tool pages) / its text; `link`; `focus` the ring, 2 px, offset 2 px; `good` `warn` `bad` (+ `-tint` grounds) meets, provisional or a caution, misses or wrong; `stage` / `on-stage` the closing panel / its text; `spark-1` to `-3` the fields' dashes only (ink, red, marigold); `desk` `paper` `margin` `marigold` the ink desk, paper, the ledger red, the highlighter.
 
@@ -75,7 +75,7 @@ Tool pages: `docs/DESIGN-SITE.md`. Home: FinSight's order (F13); each tool's wor
 Each tool is reviewed empty, partly filled, provisional (a fact missing), with an error, with a result, missing a default benchmark ratio, an optional input empty, at the download, with focus and hover; at 360 px and on a desktop, 1024 too for a change in `lg:`, light and dark. `npm run design-review -- /dscr/` drives the states listed in `scripts/design-review.mjs` and prints what it measures; screenshots (`--shots <dir>`) only for pages a change touches.
 
 ## Measured checks (`scripts/design-checks.mjs`, in the site check)
-On every page at 360 and 1280 px, light and dark: axe-core (WCAG 2.2 A and AA), text 4.5:1 and large 3:1, edges and focus 3:1, targets 24 px, 44 px on a phone, every control by Tab, the focus kept and never under a sticky band, no sideways scroll at 320 px, still under reduced motion, the token ratchet. What they cannot see goes to the critic.
+On every page at 360 and 1280 px, light and dark: axe-core (WCAG 2.2 A and AA), text 4.5:1 and large 3:1, edges and focus 3:1, targets 24 px, 44 px on a phone, every control by Tab, the focus kept and never under a sticky band, no sideways scroll at 320 px, still under reduced motion; the token count reports. What they cannot see goes to the critic.
 
 ## Acceptable and unacceptable
 - Acceptable: the DSCR's verdict in a sentence with the average and the lowest year beside it, the years marked against the target. Unacceptable: the verdict only as a colour, or below the table.
