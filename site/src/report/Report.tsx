@@ -10,7 +10,9 @@ import { parseMonth } from '../../../engine/parse';
 import { SOLD_BY, soldBy } from '../../../engine/sold-by';
 import { verdictWords, workWords } from '../verdict';
 import { Paper, sheetId, still } from '../Paper';
-import { answerRule, BUTTON, reach, Choice, Counter, Dash, FILLED, goTo, HINT, Ledger, SelectField, STATE, TextField, Tick, InAppNote, Verdict, useHomeCase, useStart, StartLine, MoreOptions, useKept } from '../fields';
+import { answerRule, BUTTON, reach, Choice, Counter, Dash, FILLED, goTo, HINT, How, Ledger, SelectField, STATE, TextField, Tick, InAppNote, Verdict, useHomeCase, useStart, StartLine, MoreOptions, useKept } from '../fields';
+import { W } from './words';
+import { SHARED } from '../words';
 import { REPORT_HOME } from './home-case';
 import { reportExample } from './example';
 import { Bar, Benchmarks, Lever, PlanLever, targetOf } from '../Board';
@@ -305,7 +307,7 @@ export function ReportCalculator() {
       onChange={(borrower) => update((x) => ({ ...x, borrower }))} />
         </>)}
         {stepOf('cost', <Group id="cost">
-      <p class={`mt-2 ${HINT}`}>Leave a head empty if the project has none. The margin for working capital is worked out and added.</p>
+      <p class={`mt-2 ${HINT}`}>{W.cost}</p>
       <div class="mt-4 grid gap-4 @md:grid-cols-2">
         {HEADS.filter((h) => !simple || SIMPLE_COST.includes(h.id)).map((h) => <Fragment key={h.id}>{amount(`fld-cost-${h.id}`, h.label, s.cost[h.id], (x, t) => ({ ...x, cost: { ...x.cost, [h.id]: t } }),
           h.id === 'building' && s.scheme === 'pmegp' ? PMEGP_SHED : undefined)}</Fragment>)}
@@ -313,7 +315,7 @@ export function ReportCalculator() {
         </Group>)}
         {stepOf('loan', <>
           <Group id="finance">
-      <p class={`mt-2 ${HINT}`}>The promoters bring in the rest of the cost of the project; it is worked out.</p>
+      <p class={`mt-2 ${HINT}`}>{W.promoters}</p>
       <Choice name="fld-scheme" legend="A government scheme" options={SCHEME_CHOICES} value={s.scheme} columns
         onChange={(scheme) => update((x) => ({ ...x, scheme }))} />
       {s.scheme === 'pmegp' && <>
@@ -435,7 +437,7 @@ export function ReportCalculator() {
       {simple && s.salesBy === 'typed' && <p class="mt-4 text-ink">Sales are typed by year in expert mode.</p>}
       <div class="mt-4 grid gap-4 @md:grid-cols-2">
         {simple ? <TextField id="fld-sellFrom" label="When will you start selling?" type="month" value={s.sellFrom ?? ''}
-            hint={'The holiday before the first instalment runs until then, unless you type another.'}
+            hint={W.holiday}
             said={s.sellFrom?.trim() ? (parseMonth(s.sellFrom) ? monthText(parseMonth(s.sellFrom) as string) : 'Not understood. Type 2027-03 or Mar 2027.') : undefined}
             onCommit={(sellFrom) => update((x) => ({ ...x, sellFrom }))} />
           : percent('fld-monthsToStart', 'Months from the loan to the first sales (0 if at once)', s.monthsToStart, (x, monthsToStart) => ({ ...x, monthsToStart }), 'months')}
@@ -446,7 +448,7 @@ export function ReportCalculator() {
       </div>
       {!simple && <fieldset id="rep-heads" class="mt-6">
         <legend class="font-medium text-ink">Costs by head, if you have them</legend>
-        <p class={`mt-1 ${HINT}`}>Each named in the profit and loss; a side with a head typed is added up from its heads.</p>
+        <p class={`mt-1 ${HINT}`}>{W.heads}</p>
         <div class="mt-2 grid gap-4 @md:grid-cols-2">
           {COST_HEADS.variable.map((h) => <Fragment key={h.id}>{percent(`fld-head-${h.id}`, `${h.label} (% of sales)`, s.heads?.variable?.[h.id] ?? '',
             (x, t) => ({ ...x, heads: { ...x.heads, variable: { ...x.heads?.variable, [h.id]: t } } }), '%', undefined, 'hint' in h ? h.hint : undefined)}</Fragment>)}
@@ -477,10 +479,10 @@ export function ReportCalculator() {
             benchmarks={(p.checks ?? []).map((c) => ({ label: c.label, value: c.byDefault === undefined ? c.level : `${c.level}, yours (default ${c.byDefault}${c.looser ? ', looser than a bank may accept' : ''})` }))}
             confirm={seen ? 'These are right' : 'These are right: show the report'} onConfirm={confirm} />}
           {p.view && (ok || seen) && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
-          <Ledger id="assumed" testid="rep-assumed" title="Assumed until changed" rows={assumptionsOf(s).map((a) => {
+          <How><p>{SHARED.twice}</p><p>{W.bars}</p><Ledger inside id="assumed" testid="rep-assumed" rows={assumptionsOf(s).map((a) => {
             const to = ASSUMED_BOX[a.id];
             return { ...a, to, go: to && simple && !IN_SIMPLE.has(to) ? toExpert(to) : undefined };
-          })} />
+          })} /></How>
         </>)}
         {stepOf('download', <Download s={s} p={p} update={update} ok={ok} />)}
       </div>
@@ -637,12 +639,12 @@ function Viable({ s, p, update, use, useWay, answer, toCollateral }: {
   const pending = s.pending ? PENDING[s.pending] : undefined;
   return <div class="mt-6">
     {pending && <div data-testid="rep-pending" class="mb-4 rounded-control border-l-4 border-warn bg-surface p-3">
-      <TextField id="fld-pending" label={pending.label} hint={`A question the way you used left open: the report stays provisional until it is answered. ${pending.hint}`}
+      <TextField id="fld-pending" label={pending.label} hint={`${W.pending} ${pending.hint}`}
         unit="Rs." inputMode="decimal" value="" tidy={tidyAmount} onCommit={answer} />
     </div>}
     {ask && <div data-testid="rep-work" tabIndex={-1}>
       <h3 class="text-title text-ink">Make it work</h3>
-      <p class="mt-1 text-sm text-ink">What holds it back, then the ways that fix it: the ones that keep your loan first. Use this writes a way into your answers, with an undo.</p>
+      <p class="mt-1 text-sm text-ink">{W.viable}</p>
       {!w ? <p data-testid="rep-work-wait" class={`mt-2 ${HINT}`}>{work?.on === wbase ? 'No way can be worked out for these figures.' : 'Working out the ways…'}</p> : <>
         <h4 class="mt-4 font-medium text-ink">What holds it back</h4>
         <p class={HINT}>{w.misses ? `${w.misses} ratio${w.misses === 1 ? '' : 's'} short, ${w.held.length === 1 ? 'one cause' : `${w.held.length} causes`}${w.cash ? ', and cash runs out, as said above' : ''}.`
@@ -663,7 +665,7 @@ function Viable({ s, p, update, use, useWay, answer, toCollateral }: {
         {w.useCannot && <p data-testid="rep-work-use-cannot" class="mt-2 text-sm text-ink">{w.useCannot}</p>}
         {notReached('rep-work-not', 'Ways that do not reach here', w.keepNot)}
         <h4 data-testid="rep-work-change-h" class="mt-6 font-medium text-ink">Or change the loan</h4>
-        <p class={HINT}>If you would rather borrow less, or ask the lender for other terms.</p>
+        <p class={HINT}>{W.less}</p>
         {w.change.length > 0 && <ul data-testid="rep-work-change" class="mt-2 space-y-2">{w.change.map((c) => wayCard(c, w.misses, true))}</ul>}
         {w.changeNone && <p data-testid="rep-work-change-none" class="mt-1 text-sm text-ink">{w.changeNone}</p>}
         {notReached('rep-work-change-not', 'Changes that do not reach alone', w.changeNot)}
@@ -672,7 +674,6 @@ function Viable({ s, p, update, use, useWay, answer, toCollateral }: {
     {p.checks && <div data-testid="rep-checks" class={ask ? 'mt-6' : ''}>
       <h3 class="text-title text-ink">{ask ? 'The other benchmark ratios' : `${p.misses || p.checks.some((c) => c.verdict === 'wait') ? 'Against' : 'Meets'} the ${p.benchmarks ? '' : 'default '}benchmark ratios`}</h3>
       {p.benchmarks && <p data-testid="rep-benchmarks-note" class="mt-1 text-sm text-warn">{p.benchmarks}</p>}
-      <p class={`mt-1 ${HINT}`}>A benchmark is a level lenders commonly look for.</p>
       <ul class="mt-1 divide-y divide-line">{p.checks.filter((c) => !onKey.has(c.id) && !held.has(c.id)).map((c) => <Bar key={c.id} c={c}>
         {/* Met on the project's own assets, the cover reads once: no note, no ask (UX5b, the critic's finding 3). */}
         {c.id === 'securityCover' && (p.collateralNote || (!s.collateral.trim() && c.verdict !== 'meets')) && <p data-testid="rep-collateral-note" class={HINT}>
@@ -680,7 +681,6 @@ function Viable({ s, p, update, use, useWay, answer, toCollateral }: {
             class="text-link underline underline-offset-4">Type its market value</a>.</>}</p>}
       </Bar>)}</ul>
       {/* How to read the bars, under them as a chart its key (UX9b, the UX9 critic). */}
-      <p class={`mt-1 ${HINT}`}>Each ratio in its worst year; the line is its benchmark.</p>
       <Benchmarks pre="rep" fields={benchmarkFields('fresh', s.benchmarks)} reset={() => update((t) => ({ ...t, benchmarks: undefined }))}
         set={(id, t) => update((u) => ({ ...u, benchmarks: withBenchmark(u.benchmarks, id, t) }))} />
     </div>}
@@ -713,8 +713,8 @@ function Viable({ s, p, update, use, useWay, answer, toCollateral }: {
       onClick={() => { replan([], AS_TYPED); focusNext('[data-testid="rep-plan"]'); }}>Try the changes together</button>}
     {p.misses && plan && b && <div data-testid="rep-plan" tabIndex={-1} class="mt-6 border-t-2 border-ink pt-4">
       <h3 class="text-title text-ink">The changes together</h3>
-      <p class={HINT}>Each slider moves one figure from what you typed; the figures above change only when you use them.</p>
-      <TextField id="fld-promotersMost" class="mt-3" label="The most the promoters can bring in all, if known" hint="Without it, the sliders take no limit on their money."
+      <p class={HINT}>{W.sliders}</p>
+      <TextField id="fld-promotersMost" class="mt-3" label="The most the promoters can bring in all, if known" hint={W.most}
         unit="Rs." inputMode="decimal" value={s.promotersMost} tidy={tidyAmount} invalid={bad(s.promotersMost, amountOf)}
         said={notUnderstood(s.promotersMost, amountOf, '10,00,000 or 10 L')} onCommit={(promotersMost) => update((x) => ({ ...x, promotersMost }))} />
       {b.steps.length
@@ -805,8 +805,8 @@ function Facts({ s, update }: { s: ReportState; update: Update }) {
       {field('name', 'Business’s name')}
       {field('activity', 'What the business does', 'Like “Manufacture of corrugated boxes”.')}
       {field('address', 'Business’s address')}
-      {field('lender', 'Lender', 'The bank or finance company, and the branch, if known.')}
-      {field('preparedBy', 'Prepared by', 'Your name or your firm’s, if not the borrower.')}
+      {field('lender', 'Lender', SHARED.lender)}
+      {field('preparedBy', 'Prepared by', SHARED.preparedBy)}
     </div>
   </Group>;
 }
@@ -818,7 +818,7 @@ function Download({ s, p, update, ok }: { s: ReportState; p: ReportPreview; upda
     ? 'No document while the two computations disagree.' : `A PDF, an Excel copy and a Word copy, once ${p.view ? 'you have checked your figures' : 'the report shows figures'}.`}
     {!p.blocked && <> <a href="#report" data-testid="rep-to-check" class="text-link underline underline-offset-4">Go to Check</a></>}</p></Group>;
   return <Group id="download">
-    <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy and a Word copy to edit, made in your browser from your figures.</p>
+    <p class={`mt-2 ${HINT}`}>{SHARED.files}</p>
     <Words s={s} update={update} />
     <div class="mt-5">
         {/* No tick while the file is marked provisional, as when cash runs out (D-UX-49); a quiet line says why (D-UX-247). */}

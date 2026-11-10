@@ -10,7 +10,7 @@
  */
 import type { ComponentChildren } from 'preact';
 import { useMemo, useState } from 'preact/hooks';
-import { AnswerBar, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, HINT, KeptLine, Ledger, Section, STATE, TextField, Tick, InAppNote, Verdict, answerRule, useHomeCase, useKept, reach, useStart, StartLine, StartNotes, MoreOptions, LINK_BUTTON, goTo } from '../fields';
+import { AnswerBar, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, HINT, How, KeptLine, Ledger, Section, STATE, TextField, Tick, InAppNote, Verdict, answerRule, useHomeCase, useKept, reach, useStart, StartLine, StartNotes, MoreOptions, LINK_BUTTON, goTo } from '../fields';
 import { Downloads } from '../Downloads';
 import { AnswersColumn, foldGrid, SeeAnswer, useFold, type AnswerGroup } from '../Fold';
 import { CMA_HOME } from './home-case';
@@ -19,6 +19,8 @@ import { inr } from '../../../engine/util';
 import { cmaDoc, docNeeds, docStatus, fileName } from './document';
 import { ReadStatement } from './Read';
 import { Levels } from './Levels';
+import { W } from './words';
+import { SHARED } from '../words';
 import { verdictWords, workWords } from '../verdict';
 import type { YearId } from '../../../engine/cma';
 import { CASE_CHOICES, COLLATERAL_HINT, applyCmaPlan, levelsOf, undoCmaPlan, type CmaChange, type CmaLevers } from './levers';
@@ -57,7 +59,7 @@ export function CmaCalculator() {
   const top = <>
     <Section id="limit" title="The limit">
       <div class="mt-4 max-w-sm">
-        <TextField id="fld-cma-existing" label="Limit you have today, from all banks" hint="The working-capital limit already sanctioned, or 0 if none; the limit your figures support is worked out below." unit="Rs." inputMode="decimal" value={s.existingLimit}
+        <TextField id="fld-cma-existing" label={W.existing} hint={W.existingHint} unit="Rs." inputMode="decimal" value={s.existingLimit}
           tidy={tidyAmount} invalid={bad(s.existingLimit)} said={bad(s.existingLimit) ? 'Not understood. Type 70,00,000 or 70 L.' : undefined}
           onCommit={(existingLimit) => update((x) => ({ ...x, existingLimit }))} />
       </div>
@@ -94,9 +96,9 @@ export function CmaCalculator() {
     {f.fold ? null : <div class="lg:col-span-2 lg:row-start-2">{figures}</div>}
     <div class={f.fold ? 'lg:col-start-2 lg:row-start-2' : 'lg:col-span-2 lg:row-start-3'}>
     {p.view && <Forms p={p} wide={f.wide} />}
-    <Ledger id="assumed" testid="cma-assumed" title="Assumed until changed" rows={ASSUMPTIONS.map((a) => ({ ...a,
+    <How><p>{SHARED.twice}</p><p>{W.bars}</p><Ledger inside id="assumed" testid="cma-assumed" rows={ASSUMPTIONS.map((a) => ({ ...a,
       ...(a.id === 'quasi' ? { to: 'fld-cma-quasi', go: (e: Event) => { e.preventDefault();
-        reach('more-options', (d) => { (d as HTMLDetailsElement).open = true; document.getElementById('fld-cma-quasi')?.focus(); }); } } : {}) }))} />
+        reach('more-options', (d) => { (d as HTMLDetailsElement).open = true; document.getElementById('fld-cma-quasi')?.focus(); }); } } : {}) }))} /></How>
     <Download s={s} p={p} update={update} />
     </div>
     {/* The limit and its status on every screen of the forms (review finding 4), as the DSCR's answer bar, from load. */}
@@ -160,7 +162,7 @@ function Grid({ form, title, s, update, was, year, pick }: { form: 'II' | 'III';
     {form === 'II' && <>
       {/* Where one year shows at a time its buttons name the years, so the line does not (UXR6). */}
       <p data-testid="cma-years" class={`mt-2 ${HINT}`}>
-        <span class="@max-[52rem]:hidden">Years: {cols.map((c) => `${c.fy} (${KIND[c.kind]})`).join(', ')}. </span>Type in rupees, or like 12 L or 1.2 Cr. Leave the oldest years empty if the business is younger.
+        <span class="@max-[52rem]:hidden">Years: {cols.map((c) => `${c.fy} (${KIND[c.kind]})`).join(', ')}. </span>{W.typing}
       </p>
       <KeptLine />
     </>}
@@ -306,13 +308,13 @@ function Download({ s, p, update }: { s: CmaState; p: CmaPreview; update: Update
     <TextField id={`fld-cma-${id}`} label={label} hint={hint} value={f[id] ?? ''} said={english(f[id] ?? '')} invalid={!!english(f[id] ?? '')} onCommit={(t) => set({ [id]: t })} />;
   // Before the forms show figures the section is one line (UX8, review finding 9).
   if (!ready) return <Folded id="download" title="Download the CMA data"><span data-testid="cma-doc-wait">{p.blocked
-    ? 'No document while the two computations disagree.' : 'A PDF, an Excel copy and a Word copy, once the forms show figures.'}</span></Folded>;
+    ? 'No document while the two computations disagree.' : SHARED.wait}</span></Folded>;
   return <Section id="download" title="Download the CMA data">
-    <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy whose Check sheet redoes the figures, and a Word copy to edit, made in your browser.</p>
+    <p class={`mt-2 ${HINT}`}>{SHARED.files}</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
-      {field('name', 'Business’s name')}
-      {field('lender', 'Lender', 'The bank or finance company, and the branch, if known.')}
-      {field('preparedBy', 'Prepared by', 'Your name or your firm’s, if not the borrower.')}
+      {field('name', W.name)}
+      {field('lender', W.lender, SHARED.lender)}
+      {field('preparedBy', W.preparedBy, SHARED.preparedBy)}
     </div>
     {ready
       ? <div class="mt-5">

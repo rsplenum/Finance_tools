@@ -1,4 +1,5 @@
 /** Form fields shared by the tool pages. A field keeps what is being typed to itself and hands it on only when it is left. */
+import { plain, SHARED } from './words';
 import { sameValue } from './amount';
 import type { ComponentChildren } from 'preact';
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
@@ -279,26 +280,39 @@ export interface LedgerRow { id: string; what: string; shown: string; why: strin
  * the value assumed and Change, so the values can be scanned; the reasons behind one "Why these". The rows no box changes
  * come after, under their own line, so a row without Change does not read as one missing it (UX9b, the UX9 critic).
  */
-export function Ledger(p: { id: string; testid: string; title: string; rows: LedgerRow[]; row?: string; class?: string }) {
+export function Ledger(p: { id: string; testid: string; title?: string; rows: LedgerRow[]; row?: string; class?: string; /** Inside "How this is worked out": no rule of its own. */ inside?: boolean }) {
   if (!p.rows.length) return null;
   const list = (rows: LedgerRow[]) => rows.length > 0 && <ul class="text-sm">
     {rows.map((r) => <li key={r.id} data-testid={`${p.row ?? `${p.testid}-`}${r.id}`} class="grid gap-x-4 border-b border-line py-2 sm:grid-cols-ledger">
       <span class="font-medium text-ink">{r.what}<span class="sr-only">: </span></span> <span class="text-ink">{r.shown}</span>{' '}
-      {r.to ? <a href={`#${r.to}`} onClick={r.go ?? goTo(r.to)} aria-label={`Change: ${r.what}`} class="text-link underline underline-offset-4 sm:text-right">Change</a> : <span />}
+      {r.to ? <a href={`#${r.to}`} onClick={r.go ?? goTo(r.to)} aria-label={`Change: ${r.what}`} class="text-link underline underline-offset-4 sm:text-right">{SHARED.change}</a> : <span />}
     </li>)}
   </ul>;
-  return <section id={p.id} data-folded aria-labelledby={`${p.id}-h`} class={`mt-10 border-t border-line pt-3 ${p.class ?? ''}`}>
+  return <section id={p.id} data-folded aria-labelledby={`${p.id}-h`} class={`${p.inside ? 'mt-2' : 'mt-10 border-t border-line pt-3'} ${p.class ?? ''}`}>
     <details data-testid={p.testid} class="group">
       <summary class="flex min-h-11 cursor-pointer flex-wrap items-baseline gap-x-2 text-sm [&::-webkit-details-marker]:hidden">
-        <h2 id={`${p.id}-h`} class="font-medium text-ink">{p.title}: {p.rows.length}</h2>
-        <span class="text-link"><span class="group-open:hidden">Show</span><span class="hidden group-open:inline">Hide</span></span>
+        <h2 id={`${p.id}-h`} class="font-medium text-ink">{p.title ?? SHARED.assumed}: {p.rows.length}</h2>
+        <span class="text-link"><span class="group-open:hidden">{SHARED.show}</span><span class="hidden group-open:inline">{SHARED.hide}</span></span>
       </summary>
       {list(p.rows.filter((r) => r.to))}
-      {p.rows.some((r) => !r.to) && <><h3 class="mt-4 text-sm font-medium text-ink-muted">No box here changes these</h3>{list(p.rows.filter((r) => !r.to))}</>}
-      <SourceNote what="Why these">{p.rows.map((r) => <span key={r.id} class="mt-1 block"><b>{r.what}:</b> {r.why}.</span>)}</SourceNote>
+      {p.rows.some((r) => !r.to) && <><h3 class="mt-4 text-sm font-medium text-ink-muted">{SHARED.fixed}</h3>{list(p.rows.filter((r) => !r.to))}</>}
+      <SourceNote what={SHARED.whyThese}>{p.rows.map((r) => <span key={r.id} class="mt-1 block"><b>{r.what}:</b> {plain(r.why)}.</span>)}</SourceNote>
     </details>
   </section>;
 }
+
+/**
+ * The one place a page keeps its sources, dates and reasons (WORDS1, docs/PLAN.md row 3): closed, under the answer, so
+ * the questions and the result read in short lines. A link to something inside opens it (`openHow`).
+ */
+export function How(p: { children: ComponentChildren; class?: string }) {
+  return <details id="how" data-testid="how" class={`mt-10 border-t border-line pt-1 ${p.class ?? ''}`}>
+    <summary class="flex min-h-11 cursor-pointer items-center font-medium text-link">{SHARED.how}</summary>
+    <div class="space-y-2 pb-2 text-sm text-ink-muted">{p.children}</div>
+  </details>;
+}
+/** Opens "How this is worked out", for a link to a line inside it. */
+export const openHow = () => { const d = document.getElementById('how'); if (d instanceof HTMLDetailsElement) d.open = true; };
 
 /** The answer bar (D-UX-84) under 1024 px, from load on every tool (UX8, review finding 13); from 1024 px the answer panel
  * stands beside the questions, so the bar keeps only its words for a screen reader, and its arrow goes. */

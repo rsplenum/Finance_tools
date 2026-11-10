@@ -57,3 +57,21 @@ export function wordsSections(w?: ReportWords): [string, string][] {
     return t ? [[x.label, t]] : [];
   });
 }
+
+// The page's own words, in one place, ready for a second language (WORDS1, D-UX-344). Sentences built around a figure
+// stay with the model that builds them.
+export const W = {
+  kind: 'A report for a new term loan',
+  title: 'Project report',
+  lead: 'The report a lender asks for with a new term loan. Keep your costs and expected sales at hand.',
+  cost: 'Leave a head empty if there is none. The working-capital margin is added for you.',
+  promoters: 'The promoters bring in the rest.',
+  holiday: 'The holiday runs until then, unless you type another.',
+  heads: 'A side with heads typed is added up from them.',
+  pending: 'Answer this to finish the report.',
+  viable: 'What holds it back, and ways to fix it. “Use this” changes your answers; you can undo it.',
+  less: 'To borrow less, or ask for other terms.',
+  bars: 'Each ratio in its worst year. The line is the level lenders commonly look for.',
+  sliders: 'Each slider moves one figure. Nothing above changes until you use it.',
+  most: 'Without it, the sliders take no limit.',
+};

@@ -165,22 +165,22 @@ const lc = (typed: string | undefined) => {
 };
 
 const DSCR_INTRO: Intro = {
-  id: 'dscr', name: tool('/dscr/').name, gives: 'Seven answers give the statement a lender reads, year by year, and whether the loan passes.',
+  id: 'dscr', name: tool('/dscr/').name, gives: 'Seven answers show whether the loan passes, year by year.',
   forWhom: 'For a shop owner, a firm or its CA, before the bank sees it.',
   go: { href: '/dscr/?case=home', text: 'Open the DSCR statement with this case' },
 };
 const REPORT_INTRO: Intro = {
-  id: 'report', name: tool('/project-report/').name, gives: 'What the project costs, how it is paid for and whether it can repay, every figure worked out twice.',
+  id: 'report', name: tool('/project-report/').name, gives: 'What the project costs, how it is paid for and whether it can repay.',
   forWhom: 'For a business starting or growing a unit, and the CA who prepares its papers.',
   go: { href: '/project-report/?case=home', text: 'Open the project report with this case' },
 };
 const ESTIMATE_INTRO: Intro = {
-  id: 'estimate', name: tool('/estimate/').name, gives: 'What the work should cost, room by room at five quality levels, before you collect quotes.',
+  id: 'estimate', name: tool('/estimate/').name, gives: 'What the work should cost, room by room, at five quality levels.',
   forWhom: 'For a family building, renovating or doing up interiors.',
   go: { href: '/estimate/?case=home', text: 'Open the estimate with this case' },
 };
 const CMA_INTRO: Intro = {
-  id: 'cma', name: tool('/cma/').name, gives: 'Forms I to VI, the ratios and the limit by the turnover method, from five years’ figures.',
+  id: 'cma', name: tool('/cma/').name, gives: 'Forms I to VI, the ratios and the limit, from five years’ figures.',
   forWhom: 'For a business asking for cash credit or renewing it, and its CA.',
   go: { href: '/cma/?case=home', text: 'Open CMA data with this case' },
 };
@@ -277,7 +277,7 @@ export const DSCR_SCENE: ToolScene = (() => {
     statement: {
       title: 'DSCR statement', sub: title.sub, verdict: L.verdict,
       lines: [
-        { head: 'Worked out twice', text: `Every DSCR worked out a second way, and again by formula in the Excel copy: difference ${diff.toFixed(2)}.` },
+        { head: 'Worked out twice', text: `A second way and the Excel copy’s formulas agree: difference ${diff.toFixed(2)}.` },
         { head: 'Every instalment', text: `Annex 2: the repayment schedule, all ${months} months.` },
         { head: 'Ready to sign', text: 'Signatory, date and place lines, in each copy.' },
       ],
@@ -319,10 +319,9 @@ export const CMA_SCENE: ToolScene = (() => {
       title: 'CMA data', sub: title.sub,
       verdict: `The current ratio meets ${level.text} in every year ahead; the limit by the turnover method, ${f.limit.fy}, is ${lc(f.limit.text)}.`,
       lines: [
-        { head: 'Worked out twice', text: 'Every figure worked out a second way; the Excel copy’s Check sheet redoes the main ones by formula.' },
+        { head: 'Worked out twice', text: 'A second way agrees; the Excel copy redoes the main figures by formula.' },
         { head: 'Forms I to VI', text: `The limit, the operating statement, the balance sheet, working capital and the funds flow, ${first} to ${last}.` },
         { head: 'Its basis', text: 'The ratios a lender reads, each rule’s level with how sure it is.' },
-        { head: 'Ready to sign', text: 'Signatory, date and place lines, in each copy.' },
       ],
       files: ['PDF', 'Excel'], ready: 'Ready to take to your bank',
     },
@@ -366,10 +365,9 @@ export const REPORT_SCENE: ToolScene = (() => {
       title: 'Project report', sub: `${cover.sub}, ${period.replace(/^Projections for /, '')}`,
       verdict: `Meets all ${said(tests.length)} tests a lender reads: the lowest DSCR is ${fixed.dscr} against ${level.text}; the project costs ${lc(fixed.cost)}.`,
       lines: [
-        { head: 'Worked out twice', text: 'Every figure worked out a second way, and shown only when both agree.' },
+        { head: 'Worked out twice', text: 'Shown only when two workings agree.' },
         { head: `${said(rows.length, true)} years ahead`, text: 'Profit and loss, balance sheet and cash flow, with break-even and the key ratios.' },
         { head: 'Its basis', text: 'The figures entered, the repayment, and an annex of the method.' },
-        { head: 'Ready to sign', text: 'Signatory, date and place lines, in each copy.' },
       ],
       files: ['PDF', 'Excel', 'Word'], ready: 'Ready to take to your lender',
     },
@@ -418,10 +416,9 @@ export const ESTIMATE_SCENE: ToolScene = (() => {
     statement: {
       title: title.text, sub: where, verdict: `Rs. ${b.total} in all, within the budget of ${level.text}, in figures and in words.`,
       lines: [
-        { head: 'Worked out twice', text: `The total worked out a second way: difference Rs. ${Math.round(diff)}.` },
+        { head: 'Worked out twice', text: `A second way agrees: difference Rs. ${Math.round(diff)}.` },
         { head: 'Every item', text: `Annex 1: the detailed estimate, each of the ${items} items with its quantity and rate.` },
         { head: 'What it assumes', text: 'Annex 2: every assumption, stated until you change it.' },
-        { head: 'Ready to sign', text: 'Signatory, date and place lines, in each copy.' },
       ],
       files: ['PDF', 'Excel', 'Word'], ready: 'Ready for quotes and your lender',
     },

@@ -2,10 +2,11 @@
 import Base from '../Base.astro';
 import ToolHead from '../ToolHead.astro';
 import { ReportCalculator } from '../report/Report';
+import { W } from '../report/words';
 ---
 <Base name="Project report" description="A project report for a term loan with working capital: cost and finance, projected profit and loss, balance sheet and cash flow, DSCR, break-even and ratios." look="new">
   <div data-tool class="mx-auto max-w-3xl px-4 pt-6 pb-16 sm:px-8 sm:pt-8 lg:max-w-[88rem]">
-  <ToolHead href="/project-report/" kind="A report for a new term loan" title="Project report" lead="Projected accounts, yearly repayment, break-even and the ratios a lender checks, as PDF, Excel and Word. Keep the project’s cost, its finance and your expected sales at hand." kept="device" compact />
+  <ToolHead href="/project-report/" kind={W.kind} title={W.title} lead={W.lead} kept="device" compact />
   <div class="mt-2"><ReportCalculator client:load /></div>
   </div>
 </Base>

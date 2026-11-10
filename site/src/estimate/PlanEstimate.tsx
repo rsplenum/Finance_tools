@@ -13,7 +13,9 @@
 import { questionsLeft } from '../verdict';
 import { Fragment } from 'preact';
 import { useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks';
-import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, docLink, FILLED, Folded, goTo, HINT, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, SEE, seeOr, useAnswerPlace, InAppNote, useHomeCase, useKept, KeptLine, useStart, StartLine, StartNotes, LINK_BUTTON } from '../fields';
+import { answerRule, BAR_ARROW, BUTTON, Choice, Counter, Dash, docLink, FILLED, Folded, goTo, HINT, How, LABEL, Section, SelectField, SourceNote, STATE, TextField, Tick, SEE, seeOr, useAnswerPlace, InAppNote, useHomeCase, useKept, KeptLine, useStart, StartLine, StartNotes, LINK_BUTTON } from '../fields';
+import { W } from './words';
+import { plain, SHARED } from '../words';
 import { ESTIMATE_HOME } from './home-case';
 import { AnswersColumn, foldGrid, SeeAnswer, useFold, type AnswerGroup } from '../Fold';
 import { printable } from '../doc/pdf';
@@ -119,7 +121,7 @@ export function PlanEstimate() {
     </div>}
     <div class={f.fold ? 'lg:col-start-2 lg:row-start-3' : 'lg:col-span-2 lg:row-start-3'}>
       {v ? <Download s={s} p={p} update={update} />
-        : <Folded id="pl-download" title="Download the planning estimate">A PDF, an Excel copy and a Word copy, once the six are answered.</Folded>}
+        : <Folded id="pl-download" title="Download the planning estimate">{SHARED.wait}</Folded>}
     </div>
     {/* The answer bar (D-UX-84), from load as on every tool (UX8, review finding 13): text read out as it changes, one 44 px
         arrow to the answer; solid, no blur (principle 10). From 1024 px only what changed stays in sight, for its Undo. */}
@@ -224,7 +226,7 @@ function Questions({ s, update, p, toLevel, see }: { s: PlanState; update: Updat
         onChange={(l) => toLevel(Number(l) as Level)} />
     </div>
     <SeeAnswer pre="pl" onSee={see} />
-    {p.needs.length === 6 && <p class={`mt-4 ${HINT}`}>The estimate appears as soon as the six are answered.</p>}
+    {p.needs.length === 6 && <p class={`mt-4 ${HINT}`}>{W.wait}</p>}
   </div>;
 }
 
@@ -238,9 +240,9 @@ function Answer({ v, toLevel }: { v: PlanView; toLevel: (l: Level) => void }) {
       <p data-testid="pl-total" data-result={'ready'} class={`figure text-section ${INK}`}>{v.headline}</p>
       {v.rangeBar ? <Range r={v.rangeBar} /> : v.range.text && <p data-testid="pl-range" class={`mt-1 text-sm ${INK}`}>{v.range.text}</p>}
       <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="whitespace-nowrap tabular-nums">Rs. {v.perSqft}</span> a sq ft of {v.perName.toLowerCase()}</p>
-      <p data-testid="pl-exact" class={`mt-1 text-sm ${MUTED}`}>Exact: <span class="whitespace-nowrap tabular-nums">Rs. {v.total}</span>, as in the bill and the documents.</p>
+      <p data-testid="pl-exact" class={`mt-1 text-sm ${MUTED}`}>{W.exact} <span class="whitespace-nowrap tabular-nums">Rs. {v.total}</span></p>
     </div>
-    <p data-testid="pl-rates" class={`mt-2 flex items-start gap-1.5 text-sm ${MUTED}`}><Tick />{v.ratesLine}</p>
+    <p data-testid="pl-mark" class={`mt-2 flex items-start gap-1.5 text-sm ${MUTED}`}><Tick />{W.mark}</p>
     {/* Edged, never filled: the chosen level takes an edge in ink (UX7: the accent is for links alone) (principle 6; F4 asks a filled control to be a pill).
         The five totals read as a chart's labels: 12 px on a phone, where "Standard" at 14 px overflows its fifth of 360 px. */}
     <div role="group" aria-label="The total at each level; choose one to switch the package" class="-mx-1 mt-4 grid grid-cols-5 gap-0.5 sm:mx-0 sm:gap-1">
@@ -250,7 +252,7 @@ function Answer({ v, toLevel }: { v: PlanView; toLevel: (l: Level) => void }) {
         <span class={`block text-xs leading-tight tabular-nums sm:text-sm ${MUTED}`}>{x.total}<span class="sr-only"> (Rs. {x.full})</span></span>
       </button>)}
     </div>
-    <p class={`mt-1 text-sm ${MUTED}`}>Each level as a package, in Rs. lakh; tap one to switch.</p>
+    <p class={`mt-1 text-sm ${MUTED}`}>{W.levels}</p>
     <Compare v={v} />
     {v.stages && <Stages v={v} />}
   </>;
@@ -591,7 +593,7 @@ function Assumed({ s, v, update }: { s: PlanState; v: PlanView; update: Update }
   const plotSide = (which: 'l' | 'b') => plot && <TextField id={`fld-plot-${which}`} class="w-28" label={`Plot ${which === 'l' ? 'length' : 'width'}, ${unit}`} inputMode="decimal"
     value={plot[which]} placeholder={plot.planned[which]} invalid={!!plot.bad} onCommit={(t) => update((x) => withPlotSide(x, which, t))} />;
   return <details id="pl-assumed" data-testid="pl-assumed" class="mt-2">
-    <summary class={SUMMARY}>What the estimate assumes ({v.assumed.length})</summary>
+    <summary class={SUMMARY}>{W.assumes} ({v.assumed.length})</summary>
     <ul class="mt-3 space-y-2">
       {v.assumed.map((a, i) => <li key={a.what} data-testid={`pl-assumed-${i}`} class={`text-sm ${INK}`}>
         <span class="font-medium">{a.what}:</span> {a.shown}
@@ -608,7 +610,7 @@ function Assumed({ s, v, update }: { s: PlanState; v: PlanView; update: Update }
           <input type="checkbox" id="fld-sewer" checked={s.sewer} onChange={(e) => update((x) => withSewer(x, (e.currentTarget as HTMLInputElement).checked))} class="h-4 w-4 accent-ink" />
           The city's sewer reaches my plot
         </label>}
-        <SourceNote what="Why">{a.why}{a.sources.length ? ` Sources: ${a.sources.map((x) => x.what).join('; ')}.` : ''}</SourceNote>
+        <SourceNote what="Why">{plain(a.why)}{a.sources.length ? ` Sources: ${a.sources.map((x) => x.what).join('; ')}.` : ''}</SourceNote>
       </li>)}
     </ul>
   </details>;
@@ -627,7 +629,8 @@ function Checks({ s, v, update }: { s: PlanState; v: PlanView; update: Update })
       <summary class={SUMMARY}>Other things to check ({v.notes.length})</summary>
       <ul class={`mt-2 list-disc space-y-1 pl-5 text-sm ${INK}`}>{v.notes.map((f) => <li key={f}>{f}</li>)}</ul>
     </details>}
-    <Assumed s={s} v={v} update={update} />
+    <How class="mt-4"><p>{SHARED.twice}</p><p data-testid="pl-rates">{v.ratesLine}</p>
+      <Assumed s={s} v={v} update={update} /></How>
   </Section>;
 }
 
@@ -646,12 +649,12 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
   const field = (id: keyof PlanFacts, label: string, hint?: string) =>
     <TextField id={`fld-pl-${id}`} label={label} hint={hint} value={f[id]} said={english(f[id])} invalid={!!english(f[id])} onCommit={(t) => set({ [id]: t })} />;
   return <Section id="pl-download" title="Download the planning estimate">
-    <p class={`mt-2 ${HINT}`}>A PDF for the lender, Excel and Word copies to edit, made in your browser: every item and what it assumes.</p>
+    <p class={`mt-2 ${HINT}`}>{SHARED.files}</p>
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
-      {field('owner', 'Owner’s name')}
-      {field('property', 'Property’s address')}
-      {field('lender', 'Lender', 'The bank or finance company, and the branch, if known.')}
-      {field('preparedBy', 'Prepared by', 'An engineer or architect who adopts it, with registration number, if any. Leave empty for a planning estimate.')}
+      {field('owner', W.owner)}
+      {field('property', W.property)}
+      {field('lender', W.lender, SHARED.lender)}
+      {field('preparedBy', W.preparedBy, W.preparedByHint)}
     </div>
     <div class="mt-5">
       <p data-testid="pl-doc-status" class={`${STATE} ${own.length ? 'text-warn' : 'text-ink'}`}>{!own.length && <Tick />}{planDocStatus(s, p)}</p>
@@ -660,7 +663,7 @@ function Download({ s, p, update }: { s: PlanState; p: PlanPreview; update: Upda
       <InAppNote id="pl-in-app" />
     </div>
     <div class="mt-5">
-      <p class={HINT}>A bill of quantities for two or three contractors to quote like for like: each item, where it goes and how much, with the rates left blank.</p>
+      <p class={HINT}>{W.bill}</p>
       <div class="mt-3 flex w-fit flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap">
         <button type="button" data-testid="pl-bill-pdf" class={BUTTON} onClick={() => bill('pdf')}>Bill as PDF</button>
         <button type="button" data-testid="pl-bill-xlsx" class={BUTTON} onClick={() => bill('xlsx')}>Bill as Excel</button>

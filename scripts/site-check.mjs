@@ -264,6 +264,8 @@ const openMore = async (page) => {
 /** A closed line on the planning estimate opened by a tap, as a user would (V1): a section, the other things to check, what the estimate assumes. */
 const tap = async (page, id) => {
   const d = page.getByTestId(id);
+  // Sources, reasons and assumptions sit in one closed "How this is worked out" (WORDS1, D-UX-344): open it to reach one.
+  await d.evaluate((x) => { const how = x.closest('[data-testid="how"]'); if (how && how !== x) how.open = true; });
   if (!(await d.evaluate((x) => x.open))) await d.locator(':scope > summary').click();
 };
 
