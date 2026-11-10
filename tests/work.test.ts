@@ -105,6 +105,9 @@ describe('Make it work on case P at Rs. 150 a unit (D-UX-249: the price and the 
   const w = work(P);
   it('says more use cannot reach, then a price of Rs. 178.70 at 85% use', () => {
     expect(w.useCannot?.still).toEqual(['dscrAverage', 'dscrLowest', 'interestCover']);
+    // FIX1: the use it would need passes 100% of the plant, so none is named; nor does any way's change.
+    expect(w.useCannot?.needed).toBeUndefined();
+    for (const k of [...w.keep, ...w.change, ...w.not]) for (const u of k.change.utilisationPct ?? []) expect(u).toBeLessThanOrEqual(100);
     const p = way(w.keep, 'price');
     expect(p.change).toEqual({ utilisationPct: [85, 85, 85], price: 178.7 });
     expect([icP(50000, 178.7).toFixed(5), icP(50000, 178.69).toFixed(5)]).toEqual(['1.50042', '1.49974']);

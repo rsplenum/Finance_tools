@@ -1,0 +1,25 @@
+{
+  "title": "Fix it for me: how far a plan may move each figure",
+  "date": "2026-11-10",
+  "sure": "illustrative",
+  "reviewBy": "2027-11-10",
+  "status": "The limits engine/solve.ts keeps to when it looks for whole plans that meet every level (FIX1, D-UX-346, D-UX-351). The four marked placeholders are ours, not a lender's: they wait for the owner's figures (docs/OWNER.md). The most use of the capacity and the longest term are read from engine/data/ratios.json, never repeated here.",
+  "source": "Placeholders set by Claude for FIX1 (10-11-2026), not from a lender or a publication; the owner's figures take their place",
+  "loanCutMostPct": 50,
+  "loanCutMostWhy": "A placeholder: the most of the term loan asked for that a plan gives up; a plan that keeps less than half the loan is another project, so the page shows what stays short instead",
+  "priceMostPct": 10,
+  "priceMostWhy": "A placeholder: the most a plan raises the price a unit, as a share of the typed price; a larger rise is the business's own to type, with its reason",
+  "priceGrowthMostPct": 5,
+  "priceGrowthMostWhy": "A placeholder: the most a plan lets prices rise a year, about the pace of costs (the page's fixed costs grow 5% a year by default)",
+  "moratoriumMostMonths": 24,
+  "moratoriumMostWhy": "A placeholder: the longest holiday before the first instalment a plan asks for (a longer one typed is kept)",
+  "gridSteps": 20,
+  "runsMost": 600,
+  "searchWhy": "How finely and how long the search looks (docs/UX-OVERHAUL.md §3.2): each figure's range in 20 steps, then narrowed to the box's rounding; at most 600 runs of the whole report a plan, so the page never waits long",
+  "rounding": { "rupees": 1000, "perCentTenths": 1 },
+  "plans": [
+    { "id": "borrowLess", "label": "Borrow less", "moves": ["loan", "cash", "wc", "moratorium", "instalments"] },
+    { "id": "earnMore", "label": "Earn more", "moves": ["use", "price", "priceGrowth", "moratorium", "instalments"] },
+    { "id": "balanced", "label": "Balanced", "moves": ["loan", "cash", "wc", "use", "price", "priceGrowth", "moratorium", "instalments"] }
+  ]
+}
