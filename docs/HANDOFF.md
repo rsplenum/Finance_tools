@@ -28,9 +28,9 @@ A row's session writes 1 to 4 straight into the shared docs (`docs/DECISIONS.md`
 ## Budgets and actuals
 | Date | Row | Budget | Actual |
 |---|---|---|---|
-| 07-11-2026 | VID6a2 (the v6 tour re-cut on Gate 2's fixes, two develop rounds in the row, the gates' new rules, Rahul's page) | L, Extra | 148 steps, 1.1 h, 1 compaction; 2 reviewer agents, 17% of the cost; within L; round 3 handed on as VID6a3 |
 | 08-11-2026 | VID6a3 (round 3 of the v6 tour's Gate 2: fans in three chapters, cut to 4:32, the red card hidden, Excel as a grid; the reviewer's greenlight; Rahul's page) | M, Extra | about 115 steps after the last merge, 2% of the session's cost; 1 reviewer agent; within M |
 | 08-11-2026 | VID6b (Rahul's greenlight, silent; the five polish fixes; the 1080p master with motion blur, capped on fast moves after Gate 3; Gate 3 produce; Rahul's page) | M, high | 124 steps, 0.6 working hours plus two 25 min renders, 1 compaction; 1 reviewer agent, 9% of the cost; within M |
 | 09-11-2026 | PLAN1 (the plan from Rahul's thirteen questions: `docs/PLAN.md` and Rahul's page) | none set: Rahul's ask | about 50 steps, 0.3 h, 1 compaction; no agent |
 | 09-11-2026 | LOOSE1 (the look freed from the checks: the taste counts report, the gates named in D-TECH-110; BUILD1's row) | S, high | about 45 steps, 0.2 h, no compaction; no agent; within S |
 | 10-11-2026 | BUILD1 (the project report as a builder with the live paper; answers saved on the device; the worked example that passes; the checks walk the steps; WORDS1's row) | L, Extra | about 160 steps, 3 compactions, long waits between steps (the cache lapsed several times: the cost guard warned); 3 small agents; within L |
+| 10-11-2026 | WORDS1 (plain words on the four tools and home; one "How this is worked out" a page; Rahul's before and after, https://claude.ai/artifact/V4B8zLU9VzqUBCn42SVFbx; BUILD2's row) | M, high | about 110 steps, 2 compactions, long waits between steps (the cache lapsed); no agent; within M |

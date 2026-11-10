@@ -690,7 +690,7 @@ if (touched('/dscr/')) {
   if (await page.locator('#more-options').evaluate((d) => d.open)) v('More options is open on load');
   const texts = await page.locator('#front-door input[type="text"]').count(), radios = await page.locator('#front-door fieldset').count();
   if (texts + radios !== 8) v(`the front door asks ${texts + radios} fields (${texts} typed, ${radios} choices); the owner's list is 8`);
-  await expectText(page, v, 'fd-loan-note', 'The loan is taken as drawn in October 2026 and repaid by EMI every month, with no holiday before the first instalment.', 'the front door');
+  await expectText(page, v, 'fd-loan-note', 'Taken as drawn in October 2026 and repaid by monthly EMI, with no holiday.', 'the front door');
   // S8 (UXR5b): the line to year-by-year projections stands under the last default field, not above the first.
   if (!(await page.evaluate(() => { const m = document.querySelector('[data-testid="fd-more"]'), f = [...document.querySelectorAll('#front-door input')].at(-1);
     return !!m && !!f && !!(f.compareDocumentPosition(m) & Node.DOCUMENT_POSITION_FOLLOWING); }))) v('S8: the line to More options is not under the last default field');

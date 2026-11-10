@@ -254,6 +254,7 @@ The owner's two reference films set the bar and the VID3 path (`docs/video/VID3-
 | 07-11-2026 | The v6 plan from Rahul's twelve notes on v5 (quick ask): the brief, DOC1, VID6a, VID6b | none set: quick ask | about 25 steps |
 | 07-11-2026 | DOC1 (the project report's paper: cover, contents, numbered sections, units, annex, declaration, in PDF, Word and Excel) | L, Extra | 109 steps logged, 0.3 h, 2 compactions; 1 agent, 3% of the cost; within L |
 | 07-11-2026 | VID6a (the v6 tour's stage script, a clean 4 min 37 s animatic, Gate 2: reject the cut, re-cut as VID6a2; the two cuts planned) | L, Extra | 158 steps, 1.1 h, 2 compactions; 1 agent, 10% of the cost; within L |
+| 07-11-2026 | VID6a2 (the v6 tour re-cut on Gate 2's fixes, two develop rounds in the row, the gates' new rules, Rahul's page) | L, Extra | 148 steps, 1.1 h, 1 compaction; 2 reviewer agents, 17% of the cost; within L; round 3 handed on as VID6a3 |
 
 ## Rows set aside
 Set aside by the owner on 10-10-2026 until the business entity, GST and Razorpay account are ready (D-UX-42):
