@@ -7,6 +7,7 @@
  * figures are worked out and the rules' sources; and the declaration, signed. Built from the page's state and preview
  * only: the tables are the page's (model.ts), every figure the engine's or as typed, none computed here.
  */
+import { inr } from '../../../engine/util';
 import { parseMonth } from '../../../engine/parse';
 import { sureLower, sureText, type Marked } from '../../../engine/sure';
 import { METHOD, MUDRA, PMEGP, REPORT_REVIEW_BY, WORKING_CAPITAL } from '../../../engine/report';
@@ -20,7 +21,7 @@ import { ALL_ANSWERED } from '../verdict';
 import { printable } from '../doc/pdf';
 import { monthText } from '../dscr/model';
 import { SITE_NAME } from '../site';
-import { ACTIVITY_CHOICES, AREA_CHOICES, CATEGORY_CHOICES, CGTMSE, HEADS, REPAYMENT_CHOICES, guaranteeOf, plainOf, pmegpConditions, statusText, tidyAmount, withMode, type ReportFacts, type ReportPreview, type ReportState, type ReportWords, type ViewTable } from './model';
+import { ACTIVITY_CHOICES, AREA_CHOICES, CATEGORY_CHOICES, CGTMSE, HEADS, REPAYMENT_CHOICES, guaranteeOf, limitOf, plainOf, pmegpConditions, statusText, tidyAmount, wcByOf, withMode, type ReportFacts, type ReportPreview, type ReportState, type ReportWords, type ViewTable } from './model';
 import { wordsNeeds, wordsSections } from './words';
 
 /** How sure each rule the report rests on is (D-DATA-25, TRUST1): the tax by who the borrower is, the working-capital
@@ -91,7 +92,7 @@ const amount = (t: string) => (t.trim() ? `Rs. ${tidyAmount(t)}` : 'None');
 function proposal(s: ReportState): [string, string][] {
   const pairs: [string, string][] = [];
   // Simple mode's loan as expert mode's fields hold it: its month, holiday and instalments as assumed or worked out.
-  const l = withMode(s, 'expert').loan, rep = REPAYMENT_CHOICES.find((r) => r.value === l.repayment)?.label ?? '';
+  const e = withMode(s, 'expert'), l = e.loan, rep = REPAYMENT_CHOICES.find((r) => r.value === l.repayment)?.label ?? '';
   const month = parseMonth(l.disbursed), m = plainOf(l.moratoriumMonths);
   if (s.scheme === 'pmegp') {
     const label = <T,>(c: { value: T; label: string }[], v?: T) => c.find((o) => o.value === v)?.label ?? '';
@@ -99,7 +100,11 @@ function proposal(s: ReportState): [string, string][] {
   }
   if (s.scheme === 'mudra') pairs.push(['Scheme', `Mudra; ${s.tarunRepaid ? 'a Tarun loan taken and repaid' : 'no Tarun loan repaid'}`]);
   pairs.push([s.scheme === 'pmegp' ? 'Term loan applied for' : 'Term loan', `${amount(l.amount)} at ${plainOf(l.ratePct)}% a year, first drawn in ${month ? monthText(month) : l.disbursed}; ${m ? `${m} months' moratorium` : 'no moratorium'}; ${plainOf(l.instalments)} instalments, ${rep.toLowerCase()}`]);
-  pairs.push(['Working-capital limit applied for', `${amount(s.wcLimit)}${plainOf(s.wcLimit) ? ` at ${plainOf(s.wcRate)}% a year` : ''}`]);
+  // The limit as the page holds it: typed, or worked out by the engine (D-UX-112), with its rate as assumed. A worked limit
+  // read "None" here while the cover gave its figure, and simple mode's rate read "undefined" (BUILD1: the live paper showed it).
+  const worked = wcByOf(s) === 'worked', lim = worked ? limitOf(s) : undefined, rate = plainOf(e.wcRate);
+  const limit = worked ? (lim ? `Rs. ${inr(lim)}` : 'Worked out once the questions are answered') : amount(s.wcLimit);
+  pairs.push(['Working-capital limit applied for', `${limit}${(worked ? lim : plainOf(s.wcLimit)) && rate !== undefined ? ` at ${rate}% a year` : ''}`]);
   const g = guaranteeOf(s);
   if (g) pairs.push(['Guarantee', `${g === 'cgfmu' ? 'CGFMU' : 'CGTMSE'}${g === 'cgtmse' ? `; concessions: ${CGTMSE.groups.filter((_, k) => s.concessions?.[k]).map((t) => t.split(',')[0].toLowerCase()).join('; ') || 'none'}` : ''}${s.feeRate.trim() ? `; its fee at ${plainOf(s.feeRate)}% a year, as the lender quotes` : ''}`]);
   if (s.subsidy.trim()) pairs.push(['Capital subsidy', amount(s.subsidy)]);
@@ -110,7 +115,9 @@ function proposal(s: ReportState): [string, string][] {
 
 /** The basis of the projections as typed: sales, the costs, the working capital's days. */
 function basis(s: ReportState): [string, string][] {
-  const pairs: [string, string][] = [];
+  // Simple mode's months, fixed costs and their growth as expert mode's fields hold them (as the proposal's loan above):
+  // read raw, they printed "undefined" on a simple report's paper.
+  const pairs: [string, string][] = [], e = withMode(s, 'expert'), months = plainOf(e.monthsToStart), growth = plainOf(e.fixedGrowth);
   if (s.salesBy === 'typed') pairs.push(['Sales in a full first year', `${amount(s.sales)}, growing ${plainOf(s.salesGrowth)}% a year`]);
   else {
     if (s.salesBy === 'expansion') pairs.push(['Today\'s sales in a full first year', `${amount(s.sales)}, growing ${plainOf(s.salesGrowth)}% a year`]);
@@ -121,9 +128,9 @@ function basis(s: ReportState): [string, string][] {
     pairs.push(['The prices', `Growing ${plainOf(s.priceGrowth)}% a year${s.salesBy === 'expansion' ? ' once the new line is full' : ''}`]);
     pairs.push([s.salesBy === 'expansion' ? 'The new line\'s use' : 'Use of the capacity', `${s.utilisation.split(/[,\s]+/).filter(Boolean).join('%, ')}% by year from the first sales`]);
   }
-  pairs.push(['Months from the loan to the first sales', `${plainOf(s.monthsToStart)}`]);
+  pairs.push(['Months from the loan to the first sales', months === undefined ? 'Still needed' : `${months}`]);
   pairs.push(['Materials and other variable costs', `${plainOf(s.variablePct)}% of sales`]);
-  pairs.push(['Fixed costs in a full first year', `${amount(s.fixed)}, growing ${plainOf(s.fixedGrowth)}% a year`]);
+  pairs.push(['Fixed costs in a full first year', `${amount(e.fixed)}${growth === undefined ? '' : `, growing ${growth}% a year`}`]);
   pairs.push(['Stock, debtors and creditors', `${plainOf(s.days.stock)}, ${plainOf(s.days.debtors)} and ${plainOf(s.days.creditors)} days`]);
   return pairs;
 }

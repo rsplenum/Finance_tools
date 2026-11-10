@@ -17,7 +17,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { inputOf, preview } from '../site/src/report/model';
-import { allNeeds } from '../site/src/report/document';
+import { allNeeds, paperDoc } from '../site/src/report/document';
 import { exampleSellFrom, reportExample } from '../site/src/report/example';
 
 const rs = (n: number) => Math.round(n).toLocaleString('en-IN');
@@ -56,6 +56,16 @@ describe('the project report’s worked example', () => {
     expect(p.view!.key.map((k) => `${k.label}: ${k.value}`)).toEqual(['Cost of the project: Rs. 29,63,403', 'Average DSCR: 2.91', 'Lowest DSCR: 2.31']);
   });
 
+  it('its paper states every line: the limit as worked out, simple mode’s months and fixed costs, nothing "undefined"', () => {
+    vi.setSystemTime(new Date('2026-10-15T12:00:00'));
+    const s = reportExample(), text = JSON.stringify(paperDoc(s, preview(s), '2026-10-15'));
+    expect(text).not.toMatch(/undefined|NaN/);
+    // The limit is the engine's (Rs. 3,77,556 in the hand working above), at the loan's rate as simple mode assumes.
+    expect(text).toContain('["Working-capital limit applied for","Rs. 3,77,556 at 10% a year"]');
+    // April 2027 is six months from October 2026; Rs. 1 L a month is Rs. 12,00,000 a year, growing 5% (defaults.json).
+    expect(text).toContain('["Months from the loan to the first sales","6"]');
+    expect(text).toContain('["Fixed costs in a full first year","Rs. 12,00,000, growing 5% a year"]');
+  });
   it('passes every check and needs nothing more, whichever month it is opened in', () => {
     for (let m = 0; m < 24; m++) {
       vi.setSystemTime(new Date(2026, 10 + m, 15, 12));
