@@ -55,6 +55,8 @@ export interface Part {
   section?: string;
   /** Runs on under the part before it, in the PDF and the Word copy, rather than from a new page. */
   flow?: boolean;
+  /** On the page's live paper only (Paper.tsx): the part is not worked out yet and stands as this many faint lines. */
+  ghost?: number;
 }
 
 export interface Doc {
