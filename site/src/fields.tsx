@@ -415,6 +415,8 @@ export function useHomeCase<T>(set: (s: T) => void, made: () => T) {
 
 /** The line on what is kept (D-UX-163, one sentence: D-UX-172): under each tool's lead; on the estimate, with its questions (D-UX-169). */
 export const KEPT_LINE = 'Your answers are kept only in this browser tab, and closing the tab clears them.';
+/** The project report's line (BUILD1, D-UX-341): a report takes more than one sitting, so its answers stay on the device until cleared. */
+export const KEPT_DEVICE_LINE = 'Your answers are saved on this device, in this browser only. Clear all removes them.';
 export const KeptLine = () => <p data-testid="kept-line" class="mt-2 max-w-prose text-sm text-ink-muted">{KEPT_LINE}</p>;
 
 /** The draft's version (D-UX-159): raise it when a tool's inputs change meaning, so an old draft is dropped. */
@@ -424,19 +426,23 @@ const shapeOf = (x: unknown): string => Array.isArray(x) ? '[]'
   : x && typeof x === 'object' ? `{${Object.keys(x).sort().map((k) => `${k}:${shapeOf((x as Record<string, unknown>)[k])}`).join(',')}}` : '';
 /**
  * A tool's answers kept in this browser tab (UXR2, D-UX-157 to D-UX-161): what was typed comes back after a reload, Back
- * or a phone dropping the tab, and goes when the tab closes. The state holds inputs only, never results or documents
+ * or a phone dropping the tab, and goes when the tab closes (the project report's stay on the device, D-UX-341). The state holds inputs only, never results or documents
  * (D-UX-158, D-UX-160); a blank state, as after Clear all, empties the draft. A visit with home's fictional case is not
  * kept and does not touch the draft (D-UX-162). Put back after the page wakes, so the page served stays the blank one.
  */
-export function useKept<T>(tool: string, s: T, set: (s: T) => void, blank: T) {
+export function useKept<T>(tool: string, s: T, set: (s: T) => void, blank: T, device = false) {
   const key = `draft:${tool}:v${DRAFT_VERSION}`, shape = shapeOf(blank), empty = JSON.stringify(blank);
   const ready = useRef(false), off = useRef(false);
+  // `device` (D-UX-341): kept on the device until cleared, not only for the tab; a draft the tab held before moves over once.
+  const store = () => device ? localStorage : sessionStorage;
   useEffect(() => {
     off.current = homeAsked();
     if (!off.current) {
       try {
-        const d = JSON.parse(sessionStorage.getItem(key) ?? 'null') as { shape: string; s: T } | null;
-        if (d && d.shape === shape) set(d.s); else if (d) sessionStorage.removeItem(key);
+        const old = device && !localStorage.getItem(key) ? sessionStorage.getItem(key) : null;
+        if (old) { localStorage.setItem(key, old); sessionStorage.removeItem(key); }
+        const d = JSON.parse(store().getItem(key) ?? 'null') as { shape: string; s: T } | null;
+        if (d && d.shape === shape) set(d.s); else if (d) store().removeItem(key);
       } catch { /* no storage or a broken draft: the blank page */ }
     }
     ready.current = true;
@@ -445,8 +451,8 @@ export function useKept<T>(tool: string, s: T, set: (s: T) => void, blank: T) {
   useLayoutEffect(() => {
     if (!ready.current || off.current) return;
     try {
-      if (JSON.stringify(s) === empty) sessionStorage.removeItem(key);
-      else sessionStorage.setItem(key, JSON.stringify({ shape, s }));
+      if (JSON.stringify(s) === empty) store().removeItem(key);
+      else store().setItem(key, JSON.stringify({ shape, s }));
     } catch { /* storage full or blocked: the answers stay for this view only */ }
   }, [s]);
 }

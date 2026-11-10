@@ -22,7 +22,7 @@ export interface PolicySection extends Section { src: string[] }
 export const privacySections = (counting: boolean): PolicySection[] => [
   { h: 'What you type stays on your device', src: ['site/src/events.ts', 'site/src/download.ts', 'site/src/fields.tsx'], p: [
     'The figures, names and other details you type into a tool are worked out in your browser. They are not sent to us, and we cannot see them.',
-    'Downloads (PDF, Excel and Word) are made in your browser too. Your answers stay on your device, only for this tab. Close the tab and they are gone.',
+    'Downloads (PDF, Excel and Word) are made in your browser too. Your answers stay on your device. On the project report they are saved in your browser until you press Clear all, so you can come back to them; on the other tools they last only for this tab.',
   ] },
   { h: 'What we count, never what you type', src: ['worker/src/event-shape.ts', 'worker/src/events.ts', 'worker/migrations/0001_events.sql', 'worker/wrangler.jsonc'], p: [
     'To make the tools better, we count which steps are used:',
@@ -38,7 +38,7 @@ export const privacySections = (counting: boolean): PolicySection[] => [
   ] },
   { h: 'Who else sees your visit', src: ['worker/wrangler.jsonc', 'site/src/theme.ts', 'site/src/report/Report.tsx', 'site/src/fields.tsx'], p: [
     'Cloudflare hosts this site and our server, and may hold the counts outside India. Like any host, it receives your internet address and browser details when a page loads. Its own privacy policy covers them. Our server’s error notes say only what kind of failure it was. From launch we will also use Cloudflare Web Analytics, which counts page views without cookies.',
-    'Your browser remembers two choices on your device: light or dark, and the project report’s simple or expert view. For this tab only, it also keeps your answers, and clears them when you close it. Uploaded documents and results are never kept. We show no ads today.',
+    'Your browser remembers two choices on your device: light or dark, and the project report’s simple or expert view. It also keeps your answers: the project report’s on your device until you press Clear all, with the step you were on; the other tools’ for this tab only, cleared when you close it. Uploaded documents and results are never kept. We show no ads today.',
   ] },
   { h: 'What this means under India’s data law', src: ['site/src/privacy.ts'], p: [
     'The Digital Personal Data Protection Act, 2023 and its 2025 Rules cover personal data: anything that names you or could. What we may hold of it, and why:',

@@ -7,6 +7,7 @@
  * figures are worked out and the rules' sources; and the declaration, signed. Built from the page's state and preview
  * only: the tables are the page's (model.ts), every figure the engine's or as typed, none computed here.
  */
+import { inr } from '../../../engine/util';
 import { parseMonth } from '../../../engine/parse';
 import { sureLower, sureText, type Marked } from '../../../engine/sure';
 import { METHOD, MUDRA, PMEGP, REPORT_REVIEW_BY, WORKING_CAPITAL } from '../../../engine/report';
@@ -20,7 +21,7 @@ import { ALL_ANSWERED } from '../verdict';
 import { printable } from '../doc/pdf';
 import { monthText } from '../dscr/model';
 import { SITE_NAME } from '../site';
-import { ACTIVITY_CHOICES, AREA_CHOICES, CATEGORY_CHOICES, CGTMSE, HEADS, REPAYMENT_CHOICES, guaranteeOf, plainOf, pmegpConditions, statusText, tidyAmount, withMode, type ReportFacts, type ReportPreview, type ReportState, type ReportWords, type ViewTable } from './model';
+import { ACTIVITY_CHOICES, AREA_CHOICES, CATEGORY_CHOICES, CGTMSE, HEADS, REPAYMENT_CHOICES, guaranteeOf, limitOf, plainOf, pmegpConditions, statusText, tidyAmount, wcByOf, withMode, type ReportFacts, type ReportPreview, type ReportState, type ReportWords, type ViewTable } from './model';
 import { wordsNeeds, wordsSections } from './words';
 
 /** How sure each rule the report rests on is (D-DATA-25, TRUST1): the tax by who the borrower is, the working-capital
@@ -91,7 +92,7 @@ const amount = (t: string) => (t.trim() ? `Rs. ${tidyAmount(t)}` : 'None');
 function proposal(s: ReportState): [string, string][] {
   const pairs: [string, string][] = [];
   // Simple mode's loan as expert mode's fields hold it: its month, holiday and instalments as assumed or worked out.
-  const l = withMode(s, 'expert').loan, rep = REPAYMENT_CHOICES.find((r) => r.value === l.repayment)?.label ?? '';
+  const e = withMode(s, 'expert'), l = e.loan, rep = REPAYMENT_CHOICES.find((r) => r.value === l.repayment)?.label ?? '';
   const month = parseMonth(l.disbursed), m = plainOf(l.moratoriumMonths);
   if (s.scheme === 'pmegp') {
     const label = <T,>(c: { value: T; label: string }[], v?: T) => c.find((o) => o.value === v)?.label ?? '';
@@ -99,7 +100,11 @@ function proposal(s: ReportState): [string, string][] {
   }
   if (s.scheme === 'mudra') pairs.push(['Scheme', `Mudra; ${s.tarunRepaid ? 'a Tarun loan taken and repaid' : 'no Tarun loan repaid'}`]);
   pairs.push([s.scheme === 'pmegp' ? 'Term loan applied for' : 'Term loan', `${amount(l.amount)} at ${plainOf(l.ratePct)}% a year, first drawn in ${month ? monthText(month) : l.disbursed}; ${m ? `${m} months' moratorium` : 'no moratorium'}; ${plainOf(l.instalments)} instalments, ${rep.toLowerCase()}`]);
-  pairs.push(['Working-capital limit applied for', `${amount(s.wcLimit)}${plainOf(s.wcLimit) ? ` at ${plainOf(s.wcRate)}% a year` : ''}`]);
+  // The limit as the page holds it: typed, or worked out by the engine (D-UX-112), with its rate as assumed. A worked limit
+  // read "None" here while the cover gave its figure, and simple mode's rate read "undefined" (BUILD1: the live paper showed it).
+  const worked = wcByOf(s) === 'worked', lim = worked ? limitOf(s) : undefined, rate = plainOf(e.wcRate);
+  const limit = worked ? (lim ? `Rs. ${inr(lim)}` : 'Worked out once the questions are answered') : amount(s.wcLimit);
+  pairs.push(['Working-capital limit applied for', `${limit}${(worked ? lim : plainOf(s.wcLimit)) && rate !== undefined ? ` at ${rate}% a year` : ''}`]);
   const g = guaranteeOf(s);
   if (g) pairs.push(['Guarantee', `${g === 'cgfmu' ? 'CGFMU' : 'CGTMSE'}${g === 'cgtmse' ? `; concessions: ${CGTMSE.groups.filter((_, k) => s.concessions?.[k]).map((t) => t.split(',')[0].toLowerCase()).join('; ') || 'none'}` : ''}${s.feeRate.trim() ? `; its fee at ${plainOf(s.feeRate)}% a year, as the lender quotes` : ''}`]);
   if (s.subsidy.trim()) pairs.push(['Capital subsidy', amount(s.subsidy)]);
@@ -110,7 +115,9 @@ function proposal(s: ReportState): [string, string][] {
 
 /** The basis of the projections as typed: sales, the costs, the working capital's days. */
 function basis(s: ReportState): [string, string][] {
-  const pairs: [string, string][] = [];
+  // Simple mode's months, fixed costs and their growth as expert mode's fields hold them (as the proposal's loan above):
+  // read raw, they printed "undefined" on a simple report's paper.
+  const pairs: [string, string][] = [], e = withMode(s, 'expert'), months = plainOf(e.monthsToStart), growth = plainOf(e.fixedGrowth);
   if (s.salesBy === 'typed') pairs.push(['Sales in a full first year', `${amount(s.sales)}, growing ${plainOf(s.salesGrowth)}% a year`]);
   else {
     if (s.salesBy === 'expansion') pairs.push(['Today\'s sales in a full first year', `${amount(s.sales)}, growing ${plainOf(s.salesGrowth)}% a year`]);
@@ -121,9 +128,9 @@ function basis(s: ReportState): [string, string][] {
     pairs.push(['The prices', `Growing ${plainOf(s.priceGrowth)}% a year${s.salesBy === 'expansion' ? ' once the new line is full' : ''}`]);
     pairs.push([s.salesBy === 'expansion' ? 'The new line\'s use' : 'Use of the capacity', `${s.utilisation.split(/[,\s]+/).filter(Boolean).join('%, ')}% by year from the first sales`]);
   }
-  pairs.push(['Months from the loan to the first sales', `${plainOf(s.monthsToStart)}`]);
+  pairs.push(['Months from the loan to the first sales', months === undefined ? 'Still needed' : `${months}`]);
   pairs.push(['Materials and other variable costs', `${plainOf(s.variablePct)}% of sales`]);
-  pairs.push(['Fixed costs in a full first year', `${amount(s.fixed)}, growing ${plainOf(s.fixedGrowth)}% a year`]);
+  pairs.push(['Fixed costs in a full first year', `${amount(e.fixed)}${growth === undefined ? '' : `, growing ${growth}% a year`}`]);
   pairs.push(['Stock, debtors and creditors', `${plainOf(s.days.stock)}, ${plainOf(s.days.debtors)} and ${plainOf(s.days.creditors)} days`]);
   return pairs;
 }
@@ -132,41 +139,88 @@ function basis(s: ReportState): [string, string][] {
 const method = () => [...METHOD.map((t) => t.replace(/, or no figures are shown\./, '.')),
   'Every figure in this report is worked out twice, by two separate methods, and shown only when the two agree.'];
 
+/** The parts by name (a sheet in the Excel copy; a place on the page's live paper, Paper.tsx), and each section's title. */
+export const PARTS = { cover: 'Cover', glance: '1 At a glance', business: '2 Business', cost: '3 Cost and finance', basis: '4 Basis', statements: '5 Statements', ratios: '6 DSCR and ratios', repayment: '7 Repayment' } as const;
+const TITLES = ['The project at a glance', 'Promoters and the business', 'Cost of the project and means of finance', 'The basis of the projections', 'Projected financial statements',
+  'DSCR, break-even, ratios and working capital', 'Repayment of the term loan'];
+const whoOf = (s: ReportState) => BORROWERS.find((b) => b.id === s.borrower);
+const numbered = (k: number, t: string) => ({ kind: 'title', text: `${k}. ${t}`, small: true }) as Block;
+/** The cover, from the report's own facts: `lines` under the name, the lender's after them; `mark` while anything is open. */
+function coverOf(s: ReportState, lines: string[], mark: { title: string; text: string } | undefined, today: string): Block {
+  const f = s.doc, name = ok(f.name), by = ok(f.preparedBy), lender = ok(f.lender), activity = ok(f.activity);
+  return {
+    kind: 'cover', kicker: 'Project report', title: name || 'Project report', ...(activity ? { sub: activity } : {}),
+    lines: [...lines, lender ? `Submitted to ${lender}` : ''].filter(Boolean),
+    facts: [['Address', ok(f.address) || 'Still needed'], ['Constitution', whoOf(s)?.label ?? ''], ...(by ? [['Prepared by', by] as [string, string]] : []), ['Prepared on', dmy(today)]],
+    ...(mark ? { mark } : {}),
+  };
+}
+/** Section 2's lines: who the business is, as typed. */
+const businessPairs = (s: ReportState): [string, string][] => {
+  const f = s.doc, lender = ok(f.lender);
+  return [['Name', ok(f.name) || 'Still needed'], ['Constitution', whoOf(s)?.label ?? ''], ['Activity', ok(f.activity) || 'Still needed'], ['Address', ok(f.address) || 'Still needed'], ...(lender ? [['Lender', lender] as [string, string]] : [])];
+};
+const headOf = (s: ReportState, today: string) => {
+  const name = ok(s.doc.name), by = ok(s.doc.preparedBy);
+  return { title: `Project report${name ? `, ${name}` : ''}`, header: name ? `${name} · Project report` : 'Project report', footer: `Prepared on ${dmy(today)}${by ? ` by ${by}` : ''}`, ...(by || name ? { author: by || name } : {}), creator: SITE_NAME };
+};
+
+/**
+ * The paper before the report has its figures (BUILD1, D-UX-340): the same cover and the same parts under the same
+ * titles, for the page's live paper only, never a file. What was typed is read back as typed; a part the engine has yet
+ * to work out stands as faint lines (`ghost`) under one line that says what it waits for. No figure is worked out here.
+ */
+export function draftDoc(s: ReportState, p: ReportPreview, today: string): Doc {
+  const left = p.blocked ? [p.blocked] : p.needs, n = left.length;
+  const waits = n ? `Worked out once the questions are answered: ${n} still to go.` : 'Worked out once the questions are answered.';
+  const wait = (k: number, name: string, blocks: Block[], ghost: number, flow = false) =>
+    ({ name, section: `${k}. ${TITLES[k - 1]}`, blocks: [numbered(k, TITLES[k - 1]), ...blocks, { kind: 'text', text: waits, small: true } as Block], ghost, ...(flow ? { flow } : {}) });
+  const typed = HEADS.filter((h) => plainOf(s.cost[h.id] ?? '') !== undefined || s.cost[h.id]?.trim()).map((h) => [h.label, amount(s.cost[h.id])] as [string, string]);
+  const asked = [...(s.loan.amount.trim() ? [['Term loan asked for', amount(s.loan.amount)] as [string, string]] : []), ...(s.loan.ratePct.trim() ? [['Interest rate', `${s.loan.ratePct.trim().replace(/%$/, '')}% a year`] as [string, string]] : [])];
+  const sells = s.salesBy === 'typed' ? [] : s.products.filter((pr) => pr.name.trim()).map((pr) => [`Sells: ${pr.name.trim()}`, [pr.units.trim() && `${pr.units.trim()} ${soldBy(pr.unit).many} a month at full running`, pr.price.trim() && `Rs. ${tidyAmount(pr.price)} ${soldBy(pr.unit).per}`].filter(Boolean).join(', at ') || 'Still needed'] as [string, string]);
+  return {
+    ...headOf(s, today), mark: 'Draft',
+    parts: [
+      { name: PARTS.cover, blocks: [coverOf(s, [], { title: p.blocked ? 'No figures yet' : 'Draft: it fills in as you answer', text: p.blocked ?? 'Each answer goes into this report as you give it. The figures are worked out once the questions are answered.' }, today), { kind: 'contents', title: 'Contents' }] },
+      wait(1, PARTS.glance, n && !p.blocked ? [{ kind: 'box', title: `Still needed: ${n}`, items: left }] : [], 4),
+      { name: PARTS.business, section: `2. ${TITLES[1]}`, flow: true, blocks: [numbered(2, TITLES[1]), { kind: 'pairs', pairs: businessPairs(s) }] },
+      wait(3, PARTS.cost, typed.length || asked.length ? [{ kind: 'pairs', pairs: [...typed, ...asked] }] : [], 6),
+      wait(4, PARTS.basis, sells.length ? [{ kind: 'pairs', pairs: sells }] : [], 4, true),
+      wait(5, PARTS.statements, [], 14),
+      wait(6, PARTS.ratios, [], 10),
+      wait(7, PARTS.repayment, [], 6, true),
+    ],
+  };
+}
+/** The paper the page shows beside the questions: the report itself once it has figures, its draft until then. */
+export const paperDoc = (s: ReportState, p: ReportPreview, today: string): Doc => reportDoc(s, p, today) ?? draftDoc(s, p, today);
+
 export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc | undefined {
   const v = p.view;
   if (!v || p.blocked) return undefined;
-  const f = s.doc, needs = allNeeds(s, p), name = ok(f.name), by = ok(f.preparedBy), lender = ok(f.lender), activity = ok(f.activity);
+  const f = s.doc, needs = allNeeds(s, p), name = ok(f.name);
   const has = (id: string) => v.tables.some((t) => t.id === id), get = (id: string) => v.tables.find((t) => t.id === id) as ViewTable;
   const gid = guaranteeOf(s), words = wordsSections(s.words), who = BORROWERS.find((b) => b.id === s.borrower), period = `${v.years[0]} to ${v.years[v.years.length - 1]}`;
   // The figures as the page shows them, read off its tables by name: none worked out here.
   const shown = (id: string, label: (l: string) => boolean) => get(id).rows.find((r) => label(r.label));
   const loan = shown('finance', (l) => l.startsWith('Term loan')), limit = shown('wc', (l) => l === 'Limit applied for'), promoters = shown('finance', (l) => l.startsWith('Promoters'));
   const asks = [loan && `Term loan of Rs. ${loan.values[0]}`, limit && limit.n?.[0] ? `working-capital limit of Rs. ${limit.values[0]}` : ''].filter(Boolean).join(' and a ');
-  const n = (k: number, t: string) => ({ kind: 'title', text: `${k}. ${t}`, small: true }) as Block;
+  const n = numbered;
   // The projections in brief: the rows a lender looks for first, year by year, as the statements show them.
   const brief = ([['pl', 'Sales'], ['pl', 'Profit after tax'], ['dscr', 'Cash available (A)'], ['dscr', 'DSCR (A ÷ B)'], ['cf', 'Cash at the end of the year']] as const)
     .map(([id, label]) => shown(id, (l) => l === label)).filter((r) => r !== undefined);
   const glance: ViewTable = { id: 'glance', title: 'The projections in brief', first: 'Rupees', columns: v.years,
     rows: brief.map((r) => ({ ...r, kind: r.label.startsWith('DSCR') ? 'ratio' : undefined, values: r.values.slice(0, v.years.length), n: r.n?.slice(0, v.years.length) })) };
   const we = who?.id === 'proprietor' ? 'I' : 'We', our = who?.id === 'proprietor' ? 'my' : 'our';
-  const cover: Block = {
-    kind: 'cover', kicker: 'Project report', title: name || 'Project report', ...(activity ? { sub: activity } : {}),
-    lines: [asks ? `${asks}` : '', `Projections for ${period}`, lender ? `Submitted to ${lender}` : ''].filter(Boolean),
-    facts: [['Address', ok(f.address) || 'Still needed'], ['Constitution', who?.label ?? ''], ...(by ? [['Prepared by', by] as [string, string]] : []), ['Prepared on', dmy(today)]],
-    ...(needs.length ? { mark: { title: `Provisional: ${needs.length} still needed`, text: 'What is still needed is listed in section 1, The project at a glance. The report is to be submitted once it is complete.' } } : {}),
-  };
-  const sec = (k: number, t: string, name: string, blocks: Block[], flow = false) => ({ name, section: `${k}. ${t}`, blocks: [n(k, t), ...blocks], ...(flow ? { flow } : {}) });
+  const cover = coverOf(s, [asks ? `${asks}` : '', `Projections for ${period}`], needs.length ? { title: `Provisional: ${needs.length} still needed`, text: 'What is still needed is listed in section 1, The project at a glance. The report is to be submitted once it is complete.' } : undefined, today);
+  const sec = (k: number, name: string, blocks: Block[], flow = false) => ({ name, section: `${k}. ${TITLES[k - 1]}`, blocks: [n(k, TITLES[k - 1]), ...blocks], ...(flow ? { flow } : {}) });
   return {
-    title: `Project report${name ? `, ${name}` : ''}`,
-    header: name ? `${name} · Project report` : 'Project report',
+    ...headOf(s, today),
     ...(needs.length ? { mark: 'Provisional' } : {}),
-    footer: `Prepared on ${dmy(today)}${by ? ` by ${by}` : ''}`,
     workbookNote: 'Each cell holds the exact figure of the report, shown in whole rupees; there are no formulas.',
-    ...(by || name ? { author: by || name } : {}),
-    creator: SITE_NAME,
     parts: [
-      { name: 'Cover', blocks: [cover, { kind: 'contents', title: 'Contents' }] },
-      sec(1, 'The project at a glance', '1 At a glance', [
+      { name: PARTS.cover, blocks: [cover, { kind: 'contents', title: 'Contents' }] },
+      sec(1, PARTS.glance, [
         ...(needs.length ? [{ kind: 'box', title: `Provisional: ${needs.length} still needed`, items: needs } as Block] : []),
         ...(p.flags.length ? [{ kind: 'box', title: 'PMEGP: to look at', items: p.flags } as Block] : []),
         { kind: 'figures', items: v.key.map(({ label, value, note }) => (label === 'Average DSCR' ? { label, value } : { label, value, ...(note ? { note } : {}) })) },
@@ -174,15 +228,15 @@ export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc 
         { kind: 'pairs', pairs: [...(promoters ? [[promoters.label, `Rs. ${promoters.values[0]}`] as [string, string]] : []), ...proposal(s)] },
         ...tableOf(glance, '1.2'),
       ]),
-      sec(2, 'Promoters and the business', '2 Business', [
-        { kind: 'pairs', pairs: [['Name', name || 'Still needed'], ['Constitution', who?.label ?? ''], ['Activity', activity || 'Still needed'], ['Address', ok(f.address) || 'Still needed'], ...(lender ? [['Lender', lender] as [string, string]] : [])] },
+      sec(2, PARTS.business, [
+        { kind: 'pairs', pairs: businessPairs(s) },
         ...words.flatMap(([label, text], i): Block[] => [{ kind: 'heading', text: `2.${i + 1} ${label}` }, { kind: 'text', text }]),
       ], true),
-      sec(3, 'Cost of the project and means of finance', '3 Cost and finance', [...tableOf(get('cost'), '3.1'), ...tableOf(get('finance'), '3.2'), ...(has('collateral') ? tableOf(get('collateral'), '3.3') : [])]),
-      sec(4, 'The basis of the projections', '4 Basis', [{ kind: 'pairs', pairs: basis(s) }], true),
-      (() => { let k = 0; const no = () => `5.${++k}`; return sec(5, 'Projected financial statements', '5 Statements', [...(has('sales') ? tableOf(get('sales'), no()) : []), ...tableOf(get('pl'), no()), ...tableOf(get('bs'), no()), ...tableOf(get('cf'), no())]); })(),
-      sec(6, 'DSCR, break-even, ratios and working capital', '6 DSCR and ratios', [...tableOf(get('dscr'), '6.1'), ...tableOf(get('bep'), '6.2'), ...tableOf(get('ratios'), '6.3'), ...tableOf(get('wc'), '6.4')]),
-      sec(7, 'Repayment of the term loan', '7 Repayment', tableOf(get('schedule'), ''), true),
+      sec(3, PARTS.cost, [...tableOf(get('cost'), '3.1'), ...tableOf(get('finance'), '3.2'), ...(has('collateral') ? tableOf(get('collateral'), '3.3') : [])]),
+      sec(4, PARTS.basis, [{ kind: 'pairs', pairs: basis(s) }], true),
+      (() => { let k = 0; const no = () => `5.${++k}`; return sec(5, PARTS.statements, [...(has('sales') ? tableOf(get('sales'), no()) : []), ...tableOf(get('pl'), no()), ...tableOf(get('bs'), no()), ...tableOf(get('cf'), no())]); })(),
+      sec(6, PARTS.ratios, [...tableOf(get('dscr'), '6.1'), ...tableOf(get('bep'), '6.2'), ...tableOf(get('ratios'), '6.3'), ...tableOf(get('wc'), '6.4')]),
+      sec(7, PARTS.repayment, tableOf(get('schedule'), ''), true),
       { name: 'Annex', section: 'Annex. How the figures are worked out, and the rules’ sources', blocks: [
         { kind: 'title', text: 'Annex. How the figures are worked out, and the rules’ sources', small: true },
         { kind: 'heading', text: 'How the figures are worked out' }, { kind: 'list', items: method() },

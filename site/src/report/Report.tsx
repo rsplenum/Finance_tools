@@ -5,21 +5,22 @@
  * table; what it assumes until changed; and the three downloads. Figures: engine/report.ts only, via model.ts.
  */
 import { Fragment, type ComponentChildren } from 'preact';
-import { useEffect, useMemo, useState } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
 import { SOLD_BY, soldBy } from '../../../engine/sold-by';
 import { verdictWords, workWords } from '../verdict';
-import { AnswersColumn, foldGrid, SeeAnswer, useFold } from '../Fold';
-import { answerRule, AnswerBar, BUTTON, reach, Choice, Counter, Dash, FILLED, Folded, goTo, HINT, Ledger, Section, SelectField, STATE, TextField, Tick, InAppNote, Verdict, useHomeCase, useStart, StartLine, StartNotes, MoreOptions, useKept } from '../fields';
+import { Paper, sheetId, still } from '../Paper';
+import { answerRule, BUTTON, reach, Choice, Counter, Dash, FILLED, goTo, HINT, Ledger, SelectField, STATE, TextField, Tick, InAppNote, Verdict, useHomeCase, useStart, StartLine, MoreOptions, useKept } from '../fields';
 import { REPORT_HOME } from './home-case';
+import { reportExample } from './example';
 import { Bar, Benchmarks, Lever, PlanLever, targetOf } from '../Board';
 import { benchmarkFields, inSentence, listed, withBenchmark } from '../board-model';
-import { printable } from '../doc/pdf';
-import { isoDate, save, type FileKind } from '../download';
+import { printable, sectionPages } from '../doc/pdf';
+import { isoDate } from '../download';
 import { monthText } from '../dscr/model';
 import { overdueNote, todayIso } from '../../../engine/review';
 import { sureLower, type Marked } from '../../../engine/sure';
-import { allNeeds, docNeeds, docStatus, fileName, reportDoc } from './document';
+import { allNeeds, docNeeds, docStatus, fileName, paperDoc, PARTS, reportDoc } from './document';
 import { Words } from './Words';
 import { CheckStep } from '../CheckStep';
 import { Downloads } from '../Downloads';
@@ -115,11 +116,33 @@ function barText(s: ReportState, p: ReportPreview) {
   return [lowest && `Lowest DSCR ${lowest.value}`, said, docStatus(s, p)].filter(Boolean).join(' · ');
 }
 
-/** Under the last input section (review finding 8): whether the report below has figures, linked to it. */
-function arrived(p: ReportPreview) {
-  if (p.blocked) return 'has no figures: its two computations disagree.';
-  if (p.view) return 'has its figures.';
-  return `still needs ${p.needs.length === 1 ? 'one thing' : `${p.needs.length} things`}, listed there.`;
+/** The builder's steps (BUILD1, D-UX-340): one topic a step, in the order a report is made. */
+const STEPS = [['business', 'The business'], ['cost', 'The cost'], ['loan', 'The loan'], ['sales', 'Sales and costs'], ['check', 'Check'], ['download', 'Download']] as const;
+type StepId = typeof STEPS[number][0];
+/** The step last open on this device, beside the answers saved there (D-UX-341); the first step is not kept. */
+const STEP_KEY = 'report-step';
+const savedStep = (): StepId | undefined => { try { return localStorage.getItem('draft:report:v1') ? STEPS.find(([id]) => id === localStorage.getItem(STEP_KEY))?.[0] : undefined; } catch { return undefined; } };
+const saveStep = (id: StepId) => { try { if (id === 'business') localStorage.removeItem(STEP_KEY); else localStorage.setItem(STEP_KEY, id); } catch { /* the step is a convenience */ } };
+/** The step a box is asked in, by its id, for the count on the progress line; a link finds its step in the page itself. */
+const stepOfBox = (id: string): StepId => /^fld-(rep-|borrower)/.test(id) ? 'business' : id === 'cost' || id.startsWith('fld-cost-') ? 'cost' : id === 'fld-pending' ? 'check'
+  : /^fld-(tl-|years|scheme|category|area|activity|pmegp|tarun|subsidy|unsecured|cashAtStart|existingEmis|security|collateral|cgtmse|concession|feeRate|wc|days-)/.test(id) ? 'loan' : 'sales';
+/** What each step still needs: the engine's needs by their boxes, and the first page's facts on the first step. */
+function leftOf(s: ReportState, p: ReportPreview): Record<StepId, number> {
+  const out: Record<StepId, number> = { business: 0, cost: 0, loan: 0, sales: 0, check: 0, download: 0 };
+  for (const n of p.needs) { const b = boxOf(n); out[b ? stepOfBox(b[1]) : 'sales']++; }
+  out.business += docNeeds(s.doc, s.words).filter(docBox).length;
+  return out;
+}
+/** The part of the paper a step fills: where the paper stands while the step is open. */
+const partOf = (step: StepId, figures: boolean) => ({ business: PARTS.cover, cost: PARTS.cost, loan: figures ? PARTS.repayment : PARTS.cost, sales: PARTS.basis, check: PARTS.glance, download: PARTS.cover })[step];
+/** The one filled button of a step: the way on. */
+const NEXT = FILLED.replace('sm:min-h-0', '');
+/** A group of questions in a step: named only where the step holds more than one. */
+function Group({ id, title, children }: { id: string; title?: string; children: ComponentChildren }) {
+  return <section id={id} aria-labelledby={title ? `${id}-h` : undefined} class={title ? 'mt-10' : 'mt-2'}>
+    {title && <h3 id={`${id}-h`} class="text-lg font-medium text-ink">{title}</h3>}
+    {children}
+  </section>;
 }
 
 /** The mode last picked on this device (D-UX-112): the page opens in simple mode until expert is picked. */
@@ -136,13 +159,15 @@ export function ReportCalculator() {
   const period = useMemo(() => periodLine(s), [s]);
   const simple = s.mode === 'simple', blank = { ...EMPTY, mode: s.mode };
   const typed = JSON.stringify(s) !== JSON.stringify(blank);
-  useKept('report', s, setS, blank);
+  useKept('report', s, setS, blank, true);
   const toMode = (m: Mode) => { saveMode(m); update((x) => withMode(x, m)); };
   // The mode sits in More options (UXR5b, S12): open while expert, and never shut under the hand that picks Simple.
   const [more, setMore] = useState(!simple);
   useEffect(() => { if (!simple) setMore(true); }, [simple]);
   // A box only expert mode has: switch to it, then focus the box.
-  const toExpert = (id: string) => (e: Event) => { e.preventDefault(); toMode('expert'); requestAnimationFrame(() => reach(id, (el) => el.focus())); };
+  // Opens the step a box is in before the focus goes to it (set once the steps are drawn, below).
+  const into = useRef<(el: Element) => void>(() => {});
+  const toExpert = (id: string) => (e: Event) => { e.preventDefault(); toMode('expert'); requestAnimationFrame(() => reach(id, (el) => { into.current(el); el.focus(); })); };
   // "Use this plan" (MV3): the fields it wrote, each marked with what it was, until undone or kept.
   const [used, setUsed] = useState<PlanChange[]>([]);
   const use = (l: Levers) => { const a = applyPlan(s, l); setS(a.s); setUsed(a.changes); };
@@ -159,15 +184,14 @@ export function ReportCalculator() {
   const confirm = () => { setChecked(key); setSeen(true); focusNext('[data-testid="rep-confirmed"] > summary'); };
   const undo = () => { setS((x) => undoPlan(x, used)); setUsed([]); };
   // Clear all, with an undo until the next figure is typed (review finding 5), as on every tool (UXR5b, S16).
-  const c = useStart('rep', s, setS, () => blank, () => REPORT_HOME, () => { setUsed([]); setChecked(undefined); setSeen(false); });
+  const c = useStart('rep', s, setS, () => blank, () => reportExample(), () => { setUsed([]); setChecked(undefined); setSeen(false); });
   // The security cover's row links to the collateral field (review finding 4); in simple mode, property is chosen first.
-  const toCollateral = (e: Event) => { e.preventDefault(); if (simple && !withProperty(s)) update((x) => ({ ...x, security: 'property' })); requestAnimationFrame(() => reach('fld-collateral', (el) => el.focus())); };
+  const toCollateral = (e: Event) => { e.preventDefault(); if (simple && !withProperty(s)) update((x) => ({ ...x, security: 'property' })); requestAnimationFrame(() => reach('fld-collateral', (el) => { into.current(el); el.focus(); })); };
   // A missing figure's link: to its box, in expert mode when only it has one.
   const toBox = (need: string) => (e: Event) => {
     const b = boxOf(need);
     if (!b) return;
-    // Folded, the box is among the answers: they open to it (OR9).
-    return document.getElementById(b[1]) || f.fold ? goTo(b[1])(e) : toExpert(b[1])(e);
+    return document.getElementById(b[1]) ? goTo(b[1])(e) : toExpert(b[1])(e);
   };
   const mark = (id: string, hint?: string) => { const c = used.find((u) => u.field === id); return c ? `Changed by the plan; it was ${c.was || 'empty'}.${hint ? ` ${hint}` : ''}` : hint; };
   // Each setter builds on the latest state (x), never on the one this render saw.
@@ -184,29 +208,111 @@ export function ReportCalculator() {
       <span>{label}{hint && <span class={`block text-sm ${MUTED}`}>{hint}</span>}</span>
     </label>;
   const g = guaranteeOf(s);
-  // From 1024 px the questions stand left and the answer panel right (UX8, D-UX-106); the report's tables, what it assumes
-  // and the download run the full width below.
   const hv = headsSum(s, 'variable'), hf = headsSum(s, 'fixed'), by = wcByOf(s), changed = changedOf(s), worked = workedLine(s);
   const sum = (testid: string, text: string) => <p data-testid={testid} class="mt-2 self-end text-ink @md:col-span-1">{text}</p>;
   const hybridBack = p.hybrid && <p data-testid="rep-hybrid" aria-live="polite" class="mt-2 text-sm text-ink">{p.hybrid}</p>;
   const collateralBox = () => amount('fld-collateral', 'Collateral: its market value', s.collateral, (x, collateral) => ({ ...x, collateral }), `Property offered beside the project's assets. ${COLLATERAL_HINT}`);
-  // From 1024 px the questions stand left and the answer panel right (UX8, D-UX-106); the report's tables, what it assumes
-  // and the download run the full width below. Simple mode asks its questions; expert mode, under More options, every field (D-UX-112).
-  // The answers fold once the report is ready and "See the answer" is tapped (OR9, LOOP1d): to a rail beside it from
-  // 1024 px, on a phone to "Edit answers" and a sheet; Clear all waits among them (D-UX-232).
-  const ready = !!p.view && !p.blocked && !p.needs.length, f = useFold(ready, 'report-h');
-  // The questions' grids take two columns by their own width, so they stack in the open rail (UXR5).
-  const door = <div class="@container">
+  // The builder (BUILD1, D-UX-340): one topic a step, every step in the page from load so its answers and its boxes
+  // stay (rule 17's count is of them all); only the step in hand shows. The paper stands beside from 1024 px, and on a
+  // phone behind "See the paper".
+  const root = useRef<HTMLDivElement>(null), pane = useRef<HTMLDivElement>(null), peek = useRef<HTMLDialogElement>(null);
+  const [step, setStep] = useState<StepId>('business');
+  // Shown at once, in the page itself, so a link's own jump and focus land on a box that is there; the state follows.
+  const flip = (id: StepId, keep = true) => {
+    root.current?.querySelectorAll<HTMLElement>('[data-step]').forEach((el) => { el.hidden = el.dataset.step !== id; });
+    setStep(id);
+    if (keep) saveStep(id);
+  };
+  into.current = (el) => { const at = el.closest<HTMLElement>('[data-step]'); if (at?.hidden) flip(at.dataset.step as StepId); };
+  // The progress line, Back and Next: the step's heading takes the focus, and the page comes back up to the line.
+  const go = (id: StepId) => {
+    flip(id);
+    requestAnimationFrame(() => {
+      const line = root.current?.querySelector('[data-steps]');
+      if (line && line.getBoundingClientRect().top < 0) line.scrollIntoView();
+      document.getElementById(`step-${id}-h`)?.focus({ preventScroll: true });
+    });
+  };
+  // A link to a box in another step opens that step first (the needs, a dash, Change, the check's lines).
+  const linked = (e: MouseEvent) => {
+    const a = (e.target as HTMLElement).closest?.('a[href^="#"]') as HTMLAnchorElement | null;
+    const to = a && document.getElementById(decodeURIComponent(a.hash.slice(1)));
+    if (to) into.current(to);
+  };
+  // The step last open comes back with the answers saved on this device; home's case opens on its answer.
+  useEffect(() => { const t = savedStep(); if (t && !home) flip(t, false); }, []);
+  useEffect(() => { if (home) flip('check', false); }, [home]);
+  // The paper: the document the PDF is written from (document.ts), a draft until the figures are checked.
+  const [today, setToday] = useState(''), [wide, setWide] = useState(true), [large, setLarge] = useState(false);
+  useEffect(() => {
+    setToday(isoDate(new Date()));
+    const m = matchMedia('(min-width: 64rem)'), set = () => { setWide(m.matches); if (m.matches && peek.current?.open) peek.current.close(); };
+    set();
+    m.addEventListener('change', set);
+    return () => m.removeEventListener('change', set);
+  }, []);
+  const figures = !!p.view && !p.blocked;
+  const paper = useMemo(() => { const d = paperDoc(s, p, today); return ok || d.mark ? d : { ...d, mark: 'Draft' }; }, [s, p, today, ok]);
+  const pages = useMemo(() => sectionPages(paper), [paper]);
+  // The paper stands at the part the step fills.
+  const stand = (smooth: boolean) => {
+    const box = wide ? pane.current : peek.current?.querySelector<HTMLElement>('[data-paper-scroll]'), el = document.getElementById(sheetId(partOf(step, figures)));
+    if (box && el) box.scrollTo({ top: box.scrollTop + el.getBoundingClientRect().top - box.getBoundingClientRect().top - 12, behavior: smooth && !still() ? 'smooth' : 'auto' });
+  };
+  useEffect(() => { stand(true); }, [step, wide, figures]);
+  /** A tap on the paper brings it close where it was tapped, and a second tap takes it back: the phone's way to read a line. */
+  const zoom = (e: MouseEvent) => {
+    const box = (e.currentTarget as HTMLElement).parentElement!, sheet = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const fx = (e.clientX - sheet.left) / sheet.width, fy = (e.clientY - sheet.top) / sheet.height, x = e.clientX - box.getBoundingClientRect().left, y = e.clientY - box.getBoundingClientRect().top;
+    const inner = e.currentTarget as HTMLElement;
+    setLarge(!large);
+    requestAnimationFrame(() => { const r = inner.getBoundingClientRect(); box.scrollTo({ left: Math.max(0, fx * r.width - x + 12), top: Math.max(0, fy * r.height - y + 12) }); });
+  };
+  const see = () => { peek.current?.showModal(); requestAnimationFrame(() => stand(false)); };
+  const sheets = <div data-testid="rep-paper"><Paper doc={paper} pages={pages} label="Your project report so far" /></div>;
+  const left = leftOf(s, p), at = STEPS.findIndex(([id]) => id === step), back = STEPS[at - 1], next = STEPS[at + 1];
+  const stepOf = (id: StepId, body: ComponentChildren) => {
+    const i = STEPS.findIndex(([x]) => x === id);
+    return <section data-step={id} hidden={step !== id} aria-labelledby={`step-${id}-h`} class="@container">
+      <p class={`text-sm ${MUTED}`}>Step {i + 1} of {STEPS.length}</p>
+      <h2 id={`step-${id}-h`} tabIndex={-1} class="text-lg font-semibold text-ink outline-none new:text-title new:font-medium">{STEPS[i][1]}</h2>
+      {body}
+    </section>;
+  };
+  return <div ref={root} data-builder class="builder" onClickCapture={linked}>
+    <div class="builder-ask">
+      <StartLine c={c} home={home} />
+      <nav aria-label="Steps" data-steps class="mt-4">
+        <ol class="steps">{STEPS.map(([id, name], i) => {
+          const open = figures || p.needs.length ? left[id] : 0, done = id === 'check' ? ok : id !== 'download' && typed && !p.blocked && !left[id];
+          return <li key={id} data-state={id === step ? 'now' : done ? 'done' : ''}>
+            <button type="button" data-testid={`rep-step-${id}`} aria-current={id === step ? 'step' : undefined}
+              onClick={() => go(id)}>
+              {/* The name a screen reader says holds the words that show (axe: label-content-name-mismatch): "Step 1: The business, done". */}
+              <span class="sr-only">Step </span>
+              <span class="step-dot">{done && id !== step ? <><span aria-hidden="true">✓</span><span class="sr-only">{i + 1}</span></> : i + 1}</span>
+              <span class="sr-only">: </span>
+              <span class="step-name">{name}</span>
+              <span class="sr-only">{done ? ', done' : open && typed ? `, ${open} still needed` : ''}</span>
+            </button>
+          </li>;
+        })}</ol>
+      </nav>
+      <div class="mt-6">
+        {stepOf('business', <>
+          <Facts s={s} update={update} />
     <Choice name="fld-borrower" legend="Who is the borrower? It sets the tax." options={BORROWER_CHOICES} value={s.borrower} columns
       onChange={(borrower) => update((x) => ({ ...x, borrower }))} />
-    <Section id="cost" title="Cost of the project">
+        </>)}
+        {stepOf('cost', <Group id="cost">
       <p class={`mt-2 ${HINT}`}>Leave a head empty if the project has none. The margin for working capital is worked out and added.</p>
       <div class="mt-4 grid gap-4 @md:grid-cols-2">
         {HEADS.filter((h) => !simple || SIMPLE_COST.includes(h.id)).map((h) => <Fragment key={h.id}>{amount(`fld-cost-${h.id}`, h.label, s.cost[h.id], (x, t) => ({ ...x, cost: { ...x.cost, [h.id]: t } }),
           h.id === 'building' && s.scheme === 'pmegp' ? PMEGP_SHED : undefined)}</Fragment>)}
       </div>
-    </Section>
-    <Section id="finance" title="Means of finance">
+        </Group>)}
+        {stepOf('loan', <>
+          <Group id="finance">
       <p class={`mt-2 ${HINT}`}>The promoters bring in the rest of the cost of the project; it is worked out.</p>
       <Choice name="fld-scheme" legend="A government scheme" options={SCHEME_CHOICES} value={s.scheme} columns
         onChange={(scheme) => update((x) => ({ ...x, scheme }))} />
@@ -237,8 +343,8 @@ export function ReportCalculator() {
         {!simple && s.salesBy === 'expansion' && amount('fld-existingEmis', 'Today’s loans: their instalments a year, if any', s.existingEmis ?? '',
           (x, existingEmis) => ({ ...x, existingEmis }), 'Taken to run through the new loan.')}
       </div>
-    </Section>
-    <Section id="loan" title="The term loan">
+          </Group>
+          <Group id="loan">
       <div class="mt-4 grid gap-4 @md:grid-cols-2">
         {percent('fld-tl-rate', 'Interest rate (% a year)', s.loan.ratePct, (x, ratePct) => ({ ...x, loan: { ...x.loan, ratePct } }), '%')}
         {/* The holiday and the repayment after it, read back in all (D-UX-174); in simple mode the holiday runs to the first
@@ -266,8 +372,42 @@ export function ReportCalculator() {
         {withProperty(s) && <div class="mt-4 grid gap-4 @md:grid-cols-2">{collateralBox()}</div>}
         {s.security === 'hybrid' && hybridBack}
       </>}
-    </Section>
-    <Section id="operations" title="Sales and costs">
+            {!simple && <>
+              {s.scheme !== 'mudra' && <div class="mt-4 grid gap-4 @md:grid-cols-2">{collateralBox()}</div>}
+      {s.scheme !== 'mudra' && tick('fld-cgtmse', 'CGTMSE guarantees the loans', !!s.cgtmse, (x, cgtmse) => ({ ...x, cgtmse }),
+        `A government scheme that guarantees small-business loans. Its fee, ${CGTMSE.slabs[0].ratePct}% to ${CGTMSE.slabs[CGTMSE.slabs.length - 1].ratePct.toFixed(2)}% a year by the loans in all, goes into the projections as a finance cost. Beside collateral, it guarantees only the part the collateral does not back.`)}
+      {s.scheme !== 'mudra' && s.cgtmse && <fieldset class="mt-4">
+        <legend class="font-medium text-ink">Concessions that apply, each {CGTMSE.concessionPct}% off the fee</legend>
+        {CGTMSE.groups.map((t, k) => <Fragment key={k}>{tick(`fld-concession-${k}`, t, !!s.concessions?.[k], (x, v) => ({ ...x, concessions: CGTMSE.groups.map((_, i) => (i === k ? v : !!x.concessions?.[i])) }))}</Fragment>)}
+      </fieldset>}
+      {s.scheme !== 'mudra' && s.cgtmse && hybridBack}
+      {g && <div class="mt-4 grid gap-4 @md:grid-cols-2">
+        {percent('fld-feeRate', 'The guarantee fee, if the lender quotes another rate (% a year)', s.feeRate, (x, feeRate) => ({ ...x, feeRate }), '%', undefined,
+          g === 'cgfmu' ? `Left empty, CGFMU's ${CGFMU.ratePct}% a year.` : 'Left empty, CGTMSE’s rate for the loans in all, less the concessions ticked.')}
+      </div>}
+            </>}
+          </Group>
+          <Group id="wc" title="Working capital">
+      <Choice name="fld-wcBy" legend="The working-capital limit (cash credit)" options={WC_CHOICES} value={by} columns
+        onChange={(wcBy) => update((x) => ({ ...x, wcBy }))} />
+      {worked && <p data-testid="rep-worked" class="mt-2 text-ink">{worked}</p>}
+      <div class="mt-4 grid gap-4 @md:grid-cols-2">
+        {(simple ? by === 'typed' : by !== 'worked' && by !== 'none') && amount('fld-wcLimit', 'Working-capital limit you will ask for', s.wcLimit, (x, wcLimit) => ({ ...x, wcLimit }))}
+        {!simple && <>
+          {percent('fld-wcRate', 'Its interest rate (% a year)', s.wcRate, (x, wcRate) => ({ ...x, wcRate }), '%')}
+          {(['stock', 'debtors', 'creditors'] as const).map((k) => <Fragment key={k}>
+            {percent(`fld-days-${k}`, `Days of ${k}`, s.days[k], (x, t) => ({ ...x, days: { ...x.days, [k]: t } }), 'days', EMPTY.days[k])}
+          </Fragment>)}
+        </>}
+      </div>
+      {changed.length > 0 && <div data-testid="rep-changed" class="mt-6 rounded-card bg-surface px-4 py-3">
+        <p class="font-medium text-ink">Set in expert mode, and used:</p>
+        <ul class="mt-2 list-disc space-y-1 pl-5 text-ink">{changed.map((c) => <li key={c}>{c}</li>)}</ul>
+        <button type="button" data-testid="rep-to-expert" class="mt-2 min-h-11 text-link underline underline-offset-4" onClick={() => toMode('expert')}>Change them in expert mode</button>
+      </div>}
+          </Group>
+        </>)}
+        {stepOf('sales', <Group id="operations">
       {!simple && <Choice name="fld-salesBy" legend="Sales come from" options={SALES_BY} value={s.salesBy} columns
         onChange={(salesBy) => update((x) => ({ ...x, salesBy }))} />}
       {/* One line per product or service (D-UX-109): what it is, how many a month at full running, its price; they add up to sales. */}
@@ -328,67 +468,47 @@ export function ReportCalculator() {
           {amount('fld-sales', 'Sales in a full first year', s.sales, (x, sales) => ({ ...x, sales }))}
           {percent('fld-salesGrowth', 'Sales: growth a year (%)', s.salesGrowth, (x, salesGrowth) => ({ ...x, salesGrowth }), '%')}
         </>}
-        {s.scheme !== 'mudra' && collateralBox()}
+          </div>
+          </>}
+        </Group>)}
+        {stepOf('check', <>
+          <Result s={s} p={p} update={update} use={use} useWay={useWay} answer={answer} used={used} undo={undo} keep={() => setUsed([])} toCollateral={toCollateral} toBox={toBox} ok={ok} />
+          {figures && <CheckStep pre="rep" groups={checkOf(s, p)} to="benchmarks" state={ok ? 'done' : checked ? 'lapsed' : 'open'}
+            benchmarks={(p.checks ?? []).map((c) => ({ label: c.label, value: c.byDefault === undefined ? c.level : `${c.level}, yours (default ${c.byDefault}${c.looser ? ', looser than a bank may accept' : ''})` }))}
+            confirm={seen ? 'These are right' : 'These are right: show the report'} onConfirm={confirm} />}
+          {p.view && (ok || seen) && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
+          <Ledger id="assumed" testid="rep-assumed" title="Assumed until changed" rows={assumptionsOf(s).map((a) => {
+            const to = ASSUMED_BOX[a.id];
+            return { ...a, to, go: to && simple && !IN_SIMPLE.has(to) ? toExpert(to) : undefined };
+          })} />
+        </>)}
+        {stepOf('download', <Download s={s} p={p} update={update} ok={ok} />)}
       </div>
-      {s.scheme !== 'mudra' && tick('fld-cgtmse', 'CGTMSE guarantees the loans', !!s.cgtmse, (x, cgtmse) => ({ ...x, cgtmse }),
-        `A government scheme that guarantees small-business loans. Its fee, ${CGTMSE.slabs[0].ratePct}% to ${CGTMSE.slabs[CGTMSE.slabs.length - 1].ratePct.toFixed(2)}% a year by the loans in all, goes into the projections as a finance cost. Beside collateral, it guarantees only the part the collateral does not back.`)}
-      {s.scheme !== 'mudra' && s.cgtmse && <fieldset class="mt-4">
-        <legend class="font-medium text-ink">Concessions that apply, each {CGTMSE.concessionPct}% off the fee</legend>
-        {CGTMSE.groups.map((t, k) => <Fragment key={k}>{tick(`fld-concession-${k}`, t, !!s.concessions?.[k], (x, v) => ({ ...x, concessions: CGTMSE.groups.map((_, i) => (i === k ? v : !!x.concessions?.[i])) }))}</Fragment>)}
-      </fieldset>}
-      {s.scheme !== 'mudra' && s.cgtmse && hybridBack}
-      {g && <div class="mt-4 grid gap-4 @md:grid-cols-2">
-        {percent('fld-feeRate', 'The guarantee fee, if the lender quotes another rate (% a year)', s.feeRate, (x, feeRate) => ({ ...x, feeRate }), '%', undefined,
-          g === 'cgfmu' ? `Left empty, CGFMU's ${CGFMU.ratePct}% a year.` : 'Left empty, CGTMSE’s rate for the loans in all, less the concessions ticked.')}
-      </div>}
-      </>}
-    </Section>
-    <Section id="wc" title="Working capital">
-      <Choice name="fld-wcBy" legend="The working-capital limit (cash credit)" options={WC_CHOICES} value={by} columns
-        onChange={(wcBy) => update((x) => ({ ...x, wcBy }))} />
-      {worked && <p data-testid="rep-worked" class="mt-2 text-ink">{worked}</p>}
-      <div class="mt-4 grid gap-4 @md:grid-cols-2">
-        {(simple ? by === 'typed' : by !== 'worked' && by !== 'none') && amount('fld-wcLimit', 'Working-capital limit you will ask for', s.wcLimit, (x, wcLimit) => ({ ...x, wcLimit }))}
-        {!simple && <>
-          {percent('fld-wcRate', 'Its interest rate (% a year)', s.wcRate, (x, wcRate) => ({ ...x, wcRate }), '%')}
-          {(['stock', 'debtors', 'creditors'] as const).map((k) => <Fragment key={k}>
-            {percent(`fld-days-${k}`, `Days of ${k}`, s.days[k], (x, t) => ({ ...x, days: { ...x.days, [k]: t } }), 'days', EMPTY.days[k])}
-          </Fragment>)}
-        </>}
+      {/* The mode is the report's More options (UXR1's S12, S19): under the questions of each step, closed while simple. */}
+      <div hidden={at > 4}>
+        <MoreOptions what="every figure, and the costs by head" open={more} onToggle={setMore}>
+          <Choice name="fld-mode" legend="How much to ask" options={MODE_CHOICES} value={s.mode ?? 'expert'} columns onChange={toMode} />
+        </MoreOptions>
       </div>
-      {changed.length > 0 && <div data-testid="rep-changed" class="mt-6 rounded-card bg-surface px-4 py-3">
-        <p class="font-medium text-ink">Set in expert mode, and used:</p>
-        <ul class="mt-2 list-disc space-y-1 pl-5 text-ink">{changed.map((c) => <li key={c}>{c}</li>)}</ul>
-        <button type="button" data-testid="rep-to-expert" class="mt-2 min-h-11 text-link underline underline-offset-4" onClick={() => toMode('expert')}>Change them in expert mode</button>
-      </div>}
-    </Section>
-    <Facts s={s} update={update}>
-      {typed && !f.fold && <p data-testid="rep-arrived" class="mt-8 text-ink lg:hidden"><a href="#report" class="text-link underline underline-offset-4">The project report below</a> {arrived(p)}</p>}
-    </Facts>
-    {/* The mode is the report's More options (UXR1's S12, S19): under the last question, closed while simple. */}
-    <MoreOptions what="every figure, and the costs by head" open={more} onToggle={setMore}>
-      <Choice name="fld-mode" legend="How much to ask" options={MODE_CHOICES} value={s.mode ?? 'expert'} columns onChange={toMode} />
-    </MoreOptions>
-    <SeeAnswer pre="rep" onSee={ready && !f.fold ? f.see : undefined} />
-  </div>;
-  return <div class={foldGrid(f, 'lg:grid lg:grid-cols-tool-grid lg:gap-x-10')}>
-    <AnswersColumn f={f} pre="rep" groups={() => checkOf(s, p).map((g) => ({ title: g.title, rows: g.lines.map((l) => [l.label, l.value] as [string, string]) }))}
-      rows={2} start={<StartLine c={c} home={home} fold={f.fold} />} unfolded={door}>{door}</AnswersColumn>
-    <Result s={s} p={p} update={update} use={use} useWay={useWay} answer={answer} used={used} undo={undo} keep={() => setUsed([])} toCollateral={toCollateral} toBox={toBox} ok={ok} fold={f.fold} note={f.fold && <StartNotes c={c} home={home} />} />
-    <div class={f.fold ? 'lg:col-start-2 lg:row-start-2' : 'lg:col-span-2 lg:row-start-2'}>
-    {p.view && !p.blocked && <CheckStep pre="rep" groups={checkOf(s, p)} to="benchmarks" state={ok ? 'done' : checked ? 'lapsed' : 'open'}
-      benchmarks={(p.checks ?? []).map((c) => ({ label: c.label, value: c.byDefault === undefined ? c.level : `${c.level}, yours (default ${c.byDefault}${c.looser ? ', looser than a bank may accept' : ''})` }))}
-      confirm={seen ? 'These are right' : 'These are right: show the report'} onConfirm={confirm} railed={f.fold} />}
-    {p.view && (ok || seen) && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
-    <Ledger id="assumed" testid="rep-assumed" title="Assumed until changed" rows={assumptionsOf(s).map((a) => {
-      const to = ASSUMED_BOX[a.id];
-      return { ...a, to, go: to && simple && !IN_SIMPLE.has(to) ? toExpert(to) : undefined };
-    })} />
-    <Download s={s} p={p} update={update} ok={ok} />
+      {/* The answer on every step (D-UX-84), read out as it changes, with the way on: Back, the paper on a phone, Next. */}
+      <div data-builder-bar class="builder-bar">
+        <p data-testid="rep-answer-bar" data-answer aria-live="polite" class="text-sm font-medium text-ink">{barText(s, p)}</p>
+        <div class="mt-1.5 flex items-center gap-2">
+          {back && <button type="button" data-testid="rep-back" class={BUTTON} onClick={() => go(back[0])}>Back</button>}
+          <button type="button" data-testid="rep-peek" class={`${BUTTON} lg:hidden`} onClick={see}>See the paper</button>
+          {next && <button type="button" data-testid="rep-next" class={`ml-auto ${step === 'check' && figures && !ok ? BUTTON : NEXT}`} onClick={() => go(next[0])}>Next<span class="max-sm:sr-only">: {next[1]}</span></button>}
+        </div>
+      </div>
     </div>
-    {/* The answer on every screen of the fields (D-UX-84), from load as on every tool (UX8, review finding 13): text, read
-        out as it changes; only the arrow is a target, 44 px. From 1024 px the panel stands beside, so only the words stay. */}
-    <AnswerBar to="report" testid="rep-answer-bar" text={barText(s, p)} onSee={ready && !f.fold ? f.see : undefined} />
+    <div ref={pane} class="builder-paper" role="region" aria-label="Your report so far" tabIndex={0}>{wide && sheets}</div>
+    <dialog ref={peek} data-testid="rep-peek-sheet" aria-labelledby="peek-h" class="peek">
+      <div class="peek-head">
+        <h2 id="peek-h" class="mr-auto font-medium text-ink">Your report so far</h2>
+        <button type="button" data-testid="rep-peek-size" class={BUTTON} aria-pressed={large} onClick={() => setLarge(!large)}>Larger</button>
+        <button type="button" data-testid="rep-peek-close" class={NEXT} onClick={() => peek.current?.close()}>Back to the questions</button>
+      </div>
+      <div data-paper-scroll class="peek-body"><div class={large ? 'peek-large' : ''} onClick={zoom}>{!wide && sheets}</div></div>
+    </dialog>
   </div>;
 }
 
@@ -621,17 +741,16 @@ function Viable({ s, p, update, use, useWay, answer, toCollateral }: {
   </div>;
 }
 
-function Result({ s, p, update, use, useWay, answer, used, undo, keep, toCollateral, toBox, ok, fold, note }: {
+function Result({ s, p, update, use, useWay, answer, used, undo, keep, toCollateral, toBox, ok }: {
   s: ReportState; p: ReportPreview; update: Update; use: (l: Levers) => void; useWay: (w: WorkCard) => void; answer: (t: string) => void; used: PlanChange[]; undo: () => void; keep: () => void;
-  toCollateral: (e: Event) => void; toBox: (need: string) => (e: Event) => void; ok: boolean; fold: boolean; note: ComponentChildren;
+  toCollateral: (e: Event) => void; toBox: (need: string) => (e: Event) => void; ok: boolean;
 }) {
   const v = p.view, verdict = verdictOf(p), own = v && !p.blocked && !p.needs.length ? docNeeds(s.doc, s.words) : [];
   const result = p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready';
   // Before the figures, the report's outline: its key figures with "—" for each not yet known, never 0 (UX8, review finding 2).
   const first = p.needs.map(boxOf).find(Boolean)?.[1];
   const key = v?.key ?? [{ label: 'Cost of the project' }, { label: 'Average DSCR', check: 'dscrAverage' }, { label: 'Lowest DSCR', check: 'dscrLowest' }];
-  // Folded (OR9), the answer takes the centre column and scrolls with the page.
-  return <div class="lg:col-start-2 lg:row-start-1">{note}<section id="report" aria-labelledby="report-h" class={fold ? 'mt-4' : 'answer-panel mt-10 lg:mt-4'}>
+  return <section id="report" aria-labelledby="report-h" class="mt-4">
     <h2 id="report-h" tabIndex={-1} class="sr-only">The project report</h2>
     {used.length > 0 && <div data-testid="rep-used" role="status" class="mb-3 rounded-control border-l-4 border-ink bg-surface p-3">
       <p class="font-medium text-ink">Used: these figures changed.</p>
@@ -656,11 +775,10 @@ function Result({ s, p, update, use, useWay, answer, used, undo, keep, toCollate
         })}</ul> : own.length > 0 && <ul data-testid="rep-doc-left" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map(docItem)}</ul>}
       </Counter>
       {p.blocked && <p role="alert" class={`mt-3 ${answerRule(true)} text-ink`}>{p.blocked}</p>}
-      {/* Folded, from 1024 px the rail beside gives the cost of the project: it is not said twice (D-UX-237). */}
       {!p.blocked && <dl class="mt-4 grid gap-3 sm:grid-cols-3 lg:grid-cols-2">
         {key.map((k, i) => {
           const c = k.check && v ? p.checks?.find((x) => x.id === k.check) : undefined;
-          return <div key={k.label} data-testid={c ? `rep-check-${c.id}` : undefined} class={`rounded-control bg-surface p-3 ${k.check ? '' : 'lg:col-span-2'}${fold && !i && 'value' in k ? ' lg:hidden' : ''}`}>
+          return <div key={k.label} data-testid={c ? `rep-check-${c.id}` : undefined} class={`rounded-control bg-surface p-3 ${k.check ? '' : 'lg:col-span-2'}`}>
             <dt class={`text-sm ${MUTED}`}>{k.label}</dt>
             <dd data-testid={`rep-key-${i}`} class="figure text-2xl text-ink">{'value' in k ? k.value : <Dash what={k.label} to={i ? first : 'cost'} />}</dd>
             {'note' in k && k.note && <dd class={`text-sm ${MUTED}`}>{k.note}</dd>}
@@ -672,17 +790,17 @@ function Result({ s, p, update, use, useWay, answer, used, undo, keep, toCollate
       {p.flags.length > 0 && <ul data-testid="rep-flags" class="mt-3 list-disc space-y-0.5 pl-5 text-sm text-warn">{p.flags.map((n) => <li key={n}>{n}</li>)}</ul>}
       {v && !p.blocked && <Viable s={s} p={p} update={update} use={use} useWay={useWay} answer={answer} toCollateral={toCollateral} />}
     </div>
-  </section></div>;
+  </section>;
 }
 
 /** The report's first page (D-UX-216): its own facts among the questions, before the check, so none is left unseen. They
  * change no figure, so a change to one does not ask for the check again (`checkKey`). */
-function Facts({ s, update, children }: { s: ReportState; update: Update; children?: ComponentChildren }) {
+function Facts({ s, update }: { s: ReportState; update: Update }) {
   const f = s.doc, set = (patch: Partial<ReportFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
   const english = (t: string) => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
   const field = (id: keyof ReportFacts, label: string, hint?: string) =>
     <TextField id={`fld-rep-${id}`} label={label} hint={hint} value={f[id]} said={english(f[id])} invalid={!!english(f[id])} onCommit={(t) => set({ [id]: t })} />;
-  return <Section id="facts" title="For the report’s first page">
+  return <Group id="facts">
     <div class="mt-4 grid gap-4 @md:grid-cols-2">
       {field('name', 'Business’s name')}
       {field('activity', 'What the business does', 'Like “Manufacture of corrugated boxes”.')}
@@ -690,17 +808,17 @@ function Facts({ s, update, children }: { s: ReportState; update: Update; childr
       {field('lender', 'Lender', 'The bank or finance company, and the branch, if known.')}
       {field('preparedBy', 'Prepared by', 'Your name or your firm’s, if not the borrower.')}
     </div>
-    {children}
-  </Section>;
+  </Group>;
 }
 
 function Download({ s, p, update, ok }: { s: ReportState; p: ReportPreview; update: Update; ok: boolean }) {
   const own = docNeeds(s.doc, s.words), ready = !!p.view && !p.blocked && ok;
   // Before the report shows figures the section is one line (UX8, review finding 9).
-  if (!ready) return <Folded id="download" title="Download the project report"><span data-testid="rep-doc-wait">{p.blocked
-    ? 'No document while the two computations disagree.' : `A PDF, an Excel copy and a Word copy, once ${p.view ? 'you have checked your figures above' : 'the report shows figures'}.`}</span></Folded>;
-  return <Section id="download" title="Download the project report">
-    <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy and a Word copy to edit, made in your browser from the figures above.</p>
+  if (!ready) return <Group id="download"><p data-testid="rep-doc-wait" class="mt-2 text-ink">{p.blocked
+    ? 'No document while the two computations disagree.' : `A PDF, an Excel copy and a Word copy, once ${p.view ? 'you have checked your figures' : 'the report shows figures'}.`}
+    {!p.blocked && <> <a href="#report" data-testid="rep-to-check" class="text-link underline underline-offset-4">Go to Check</a></>}</p></Group>;
+  return <Group id="download">
+    <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy and a Word copy to edit, made in your browser from your figures.</p>
     <Words s={s} update={update} />
     <div class="mt-5">
         {/* No tick while the file is marked provisional, as when cash runs out (D-UX-49); a quiet line says why (D-UX-247). */}
@@ -710,5 +828,5 @@ function Download({ s, p, update, ok }: { s: ReportState; p: ReportPreview; upda
         <Downloads pre="rep" doc={(today) => reportDoc(s, p, today)} name={(kind) => fileName(s, p, kind)} />
         <InAppNote id="rep-in-app" />
       </div>
-  </Section>;
+  </Group>;
 }

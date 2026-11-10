@@ -7,17 +7,18 @@
  * title balanced, the lead and the kept line set pretty (D-UX-221, as home's D-UX-217).
  */
 import Drawing from './home/Drawing.astro';
-import { KEPT_LINE } from './fields';
-/** `kept` false: the page puts the line on what is kept itself (the estimate, beside its questions). */
-interface Props { href: string; kind: string; title: string; lead: string; kept?: boolean }
-const { href, kind, title, lead, kept = true } = Astro.props;
+import { KEPT_DEVICE_LINE, KEPT_LINE } from './fields';
+/** `kept` false: the page puts the line on what is kept itself (the estimate, beside its questions); 'device': answers saved on the device (the project report, D-UX-341). */
+/** `compact`: a short heading for a page that is a workspace (the project report's builder, D-UX-340): the questions and the paper start on the first screen. */
+interface Props { href: string; kind: string; title: string; lead: string; kept?: boolean | 'device'; compact?: boolean }
+const { href, kind, title, lead, kept = true, compact = false } = Astro.props;
 ---
 <div class="flex items-end justify-between gap-4">
   <p data-testid="tool-kind" class="caps text-balance text-ink-muted">{kind}</p>
-  <div aria-hidden="true" data-glow class="flex w-28 items-center justify-center rounded-panel p-2 text-ink sm:w-44 sm:p-3 lg:w-56">
+  <div aria-hidden="true" data-glow class:list={['flex items-center justify-center rounded-panel p-2 text-ink', compact ? 'w-20 sm:w-24' : 'w-28 sm:w-44 sm:p-3 lg:w-56']}>
     <Drawing href={href} />
   </div>
 </div>
-<h1 class="mt-4 text-hero text-balance text-ink">{title}</h1>
-<p class="mt-5 max-w-prose text-pretty text-ink-muted">{lead}</p>
-{kept && <p data-testid="kept-line" class="mt-2 max-w-prose text-sm text-pretty text-ink-muted">{KEPT_LINE}</p>}
+<h1 class:list={['text-balance text-ink', compact ? 'mt-1 text-section' : 'mt-4 text-hero']}>{title}</h1>
+<p class:list={['max-w-prose text-pretty text-ink-muted', compact ? 'mt-2 text-sm lg:max-w-none' : 'mt-5']}>{lead}</p>
+{kept && <p data-testid="kept-line" class:list={['max-w-prose text-sm text-pretty text-ink-muted', compact ? 'mt-1' : 'mt-2']}>{kept === 'device' ? KEPT_DEVICE_LINE : KEPT_LINE}</p>}

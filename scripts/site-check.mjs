@@ -28,6 +28,7 @@ import { designChecks, FIXED_AT } from './design-checks.mjs';
 import { loadCheck } from './load-measure.mjs';
 import { forbiddenChecks, sceneFrame, WEIGHT_CAP } from './forbidden-checks.mjs';
 import { changedFiles, pagesFor } from './site-pages.mjs';
+import { stepped } from './stepped.mjs';
 
 const { BASE, server } = await serveDist();
 
@@ -137,8 +138,9 @@ async function open(path, { scheme = 'light', stored, blockScripts = false, at =
   if (!blockScripts) await page.waitForFunction(() => ![...document.querySelectorAll('astro-island[ssr]')].some((i) => !i.closest('details:not([open])')), null, { timeout: 10000 })
     .catch(() => v('an interactive part did not start'));
   const isDark = () => page.evaluate(() => document.documentElement.classList.contains('dark'));
-  return { page, ctx, v, isDark };
+  return { page: path.startsWith('/project-report/') ? stepped(page) : page, ctx, v, isDark };
 }
+
 
 /** Runs in the page: layout, text and contrast facts. */
 function audit() {
@@ -1240,7 +1242,7 @@ if (touched('/project-report/')) {
   await expectText(page, v, 'rep-key-0', 'Rs. 37,86,301', 'the cost of the project');
   // Before the check (OR8, the owner's O13): what was collected and the benchmarks, the owner's line; no table, no download.
   if (await page.getByTestId('rep-pl').count() || await page.getByTestId('rep-download-pdf').count()) v('the report shows its tables or downloads before its check (OR8)');
-  await expectText(page, v, 'rep-doc-wait', 'A PDF, an Excel copy and a Word copy, once you have checked your figures above.', 'the download before the check');
+  await expectText(page, v, 'rep-doc-wait', 'A PDF, an Excel copy and a Word copy, once you have checked your figures. Go to Check', 'the download before the check');
   await expectText(page, v, 'rep-confirm-cost', /Total cost of the projectRs\. 37,86,301$/, 'the check: the cost of the project');
   await expectText(page, v, 'rep-confirm-sales', /Sales in a full first yearRs\. 1,20,00,000Sales: growth a year10%$/, 'the check: the sales as typed');
   await expectText(page, v, 'rep-confirm-document', /Business’s nameNot given yet/, 'the check: the first page, not given yet');
@@ -1375,30 +1377,20 @@ if (touched('/project-report/')) {
   if (!worded.includes('2. Promoters and the business') || !worded.includes('It is in talks with 3 buyers.') || /reputed|lakh/.test(worded)) v(`the report PDF holds its words as ${worded.slice(worded.indexOf('2. Promoters'), 200)}`);
   const wordedDocx = await docxLines((await save('rep-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
   if (wordedDocx.messages.length || !wordedDocx.lines.some((l) => /^2\.\d The promoter$/.test(l))) v(`the report's Word copy lacks its words ${JSON.stringify(wordedDocx.messages).slice(0, 120)}`);
-  // UXR5 (LOOP1d, D-UX-233): all answered, "See the answer" folds the questions: on a phone to "Edit answers" and a sheet
-  // that holds them; from 1024 px to a rail of the answers as the check reads them, which opens in place. On a phone it is
-  // the answer bar's arrow (OR11a), shown once the answer is out of view.
-  if (await page.getByTestId('rep-fold').isVisible()) v('OR11a: the button "See the answer" shows on a phone, beside the bar\'s arrow');
-  await page.evaluate(() => scrollTo(0, 0));
-  if (!(await page.getByTestId('rep-answer-bar-see').isVisible())) v('UXR5: no "See the answer" on a report all answered');
-  else {
-    await page.getByTestId('rep-answer-bar-see').click();
-    if (await page.locator('#fld-rep-name').count()) v('UXR5: "See the answer" leaves the report\'s questions unfolded');
-    await page.getByTestId('rep-edit').click();
-    await page.locator('dialog[open] #fld-rep-name').waitFor();
-    await page.keyboard.press('Escape');
-    await page.locator('#fld-rep-name').waitFor({ state: 'detached', timeout: 5000 }).catch(() => v('UXR5: Esc leaves the report\'s sheet open'));
-    await page.setViewportSize({ width: 1280, height: 900 });
-    await expectText(page, v, 'rep-rail', /Total cost of the projectRs\. 37,86,301/, 'UXR5, the report\'s rail at 1280 px');
-    // The owner (D-UX-237): what the rail shows, the check beside it does not repeat; its benchmarks stay.
-    if (await page.locator('details#check').count()) await page.locator('details#check').evaluate((d) => { d.open = true; });
-    if (await page.getByTestId('rep-confirm-cost').isVisible()) v('D-UX-237: the check repeats the rail\'s answers at 1280 px');
-    if (!(await page.getByTestId('rep-confirm-railed').isVisible()) || !(await page.getByTestId('rep-confirm-benchmarks').isVisible())) v('D-UX-237: the check beside the rail lacks its pointer or its benchmarks');
-    await page.getByTestId('rep-rail-change').click();
-    await page.locator('[data-testid="rep-rail-open"] #fld-rep-name').waitFor({ timeout: 5000 }).catch(() => v('UXR5: the report\'s rail does not open to its questions'));
-    await page.getByTestId('rep-rail-done').click();
-    await page.getByTestId('rep-rail').waitFor({ timeout: 5000 }).catch(() => v('UXR5: Done does not close the report\'s answers to the rail'));
-  }
+  // BUILD1 (D-UX-340): the paper beside the questions is the document's own blocks, never a second copy. All answered and
+  // worded, at 1280 px it stands in its pane with the engine's figures and the words; on a phone one tap opens it over the
+  // questions and one closes it.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.getByTestId('rep-paper').waitFor({ timeout: 5000 }).catch(() => v('BUILD1: no paper beside the questions at 1280 px'));
+  await expectText(page, v, 'rep-paper', /Total cost of the project37,86,301/, 'BUILD1, the paper\'s cost of the project');
+  await expectText(page, v, 'rep-paper', /It is in talks with 3 buyers\./, 'BUILD1, the paper\'s words');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByTestId('rep-peek').waitFor({ timeout: 5000 }).catch(() => v('BUILD1: no "See the paper" on a phone'));
+  if (await page.locator('dialog[open]').count()) v('BUILD1: the paper covers the questions on a phone before it is asked for');
+  await page.getByTestId('rep-peek').click();
+  await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('BUILD1: "See the paper" does not open the paper on a phone'));
+  await page.getByTestId('rep-peek-close').click();
+  await page.waitForFunction(() => !document.querySelector('dialog[open]'), null, { timeout: 5000 }).catch(() => v('BUILD1: the paper does not close back to the questions'));
   await ctx.close();
 }
 
@@ -1613,24 +1605,46 @@ for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'
   await ctx.close();
 }
 // OR11a (D-UX-245): case R all answered. The status counts only questions with a box, the check is a step of its own,
-// and cash running out joins the verdict. On a phone the bar's arrow is "See the answer": it folds the questions and lands
-// the answer below the top bar; the button under the questions shows from 1024 px only.
+// and cash running out joins the verdict. Home's case opens on the Check step, where its answer is (BUILD1).
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/?case=home', { scheme: 'light' });
   await expectText(page, v, 'rep-status-go', 'check your figures before the download', 'OR11a: the check as its own step');
   await expectText(page, v, 'rep-misses-work', /^Does not work yet: \d+ ratios? short and cash runs out in 20\d\d-\d\d\./, 'OR11a: cash running out in the verdict');
-  if (await page.getByTestId('rep-fold').isVisible()) v('OR11a: the button "See the answer" shows on a phone');
-  await page.evaluate(() => scrollTo(0, 0));
-  const see = page.getByTestId('rep-answer-bar-see');
-  if ((await see.getAttribute('aria-label')) !== 'See the answer') v(`OR11a: the bar's arrow is named "${await see.getAttribute('aria-label')}", want "See the answer"`);
-  await see.click();
-  await page.waitForFunction(() => document.activeElement?.id === 'report-h', null, { timeout: 5000 }).catch(() => v('OR11a: the bar\'s arrow does not take the focus to the answer'));
-  if (!(await page.getByTestId('rep-edit').isVisible())) v('OR11a: the bar\'s arrow leaves the questions unfolded on a phone');
-  const [top, under] = await page.evaluate(() => [document.querySelector('[data-testid="rep-edit"]').getBoundingClientRect().top, document.querySelector('[data-header]').getBoundingClientRect().bottom]);
-  if (top < under - 1) v(`OR11a: the answer lands under the top bar (Edit answers at ${Math.round(top)} px, the bar's foot at ${Math.round(under)} px)`);
-  await page.setViewportSize({ width: 1280, height: 900 });
-  await page.goto(`${BASE}/project-report/?case=home`, { waitUntil: 'networkidle' });
-  if (!(await page.getByTestId('rep-fold').isVisible())) v('OR11a: no button "See the answer" under the questions at 1280 px');
+  if ((await page.getByTestId('rep-step-check').getAttribute('aria-current')) !== 'step') v('BUILD1: home\'s case does not open on the Check step');
+  await ctx.close();
+}
+// BUILD1 (D-UX-340 to D-UX-342): the builder. Six steps on the progress line and one shown; Next and Back walk them and
+// the step's heading takes the focus; what is typed shows on the paper, marked a draft; the answers and the step come
+// back after a reload, saved on the device (D-UX-341); the worked example passes every check (D-UX-342); Clear all
+// empties the device's copy.
+if (touched('/project-report/')) {
+  const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
+  const shown = () => page.evaluate(() => [...document.querySelectorAll('[data-step]')].filter((x) => !x.hidden).map((x) => x.dataset.step).join());
+  const kept = () => page.evaluate(() => [localStorage.getItem('draft:report:v1') !== null, sessionStorage.getItem('draft:report:v1') !== null, localStorage.getItem('report-step')]);
+  const names = await page.locator('[data-steps] button').allTextContents();
+  if (names.length !== 6) v(`BUILD1: the progress line has ${names.length} steps, want 6`);
+  if (await shown() !== 'business' || (await page.getByTestId('rep-step-business').getAttribute('aria-current')) !== 'step') v(`BUILD1: the page opens on ${await shown()}, want the business alone`);
+  if (await page.getByTestId('rep-back').count()) v('BUILD1: Back shows on the first step');
+  await leave(page, '#fld-rep-name', 'Meera Foods');
+  await expectText(page, v, 'rep-paper', /Meera Foods/, 'BUILD1, the name typed on the paper');
+  await expectText(page, v, 'rep-paper', /Draft/, 'BUILD1, the paper marked a draft before the check');
+  await page.getByTestId('rep-next').click();
+  await page.waitForFunction(() => document.activeElement?.id === 'step-cost-h', null, { timeout: 5000 }).catch(() => v('BUILD1: Next does not take the focus to the next step\'s heading'));
+  if (await shown() !== 'cost') v(`BUILD1: Next from the business shows ${await shown()}`);
+  await page.getByTestId('rep-back').click();
+  if (await shown() !== 'business') v(`BUILD1: Back from the cost shows ${await shown()}`);
+  await page.getByTestId('rep-step-loan').click();
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForFunction(() => document.querySelector('#fld-rep-name')?.value === 'Meera Foods', null, { timeout: 5000 }).catch(() => v('D-UX-341: a reload lost the report\'s answers'));
+  if (await shown() !== 'loan') v(`D-UX-341: a reload opens on ${await shown()}, want the loan, the step left`);
+  if (JSON.stringify(await kept()) !== '[true,false,"loan"]') v(`D-UX-341: the device keeps ${JSON.stringify(await kept())}, want the draft on the device, none in the tab, the step`);
+  await page.getByTestId('rep-example').click();
+  await page.getByTestId('rep-step-check').click();
+  await expectText(page, v, 'rep-verdict', /./, 'D-UX-342, the worked example\'s verdict');
+  if (await page.getByTestId('rep-misses').count()) v('D-UX-342: the worked example misses a check');
+  await expectText(page, v, 'rep-paper', /Lowest DSCR2\.31/, 'D-UX-342, the example\'s lowest DSCR on the paper');
+  await page.getByTestId('rep-clear').click();
+  if ((await kept())[0]) v('D-UX-341: Clear all leaves the answers on the device');
   await ctx.close();
 }
 // UXR5 (LOOP1d, D-UX-234): the estimate's answers folded from 1024 px to a rail in two groups, which opens in place.
@@ -1915,13 +1929,14 @@ if (touched('/estimate/')) {
 const filledCount = (page) => page.evaluate(() => [...document.querySelectorAll('main input, main select, main textarea')]
   .filter((e) => (e.type === 'radio' || e.type === 'checkbox' ? e.checked : e.value.trim() !== '')).length);
 // What the tab holds (D-UX-173): only the five drafts (the estimate's two islands keep one each, D-UX-171), each small and
-// holding no document; nothing in localStorage but the theme and the report's mode (preferences, not answers).
+// holding no document; nothing in localStorage but the theme and the report's mode (preferences, not answers), and, on
+// the project report alone, its draft and the step left: its answers are saved on the device until cleared (D-UX-341).
 const DRAFT_KEY = /^draft:(dscr|cma|report|plan|quote):v1$/;
-const stored = (page) => page.evaluate(() => ({ s: Object.keys(sessionStorage).map((k) => [k, sessionStorage.getItem(k) ?? '']), l: Object.keys(localStorage) }));
+const stored = (page) => page.evaluate(() => ({ s: Object.keys(sessionStorage).map((k) => [k, sessionStorage.getItem(k) ?? '']), l: Object.keys(localStorage).map((k) => [k, localStorage.getItem(k) ?? '']) }));
 const KEPT = [
   { path: '/dscr/', key: 'dscr', clear: ['dscr-clear'] },
   { path: '/cma/', key: 'cma', clear: ['cma-clear'] },
-  { path: '/project-report/', key: 'report', clear: ['rep-clear'] },
+  { path: '/project-report/', key: 'report', clear: ['rep-clear'], device: true },
   { path: '/estimate/', key: 'plan', fill: async (page) => { await page.check('#fld-work-renovate'); await page.check('#fld-home-flat'); await page.selectOption('#fld-city', 'pune'); } },
 ];
 for (const t of KEPT.filter((t) => touched(t.path))) {
@@ -1936,13 +1951,14 @@ for (const t of KEPT.filter((t) => touched(t.path))) {
   const typed = await filledCount(page);
   if (typed <= blank) v(`UXR2: typing filled no field (${blank} → ${typed})`);
   const held = await stored(page);
-  if (!held.s.some(([k]) => k === `draft:${t.key}:v1`)) v(`UXR2: typing kept no draft:${t.key}:v1`);
-  for (const [k, val] of held.s) {
+  if (!(t.device ? held.l : held.s).some(([k]) => k === `draft:${t.key}:v1`)) v(`UXR2: typing kept no draft:${t.key}:v1 ${t.device ? 'on the device' : 'in the tab'}`);
+  const own = t.device ? held.l.filter(([k]) => k === `draft:${t.key}:v1`) : [];
+  for (const [k, val] of [...held.s, ...own]) {
     if (k === 'seeded') continue;
-    if (!DRAFT_KEY.test(k)) v(`UXR2: the tab holds ${k}, not a draft`);
+    if (!DRAFT_KEY.test(k) || (t.device && !own.some(([o]) => o === k))) v(`UXR2: the tab holds ${k}, not a draft`);
     else if (val.length > 20000 || /data:|blob:|%PDF/.test(val)) v(`UXR2: ${k} holds more than typed answers (${val.length} characters)`);
   }
-  if (held.l.some((k) => k !== 'app-theme' && k !== 'report-mode')) v(`UXR2: localStorage holds ${held.l.join(', ')}`);
+  if (held.l.some(([k]) => k !== 'app-theme' && k !== 'report-mode' && !(t.device && (k === `draft:${t.key}:v1` || k === 'report-step')))) v(`UXR2: localStorage holds ${held.l.map(([k]) => k).join(', ')}`);
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForFunction(() => !document.querySelector('astro-island[ssr]'), null, { timeout: 10000 }).catch(() => {});
   const back = await filledCount(page);
@@ -1957,7 +1973,8 @@ for (const t of KEPT.filter((t) => touched(t.path))) {
     await page.waitForFunction(() => !document.querySelector('astro-island[ssr]'), null, { timeout: 10000 }).catch(() => {});
     const after = await filledCount(page);
     if (after !== blank) v(`UXR2: after Clear all and a reload ${after} fields are filled, not ${blank}`);
-    if ((await stored(page)).s.some(([k]) => k === `draft:${t.key}:v1`)) v(`UXR2: Clear all left draft:${t.key}:v1 behind`);
+    const left = await stored(page);
+    if ([...left.s, ...left.l].some(([k]) => k === `draft:${t.key}:v1`)) v(`UXR2: Clear all left draft:${t.key}:v1 behind`);
   }
   await ctx.close();
 }
@@ -1976,6 +1993,8 @@ for (const [path, pre, dl] of SAME.filter(([p]) => touched(p))) for (const width
       if (!q || q.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) break;
       if (el.contains(q) || !el.checkVisibility() || el.closest(`[data-testid="${pre}-start"]`) || el.matches('[data-testid="tool-kind"], [data-testid="kept-line"], h1 + p')) continue;
       if (sec?.contains(el) && el.matches('h2, h3')) continue;
+      // The builder's way round (BUILD1, D-UX-340): the progress line, and the step's count and name over its questions.
+      if (el.closest('[data-steps]') || el.matches('[data-step] > p:first-child, [data-step] > h2')) continue;
       out.push(`${el.tagName.toLowerCase()} "${el.textContent.trim().slice(0, 40)}"`);
     }
     return q ? out : ['no question'];

@@ -11,6 +11,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
+import { stepped } from './stepped.mjs';
 
 const AXE = await readFile(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
 const BASELINE = fileURLToPath(new URL('./design-baseline.json', import.meta.url));
@@ -376,7 +377,7 @@ export async function openAt(browser, url, { width = 'phone', scheme = 'light', 
   await page.goto(url, { waitUntil: 'networkidle' });
   // An island behind a closed line wakes when it is opened (client:visible, the typed quotation, UXR7).
   await page.waitForFunction(() => ![...document.querySelectorAll('astro-island[ssr]')].some((i) => !i.closest('details:not([open])')), null, { timeout: 10000 }).catch(() => {});
-  return { ctx, page };
+  return { ctx, page: new URL(url).pathname.startsWith('/project-report/') ? stepped(page) : page };
 }
 
 /**
