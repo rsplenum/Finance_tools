@@ -22,7 +22,7 @@ import { BORROWERS, TAX_STATUS, borrowerOf } from '../../../engine/tax';
 import { inr, rs } from '../../../engine/util';
 import DSCR_FILE from '../../../engine/data/dscr.json';
 import TAX_FILE from '../../../engine/data/tax.json';
-import { answerRule, AnswerBar, Why, BUTTON, CellInput, Choice, Counter, Dash, docLink, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick, InAppNote, Verdict, useHomeCase, useKept, useStart, StartLine, StartNotes, MoreOptions } from '../fields';
+import { answerRule, AnswerBar, How, Why, BUTTON, CellInput, Choice, Counter, Dash, docLink, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick, InAppNote, Verdict, useHomeCase, useKept, useStart, StartLine, StartNotes, MoreOptions } from '../fields';
 import { Downloads } from '../Downloads';
 import { DSCR_HOME } from './home-case';
 import { printable } from '../doc/pdf';
@@ -35,6 +35,8 @@ import {
   type DocFacts, type LenderLine, type LenderText, type LenderView, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 import { Levels } from './Levels';
+import { W } from './words';
+import { SHARED } from '../words';
 import { Rounds } from './MakeItWork';
 import { roundKey, setupOf, termWords, writeTerms } from './rounds';
 import { AnswersColumn, foldGrid, SeeAnswer, useFold, type AnswerGroup } from '../Fold';
@@ -99,7 +101,7 @@ export function DscrCalculator() {
       unfolded={s.source === 'plan' && door}>{door}</AnswersColumn>
     {/* On the front door the answer comes before More options (review finding 12); with year-by-year figures, after them. */}
     {s.source === 'plan' && results}
-    {fold ? null : <MoreOptions what="the method, the loan in full, year-by-year figures" open={more} onToggle={setMore} class="mt-12 lg:col-start-1 lg:row-start-2">
+    {fold ? null : <MoreOptions what={W.moreHolds} open={more} onToggle={setMore} class="mt-12 lg:col-start-1 lg:row-start-2">
         <Start s={s} update={update} />
         {p.started && <>
           {s.source === 'plan' ? <Loan s={s} update={update} y={y} p={p} was={was} /> : <YearsSection s={s} update={update} y={y} />}
@@ -141,35 +143,34 @@ function FrontDoor({ s, update, openMore, was, onSee }: { s: State; update: Upda
   const amountSaid = (t: string) => notUnderstood(t, amountOf, '5,00,000 or 5 L');
   const first = (key: string, t: string) => (x: State) => ({ ...x, cells: { ...x.cells, [key]: [t, ...(x.cells[key] ?? []).slice(1)] } });
   return <section id="front-door" aria-label="The loan and the business" class="mt-4 @container">
-    <Choice name="fld-fd-borrower" legend="Who is the borrower?" columns value={s.borrower as string | undefined}
+    <Choice name="fld-fd-borrower" legend={W.borrower} columns value={s.borrower as string | undefined}
       options={BORROWER_CHOICES.map((b) => ({ value: b.id, label: b.label }))} onChange={(id) => update((x) => withBorrower(x, id))} />
     <div class="mt-4 grid gap-4 @md:grid-cols-2">
-      <TextField id="fld-fd-profit" label="This year’s profit before interest, depreciation and tax" unit="Rs." inputMode="decimal" value={s.cells.pbdit?.[0] ?? ''}
+      <TextField id="fld-fd-profit" label={W.profit} unit="Rs." inputMode="decimal" value={s.cells.pbdit?.[0] ?? ''}
         tidy={tidyAmount} said={amountSaid(s.cells.pbdit?.[0] ?? '')}
         onCommit={(t) => update((x) => ({ ...first('pbdit', t)(x), modes: { ...x.modes, pbdit: 'grow' } }))} />
-      <TextField id="fld-fd-growth" label="Growth in sales a year (%)" unit="%" inputMode="decimal" hint="Like 10." value={s.rates.pbdit ?? ''}
+      <TextField id="fld-fd-growth" label={W.growth} unit="%" inputMode="decimal" hint={W.growthHint} value={s.rates.pbdit ?? ''}
         said={notUnderstood(s.rates.pbdit ?? '', numberOf, 'a number, like 10')} onCommit={(t) => update((x) => ({ ...x, rates: { ...x.rates, pbdit: t } }))} />
-      <TextField id="fld-fd-emis" label="EMIs already paid, a month" unit="Rs." hint={<>EMI: each loan’s monthly instalment, interest included. Leave empty if none.<Why id="fld-fd-emis-why">{emisAsk(s).replace(/\.?$/, '.')}</Why></>} inputMode="decimal" value={emi} tidy={tidyAmount}
+      <TextField id="fld-fd-emis" label={W.emis} unit="Rs." hint={<>{W.emisHint}<Why id="fld-fd-emis-why">{emisAsk(s).replace(/\.?$/, '.')}</Why></>} inputMode="decimal" value={emi} tidy={tidyAmount}
         said={amountSaid(emi)} onCommit={(t) => update((x) => (t.trim()
           ? { ...x, modes: { ...x.modes, otherLoans: 'emi' }, running: [{ emi: t, last: x.running[0]?.last ?? '' }, ...x.running.slice(1)] }
           : { ...x, modes: { ...x.modes, otherLoans: 'none' } }))} />
-      <TextField id="fld-fd-depreciation" label="Depreciation a year, if any" unit="Rs." hint="Leave empty if none." inputMode="decimal" value={dep} tidy={tidyAmount}
+      <TextField id="fld-fd-depreciation" label={W.depreciation} unit="Rs." hint={W.empty} inputMode="decimal" value={dep} tidy={tidyAmount}
         said={amountSaid(dep)} onCommit={(t) => update((x) => (t.trim() ? { ...first('depreciation', t)(x), modes: { ...x.modes, depreciation: 'same' } } : { ...x, modes: { ...x.modes, depreciation: 'none' } }))} />
-      <TextField id="fld-fd-amount" label="Loan amount" unit="Rs." hint={was('amount')} inputMode="decimal" value={s.loan.amount} tidy={tidyAmount}
+      <TextField id="fld-fd-amount" label={W.amount} unit="Rs." hint={was('amount')} inputMode="decimal" value={s.loan.amount} tidy={tidyAmount}
         said={amountSaid(s.loan.amount)} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, amount: t } }))} />
-      <TextField id="fld-fd-rate" label="Interest rate (% a year)" unit="%" inputMode="decimal" hint="Like 12." value={s.loan.ratePct}
+      <TextField id="fld-fd-rate" label={W.rate} unit="%" inputMode="decimal" hint={W.rateHint} value={s.loan.ratePct}
         said={notUnderstood(s.loan.ratePct, numberOf, 'a number, like 12')} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, ratePct: t } }))} />
-      <TextField id="fld-fd-years" label="Repayment period (years)" unit="years" hint={was('instalments') ?? 'Like 5.'} inputMode="decimal" value={years}
+      <TextField id="fld-fd-years" label={W.years} unit="years" hint={was('instalments') ?? W.yearsHint} inputMode="decimal" value={years}
         said={notUnderstood(years, numberOf, 'a number, like 5')} onCommit={(t) => update((x) => {
           const n = numberOf(t), per = x.loan.repayment === 'quarterly' ? 4 : 12;
           return { ...x, loan: { ...x.loan, instalments: n === undefined ? t : String(Math.round(n * per)) } };
         })} />
     </div>
-    {s.door && s.loan.disbursed === s.door.month && <p data-testid="fd-loan-note" class={`mt-3 ${HINT}`}>
-      The loan is taken as drawn in {monthText(s.door.month)} and repaid by EMI every month, with no holiday before the first instalment.</p>}
+    {s.door && s.loan.disbursed === s.door.month && <p data-testid="fd-loan-note" class={`mt-3 ${HINT}`}>{W.drawn(monthText(s.door.month))}</p>}
     {/* The way out for experts under the last question, by More options (UXR1's S8): nothing but the lead before the first. */}
-    <p data-testid="fd-more" class={`mt-3 ${HINT}`}>Have year-by-year projections, a holiday before the first instalment, or a loan already drawn? <a href="#more-options" onClick={openMore}
-      class="text-link underline underline-offset-4">Use More options</a>.</p>
+    <p data-testid="fd-more" class={`mt-3 ${HINT}`}>{W.more} <a href="#more-options" onClick={openMore}
+      class="text-link underline underline-offset-4">{W.useMore}</a>.</p>
     <SeeAnswer pre="dscr" onSee={onSee} />
   </section>;
 }
@@ -478,11 +479,11 @@ function AnswerPanel({ s, p, update, see, back, trail, fold, onPlan, note }: {
     {p.blocked && <p data-testid="dscr-blocked" role="alert" class={`mt-4 ${answerRule(true)} text-ink`}>{p.blocked}</p>}
     {!p.blocked && <dl class="mt-4 grid grid-cols-2 gap-3">
       <div class="rounded-control bg-surface p-3">
-        <dt class={`text-sm ${MUTED}`}>Average DSCR</dt>
+        <dt class={`text-sm ${MUTED}`}>{W.average}</dt>
         <dd data-testid="dscr-average" class="figure text-section text-ink">{p.average ?? dash('Average DSCR')}</dd>
       </div>
       <div class="rounded-control bg-surface p-3">
-        <dt class={`text-sm ${MUTED}`}>Lowest year</dt>
+        <dt class={`text-sm ${MUTED}`}>{W.lowest}</dt>
         <dd class="text-ink">
           <span data-testid="dscr-lowest" class="figure text-section">{p.lowest ?? dash('Lowest year')}</span>
           {p.lowestYear && <>{' '}<span data-testid="dscr-lowest-year" class="whitespace-nowrap text-sm">in {p.lowestYear}</span></>}
@@ -501,10 +502,9 @@ function AnswerPanel({ s, p, update, see, back, trail, fold, onPlan, note }: {
     </ul>}
     {/* Once nothing is still to answer (audit 7D): the one thing to check, and how sure what the verdict rests on is. */}
     {p.verdict && !p.blocked && !p.needs.length && (() => {
-      const ms = dscrMarks(s), sure = sureLine(ms);
+      const ms = dscrMarks(s);
       return <div class="mt-4 text-sm">
         <p data-testid="dscr-check-next" class="text-ink">{checkNext(ms)}</p>
-        {sure && <p data-testid="dscr-sure" class={HINT}>{sure}</p>}
       </div>;
     })()}
     </div>
@@ -532,15 +532,23 @@ function Working({ s, p, openMore, fold }: { s: State; p: Preview; openMore: () 
     ...(a.id === 'method' && target ? { what: 'How DSCR is worked out, and the target', shown: `${a.shown}; ${target.shown.toLowerCase()}`, why: `${a.why}. The target: ${target.why}` } : a),
     id: a.id, to: a.where, go: (e: Event) => { e.preventDefault(); openMore(); requestAnimationFrame(() => goTo(a.where)(e)); },
   }));
+  const sure = p.verdict && !p.blocked && !p.needs.length ? sureLine(dscrMarks(s)) : '';
   return <section id="working" aria-label="How it is worked out" class={fold ? 'lg:col-start-2 lg:row-start-2' : 'lg:col-span-2 lg:row-start-3'}>
     {p.lender && <LenderLines v={p.lender} openMore={openMore} />}
-    <Ledger id="assumed" testid="dscr-assumed" row="assumed-" title="Assumed until changed" rows={rows} />
     {p.statement && <StatementTable st={p.statement} parts={p.partYears} />}
     {p.beforeStart && <p data-testid="dscr-before-start" class={`mt-2 ${HINT}`}>{p.beforeStart}</p>}
     {p.notCounted && <p data-testid="dscr-not-counted" class={`mt-2 ${HINT}`}>{p.notCounted}</p>}
     {p.notes.length > 0 && <ul data-testid="dscr-notes" class="mt-2 space-y-0.5 text-sm text-warn">{p.notes.map((n) => <li key={n}>{n}</li>)}</ul>}
     {p.schedule && <Schedule sch={p.schedule} />}
-    <p class={`mt-6 ${HINT}`}>A free preview, worked out twice in your browser; figures are shown only when both agree.</p>
+    <How>
+      <p>{SHARED.twice}</p>
+      {sure && <p data-testid="dscr-sure">{sure}</p>}
+      <p>{SHARED.rounded} {W.nilLines}</p>
+      <Ledger inside id="assumed" testid="dscr-assumed" row="assumed-" rows={rows} />
+      {p.lender && <div><p class="font-medium text-ink">{W.tests}</p>
+        {'assumed' in p.lender.promoters && <p data-testid="lender-promoters">{p.lender.promoters.assumed}.</p>}
+        <p>{LENDER.status} {LENDER.stress.map((x) => `${x.label}: ${x.how}.`).join(' ')} {LENDER.floor.why}.</p></div>}
+    </How>
   </section>;
 }
 
@@ -557,7 +565,7 @@ function LenderLines({ v, openMore }: { v: LenderView; openMore: () => void }) {
     <ul class="mt-1 space-y-1 text-sm text-ink-muted">
       {v.stress.map((l, i) => line(l, LENDER.stress[i]?.id ?? String(i)))}
       {v.ask && <li data-testid="lender-ask"><a href="#lender" onClick={openMore} class="inline-flex min-h-6 items-center text-link">{v.ask}</a></li>}
-      {'line' in v.promoters ? line(v.promoters.line, 'promoters') : <li data-testid="lender-promoters">{v.promoters.assumed}.</li>}
+      {'line' in v.promoters && line(v.promoters.line, 'promoters')}
       {v.notStressed && <li>{v.notStressed}.</li>}
     </ul>
     {v.needs.length > 0 && <ul class="mt-1 list-disc pl-5 text-sm text-warn">{v.needs.map((n) => <li key={n}>{n}</li>)}</ul>}
@@ -577,7 +585,6 @@ function LenderLines({ v, openMore }: { v: LenderView; openMore: () => void }) {
           <tbody>{a.rows.map((r) => <tr key={r.label}><td class="px-2 py-1">{r.label}</td><td class={td}>{r.audited}</td>{a.nextFy && <td class={td}>{r.next ?? ''}</td>}</tr>)}</tbody></table></div>
         {a.flags.map((f) => <p key={f} class="mt-1 text-warn">{f}.</p>)}
       </div>)}
-    <SourceNote what="About these tests">{LENDER.status} {LENDER.stress.map((x) => `${x.label}: ${x.how}.`).join(' ')} {LENDER.floor.why}.</SourceNote>
   </div>;
 }
 
@@ -628,18 +635,18 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
       said={english(f[id]) ?? (id === 'gstin' ? gstinSaid : undefined)} invalid={!!english(f[id]) || (id === 'gstin' && !!gstinSaid)} />;
   // Before the statement shows figures the section is one line (UX8, review finding 9).
   if (!ready) return <Folded id="download" title="Download the statement"><span data-testid="doc-wait">{p.blocked
-    ? 'No document while the two computations disagree.' : 'A PDF, an Excel and a Word copy, once the statement shows figures.'}</span></Folded>;
+    ? 'No document while the two computations disagree.' : SHARED.wait}</span></Folded>;
   return <Section id="download" title="Download the statement">
-    <p class={`mt-2 ${HINT}`}>A PDF for the lender, an Excel copy for the accountant and a Word copy to edit, made in your browser from the figures above.</p>
+    <p class={`mt-2 ${HINT}`}>{SHARED.files}</p>
     {ready
       ? <div class="mt-5">
         <div class="grid gap-4 sm:grid-cols-2">
-          {field('borrower', 'Borrower’s name', 'Like Asha Traders.')}
-          {field('lender', 'Lender', 'The bank or finance company, and the branch.')}
-          {field('preparedBy', 'Prepared by', 'Your name or your firm’s, if not the borrower.')}
+          {field('borrower', W.borrowerName, W.borrowerLike)}
+          {field('lender', W.lender, SHARED.lender)}
+          {field('preparedBy', W.preparedBy, SHARED.preparedBy)}
         </div>
         <details id="doc-more" class="mt-4">
-          <summary class="flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link">Address, the loan’s purpose and GSTIN, if you want them on the statement</summary>
+          <summary class="flex min-h-11 cursor-pointer items-center rounded-card bg-surface px-4 py-3 font-medium text-link">{W.docMore}</summary>
           <div class="grid gap-4 pt-2 pb-4 sm:grid-cols-2">
             {field('address', 'Address', 'The business’s address.')}
             {field('purpose', 'Purpose of the loan', 'Like a new CNC machine.')}
@@ -668,11 +675,11 @@ function StatementTable({ st, parts = {} }: { st: StatementView; parts?: Record<
   const cols = st.years.length + 1 + (st.total ? 1 : 0);
   // On a phone a line that is nil every year is left off the cards; the table and the document keep it (finding 16).
   const shown = st.lines.filter((l) => l.kind || !l.n || l.n.some((x) => x !== 0));
-  const hidden = st.lines.length - shown.length;
+  const ratio = st.lines.find((l) => l.kind === 'ratio');
   // A sheet lying flat: only the answer's casts the shadow (UX8, D-UX-106).
   return <div class="paper mt-8 rounded-card p-4 sm:p-6">
-    <h3 class="font-semibold text-ink">Year by year</h3>
-    <p class={`mt-1 ${HINT}`}>In rupees.{hidden > 0 && <span class="sm:hidden"> Lines that are nil every year are left out here; the document keeps them.</span>}</p>
+    <h3 class="font-semibold text-ink">{W.yearByYear}</h3>
+    <p class={`mt-1 ${HINT}`}><span class="sm:hidden">{W.openYear}</span><span class="max-sm:hidden">{W.inRupees}</span></p>
     <div class="mt-2 overflow-x-auto max-sm:hidden">
       <table data-testid="dscr-statement" class="w-full border-collapse text-sm">
         <thead>
@@ -700,9 +707,12 @@ function StatementTable({ st, parts = {} }: { st: StatementView; parts?: Record<
       </table>
     </div>
     <div class="mt-2 space-y-3 sm:hidden">
-      {st.years.map((fy, i) => <div key={fy} data-testid={`card-${fy}`} class="rounded-control bg-surface p-3">
-        <p class="font-medium text-ink">{fy}{!st.counted[i] && <span class={`ml-2 text-xs font-normal ${MUTED}`}>not counted</span>}
-          {parts[fy] && <span class={`ml-2 text-xs font-normal ${MUTED}`}>{parts[fy]}</span>}</p>
+      {st.years.map((fy, i) => <details key={fy} data-testid={`card-${fy}`} class="group rounded-control bg-surface px-3">
+        <summary class="flex min-h-11 cursor-pointer items-center justify-between gap-3 font-medium text-ink [&::-webkit-details-marker]:hidden">
+          <span><span aria-hidden="true" class="mr-1 inline-block transition-transform group-open:rotate-90">›</span>{fy}{!st.counted[i] && <span class={`ml-2 text-xs font-normal ${MUTED}`}>not counted</span>}
+          {parts[fy] && <span class={`ml-2 text-xs font-normal ${MUTED}`}>{parts[fy]}</span>}</span>
+          {ratio && <span class="tabular-nums group-open:hidden">DSCR {ratio.values[i]}</span>}
+        </summary>
         <div class="mt-1 text-sm">
           {shown.map((l) => l.kind === 'head'
             ? <p key={l.label} class={`pt-2 text-xs font-semibold tracking-wide uppercase ${MUTED}`}>{l.label}</p>
@@ -710,7 +720,7 @@ function StatementTable({ st, parts = {} }: { st: StatementView; parts?: Record<
               <span>{l.label}</span><span data-line={l.id} class="text-right tabular-nums">{l.values[i]}</span>
             </p>)}
         </div>
-      </div>)}
+      </details>)}
       {st.total && <div data-testid="card-total" class="rounded-control border-l-4 border-ink bg-surface p-3">
         <p class="font-medium text-ink">Total{st.total.sub && <span class={`ml-2 text-xs font-normal ${MUTED}`}>{st.total.sub}</span>}</p>
         <div class="mt-1 text-sm">
@@ -729,9 +739,9 @@ function StatementTable({ st, parts = {} }: { st: StatementView; parts?: Record<
 function Schedule({ sch }: { sch: ScheduleView }) {
   const cols = 'grid grid-cols-label gap-2 sm:grid-cols-label-wide';
   return <div data-testid="schedule" class="mt-8">
-    <h3 class="font-semibold text-ink">Repayment schedule</h3>
+    <h3 class="font-semibold text-ink">{W.schedule}</h3>
     <p data-testid="schedule-level" class={`mt-1 ${HINT}`}>{sch.level}</p>
-    <p class={HINT}>In rupees, rounded; totals use the exact figures. Open a year for its months.</p>
+    <p class={HINT}>{W.openMonths}</p>
     <div class={`${cols} mt-3 px-3 text-xs font-medium ${MUTED}`}>
       <span>Year</span><span class="text-right">Interest</span><span class="text-right">Principal</span><span class="text-right">Balance at year end</span>
     </div>
