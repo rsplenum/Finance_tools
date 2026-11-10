@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          "docs/design-reviews/2026-11-10-ux2/mock.html"
+        ],
+        "createdAt": "2026-11-10T13:30:42.940Z",
+        "reason": "agent: the detector reads the dark colour set against the light page; a browser render at 390 and 1280 px, light and dark, found every text at 4.5:1 or more"
+      }
+    ]
+  }
+}

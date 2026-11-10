@@ -1,0 +1,291 @@
+<title>Report Builder Rebuild</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap">
+<style>
+:root{--bg:#f4f1ea;--surface:#fffdf8;--app:#ffffff;--ink:#17202b;--muted:#4d5661;--line:#ddd6c8;--accent:#0f4c5c;--on-accent:#ffffff;--ok:#17633d;--bad:#a8221b;--okbg:#e3f2e8;--badbg:#fbe9e7;--frame:#17202b}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#12161b;--surface:#1b2129;--app:#161b22;--ink:#eef0f2;--muted:#9aa4b0;--line:#2e3742;--accent:#6fc3d6;--on-accent:#0b1418;--ok:#5fce93;--bad:#ff8a80;--okbg:#17382a;--badbg:#45201d;--frame:#3a4552}}
+:root[data-theme="dark"]{--bg:#12161b;--surface:#1b2129;--app:#161b22;--ink:#eef0f2;--muted:#9aa4b0;--line:#2e3742;--accent:#6fc3d6;--on-accent:#0b1418;--ok:#5fce93;--bad:#ff8a80;--okbg:#17382a;--badbg:#45201d;--frame:#3a4552}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+.wrap{max-width:1040px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-right)) 72px max(16px,env(safe-area-inset-left))}
+h1,h2,.disp{font-family:Fraunces,Georgia,serif;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+h1{font-size:clamp(30px,6vw,52px);line-height:1.06;margin:10px 0 14px}
+h2{font-size:clamp(24px,4vw,32px);line-height:1.15;margin:0 0 6px}
+h3{font-size:16px;margin:0 0 4px}
+p{margin:0 0 10px}
+.eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lead{font-size:18px;color:var(--muted);max-width:62ch}
+section{margin-top:56px}
+.sub{color:var(--muted);max-width:66ch;margin-bottom:18px}
+.grid2{display:grid;gap:12px}
+@media (min-width:720px){.grid2{grid-template-columns:1fr 1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px}
+.card p:last-child{margin:0}
+.num{font-family:Fraunces,Georgia,serif;font-size:13px;color:var(--bad);font-weight:600;letter-spacing:.04em}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+@media (min-width:720px){.stats{grid-template-columns:repeat(4,1fr)}}
+.stat b{display:block;font-family:Fraunces,Georgia,serif;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.stat span{font-size:13px;color:var(--muted)}
+.note{font-size:13px;color:var(--muted)}
+/* demo */
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px;scrollbar-width:none}
+.tabs button{flex:none;font:inherit;font-size:14px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.demo{display:grid;gap:20px;align-items:start}
+@media (min-width:820px){.demo{grid-template-columns:360px 1fr;gap:40px}}
+.phone{width:min(100%,360px);margin:0 auto;border:10px solid var(--frame);border-radius:38px;background:var(--app);overflow:hidden;box-shadow:0 18px 40px -18px rgba(0,0,0,.35)}
+.screen{height:620px;overflow-y:auto;padding:14px 16px 18px;font-size:14px;line-height:1.45}
+.screen[hidden]{display:none}
+.bar{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:10px}
+.dots{display:flex;gap:4px}.dots i{width:16px;height:4px;border-radius:2px;background:var(--line)}.dots i.on{background:var(--accent)}
+.ringbox{position:relative;width:132px;margin:6px auto 8px}
+.ringbox svg{display:block;width:100%}
+.ringbox div{position:absolute;inset:0;display:grid;place-content:center;text-align:center;font-size:11px;color:var(--muted)}
+.ringbox b{display:block;font-family:Fraunces,Georgia,serif;font-size:30px;line-height:1;color:var(--ink)}
+.head{font-family:Fraunces,Georgia,serif;font-size:22px;line-height:1.15;text-align:center;margin:0 0 4px}
+.why{text-align:center;color:var(--muted);margin:0 6px 14px}
+.lbl{font-size:12px;font-weight:600;margin:14px 0 6px}
+.bars{position:relative;height:118px;display:flex;align-items:flex-end;gap:3px;border-bottom:1px solid var(--line)}
+.bars .b{flex:1;border-radius:3px 3px 0 0;background:var(--accent);position:relative;min-width:0}
+.bars .b.s{background:var(--bad)}
+.bars .b span{position:absolute;top:-13px;left:50%;transform:translateX(-50%);font-size:8.5px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.bars .lvl{position:absolute;left:0;right:0;border-top:2px dashed #fff;mix-blend-mode:difference;pointer-events:none}
+.lbl.k{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px}.lbl.k span{font-weight:400;font-size:11px;color:var(--muted)}
+.yrs{display:flex;gap:3px;font-size:8.5px;color:var(--muted);margin-top:3px}.yrs span{flex:1;text-align:center}
+.chip{display:flex;gap:8px;align-items:center;justify-content:space-between;background:var(--badbg);border-radius:10px;padding:8px 10px;margin-top:12px;font-size:12.5px}
+.chip button,.mini{font:inherit;font-size:12px;border:1px solid currentColor;background:transparent;color:var(--ink);border-radius:999px;padding:4px 10px;white-space:nowrap;cursor:pointer}
+.cta{display:block;width:100%;font:inherit;font-weight:600;font-size:15px;padding:13px;border-radius:12px;border:0;background:var(--accent);color:var(--on-accent);margin-top:14px;cursor:pointer}
+.ghost{display:block;width:100%;font:inherit;font-size:14px;padding:10px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--ink);margin-top:8px;cursor:pointer}
+.rows{list-style:none;margin:8px 0 0;padding:0;border-top:1px solid var(--line)}
+.rows li{display:grid;grid-template-columns:10px 1fr auto;gap:8px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.rows i{width:8px;height:8px;border-radius:50%;background:var(--ok);align-self:center}.rows i.x{background:var(--bad)}
+.rows small{display:block;color:var(--muted);font-size:11.5px}
+.rows b{font-variant-numeric:tabular-nums}
+.plan{border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:10px;background:var(--surface)}
+.plan h4{margin:0;font-size:15px}.plan p{font-size:12.5px;color:var(--muted);margin:2px 0 8px}
+.plan dl{margin:0;font-size:12.5px}.plan dl div{display:flex;justify-content:space-between;gap:8px;padding:3px 0}.plan dt{color:var(--muted)}.plan dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.blank{display:inline-block;border:1px dashed var(--muted);border-radius:6px;padding:0 6px;font-size:11px;color:var(--muted)}
+.pass{display:inline-block;background:var(--okbg);color:var(--ok);border-radius:999px;padding:2px 8px;font-size:11.5px;font-weight:600;margin-top:8px}
+.strip{display:flex;align-items:center;justify-content:center;gap:10px;background:var(--okbg);border-radius:12px;padding:10px;font-size:13px;margin:10px 0}
+.strip b{font-family:Fraunces,Georgia,serif;font-size:18px}
+.old{position:relative;padding-left:0}
+.blk{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12px;background:var(--surface)}
+.blk.r{border-color:var(--bad);background:var(--badbg)}
+.blk b{display:block;font-size:12.5px}.blk span{color:var(--muted)}
+.grp{display:flex;justify-content:space-between;gap:8px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px}.grp span{color:var(--muted)}
+.tick{display:flex;gap:10px;align-items:center;margin:14px 0 4px;font-size:14px;font-weight:600}
+.tick input{width:20px;height:20px;accent-color:var(--accent)}
+.dl{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.dl button{font:inherit;font-size:13px;font-weight:600;padding:12px 4px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.dl button:disabled{border-style:dashed;background:transparent;font-weight:400}
+.cap h3{font-family:Fraunces,Georgia,serif;font-size:22px;margin-bottom:8px}
+.cap ul{margin:0;padding-left:18px}.cap li{margin-bottom:8px}
+.cap[hidden]{display:none}
+.standin{font-size:12.5px;color:var(--muted);border-left:3px solid var(--line);padding-left:10px;margin-top:16px}
+.steps{display:grid;gap:10px}
+.step{display:grid;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+@media (min-width:720px){.step{grid-template-columns:170px 1fr 1.3fr;gap:18px;align-items:baseline}}
+.step .t{font-weight:600}.step .was{color:var(--muted);font-size:14px}.step .now{font-size:14.5px}
+.feat{columns:1;padding:0;margin:0;list-style:none}
+@media (min-width:720px){.feat{columns:2;column-gap:28px}}
+.feat li{break-inside:avoid;padding:10px 0;border-top:1px solid var(--line)}.feat b{display:block}
+.feat span{color:var(--muted);font-size:14.5px}
+.tag{display:inline-block;font-size:11.5px;border:1px solid var(--line);border-radius:999px;padding:1px 8px;color:var(--muted);margin-bottom:6px}
+.decide{background:var(--ink);color:var(--bg);border-radius:18px;padding:22px}
+.decide h2{margin-bottom:10px}.decide p{max-width:64ch}.decide .pick{border-top:1px solid color-mix(in srgb,var(--bg) 30%,transparent);padding-top:12px;margin-top:12px}
+</style>
+
+<main class="wrap">
+  <header>
+    <div class="eyebrow">Project report builder · 10-11-2026</div>
+    <h1>Make it work did not work. Here is why, and the rebuild.</h1>
+    <p class="lead">I typed a case shaped like yours into the live builder, walked every step at a phone's size and ran the engine behind it. Below: what is broken, the new screens to tap through, and the three rows that build them.</p>
+  </header>
+
+  <section>
+    <h2>What I found</h2>
+    <p class="sub">Four causes sit behind "Make it work does not work". None of them is the look; all of them are fixable.</p>
+    <div class="grid2">
+      <div class="card"><div class="num">1</div><h3>It tries one change at a time</h3><p>Your case needs two or three changes together. So every card ends "leaves fixed-asset cover short" and the page tells you to combine them yourself.</p></div>
+      <div class="card"><div class="num">2</div><h3>The part that combines them was switched off</h3><p>The engine can already work a combined plan. Since 1 November the page opens eight sliders at "No slider moved yet" instead. You were made the solver.</p></div>
+      <div class="card"><div class="num">3</div><h3>One check can never pass</h3><p>Interest cover is judged on the first, part year: a few months of sales against the interest. I ran the engine's own solver and 972 more trials; nothing a borrower changes mends it. This one is yours to decide, below.</p></div>
+      <div class="card"><div class="num">4</div><h3>A hidden assumption sinks the late years</h3><p>Prices are held flat while costs rise each year. That is why your DSCR slides from 2.48 to 0.58. The page never says so; it only offers "price growth 1.2%" as one card among many.</p></div>
+    </div>
+    <div class="stats">
+      <div class="card stat"><b>9.3</b><span>phone screens in the Check step; 12.6 with the sliders open</span></div>
+      <div class="card stat"><b>1,187</b><span>words in that one step</span></div>
+      <div class="card stat"><b>5×</b><span>the same bad news is said</span></div>
+      <div class="card stat"><b>9</b><span>screens down to the button that unlocks the paper</span></div>
+    </div>
+    <p class="note" style="margin-top:10px">Measured at 390 × 844 on a case shaped like yours. Also found: "it would need 105.4%, 123%, 140.5%" use of the plant, which cannot be; and Download is a locked door that says "Go to Check".</p>
+  </section>
+
+  <section>
+    <h2>The rebuild: tap through it</h2>
+    <p class="sub">The figures are from your own screen. Where a figure can only come from the engine, the mock shows a dashed blank.</p>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <div class="demo">
+      <div class="phone">
+        <div class="screen old" data-s="today">
+          <div class="bar"><span>Step 5 of 6 · Check</span><span>today</span></div>
+          <div class="blk r"><b>Does not work yet: 5 ratios short and cash runs out in 2027-28</b><span>said again in the bar, the count, the cards and the ways</span></div>
+          <div class="blk"><b>What holds it back</b><span>5 cards of ratios, years and shortfalls</span></div>
+          <div class="blk"><b>Ways that keep your loan</b><span>each fixes one thing and "leaves fixed-asset cover short"</span></div>
+          <div class="blk"><b>Ways that do not reach here (5)</b><span>"it would need 105.4%, 123%, 140.5%…"</span></div>
+          <div class="blk"><b>Changes that do not reach alone (3)</b><span>"Combine one with a way above"</span></div>
+          <div class="blk"><b>Ways to repay</b><span>3 more cards</span></div>
+          <div class="blk"><b>Try the changes together</b><span>8 sliders, "No slider moved yet"</span></div>
+          <div class="blk"><b>Check your figures</b><span>8 groups, all open</span></div>
+          <div class="blk r"><b>"These are right: show the report"</b><span>the button that unlocks the paper: 9 screens down</span></div>
+          <div class="blk"><b>Benchmarks</b><span>8 boxes to edit</span></div>
+          <div class="blk"><b>Assumed until changed: 18</b><span>and More options</span></div>
+        </div>
+
+        <div class="screen" data-s="result" hidden>
+          <div class="bar"><span>Result</span><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+          <div class="ringbox" id="ring1"></div>
+          <p class="head">Not ready for the bank yet</p>
+          <p class="why">The loan is large for the money you bring in, and from 2035-36 the earnings fall below what the bank wants.</p>
+          <div class="lbl k">Can it repay each year?<span>- - - the bank wants 1.25</span></div>
+          <div class="bars" id="bars"></div><div class="yrs" id="yrs"></div>
+          <div class="chip"><span>Cash runs short in 2027-28 by Rs. 3,78,577</span><button type="button">Mend</button></div>
+          <button class="cta" data-go="fix">Fix it for me</button>
+          <button class="ghost" id="all">See all 8 checks</button>
+          <ul class="rows" id="checks" hidden></ul>
+        </div>
+
+        <div class="screen" data-s="fix" hidden>
+          <div class="bar"><span>Result · Fix it</span><button class="mini" data-go="result">Back</button></div>
+          <p class="head" style="text-align:left">Three plans that pass</p>
+          <p style="color:var(--muted);margin:0">Each meets all 8 checks and keeps cash above zero. Pick one. You can undo.</p>
+          <div class="plan"><h4>Borrow less</h4><p>A smaller loan, repaid a little sooner. You bring more.</p>
+            <dl><div><dt>Term loan</dt><dd>Rs. 2,00,00,000 → <span class="blank">engine</span></dd></div><div><dt>You bring</dt><dd>Rs. 74,61,712 → <span class="blank">engine</span></dd></div><div><dt>Holiday</dt><dd>24 months → <span class="blank">engine</span></dd></div></dl>
+            <span class="pass">Passes 8 of 8</span><button class="cta" data-go="fixed">Use this plan</button></div>
+          <div class="plan"><h4>Earn more</h4><p>Your loan stays. Prices rise a little each year and the plant runs fuller.</p>
+            <dl><div><dt>Price a year</dt><dd>held flat → <span class="blank">engine</span></dd></div><div><dt>Use of the plant</dt><dd>60, 70, 80% → <span class="blank">engine</span></dd></div></dl>
+            <span class="pass">Passes 8 of 8</span><button class="cta" data-go="fixed">Use this plan</button></div>
+          <div class="plan"><h4>Balanced</h4><p>A little of each: the smallest change to every figure.</p>
+            <dl><div><dt>Term loan</dt><dd>Rs. 2,00,00,000 → <span class="blank">engine</span></dd></div><div><dt>Price a year</dt><dd>held flat → <span class="blank">engine</span></dd></div></dl>
+            <span class="pass">Passes 8 of 8</span><button class="cta" data-go="fixed">Use this plan</button></div>
+          <button class="ghost">Adjust it yourself</button>
+        </div>
+
+        <div class="screen" data-s="fixed" hidden>
+          <div class="bar"><span>Result</span><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></span></div>
+          <div class="ringbox" id="ring2"></div>
+          <p class="head">Ready for the bank</p>
+          <div class="strip"><span>Before <b>3 of 8</b></span><span>→</span><span>Now <b>8 of 8</b></span></div>
+          <div class="lbl">What changed: Borrow less</div>
+          <div class="plan" style="margin-top:0"><dl><div><dt>Term loan</dt><dd>Rs. 2,00,00,000 → <span class="blank">engine</span></dd></div><div><dt>You bring</dt><dd>Rs. 74,61,712 → <span class="blank">engine</span></dd></div><div><dt>Holiday</dt><dd>24 months → <span class="blank">engine</span></dd></div></dl></div>
+          <p class="note" style="margin-top:8px">The yearly bars redraw here from the engine's new figures.</p>
+          <button class="cta" data-go="review">Review and download</button>
+          <button class="ghost" data-go="result">Undo</button>
+        </div>
+
+        <div class="screen" data-s="review" hidden>
+          <div class="bar"><span>Review and download</span><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></div>
+          <p class="head" style="text-align:left">One last look</p>
+          <p style="color:var(--muted);margin:0 0 6px">Tap a line to see its figures or change them.</p>
+          <div class="grp"><b>The business</b><span>›</span></div>
+          <div class="grp"><b>What it costs</b><span>›</span></div>
+          <div class="grp"><b>Who pays for it</b><span>›</span></div>
+          <div class="grp"><b>The loan</b><span>›</span></div>
+          <div class="grp"><b>Sales and costs</b><span>›</span></div>
+          <div class="grp"><b>Working capital</b><span>›</span></div>
+          <label class="tick"><input type="checkbox" id="ok"> These figures are right</label>
+          <div class="dl"><button disabled>PDF</button><button disabled>Word</button><button disabled>Excel</button></div>
+          <p class="note" style="margin-top:10px">No locked door: the tick and the downloads sit on one screen.</p>
+        </div>
+      </div>
+
+      <div>
+        <div class="cap" data-c="today"><h3>Today: one step, eight jobs</h3><ul><li>The answer, the reasons, three lists of fixes, ways to repay, sliders, a check of your figures, benchmarks and assumptions share one scroll.</li><li>The fixes do not fix. The one button that matters is near the foot.</li></ul></div>
+        <div class="cap" data-c="result" hidden><h3>Result: one screen, one answer</h3><ul><li><b>The ring</b> shows the eight checks at a glance: 3 pass, 5 do not. It says the bad news once.</li><li><b>One sentence of cause</b>, in a borrower's words, worked from the engine's own reasons.</li><li><b>The yearly bars</b> replace a grid of eleven numbers: you see the slide below the bank's line.</li><li><b>One main button.</b> Every red line carries its own button.</li><li>Tap "See all 8 checks": plain names first, the banker's figure beside.</li></ul></div>
+        <div class="cap" data-c="fix" hidden><h3>Fix it: the engine solves, you pick</h3><ul><li>The engine tries the changes <b>together</b> and returns up to three whole plans that pass every check.</li><li>Each plan shows was → becomes for every figure it moves, and what you bring more.</li><li>New moves the engine could not make before: a <b>shorter</b> holiday, a <b>faster</b> repayment, prices rising a year.</li><li>If no plan passes, it shows the nearest and says plainly what is left.</li></ul></div>
+        <div class="cap" data-c="fixed" hidden><h3>Applied: before and after, with Undo</h3><ul><li>One tap writes the plan into your answers; the paper follows.</li><li>The ring moves from 3 of 8 to 8 of 8 in front of you.</li><li>Undo puts every figure back.</li></ul></div>
+        <div class="cap" data-c="review" hidden><h3>Review and download: one place</h3><ul><li>Your figures as six short lines that open on a tap, not eight open tables.</li><li>One tick unlocks PDF, Word and Excel right there.</li><li>Try the tick.</li></ul></div>
+        <p class="standin">A hand-made stand-in to show the shape, not the built page. The first row makes it real with the engine's figures.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Every step, not only the last</h2>
+    <p class="sub">No screen longer than about one and a half phone screens. No question added.</p>
+    <div class="steps">
+      <div class="step"><span class="t">The business</span><span class="was">2.9 screens</span><span class="now">Kept. Banking words open in two lines on a tap.</span></div>
+      <div class="step"><span class="t">The cost</span><span class="was">2.9 screens</span><span class="now">Two short screens. A live bar: your money against the loan.</span></div>
+      <div class="step"><span class="t">The loan</span><span class="was">5.5 screens, 30 boxes</span><span class="now">Three short screens: the loan, security, working capital. Ways to repay become three cards here, each saying if it passes.</span></div>
+      <div class="step"><span class="t">Sales and costs</span><span class="was">4.7 screens</span><span class="now">Two short screens. "Prices stay the same every year; costs rise" is said once, with Change beside it.</span></div>
+      <div class="step"><span class="t">Check → Result</span><span class="was">9.3 screens, 1,187 words</span><span class="now">One screen: the ring, the cause, the bars, Fix it.</span></div>
+      <div class="step"><span class="t">Download → Review and download</span><span class="was">a locked door</span><span class="now">Look, tick, download: one screen.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What makes it more than tabs</h2>
+    <ul class="feat">
+      <li><b>Fix it for me</b><span>Whole plans that pass, not hints to combine.</span></li>
+      <li><b>The ring</b><span>Eight checks in one glance, on every step's bar.</span></li>
+      <li><b>The yearly bars</b><span>The DSCR against the bank's line, drawn.</span></li>
+      <li><b>Was → becomes, with Undo</b><span>Nothing changes without showing what and letting you go back.</span></li>
+      <li><b>Every red line has a button</b><span>It mends it or takes you to its box.</span></li>
+      <li><b>A nudge at the box</b><span>The figure that will fail a check says so where you type it.</span></li>
+      <li><b>The money bar</b><span>Your share against the loan, live.</span></li>
+      <li><b>The paper marks what changed</b><span>One tap away on every screen.</span></li>
+      <li><b>For professionals</b><span>Benchmarks and year-by-year figures in one drawer, off the borrower's path.</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Three rows, in this order</h2>
+    <p class="sub">Each is one fresh session for Opus 5.5 and one thing you open. The full plan is in the repo: <code>docs/UX-OVERHAUL.md</code>.</p>
+    <div class="grid2" style="grid-template-columns:1fr">
+      <div class="card"><span class="tag">1 · FIX1 · large</span><h3>Make it work, working</h3><p>The engine finds plans that pass; the page shows them and applies one. You open the preview, type your own case, tap Fix it.</p></div>
+      <div class="card"><span class="tag">2 · RESULT1 · large</span><h3>Result, and Review and download</h3><p>The two screens above, built for real on a phone and a desktop.</p></div>
+      <div class="card"><span class="tag">3 · STEPS1 · large</span><h3>Steps 1 to 4</h3><p>Short screens, the money bar, the nudges, words on a tap.</p></div>
+    </div>
+    <p class="note" style="margin-top:12px">Then BUILD2 carries the same pattern to the DSCR, the CMA and the estimate, and REPORT2 makes the paper full. To keep cost down, each row's plan names the exact files, builds the engine by tests before any browser opens, and uses no helper agents.</p>
+  </section>
+
+  <section>
+    <div class="decide">
+      <div class="eyebrow" style="color:inherit">Yours to decide: one question</div>
+      <h2>Should the first, part year be judged?</h2>
+      <p>Today interest cover is judged in the year sales begin, even when that year holds only a few months of sales. On your screen that is the −0.84 in 2027-28. No plan can mend it, so no plan can pass.</p>
+      <p class="pick"><b>My pick:</b> judge interest cover from the first full year of sales, and print the part year marked "part year, not judged". Cash running short in that year stays judged. Say yes or no; FIX1 builds on your answer.</p>
+    </div>
+  </section>
+</main>
+
+<script>
+(()=>{
+const names={today:'Today',result:'1 · Result',fix:'2 · Fix it',fixed:'3 · Applied',review:'4 · Review'};
+const tabs=document.getElementById('tabs');
+function go(k){
+  document.querySelectorAll('.screen').forEach(s=>{s.hidden=s.dataset.s!==k;if(!s.hidden)s.scrollTop=0});
+  document.querySelectorAll('.cap').forEach(c=>c.hidden=c.dataset.c!==k);
+  tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',b.dataset.k===k));
+}
+Object.entries(names).forEach(([k,v])=>{const b=document.createElement('button');b.type='button';b.role='tab';b.dataset.k=k;b.textContent=v;b.onclick=()=>go(k);tabs.append(b)});
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+
+function ring(id,ok,n){
+  const r=40,c=2*Math.PI*r,seg=c/n,gap=5;let s='<svg viewBox="0 0 100 100" role="img" aria-label="'+ok+' of '+n+' checks pass">';
+  for(let i=0;i<n;i++)s+='<circle cx="50" cy="50" r="'+r+'" fill="none" stroke="var('+(i<ok?'--ok':'--bad')+')" stroke-width="9" stroke-dasharray="'+(seg-gap)+' '+(c-seg+gap)+'" stroke-dashoffset="'+(-i*seg)+'" transform="rotate(-90 50 50)"/>';
+  document.getElementById(id).innerHTML=s+'</svg><div><b>'+ok+' of '+n+'</b>checks pass</div>';
+}
+ring('ring1',3,8);ring('ring2',8,8);
+
+const dscr=[2.48,2.39,2.20,2.00,1.79,1.59,1.38,1.15,0.90,0.64,0.58],top=2.8,lvl=1.25;
+document.getElementById('bars').innerHTML=dscr.map(v=>'<div class="b'+(v<lvl?' s':'')+'" style="height:'+(v/top*100)+'%"><span>'+v.toFixed(2)+'</span></div>').join('')+'<div class="lvl" style="bottom:'+(lvl/top*100)+'%"></div>';
+document.getElementById('yrs').innerHTML=dscr.map((_,i)=>'<span>’'+(29+i)+'</span>').join('');
+
+const checks=[['Earns enough to repay, on average','Average DSCR','1.57','wants 1.50',1],['Stock and dues against bills to pay','Current ratio','1.25','meets',1],['Security against the loans','Security cover','1.60','meets',1],['Earns enough to repay, every year','Lowest DSCR, 2038-39','0.58','wants 1.25',0],['Profit covers the interest','Interest cover, 2027-28','−0.84','wants 1.50',0],['All debts against your own money','TOL ÷ net worth, 2027-28','7.27','at most 5.00',0],['Long-term loans against your own money','Debt-equity','5.87','at most 4.00',0],['Machines and building against the loan left','Fixed-asset cover, 2032-33','0.75','wants 1.20',0]];
+const list=document.getElementById('checks');
+list.innerHTML=checks.map(c=>'<li><i class="'+(c[4]?'':'x')+'"></i><span>'+c[0]+'<small>'+c[1]+'</small></span><span style="text-align:right"><b>'+c[2]+'</b><small>'+c[3]+'</small></span></li>').join('');
+document.getElementById('all').onclick=e=>{list.hidden=!list.hidden;e.currentTarget.textContent=list.hidden?'See all 8 checks':'Hide the checks';if(!list.hidden)list.scrollIntoView({block:'nearest',behavior:'smooth'})};
+document.getElementById('ok').onchange=e=>document.querySelectorAll('.dl button').forEach(b=>b.disabled=!e.target.checked);
+go('result');
+})();
+</script>
