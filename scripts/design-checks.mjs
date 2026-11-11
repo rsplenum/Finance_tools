@@ -206,7 +206,7 @@ const caseRSimple = async (page) => {
   const now = new Date(FIXED_AT), sell = new Date(now.getFullYear(), now.getMonth() + 3, 1);
   for (const id of ['field=Partnership firm or LLP', 'field=Neither', 'field=Work it out for me']) await page.check(id);
   for (const [id, value] of [['field=Building and civil works', '10 L'], ['field=Plant and machinery', '20 L'], ['field=Term loan you will ask for', '20 L'], ['field=Interest rate (% a year)', '10'], ['field=Repayment period after it (years)', '5'],
-    ['field=What it sells > What it is', 'Boxes'], ['field=How many pieces a month at full running', '15,000'], ['field=Price a piece', '100'],
+    ['field=What it sells > What it is', 'Boxes'], ['#fld-product-0-units', '15,000'], ['#fld-product-0-price', '100'],
     ['field=When will you start selling?', `${sell.getFullYear()}-${String(sell.getMonth() + 1).padStart(2, '0')}`], ['field=Materials and other variable costs (% of sales)', '65'], ['field=Fixed costs a month', '1 L']])
     await leave(page, id, value);
 };
@@ -219,7 +219,7 @@ const caseR = async (page, repayment = true) => {
   await page.check('field=Expert…');
   await page.check('field=Sales I type, with their growth');
   for (const [id, value] of [['field=Building and civil works', '10 L'], ['field=Plant and machinery', '20 L'], ['field=Furniture and fixtures', '2 L'], ['field=Preliminary and pre-operative expenses', '1 L'],
-    ['field=Term loan you will ask for', '25 L'], ['field=Interest rate (% a year)', '10'], ['field=Month the loan is first drawn', '2026-04'], ['field=Holiday before the first instalment (months)', '0'], ['field=Number of instalments', '60'], ['field=Months from the loan to the first sales (0 if at once)', '0'],
+    ['field=Term loan you will ask for', '25 L'], ['field=Interest rate (% a year)', '10'], ['field=Month the loan is first drawn', '2026-04'], ['#fld-tl-moratorium', '0'], ['field=Number of instalments', '60'], ['field=Months from the loan to the first sales (0 if at once)', '0'],
     ['field=Sales in a full first year', '1.2 Cr'], ['field=Sales: growth a year (%)', '10'], ['field=Materials and other variable costs (% of sales)', '65'], ['field=Fixed costs in a full first year', '18 L'], ['field=Fixed costs: growth a year (%)', '5'], ['field=Working-capital limit you will ask for', '5 L'], ['field=Its interest rate (% a year)', '11']])
     await leave(page, id, value);
   if (repayment) await page.check('field=Equal principal every month');
@@ -307,7 +307,7 @@ export const STATES = {
       await page.locator('#typed-path > summary').click();
       await page.waitForSelector('#typed-path astro-island:not([ssr])', { state: 'attached' }); // client:visible (UXR7)
       await page.check('field=New construction');
-      await leave(page, 'field=Built-up area (sq ft)', '1,200');
+      await leave(page, '#fld-area', '1,200');
       await page.selectOption('#fld-item-1-head', 'earthwork');
       await leave(page, '#fld-item-1-description', 'Excavation for foundations');
       await leave(page, '#fld-item-1-quantity', '45');
