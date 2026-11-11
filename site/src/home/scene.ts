@@ -1,5 +1,5 @@
 /**
- * A tool's scene in motion (HOME1d, HOME1e; D-UX-125, D-UX-136; Scene.astro, docs/DESIGN-MOTION.md): the five beats in
+ * A tool's scene in motion (HOME1d, HOME1e; D-UX-125, D-UX-136; Scene.astro, docs/archive/DESIGN-MOTION.md): the five beats in
  * 32.5 s (D-UX-259: each beat held long enough to read), the same for all four tools, played once when the scene comes into view, loaded after the page. Every move is a Web Animation (element.animate), never a timer or
  * a frame loop, so `document.getAnimations()` can pause and seek the whole scene (the video studio, D-TECH-56). Springs
  * are underdamped (damping ratio about 0.7, the brackets' snap about 0.45) and written as CSS `linear()` easings; cards

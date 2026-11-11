@@ -96,7 +96,7 @@ function goOf(s: ReportState, p: ReportPreview, toBox: (need: string) => (e: Eve
   // All questions answered, the check is a step of its own, not a question left (OR11's O1).
   return ok ? undefined : { to: 'check', label: 'check your figures before the download' };
 }
-/** One tone a meaning (docs/DESIGN-SITE.md, Colours): good meets, warn provisional, bad misses. */
+/** One tone a meaning (docs/archive/DESIGN-SITE.md, Colours): good meets, warn provisional, bad misses. */
 
 /** The answer in words (review finding 3): the model's own sentence when a level misses; else what meets and what it cannot
  * read yet. Words only, from the model's checks; no figure. */
@@ -772,7 +772,7 @@ function Result({ s, p, cv, useCloser, update, use, useWay, useFix, toField, ans
         <button type="button" data-testid="rep-keep" class={BUTTON} onClick={keep}>Keep these</button>
       </div>
     </div>}
-    {/* The answer as paper, there from load (docs/DESIGN-SITE.md): the verdict in words and the key figures above the
+    {/* The answer as paper, there from load (docs/archive/DESIGN-SITE.md): the verdict in words and the key figures above the
         status (review finding 3); one tone a meaning, and the status plain when complete, never green under a miss. */}
     <div class="paper shadow-paper rounded-card p-4 sm:p-6">
       {cv && <Carries c={cv} use={useCloser} />}

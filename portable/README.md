@@ -18,9 +18,9 @@ The owner's general skills, which hold in any project (D-TECH-27). Uploaded to t
 ## A new project
 
 - Add one line to its CLAUDE.md: "Read the `working-practice` skill at the start of each session." Account skills load only when a task matches; the line makes sure this one does.
-- Start `docs/LESSONS.md` from the template in the `lessons` skill, and `docs/DECISIONS.md` and `docs/HANDOFF.md` as `working-practice` says.
+- Start `docs/lessons/` as the `lessons` skill says (a short index and one file a topic), and `docs/DECISIONS.md` and `docs/HANDOFF.md` as `working-practice` says.
 - For the `fetcher` agent there, copy `fetcher.md` from the `working-practice` skill into `.claude/agents/`.
 
 ## Keeping it current
 
-`npm run verify` runs `node portable/pack.mjs --check`. It fails when a skill's name differs from its folder, a description is over claude.ai's 200 characters, a file names this project, or a rule that `docs/LESSONS.md` marks `any` is missing from the pack word for word (`skills/working-practice/carried.md` holds each one). After a change, run `npm run pack-skills` and send the owner the changed zips to upload. A lesson found in another project reaches the pack when the owner brings its row to a session here.
+`npm run pack-skills` checks the pack before it writes the zips: it stops when a skill's name differs from its folder, a description is over claude.ai's 200 characters, or a file names this project. It is not part of `npm run verify`, and no lesson is held word for word in two files. A lesson that holds in any project goes into the skill for its task, in general words; `skills/working-practice/carried.md` keeps the story behind the older ones. After a change, send the owner the changed zips to upload.

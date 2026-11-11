@@ -217,7 +217,7 @@ const YEARS_A = ['2026-27', '2027-28', '2028-29', '2029-30'];
 /**
  * Reads a test id's (or a locator's) text once it settles on `want`, a text or a pattern (or after 3 s); a violation when it differs.
  * It reads `textContent`, which joins paragraphs with no space ("…wardrobeWhat it is:"): a pattern puts none before a label that
- * starts one (T1, `docs/LESSONS.md`).
+ * starts one (T1, `docs/archive/LESSONS.md`).
  */
 async function expectText(page, v, what, want, step) {
   const at = typeof what === 'string' ? page.getByTestId(what).first() : what, name = typeof what === 'string' ? what : String(what);
@@ -2074,7 +2074,7 @@ await browser.close();
 server.close();
 console.log(`site check: ${pages.length} pages at 390 px, light and dark: ${violations.length} violations; the look: ${look.length} reported, never a gate${quick ? ` (--quick: ${pages.join(' ')}; the full check before a PR)` : ''}`);
 console.log(`design checks: ${design.lines} findings measured (each held in scripts/design-baseline.json), ${design.tokens.rawColour} raw colour classes, ${design.tokens.arbitraryValue} arbitrary values${design.lower.length ? `; the baseline can come down: ${design.lower.join(', ')}` : ''}${design.fixed ? `; ${design.fixed} known findings fixed, take them out of the baseline` : ''}`);
-console.log(`load measure: ${load.pages} pages against scripts/load-baseline.json, ${load.rose} counts rose, ${load.fell} fell${load.fonts ? '' : '; other fonts here than the baseline\'s, so the answer\'s place and the out-of-sight count are not compared'} (docs/LOAD-MEASURE.md)`);
+console.log(`load measure: ${load.pages} pages against scripts/load-baseline.json, ${load.rose} counts rose, ${load.fell} fell${load.fonts ? '' : '; other fonts here than the baseline\'s, so the answer\'s place and the out-of-sight count are not compared'} (docs/archive/LOAD-MEASURE.md)`);
 console.log(`FinSight's rules: ${forbidden.pages} page${forbidden.pages === 1 ? '' : 's'} in the new look (docs/DESIGN.md), F1 to F19; ${forbidden.weight ? `home weighs ${forbidden.weight} KB as it loads (cap ${WEIGHT_CAP} KB)` : 'no motion, frame or weight check (home not touched)'}`);
 console.log(`downloads on a slow phone (CPU ×4): ${timings.length} timed, slowest ${Math.max(0, ...timings.map((t) => t[1]))} ms (cap ${SLOW_MS} ms)`);
 for (const x of violations) console.log(`  - ${x}`);

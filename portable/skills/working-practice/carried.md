@@ -1,6 +1,6 @@
 # Carried lessons
 
-The lessons that hold in any project: the context each arose in, its rule, and where the rule lives in this pack. Each project keeps its own log (`docs/LESSONS.md`, the `lessons` skill); a row that holds anywhere is copied here with its rule word for word, and the changed skills are uploaded again. Newest at the bottom.
+The lessons that hold in any project: the context each arose in, its rule, and where the rule lives in this pack. Each project keeps its own lessons by topic (`docs/lessons/`, the `lessons` skill). This table is the story behind the older ones; it is read by grep, nothing checks it, and each row informs and bends like any lesson. Newest at the bottom.
 
 | Date | Context | Rule | Lives in |
 | --- | --- | --- | --- |

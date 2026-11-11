@@ -1,5 +1,5 @@
 /**
- * Home's motion (HOME1b, D-UX-115; docs/DESIGN-MOTION.md): draw, settle, pulse, stagger and type, each run once.
+ * Home's motion (HOME1b, D-UX-115; docs/archive/DESIGN-MOTION.md): draw, settle, pulse, stagger and type, each run once.
  * - The hero's "how it works" (How.astro) plays on each visit: the boxes settle one after another, the lines draw, and one
  *   marigold pulse runs from your answers to the papers, all within 2.7 s.
  * - Each tool's scene in look C (Scene.astro, scene.ts; HOME1d, HOME1e) loads after the page and plays its five beats once

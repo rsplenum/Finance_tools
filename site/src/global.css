@@ -235,7 +235,7 @@ body[data-look='new'] .paper { background-color: var(--paper); color: var(--on-p
   :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   /* A control scrolled to by Tab stops above the DSCR page's sticky answer bar, 45 px tall (WCAG 2.4.11; the design check measures it). */
   html { scroll-padding-bottom: 4rem; }
-  /* Every "Why?" and drawer summary is a target of 24 px at least (WCAG 2.5.8; docs/DESIGN-LESSONS.md, lesson 1). */
+  /* Every "Why?" and drawer summary is a target of 24 px at least (WCAG 2.5.8; docs/archive/DESIGN-LESSONS.md, lesson 1). */
   summary { min-height: 1.5rem; }
 }
 

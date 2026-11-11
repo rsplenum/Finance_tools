@@ -136,7 +136,7 @@ function barText(p: CmaPreview, s: CmaState) {
 const SPAN = { II: '@min-[52rem]:row-span-13', III: '@min-[52rem]:row-span-17' } as const;
 const SUBTOTALS = { II: ['Gross profit', 'Net profit'], III: ['Total liabilities', 'Total assets', 'Balance sheet'] } as const;
 /** How sure a year's figures are, drawn on its head (UX9, review finding 3): audited solid, the estimate dashed, the
- * projection dashed and lighter, as the answer's rule is solid once final (docs/DESIGN-SITE.md). */
+ * projection dashed and lighter, as the answer's rule is solid once final (docs/archive/DESIGN-SITE.md). */
 const SURE = { audited: 'border-ink', estimate: 'border-dashed border-ink', projection: 'border-dashed border-ink-muted' } as const;
 const rs = (n: number) => `Rs. ${inr(n, Number.isInteger(n) ? 0 : 2)}`;
 

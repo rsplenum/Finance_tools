@@ -139,7 +139,7 @@ function Against({ q }: { q: QuoteView }) {
 function Result({ p }: { p: EstimatePreview }) {
   const v = p.view;
   return <Section id="result" title="The estimate">
-    {/* The answer as paper, there at once (docs/DESIGN-SITE.md, tool pages). */}
+    {/* The answer as paper, there at once (docs/archive/DESIGN-SITE.md, tool pages). */}
     <div class="paper mt-6 rounded-card p-4 sm:p-6">
     <p data-testid="est-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class={`${STATE} ${answerRule(!p.needs.length && !p.blocked)} ${p.needs.length || p.blocked
       ? 'text-warn' : 'text-ink'}`}>{!p.needs.length && !p.blocked && <Tick />}{statusText(p)}</p>

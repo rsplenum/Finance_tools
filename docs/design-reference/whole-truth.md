@@ -30,7 +30,7 @@ One claim, proved section by section: **"We're re-building the world's trust in 
 |---|---|
 | Headings that are flat claims, readable alone as the story | Each result and section heading a sentence that is the answer: "Meets the default benchmarks", "Short of the lowest-year DSCR by Rs. 1,20,000" (D-UX-99's bars already do it) |
 | Three voices, one job each | Our sans for the claim, tabular figures for the engine's facts and "how it is worked" (our ingredient list), and the aside in a margin note (below), with no new font |
-| One accent that means "the point" | One colour for the benchmark line and what crosses it; nothing else in it (`docs/DESIGN-MATHS.md` decides the share) |
+| One accent that means "the point" | One colour for the benchmark line and what crosses it; nothing else in it (`docs/archive/DESIGN-MATHS.md` decides the share) |
 | The Venn that closes a gap | Our gap is the shortfall to a benchmark, and Make it viable closes it: one bar, the benchmark line, the gap filled, the lever named |
 | Confession first | Provisional said as loudly as final; the assumptions and what is missing on the front, never in a footnote |
 | Show the factory | Show the engine: every rule with its source and date (`docs/RULES.md`), worked twice |

@@ -1,8 +1,8 @@
-# Design system (DT1, D-UX-58)
+# Design system: the site as built (DT1, D-UX-58)
 
-What every page is held to, read whole by the designer and the critic (`.claude/agents/`). The look comes from these rules, the measured checks, the usage numbers and the owner's judgement of the preview, not from an agent's taste. A rule stays only with its evidence. The owner's inputs, and the rows that do not hold: `docs/design-inputs/cognitive-matrix.md`. Proposed rules wait in `docs/DESIGN-LESSONS.md` until accepted. Astro, Preact and Tailwind 4; the tokens in `site/src/global.css`.
+A reference for the look as it stands today: the principles earlier pages were built on, the tokens, the shared parts. **Grep it for the part you need; it is not a rulebook.** A new design starts from the result wanted (`CLAUDE.md`), with `docs/lessons/rahul.md` and `docs/lessons/design.md` as what we have learned; where this file and a better page differ, the page wins and this file is updated. Only accessibility, the engine's figures and the law hold fast. The owner's inputs: `docs/design-inputs/cognitive-matrix.md`. Astro, Preact and Tailwind 4; the tokens in `site/src/global.css`.
 
-The look is FinSight's own (D-UX-72, `docs/design-reference/finsight.md`; how it lands on each page: `docs/DESIGN-SITE.md`), on every page (`look="new"` in `site/src/Base.astro`, listed in `NEW_LOOK`). Its rules win where they differ, except on accessibility, figures and the law.
+The look is FinSight's own (D-UX-72, `docs/design-reference/finsight.md`; how it landed on each page before the builder: `docs/archive/DESIGN-SITE.md`), on every page (`look="new"` in `site/src/Base.astro`, listed in `NEW_LOOK`).
 
 **Reference sites** (the owner's matrix, `docs/design-inputs/cognitive-matrix.md`): GOV.UK (forms, errors), Our World in Data (chart labels), Linear (speed), Stripe's docs (an explanation beside its subject), ciechanow.ski (a control beside its effect). Borrow patterns, never looks.
 
@@ -17,13 +17,13 @@ Each: the friction it removes; its evidence.
 7. **Lines of 45 to 75 characters** for running text (`max-w-prose` or the page's `max-w-3xl` column). Friction: losing the line on the return sweep. Evidence: Bringhurst, *The Elements of Typographic Style*; WCAG 1.4.8 (AAA) caps at 80.
 8. **A reset always in reach**: Clear all, Undo after "Use this plan", every change reversible. Friction: fear of trying. Evidence: Nielsen's heuristic 3, "User control and freedom" (NN/g).
 9. **An answer within 100 ms** of leaving a field: the engine runs in the page, no spinner. Friction: waiting breaks the flow of thought. Evidence: Nielsen, "Response times: the 3 important limits" (NN/g, 1993).
-10. **Every element says something, or goes** (the owner, 18-10-2026): no shadow, gradient, blur, icon, box or space that tells nothing; each size, gap and colour from the maths in `docs/DESIGN-MATHS.md`; each section or line says what no other does (lesson 11, HOME1b; TRUST1). Evidence: Tufte's data-ink principle (1983).
+10. **Every element says something, or goes** (the owner, 18-10-2026): no shadow, gradient, blur, icon, box or space that tells nothing; each size, gap and colour from the maths in `docs/archive/DESIGN-MATHS.md`; each section or line says what no other does (lesson 11, HOME1b; TRUST1). Evidence: Tufte's data-ink principle (1983).
 11. **No pure black behind white text in dark mode** (the canvas is a dark grey). Evidence: Material Design, "Dark theme" (a guideline).
-12. **Plain words on screen**, the owner's words; a CA's terms in the documents. Evidence: GOV.UK, "Writing for GOV.UK"; LESSONS-CARRIED §1.
+12. **Plain words on screen**, the owner's words; a CA's terms in the documents. Evidence: GOV.UK, "Writing for GOV.UK"; `docs/lessons/rahul.md`.
 
 
-## FinSight's rules (AG2, D-UX-72)
-The brief: `docs/design-reference/finsight.md`. *Tested*: by `scripts/forbidden-checks.mjs` (thresholds beside each check) in the site check; the rest are the critic's.
+## The look as built (AG2, D-UX-72)
+The brief: `docs/design-reference/finsight.md`. These describe today's look so a new part can match it when matching is wanted; they are a record, not a law, and a design may leave them (several were bent before a look Rahul chose could ship). *Tested* marks what `scripts/forbidden-checks.mjs` measures: since LOOSE1 the look lines report, and only the accessibility and privacy lines fail a build (D-TECH-110).
 - **F1 Type**: Figtree for text; Anek (Ek Type, OFL) for headings, `figure` (wide, tabular) and `caps` (condensed, labels of one to three words). *Tested*.
 - **F2 Small headings**: h1 `text-hero`, h2 `text-section` or `text-statement`, h3 `text-title`; not a fold's line or an sr-only one (D-UX-106). *Tested*.
 - **F3 Boxed cards**: a panel is set off by its fill, never a border all round. *Tested*.
@@ -55,7 +55,7 @@ Ratios: `node scripts/design-review.mjs --tokens` (every pair but `line` at leas
 - **Type**: F1 and F2; 16 px for body and fields (it stops phones zooming); 14 px (`text-sm`) for hints, second lines and table cells; 12 px (`text-xs`) only for labels in a chart. Figures in tables: `tabular-nums`, right-aligned (GOV.UK Table).
 - **Space**: Tailwind's 4 px scale; use 1, 2, 3, 4, 6, 8, 10, 12 (4 to 48 px). Related things sit closer than unrelated ones (Gestalt proximity).
 - **Radius**: `rounded-control` (6 px) for fields, `rounded-card` (8 px) for panels, `rounded-full` for buttons (F4) and status pills.
-- **Motion**: never needed to understand anything; F9; the moves in `docs/DESIGN-MOTION.md`.
+- **Motion**: never needed to understand anything; F9; the moves in `docs/archive/DESIGN-MOTION.md`.
 
 ## Shared parts (`site/src/fields.tsx` and its neighbours)
 - **Field** (`TextField`, `INPUT`): label above, hint between label and field, the field 44 px tall with a 3:1 edge, the read-back or error under it. Never a placeholder as the label or the only hint (NN/g, "Placeholders in form fields are harmful", 2014); a format example ("like 12 L") may sit in the field only where a read-back under it confirms what was understood. An error says what is wrong and how to fix it, beside the field (GOV.UK).
@@ -69,7 +69,7 @@ Ratios: `node scripts/design-review.mjs --tokens` (every pair but `line` at leas
 - **Targets**: a link that stands alone (not in a sentence) and every `<summary>` at least 24 px tall (`min-h-6`; global.css gives it to summaries); a sticky band leaves a `scroll-padding-bottom` of its height, so Tab never stops under it (WCAG 2.5.8, 2.4.11; lesson 1).
 
 ## Page templates
-Tool pages: `docs/DESIGN-SITE.md`. Home: FinSight's order (F13); each tool's words are `site/src/site.ts`'s `what` and `gives` (D-UX-65).
+Tool pages: `docs/archive/DESIGN-SITE.md`. Home: FinSight's order (F13); each tool's words are `site/src/site.ts`'s `what` and `gives` (D-UX-65).
 
 ## States, the critic's checklist
 Each tool is reviewed empty, partly filled, provisional (a fact missing), with an error, with a result, missing a default benchmark ratio, an optional input empty, at the download, with focus and hover; at 360 px and on a desktop, 1024 too for a change in `lg:`, light and dark. `npm run design-review -- /dscr/` drives the states listed in `scripts/design-review.mjs` and prints what it measures; screenshots (`--shots <dir>`) only for pages a change touches.
@@ -84,4 +84,4 @@ On every page at 360 and 1280 px, light and dark: axe-core (WCAG 2.2 A and AA), 
 - Unacceptable anywhere: `text-[11px]`, a `#hex` class, `outline-none` without a ring, a raw palette class.
 
 ## How the team works
-Each agent reads this file and the open lessons. The designer offers two or three options when the choice is the owner's and builds with the tokens and parts; the critic reviews alone, ranks findings and checks each fix; the writer puts words plain against `docs/LOAD-MEASURE.md`; the researcher turns test notes into ranked findings. A recurring finding or the owner's rule becomes a lesson; accepted, it moves here. Agents never merge.
+The designer builds the bold version for real, with one recommendation, and shows it beside what it replaces; the critic reviews alone as a user would, ranks findings and checks each fix, and keeps taste apart from faults; the writer puts the words plain; the researcher turns test notes into ranked findings. What is worth remembering goes into `docs/lessons/`. Agents never merge.

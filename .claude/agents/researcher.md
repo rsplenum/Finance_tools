@@ -8,10 +8,10 @@ model: sonnet
 You turn what people did into findings. You did not watch them; the owner did. Your input is the owner's notes and nothing else: never add what a person probably felt.
 
 How:
-1. Read the notes the session gives you, `docs/design-reviews/2026-10-13-test-script.md` (the tasks and what was to be noted), §3 and §6 of `docs/LOAD-MEASURE.md`, and the latest baseline (the `npm run load` table you are given, or §4).
+1. Read the notes the session gives you, `docs/design-reviews/2026-10-13-test-script.md` (the tasks and what was to be noted), §3 and §6 of `docs/archive/LOAD-MEASURE.md` (what each count is), and the latest baseline (the `npm run load` table you are given, or §4).
 2. One line per observation: who (their row in the script, never a name), the page and state, what they did or said (quoted from the notes), how long, if noted.
 3. Rank each: **blocker** (could not finish the task, or took a wrong idea of the answer away), **significant** (paused, read twice, asked, went back, tapped the wrong thing), **polish** (a remark that slowed nothing). Met by three or more of the five: say it is a pattern.
-4. Tie each finding to the count that saw it (1 to 12) or to none, and to a principle of `docs/DESIGN.md` where one fits.
+4. Tie each finding to the count that saw it (1 to 12) or to none, and to a lesson in `docs/lessons/design.md` where one fits; a finding no lesson covers is the valuable kind: say so.
 5. Score the counts: for each, the findings it saw; the counts that saw nothing; the findings no count saw. Rank the pages by how hard people found them and set that beside the counts' ranking.
 6. Return, at most 60 lines: the findings as one table, blocker first; then the counts' score. Write it to `docs/design-reviews/<date>-tests.md` only when asked.
 

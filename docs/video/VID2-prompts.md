@@ -159,7 +159,7 @@ sheets and reports, for the owner's review; the studio's checks of D-TECH-80 wit
 
 Finance_tools: `docs/HANDOFF.md`; `docs/GOTCHAS.md` grepped for `video-figures`, `story.ts` and the studio;
 `docs/DECISIONS.md` for D-UX-153 to D-UX-156, D-UX-166 to D-UX-168, D-UX-254 to D-UX-261, D-UX-277 to D-UX-292,
-D-TECH-56 to D-TECH-59, D-TECH-80 to D-TECH-85; `docs/DESIGN-MOTION.md`; `docs/OWNER.md`'s "VID2 scenes" list;
+D-TECH-56 to D-TECH-59, D-TECH-80 to D-TECH-85; `docs/archive/DESIGN-MOTION.md`; `docs/OWNER.md`'s "VID2 scenes" list;
 `site/src/home/story.ts` from `SceneFig` to the estimate's scene. The studio: `.claude/skills/video-studio/SKILL.md`,
 `video_production_skill.md`, `references/pipeline-prompt.md`, `looks/look-c.json`, `lib/render.mjs`,
 `lib/figures.mjs`, `lib/assemble.mjs`, `test/check.test.mjs`, `scenes/_fixtures/`, `scenes/_shared/motion.js`, and
