@@ -20,6 +20,8 @@ Before designing, write down (and show the owner when it is new or unclear):
 
 The inputs the owner lists for a page are its default path: a ceiling, not a floor to build on. When the maths needs a fact the list lacks, prefer an assumption stated on the page over a new question. Ask first what narrows later questions (purpose, product, type), and take each fact once, shown elsewhere read-only.
 
+What the owner links or attaches has a purpose: an example of depth, a look to draw on, a method, a rival. Say in one line which you take it for before building on it; a wrong reading costs the whole session. Inspiration is taken as a principle, never a copy.
+
 What the owner attaches (an analysis, a design document, a catalogue) is read in full before any question or choice; where it already answers a question or names a method, follow it over the repo's older notes and ask only what it leaves open. A draft the owner will judge is made with the owner's own tool for the job and from their catalogue where one exists; a hand-made stand-in is called that before the owner judges it.
 
 ## 2. Recommend, then build
