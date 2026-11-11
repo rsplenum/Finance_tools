@@ -321,3 +321,6 @@ Budget line moved from HANDOFF on 04-11-2026:
 | # | Deliverable | Budget | Starter prompt |
 |---|---|---|---|
 | RC1 | The release check on `main`, once every Monday PR is merged (D-BIZ-20): every page by the critic at once, at 360 and 1280, light and dark; the owner's five tests' notes scored; every check at 0; `noindex` on; the network back to the allowed list; fixes on one PR. Traps: never start on a half-merged `main`; a blocker is fixed or named, never waved through; LEGAL2 is after Monday, so the draft marks stay | M, high | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md, D-BIZ-20 and RC1 in docs/ROADMAP.md, and grep docs/GOTCHAS.md for `site-check` and `critic`. Budget M, at high. RC1: the release check. My five tests' notes: …. Finish per HANDOFF." |
+
+Budgets and actuals, moved from the handoff on 10-11-2026:
+| 10-11-2026 | BUILD1 (the project report as a builder with the live paper; answers saved on the device; the worked example that passes; the checks walk the steps; WORDS1's row) | L, Extra | about 160 steps, 3 compactions, long waits between steps (the cache lapsed several times: the cost guard warned); 3 small agents; within L |
