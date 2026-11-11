@@ -229,10 +229,13 @@ const figures = (t) => (t.replace(/\s+/g, ' ').match(TOKEN) ?? []).map((x) => x.
 async function expectFigures(page, v, what, want, step) {
   const at = typeof what === 'string' ? page.getByTestId(what).first() : what, name = typeof what === 'string' ? what : String(what);
   const fit = new RegExp('^' + want.split(' ').filter(Boolean).map((t) => (t === '…' ? '(?:\\S+ )*' : t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' ')).join('') + '$');
-  const read = () => at.textContent({ timeout: 3000 }).then((t) => figures(t ?? '').map((x) => x + ' ').join(''), () => null);
+  // Two parts set side by side on the page run together in its text ("2026-27Meets"): read with them apart, then as written.
+  const line = (t) => figures(t).map((x) => x + ' ').join('');
+  const read = () => at.textContent({ timeout: 3000 }).then((t) => [line((t ?? '').replace(/([a-z\d])([A-Z])/g, '$1 $2')), line(t ?? '')], () => null);
+  const ok = (g) => g !== null && g.some((x) => fit.test(x));
   let got = await read();
-  for (let i = 0; !(got !== null && fit.test(got)) && i < 30; i++) { await page.waitForTimeout(100); got = await read(); }
-  if (got === null || !fit.test(got)) await v(`${step}: ${name} shows the figures "${got === null ? '(missing)' : got.trim()}", want "${want}"`);
+  for (let i = 0; !ok(got) && i < 30; i++) { await page.waitForTimeout(100); got = await read(); }
+  if (!ok(got)) await v(`${step}: ${name} shows the figures "${got === null ? '(missing)' : got[0].trim()}", want "${want}"`);
 }
 /**
  * Rule 17's count, the same way on every tool: the fields asked inside `scope` and outside More options, the document's
