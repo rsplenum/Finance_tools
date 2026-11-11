@@ -31,6 +31,8 @@ Everything else (the look, the wording, the order of sections, a count of words)
 - A new measure is first run on a page whose answer is known.
 - A count that moves when no words changed is a bug in the measure.
 - A check tests each clause of what it claims: "44 px" tested only the corners.
+- A field's label can change with the page's state (a year, a mode, a method). Before a check moves from ids to labels, record every label each field shows through one whole run; a field with more than one label keeps its id until its step is read by hand. (CHECKS1)
+- A selector that finds nothing ends the whole site check with a timeout, so each wrong one costs a run. Change selectors from a recording, never by trial. (CHECKS1)
 
 ## Running them
 

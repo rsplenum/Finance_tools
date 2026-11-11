@@ -1,107 +1,22 @@
 /**
- * FinSight's rules (AG1, AG2; D-UX-67, D-UX-72; docs/DESIGN.md, "FinSight's rules"; the brief:
- * docs/design-reference/finsight.md), held on every page in the new look (`look="new"` in site/src/Base.astro). Each item a script can see is
- * tested here, at 360 and 1280 px; F3's cards, F8's underlines and the like are read off the page as it stands, F9 waits
- * for the motion to stop. The page's weight is printed and capped. Called by scripts/site-check.mjs.
+ * What a page must never do to a reader, whatever its look (CHECKS1, D-TECH-113): keep moving past 5 s or under reduced
+ * motion (WCAG 2.2.2), leave its content unshown under reduced motion or after a scroll, fetch from another host (the
+ * claim "nothing leaves your browser"), or send Tab against the eye (WCAG 2.4.3). The look itself (fonts, sizes, boxes,
+ * the order of sections) is judged by eye and is no part of any check. Called by scripts/site-check.mjs on every built
+ * page; home's weight is printed, never capped (the honest speed measure is scripts/speed.mjs).
  */
-import { readFile } from 'node:fs/promises';
 import { openAt } from './design-checks.mjs';
-
-/** The pages in the new look: home, from UX3 the DSCR and CMA pages, from UX4 the estimate, the report, and from LEGAL1 the policy pages, from MAP1 the site map. */
-export const NEW_LOOK = ['/', '/dscr/', '/cma/', '/estimate/', '/project-report/', '/404.html', '/privacy/', '/terms/', '/not-advice/', '/refunds/', '/contact/', '/site-map/'];
-/** F13: our order, the borrower's path (docs/design-reference/finsight.md, rule 10); from HOME1b three sections (D-UX-114). */
-export const ORDER = ['hero', 'tools', 'closing'];
-/**
- * F15: the page's weight as it loads, before compression (HTML, styles, scripts, the fonts), in KB: 160 measured 14-10-2026
- * (D-UX-72), AG1's 124 with Anek (27 KB, one weight cut to the signs the pages use) and the line drawings; 166 with
- * AG3b's three trailers, the two later ones fetched only as the reader nears them (D-UX-78); 168 with AG3c's trailers
- * beside their text (D-UX-81); 156 with HOME1b's four terminal intros, the pen, its font and the trailers gone (D-UX-117).
- * From HOME1d the DSCR's scene, below the first screen, is not counted (D-UX-122, D-UX-128); from HOME1e none of the
- * four tools' scenes is (D-UX-142). A heavier page lowers
- * something else first.
- */
-export const WEIGHT_CAP = 160;
-
-const SITE = await readFile(new URL('../site/src/site.ts', import.meta.url), 'utf8');
-const TOOLS = [...SITE.matchAll(/status: 'Ready', href: '([^']+)'/g)].map((m) => m[1]);
-
-/** Runs in the page: every item that reads the page as it stands. */
-function inPage({ tools, order, phone }) {
-  const out = [];
-  const shown = (el) => getComputedStyle(el).clipPath !== 'inset(50%)' && el.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) && el.getBoundingClientRect().width > 1;
-  const px = (el, k) => parseFloat(getComputedStyle(el)[k]);
-  const name = (el) => (el.textContent ?? '').trim().replace(/\s+/g, ' ').slice(0, 40);
-  // F1: the text in Figtree, the headings in Anek, both loaded from here.
-  if (!getComputedStyle(document.body).fontFamily.startsWith('Figtree') || !document.fonts.check('16px Figtree')) out.push('F1 the page is not set in Figtree');
-  for (const h of document.querySelectorAll('h1, h2')) if (!getComputedStyle(h).fontFamily.startsWith('Anek')) out.push(`F1 the heading "${name(h)}" is not in Anek`);
-  if (!document.fonts.check('500 16px Anek')) out.push('F1 Anek is not loaded');
-  // F17: only paper casts a shadow (a page on the desk: the shadow-paper token). The tools' scenes are in look C, glass on navy (D-UX-124, D-UX-128).
-  for (const el of document.querySelectorAll('main *, footer *')) if (getComputedStyle(el).boxShadow !== 'none' && !el.matches('.shadow-paper') && !el.closest('[data-scene]') && shown(el)) out.push(`F17 a shadow on something that is not paper: <${el.tagName.toLowerCase()}> "${name(el)}"`);
-  // F2: large headings.
-  const h1 = document.querySelector('h1');
-  if (!h1 || px(h1, 'fontSize') < (phone ? 40 : 64)) out.push(`F2 the h1 is ${h1 ? px(h1, 'fontSize') : 0} px (want ${phone ? 40 : 64} or more)`);
-  // A folded section's one line and a heading kept for screen readers (1 px, sr-only) are not headings on show (UX8, D-UX-106).
-  for (const h of document.querySelectorAll('main h2')) if (!h.closest('[data-folded]') && h.getBoundingClientRect().width > 1 && px(h, 'fontSize') < (phone ? 26 : 40)) out.push(`F2 the h2 "${name(h)}" is ${px(h, 'fontSize')} px`);
-  // F3: no boxed cards; panels are set off by their fill. Not in the tools' scenes, whose glass has a hairline edge (D-UX-128).
-  for (const el of document.querySelectorAll('main *, footer *')) {
-    const s = getComputedStyle(el), r = el.getBoundingClientRect();
-    const all = ['Top', 'Right', 'Bottom', 'Left'].every((k) => parseFloat(s[`border${k}Width`]) >= 1 && s[`border${k}Style`] !== 'none');
-    if (all && r.width > 40 && r.height > 40 && !el.matches('input, select, textarea, button, a') && !el.closest('[data-scene]') && shown(el)) out.push(`F3 a bordered box: <${el.tagName.toLowerCase()}> "${name(el)}"`);
-  }
-  // F4, F5: a filled link or button is a pill, in ink, canvas or the stage's ink; never the accent.
-  const probe = document.createElement('i');
-  probe.style.background = 'var(--accent)'; document.body.append(probe);
-  const accent = getComputedStyle(probe).backgroundColor; probe.remove();
-  for (const el of document.querySelectorAll('a, button')) {
-    if (!shown(el)) continue;
-    const s = getComputedStyle(el), bg = s.backgroundColor, r = el.getBoundingClientRect();
-    const filled = bg !== 'transparent' && !/rgba\(.*, 0\)$/.test(bg);
-    if (filled && px(el, 'borderTopLeftRadius') < r.height / 2 - 1) out.push(`F4 a filled control that is not a pill: "${name(el)}"`);
-    if (filled && r.height < 43.5) out.push(`F4 a filled control ${Math.round(r.height)} px tall (want 44): "${name(el)}"`);
-    if (filled && bg === accent) out.push(`F5 a control filled with the accent: "${name(el)}"`);
-    // F8: a link that stands alone is not underlined; a link inside a sentence keeps its line.
-    const alone = el.tagName === 'A' && (el.parentElement?.textContent ?? '').trim() === (el.textContent ?? '').trim();
-    if ((alone || filled) && s.textDecorationLine.includes('underline')) out.push(`F8 an underlined link that stands alone: "${name(el)}"`);
-  }
-  // F6, F7, F13: the sections run wide and tall, in the reference's order.
-  const secs = [...document.querySelectorAll('[data-ag]')];
-  if (order && secs.map((s) => s.dataset.ag).join() !== order.join()) out.push(`F13 the sections are ${secs.map((s) => s.dataset.ag).join(', ')}`);
-  // F13 on home, principle 10 (lesson 11): each tool once, in one block with one link, which opens that tool (HOME1b, D-UX-114).
-  if (order) {
-    const blocks = [...document.querySelectorAll('[data-tool]')], to = blocks.map((b) => [...b.querySelectorAll('a[href]')].map((a) => new URL(a.href).pathname));
-    if (blocks.length !== tools.length || new Set(blocks.map((b) => b.dataset.tool)).size !== tools.length) out.push(`F13 home has ${blocks.length} tool blocks (want each of ${tools.length} once)`);
-    to.forEach((t, k) => { if (t.length !== 1) out.push(`F13 the ${blocks[k].dataset.tool} block has ${t.length} links (want one)`); });
-    for (const t of tools) if (to.flat().filter((x) => x === t).length !== 1) out.push(`F13 the tools' blocks link ${t} ${to.flat().filter((x) => x === t).length} times (want once)`);
-  }
-  if (!phone) for (const s of secs) {
-    const w = s.clientWidth - px(s, 'paddingLeft') - px(s, 'paddingRight'), h = s.getBoundingClientRect().height / innerHeight;
-    if (w < 1100) out.push(`F6 the ${s.dataset.ag} section is ${Math.round(w)} px wide (want 1100 or more at 1280)`);
-    if (h < 0.4) out.push(`F7 the ${s.dataset.ag} section is ${h.toFixed(2)} of a screen tall (want 0.4 or more)`);
-  }
-  // F11: every tool in the top bar, in the first screen.
-  const header = document.querySelector('header');
-  for (const t of tools) {
-    const a = [...(header?.querySelectorAll(`a[href="${t}"]`) ?? [])].find(shown);
-    if (!a || a.getBoundingClientRect().bottom > innerHeight) out.push(`F11 ${t} is not in the top bar's first screen`);
-  }
-  // F12: the foot links every tool and carries the name large.
-  const foot = document.querySelector('footer');
-  for (const t of tools) if (!foot?.querySelector(`a[href="${t}"]`)) out.push(`F12 the foot does not link ${t}`);
-  if (!foot?.querySelector('[data-wordmark]')?.textContent?.trim()) out.push('F12 the foot has no name in large type');
-  return out;
-}
 
 /** The headings and counted figures, the running animations and a picture of each field, to compare over time. */
 const still = (page) => page.evaluate(() => ({
-  typed: [...document.querySelectorAll('h1, h2, [data-count]')].map((e) => e.textContent),
   running: document.getAnimations().filter((a) => a.playState === 'running').map((a) => `${a.constructor.name} on <${a.effect?.target?.tagName?.toLowerCase()}>`),
   fields: [...document.querySelectorAll('canvas[data-field]')].map((c) => c.toDataURL().length + ':' + c.toDataURL().slice(-64)),
 }));
 
 /**
- * Tab against the eye (F19, AG3c): in the page's order, a control that comes next yet sits to the left in the same row,
- * or above in the same column, was moved by CSS `order` or a grid (WCAG 2.4.3). A control pinned to the screen (sticky or
- * fixed, as the tool pages' answer bar at the foot) has no place in the flow to compare, so it is left out (UX3). Runs in the page.
+ * Tab against the eye: in the page's order, a control that comes next yet sits to the left in the same row, or above in
+ * the same column, was moved by CSS `order` or a grid (WCAG 2.4.3). A control pinned to the screen (sticky or fixed, as
+ * the tool pages' answer bar at the foot) has no place in the flow to compare, so it is left out. Runs in the page.
  */
 export function tabAgainstEye() {
   const pinned = (e) => { for (let x = e; x && x !== document.body; x = x.parentElement) if (/sticky|fixed/.test(getComputedStyle(x).position)) return true; return false; };
@@ -118,11 +33,9 @@ export function tabAgainstEye() {
 }
 
 /**
- * Runs in the page: home's diagram and scenes that are not in their finished state (HOME1b, D-UX-115). With motion each
- * must have played (`data-played`, every animation dropped); without it the HTML stands as it is. Either way every line,
- * input, bar and mark shows whole, and "Show it all" is gone. Each tool's scene (HOME1d, HOME1e; D-UX-125) ends on its last beat:
- * every input card, the statement's lines and its files whole, its wires drawn; it may offer "Play it again". Empty when
- * the page has none, so only home is held here; the count of tools is F13's.
+ * Runs in the page: a part that animates in (home's diagram and scenes) and is not whole. Under reduced motion the HTML
+ * stands as it is, so every line, bar and mark must show whole and nothing may wait behind "Show it all". Empty when the
+ * page has no such part. The look report uses it too, after a scene has played.
  */
 export function unfinished() {
   const out = [], js = document.documentElement.classList.contains('js');
@@ -136,156 +49,79 @@ export function unfinished() {
     });
     if (part) out.push(`${id}: <${part.tagName.toLowerCase()}> "${(part.textContent ?? '').trim().slice(0, 30)}" is not whole`);
     if ([...box.querySelectorAll('[data-show]')].some((b) => !b.hidden)) out.push(`${id} still offers "Show it all"`);
-    if (box.matches('[data-scene]') && js && box.querySelectorAll('[data-wires] path').length < 2) out.push(`${id}: its wires are not drawn`);
   }
   return out;
 }
 
-/**
- * Runs in the page (HOME1f, D-UX-255): below 1024 px a tool's scene is one frame that fits the screen under the header.
- * The scene is held at each time in `times` (ms; every shot of every beat) and must then be no taller than the screen
- * less the header, show every line of text it shows whole inside its frame and none over another, and scale no layer
- * below 0.9 to fit (--fit, home.ts). A line counts as shown at an opacity of half or more, its ancestors' and their
- * `filter: opacity()` included (the camera, scene.ts). Returns what fails.
- */
-export function sceneFrame([id, times]) {
-  const root = document.querySelector(`[data-scene="${id}"]`), out = [];
-  if (!root) return [`there is no ${id} scene`];
-  const header = document.querySelector('[data-header]'), room = innerHeight - (header ? header.getBoundingClientRect().height : 0);
-  const canvas = root.querySelector('[data-canvas]'), anims = root.getAnimations({ subtree: true });
-  const shown = (e) => {
-    let o = 1;
-    for (let x = e; x && x !== root.parentElement; x = x.parentElement) {
-      const s = getComputedStyle(x);
-      if (s.visibility !== 'visible' && x === e) return 0;
-      o *= parseFloat(s.opacity);
-      const f = /opacity\(([\d.]+)(%?)\)/.exec(s.filter);
-      if (f) o *= parseFloat(f[1]) / (f[2] ? 100 : 1);
-    }
-    return o;
-  };
-  const say = (n) => `"${n.textContent.trim().slice(0, 28)}"`;
-  for (const t of times) {
-    for (const a of anims) { a.pause(); a.currentTime = t; }
-    const h = root.getBoundingClientRect().height;
-    if (h > room + 0.5) out.push(`${id} at ${t} ms is ${Math.round(h)} px tall; the screen under the header has ${Math.round(room)} px`);
-    for (const l of root.querySelectorAll('[data-panel], [data-doc]')) {
-      const k = parseFloat(getComputedStyle(l).getPropertyValue('--fit') || '1');
-      if (k < 0.9) out.push(`${id}'s ${l.matches('[data-doc]') ? 'document' : 'panel'} is scaled to ${k.toFixed(2)} to fit its frame (0.9 at least)`);
-    }
-    const frame = canvas?.parentElement?.getBoundingClientRect(), lines = [];
-    const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: (n) => n.textContent.trim() && !n.parentElement.closest('.sr-only') ? 1 : 2 });
-    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
-      if (shown(n.parentElement) < 0.5) continue;
-      const r = document.createRange();
-      r.selectNodeContents(n);
-      for (const b of r.getClientRects()) if (b.width > 1 && b.height > 1) lines.push({ n, b, inFrame: canvas?.contains(n) });
-    }
-    for (const { n, b, inFrame } of lines) if (inFrame && frame && (b.left < frame.left - 1 || b.right > frame.right + 1 || b.top < frame.top - 1 || b.bottom > frame.bottom + 1)) out.push(`${id} at ${t} ms: ${say(n)} is cut off by the frame`);
-    for (let i = 0; i < lines.length; i++) for (let j = i + 1; j < lines.length; j++) {
-      const A = lines[i].b, B = lines[j].b;
-      if (lines[i].n === lines[j].n) continue;
-      const x = Math.min(A.right, B.right) - Math.max(A.left, B.left), y = Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top);
-      if (x > 2 && y > 0.3 * Math.min(A.height, B.height)) out.push(`${id} at ${t} ms: ${say(lines[i].n)} and ${say(lines[j].n)} overlap`);
-    }
-  }
-  return [...new Set(out)];
-}
-
-/** `pages` limits the pages read (the site check's --quick); `motion` false skips F9, F10, F14 and F15, which wait on the motion. */
-export async function forbiddenChecks({ browser, BASE, pages = NEW_LOOK, motion = true, violations, look: seen = violations }) {
+/** `pages` are the built pages to read; `motion` false (the site check's --quick without home) skips the checks that wait on motion. */
+export async function forbiddenChecks({ browser, BASE, pages, motion = true, violations }) {
   let weight = 0;
-  const look = NEW_LOOK.filter((p) => pages.includes(p));
-  for (const path of look) {
-    const v = (m) => violations.push(`${path} FinSight's rules: ${m}`);
-    // The look (F1 to F8, F10 to F13, F17) is reported, never a violation (LOOSE1, D-TECH-110). Motion that stops (F9), nothing
-    // fetched from elsewhere (F14), the weight (F15) and Tab's order (F19) stay violations: accessibility, privacy, a slow phone.
-    const t = (m) => seen.push(`${path} FinSight's look: ${m}`);
-    for (const width of ['phone', 'desktop']) {
-      const { ctx, page } = await openAt(browser, BASE + path, { width });
-      for (const m of await page.evaluate(inPage, { tools: TOOLS, order: path === '/' ? ORDER : null, phone: width === 'phone' })) t(`${m} (${width})`);
-      await ctx.close();
-    }
-    // F9, F10, F14, F15: the motion stops by itself, the words are whole from the start, nothing is fetched from elsewhere.
+  for (const path of pages) {
+    const v = (m) => violations.push(`${path}: ${m}`);
     if (motion) {
       const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
       const page = await ctx.newPage(), hosts = new Set(), sizes = [];
       page.on('request', (r) => hosts.add(new URL(r.url()).origin));
       page.on('response', (r) => sizes.push(r.body().then((b) => b.length, () => 0)));
       await page.goto(BASE + path, { waitUntil: 'domcontentloaded' });
-      const first = await still(page);
       await page.waitForTimeout(6000);
       const settled = await still(page);
       await page.waitForTimeout(1000);
       const later = await still(page);
-      // The tools' scenes sit below the first screen and are not counted: each one's markup, and their scoped styles once,
-      // since the four share one component (D-UX-122, D-UX-128, D-UX-142).
-      const below = await page.evaluate(() => {
-        const boxes = [...document.querySelectorAll('[data-scene]')], cid = boxes[0] && [...boxes[0].attributes].find((a) => a.name.startsWith('data-astro-cid-'))?.name;
-        if (!cid) return 0;
-        let css = 0;
-        for (const sheet of document.styleSheets) for (const r of sheet.cssRules) if (r.cssText.includes(cid)) css += r.cssText.length;
-        return boxes.reduce((a, b) => a + b.outerHTML.length, 0) + css;
-      });
-      const kb = Math.round(((await Promise.all(sizes)).reduce((a, b) => a + b, 0) - below) / 1024);
-      if (path === '/') weight = kb;
-      if (first.typed.join('|') !== settled.typed.join('|')) t('F10 a heading\'s words or a counted figure are not in the page from the start');
-      if (await page.locator('[data-typed]').count()) t('F10 a heading still types itself');
-      if (settled.running.length) v(`F9 still moving 6 s after load: ${[...new Set(settled.running)].join(', ')}`);
-      if (settled.fields.join() !== later.fields.join()) v('F9 a field of dashes still moves 6 s after load');
-      for (const h of hosts) if (h !== BASE) v(`F14 a request to ${h}`);
-      if (path === '/' && kb > WEIGHT_CAP) v(`F15 the page weighs ${kb} KB as it loads (cap ${WEIGHT_CAP} KB)`);
+      if (path === '/') weight = Math.round((await Promise.all(sizes)).reduce((a, b) => a + b, 0) / 1024);
+      if (settled.running.length) v(`still moving 6 s after load: ${[...new Set(settled.running)].join(', ')} (WCAG 2.2.2)`);
+      if (settled.fields.join() !== later.fields.join()) v('a field of dashes still moves 6 s after load (WCAG 2.2.2)');
+      for (const h of hosts) if (h !== BASE) v(`a request to ${h}: nothing is fetched from another host`);
       await ctx.close();
-      // Under reduced motion nothing moves at all.
+      // Under reduced motion nothing moves at all, and what would have animated in stands whole.
       const rm = await openAt(browser, BASE + path, { width: 'desktop', reducedMotion: 'reduce' });
       const a = await still(rm.page);
       await rm.page.waitForTimeout(800);
       const b = await still(rm.page);
-      if (b.running.length || a.fields.join() !== b.fields.join()) v('F9 something moves under reduced motion');
-      // ... and home's diagram and scenes stand finished, as the HTML has them, with no "Show it all" (HOME1b, D-UX-115).
-      for (const x of (await rm.page.evaluate(unfinished)).slice(0, 3)) v(`F9 not finished under reduced motion: ${x}`);
+      if (b.running.length || a.fields.join() !== b.fields.join()) v('something moves under reduced motion');
+      for (const x of (await rm.page.evaluate(unfinished)).slice(0, 3)) v(`not all there under reduced motion: ${x}`);
       await rm.ctx.close();
     }
-    // F19: Tab follows the eye at 360 and where lg's layouts start and widen.
+    // Tab follows the eye at 360 and where the wide layouts start and widen.
     for (const w of [360, 1024, 1280]) {
       const oc = await browser.newContext({ viewport: { width: w, height: 900 } });
       const op = await oc.newPage();
       await op.goto(BASE + path, { waitUntil: 'load' });
       await op.waitForTimeout(300);
-      for (const m of (await op.evaluate(tabAgainstEye)).slice(0, 3)) v(`F19 Tab runs against the eye at ${w} px: ${m}`);
+      for (const m of (await op.evaluate(tabAgainstEye)).slice(0, 3)) v(`Tab runs against the eye at ${w} px: ${m} (WCAG 2.4.3)`);
       await oc.close();
     }
     if (!motion) continue;
-    // F9 on a phone and on a short screen (1280 at 400%): scrolled through, every block that settles or lands shows, the
-    // hero's diagram and every tool's scene have played to their finished state (HOME1b, D-UX-115), and no two figures in
-    // a chart overlap (lesson 6). A block that waits for a share of its height never shows on a short one.
+    // On a phone and on a short screen (1280 at 400%), scrolled through: every block that waits to settle or land shows
+    // (one that waits for a share of its height never shows on a short screen), and no two figures in a chart overlap.
+    // A page whose scenes play as they come into view is given their 32.5 s; any other is read as soon as its blocks show, or after 14 s.
     for (const [w, h] of [[360, 740], [320, 256]]) {
       const sc = await browser.newContext({ viewport: { width: w, height: h } });
       const p = await sc.newPage();
       await p.goto(BASE + path);
-      await p.evaluate(async () => {
-        for (let y = 0; y < document.body.scrollHeight; y += innerHeight / 2) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 100)); }
-      });
-      // Each tool's scene runs 32.5 s from when it comes into view (D-UX-259); the last starts as the scroll reaches it.
-      await p.waitForTimeout((await p.locator('[data-scene]').count()) ? 34000 : 14000);
-      const ends = await p.evaluate(unfinished);
-      const r = await p.evaluate(() => {
-        const hidden = [...document.querySelectorAll('[data-settle], [data-at]')].filter((e) => getComputedStyle(e).opacity !== '1')
-          .map((e) => `<${e.tagName.toLowerCase()}> "${(e.textContent ?? '').trim().slice(0, 30)}"`);
-        const boxes = [...document.querySelectorAll('figure span, figure li')].filter((e) => e.childElementCount === 0 && e.textContent?.trim())
-          .map((e) => ({ t: e.textContent.trim(), b: e.getBoundingClientRect() })).filter(({ b }) => b.width > 1 && b.height > 1);
-        const overlaps = [];
-        for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
-          const A = boxes[i].b, B = boxes[j].b;
-          if (Math.min(A.right, B.right) - Math.max(A.left, B.left) > 1 && Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top) > 1) overlaps.push(`${boxes[i].t} and ${boxes[j].t}`);
-        }
-        return { hidden, overlaps };
-      });
-      for (const x of r.hidden.slice(0, 3)) v(`F9 still hidden after scrolling through at ${w}×${h}: ${x}`);
-      for (const x of ends.slice(0, 3)) v(`F9 not finished after scrolling through at ${w}×${h}: ${x}`);
-      for (const x of r.overlaps.slice(0, 3)) v(`principle 5: chart figures overlap at ${w}×${h}: ${x}`);
+      {
+        await p.evaluate(async () => {
+          for (let y = 0; y < document.body.scrollHeight; y += innerHeight / 2) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 100)); }
+        });
+        if (await p.locator('[data-scene]').count()) await p.waitForTimeout(34000);
+        else await p.waitForFunction(() => [...document.querySelectorAll('[data-settle], [data-at]')].every((e) => getComputedStyle(e).opacity === '1'), null, { timeout: 14000 }).catch(() => {});
+        const r = await p.evaluate(() => {
+          const hidden = [...document.querySelectorAll('[data-settle], [data-at]')].filter((e) => getComputedStyle(e).opacity !== '1')
+            .map((e) => `<${e.tagName.toLowerCase()}> "${(e.textContent ?? '').trim().slice(0, 30)}"`);
+          const boxes = [...document.querySelectorAll('figure span, figure li')].filter((e) => e.childElementCount === 0 && e.textContent?.trim())
+            .map((e) => ({ t: e.textContent.trim(), b: e.getBoundingClientRect() })).filter(({ b }) => b.width > 1 && b.height > 1);
+          const overlaps = [];
+          for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+            const A = boxes[i].b, B = boxes[j].b;
+            if (Math.min(A.right, B.right) - Math.max(A.left, B.left) > 1 && Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top) > 1) overlaps.push(`${boxes[i].t} and ${boxes[j].t}`);
+          }
+          return { hidden, overlaps };
+        });
+        for (const x of r.hidden.slice(0, 3)) v(`still hidden after scrolling through at ${w}×${h}: ${x}`);
+        for (const x of r.overlaps.slice(0, 3)) v(`chart figures overlap at ${w}×${h}: ${x}`);
+      }
       await sc.close();
     }
   }
-  return { pages: look.length, weight };
+  return { pages: pages.length, weight };
 }

@@ -22,7 +22,7 @@ const OWN = [
 const NONE = [
   /^docs\/(?!TRADEMARKS\.md$)/, /^tests\/(?!fixtures\/)/, /^\.claude\//, /^portable\//, /^\.github\//, /^[^/]+\.md$/,
   /^worker\/(?!src\/event-shape\.ts$)/,
-  /^scripts\/(verify|doc-sizes|review-dates|rules-doc|hosts|usage|design-review|words-dump)\.mjs$/,
+  /^scripts\/(verify|doc-sizes|review-dates|rules-doc|hosts|usage|design-review|words-dump|look-report)\.mjs$/,
 ];
 
 /** The pages among `all` that `files` touch; `all` itself when any file is shared or unknown. */
