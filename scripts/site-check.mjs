@@ -272,9 +272,9 @@ const saver = (page, v) => async (id) => {
 };
 // A CMA year's boxes are hidden on a phone until its year is picked (UXR6): the year's button first.
 const leave = async (page, sel, value) => {
-  const year = /, (\d{4}-\d\d)$/.exec(sel)?.[1];
-  const pick = page.locator('[role="group"][aria-label="The year shown"] button:visible', { hasText: year ?? 'none' }).first();
-  if (year && !(await page.locator(sel).isVisible()) && await pick.count()) await pick.click();
+  const year = /, (\d{4}-\d\d)$/.exec(sel)?.[1], y = /^#fld-cma-(a1|a2|a3|est|proj)-/.exec(sel)?.[1];
+  const pick = y ? page.getByTestId(`cma-year-${y}`) : page.locator('[role="group"][aria-label="The year shown"] button:visible', { hasText: year ?? 'none' }).first();
+  if ((year || y) && !(await page.locator(sel).isVisible()) && await pick.count()) await pick.click();
   await page.fill(sel, value); await page.press(sel, 'Tab');
 };
 /** The detailed form sits under the closed "More options" (P1f): the flows below open it first. */
