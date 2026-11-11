@@ -231,7 +231,7 @@ async function expectFigures(page, v, what, want, step) {
   const fit = new RegExp('^' + want.split(' ').filter(Boolean).map((t) => (t === '…' ? '(?:\\S+ )*' : t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' ')).join('') + '$');
   // Two parts set side by side on the page run together in its text ("2026-27Meets"): read with them apart, then as written.
   const line = (t) => figures(t).map((x) => x + ' ').join('');
-  const read = () => at.textContent({ timeout: 3000 }).then((t) => [line((t ?? '').replace(/([a-z\d])([A-Z])/g, '$1 $2')), line(t ?? '')], () => null);
+  const read = () => at.textContent({ timeout: 3000 }).then((t) => [line((t ?? '').replace(/([a-z\d])([A-Z])|([A-Z])([A-Z][a-z])/g, '$1$3 $2$4')), line(t ?? '')], () => null);
   const ok = (g) => g !== null && g.some((x) => fit.test(x));
   let got = await read();
   for (let i = 0; !ok(got) && i < 30; i++) { await page.waitForTimeout(100); got = await read(); }
