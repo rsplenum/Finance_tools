@@ -369,7 +369,7 @@ if (touched('/dscr/')) {
   // and other non-cash charges as answered by the assumptions (tax, profit and depreciation were typed).
   await expectText(page, v, 'dscr-status', 'All questions answered, on 7 assumptions', 'case A with the examples');
   await expectText(page, v, 'dscr-verdict', 'Misses 2 of 2 targets: the lowest year, 2027-28, is 1.16 against 1.25; the average is 1.45 against 1.50.', 'case A with the examples');
-  await expectText(page, v, 'dscr-largest', 'The largest loan on these terms is Rs. 11,11,295, limited by the lowest year, 2027-28.', 'case A with the examples');
+  await expectText(page, v, 'dscr-largest', 'Your business can carry a loan of Rs. 11,11,295. You asked Rs. 12,00,000. What sets it: the lowest year, 2027-28.', 'case A with the examples');
   await expectText(page, v, 'use-amount', 'Use Rs. 11,11,295', 'case A with the examples');
   await expectText(page, v, 'dscr-fewest', 'Even 14 instalments, the most the projections cover (to 2029-30), miss the target: the average is below the target. Add later years to try a longer repayment.', 'case A with the examples');
   await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · does not work yet: 2 ratios short · all questions answered, on 7 assumptions', 'case A with the examples');
@@ -588,7 +588,7 @@ if (touched('/dscr/')) {
   if (!pages[1]?.includes('Annex 1. The basis') || !pages[2]?.includes('Annex 2. Repayment schedule')) v('the annexes do not start pages 2 and 3');
   // What stays on the page only (D-DOC-03, and the owner on 02-10-2026): the assumptions, the verdict, the largest loan,
   // the fewest instalments, the lender's target, how far the method was checked, and the rules for building the figures.
-  const ONLY_ON_THE_PAGE = ['Assumed until changed', 'Misses', 'The largest loan', 'The fewest instalments', 'target', 'checked', 'How the figures are built', 'Status'];
+  const ONLY_ON_THE_PAGE = ['Assumed until changed', 'Misses', 'can carry a loan', 'The fewest instalments', 'target', 'checked', 'How the figures are built', 'Status'];
   for (const not of ONLY_ON_THE_PAGE) if (pages.join('\n').includes(not)) v(`the PDF says "${not}"`);
   const xlsx = await save('download-xlsx');
   if (xlsx.name !== 'DSCR statement - Asha Traders.xlsx') v(`the Excel copy is named "${xlsx.name}"`);
@@ -1305,6 +1305,17 @@ if (touched('/project-report/')) {
   if (await page.getByTestId('rep-pending').count()) v('the plant\'s question answered is still asked');
   await page.getByTestId('rep-undo').click();
   if ([await page.inputValue('#fld-tl-amount'), await page.inputValue('#fld-sales')].join() !== '25,00,000,70,00,000') v('Undo did not put the figures back');
+  // What the business can carry (CAP1): the figure beside the loan asked first; a change that closes the gap, used and undone.
+  await expectText(page, v, 'rep-carry-line', /^Your business can carry a loan of Rs\. [\d,]+\. You asked Rs\. 25,00,000\.$/, 'CAP1: the figure beside the loan asked');
+  await expectText(page, v, 'rep-answer-bar', /^Carries Rs\. [\d,]+ of Rs\. 25,00,000 · /, 'CAP1: the bar leads with what the business carries');
+  const closer = page.locator('[data-testid^="rep-carry-use-"]').first();
+  if (!(await closer.count())) v('CAP1: no change that closes the gap is offered');
+  else {
+    await closer.click();
+    await expectText(page, v, 'rep-answer-bar', /^Carries the Rs\. [\d,]+ asked · /, 'CAP1: a closer used carries the loan');
+    await page.getByTestId('rep-undo').click();
+    await expectText(page, v, 'rep-answer-bar', /^Carries Rs\. [\d,]+ of Rs\. 25,00,000 · /, 'CAP1: the closer undone');
+  }
   await expectText(page, v, 'rep-work-ask-sales-0', 'Within the plant: it needs Rs. 1,41,43,206 a year running full.', 'the plant\'s sales, answered, read on the card');
   await page.getByTestId('rep-levers').click();
   if (await page.getByTestId('rep-plan-steps').count()) v('the sliders open with a step said before one is moved (OR11d, FIX1)');

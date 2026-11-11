@@ -31,7 +31,7 @@ import {
   CGFMU, CGTMSE, MUDRA, PMEGP, PMEGP_SHED, REPORT_REVIEW_BY, pmegpConditions, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, NO_PRODUCT, REPAYMENT_CHOICES, SCHEME_CHOICES,
   COST_HEADS, MODE_CHOICES, SECURITY_CHOICES, SIMPLE_COST, WC_CHOICES, changedOf, headsSum, holidayAssumed, periodLine, repaymentView, wcByOf, withMode, workedLine, type Mode,
   AS_TYPED, COLLATERAL_HINT, withProperty, amountOf, applyPlan, applySolution, assumptionsOf, boardOf, applyWay, answerPending, PENDING, workView, guaranteeOf, mudraLine, plainOf, planOf, preview, sameLevers, statusText, tarunAsked, tidyAmount, undoPlan, viableOf,
-  checkKey, checkOf, type FixCard, type LeverId, type Levers, type PlanChange, type WorkCard, type WorkView, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
+  checkKey, checkOf, carryView, applyCloser, type CarryCloser, type CarryView, type FixCard, type LeverId, type Levers, type PlanChange, type WorkCard, type WorkView, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
   type ViableView, type ViewRow, type ViewTable,
 } from './model';
 
@@ -112,11 +112,12 @@ function verdictOf(p: ReportPreview): { head: string; work: string; text: string
 
 /** The answer bar's words (D-UX-84): the lowest DSCR as the model gives it, the verdict and the status, counting the
  * document's own facts as its file does (UXR3, UXR1's S4). */
-function barText(s: ReportState, p: ReportPreview) {
+function barText(s: ReportState, p: ReportPreview, c?: CarryView) {
   if (p.blocked || !p.view) return statusText(p);
   const lowest = p.view.key.find((k) => k.check === 'dscrLowest');
   const said = p.checks?.length ? verdictOf(p)?.work : undefined;
-  return [lowest && `Lowest DSCR ${lowest.value}`, said, docStatus(s, p)].filter(Boolean).join(' · ');
+  // What the business carries leads once worked (CAP1); the lowest DSCR stands in while it is.
+  return [c ? c.bar : lowest && `Lowest DSCR ${lowest.value}`, said, docStatus(s, p)].filter(Boolean).join(' · ');
 }
 
 /** The builder's steps (BUILD1, D-UX-340): one topic a step, in the order a report is made. */
@@ -179,6 +180,18 @@ export function ReportCalculator() {
   // Fix it for me's Use this plan (FIX1): a whole plan's figures under the same undo, the banner saying the checks before and now.
   const [fixNote, setFixNote] = useState<{ on: PlanChange[]; text: string }>();
   const useFix = (c: FixCard) => { const a = applySolution(s, c); setS(a.s); setUsed(a.changes); setFixNote({ on: a.changes, text: c.counts }); focusNext('#report-h'); };
+  // What the business can carry (CAP1): the whole report run a few dozen times, so worked once the figures rest, shown only
+  // on the figures it was worked on; a closer's Use this goes under the same undo.
+  const cbase = useMemo(() => JSON.stringify({ ...s, doc: undefined, words: undefined }), [s]);
+  const [carried, setCarried] = useState<{ on: string; v: CarryView | undefined }>();
+  const live = !!p.view && !p.blocked;
+  useEffect(() => {
+    if (!live) return;
+    const t = setTimeout(() => setCarried({ on: cbase, v: carryView(s) }), 200);
+    return () => clearTimeout(t);
+  }, [cbase, live]);
+  const cv = live && carried?.on === cbase ? carried.v : undefined;
+  const useCloser = (k: CarryCloser) => { const a = applyCloser(s, k); setS(a.s); setUsed(a.changes); focusNext('#report-h'); };
   // Its question answered: the line that said it was open gives way to what the answer wrote, under the same undo.
   const answer = (t: string) => { const a = answerPending(s, t); setS(a.s); setUsed((u) => [...u.filter((c) => c.key !== 'pending'), ...a.changes]); };
   // Check and confirm (OR8): the page's own state, never the draft's (a field there drops older drafts, useKept), so a
@@ -480,7 +493,7 @@ export function ReportCalculator() {
           </>}
         </Group>)}
         {stepOf('check', <>
-          <Result s={s} p={p} update={update} use={use} useWay={useWay} useFix={useFix} toField={toField} answer={answer} used={used} counts={fixNote?.on === used ? fixNote.text : undefined} undo={undo} keep={() => setUsed([])} toCollateral={toCollateral} toBox={toBox} ok={ok} />
+          <Result s={s} p={p} cv={cv} useCloser={useCloser} update={update} use={use} useWay={useWay} useFix={useFix} toField={toField} answer={answer} used={used} counts={fixNote?.on === used ? fixNote.text : undefined} undo={undo} keep={() => setUsed([])} toCollateral={toCollateral} toBox={toBox} ok={ok} />
           {figures && <CheckStep pre="rep" groups={checkOf(s, p)} to="benchmarks" state={ok ? 'done' : checked ? 'lapsed' : 'open'}
             benchmarks={(p.checks ?? []).map((c) => ({ label: c.label, value: c.byDefault === undefined ? c.level : `${c.level}, yours (default ${c.byDefault}${c.looser ? ', looser than a bank may accept' : ''})` }))}
             confirm={seen ? 'These are right' : 'These are right: show the report'} onConfirm={confirm} />}
@@ -500,7 +513,7 @@ export function ReportCalculator() {
       </div>
       {/* The answer on every step (D-UX-84), read out as it changes, with the way on: Back, the paper on a phone, Next. */}
       <div data-builder-bar class="builder-bar">
-        <p data-testid="rep-answer-bar" data-answer aria-live="polite" class="text-sm font-medium text-ink">{barText(s, p)}</p>
+        <p data-testid="rep-answer-bar" data-answer aria-live="polite" class="text-sm font-medium text-ink">{barText(s, p, cv)}</p>
         <div class="mt-1.5 flex items-center gap-2">
           {back && <button type="button" data-testid="rep-back" class={BUTTON} onClick={() => go(back[0])}>Back</button>}
           <button type="button" data-testid="rep-peek" class={`${BUTTON} lg:hidden`} onClick={see}>See the paper</button>
@@ -738,8 +751,8 @@ function Viable({ s, p, update, use, useWay, useFix, toField, answer, toCollater
   </div>;
 }
 
-function Result({ s, p, update, use, useWay, useFix, toField, answer, used, counts, undo, keep, toCollateral, toBox, ok }: {
-  s: ReportState; p: ReportPreview; update: Update; use: (l: Levers) => void; useWay: (w: WorkCard) => void; useFix: (c: FixCard) => void; toField: (id: string) => (e: Event) => void;
+function Result({ s, p, cv, useCloser, update, use, useWay, useFix, toField, answer, used, counts, undo, keep, toCollateral, toBox, ok }: {
+  s: ReportState; p: ReportPreview; cv?: CarryView; useCloser: (k: CarryCloser) => void; update: Update; use: (l: Levers) => void; useWay: (w: WorkCard) => void; useFix: (c: FixCard) => void; toField: (id: string) => (e: Event) => void;
   answer: (t: string) => void; used: PlanChange[]; counts?: string; undo: () => void; keep: () => void;
   toCollateral: (e: Event) => void; toBox: (need: string) => (e: Event) => void; ok: boolean;
 }) {
@@ -762,6 +775,7 @@ function Result({ s, p, update, use, useWay, useFix, toField, answer, used, coun
     {/* The answer as paper, there from load (docs/DESIGN-SITE.md): the verdict in words and the key figures above the
         status (review finding 3); one tone a meaning, and the status plain when complete, never green under a miss. */}
     <div class="paper shadow-paper rounded-card p-4 sm:p-6">
+      {cv && <Carries c={cv} use={useCloser} />}
       {/* The answer is the paper's heading (UX7): a flat claim, its rule solid once final and dashed while provisional. */}
       {verdict && <Verdict id={p.misses ? 'rep-misses' : 'rep-verdict'} work={verdict.work} text={verdict.text} rule={answerRule(!p.blocked && !p.needs.length)} />}
       {p.short && <p data-testid="rep-short" class="mt-3 text-sm font-medium text-bad">{p.short}</p>}
@@ -790,6 +804,31 @@ function Result({ s, p, update, use, useWay, useFix, toField, answer, used, coun
       {v && !p.blocked && <Viable s={s} p={p} update={update} use={use} useWay={useWay} useFix={useFix} toField={toField} answer={answer} toCollateral={toCollateral} />}
     </div>
   </section>;
+}
+
+/** What the business can carry, first (CAP1, docs/CAPACITY-FIRST.md §4 rule 1): the figure beside the loan asked, one bar
+ * (the loan carried in ink, the gap to the loan asked dashed, the asked a line, as the ratios' bars), the tightest year,
+ * and the changes that close the gap, each alone with its Use this. */
+function Carries({ c, use }: { c: CarryView; use: (k: CarryCloser) => void }) {
+  return <div data-testid="rep-carry" class="mb-4">
+    <p data-testid="rep-carry-line" class="text-title text-ink">{c.line}</p>
+    <div aria-hidden="true" class="relative mt-2 h-3 rounded-full bg-surface">
+      <div class="h-3 rounded-full bg-ink-muted" style={{ width: `${c.share}%` }} />
+      {c.gap && <div class="absolute inset-y-0 rounded-full border-2 border-dashed border-ink-muted" style={{ left: `${c.share}%`, width: `${c.asked - c.share}%` }} />}
+      <div class="absolute -inset-y-1 w-0.5 bg-ink" style={{ left: `calc(${c.asked}% - 2px)` }} />
+    </div>
+    <p data-testid="rep-carry-how" class="mt-1 text-sm text-ink-muted">{c.how}</p>
+    {c.keepReady && <p data-testid="rep-carry-ready" class="mt-1 text-sm font-medium text-warn">{c.keepReady}</p>}
+    {c.closers.length > 0 && <>
+      <h3 class="mt-3 text-sm font-medium text-ink">What closes the gap, each alone</h3>
+      <ul data-testid="rep-carry-closers" class="mt-1 divide-y divide-line">{c.closers.map((k) => <li key={k.id} data-testid={`rep-carry-${k.id}`} class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+        <span class="text-sm text-ink tabular-nums">{k.text}</span>
+        <span class={`text-sm ${k.closes ? 'text-good' : MUTED}`}>{k.reach}</span>
+        {k.change && <button type="button" data-testid={`rep-carry-use-${k.id}`} class={`ml-auto ${BUTTON}`} onClick={() => use(k)}>Use this</button>}
+      </li>)}</ul>
+    </>}
+    {c.after && <p data-testid="rep-carry-after" class="mt-1 text-sm text-ink">{c.after}</p>}
+  </div>;
 }
 
 /** The report's first page (D-UX-216): its own facts among the questions, before the check, so none is left unseen. They

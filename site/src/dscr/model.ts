@@ -728,7 +728,8 @@ export function preview(s: State): Preview {
   const { amount, ...terms } = loan;
   const most = maxLoanAmount(proj, terms, def, target, y.start);
   if ('amount' in most) p.largest = {
-    text: `The largest loan on these terms is ${rs(most.amount)}, limited by ${limitedBy(most.limitedBy)}.`,
+    // What the business can carry, beside the loan asked (CAP1): the same sentence as the report's, no new box.
+    text: `Your business can carry a loan of ${rs(most.amount)}.${amount !== undefined ? ` You asked ${rs(amount)}.` : ''} What sets it: ${limitedBy(most.limitedBy)}.`,
     ...(most.amount !== amount ? { amount: most.amount } : {}),
   };
   else if ('none' in most) p.largest = { text: most.none };

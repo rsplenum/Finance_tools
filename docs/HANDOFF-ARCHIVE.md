@@ -324,3 +324,5 @@ Budget line moved from HANDOFF on 04-11-2026:
 
 Budgets and actuals, moved from the handoff on 10-11-2026:
 | 10-11-2026 | BUILD1 (the project report as a builder with the live paper; answers saved on the device; the worked example that passes; the checks walk the steps; WORDS1's row) | L, Extra | about 160 steps, 3 compactions, long waits between steps (the cache lapsed several times: the cost guard warned); 3 small agents; within L |
+| 10-11-2026 | WORDS1 (plain words on the four tools and home; one "How this is worked out" a page; Rahul's before and after, https://claude.ai/artifact/V4B8zLU9VzqUBCn42SVFbx; BUILD2's row) | M, high | about 110 steps, 2 compactions, long waits between steps (the cache lapsed); no agent; within M |
+| 10-11-2026 | UX2 (why Make it work fails on the report; every step measured; the rebuild's plan, the mock and Rahul's page; FIX1's row) | none set: Rahul's ask | about 50 steps, 0.5 h, 2 compactions; no agent; the cost guard warned twice |

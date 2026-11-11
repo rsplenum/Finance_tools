@@ -63,7 +63,7 @@ const up = (v: number, places: number) => Math.ceil(v * 10 ** places - 1e-6) / 1
 
 /** A move's axis: `k` whole units of the box's rounding from the typed figure (0), between `lo` and `hi`; a grid step
  * is `step` units; `at` the box's figure at `k`; `write` puts it into the inputs. */
-interface Axis { id: MoveId; lo: number; hi: number; step: number; at: (k: number) => number; write: (y: ReportInput, k: number) => void }
+export interface Axis { id: MoveId; lo: number; hi: number; step: number; at: (k: number) => number; write: (y: ReportInput, k: number) => void }
 
 /** Rupees moved to round thousands: `k` thousands down (`dir` −1) or up from the typed figure, itself kept at 0. */
 const rupees = (typed: number, dir: 1 | -1) => {
@@ -71,7 +71,7 @@ const rupees = (typed: number, dir: 1 | -1) => {
   return { at: (k: number) => (k === 0 ? typed : base + dir * RUPEES * (k - (whole ? 0 : 1))), most: (room: number) => Math.max(0, Math.floor((room + EPS) / RUPEES) + (whole ? 0 : 1)) };
 };
 
-function axes(x: ReportInput, base: Report): Axis[] {
+export function axes(x: ReportInput, base: Report): Axis[] {
   const out: Axis[] = [], grid = (lo: number, hi: number) => Math.max(1, Math.ceil(Math.max(hi, -lo) / DATA.gridSteps));
   const add = (id: MoveId, lo: number, hi: number, at: Axis['at'], write: Axis['write']) => { if (hi > lo) out.push({ id, lo, hi, step: grid(lo, hi), at, write }); };
   const tl = x.loan.amount as number, leastLoan = base.scheme ? Math.floor(base.scheme.subsidy) + 1 : 1;

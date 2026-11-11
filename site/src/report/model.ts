@@ -6,7 +6,8 @@
 import { ALL_ANSWERED, questionsLeft, verdictWords } from '../verdict';
 import { ASSUMPTIONS, COST_HEADS, HEADS, costsOf, MUDRA, PMEGP, REPORT_REVIEW_BY, mudraLevel, mudraShort, projectReport, workedLimit, WORKING_CAPITAL, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
 import { parseAmount, parseMonth } from '../../../engine/parse';
-import { LEVELS, collateralNeeded, diagnose, type Levels, type RatioCheck, type RatioId } from '../../../engine/ratios';
+import { LEVELS, collateralNeeded, diagnose, levelFor, type Levels, type RatioCheck, type RatioId } from '../../../engine/ratios';
+import { carry, type Carry, type CloserId } from '../../../engine/capacity';
 import { makeViable, type Longer, type Outcome } from '../../../engine/viable';
 import { AS_TYPED, LEVER_IDS, makePlan, withLevers, type LeverId, type Levers } from '../../../engine/plan';
 import { makeWork, plantMachinery, type Cause, type Change, type Way as WorkWay, type WayId } from '../../../engine/work';
@@ -1062,6 +1063,89 @@ export function solvedOf(s: ReportState): FixView | undefined {
 }
 /** "Use this plan": the plan's figures written into the answers, with what each was, for the banner and its undo. */
 export const applySolution = (s: ReportState, card: FixCard) => applyWay(s, { change: card.change });
+
+// ---- What the business can carry (CAP1, docs/CAPACITY-FIRST.md §5.1): engine/capacity.ts's figure, its limit and the
+// changes that close the gap, each alone, in words; Use this writes one as typed text, under the same undo as a plan. ----
+
+/** A change that closes the gap, or how far it reaches: "was → becomes", and `change` when Use this can write it. */
+export interface CarryCloser { id: CloserId; text: string; reach: string; closes: boolean; change?: Change }
+/** `share` and `gapAt`: the bar's fill and the loan asked, as parts of its track (the larger of the two loans). */
+export interface CarryView {
+  line: string; bar: string; how: string; gap: boolean; share: number; asked: number;
+  closers: CarryCloser[]; after?: string; keepReady?: string;
+}
+const CLOSER_LABEL: Record<CloserId, string> = {
+  term: 'Instalments', holiday: 'Holiday before the first instalment', use: 'Use of the capacity by year', price: 'Price', own: 'Your own money in the project',
+};
+let carried: { on: string; v: CarryView | undefined } | undefined;
+/** The figure on the page: none while the report has no figures. Worked once for the same answers. */
+export function carryView(s: ReportState): CarryView | undefined {
+  const on = JSON.stringify(s);
+  if (carried?.on === on) return carried.v;
+  const x = inputOf(s), lv = levelsOf(s.benchmarks), most = amountOf(s.promotersMost);
+  const c = carry(x, { levels: lv, ...(most !== undefined && most >= 0 ? { promotersMost: most } : {}) });
+  const view = (): CarryView | undefined => {
+    if ('needs' in c || 'blocked' in c) return undefined;
+    const rs = (n: number) => `Rs. ${rupees(n)}`, months = (n: number) => `${n} month${n === 1 ? '' : 's'}`;
+    const names = s.products.map((r, i) => r.name.trim() || `line ${i + 1}`);
+    const low = levelFor('dscrLowest', 'fresh', lv), avg = levelFor('dscrAverage', 'fresh', lv);
+    const line = c.carries > 0 ? `Your business can carry a loan of ${rs(c.carries)}. You asked ${rs(c.asked)}.`
+      : `Your business cannot carry a term loan on these figures yet. You asked ${rs(c.asked)}.`;
+    const bar = c.gap > 0 ? `Carries ${rs(c.carries)} of ${rs(c.asked)}` : `Carries the ${rs(c.asked)} asked`;
+    const l = c.limitedBy, h = c.how, pays = `can pay up to ${rs(Math.floor(h.forInstalments))} of instalments and interest`;
+    const why = (l.why ?? '').replace(/\.$/, '');
+    const how = l.check === 'cash' ? `A larger loan runs the cash short in ${l.fy}.`
+      : l.check === 'cost' ? `No more can be borrowed: ${why.charAt(0).toLowerCase()}${why.slice(1)}.`
+      : h.fy ? `In ${h.fy}, the tightest year, the business has ${rs(h.available)} for the loan; a bank wants ${h.level} times what it pays, so it ${pays} that year.`
+      : `Over the loan the business has ${rs(h.available)} for it; a bank wants ${h.level} times on average, so it ${pays} in all.`;
+    const textOf = (k: Carry['closers'][number]): string => {
+      const y = k.input ?? x;
+      switch (k.id) {
+        case 'term': return `${CLOSER_LABEL.term}: ${k.from} → ${k.to}`;
+        case 'holiday': return `${CLOSER_LABEL.holiday}: ${months(k.from)} → ${months(k.to ?? k.from)}`;
+        case 'use': return k.input ? `${CLOSER_LABEL.use}: ${usesOf(x.utilisationPct)} → ${usesOf(y.utilisationPct)}` : `${CLOSER_LABEL.use}: first year ${pctOf(k.from)} → ${pctOf(k.to ?? k.from)}`;
+        case 'price': return k.input && names.length > 1
+          ? (y.products ?? []).map((n, i) => `${CLOSER_LABEL.price}, ${names[i]}: ${priceText(x.products?.[i]?.price as number)} → ${priceText(n.price as number)}`).join('; ')
+          : `${CLOSER_LABEL.price}${names.length > 1 ? `, ${names[0]}` : ''}: ${priceText(k.from)} → ${priceText(k.to ?? k.from)}`;
+        default: return k.to === undefined ? CLOSER_LABEL.own : `${CLOSER_LABEL.own}: ${rs(k.from)} → ${rs(k.to)}, the term loan ${rs(k.reaches)}`;
+      }
+    };
+    const changeOfCloser = (k: Carry['closers'][number]): Change | undefined => {
+      const y = k.input;
+      if (!y) return undefined;
+      switch (k.id) {
+        case 'term': return { instalments: y.loan.instalments };
+        case 'holiday': return { moratoriumMonths: y.loan.moratoriumMonths };
+        case 'use': return { utilisationPct: y.utilisationPct };
+        case 'price': return { products: (y.products ?? []).map((q) => ({ unitsMonth: q.unitsMonth as number, price: q.price as number })) };
+        default: return { amount: y.loan.amount };
+      }
+    };
+    // Written into the answers as typed text and run again: one that no longer meets both DSCRs there gets no button.
+    const holds = (change: Change) => {
+      const r = projectReport(inputOf(applyWay(s, { change }).s));
+      return !('needs' in r) && !('blocked' in r) && !!r.lowest && r.lowest.dscr >= low - 1e-9 && r.average !== undefined && r.average >= avg - 1e-9;
+    };
+    const ORDER: CloserId[] = ['term', 'use', 'price', 'own', 'holiday'];
+    const closers = [...c.closers].sort((a, b) => +b.closes - +a.closes || ORDER.indexOf(a.id) - ORDER.indexOf(b.id)).map((k): CarryCloser => {
+      const change = k.closes ? changeOfCloser(k) : undefined;
+      const reach = k.closes ? (k.id === 'own' ? `A smaller loan, the ${rs(c.gap)} short from you` : `Carries the ${rs(c.asked)} asked`)
+        : k.id === 'own' ? (k.reaches > 0 ? `Cuts the loan by more than ${SOLVE.loanCutMostPct}%, or past the most you can bring` : 'Even the smallest loan misses')
+        : k.reaches > 0 ? `Carries ${rs(k.reaches)} at most: not enough alone` : 'Carries no loan alone';
+      return { id: k.id, text: textOf(k), reach, closes: k.closes, ...(change && holds(change) ? { change } : {}) };
+    });
+    const after = c.verdict === 'notAsItStands' ? `No change here, alone or with others, carries the loan asked as it stands. ${CLOSER_LABEL[c.nearest ?? 'own']} comes nearest.`
+      : c.verdict === 'closable' && !c.closers.some((k) => k.closes) ? 'No one change alone carries the loan asked; Fix it for me, below, puts them together.' : undefined;
+    const top = Math.max(c.asked, c.carries);
+    return { line, bar, how, gap: c.gap > 0, share: top > 0 ? (100 * c.carries) / top : 0, asked: top > 0 ? (100 * c.asked) / top : 0, closers,
+      ...(after ? { after } : {}),
+      ...(c.keepReady !== undefined ? { keepReady: `Cash runs short before the sales come in, whatever the loan: keep Rs. ${upRupees(c.keepReady)} more of your own ready.` } : {}) };
+  };
+  carried = { on, v: view() };
+  return carried.v;
+}
+/** "Use this" on a closer: its figure written into the answers as typed text, with what it was, for the banner and its undo. */
+export const applyCloser = (s: ReportState, k: CarryCloser) => applyWay(s, { change: k.change as Change });
 
 /** The answer to the question left open: the plant's sales are kept beside the report; the larger plant's cost sets the
  * machinery (engine/work.ts's plantMachinery), a change the banner lists and its undo takes back. Not understood, it
