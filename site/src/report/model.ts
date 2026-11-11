@@ -6,10 +6,12 @@
 import { ALL_ANSWERED, questionsLeft, verdictWords } from '../verdict';
 import { ASSUMPTIONS, COST_HEADS, HEADS, costsOf, MUDRA, PMEGP, REPORT_REVIEW_BY, mudraLevel, mudraShort, projectReport, workedLimit, WORKING_CAPITAL, type Activity, type Area, type Category, type HeadId, type Report, type ReportInput, type ReportYear } from '../../../engine/report';
 import { parseAmount, parseMonth } from '../../../engine/parse';
-import { LEVELS, collateralNeeded, diagnose, type Levels, type RatioCheck, type RatioId } from '../../../engine/ratios';
+import { LEVELS, collateralNeeded, diagnose, levelFor, type Levels, type RatioCheck, type RatioId } from '../../../engine/ratios';
+import { carry, type Carry, type CloserId } from '../../../engine/capacity';
 import { makeViable, type Longer, type Outcome } from '../../../engine/viable';
 import { AS_TYPED, LEVER_IDS, makePlan, withLevers, type LeverId, type Levers } from '../../../engine/plan';
 import { makeWork, plantMachinery, type Cause, type Change, type Way as WorkWay, type WayId } from '../../../engine/work';
+import { SOLVE, solve, type PlanId, type Solution } from '../../../engine/solve';
 import { compareRepayments, periodOf, type Way } from '../../../engine/repayment';
 import { STEPPED } from '../../../engine/loan';
 import { BORROWERS } from '../../../engine/tax';
@@ -992,6 +994,159 @@ export function applyWay(s: ReportState, card: { change: Change; ask?: { id: 'pl
   if (a && !a.value.trim() && s.pending !== a.id) changes.push({ key: 'pending', field: 'fld-pending', label: 'A question left', was: s.pending ?? '', now: a.id, text: `A question left: ${PENDING[a.id].label}` });
   return { s: changes.reduce((t, x) => put(t, x.key, x.now), s), changes };
 }
+// ---- Fix it for me (FIX1, D-UX-346, D-UX-351): whole plans that pass, from engine/solve.ts ----
+
+/** A plan as a card: each move as "was → becomes", what the promoters bring, the checks it passes, and the figures "Use
+ * this plan" writes; `counts` is the strip once it is used. */
+export interface FixCard { id: PlanId; title: string; lines: string[]; brings?: string; passes: string; counts: string; change: Change }
+/** The plans that pass; or, when none does, the nearest and what it leaves short, each with the box that moves it. */
+export interface FixView { plans: FixCard[]; nearest?: { still: { text: string; field: string; box: string }[] } }
+const FIX_BOX: Record<RatioId, [string, string]> = {
+  currentRatio: ['fld-wcLimit', 'Working-capital limit'], tolTnw: ['fld-tl-amount', 'Term loan'], debtEquity: ['fld-tl-amount', 'Term loan'], facr: ['fld-tl-amount', 'Term loan'],
+  dscrAverage: ['', ''], dscrLowest: ['', ''], interestCover: ['', ''], securityCover: ['fld-collateral', 'The collateral'],
+};
+/** A plan's moves as the figures Use this writes (engine/work.ts's Change), read off the plan's own inputs. */
+const changeOf = (p: Solution): Change => {
+  const y = p.input, has = (id: string) => p.moves.some((m) => m.id === id);
+  return {
+    ...(has('loan') ? { amount: y.loan.amount } : {}), ...(has('cash') ? { cashAtStart: y.cashAtStart } : {}), ...(has('wc') ? { wcLimit: y.wcLimit } : {}),
+    ...(has('moratorium') ? { moratoriumMonths: y.loan.moratoriumMonths } : {}), ...(has('instalments') ? { instalments: y.loan.instalments } : {}),
+    ...(has('use') ? { utilisationPct: y.utilisationPct } : {}), ...(has('priceGrowth') ? { priceGrowthPct: y.priceGrowthPct } : {}),
+    ...(has('price') ? { products: (y.products ?? []).map((q) => ({ unitsMonth: q.unitsMonth as number, price: q.price as number })) } : {}),
+  };
+};
+let fixed: { on: string; v: FixView | undefined } | undefined;
+/** Fix it for me on the page: none while the report has no figures or already works. Each plan is written into the
+ * answers as typed text and run again; one that no longer passes there is not offered. Worked once for the same answers. */
+export function solvedOf(s: ReportState): FixView | undefined {
+  const on = JSON.stringify(s);
+  if (fixed?.on === on) return fixed.v;
+  const x = inputOf(s), lv = levelsOf(s.benchmarks), most = amountOf(s.promotersMost);
+  const q = solve(x, { levels: lv, ...(most !== undefined && most >= 0 ? { promotersMost: most } : {}) });
+  const view = (): FixView | undefined => {
+    if ('needs' in q || 'blocked' in q) return undefined;
+    const read = (d: { checks: RatioCheck[] }) => d.checks.filter((c) => c.meets !== undefined), met = (d: { checks: RatioCheck[] }) => d.checks.filter((c) => c.meets).length;
+    const before = `${met(q.base.diagnosis)} of ${read(q.base.diagnosis).length}`, names = s.products.map((r, i) => r.name.trim() || `line ${i + 1}`);
+    const months = (n: number) => `${n} month${n === 1 ? '' : 's'}`, money = (n: number) => (n ? `Rs. ${figText(n)}` : 'none');
+    const plans = q.plans.filter((p) => p.works).flatMap((p): FixCard[] => {
+      const change = changeOf(p), y = inputOf(applyWay(s, { change }).s), r = projectReport(y);
+      if ('needs' in r || 'blocked' in r) return [];
+      const d = diagnose(r, y, 'fresh', lv);
+      if (d.misses.length || r.cashShort) return [];
+      const lines = p.moves.flatMap((m): string[] => {
+        switch (m.id) {
+          case 'loan': return [`Term loan: ${money(m.from)} → ${money(m.to)}`];
+          case 'cash': return [`Your own money kept in the business: ${money(m.from)} → ${money(m.to)}`];
+          case 'wc': return [`Working-capital limit: ${money(m.from)} → ${money(m.to)}`];
+          case 'moratorium': return [`Holiday before the first instalment: ${months(m.from)} → ${months(m.to)}`];
+          case 'instalments': return [`Instalments: ${m.from} → ${m.to}`];
+          case 'use': return [`Use of the capacity by year: ${usesOf(x.utilisationPct)} → ${usesOf(y.utilisationPct)}`];
+          case 'price': return (y.products ?? []).map((n, i) => `Price${names.length > 1 ? `, ${names[i]}` : ''}: ${priceText(x.products?.[i]?.price as number)} → ${priceText(n.price as number)}`);
+          default: return [`Prices rise a year: ${pctOf(m.from)} → ${pctOf(m.to)}`];
+        }
+      });
+      const more = r.finance.promoter + r.finance.kept - p.promoters.now, n = read(d).length;
+      return [{ id: p.id, title: SOLVE.plans.find((k) => k.id === p.id)?.label ?? p.id, lines, change,
+        ...(Math.abs(more) >= 0.5 ? { brings: more > 0 ? `You bring Rs. ${upRupees(more)} more.` : `You bring Rs. ${rupees(-more)} less.` } : {}),
+        passes: `Passes all ${n} checks${q.base.report.cashShort ? ', and cash never runs out' : ''}`, counts: `Before: ${before}. Now: ${met(d)} of ${n}.` }];
+    });
+    if (plans.length) return { plans };
+    const near = q.plans.find((p) => !p.works), sales: [string, string] = s.salesBy === 'typed' ? ['fld-sales', 'Sales'] : ['fld-utilisation', 'Use of the capacity'];
+    const still = near ? [
+      ...near.still.map((id) => { const [field, box] = FIX_BOX[id][0] ? FIX_BOX[id] : sales; const n = labelOf(id); return { text: `${n[0].toUpperCase()}${n.slice(1)} stays short`, field, box }; }),
+      ...(near.runsOut ? [{ text: `Cash still runs out in ${near.runsOut}`, field: 'fld-cashAtStart', box: 'Your own money kept in the business' }] : []),
+    ] : [];
+    return { plans: [], nearest: { still } };
+  };
+  fixed = { on, v: view() };
+  return fixed.v;
+}
+/** "Use this plan": the plan's figures written into the answers, with what each was, for the banner and its undo. */
+export const applySolution = (s: ReportState, card: FixCard) => applyWay(s, { change: card.change });
+
+// ---- What the business can carry (CAP1, docs/CAPACITY-FIRST.md §5.1): engine/capacity.ts's figure, its limit and the
+// changes that close the gap, each alone, in words; Use this writes one as typed text, under the same undo as a plan. ----
+
+/** A change that closes the gap, or how far it reaches: "was → becomes", and `change` when Use this can write it. */
+export interface CarryCloser { id: CloserId; text: string; reach: string; closes: boolean; change?: Change }
+/** `share` and `gapAt`: the bar's fill and the loan asked, as parts of its track (the larger of the two loans). */
+export interface CarryView {
+  line: string; bar: string; how: string; gap: boolean; share: number; asked: number;
+  closers: CarryCloser[]; after?: string; keepReady?: string;
+}
+const CLOSER_LABEL: Record<CloserId, string> = {
+  term: 'Instalments', holiday: 'Holiday before the first instalment', use: 'Use of the capacity by year', price: 'Price', own: 'Your own money in the project',
+};
+let carried: { on: string; v: CarryView | undefined } | undefined;
+/** The figure on the page: none while the report has no figures. Worked once for the same answers. */
+export function carryView(s: ReportState): CarryView | undefined {
+  const on = JSON.stringify(s);
+  if (carried?.on === on) return carried.v;
+  const x = inputOf(s), lv = levelsOf(s.benchmarks), most = amountOf(s.promotersMost);
+  const c = carry(x, { levels: lv, ...(most !== undefined && most >= 0 ? { promotersMost: most } : {}) });
+  const view = (): CarryView | undefined => {
+    if ('needs' in c || 'blocked' in c) return undefined;
+    const rs = (n: number) => `Rs. ${rupees(n)}`, months = (n: number) => `${n} month${n === 1 ? '' : 's'}`;
+    const names = s.products.map((r, i) => r.name.trim() || `line ${i + 1}`);
+    const low = levelFor('dscrLowest', 'fresh', lv), avg = levelFor('dscrAverage', 'fresh', lv);
+    const line = c.carries > 0 ? `Your business can carry a loan of ${rs(c.carries)}. You asked ${rs(c.asked)}.`
+      : `Your business cannot carry a term loan on these figures yet. You asked ${rs(c.asked)}.`;
+    const bar = c.gap > 0 ? `Carries ${rs(c.carries)} of ${rs(c.asked)}` : `Carries the ${rs(c.asked)} asked`;
+    const l = c.limitedBy, h = c.how, pays = `can pay up to ${rs(Math.floor(h.forInstalments))} of instalments and interest`;
+    const why = (l.why ?? '').replace(/\.$/, '');
+    const how = l.check === 'cash' ? `A larger loan runs the cash short in ${l.fy}.`
+      : l.check === 'cost' ? `No more can be borrowed: ${why.charAt(0).toLowerCase()}${why.slice(1)}.`
+      : h.fy ? `In ${h.fy}, the tightest year, the business has ${rs(h.available)} for the loan; a bank wants ${h.level} times what it pays, so it ${pays} that year.`
+      : `Over the loan the business has ${rs(h.available)} for it; a bank wants ${h.level} times on average, so it ${pays} in all.`;
+    const textOf = (k: Carry['closers'][number]): string => {
+      const y = k.input ?? x;
+      switch (k.id) {
+        case 'term': return `${CLOSER_LABEL.term}: ${k.from} → ${k.to}`;
+        case 'holiday': return `${CLOSER_LABEL.holiday}: ${months(k.from)} → ${months(k.to ?? k.from)}`;
+        case 'use': return k.input ? `${CLOSER_LABEL.use}: ${usesOf(x.utilisationPct)} → ${usesOf(y.utilisationPct)}` : `${CLOSER_LABEL.use}: first year ${pctOf(k.from)} → ${pctOf(k.to ?? k.from)}`;
+        case 'price': return k.input && names.length > 1
+          ? (y.products ?? []).map((n, i) => `${CLOSER_LABEL.price}, ${names[i]}: ${priceText(x.products?.[i]?.price as number)} → ${priceText(n.price as number)}`).join('; ')
+          : `${CLOSER_LABEL.price}${names.length > 1 ? `, ${names[0]}` : ''}: ${priceText(k.from)} → ${priceText(k.to ?? k.from)}`;
+        default: return k.to === undefined ? CLOSER_LABEL.own : `${CLOSER_LABEL.own}: ${rs(k.from)} → ${rs(k.to)}, the term loan ${rs(k.reaches)}`;
+      }
+    };
+    const changeOfCloser = (k: Carry['closers'][number]): Change | undefined => {
+      const y = k.input;
+      if (!y) return undefined;
+      switch (k.id) {
+        case 'term': return { instalments: y.loan.instalments };
+        case 'holiday': return { moratoriumMonths: y.loan.moratoriumMonths };
+        case 'use': return { utilisationPct: y.utilisationPct };
+        case 'price': return { products: (y.products ?? []).map((q) => ({ unitsMonth: q.unitsMonth as number, price: q.price as number })) };
+        default: return { amount: y.loan.amount };
+      }
+    };
+    // Written into the answers as typed text and run again: one that no longer meets both DSCRs there gets no button.
+    const holds = (change: Change) => {
+      const r = projectReport(inputOf(applyWay(s, { change }).s));
+      return !('needs' in r) && !('blocked' in r) && !!r.lowest && r.lowest.dscr >= low - 1e-9 && r.average !== undefined && r.average >= avg - 1e-9;
+    };
+    const ORDER: CloserId[] = ['term', 'use', 'price', 'own', 'holiday'];
+    const closers = [...c.closers].sort((a, b) => +b.closes - +a.closes || ORDER.indexOf(a.id) - ORDER.indexOf(b.id)).map((k): CarryCloser => {
+      const change = k.closes ? changeOfCloser(k) : undefined;
+      const reach = k.closes ? (k.id === 'own' ? `A smaller loan, the ${rs(c.gap)} short from you` : `Carries the ${rs(c.asked)} asked`)
+        : k.id === 'own' ? (k.reaches > 0 ? `Cuts the loan by more than ${SOLVE.loanCutMostPct}%, or past the most you can bring` : 'Even the smallest loan misses')
+        : k.reaches > 0 ? `Carries ${rs(k.reaches)} at most: not enough alone` : 'Carries no loan alone';
+      return { id: k.id, text: textOf(k), reach, closes: k.closes, ...(change && holds(change) ? { change } : {}) };
+    });
+    const after = c.verdict === 'notAsItStands' ? `No change here, alone or with others, carries the loan asked as it stands. ${CLOSER_LABEL[c.nearest ?? 'own']} comes nearest.`
+      : c.verdict === 'closable' && !c.closers.some((k) => k.closes) ? 'No one change alone carries the loan asked; Fix it for me, below, puts them together.' : undefined;
+    const top = Math.max(c.asked, c.carries);
+    return { line, bar, how, gap: c.gap > 0, share: top > 0 ? (100 * c.carries) / top : 0, asked: top > 0 ? (100 * c.asked) / top : 0, closers,
+      ...(after ? { after } : {}),
+      ...(c.keepReady !== undefined ? { keepReady: `Cash runs short before the sales come in, whatever the loan: keep Rs. ${upRupees(c.keepReady)} more of your own ready.` } : {}) };
+  };
+  carried = { on, v: view() };
+  return carried.v;
+}
+/** "Use this" on a closer: its figure written into the answers as typed text, with what it was, for the banner and its undo. */
+export const applyCloser = (s: ReportState, k: CarryCloser) => applyWay(s, { change: k.change as Change });
+
 /** The answer to the question left open: the plant's sales are kept beside the report; the larger plant's cost sets the
  * machinery (engine/work.ts's plantMachinery), a change the banner lists and its undo takes back. Not understood, it
  * stays open. */

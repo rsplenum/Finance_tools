@@ -40,8 +40,8 @@ What the screens do wrong: the Check step holds eight jobs (the answer, why, the
 ## 3. FIX1: the engine finds plans that pass (L, Extra)
 Rahul opens: the preview, their own case typed in, "Fix it for me", plans that pass, one applied. Done when Rahul says Make it work works.
 
-### 3.1 The part first year (Rahul's answer first: `docs/OWNER.md`, "UX2's part first year")
-Recommended, and FIX1 builds it only on Rahul's yes: the levels that read a year's earnings (interest cover, and the DSCR if a part year ever carries an instalment) are judged from the first full year of sales; a part year is printed and marked "part year, not judged". Cash running out in a part year stays judged. In `engine/data/ratios.json` as `judgeFrom: "firstFullYear"` with its source ("the owner's answer of dd-mm-2026") and date; `engine/ratios.ts` `diagnose` skips years with `months < 12` for those ids; the paper's ratio table prints the mark. Without the yes: leave the rule, and the fix panel says of such a case "Interest cover in the part first year stays short: no change mends it" under the nearest plan.
+### 3.1 The part first year (Rahul's answer of 10-11-2026: it stays judged; built, D-UX-350)
+Rahul's rule: interest is paid in those months too, so the part year is judged, on its own months of sales and its own months of interest; nothing is printed "not judged". Term-loan interest before the first sale goes to the project's cost, which the margin shares; a first year of sales under 180 days takes half the year's depreciation. Cash running out is judged in every year. A new unit whose first months earn less than their costs misses interest cover whatever the loan: only a plan that raises use or price passes, else the nearest names it.
 
 ### 3.2 `engine/solve.ts` (new, pure, no DOM)
 Built on what exists; nothing is worked twice: `withLevers` and the limits of `engine/plan.ts`, `withChange` of `engine/work.ts`, `projectReport`, `diagnose`.
@@ -88,7 +88,7 @@ Also in this row: `engine/work.ts` never prints a use above 100% (`useCannot.nee
 ### 3.3 Tests (`tests/solve.test.ts`; the `money-maths-checks` skill)
 1. Second computation: for every plan with `works`, `diagnose(projectReport(plan.input))` run afresh in the test meets every level and cash never runs out.
 2. Least: one grid step back on any move of a working plan fails.
-3. The fixture `tests/fixtures/solve-part-year.json` (fictional: "Sample Metals", shaped as §1): with `judgeFrom` on, at least two plans work; with it off, none works and the nearest names interest cover.
+3. The fixture `tests/fixtures/solve-part-year.json` (fictional: "Sample Metals", shaped as §1): Earn more and Balanced work; Borrow less alone does not, and its nearest names interest cover in the part year.
 4. Limits: no use above 85%, no term above 180 months, no loan below `leastLoan`, the promoters within `promotersMost`.
 5. A case that works returns `plans: []`. A hopeless case returns only `works: false`.
 6. The same input gives the same plans (run twice, deep equal). The run count stays within the budget.

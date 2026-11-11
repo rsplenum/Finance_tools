@@ -14,6 +14,8 @@ export interface ReportCheckIn {
   cost: Record<string, number>; promoter: number; subsidy: number; unsecured: number; limit: number;
   /** A full year's sales at each year's rate (typed), or the drivers to work it out afresh; the months of sales a year. */
   run: number[]; months: number[];
+  /** The month of the first sales ('YYYY-MM'): a first year of fewer than 180 days of them takes half the depreciation. */
+  start: string;
   /** `fullAt`: the year (from 0) after which the price grows, the new line's last typed use in an expansion, else 0. */
   drivers?: { capacity?: number; price?: number; products?: { unitsMonth: number; price: number }[]; utilisationPct: number[]; priceGrowthPct: number; fullAt?: number };
   /** An expansion's sales today (a full first year) and their growth: sold every month of each year, beside the new line. */
@@ -28,6 +30,11 @@ export interface ReportCheckYear { sales: number; depreciation: number; netBlock
 export function reportCheck(x: ReportCheckIn): ReportCheckYear[] {
   const debt = new Map(scheduleCheck(x.loan).map((d) => [d.fy, d.closing]));
   const n = DATA.preliminaryYears, prelim = x.cost.preliminary ?? 0;
+  // The days of sales in the first year, counted month by month to March (report.ts takes two dates apart).
+  const [sy, sm] = x.start.split('-').map(Number), F = DATA.firstYearDepreciation;
+  let days = 0;
+  for (let m = sm, y = sy; ; m = m === 12 ? 1 : m + 1, y += m === 1 ? 1 : 0) { days += new Date(Date.UTC(y, m, 0)).getUTCDate(); if (m === 3) break; }
+  const share = days < F.belowDays ? F.sharePct / 100 : 1;
   let profits = 0;
   return x.fys.map((fy, k) => {
     profits += x.pat[k];
@@ -35,8 +42,9 @@ export function reportCheck(x: ReportCheckIn): ReportCheckYear[] {
     for (const h of DATA.heads) {
       if (h.id === 'preliminary') continue;
       const c = x.cost[h.id] ?? 0, r = h.depreciationPct / 100;
-      depreciation += c * r * Math.pow(1 - r, k);
-      netBlock += c * Math.pow(1 - r, k + 1);
+      // The first year at its share of the rate; each later year on what the first left, in closed form.
+      depreciation += k ? c * (1 - r * share) * r * Math.pow(1 - r, k - 1) : c * r * share;
+      netBlock += c * (1 - r * share) * Math.pow(1 - r, k);
     }
     // By the drivers: each product's units a year at the year's use, times its price that year, summed; else as typed. An
     // expansion adds today's sales, compounded afresh, for the whole year.

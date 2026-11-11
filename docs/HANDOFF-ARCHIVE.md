@@ -173,6 +173,8 @@ The owner's two reference films set the bar and the VID3 path (`docs/video/VID3-
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 09-11-2026 | PLAN1 (the plan from Rahul's thirteen questions: `docs/PLAN.md` and Rahul's page) | none set: Rahul's ask | about 50 steps, 0.3 h, 1 compaction; no agent |
+| 09-11-2026 | LOOSE1 (the look freed from the checks: the taste counts report, the gates named in D-TECH-110; BUILD1's row) | S, high | about 45 steps, 0.2 h, no compaction; no agent; within S |
 | 28-10-2026 | LOOP1d: the fold on the report, the CMA and the estimate, one shape for four | L, Extra | about 110 steps, one compaction; a Python replace of an empty string grew a file to 770k lines (assert a match first) |
 | 28-10-2026 | LOOP1c: the answers fold to a rail (a sheet on a phone); Make it work as one shared part | L, Extra | about 200 steps, one compaction; CI's headless shell needed three fixes to the sheet's Esc (a late close, then Esc before showModal) |
 | 27-10-2026 | LOOP1b: Make it work on the DSCR page (the slider moved stays, one follows; three plans with their cost; the rounds) | L, Extra | about 187 steps, two compactions; the non-monotone repayment cost a redo of the stop search |
@@ -319,3 +321,8 @@ Budget line moved from HANDOFF on 04-11-2026:
 | # | Deliverable | Budget | Starter prompt |
 |---|---|---|---|
 | RC1 | The release check on `main`, once every Monday PR is merged (D-BIZ-20): every page by the critic at once, at 360 and 1280, light and dark; the owner's five tests' notes scored; every check at 0; `noindex` on; the network back to the allowed list; fixes on one PR. Traps: never start on a half-merged `main`; a blocker is fixed or named, never waved through; LEGAL2 is after Monday, so the draft marks stay | M, high | "Work from `main`. Read CLAUDE.md, docs/HANDOFF.md, D-BIZ-20 and RC1 in docs/ROADMAP.md, and grep docs/GOTCHAS.md for `site-check` and `critic`. Budget M, at high. RC1: the release check. My five tests' notes: …. Finish per HANDOFF." |
+
+Budgets and actuals, moved from the handoff on 10-11-2026:
+| 10-11-2026 | BUILD1 (the project report as a builder with the live paper; answers saved on the device; the worked example that passes; the checks walk the steps; WORDS1's row) | L, Extra | about 160 steps, 3 compactions, long waits between steps (the cache lapsed several times: the cost guard warned); 3 small agents; within L |
+| 10-11-2026 | WORDS1 (plain words on the four tools and home; one "How this is worked out" a page; Rahul's before and after, https://claude.ai/artifact/V4B8zLU9VzqUBCn42SVFbx; BUILD2's row) | M, high | about 110 steps, 2 compactions, long waits between steps (the cache lapsed); no agent; within M |
+| 10-11-2026 | UX2 (why Make it work fails on the report; every step measured; the rebuild's plan, the mock and Rahul's page; FIX1's row) | none set: Rahul's ask | about 50 steps, 0.5 h, 2 compactions; no agent; the cost guard warned twice |

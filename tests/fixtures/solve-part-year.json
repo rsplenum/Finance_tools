@@ -1,0 +1,11 @@
+{
+  "about": "Fictional: Sample Metals, a new unit. Sales begin seven months after the loan is drawn, so the first year holds three months of sales; prices are held flat while fixed costs rise 5% a year; the loan is about 73% of the project's cost. Model-worked; no real business.",
+  "input": {
+    "taxBy": "firm",
+    "cost": { "building": 3000000, "machinery": 6000000, "furniture": 500000, "preliminary": 200000 },
+    "loan": { "amount": 7500000, "ratePct": 11, "disbursed": "2026-06", "moratoriumMonths": 6, "instalments": 72, "frequency": "monthly", "style": "equal-principal" },
+    "salesBy": "drivers", "capacity": 120000, "price": 250, "utilisationPct": [50, 65, 80], "priceGrowthPct": 0, "monthsToStart": 7,
+    "variablePct": 68, "fixedCosts": 3600000, "fixedGrowthPct": 5,
+    "days": { "stock": 30, "debtors": 45, "creditors": 30 }, "wcLimit": 2000000, "wcRatePct": 11.5
+  }
+}

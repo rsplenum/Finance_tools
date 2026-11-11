@@ -29,6 +29,9 @@ export interface ProjectionYear {
   leaseRentals?: number;
   otherLoansInterest?: number;
   otherLoansPrincipal?: number;
+  /** The part of this year's interest on the new loan that is paid from the project's cost: the months before the first
+   * sales (the project report). It is left out of the year's profit and of its debt service. */
+  interestFromCost?: number;
   /** EMIs paid in the year on loans already running, interest and principal together. */
   existingEmis?: number;
   /** A tax rate, or instead who the borrower is (`taxBy`, an id in engine/data/tax.json), which sets the tax. */
@@ -70,7 +73,7 @@ export const BENCHMARKS = DATA.benchmarks;
 export const OPTIONS = DATA.options;
 export const COMPONENTS = DATA.components;
 
-export const PROJECTION_LABELS: Record<Exclude<keyof ProjectionYear, 'fy' | 'taxBy'>, string> = {
+export const PROJECTION_LABELS: Record<Exclude<keyof ProjectionYear, 'fy' | 'taxBy' | 'interestFromCost'>, string> = {
   pbdit: 'Profit before interest, depreciation and tax',
   assetIncome: 'Extra income from the new asset',
   depreciation: 'Depreciation',
@@ -295,7 +298,7 @@ function plan(all: ProjectionYear[], loan: LoanTerms, def: Definition, start?: s
   const profit: ProfitYear[] = [];
   const years: YearFigures[] = proj.map((y) => {
     const p = y as Required<ProjectionYear>, d = byFy.get(y.fy);
-    const interestTL = (d?.interest ?? 0) + p.otherLoansInterest, principalTL = (d?.principal ?? 0) + p.otherLoansPrincipal;
+    const interestTL = (d?.interest ?? 0) - (y.interestFromCost ?? 0) + p.otherLoansInterest, principalTL = (d?.principal ?? 0) + p.otherLoansPrincipal;
     // Existing EMIs are not split into interest and principal, so none of their interest is set against tax (errs low).
     const pbt = p.pbdit + p.assetIncome - p.depreciation - p.nonCash - interestTL - p.interestOther;
     const by = borrowerOf(y.taxBy), tax = by ? taxOn(pbt, by) : pbt > 0 ? pbt * p.taxPct / 100 : 0, pat = pbt - tax;

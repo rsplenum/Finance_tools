@@ -9,12 +9,14 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import { allNeeds, docStatus, fileName, reportDoc } from '../site/src/report/document';
-import { AS_TYPED, EMPTY, PENDING, applyPlan, applyWay, answerPending, checkKey, checkOf, assumptionsOf, boardOf, changedOf, holidayAssumed, inputOf, periodLine, planOf, preview, repaymentView, statusText, undoPlan, viableOf, withMode, workView, type ReportState } from '../site/src/report/model';
+import { AS_TYPED, EMPTY, PENDING, applyPlan, applySolution, applyWay, answerPending, checkKey, checkOf, assumptionsOf, boardOf, changedOf, holidayAssumed, inputOf, periodLine, planOf, preview, repaymentView, solvedOf, statusText, undoPlan, viableOf, withMode, workView, type ReportState } from '../site/src/report/model';
 import { compareRepayments } from '../engine/repayment';
 import { inr } from '../engine/util';
 import { makePlan, withLevers } from '../engine/plan';
 import { REPORT_HOME } from '../site/src/report/home-case';
 import { F } from './fix.test';
+import SAMPLE from './fixtures/solve-part-year.json';
+import { projectReport, type Report, type ReportInput } from '../engine/report';
 import { benchmarkFields, levelsOf, withBenchmark } from '../site/src/board-model';
 import { sameValue } from '../site/src/amount';
 import { SITE_NAME } from '../site/src/site';
@@ -71,14 +73,15 @@ describe('the project report page', () => {
     expect([row(p, 'sales', 'Pieces sold')?.values[0], row(p, 'sales', 'Total sales')?.values.slice(0, 2)]).toEqual(['4,500', ['14,40,000', '67,20,000']]);
     expect(row(p, 'pl', 'Months of sales')?.values).toEqual(['3', '12', '12', '12', '12']);
     expect(row(p, 'pl', 'Use of the capacity')?.values).toEqual(['60%', '70%', '80%', '80%', '80%']);
-    expect(row(p, 'cf', 'Cash at the end of the year')?.values[0]).toBe('42,793');
+    expect(row(p, 'cf', 'Cash at the end of the year')?.values[0]).toBe('83,271');
   });
   it('PMEGP asks its three facts; cash running out names its first year and the amount, and keeps the document provisional', () => {
     expect(preview({ ...P, category: undefined, area: undefined, activity: undefined }).needs.length).toBe(3);
     const t = { ...P, fixed: '25 L' }, q = preview(t);
-    // The first year under nil read off the cash row: the first value with a minus (D-UX-247).
-    expect(row(q, 'cf', 'Cash at the end of the year')?.values).toEqual(['-2,82,207', '-15,51,259', '-26,23,082', '-37,13,335', '-49,07,813']);
-    expect(q.short).toBe('Cash runs out in 2026-27: Rs. 49,07,813 short at its lowest, in 2030-31. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.');
+    // The first year under nil read off the cash row: the first value with a minus (D-UX-247). Each year is Rs. 40,479
+    // above the figures before D-UX-350: the interest before the first sales, now in the project's cost, comes from the promoters.
+    expect(row(q, 'cf', 'Cash at the end of the year')?.values).toEqual(['-2,41,729', '-15,10,780', '-25,82,604', '-36,72,856', '-48,67,334']);
+    expect(q.short).toBe('Cash runs out in 2026-27: Rs. 48,67,334 short at its lowest, in 2030-31. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.');
     expect(q.runsOut).toBe('2026-27');
     // A result, not a question (OR11's O1): out of the count, into the verdict; the file stays provisional (D-UX-49).
     expect(statusText(q)).toBe('All questions answered');
@@ -332,15 +335,15 @@ describe('Make it work on the page, used and undone (OR11d)', () => {
     expect(w.held.map((h) => [h.cause, h.head, h.rows.map((r) => r.id)])).toEqual([['assets', 'The assets wear out faster than the loan is repaid', ['facr']]]);
     expect([w.misses, w.cash, w.amount, w.keep, w.dscrLevel]).toEqual([1, undefined, 'Rs. 2,50,00,000', [], '1.25']);
     expect(w.keepNot.map((c) => [c.id, c.still])).toEqual([['price', ['fixed-asset cover']], ['capacity', ['fixed-asset cover']], ['growth', ['fixed-asset cover']], ['cash', ['fixed-asset cover']]]);
-    // tests/fix.test.ts by hand: Rs. 1,03,20,000 over the typed 15 years, or Rs. 1,75,00,000 over 10.
+    // tests/fix.test.ts by hand: Rs. 1,11,40,000 over the typed 15 years, or Rs. 1,72,20,000 over 11.
     expect(w.change.map((c) => [c.head, c.text, c.notes, c.reaches])).toEqual([
-      ['Borrow less', 'A term loan of Rs. 1,03,20,000 (now Rs. 2,50,00,000).', ['The promoters bring Rs. 1,46,80,000 more.'], true],
-      ['Borrow less and repay in 10 years', 'A term loan of Rs. 1,75,00,000 (now Rs. 2,50,00,000), repaid in 10 years instead of 15 years.', ['The promoters bring Rs. 75,00,000 more.'], true]]);
+      ['Borrow less', 'A term loan of Rs. 1,11,40,000 (now Rs. 2,50,00,000).', ['The promoters bring Rs. 1,37,52,585 more.'], true],
+      ['Borrow less and repay in 11 years', 'A term loan of Rs. 1,72,20,000 (now Rs. 2,50,00,000), repaid in 11 years instead of 15 years.', ['The promoters bring Rs. 77,19,705 more.'], true]]);
     expect([w.changeNone, w.changeNot.map((c) => c.id)]).toEqual([undefined, ['wc']]);
   });
   it('Use this writes the way, every level then meets, and the undo gives back the figures as typed', () => {
     const w = workView(FS)!;
-    for (const [k, was] of [[0, ['Term loan: 2.5 Cr → 1,03,20,000']], [1, ['Term loan: 2.5 Cr → 1,75,00,000', 'Instalments: 180 → 120']]] as const) {
+    for (const [k, was] of [[0, ['Term loan: 2.5 Cr → 1,11,40,000']], [1, ['Term loan: 2.5 Cr → 1,72,20,000', 'Instalments: 180 → 132']]] as const) {
       const { s, changes } = applyWay(FS, w.change[k]);
       expect(changes.map((c) => `${c.label}: ${c.was} → ${c.now}`)).toEqual(was);
       expect([preview(s).misses, preview(s).needs, workView(s)]).toEqual([undefined, [], undefined]);
@@ -387,8 +390,8 @@ describe('simple and expert modes', () => {
     const T: ReportState = { ...FS, mode: 'simple', sellFrom: '2026-11', fixed: '', fixedMonth: '10 L', loan: { ...EMPTY.loan, amount: '2.5 Cr', ratePct: '9.3' }, years: '15', wcBy: 'typed', security: 'neither' };
     const { s, changes } = applyWay(T, workView(T)!.change[1]);
     expect(inputOf(T).loan).toEqual(F.loan);
-    expect(changes.map((c) => `${c.label}: ${c.was} → ${c.now}`)).toEqual(['Term loan: 2.5 Cr → 1,75,00,000', 'Instalments: 180 → 120']);
-    expect([s.years, preview(s).misses]).toEqual(['10', undefined]);
+    expect(changes.map((c) => `${c.label}: ${c.was} → ${c.now}`)).toEqual(['Term loan: 2.5 Cr → 1,72,20,000', 'Instalments: 180 → 132']);
+    expect([s.years, preview(s).misses]).toEqual(['11', undefined]);
   });
   it('simple mode fills what it assumes, and works the limit out', () => {
     const x = inputOf(S);
@@ -457,8 +460,9 @@ describe('simple and expert modes', () => {
     expect(w.notes[0]).toMatch(/^A stepped instalment is level within each year and rises each new year by up to 10%\. The last year's is held to 2 times the first year's at most/);
     const p = w.rows.find((r) => r.proposed);
     expect(p).toBeUndefined();
-    // Six ratios miss with each way (the owner, 26-10-2026): the way to repay cannot fix them, so it says so.
-    expect(w.lead).toBe('6 ratios miss whichever way the loan is repaid: the ways differ in the interest and the instalments. What fixes them is under “Make it work” above.');
+    // Three ratios miss with each way (six before D-UX-350 took the interest before the first sales to the project's
+    // cost and half the depreciation in a first year under 180 days): the way to repay cannot fix them, so it says so.
+    expect(w.lead).toBe('3 ratios miss whichever way the loan is repaid: the ways differ in the interest and the instalments. What fixes them is under “Make it work” above.');
     expect(w.rows.every((r) => r.lines.length === 1 && /^Misses /.test(r.lines[0].text))).toBe(true);
     const st = { ...S, loan: { ...S.loan, repayment: 'stepped' as const } };
     expect([inputOf(st).loan.style, repaymentView(st)!.rows.find((r) => r.now)?.value]).toEqual(['stepped', 'stepped']);
@@ -501,7 +505,7 @@ describe('check and confirm (OR8)', () => {
     const p = preview(P), g = lines(P), table = (id: string) => p.view!.tables.find((t) => t.id === id)!.rows.map((r) => `${r.label}: Rs. ${r.values[0]}`);
     expect(g.business).toEqual(['Who the borrower is: Partnership firm or LLP', 'A government scheme: PMEGP', 'What backs the loan: The project’s own assets only']);
     expect(g.cost).toEqual(table('cost'));
-    expect(g.cost.at(-1)).toBe('Total cost of the project: Rs. 30,23,425');
+    expect(g.cost.at(-1)).toBe('Total cost of the project: Rs. 30,63,903');
     expect(g.finance).toEqual(table('finance'));
     expect(g.loan).toEqual(['Interest rate: 10% a year', 'Loan period: 4 years 6 months in all: a holiday of 6 months, then 4 years of instalments', 'How it is repaid: Equal principal every month']);
     expect(g.sales).toEqual(['Roasted chana: 2,500 pieces a month at full running, at Rs. 200 a piece', 'Roasted peanuts: 1,500 pieces a month at full running, at Rs. 200 a piece',
@@ -552,5 +556,60 @@ describe('today\'s sales and a new line, on the page', () => {
   });
   it('needs today\'s sales in the line\'s words', () => {
     expect(preview({ ...E, sales: '' }).needs.join(' ')).toContain('Today\'s sales');
+  });
+});
+
+// Fix it for me (FIX1, D-UX-351) on fictional Sample Metals (tests/fixtures/solve-part-year.json), typed as text. The
+// plans are engine/solve.ts's, worked by hand in tests/solve.test.ts: Earn more is the use at 85% in every year with the
+// price at Rs. 251.25; Balanced is a loan of Rs. 54,66,000, a limit of Rs. 18,00,000 and the use from 80.5%; Borrow
+// less leaves interest cover short in the part first year, so it is not offered. What the promoters bring more is read
+// here a second way: the project's cost less the term loan, after against before.
+const SM: ReportState = {
+  ...EMPTY, borrower: 'firm', cost: { ...EMPTY.cost, building: '30 L', machinery: '60 L', furniture: '5 L', preliminary: '2 L' },
+  loan: { amount: '75 L', ratePct: '11', disbursed: '2026-06', moratoriumMonths: '6', instalments: '72', repayment: 'monthly' },
+  products: [{ name: 'Castings', units: '10,000', price: '250' }], monthsToStart: '7', utilisation: '50, 65, 80', priceGrowth: '0',
+  variablePct: '68', fixed: '36 L', fixedGrowth: '5', days: { stock: '30', debtors: '45', creditors: '30' }, wcLimit: '20 L', wcRate: '11.5',
+};
+describe('Fix it for me on the page (FIX1)', () => {
+  const own = (s: ReportState) => { const r = projectReport(inputOf(s)) as Report; return r.projectCost - (inputOf(s).loan.amount as number); };
+  it('types the fixture: the same sales, profit and cash in every year', () => {
+    const fig = (x: ReportInput) => (projectReport(x) as Report).years.map((y) => [y.sales, y.pat, y.cash].map((n) => n.toFixed(2)));
+    expect(fig(inputOf(SM))).toEqual(fig(SAMPLE.input as ReportInput));
+    expect([preview(SM).misses, preview(SM).runsOut]).toEqual(['Misses 5 of 8 benchmarks: current ratio, total outside liabilities ÷ net worth, average DSCR, DSCR in the lowest year and interest cover.', '2026-27']);
+  });
+  it('offers the plans that pass, each move as was → becomes', () => {
+    const v = solvedOf(SM)!;
+    expect(v.nearest).toBeUndefined();
+    expect(v.plans.map((c) => [c.id, c.title, c.lines, c.passes, c.counts])).toEqual([
+      ['earnMore', 'Earn more', ['Use of the capacity by year: 50%, 65%, 80% → 85%, 85%, 85%', 'Price: Rs. 250 → Rs. 251.25'], 'Passes all 8 checks, and cash never runs out', 'Before: 3 of 8. Now: 8 of 8.'],
+      ['balanced', 'Balanced', ['Term loan: Rs. 75,00,000 → Rs. 54,66,000', 'Working-capital limit: Rs. 20,00,000 → Rs. 18,00,000', 'Use of the capacity by year: 50%, 65%, 80% → 80.5%, 85%, 85%'], 'Passes all 8 checks, and cash never runs out', 'Before: 3 of 8. Now: 8 of 8.']]);
+    for (const c of v.plans) {
+      const more = Math.ceil(own(applySolution(SM, c).s) - own(SM) - 1e-6);
+      expect(c.brings).toBe(`You bring Rs. ${inr(more)} more.`);
+    }
+  });
+  it('Use this plan writes the figures as typed text, every check then passes, and the undo gives back the answers', () => {
+    const v = solvedOf(SM)!;
+    const wrote = v.plans.map((c) => {
+      const { s, changes } = applySolution(SM, c), p = preview(s);
+      expect([p.misses, p.short, p.checks?.filter((k) => k.verdict !== 'meets').length]).toEqual([undefined, undefined, 0]);
+      expect(undoPlan(s, changes)).toEqual(SM);
+      return changes.map((k) => `${k.label}: ${k.was} → ${k.now}`);
+    });
+    expect(wrote).toEqual([['Use of the capacity: 50, 65, 80 → 85, 85, 85', 'Price, Castings: 250 → 251.25'],
+      ['Use of the capacity: 50, 65, 80 → 80.5, 85, 85', 'Term loan: 75 L → 54,66,000', 'Working-capital limit: 20 L → 18,00,000']]);
+  });
+  it('keeps within the most the promoters can bring, and names what the nearest leaves short when none passes', () => {
+    // The promoters bring Rs. 26,81,250 now (the cost of Rs. 1,01,81,250 less the loan); Earn more asks Rs. 11,59,555 more.
+    expect(solvedOf({ ...SM, promotersMost: '40 L' })?.plans.map((c) => [c.id, c.brings])).toEqual([['earnMore', 'You bring Rs. 11,59,555 more.']]);
+    expect(solvedOf({ ...SM, promotersMost: '35 L' })).toEqual({ plans: [], nearest: { still: [{ text: 'Interest cover stays short', field: 'fld-utilisation', box: 'Use of the capacity' }] } });
+    const none = solvedOf({ ...SM, variablePct: '97' })!;
+    expect(none.plans).toEqual([]);
+    expect(none.nearest?.still.every((t) => /^[A-Z].* stays short$|^Cash still runs out in 20\d\d-\d\d$/.test(t.text) && t.field.startsWith('fld-') && !!t.box)).toBe(true);
+    expect(none.nearest?.still.length).toBeGreaterThan(0);
+  });
+  it('gives none when every check already passes or the figures are not all there', () => {
+    expect(solvedOf(applySolution(SM, solvedOf(SM)!.plans[0]).s)).toEqual({ plans: [], nearest: { still: [] } });
+    expect(solvedOf({ ...SM, fixed: '' })).toBeUndefined();
   });
 });

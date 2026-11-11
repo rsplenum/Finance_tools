@@ -132,7 +132,7 @@ export function planCheck(proj: ProjectionYear[], loan: LoanTerms, def: Definiti
   const debt = new Map(scheduleCheck(loan).map((d) => [d.fy, d]));
   return summarise(proj.map((y) => {
     const p = y as Required<ProjectionYear>, d = debt.get(y.fy);
-    const tl = (d?.interest ?? 0) + p.otherLoansInterest, principal = (d?.principal ?? 0) + p.otherLoansPrincipal;
+    const tl = p.otherLoansInterest + (d?.interest ?? 0) - (y.interestFromCost === undefined ? 0 : y.interestFromCost), principal = (d?.principal ?? 0) + p.otherLoansPrincipal;
     const earned = p.pbdit + p.assetIncome;
     const profitBeforeTax = earned - p.depreciation - p.nonCash - tl - p.interestOther;
     const schedule = TAX.borrowers.find((b) => b.id === y.taxBy) as Borrower | undefined;

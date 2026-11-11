@@ -72,7 +72,8 @@ export interface Work {
   cash?: Report['cashShort'];
   keep: Way[]; change: Way[]; not: Way[];
   /** By the drivers, when more use of the capacity cannot carry the loan even at the most a plan takes in every year: the
-   * levels left short there, and the use it would need at the same price (engine/viable.ts). */
+   * levels left short there, and the use it would need at the same price (engine/viable.ts), left out when any year's
+   * passes 100%: no plant runs above its capacity, so use alone cannot reach it (FIX1). */
   useCannot?: { still: RatioId[]; needed?: number[] };
 }
 export interface WorkInput {
@@ -209,7 +210,7 @@ export function makeWork(x: ReportInput, o: WorkInput = {}): Work | Needs | Bloc
       const x85: ReportInput = reached ? x : { ...x, utilisationPct: u0.map(() => most) };
       if (!reached) {
         const u = run(x85);
-        out.useCannot = { still: u?.misses ?? missed, ...(v.sales?.use ? { needed: v.sales.use.needed } : {}) };
+        out.useCannot = { still: u?.misses ?? missed, ...(v.sales?.use && v.sales.use.needed.every((n) => n <= 100 + 1e-9) ? { needed: v.sales.use.needed } : {}) };
       }
       const use85 = reached ? {} : { utilisationPct: x85.utilisationPct as number[] }, at85 = !reached;
       // The price: the one price to the paise, or every product's price by the same share (tenths of a per cent).
