@@ -221,7 +221,7 @@ const lib = ['# The library', '', 'Generated from `engine/data/library/` by `npm
   `${entries.size} items in ${files.reduce((t, f) => t + f.families.length, 0)} families, from ${Object.keys(sources.sources).length} sources. The estimate uses the middle of each range. A family's five levels name one item each (${A.levels.map((l) => l.name).join(', ')}); every other item in the family is an alternative you can choose instead. A level is a band of choices (L1): the item it names and every other item usually at it; the estimate's range at a level runs from the cheapest priced choice at it in every line to the dearest.`, '',
   // E2: how much was read on its page, as counts; each source below says which.
   `Checked against their pages: ${[...entries.values()].filter((e) => e.checked).length} of ${entries.size} items, ${Object.values(sources.sources).filter((s) => s.checked).length} sources; ${Object.values(sources.sources).filter((s) => s.unread).length} sources could not be opened.`, '',
-  // E4: the items with no check of their own, counted here so a doc quoting them can copy the count (docs/LESSONS.md).
+  // E4: the items with no check of their own, counted here so a doc quoting them can copy the count (docs/archive/LESSONS.md).
   unchecked(), ''];
 const introAt = lib.length - 4;
 for (const f of files) {

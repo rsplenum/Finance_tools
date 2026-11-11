@@ -109,7 +109,7 @@ export function PlanEstimate() {
     <AnswersColumn f={f} pre="pl" groups={() => (v ? railOf(s, v) : [])} summary={v?.summary} rows={3} start={<>{!f.fold && <KeptLine />}<StartLine c={c} home={home} fold={f.fold}>
       <a href="#typed-path" data-testid="pl-to-typed" class={LINK_BUTTON} onClick={toTyped}>Have a contractor’s quotation?</a></StartLine></>}
       unfolded={questions}>{questions}</AnswersColumn>
-    {/* The answer as paper, there from load as its outline, and the one sheet with a shadow (docs/DESIGN-SITE.md, tool pages). */}
+    {/* The answer as paper, there from load as its outline, and the one sheet with a shadow (docs/archive/DESIGN-SITE.md, tool pages). */}
     <div class={f.fold ? 'lg:col-start-2 lg:row-start-1' : 'lg:col-start-2 lg:row-start-1 lg:row-end-3'}>{f.fold && <StartNotes c={c} home={home} />}<section id="pl-result" aria-labelledby="pl-result-h" class={f.fold ? 'mt-4' : 'answer-panel mt-6 lg:mt-4'}>
       <h2 id="pl-result-h" tabIndex={-1} class="sr-only text-section">The estimate</h2>
       <div class="paper shadow-paper rounded-card p-3 sm:p-6">{v ? <Answer v={v} toLevel={toLevel} /> : <Outline p={p} />}</div>
@@ -234,7 +234,7 @@ function Questions({ s, update, p, toLevel, see }: { s: PlanState; update: Updat
  * rates' line, the five levels, Compare and a new house's stages. */
 function Answer({ v, toLevel }: { v: PlanView; toLevel: (l: Level) => void }) {
   return <>
-    {/* The answer in words and its figure, marked for the load measure (docs/LOAD-MEASURE.md, count 8). As precise as the
+    {/* The answer in words and its figure, marked for the load measure (docs/archive/LOAD-MEASURE.md, count 8). As precise as the
         estimate (UX8, review finding 5): rounded here, to the rupee in the bill and the documents, as the page says. */}
     <div data-answer class={answerRule(true)}>
       <p data-testid="pl-total" data-result={'ready'} class={`figure text-section ${INK}`}>{v.headline}</p>

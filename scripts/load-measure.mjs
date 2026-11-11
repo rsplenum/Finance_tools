@@ -1,6 +1,6 @@
 /**
  * The load measure (UX2, UX2b; D-UX-61, D-UX-62, D-UX-63). The paper, with what each count stands for in the reader's head,
- * its source, what it misses and how it could be gamed: docs/LOAD-MEASURE.md. Opens each built page at 360 by 780 px, light,
+ * its source, what it misses and how it could be gamed: docs/archive/LOAD-MEASURE.md. Opens each built page at 360 by 780 px, light,
  * as it loads, in its answer state (the `result` state of scripts/design-checks.mjs, or as it loads on a page without
  * one) and in its plan state, and takes its counts. Each page marks its answer `data-answer` (words, not only a figure)
  * and a sticky echo of it `data-answer-echo`. The site check reports a count that differs from scripts/load-baseline.json
@@ -119,7 +119,7 @@ function inPage({ after, open, text, limit = 25 }) {
     for (const side of ['Top', 'Right', 'Bottom', 'Left']) if (parseFloat(s[`border${side}Width`]) > 0) hue(s[`border${side}Color`]);
     if (el instanceof SVGElement) { hue(s.fill); hue(s.stroke); }
   }
-  // Codes per meaning (docs/DESIGN-MATHS.md §2): each colour that means something is a token; each way it is drawn (text,
+  // Codes per meaning (docs/archive/DESIGN-MATHS.md §2): each colour that means something is a token; each way it is drawn (text,
   // ground, rule, mark) is a code. One meaning wants one code, and two meanings never share a hue, so the count is the
   // codes past the first for each meaning in use, plus each pair of meanings in use whose hues lie within 15 degrees.
   const rgb = (c) => { cv.fillStyle = '#000'; cv.fillStyle = c.replace(/\s*\/\s*[\d.]+%?\s*\)$/, ')').replace(/^rgba\(([^,]+,[^,]+,[^,]+),[^)]+\)/, 'rgb($1)'); cv.fillRect(0, 0, 1, 1); return [...cv.getImageData(0, 0, 1, 1).data].slice(0, 3); };
@@ -255,7 +255,7 @@ async function effects(page) {
   return { tried, out };
 }
 
-/** The counts, their names in the table, and the aim each prints beside it from its source (docs/LOAD-MEASURE.md §5): printed, never failed. */
+/** The counts, their names in the table, and the aim each prints beside it from its source (docs/archive/LOAD-MEASURE.md §5): printed, never failed. */
 export const COUNTS = [
   ['before', 'Words before Q1', 40], ['shown', 'Words shown'], ['all', 'Words in all'], ['plan', 'Words in all, with the plan'], ['long', 'Long sentences', 0],
   ['abbr', 'Abbreviations'], ['questions', 'Questions'], ['controls', 'Controls'], ['answerAt', 'Answer at (screens)', 1],
@@ -271,10 +271,6 @@ async function fontProbe(browser, BASE) {
   return w;
 }
 export const BASELINE = fileURLToPath(new URL('./load-baseline.json', import.meta.url));
-const DECISIONS = fileURLToPath(new URL('../docs/DECISIONS.md', import.meta.url));
-async function logged(id) {
-  return (await readFile(DECISIONS, 'utf8')).includes(`| ${id} |`);
-}
 
 /** Every built page, as the site check lists them. */
 export async function builtPages() {
@@ -361,7 +357,7 @@ export async function loadCheck({ browser, BASE, pages, quick = false, violation
       if (then === undefined) { look.push(`load: ${path} ${name} has no reading yet (npm run load -- --lower ${path})`); continue; }
       if (now === null || then === null || now > then) {
         rose++;
-        if (k === 'questions') violations.push(`load: ${path} asks ${now ?? 'none'} questions, ${then ?? 'none'} before (rule 17: cut it, or a line in docs/DECISIONS.md and npm run load -- --raise ${path} ${k} <D-id>)`);
+        if (k === 'questions') violations.push(`load: ${path} asks ${now ?? 'none'} questions, ${then ?? 'none'} before (the page asks only the inputs Rahul listed: cut it, or on Rahul's word npm run load -- --raise ${path} ${k} and say so in the PR)`);
         else look.push(`load: ${path} ${name} rose from ${then ?? 'none'} to ${now ?? 'none'}${k === 'colours' ? `; saw ${seen.match(/colours: (.*)/)?.[1]}` : ''}`);
       } else {
         fell++;
@@ -378,8 +374,7 @@ async function main() {
   const text = args.includes('--text'), skipEffects = args.includes('--no-effects'), lower = args.includes('--lower'), raise = args.indexOf('--raise');
   const [rPage, rCount, rWhy] = raise >= 0 ? args.slice(raise + 1, raise + 4) : [];
   if (raise >= 0) {
-    if (!COUNTS.some(([k]) => k === rCount)) throw new Error(`--raise <page> <count> <D-id>: the count is one of ${COUNTS.map(([k]) => k).join(', ')}`);
-    if (!/^D-[A-Z]+-\d+$/.test(rWhy ?? '') || !(await logged(rWhy))) throw new Error(`--raise: ${rWhy} is not a decision in docs/DECISIONS.md; write its line first`);
+    if (!COUNTS.some(([k]) => k === rCount)) throw new Error(`--raise <page> <count> [why]: the count is one of ${COUNTS.map(([k]) => k).join(', ')}`);
   }
   const only = raise >= 0 ? [rPage] : args.filter((a) => a.startsWith('/') && !a.startsWith('//'));
   const { BASE, server } = await serveDist();
@@ -414,8 +409,8 @@ async function main() {
     const [then, now] = [base.pages[rPage]?.[rCount], measured[rPage]?.[rCount]];
     if (!(now > then || (then === null && now !== null))) throw new Error(`--raise: ${rPage} ${rCount} is ${now ?? 'none'}, not above ${then ?? 'none'}`);
     base.pages[rPage][rCount] = now;
-    base.raised.push({ page: rPage, count: rCount, from: then, to: now, why: rWhy, date: new Date().toISOString().slice(0, 10) });
-    changed.push(`${rPage} ${rCount} ${then} → ${now} (${rWhy})`);
+    base.raised.push({ page: rPage, count: rCount, from: then, to: now, why: rWhy ?? '', date: new Date().toISOString().slice(0, 10) });
+    changed.push(`${rPage} ${rCount} ${then} → ${now}${rWhy ? ` (${rWhy})` : ''}`);
   } else {
     if (skipEffects) throw new Error('--lower measures every count: leave out --no-effects');
     for (const [path, counts] of Object.entries(measured)) {

@@ -1,5 +1,5 @@
 // D-TECH-85: a row first checks every path and decision number named in it. For each file (optionally only some of
-// its "## <n>." sections) this prints each decision number named, with its title from docs/DECISIONS.md, and each
+// its "## <n>." sections) this prints each decision number named, with its title from docs/DECISIONS.md (or the retired entries in docs/archive/), and each
 // path in backticks found in neither repo, so the session judges in one look whether each decision says what the row
 // says and whether each missing path is one the row makes.
 // `node scripts/doc-refs.mjs docs/video/VID2-prompts.md#0,1 docs/video/VID2-script.md [--studio /home/user/video-studio]`
@@ -13,7 +13,7 @@ const files = args.filter((a, i) => at < 0 || (i !== at && i !== at + 1));
 if (!files.length) throw new Error('Usage: node scripts/doc-refs.mjs <file>[#<section>,...] ... [--studio <dir>]');
 
 const decisions = new Map();
-for (const line of fs.readFileSync('docs/DECISIONS.md', 'utf8').split('\n')) {
+for (const line of ['docs/DECISIONS.md', 'docs/archive/DECISIONS-RETIRED.md'].flatMap((f) => fs.readFileSync(f, 'utf8').split('\n'))) {
   const m = line.match(/^\| (D-[A-Z]+-\d+) \| [^|]+ \| \*\*(.+?)\*\*/);
   if (m) decisions.set(m[1], m[2]);
 }

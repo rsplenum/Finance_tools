@@ -151,7 +151,7 @@ export function Choice<T extends string>(p: { name: string; legend: string; opti
 }
 
 /** The answer's rule (UX7, D-UX-104): ink, solid once the result is final, dashed while it is provisional, so its outline
- * tells the state before its words do; the colour never does (docs/DESIGN-MATHS.md §2). */
+ * tells the state before its words do; the colour never does (docs/archive/DESIGN-MATHS.md §2). */
 export const answerRule = (final: boolean) => `border-l-4 border-ink pl-3 ${final ? '' : 'border-dashed'}`;
 
 /** The auditor's tick (UX7, D-UX-104): a drawn tick in ink, set before the pencil note that says a result is final. Only

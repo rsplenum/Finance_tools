@@ -66,8 +66,8 @@ Rather than spawning an uncoordinated swarm of specialized agents (which creates
 ### 2.3 Resolving Operational Pitfalls
 
 #### A. Preventing "Memory Drift" via the Graduation Pipeline
-Letting `docs/DESIGN-LESSONS.md` grow indefinitely creates context saturation and conflicting instructions.
-* **Triage Stage:** New defects, user friction points, or review notes enter `docs/DESIGN-LESSONS.md` as active triage items.
+Letting `docs/archive/DESIGN-LESSONS.md` grow indefinitely creates context saturation and conflicting instructions.
+* **Triage Stage:** New defects, user friction points, or review notes enter `docs/archive/DESIGN-LESSONS.md` as active triage items.
 * **Graduation Stage:** Once a rule is verified (e.g., *"Helper text must sit above input fields to prevent layout shift"*), it must be codified directly into `docs/DESIGN.md` as an immutable token/rule or built into component primitives.
 * **Archive Stage:** Once codified in code, the item is removed from the active prompt to keep agent context tight and deterministic.
 

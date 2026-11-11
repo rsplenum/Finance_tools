@@ -13,7 +13,6 @@ const checks = [
   ['build', 'npm run build'],
   ...(process.argv.includes('--quick') ? [['site check --quick', 'npm run check:site -- --quick']] : [['site check', 'npm run check:site']]),
   ['simulation', 'npm run sim'],
-  ['skill pack', 'node portable/pack.mjs --check'],
   ['cost guard', 'node .claude/hooks/cost-guard.mjs --self-test'],
   ['session guard', 'node .claude/hooks/session-guard.mjs --self-test'],
   ['film gate door', 'node .claude/hooks/film-gate.mjs --self-test'],

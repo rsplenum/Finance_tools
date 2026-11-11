@@ -14,13 +14,13 @@ The owner's guiding principle, in their words: "We are creators, not imitators a
 The owner made Claude the arbiter of what it means in each context. Start from this reading:
 - Simple to use, not simple to build: the hard work stays ours, never the user's, and simple never means diluted: a fact that changes the answer stays.
 - Take what exists (a method, a format others expect, a library, a pattern) and make it ours, adapted to our case or reimagined; never copy it as it is, nor rebuild from nothing only to differ.
-- It decides how, never what is allowed: the repo's rules and the law stand.
+- It decides how, and it may set a lesson or a past decision aside for a better result, saying so in one line. What stands whatever the lens says is short: the law, the owner's hard lines (money worked by code and checked twice, privacy, nothing from the owner's employer) and what the owner decided as theirs.
 - Where it changes a choice, say in one line how it was read, so the owner can overrule.
 
 ## Tokens: every step re-reads the whole context
 
 - One deliverable per session, each in a new session, with a budget set before it starts (S about 60 steps, M about 120, L about 200; stop at the budget plus a quarter) and ended by the handoff below; preparing the next session's row is part of the one that ends. Measure each session's actual and keep it next to its budget. When new work is asked in an old conversation, say once that a new session costs less.
-- Grep before reading; never read a large file, PDF or source text whole. Check a page with text assertions, and take a screenshot only for a layout question.
+- Grep before reading, to find what matters; then read whole what the task is about. Skimming the subject of the work is not a saving: when asked for a deep dive, list what will be read and walked, cover all of it, and say plainly what was left out. Check a page with text assertions, and take a screenshot only for a layout question.
 - Put independent commands together in one step, and fetch many pages through one script that prints only what is needed.
 - Before reading any website, list the hosts the work needs, check in one step which the environment's network blocks, and give the owner the blocked list to allow before starting; never try a blocked host again.
 - Compact at about 192k tokens: set `CLAUDE_CODE_AUTO_COMPACT_WINDOW` to `"260000"` under `env` in the repo's `.claude/settings.json` (a 1M-token window otherwise never compacts), and give CLAUDE.md a "Compact Instructions" section naming what a summary must keep.
@@ -36,7 +36,7 @@ The owner made Claude the arbiter of what it means in each context. Start from t
 
 ## What the owner asks for
 
-- Once given, an answer is final: spend each new turn on the new ask, and revisit an earlier answer only when the owner points out a problem with it. An error met by chance in new work gets one line, never a review.
+- Do not reopen a settled answer unasked: spend each new turn on the new ask. Reopen it when the owner points out a problem, or when it stands in the way of the result and you say so. An error met by chance in new work gets one line, never a review.
 - Talk in simple words, articulate and to the point, so the owner can decide. Recommend, don't survey: say what you will do and why, then do it; name a tradeoff only when it could flip their decision, at most two, each with your pick. `brief-first` has the rest.
 - Outcome before structure: lessons and past decisions inform, never bind; start from the result wanted and replace machinery that cannot make it, whatever it cost.
 - Bold first: for a look, a page, a flow or a film, build the boldest version that serves the user, never today's version with tweaks; what exists is a draft, not a rule. Small is only for the questions a user answers.
@@ -48,7 +48,7 @@ The owner made Claude the arbiter of what it means in each context. Start from t
 
 ## Checks
 
-- Run a project's checks through one script that prints each check's exit code and only a failing check's output (`npm run verify` or its like); every change passes it.
+- Run a project's checks through one script that prints each check's exit code and only a failing check's output (`npm run verify` or its like). Checks are there to show that new work runs and breaks nothing: money, law, privacy, accessibility, a flow a user needs. A look, a wording or a count is judged by the owner and by users; a script may report it, never fail a build on it. When a check fails only because the work changed shape, change the check in the same commit and say so.
 - A check run that takes longer than a tool call may wait runs once, in the background with its output to a file, and is read from that file; never two runs chained in one call.
 - A test asserts that its fixture exists and is the one meant, picked by its full key, never a part of it; no expectations inside an `if`; a fixture picked for a property of the data (the cheapest, not yet checked) asserts that property first.
 - A data check over many items collects every offender and asserts the list is empty, so one run names them all.
@@ -59,11 +59,11 @@ The owner made Claude the arbiter of what it means in each context. Start from t
 
 ## Records
 
-- `docs/DECISIONS.md`: one line per decision, with an ID by area (such as POL, UX, TECH, DOC, DATA, AI, BIZ), the date, what and where, why, and who decided, so later sessions do not decide it again.
+- `docs/DECISIONS.md`: a dated log to grep, never a law book. A line goes in when the owner decides something, or when a choice about money, law or the product's shape would otherwise be made twice: an ID by area, the date, what, why, who. It informs; the owner, new evidence or a better result reopens it. A change to the code is not a decision: the commit holds it.
 - `docs/HANDOFF.md`, short and current, its size capped by a check (about 10 KB): the state and the next rows, each with its deliverable, budget, plan and the effort to start at. History, traps and what waits on the owner go to files read only by grep. End each session with a starter prompt the owner can paste into a new one.
 - Recount a figure from the data just before writing it into a doc, by a script that says what it counts; where a generated doc can print it, print it there and cite that.
 - Work goes in the repo where its subject lives; a gate travels with what it guards, and another repo keeps only a door to it.
-- The `lessons` skill at the end of each session.
+- The `lessons` skill when a session learned something a later one would want: lessons are kept by topic, fetched only when the work touches the topic, and bend.
 - Draft PRs; the owner says "merge" once they have tried it. No hourly PR check-ins unless asked.
 
 ## Safety

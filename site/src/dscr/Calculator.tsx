@@ -466,7 +466,7 @@ function AnswerPanel({ s, p, update, see, back, trail, fold, onPlan, note }: {
   // Folded (OR9), the answer takes the centre column and scrolls with the page.
   return <div class={fold ? 'lg:col-start-2 lg:row-start-1' : 'lg:col-start-2 lg:row-start-1 lg:row-end-3'}>{note}<section id="preview" tabIndex={-1} aria-labelledby="preview-h" class={fold ? 'mt-4 outline-none' : 'answer-panel mt-10 outline-none lg:mt-4'}>
     <h2 id="preview-h" class="sr-only">Results</h2>
-    {/* The answer as paper, there at once: it changes as the figures are typed (docs/DESIGN-SITE.md, tool pages). */}
+    {/* The answer as paper, there at once: it changes as the figures are typed (docs/archive/DESIGN-SITE.md, tool pages). */}
     <div class="paper shadow-paper rounded-card p-4 sm:p-6">
     {/* The answer is the paper's heading (UX7): a flat claim, its rule solid once final and dashed while provisional. */}
     {p.verdict && <Verdict id="dscr-verdict" work={workWords(p.verdict.missed)} text={p.verdict.text} rule={answerRule(!p.blocked && !p.needs.length)} />}
