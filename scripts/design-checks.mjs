@@ -206,7 +206,7 @@ const caseRSimple = async (page) => {
   const now = new Date(FIXED_AT), sell = new Date(now.getFullYear(), now.getMonth() + 3, 1);
   for (const id of ['field=Partnership firm or LLP', 'field=Neither', 'field=Work it out for me']) await page.check(id);
   for (const [id, value] of [['field=Building and civil works', '10 L'], ['field=Plant and machinery', '20 L'], ['field=Term loan you will ask for', '20 L'], ['field=Interest rate (% a year)', '10'], ['field=Repayment period after it (years)', '5'],
-    ['field=What it sells > What it is', 'Boxes'], ['#fld-product-0-units', '15,000'], ['#fld-product-0-price', '100'],
+    ['#fld-product-0-name', 'Boxes'], ['#fld-product-0-units', '15,000'], ['#fld-product-0-price', '100'],
     ['field=When will you start selling?', `${sell.getFullYear()}-${String(sell.getMonth() + 1).padStart(2, '0')}`], ['field=Materials and other variable costs (% of sales)', '65'], ['field=Fixed costs a month', '1 L']])
     await leave(page, id, value);
 };

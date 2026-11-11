@@ -1398,7 +1398,7 @@ if (touched('/project-report/')) {
   if (await page.locator('field=Capital subsidy, if any').count()) v('the project report asks a capital subsidy beside PMEGP');
   for (const [id, value] of [['field=Land', '2 L'], ['field=Building and civil works', '6 L'], ['field=Plant and machinery', '20 L'], ['field=Preliminary and pre-operative expenses', '50,000'],
     ['field=Term loan you will ask for', '24 L'], ['field=Interest rate (% a year)', '10'], ['field=Month the loan is first drawn', '2026-10'], ['#fld-tl-moratorium', '6'], ['field=Number of instalments', '48'],
-    ['field=What it sells > What it is', 'Roasted chana'], ['#fld-product-0-units', '2,500'], ['#fld-product-0-price', '200'],
+    ['#fld-product-0-name', 'Roasted chana'], ['#fld-product-0-units', '2,500'], ['#fld-product-0-price', '200'],
     ['field=Product or service 2 > What it is', 'Roasted peanuts'], ['#fld-product-1-units', '1,500'], ['#fld-product-1-price', '200'], ['field=Months from the loan to the first sales (0 if at once)', '3'], ['field=Materials and other variable costs (% of sales)', '70'], ['field=Fixed costs in a full first year', '12 L'], ['field=Fixed costs: growth a year (%)', '5'],
     ['field=Working-capital limit you will ask for', '3 L'], ['field=Its interest rate (% a year)', '11']])
     await leave(page, id, value);
@@ -1453,7 +1453,7 @@ if (touched('/project-report/')) {
   await openMore(page); await page.check('field=Expert…');
   for (const id of ['field=Proprietor', 'field=EMI every month']) await page.check(id);
   for (const [id, value] of [['field=Building and civil works', '50 L'], ['field=Plant and machinery', '2.5 Cr'], ['field=Term loan you will ask for', '2.5 Cr'], ['field=Interest rate (% a year)', '9.3'],
-    ['field=Month the loan is first drawn', '2026-10'], ['#fld-tl-moratorium', '1'], ['field=Number of instalments', '180'], ['field=What it sells > What it is', 'Widgets'], ['#fld-product-0-units', '10,000'],
+    ['field=Month the loan is first drawn', '2026-10'], ['#fld-tl-moratorium', '1'], ['field=Number of instalments', '180'], ['#fld-product-0-name', 'Widgets'], ['#fld-product-0-units', '10,000'],
     ['#fld-product-0-price', '1,500'], ['field=Months from the loan to the first sales (0 if at once)', '1'], ['field=Materials and other variable costs (% of sales)', '60'], ['field=Fixed costs in a full first year', '1.2 Cr'], ['field=Fixed costs: growth a year (%)', '5'], ['field=Working-capital limit you will ask for', '53 L'], ['field=Its interest rate (% a year)', '9.3']])
     await leave(page, id, value);
   await expectText(page, v, 'rep-cause-assets', /^The assets wear out faster than the loan is repaid/, 'case F\'s cause');
@@ -1482,7 +1482,7 @@ if (touched('/project-report/')) {
   for (const id of ['field=Partnership firm or LLP', 'field=Equal principal every month']) await page.check(id);
   for (const [id, value] of [['field=Building and civil works', '30 L'], ['field=Plant and machinery', '60 L'], ['field=Furniture and fixtures', '5 L'], ['field=Preliminary and pre-operative expenses', '2 L'],
     ['field=Term loan you will ask for', '75 L'], ['field=Interest rate (% a year)', '11'], ['field=Month the loan is first drawn', '2026-06'], ['#fld-tl-moratorium', '6'], ['field=Number of instalments', '72'],
-    ['field=What it sells > What it is', 'Castings'], ['#fld-product-0-units', '10,000'], ['#fld-product-0-price', '250'], ['field=Months from the loan to the first sales (0 if at once)', '7'], ['field=Use of the capacity by year (%)', '50, 65, 80'],
+    ['#fld-product-0-name', 'Castings'], ['#fld-product-0-units', '10,000'], ['#fld-product-0-price', '250'], ['field=Months from the loan to the first sales (0 if at once)', '7'], ['field=Use of the capacity by year (%)', '50, 65, 80'],
     ['field=The price: growth a year (%)', '0'], ['field=Materials and other variable costs (% of sales)', '68'], ['field=Fixed costs in a full first year', '36 L'], ['field=Fixed costs: growth a year (%)', '5'], ['field=Days of debtors', '45'], ['field=Working-capital limit you will ask for', '20 L'], ['field=Its interest rate (% a year)', '11.5']])
     await leave(page, id, value);
   await expectFigures(page, v, 'rep-misses', '… misses … 5 … 8 …', 'FIX1: the case as typed');
@@ -1522,7 +1522,7 @@ if (touched('/project-report/')) {
   for (const id of ['field=Expert…', 'field=Partnership firm or LLP', 'field=Mudra', 'field=Equal principal every month']) await page.check(id);
   for (const [id, value] of [['field=Building and civil works', '10 L'], ['field=Plant and machinery', '20 L'], ['field=Furniture and fixtures', '2 L'], ['field=Preliminary and pre-operative expenses', '1 L'],
     ['field=Term loan you will ask for', '12 L'], ['field=Interest rate (% a year)', '10'], ['field=Month the loan is first drawn', '2026-04'], ['#fld-tl-moratorium', '0'], ['field=Number of instalments', '60'],
-    ['field=What it sells > What it is', 'Boxes'], ['#fld-product-0-units', '10,000'], ['#fld-product-0-price', '100'], ['field=Months from the loan to the first sales (0 if at once)', '0'], ['field=Materials and other variable costs (% of sales)', '65'],
+    ['#fld-product-0-name', 'Boxes'], ['#fld-product-0-units', '10,000'], ['#fld-product-0-price', '100'], ['field=Months from the loan to the first sales (0 if at once)', '0'], ['field=Materials and other variable costs (% of sales)', '65'],
     ['field=Fixed costs in a full first year', '18 L'], ['field=Fixed costs: growth a year (%)', '5'], ['field=Working-capital limit you will ask for', '3 L'], ['field=Its interest rate (% a year)', '11']])
     await leave(page, id, value);
   await expectFigures(page, v, 'rep-mudra-level', '15,00,000', 'Mudra\'s level');
@@ -1558,7 +1558,7 @@ if (touched('/project-report/')) {
   for (const id of ['field=Partnership firm or LLP', 'field=Neither', 'field=Work it out for me']) await page.check(id);
   await page.getByTestId('rep-product-add').click();
   for (const [id, value] of [['field=Building and civil works', '6 L'], ['field=Plant and machinery', '20 L'], ['field=Term loan you will ask for', '20 L'], ['field=Interest rate (% a year)', '10'], ['field=Repayment period after it (years)', '4'],
-    ['field=What it sells > What it is', 'Roasted chana'], ['#fld-product-0-units', '2,500'], ['#fld-product-0-price', '200'],
+    ['#fld-product-0-name', 'Roasted chana'], ['#fld-product-0-units', '2,500'], ['#fld-product-0-price', '200'],
     ['field=Product or service 2 > What it is', 'Roasted peanuts'], ['#fld-product-1-units', '1,500'], ['#fld-product-1-price', '200'], ['field=When will you start selling?', month], ['field=Materials and other variable costs (% of sales)', '70'], ['field=Fixed costs a month', '1 L']])
     await leave(page, id, value);
   await expectFigures(page, v, 'rep-worked', '… 2,72,219 … 2,72,219 … 11,52,000 …', 'the limit worked out');
