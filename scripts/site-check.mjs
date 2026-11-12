@@ -285,6 +285,24 @@ const openMore = async (page) => {
   const more = page.locator('#more-options');
   if (!(await more.evaluate((d) => d.open))) await more.locator(':scope > summary').click();
 };
+/** A closed line opened by a tap on its summary, unless it is open already. */
+const openFold = async (page, id) => {
+  const d = page.locator(`#${id}`);
+  if (!(await d.evaluate((x) => x.open))) await d.locator(':scope > summary').click();
+};
+/** The DSCR (NEW1) opens on a marked example; its detailed checks start from For professionals' form emptied (the stated
+ * assumptions kept, as the old page opened), with the working, the assumptions and the paper open to read. */
+const fromBlank = async (page) => {
+  for (const id of ['working', 'assumed', 'more-options', 'paper']) await openFold(page, id);
+  await page.getByTestId('dscr-clear').click();
+};
+/** A fact on the DSCR's first screen typed into its sheet, and the sheet closed. */
+const typeFact = async (page, id, value) => {
+  await page.locator(`[data-fact="${id}"]`).click();
+  if (id === 'borrower') await page.getByTestId(`sheet-choice-${value}`).click();
+  else await page.getByTestId('sheet-field').fill(value);
+  await page.getByTestId('sheet-done').click();
+};
 /** A closed line on the planning estimate opened by a tap, as a user would (V1): a section, the other things to check, what the estimate assumes. */
 const tap = async (page, id) => {
   const d = page.getByTestId(id);
@@ -328,14 +346,14 @@ async function layout(page, v, step) {
 
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
-  await openMore(page);
+  await fromBlank(page);
   // The page opens with the assumptions answered (D-UX-08): the start questions chosen, the loan asked at once, the target
   // filled in, and the preview listing what it assumes.
   if (!(await page.isChecked('#fld-source-plan')) || !(await page.isChecked('#fld-method-common'))) v('the start questions are not answered from the assumptions');
   await page.locator('#fld-loanAmount').waitFor({ timeout: 3000 }).catch(() => v('the loan is not asked at once'));
   await expectValue(page, v, '#fld-targetAverage', '1.50', 'the assumed target');
-  // The method and the target read as one line (P1f).
-  await expectFigures(page, v, 'assumed-method', '1.50 1.25', 'the assumptions listed');
+  // The target listed among the assumptions, with its two levels.
+  await expectFigures(page, v, 'assumed-target', '1.50 1.25', 'the assumptions listed');
 
   // The loan amount field, kept from P0: read back in figures and words while typing; long words wrap.
   const field = page.locator('#fld-loanAmount');
@@ -396,7 +414,8 @@ if (touched('/dscr/')) {
   await expectFigures(page, v, 'dscr-largest', '11,11,295 12,00,000 2027-28', 'case A with the examples');
   await expectFigures(page, v, 'use-amount', '11,11,295', 'case A with the examples');
   await expectFigures(page, v, 'dscr-fewest', '14 2029-30', 'case A with the examples');
-  await expectFigures(page, v, 'answer-bar', '1.45 1.16 2027-28 2 short 7', 'case A with the examples');
+  // The reading on the first screen: the loan it carries (11,11,295, about Rs. 11.11 lakh) beside the one asked, then the banker's terms.
+  await expectFigures(page, v, 'reading', '11.11lakh 12lakh …', 'case A with the examples');
 
   // Tables become cards on phones and stay tables on wider screens, without a sideways scroll either way.
   await layout(page, v, 'case A filled, a schedule year open, 390 px');
@@ -435,7 +454,7 @@ if (touched('/dscr/')) {
   await page.check('#fld-borrowerType-company');
   await expectFigures(page, v, 'tax-by', '25.168%', "the company's tax");
   if (await page.locator('#fld-taxPct-2026-27').count()) v('a tax rate is still asked after saying who the borrower is');
-  // Clear all in one tap takes the page back to where it opened, the assumptions and nothing typed, with an undo (UXR5b, S16).
+  // Empty the form in one tap: the assumptions and nothing typed, as the old page opened, with an undo (UXR5b, S16).
   await page.getByTestId('dscr-clear').click();
   await expectValue(page, v, '#fld-loanAmount', '', 'Clear all empties the loan');
   if (!(await page.isChecked('#fld-source-plan'))) v('Clear all did not go back to the assumptions');
@@ -448,7 +467,7 @@ if (touched('/dscr/')) {
 // The same filled page in dark mode.
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'dark' });
-  await openMore(page);
+  await fromBlank(page);
   await enterCaseA(page);
   await page.getByTestId('use-examples').click();
   await expectFigures(page, v, 'dscr-average', '1.45', 'case A, dark');
@@ -462,7 +481,7 @@ if (touched('/dscr/')) {
 // and the question offers the later year.
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
-  await openMore(page);
+  await fromBlank(page);
   await page.check('#fld-source-plan');
   await page.check('#fld-method-common');
   await leave(page, '#fld-loanAmount', '12 L');
@@ -488,7 +507,7 @@ if (touched('/dscr/')) {
   // depreciation are asked (only the later years were typed).
   await expectFigures(page, v, 'dscr-status', '2', 'a first year with interest only');
   if (!(await page.isChecked('#fld-start-2026-27'))) v("the figures do not start in the loan's first year as assumed");
-  await expectText(page, v, 'assumed-start', 'The first year of the figures: The year the loan is first drawn Change', 'the start assumption listed');
+  await expectText(page, v, 'assumed-start', /^The first year of the figures: The year the loan is first drawn ?\S.* Change$/, 'the start assumption listed, with its reason');
   await expectFigures(page, v, page.getByTestId('start-question').locator('p').first(), '2026-27 72,000', 'the question about the first year');
   await page.check('#fld-start-2027-28');
   await expectFigures(page, v, 'dscr-status', '7', 'figures starting in 2027-28');
@@ -505,7 +524,7 @@ if (touched('/dscr/')) {
 // A few answers instead of every year: profit grows from one figure and one rate; the rest are one figure or None.
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
-  await openMore(page);
+  await fromBlank(page);
   await page.check('#fld-source-plan');
   await page.check('#fld-method-common');
   await leave(page, '#fld-loanAmount', '50 L');
@@ -541,7 +560,7 @@ if (touched('/dscr/')) {
 // worked by hand in tests/dscr-page.test.ts).
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
-  await openMore(page);
+  await fromBlank(page);
   await leave(page, '#fld-loanAmount', '12 L');
   await leave(page, '#fld-ratePct', '12');
   await leave(page, '#fld-disbursed', '2026-04');
@@ -584,7 +603,7 @@ if (touched('/dscr/')) {
   if (await page.locator('#doc-more').getAttribute('open') !== null) v('the address, purpose and GSTIN line is open by default');
   await page.locator('#doc-more summary').click();
   await leave(page, '#fld-gstin', '27ABCDE1234');
-  await expectFigures(page, v, 'fld-gstin-said', '15 27 1234 1 5', 'a short GSTIN');
+  await expectFigures(page, v, 'fld-gstin-said', '15', 'a short GSTIN');
   // Its need links to its box, opening the closed line on the way (UXR7, as on the CMA and the report).
   await page.locator('#doc-more summary').click();
   await page.getByTestId('doc-needs').getByRole('link', { name: /^The GSTIN/ }).click();
@@ -633,7 +652,7 @@ if (touched('/dscr/')) {
 // October 2026 (1,80,000 in 2026-27). Cash 6,30,000 against 7,61,000 in 2026-27: 0.83; average 33,80,500 / 26,91,000 = 1.26.
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
-  await openMore(page);
+  await fromBlank(page);
   await leave(page, '#fld-loanAmount', '12 L');
   await leave(page, '#fld-ratePct', '12');
   await leave(page, '#fld-disbursed', '2026-04');
@@ -650,7 +669,7 @@ if (touched('/dscr/')) {
   await expectFigures(page, v, 'tax-by', '5% 30% 4% 12,00,000', "a proprietor's tax");
   await expectFigures(page, v, 'tax-2026-27', '0', "a proprietor's tax");
   await expectFigures(page, v, 'dscr-average', '1.41', "a proprietor's tax");
-  await expectText(page, v, 'assumed-proprietorTax', "A proprietor's tax: The new regime's slab rates, on the business's profit as the only income Change", "a proprietor's tax");
+  await expectText(page, v, 'assumed-proprietorTax', /^A proprietor's tax: The new regime's slab rates, on the business's profit as the only income ?\S.* Change$/, "a proprietor's tax, with its reason");
   await page.check('#fld-otherLoansInterest-emi');
   await expectText(page, v, 'emis-ask', 'All EMIs a month, business and personal (home, car, personal loans).', "a proprietor's EMIs");
   await leave(page, '#fld-emi-1', '20000');
@@ -675,7 +694,7 @@ if (touched('/dscr/')) {
 // instalment is not counted.
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
-  await openMore(page);
+  await fromBlank(page);
   await page.check('#fld-source-own');
   await page.check('#fld-method-common');
   await page.waitForSelector('#fld-firstYear', { timeout: 3000 }).catch(() => v('own figures: the years are not asked'));
@@ -700,28 +719,61 @@ if (touched('/dscr/')) {
   await ctx.close();
 }
 
-// The front door (P1f, D-UX-10): eight fields, More options closed on load, and the results without opening it. A textbook
-// EMI: Rs. 10,00,000 at 12% for one year is Rs. 88,848.79 a month; 12 of them less the loan is Rs. 66,185 of interest.
+// The DSCR's first screen (NEW1, docs/WORKED-PAGE.md §2), on a 375 × 667 phone in November 2026, the month of
+// tests/dscr-worked.test.ts: the reading, the picture and the one next step with no scroll and no field; the example
+// marked; every fold closed; the paper one tap away, every file from it marked Example. Then the facts, one at a time
+// (D-UX-10: at most 8 facts, and 8 fields with a fact open). A textbook EMI: Rs. 10,00,000 at 12% for one year is
+// Rs. 88,848.79 a month; 12 of them less the loan is Rs. 66,185 of interest. The loan drawn in November: 2026-27 holds
+// five of its twelve months.
+const NOV = '2026-11-02T10:00:00+05:30';
 if (touched('/dscr/')) {
-  const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
-  if (await page.locator('#more-options').evaluate((d) => d.open)) v('More options is open on load');
-  await ceiling(page, v, 8, 'the front door', '#front-door');
-  await expectFigures(page, v, 'fd-loan-note', '2026', 'the front door');
-  await page.check('field=Partnership firm or LLP');
-  await leave(page, 'field=This year’s profit before interest, depreciation and tax', '5 L');
-  await leave(page, 'field=Growth in sales a year (%)', '10');
-  await leave(page, '#fld-fd-amount', '10 L');
-  await leave(page, 'field=Interest rate (% a year)', '12');
-  await leave(page, 'field=Repayment period (years)', '1');
-  await expectFigures(page, v, 'dscr-instalment', '88,848.79', 'the front door');
-  await expectFigures(page, v, 'dscr-total-interest', '66,185', 'the front door');
-  if (!(await page.getByTestId('dscr-average').isVisible())) v('the front door: no average DSCR without opening More options');
-  if (!(await page.getByTestId('dscr-marks').isVisible())) v('the front door: the years are not marked against the target');
-  if (await page.locator('#more-options').evaluate((d) => d.open)) v('More options opened by itself');
-  await expectFigures(page, v, 'assumed-method', '1.50 1.25', 'the method and the target in one line');
-  await expectFigures(page, v, 'part-2026-27', '6 12', 'the first part-year');
-  await layout(page, v, 'the front door filled, 390 px');
-  // D1 (D-UX-47): the lenders' lines beside the DSCR, their inputs only under More options; the front door still asks 8.
+  const { ctx, page, v } = await open('/dscr/', { scheme: 'light', at: NOV });
+  await page.setViewportSize({ width: 375, height: 667 });
+  for (const id of ['working', 'assumed', 'more-options', 'paper']) if (await page.locator(`#${id}`).evaluate((d) => d.open)) v(`${id} is open on load`);
+  const first = await page.evaluate(() => {
+    const foot = (id) => document.querySelector(`[data-testid="${id}"]`)?.getBoundingClientRect().bottom ?? 9999;
+    const fields = [...document.querySelectorAll('main input, main select, main textarea')].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.top < innerHeight; });
+    return { reading: foot('reading'), bars: foot('bars'), next: foot('next'), fields: fields.length, mains: document.querySelectorAll('[data-testid="next"]').length };
+  });
+  for (const k of ['reading', 'bars', 'next']) if (first[k] > 667) v(`375 × 667: the ${k} is not on the first screen (its foot at ${Math.round(first[k])} px)`);
+  if (first.fields) v(`375 × 667: ${first.fields} fields show on opening`);
+  if (first.mains !== 1) v(`${first.mains} main buttons, not one`);
+  await expectText(page, v, 'mark', /^Example /, 'the example marked');
+  // The largest loan the example carries, solved directly in tests/dscr-worked.test.ts.
+  await expectFigures(page, v, 'reading', '14.39lakh 12lakh …', 'the example');
+  if (await page.getByTestId('next').getAttribute('data-next') !== 'own') v('the example: the next step is not "Use your own figures"');
+  await page.getByTestId('paper-link').click();
+  if (!(await page.locator('#paper').evaluate((d) => d.open))) v('"The paper" does not open the paper');
+  for (const id of ['download-pdf', 'download-xlsx', 'download-docx', 'print']) if (await page.getByTestId(id).count() !== 1) v(`the paper: no ${id}`);
+  const save = saver(page, v);
+  const pdf = await save('download-pdf');
+  if (pdf.name !== 'DSCR statement (example).pdf') v(`the example's PDF is named "${pdf.name}"`);
+  const pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
+  if (!pages.every((t) => t.startsWith('DSCR statement Example\n'))) v(`the example's PDF is not marked Example on every page: ${JSON.stringify(pages[0].slice(0, 60))}`);
+  const xlsx = await save('download-xlsx');
+  if (xlsx.name !== 'DSCR statement (example).xlsx') v(`the example's Excel copy is named "${xlsx.name}"`);
+  // A fact opens alone: the reading stays in view above it; Escape closes it and gives the focus back.
+  await page.locator('[data-fact="profit"]').click();
+  await ceiling(page, v, 8, 'the front door with a fact open', '#front-door');
+  const facts = await page.locator('#front-door [data-fact]').count();
+  if (facts > 8) v(`the front door has ${facts} facts, over Rahul's 8 (CLAUDE.md rule 17)`);
+  if (!(await page.getByTestId('reading').isVisible())) v('the reading is not in view with a fact open');
+  await page.keyboard.press('Escape');
+  if (await page.getByTestId('sheet').count()) v('Escape leaves the fact open');
+  if (!(await page.evaluate(() => document.activeElement?.getAttribute('data-fact') === 'profit'))) v('Escape does not give the focus back to the figure');
+  for (const [id, x] of [['borrower', 'firm'], ['profit', '5 L'], ['growth', '10'], ['amount', '10 L'], ['rate', '12'], ['years', '1']]) await typeFact(page, id, x);
+  if (await page.getByTestId('mark').count()) v('every fact typed: the example mark still shows');
+  await openFold(page, 'working');
+  await expectFigures(page, v, 'dscr-instalment', '88,848.79', 'the textbook EMI');
+  await expectFigures(page, v, 'dscr-total-interest', '66,185', 'the textbook EMI');
+  await expectFigures(page, v, 'part-2026-27', '5 12', 'the first part-year');
+  if (!(await page.getByTestId('dscr-marks').isVisible())) v('the years are not marked against the target');
+  if (await page.locator('#more-options').evaluate((d) => d.open)) v('For professionals opened by itself');
+  await openFold(page, 'assumed');
+  await expectFigures(page, v, 'assumed-target', '1.50 1.25', 'the target among the assumptions');
+  await expectFigures(page, v, 'fd-loan-note', '2026', 'the loan taken as drawn this month');
+  await layout(page, v, 'the facts typed, 375 px');
+  // D1 (D-UX-47): the lenders' lines beside the DSCR, their inputs only under For professionals; the front door still asks 8.
   if (!(await page.getByTestId('lender-ask').isVisible())) v('D1: no line asking for sales beside the DSCR');
   await expectText(page, v, 'lender-promoters', "Promoters' loans are kept in the business until this loan is repaid (subordinated).", 'D1');
   const avg = await page.getByTestId('dscr-average').textContent();
@@ -731,81 +783,72 @@ if (touched('/dscr/')) {
   if (!(await page.getByTestId('lender-costs').count())) v('D1: no line for costs 10% higher');
   if ((await page.getByTestId('dscr-average').textContent()) !== avg) v('D1: the sales changed the borrower\'s DSCR');
   await ceiling(page, v, 8, "the front door after the lenders' tests", '#front-door');
-  await layout(page, v, 'the lenders\' tests open, 390 px');
+  await layout(page, v, 'the lenders\' tests open, 375 px');
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await layout(page, v, 'the facts typed, 1280 px');
   await ctx.close();
 }
 
-// Make it work on the front door (LOOP1b, D-UX-227 to D-UX-229): fictional case S, worked by hand in tests/dscr-plan.test.ts
-// (a firm, Rs. 4,50,000 this year with no growth, Rs. 12,00,000 at 12% for 5 years; the targets 1.50 and 1.25). The bars
-// with the cash short; up to Rs. 1,80,000 of the borrower's own; the plans with their cost, each EMI checked by its closed
-// form P·r ÷ (1 − (1 + r)^−n) (20,145.98 over 91, 20,962.39 for 10,20,000 over 67); the repayment let go short of what
-// works stops at the nearest that does, the loan following; the rate cut to 10% gives the loan back (20,905.97 for
-// 10,70,000 over 67); "See round 2" writes all three; round 1 restores the loan as typed; the front door still asks 8.
-// Make it work folds the answers (OR9, D-UX-231): on a phone to "Edit answers" and a sheet that holds the eight fields; from
-// 1024 px to a rail of the answers as typed, which opens in place to change them.
+// When it falls short (D-UX-346): the home page's case S, worked by hand in tests/dscr-worked.test.ts and
+// tests/dscr-plan.test.ts, drawn in October 2026 as there (a firm, Rs. 4,50,000 this year with no growth; Rs. 12,00,000 at 12% over 5 years; the targets
+// 1.50 and 1.25), in the dark. The reading gives the loan it carries beside the one asked; the next step is the ways that
+// work, each as was → becomes; repaying over longer is 7 years 7 months, 91 EMIs of Rs. 20,145.98 (P·r ÷ (1 − (1 + r)^−n)).
+// Used, it meets and the paper is next; Undo puts the loan back.
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'dark' });
-  await page.check('field=Partnership firm or LLP');
-  await leave(page, 'field=This year’s profit before interest, depreciation and tax', '4.5 L');
-  await leave(page, 'field=Growth in sales a year (%)', '0');
-  await leave(page, '#fld-fd-amount', '12 L');
-  await leave(page, 'field=Interest rate (% a year)', '12');
-  await leave(page, 'field=Repayment period (years)', '5');
-  await expectFigures(page, v, 'dscr-short-average', 'short 4,19,502', 'case S');
-  await expectFigures(page, v, 'dscr-short-lowest', 'short 79,164 2030-31', 'case S');
-  await page.getByTestId('dscr-viable').click();
-  if (await page.locator('#front-door').count()) v('OR9: Make it work leaves the answers unfolded');
-  if (!(await page.getByTestId('dscr-edit').isVisible())) v('OR9: no "Edit answers" on a phone once folded');
-  await page.check('#dscr-own-180000');
-  await expectFigures(page, v, 'dscr-plan-longer', '… 7 … 7 … 20,145.98 … 6,33,284 … 18,33,284 …', 'case S, repay over longer');
-  await expectFigures(page, v, 'dscr-plan-mix', '… 5 … 7 … 10,20,000 … 1,80,000 … 20,962.39 … 3,84,480 … 15,84,480 …', 'case S, some of both');
-  await expectFigures(page, v, 'dscr-plans-own-short', '… 5 … 1,80,000 …', 'case S, own money alone');
-  if (await page.getByTestId('dscr-plan-best').count()) v('LOOP1b: a plan is marked best');
-  await layout(page, v, 'case S\'s plans, 390 px');
-  const slide = (id, x) => page.$eval(`#dscr-slider-${id}`, (el, x) => {
-    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, String(x));
-    el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true }));
-  }, x);
-  await slide('instalments', 66);
-  await expectFigures(page, v, 'dscr-move-instalments', '5 7', 'case S, the repayment let go at 66');
-  await expectFigures(page, v, 'dscr-move-amount', '10,20,000', 'case S, the loan following');
-  await expectText(page, v, 'dscr-badge-amount', 'Follows', 'case S, the loan following');
-  await expectFigures(page, v, 'dscr-plan-stop', '5 7 5 6 10,20,000', 'case S, the stop');
-  await slide('ratePct', 10);
-  await expectFigures(page, v, 'dscr-move-instalments', '5 7', 'case S at 10%: the repayment stays');
-  await expectFigures(page, v, 'dscr-move-amount', '10,70,000', 'case S at 10%: the loan comes back');
-  await expectFigures(page, v, 'dscr-plan-line', '… 1.62 … meets … 20,905.97 … 3,30,700 …', 'case S at 10%');
-  await page.getByTestId('dscr-plan-use').click();
-  await page.getByTestId('dscr-edit').click();
-  await page.locator('dialog[open] #front-door').waitFor();
-  await ceiling(page, v, 8, 'the sheet of answers', 'dialog[open] #front-door');
-  await expectValue(page, v, '#fld-fd-amount', '10,70,000', 'case S, round 2');
-  await expectValue(page, v, 'field=Repayment period (years)', '5.58', 'case S, round 2');
-  await expectValue(page, v, 'field=Interest rate (% a year)', '10', 'case S, round 2');
-  await expectFigures(page, v, page.locator('#fld-fd-amount-hint'), '1 12,00,000', 'case S, round 2');
-  await expectFigures(page, v, page.locator('#fld-fd-years-hint'), '1 60', 'case S, round 2');
-  await page.getByTestId('dscr-sheet-done').click();
-  await expectFigures(page, v, 'dscr-verdict', '… meets …', 'case S, round 2');
-  await expectFigures(page, v, 'dscr-round-2', '… 2 … 5 … 7 … 5 … 10,70,000 … 12,00,000 … 1,30,000 … 10% … 12% …', 'case S, round 2');
-  if (await page.getByTestId('dscr-levels').count()) v('case S still shows why it does not work in round 2');
-  await page.getByTestId('dscr-round-back-1').click();
-  await expectFigures(page, v, 'dscr-round-1', '… 1 …', 'case S, back to round 1');
-  await page.getByTestId('dscr-edit').click();
-  await expectValue(page, v, '#fld-fd-amount', '12,00,000', 'case S, back to round 1');
-  await expectValue(page, v, 'field=Repayment period (years)', '5', 'case S, back to round 1');
-  // Esc closes only an open dialog: on a slow runner it came before showModal (GOTCHAS).
-  await page.locator('dialog[open] #front-door').waitFor();
-  await page.keyboard.press('Escape');
-  // The answers leave the page once the sheet has closed (its close event may come a frame late, GOTCHAS).
-  if (!(await page.locator('#front-door').waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false))) v('OR9: Esc leaves the sheet open');
-  await page.setViewportSize({ width: 1280, height: 900 });
-  await expectFigures(page, v, 'dscr-rail', '… 12,00,000 … 12% … 5 …', 'OR9, the rail at 1280 px');
-  if (await page.getByTestId('dscr-rail-change').waitFor({ timeout: 5000 }).then(() => true, () => false)) {
-    await page.getByTestId('dscr-rail-change').click();
-    await leave(page, 'field=Interest rate (% a year)', '11');
-    await page.getByTestId('dscr-rail-done').click();
-    await expectFigures(page, v, 'dscr-rail', '… 11% …', 'OR9, an answer changed in the rail');
-  } else v(`OR9: no "Change an answer" at 1280 px; on the page: ${await page.evaluate(() => [...document.querySelectorAll('[data-testid^="dscr-rail"], [data-testid^="dscr-sheet"], [data-testid="dscr-edit"], #front-door, #preview')].map((e) => e.dataset.testid || e.id).join(', ') + ` (dialogs open ${document.querySelectorAll('dialog[open]').length}, wide ${matchMedia('(min-width: 64rem)').matches})`)}`);
+  await page.setViewportSize({ width: 375, height: 667 });
+  for (const [id, x] of [['borrower', 'firm'], ['profit', '4.5 L'], ['growth', '0'], ['amount', '12 L'], ['rate', '12'], ['years', '5']]) await typeFact(page, id, x);
+  await expectFigures(page, v, 'reading', '9.56lakh 12lakh …', 'case S');
+  const next = page.getByTestId('next');
+  if (await next.getAttribute('data-next') !== 'options') v(`case S: the next step is "${await next.getAttribute('data-next')}", not the ways that work`);
+  await next.click();
+  for (const id of ['longer', 'own', 'mix']) if (!(await page.getByTestId(`option-${id}`).isVisible())) v(`case S: no option ${id}`);
+  await expectFigures(page, v, 'option-longer', '5 7 7 12,00,000 … 20,145.98 …', 'case S, repay over longer');
+  await layout(page, v, 'case S, the ways that work, dark, 375 px');
+  await page.getByTestId('use-longer').click();
+  await expectText(page, v, 'used', /^Used: Repay over longer\./, 'case S, repay over longer used');
+  if (await next.getAttribute('data-next') !== 'paper') v('case S: once it works the next step is not the paper');
+  await openFold(page, 'working');
+  await expectFigures(page, v, 'dscr-verdict', '… meets …', 'case S, repay over longer used');
+  await expectFigures(page, v, 'dscr-instalment', '20,145.98', 'case S, repay over longer used');
+  await page.getByTestId('undo').click();
+  await expectFigures(page, v, 'reading', '9.56lakh 12lakh …', 'case S, undone');
+  if (await next.getAttribute('data-next') !== 'options') v('case S: Undo does not bring back the ways that work');
+  await ctx.close();
+}
+
+// Kept on the device (docs/WORKED-PAGE.md §4): a fact typed is saved under one versioned key and nothing else; a reload
+// and a visit with home's case keep it; an old shape is brought forward or dropped, never half-read; "Start again from the
+// example" removes it, with an undo.
+if (touched('/dscr/')) {
+  const { ctx, page, v } = await open('/dscr/', { scheme: 'light', at: NOV });
+  if (await page.getByTestId('kept-line').count() !== 1) v('the line on what is kept shows not once');
+  const keys = () => page.evaluate(() => ({ l: Object.keys(localStorage), s: Object.keys(sessionStorage).filter((k) => k !== 'seeded'), dscr: localStorage.getItem('worked:dscr') }));
+  if ((await keys()).dscr) v('the example is saved before anything is typed');
+  await typeFact(page, 'profit', '4.5 L');
+  let held = await keys();
+  const kept = JSON.parse(held.dscr ?? 'null');
+  if (kept?.v !== 1 || !kept?.c?.mine?.includes('profit')) v(`a fact typed is kept as ${String(held.dscr).slice(0, 80)}`);
+  if (held.l.some((k) => !['app-theme', 'worked:dscr'].includes(k)) || held.s.length) v(`the device holds ${[...held.l, ...held.s].join(', ')}`);
+  if ((held.dscr ?? '').length > 20000 || /data:|blob:|%PDF/.test(held.dscr ?? '')) v('the kept answers hold more than what was typed');
+  const reading = await page.getByTestId('reading').textContent();
+  await page.reload({ waitUntil: 'networkidle' });
+  await expectText(page, v, 'reading', (reading ?? '').replace(/\s+/g, ' ').trim(), 'a reload');
+  await page.goto(`${BASE}/dscr/?case=home`, { waitUntil: 'networkidle' });
+  await page.goto(`${BASE}/dscr/`, { waitUntil: 'networkidle' });
+  await expectText(page, v, 'reading', (reading ?? '').replace(/\s+/g, ' ').trim(), 'a visit with home\'s case');
+  // An odd kept shape is dropped and the example shown.
+  await page.evaluate(() => localStorage.setItem('worked:dscr', '{"v":99,"c":{"s":7}}'));
+  await page.reload({ waitUntil: 'networkidle' });
+  await expectText(page, v, 'mark', /^Example /, 'an unknown kept shape');
+  await page.getByTestId('kept-line').waitFor();
+  await typeFact(page, 'amount', '15 L');
+  await page.getByTestId('clear').click();
+  await expectText(page, v, 'mark', /^Example /, 'Start again from the example');
+  held = await keys();
+  if (held.dscr) v('Start again from the example left the kept answers behind');
+  await page.getByTestId('clear-undo').click();
+  await expectFigures(page, v, page.locator('[data-fact="amount"]'), '15lakh', 'Undo after Start again');
   await ctx.close();
 }
 
@@ -1852,43 +1895,40 @@ if (touched('/dscr/')) {
   await ctx.close();
 }
 
-// Interaction data (UD1, D-TECH-37): the steps only, never what is typed. Case S typed on the front door, Make it work,
-// a plan's round seen, More options opened, a PDF and an Excel copy, a field marked wrong, then leaving: every batch has the
+// Interaction data (UD1, D-TECH-37): the steps only, never what is typed. Case S typed fact by fact, one of the ways that
+// work used, For professionals opened, a PDF and an Excel copy, a figure not understood, then leaving: every batch has the
 // Worker's shape, holds each step, and holds none of the typed figures in any form. Built without the Worker's address
 // (as now), a page sends nothing.
 if (touched('/dscr/')) {
   const { check } = await import('../worker/src/event-shape.ts');
   const events = [];
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light', events });
-  const typed = { 'field=This year’s profit before interest, depreciation and tax': '4.5 L', 'field=Growth in sales a year (%)': '0', '#fld-fd-amount': '12 L', 'field=Interest rate (% a year)': '12.25', 'field=Repayment period (years)': '5' };
-  await page.check('field=Partnership firm or LLP');
-  for (const [sel, x] of Object.entries(typed)) await leave(page, sel, x);
-  await page.getByTestId('dscr-viable').click();
-  await page.check('#dscr-own-180000');
-  await page.getByTestId('dscr-plan-from-mix').click();
-  await page.getByTestId('dscr-plan-use').click();
-  await page.getByTestId('dscr-edit').click();
-  await page.locator('dialog[open]').getByText('Use More options').click();
-  await openMore(page);
+  for (const [id, x] of [['borrower', 'firm'], ['profit', '4.5 L'], ['growth', '0'], ['amount', '12 L'], ['rate', '12.25'], ['years', '5']]) await typeFact(page, id, x);
+  await page.getByTestId('next').click();
+  await page.locator('[data-testid="options"] button[data-testid^="use-"]').first().click({ timeout: 3000 }).catch(() => v('UD1: case S offers no way that works'));
+  await openFold(page, 'more-options');
+  await openFold(page, 'paper');
   for (const kind of ['pdf', 'xlsx']) {
     const saved = page.waitForEvent('download');
     await page.getByTestId(`download-${kind}`).click();
     await saved;
   }
-  await leave(page, '#fld-fd-amount', '1,23,45,678');
-  await leave(page, 'field=Interest rate (% a year)', 'twelve');
+  await typeFact(page, 'amount', '1,23,45,678');
+  await page.locator('[data-fact="rate"]').click();
+  await page.getByTestId('sheet-field').fill('twelve');
   await page.waitForTimeout(100);
   await page.evaluate(() => dispatchEvent(new Event('pagehide')));
   await page.waitForTimeout(300);
   const batches = events.map((b) => { try { return JSON.parse(b); } catch { return b; } });
   for (const b of batches) { const r = check(b); if (!r.ok) v(`UD1: a batch the Worker would refuse (${r.why}): ${String(JSON.stringify(b)).slice(0, 120)}`); }
   const steps = batches.flatMap((b) => b.ev ?? []).map((e) => (e.f ? `${e.e} ${e.f}` : e.e));
-  for (const want of ['open', 'field fld-fd-borrower', 'field fld-fd-amount', 'result dscr-status-ready', 'tap dscr-viable', 'tap dscr-plan-use', 'tap dscr-edit',
-    'more more-options', 'download pdf', 'download xlsx', 'error fld-fd-rate']) if (!steps.includes(want)) v(`UD1: no "${want}" in the batches (seen: ${steps.join(', ').slice(-300)})`);
-  if (!steps.at(-1)?.startsWith('leave error-fld-')) v(`UD1: leaving does not name the last step, an error (seen: ${steps.at(-1)})`);
+  for (const want of ['open', 'tap sheet-choice-firm', 'field sheet-profit', 'field sheet-amount', 'result dscr-status-ready', 'tap next',
+    'more more-options', 'download pdf', 'download xlsx', 'error sheet-rate']) if (!steps.includes(want)) v(`UD1: no "${want}" in the batches (seen: ${steps.join(', ').slice(-300)})`);
+  if (!steps.some((x) => /^tap use-/.test(x))) v(`UD1: using a way that works is not a step (seen: ${steps.join(', ').slice(-300)})`);
+  if (!steps.at(-1)?.startsWith('leave error-sheet-')) v(`UD1: leaving does not name the last step, an error (seen: ${steps.at(-1)})`);
   // The figures as typed, in digits, and as the page shows them; the times are left out, being the page's own.
   const said = events.join('\n').replace(/"t":\d+/g, '');
-  for (const x of ['4.5 L', '450000', '4,50,000', '12 L', '1200000', '12,00,000', '12.25', '180000', '1,80,000', '12345678', '1,23,45,678'])
+  for (const x of ['4.5 L', '450000', '4,50,000', '12 L', '1200000', '12,00,000', '12.25', '12345678', '1,23,45,678', 'twelve'])
     if (said.includes(x)) v(`UD1: the typed or shown figure ${x} is in a batch`);
   if (await page.getByTestId('counted').count()) v('UD1: the footer says steps are counted on a build without the Worker');
   await ctx.close();
@@ -1896,7 +1936,7 @@ if (touched('/dscr/')) {
   const { ctx: c2, page: p2, v: v2 } = await open('/dscr/', { scheme: 'dark' });
   let sent = 0;
   p2.on('request', (r) => { if (r.method() === 'POST') sent++; });
-  await leave(p2, '#fld-fd-amount', '12 L');
+  await typeFact(p2, 'amount', '12 L');
   await p2.evaluate(() => dispatchEvent(new Event('pagehide')));
   await p2.waitForTimeout(200);
   if (sent) v2(`UD1: ${sent} requests sent while the Worker is not live`);
@@ -1921,7 +1961,7 @@ if (touched('/estimate/')) {
   await plain.ctx.close();
 }
 
-// Answers kept in the tab (UXR2, D-UX-157 to D-UX-162): each tool, typed into, reloaded and opened from home's fictional
+// Answers kept in the tab (UXR2, D-UX-157 to D-UX-162; the DSCR, now kept on the device, is checked with its page above): each tool, typed into, reloaded and opened from home's fictional
 // case keeps its filled fields; Clear all empties the draft. A field is filled when it holds text, a choice or a tick.
 const filledCount = (page) => page.evaluate(() => [...document.querySelectorAll('main input, main select, main textarea')]
   .filter((e) => (e.type === 'radio' || e.type === 'checkbox' ? e.checked : e.value.trim() !== '')).length);
@@ -1931,7 +1971,6 @@ const filledCount = (page) => page.evaluate(() => [...document.querySelectorAll(
 const DRAFT_KEY = /^draft:(dscr|cma|report|plan|quote):v1$/;
 const stored = (page) => page.evaluate(() => ({ s: Object.keys(sessionStorage).map((k) => [k, sessionStorage.getItem(k) ?? '']), l: Object.keys(localStorage).map((k) => [k, localStorage.getItem(k) ?? '']) }));
 const KEPT = [
-  { path: '/dscr/', key: 'dscr', clear: ['dscr-clear'] },
   { path: '/cma/', key: 'cma', clear: ['cma-clear'] },
   { path: '/project-report/', key: 'report', clear: ['rep-clear'], device: true },
   { path: '/estimate/', key: 'plan', fill: async (page) => { await page.check('field=Repair or renovate…'); await page.check('#fld-home-flat'); await page.selectOption('field=Which city?', 'pune'); } },
@@ -1976,9 +2015,9 @@ for (const t of KEPT.filter((t) => touched(t.path))) {
   await ctx.close();
 }
 
-// UXR5's "Done when" (UXR5b, the UXR1 report): on all four tools one closed More options (S19); the worked example fills and says it is fictional; Clear all
+// UXR5's "Done when" (UXR5b, the UXR1 report; the DSCR, now opening on its example, is checked with its page above): on the other three tools one closed More options (S19); the worked example fills and says it is fictional; Clear all
 // takes it in one tap, with an undo; and the same four downloads (P10). The report's downloads wait for its check (OR8).
-const SAME = [['/dscr/', 'dscr', ''], ['/cma/', 'cma', 'cma-'], ['/project-report/', 'rep', 'rep-'], ['/estimate/', 'pl', 'pl-']];
+const SAME = [['/cma/', 'cma', 'cma-'], ['/project-report/', 'rep', 'rep-'], ['/estimate/', 'pl', 'pl-']];
 for (const [path, pre, dl] of SAME.filter(([p]) => touched(p))) for (const width of [390, 1280]) {
   const { ctx, page, v } = await open(path);
   if (width !== 390) await page.setViewportSize({ width, height: 900 });

@@ -11,11 +11,11 @@ export interface FactShown { id: string; kind: FactKind; text: string; spoken: s
 
 /**
  * The reading (§4 part 2): one sentence, the largest thing on the screen, the cash first; the banker's term under it.
- * `state` tints its rule: solid once it carries, warn when short, bad when it cannot; dashed while a fact is the example's.
+ * The sentence says the state in words; no tinted side rule repeats it (a coloured stripe reads as decoration, not news).
+ * `state` and `pencil` stay on the element for checks.
  */
 export function Reading(p: { text: string; banker?: string; state: 'carries' | 'short' | 'cannot' | 'wait'; pencil: boolean; children?: ComponentChildren }) {
-  const rule = p.state === 'carries' ? 'border-good' : p.state === 'short' ? 'border-warn' : p.state === 'cannot' ? 'border-bad' : 'border-line';
-  return <div data-testid="reading" data-answer class={`border-l-4 pl-4 ${rule} ${p.pencil ? 'border-dashed' : ''}`}>
+  return <div data-testid="reading" data-answer data-state={p.state} data-pencil={p.pencil ? '' : undefined}>
     <p data-testid="reading-text" role="status" class="font-display text-[1.5rem] leading-[1.2] font-semibold tracking-[-0.01em] text-ink text-balance sm:text-[2rem]">{p.text}</p>
     {p.banker && <p data-testid="reading-banker" class="mt-2 text-base text-ink-muted text-pretty">{p.banker}</p>}
     {p.children}

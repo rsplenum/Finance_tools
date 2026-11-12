@@ -552,6 +552,20 @@ function Working({ s, p, openMore, fold }: { s: State; p: Preview; openMore: () 
   </section>;
 }
 
+/** How the figures are worked out, for the worked page's See the working (NEW1): worked twice, rounding, how far the
+ * method was checked, and the lenders' tests with the promoters' loans as assumed. */
+export function WorkingNotes({ s, p }: { s: State; p: Preview }) {
+  const sure = p.verdict && !p.blocked && !p.needs.length ? sureLine(dscrMarks(s)) : '';
+  return <div data-testid="dscr-how" class={`mt-6 space-y-2 ${HINT}`}>
+    <p>{SHARED.twice}</p>
+    {sure && <p data-testid="dscr-sure">{sure}</p>}
+    <p>{SHARED.rounded} {W.nilLines}</p>
+    {p.lender && <div><p class="font-medium text-ink">{W.tests}</p>
+      {'assumed' in p.lender.promoters && <p data-testid="lender-promoters">{p.lender.promoters.assumed}.</p>}
+      <p>{LENDER.status} {LENDER.stress.map((x) => `${x.label}: ${x.how}.`).join(' ')} {LENDER.floor.why}.</p></div>}
+  </div>;
+}
+
 /** DSCR as lenders test it, beside the borrower's (D-UX-47): never part of the verdict. */
 export function LenderLines({ v, openMore }: { v: LenderView; openMore: () => void }) {
   const line = (l: LenderLine, id: string) => <li key={id} data-testid={`lender-${id}`} class={l.below ? 'text-bad' : ''}>
@@ -630,7 +644,7 @@ export function DownloadSection({ s, p: page, update, example = [], bare }: { s:
   const p = example.length ? { ...page, needs: [...page.needs, ...example] } : page, marked = example.length > 0;
   const f = s.doc, set = (patch: Partial<DocFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
   const english = (t = '') => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
-  const gstinSaid = f.gstin?.trim() && !gstinOf(f.gstin) ? 'A GSTIN has 15 letters and digits, like 27ABCDE1234F1Z5.' : undefined;
+  const gstinSaid = f.gstin?.trim() && !gstinOf(f.gstin) ? 'A GSTIN has 15 letters and digits, as on the GST certificate.' : undefined;
   const own = docNeeds(f), provisional = allNeeds(s, p).length > 0, ready = !!p.statement && !p.blocked;
   const field = (id: keyof DocFacts, label: string, hint?: string) =>
     <TextField id={`fld-${id}`} label={label} hint={hint} value={f[id] ?? ''} onCommit={(t) => set({ [id]: t })}
@@ -653,7 +667,7 @@ export function DownloadSection({ s, p: page, update, example = [], bare }: { s:
           <div class="grid gap-4 pt-2 pb-4 sm:grid-cols-2">
             {field('address', 'Address', 'The business’s address.')}
             {field('purpose', 'Purpose of the loan', 'Like a new CNC machine.')}
-            {field('gstin', 'GSTIN, if registered', 'Like 27ABCDE1234F1Z5.')}
+            {field('gstin', 'GSTIN, if registered', '15 letters and digits, as on the GST certificate.')}
           </div>
         </details>
         <div class="mt-5">

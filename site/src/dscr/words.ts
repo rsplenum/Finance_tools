@@ -65,6 +65,8 @@ export const N = {
   who: { proprietor: 'A proprietor', firm: 'A firm', company: 'A company', none: 'A business' },
   mark: {
     example: 'Example: a fictional firm. Tap any figure to make it yours.',
+    /** Opened from the home page with its case (D-UX-245): still a marked example. */
+    home: 'Example: the home page’s fictional firm. Tap any figure to make it yours.',
     part: (yours: string, left: string) => `Yours: ${yours}. Still the example’s: ${left}.`,
   },
   name: { profit: 'the profit', amount: 'the loan', years: 'the years', rate: 'the rate', borrower: 'who borrows', growth: 'the growth', emis: 'other loans', depreciation: 'depreciation' },
@@ -100,6 +102,8 @@ export const N = {
   },
   chart: { title: 'Cash for the loan against repayments, by year', cash: 'Cash available', service: 'Repayments due', unit: 'Rs. lakh', tight: 'tightest' },
   folds: { working: 'See the working', assumed: 'What we assumed', pro: 'For professionals', paper: 'The paper' },
+  /** For professionals, above the form: a projection typed from the start, with the stated assumptions kept. */
+  blank: { lead: 'Typing a projection from the start?', go: 'Empty the form', undo: 'Undo' },
   assumed: { example: 'Still the example’s', drawn: (month: string) => `The loan is taken as drawn in ${month} and repaid by monthly EMI, with no holiday.` },
   needs: (what: string) => `Your own figure for ${what} (the example’s stands in)`,
 } as const;

@@ -15,9 +15,10 @@ import { Bars } from '../worked/Bars';
 import { FactSheet, type SheetFact } from '../worked/FactSheet';
 import { useWorkedKept, over } from '../worked/kept';
 import { Fold, FactLine, MAIN, openFold, QUIET, Reading } from '../worked/parts';
-import { DownloadSection, LenderLines, Professionals, Schedule, StatementTable, type Update } from './Calculator';
+import { DownloadSection, LenderLines, Professionals, Schedule, StatementTable, WorkingNotes, type Update } from './Calculator';
 import { DSCR_HOME } from './home-case';
-import { BORROWER_CHOICES, frontDoor, monthText, type Preview, type State } from './model';
+import { inr, rs } from '../../../engine/util';
+import { BORROWER_CHOICES, frontDoor, monthText, statusText, type Preview, type State } from './model';
 import {
   ASSUMED_FACTS, applyOption, barsOf, changedFacts, exampleCase, exampleFacts, exampleNeeds, exampleState, FACTS, factProblem, factsOf, factText,
   markOf, nextOf, optionsFor, previewOf, readingOf, WALK, withMine, writeFact, type Case, type FactId, type OptionCard,
@@ -99,6 +100,11 @@ export function DscrWorked() {
   };
   const use = (o: OptionCard) => { setUsed({ title: o.title, before: c }); setC(applyOption(c, o)); setShowOptions(false); };
   const clear = () => { setCleared(c); setC(exampleCase(thisMonth())); setSheet(undefined); setUsed(undefined); };
+  // For professionals: every fact the borrower's and empty, the stated assumptions kept (the old page's opening form).
+  const [emptied, setEmptied] = useState<Case>();
+  const empty = (): Case => ({ s: frontDoor(thisMonth()), mine: [...FACTS] });
+  const isEmpty = c.mine.length === FACTS.length && JSON.stringify(c.s) === JSON.stringify(empty().s);
+  const emptyForm = () => { setEmptied(c); setC(empty()); setSheet(undefined); setUsed(undefined); setShowOptions(false); };
 
   const bars = barsOf(p).map((b) => ({
     key: b.fy, label: b.fy, a: b.cash, b: b.service, aText: b.cashText, bText: b.serviceText, tight: b.tight, note: b.part ? 'part year' : undefined,
@@ -116,17 +122,18 @@ export function DscrWorked() {
         <Reading text={r.text} banker={r.banker} state={r.state} pencil={pencil} />
         {bars.length > 0 && <div class="mt-3"><Bars title={N.chart.title} aName={N.chart.cash} bName={N.chart.service} unit={N.chart.unit} tightName={N.chart.tight} rows={bars} /></div>}
       </div>
-      {/* On a phone the next step comes straight under the picture, so the first screen holds all three; the facts follow it. */}
+      {/* The next step comes straight under the picture, so a phone's first screen holds all three; the facts follow it, in
+          the same order on a desktop, so Tab follows the eye (WCAG 2.4.3). */}
       <section id="front-door" aria-label="Your figures" class="mt-3 flex flex-col lg:mt-1">
-        <div class="order-2 mt-6 lg:order-1 lg:mt-0">
-          {mark && <p data-testid="mark" class="text-base text-ink-muted"><span class="mr-1.5 inline-flex items-center rounded-full bg-warn-tint px-2 py-0.5 text-sm font-semibold text-warn">{N.example}</span>{' '}{mark.replace(/^Example: /, '')}</p>}
-          <FactLine facts={facts} open={sheet?.id} onTap={(id) => open(id as FactId)} label="The facts" />
-        </div>
-        <div class="order-1 lg:order-2 lg:mt-6">
+        <div>
           <button type="button" data-testid="next" data-next={next.kind} aria-expanded={next.kind === 'options' ? showOptions : undefined} class={MAIN} onClick={go}>{next.label}</button>
           {used && <p role="status" data-testid="used" class="mt-3 flex flex-wrap items-center gap-x-2 text-base text-ink">{N.options.used(used.title)}
             <button type="button" data-testid="undo" class={QUIET} onClick={() => { setC(used.before); setUsed(undefined); }}>{N.options.undo}</button></p>}
           {showOptions && <Options options={options} onUse={use} />}
+        </div>
+        <div class="mt-6">
+          {mark && <p data-testid="mark" class="text-base text-ink-muted"><span class="mr-1.5 inline-flex items-center rounded-full bg-warn-tint px-2 py-0.5 text-sm font-semibold text-warn">{N.example}</span>{' '}{home && !c.mine.length ? <span data-testid="home-case">{N.mark.home.replace(/^Example: /, '')}</span> : mark.replace(/^Example: /, '')}</p>}
+          <FactLine facts={facts} open={sheet?.id} onTap={(id) => open(id as FactId)} label="The facts" />
         </div>
         {sheet && <FactSheet key={sheet.walk ? 'walk' : sheet.id} fact={sheetFact(c, sheet.id)} words={N.sheet}
           problem={(t) => factProblem(sheet.id, t)} onLive={(t) => live(sheet.id, t)} onKeep={() => keep(sheet.id)}
@@ -136,9 +143,14 @@ export function DscrWorked() {
     </div>
 
     <div class="mt-12">
-      <Fold id="working" title={N.folds.working}><Working c={c} p={p} /></Fold>
+      <Fold id="working" title={N.folds.working}><Working c={c} p={p} update={update} /></Fold>
       <Fold id="assumed" title={N.folds.assumed}><Assumed c={c} p={p} /></Fold>
-      <Fold id="more-options" title={N.folds.pro}><Professionals s={c.s} update={update} /></Fold>
+      <Fold id="more-options" title={N.folds.pro}>
+        {(!isEmpty || emptied) && <p class="mb-6 flex flex-wrap items-center gap-x-2 text-base text-ink-muted">{N.blank.lead}
+          {!isEmpty && <button type="button" data-testid="dscr-clear" class={`${QUIET} -ml-1`} onClick={emptyForm}>{N.blank.go}</button>}
+          {isEmpty && emptied && <button type="button" data-testid="dscr-clear-undo" class={`${QUIET} -ml-1`} onClick={() => { setC(emptied); setEmptied(undefined); }}>{N.blank.undo}</button>}</p>}
+        <Professionals s={c.s} update={update} />
+      </Fold>
       <Fold id="paper" title={N.folds.paper} class="border-b">
         <DownloadSection s={c.s} p={p} update={update} example={exampleNeeds(c)} bare />
       </Fold>
@@ -173,10 +185,12 @@ function Options({ options, onUse }: { options: OptionCard[]; onUse: (o: OptionC
 }
 
 /** See the working: the key figures, the statement that adds up, the lender's tests and the schedule. */
-function Working({ c, p }: { c: Case; p: Preview }) {
+function Working({ c, p, update }: { c: Case; p: Preview; update: Update }) {
   const toPro = () => openFold('more-options');
-  const cell = 'rounded-control bg-surface p-3';
+  const cell = 'rounded-control bg-surface p-3', largest = p.largest?.amount, fewest = p.fewest?.instalments;
   return <div>
+    <p data-testid="dscr-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class="mb-1 text-base text-ink">{statusText(p)}</p>
+    {p.needs.length > 0 && <ul data-testid="dscr-needs" class="mb-3 list-disc space-y-0.5 pl-5 text-base text-ink-muted">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>}
     {p.blocked && <p data-testid="dscr-blocked" role="alert" class="text-bad">{p.blocked}</p>}
     {!p.blocked && <dl class="grid grid-cols-2 gap-3 sm:grid-cols-4">
       <div class={cell}><dt class="text-sm text-ink-muted">Average DSCR</dt><dd data-testid="dscr-average" class="text-2xl font-semibold text-ink tabular-nums">{p.average ?? '—'}</dd></div>
@@ -188,8 +202,10 @@ function Working({ c, p }: { c: Case; p: Preview }) {
       </>}
     </dl>}
     {p.verdict && <p data-testid="dscr-verdict" class="mt-4 text-ink">{p.verdict.text}</p>}
-    {p.largest && <p data-testid="dscr-largest" class="mt-2 text-ink">{p.largest.text}</p>}
-    {p.fewest && <p data-testid="dscr-fewest" class="mt-2 text-ink">{p.fewest.text}</p>}
+    {p.largest && <p class="mt-2 flex flex-wrap items-center gap-x-2 text-ink"><span data-testid="dscr-largest">{p.largest.text}</span>
+      {largest !== undefined && <button type="button" data-testid="use-amount" class={`${QUIET} -ml-3`} onClick={() => update((x) => ({ ...x, loan: { ...x.loan, amount: inr(largest) } }))}>Use {rs(largest)}</button>}</p>}
+    {p.fewest && <p class="mt-2 flex flex-wrap items-center gap-x-2 text-ink"><span data-testid="dscr-fewest">{p.fewest.text}</span>
+      {fewest !== undefined && <button type="button" data-testid="use-instalments" class={`${QUIET} -ml-3`} onClick={() => update((x) => ({ ...x, loan: { ...x.loan, instalments: String(fewest) } }))}>Use {fewest} instalments</button>}</p>}
     {p.marks && p.marks.length > 0 && <ul data-testid="dscr-marks" class="mt-4 flex flex-wrap gap-2 text-sm">
       {p.marks.map((m) => <li key={m.fy} data-testid={`mark-${m.fy}`} class={`rounded-full bg-surface px-2.5 py-0.5 ${!m.counted ? 'text-ink-muted' : m.meets ? 'text-good' : 'text-bad'}`}>
         {m.fy}: {m.dscr}, {!m.counted ? 'not counted' : m.meets ? 'meets the target' : 'below the target'}</li>)}
@@ -200,6 +216,7 @@ function Working({ c, p }: { c: Case; p: Preview }) {
     {p.notCounted && <p data-testid="dscr-not-counted" class="mt-2 text-sm text-ink-muted">{p.notCounted}</p>}
     {p.notes.length > 0 && <ul data-testid="dscr-notes" class="mt-2 space-y-0.5 text-sm text-warn">{p.notes.map((n) => <li key={n}>{n}</li>)}</ul>}
     {p.schedule && <Schedule sch={p.schedule} />}
+    <WorkingNotes s={c.s} p={p} />
   </div>;
 }
 

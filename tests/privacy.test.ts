@@ -38,13 +38,17 @@ describe('the privacy page against the code', () => {
   it('sets no cookie and keeps in the browser only the two choices, the tab’s answers and the report’s answers it names', () => {
     for (const f of [...site, ...worker]) expect(read(f), f).not.toMatch(/document\.cookie|set-cookie/i);
     const stores = site.filter((f) => /localStorage\.setItem|sessionStorage|indexedDB/.test(read(f)));
-    expect(stores.sort()).toEqual(['site/src/fields.tsx', 'site/src/report/Report.tsx', 'site/src/theme.ts']);
-    // Answers stay on the device for one tool only, the project report (D-UX-341): the page and the privacy page say so.
+    expect(stores.sort()).toEqual(['site/src/fields.tsx', 'site/src/report/Report.tsx', 'site/src/theme.ts', 'site/src/worked/kept.ts']);
+    // Answers stay on the device for two tools: the project report (D-UX-341) and the DSCR made new (NEW1,
+    // docs/WORKED-PAGE.md §4, under `worked:dscr`): the pages and the privacy page say so.
     const device = site.filter((f) => /useKept\([^)]*, true\)/.test(read(f)));
     expect(device).toEqual(['site/src/report/Report.tsx']);
     expect(read('site/src/fields.tsx')).toMatch(/const store = \(\) => device \? localStorage : sessionStorage;/);
     expect(read('site/src/pages/project-report.astro')).toMatch(/kept="device"/);
     expect(text).toMatch(/On the project report they are saved in your browser until you press Clear all/);
+    expect(read('site/src/worked/kept.ts')).toMatch(/const key = `worked:\$\{spec\.tool\}`/);
+    expect(read('site/src/dscr/Worked.tsx')).toMatch(/tool: 'dscr'/);
+    expect(text).toMatch(/on the DSCR until you press Start again from the example/);
   });
   it('sends to our server only the counts, a statement’s lines and the draft’s inputs', () => {
     const calls = site.filter((f) => /\bfetch\(|sendBeacon/.test(read(f)));

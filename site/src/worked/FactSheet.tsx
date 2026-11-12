@@ -35,14 +35,20 @@ export function FactSheet(p: {
   onClose: () => void;
 }) {
   const f = p.fact, [text, setText] = useState(f.value), [said, setSaid] = useState<string>();
-  const input = useRef<HTMLInputElement>(null), first = useRef<HTMLButtonElement>(null), opener = useRef<Element | null>(null);
+  const input = useRef<HTMLInputElement>(null), first = useRef<HTMLButtonElement>(null), opener = useRef<Element | null>(null), away = useRef(false);
   // A new fact starts from its own figure; the focus goes into the sheet and comes back to the figure when it closes.
   useLayoutEffect(() => { setText(f.value); setSaid(undefined); }, [f.id]);
   useEffect(() => {
     if (!opener.current) opener.current = document.activeElement;
     (input.current ?? first.current)?.focus({ preventScroll: true });
   }, [f.id]);
-  useEffect(() => () => { const o = opener.current; if (o instanceof HTMLElement && o.isConnected) o.focus({ preventScroll: true }); }, []);
+  useEffect(() => () => { const o = opener.current; if (!away.current && o instanceof HTMLElement && o.isConnected) o.focus({ preventScroll: true }); }, []);
+  // The focus moved on to the page (Tab, or a tap on another control): the sheet closes and the focus stays where it went,
+  // so nothing focused sits hidden under the sheet (WCAG 2.4.11). A tap on plain text or a switch of app keeps it open.
+  const out = (e: FocusEvent) => {
+    const to = e.relatedTarget;
+    if (to instanceof Element && !(e.currentTarget as Element).contains(to)) { away.current = true; p.onClose(); }
+  };
   const change = (t: string) => { setText(t); const bad = t.trim() ? p.problem(t) : undefined; setSaid(bad); if (!bad) p.onLive(t); };
   // Next and Done take the figure if it is understood; an empty field leaves the example standing.
   const go = (then: () => void) => {
@@ -53,7 +59,7 @@ export function FactSheet(p: {
   const n = Number(text.replace(/,/g, '')), slider = f.range && Number.isFinite(n) ? Math.min(f.range.max, Math.max(f.range.min, n)) : f.range?.min;
   const fieldId = `sheet-${f.id}`, hintId = `${fieldId}-hint`;
   return <div role="dialog" aria-modal="false" aria-labelledby={`${fieldId}-label`} data-testid="sheet"
-    onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); p.onClose(); } }}
+    onKeyDown={(e) => { if (e.key === 'Escape') { e.preventDefault(); p.onClose(); } }} onFocusOut={out}
     class="fixed inset-x-0 bottom-0 z-30 max-h-[62svh] overflow-y-auto rounded-t-panel border-t border-line bg-canvas px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-12px_40px_-12px_oklch(0.2_0.03_270/0.35)] sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-[26rem] sm:rounded-panel sm:border">
     <div class="flex items-start justify-between gap-3">
       <div>
@@ -72,14 +78,14 @@ export function FactSheet(p: {
           class={`min-h-12 rounded-control border px-4 text-left text-base ${f.value === c.value ? 'border-ink bg-ink text-canvas font-semibold' : 'border-edge bg-field text-ink hover:bg-ink/6'}`}>{c.label}</button>)}
       </div>
       : <div class="mt-3">
-        <div class="flex items-center rounded-control border border-edge bg-field focus-within:border-focus focus-within:ring-2 focus-within:ring-focus/40">
-          {f.unit === 'Rs.' && <span aria-hidden="true" class="pl-3 text-xl text-ink-muted">Rs.</span>}
+        <div class="relative">
+          {f.unit === 'Rs.' && <span aria-hidden="true" class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-xl text-ink-muted">Rs.</span>}
           <input ref={input} id={fieldId} data-testid="sheet-field" type="text" inputMode={f.inputMode ?? 'decimal'} autoComplete="off" enterKeyHint={p.walk ? 'next' : 'done'}
             value={text} placeholder={f.placeholder} aria-describedby={hintId} aria-invalid={!!said}
             onInput={(e) => change((e.currentTarget as HTMLInputElement).value)}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); go(p.walk ? p.walk.onNext : p.onClose); } }}
-            class="min-h-14 w-full min-w-0 bg-transparent px-3 text-2xl font-semibold text-ink tabular-nums outline-none placeholder:font-normal placeholder:text-ink-muted/80" />
-          {f.unit && f.unit !== 'Rs.' && <span aria-hidden="true" class="pr-3 text-xl text-ink-muted">{f.unit}</span>}
+            class={`min-h-14 w-full min-w-0 rounded-control border border-edge bg-field text-2xl font-semibold text-ink tabular-nums outline-none placeholder:font-normal placeholder:text-ink-muted/80 focus:border-focus focus:ring-2 focus:ring-focus ${f.unit === 'Rs.' ? 'pl-12' : 'pl-3'} ${f.unit && f.unit !== 'Rs.' ? 'pr-20' : 'pr-3'}`} />
+          {f.unit && f.unit !== 'Rs.' && <span aria-hidden="true" class="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xl text-ink-muted">{f.unit}</span>}
         </div>
         {f.range && <input type="range" data-testid="sheet-slider" aria-label={f.label} min={f.range.min} max={f.range.max} step={f.range.step} value={slider}
           onInput={(e) => change((e.currentTarget as HTMLInputElement).value)} class="mt-3 h-11 w-full cursor-pointer accent-[var(--ink)]" />}
