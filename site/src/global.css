@@ -427,3 +427,62 @@ html:has([data-builder-bar]) { scroll-padding-bottom: 7.5rem; }
 .peek-body > div { cursor: zoom-in; }
 .peek-large { width: 220%; }
 .peek-body > .peek-large { cursor: zoom-out; }
+
+/*
+ * The journey across (NEW1d, `site/src/worked/Journey.tsx`; Rahul, 12-11-2026: "make it horizontal journey (really top
+ * class and sophisticated CSS elements guiding it)"). Chapters side by side on a track that snaps one at a time; the next
+ * one shows at the edge under a fade. The rail's line and the hairline under the pinned strip fill with `--p` (0 to 1),
+ * written as the track scrolls. Each chapter is cut at its edges (`overflow: clip`, with room for a focus ring), so
+ * nothing in it widens the track; a chapter not in view is cut to the height of the one in view (`--h`).
+ */
+.journey { --peek: 1.25rem; --gap: 0.75rem; --p: 0; }
+.journey[data-one] { --peek: 0px; --gap: 0px; }
+/* The pin stands under the top bar while it shows and takes its place when it steps away (look.ts writes `--bar-h`). */
+.journey-pin { position: sticky; top: var(--bar-h, 0px); z-index: 10; transition: top 0.25s ease-out; }
+html:has([data-header][data-away]:not(:focus-within)) .journey-pin { top: 0; }
+@media (width >= 64rem) { .journey-pin { display: none; } }
+.journey-hair { position: absolute; inset-inline: 0; bottom: -1px; height: 2px; border-radius: 1px; background: var(--ink); transform: scaleX(var(--p)); transform-origin: left; }
+.journey-rail { position: relative; margin-block: 0.25rem 1.25rem; }
+.journey-stops { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
+.journey-line { position: absolute; top: calc(1.375rem - 1px); inset-inline: calc(50% / var(--n)); height: 2px; border-radius: 1px; background: var(--line); }
+.journey-fill { position: absolute; inset: 0; border-radius: inherit; background: var(--ink); transform: scaleX(var(--p)); transform-origin: left; }
+.journey-stop-button { display: flex; width: 100%; min-height: 2.75rem; flex-direction: column; align-items: center; gap: 0.375rem; border-radius: 0.75rem; padding: 0.5rem 0.125rem 0.375rem; color: var(--ink-muted); }
+.journey-stop-button:hover { background: color-mix(in oklch, var(--ink) 5%, transparent); }
+.journey-dot { position: relative; z-index: 1; display: grid; width: 1.75rem; height: 1.75rem; place-items: center; border-radius: 999px; border: 2px solid var(--line); background: var(--canvas); font-size: 0.8125rem; font-weight: 600; font-variant-numeric: tabular-nums; transition: background-color 0.3s, border-color 0.3s, color 0.3s, box-shadow 0.3s, scale 0.3s; }
+.journey-name { text-align: center; font-size: 0.8125rem; line-height: 1.2; overflow-wrap: anywhere; }
+.journey-stop-button[data-state='done'] .journey-dot { border-color: var(--ink); background: var(--ink); color: var(--canvas); }
+.journey-stop-button[data-state='now'] { color: var(--ink); font-weight: 600; }
+.journey-stop-button[data-state='now'] .journey-dot { border-color: var(--ink); color: var(--ink); box-shadow: 0 0 0 0.3125rem color-mix(in oklch, var(--ink) 12%, transparent); scale: 1.08; }
+.journey-stop-button:hover .journey-dot { border-color: var(--ink); }
+.journey-track {
+  position: relative; display: flex; align-items: flex-start; gap: var(--gap); margin-inline: -0.25rem; padding-block: 0.25rem;
+  overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-behavior: smooth; scrollbar-width: none;
+  transition: height 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+  mask-image: linear-gradient(to right, #000 calc(100% - var(--peek) - var(--gap)), transparent);
+}
+.journey-track::-webkit-scrollbar { display: none; }
+.journey-track[data-last] { mask-image: linear-gradient(to left, #000 calc(100% - var(--peek) - var(--gap)), transparent); }
+.journey-panel { flex: 0 0 calc(100% - var(--peek) - var(--gap)); min-width: 0; overflow: clip; padding: 0 0.25rem 0.25rem; scroll-snap-align: start; scroll-snap-stop: always; }
+.journey-panel:last-child { scroll-snap-align: end; }
+.journey-panel:not([data-now]) { max-height: var(--h, none); }
+.journey-panel > section { margin-top: 0.25rem; border: 0; padding-top: 0; }
+.journey-panel [data-ledger] { display: none; }
+.journey-step { width: fit-content; font-size: 0.875rem; font-weight: 600; letter-spacing: 0.02em; color: var(--ink-muted); outline: none; }
+.journey-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; margin-top: 2rem; border-top: 1px solid var(--line); padding-top: 1.25rem; }
+.journey-next { display: inline-flex; min-height: 3rem; align-items: center; gap: 0.5rem; border-radius: 999px; background: var(--ink); padding-inline: 1.5rem; font-weight: 600; color: var(--canvas); }
+.journey-next:hover { background: color-mix(in oklch, var(--ink) 85%, var(--canvas)); }
+.journey-arrow { display: inline-block; transition: translate 0.2s; }
+.journey-next:hover .journey-arrow { translate: 0.25rem 0; }
+.journey-back { display: inline-flex; min-height: 2.75rem; align-items: center; gap: 0.375rem; border-radius: 999px; padding-inline: 0.75rem; font-weight: 500; color: var(--link); }
+.journey-back:hover { background: color-mix(in oklch, var(--ink) 6%, transparent); }
+/* As a chapter slides in, it comes up from a dim edge and its heading arrives a beat behind it (a scroll-driven
+ * animation on the track's own scroll, so it moves exactly with the finger). Where there is none, or motion is not
+ * wanted, the chapters simply slide. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .journey-panel { animation: journey-near linear both; animation-timeline: view(inline); }
+    .journey-step, .journey-panel > section > h2 { animation: journey-trail linear both; animation-timeline: view(inline); animation-range: entry 0% entry 100%; }
+  }
+}
+@keyframes journey-near { entry 0% { opacity: 0.35; } entry 100% { opacity: 1; } exit 0% { opacity: 1; } exit 100% { opacity: 0.35; } }
+@keyframes journey-trail { from { translate: 2.5rem 0; } to { translate: 0 0; } }

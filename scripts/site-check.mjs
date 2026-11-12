@@ -370,6 +370,8 @@ async function enterCaseA(page) {
 }
 
 async function layout(page, v, step) {
+  // Colours are read at rest: a fade under way (the journey's stops, 0.3 s, NEW1d) is not what a reader reads.
+  await page.waitForFunction(() => !document.getAnimations().some((a) => a instanceof CSSTransition && a.playState === 'running'), null, { timeout: 3000 }).catch(() => {});
   const f = await page.evaluate(audit);
   if (f.wide) v(`${step}: horizontal scroll: ${f.wide}`);
   for (const id of f.smallInputs) v(`${step}: input under 16 px: ${id}`);
@@ -867,6 +869,24 @@ if (touched('/dscr/')) {
   await ceiling(page, v, 0, 'the report in Professional mode', '[data-testid="report"]');
   if (!(await page.getByTestId('pro-strip').isVisible())) v('Professional, 375 px: the DSCR is not kept in sight above the fields');
   await layout(page, v, 'Professional mode, 375 px');
+  // The fields as a journey across (NEW1d, Rahul: "make it horizontal journey"): chapters side by side on a track, a
+  // stop for each on the rail, Next at a chapter's foot; a box taken by focus (Tab, a Change link) brings its chapter
+  // and stands in sight, the track its height.
+  const j = page.getByTestId('journey'), now = () => j.getAttribute('data-chapter-now');
+  const across = await page.getByTestId('journey-track').evaluate((t) => t.scrollWidth > t.clientWidth * 3);
+  if (!across) v('Professional: the fields do not lie across as a journey');
+  if (await j.locator('nav button').count() !== 5) v('Professional: the journey has not five stops for a projection');
+  await page.getByTestId('next-how').click();
+  await page.waitForFunction(() => document.querySelector('[data-testid="stop-loan"]')?.getAttribute('aria-current') === 'step', null, { timeout: 4000 }).catch(() => v('Professional: Next does not move the journey to the loan'));
+  const inSight = (sel) => page.locator(sel).evaluate((e) => { const r = e.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight; });
+  await page.locator('#fld-targetAverage').focus();
+  await page.waitForTimeout(400);
+  if (await now() !== 'target' || !(await inSight('#fld-targetAverage'))) v(`Professional: a box taken by focus does not bring its chapter (at ${await now()})`);
+  await page.keyboard.press('Shift+Tab');
+  await page.waitForTimeout(400);
+  if (await now() !== 'figures' || !(await inSight('*:focus'))) v(`Professional: Shift+Tab back a chapter leaves the box out of sight (at ${await now()})`);
+  if (await page.getByTestId('journey-track').evaluate((t) => t.scrollTop)) v('Professional: the track scrolled up or down inside itself');
+  await layout(page, v, 'Professional mode, 375 px, along the journey');
   await page.getByTestId('mode-simple').click();
   if (await page.locator('#more-options').count()) v('Simple mode still shows every field');
   if (!(await page.getByTestId('filled').isVisible())) v('Simple mode does not say what it filled in');

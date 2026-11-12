@@ -26,6 +26,7 @@ Tokens are for building, and for checking that the new thing works. Reading rule
 - `docs/HANDOFF.md` says where things stand and what is next. Keep it short: it is read whole.
 - `docs/DECISIONS.md` is a dated log to grep. A line goes in when Rahul decides something, or when a choice about money, law or the product's shape would otherwise be made twice. A change to the code is not a decision: the commit holds it.
 - A lesson goes in its topic file here (see `README.md`).
+- **Record every ask in a message before building any of it.** Rahul's horizontal journey for Professional (12-11-2026, D-UX-361) was asked in the same message as other notes; D-UX-360's line quoted only the others, so NEW1c built half and Rahul had to ask again. When a message holds several asks, list each in the row or the decision line, quoted, and say which are built and which wait.
 
 ## Gears
 
