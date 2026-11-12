@@ -207,7 +207,7 @@ export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc 
   const asks = [loan && `Term loan of Rs. ${loan.values[0]}`, limit && limit.n?.[0] ? `working-capital limit of Rs. ${limit.values[0]}` : ''].filter(Boolean).join(' and a ');
   const n = numbered;
   // The projections in brief: the rows a lender looks for first, year by year, as the statements show them.
-  const brief = ([['pl', 'Sales'], ['pl', 'Profit after tax'], ['dscr', 'Cash available (A)'], ['dscr', 'DSCR (A ÷ B)'], ['cf', 'Cash at the end of the year']] as const)
+  const brief = ([['pl', 'Sales'], ['pl', 'Profit after tax'], ['dscr', 'Cash available (A)'], ['dscr', 'Debt service (B)'], ['dscr', 'DSCR (A ÷ B)'], ['cf', 'Cash at the end of the year']] as const)
     .map(([id, label]) => shown(id, (l) => l === label)).filter((r) => r !== undefined);
   const glance: ViewTable = { id: 'glance', title: 'The projections in brief', first: 'Rupees', columns: v.years,
     rows: brief.map((r) => ({ ...r, kind: r.label.startsWith('DSCR') ? 'ratio' : undefined, values: r.values.slice(0, v.years.length), n: r.n?.slice(0, v.years.length) })) };

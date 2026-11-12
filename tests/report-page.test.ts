@@ -110,6 +110,14 @@ describe('the project report to download', () => {
     expect(docStatus(R, p)).toBe('All questions answered');
     expect(fileName(R, p, 'pdf')).toBe('Project report - Asha Packaging.pdf');
   });
+  it('the projections in brief show both A and B above the DSCR that divides them', () => {
+    const at = lines.findIndex((l) => l.startsWith('DSCR (A ÷ B) | '));   // its first table is the brief in section 1
+    expect(lines.indexOf('The projections in brief')).toBeLessThan(at);
+    expect(lines[at - 2]).toMatch(/^Cash available \(A\) \| /);
+    expect(lines[at - 1]).toMatch(/^Debt service \(B\) \| /);
+    const num = (l: string) => Number(l.split(' | ')[1].replace(/,/g, ''));
+    expect((num(lines[at - 2]) / num(lines[at - 1])).toFixed(2)).toBe(lines[at].split(' | ')[1]);
+  });
   it('carries no assumptions list and no jargon beyond the tables\' own names', () => {
     expect(text).not.toMatch(/assum|Tandon|Nayak|MPBF|(?<!cross-)checked/i);
   });
