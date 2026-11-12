@@ -23,7 +23,7 @@ Each: the friction it removes; its evidence.
 
 
 ## The look as built (AG2, D-UX-72)
-The brief: `docs/design-reference/finsight.md`. These describe today's look so a new part can match it when matching is wanted; they are a record, not a law, and a design may leave them (several were bent before a look Rahul chose could ship). *Tested* marks what `scripts/forbidden-checks.mjs` measures: since LOOSE1 the look lines report, and only the accessibility and privacy lines fail a build (D-TECH-110).
+The brief: `docs/design-reference/finsight.md`. These describe today's look so a new part can match it when matching is wanted; they are a record, not a law, and a design may leave them (several were bent before a look Rahul chose could ship). No check holds the look (CHECKS1, D-TECH-113): *Tested* marks what a check once measured, and `npm run look` prints what a page shows; only money, law, privacy, accessibility and the question ceiling fail a build.
 - **F1 Type**: Figtree for text; Anek (Ek Type, OFL) for headings, `figure` (wide, tabular) and `caps` (condensed, labels of one to three words). *Tested*.
 - **F2 Small headings**: h1 `text-hero`, h2 `text-section` or `text-statement`, h3 `text-title`; not a fold's line or an sr-only one (D-UX-106). *Tested*.
 - **F3 Boxed cards**: a panel is set off by its fill, never a border all round. *Tested*.
@@ -47,7 +47,7 @@ The brief: `docs/design-reference/finsight.md`. These describe today's look so a
 Colour: ink, ledger red (the margin rule only, never a figure) and marigold (highlighter, ticks, glow), one highlight per screen; the critic's. Principle 6 yields: two ink pills may share a screen, never an accent fill; principle 10 yields for the glow (never behind a figure, still under reduced motion).
 
 ## Tokens (`site/src/global.css`)
-A token is a role, needing no `dark:` twin. New work uses tokens only: the site check counts raw palette classes (`text-slate-600`) and arbitrary values (`text-[11px]`) and reports a rise (`scripts/design-baseline.json`); both stand at nil from UX6.
+A token is a role, needing no `dark:` twin. New work uses tokens; raw palette classes (`text-slate-600`) and arbitrary values (`text-[11px]`) stood at nil from UX6, and no check counts them now (CHECKS1).
 
 Tokens and their use: `canvas` the page; `surface` a panel set off from it; `field` inside a field; `ink` / `ink-muted` text / hints and second lines; `line` dividers that only group (never a control's edge); `edge` a field's edge; `accent` / `on-accent` / `accent-hover` the chosen option (on the tool pages) / its text; `link`; `focus` the ring, 2 px, offset 2 px; `good` `warn` `bad` (+ `-tint` grounds) meets, provisional or a caution, misses or wrong; `stage` / `on-stage` the closing panel / its text; `spark-1` to `-3` the fields' dashes only (ink, red, marigold); `desk` `paper` `margin` `marigold` the ink desk, paper, the ledger red, the highlighter.
 

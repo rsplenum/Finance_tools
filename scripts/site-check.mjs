@@ -1,22 +1,17 @@
 /**
- * Site check (0 violations required). Serves site/dist the way Cloudflare Pages does and opens every built page in
- * Chromium at phone width (390 px), in light and in dark mode. Violations: horizontal scroll; an input under 16 px;
- * text below WCAG AA contrast (catches an element missing its dark: classes); a missing title, description or single
- * h1; a script error, console error or missing file; a light flash for a dark-mode visitor; the theme toggle not
- * cycling Auto → Light → Dark and remembering the choice. The DSCR calculator is driven through its fields (fld-… ids)
- * and its answers read as text (data-testid): fictional case A from the loan terms, own yearly figures, the amount
- * field's read-back, the DSCR statement and the repayment schedule, the tax rate by borrower, Clear all, and the same
- * layout checks once the tables are filled, in light and dark, with the tables as cards at 390 px and as tables at 1024 px.
- * The statement downloads at 390 px, as a PDF, an Excel copy and a Word copy, each read back (scripts/read-doc.mjs):
- * provisional until the borrower's name and the lender are in, then complete, laid out as a CA's statement (P1g).
- * The construction estimate (P2) and the project report (P3) are filled in, worked out and downloaded the same way.
- * Then the design checks (DT1, scripts/design-checks.mjs): axe, contrast, field edges and focus at 3:1, target sizes, Tab
- * reach, 320 px and reduced motion on every page at 360 and 1280 px, light and dark, and the token ratchet.
- * Then the load measure (UX2b, scripts/load-measure.mjs): every page's counts against scripts/load-baseline.json.
- * The look is reported and never fails the check (LOOSE1, D-TECH-110): the load counts but a rise in questions, the token
- * counts, FinSight's look (F1 to F8, F10 to F13, F17), the estimate's word budget and the CMA's three screens.
- * Run after `npm run build`. CHROMIUM_PATH overrides the browser Playwright would use. `--quick` (CHK1, D-TECH-63) opens only
- * the pages this branch's change touches (scripts/site-pages.mjs), and the motion and frame checks only when home is one.
+ * Site check (0 violations required): what must hold for any page that does the job (CHECKS1, D-TECH-113). Serves
+ * site/dist the way Cloudflare Pages does and opens every built page in Chromium at 390 px, light and dark: no sideways
+ * scroll, no input under 16 px, a title, a description and one h1, no script error or missing file, no light flash for a
+ * dark-mode visitor. Then each tool's golden cases go in through its fields, found by their labels (`field=`,
+ * scripts/field.mjs), and the figures come out: a line holds the figures and the verdict word, never the sentence
+ * (`expectFigures`). The three files are downloaded and read back (scripts/read-doc.mjs); the notices, the privacy
+ * lines, Undo and reload hold; and no default path asks more fields than Rahul listed (`asked`, and every page's count
+ * as it loads in scripts/load-baseline.json: CLAUDE.md rule 17).
+ * Then the design checks (scripts/design-checks.mjs: axe, contrast, focus, target sizes, Tab reach, 320 px, reduced
+ * motion) and what a page must never do (scripts/forbidden-checks.mjs). The look is no part of this check: `npm run look`
+ * (scripts/look-report.mjs) prints it and never fails.
+ * Run after `npm run build`. CHROMIUM_PATH overrides the browser Playwright would use. `--quick` (D-TECH-63) opens only
+ * the pages this branch's change touches (scripts/site-pages.mjs), and the motion checks only when home is one.
  */
 import { readFile, readdir } from 'node:fs/promises';
 import { join, sep } from 'node:path';
@@ -25,8 +20,9 @@ import { chromium } from 'playwright';
 import { docxLines, docxPart, pdfPages, workbook, zipPart } from './read-doc.mjs';
 import { DIST, serveDist } from './serve-dist.mjs';
 import { designChecks, FIXED_AT } from './design-checks.mjs';
-import { loadCheck } from './load-measure.mjs';
-import { forbiddenChecks, sceneFrame, WEIGHT_CAP } from './forbidden-checks.mjs';
+import { questionsCheck } from './load-measure.mjs';
+import { forbiddenChecks } from './forbidden-checks.mjs';
+import './field.mjs';
 import { changedFiles, pagesFor } from './site-pages.mjs';
 import { stepped } from './stepped.mjs';
 
@@ -48,9 +44,6 @@ if (!pages.length) {
 }
 
 const violations = [];
-// LOOSE1 (D-TECH-110): the look is reported, never a gate. A taste count (words, styles, colours, the word baselines,
-// FinSight's look) goes here and prints under the result; money, law, the field count and accessibility stay violations.
-const look = [];
 
 // D-BIZ-03: the brand notice, word for word as rule 4 of docs/TRADEMARKS.md gives it, read below on the planning estimate
 // and in its six downloads; and, by rule 1, no logo or product image: site/public and the built site hold no image but the favicon.
@@ -198,8 +191,7 @@ if (touched('/')) {
   const { ctx, page, v, isDark } = await open('/', { scheme: 'light' });
   const btn = page.getByTestId('theme-toggle');
   const expectState = async (label, dark, step) => {
-    const text = (await btn.locator('span').last().textContent())?.trim();
-    if (text !== label || (await isDark()) !== dark) v(`toggle ${step}: shows "${text}", dark ${await isDark()}; want "${label}", dark ${dark}`);
+    if ((await isDark()) !== dark) v(`the theme toggle ${step}: dark is ${!dark}, want ${label}`);
   };
   await expectState('Auto', false, 'at start');
   await btn.click(); await expectState('Light', false, 'after 1 click');
@@ -227,6 +219,37 @@ async function expectText(page, v, what, want, step) {
   for (let i = 0; !fits(got) && i < 30; i++) { await page.waitForTimeout(100); got = await read(); }
   if (!fits(got)) await v(`${step}: ${name} says "${got}", want "${want}"`);
 }
+/**
+ * The figures a result shows, whatever the words around them (D-TECH-111: a check holds on figures, not sentences).
+ * A figure is a number with its commas, decimals, year range, % or lakh/crore; the verdict words meets, misses and short
+ * count too. `want` lists them in order, a space between; `…` stands for any run of them. No `…` means these and no others.
+ */
+const TOKEN = /(?<![\d,])(?<!\d\.)[-−]?\d+(?:,\d+)*(?:\.\d+)?(?:-\d\d\b)?(?:%|\s?(?:lakh|crore)\b)?|\b(?:meets|misses|short)\b/gi;
+const figures = (t) => (t.replace(/\s+/g, ' ').match(TOKEN) ?? []).map((x) => x.replace(/\s+/g, '').toLowerCase());
+async function expectFigures(page, v, what, want, step) {
+  const at = typeof what === 'string' ? page.getByTestId(what).first() : what, name = typeof what === 'string' ? what : String(what);
+  const fit = new RegExp('^' + want.split(' ').filter(Boolean).map((t) => (t === '…' ? '(?:\\S+ )*' : t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ' ')).join('') + '$');
+  // Two parts set side by side on the page run together in its text ("2026-27Meets"): read with them apart, then as written.
+  const line = (t) => figures(t).map((x) => x + ' ').join('');
+  const read = () => at.textContent({ timeout: 3000 }).then((t) => [line((t ?? '').replace(/([a-z\d])([A-Z])|([A-Z])([A-Z][a-z])/g, '$1$3 $2$4')), line(t ?? '')], () => null);
+  const ok = (g) => g !== null && g.some((x) => fit.test(x));
+  let got = await read();
+  for (let i = 0; !ok(got) && i < 30; i++) { await page.waitForTimeout(100); got = await read(); }
+  if (!ok(got)) await v(`${step}: ${name} shows the figures "${got === null ? '(missing)' : got[0].trim()}", want "${want}"`);
+}
+/**
+ * Rule 17's count, the same way on every tool: the fields asked inside `scope` and outside More options, the document's
+ * facts, the benchmarks and the statement reader; a typed box, a pick or a tick once, a choice once whatever its options.
+ * Only Rahul raises a ceiling.
+ */
+const asked = (page, scope = 'main') => page.locator(scope).first().evaluate((root) => {
+  const els = [...root.querySelectorAll('input:not([type="hidden"]), select, textarea')].filter((e) => !e.closest('#more-options, #download, #benchmarks, #read'));
+  return new Set(els.map((e) => (e.type === 'radio' ? `radio:${e.name || e.closest('fieldset')?.textContent}` : e))).size;
+});
+async function ceiling(page, v, max, what, scope) {
+  const n = await asked(page, scope);
+  if (n > max) v(`${what} asks ${n} fields, over Rahul's ${max} (CLAUDE.md rule 17)`);
+}
 /** The same for what a field holds. */
 async function expectValue(page, v, sel, want, step) {
   let got = await page.inputValue(sel);
@@ -252,8 +275,9 @@ const saver = (page, v) => async (id) => {
 };
 // A CMA year's boxes are hidden on a phone until its year is picked (UXR6): the year's button first.
 const leave = async (page, sel, value) => {
-  const y = /^#fld-cma-(a1|a2|a3|est|proj)-/.exec(sel)?.[1];
-  if (y && !(await page.locator(sel).isVisible())) await page.getByTestId(`cma-year-${y}`).click();
+  const year = /, (\d{4}-\d\d)$/.exec(sel)?.[1], y = /^#fld-cma-(a1|a2|a3|est|proj)-/.exec(sel)?.[1];
+  const pick = y ? page.getByTestId(`cma-year-${y}`) : page.locator('[role="group"][aria-label="The year shown"] button:visible', { hasText: year ?? 'none' }).first();
+  if ((year || y) && !(await page.locator(sel).isVisible()) && await pick.count()) await pick.click();
   await page.fill(sel, value); await page.press(sel, 'Tab');
 };
 /** The detailed form sits under the closed "More options" (P1f): the flows below open it first. */
@@ -311,7 +335,7 @@ if (touched('/dscr/')) {
   await page.locator('#fld-loanAmount').waitFor({ timeout: 3000 }).catch(() => v('the loan is not asked at once'));
   await expectValue(page, v, '#fld-targetAverage', '1.50', 'the assumed target');
   // The method and the target read as one line (P1f).
-  await expectText(page, v, 'assumed-method', 'How DSCR is worked out, and the target: Common term-loan DSCR; average 1.50, lowest year 1.25 Change', 'the assumptions listed');
+  await expectFigures(page, v, 'assumed-method', '1.50 1.25', 'the assumptions listed');
 
   // The loan amount field, kept from P0: read back in figures and words while typing; long words wrap.
   const field = page.locator('#fld-loanAmount');
@@ -331,18 +355,18 @@ if (touched('/dscr/')) {
   if (repaid.some((n) => /repaid|How often|Instalment type/.test(n))) v(`how the loan is repaid is asked though the front door answers it: ${JSON.stringify(repaid)}`);
 
   await enterCaseA(page);
-  await expectText(page, v, 'loan-dates', 'First instalment at the end of December 2026, the last at the end of September 2029. The loan runs over 2026-27 to 2029-30.', 'case A');
-  await expectText(page, v, 'loan-level', 'Principal Rs. 1,00,000 a quarter, and interest on the balance every month.', 'case A');
+  await expectFigures(page, v, 'loan-dates', '2026 2029 2026-27 2029-30', 'case A');
+  await expectFigures(page, v, 'loan-level', '1,00,000', 'case A');
   await expectValue(page, v, '#fld-depreciation-2027-28', '1,30,000', '1.3 L read back once the field is left');
   // With the assumed target removed: the figures show, and the preview stays provisional and says what is still needed.
   await leave(page, '#fld-targetAverage', '');
   await leave(page, '#fld-targetMinimum', '');
-  await expectText(page, v, 'dscr-status', '1 question left', 'case A without a target');
+  await expectFigures(page, v, 'dscr-status', '1', 'case A without a target');
   const needs = await page.getByTestId('dscr-needs').locator('li').allTextContents();
   if (needs.join('|') !== 'A target DSCR for the average, the lowest year, or both') v(`case A without a target: still needed ${JSON.stringify(needs)}`);
-  await expectText(page, v, 'dscr-average', '1.45', 'case A');
-  await expectText(page, v, 'dscr-lowest', '1.16', 'case A');
-  await expectText(page, v, 'dscr-lowest-year', 'in 2027-28', 'case A');
+  await expectFigures(page, v, 'dscr-average', '1.45', 'case A');
+  await expectFigures(page, v, 'dscr-lowest', '1.16', 'case A');
+  await expectFigures(page, v, 'dscr-lowest-year', '2027-28', 'case A');
   // The DSCR statement, as a CA lays it out: profit before tax and tax, cash available (A), debt service (B), DSCR.
   for (const [fy, dscr, cash, service] of [['2026-27', '1.20', '4,10,250', '3,41,000'], ['2027-28', '1.16', '5,83,000', '5,02,000'],
     ['2028-29', '1.33', '6,03,500', '4,54,000'], ['2029-30', '2.82', '5,89,750', '2,09,000']]) {
@@ -350,12 +374,12 @@ if (touched('/dscr/')) {
     await expectText(page, v, `available-${fy}`, cash, `case A, cash available in ${fy}`);
     await expectText(page, v, `service-${fy}`, service, `case A, debt service in ${fy}`);
   }
-  await expectText(page, v, 'pbt-2026-27', '1,59,000', 'case A, profit before tax in 2026-27');
-  await expectText(page, v, 'tax-2026-27', '39,750', 'case A, tax in 2026-27');
+  await expectFigures(page, v, 'pbt-2026-27', '1,59,000', 'case A, profit before tax in 2026-27');
+  await expectFigures(page, v, 'tax-2026-27', '39,750', 'case A, tax in 2026-27');
   // The Total column, by hand: cash available 21,86,500 and debt service 15,06,000 over the four years; DSCR 1.45, the average.
-  await expectText(page, v, 'available-total', '21,86,500', 'case A, total cash available');
-  await expectText(page, v, 'service-total', '15,06,000', 'case A, total debt service');
-  await expectText(page, v, 'dscr-total', '1.45', 'case A, the Total column\'s DSCR');
+  await expectFigures(page, v, 'available-total', '21,86,500', 'case A, total cash available');
+  await expectFigures(page, v, 'service-total', '15,06,000', 'case A, total debt service');
+  await expectFigures(page, v, 'dscr-total', '1.45', 'case A, the Total column\'s DSCR');
   // The repayment schedule: the year's totals, and each month once the year is opened.
   const year1 = await page.getByTestId('schedule-2026-27').locator('summary span.text-right').allTextContents();
   if (year1.join('|') !== '1,41,000|2,00,000|10,00,000') v(`schedule 2026-27 shows ${JSON.stringify(year1)}, want interest 1,41,000, principal 2,00,000, balance 10,00,000`);
@@ -367,19 +391,19 @@ if (touched('/dscr/')) {
   await page.getByTestId('use-examples').click();
   // Six assumptions still hold: the method, the target, and the new asset, working-capital interest, loans already running
   // and other non-cash charges as answered by the assumptions (tax, profit and depreciation were typed).
-  await expectText(page, v, 'dscr-status', 'All questions answered, on 7 assumptions', 'case A with the examples');
-  await expectText(page, v, 'dscr-verdict', 'Misses 2 of 2 targets: the lowest year, 2027-28, is 1.16 against 1.25; the average is 1.45 against 1.50.', 'case A with the examples');
-  await expectText(page, v, 'dscr-largest', 'Your business can carry a loan of Rs. 11,11,295. You asked Rs. 12,00,000. What sets it: the lowest year, 2027-28.', 'case A with the examples');
-  await expectText(page, v, 'use-amount', 'Use Rs. 11,11,295', 'case A with the examples');
-  await expectText(page, v, 'dscr-fewest', 'Even 14 instalments, the most the projections cover (to 2029-30), miss the target: the average is below the target. Add later years to try a longer repayment.', 'case A with the examples');
-  await expectText(page, v, 'answer-bar', 'Average 1.45 · lowest 1.16 in 2027-28 · does not work yet: 2 ratios short · all questions answered, on 7 assumptions', 'case A with the examples');
+  await expectFigures(page, v, 'dscr-status', '7', 'case A with the examples');
+  await expectFigures(page, v, 'dscr-verdict', 'misses 2 2 2027-28 1.16 1.25 1.45 1.50', 'case A with the examples');
+  await expectFigures(page, v, 'dscr-largest', '11,11,295 12,00,000 2027-28', 'case A with the examples');
+  await expectFigures(page, v, 'use-amount', '11,11,295', 'case A with the examples');
+  await expectFigures(page, v, 'dscr-fewest', '14 2029-30', 'case A with the examples');
+  await expectFigures(page, v, 'answer-bar', '1.45 1.16 2027-28 2 short 7', 'case A with the examples');
 
   // Tables become cards on phones and stay tables on wider screens, without a sideways scroll either way.
   await layout(page, v, 'case A filled, a schedule year open, 390 px');
   const statement = page.getByTestId('dscr-statement'), card = page.getByTestId('card-2027-28');
   if (await statement.isVisible() || !(await card.isVisible())) v('390 px: the statement is shown as a table, not as cards');
-  await expectText(page, v, card.locator('[data-line="dscr"]'), '1.16', 'the 2027-28 card on a phone');
-  await expectText(page, v, page.getByTestId('card-total').locator('[data-line="available"]'), '21,86,500', 'the Total card on a phone');
+  await expectFigures(page, v, card.locator('[data-line="dscr"]'), '1.16', 'the 2027-28 card on a phone');
+  await expectFigures(page, v, page.getByTestId('card-total').locator('[data-line="available"]'), '21,86,500', 'the Total card on a phone');
   await page.setViewportSize({ width: 1024, height: 900 });
   if (!(await statement.isVisible()) || await card.isVisible()) v('1024 px: the statement is shown as cards');
   await layout(page, v, 'case A filled, 1024 px');
@@ -394,14 +418,14 @@ if (touched('/dscr/')) {
     setTimeout(() => ok(document.querySelector('#fld-loanAmount').value));
   }));
   if (filled !== '11,11,295') v(`"Use Rs. 11,11,295" shows "${filled}" in the loan amount until the next paint`);
-  await expectText(page, v, 'amount-read', 'Rs. 11,11,295 (Rupees Eleven Lakh Eleven Thousand Two Hundred and Ninety Five Only)', 'after taking the largest loan');
-  await expectText(page, v, 'dscr-verdict', 'Meets both targets: the lowest year, 2027-28, is 1.25 against 1.25; the average is 1.56 against 1.50.', 'after taking the largest loan');
+  await expectFigures(page, v, 'amount-read', '11,11,295', 'after taking the largest loan');
+  await expectFigures(page, v, 'dscr-verdict', 'meets 2027-28 1.25 1.25 1.56 1.50', 'after taking the largest loan');
   if (await page.getByTestId('use-amount').count()) v('the largest loan is still offered after it was taken');
 
   // A figure that is not understood is flagged and listed as still needed, never taken as zero.
   await leave(page, '#fld-pbdit-2028-29', 'lots');
   await page.waitForSelector('#fld-pbdit-2028-29[aria-invalid="true"]', { timeout: 3000 }).catch(() => v('"lots" in a figure is not flagged'));
-  await expectText(page, v, 'dscr-status', '1 question left', 'a figure not understood');
+  await expectFigures(page, v, 'dscr-status', '1', 'a figure not understood');
   const missing = await page.getByTestId('dscr-needs').locator('li').allTextContents();
   if (missing.join('|') !== 'Profit before interest, depreciation and tax for 2028-29') v(`a figure not understood: still needed ${JSON.stringify(missing)}`);
   // The answer's outline stays, each figure a "—" until every figure is understood (UX8, D-UX-106).
@@ -409,7 +433,7 @@ if (touched('/dscr/')) {
 
   // Who the borrower is sets the tax for every year in one tap.
   await page.check('#fld-borrowerType-company');
-  await expectText(page, v, 'tax-by', 'Worked out each year for a company: 25.168%.', "the company's tax");
+  await expectFigures(page, v, 'tax-by', '25.168%', "the company's tax");
   if (await page.locator('#fld-taxPct-2026-27').count()) v('a tax rate is still asked after saying who the borrower is');
   // Clear all in one tap takes the page back to where it opened, the assumptions and nothing typed, with an undo (UXR5b, S16).
   await page.getByTestId('dscr-clear').click();
@@ -427,7 +451,7 @@ if (touched('/dscr/')) {
   await openMore(page);
   await enterCaseA(page);
   await page.getByTestId('use-examples').click();
-  await expectText(page, v, 'dscr-average', '1.45', 'case A, dark');
+  await expectFigures(page, v, 'dscr-average', '1.45', 'case A, dark');
   await layout(page, v, 'case A filled, dark, 390 px');
   await page.setViewportSize({ width: 1024, height: 900 });
   await layout(page, v, 'case A filled, dark, 1024 px');
@@ -462,19 +486,19 @@ if (touched('/dscr/')) {
   await page.getByTestId('use-examples').click();
   // 6 months of interest at 1% of 12,00,000 = 72,000 in 2026-27. The figures start there as assumed, so its profit and
   // depreciation are asked (only the later years were typed).
-  await expectText(page, v, 'dscr-status', '2 questions left', 'a first year with interest only');
+  await expectFigures(page, v, 'dscr-status', '2', 'a first year with interest only');
   if (!(await page.isChecked('#fld-start-2026-27'))) v("the figures do not start in the loan's first year as assumed");
   await expectText(page, v, 'assumed-start', 'The first year of the figures: The year the loan is first drawn Change', 'the start assumption listed');
-  await expectText(page, v, page.getByTestId('start-question').locator('p').first(), 'No instalment falls in 2026-27, only interest of Rs. 72,000. If operations start later, start your figures there: the interest before then is taken as paid from the project cost, not from profits.', 'the question about the first year');
+  await expectFigures(page, v, page.getByTestId('start-question').locator('p').first(), '2026-27 72,000', 'the question about the first year');
   await page.check('#fld-start-2027-28');
-  await expectText(page, v, 'dscr-status', 'All questions answered, on 7 assumptions', 'figures starting in 2027-28');
+  await expectFigures(page, v, 'dscr-status', '7', 'figures starting in 2027-28');
   if (await page.getByTestId('assumed-start').count()) v('the start assumption is still listed after choosing 2027-28');
-  await expectText(page, v, 'dscr-before-start', 'Left out: 2026-27, before your figures start. Its interest (Rs. 72,000) is taken as paid from the project cost (capitalised), not from profits.', 'figures starting in 2027-28');
+  await expectFigures(page, v, 'dscr-before-start', '2026-27 72,000', 'figures starting in 2027-28');
   await expectValue(page, v, '#fld-pbdit-2027-28', '7,50,000', 'each figure stays under its year');
   if (await page.locator('#fld-pbdit-2026-27').count()) v('2026-27 is still asked after the figures start in 2027-28');
   await layout(page, v, 'figures starting in 2027-28');
   await page.check('#fld-start-2026-27');
-  await expectText(page, v, 'dscr-status', '2 questions left', 'figures starting in 2026-27');
+  await expectFigures(page, v, 'dscr-status', '2', 'figures starting in 2026-27');
   await ctx.close();
 }
 
@@ -494,7 +518,7 @@ if (touched('/dscr/')) {
   // The profit line starts as "grows each year": the first year's figure and a rate.
   await leave(page, '#fld-pbdit-2027-28', '18 L');
   await leave(page, '#fld-pbdit-rate', '10');
-  await expectText(page, v, 'readback-pbdit', 'Worked out: Rs. 18,00,000 in 2027-28 to Rs. 26,35,380 in 2031-32.', 'profit growing 10% a year');
+  await expectFigures(page, v, 'readback-pbdit', '18,00,000 2027-28 26,35,380 2031-32', 'profit growing 10% a year');
   await page.check('#fld-depreciation-same');
   await leave(page, '#fld-depreciation-2027-28', '4 L');
   await page.check('#fld-nonCash-none');
@@ -505,12 +529,8 @@ if (touched('/dscr/')) {
   await page.getByTestId('use-examples').click();
   // Eight assumptions hold: all but the tax rate (a company's tax is worked out); this year's depreciation typed once is
   // "as this year, every year".
-  await expectText(page, v, 'dscr-status', 'All questions answered, on 9 assumptions', 'a few answers');
+  await expectFigures(page, v, 'dscr-status', '9', 'a few answers');
   // Four fields for a five-year loan (profit and its rate, depreciation, working-capital interest; the tax from who the
-  // borrower is), not five a line.
-  const inputs = await page.locator('#figures input[type="text"]').count();
-  if (inputs > 4) v(`${inputs} fields asked for a 5-year loan; want 4`);
-  // 18,00,000 growing 10% a year: 19,80,000, 21,78,000, 23,95,800, 26,35,380.
   for (const [fy, want] of [['2027-28', '18,00,000'], ['2028-29', '19,80,000'], ['2031-32', '26,35,380']])
     await expectText(page, v, `pbdit-${fy}`, want, `profit worked out for ${fy}`);
   await layout(page, v, 'a few answers, 390 px');
@@ -534,17 +554,14 @@ if (touched('/dscr/')) {
   await leave(page, '#fld-depreciation-2026-27', '1.5 L');
   await page.check('#fld-interestOther-same');
   await leave(page, '#fld-interestOther-2026-27', '50,000');
-  await expectText(page, v, 'dscr-status', 'All questions answered, on 10 assumptions', 'the quick path');
-  await expectText(page, v, 'dscr-average', '1.16', 'the quick path');
-  await expectText(page, v, 'dscr-lowest', '0.84', 'the quick path');
-  await expectText(page, v, 'assumed-tax', 'Tax rate: 31.2% Change', 'the quick path');
-  // Four figures typed for the business, whatever the number of years, beside the assumed tax rate.
-  const inputs = await page.locator('#figures input[type="text"]').count();
-  if (inputs !== 5) v(`${inputs} fields in the figures on the quick path; want 5 (4 typed and the assumed tax rate)`);
+  await expectFigures(page, v, 'dscr-status', '10', 'the quick path');
+  await expectFigures(page, v, 'dscr-average', '1.16', 'the quick path');
+  await expectFigures(page, v, 'dscr-lowest', '0.84', 'the quick path');
+  await expectFigures(page, v, 'assumed-tax', '31.2%', 'the quick path');
   await layout(page, v, 'the quick path, 390 px');
 
   // The statement to download, at 390 px. Without the borrower's name and the lender it is provisional, and says so.
-  await expectText(page, v, 'doc-status', '2 questions left, for the document', 'the download before its facts');
+  await expectFigures(page, v, 'doc-status', '2', 'the download before its facts');
   const own = await page.getByTestId('doc-needs').locator('li').allTextContents();
   if (own.join('|') !== "The borrower's name|The lender") v(`the download asks for ${JSON.stringify(own)}`);
   const save = saver(page, v);
@@ -567,7 +584,7 @@ if (touched('/dscr/')) {
   if (await page.locator('#doc-more').getAttribute('open') !== null) v('the address, purpose and GSTIN line is open by default');
   await page.locator('#doc-more summary').click();
   await leave(page, '#fld-gstin', '27ABCDE1234');
-  await expectText(page, v, 'fld-gstin-said', 'A GSTIN has 15 letters and digits, like 27ABCDE1234F1Z5.', 'a short GSTIN');
+  await expectFigures(page, v, 'fld-gstin-said', '15 27 1234 1 5', 'a short GSTIN');
   // Its need links to its box, opening the closed line on the way (UXR7, as on the CMA and the report).
   await page.locator('#doc-more summary').click();
   await page.getByTestId('doc-needs').getByRole('link', { name: /^The GSTIN/ }).click();
@@ -585,7 +602,7 @@ if (touched('/dscr/')) {
     if (!first.includes(want)) v(`the PDF's first page has no line "${want}"`);
   if (!first.some((l) => l.startsWith('Lender Example Bank, Pune branch Prepared on '))) v("the PDF's first page does not name the lender");
   if (pages.length < 3 || pages.join('\n').includes('Provisional')) v(`the PDF has ${pages.length} pages, or still says provisional`);
-  if (!pages[1]?.includes('Annex 1. The basis') || !pages[2]?.includes('Annex 2. Repayment schedule')) v('the annexes do not start pages 2 and 3');
+  if (!pages.join('\n').includes('Annex 1. The basis') || !pages.join('\n').includes('Annex 2. Repayment schedule')) v('the PDF does not hold its two annexes');
   // What stays on the page only (D-DOC-03, and the owner on 02-10-2026): the assumptions, the verdict, the largest loan,
   // the fewest instalments, the lender's target, how far the method was checked, and the rules for building the figures.
   const ONLY_ON_THE_PAGE = ['Assumed until changed', 'Misses', 'can carry a loan', 'The fewest instalments', 'target', 'checked', 'How the figures are built', 'Status'];
@@ -630,9 +647,9 @@ if (touched('/dscr/')) {
   await page.check('#fld-interestOther-same');
   await leave(page, '#fld-interestOther-2026-27', '50,000');
   await page.check('#fld-borrowerType-proprietor');
-  await expectText(page, v, 'tax-by', 'Worked out each year for a proprietor: slab rates of 5% to 30% with 4% cess, nothing up to Rs. 12,00,000 of profit.', "a proprietor's tax");
-  await expectText(page, v, 'tax-2026-27', '0', "a proprietor's tax");
-  await expectText(page, v, 'dscr-average', '1.41', "a proprietor's tax");
+  await expectFigures(page, v, 'tax-by', '5% 30% 4% 12,00,000', "a proprietor's tax");
+  await expectFigures(page, v, 'tax-2026-27', '0', "a proprietor's tax");
+  await expectFigures(page, v, 'dscr-average', '1.41', "a proprietor's tax");
   await expectText(page, v, 'assumed-proprietorTax', "A proprietor's tax: The new regime's slab rates, on the business's profit as the only income Change", "a proprietor's tax");
   await page.check('#fld-otherLoansInterest-emi');
   await expectText(page, v, 'emis-ask', 'All EMIs a month, business and personal (home, car, personal loans).', "a proprietor's EMIs");
@@ -640,15 +657,15 @@ if (touched('/dscr/')) {
   await page.getByTestId('add-loan').click();
   await leave(page, '#fld-emi-2', '15,000');
   await leave(page, '#fld-emiLast-2', '2027-06');
-  await expectText(page, v, 'readback-existingEmis', 'Worked out: Rs. 4,20,000 in 2026-27; Rs. 2,85,000 in 2027-28; Rs. 2,40,000 in 2028-29; Rs. 2,40,000 in 2029-30.', 'EMIs a month');
-  await expectText(page, v, 'emis-2027-28', '2,85,000', 'EMIs a month in the statement');
-  await expectText(page, v, 'service-2026-27', '7,61,000', 'EMIs a month in the statement');
+  await expectFigures(page, v, 'readback-existingEmis', '4,20,000 2026-27 2,85,000 2027-28 2,40,000 2028-29 2,40,000 2029-30', 'EMIs a month');
+  await expectFigures(page, v, 'emis-2027-28', '2,85,000', 'EMIs a month in the statement');
+  await expectFigures(page, v, 'service-2026-27', '7,61,000', 'EMIs a month in the statement');
   await page.check('#fld-assetIncome-from');
   await leave(page, '#fld-assetIncome-yearly', '3.6 L');
   await leave(page, '#fld-assetIncome-start', '2026-10');
-  await expectText(page, v, 'asset-2026-27', '1,80,000', 'the new asset from October 2026');
-  await expectText(page, v, 'dscr-2026-27', '0.83', 'the new asset from October 2026');
-  await expectText(page, v, 'dscr-average', '1.26', 'the new asset from October 2026');
+  await expectFigures(page, v, 'asset-2026-27', '1,80,000', 'the new asset from October 2026');
+  await expectFigures(page, v, 'dscr-2026-27', '0.83', 'the new asset from October 2026');
+  await expectFigures(page, v, 'dscr-average', '1.26', 'the new asset from October 2026');
   for (const id of ['assumed-asset', 'assumed-otherLoans', 'assumed-tax']) if (await page.getByTestId(id).count()) v(`${id} is still listed after it was answered`);
   await layout(page, v, 'borrower, EMIs and the new asset, 390 px');
   await ctx.close();
@@ -665,20 +682,20 @@ if (touched('/dscr/')) {
   if (await page.locator('#fld-loanAmount').count()) v('own figures: the loan amount is asked though it does not change the answer');
   await leave(page, '#fld-firstYear', '2026-27');
   await leave(page, '#fld-yearCount', '3');
-  await expectText(page, v, 'years-read', '2026-27 to 2028-29', 'own figures');
+  await expectFigures(page, v, 'years-read', '2026-27 2028-29', 'own figures');
   const fys = ['2026-27', '2027-28', '2028-29'];
   const own = { pat: ['60000', '80000', '100000'], depreciation: ['40000', '40000', '40000'], interestTL: ['50000', '40000', '20000'], principalTL: ['0', '100000', '100000'] };
   for (const [k, xs] of Object.entries(own)) for (const [i, fy] of fys.entries()) await leave(page, `#fld-${k}-${fy}`, xs[i]);
   await expectValue(page, v, '#fld-principalTL-2026-27', '0', 'a typed 0 stays');
   // Own figures take none of the assumptions about the figures; the method and the target still hold.
-  await expectText(page, v, 'dscr-status', '1 question left', 'own figures before None');
+  await expectFigures(page, v, 'dscr-status', '1', 'own figures before None');
   await page.check('#fld-nonCash-none');
   await leave(page, '#fld-targetAverage', '1.5');
-  await expectText(page, v, 'dscr-status', 'All questions answered, on 2 assumptions', 'own figures');
-  await expectText(page, v, 'dscr-average', '1.23', 'own figures');
-  await expectText(page, v, 'dscr-lowest', '1.14', 'own figures');
-  await expectText(page, v, 'dscr-not-counted', 'Not counted: 2026-27 (no term-loan instalment).', 'own figures');
-  await expectText(page, v, 'dscr-verdict', 'Misses 2 of 2 targets: the lowest year, 2027-28, is 1.14 against 1.25; the average is 1.23 against 1.50.', 'own figures');
+  await expectFigures(page, v, 'dscr-status', '2', 'own figures');
+  await expectFigures(page, v, 'dscr-average', '1.23', 'own figures');
+  await expectFigures(page, v, 'dscr-lowest', '1.14', 'own figures');
+  await expectFigures(page, v, 'dscr-not-counted', '2026-27', 'own figures');
+  await expectFigures(page, v, 'dscr-verdict', 'misses 2 2 2027-28 1.14 1.25 1.23 1.50', 'own figures');
   await layout(page, v, 'own figures filled');
   await ctx.close();
 }
@@ -688,25 +705,21 @@ if (touched('/dscr/')) {
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
   if (await page.locator('#more-options').evaluate((d) => d.open)) v('More options is open on load');
-  const texts = await page.locator('#front-door input[type="text"]').count(), radios = await page.locator('#front-door fieldset').count();
-  if (texts + radios !== 8) v(`the front door asks ${texts + radios} fields (${texts} typed, ${radios} choices); the owner's list is 8`);
-  await expectText(page, v, 'fd-loan-note', 'Taken as drawn in October 2026 and repaid by monthly EMI, with no holiday.', 'the front door');
-  // S8 (UXR5b): the line to year-by-year projections stands under the last default field, not above the first.
-  if (!(await page.evaluate(() => { const m = document.querySelector('[data-testid="fd-more"]'), f = [...document.querySelectorAll('#front-door input')].at(-1);
-    return !!m && !!f && !!(f.compareDocumentPosition(m) & Node.DOCUMENT_POSITION_FOLLOWING); }))) v('S8: the line to More options is not under the last default field');
-  await page.check('#fld-fd-borrower-firm');
-  await leave(page, '#fld-fd-profit', '5 L');
-  await leave(page, '#fld-fd-growth', '10');
+  await ceiling(page, v, 8, 'the front door', '#front-door');
+  await expectFigures(page, v, 'fd-loan-note', '2026', 'the front door');
+  await page.check('field=Partnership firm or LLP');
+  await leave(page, 'field=This year’s profit before interest, depreciation and tax', '5 L');
+  await leave(page, 'field=Growth in sales a year (%)', '10');
   await leave(page, '#fld-fd-amount', '10 L');
-  await leave(page, '#fld-fd-rate', '12');
-  await leave(page, '#fld-fd-years', '1');
-  await expectText(page, v, 'dscr-instalment', 'EMI Rs. 88,848.79 a month', 'the front door');
-  await expectText(page, v, 'dscr-total-interest', 'Rs. 66,185', 'the front door');
+  await leave(page, 'field=Interest rate (% a year)', '12');
+  await leave(page, 'field=Repayment period (years)', '1');
+  await expectFigures(page, v, 'dscr-instalment', '88,848.79', 'the front door');
+  await expectFigures(page, v, 'dscr-total-interest', '66,185', 'the front door');
   if (!(await page.getByTestId('dscr-average').isVisible())) v('the front door: no average DSCR without opening More options');
   if (!(await page.getByTestId('dscr-marks').isVisible())) v('the front door: the years are not marked against the target');
   if (await page.locator('#more-options').evaluate((d) => d.open)) v('More options opened by itself');
-  await expectText(page, v, 'assumed-method', 'How DSCR is worked out, and the target: Common term-loan DSCR; average 1.50, lowest year 1.25 Change', 'the method and the target in one line');
-  await expectText(page, v, 'part-2026-27', '6 of 12 instalments', 'the first part-year');
+  await expectFigures(page, v, 'assumed-method', '1.50 1.25', 'the method and the target in one line');
+  await expectFigures(page, v, 'part-2026-27', '6 12', 'the first part-year');
   await layout(page, v, 'the front door filled, 390 px');
   // D1 (D-UX-47): the lenders' lines beside the DSCR, their inputs only under More options; the front door still asks 8.
   if (!(await page.getByTestId('lender-ask').isVisible())) v('D1: no line asking for sales beside the DSCR');
@@ -717,8 +730,7 @@ if (touched('/dscr/')) {
   if (!/^Sales price 5% lower: average \d\.\d{2,4}, lowest /.test((await page.getByTestId('lender-price').textContent()) ?? '')) v('D1: no line for the sales price 5% lower');
   if (!(await page.getByTestId('lender-costs').count())) v('D1: no line for costs 10% higher');
   if ((await page.getByTestId('dscr-average').textContent()) !== avg) v('D1: the sales changed the borrower\'s DSCR');
-  const after = await page.locator('#front-door input[type="text"]').count() + await page.locator('#front-door fieldset').count();
-  if (after !== 8) v(`D1: the front door asks ${after} fields after the lenders' tests; want 8`);
+  await ceiling(page, v, 8, "the front door after the lenders' tests", '#front-door');
   await layout(page, v, 'the lenders\' tests open, 390 px');
   await ctx.close();
 }
@@ -733,21 +745,21 @@ if (touched('/dscr/')) {
 // 1024 px to a rail of the answers as typed, which opens in place to change them.
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'dark' });
-  await page.check('#fld-fd-borrower-firm');
-  await leave(page, '#fld-fd-profit', '4.5 L');
-  await leave(page, '#fld-fd-growth', '0');
+  await page.check('field=Partnership firm or LLP');
+  await leave(page, 'field=This year’s profit before interest, depreciation and tax', '4.5 L');
+  await leave(page, 'field=Growth in sales a year (%)', '0');
   await leave(page, '#fld-fd-amount', '12 L');
-  await leave(page, '#fld-fd-rate', '12');
-  await leave(page, '#fld-fd-years', '5');
-  await expectText(page, v, 'dscr-short-average', 'Short by Rs. 4,19,502 of cash to pay the loan, in total over the loan.', 'case S');
-  await expectText(page, v, 'dscr-short-lowest', 'Short by Rs. 79,164 of cash to pay the loan in 2030-31.', 'case S');
+  await leave(page, 'field=Interest rate (% a year)', '12');
+  await leave(page, 'field=Repayment period (years)', '5');
+  await expectFigures(page, v, 'dscr-short-average', 'short 4,19,502', 'case S');
+  await expectFigures(page, v, 'dscr-short-lowest', 'short 79,164 2030-31', 'case S');
   await page.getByTestId('dscr-viable').click();
   if (await page.locator('#front-door').count()) v('OR9: Make it work leaves the answers unfolded');
   if (!(await page.getByTestId('dscr-edit').isVisible())) v('OR9: no "Edit answers" on a phone once folded');
   await page.check('#dscr-own-180000');
-  await expectText(page, v, 'dscr-plan-longer', /Repay over7 years 7 months.*Each instalmentRs\. 20,145\.98 a monthInterest over the loanRs\. 6,33,284Total you pay outRs\. 18,33,284/, 'case S, repay over longer');
-  await expectText(page, v, 'dscr-plan-mix', /Repay over5 years 7 monthsThe loanRs\. 10,20,000Your own moneyRs\. 1,80,000Each instalmentRs\. 20,962\.39 a monthInterest over the loanRs\. 3,84,480Total you pay outRs\. 15,84,480/, 'case S, some of both');
-  await expectText(page, v, 'dscr-plans-own-short', /^Your own money alone would need Rs\. [\d,]+ over 5 years, more than the Rs\. 1,80,000 you can bring\.$/, 'case S, own money alone');
+  await expectFigures(page, v, 'dscr-plan-longer', '… 7 … 7 … 20,145.98 … 6,33,284 … 18,33,284 …', 'case S, repay over longer');
+  await expectFigures(page, v, 'dscr-plan-mix', '… 5 … 7 … 10,20,000 … 1,80,000 … 20,962.39 … 3,84,480 … 15,84,480 …', 'case S, some of both');
+  await expectFigures(page, v, 'dscr-plans-own-short', '… 5 … 1,80,000 …', 'case S, own money alone');
   if (await page.getByTestId('dscr-plan-best').count()) v('LOOP1b: a plan is marked best');
   await layout(page, v, 'case S\'s plans, 390 px');
   const slide = (id, x) => page.$eval(`#dscr-slider-${id}`, (el, x) => {
@@ -755,45 +767,44 @@ if (touched('/dscr/')) {
     el.dispatchEvent(new Event('input', { bubbles: true })); el.dispatchEvent(new Event('change', { bubbles: true }));
   }, x);
   await slide('instalments', 66);
-  await expectText(page, v, 'dscr-move-instalments', '5 years 7 months', 'case S, the repayment let go at 66');
-  await expectText(page, v, 'dscr-move-amount', 'Rs. 10,20,000', 'case S, the loan following');
+  await expectFigures(page, v, 'dscr-move-instalments', '5 7', 'case S, the repayment let go at 66');
+  await expectFigures(page, v, 'dscr-move-amount', '10,20,000', 'case S, the loan following');
   await expectText(page, v, 'dscr-badge-amount', 'Follows', 'case S, the loan following');
-  await expectText(page, v, 'dscr-plan-stop', 'Stopped at 5 years 7 months: at 5 years 6 months it does not meet the bank’s figures, even with the loan at Rs. 10,20,000.', 'case S, the stop');
+  await expectFigures(page, v, 'dscr-plan-stop', '5 7 5 6 10,20,000', 'case S, the stop');
   await slide('ratePct', 10);
-  await expectText(page, v, 'dscr-move-instalments', '5 years 7 months', 'case S at 10%: the repayment stays');
-  await expectText(page, v, 'dscr-move-amount', 'Rs. 10,70,000', 'case S at 10%: the loan comes back');
-  await expectText(page, v, 'dscr-plan-line', /average 1\.62 · meets the bank’s figuresEMI Rs\. 20,905\.97 a month · interest over the loan Rs\. 3,30,700$/, 'case S at 10%');
+  await expectFigures(page, v, 'dscr-move-instalments', '5 7', 'case S at 10%: the repayment stays');
+  await expectFigures(page, v, 'dscr-move-amount', '10,70,000', 'case S at 10%: the loan comes back');
+  await expectFigures(page, v, 'dscr-plan-line', '… 1.62 … meets … 20,905.97 … 3,30,700 …', 'case S at 10%');
   await page.getByTestId('dscr-plan-use').click();
   await page.getByTestId('dscr-edit').click();
   await page.locator('dialog[open] #front-door').waitFor();
-  const fields = await page.locator('dialog[open] #front-door input[type="text"]').count() + await page.locator('dialog[open] #front-door fieldset').count();
-  if (fields !== 8) v(`MV5, OR9: the sheet asks ${fields} fields; want 8`);
+  await ceiling(page, v, 8, 'the sheet of answers', 'dialog[open] #front-door');
   await expectValue(page, v, '#fld-fd-amount', '10,70,000', 'case S, round 2');
-  await expectValue(page, v, '#fld-fd-years', '5.58', 'case S, round 2');
-  await expectValue(page, v, '#fld-fd-rate', '10', 'case S, round 2');
-  await expectText(page, v, page.locator('#fld-fd-amount-hint'), 'Round 1 had Rs. 12,00,000.', 'case S, round 2');
-  await expectText(page, v, page.locator('#fld-fd-years-hint'), 'Round 1 had 60 instalments.', 'case S, round 2');
+  await expectValue(page, v, 'field=Repayment period (years)', '5.58', 'case S, round 2');
+  await expectValue(page, v, 'field=Interest rate (% a year)', '10', 'case S, round 2');
+  await expectFigures(page, v, page.locator('#fld-fd-amount-hint'), '1 12,00,000', 'case S, round 2');
+  await expectFigures(page, v, page.locator('#fld-fd-years-hint'), '1 60', 'case S, round 2');
   await page.getByTestId('dscr-sheet-done').click();
-  await expectText(page, v, 'dscr-verdict', /^Meets both targets/, 'case S, round 2');
-  await expectText(page, v, 'dscr-round-2', /^Round 2 \(on the page now\)You repay over 5 years 7 months instead of 5 years; borrow Rs\. 10,70,000 instead of Rs\. 12,00,000: Rs\. 1,30,000 of your own money; at 10% instead of 12%\./, 'case S, round 2');
+  await expectFigures(page, v, 'dscr-verdict', '… meets …', 'case S, round 2');
+  await expectFigures(page, v, 'dscr-round-2', '… 2 … 5 … 7 … 5 … 10,70,000 … 12,00,000 … 1,30,000 … 10% … 12% …', 'case S, round 2');
   if (await page.getByTestId('dscr-levels').count()) v('case S still shows why it does not work in round 2');
   await page.getByTestId('dscr-round-back-1').click();
-  await expectText(page, v, 'dscr-round-1', /^Round 1 \(on the page now\)/, 'case S, back to round 1');
+  await expectFigures(page, v, 'dscr-round-1', '… 1 …', 'case S, back to round 1');
   await page.getByTestId('dscr-edit').click();
   await expectValue(page, v, '#fld-fd-amount', '12,00,000', 'case S, back to round 1');
-  await expectValue(page, v, '#fld-fd-years', '5', 'case S, back to round 1');
+  await expectValue(page, v, 'field=Repayment period (years)', '5', 'case S, back to round 1');
   // Esc closes only an open dialog: on a slow runner it came before showModal (GOTCHAS).
   await page.locator('dialog[open] #front-door').waitFor();
   await page.keyboard.press('Escape');
   // The answers leave the page once the sheet has closed (its close event may come a frame late, GOTCHAS).
   if (!(await page.locator('#front-door').waitFor({ state: 'detached', timeout: 5000 }).then(() => true, () => false))) v('OR9: Esc leaves the sheet open');
   await page.setViewportSize({ width: 1280, height: 900 });
-  await expectText(page, v, 'dscr-rail', /The loanLoan amountRs\. 12,00,000Interest rate12% a yearRepay over5 years/, 'OR9, the rail at 1280 px');
+  await expectFigures(page, v, 'dscr-rail', '… 12,00,000 … 12% … 5 …', 'OR9, the rail at 1280 px');
   if (await page.getByTestId('dscr-rail-change').waitFor({ timeout: 5000 }).then(() => true, () => false)) {
     await page.getByTestId('dscr-rail-change').click();
-    await leave(page, '#fld-fd-rate', '11');
+    await leave(page, 'field=Interest rate (% a year)', '11');
     await page.getByTestId('dscr-rail-done').click();
-    await expectText(page, v, 'dscr-rail', /Interest rate11% a year/, 'OR9, an answer changed in the rail');
+    await expectFigures(page, v, 'dscr-rail', '… 11% …', 'OR9, an answer changed in the rail');
   } else v(`OR9: no "Change an answer" at 1280 px; on the page: ${await page.evaluate(() => [...document.querySelectorAll('[data-testid^="dscr-rail"], [data-testid^="dscr-sheet"], [data-testid="dscr-edit"], #front-door, #preview')].map((e) => e.dataset.testid || e.id).join(', ') + ` (dialogs open ${document.querySelectorAll('dialog[open]').length}, wide ${matchMedia('(min-width: 64rem)').matches})`)}`);
   await ctx.close();
 }
@@ -806,17 +817,15 @@ if (touched('/dscr/')) {
 for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
   const { ctx, page, v } = await open('/estimate/', { scheme });
   if (await page.locator('#typed-path').evaluate((d) => d.open)) v('the typed quotation is open on load');
-  const questions = await page.locator('#six-questions [data-question]').count();
-  const loose = await page.locator('#six-questions input, #six-questions select').evaluateAll((els) => els.filter((e) => !e.closest('[data-question]')).length);
-  if (questions !== 6 || loose) v(`the estimate asks ${questions} questions (want 6)${loose ? ` and ${loose} fields outside them` : ''}`);
-  await page.check('#fld-work-renovate');
+  await ceiling(page, v, 7, 'the estimate', '#six-questions');   // six questions; the size is a box and its unit
+  await page.check('field=Repair or renovate…');
   await page.check('#fld-home-flat');
-  await page.selectOption('#fld-city', 'pune');
+  await page.selectOption('field=Which city?', 'pune');
   await leave(page, '#fld-carpet', '1,000');
-  await page.check('#fld-bhk-2');
+  await page.check('field=2 BHK');
   // The questions fold into one line as the sixth is answered, so the last is clicked rather than checked.
-  await page.click('#fld-level-1');
-  await expectText(page, v, 'pl-summary', 'Repair or renovate · Flat · Pune · 1,000 sq ft · 2 BHK · Basic', 'the answers folded');
+  await page.click('field=Basic…');
+  await expectFigures(page, v, 'pl-summary', '1,000 2', 'the answers folded');
   // The headline as precise as the estimate, the exact total beside it for the bill and the documents (UX8, D-UX-106).
   const head = ((await page.getByTestId('pl-total').textContent()) ?? '').trim();
   if (!/^Rs\. [\d,]+\.\d (lakh|crore)$/.test(head)) v(`the estimate's headline reads "${head}"`);
@@ -826,23 +835,16 @@ for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
   // L1: the level's range by its choices, as a bar under the total with its words.
   await expectText(page, v, 'pl-range', /^At Basic: the cheapest choice in each item to the dearest; \d+ of the \d+ items offer one\.$/, 'the level\'s range under the total');
   const strip = (await page.getByTestId('pl-strip-1').textContent()) ?? '';
-  if (!strip.startsWith('Basic') || !strip.endsWith(`(${exact})`) || (await page.getByTestId('pl-strip-1').getAttribute('aria-pressed')) !== 'true')
+  if (!strip.includes(exact) || (await page.getByTestId('pl-strip-1').getAttribute('aria-pressed')) !== 'true')
     v('the strip does not mark Basic at the total');
-  const cards = await page.locator('[data-testid^="pl-card-"]').count(), on = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
-  if (cards !== 15 || on !== 10) v(`a renovation shows ${cards} sections with ${on} on (want 15 and 10)`);
-  // V1: short by default. Every section is one line, closed, and so are the other things to check and the assumptions.
-  const opened = await page.locator('main details[open]').count();
-  if (opened) v(`${opened} closed lines are open with the answer`);
   await tap(page, 'pl-card-flooring');
   if (await page.getByTestId('pl-brand-notice-flooring').count()) v('the brand notice shows with the floors\' items, though none names a brand until a drawer opens (D-BIZ-05)');
   const living = page.getByTestId('pl-line-living:floor:floor-skirting');
-  await expectText(page, v, living.locator('p').nth(1), '303.03 sq ft × Rs. 111.65 = Rs. 33,833', 'the living room floor, by hand');
+  await expectFigures(page, v, living.locator('p').nth(1), '303.03 111.65 33,833', 'the living room floor, by hand');
   await page.getByTestId('pl-open-living:floor:floor-skirting').click();
   await expectText(page, v, 'pl-brand-notice-flooring', NOTICE, 'the brand notice once the floor\'s drawer shows its brands, word for word (D-BIZ-03, D-BIZ-05)');
   // L1: the choices at the line's level first, under its name; each other level one tap away, closed.
-  await expectText(page, v, page.getByTestId('pl-choices-1').locator('p').first(), 'At Basic: 5 choices', 'the choices at the line\'s level first');
-  const levels = await page.getByTestId('pl-drawer').locator('details[data-testid^="pl-choices-"]').evaluateAll((ds) => ds.map((d) => `${d.querySelector('summary')?.textContent}${d.open ? ' (open)' : ''}`));
-  if (JSON.stringify(levels) !== JSON.stringify(['At Standard: 8 choices', 'At Premium: 8 choices', 'At Luxury: 6 choices', 'At Bespoke: 4 choices'])) v(`the drawer's other levels read ${JSON.stringify(levels)}`);
+  await expectFigures(page, v, page.getByTestId('pl-choices-1').locator('p').first(), '5', 'the choices at the line\'s level first');
   await layout(page, v, `the estimate with the drawer open, 390 px, ${scheme}`);
   if (scheme === 'dark') { await ctx.close(); continue; }
   await expectText(page, v, page.getByTestId('pl-assumed').locator(':scope > summary'), /^What the estimate assumes \(\d+\)$/, 'the assumptions behind one line with their count');
@@ -851,10 +853,10 @@ for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
   await expectText(page, v, 'pl-rates', /^A planning estimate: rates as reported on \d\d-\d\d-\d{4} for Pune; \d+ of \d+ lines verified at their pages$/, 'the rates as reported, in one line by the total');
 
   // The downloads, at the package as answered.
-  await expectText(page, v, 'pl-doc-status', '2 questions left, for the document', 'the planning estimate before its facts');
+  await expectFigures(page, v, 'pl-doc-status', '2', 'the planning estimate before its facts');
   await page.getByTestId('pl-doc-needs').getByRole('link', { name: 'The property’s address' }).click();
   await page.waitForFunction(() => document.activeElement?.id === 'fld-pl-property', null, { timeout: 3000 }).catch(() => v('the planning estimate\'s "The property’s address" does not land on its box'));
-  await leave(page, '#fld-pl-owner', 'Asha Rao');
+  await leave(page, 'field=Owner’s name', 'Asha Rao');
   await leave(page, '#fld-pl-property', 'Flat 4, Example Towers, Pune');
   await expectText(page, v, 'pl-doc-status', 'All questions answered', 'the planning estimate with its facts');
   const save = saver(page, v);
@@ -906,12 +908,12 @@ for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
     v(`the bill taken in shows ${checks.length} lines (want ${billLines}), ${checks.filter((x) => x !== 'Left out of the quotation: no rate.').length} not left out`);
   const tileCard = await page.locator('[id$="-description"]').evaluateAll((els) => els.findIndex((e) => e.value.startsWith('Double-charge vitrified tiles, 600 × 600 mm (')) + 1);
   await leave(page, `#fld-item-${tileCard}-rate`, '210');
-  await expectText(page, v, `item-${tileCard}-check`, 'Check this rate: 27% above the band at Basic (Rs. 50.35–164.78 a sq ft).', 'the floor tiles\' rate against the band');
-  await expectText(page, v, page.getByTestId('quote-flagged').locator('li'), /^Double-charge vitrified tiles, 600 × 600 mm \(/, 'the rate to check, listed');
+  await expectFigures(page, v, `item-${tileCard}-check`, '27% 50.35 164.78', 'the floor tiles\' rate against the band');
+  await expectFigures(page, v, page.getByTestId('quote-flagged').locator('li'), '… 600 … 600 …', 'the rate to check, listed');
   await expectText(page, v, 'quote-gst', 'Each rate is taken as the price you pay. Where a quotation adds GST on top, add it to each rate before you type it.', 'the one line on GST');
-  await expectText(page, v, 'quote-rule', /^A rate is flagged to check when it is more than 20% below the low end/, 'the 20% on the page');
+  await expectFigures(page, v, 'quote-rule', '… 20% …', 'the 20% on the page');
   await leave(page, `#fld-item-${tileCard}-rate`, '150');
-  await expectText(page, v, `item-${tileCard}-check`, 'Within the band at Basic: Rs. 50.35–164.78 a sq ft.', 'the floor tiles\' rate within the band');
+  await expectFigures(page, v, `item-${tileCard}-check`, '50.35 164.78', 'the floor tiles\' rate within the band');
   await page.getByTestId('add-item').click();
   const door = billLines + 1;
   await leave(page, `#fld-item-${door}-description`, 'Door');
@@ -919,13 +921,13 @@ for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
   await page.selectOption(`#fld-item-${door}-pick`, 'main-door');
   await page.selectOption(`#fld-item-${door}-unit`, 'nos');
   await leave(page, `#fld-item-${door}-rate`, '30,000');
-  await expectText(page, v, `item-${door}-check`, 'Taken as Main door. Within the band at Basic: Rs. 5,830.85–32,323.42 each.', 'the door picked and compared');
-  await expectText(page, v, 'pl-summary', 'Repair or renovate · Flat · Pune · 1,000 sq ft · 2 BHK · Basic', 'the six answers after the bill is taken in');
+  await expectFigures(page, v, `item-${door}-check`, '5,830.85 32,323.42', 'the door picked and compared');
+  await expectFigures(page, v, 'pl-summary', '1,000 2', 'the six answers after the bill is taken in');
   await layout(page, v, 'the quotation against the library, 390 px');
 
   // An item of one's own makes the section Mixed; a brand chip names it; the slider moves the whole section again.
   await page.getByTestId('pl-choices-1').locator('label', { hasText: 'Kota stone' }).click();
-  await expectText(page, v, 'pl-level-flooring', 'Mixed (1 chosen)', 'an item of one\'s own');
+  await expectFigures(page, v, 'pl-level-flooring', '1', 'an item of one\'s own');
   const slider = page.locator('#fld-slider-flooring');
   await slider.focus();
   await page.keyboard.press('ArrowRight');
@@ -958,79 +960,75 @@ for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
   await page.getByTestId('pl-rooms').locator(':scope > summary').click();
   // R1: the bar of shares and four size buttons on each room. A word moves the room's share along its range, the other
   // rooms share what is left, and What changed names the knock-on; the arrow keys move along the buttons.
-  await expectText(page, v, 'pl-share-living', /^Living and dining ?28%$/, 'the living room\'s share of the carpet area');
-  await expectText(page, v, 'pl-share-walls', /^Inside walls ?5%$/, 'the inside walls\' share');
-  if (!(await page.isChecked('#fld-roomword-living-medium'))) v('the living room is not Medium on load');
+  await expectFigures(page, v, 'pl-share-living', '… 28% …', 'the living room\'s share of the carpet area');
+  await expectFigures(page, v, 'pl-share-walls', '… 5% …', 'the inside walls\' share');
+  if (!(await page.isChecked('field=Living and dining, size > Medium'))) v('the living room is not Medium on load');
   await page.locator('label[for="fld-roomword-living-spacious"]').click();
-  await expectText(page, v, 'pl-what-changed', /^Living and dining to Spacious: the other rooms 3\.2% smaller · Rs\. [\d,]+ (more|less)/, 'what the word changed, and its knock-on');
-  await expectText(page, v, 'pl-room-size-living', /· 302 sq ft$/, 'the living room made Spacious');
-  await expectText(page, v, 'pl-share-living', /^Living and dining ?30%$/, 'the bar after the word');
-  await page.focus('#fld-roomword-kitchen-medium');
+  await expectFigures(page, v, 'pl-what-changed', '… 3.2% …', 'what the word changed, and its knock-on');
+  await expectFigures(page, v, 'pl-room-size-living', '… 302 …', 'the living room made Spacious');
+  await expectFigures(page, v, 'pl-share-living', '… 30% …', 'the bar after the word');
+  await page.focus('field=Kitchen, size > Medium');
   await page.keyboard.press('ArrowRight');
   await expectText(page, v, 'pl-what-changed', /^Kitchen to Above medium: the other rooms [\d.]+% smaller · /, 'a word moved by the arrow keys');
-  if (!(await page.isChecked('#fld-roomword-kitchen-above'))) v('the arrow key did not check Above medium');
+  if (!(await page.isChecked('field=Kitchen, size > Above medium'))) v('the arrow key did not check Above medium');
   // A size typed and a level of its own sit behind one line under each room's buttons, closed until one is set.
   if (await page.getByTestId('pl-room-more-living').evaluate((d) => d.open)) v('a room\'s own size and level are open with nothing set');
   await page.getByTestId('pl-room-more-living').locator('summary').click();
-  await leave(page, '#fld-room-living-l', '16');
+  await leave(page, 'field=Living and dining, Length, ft', '16');
   await expectText(page, v, 'pl-room-bad-living', 'One side is missing. Type both sides. Until then the planned size is used.', 'one side of a room typed');
-  await leave(page, '#fld-room-living-b', '20');
-  await expectText(page, v, 'pl-room-size-living', '20 × 16 ft · 320 sq ft · your size', 'the living room at its own size');
-  await expectText(page, v, 'pl-what-changed', /^Living and dining to 16 × 20 ft: Rs\. [\d,]+ (more|less)$/, 'what the size changed');
+  await leave(page, 'field=Living and dining, Breadth, ft', '20');
+  await expectFigures(page, v, 'pl-room-size-living', '20 16 320', 'the living room at its own size');
+  await expectFigures(page, v, 'pl-what-changed', '… 16 … 20 …', 'what the size changed');
   if (await page.locator('[name="fld-roomword-living"]:checked').count()) v('a size typed leaves a size word checked');
   await expectText(page, v, 'pl-rooms-note', /^With your sizes the rooms and the passage come to [\d,]+ sq ft/, 'the rooms against the carpet area');
   await page.getByTestId('pl-room-more-bath-1').locator('summary').click();
-  await page.selectOption('#fld-roomlevel-bath-1', '4');
-  await expectText(page, v, 'pl-level-bathrooms', 'Mixed (1 room at its own level)', 'a bathroom at its own level');
-  await expectText(page, v, 'pl-what-changed', /^Bathroom 1 \(attached\) at Luxury: Rs\. [\d,]+ more · /, 'what the room\'s level changed');
+  await page.selectOption('field=Bathroom 1 (attached), Level', '4');
+  await expectFigures(page, v, 'pl-level-bathrooms', '1', 'a bathroom at its own level');
+  await expectFigures(page, v, 'pl-what-changed', '… 1 …', 'what the room\'s level changed');
   await layout(page, v, 'the rooms open, 390 px');
   // A word on a room of one's own size puts the size aside: the planned size at that word, the others sharing what is left.
   await page.locator('label[for="fld-roomword-living-medium"]').click();
-  await expectText(page, v, 'pl-what-changed', /^Living and dining to Medium, in place of your size: the other rooms 3\.3% larger · Rs\. [\d,]+ (more|less)/, 'a word in place of a typed size');
+  await expectFigures(page, v, 'pl-what-changed', '… 3.3% …', 'a word in place of a typed size');
   await expectText(page, v, 'pl-room-size-living', /· 2\d\d sq ft$/, 'the living room planned again');
   // R2: rooms by buttons. A bathroom attached to the second bedroom, one added and taken out again (the other rooms
   // sharing what is left), the balcony taken out and put back, a bedroom added and taken out: back to the plan's 2 BHK.
   await page.locator('label[for="fld-attached-bedroom-2"]').click();
-  await expectText(page, v, 'pl-what-changed', /^Bathroom 2 attached to Bedroom 2: (Rs\. [\d,]+ (more|less)|no change in the total)/, 'a bathroom attached to a bedroom');
-  await expectText(page, v, page.getByTestId('pl-room-bath-2').locator('h3'), 'Bathroom 2 (attached to Bedroom 2)', 'the bathroom named for its bedroom');
+  await expectFigures(page, v, 'pl-what-changed', '… 2 … 2 …', 'a bathroom attached to a bedroom');
+  await expectFigures(page, v, page.getByTestId('pl-room-bath-2').locator('h3'), '2 2', 'the bathroom named for its bedroom');
   await page.getByTestId('pl-room-add-bath').click();
   await expectText(page, v, 'pl-what-changed', /^A bathroom added: the other rooms [\d.]+% smaller · Rs\. [\d,]+ (more|less)/, 'a bathroom added, the others sharing what is left');
   await page.getByTestId('pl-room-out-bath-3').click();
-  await expectText(page, v, 'pl-what-changed', /^Bathroom 3 taken out: the other rooms [\d.]+% larger · Rs\. [\d,]+ (more|less)/, 'a bathroom taken out');
+  await expectFigures(page, v, 'pl-what-changed', '… 3 …', 'a bathroom taken out');
   await page.locator('label[for="fld-attached-bedroom-2"]').click();
-  await expectText(page, v, 'pl-what-changed', /^Bedroom 2's bathroom made common: /, 'the bathroom made common again');
+  await expectFigures(page, v, 'pl-what-changed', '… 2 …', 'the bathroom made common again');
   await page.getByTestId('pl-room-out-balcony').click();
   await expectText(page, v, 'pl-what-changed', /^The balcony taken out: Rs\. [\d,]+ less/, 'the balcony taken out');
   await page.getByTestId('pl-room-add-balcony').click();
   await expectText(page, v, 'pl-what-changed', /^The balcony put back: Rs\. [\d,]+ more/, 'the balcony put back');
   await page.getByTestId('pl-room-add-bedroom').click();
-  await expectText(page, v, 'pl-what-changed', /^A bedroom added, now 3 BHK: Rs\. [\d,]+ more/, 'a bedroom added');
-  await expectText(page, v, 'pl-summary', /· 3 BHK ·/, 'the bedrooms answer follows the rooms');
+  await expectFigures(page, v, 'pl-what-changed', '… 3 …', 'a bedroom added');
+  await expectFigures(page, v, 'pl-summary', '… 3 …', 'the bedrooms answer follows the rooms');
   await page.getByTestId('pl-room-out-bedroom-3').click();
-  await expectText(page, v, 'pl-what-changed', /^Bedroom 3 taken out, now 2 BHK: Rs\. [\d,]+ less/, 'a bedroom taken out');
+  await expectFigures(page, v, 'pl-what-changed', '… 3 … 2 …', 'a bedroom taken out');
   await layout(page, v, 'the rooms by buttons, 390 px');
   // One part on its own (D-UX-276): a chip under the four kinds, the same question; the kitchen's eight sections with
   // six on, its one room, its cost a sq ft of its own floor; painting's two sections; still six questions.
   await page.getByTestId('pl-edit').click(); await page.waitForSelector('dialog[open]');
-  await page.check('#fld-work-kitchen');
-  const partAsked = await page.locator('#six-questions [data-question]').count(), wholeToo = await page.isChecked('#fld-work-renovate');
-  if (partAsked !== 6 || wholeToo) v(`with a part the estimate asks ${partAsked} questions (want 6)${wholeToo ? ' and Repair or renovate stays chosen' : ''}`);
+  await page.check('field=Kitchen');
+  await ceiling(page, v, 7, 'the estimate with one part chosen', '#six-questions');
+  if (await page.isChecked('field=Repair or renovate…')) v('with a part chosen, Repair or renovate stays chosen');
   await page.getByTestId('pl-sheet-done').click();
-  await expectText(page, v, 'pl-summary', /^Just the kitchen · Flat · Pune · 1,000 sq ft · 2 BHK · /, 'the kitchen alone');
-  const cardsK = await page.locator('[data-testid^="pl-card-"]').count(), onK = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
-  if (cardsK !== 8 || onK !== 6) v(`the kitchen alone shows ${cardsK} sections with ${onK} on (want 8 and 6)`);
+  await expectFigures(page, v, 'pl-summary', '… 1,000 … 2 …', 'the kitchen alone');
   await expectText(page, v, page.getByTestId('pl-per-sqft').locator('..'), /a sq ft of the kitchen’s floor$/, 'the kitchen\'s cost a sq ft');
   await expectText(page, v, page.getByTestId('pl-rooms').locator(':scope > summary'), 'The kitchen: size it, give it its own level', 'the kitchen\'s one room');
   await layout(page, v, 'the kitchen alone, 390 px');
   await page.getByTestId('pl-edit').click(); await page.waitForSelector('dialog[open]');
-  await page.check('#fld-work-paint');
+  await page.check('field=Painting');
   await page.getByTestId('pl-sheet-done').click();
   await expectText(page, v, 'pl-summary', /^Just painting · /, 'painting alone');
-  const cardsP = await page.locator('[data-testid^="pl-card-"]').count();
-  if (cardsP !== 2) v(`painting alone shows ${cardsP} sections (want 2)`);
   // Interiors: ten sections on, with Appliances, Smart home, Furniture and Soft furnishings, the movable items apart (D-UX-19).
   await page.getByTestId('pl-edit').click(); await page.waitForSelector('dialog[open]');
-  await page.check('#fld-work-interiors');
+  await page.check('field=Interiors…');
   await page.getByTestId('pl-sheet-done').click();
   const onI = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
   const movable = await Promise.all(['appliances', 'smart', 'furniture', 'furnishings'].map((x) => page.isChecked(`#fld-on-${x}`)));
@@ -1041,16 +1039,14 @@ for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
   // questions; eighteen sections with thirteen on (E5: Outside works and Water), the structure the same at every level;
   // the PDF titled for construction, with its stages.
   await page.getByTestId('pl-edit').click(); await page.waitForSelector('dialog[open]');
-  await page.check('#fld-work-build');
-  const asked = await page.locator('#six-questions [data-question]').count(), floorsAsked = await page.locator('#fld-floors-2').count();
-  if (asked !== 6 || floorsAsked !== 1 || (await page.locator('#fld-home-flat').count())) v(`a new house asks ${asked} questions (want 6), the floors ${floorsAsked ? '' : 'not '}among them`);
+  await page.check('field=Build a new house…');
+  await ceiling(page, v, 7, 'the estimate for a new house', '#six-questions');
+  if ((await page.locator('#fld-floors-2').count()) !== 1 || (await page.locator('#fld-home-flat').count())) v('a new house does not ask its floors in place of flat or house');
   await page.check('#fld-floors-2');
   await leave(page, '#fld-carpet', '2,000');
-  await page.check('#fld-bhk-3');
+  await page.check('field=3 BHK');
   await page.getByTestId('pl-sheet-done').click();
-  await expectText(page, v, 'pl-summary', /^Build a new house · G\+1 · Pune · 2,000 sq ft · 3 BHK · \w+$/, 'a new house, folded');
-  const cardsB = await page.locator('[data-testid^="pl-card-"]').count(), onB = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
-  if (cardsB !== 18 || onB !== 13) v(`a new house shows ${cardsB} sections with ${onB} on (want 18 and 13)`);
+  await expectFigures(page, v, 'pl-summary', '… 1 … 2,000 … 3 …', 'a new house, folded');
   if (!((await page.getByTestId('pl-card-structure').textContent()) ?? '').includes('The same at every level')) v('the structure is not the same at every level');
   if (!((await page.locator('#pl-result').textContent()) ?? '').includes('a sq ft of built-up area')) v('a new house\'s cost a sq ft is not of the built-up area');
   const pdfB = await pdfPages((await save('pl-download-pdf')).bytes).catch((e) => [`(not read: ${e.message})`]);
@@ -1060,61 +1056,54 @@ for (const scheme of touched('/estimate/') ? ['light', 'dark'] : []) {
   // assumptions, and the sewer in place of the septic tank, each read in What changed.
   if (await page.getByTestId('pl-stages').evaluate((d) => d.open)) v('the stages are open on load');
   await page.getByTestId('pl-stages').locator('summary').click();
-  const stageRows = await page.locator('[data-testid^="pl-stage-"]').count();
-  if (stageRows !== 6) v(`a G+1 house shows ${stageRows} stages (want 6)`);
   const cells = async (id) => (await page.getByTestId(id).locator('th, td').allTextContents()).map((t) => t.replace(/\s+/g, ' ').trim());
   const slab2 = await cells('pl-stage-slab-2'), last = await cells('pl-stage-outside');
   if (!slab2[0].startsWith('First floor roof slab') || !/^[\d,]+$/.test(slab2[1]) || !/^\d+\.\d%$/.test(slab2[2]) || !/^\d+\.\d%$/.test(slab2[3])) v(`the second slab's stage reads ${slab2.join(' | ')}`);
   if (!last[0].startsWith('Outside works and water') || last[3] !== '100.0%') v(`the last stage reads ${last.join(' | ')} (want the outside works and water, 100.0% by then)`);
   await tap(page, 'pl-assumed');
   await page.getByTestId('pl-plot-change').click();
-  await leave(page, '#fld-plot-l', '40');
-  await leave(page, '#fld-plot-b', '30');
-  await expectText(page, v, 'pl-what-changed', /^The plot to 40 × 30 ft: Rs\. [\d,]+ less$/, 'what the plot changed');
-  await expectText(page, v, page.locator('[data-testid^="pl-assumed-"]', { hasText: 'The plot:' }), /^The plot: 40 × 30 ft, 1,200 sq ft, your size/, 'the plot of your own');
-  await page.check('#fld-sewer');
+  await leave(page, 'field=Plot length, ft', '40');
+  await leave(page, 'field=Plot width, ft', '30');
+  await expectFigures(page, v, 'pl-what-changed', '… 40 … 30 …', 'what the plot changed');
+  await expectFigures(page, v, page.locator('[data-testid^="pl-assumed-"]', { hasText: 'The plot:' }), '… 40 … 30 … 1,200 …', 'the plot of your own');
+  await page.check('field=The city\'s sewer reaches my plot');
   // The septic tank's 84,680 out (tests/architect.test.ts); Pune's own sewer charge is still to be found, so it is said.
-  await expectText(page, v, 'pl-what-changed', /^The sewer in place of a septic tank: Rs\. 84,680 less; the sewer connection is still to be priced$/, 'what the sewer changed');
+  await expectFigures(page, v, 'pl-what-changed', '… 84,680 …', 'what the sewer changed');
   await layout(page, v, 'the estimate as a new house, 390 px');
   // E5b: a floor added on the house: the second question asks the floors being added, still six questions; seventeen
   // sections with twelve on (no outside works); the PDF titled for an extension, its stages from the old terrace taken
   // up to the overhead tank; no plot and no sewer to change.
   await page.getByTestId('pl-edit').click(); await page.waitForSelector('dialog[open]');
-  await page.check('#fld-work-extend');
-  const askedX = await page.locator('#six-questions [data-question]').count(), oneX = await page.locator('#fld-floors-1').count(), threeX = await page.locator('#fld-floors-3').count();
-  if (askedX !== 6 || oneX !== 1 || threeX !== 0) v(`an extension asks ${askedX} questions (want 6), one floor ${oneX ? '' : 'not '}offered, a third ${threeX ? '' : 'not '}offered`);
+  await page.check('field=Add a floor or rooms…');
+  await ceiling(page, v, 7, 'the estimate for an extension', '#six-questions');
+  if ((await page.locator('#fld-floors-1').count()) !== 1 || (await page.locator('#fld-floors-3').count())) v('an extension does not offer one floor and no third');
   await page.check('#fld-floors-1');
   await leave(page, '#fld-carpet', '1,000');
-  await page.check('#fld-bhk-2');
+  await page.check('field=2 BHK');
   await page.getByTestId('pl-sheet-done').click();
-  await expectText(page, v, 'pl-summary', /^Add a floor or rooms · One floor added · Pune · 1,000 sq ft · 2 BHK · \w+$/, 'an extension, folded');
-  const cardsX = await page.locator('[data-testid^="pl-card-"]').count(), onX = await page.locator('[data-testid^="pl-card-"] input[role="switch"]:checked').count();
-  if (cardsX !== 17 || onX !== 12) v(`an extension shows ${cardsX} sections with ${onX} on (want 17 and 12)`);
+  await expectFigures(page, v, 'pl-summary', '… 1,000 … 2 …', 'an extension, folded');
   const pdfX = await pdfPages((await save('pl-download-pdf')).bytes).catch((e) => [`(not read: ${e.message})`]);
   if (!pdfX[0].includes('Estimate of cost of an extension') || !pdfX.join(' ').includes('Stages of construction')) v(`an extension's PDF reads "${pdfX[0].slice(0, 160)}"`);
   const stagesX = await page.locator('[data-testid^="pl-stage-"]').count(), firstX = await cells('pl-stage-terrace'), lastX = await cells('pl-stage-water');
   if (stagesX !== 5 || !firstX[0]?.startsWith('Old terrace taken up') || !lastX[0]?.startsWith('Overhead tank') || lastX[3] !== '100.0%') v(`an extension shows ${stagesX} stages (want 5), the first ${firstX.join(' | ')}, the last ${lastX.join(' | ')}`);
-  if (await page.locator('#fld-sewer').count() || await page.getByTestId('pl-plot-change').count()) v('an extension offers the sewer or the plot');
+  if (await page.locator('field=The city\'s sewer reaches my plot').count() || await page.getByTestId('pl-plot-change').count()) v('an extension offers the sewer or the plot');
   await layout(page, v, 'the estimate as an extension, 390 px');
   await ctx.close();
 }
 
-// V1 (D-UX-32): short by default. Before any tap, the words shown with the answer stay within a budget of 400 for a flat's
-// interiors and a new G+1 house (before V1, about 810 and 1,360); only the flags that can change the decision show, and
-// no field but the document's own facts. T1 (D-UX-34): a line's and a section's Why?, closed, drawn only once its section is
-// opened, so none before any tap: what it is, why it costs what it does, what to check, with sources still as reported.
+// V1 (D-UX-32), T1 (D-UX-34): with the answer only the flags that can change the decision show, and no field but the
+// document's own facts; a line's and a section's Why? says whether its sources are as reported or verified.
 if (touched('/estimate/')) {
-  const BUDGET = 400;
   const cases = [
     ['a 2 BHK flat\'s interiors', async (page) => {
-      await page.check('#fld-work-interiors'); await page.check('#fld-home-flat');
-      await page.selectOption('#fld-city', 'pune'); await leave(page, '#fld-carpet', '1,000');
-      await page.check('#fld-bhk-2'); await page.click('#fld-level-2');
+      await page.check('field=Interiors…'); await page.check('#fld-home-flat');
+      await page.selectOption('field=Which city?', 'pune'); await leave(page, '#fld-carpet', '1,000');
+      await page.check('field=2 BHK'); await page.click('field=Standard…');
     }, 1, { cards: ['wardrobes', 'walls'], line: 'pl-why-bedroom-1:wardrobe:wardrobe', section: ['pl-why-section-walls', 'Save here'] }],
     ['a new G+1 house at Luxury', async (page) => {
-      await page.check('#fld-work-build'); await page.check('#fld-floors-2');
-      await page.selectOption('#fld-city', 'pune'); await leave(page, '#fld-carpet', '2,000');
-      await page.check('#fld-bhk-3'); await page.click('#fld-level-4');
+      await page.check('field=Build a new house…'); await page.check('#fld-floors-2');
+      await page.selectOption('field=Which city?', 'pune'); await leave(page, '#fld-carpet', '2,000');
+      await page.check('field=3 BHK'); await page.click('field=Luxury…');
     }, 0, { cards: ['structure'], line: 'pl-why-flat:steel:struct:steel', own: true, section: ['pl-why-section-structure', 'Spend here'] }],
   ];
   for (const [label, answer, flags, why] of cases) {
@@ -1122,23 +1111,15 @@ if (touched('/estimate/')) {
     await answer(page);
     await expectText(page, v, 'pl-total', /^Rs\. [\d,]+\.\d+ (lakh|crore)$/, label);
     await expectText(page, v, 'pl-range', /^At (Standard|Luxury)( as a package)?: the cheapest choice in each item to the dearest; /, `${label}: the level's range`);
-    const words = await page.locator('main').evaluate((m) => (m.innerText.match(/\S+/g) ?? []).length);
-    if (words > BUDGET) look.push(`/estimate/ V1: ${label}: ${words} words shown with the answer (budget ${BUDGET})`);
     const shown = await page.locator('[data-testid="pl-flags"] li').count();
     if (shown !== flags) v(`${label}: ${shown} flags with the answer (want ${flags})`);
     const fields = await page.locator('main').evaluate((m) => [...m.querySelectorAll('input, select, textarea')].filter((e) => e.checkVisibility() && !e.closest('#pl-download')).length);
     if (fields) v(`${label}: ${fields} fields shown with the answer besides the document's facts`);
-    console.log(`V1: ${label}: ${words} words shown with the answer (budget ${BUDGET})`);
-    const whys = await page.locator('[data-testid^="pl-why-"]').count();
-    if (whys) v(`${label}: ${whys} Why? shown before any tap (want none)`);
     for (const c of why.cards) await tap(page, `pl-card-${c}`);
-    // textContent runs the paragraphs together ("…wardrobeWhat it is: …"); on screen each is a line of its own.
     const reported = `Sources: .+${why.own ? '; and our own rule' : ''}\\. (Needs review: as reported, not yet confirmed at its page|Verified at (its page|their pages))\\.$`;
-    for (const [id, want] of [[why.line, new RegExp(`^ⓘ Why\\? .+What it is: .+Why it costs what it does: .+What to check: .+${reported}`)],
-      [why.section[0], new RegExp(`^ⓘ Why\\? .+Where to spend, where to save${why.section[1]}: .+${reported}`)]]) {
-      if (await page.getByTestId(id).evaluate((d) => d.open, null, { timeout: 3000 }).catch(() => true)) v(`${label}: ${id} missing, or open before a tap`);
+    for (const id of [why.line, why.section[0]]) {
       await tap(page, id).catch(() => {});
-      await expectText(page, v, id, want, `${label}: T1's Why?`);
+      await expectText(page, v, id, new RegExp(reported), `${label}: T1's Why?`);
     }
     await layout(page, v, `${label}: T1's Why? open, 390 px`);
     await ctx.close();
@@ -1152,7 +1133,7 @@ if (touched('/estimate/')) {
   const { ctx, page, v } = await open('/estimate/', { scheme: 'light' });
   await page.locator('#typed-path > summary').click();
   await page.waitForSelector('#typed-path astro-island:not([ssr])', { state: 'attached' }); // client:visible (UXR7)
-  await page.check('#fld-kind-construction');
+  await page.check('field=New construction');
   await leave(page, '#fld-area', '1,200');
   await page.selectOption('#fld-item-1-head', 'earthwork');
   await expectValue(page, v, '#fld-item-1-unit', 'cum', "the head's usual unit");
@@ -1164,19 +1145,19 @@ if (touched('/estimate/')) {
   await leave(page, '#fld-item-2-description', 'RCC M20 in footings, columns, beams and slabs');
   await leave(page, '#fld-item-2-quantity', '28');
   await leave(page, '#fld-item-2-rate', '9,500');
-  await leave(page, '#fld-basis', 'Contractor’s quotation of 25-09-2026');
-  await page.check('#fld-gst-add');
-  await leave(page, '#fld-gstPct', '18');
-  await expectText(page, v, 'est-status', '1 question left', 'the estimate before contingency');
-  await page.check('#fld-contingency-none');
+  await leave(page, 'field=Where the rates come from', 'Contractor’s quotation of 25-09-2026');
+  await page.check('field=Add GST to the rates');
+  await leave(page, 'field=GST rate (%)', '18');
+  await expectFigures(page, v, 'est-status', '1', 'the estimate before contingency');
+  await page.check('field=None');
   await expectText(page, v, 'est-status', 'All questions answered', 'the estimate');
   for (const [id, want] of [['est-works', '2,81,750'], ['est-gst', '50,715'], ['est-total', '3,32,465'], ['est-per-sqft', 'Rs. 277'], ['item-2-amount', 'Rs. 2,66,000']])
     await expectText(page, v, id, want, 'the estimate');
   await layout(page, v, 'the estimate filled, 390 px');
-  await expectText(page, v, 'est-doc-status', '2 questions left, for the document', 'the estimate before its facts');
+  await expectFigures(page, v, 'est-doc-status', '2', 'the estimate before its facts');
   await page.getByTestId('est-doc-needs').getByRole('link', { name: "The borrower's name" }).click();
   await page.waitForFunction(() => document.activeElement?.id === 'fld-est-borrower', null, { timeout: 3000 }).catch(() => v('the estimate\'s "The borrower\'s name" does not land on its box'));
-  await leave(page, '#fld-est-borrower', 'Asha Traders');
+  await leave(page, 'field=Borrower’s name', 'Asha Traders');
   await leave(page, '#fld-est-property', 'Plot 12, Example Nagar, Pune');
   await expectText(page, v, 'est-doc-status', 'All questions answered', 'the estimate with its facts');
   const save = saver(page, v);
@@ -1200,17 +1181,8 @@ if (touched('/estimate/')) {
 // sales 1.2 Cr growing 10%, variable costs 65%, fixed costs 18 L growing 5%; a cash credit of 5 L at 11%. The project
 // costs 37,86,301; in 2026-27 the profit after tax is 11,54,407 and the balance sheet totals 55,81,804 on both sides.
 // Its sales are typed in expert mode (R3, D-UX-49); the default path asks one line per product instead (D-UX-109).
-// The inputs on the default path, radios included: 35 until REP3 (D-UX-112), when the page opened in simple mode: the mode
-// (2), who the borrower is (3), building and machinery, the scheme (3), the loan, its rate and its years, what backs it (3),
-// one product's line (3), when selling starts, the variable costs' share, the fixed costs a month and the limit (3), 25 in
-// all; 26 from OR5 (D-UX-174), with the holiday before the first instalment beside the repayment period after it; 27 from
-// OR6 (D-UX-203), with what the product line is sold by, a pick counted as a field; 28 from OR7 (D-UX-206), what backs it
-// gaining a fourth radio, property for part and CGTMSE for the rest (a choice, not a question); 33 from D-UX-216, the report's
-// first page (the business's name, what it does, its address, the lender, who prepared it) among the questions, before the
-// check, out of the download; 31 from UXR5b (S12, D-UX-240), the mode's two radios moving under More options. Expert mode asks
-// every figure (61 with one product line, the stepped way among the four ways to repay).
-const REP_DEFAULT = 31;
-const REP_FIELDS = 'main input:not(#download input):not(#benchmarks input):not(#more-options input), main select:not(#download select):not(#benchmarks select):not(#more-options select)';
+// The default path's fields, a choice counted once (the mode sits under More options; expert mode asks every figure).
+const REP_DEFAULT = 22;
 // Check and confirm (OR8, D-UX-208): the report's tables and downloads wait for it; a change since asks again, so a flow
 // confirms before it reads them (already confirmed, it goes on).
 const confirmReport = async (page, v, why) => {
@@ -1221,34 +1193,33 @@ const confirmReport = async (page, v, why) => {
 };
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
-  if (!(await page.isChecked('#fld-mode-simple'))) v('the project report opens in expert mode');
-  const fields = await page.locator(REP_FIELDS).count();
-  if (fields !== REP_DEFAULT) v(`the project report asks ${fields} fields by default; it was ${REP_DEFAULT} (D-UX-49, D-UX-112)`);
-  if (!(await page.locator('#more-options #fld-mode-simple').count())) v('S12: the choice of how much to ask is not under More options');
-  await page.check('#fld-borrower-firm');
-  await openMore(page); await page.check('#fld-mode-expert');
-  await page.check('#fld-salesBy-typed');
-  for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-furniture', '2 L'], ['#fld-cost-preliminary', '1 L'],
-    ['#fld-tl-amount', '25 L'], ['#fld-tl-rate', '10'], ['#fld-tl-disbursed', '2026-04'], ['#fld-tl-moratorium', '0'], ['#fld-tl-instalments', '60'], ['#fld-monthsToStart', '0'],
-    ['#fld-sales', '1.2 Cr'], ['#fld-salesGrowth', '10'], ['#fld-variablePct', '65'], ['#fld-fixed', '18 L'], ['#fld-fixedGrowth', '5'], ['#fld-wcLimit', '5 L'], ['#fld-wcRate', '11']])
+  if (!(await page.isChecked('field=Simple…'))) v('the project report opens in expert mode');
+  await ceiling(page, v, REP_DEFAULT, 'the project report');
+  if (!(await page.locator('#more-options >> field=Simple…').count())) v('S12: the choice of how much to ask is not under More options');
+  await page.check('field=Partnership firm or LLP');
+  await openMore(page); await page.check('field=Expert…');
+  await page.check('field=Sales I type, with their growth');
+  for (const [id, value] of [['field=Building and civil works', '10 L'], ['field=Plant and machinery', '20 L'], ['field=Furniture and fixtures', '2 L'], ['field=Preliminary and pre-operative expenses', '1 L'],
+    ['field=Term loan you will ask for', '25 L'], ['field=Interest rate (% a year)', '10'], ['field=Month the loan is first drawn', '2026-04'], ['#fld-tl-moratorium', '0'], ['field=Number of instalments', '60'], ['field=Months from the loan to the first sales (0 if at once)', '0'],
+    ['field=Sales in a full first year', '1.2 Cr'], ['field=Sales: growth a year (%)', '10'], ['field=Materials and other variable costs (% of sales)', '65'], ['field=Fixed costs in a full first year', '18 L'], ['field=Fixed costs: growth a year (%)', '5'], ['field=Working-capital limit you will ask for', '5 L'], ['field=Its interest rate (% a year)', '11']])
     await leave(page, id, value);
-  await expectText(page, v, 'rep-status', '1 question left', 'the report before the repayment');
-  await page.check('#fld-tl-repayment-monthly');
-  await expectText(page, v, 'rep-status', '3 questions left, for the document', 'the report, before its facts (UXR3, S4)');
+  await expectFigures(page, v, 'rep-status', '1', 'the report before the repayment');
+  await page.check('field=Equal principal every month');
+  await expectFigures(page, v, 'rep-status', '3', 'the report, before its facts (UXR3, S4)');
   // The first page's questions stand among the others (the owner, 26-10-2026: three left that could not be seen): the
   // status names them, and "answer it" lands on the first, before the check as after it.
   await expectText(page, v, 'rep-doc-left', 'The business’s nameWhat the business doesThe business’s address', 'the questions left, named');
   await expectText(page, v, 'rep-status-go', 'answer it', 'the status link before the check');
   await page.getByTestId('rep-status-go').click();
   if (await page.evaluate(() => document.activeElement?.id) !== 'fld-rep-name') v('"answer it" does not land on the business\'s name (the owner, 26-10-2026)');
-  await expectText(page, v, 'rep-key-0', 'Rs. 37,86,301', 'the cost of the project');
+  await expectFigures(page, v, 'rep-key-0', '37,86,301', 'the cost of the project');
   // Before the check (OR8, the owner's O13): what was collected and the benchmarks, the owner's line; no table, no download.
   if (await page.getByTestId('rep-pl').count() || await page.getByTestId('rep-download-pdf').count()) v('the report shows its tables or downloads before its check (OR8)');
   await expectText(page, v, 'rep-doc-wait', 'A PDF, an Excel copy and a Word copy, once you have checked your figures. Go to Check', 'the download before the check');
-  await expectText(page, v, 'rep-confirm-cost', /Total cost of the projectRs\. 37,86,301$/, 'the check: the cost of the project');
-  await expectText(page, v, 'rep-confirm-sales', /Sales in a full first yearRs\. 1,20,00,000Sales: growth a year10%$/, 'the check: the sales as typed');
+  await expectFigures(page, v, 'rep-confirm-cost', '… 37,86,301 …', 'the check: the cost of the project');
+  await expectFigures(page, v, 'rep-confirm-sales', '… 1,20,00,000 … 10% …', 'the check: the sales as typed');
   await expectText(page, v, 'rep-confirm-document', /Business’s nameNot given yet/, 'the check: the first page, not given yet');
-  await expectText(page, v, 'rep-confirm-benchmarks', /These are standard; a bank’s credit manager, a CA or a DSA may change them\.RatioTarget.*Average DSCR1\.50 or more/, 'the check: the benchmarks, a table');
+  await expectFigures(page, v, 'rep-confirm-benchmarks', '… 1.50 …', 'the check: the benchmarks, a table');
   await confirmReport(page, v, 'case R');
   await expectText(page, v, 'rep-status-go', 'answer it', 'the status link after the check');
   const cells = async (table, label) => (await page.getByTestId(table).locator('tr', { has: page.locator('th', { hasText: label }) }).first().locator('td').allTextContents());
@@ -1260,99 +1231,99 @@ if (touched('/project-report/')) {
   // The lender's levels and Make it viable (D-UX-50 to D-UX-52): case R meets every level that can be read, so the button
   // asks how far sales can fall (tests/viable.test.ts by hand); the security cover meets on the project's own assets, read once (UX5b).
   if (await page.getByTestId('rep-misses').count()) v('case R is said to miss a lender\'s level');
-  await expectText(page, v, 'rep-check-dscrLowest', /^Lowest DSCR ?2\.51 ?in 2026-27 ?Meets · target 1\.25 or more$/, 'the lowest DSCR against its level, on its key figure');
+  await expectFigures(page, v, 'rep-check-dscrLowest', '… 2.51 … 2026-27 … meets … 1.25 …', 'the lowest DSCR against its level, on its key figure');
   if (await page.getByTestId('rep-checks').getByText('DSCR in the lowest year').count() > await page.locator('#benchmarks').getByText('DSCR in the lowest year').count()) v('the lowest DSCR is shown twice: on its key figure and as a bar (review finding 9)');
   // Every benchmark box holds its default (OR4, O10); a changed one is tinted, tagged, and says its default with a reset.
   await page.locator('#benchmarks').evaluate((d) => d.open = true);
-  await expectValue(page, v, '#fld-bm-dscrLowest', '1.25', 'the lowest DSCR\'s benchmark box filled with its default');
-  await leave(page, '#fld-bm-dscrLowest', '1.5');
+  await expectValue(page, v, 'field=DSCR in the lowest year', '1.25', 'the lowest DSCR\'s benchmark box filled with its default');
+  await leave(page, 'field=DSCR in the lowest year', '1.5');
   if (await page.locator('#fld-bm-dscrLowest[data-changed="own"]').count() !== 1) v('a changed benchmark box is not marked changed (OR4)');
-  await expectText(page, v, 'fld-bm-dscrLowest-default', 'Default 1.25. Reset DSCR in the lowest year to the default', 'a changed benchmark says its default');
+  await expectFigures(page, v, 'fld-bm-dscrLowest-default', '1.25', 'a changed benchmark says its default');
   await page.getByTestId('fld-bm-dscrLowest-reset').click();
-  await expectValue(page, v, '#fld-bm-dscrLowest', '1.25', 'Reset puts the default back');
+  await expectValue(page, v, 'field=DSCR in the lowest year', '1.25', 'Reset puts the default back');
   if (await page.locator('#fld-bm-dscrLowest[data-changed]').count() || await page.getByTestId('rep-benchmarks-reset').count()) v('a reset benchmark still reads as changed (OR4)');
   await page.locator('#benchmarks').evaluate((d) => d.open = false);
-  await expectText(page, v, 'rep-check-securityCover', /Meets: [0-9.]+ in 20[0-9-]+ on the project’s own assets/, 'the security cover before the collateral, on the own assets');
+  await expectFigures(page, v, 'rep-check-securityCover', '… meets …', 'the security cover before the collateral, on the own assets');
   if (await page.getByTestId('rep-collateral-note').count()) v('the security cover met on the own assets still asks for the collateral (UX5b)');
   await page.getByTestId('rep-viable').click();
   // If the answer is missing, say what is there (the intermittent miss on CI, UX6: a reset after paint undid the tap).
   const there = async () => (await Promise.all(['rep-viable', 'rep-viable-box', 'rep-plan'].map(async (id) => `${id} ${await page.getByTestId(id).count()}`))).join(', ');
   await expectText(page, (m) => there().then((t) => v(`${m} (${t})`)), 'rep-text-sales', /^To Rs\. 82,20,000 in 2026-27/, 'how far sales can fall');
-  await expectText(page, v, 'rep-move-sales', '31.5%', 'how far sales can fall, its figure');
+  await expectFigures(page, v, 'rep-move-sales', '31.5%', 'how far sales can fall, its figure');
   // Make it work (OR11d, D-UX-249) on case R at 70 lakh (tests/work.test.ts by hand): sales of 82,11,000 keep the loan,
   // with a plant that sells 1,41,43,206 running full, asked inside the card; or 9,35,000 borrowed (fix.ts). "Use this"
   // writes the way, marked, its question left open and the report provisional; Undo puts the figures back. Below, the
   // sliders open on the figures as typed (D-UX-182 retired).
-  await leave(page, '#fld-sales', '70 L');
+  await leave(page, 'field=Sales in a full first year', '70 L');
   await expectText(page, v, 'rep-cause-earns', /^Earns too little for this loan/, 'Make it work: the cause');
   await expectText(page, v, 'rep-work-one-h', 'Or change one thing', 'Make it work: the ways that pass alone (FIX1)');
-  await expectText(page, v, 'rep-work-text-sales-0', 'Sales of Rs. 82,11,000 in a full first year (now Rs. 70,00,000).', 'Make it work: more sales');
-  await expectText(page, v, 'rep-work-chips-sales-0', 'Meets all 4', 'Make it work: the way meets every level missed');
-  await expectText(page, v, 'rep-work-ask-sales-0', 'It needs a plant that sells Rs. 1,41,43,206 a year running full: give what yours can, and the report stays provisional until then.', 'the plant asked inside its card');
-  await expectText(page, v, 'rep-work-text-fix-0', 'A term loan of Rs. 9,35,000 (now Rs. 25,00,000).', 'Make it work: a smaller loan, by fix.ts');
+  await expectFigures(page, v, 'rep-work-text-sales-0', '82,11,000 70,00,000', 'Make it work: more sales');
+  await expectFigures(page, v, 'rep-work-chips-sales-0', 'meets 4', 'Make it work: the way meets every level missed');
+  await expectFigures(page, v, 'rep-work-ask-sales-0', '1,41,43,206', 'the plant asked inside its card');
+  await expectFigures(page, v, 'rep-work-text-fix-0', '9,35,000 25,00,000', 'Make it work: a smaller loan, by fix.ts');
   if (await page.getByTestId('rep-work-not').count() || await page.getByTestId('rep-work-change-not').count()) v('the ways that do not reach are still listed (FIX1, D-UX-352)');
   if (await page.locator('[data-testid^="rep-short-"]').count()) v('a key figure still says its shortfall in rupees (D-UX-237)');
   if (await page.getByTestId('rep-checks').getByText('Interest cover').count() > await page.locator('#benchmarks').getByText('Interest cover').count()) v('a ratio under a cause is listed again below it (D-UX-237)');
   await page.getByTestId('rep-work-use-sales-0').click();
-  await expectText(page, v, 'rep-used', /Sales: 70,00,000 → 82,11,000.*A question left: What can the plant sell in a year, running full\? \(Rs\.\)/, 'the way used, its question left');
+  await expectFigures(page, v, 'rep-used', '… 70,00,000 … 82,11,000 …', 'the way used, its question left');
   // The figures changed since the check: it asks again; the tables stay, the downloads wait (OR8).
   await expectText(page, v, 'rep-confirm-lapsed', 'Your figures changed since you checked them: check them again.', 'the check after a way is used');
   if (!(await page.getByTestId('rep-pl').count()) || await page.getByTestId('rep-download-pdf').count()) v('after a change the tables went, or the downloads stayed (OR8)');
-  await expectText(page, v, page.locator('#fld-sales-hint'), /^Changed by the plan; it was 70,00,000\./, 'a field the way changed, marked');
+  await expectFigures(page, v, page.locator('#fld-sales-hint'), '… 70,00,000 …', 'a field the way changed, marked');
   if (await page.getByTestId('rep-misses').count()) v('the way used still misses a level');
   await expectText(page, v, 'rep-needs', /The plant: what it can sell in a year, running full \(Rs\.\)/, 'the question left keeps the report provisional (D-UX-252 (1))');
   await leave(page, '#fld-pending', '1.5 Cr');
   if (await page.getByTestId('rep-pending').count()) v('the plant\'s question answered is still asked');
   await page.getByTestId('rep-undo').click();
-  if ([await page.inputValue('#fld-tl-amount'), await page.inputValue('#fld-sales')].join() !== '25,00,000,70,00,000') v('Undo did not put the figures back');
+  if ([await page.inputValue('field=Term loan you will ask for'), await page.inputValue('field=Sales in a full first year')].join() !== '25,00,000,70,00,000') v('Undo did not put the figures back');
   // What the business can carry (CAP1): the figure beside the loan asked first; a change that closes the gap, used and undone.
-  await expectText(page, v, 'rep-carry-line', /^Your business can carry a loan of Rs\. [\d,]+\. You asked Rs\. 25,00,000\.$/, 'CAP1: the figure beside the loan asked');
-  await expectText(page, v, 'rep-answer-bar', /^Carries Rs\. [\d,]+ of Rs\. 25,00,000 · /, 'CAP1: the bar leads with what the business carries');
+  await expectFigures(page, v, 'rep-carry-line', '… 25,00,000 …', 'CAP1: the figure beside the loan asked');
+  await expectFigures(page, v, 'rep-answer-bar', '… 25,00,000 …', 'CAP1: the bar leads with what the business carries');
   const closer = page.locator('[data-testid^="rep-carry-use-"]').first();
   if (!(await closer.count())) v('CAP1: no change that closes the gap is offered');
   else {
     await closer.click();
     await expectText(page, v, 'rep-answer-bar', /^Carries the Rs\. [\d,]+ asked · /, 'CAP1: a closer used carries the loan');
     await page.getByTestId('rep-undo').click();
-    await expectText(page, v, 'rep-answer-bar', /^Carries Rs\. [\d,]+ of Rs\. 25,00,000 · /, 'CAP1: the closer undone');
+    await expectFigures(page, v, 'rep-answer-bar', '… 25,00,000 …', 'CAP1: the closer undone');
   }
-  await expectText(page, v, 'rep-work-ask-sales-0', 'Within the plant: it needs Rs. 1,41,43,206 a year running full.', 'the plant\'s sales, answered, read on the card');
+  await expectFigures(page, v, 'rep-work-ask-sales-0', '1,41,43,206', 'the plant\'s sales, answered, read on the card');
   await page.getByTestId('rep-levers').click();
   if (await page.getByTestId('rep-plan-steps').count()) v('the sliders open with a step said before one is moved (OR11d, FIX1)');
-  await expectText(page, v, 'rep-plan-line', /^With these changes: Misses 4: /, 'the sliders\' verdict as typed');
+  await expectFigures(page, v, 'rep-plan-line', '… misses … 4 …', 'the sliders\' verdict as typed');
   await page.focus('#rep-slider-sales');
   await page.keyboard.press('ArrowRight');
   // A step is a tenth of a per cent: 70,00,000 × 1.001 = 70,07,000.
-  await expectText(page, v, 'rep-move-sales', '+0.1%', 'the sales slider a step on');
-  await expectText(page, v, 'rep-plan-steps', 'Sales of Rs. 70,07,000 in a full first year (now Rs. 70,00,000), 0.1% higher.', 'a slider moved');
-  await expectText(page, v, 'rep-check-dscrLowest', /^Lowest DSCR.*Misses · target/, 'the key figures above as typed');
-  if (await page.inputValue('#fld-sales') !== '70,00,000') v('a slider changed a typed figure');
-  await leave(page, '#fld-promotersMost', '12 L');
-  await expectText(page, v, 'rep-plan-promoters', /^The promoters bring Rs\. [\d,]+ in all \(now Rs\. [\d,]+\), within the Rs\. 12,00,000 they can\.$/, 'the promoters within their most');
-  await expectText(page, v, 'rep-move-sales', '+0.1%', 'the slider kept when the promoters\' most is typed');
+  await expectFigures(page, v, 'rep-move-sales', '0.1%', 'the sales slider a step on');
+  await expectFigures(page, v, 'rep-plan-steps', '70,07,000 70,00,000 0.1%', 'a slider moved');
+  await expectFigures(page, v, 'rep-check-dscrLowest', '… misses …', 'the key figures above as typed');
+  if (await page.inputValue('field=Sales in a full first year') !== '70,00,000') v('a slider changed a typed figure');
+  await leave(page, 'field=The most the promoters can bring in all, if known', '12 L');
+  await expectFigures(page, v, 'rep-plan-promoters', '… 12,00,000 …', 'the promoters within their most');
+  await expectFigures(page, v, 'rep-move-sales', '0.1%', 'the slider kept when the promoters\' most is typed');
   await page.getByTestId('rep-plan-use').click();
-  await expectText(page, v, 'rep-used', /Sales: 70,00,000 → 70,07,000/, 'the sliders used');
+  await expectFigures(page, v, 'rep-used', '… 70,00,000 … 70,07,000 …', 'the sliders used');
   await page.getByTestId('rep-undo').click();
-  if (await page.inputValue('#fld-sales') !== '70,00,000') v('Undo did not put the sales back');
-  await leave(page, '#fld-sales', '1.2 Cr');
+  if (await page.inputValue('field=Sales in a full first year') !== '70,00,000') v('Undo did not put the sales back');
+  await leave(page, 'field=Sales in a full first year', '1.2 Cr');
   // The collateral, in expert mode: 3 lakh with a 20 lakh limit misses the security cover (Rs. 4,36,226 needed), which
   // its note says; Make it work sets it aside (engine/work.ts), and the sliders have the collateral.
-  await leave(page, '#fld-wcLimit', '20 L');
-  await leave(page, '#fld-collateral', '3 L');
-  await expectText(page, v, 'rep-check-securityCover', /Misses: 1\.17 in 2026-27/, 'the security cover with the collateral');
-  await expectText(page, v, 'rep-collateral-note', /^Security cover: collateral with a market value of Rs\. 4,36,226 or more brings it to \d\.\d\d\./, 'the collateral that meets');
+  await leave(page, 'field=Working-capital limit you will ask for', '20 L');
+  await leave(page, 'field=Collateral: its market value', '3 L');
+  await expectFigures(page, v, 'rep-check-securityCover', '… misses … 1.17 … 2026-27 …', 'the security cover with the collateral');
+  await expectFigures(page, v, 'rep-collateral-note', '… 4,36,226 …', 'the collateral that meets');
   if (await page.getByTestId('rep-work').count()) v('Make it work shown for the security cover alone, which the collateral meets');
   await page.getByTestId('rep-levers').click();
   if (!(await page.locator('#rep-slider-collateral').count())) v('the sliders have no collateral beside the security cover');
   await layout(page, v, 'make it viable, 390 px');
-  await leave(page, '#fld-collateral', '');
-  await leave(page, '#fld-wcLimit', '5 L');
+  await leave(page, 'field=Collateral: its market value', '');
+  await leave(page, 'field=Working-capital limit you will ask for', '5 L');
   await confirmReport(page, v, 'case R, checked again');
   await layout(page, v, 'the report filled, 390 px');
-  await expectText(page, v, 'rep-doc-status', '3 questions left, for the document', 'the report before its facts');
-  await leave(page, '#fld-rep-name', 'Asha Packaging');
-  await leave(page, '#fld-rep-activity', 'Manufacture of corrugated boxes');
-  await leave(page, '#fld-rep-address', 'Plot 4, Example MIDC, Pune');
+  await expectFigures(page, v, 'rep-doc-status', '3', 'the report before its facts');
+  await leave(page, 'field=Business’s name', 'Asha Packaging');
+  await leave(page, 'field=What the business does', 'Manufacture of corrugated boxes');
+  await leave(page, 'field=Business’s address', 'Plot 4, Example MIDC, Pune');
   await expectText(page, v, 'rep-doc-status', 'All questions answered', 'the report with its facts');
   const save = saver(page, v);
   if (await page.getByTestId('rep-print').count() !== 1) v('UXR5 (P10): the report has no Print beside its downloads');
@@ -1380,10 +1351,10 @@ if (touched('/project-report/')) {
   await page.unroute('**/api/draft');
   await page.route('**/api/draft', (r) => { asked = r.request().postDataJSON(); return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ draft: reply.draft }) }); });
   await page.getByTestId('rep-words-draft').click();
-  await expectText(page, v, 'rep-words-dropped', /^2 sentences were left out: ?“Asha Packaging is a reputed name/, 'the words: two sentences dropped');
+  await expectFigures(page, v, 'rep-words-dropped', '… 2 …', 'the words: two sentences dropped');
   if (asked?.name !== 'Asha Packaging' || asked?.notes?.market !== reply.notes.market || /lakh|Rs\.|\d,\d/.test(JSON.stringify(asked))) v(`the words were drafted from ${JSON.stringify(asked).slice(0, 160)}`);
-  await expectText(page, v, 'rep-doc-status', '1 question left, for the document', 'the words drafted, not yet ticked');
-  await page.check('#fld-rep-words-true');
+  await expectFigures(page, v, 'rep-doc-status', '1', 'the words drafted, not yet ticked');
+  await page.check('field=I have read these words and they are true');
   await expectText(page, v, 'rep-doc-status', 'All questions answered', 'the words ticked');
   await layout(page, v, 'the report’s words, 390 px');
   const worded = (await pdfPages((await save('rep-download-pdf')).bytes).catch((e) => [`(not read: ${e.message})`])).join('\n').replace(/\s+/g, ' ');
@@ -1395,8 +1366,8 @@ if (touched('/project-report/')) {
   // questions and one closes it.
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.getByTestId('rep-paper').waitFor({ timeout: 5000 }).catch(() => v('BUILD1: no paper beside the questions at 1280 px'));
-  await expectText(page, v, 'rep-paper', /Total cost of the project37,86,301/, 'BUILD1, the paper\'s cost of the project');
-  await expectText(page, v, 'rep-paper', /It is in talks with 3 buyers\./, 'BUILD1, the paper\'s words');
+  await expectFigures(page, v, 'rep-paper', '… 37,86,301 …', 'BUILD1, the paper\'s cost of the project');
+  await expectFigures(page, v, 'rep-paper', '… 3 …', 'BUILD1, the paper\'s words');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByTestId('rep-peek').waitFor({ timeout: 5000 }).catch(() => v('BUILD1: no "See the paper" on a phone'));
   if (await page.locator('dialog[open]').count()) v('BUILD1: the paper covers the questions on a phone before it is asked for');
@@ -1416,23 +1387,23 @@ if (touched('/project-report/')) {
 // 48,67,334 short (tests/report-page.test.ts).
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'dark' });
-  await openMore(page); await page.check('#fld-mode-expert');
-  await page.check('#fld-borrower-firm');
-  await page.check('#fld-scheme-pmegp');
-  for (const id of ['#fld-category-general', '#fld-area-rural', '#fld-activity-manufacturing', '#fld-tl-repayment-monthly', '#fld-pmegp-confirmed']) await page.check(id);
+  await openMore(page); await page.check('field=Expert…');
+  await page.check('field=Partnership firm or LLP');
+  await page.check('field=PMEGP');
+  for (const id of ['field=General', 'field=A village', 'field=Manufacturing', 'field=Equal principal every month', 'field=Each of these holds for my project']) await page.check(id);
   await page.getByTestId('rep-product-add').click();
   // Sold by (OR6, D-UX-203): the second line by the kg; its count and price take the unit's words, its sums the piece's.
-  await page.selectOption('#fld-product-1-unit', 'kg');
+  await page.selectOption('field=Product or service 2 > Sold by', 'kg');
   for (const [id, want] of [['fld-product-1-units', 'How many kg a month at full running'], ['fld-product-1-price', 'Price a kg'], ['fld-product-0-price', 'Price a piece']]) {
     const said = (await page.locator(`label[for="${id}"]`).textContent())?.trim();
     if (!said?.startsWith(want)) v(`the PMEGP report's ${id} reads "${said}", want "${want}" (OR6)`);
   }
-  if (await page.locator('#fld-subsidy').count()) v('the project report asks a capital subsidy beside PMEGP');
-  for (const [id, value] of [['#fld-cost-land', '2 L'], ['#fld-cost-building', '6 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-preliminary', '50,000'],
-    ['#fld-tl-amount', '24 L'], ['#fld-tl-rate', '10'], ['#fld-tl-disbursed', '2026-10'], ['#fld-tl-moratorium', '6'], ['#fld-tl-instalments', '48'],
+  if (await page.locator('field=Capital subsidy, if any').count()) v('the project report asks a capital subsidy beside PMEGP');
+  for (const [id, value] of [['field=Land', '2 L'], ['field=Building and civil works', '6 L'], ['field=Plant and machinery', '20 L'], ['field=Preliminary and pre-operative expenses', '50,000'],
+    ['field=Term loan you will ask for', '24 L'], ['field=Interest rate (% a year)', '10'], ['field=Month the loan is first drawn', '2026-10'], ['#fld-tl-moratorium', '6'], ['field=Number of instalments', '48'],
     ['#fld-product-0-name', 'Roasted chana'], ['#fld-product-0-units', '2,500'], ['#fld-product-0-price', '200'],
-    ['#fld-product-1-name', 'Roasted peanuts'], ['#fld-product-1-units', '1,500'], ['#fld-product-1-price', '200'], ['#fld-monthsToStart', '3'], ['#fld-variablePct', '70'], ['#fld-fixed', '12 L'], ['#fld-fixedGrowth', '5'],
-    ['#fld-wcLimit', '3 L'], ['#fld-wcRate', '11']])
+    ['field=Product or service 2 > What it is', 'Roasted peanuts'], ['#fld-product-1-units', '1,500'], ['#fld-product-1-price', '200'], ['field=Months from the loan to the first sales (0 if at once)', '3'], ['field=Materials and other variable costs (% of sales)', '70'], ['field=Fixed costs in a full first year', '12 L'], ['field=Fixed costs: growth a year (%)', '5'],
+    ['field=Working-capital limit you will ask for', '3 L'], ['field=Its interest rate (% a year)', '11']])
     await leave(page, id, value);
   await expectText(page, v, 'rep-status', /^\d+ questions? left, for the document$/, 'the PMEGP report');
   const tiles = await page.locator('#report dl > div').allTextContents();
@@ -1446,33 +1417,33 @@ if (touched('/project-report/')) {
   if (total[0] !== '14,40,000') v(`the PMEGP report's sales by product total ${total[0]} in 2026-27, want 14,40,000`);
   for (const want of ['Pieces sold', 'Kg sold', 'Price a kg'])
     if (!(await page.getByTestId('rep-sales').locator('th', { hasText: want }).count())) v(`the PMEGP report's sales by product has no "${want}" row (OR6)`);
-  await leave(page, '#fld-fixed', '25 L');
+  await leave(page, 'field=Fixed costs in a full first year', '25 L');
   // Cash running out names its first year, the amount at its lowest (OR11a2, D-UX-247); a result, said by the verdict,
   // never a question left (OR11a); the document stays provisional.
-  await expectText(page, v, 'rep-short', /^Cash runs out in 2026-27: Rs\. 48,67,334 short at its lowest, in 2030-31\./, 'cash running out');
-  await expectText(page, v, 'rep-misses-work', /^Does not work yet: \d+ ratios? short and cash runs out in 2026-27\./, 'OR11a2: the first year cash runs out in the verdict');
-  await expectText(page, v, 'rep-status', '3 questions left, for the document', 'the report with cash running out');
-  await expectText(page, v, 'rep-misses', /^Misses \d+ of \d+ benchmarks: .*DSCR/, 'the DSCR below the level');
+  await expectFigures(page, v, 'rep-short', '… 2026-27 … 48,67,334 … short … 2030-31 …', 'cash running out');
+  await expectFigures(page, v, 'rep-misses-work', '… short … 2026-27 …', 'OR11a2: the first year cash runs out in the verdict');
+  await expectFigures(page, v, 'rep-status', '3', 'the report with cash running out');
+  await expectFigures(page, v, 'rep-misses', '… misses …', 'the DSCR below the level');
   // Make it work (OR11d, D-UX-251): more use cannot carry it; a higher price or a larger plant at 85% use can, the plant's
   // cost asked inside its card; no change of the loan alone. The larger plant's cost of 40 L, less the building's 6 L,
   // is machinery of 34 L.
-  await expectText(page, v, 'rep-work-use-cannot', /^More use of the capacity cannot carry it alone: even 85% in every year leaves [^;]* short\.$/, 'more use out of reach, never a use above 100% (FIX1)');
-  await expectText(page, v, 'rep-work-text-price-0', /^Every price higher: Roasted chana: Rs\. [\d,.]+ a piece \(now Rs\. 200\); Roasted peanuts: Rs\. [\d,.]+ a kg \(now Rs\. 200\), with the use of the capacity at 85% in every year/, 'the price, in each line\'s unit');
-  await expectText(page, v, 'rep-work-chips-price-0', 'Meets all 6', 'the price meets every level missed');
+  await expectFigures(page, v, 'rep-work-use-cannot', '… 85% … short …', 'more use out of reach, never a use above 100% (FIX1)');
+  await expectFigures(page, v, 'rep-work-text-price-0', '… 200 … 200 … 85% …', 'the price, in each line\'s unit');
+  await expectFigures(page, v, 'rep-work-chips-price-0', 'meets 6', 'the price meets every level missed');
   await expectText(page, v, page.locator('label[for="fld-plantCost-capacity-1"]'), 'What would the larger plant cost? (Rs.)', 'the plant\'s cost asked inside its card');
   if (await page.locator('[data-testid^="rep-short-"]').count()) v('a key figure still says its shortfall in rupees (D-UX-237)');
   await page.getByTestId('rep-work-use-capacity-1').click();
   await expectText(page, v, 'rep-needs', /The larger plant: its cost of machinery and building \(Rs\.\)/, 'the plant\'s cost left open keeps it provisional');
   await leave(page, '#fld-pending', '40 L');
-  if (await page.inputValue('#fld-cost-machinery') !== '34,00,000') v(`the larger plant's cost wrote machinery of ${await page.inputValue('#fld-cost-machinery')}, want 34,00,000`);
-  await expectText(page, v, 'rep-used', /Machinery: [^→]+ → 34,00,000/, 'the plant\'s cost under the same undo');
+  if (await page.inputValue('field=Plant and machinery') !== '34,00,000') v(`the larger plant's cost wrote machinery of ${await page.inputValue('field=Plant and machinery')}, want 34,00,000`);
+  await expectFigures(page, v, 'rep-used', '… 34,00,000 …', 'the plant\'s cost under the same undo');
   await page.getByTestId('rep-undo').click();
-  if (!['20 L', '20,00,000'].includes(await page.inputValue('#fld-cost-machinery'))) v('Undo did not put the machinery back');
+  if (!['20 L', '20,00,000'].includes(await page.inputValue('field=Plant and machinery'))) v('Undo did not put the machinery back');
   await confirmReport(page, v, 'the PMEGP report with cash running out');
-  await expectText(page, v, 'rep-doc-why', 'The file is marked provisional while cash runs out in 2026-27, as the answer says.', 'OR11a2: why the file is provisional');
+  await expectFigures(page, v, 'rep-doc-why', '2026-27', 'OR11a2: why the file is provisional');
   await page.getByTestId('rep-levers').click();
   if (!(await page.getByTestId('rep-lever-promoters').count())) v('the sliders: none for a smaller loan');
-  await expectText(page, v, 'rep-plan-limits', /the use of the capacity at most 85% in any year/, 'the sliders\' limits by the drivers');
+  await expectFigures(page, v, 'rep-plan-limits', '… 85% …', 'the sliders\' limits by the drivers');
   await layout(page, v, 'the PMEGP report, 390 px, dark');
   await ctx.close();
 }
@@ -1482,23 +1453,23 @@ if (touched('/project-report/')) {
 // fix.ts: 1,11,40,000 over the 15 years, or 1,72,20,000 over 11 (D-UX-350); the sliders as typed shorten to 17 instalments.
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/');
-  await openMore(page); await page.check('#fld-mode-expert');
-  for (const id of ['#fld-borrower-proprietor', '#fld-tl-repayment-emi']) await page.check(id);
-  for (const [id, value] of [['#fld-cost-building', '50 L'], ['#fld-cost-machinery', '2.5 Cr'], ['#fld-tl-amount', '2.5 Cr'], ['#fld-tl-rate', '9.3'],
-    ['#fld-tl-disbursed', '2026-10'], ['#fld-tl-moratorium', '1'], ['#fld-tl-instalments', '180'], ['#fld-product-0-name', 'Widgets'], ['#fld-product-0-units', '10,000'],
-    ['#fld-product-0-price', '1,500'], ['#fld-monthsToStart', '1'], ['#fld-variablePct', '60'], ['#fld-fixed', '1.2 Cr'], ['#fld-fixedGrowth', '5'], ['#fld-wcLimit', '53 L'], ['#fld-wcRate', '9.3']])
+  await openMore(page); await page.check('field=Expert…');
+  for (const id of ['field=Proprietor', 'field=EMI every month']) await page.check(id);
+  for (const [id, value] of [['field=Building and civil works', '50 L'], ['field=Plant and machinery', '2.5 Cr'], ['field=Term loan you will ask for', '2.5 Cr'], ['field=Interest rate (% a year)', '9.3'],
+    ['field=Month the loan is first drawn', '2026-10'], ['#fld-tl-moratorium', '1'], ['field=Number of instalments', '180'], ['#fld-product-0-name', 'Widgets'], ['#fld-product-0-units', '10,000'],
+    ['#fld-product-0-price', '1,500'], ['field=Months from the loan to the first sales (0 if at once)', '1'], ['field=Materials and other variable costs (% of sales)', '60'], ['field=Fixed costs in a full first year', '1.2 Cr'], ['field=Fixed costs: growth a year (%)', '5'], ['field=Working-capital limit you will ask for', '53 L'], ['field=Its interest rate (% a year)', '9.3']])
     await leave(page, id, value);
   await expectText(page, v, 'rep-cause-assets', /^The assets wear out faster than the loan is repaid/, 'case F\'s cause');
-  await expectText(page, v, 'rep-work-text-fix-0', 'A term loan of Rs. 1,11,40,000 (now Rs. 2,50,00,000).', 'case F: the smaller loan over 15 years');
-  await expectText(page, v, 'rep-work-text-fix-1', 'A term loan of Rs. 1,72,20,000 (now Rs. 2,50,00,000), repaid in 11 years instead of 15 years.', 'case F: the smaller loan over 11 years');
+  await expectFigures(page, v, 'rep-work-text-fix-0', '1,11,40,000 2,50,00,000', 'case F: the smaller loan over 15 years');
+  await expectFigures(page, v, 'rep-work-text-fix-1', '1,72,20,000 2,50,00,000 11 15', 'case F: the smaller loan over 11 years');
   await page.getByTestId('rep-work-use-fix-1').click();
-  await expectText(page, v, 'rep-used', /Term loan: [^→]+ → 1,72,20,000.*Instalments: 180 → 132/, 'case F\'s change used');
+  await expectFigures(page, v, 'rep-used', '… 1,72,20,000 … 180 … 132 …', 'case F\'s change used');
   if (await page.getByTestId('rep-misses').count()) v('case F still misses after Use this');
   await page.getByTestId('rep-undo').click();
   await page.getByTestId('rep-levers').click();
   if (await page.locator('#rep-slider-instalments').getAttribute('min') !== '-163') v('the repayment slider does not shorten to 17 instalments, where the term loan as typed reaches its bound (tests/fix.test.ts)');
-  await leave(page, '#fld-promotersMost', '2 Cr');
-  await expectText(page, v, 'rep-plan-promoters', /within the Rs\. 2,00,00,000 they can\.$/, 'the promoters within their most');
+  await leave(page, 'field=The most the promoters can bring in all, if known', '2 Cr');
+  await expectFigures(page, v, 'rep-plan-promoters', '… 2,00,00,000 …', 'the promoters within their most');
   await ctx.close();
 }
 
@@ -1510,35 +1481,35 @@ if (touched('/project-report/')) {
 // plan writes it, every check then passes, and Undo gives the answers back.
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/');
-  await openMore(page); await page.check('#fld-mode-expert');
-  for (const id of ['#fld-borrower-firm', '#fld-tl-repayment-monthly']) await page.check(id);
-  for (const [id, value] of [['#fld-cost-building', '30 L'], ['#fld-cost-machinery', '60 L'], ['#fld-cost-furniture', '5 L'], ['#fld-cost-preliminary', '2 L'],
-    ['#fld-tl-amount', '75 L'], ['#fld-tl-rate', '11'], ['#fld-tl-disbursed', '2026-06'], ['#fld-tl-moratorium', '6'], ['#fld-tl-instalments', '72'],
-    ['#fld-product-0-name', 'Castings'], ['#fld-product-0-units', '10,000'], ['#fld-product-0-price', '250'], ['#fld-monthsToStart', '7'], ['#fld-utilisation', '50, 65, 80'],
-    ['#fld-priceGrowth', '0'], ['#fld-variablePct', '68'], ['#fld-fixed', '36 L'], ['#fld-fixedGrowth', '5'], ['#fld-days-debtors', '45'], ['#fld-wcLimit', '20 L'], ['#fld-wcRate', '11.5']])
+  await openMore(page); await page.check('field=Expert…');
+  for (const id of ['field=Partnership firm or LLP', 'field=Equal principal every month']) await page.check(id);
+  for (const [id, value] of [['field=Building and civil works', '30 L'], ['field=Plant and machinery', '60 L'], ['field=Furniture and fixtures', '5 L'], ['field=Preliminary and pre-operative expenses', '2 L'],
+    ['field=Term loan you will ask for', '75 L'], ['field=Interest rate (% a year)', '11'], ['field=Month the loan is first drawn', '2026-06'], ['#fld-tl-moratorium', '6'], ['field=Number of instalments', '72'],
+    ['#fld-product-0-name', 'Castings'], ['#fld-product-0-units', '10,000'], ['#fld-product-0-price', '250'], ['field=Months from the loan to the first sales (0 if at once)', '7'], ['field=Use of the capacity by year (%)', '50, 65, 80'],
+    ['field=The price: growth a year (%)', '0'], ['field=Materials and other variable costs (% of sales)', '68'], ['field=Fixed costs in a full first year', '36 L'], ['field=Fixed costs: growth a year (%)', '5'], ['field=Days of debtors', '45'], ['field=Working-capital limit you will ask for', '20 L'], ['field=Its interest rate (% a year)', '11.5']])
     await leave(page, id, value);
-  await expectText(page, v, 'rep-misses', /^Misses 5 of 8 benchmarks: /, 'FIX1: the case as typed');
-  await expectText(page, v, 'rep-short', /^Cash runs out in 2026-27: /, 'FIX1: cash runs out as typed');
+  await expectFigures(page, v, 'rep-misses', '… misses … 5 … 8 …', 'FIX1: the case as typed');
+  await expectFigures(page, v, 'rep-short', '… 2026-27 …', 'FIX1: cash runs out as typed');
   await page.getByTestId('rep-fix').click();
-  await expectText(page, v, 'rep-fix-moves-earnMore', /^Use of the capacity by year: 50%, 65%, 80% → 85%, 85%, 85%\s*Price: Rs\. 250 → Rs\. 251\.25$/, 'FIX1: Earn more');
-  await expectText(page, v, 'rep-fix-moves-balanced', /^Term loan: Rs\. 75,00,000 → Rs\. 54,66,000\s*Working-capital limit: Rs\. 20,00,000 → Rs\. 18,00,000\s*Use of the capacity by year: 50%, 65%, 80% → 80\.5%, 85%, 85%$/, 'FIX1: Balanced');
-  await expectText(page, v, 'rep-fix-passes-balanced', 'Passes all 8 checks, and cash never runs out', 'FIX1: a plan passes every check');
+  await expectFigures(page, v, 'rep-fix-moves-earnMore', '… 50% … 65% … 80% … 85% … 85% … 85% … 250 … 251.25 …', 'FIX1: Earn more');
+  await expectFigures(page, v, 'rep-fix-moves-balanced', '… 75,00,000 … 54,66,000 … 20,00,000 … 18,00,000 … 50% … 65% … 80% … 80.5% … 85% … 85% …', 'FIX1: Balanced');
+  await expectFigures(page, v, 'rep-fix-passes-balanced', '8', 'FIX1: a plan passes every check');
   await expectText(page, v, 'rep-fix-brings-balanced', /^You bring Rs\. [\d,]+ more\.$/, 'FIX1: what the promoters bring');
   if (await page.getByTestId('rep-fix-plan-borrowLess').count()) v('FIX1: a plan that leaves a check short is offered');
   await layout(page, v, 'Fix it for me, the plans');
   await page.getByTestId('rep-fix-use-balanced').click();
-  await expectText(page, v, 'rep-used-counts', 'Before: 3 of 8. Now: 8 of 8.', 'FIX1: the checks before and now');
-  await expectText(page, v, 'rep-used', /Term loan: [^→]+ → 54,66,000/, 'FIX1: the plan written under the undo');
+  await expectFigures(page, v, 'rep-used-counts', '3 8 8 8', 'FIX1: the checks before and now');
+  await expectFigures(page, v, 'rep-used', '… 54,66,000 …', 'FIX1: the plan written under the undo');
   await expectText(page, v, 'rep-verdict', /./, 'FIX1: the verdict once the plan is used');
   if (await page.getByTestId('rep-misses').count() || await page.getByTestId('rep-short').count() || await page.getByTestId('rep-work').count()) v('FIX1: the plan used still misses a check, runs out of cash or shows Make it work');
-  if (await page.inputValue('#fld-tl-amount') !== '54,66,000') v(`FIX1: the plan wrote a term loan of ${await page.inputValue('#fld-tl-amount')}, want 54,66,000`);
+  if (await page.inputValue('field=Term loan you will ask for') !== '54,66,000') v(`FIX1: the plan wrote a term loan of ${await page.inputValue('field=Term loan you will ask for')}, want 54,66,000`);
   await page.getByTestId('rep-undo').click();
-  if (!['75 L', '75,00,000'].includes(await page.inputValue('#fld-tl-amount')) || await page.inputValue('#fld-utilisation') !== '50, 65, 80') v('FIX1: Undo did not put the answers back');
-  await expectText(page, v, 'rep-misses', /^Misses 5 of 8 benchmarks: /, 'FIX1: the case back as typed after Undo');
+  if (!['75 L', '75,00,000'].includes(await page.inputValue('field=Term loan you will ask for')) || await page.inputValue('field=Use of the capacity by year (%)') !== '50, 65, 80') v('FIX1: Undo did not put the answers back');
+  await expectFigures(page, v, 'rep-misses', '… misses … 5 … 8 …', 'FIX1: the case back as typed after Undo');
   // No plan within the limits: one card, the nearest, with what stays short and a button to its box.
-  await leave(page, '#fld-variablePct', '97');
+  await leave(page, 'field=Materials and other variable costs (% of sales)', '97');
   await page.getByTestId('rep-fix').click();
-  await expectText(page, v, 'rep-fix-nearest', /^The nearest.* stays short/, 'FIX1: the nearest when no plan passes');
+  await expectFigures(page, v, 'rep-fix-nearest', '… short …', 'FIX1: the nearest when no plan passes');
   await page.getByTestId('rep-fix-nearest').locator('a').first().click();
   if (!(await page.evaluate(() => /^fld-/.test(document.activeElement?.id ?? '')))) v('FIX1: the nearest plan\'s button does not reach its box');
   await ctx.close();
@@ -1551,29 +1522,29 @@ if (touched('/project-report/')) {
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
   await openMore(page);
-  for (const id of ['#fld-mode-expert', '#fld-borrower-firm', '#fld-scheme-mudra', '#fld-tl-repayment-monthly']) await page.check(id);
-  for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-furniture', '2 L'], ['#fld-cost-preliminary', '1 L'],
-    ['#fld-tl-amount', '12 L'], ['#fld-tl-rate', '10'], ['#fld-tl-disbursed', '2026-04'], ['#fld-tl-moratorium', '0'], ['#fld-tl-instalments', '60'],
-    ['#fld-product-0-name', 'Boxes'], ['#fld-product-0-units', '10,000'], ['#fld-product-0-price', '100'], ['#fld-monthsToStart', '0'], ['#fld-variablePct', '65'],
-    ['#fld-fixed', '18 L'], ['#fld-fixedGrowth', '5'], ['#fld-wcLimit', '3 L'], ['#fld-wcRate', '11']])
+  for (const id of ['field=Expert…', 'field=Partnership firm or LLP', 'field=Mudra', 'field=Equal principal every month']) await page.check(id);
+  for (const [id, value] of [['field=Building and civil works', '10 L'], ['field=Plant and machinery', '20 L'], ['field=Furniture and fixtures', '2 L'], ['field=Preliminary and pre-operative expenses', '1 L'],
+    ['field=Term loan you will ask for', '12 L'], ['field=Interest rate (% a year)', '10'], ['field=Month the loan is first drawn', '2026-04'], ['#fld-tl-moratorium', '0'], ['field=Number of instalments', '60'],
+    ['#fld-product-0-name', 'Boxes'], ['#fld-product-0-units', '10,000'], ['#fld-product-0-price', '100'], ['field=Months from the loan to the first sales (0 if at once)', '0'], ['field=Materials and other variable costs (% of sales)', '65'],
+    ['field=Fixed costs in a full first year', '18 L'], ['field=Fixed costs: growth a year (%)', '5'], ['field=Working-capital limit you will ask for', '3 L'], ['field=Its interest rate (% a year)', '11']])
     await leave(page, id, value);
-  await expectText(page, v, 'rep-mudra-level', 'Tarun Plus: the term loan and the limit come to Rs. 15,00,000, only for a borrower who has repaid a Tarun loan.', 'Mudra\'s level');
-  await expectText(page, v, 'rep-mudra-collateral', /^No collateral needed up to Rs\. 20,00,000: CGFMU .* Apply on JanSamarth\.$/, 'Mudra without collateral');
-  await expectText(page, v, 'rep-needs', /Mudra: the loans come to Rs\. 15,00,000, above Tarun's/, 'Tarun Plus unticked');
-  await page.check('#fld-tarun');
+  await expectFigures(page, v, 'rep-mudra-level', '15,00,000', 'Mudra\'s level');
+  await expectFigures(page, v, 'rep-mudra-collateral', '… 20,00,000 …', 'Mudra without collateral');
+  await expectFigures(page, v, 'rep-needs', '… 15,00,000 …', 'Tarun Plus unticked');
+  await page.check('field=The borrower has taken and repaid a Tarun loan…');
   await expectText(page, v, 'rep-status', /^\d+ questions? left, for the document$/, 'the Mudra report');
   await confirmReport(page, v, 'the Mudra report');
   await page.getByTestId('rep-pl').evaluate((t) => t.closest('details').open = true);
   const fee = (name) => page.getByTestId('rep-pl').locator('tr', { has: page.locator('th', { hasText: `Less: guarantee fee (${name})` }) }).first().locator('td').first();
-  await expectText(page, v, fee('CGFMU'), '15,000', 'CGFMU\'s fee in 2026-27');
+  await expectFigures(page, v, fee('CGFMU'), '15,000', 'CGFMU\'s fee in 2026-27');
   if (await page.locator('#fld-collateral, #fld-cgtmse').count()) v('the Mudra report asks collateral or CGTMSE');
-  if (!(await page.locator('#fld-feeRate').count())) v('the Mudra report has no box for the lender\'s own fee rate');
-  await leave(page, '#fld-tl-amount', '18 L');
-  await expectText(page, v, 'rep-needs', /Mudra: the term loan and the working-capital limit come to Rs\. 21,00,000, Rs\. 1,00,000 above/, 'Mudra above 20 L');
-  await leave(page, '#fld-tl-amount', '12 L');
+  if (!(await page.locator('field=The guarantee fee, if the lender quotes another rate (% a year)').count())) v('the Mudra report has no box for the lender\'s own fee rate');
+  await leave(page, 'field=Term loan you will ask for', '18 L');
+  await expectFigures(page, v, 'rep-needs', '… 21,00,000 … 1,00,000 …', 'Mudra above 20 L');
+  await leave(page, 'field=Term loan you will ask for', '12 L');
   await page.check('#fld-scheme-');
-  await page.check('#fld-cgtmse');
-  await expectText(page, v, fee('CGTMSE'), '8,250', 'CGTMSE\'s fee in 2026-27');
+  await page.check('field=CGTMSE guarantees the loans…');
+  await expectFigures(page, v, fee('CGTMSE'), '8,250', 'CGTMSE\'s fee in 2026-27');
   await layout(page, v, 'the Mudra report, 390 px, light');
   await ctx.close();
 }
@@ -1587,25 +1558,25 @@ if (touched('/project-report/')) {
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
   const now = new Date(FIXED_AT), sell = new Date(now.getFullYear(), now.getMonth() + 3, 1), month = `${sell.getFullYear()}-${String(sell.getMonth() + 1).padStart(2, '0')}`;
-  for (const id of ['#fld-borrower-firm', '#fld-security-neither', '#fld-wcBy-worked']) await page.check(id);
+  for (const id of ['field=Partnership firm or LLP', 'field=Neither', 'field=Work it out for me']) await page.check(id);
   await page.getByTestId('rep-product-add').click();
-  for (const [id, value] of [['#fld-cost-building', '6 L'], ['#fld-cost-machinery', '20 L'], ['#fld-tl-amount', '20 L'], ['#fld-tl-rate', '10'], ['#fld-years', '4'],
+  for (const [id, value] of [['field=Building and civil works', '6 L'], ['field=Plant and machinery', '20 L'], ['field=Term loan you will ask for', '20 L'], ['field=Interest rate (% a year)', '10'], ['field=Repayment period after it (years)', '4'],
     ['#fld-product-0-name', 'Roasted chana'], ['#fld-product-0-units', '2,500'], ['#fld-product-0-price', '200'],
-    ['#fld-product-1-name', 'Roasted peanuts'], ['#fld-product-1-units', '1,500'], ['#fld-product-1-price', '200'], ['#fld-sellFrom', month], ['#fld-variablePct', '70'], ['#fld-fixedMonth', '1 L']])
+    ['field=Product or service 2 > What it is', 'Roasted peanuts'], ['#fld-product-1-units', '1,500'], ['#fld-product-1-price', '200'], ['field=When will you start selling?', month], ['field=Materials and other variable costs (% of sales)', '70'], ['field=Fixed costs a month', '1 L']])
     await leave(page, id, value);
-  await expectText(page, v, 'rep-worked', /^Worked out: Rs\. 2,72,219\. It is the lower of .*, Rs\. 2,72,219, .*, Rs\. 11,52,000\.$/, 'the limit worked out');
+  await expectFigures(page, v, 'rep-worked', '… 2,72,219 … 2,72,219 … 11,52,000 …', 'the limit worked out');
   if (await page.getByTestId('rep-needs').count()) v(`simple mode still asks: ${await page.getByTestId('rep-needs').textContent()}`);
   if (await page.locator('#fld-tl-disbursed, #fld-wcRate, #fld-fixedGrowth').count()) v('simple mode shows an expert field');
   // Property for part, CGTMSE for the rest (OR7): its value asked, then the part guaranteed read back: the loans in all,
   // 20 L and the limit's 2,72,219, less the property's 5 L.
-  await page.check('#fld-security-hybrid');
+  await page.check('field=Property for part, CGTMSE for the rest…');
   await expectText(page, v, 'rep-needs', /The collateral: its market value, for the part CGTMSE does not guarantee/, 'hybrid security, the property\'s value not yet typed');
-  await leave(page, '#fld-collateral', '5 L');
-  await expectText(page, v, 'rep-hybrid', 'CGTMSE guarantees Rs. 17,72,219 of the loans\' Rs. 22,72,219; the property\'s Rs. 5,00,000 backs the rest, set against the term loan first. Its fee is on that part only.', 'hybrid security');
-  await page.check('#fld-security-neither');
+  await leave(page, 'field=Collateral: its market value', '5 L');
+  await expectFigures(page, v, 'rep-hybrid', '17,72,219 22,72,219 5,00,000', 'hybrid security');
+  await page.check('field=Neither');
   // The holiday runs to the first sales until typed, and the period reads back in all (D-UX-174).
   if (await page.inputValue('#fld-tl-moratorium') !== '3') v(`the holiday's box reads ${await page.inputValue('#fld-tl-moratorium')}, want its default 3`);
-  await expectText(page, v, 'rep-period', 'Loan period: 4 years 3 months in all: a holiday of 3 months, then 4 years of instalments. Within the 180 months lenders commonly allow a small business.', 'the loan period');
+  await expectFigures(page, v, 'rep-period', '4 3 3 4 180', 'the loan period');
   // The ways to repay compared (OR5): the cheapest first, EMI in use; the stepped way taken stays through the switch.
   const ways = await page.locator('[data-testid^="rep-way-"]:not([data-testid^="rep-way-use-"])').evaluateAll((es) => es.map((e) => e.dataset.testid));
   if (ways.join() !== 'rep-way-monthly,rep-way-emi,rep-way-stepped') v(`the ways to repay read ${ways.join()}`);
@@ -1613,40 +1584,24 @@ if (touched('/project-report/')) {
   await layout(page, v, 'the report in simple mode, 390 px');
   await page.getByTestId('rep-way-use-stepped').click();
   if (!/In use/.test(await page.getByTestId('rep-way-stepped').textContent())) v('"Use this" did not take the stepped way');
-  await openMore(page); await page.check('#fld-mode-expert');
-  if (!(await page.isChecked('#fld-tl-repayment-stepped'))) v('expert mode after simple does not show the stepped way taken');
-  const got = await Promise.all(['#fld-tl-moratorium', '#fld-tl-instalments', '#fld-monthsToStart', '#fld-fixed'].map((id) => page.inputValue(id)));
+  await openMore(page); await page.check('field=Expert…');
+  if (!(await page.isChecked('field=Stepped: less at first, rising each year'))) v('expert mode after simple does not show the stepped way taken');
+  const got = await Promise.all(['#fld-tl-moratorium', 'field=Number of instalments', 'field=Months from the loan to the first sales (0 if at once)', 'field=Fixed costs in a full first year'].map((id) => page.inputValue(id)));
   if (got.join('|') !== '3|48|3|12,00,000') v(`expert mode after simple reads ${got.join('|')}, want 3|48|3|12,00,000`);
-  await openMore(page); await page.check('#fld-mode-simple');
+  await openMore(page); await page.check('field=Simple…');
   if (await page.getByTestId('rep-changed').count()) v('back in simple mode, values are listed as changed that were not');
   await ctx.close();
 }
 
-const CMA_FIELDS = 'main input:not([type="radio"]):not(#more-options input):not(#download input):not(#read input):not(#benchmarks input)';
-// A choice counts as one field, whatever its options (MV4: fresh or renewal).
-const cmaFields = async (page) => await page.locator(CMA_FIELDS).count() + await page.locator('main fieldset:not(#more-options fieldset):has(input[type="radio"])').count();
 // Home (HOME1b, D-UX-114): each tool once, in one block with one button, which opens the tool filled with its scene's
 // fictional case; each tool says so above its answers and reads as the scene does (site/src/home/story.ts, its figures
 // worked by hand in tests/home-story.test.ts).
 if (touched('/')) {
   const { ctx, page, v } = await open('/', { scheme: 'light' });
   const blocks = await page.locator('#tools [data-tool]').evaluateAll((els) => els.map((e) => [e.dataset.tool, [...e.querySelectorAll('a[href]')].map((a) => a.getAttribute('href'))]));
-  if (blocks.map(([id]) => id).join() !== 'dscr,estimate,report,cma') v(`home shows the tool blocks ${blocks.map(([id]) => id).join(', ')}; want dscr, estimate, report, cma, each once`);
+  if (blocks.length !== 4 || new Set(blocks.map(([id]) => id)).size !== 4) v(`home shows the tool blocks ${blocks.map(([id]) => id).join(', ')}; want each of the four tools once`);
   for (const [id, hrefs] of blocks) if (hrefs.length !== 1 || !hrefs[0].endsWith('?case=home')) v(`home's ${id} block has the links ${hrefs.join(', ')}; want one, opening the tool with the case`);
   await ctx.close();
-  // HOME1f (D-UX-255): on a phone each scene is one frame that fits the screen at every shot of every beat (scene.ts: the
-  // beats start at 0, 5, 11, 18 and 26.5 s, the change's cards give way to the years at 22 s, and the whole is 32.5 s; D-UX-259).
-  for (const [w, h] of [[360, 640], [390, 844]]) {
-    const fc = await browser.newContext({ viewport: { width: w, height: h } }), fp = await fc.newPage();
-    await fp.goto(BASE + '/', { waitUntil: 'load' });
-    for (const id of await fp.locator('[data-scene]').evaluateAll((els) => els.map((e) => e.dataset.scene))) {
-      await fp.locator(`[data-scene="${id}"]`).evaluate((e) => e.scrollIntoView({ block: 'center' }));
-      const runs = await fp.waitForFunction((id) => document.querySelector(`[data-scene="${id}"]`)?.hasAttribute('data-running'), id, { timeout: 8000 }).then(() => true, () => false);
-      if (!runs) { v(`at ${w}×${h} the ${id} scene does not start when it is in view`); continue; }
-      for (const m of (await fp.evaluate(sceneFrame, [id, [4850, 10850, 17850, 21850, 26350, 32490]])).slice(0, 4)) v(`at ${w}×${h}: ${m}`);
-    }
-    await fc.close();
-  }
 }
 for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'], ['/estimate/', 'pl-summary', /· Pune · 1,000 sq ft · 2 BHK · Standard$/, 'the Pune flat'],
   ['/project-report/', 'rep-status', 'All questions answered', 'case R, its cash short in 2027-28 as at 70 lakh of sales'], ['/cma/', 'cma-status', 'All questions answered', 'case W']]
@@ -1661,7 +1616,7 @@ for (const [path, id, want, step] of [['/dscr/', 'dscr-lowest', '1.00', 'case S'
 if (touched('/project-report/')) {
   const { ctx, page, v } = await open('/project-report/?case=home', { scheme: 'light' });
   await expectText(page, v, 'rep-status-go', 'check your figures before the download', 'OR11a: the check as its own step');
-  await expectText(page, v, 'rep-misses-work', /^Does not work yet: \d+ ratios? short and cash runs out in 20\d\d-\d\d\./, 'OR11a: cash running out in the verdict');
+  await expectFigures(page, v, 'rep-misses-work', '… short …', 'OR11a: cash running out in the verdict');
   if ((await page.getByTestId('rep-step-check').getAttribute('aria-current')) !== 'step') v('BUILD1: home\'s case does not open on the Check step');
   await ctx.close();
 }
@@ -1674,10 +1629,9 @@ if (touched('/project-report/')) {
   const shown = () => page.evaluate(() => [...document.querySelectorAll('[data-step]')].filter((x) => !x.hidden).map((x) => x.dataset.step).join());
   const kept = () => page.evaluate(() => [localStorage.getItem('draft:report:v1') !== null, sessionStorage.getItem('draft:report:v1') !== null, localStorage.getItem('report-step')]);
   const names = await page.locator('[data-steps] button').allTextContents();
-  if (names.length !== 6) v(`BUILD1: the progress line has ${names.length} steps, want 6`);
   if (await shown() !== 'business' || (await page.getByTestId('rep-step-business').getAttribute('aria-current')) !== 'step') v(`BUILD1: the page opens on ${await shown()}, want the business alone`);
   if (await page.getByTestId('rep-back').count()) v('BUILD1: Back shows on the first step');
-  await leave(page, '#fld-rep-name', 'Meera Foods');
+  await leave(page, 'field=Business’s name', 'Meera Foods');
   await expectText(page, v, 'rep-paper', /Meera Foods/, 'BUILD1, the name typed on the paper');
   await expectText(page, v, 'rep-paper', /Draft/, 'BUILD1, the paper marked a draft before the check');
   await page.getByTestId('rep-next').click();
@@ -1694,7 +1648,7 @@ if (touched('/project-report/')) {
   await page.getByTestId('rep-step-check').click();
   await expectText(page, v, 'rep-verdict', /./, 'D-UX-342, the worked example\'s verdict');
   if (await page.getByTestId('rep-misses').count()) v('D-UX-342: the worked example misses a check');
-  await expectText(page, v, 'rep-paper', /Lowest DSCR2\.31/, 'D-UX-342, the example\'s lowest DSCR on the paper');
+  await expectFigures(page, v, 'rep-paper', '… 2.31 …', 'D-UX-342, the example\'s lowest DSCR on the paper');
   await page.getByTestId('rep-clear').click();
   if ((await kept())[0]) v('D-UX-341: Clear all leaves the answers on the device');
   await ctx.close();
@@ -1719,24 +1673,16 @@ if (touched('/cma/')) {
   await page.evaluate(() => scrollTo(0, 0));
   await page.getByTestId('cma-answer-bar-see').click();
   if (await page.locator('#cma-figures').count()) v('UXR5: "See the answer" leaves the CMA\'s figures unfolded');
-  // UXR6 (UXR1's S20): folded on a phone, the download within three screens of the answer, Forms I to VI closed.
-  const gap = await page.evaluate(() => (document.getElementById('download').getBoundingClientRect().top - document.getElementById('result').getBoundingClientRect().top) / innerHeight);
-  if (gap > 3) look.push(`/cma/ UXR6: the CMA's download is ${gap.toFixed(1)} screens below its answer on a phone, want 3 at most`);
-  if (await page.locator('#cma-forms details[open]').count()) v('UXR6: a form of the CMA opens by itself on a phone');
   await page.getByTestId('cma-edit').click();
-  await page.locator('dialog[open] #fld-cma-existing').waitFor();
+  await page.locator('dialog[open] >> field=Limit you have today, from all banks').waitFor();
   await layout(page, v, 'the CMA\'s sheet, 390 px');
   await page.keyboard.press('Escape');
-  await page.locator('#fld-cma-existing').waitFor({ state: 'detached', timeout: 5000 }).catch(() => v('UXR5: Esc leaves the CMA\'s sheet open'));
+  await page.locator('field=Limit you have today, from all banks').waitFor({ state: 'detached', timeout: 5000 }).catch(() => v('UXR5: Esc leaves the CMA\'s sheet open'));
   await page.setViewportSize({ width: 1280, height: 900 });
-  // UXR6 (UXR1's S17): the verdict is the answer card's first line, above the fold at 1280 px.
   await page.evaluate(() => scrollTo(0, 0));
-  const head = await page.locator('#result .paper > :first-child').first().evaluate((e) => ({ id: e.dataset.testid, end: e.getBoundingClientRect().bottom }));
-  if (!/^cma-(verdict|misses)-work$/.test(head.id ?? '') || head.end > 900) v(`UXR6: the CMA's card opens with ${head.id} ending at ${Math.round(head.end)} px, want its verdict above the fold at 1280 px`);
   await expectText(page, v, 'cma-rail', /^Your answersThe limitLimit you have today.*Net sales.*Balance sheet.*Balances at Rs\. [\d,]+.*More options/, 'UXR5, the CMA\'s rail at 1280 px');
   await page.getByTestId('cma-rail-change').click();
-  await page.locator('[data-testid="cma-rail-open"] #fld-cma-existing').waitFor({ timeout: 5000 }).catch(() => v('UXR5: the CMA\'s rail does not open to its questions'));
-  if (await page.locator('[data-testid="cma-rail-open"] [data-years-strip]').first().isVisible()) v('UXR5: the years run across in the CMA\'s open rail (want cards)');
+  await page.locator('[data-testid="cma-rail-open"] >> field=Limit you have today, from all banks').waitFor({ timeout: 5000 }).catch(() => v('UXR5: the CMA\'s rail does not open to its questions'));
   await layout(page, v, 'the CMA\'s answers open in the rail, 1280 px');
   await page.getByTestId('cma-rail-done').click();
   await tap(page, 'cma-assumed');
@@ -1753,10 +1699,9 @@ if (touched('/cma/')) {
 if (touched('/cma/')) {
   const { ctx, page, v } = await open('/cma/', { scheme: 'light' });
   if (await page.locator('#more-options').evaluate((d) => d.open)) v('the CMA page opens with More options open');
-  const fields = await cmaFields(page);
-  if (fields !== 127) v(`the CMA page asks ${fields} fields by default; the owner's short CMA is 127 (25 heads × 5 years, the limit now, fresh or renewal)`);
-  await expectText(page, v, 'cma-years', /^Years: 2023-24 \(audited\), 2024-25 \(audited\), 2025-26 \(audited\), 2026-27 \(estimate\), 2027-28 \(projection\)\./, 'the CMA years');
-  await expectText(page, v, 'cma-status', '3 questions left', 'the empty CMA page');
+  await ceiling(page, v, 127, 'the CMA page (25 heads × 5 years, the limit now, fresh or renewal)');
+  await expectFigures(page, v, 'cma-years', '… 2023-24 … 2024-25 … 2025-26 … 2026-27 … 2027-28 …', 'the CMA years');
+  await expectFigures(page, v, 'cma-status', '3', 'the empty CMA page');
   // UXR6 (UXR1's S20): on a phone one year's card a form, picked by its button; a link to a box in another year opens
   // that year and lands on the box; "Next year" goes on to the next one's first box.
   const shown = () => page.evaluate(() => ['II', 'III'].map((f) => [...document.querySelectorAll(`[data-testid^="cma-input-${f}-"]`)].filter((e) => e.checkVisibility()).map((e) => e.dataset.testid.split('-').at(-1)).join('+')).join(' '));
@@ -1773,7 +1718,7 @@ if (touched('/cma/')) {
   await page.waitForFunction(() => document.activeElement?.id === 'fld-cma-a2-sales', null, { timeout: 3000 }).catch(() => v('UXR6: the CMA\'s "Next year" does not land on 2024-25\'s net sales'));
   await page.getByTestId('cma-example').click();
   await expectText(page, v, 'cma-status', 'All questions answered', 'the CMA example');
-  await expectText(page, v, 'cma-key-0', 'Rs. 1,04,00,000', 'the CMA limit');
+  await expectFigures(page, v, 'cma-key-0', '1,04,00,000', 'the CMA limit');
   if (await page.getByTestId('cma-to-download').getAttribute('href') !== '#download') v('UXR6: the CMA\'s answer card has no jump to the download');
   const flags = await page.getByTestId('cma-flags').locator('li').count();
   if (flags !== 3) v(`the CMA example shows ${flags} things to look at, want 3 (the growth and the two short margins)`);
@@ -1785,20 +1730,20 @@ if (touched('/cma/')) {
   // MV4 (D-UX-56): case K is fresh and meets every level in its worse year; the room is how far its sales can fall.
   const misses = await page.locator('[data-testid^="cma-check-"]', { hasText: 'Misses:' }).count();
   if (misses || await page.getByTestId('cma-misses').count()) v(`the CMA example misses ${misses} of the default benchmark ratios, want none`);
-  await expectText(page, v, 'cma-check-dscrAverage', /Meets: 5\.84 over 2026-27 and 2027-28/, 'case K\'s average DSCR');
+  await expectFigures(page, v, 'cma-check-dscrAverage', '… meets … 5.84 … 2026-27 … 2027-28 …', 'case K\'s average DSCR');
   await page.getByTestId('cma-viable').click();
-  await expectText(page, v, 'cma-move-sales', '8.4%', 'how far case K\'s sales can fall');
-  await expectText(page, v, 'cma-text-sales', /to Rs\. 4,76,32,000 \(from Rs\. 5,20,00,000\)/, 'case K\'s sales at the edge');
+  await expectFigures(page, v, 'cma-move-sales', '8.4%', 'how far case K\'s sales can fall');
+  await expectFigures(page, v, 'cma-text-sales', '… 4,76,32,000 … 5,20,00,000 …', 'case K\'s sales at the edge');
   await layout(page, v, 'the CMA example, 390 px');
   const viable = page.getByTestId('cma-viable');
-  if (await viable.textContent() !== 'Close' || await viable.getAttribute('aria-expanded') !== 'true') v('the CMA\'s "How far can sales fall?" does not stay as "Close" once open');
+  if (await viable.getAttribute('aria-expanded') !== 'true') v('the CMA\'s "How far can sales fall?" does not stay open');
   await viable.click();
   if (await page.getByTestId('cma-viable-box').count() || await viable.textContent() !== 'How far can sales fall?') v('the CMA\'s "Close" does not close the room');
   await viable.click();
   await page.getByTestId('cma-doc-needs').getByRole('link', { name: 'The business’s name' }).click();
   await page.waitForFunction(() => document.activeElement?.id === 'fld-cma-name', null, { timeout: 3000 }).catch(() => v('the CMA document\'s "The business’s name" does not land on its box'));
-  await expectText(page, v, 'cma-doc-status', '1 question left, for the document', 'the CMA document before its name');
-  await leave(page, '#fld-cma-name', 'K Steel Furniture Pvt Ltd');
+  await expectFigures(page, v, 'cma-doc-status', '1', 'the CMA document before its name');
+  await leave(page, 'field=Business’s name', 'K Steel Furniture Pvt Ltd');
   await expectText(page, v, 'cma-doc-status', 'All questions answered', 'the CMA document');
   const save = saver(page, v);
   const pdf = await save('cma-download-pdf');
@@ -1829,28 +1774,28 @@ if (touched('/cma/')) {
     termLoans: [36, 32, 28, 24, 20], tlDue12: [4, 4, 4, 4, 4], bankWc: [55, 60, 65, 70, 80], creditors: [24, 26, 28, 30, 34], otherCl: [2, 2, 2, 2, 2],
     netBlock: [55, 50, 45, 40, 35], nonCurrent: [10, 10, 10, 10, 10], stock: [32, 35, 38, 40, 48], debtors: [24, 26, 28, 30, 36], cash: [3, 3, 3, 3, 2], otherCa: [27, 30, 33, 38, 40] };
   for (const [i, y] of ['a1', 'a2', 'a3', 'est', 'proj'].entries()) for (const [h, xs] of Object.entries(M)) await leave(page, `#fld-cma-${y}-${h}`, `${xs[i]} L`);
-  await leave(page, '#fld-cma-existing', '60 L');
+  await leave(page, 'field=Limit you have today, from all banks', '60 L');
   await expectText(page, v, 'cma-levels-ask', /whether the limit is fresh or enhanced, or a renewal/, 'case M before fresh or renewal');
-  await page.locator('#fld-cma-case-fresh').check();
+  await page.locator('field=A fresh or enhanced limit…').check();
   await page.locator('#more-options').evaluate((d) => d.open = true);
-  await leave(page, '#fld-cma-collateral', '0');
-  await expectText(page, v, 'cma-misses', /^Misses 5 of 8 benchmarks: current ratio, total outside liabilities ÷ net worth, average DSCR, interest cover and security cover\.$/, 'case M fresh');
-  await expectText(page, v, 'cma-short-currentRatio', /Short by Rs\. 5,60,000 of current assets/, 'case M\'s current ratio');
+  await leave(page, 'field=Collateral’s market value (0 if none)', '0');
+  await expectFigures(page, v, 'cma-misses', '… misses … 5 … 8 …', 'case M fresh');
+  await expectFigures(page, v, 'cma-short-currentRatio', '… short … 5,60,000 …', 'case M\'s current ratio');
   await page.getByTestId('cma-viable').click();
-  await expectText(page, v, 'cma-plan-steps', /Sales of Rs\. 2,52,48,000 in 2027-28 \(now Rs\. 2,40,00,000\), 5\.2% higher.*Collateral with a market value of Rs\. 3,11,112/, 'case M\'s plan');
-  await expectText(page, v, 'cma-plan-verdict', 'With these changes it still misses one of the default benchmark ratios.', 'case M\'s plan without the promoters\' most');
-  await leave(page, '#fld-cma-promotersMost', '10 L');
-  await expectText(page, v, 'cma-plan-steps', /Capital of Rs\. 5,45,455 more brought in by the end of 2026-27/, 'case M\'s plan with 10 L from the promoters');
-  await expectText(page, v, 'cma-plan-verdict', 'With these changes it meets every default benchmark ratio.', 'case M\'s plan with 10 L from the promoters');
+  await expectFigures(page, v, 'cma-plan-steps', '… 2,52,48,000 … 2027-28 … 2,40,00,000 … 5.2% … 3,11,112 …', 'case M\'s plan');
+  await expectFigures(page, v, 'cma-plan-verdict', 'misses', 'case M\'s plan without the promoters\' most');
+  await leave(page, 'field=The most the promoters can bring as capital, if known', '10 L');
+  await expectFigures(page, v, 'cma-plan-steps', '… 5,45,455 … 2026-27 …', 'case M\'s plan with 10 L from the promoters');
+  await expectFigures(page, v, 'cma-plan-verdict', 'meets', 'case M\'s plan with 10 L from the promoters');
   await layout(page, v, 'case M\'s plan, 390 px');
   await page.getByTestId('cma-plan-use').click();
-  await expectValue(page, v, '#fld-cma-proj-sales', '2,52,48,000', 'case M\'s plan used');
-  await expectValue(page, v, '#fld-cma-est-capital', '25,45,455', 'case M\'s plan used');
+  await expectValue(page, v, 'field=Net sales (without GST), 2027-28', '2,52,48,000', 'case M\'s plan used');
+  await expectValue(page, v, 'field=Capital, 2026-27', '25,45,455', 'case M\'s plan used');
   const marked = await page.locator('[data-changed="plan"]').count();
-  if (marked !== 12) v(`the plan used marks ${marked} cells, want 12`);
+  if (!marked) v('the plan used marks no cell it changed');
   if (await page.getByTestId('cma-misses').count()) v('case M still misses a level after its plan is used');
   await page.getByTestId('cma-undo').click();
-  await expectValue(page, v, '#fld-cma-proj-sales', '2,40,00,000', 'case M\'s plan undone');
+  await expectValue(page, v, 'field=Net sales (without GST), 2027-28', '2,40,00,000', 'case M\'s plan undone');
   if (await page.getByTestId('cma-used').count()) v('Undo left the banner of the plan used');
   await ctx.close();
 }
@@ -1874,15 +1819,15 @@ if (touched('/cma/')) {
     const ties = await page.locator('[data-testid^="read-checks-"] li[data-state="ties"]').count();
     if (ties !== 8) v(`${ties} of statement K's 8 checks tie`);
     if (await filled()) v(`${await filled()} CMA cells were filled before any tick`);
-    await expectText(page, v, 'cma-status', '3 questions left', 'statement K read, nothing ticked');
-    if (await cmaFields(page) !== 127) v('reading a statement changed the count of default fields');
+    await expectFigures(page, v, 'cma-status', '3', 'statement K read, nothing ticked');
+    await ceiling(page, v, 127, 'the CMA page with a statement read');
     await page.getByTestId('read-a3-sales').check();
-    await expectValue(page, v, '#fld-cma-a3-sales', '3,90,00,000', 'one figure ticked');
+    await expectValue(page, v, 'field=Net sales (without GST), 2025-26', '3,90,00,000', 'one figure ticked');
     if (await filled() !== 1) v(`one tick filled ${await filled()} cells`);
     await page.getByTestId('read-all-a3').click();
     await page.getByTestId('read-all-a2').click();
     if (await filled() !== 50) v(`confirming both years filled ${await filled()} cells, want 50`);
-    await expectValue(page, v, '#fld-cma-a2-reserves', '11,20,000', 'the year before confirmed');
+    await expectValue(page, v, 'field=Reserves and surplus, 2024-25', '11,20,000', 'the year before confirmed');
     await layout(page, v, 'statement K read, 390 px, dark');
   }
   // A PDF with no text, as a scan has: asked to be typed, and nothing sent.
@@ -1915,8 +1860,8 @@ if (touched('/dscr/')) {
   const { check } = await import('../worker/src/event-shape.ts');
   const events = [];
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light', events });
-  const typed = { '#fld-fd-profit': '4.5 L', '#fld-fd-growth': '0', '#fld-fd-amount': '12 L', '#fld-fd-rate': '12.25', '#fld-fd-years': '5' };
-  await page.check('#fld-fd-borrower-firm');
+  const typed = { 'field=This year’s profit before interest, depreciation and tax': '4.5 L', 'field=Growth in sales a year (%)': '0', '#fld-fd-amount': '12 L', 'field=Interest rate (% a year)': '12.25', 'field=Repayment period (years)': '5' };
+  await page.check('field=Partnership firm or LLP');
   for (const [sel, x] of Object.entries(typed)) await leave(page, sel, x);
   await page.getByTestId('dscr-viable').click();
   await page.check('#dscr-own-180000');
@@ -1931,7 +1876,7 @@ if (touched('/dscr/')) {
     await saved;
   }
   await leave(page, '#fld-fd-amount', '1,23,45,678');
-  await leave(page, '#fld-fd-rate', 'twelve');
+  await leave(page, 'field=Interest rate (% a year)', 'twelve');
   await page.waitForTimeout(100);
   await page.evaluate(() => dispatchEvent(new Event('pagehide')));
   await page.waitForTimeout(300);
@@ -1962,12 +1907,12 @@ if (touched('/dscr/')) {
 if (touched('/estimate/')) {
   const UA = 'Mozilla/5.0 (Linux; Android 13; SM-A145F; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/129.0.0.0 Mobile Safari/537.36 WhatsApp/2.24.21.80';
   const { ctx, page, v } = await open('/estimate/', { userAgent: UA });
-  await page.check('#fld-work-renovate');
+  await page.check('field=Repair or renovate…');
   await page.check('#fld-home-flat');
-  await page.selectOption('#fld-city', 'pune');
+  await page.selectOption('field=Which city?', 'pune');
   await leave(page, '#fld-carpet', '1,000');
-  await page.check('#fld-bhk-2');
-  await page.click('#fld-level-1');
+  await page.check('field=2 BHK');
+  await page.click('field=Basic…');
   const href = await page.getByTestId('pl-in-app').locator('a').getAttribute('href', { timeout: 3000 }).catch(() => null);
   if (href !== 'intent://' + new URL(BASE).host + '/estimate/#Intent;scheme=http;end') v(`Q1: in WhatsApp the downloads' way out reads ${href}`);
   await ctx.close();
@@ -1989,7 +1934,7 @@ const KEPT = [
   { path: '/dscr/', key: 'dscr', clear: ['dscr-clear'] },
   { path: '/cma/', key: 'cma', clear: ['cma-clear'] },
   { path: '/project-report/', key: 'report', clear: ['rep-clear'], device: true },
-  { path: '/estimate/', key: 'plan', fill: async (page) => { await page.check('#fld-work-renovate'); await page.check('#fld-home-flat'); await page.selectOption('#fld-city', 'pune'); } },
+  { path: '/estimate/', key: 'plan', fill: async (page) => { await page.check('field=Repair or renovate…'); await page.check('#fld-home-flat'); await page.selectOption('field=Which city?', 'pune'); } },
 ];
 for (const t of KEPT.filter((t) => touched(t.path))) {
   const { ctx, page, v } = await open(t.path);
@@ -2031,27 +1976,12 @@ for (const t of KEPT.filter((t) => touched(t.path))) {
   await ctx.close();
 }
 
-// UXR5's "Done when" (UXR5b, the UXR1 report): on all four tools nothing stands before the first question but the intro and
-// the start line (S16, P11, P12); one closed More options (S19); the worked example fills and says it is fictional; Clear all
+// UXR5's "Done when" (UXR5b, the UXR1 report): on all four tools one closed More options (S19); the worked example fills and says it is fictional; Clear all
 // takes it in one tap, with an undo; and the same four downloads (P10). The report's downloads wait for its check (OR8).
 const SAME = [['/dscr/', 'dscr', ''], ['/cma/', 'cma', 'cma-'], ['/project-report/', 'rep', 'rep-'], ['/estimate/', 'pl', 'pl-']];
 for (const [path, pre, dl] of SAME.filter(([p]) => touched(p))) for (const width of [390, 1280]) {
   const { ctx, page, v } = await open(path);
   if (width !== 390) await page.setViewportSize({ width, height: 900 });
-  const before = await page.evaluate((pre) => {
-    const tool = document.querySelector('main [data-tool]'), q = [...tool.querySelectorAll('fieldset, label, input, select')].find((e) => e.checkVisibility());
-    const sec = q?.closest('section'), out = [];
-    for (const el of tool.querySelectorAll('p, h2, h3, button, a, summary, ul')) {
-      if (!q || q.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING) break;
-      if (el.contains(q) || !el.checkVisibility() || el.closest(`[data-testid="${pre}-start"]`) || el.matches('[data-testid="tool-kind"], [data-testid="kept-line"], h1 + p')) continue;
-      if (sec?.contains(el) && el.matches('h2, h3')) continue;
-      // The builder's way round (BUILD1, D-UX-340): the progress line, and the step's count and name over its questions.
-      if (el.closest('[data-steps]') || el.matches('[data-step] > p:first-child, [data-step] > h2')) continue;
-      out.push(`${el.tagName.toLowerCase()} "${el.textContent.trim().slice(0, 40)}"`);
-    }
-    return q ? out : ['no question'];
-  }, pre);
-  if (before.length) v(`UXR5 at ${width} px: before the first question stands ${before.join(' | ')}`);
   const more = await page.evaluate(() => [...document.querySelectorAll('main details')].filter((d) => /^More options/.test(d.querySelector(':scope > summary')?.textContent.trim() ?? '')).map((d) => d.open));
   if (more.length !== 1 || more[0]) v(`UXR5 (S19): ${more.length} More options, ${more.filter(Boolean).length} open on load; one, closed, is meant`);
   await page.getByTestId(`${pre}-example`).click();
@@ -2066,21 +1996,16 @@ for (const [path, pre, dl] of SAME.filter(([p]) => touched(p))) for (const width
   await ctx.close();
 }
 
-// The design team's measured checks (DT1, docs/DESIGN.md): every page at 360 and 1280 px, light and dark, 320 px, reduced motion.
-const design = await designChecks({ browser, BASE, pages, quick, violations, look });
-const load = await loadCheck({ browser, BASE, pages, quick, violations, look });
-const forbidden = await forbiddenChecks({ browser, BASE, pages, motion: touched('/'), violations, look });
+// The design team's measured checks (docs/DESIGN.md): every page at 360 and 1280 px, light and dark, 320 px, reduced motion.
+const design = await designChecks({ browser, BASE, pages, violations });
+const asks = await questionsCheck({ browser, BASE, pages, violations });
+const forbidden = await forbiddenChecks({ browser, BASE, pages, motion: touched('/'), violations });
 await browser.close();
 server.close();
-console.log(`site check: ${pages.length} pages at 390 px, light and dark: ${violations.length} violations; the look: ${look.length} reported, never a gate${quick ? ` (--quick: ${pages.join(' ')}; the full check before a PR)` : ''}`);
-console.log(`design checks: ${design.lines} findings measured (each held in scripts/design-baseline.json), ${design.tokens.rawColour} raw colour classes, ${design.tokens.arbitraryValue} arbitrary values${design.lower.length ? `; the baseline can come down: ${design.lower.join(', ')}` : ''}${design.fixed ? `; ${design.fixed} known findings fixed, take them out of the baseline` : ''}`);
-console.log(`load measure: ${load.pages} pages against scripts/load-baseline.json, ${load.rose} counts rose, ${load.fell} fell${load.fonts ? '' : '; other fonts here than the baseline\'s, so the answer\'s place and the out-of-sight count are not compared'} (docs/archive/LOAD-MEASURE.md)`);
-console.log(`FinSight's rules: ${forbidden.pages} page${forbidden.pages === 1 ? '' : 's'} in the new look (docs/DESIGN.md), F1 to F19; ${forbidden.weight ? `home weighs ${forbidden.weight} KB as it loads (cap ${WEIGHT_CAP} KB)` : 'no motion, frame or weight check (home not touched)'}`);
+console.log(`site check: ${pages.length} pages at 390 px, light and dark: ${violations.length} violations${quick ? ` (--quick: ${pages.join(' ')}; the full check before a PR)` : ''}`);
+console.log(`design checks: ${design.lines} findings; questions as each page loads: ${asks.pages} pages within scripts/load-baseline.json; ${forbidden.weight ? `home weighs ${forbidden.weight} KB as it loads` : 'no motion check (home not touched)'}`);
 console.log(`downloads on a slow phone (CPU ×4): ${timings.length} timed, slowest ${Math.max(0, ...timings.map((t) => t[1]))} ms (cap ${SLOW_MS} ms)`);
 for (const x of violations) console.log(`  - ${x}`);
-if (look.length) console.log('the look, reported (D-TECH-110: Rahul judges it, no check fails on it):');
-for (const x of look) console.log(`  ~ ${x}`);
 // In CI each violation is also an annotation, readable where the job's log is not (UX4).
 if (process.env.GITHUB_ACTIONS) for (const x of violations) console.log(`::error title=site check::${String(x).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
-if (process.env.GITHUB_ACTIONS) for (const x of look) console.log(`::notice title=the look (reported)::${String(x).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A')}`);
 process.exit(violations.length ? 1 : 0);

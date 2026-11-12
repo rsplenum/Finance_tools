@@ -3,19 +3,16 @@
  * its source, what it misses and how it could be gamed: docs/archive/LOAD-MEASURE.md. Opens each built page at 360 by 780 px, light,
  * as it loads, in its answer state (the `result` state of scripts/design-checks.mjs, or as it loads on a page without
  * one) and in its plan state, and takes its counts. Each page marks its answer `data-answer` (words, not only a figure)
- * and a sticky echo of it `data-answer-echo`. The site check reports a count that differs from scripts/load-baseline.json
- * and never fails on it (LOOSE1, D-TECH-110), but for a rise in questions (rule 17), which needs a decision.
+ * and a sticky echo of it `data-answer-echo`. One count is a rule: the questions a page asks as it loads, held for the
+ * site check in scripts/load-baseline.json (CLAUDE.md rule 17; `questionsCheck` below). The other counts are the look:
+ * printed here and in `npm run look`, never compared and never a gate (CHECKS1, D-TECH-113).
  *
  *   node scripts/load-measure.mjs [/dscr/ ...] [--text] [--no-effects]   the counts as a table, the aims under it
- *   node scripts/load-measure.mjs --lower [/dscr/ ...]                   writes the counts as they stand, and new pages; never more questions
- *   node scripts/load-measure.mjs --raise /dscr/ questions D-UX-63       writes a count that rose, with its decision (questions need it)
- * Both work in any container (D-TECH-74): where the fonts differ from the baseline's probe, they write every count but the
- * three that hang on where text wraps (LAYOUT), and a raise of one of those refuses.
  * --text also prints what the counts saw: the long sentences, the abbreviations, the text styles, the colours and the
  * controls whose figures move out of sight (the writer's and the critic's input). --no-effects skips the slowest count.
  * Run after `npm run build`.
  */
-import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
@@ -261,15 +258,6 @@ export const COUNTS = [
   ['abbr', 'Abbreviations'], ['questions', 'Questions'], ['controls', 'Controls'], ['answerAt', 'Answer at (screens)', 1],
   ['gap', 'From last step to answer (px)'], ['styles', 'Text styles'], ['colours', 'Colours'], ['codes', 'Extra codes', 0], ['outOfSight', 'Out of sight', 0],
 ];
-/** The counts that hang on where text wraps, so on the fonts: compared only where the fonts match the baseline's (CI's runner may differ from the sessions'). */
-const LAYOUT = ['answerAt', 'gap', 'outOfSight'];
-/** The fonts, as the width of one line in the page's body text at 16 px. */
-async function fontProbe(browser, BASE) {
-  const { ctx, page } = await openAt(browser, `${BASE}/404.html`);
-  const w = await page.evaluate(() => { const s = document.createElement('span'); s.textContent = 'Short by Rs. 4,19,502 of cash to pay the loan'; document.querySelector('main').append(s); const w = s.getBoundingClientRect().width; s.remove(); return Math.round(w * 100) / 100; });
-  await ctx.close();
-  return w;
-}
 export const BASELINE = fileURLToPath(new URL('./load-baseline.json', import.meta.url));
 
 /** Every built page, as the site check lists them. */
@@ -336,97 +324,45 @@ export async function countPage(browser, BASE, path, { text = false, effectsToo 
 }
 
 /**
- * The site check's part: every built page against scripts/load-baseline.json. The counts are the look and are reported,
- * never a violation (LOOSE1, D-TECH-110): a count that rose or fell, a page without a baseline, a page whose answer is
- * not marked. One stays a gate: a page that asks more questions than its baseline (CLAUDE.md, rule 17).
+ * The site check's part, and rule 17's one gate here: no built page asks more questions as it loads than its count in
+ * scripts/load-baseline.json (a page not listed asks none). Only Rahul raises a count: change the number there on his word.
  */
-export async function loadCheck({ browser, BASE, pages, quick = false, violations, look = violations }) {
+export async function questionsCheck({ browser, BASE, pages, violations }) {
   const base = JSON.parse(await readFile(BASELINE, 'utf8'));
-  const fonts = (await fontProbe(browser, BASE)) === base.fontProbe;
-  let rose = 0, fell = 0;
   for (const path of pages) {
-    // What the colours count saw goes with its line: a rise seen only on the runner cannot be read here (OR11c).
-    const { counts, defect, seen } = await countPage(browser, BASE, path, { text: true });
-    if (defect) look.push(`load: ${path}: ${defect}`);
-    const was = base.pages[path];
-    if (!was) { look.push(`load: ${path} has no baseline (npm run load -- --lower ${path})`); continue; }
-    for (const [k, name] of COUNTS) {
-      const [now, then] = [counts[k], was[k]];
-      if (now === then || (!fonts && LAYOUT.includes(k))) continue;
-      // A page added where the fonts differed has no reading of the counts that hang on them yet.
-      if (then === undefined) { look.push(`load: ${path} ${name} has no reading yet (npm run load -- --lower ${path})`); continue; }
-      if (now === null || then === null || now > then) {
-        rose++;
-        if (k === 'questions') violations.push(`load: ${path} asks ${now ?? 'none'} questions, ${then ?? 'none'} before (the page asks only the inputs Rahul listed: cut it, or on Rahul's word npm run load -- --raise ${path} ${k} and say so in the PR)`);
-        else look.push(`load: ${path} ${name} rose from ${then ?? 'none'} to ${now ?? 'none'}${k === 'colours' ? `; saw ${seen.match(/colours: (.*)/)?.[1]}` : ''}`);
-      } else {
-        fell++;
-        look.push(`load: ${path} ${name} fell from ${then} to ${now} (npm run load -- --lower ${path} writes it)`);
-      }
-    }
+    const { ctx, page } = await openAt(browser, `${BASE}${path}`, { reducedMotion: 'reduce' });
+    const { questions } = await page.evaluate(inPage, {});
+    await ctx.close();
+    const cap = base[path] ?? 0;
+    if (questions > cap) violations.push(`${path} asks ${questions} questions as it loads, ${cap} in scripts/load-baseline.json (rule 17: cut it, or on Rahul's word change the number there and say so in the PR)`);
   }
-  if (!quick) for (const path of Object.keys(base.pages)) if (!pages.includes(path)) look.push(`load: ${path} is in the baseline but not built (take it out of scripts/load-baseline.json)`);
-  return { pages: pages.length, rose, fell, fonts };
+  return { pages: pages.length };
 }
 
-async function main() {
-  const args = process.argv.slice(2);
-  const text = args.includes('--text'), skipEffects = args.includes('--no-effects'), lower = args.includes('--lower'), raise = args.indexOf('--raise');
-  const [rPage, rCount, rWhy] = raise >= 0 ? args.slice(raise + 1, raise + 4) : [];
-  if (raise >= 0) {
-    if (!COUNTS.some(([k]) => k === rCount)) throw new Error(`--raise <page> <count> [why]: the count is one of ${COUNTS.map(([k]) => k).join(', ')}`);
-  }
-  const only = raise >= 0 ? [rPage] : args.filter((a) => a.startsWith('/') && !a.startsWith('//'));
-  const { BASE, server } = await serveDist();
-  const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
-  const pages = (await builtPages()).filter((p) => !only.length || only.includes(p));
-  const rows = [], notes = [], measured = {};
+/** The table of counts for these pages (all when none is named), with what the counts saw under it when `text`. */
+export async function loadTable({ browser, BASE, pages, text = false, effectsToo = true }) {
+  const rows = [], notes = [];
   for (const path of pages) {
-    const r = await countPage(browser, BASE, path, { text, effectsToo: !skipEffects });
-    measured[path] = r.counts;
+    const r = await countPage(browser, BASE, path, { text, effectsToo });
     const c = r.counts, show = (v) => v ?? '-';
     rows.push([path, `${c.before} (${show(r.q1At)})`, ...COUNTS.slice(1).map(([k]) => (k === 'outOfSight' && c[k] !== null ? `${c[k]} of ${r.moving}` : show(c[k])))]);
     if (r.defect) notes.push(`\n${path}: ${r.defect}`);
     if (text) notes.push(r.seen);
   }
-  const probe = lower || raise >= 0 ? await fontProbe(browser, BASE) : null;
+  const head = ['Page', ...COUNTS.map(([k, name]) => (k === 'before' ? 'Words before Q1 (Q1 at, screens)' : name))];
+  return [`| ${head.join(' | ')} |\n|${head.map((_, i) => (i ? '---:' : '---')).join('|')}|`, ...rows.map((r) => `| ${r.join(' | ')} |`),
+    `| Aim | ${COUNTS.map(([, , aim]) => aim ?? '').join(' | ')} |`, ...notes].join('\n');
+}
+
+async function main() {
+  const args = process.argv.slice(2);
+  const only = args.filter((a) => a.startsWith('/') && !a.startsWith('//'));
+  const { BASE, server } = await serveDist();
+  const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined });
+  const pages = (await builtPages()).filter((p) => !only.length || only.includes(p));
+  console.log(await loadTable({ browser, BASE, pages, text: args.includes('--text'), effectsToo: !args.includes('--no-effects') }));
   await browser.close();
   server.close();
-  const head = ['Page', ...COUNTS.map(([k, name]) => (k === 'before' ? 'Words before Q1 (Q1 at, screens)' : name))];
-  console.log(`| ${head.join(' | ')} |\n|${head.map((_, i) => (i ? '---:' : '---')).join('|')}|`);
-  for (const r of rows) console.log(`| ${r.join(' | ')} |`);
-  console.log(`| Aim | ${COUNTS.map(([, , aim]) => aim ?? '').join(' | ')} |`);
-  if (notes.length) console.log(notes.join('\n'));
-  if (!lower && raise < 0) return;
-  const base = JSON.parse(await readFile(BASELINE, 'utf8').catch(() => '{"pages":{},"raised":[]}'));
-  base.fontProbe ??= probe;
-  // Where the fonts differ, the counts that hang on them are left as they are (D-TECH-74); the rest are the same here.
-  const fonts = base.fontProbe === probe, differ = `the fonts here differ from the baseline's (a line ${probe} px wide, not ${base.fontProbe})`;
-  const writes = (k) => fonts || !LAYOUT.includes(k);
-  const changed = [];
-  if (raise >= 0) {
-    if (!writes(rCount)) throw new Error(`--raise: ${rCount} hangs on where text wraps and ${differ}: raise it where they match`);
-    const [then, now] = [base.pages[rPage]?.[rCount], measured[rPage]?.[rCount]];
-    if (!(now > then || (then === null && now !== null))) throw new Error(`--raise: ${rPage} ${rCount} is ${now ?? 'none'}, not above ${then ?? 'none'}`);
-    base.pages[rPage][rCount] = now;
-    base.raised.push({ page: rPage, count: rCount, from: then, to: now, why: rWhy ?? '', date: new Date().toISOString().slice(0, 10) });
-    changed.push(`${rPage} ${rCount} ${then} → ${now}${rWhy ? ` (${rWhy})` : ''}`);
-  } else {
-    if (skipEffects) throw new Error('--lower measures every count: leave out --no-effects');
-    for (const [path, counts] of Object.entries(measured)) {
-      if (!base.pages[path]) { base.pages[path] = Object.fromEntries(Object.entries(counts).filter(([k]) => writes(k))); changed.push(`${path} added`); continue; }
-      for (const [k] of COUNTS.filter(([k]) => writes(k))) {
-        const [then, now] = [base.pages[path][k], counts[k]];
-        // A count new to the measure takes its first reading; a look count is written as it stands (LOOSE1, D-TECH-110);
-        // questions only when they fell: a rise is rule 17's, by --raise with its decision.
-        if (then === undefined || (now !== then && (k !== 'questions' || (now !== null && then !== null && now < then)))) { base.pages[path][k] = now; changed.push(`${path} ${k} ${then} → ${now}`); }
-      }
-    }
-  }
-  base.pages = Object.fromEntries(Object.entries(base.pages).sort(([a], [b]) => a.localeCompare(b)));
-  await writeFile(BASELINE, JSON.stringify(base, null, 2) + '\n');
-  console.log(`scripts/load-baseline.json: ${changed.join(', ') || 'nothing to change'}`);
-  if (!fonts) console.log(`${differ}: ${LAYOUT.join(', ')} left as they are`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) await main();

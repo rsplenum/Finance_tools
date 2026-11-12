@@ -3,35 +3,17 @@
  * "Measured checks". The site check runs `designChecks` on every built page at 360 px and at 1280 px, light and dark:
  * axe-core (WCAG 2.2 A and AA); the edges of fields at 3:1 and a visible focus at 3:1 (WCAG 1.4.11, 2.4.7); targets of
  * 24 by 24 px (2.5.8) and, at 360 px, fields and buttons filled with the accent 44 px tall; every control reached by Tab (2.1.1) and, once focused, not hidden under a sticky band (2.4.11); no
- * sideways scroll at 320 px (1.4.10); nothing moving under reduced motion (2.3.3). `tokenCounts` counts the raw colour
- * classes and arbitrary values in site/src against scripts/design-baseline.json: a rise is reported as the look, never a
- * violation (LOOSE1, D-TECH-110). The accessibility findings stay violations.
+ * sideways scroll at 320 px (1.4.10); nothing moving under reduced motion (2.3.3). Every finding is a violation: there is no
+ * list of known defects to hide one behind (CHECKS1, D-TECH-113).
  * `measure` is also what scripts/design-review.mjs prints for each state of a page.
  */
-import { readFile, readdir } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
-import { fileURLToPath } from 'node:url';
 import { stepped } from './stepped.mjs';
+import './field.mjs';
 
 const AXE = await readFile(createRequire(import.meta.url).resolve('axe-core/axe.min.js'), 'utf8');
-const BASELINE = fileURLToPath(new URL('./design-baseline.json', import.meta.url));
-const SRC = fileURLToPath(new URL('../site/src/', import.meta.url));
 export const WIDTHS = { phone: { width: 360, height: 780 }, desktop: { width: 1280, height: 900 } };
-
-/** Raw palette colours (`text-slate-600`, `bg-white`) and arbitrary values (`text-[11px]`, `bg-[#eda100]`) in site/src. */
-export async function tokenCounts() {
-  const raw = /\b(?:bg|text|border|ring|outline|fill|stroke|from|to|via|divide|accent|decoration|placeholder|caret|shadow)(?:-[trblxy])?-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|white|black)(?:-\d+)?(?:\/\d+)?\b/g;
-  // A value in brackets; a variant in brackets (`has-[:focus-visible]:`) is a selector, not a value.
-  const arbitrary = /(?<![\w-])-?[a-z][\w-]*-\[[^\]\s'"`]+\](?!:)/g;
-  let rawColour = 0, arbitraryValue = 0;
-  for (const f of await readdir(SRC, { recursive: true })) {
-    if (!/\.(tsx|ts|astro|css)$/.test(f)) continue;
-    const s = await readFile(SRC + f, 'utf8');
-    rawColour += s.match(raw)?.length ?? 0;
-    arbitraryValue += s.match(arbitrary)?.length ?? 0;
-  }
-  return { rawColour, arbitraryValue };
-}
 
 /** Runs in the page: the edges of fields, target sizes, and (on a phone) fields and filled buttons 44 px tall. */
 function inPage(phone) {
@@ -202,17 +184,17 @@ const leave = async (page, sel, value) => {
   await page.fill(sel, value); await page.press(sel, 'Tab');
 };
 const frontDoor = async (page, [profit, growth, amount, rate, years]) => {
-  await page.check('#fld-fd-borrower-firm');
+  await page.check('field=Partnership firm or LLP');
   for (const [id, v] of [['profit', profit], ['growth', growth], ['amount', amount], ['rate', rate], ['years', years]]) if (v !== undefined) await leave(page, `#fld-fd-${id}`, v);
 };
 // The planning estimate's six questions (scripts/site-check.mjs: a 2BHK of 1,000 sq ft in Pune); the last, the level, left out when `level` is false.
 const sixQuestions = async (page, level = true) => {
-  await page.check('#fld-work-renovate');
+  await page.check('field=Repair or renovate…');
   await page.check('#fld-home-flat');
-  await page.selectOption('#fld-city', 'pune');
+  await page.selectOption('field=Which city?', 'pune');
   await leave(page, '#fld-carpet', '1,000');
-  await page.check('#fld-bhk-2');
-  if (level) await page.click('#fld-level-1');
+  await page.check('field=2 BHK');
+  if (level) await page.click('field=Basic…');
 };
 // Case R on the default path, simple mode (REP3, D-UX-112): building 10 L, plant 20 L, a 20 L loan at 10% over 5 years,
 // 15,000 boxes a month at Rs. 100, variable costs 65%, fixed costs 1 L a month, the limit worked out, nothing behind the
@@ -222,25 +204,25 @@ const sixQuestions = async (page, level = true) => {
 export const FIXED_AT = '2026-10-02T10:00:00+05:30';
 const caseRSimple = async (page) => {
   const now = new Date(FIXED_AT), sell = new Date(now.getFullYear(), now.getMonth() + 3, 1);
-  for (const id of ['#fld-borrower-firm', '#fld-security-neither', '#fld-wcBy-worked']) await page.check(id);
-  for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-tl-amount', '20 L'], ['#fld-tl-rate', '10'], ['#fld-years', '5'],
+  for (const id of ['field=Partnership firm or LLP', 'field=Neither', 'field=Work it out for me']) await page.check(id);
+  for (const [id, value] of [['field=Building and civil works', '10 L'], ['field=Plant and machinery', '20 L'], ['field=Term loan you will ask for', '20 L'], ['field=Interest rate (% a year)', '10'], ['field=Repayment period after it (years)', '5'],
     ['#fld-product-0-name', 'Boxes'], ['#fld-product-0-units', '15,000'], ['#fld-product-0-price', '100'],
-    ['#fld-sellFrom', `${sell.getFullYear()}-${String(sell.getMonth() + 1).padStart(2, '0')}`], ['#fld-variablePct', '65'], ['#fld-fixedMonth', '1 L']])
+    ['field=When will you start selling?', `${sell.getFullYear()}-${String(sell.getMonth() + 1).padStart(2, '0')}`], ['field=Materials and other variable costs (% of sales)', '65'], ['field=Fixed costs a month', '1 L']])
     await leave(page, id, value);
 };
 // Fictional case R (tests/plan.test.ts, scripts/site-check.mjs) in expert mode, every fact but the repayment unless `repayment`.
 const caseR = async (page, repayment = true) => {
-  await page.check('#fld-borrower-firm');
+  await page.check('field=Partnership firm or LLP');
   // The mode sits under More options (UXR5b, S12).
   const more = page.locator('#more-options');
   if (!(await more.evaluate((d) => d.open))) await more.locator(':scope > summary').click();
-  await page.check('#fld-mode-expert');
-  await page.check('#fld-salesBy-typed');
-  for (const [id, value] of [['#fld-cost-building', '10 L'], ['#fld-cost-machinery', '20 L'], ['#fld-cost-furniture', '2 L'], ['#fld-cost-preliminary', '1 L'],
-    ['#fld-tl-amount', '25 L'], ['#fld-tl-rate', '10'], ['#fld-tl-disbursed', '2026-04'], ['#fld-tl-moratorium', '0'], ['#fld-tl-instalments', '60'], ['#fld-monthsToStart', '0'],
-    ['#fld-sales', '1.2 Cr'], ['#fld-salesGrowth', '10'], ['#fld-variablePct', '65'], ['#fld-fixed', '18 L'], ['#fld-fixedGrowth', '5'], ['#fld-wcLimit', '5 L'], ['#fld-wcRate', '11']])
+  await page.check('field=Expert…');
+  await page.check('field=Sales I type, with their growth');
+  for (const [id, value] of [['field=Building and civil works', '10 L'], ['field=Plant and machinery', '20 L'], ['field=Furniture and fixtures', '2 L'], ['field=Preliminary and pre-operative expenses', '1 L'],
+    ['field=Term loan you will ask for', '25 L'], ['field=Interest rate (% a year)', '10'], ['field=Month the loan is first drawn', '2026-04'], ['#fld-tl-moratorium', '0'], ['field=Number of instalments', '60'], ['field=Months from the loan to the first sales (0 if at once)', '0'],
+    ['field=Sales in a full first year', '1.2 Cr'], ['field=Sales: growth a year (%)', '10'], ['field=Materials and other variable costs (% of sales)', '65'], ['field=Fixed costs in a full first year', '18 L'], ['field=Fixed costs: growth a year (%)', '5'], ['field=Working-capital limit you will ask for', '5 L'], ['field=Its interest rate (% a year)', '11']])
     await leave(page, id, value);
-  if (repayment) await page.check('#fld-tl-repayment-monthly');
+  if (repayment) await page.check('field=Equal principal every month');
 };
 
 /**
@@ -269,44 +251,44 @@ export const STATES = {
     download: async (page) => {
       await frontDoor(page, ['5 L', '10', '10 L', '12', '5']);
       // All eight inputs once: the EMIs already paid and the depreciation too, so their read-backs are measured.
-      await leave(page, '#fld-fd-emis', '5,000');
-      await leave(page, '#fld-fd-depreciation', '40,000');
-      await leave(page, '#fld-borrower', 'Asha Traders');
-      await leave(page, '#fld-lender', 'A bank');
+      await leave(page, 'field=EMIs already paid, a month', '5,000');
+      await leave(page, 'field=Depreciation a year, if any', '40,000');
+      await leave(page, 'field=Borrower’s name', 'Asha Traders');
+      await leave(page, 'field=Lender', 'A bank');
       await page.locator('#download').scrollIntoViewIfNeeded();
     },
   },
   // CMA data (UX1): fictional case K is the worked example (tests/cma.test.ts).
   '/cma/': {
     empty: async () => {},
-    partly: async (page) => leave(page, '#fld-cma-a1-sales', '300 L'),
+    partly: async (page) => leave(page, 'field=Net sales (without GST), 2023-24', '300 L'),
     // The sales of every year and fresh, but no other head: the result says what it still needs.
     provisional: async (page) => {
       for (const [y, v] of [['a1', '300 L'], ['a2', '340 L'], ['a3', '390 L'], ['est', '450 L'], ['proj', '520 L']]) await leave(page, `#fld-cma-${y}-sales`, v);
-      await page.check('#fld-cma-case-fresh');
+      await page.check('field=A fresh or enhanced limit…');
     },
-    error: async (page) => leave(page, '#fld-cma-a1-sales', 'seventy'),
+    error: async (page) => leave(page, 'field=Net sales (without GST), 2023-24', 'seventy'),
     // Fictional case M (tests/cma-plan.test.ts), fresh, the collateral left empty: it misses four levels and the security
     // cover, 1.17 on its own assets, waits for the collateral (DESIGN-LESSONS 11: the case that breaks, UX5c).
     missed: async (page) => {
       for (const [i, y] of ['a1', 'a2', 'a3', 'est', 'proj'].entries()) for (const [h, xs] of Object.entries(CASE_M)) await leave(page, `#fld-cma-${y}-${h}`, `${xs[i]} L`);
-      await leave(page, '#fld-cma-existing', '60 L');
-      await page.check('#fld-cma-case-fresh');
+      await leave(page, 'field=Limit you have today, from all banks', '60 L');
+      await page.check('field=A fresh or enhanced limit…');
     },
     result: async (page) => page.getByTestId('cma-example').click(),
     plan: async (page) => { await page.getByTestId('cma-example').click(); await page.getByTestId('cma-viable').click(); },
     download: async (page) => {
       await page.getByTestId('cma-example').click();
-      await leave(page, '#fld-cma-name', 'K Steel Furniture Pvt Ltd');
+      await leave(page, 'field=Business’s name', 'K Steel Furniture Pvt Ltd');
       await page.locator('#download').scrollIntoViewIfNeeded();
     },
   },
   // The planning estimate first, then the typed quotation, its second path (UX1).
   '/estimate/': {
     empty: async () => {},
-    partly: async (page) => { await page.check('#fld-work-renovate'); await page.check('#fld-home-flat'); },
+    partly: async (page) => { await page.check('field=Repair or renovate…'); await page.check('#fld-home-flat'); },
     provisional: async (page) => sixQuestions(page, false),
-    error: async (page) => { await page.check('#fld-work-renovate'); await page.check('#fld-home-flat'); await leave(page, '#fld-carpet', 'seventy'); },
+    error: async (page) => { await page.check('field=Repair or renovate…'); await page.check('#fld-home-flat'); await leave(page, '#fld-carpet', 'seventy'); },
     result: async (page) => sixQuestions(page),
     // A section opened and a line's drawer with its choices: the controls beside the figure they change.
     plan: async (page) => {
@@ -316,7 +298,7 @@ export const STATES = {
     },
     download: async (page) => {
       await sixQuestions(page);
-      await leave(page, '#fld-pl-owner', 'Asha Rao');
+      await leave(page, 'field=Owner’s name', 'Asha Rao');
       await leave(page, '#fld-pl-property', 'Flat 4, Example Towers, Pune');
       await page.locator('#fld-pl-property').scrollIntoViewIfNeeded();
     },
@@ -324,33 +306,33 @@ export const STATES = {
     typed: async (page) => {
       await page.locator('#typed-path > summary').click();
       await page.waitForSelector('#typed-path astro-island:not([ssr])', { state: 'attached' }); // client:visible (UXR7)
-      await page.check('#fld-kind-construction');
+      await page.check('field=New construction');
       await leave(page, '#fld-area', '1,200');
       await page.selectOption('#fld-item-1-head', 'earthwork');
       await leave(page, '#fld-item-1-description', 'Excavation for foundations');
       await leave(page, '#fld-item-1-quantity', '45');
       await leave(page, '#fld-item-1-rate', '350');
-      await page.check('#fld-gst-add');
-      await leave(page, '#fld-gstPct', '18');
+      await page.check('field=Add GST to the rates');
+      await leave(page, 'field=GST rate (%)', '18');
     },
   },
   // The project report on fictional case R (UX1), on the default path and in expert mode (REP3).
   '/project-report/': {
     empty: async () => {},
-    partly: async (page) => { await page.check('#fld-borrower-firm'); await leave(page, '#fld-cost-building', '10 L'); },
+    partly: async (page) => { await page.check('field=Partnership firm or LLP'); await leave(page, 'field=Building and civil works', '10 L'); },
     provisional: async (page) => caseR(page, false),
-    error: async (page) => { await page.check('#fld-borrower-firm'); await leave(page, '#fld-tl-amount', 'seventy'); },
+    error: async (page) => { await page.check('field=Partnership firm or LLP'); await leave(page, 'field=Term loan you will ask for', 'seventy'); },
     // The answer on the default path, simple mode (D-UX-112); the rest in expert mode.
     result: async (page) => caseRSimple(page),
     expert: async (page) => caseR(page),
     // Case R with its sales cut to 70 lakh (tests/viable.test.ts): it misses a lender's levels (DESIGN-LESSONS 11, UX5c).
-    missed: async (page) => { await caseR(page); await leave(page, '#fld-sales', '70 L'); },
+    missed: async (page) => { await caseR(page); await leave(page, 'field=Sales in a full first year', '70 L'); },
     plan: async (page) => { await caseR(page); await page.getByTestId('rep-viable').click(); },
     download: async (page) => {
       await caseR(page);
       await page.getByTestId('rep-confirm').click();
-      await leave(page, '#fld-rep-name', 'Asha Packaging');
-      await leave(page, '#fld-rep-activity', 'Manufacture of corrugated boxes');
+      await leave(page, 'field=Business’s name', 'Asha Packaging');
+      await leave(page, 'field=What the business does', 'Manufacture of corrugated boxes');
       await page.locator('#download').scrollIntoViewIfNeeded();
     },
   },
@@ -381,12 +363,10 @@ export async function openAt(browser, url, { width = 'phone', scheme = 'light', 
 }
 
 /**
- * The site check's part: every page at 360 px and 1280 px, light and dark, as it loads and in its SITE_STATES, then 320 px and reduced motion, then the
- * token counts. A line already counted in the baseline's `known` (today's defects, the first review's findings) is
- * reported only when its count grows; every other line is a violation.
+ * The site check's part: every page at 360 px and 1280 px, light and dark, as it loads and in its SITE_STATES, then 320 px and reduced motion.
+ * Every line is a violation.
  */
-export async function designChecks({ browser, BASE, pages, quick = false, violations, look = violations }) {
-  const base = JSON.parse(await readFile(BASELINE, 'utf8'));
+export async function designChecks({ browser, BASE, pages, violations }) {
   const seen = new Map();
   const note = (key) => seen.set(key, (seen.get(key) ?? 0) + 1);
   for (const path of pages) {
@@ -419,12 +399,6 @@ export async function designChecks({ browser, BASE, pages, quick = false, violat
       await ctx.close();
     }
   }
-  const known = base.known ?? {};
-  for (const [key, n] of seen) if (n > (known[key] ?? 0)) violations.push(`design: ${key}${n > 1 ? ` (${n} times)` : ''}`);
-  // --quick: a known line is fixed only on a page that was opened ('/ ' is home's own prefix).
-  const gone = Object.keys(known).filter((k) => (!quick || pages.some((p) => k.startsWith(`${p} `))) && (!seen.has(k) || seen.get(k) < known[k]));
-  const t = await tokenCounts();
-  for (const k of ['rawColour', 'arbitraryValue']) if (t[k] > base[k]) look.push(`design: ${t[k]} ${k === 'rawColour' ? 'raw colour classes' : 'arbitrary values'} in site/src, more than the ${base[k]} allowed (use the tokens in docs/DESIGN.md)`);
-  const lower = ['rawColour', 'arbitraryValue'].filter((k) => t[k] < base[k]).map((k) => `${k} ${base[k]} → ${t[k]}`);
-  return { lines: seen.size, fixed: gone.length, lower, tokens: t };
+  for (const [key, n] of seen) violations.push(`design: ${key}${n > 1 ? ` (${n} times)` : ''}`);
+  return { lines: seen.size };
 }
