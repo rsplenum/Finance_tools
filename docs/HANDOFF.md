@@ -32,7 +32,6 @@ One row runs at a time and writes the shared docs itself (D-TECH-70). Bring `mai
 ## Budgets and actuals
 | Date | Row | Budget | Actual |
 |---|---|---|---|
-| 11-11-2026 | DEEP1 (four tools walked, twelve files opened, sources read; Rahul's page; `docs/DEEP1-FINDINGS.md`; NEW1's row) | L, Extra | about 70 steps, 3 compactions; 4 reading agents (56 steps); within L |
 | 12-11-2026 | PLAN2 (Rahul's six answers; the best of five plans in one, `docs/WORKED-PAGE.md`, for the build sessions; rule 14's reading; rows NEW1, PAPER1, READ1) | none set: Rahul's ask | about 35 steps, 1 compaction; no agent; the cost guard warned on reading the five plans whole |
 | 12-11-2026 | NEW1 (the DSCR made new at `/dscr/`, PR #199: the worked page, its shared parts in `site/src/worked/`, the checks moved onto it; NEW1b's row) | L, Extra | about 220 steps after #198's merge, many compactions (the conversation carried on from PLAN2); no agent; within L plus a quarter: moving the old page's checks onto the new one took the last fifth |
 | 12-11-2026 | NEW1b (Rahul's phone review: questions first over the whole screen, the report, one Professional mode, Undo and Start over on the report; the checks walk the questions) | M, Extra | 120 steps, 3 compactions; no agent; at M: the checks for the new flow took a third |
