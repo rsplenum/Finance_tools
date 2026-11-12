@@ -7,7 +7,7 @@
  * from step to step and Next does not take the focus, so the keyboard stays up through the questions. Each tool hands in
  * its questions, its checks and its read-back; nothing is worked out here.
  */
-import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
+import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { MAIN, QUIET } from './parts';
 
 export interface AskQuestion {
@@ -47,14 +47,16 @@ export function Ask(p: {
     }
     return () => put.forEach(([el, d]) => { el.style.display = d; el.inert = false; });
   }, []);
-  // Each question from its top, the focus in its box.
-  useEffect(() => {
+  // Each question from its top, the focus in its box as it appears (not a frame later).
+  useLayoutEffect(() => {
     top.current?.scrollTo({ top: 0 });
     (box.current ?? first.current)?.focus({ preventScroll: true });
   }, [q.id]);
   const go = (t: string) => {
     const bad = p.problem(t);
     if (bad) { setSaid(bad); box.current?.focus({ preventScroll: true }); return; }
+    // The box stays and keeps the focus, so it never fires its own change: an answer given counts as one (UD1's steps).
+    if (box.current && t !== q.value) box.current.dispatchEvent(new Event('change', { bubbles: true }));
     p.onAnswer(t);
   };
   // A tap on Next or None keeps the focus in the box, so a phone's keyboard does not drop and rise between questions.

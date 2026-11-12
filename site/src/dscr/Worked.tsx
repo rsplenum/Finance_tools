@@ -174,7 +174,7 @@ export function DscrWorked() {
           : <button type="button" data-testid="back-start" class={QUIET} onClick={() => setView({ at: 'intro' })}>{N.ask.back}</button>}
       </nav>
     </div>
-    {mark && <p data-testid="mark" class="mt-2 text-base text-ink-muted"><span class="mr-1.5 inline-flex items-center rounded-full bg-warn-tint px-2 py-0.5 text-sm font-semibold text-warn">{N.example}</span>
+    {mark && <p data-testid="mark" class="mt-2 text-base text-ink-muted"><span class="mr-1.5 inline-flex items-center rounded-full bg-warn-tint px-2 py-0.5 text-sm font-semibold text-warn">{N.example}</span>{' '}
       {home && !c.mine.length ? <span data-testid="home-case">{mark.replace(/^Example: /, '')}</span> : mark.replace(/^Example: /, '')}</p>}
     <div class="mt-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-x-16">
       <div>

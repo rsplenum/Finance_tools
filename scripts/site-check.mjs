@@ -1952,11 +1952,13 @@ if (touched('/cma/')) {
 // Review-by dates (Q2, D-DATA-19): nothing is flagged while in time; a year on, dscr.json's and tax.json's passed dates show beside their sources.
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await toReport(page);
   if (await page.getByTestId('review-due').count()) v('a source is flagged due for review on 02-10-2026');
   await ctx.close();
 }
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light', at: '2027-10-01T10:00:00+05:30' });
+  await toReport(page);
   const due = await page.getByTestId('review-due').allTextContents();
   if (!due.includes('Due for review since 30-09-2027.')) v(`dscr.json's passed review-by date is not flagged on 01-10-2027 (seen: ${due.join(' | ') || 'none'})`);
   await ctx.close();
