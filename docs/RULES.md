@@ -103,12 +103,12 @@ Dated 02-10-2026. Set by Claude at the owner's request (30-09-2026: work everyth
 | Extra income from the new asset | None beyond the growth | Leaving it out errs low. Add it if the asset adds to profit, from the month it starts running |
 | Depreciation | As this year, every year | Depreciation on the asset the loan buys is left out; it lowers tax, so leaving it out errs low |
 | Interest on other borrowings | As this year, every year, on top of this loan's interest | Working-capital limits are taken as unchanged |
-| Interest on working capital | None: the profit asked on the first screen is before all interest | Give the interest on a cash credit or overdraft under More options, if the business pays it |
+| Interest on working capital | None: the profit asked on the first screen is before all interest | Give the interest on a cash credit or overdraft in Professional mode, if the business pays it |
 | Loans already running | None | Change it if EMIs are paid on other loans: all of a proprietor's, business and personal; a firm's, LLP's or company's own loans only |
 | Other non-cash charges and lease rentals | None | Few small businesses have them |
 | The first year of the figures | The year the loan is first drawn | The business is running: it has this year's figures |
-| The loan | Drawn this month, repaid by EMI every month, with no moratorium | Change any of it under More options |
-| Promoters' loans | Kept in the business until this loan is repaid (subordinated) | The owner's answer of 11-10-2026 (D-UX-47). If they are repaid sooner, give the repayments under More options: the page shows the DSCR with them counted |
+| The loan | Drawn this month, repaid by EMI every month, with no moratorium | Most term loans are paid out at once and repaid by monthly EMI |
+| Promoters' loans | Kept in the business until this loan is repaid (subordinated) | A usual condition of a term loan. If any are repaid sooner, add the repayments in Professional mode |
 
 ## Construction and renovation estimates
 

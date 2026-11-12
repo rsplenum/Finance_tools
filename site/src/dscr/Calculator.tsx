@@ -574,7 +574,7 @@ export function LenderLines({ v, openMore }: { v: LenderView; openMore: () => vo
   </li>;
   const c = v.cash, a = v.audited, td = 'px-2 py-1 text-right tabular-nums';
   return <div data-testid="dscr-lender" class="mt-4 text-ink">
-    <p class="font-medium">As a lender tests it</p>
+    <p class="font-medium">More checks</p>
     {v.blocked && <p role="alert" class="mt-1 text-sm text-bad">{v.blocked}</p>}
     <ul class="mt-1 space-y-1 text-sm text-ink-muted">
       {v.stress.map((l, i) => line(l, LENDER.stress[i]?.id ?? String(i)))}
@@ -612,7 +612,7 @@ function LenderSection({ s, update, y }: { s: State; update: Update; y: Years })
   </div>;
   const aud = (k: keyof LenderText['audited'], label: string) => <TextField id={`fld-lender-audited-${k}`} label={label} unit="Rs." inputMode="decimal" value={l.audited[k]} tidy={tidyAmount}
     onCommit={(t) => set((x) => ({ ...x, audited: { ...x.audited, [k]: t } }))} />;
-  return <Section id="lender" title="As a lender tests it">
+  return <Section id="lender" title="More checks">
     <p class={`mt-1 ${HINT}`}>Optional. Each adds a line beside your DSCR; none changes it.</p>
     <h3 class="mt-4 font-medium text-ink">Sales, for the price and cost tests</h3>
     {byYear ? cells('sales', 'Sales') : <TextField id="fld-lender-sales" label="This year’s sales" unit="Rs." hint="They grow as the profit does." inputMode="decimal" value={l.sales[0] ?? ''}

@@ -59,6 +59,8 @@ A question the result needs is never dropped to look simple (D-UX-225): it moves
 
 ## 4. The page: every tool, the same five parts
 
+**Changed by Rahul on 12-11-2026 (D-UX-359), after trying NEW1 on a phone:** the page opens on what the tool answers in a line and Start, the example one quiet tap away; the questions come one a screen over the whole screen (`site/src/worked/Ask.tsx`), then the reading, the picture and the next step; "What we assumed" and "For professionals" are one closed Professional mode, the assumptions first, each with a Change; Undo and Start over stand beside the reading. Parts 1 and 5 below read in that light; the rest stands.
+
 1. **It opens working.** A fictional example that passes, marked "Example" on the page, on every figure that is its own and on any file made from it. One button: "Use your own figures".
 2. **The reading.** One sentence, the largest thing on the screen, plain words first and the banker's term second (UX2 rule 5). The cash comes first (D-POL-12): what the business can carry, beside what is asked. Three states: it carries it; it carries Rs. … of the Rs. … asked; as it stands it cannot. Never a bare ratio, never "3 of 8".
 3. **The picture.** One chart that shows the reading (the DSCR: cash for the loan against the repayments, year by year, the tightest year marked). Amounts by length on one scale, each also as a figure; a reference line never crosses the figures read against it (`docs/lessons/design.md`).

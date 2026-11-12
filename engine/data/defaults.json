@@ -69,7 +69,7 @@
       "what": "Interest on working capital",
       "value": 0,
       "shown": "None: the profit asked on the first screen is before all interest",
-      "why": "Give the interest on a cash credit or overdraft under More options, if the business pays it"
+      "why": "Give the interest on a cash credit or overdraft in Professional mode, if the business pays it"
     },
     {
       "id": "otherLoans",
@@ -97,14 +97,15 @@
       "what": "The loan",
       "value": "this-month",
       "shown": "Drawn this month, repaid by EMI every month, with no moratorium",
-      "why": "Change any of it under More options"
+      "why": "Most term loans are paid out at once and repaid by monthly EMI"
     },
     {
       "id": "promoters",
       "what": "Promoters' loans",
       "value": "subordinated",
       "shown": "Kept in the business until this loan is repaid (subordinated)",
-      "why": "The owner's answer of 11-10-2026 (D-UX-47). If they are repaid sooner, give the repayments under More options: the page shows the DSCR with them counted"
+      "why": "A usual condition of a term loan. If any are repaid sooner, add the repayments in Professional mode",
+      "decided": "The owner's answer of 11-10-2026 (D-UX-47)"
     }
   ]
 }

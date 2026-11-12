@@ -1,32 +1,43 @@
 /**
- * The DSCR, made new (NEW1, docs/WORKED-PAGE.md §4 and §7): a worked page, begun from a blank file. It opens on a marked
- * example that passes; the first phone screen holds the reading in one sentence (the cash first, the banker's term
- * second), one picture (cash against repayments by year, the tightest year marked), the facts as one sentence of
- * tappable figures, ink or pencil, and one next step. A tap opens one fact alone; "Use your own figures" walks them in
- * the ladder's order, and a figure shows from the first fact, marked with what it leaves out (rule 14, D-UX-358). When
- * it falls short, the engine's whole options that work, each as was → becomes, one tap to use and one to undo
- * (D-UX-346). Closed below: the working, what we assumed, For professionals (all the old page could do) and the paper.
- * Figures: the engine only, by way of `worked.ts` and `model.ts`.
+ * The DSCR (NEW1, finished in NEW1b from Rahul's review of 12-11-2026): what DSCR is in a few words, then the eight
+ * questions one a screen (so a phone's keyboard never hides the box), then the report: the reading in one sentence, the
+ * figures a lender reads first, the DSCR by year against the level, the cash against the repayments, the ways that work
+ * when it falls short, the answers as one sentence of tappable figures and the paper. Undo and Start over sit on top of
+ * the report. Closed below: the working; Professional mode, which lists what we assumed and holds every setting; the
+ * paper. Figures: the engine only, by way of `worked.ts` and `model.ts`.
  */
-import { useEffect, useMemo, useState } from 'preact/hooks';
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { isoDate } from '../download';
-import { useHomeCase } from '../fields';
+import { goTo, useHomeCase } from '../fields';
+import { Ask, type AskQuestion } from '../worked/Ask';
 import { Bars } from '../worked/Bars';
-import { FactSheet, type SheetFact } from '../worked/FactSheet';
 import { useWorkedKept, over } from '../worked/kept';
+import { Levels } from '../worked/Levels';
 import { Fold, FactLine, MAIN, openFold, QUIET, Reading } from '../worked/parts';
-import { DownloadSection, LenderLines, Professionals, Schedule, StatementTable, WorkingNotes, type Update } from './Calculator';
+import { DownloadSection, LenderLines, Professionals, Schedule, StatementTable, type Update } from './Calculator';
 import { DSCR_HOME } from './home-case';
 import { inr, rs } from '../../../engine/util';
-import { BORROWER_CHOICES, frontDoor, monthText, statusText, type Preview, type State } from './model';
+import { BORROWER_CHOICES, frontDoor, statusText, type Preview, type State } from './model';
 import {
   ASSUMED_FACTS, applyOption, barsOf, changedFacts, exampleCase, exampleFacts, exampleNeeds, exampleState, FACTS, factProblem, factsOf, factText,
-  markOf, nextOf, optionsFor, previewOf, readingOf, WALK, withMine, writeFact, type Case, type FactId, type OptionCard,
+  markOf, optionsFor, previewOf, readingOf, WALK, withMine, writeFact, type Case, type FactId, type OptionCard,
 } from './worked';
 import { N } from './words';
 
 const thisMonth = () => isoDate(new Date()).slice(0, 7);
+/** The kept case's shape is unchanged from NEW1: where it opens is worked out from it (`viewOf`). */
 const KEPT_VERSION = 1;
+/** The questions' order: who borrows, the business, then the loan, then the two that may be none. */
+const ORDER: FactId[] = ['borrower', 'profit', 'growth', 'amount', 'rate', 'years', 'emis', 'depreciation'];
+
+type View = { at: 'intro' } | { at: 'ask'; i: number; from: 'intro' | 'report'; single?: boolean } | { at: 'report' };
+
+/** Where a case opens: nothing answered, the start; every needed fact answered, the report; else the next question. */
+function viewOf(c: Case): View {
+  if (!c.mine.length) return { at: 'intro' };
+  if (WALK.every((id) => c.mine.includes(id))) return { at: 'report' };
+  return { at: 'ask', i: Math.max(0, ORDER.findIndex((id) => !c.mine.includes(id))), from: 'intro' };
+}
 
 /** The old page's draft (kept for the tab) brought forward: each fact it held is the borrower's; the rest stay the example's. */
 function forward(old: { v: number; c: unknown } | { legacy: unknown }): Case | undefined {
@@ -40,113 +51,153 @@ function forward(old: { v: number; c: unknown } | { legacy: unknown }): Case | u
     if (factText(s, id).trim()) mine.push(id);
     else if (WALK.includes(id)) s = writeFact(s, id, factText(ex, id));
   }
-  return { s, mine: mine.length ? mine : [] };
+  return { s, mine };
 }
 
-/** One fact as the sheet shows it. */
-function sheetFact(c: Case, id: FactId): SheetFact {
-  const t = factText(c.s, id), mine = c.mine.includes(id), shown = factsOf(c).find((f) => f.id === id)?.text ?? t;
-  const base = { id, label: N.label[id], hint: N.hint[id] };
-  if (id === 'borrower') return { ...base, value: c.s.borrower ?? '', choices: BORROWER_CHOICES.map((b) => ({ value: b.id, label: b.label })) };
-  const pencil = !mine && !ASSUMED_FACTS.includes(id);
+/** One question as the screen asks it: the borrower's answer in the box, empty while it is the example's. */
+function questionOf(c: Case, id: FactId): AskQuestion {
+  const mine = c.mine.includes(id), base = { id, question: N.ask.q[id], hint: N.ask.hint[id] };
+  if (id === 'borrower') return { ...base, value: mine ? c.s.borrower ?? '' : '', choices: BORROWER_CHOICES.map((b) => ({ value: b.id, label: b.label })) };
   const unit = id === 'profit' || id === 'amount' || id === 'emis' || id === 'depreciation' ? 'Rs.' : id === 'years' ? 'years' : '%';
-  const range = id === 'years' ? { min: 1, max: 20, step: 0.5 } : id === 'rate' ? { min: 6, max: 24, step: 0.25 } : id === 'growth' ? { min: -10, max: 30, step: 1 } : undefined;
-  return { ...base, value: pencil ? '' : t, unit, range, ...(pencil ? { example: shown, placeholder: N.sheet.example(t) } : {}) };
+  return { ...base, value: mine ? factText(c.s, id) : '', unit, none: ASSUMED_FACTS.includes(id) };
 }
 
 export function DscrWorked() {
   const [c, setC] = useState<Case>(() => exampleCase(thisMonth()));
-  const home = useHomeCase<Case>(setC, () => ({ s: DSCR_HOME, mine: [] }));
+  const [view, setView] = useState<View>({ at: 'intro' });
+  const home = useHomeCase<Case>((x) => { setC(x); setView({ at: 'report' }); }, () => ({ s: DSCR_HOME, mine: [] }));
   useWorkedKept({
     tool: 'dscr', version: KEPT_VERSION, blank: () => exampleCase(thisMonth()), forward,
     isBlank: (x) => !x.mine.length && JSON.stringify(x.s) === JSON.stringify(exampleState(thisMonth())),
-  }, c, setC);
+  }, c, (x) => { setC(x); setView(viewOf(x)); });
   const p = useMemo(() => previewOf(c.s), [c.s]);
   const r = readingOf(c, p);
   const options = useMemo(() => (r.state === 'short' || r.state === 'cannot' ? optionsFor(c.s, p) : []), [c.s, p, r.state]);
-  const next = nextOf(c, r, options.length);
-  const facts = factsOf(c), mark = markOf(c), pencil = exampleFacts(c).length > 0;
-  const [sheet, setSheet] = useState<{ id: FactId; walk: boolean; base: Case }>();
-  const [showOptions, setShowOptions] = useState(false);
-  const [used, setUsed] = useState<{ title: string; before: Case }>();
-  const [cleared, setCleared] = useState<Case>();
-  // On a phone the sheet covers the lower half: the reading and the picture are brought up above it, to move as it moves.
-  useEffect(() => {
-    if (!sheet || matchMedia('(min-width: 1024px)').matches) return;
-    const top = document.getElementById('reading-top');
-    if (top && Math.abs(top.getBoundingClientRect().top) > 16) top.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-  }, [sheet?.id]);
 
-  // A change from For professionals: whatever fact it touched becomes the borrower's.
-  const update: Update = (f) => setC((x) => { const s = f(x.s); return { s, mine: withMine(x.mine, changedFacts(x.s, s)) }; });
-  const open = (id: FactId, walk = false) => { setShowOptions(false); setSheet({ id, walk, base: c }); };
-  const live = (id: FactId, t: string) => {
-    if (!sheet) return;
+  // Undo: every change made from the report, the last twenty; typing in Professional mode counts as one change a pause.
+  const [past, setPast] = useState<Case[]>([]), last = useRef(0);
+  const remember = (x: Case, typing = false) => {
+    const now = Date.now();
+    if (typing && now - last.current < 1500) { last.current = now; return; }
+    last.current = typing ? now : 0;
+    setPast((h) => [...h.slice(-19), x]);
+  };
+  const undo = () => { const h = past[past.length - 1]; if (!h) return; setPast(past.slice(0, -1)); setC(h); setUsed(undefined); last.current = 0; };
+  const [used, setUsed] = useState<{ title: string }>();
+  const [cleared, setCleared] = useState<Case>();
+  const own = c.mine.length > 0 && !home;
+
+  // A change from Professional mode: whatever fact it touched becomes the borrower's.
+  const update: Update = (f) => { remember(c, true); setC((x) => { const s = f(x.s); return { s, mine: withMine(x.mine, changedFacts(x.s, s)) }; }); };
+  const ask = (i: number, from: 'intro' | 'report', single = false) => {
+    if (from === 'report' && !single) remember(c);
+    setView({ at: 'ask', i, from, single });
+  };
+  const answer = (i: number, t: string) => {
+    if (view.at !== 'ask') return;
+    const id = ORDER[i];
+    if (view.single) remember(c);
+    setC((x) => ({ s: writeFact(x.s, id, t), mine: withMine(x.mine, [id]) }));
     setUsed(undefined);
-    const b = sheet.base;
-    // Emptied: the example's figure stands again; for a stated assumption, empty is the borrower's "none".
-    if (!t.trim() && !ASSUMED_FACTS.includes(id)) setC(b);
-    else setC({ s: writeFact(b.s, id, t), mine: withMine(b.mine, [id]) });
+    if (view.single || i + 1 >= ORDER.length) setView({ at: 'report' });
+    else setView({ ...view, i: i + 1 });
   };
-  /** The walk's next fact: the ladder's order, after `id`, still the example's. */
-  const after = (id: FactId, x: Case) => WALK.slice(WALK.indexOf(id) + 1).find((f) => !x.mine.includes(f));
-  const step = (id: FactId, x: Case) => { const n = after(id, x); setSheet(n ? { id: n, walk: true, base: x } : undefined); };
-  const keep = (id: FactId) => { const x = { ...c, mine: withMine(c.mine, [id]) }; setC(x); if (sheet?.walk) step(id, x); else setSheet(undefined); };
-  const go = () => {
-    if (next.kind === 'paper') return openFold('paper');
-    if (next.kind === 'options') { setSheet(undefined); setShowOptions((o) => !o); return; }
-    const first = exampleFacts(c)[0] ?? WALK[0];
-    open(first, true);
+  const back = () => {
+    if (view.at !== 'ask') return;
+    if (view.single) setView({ at: 'report' });
+    else if (view.i > 0) setView({ ...view, i: view.i - 1 });
+    else setView(view.from === 'report' ? { at: 'report' } : { at: 'intro' });
   };
-  const use = (o: OptionCard) => { setUsed({ title: o.title, before: c }); setC(applyOption(c, o)); setShowOptions(false); };
-  const clear = () => { setCleared(c); setC(exampleCase(thisMonth())); setSheet(undefined); setUsed(undefined); };
-  // For professionals: every fact the borrower's and empty, the stated assumptions kept (the old page's opening form).
+  const use = (o: OptionCard) => { remember(c); setUsed({ title: o.title }); setC(applyOption(c, o)); };
+  const startOver = () => { setCleared(c); setPast([]); setUsed(undefined); setC(exampleCase(thisMonth())); setView({ at: 'intro' }); };
+  const example = () => { setC(exampleCase(thisMonth())); setView({ at: 'report' }); };
+  // Professional mode, from the start: every fact the borrower's and empty, the stated assumptions kept.
   const [emptied, setEmptied] = useState<Case>();
   const empty = (): Case => ({ s: frontDoor(thisMonth()), mine: [...FACTS] });
   const isEmpty = c.mine.length === FACTS.length && JSON.stringify(c.s) === JSON.stringify(empty().s);
-  const emptyForm = () => { setEmptied(c); setC(empty()); setSheet(undefined); setUsed(undefined); setShowOptions(false); };
+  const emptyForm = () => { remember(c); setEmptied(c); setC(empty()); setUsed(undefined); };
 
+  // A new screen starts at its top; the report's heading takes the focus, so a screen reader starts there too.
+  const heading = useRef<HTMLHeadingElement>(null), first = useRef(true);
+  useEffect(() => {
+    if (first.current) { first.current = false; return; }
+    if (view.at === 'ask') return;
+    scrollTo({ top: 0 });
+    heading.current?.focus({ preventScroll: true });
+  }, [view.at]);
+
+  if (view.at === 'ask') {
+    const id = ORDER[view.i];
+    return <Ask q={questionOf(c, id)} at={view.i + 1} of={ORDER.length} single={view.single}
+      words={{ ...N.ask, last: N.ask.see }} problem={(t) => factProblem(id, t)} onBack={back}
+      reads={(t) => (id === 'borrower' ? undefined : readBack(c, id, t))} onAnswer={(t) => answer(view.i, t)} />;
+  }
+
+  const target = c.s.target;
+  if (view.at === 'intro') {
+    return <section data-testid="intro" aria-labelledby="dscr-title" class="flex min-h-[70svh] flex-col justify-center pb-16 sm:min-h-0 sm:py-10">
+      <h1 id="dscr-title" ref={heading} tabIndex={-1} class="font-display text-[2rem] leading-[1.1] font-semibold tracking-[-0.01em] text-ink text-balance outline-none sm:text-[2.75rem]">{N.title}</h1>
+      <p data-testid="intro-lead" class="mt-4 max-w-[34rem] text-lg text-ink-muted text-pretty">{N.intro.lead(target.average.trim() || '1.50')}</p>
+      <p class="mt-6 text-sm text-ink-muted">{N.intro.size(ORDER.length)}</p>
+      <div class="mt-2 flex flex-wrap items-center gap-3">
+        <button type="button" data-testid="start" class={MAIN} onClick={() => ask(0, 'intro')}>{N.intro.start}</button>
+        <button type="button" data-testid="see-example" class={QUIET} onClick={example}>{N.intro.example}</button>
+      </div>
+      {cleared && <p role="status" class="mt-6 flex flex-wrap items-center gap-x-2 text-base text-ink-muted">{N.report.overDone}
+        <button type="button" data-testid="clear-undo" class={`${QUIET} -ml-1`} onClick={() => { setC(cleared); setView(viewOf(cleared)); setCleared(undefined); }}>{N.report.undo}</button></p>}
+      <p data-testid="kept-line" class="mt-10 text-sm text-ink-muted">{KEPT}</p>
+    </section>;
+  }
+
+  const left = exampleFacts(c), pencil = left.length > 0;
+  const mark = !pencil ? undefined : !c.mine.length ? (home ? N.report.home : N.report.example) : markOf(c);
+  const levelN = Number(target.minimum);
+  const levels = (p.marks ?? []).map((m) => ({
+    key: m.fy, label: m.fy, n: m.n, text: m.dscr, below: m.counted && !m.meets, note: !m.counted ? N.years.part : undefined,
+    spoken: `${m.fy}: DSCR ${m.dscr}${m.counted && !m.meets ? `, ${N.years.below} ${target.minimum}` : ''}`,
+  }));
   const bars = barsOf(p).map((b) => ({
     key: b.fy, label: b.fy, a: b.cash, b: b.service, aText: b.cashText, bText: b.serviceText, tight: b.tight, note: b.part ? 'part year' : undefined,
     spoken: `${b.fy}${b.tight ? `, ${N.chart.tight}` : ''}${b.part ? `, ${b.part}` : ''}: ${N.chart.cash} Rs. ${b.cashText} lakh, ${N.chart.service} Rs. ${b.serviceText} lakh`,
   }));
-  const walkAt = sheet?.walk ? { at: WALK.indexOf(sheet.id) + 1, of: WALK.length } : undefined;
+  const tap = (id: string) => ask(ORDER.indexOf(id as FactId), 'report', true);
+  const next = pencil ? { kind: 'ask', label: N.report.yours, go: () => ask(Math.max(0, ORDER.findIndex((id) => !c.mine.includes(id))), 'report') }
+    : { kind: 'paper', label: N.report.paper, go: () => openFold('paper') };
 
-  return <div class={sheet ? 'pb-[60svh]' : 'pb-24'}>
-    <div class="flex items-center justify-between gap-3">
-      <h1 class="font-heading text-base font-semibold text-ink">{N.title}</h1>
-      <a href="#paper" data-testid="paper-link" class={`${QUIET} -my-2.5 -mr-2 shrink-0 px-2`} onClick={(e) => { e.preventDefault(); openFold('paper'); }}>{N.paperLink}</a>
+  return <div data-testid="report" class="pb-24">
+    <div class="flex flex-wrap items-center justify-between gap-x-3">
+      <h1 id="dscr-title" ref={heading} tabIndex={-1} class="font-heading text-base font-semibold text-ink outline-none">{N.title}</h1>
+      <nav aria-label="Your answers" class="-mr-3 flex flex-wrap items-center">
+        {own && <button type="button" data-testid="change-answers" class={QUIET} onClick={() => ask(0, 'report')}>{N.report.change}</button>}
+        {past.length > 0 && <button type="button" data-testid="report-undo" class={QUIET} onClick={undo}>{N.report.undo}</button>}
+        {own ? <button type="button" data-testid="clear" class={QUIET} onClick={startOver}>{N.report.over}</button>
+          : <button type="button" data-testid="back-start" class={QUIET} onClick={() => setView({ at: 'intro' })}>{N.ask.back}</button>}
+      </nav>
     </div>
-    <div class="mt-3 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-x-16">
-      <div id="reading-top" class="scroll-mt-3">
-        <Reading text={r.text} banker={r.banker} state={r.state} pencil={pencil} />
-        {bars.length > 0 && <div class="mt-3"><Bars title={N.chart.title} aName={N.chart.cash} bName={N.chart.service} unit={N.chart.unit} tightName={N.chart.tight} rows={bars} /></div>}
+    {mark && <p data-testid="mark" class="mt-2 text-base text-ink-muted"><span class="mr-1.5 inline-flex items-center rounded-full bg-warn-tint px-2 py-0.5 text-sm font-semibold text-warn">{N.example}</span>
+      {home && !c.mine.length ? <span data-testid="home-case">{mark.replace(/^Example: /, '')}</span> : mark.replace(/^Example: /, '')}</p>}
+    <div class="mt-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-x-16">
+      <div>
+        <Reading text={r.text} state={r.state} pencil={pencil} />
+        <Tiles p={p} c={c} />
+        {levels.length > 0 && Number.isFinite(levelN) && <div class="mt-6"><Levels title={N.years.title} level={levelN} lineName={N.years.line(target.minimum)} belowName={`${N.years.below} ${target.minimum}`} rows={levels} /></div>}
+        {bars.length > 0 && <div class="mt-6"><Bars title={N.chart.title} aName={N.chart.cash} bName={N.chart.service} unit={N.chart.unit} tightName={N.chart.tight} rows={bars} /></div>}
       </div>
-      {/* The next step comes straight under the picture, so a phone's first screen holds all three; the facts follow it, in
-          the same order on a desktop, so Tab follows the eye (WCAG 2.4.3). */}
-      <section id="front-door" aria-label="Your figures" class="mt-3 flex flex-col lg:mt-1">
-        <div>
-          <button type="button" data-testid="next" data-next={next.kind} aria-expanded={next.kind === 'options' ? showOptions : undefined} class={MAIN} onClick={go}>{next.label}</button>
-          {used && <p role="status" data-testid="used" class="mt-3 flex flex-wrap items-center gap-x-2 text-base text-ink">{N.options.used(used.title)}
-            <button type="button" data-testid="undo" class={QUIET} onClick={() => { setC(used.before); setUsed(undefined); }}>{N.options.undo}</button></p>}
-          {showOptions && <Options options={options} onUse={use} />}
-        </div>
-        <div class="mt-6">
-          {mark && <p data-testid="mark" class="text-base text-ink-muted"><span class="mr-1.5 inline-flex items-center rounded-full bg-warn-tint px-2 py-0.5 text-sm font-semibold text-warn">{N.example}</span>{' '}{home && !c.mine.length ? <span data-testid="home-case">{N.mark.home.replace(/^Example: /, '')}</span> : mark.replace(/^Example: /, '')}</p>}
-          <FactLine facts={facts} open={sheet?.id} onTap={(id) => open(id as FactId)} label="The facts" />
-        </div>
-        {sheet && <FactSheet key={sheet.walk ? 'walk' : sheet.id} fact={sheetFact(c, sheet.id)} words={N.sheet}
-          problem={(t) => factProblem(sheet.id, t)} onLive={(t) => live(sheet.id, t)} onKeep={() => keep(sheet.id)}
-          walk={walkAt && { ...walkAt, onNext: () => step(sheet.id, c), onSkip: () => step(sheet.id, c) }}
-          onClose={() => setSheet(undefined)} />}
+      <section id="front-door" aria-label="Your answers" class="mt-6 flex flex-col lg:mt-1">
+        {options.length > 0 && <Options options={options} onUse={use} />}
+        {options.length === 0 && (r.state === 'short' || r.state === 'cannot') && <p class="mb-4 text-base text-ink-muted">{N.options.none}</p>}
+        {used && <p role="status" data-testid="used" class="mb-4 flex flex-wrap items-center gap-x-2 text-base text-ink">{N.options.used(used.title)}
+          <button type="button" data-testid="undo" class={QUIET} onClick={undo}>{N.options.undo}</button></p>}
+        <FactLine facts={factsOf(c)} onTap={tap} label="Your answers, each one tappable" />
+        <div class="mt-5"><button type="button" data-testid="next" data-next={next.kind} class={MAIN} onClick={next.go}>{next.label}</button></div>
       </section>
     </div>
 
     <div class="mt-12">
-      <Fold id="working" title={N.folds.working}><Working c={c} p={p} update={update} /></Fold>
-      <Fold id="assumed" title={N.folds.assumed}><Assumed c={c} p={p} /></Fold>
-      <Fold id="more-options" title={N.folds.pro}>
-        {(!isEmpty || emptied) && <p class="mb-6 flex flex-wrap items-center gap-x-2 text-base text-ink-muted">{N.blank.lead}
+      <Fold id="working" title={N.folds.working}><Working c={c} p={p} update={(f) => { remember(c); setC((x) => { const s = f(x.s); return { s, mine: withMine(x.mine, changedFacts(x.s, s)) }; }); }} /></Fold>
+      <Fold id="more-options" title={N.folds.pro} sub={N.folds.proSub}>
+        <Assumed p={p} />
+        {(!isEmpty || emptied) && <p class="mt-8 mb-6 flex flex-wrap items-center gap-x-2 text-base text-ink-muted">{N.blank.lead}
           {!isEmpty && <button type="button" data-testid="dscr-clear" class={`${QUIET} -ml-1`} onClick={emptyForm}>{N.blank.go}</button>}
           {isEmpty && emptied && <button type="button" data-testid="dscr-clear-undo" class={`${QUIET} -ml-1`} onClick={() => { setC(emptied); setEmptied(undefined); }}>{N.blank.undo}</button>}</p>}
         <Professionals s={c.s} update={update} />
@@ -155,18 +206,47 @@ export function DscrWorked() {
         <DownloadSection s={c.s} p={p} update={update} example={exampleNeeds(c)} bare />
       </Fold>
     </div>
-    <p data-testid="kept-line" class="mt-6 text-sm text-ink-muted">Your figures are saved on this device, in this browser only.{' '}
-      {c.mine.length > 0 && !home && <button type="button" data-testid="clear" class={QUIET} onClick={clear}>Start again from the example</button>}
-      {cleared && !c.mine.length && <button type="button" data-testid="clear-undo" class={QUIET} onClick={() => { setC(cleared); setCleared(undefined); }}>Undo</button>}
-    </p>
+    <p data-testid="kept-line" class="mt-6 text-sm text-ink-muted">{KEPT}</p>
   </div>;
+}
+
+const KEPT = 'Your answers stay on this device, in this browser only.';
+
+/** What a figure typed reads as, in the engine's words (Rs. 6 lakh), or nothing when it is said as typed. */
+function readBack(c: Case, id: FactId, t: string): string | undefined {
+  if (factProblem(id, t) || !t.trim()) return undefined;
+  const text = factsOf({ s: writeFact(c.s, id, t), mine: [...c.mine, id] }).find((f) => f.id === id)?.text;
+  return text && text.replace(/[\s,%]/g, '') !== t.replace(/[\s,%]/g, '') ? text : undefined;
+}
+
+/** The figures a lender reads first, each against the level they look for: the engine's own words and figures; each a
+ * "—" until every figure is understood (UX8, D-UX-106). */
+function Tiles({ p, c }: { p: Preview; c: Case }) {
+  if (p.blocked) return null;
+  const t = c.s.target, emi = /^EMI (.+) a month$/.exec(p.loanLine?.instalment ?? '');
+  const tile = 'rounded-card bg-surface px-3.5 py-3';
+  return <dl data-testid="tiles" class="mt-5 grid grid-cols-2 gap-2">
+    <div class={tile}><dt class="text-sm text-ink-muted">{N.tiles.average}</dt>
+      <dd><span data-testid="dscr-average" class="block text-[1.75rem] leading-tight font-semibold text-ink tabular-nums">{p.average ?? '—'}</span>
+        {t.average.trim() && <span class="text-sm text-ink-muted">{N.tiles.against(t.average)}</span>}</dd></div>
+    <div class={tile}><dt class="text-sm text-ink-muted">{N.tiles.lowest}</dt>
+      <dd><span data-testid="dscr-lowest" class="block text-[1.75rem] leading-tight font-semibold text-ink tabular-nums">{p.lowest ?? '—'}</span>
+        <span class="text-sm text-ink-muted">{p.lowestYear && <span data-testid="dscr-lowest-year" class="whitespace-nowrap">{N.tiles.inYear(p.lowestYear)}</span>}
+          {t.minimum.trim() && <>{p.lowestYear ? ' · ' : ''}{N.tiles.against(t.minimum)}</>}</span></dd></div>
+    {c.s.source === 'plan' && <>
+      <div class={tile}><dt class="text-sm text-ink-muted">{emi ? N.tiles.emi : 'Each instalment'}</dt>
+        <dd data-testid="dscr-instalment" class={`font-semibold text-ink tabular-nums ${emi || !p.loanLine ? 'text-xl' : 'text-base'}`}>{emi ? emi[1] : p.loanLine?.instalment ?? '—'}</dd></div>
+      <div class={tile}><dt class="text-sm text-ink-muted">{N.tiles.interest}</dt>
+        <dd data-testid="dscr-total-interest" class="text-xl font-semibold text-ink tabular-nums">{p.loanLine?.totalInterest ?? '—'}</dd></div>
+    </>}
+  </dl>;
 }
 
 /** The engine's whole options that work (D-UX-346): was → becomes, each used in one tap. */
 function Options({ options, onUse }: { options: OptionCard[]; onUse: (o: OptionCard) => void }) {
-  return <div data-testid="options" class="mt-5">
+  return <div data-testid="options" class="mb-6">
     <h2 class="font-heading text-xl font-semibold text-ink">{N.options.title}</h2>
-    <p class="mt-1 text-base text-ink-muted">{options.length ? N.options.lead : N.options.none}</p>
+    <p class="mt-1 text-base text-ink-muted">{N.options.lead}</p>
     <ul class="mt-3 space-y-3">
       {options.map((o) => <li key={o.id} data-testid={`option-${o.id}`} class="rounded-card border border-line bg-surface p-4">
         <h3 class="font-semibold text-ink">{o.title}</h3>
@@ -184,24 +264,15 @@ function Options({ options, onUse }: { options: OptionCard[]; onUse: (o: OptionC
   </div>;
 }
 
-/** See the working: the key figures, the statement that adds up, the lender's tests and the schedule. */
+/** See the working: where it stands, the verdict, the largest loan and the fewest instalments, each year against the
+ * target, the other checks, the statement that adds up and the schedule. */
 function Working({ c, p, update }: { c: Case; p: Preview; update: Update }) {
-  const toPro = () => openFold('more-options');
-  const cell = 'rounded-control bg-surface p-3', largest = p.largest?.amount, fewest = p.fewest?.instalments;
+  const largest = p.largest?.amount, fewest = p.fewest?.instalments;
   return <div>
     <p data-testid="dscr-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class="mb-1 text-base text-ink">{statusText(p)}</p>
     {p.needs.length > 0 && <ul data-testid="dscr-needs" class="mb-3 list-disc space-y-0.5 pl-5 text-base text-ink-muted">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>}
     {p.blocked && <p data-testid="dscr-blocked" role="alert" class="text-bad">{p.blocked}</p>}
-    {!p.blocked && <dl class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <div class={cell}><dt class="text-sm text-ink-muted">Average DSCR</dt><dd data-testid="dscr-average" class="text-2xl font-semibold text-ink tabular-nums">{p.average ?? '—'}</dd></div>
-      <div class={cell}><dt class="text-sm text-ink-muted">Lowest year</dt><dd class="text-ink"><span data-testid="dscr-lowest" class="text-2xl font-semibold tabular-nums">{p.lowest ?? '—'}</span>
-        {p.lowestYear && <>{' '}<span data-testid="dscr-lowest-year" class="whitespace-nowrap text-sm">in {p.lowestYear}</span></>}</dd></div>
-      {c.s.source === 'plan' && <>
-        <div class={cell}><dt class="text-sm text-ink-muted">Each instalment</dt><dd data-testid="dscr-instalment" class="font-semibold text-ink tabular-nums">{p.loanLine?.instalment ?? '—'}</dd></div>
-        <div class={cell}><dt class="text-sm text-ink-muted">Interest over the whole loan</dt><dd data-testid="dscr-total-interest" class="font-semibold text-ink tabular-nums">{p.loanLine?.totalInterest ?? '—'}</dd></div>
-      </>}
-    </dl>}
-    {p.verdict && <p data-testid="dscr-verdict" class="mt-4 text-ink">{p.verdict.text}</p>}
+    {p.verdict && <p data-testid="dscr-verdict" class="mt-2 text-ink">{p.verdict.text}</p>}
     {p.largest && <p class="mt-2 flex flex-wrap items-center gap-x-2 text-ink"><span data-testid="dscr-largest">{p.largest.text}</span>
       {largest !== undefined && <button type="button" data-testid="use-amount" class={`${QUIET} -ml-3`} onClick={() => update((x) => ({ ...x, loan: { ...x.loan, amount: inr(largest) } }))}>Use {rs(largest)}</button>}</p>}
     {p.fewest && <p class="mt-2 flex flex-wrap items-center gap-x-2 text-ink"><span data-testid="dscr-fewest">{p.fewest.text}</span>
@@ -210,36 +281,35 @@ function Working({ c, p, update }: { c: Case; p: Preview; update: Update }) {
       {p.marks.map((m) => <li key={m.fy} data-testid={`mark-${m.fy}`} class={`rounded-full bg-surface px-2.5 py-0.5 ${!m.counted ? 'text-ink-muted' : m.meets ? 'text-good' : 'text-bad'}`}>
         {m.fy}: {m.dscr}, {!m.counted ? 'not counted' : m.meets ? 'meets the target' : 'below the target'}</li>)}
     </ul>}
-    {p.lender && <LenderLines v={p.lender} openMore={toPro} />}
+    {p.lender && <LenderLines v={p.lender} openMore={() => openFold('more-options', false)} />}
     {p.statement && <StatementTable st={p.statement} parts={p.partYears} />}
     {p.beforeStart && <p data-testid="dscr-before-start" class="mt-2 text-sm text-ink-muted">{p.beforeStart}</p>}
     {p.notCounted && <p data-testid="dscr-not-counted" class="mt-2 text-sm text-ink-muted">{p.notCounted}</p>}
     {p.notes.length > 0 && <ul data-testid="dscr-notes" class="mt-2 space-y-0.5 text-sm text-warn">{p.notes.map((n) => <li key={n}>{n}</li>)}</ul>}
     {p.schedule && <Schedule sch={p.schedule} />}
-    <WorkingNotes s={c.s} p={p} />
   </div>;
 }
 
 /** A reason as the borrower reads it: the pointer to our own files (its source, kept in the data) left off the screen. */
 const plain = (why: string) => why.replace(/\s*\([^()]*\b[\w/.-]+\.(?:md|json)\)/g, '');
 
-/** What we assumed: each pencil with its reason, the example's facts still standing, and when the loan is taken as drawn. */
-function Assumed({ c, p }: { c: Case; p: Preview }) {
-  const left = exampleFacts(c), shown = factsOf(c);
-  const s = c.s, drawn = s.door && s.loan.disbursed === s.door.month;
-  return <div class="space-y-6">
-    {left.length > 0 && <div data-testid="assumed-example">
-      <h3 class="font-semibold text-ink">{N.assumed.example}</h3>
-      <ul class="mt-1 space-y-1 text-base text-ink">{left.map((id) => <li key={id} class="flex justify-between gap-3">
-        <span class="text-ink-muted">{N.label[id]}</span><button type="button" class="text-right text-link underline underline-offset-4" onClick={() => document.querySelector<HTMLButtonElement>(`[data-fact="${id}"]`)?.click()}>{shown.find((f) => f.id === id)?.text}</button>
-      </li>)}</ul>
-    </div>}
-    {drawn && <p data-testid="fd-loan-note" class="text-base text-ink">{N.assumed.drawn(monthText(s.door!.month))}</p>}
-    <dl data-testid="dscr-assumed" class="space-y-3">
-      {p.assumed.map((a) => <div key={a.id} data-testid={`assumed-${a.id}`}>
-        <dt class="font-medium text-ink">{a.what}: <span class="font-normal">{a.shown}</span></dt>
-        <dd class="text-sm text-ink-muted">{plain(a.why)}. <a href="#more-options" class="text-link underline underline-offset-4" onClick={(e) => { e.preventDefault(); openFold('more-options'); }}>Change</a></dd>
-      </div>)}
-    </dl>
+/** What we assumed, at the top of Professional mode: each as one line, its reason a tap away, and a way to its setting. */
+function Assumed({ p }: { p: Preview }) {
+  const rows = p.assumed.map((a) => ({ ...a, why: plain(a.why) }));
+  if (!rows.length) return null;
+  return <div data-testid="dscr-assumed">
+    <h3 class="font-heading text-lg font-semibold text-ink">{N.pro.assumed}</h3>
+    <ul class="mt-2 divide-y divide-line border-y border-line">
+      {rows.map((a) => <li key={a.id} data-testid={`assumed-${a.id}`}>
+        <details class="group/a">
+          <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 py-2.5 [&::-webkit-details-marker]:hidden">
+            <span class="min-w-0"><span class="block font-medium text-ink">{a.what}</span><span class="block text-base text-ink-muted">{a.shown}</span></span>
+            <span class="shrink-0 text-sm font-medium text-link underline underline-offset-4">{N.pro.why}</span>
+          </summary>
+          <p class="pb-3 text-sm text-ink-muted">{a.why}.{a.where && <>{' '}<a href={`#${a.where}`} class="text-link underline underline-offset-4" onClick={goTo(a.where)}>Change</a></>}</p>
+        </details>
+      </li>)}
+    </ul>
+    <p class="mt-2 text-sm text-ink-muted">{N.pro.change}</p>
   </div>;
 }

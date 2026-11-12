@@ -290,18 +290,49 @@ const openFold = async (page, id) => {
   const d = page.locator(`#${id}`);
   if (!(await d.evaluate((x) => x.open))) await d.locator(':scope > summary').click();
 };
-/** The DSCR (NEW1) opens on a marked example; its detailed checks start from For professionals' form emptied (the stated
- * assumptions kept, as the old page opened), with the working, the assumptions and the paper open to read. */
+/** The DSCR (NEW1b) opens on what DSCR is and Start; See an example opens the report on a marked example. */
+const toReport = async (page) => {
+  await page.locator('[data-testid="intro"], [data-testid="report"]').first().waitFor();
+  if (await page.getByTestId('intro').count()) await page.getByTestId('see-example').click();
+  await page.getByTestId('report').waitFor();
+};
+/** Its detailed checks start from Professional mode's form emptied (the stated assumptions kept, as the old page opened),
+ * with the working, Professional mode and the paper open to read. */
 const fromBlank = async (page) => {
-  for (const id of ['working', 'assumed', 'more-options', 'paper']) await openFold(page, id);
+  await toReport(page);
+  for (const id of ['working', 'more-options', 'paper']) await openFold(page, id);
   await page.getByTestId('dscr-clear').click();
 };
-/** A fact on the DSCR's first screen typed into its sheet, and the sheet closed. */
+/** One answer on its own screen: a choice is answered by its tap; a figure is typed and Next (Done) tapped; '' is None. */
+const answer = async (page, id, value) => {
+  await page.locator(`[data-testid="ask"][data-step="${id}"]`).waitFor();
+  if (id === 'borrower') return page.getByTestId(`ask-choice-${value}`).click();
+  if (value === '' && await page.getByTestId('ask-none').count()) return page.getByTestId('ask-none').click();
+  await page.getByTestId('ask-field').fill(value);
+  await page.getByTestId('ask-next').click();
+};
+/** A fact in the report's sentence tapped, answered on its own screen, and back on the report. */
 const typeFact = async (page, id, value) => {
+  await toReport(page);
   await page.locator(`[data-fact="${id}"]`).click();
-  if (id === 'borrower') await page.getByTestId(`sheet-choice-${value}`).click();
-  else await page.getByTestId('sheet-field').fill(value);
-  await page.getByTestId('sheet-done').click();
+  await answer(page, id, value);
+  await page.getByTestId('report').waitFor();
+};
+/** The eight questions from Start, in the order asked, each answered from `facts` (a fact not given is None). Returns the
+ * steps seen and the most fields any one of them showed. */
+const answerAll = async (page, facts) => {
+  if (await page.getByTestId('start').count()) await page.getByTestId('start').click();
+  const seen = [];
+  let most = 0;
+  for (let i = 0; i < 12 && await page.locator('[data-testid="ask"]').count(); i++) {
+    const step = await page.getByTestId('ask').getAttribute('data-step');
+    seen.push(step);
+    most = Math.max(most, await asked(page, '[data-testid="ask"]'));
+    await answer(page, step, facts[step] ?? '');
+    await page.waitForFunction((s) => document.querySelector('[data-testid="ask"]')?.getAttribute('data-step') !== s, step);
+  }
+  await page.getByTestId('report').waitFor();
+  return { seen, most };
 };
 /** A closed line on the planning estimate opened by a tap, as a user would (V1): a section, the other things to check, what the estimate assumes. */
 const tap = async (page, id) => {
@@ -507,7 +538,7 @@ if (touched('/dscr/')) {
   // depreciation are asked (only the later years were typed).
   await expectFigures(page, v, 'dscr-status', '2', 'a first year with interest only');
   if (!(await page.isChecked('#fld-start-2026-27'))) v("the figures do not start in the loan's first year as assumed");
-  await expectText(page, v, 'assumed-start', /^The first year of the figures: The year the loan is first drawn ?\S.* Change$/, 'the start assumption listed, with its reason');
+  await expectText(page, v, 'assumed-start', /^The first year of the figures ?The year the loan is first drawn ?Why ?\S.*\.( Change)?$/, 'the start assumption listed, with its reason');
   await expectFigures(page, v, page.getByTestId('start-question').locator('p').first(), '2026-27 72,000', 'the question about the first year');
   await page.check('#fld-start-2027-28');
   await expectFigures(page, v, 'dscr-status', '7', 'figures starting in 2027-28');
@@ -669,7 +700,7 @@ if (touched('/dscr/')) {
   await expectFigures(page, v, 'tax-by', '5% 30% 4% 12,00,000', "a proprietor's tax");
   await expectFigures(page, v, 'tax-2026-27', '0', "a proprietor's tax");
   await expectFigures(page, v, 'dscr-average', '1.41', "a proprietor's tax");
-  await expectText(page, v, 'assumed-proprietorTax', /^A proprietor's tax: The new regime's slab rates, on the business's profit as the only income ?\S.* Change$/, "a proprietor's tax, with its reason");
+  await expectText(page, v, 'assumed-proprietorTax', /^A proprietor's tax ?The new regime's slab rates, on the business's profit as the only income ?Why ?\S.*\.( Change)?$/, "a proprietor's tax, with its reason");
   await page.check('#fld-otherLoansInterest-emi');
   await expectText(page, v, 'emis-ask', 'All EMIs a month, business and personal (home, car, personal loans).', "a proprietor's EMIs");
   await leave(page, '#fld-emi-1', '20000');
@@ -719,31 +750,37 @@ if (touched('/dscr/')) {
   await ctx.close();
 }
 
-// The DSCR's first screen (NEW1, docs/WORKED-PAGE.md §2), on a 375 × 667 phone in November 2026, the month of
-// tests/dscr-worked.test.ts: the reading, the picture and the one next step with no scroll and no field; the example
-// marked; every fold closed; the paper one tap away, every file from it marked Example. Then the facts, one at a time
-// (D-UX-10: at most 8 facts, and 8 fields with a fact open). A textbook EMI: Rs. 10,00,000 at 12% for one year is
+// The DSCR (NEW1b, Rahul's review of 12-11-2026) on a 375 × 667 phone in November 2026, the month of
+// tests/dscr-worked.test.ts. It opens on what DSCR is and Start, with no field; See an example opens the report, marked,
+// every fold closed, the paper's files marked Example. Then the questions, one a screen with one field each (D-UX-10: at
+// most 8 questions, and at most 8 facts in the report's sentence). A textbook EMI: Rs. 10,00,000 at 12% for one year is
 // Rs. 88,848.79 a month; 12 of them less the loan is Rs. 66,185 of interest. The loan drawn in November: 2026-27 holds
 // five of its twelve months.
 const NOV = '2026-11-02T10:00:00+05:30';
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light', at: NOV });
   await page.setViewportSize({ width: 375, height: 667 });
-  for (const id of ['working', 'assumed', 'more-options', 'paper']) if (await page.locator(`#${id}`).evaluate((d) => d.open)) v(`${id} is open on load`);
+  await page.getByTestId('intro').waitFor();
   const first = await page.evaluate(() => {
     const foot = (id) => document.querySelector(`[data-testid="${id}"]`)?.getBoundingClientRect().bottom ?? 9999;
-    const fields = [...document.querySelectorAll('main input, main select, main textarea')].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && r.top < innerHeight; });
-    return { reading: foot('reading'), bars: foot('bars'), next: foot('next'), fields: fields.length, mains: document.querySelectorAll('[data-testid="next"]').length };
+    const fields = [...document.querySelectorAll('main input, main select, main textarea')].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
+    return { lead: foot('intro-lead'), start: foot('start'), fields: fields.length };
   });
-  for (const k of ['reading', 'bars', 'next']) if (first[k] > 667) v(`375 × 667: the ${k} is not on the first screen (its foot at ${Math.round(first[k])} px)`);
+  for (const k of ['lead', 'start']) if (first[k] > 667) v(`375 × 667: the ${k} is not on the first screen (its foot at ${Math.round(first[k])} px)`);
   if (first.fields) v(`375 × 667: ${first.fields} fields show on opening`);
-  if (first.mains !== 1) v(`${first.mains} main buttons, not one`);
+  await expectText(page, v, 'intro-lead', /^Banks check it with the DSCR: .* Most look for 1\.50 or more\.$/, 'what DSCR is, in a few words');
+  await layout(page, v, 'the start, 375 px');
+  await page.getByTestId('see-example').click();
+  for (const id of ['working', 'more-options', 'paper']) if (await page.locator(`#${id}`).evaluate((d) => d.open)) v(`${id} is open on the example`);
+  const top = await page.evaluate(() => ({ reading: document.querySelector('[data-testid="reading"]')?.getBoundingClientRect().bottom ?? 9999, mains: document.querySelectorAll('[data-testid="next"]').length }));
+  if (top.reading > 667) v(`375 × 667: the example's reading is not on the first screen (its foot at ${Math.round(top.reading)} px)`);
+  if (top.mains !== 1) v(`${top.mains} main buttons on the report, not one`);
   await expectText(page, v, 'mark', /^Example /, 'the example marked');
   // The largest loan the example carries, solved directly in tests/dscr-worked.test.ts.
   await expectFigures(page, v, 'reading', '14.39lakh 12lakh …', 'the example');
-  if (await page.getByTestId('next').getAttribute('data-next') !== 'own') v('the example: the next step is not "Use your own figures"');
-  await page.getByTestId('paper-link').click();
-  if (!(await page.locator('#paper').evaluate((d) => d.open))) v('"The paper" does not open the paper');
+  if (await page.getByTestId('next').getAttribute('data-next') !== 'ask') v('the example: the next step is not "Answer the 8 questions"');
+  if (!(await page.getByTestId('levels').isVisible())) v('the example: no DSCR by year');
+  await openFold(page, 'paper');
   for (const id of ['download-pdf', 'download-xlsx', 'download-docx', 'print']) if (await page.getByTestId(id).count() !== 1) v(`the paper: no ${id}`);
   const save = saver(page, v);
   const pdf = await save('download-pdf');
@@ -752,103 +789,133 @@ if (touched('/dscr/')) {
   if (!pages.every((t) => t.startsWith('DSCR statement Example\n'))) v(`the example's PDF is not marked Example on every page: ${JSON.stringify(pages[0].slice(0, 60))}`);
   const xlsx = await save('download-xlsx');
   if (xlsx.name !== 'DSCR statement (example).xlsx') v(`the example's Excel copy is named "${xlsx.name}"`);
-  // A fact opens alone: the reading stays in view above it; Escape closes it and gives the focus back.
-  await page.locator('[data-fact="profit"]').click();
-  await ceiling(page, v, 8, 'the front door with a fact open', '#front-door');
+  // The questions, from the report's next step: one field a screen, the box and Next in view above a phone's keyboard.
+  await page.getByTestId('next').click();
+  await page.getByTestId('ask').waitFor();
+  if (!(await page.evaluate(() => document.activeElement?.getAttribute('data-testid')?.startsWith('ask-choice-')))) v('the first question does not take the focus');
+  await answer(page, 'borrower', 'firm');
+  await page.locator('[data-testid="ask"][data-step="profit"]').waitFor();
+  const box = await page.evaluate(() => ({ box: document.querySelector('[data-testid="ask-field"]')?.getBoundingClientRect().bottom ?? 9999, next: document.querySelector('[data-testid="ask-next"]')?.getBoundingClientRect().bottom ?? 9999 }));
+  if (box.box > 260 || box.next > 340) v(`375 × 667: the box ends ${Math.round(box.box)} px and Next ${Math.round(box.next)} px down, into where a phone's keyboard opens`);
+  await page.getByTestId('ask-field').fill('lots');
+  await page.getByTestId('ask-next').click();
+  await page.waitForSelector('[data-testid="ask-field"][aria-invalid="true"]', { timeout: 3000 }).catch(() => v('"lots" for the profit is not flagged'));
+  if ((await page.getByTestId('ask').getAttribute('data-step')) !== 'profit') v('a figure not understood moved on');
+  await page.getByTestId('ask-field').fill('5 L');
+  await expectText(page, v, 'ask-said', 'Reads as Rs. 5 lakh', 'the profit read back');
+  if (!(await page.evaluate(() => document.activeElement?.getAttribute('data-testid') === 'ask-field'))) v('the box loses the focus');
+  await page.getByTestId('ask-next').click();
+  const walk = await answerAll(page, { growth: '10', amount: '10 L', rate: '12', years: '1' });
+  const steps = ['borrower', 'profit', ...walk.seen];
+  if (steps.join(' ') !== 'borrower profit growth amount rate years emis depreciation') v(`the questions asked: ${steps.join(', ')}`);
+  if (steps.length > 8) v(`${steps.length} questions, over Rahul's 8 (CLAUDE.md rule 17)`);
+  if (walk.most > 1) v(`a question shows ${walk.most} fields, not one`);
   const facts = await page.locator('#front-door [data-fact]').count();
-  if (facts > 8) v(`the front door has ${facts} facts, over Rahul's 8 (CLAUDE.md rule 17)`);
-  if (!(await page.getByTestId('reading').isVisible())) v('the reading is not in view with a fact open');
-  await page.keyboard.press('Escape');
-  if (await page.getByTestId('sheet').count()) v('Escape leaves the fact open');
-  if (!(await page.evaluate(() => document.activeElement?.getAttribute('data-fact') === 'profit'))) v('Escape does not give the focus back to the figure');
-  for (const [id, x] of [['borrower', 'firm'], ['profit', '5 L'], ['growth', '10'], ['amount', '10 L'], ['rate', '12'], ['years', '1']]) await typeFact(page, id, x);
-  if (await page.getByTestId('mark').count()) v('every fact typed: the example mark still shows');
-  await openFold(page, 'working');
+  if (facts > 8) v(`the report's sentence has ${facts} facts, over Rahul's 8 (CLAUDE.md rule 17)`);
+  await ceiling(page, v, 0, 'the report', '[data-testid="report"]');
+  if (await page.getByTestId('mark').count()) v('every question answered: the example mark still shows');
+  if (await page.getByTestId('next').getAttribute('data-next') !== 'paper') v('every question answered: the next step is not the paper');
   await expectFigures(page, v, 'dscr-instalment', '88,848.79', 'the textbook EMI');
   await expectFigures(page, v, 'dscr-total-interest', '66,185', 'the textbook EMI');
+  await openFold(page, 'working');
   await expectFigures(page, v, 'part-2026-27', '5 12', 'the first part-year');
   if (!(await page.getByTestId('dscr-marks').isVisible())) v('the years are not marked against the target');
-  if (await page.locator('#more-options').evaluate((d) => d.open)) v('For professionals opened by itself');
-  await openFold(page, 'assumed');
+  if (await page.locator('#more-options').evaluate((d) => d.open)) v('Professional mode opened by itself');
+  // What we assumed heads Professional mode, each with its reason and a way to its setting.
+  await openFold(page, 'more-options');
   await expectFigures(page, v, 'assumed-target', '1.50 1.25', 'the target among the assumptions');
-  await expectFigures(page, v, 'fd-loan-note', '2026', 'the loan taken as drawn this month');
-  await layout(page, v, 'the facts typed, 375 px');
-  // D1 (D-UX-47): the lenders' lines beside the DSCR, their inputs only under For professionals; the front door still asks 8.
+  await expectFigures(page, v, 'assumed-loanStart', '…', 'the loan taken as drawn this month');
+  await layout(page, v, 'the questions answered, 375 px');
+  // D1 (D-UX-47): the lenders' lines in the working, their inputs only in Professional mode; the questions still 8.
   if (!(await page.getByTestId('lender-ask').isVisible())) v('D1: no line asking for sales beside the DSCR');
-  await expectText(page, v, 'lender-promoters', "Promoters' loans are kept in the business until this loan is repaid (subordinated).", 'D1');
   const avg = await page.getByTestId('dscr-average').textContent();
   await page.getByTestId('lender-ask').locator('a').click();
   await leave(page, '#fld-lender-sales', '50 L');
   if (!/^Sales price 5% lower: average \d\.\d{2,4}, lowest /.test((await page.getByTestId('lender-price').textContent()) ?? '')) v('D1: no line for the sales price 5% lower');
   if (!(await page.getByTestId('lender-costs').count())) v('D1: no line for costs 10% higher');
   if ((await page.getByTestId('dscr-average').textContent()) !== avg) v('D1: the sales changed the borrower\'s DSCR');
-  await ceiling(page, v, 8, "the front door after the lenders' tests", '#front-door');
   await layout(page, v, 'the lenders\' tests open, 375 px');
+  // Undo and Start over on top of the report (Rahul: "no option to undo or reset … it's not where it should be").
+  if (!(await page.getByTestId('report-undo').isVisible())) v('a change in Professional mode gives no Undo on top of the report');
+  if (!(await page.getByTestId('clear').isVisible())) v('no Start over on top of the report');
   await page.setViewportSize({ width: 1280, height: 900 });
-  await layout(page, v, 'the facts typed, 1280 px');
+  await layout(page, v, 'the questions answered, 1280 px');
   await ctx.close();
 }
 
 // When it falls short (D-UX-346): the home page's case S, worked by hand in tests/dscr-worked.test.ts and
 // tests/dscr-plan.test.ts, drawn in October 2026 as there (a firm, Rs. 4,50,000 this year with no growth; Rs. 12,00,000 at 12% over 5 years; the targets
-// 1.50 and 1.25), in the dark. The reading gives the loan it carries beside the one asked; the next step is the ways that
-// work, each as was → becomes; repaying over longer is 7 years 7 months, 91 EMIs of Rs. 20,145.98 (P·r ÷ (1 − (1 + r)^−n)).
-// Used, it meets and the paper is next; Undo puts the loan back.
+// 1.50 and 1.25), in the dark. The reading gives the loan it carries beside the one asked; the ways that work stand under
+// it with no tap, each as was → becomes; repaying over longer is 7 years 7 months, 91 EMIs of Rs. 20,145.98
+// (P·r ÷ (1 − (1 + r)^−n)). Used, it meets; Undo, beside it and on top of the report, puts the loan back.
+const CASE_S = { borrower: 'firm', profit: '4.5 L', growth: '0', amount: '12 L', rate: '12', years: '5' };
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'dark' });
   await page.setViewportSize({ width: 375, height: 667 });
-  for (const [id, x] of [['borrower', 'firm'], ['profit', '4.5 L'], ['growth', '0'], ['amount', '12 L'], ['rate', '12'], ['years', '5']]) await typeFact(page, id, x);
+  await layout(page, v, 'the start, dark, 375 px');
+  await page.getByTestId('start').click();
+  await layout(page, v, 'a question, dark, 375 px');
+  await answerAll(page, CASE_S);
   await expectFigures(page, v, 'reading', '9.56lakh 12lakh …', 'case S');
-  const next = page.getByTestId('next');
-  if (await next.getAttribute('data-next') !== 'options') v(`case S: the next step is "${await next.getAttribute('data-next')}", not the ways that work`);
-  await next.click();
-  for (const id of ['longer', 'own', 'mix']) if (!(await page.getByTestId(`option-${id}`).isVisible())) v(`case S: no option ${id}`);
+  for (const id of ['longer', 'own', 'mix']) if (!(await page.getByTestId(`option-${id}`).isVisible())) v(`case S: no option ${id} under the reading`);
   await expectFigures(page, v, 'option-longer', '5 7 7 12,00,000 … 20,145.98 …', 'case S, repay over longer');
   await layout(page, v, 'case S, the ways that work, dark, 375 px');
   await page.getByTestId('use-longer').click();
   await expectText(page, v, 'used', /^Used: Repay over longer\./, 'case S, repay over longer used');
-  if (await next.getAttribute('data-next') !== 'paper') v('case S: once it works the next step is not the paper');
+  if (await page.getByTestId('next').getAttribute('data-next') !== 'paper') v('case S: once it works the next step is not the paper');
+  await expectFigures(page, v, 'dscr-instalment', '20,145.98', 'case S, repay over longer used');
   await openFold(page, 'working');
   await expectFigures(page, v, 'dscr-verdict', '… meets …', 'case S, repay over longer used');
-  await expectFigures(page, v, 'dscr-instalment', '20,145.98', 'case S, repay over longer used');
   await page.getByTestId('undo').click();
   await expectFigures(page, v, 'reading', '9.56lakh 12lakh …', 'case S, undone');
-  if (await next.getAttribute('data-next') !== 'options') v('case S: Undo does not bring back the ways that work');
+  if (!(await page.getByTestId('option-longer').isVisible())) v('case S: Undo does not bring back the ways that work');
+  // One answer changed from the report's sentence, then undone from the top of the report.
+  await typeFact(page, 'amount', '9 L');
+  await expectFigures(page, v, 'reading', '… 9lakh …', 'case S, the loan changed to 9 lakh');
+  await page.getByTestId('report-undo').click();
+  await expectFigures(page, v, 'reading', '9.56lakh 12lakh …', 'case S, the change undone');
   await ctx.close();
 }
 
-// Kept on the device (docs/WORKED-PAGE.md §4): a fact typed is saved under one versioned key and nothing else; a reload
-// and a visit with home's case keep it; an old shape is brought forward or dropped, never half-read; "Start again from the
-// example" removes it, with an undo.
+// Kept on the device (docs/WORKED-PAGE.md §4): an answer is saved under one versioned key and nothing else; a reload
+// comes back to the next question, or to the report once the questions are answered, and a visit with home's case keeps
+// them; an old shape is brought forward or dropped, never half-read; Start over removes them, with an undo.
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light', at: NOV });
   if (await page.getByTestId('kept-line').count() !== 1) v('the line on what is kept shows not once');
   const keys = () => page.evaluate(() => ({ l: Object.keys(localStorage), s: Object.keys(sessionStorage).filter((k) => k !== 'seeded'), dscr: localStorage.getItem('worked:dscr') }));
-  if ((await keys()).dscr) v('the example is saved before anything is typed');
-  await typeFact(page, 'profit', '4.5 L');
+  await page.getByTestId('see-example').click();
+  if ((await keys()).dscr) v('the example is saved before anything is answered');
+  await page.getByTestId('back-start').click();
+  await page.getByTestId('start').click();
+  await answer(page, 'borrower', 'firm');
+  await answer(page, 'profit', '4.5 L');
+  await page.locator('[data-testid="ask"][data-step="growth"]').waitFor();
   let held = await keys();
   const kept = JSON.parse(held.dscr ?? 'null');
-  if (kept?.v !== 1 || !kept?.c?.mine?.includes('profit')) v(`a fact typed is kept as ${String(held.dscr).slice(0, 80)}`);
+  if (kept?.v !== 1 || !kept?.c?.mine?.includes('profit')) v(`an answer is kept as ${String(held.dscr).slice(0, 80)}`);
   if (held.l.some((k) => !['app-theme', 'worked:dscr'].includes(k)) || held.s.length) v(`the device holds ${[...held.l, ...held.s].join(', ')}`);
   if ((held.dscr ?? '').length > 20000 || /data:|blob:|%PDF/.test(held.dscr ?? '')) v('the kept answers hold more than what was typed');
+  await page.reload({ waitUntil: 'networkidle' });
+  if ((await page.getByTestId('ask').getAttribute('data-step').catch(() => null)) !== 'growth') v('a reload does not come back to the next question');
+  await answerAll(page, CASE_S);
   const reading = await page.getByTestId('reading').textContent();
   await page.reload({ waitUntil: 'networkidle' });
   await expectText(page, v, 'reading', (reading ?? '').replace(/\s+/g, ' ').trim(), 'a reload');
   await page.goto(`${BASE}/dscr/?case=home`, { waitUntil: 'networkidle' });
   await page.goto(`${BASE}/dscr/`, { waitUntil: 'networkidle' });
   await expectText(page, v, 'reading', (reading ?? '').replace(/\s+/g, ' ').trim(), 'a visit with home\'s case');
-  // An odd kept shape is dropped and the example shown.
+  // An odd kept shape is dropped and the start shown.
   await page.evaluate(() => localStorage.setItem('worked:dscr', '{"v":99,"c":{"s":7}}'));
   await page.reload({ waitUntil: 'networkidle' });
-  await expectText(page, v, 'mark', /^Example /, 'an unknown kept shape');
-  await page.getByTestId('kept-line').waitFor();
-  await typeFact(page, 'amount', '15 L');
+  await page.getByTestId('intro').waitFor({ timeout: 3000 }).catch(() => v('an unknown kept shape does not open on the start'));
+  await answerAll(page, { ...CASE_S, amount: '15 L' });
   await page.getByTestId('clear').click();
-  await expectText(page, v, 'mark', /^Example /, 'Start again from the example');
+  await page.getByTestId('intro').waitFor({ timeout: 3000 }).catch(() => v('Start over does not go back to the start'));
   held = await keys();
-  if (held.dscr) v('Start again from the example left the kept answers behind');
+  if (held.dscr) v('Start over left the kept answers behind');
   await page.getByTestId('clear-undo').click();
-  await expectFigures(page, v, page.locator('[data-fact="amount"]'), '15lakh', 'Undo after Start again');
+  await expectFigures(page, v, page.locator('[data-fact="amount"]'), '15lakh', 'Undo after Start over');
   await ctx.close();
 }
 
@@ -1895,17 +1962,17 @@ if (touched('/dscr/')) {
   await ctx.close();
 }
 
-// Interaction data (UD1, D-TECH-37): the steps only, never what is typed. Case S typed fact by fact, one of the ways that
-// work used, For professionals opened, a PDF and an Excel copy, a figure not understood, then leaving: every batch has the
+// Interaction data (UD1, D-TECH-37): the steps only, never what is typed. Case S answered question by question, one of
+// the ways that work used, the paper by the next step, Professional mode opened, a PDF and an Excel copy, a figure not understood, then leaving: every batch has the
 // Worker's shape, holds each step, and holds none of the typed figures in any form. Built without the Worker's address
 // (as now), a page sends nothing.
 if (touched('/dscr/')) {
   const { check } = await import('../worker/src/event-shape.ts');
   const events = [];
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light', events });
-  for (const [id, x] of [['borrower', 'firm'], ['profit', '4.5 L'], ['growth', '0'], ['amount', '12 L'], ['rate', '12.25'], ['years', '5']]) await typeFact(page, id, x);
-  await page.getByTestId('next').click();
+  await answerAll(page, { ...CASE_S, rate: '12.25' });
   await page.locator('[data-testid="options"] button[data-testid^="use-"]').first().click({ timeout: 3000 }).catch(() => v('UD1: case S offers no way that works'));
+  await page.getByTestId('next').click();
   await openFold(page, 'more-options');
   await openFold(page, 'paper');
   for (const kind of ['pdf', 'xlsx']) {
@@ -1915,17 +1982,18 @@ if (touched('/dscr/')) {
   }
   await typeFact(page, 'amount', '1,23,45,678');
   await page.locator('[data-fact="rate"]').click();
-  await page.getByTestId('sheet-field').fill('twelve');
+  await page.getByTestId('ask-field').fill('twelve');
+  await page.getByTestId('ask-next').click();
   await page.waitForTimeout(100);
   await page.evaluate(() => dispatchEvent(new Event('pagehide')));
   await page.waitForTimeout(300);
   const batches = events.map((b) => { try { return JSON.parse(b); } catch { return b; } });
   for (const b of batches) { const r = check(b); if (!r.ok) v(`UD1: a batch the Worker would refuse (${r.why}): ${String(JSON.stringify(b)).slice(0, 120)}`); }
   const steps = batches.flatMap((b) => b.ev ?? []).map((e) => (e.f ? `${e.e} ${e.f}` : e.e));
-  for (const want of ['open', 'tap sheet-choice-firm', 'field sheet-profit', 'field sheet-amount', 'result dscr-status-ready', 'tap next',
-    'more more-options', 'download pdf', 'download xlsx', 'error sheet-rate']) if (!steps.includes(want)) v(`UD1: no "${want}" in the batches (seen: ${steps.join(', ').slice(-300)})`);
+  for (const want of ['open', 'tap start', 'tap ask-choice-firm', 'field ask-profit', 'field ask-amount', 'tap ask-next', 'result dscr-status-ready', 'tap next',
+    'more more-options', 'download pdf', 'download xlsx', 'error ask-rate']) if (!steps.includes(want)) v(`UD1: no "${want}" in the batches (seen: ${steps.join(', ').slice(-300)})`);
   if (!steps.some((x) => /^tap use-/.test(x))) v(`UD1: using a way that works is not a step (seen: ${steps.join(', ').slice(-300)})`);
-  if (!steps.at(-1)?.startsWith('leave error-sheet-')) v(`UD1: leaving does not name the last step, an error (seen: ${steps.at(-1)})`);
+  if (!steps.at(-1)?.startsWith('leave error-ask-')) v(`UD1: leaving does not name the last step, an error (seen: ${steps.at(-1)})`);
   // The figures as typed, in digits, and as the page shows them; the times are left out, being the page's own.
   const said = events.join('\n').replace(/"t":\d+/g, '');
   for (const x of ['4.5 L', '450000', '4,50,000', '12 L', '1200000', '12,00,000', '12.25', '12345678', '1,23,45,678', 'twelve'])

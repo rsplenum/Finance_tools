@@ -87,9 +87,7 @@ export const N = {
   kindSpoken: { ink: 'yours', example: 'the example’s', assumed: 'assumed' },
   facts: { ownYears: 'its own yearly figures', noLoans: 'No other loans', onOther: ' on other loans', noDep: 'no depreciation', depreciation: ' depreciation a year.' },
   sheet: {
-    next: 'Next', skip: 'Skip for now', done: 'Done', close: 'Close', keep: (v: string) => `Keep ${v}: it is mine`,
-    step: (i: number, n: number) => `${i} of ${n}`, example: (v: string) => `Example: ${v}`,
-    empty: 'Type a figure, or Skip for now.', notMoney: 'Not understood. Type 6 L, 1.2 Cr or 6,00,000.', notNumber: 'Not understood. Type a number, like 12.',
+    empty: 'Type a figure to go on.', notMoney: 'Not understood. Type 6 L, 1.2 Cr or 6,00,000.', notNumber: 'Not understood. Type a number, like 12.',
     negative: 'Type a figure of 0 or more.', zeroLoan: 'Type the loan you want, more than 0.', tooLarge: 'That is more than this page takes. Check the figure.',
     range: (lo: number, hi: number) => `Type a number from ${lo} to ${hi}.`,
   },
@@ -97,13 +95,45 @@ export const N = {
     own: 'Use your own figures', continue: (what: string) => `Next: ${what}`, options: 'See ways to make it work', change: 'Change your figures', paper: 'Get the paper',
   },
   options: {
-    title: 'Ways that work', lead: 'Each one meets the lender’s levels. Pick one; you can undo it.', use: 'Use this', none: 'No change to the loan alone makes it work. Change the figures, or see For professionals.',
+    title: 'Ways that work', lead: 'Each one meets the lender’s levels. Pick one; you can undo it.', use: 'Use this', none: 'No change to the loan alone makes it work. Change your answers, or open Professional mode.',
     used: (title: string) => `Used: ${title}.`, undo: 'Undo',
   },
   chart: { title: 'Cash for the loan against repayments, by year', cash: 'Cash available', service: 'Repayments due', unit: 'Rs. lakh', tight: 'tightest' },
-  folds: { working: 'See the working', assumed: 'What we assumed', pro: 'For professionals', paper: 'The paper' },
+  folds: { working: 'See the working', pro: 'Professional mode', proSub: 'What we assumed, and every setting', paper: 'The paper' },
+  /** The page opens here (Rahul, 12-11-2026): what DSCR is in a few words, then the questions. */
+  intro: {
+    lead: (target: string) => `Banks check it with the DSCR: the cash your business earns, divided by the loan repayments due each year. Most look for ${target} or more.`,
+    size: (n: number) => `${n} questions, about a minute`,
+    start: 'Start', example: 'See an example',
+  },
+  /** One question a screen. */
+  ask: {
+    q: {
+      borrower: 'Who is borrowing?', profit: 'This year’s profit before interest, depreciation and tax?', growth: 'How much will sales grow each year?',
+      amount: 'How much do you want to borrow?', rate: 'At what interest rate?', years: 'Over how many years?',
+      emis: 'EMIs you already pay, a month?', depreciation: 'Depreciation a year?',
+    },
+    hint: {
+      borrower: 'It sets the tax.', profit: 'From your last accounts. Type 6 L or 6,00,000.', growth: 'Profit grows with sales. 0 if none.',
+      amount: 'Type 12 L or 12,00,000.', rate: 'As the bank quotes it, like 12.', years: 'Like 5, or 7.5.',
+      emis: 'All running loans, added up.', depreciation: 'As in your accounts. It lowers the tax.',
+    },
+    next: 'Next', done: 'Done', see: 'See the report', back: 'Back', none: 'None', step: (i: number, n: number) => `${i} of ${n}`,
+    reads: (t: string) => `Reads as ${t}`,
+  },
+  /** The report: what can be undone and started over sits on top, where it is looked for. */
+  report: {
+    change: 'Change answers', undo: 'Undo', over: 'Start over', overDone: 'Started over.',
+    example: 'Example: a fictional firm.', home: 'Example: the home page’s fictional firm.', yours: 'Answer the 8 questions',
+    paper: 'Get the paper',
+  },
+  tiles: {
+    average: 'DSCR, average', lowest: 'Tightest year', emi: 'EMI a month', interest: 'Interest, whole loan',
+    against: (t: string) => `Banks look for ${t}`, inYear: (fy: string) => `in ${fy}`, years: (n: number) => `over ${n} years`,
+  },
+  years: { title: 'DSCR by year', line: (t: string) => `Line: ${t}, the least a year should reach`, below: 'below', part: 'part year' },
+  pro: { assumed: 'We assumed', change: 'Change any of these below.', why: 'Why' },
   /** For professionals, above the form: a projection typed from the start, with the stated assumptions kept. */
   blank: { lead: 'Typing a projection from the start?', go: 'Empty the form', undo: 'Undo' },
-  assumed: { example: 'Still the example’s', drawn: (month: string) => `The loan is taken as drawn in ${month} and repaid by monthly EMI, with no holiday.` },
   needs: (what: string) => `Your own figure for ${what} (the example’s stands in)`,
 } as const;

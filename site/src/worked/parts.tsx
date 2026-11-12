@@ -44,14 +44,14 @@ export const MAIN = 'inline-flex min-h-12 w-full items-center justify-center rou
 export const QUIET = 'inline-flex min-h-11 items-center rounded-full px-3 text-base font-medium text-link underline underline-offset-4 hover:bg-ink/6';
 
 /**
- * A fold (§4: closed until tapped), 44 px to tap, with its title as the page's next heading level. Opening one by a link
- * (`#id`) opens it first.
+ * A fold (§4: closed until tapped), 44 px to tap, with its title as the page's next heading level and, if given, one
+ * line under it on what is inside. Opening one by a link (`#id`) opens it first.
  */
-export function Fold(p: { id: string; title: string; open?: boolean; onToggle?: (open: boolean) => void; children: ComponentChildren; class?: string }) {
+export function Fold(p: { id: string; title: string; sub?: string; open?: boolean; onToggle?: (open: boolean) => void; children: ComponentChildren; class?: string }) {
   return <details id={p.id} open={p.open} class={`group border-t border-line ${p.class ?? ''}`}
     onToggle={(e) => p.onToggle?.((e.currentTarget as HTMLDetailsElement).open)}>
     <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 py-3 [&::-webkit-details-marker]:hidden">
-      <h2 class="font-heading text-xl font-semibold text-ink">{p.title}</h2>
+      <span><h2 class="font-heading text-xl font-semibold text-ink">{p.title}</h2>{p.sub && <span class="block text-sm text-ink-muted">{p.sub}</span>}</span>
       <span aria-hidden="true" class="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-ink/6 text-ink transition-transform group-open:rotate-180 motion-reduce:transition-none">
         <svg viewBox="0 0 16 16" class="size-4" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 6l4 4 4-4" /></svg>
       </span>

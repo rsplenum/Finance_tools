@@ -184,17 +184,23 @@ const leave = async (page, sel, value) => {
   if (y && !(await page.locator(sel).isVisible())) await page.getByTestId(`cma-year-${y}`).click();
   await page.fill(sel, value); await page.press(sel, 'Tab');
 };
-// The DSCR's facts, one at a time on its sheet (NEW1): a figure typed, or who the borrower is picked.
-const typeFact = async (page, id, value, done = true) => {
-  await page.locator(`[data-fact="${id}"]`).click();
-  if (id === 'borrower') await page.getByTestId(`sheet-choice-${value}`).click();
-  else await page.getByTestId('sheet-field').fill(value);
-  if (done) await page.getByTestId('sheet-done').click();
+// The DSCR's questions, one a screen (NEW1b): Start, then each answered (a choice tapped, a figure typed and Next, or
+// None); a fact not given is None. `stop` leaves the walk on that question with its figure typed and not yet taken.
+const answerAll = async (page, given, stop) => {
+  await page.getByTestId('start').click();
+  for (let i = 0; i < 12 && await page.locator('[data-testid="ask"]').count(); i++) {
+    const step = await page.getByTestId('ask').getAttribute('data-step'), v = given[step] ?? '';
+    if (step === 'borrower') await page.getByTestId(`ask-choice-${v || 'firm'}`).click();
+    else {
+      await page.getByTestId('ask-field').fill(v);
+      if (step === stop) return;
+      await page.getByTestId('ask-next').click();
+    }
+    await page.waitForFunction((s) => document.querySelector('[data-testid="ask"]')?.getAttribute('data-step') !== s, step);
+  }
+  await page.getByTestId('report').waitFor();
 };
-const facts = async (page, [profit, growth, amount, rate, years]) => {
-  await typeFact(page, 'borrower', 'firm');
-  for (const [id, v] of [['profit', profit], ['growth', growth], ['amount', amount], ['rate', rate], ['years', years]]) if (v !== undefined) await typeFact(page, id, v);
-};
+const facts = (page, [profit, growth, amount, rate, years]) => answerAll(page, { borrower: 'firm', profit, growth, amount, rate, years });
 const fold = async (page, id) => { const d = page.locator(`#${id}`); if (!(await d.evaluate((x) => x.open))) await d.locator(':scope > summary').click(); };
 // The planning estimate's six questions (scripts/site-check.mjs: a 2BHK of 1,000 sq ft in Pune); the last, the level, left out when `level` is false.
 const sixQuestions = async (page, level = true) => {
@@ -246,24 +252,22 @@ const CASE_M = { sales: [150, 165, 180, 200, 240], otherIncome: [0, 0, 0, 0, 0],
   netBlock: [55, 50, 45, 40, 35], nonCurrent: [10, 10, 10, 10, 10], stock: [32, 35, 38, 40, 48], debtors: [24, 26, 28, 30, 36], cash: [3, 3, 3, 3, 2], otherCa: [27, 30, 33, 38, 40] };
 
 export const STATES = {
-  // The DSCR made new (NEW1): it opens on its marked example; a fact opens alone on a sheet.
+  // The DSCR (NEW1b): it opens on what DSCR is and Start; the questions one a screen; then the report.
   '/dscr/': {
-    example: async () => {},
-    fact: async (page) => { await page.locator('[data-fact="profit"]').click(); },
-    walk: async (page) => { await page.getByTestId('next').click(); },
-    partly: async (page) => typeFact(page, 'profit', '5 L'),
-    error: async (page) => typeFact(page, 'profit', 'seventy', false),
-    // Fictional case S (tests/dscr-worked.test.ts): short of the target, then the ways that work.
-    short: async (page) => facts(page, ['4.5 L', '0', '12 L', '12', '5']),
-    plan: async (page) => { await facts(page, ['4.5 L', '0', '12 L', '12', '5']); await page.getByTestId('next').click(); },
-    used: async (page) => { await facts(page, ['4.5 L', '0', '12 L', '12', '5']); await page.getByTestId('next').click(); await page.getByTestId('use-longer').click(); },
+    start: async () => {},
+    example: async (page) => { await page.getByTestId('see-example').click(); },
+    ask: async (page) => { await page.getByTestId('start').click(); await page.getByTestId('ask-choice-firm').click(); await page.getByTestId('ask-field').fill('5 L'); },
+    choice: async (page) => { await page.getByTestId('start').click(); },
+    error: async (page) => { await page.getByTestId('start').click(); await page.getByTestId('ask-choice-firm').click(); await page.getByTestId('ask-field').fill('seventy'); await page.getByTestId('ask-next').click(); },
+    // Fictional case S (tests/dscr-worked.test.ts): short of the target, the ways that work under the reading.
+    plan: async (page) => facts(page, ['4.5 L', '0', '12 L', '12', '5']),
+    used: async (page) => { await facts(page, ['4.5 L', '0', '12 L', '12', '5']); await page.getByTestId('use-longer').click(); },
+    pro: async (page) => { await page.getByTestId('see-example').click(); await fold(page, 'more-options'); },
     // A case that meets the target with the working open, then the paper with the borrower and the lender named.
     result: async (page) => { await facts(page, ['5 L', '10', '10 L', '12', '5']); await fold(page, 'working'); },
     download: async (page) => {
-      await facts(page, ['5 L', '10', '10 L', '12', '5']);
       // The EMIs already paid and the depreciation too, so their read-backs are measured.
-      await typeFact(page, 'emis', '5,000');
-      await typeFact(page, 'depreciation', '40,000');
+      await answerAll(page, { borrower: 'firm', profit: '5 L', growth: '10', amount: '10 L', rate: '12', years: '5', emis: '5,000', depreciation: '40,000' });
       await fold(page, 'paper');
       await leave(page, 'field=Borrower’s name', 'Asha Traders');
       await leave(page, 'field=Lender', 'A bank');

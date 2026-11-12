@@ -468,7 +468,7 @@ export interface Preview {
   /** A year that pays fewer instalments than a full year: "7 of 12 instalments". */
   partYears?: Record<string, string>;
   /** Each year's DSCR against the target for the lowest year, while one is set. */
-  marks?: { fy: string; dscr: string; meets: boolean; counted: boolean }[];
+  marks?: { fy: string; dscr: string; n: number; meets: boolean; counted: boolean }[];
   /** DSCR as lenders test it, beside the borrower's: it never changes the verdict (D-UX-47). */
   lender?: LenderView;
 }
@@ -613,7 +613,7 @@ function statementView(st: Statement, t: Target, def: Definition, parts: YearFig
 function fillStatement(p: Preview, st: Statement, t: Target, def: Definition, parts: YearFigures[], profit?: ProfitYear[], profitTotal?: ProfitTotals) {
   p.statement = statementView(st, t, def, parts, profit, profitTotal);
   if (t.minimum !== undefined) p.marks = st.rows.filter((r) => r.dscr !== undefined)
-    .map((r) => ({ fy: r.fy, dscr: ratioText(r.dscr as number, t.minimum), meets: (r.dscr as number) >= (t.minimum as number), counted: r.counted }));
+    .map((r) => ({ fy: r.fy, dscr: ratioText(r.dscr as number, t.minimum), n: r.dscr as number, meets: (r.dscr as number) >= (t.minimum as number), counted: r.counted }));
   const skipped = st.rows.filter((r) => !r.counted).map((r) => r.fy);
   if (skipped.length && st.rows.length > skipped.length)
     p.notCounted = `Not counted: ${andList(skipped)} (${def.years === 'repayment' ? 'no term-loan instalment' : 'no interest or instalments due'}).`;
@@ -814,7 +814,7 @@ function lenderView(s: State, proj: ProjectionYear[], loan: LoanInput, def: Defi
   const st = stressTests(proj, loan, def, extra, y.start);
   if ('blocked' in st) v.blocked = st.blocked;
   else if ('needs' in st) {
-    if (!l.sales.some((t) => t.trim())) v.ask = `Add this year's sales under More options to see the DSCR with the ${LENDER.stress.map((c) => c.label.toLowerCase()).join(' and with ')}.`;
+    if (!l.sales.some((t) => t.trim())) v.ask = `Add this year's sales in Professional mode to see the DSCR with the ${LENDER.stress.map((c) => c.label.toLowerCase()).join(' and with ')}.`;
     else v.needs = st.needs;
   }
   else v.stress = st.flatMap((x) => lenderLine(x.label, x) ?? []);

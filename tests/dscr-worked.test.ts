@@ -122,7 +122,7 @@ describe('odd input is said back and never taken', () => {
   it.each([
     ['amount', '-5', 'Type a figure of 0 or more.'], ['amount', '0', 'Type the loan you want, more than 0.'],
     ['amount', '9'.repeat(20), 'That is more than this page takes. Check the figure.'], ['profit', 'lots', 'Not understood. Type 6 L, 1.2 Cr or 6,00,000.'],
-    ['rate', '0', 'Type a number from 0.01 to 40.'], ['years', '', 'Type a figure, or Skip for now.'], ['emis', '', undefined], ['growth', '-3', undefined],
+    ['rate', '0', 'Type a number from 0.01 to 40.'], ['years', '', 'Type a figure to go on.'], ['emis', '', undefined], ['growth', '-3', undefined],
   ] as const)('%s "%s"', (id, t, want) => expect(factProblem(id, t)).toBe(want));
   it('a loss: as it stands it cannot carry the loan', () => {
     const loss: Case = { s: writeFact(c.s, 'profit', '-1 L'), mine: ['profit'] };
