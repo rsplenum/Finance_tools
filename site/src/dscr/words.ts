@@ -41,3 +41,65 @@ export const W = {
   preparedBy: 'Prepared by',
   docMore: 'Address, purpose and GSTIN',
 };
+
+/**
+ * The worked page's words (NEW1, docs/WORKED-PAGE.md §4): the reading in its three states, the facts as one sentence,
+ * the one next step. Sixty words or fewer on the first phone screen (§2); figures come from the engine, in model.ts.
+ */
+export const N = {
+  title: 'Can your business repay the loan?',
+  example: 'Example',
+  paperLink: 'The paper',
+  reading: {
+    example: (noun: string) => `The example ${noun}`,
+    yours: 'Your business',
+    carries: (who: string, asked: string) => `${who} can carry the ${asked} asked.`,
+    carriesMore: (who: string, most: string, asked: string) => `${who} can carry up to ${most}, more than the ${asked} asked.`,
+    short: (who: string, most: string, asked: string) => `${who} can carry ${most} of the ${asked} asked.`,
+    cannot: (who: string) => `As it stands, ${who.replace(/^The /, 'the ').replace(/^Your /, 'your ')} cannot carry this loan.`,
+    banker: (avg: string, low: string, fy: string, target?: [string, string]) =>
+      `Banks call this the DSCR: ${avg} on average, ${low} in ${fy}, the tightest year.${target ? ` Lenders often ask for ${target[0]} and ${target[1]}.` : ''}`,
+    wait: (needs: string) => `Still needed: ${needs}.`,
+  },
+  noun: { proprietor: 'proprietor', firm: 'firm', company: 'company', none: 'business' },
+  who: { proprietor: 'A proprietor', firm: 'A firm', company: 'A company', none: 'A business' },
+  mark: {
+    example: 'Example: a fictional firm. Tap any figure to make it yours.',
+    part: (yours: string, left: string) => `Yours: ${yours}. Still the example’s: ${left}.`,
+  },
+  name: { profit: 'the profit', amount: 'the loan', years: 'the years', rate: 'the rate', borrower: 'who borrows', growth: 'the growth', emis: 'other loans', depreciation: 'depreciation' },
+  label: {
+    profit: 'This year’s profit before interest, depreciation and tax', amount: 'Loan amount', years: 'Repay over (years)', rate: 'Interest rate (% a year)',
+    borrower: 'Who is the borrower?', growth: 'Growth in sales a year (%)', emis: 'EMIs already paid, a month', depreciation: 'Depreciation a year',
+  },
+  hint: {
+    profit: 'From your last accounts or this year’s books. Type 6 L or 6,00,000.',
+    amount: 'The loan you want. Type 12 L or 12,00,000.',
+    years: 'How long to repay, in years: 5, or 7.5.',
+    rate: 'The rate the bank quotes, like 12.',
+    borrower: 'It sets the tax on the profit.',
+    growth: 'How much you expect sales to grow each year. Profit grows with them.',
+    emis: 'Each running loan’s monthly instalment, added up. Empty if none.',
+    depreciation: 'As in your accounts. It lowers tax. Empty if none.',
+  },
+  kindSpoken: { ink: 'yours', example: 'the example’s', assumed: 'assumed' },
+  facts: { ownYears: 'its own yearly figures', noLoans: 'No other loans', onOther: ' on other loans', noDep: 'no depreciation', depreciation: ' depreciation a year.' },
+  sheet: {
+    next: 'Next', skip: 'Skip for now', done: 'Done', close: 'Close', keep: (v: string) => `Keep ${v}: it is mine`,
+    step: (i: number, n: number) => `${i} of ${n}`, example: (v: string) => `Example: ${v}`,
+    empty: 'Type a figure, or Skip for now.', notMoney: 'Not understood. Type 6 L, 1.2 Cr or 6,00,000.', notNumber: 'Not understood. Type a number, like 12.',
+    negative: 'Type a figure of 0 or more.', zeroLoan: 'Type the loan you want, more than 0.', tooLarge: 'That is more than this page takes. Check the figure.',
+    range: (lo: number, hi: number) => `Type a number from ${lo} to ${hi}.`,
+  },
+  next: {
+    own: 'Use your own figures', continue: (what: string) => `Next: ${what}`, options: 'See ways to make it work', change: 'Change your figures', paper: 'Get the paper',
+  },
+  options: {
+    title: 'Ways that work', lead: 'Each one meets the lender’s levels. Pick one; you can undo it.', use: 'Use this', none: 'No change to the loan alone makes it work. Change the figures, or see For professionals.',
+    used: (title: string) => `Used: ${title}.`, undo: 'Undo',
+  },
+  chart: { title: 'Cash for the loan against repayments, by year', cash: 'Cash available', service: 'Repayments due', unit: 'Rs. lakh', tight: 'tightest' },
+  folds: { working: 'See the working', assumed: 'What we assumed', pro: 'For professionals', paper: 'The paper' },
+  assumed: { example: 'Still the example’s', drawn: (month: string) => `The loan is taken as drawn in ${month} and repaid by monthly EMI, with no holiday.` },
+  needs: (what: string) => `Your own figure for ${what} (the example’s stands in)`,
+} as const;

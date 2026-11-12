@@ -59,10 +59,11 @@ export const docStatus = (s: State, p: Preview) => {
   return !p.blocked && own && all.length === own ? forDocument(own) : statusText({ ...p, needs: all, assumed: [] });
 };
 
-/** The file's name: the borrower's, and "(provisional)" while anything is missing. */
-export function fileName(s: State, p: Preview, ext: 'pdf' | 'xlsx' | 'docx'): string {
+/** The file's name: the borrower's, and "(provisional)" while anything is missing; "(example)" while a figure is the
+ * worked page's example (NEW1, docs/WORKED-PAGE.md §3: the example's mark on every file made from it). */
+export function fileName(s: State, p: Preview, ext: 'pdf' | 'xlsx' | 'docx', example = false): string {
   const name = s.doc.borrower.replace(/[\\/:*?"<>|\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60).trim();
-  return `DSCR statement${name ? ` - ${name}` : ''}${allNeeds(s, p).length ? ' (provisional)' : ''}.${ext}`;
+  return `DSCR statement${name ? ` - ${name}` : ''}${example ? ' (example)' : allNeeds(s, p).length ? ' (provisional)' : ''}.${ext}`;
 }
 
 const dmy = (iso: string) => iso.split('-').reverse().join('-');
@@ -423,9 +424,9 @@ function basisPart(s: State, p: Preview, def: Definition, y: Years): Part {
 
 /**
  * The document, or undefined while there is no statement to show (the page says why). `today` is the date it is made
- * on, as 2026-09-30.
+ * on, as 2026-09-30. `example`: a figure is still the worked page's example, so every page is marked Example.
  */
-export function statementDoc(s: State, p: Preview, today: string): Doc | undefined {
+export function statementDoc(s: State, p: Preview, today: string, example = false): Doc | undefined {
   const st = p.statement, def = definitionOf(s) as Definition | undefined;
   if (!st || p.blocked || !def) return undefined;
   const f = s.doc, needs = allNeeds(s, p), y = yearsOf(s), years = st.years;
@@ -444,7 +445,7 @@ export function statementDoc(s: State, p: Preview, today: string): Doc | undefin
     { kind: 'title', text: borrower || 'DSCR statement', sub: `Debt service coverage ratio (DSCR), ${years.length > 1 ? `${years[0]} to ${years[years.length - 1]}` : years[0]}` },
     { kind: 'facts', lines: facts },
   ];
-  if (needs.length) blocks.push({ kind: 'box', title: `Provisional: ${needs.length} still needed`, items: needs });
+  if (needs.length) blocks.push({ kind: 'box', title: `${example ? 'Example' : 'Provisional'}: ${needs.length} still needed`, items: needs });
   if (s.source === 'plan') blocks.push({ kind: 'heading', text: 'The loan' }, { kind: 'facts', lines: loanFacts(s, p, y) });
   blocks.push({ kind: 'table', table: statementTable(st) });
   const notes = [p.beforeStart, p.notCounted, ...p.notes].filter((x): x is string => !!x);
@@ -458,7 +459,7 @@ export function statementDoc(s: State, p: Preview, today: string): Doc | undefin
   return {
     title: `DSCR statement${borrower ? `, ${borrower}` : ''}`,
     header: `DSCR statement${borrower ? ` · ${borrower}` : ''}`,
-    ...(needs.length ? { mark: 'Provisional' } : {}),
+    ...(example ? { mark: 'Example' } : needs.length ? { mark: 'Provisional' } : {}),
     footer: `Made with ${SITE_NAME} on ${dmy(today)} from the figures entered; every figure worked out twice. Not a CA's certificate.`,
     workbookNote: check ? `Each cell holds the exact figure worked out on the page, shown in whole rupees. The Check sheet redoes page 1's DSCR and its average${lender ? ' and the sensitivity figures whose arithmetic is plain' : ''} by formulas, beside the engine's figures, with their differences.`
       : 'Each cell holds the exact figure worked out on the page, shown in whole rupees; there are no formulas.',
