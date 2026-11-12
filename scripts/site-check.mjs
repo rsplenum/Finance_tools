@@ -297,10 +297,11 @@ const toReport = async (page) => {
   await page.getByTestId('report').waitFor();
 };
 /** Its detailed checks start from Professional mode's form emptied (the stated assumptions kept, as the old page opened),
- * with the working, Professional mode and the paper open to read. */
+ * with the working and the paper open to read. Professional mode is the switch on top of the report (NEW1c). */
 const fromBlank = async (page) => {
   await toReport(page);
-  for (const id of ['working', 'more-options', 'paper']) await openFold(page, id);
+  await page.getByTestId('mode-pro').click();
+  for (const id of ['working', 'paper']) await openFold(page, id);
   await page.getByTestId('dscr-clear').click();
 };
 /** One answer on its own screen: a choice is answered by its tap; a figure is typed and Next (Done) tapped; '' is None. */
@@ -771,7 +772,9 @@ if (touched('/dscr/')) {
   await expectText(page, v, 'intro-lead', /^Banks check it with the DSCR: .* Most look for 1\.50 or more\.$/, 'what DSCR is, in a few words');
   await layout(page, v, 'the start, 375 px');
   await page.getByTestId('see-example').click();
-  for (const id of ['working', 'more-options', 'paper']) if (await page.locator(`#${id}`).evaluate((d) => d.open)) v(`${id} is open on the example`);
+  for (const id of ['working', 'paper']) if (await page.locator(`#${id}`).evaluate((d) => d.open)) v(`${id} is open on the example`);
+  // Two ways in (NEW1c, Rahul): the example opens in Simple mode, every field out of sight.
+  if (await page.locator('#more-options').count()) v('the example opens with every field shown, not in Simple mode');
   const top = await page.evaluate(() => ({ reading: document.querySelector('[data-testid="reading"]')?.getBoundingClientRect().bottom ?? 9999, mains: document.querySelectorAll('[data-testid="next"]').length }));
   if (top.reading > 667) v(`375 × 667: the example's reading is not on the first screen (its foot at ${Math.round(top.reading)} px)`);
   if (top.mains !== 1) v(`${top.mains} main buttons on the report, not one`);
@@ -819,10 +822,11 @@ if (touched('/dscr/')) {
   await expectFigures(page, v, 'dscr-total-interest', '66,185', 'the textbook EMI');
   await openFold(page, 'working');
   await expectFigures(page, v, 'part-2026-27', '5 12', 'the first part-year');
-  if (!(await page.getByTestId('dscr-marks').isVisible())) v('the years are not marked against the target');
-  if (await page.locator('#more-options').evaluate((d) => d.open)) v('Professional mode opened by itself');
-  // What we assumed heads Professional mode, each with its reason and a way to its setting.
-  await openFold(page, 'more-options');
+  // Each year against the target is the chart's; the working does not say it again (Rahul, NEW1c: "First time is fine").
+  if (await page.getByTestId('dscr-marks').count()) v('the years are marked against the target twice, in the chart and in the working');
+  if (await page.locator('#more-options').count()) v('Professional mode opened by itself');
+  // Simple mode says what it filled in, under the answer, each with its reason and a way to its field.
+  if (!(await page.getByTestId('filled').isVisible())) v('Simple mode does not say what it filled in');
   await expectFigures(page, v, 'assumed-target', '1.50 1.25', 'the target among the assumptions');
   await expectFigures(page, v, 'assumed-loanStart', '…', 'the loan taken as drawn this month');
   await layout(page, v, 'the questions answered, 375 px');
@@ -849,6 +853,26 @@ if (touched('/dscr/')) {
 // it with no tap, each as was → becomes; repaying over longer is 7 years 7 months, 91 EMIs of Rs. 20,145.98
 // (P·r ÷ (1 − (1 + r)^−n)). Used, it meets; Undo, beside it and on top of the report, puts the loan back.
 const CASE_S = { borrower: 'firm', profit: '4.5 L', growth: '0', amount: '12 L', rate: '12', years: '5' };
+// The professional way in (NEW1c, Rahul, 12-11-2026): the same 8 questions, then every field filled in from the answers,
+// to change, with the answer kept in sight on a phone; Simple puts the fields away again. The fields sit under
+// #more-options, so the report still asks nothing (rule 17).
+if (touched('/dscr/')) {
+  const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.getByTestId('start-pro').click();
+  await answerAll(page, CASE_S);
+  if (await page.getByTestId('report').getAttribute('data-mode') !== 'pro') v('Professional: the questions do not end on every field');
+  await expectValue(page, v, '#fld-loanAmount', '12,00,000', 'Professional: the loan answered, in its field');
+  await expectValue(page, v, '#fld-targetAverage', '1.50', 'Professional: the target filled in');
+  await ceiling(page, v, 0, 'the report in Professional mode', '[data-testid="report"]');
+  if (!(await page.getByTestId('pro-strip').isVisible())) v('Professional, 375 px: the DSCR is not kept in sight above the fields');
+  await layout(page, v, 'Professional mode, 375 px');
+  await page.getByTestId('mode-simple').click();
+  if (await page.locator('#more-options').count()) v('Simple mode still shows every field');
+  if (!(await page.getByTestId('filled').isVisible())) v('Simple mode does not say what it filled in');
+  await ctx.close();
+}
+
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'dark' });
   await page.setViewportSize({ width: 375, height: 667 });
@@ -1953,12 +1977,14 @@ if (touched('/cma/')) {
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light' });
   await toReport(page);
+  await page.getByTestId('mode-pro').click(); // the sources sit beside the fields, in Professional mode (NEW1c)
   if (await page.getByTestId('review-due').count()) v('a source is flagged due for review on 02-10-2026');
   await ctx.close();
 }
 if (touched('/dscr/')) {
   const { ctx, page, v } = await open('/dscr/', { scheme: 'light', at: '2027-10-01T10:00:00+05:30' });
   await toReport(page);
+  await page.getByTestId('mode-pro').click();
   const due = await page.getByTestId('review-due').allTextContents();
   if (!due.includes('Due for review since 30-09-2027.')) v(`dscr.json's passed review-by date is not flagged on 01-10-2027 (seen: ${due.join(' | ') || 'none'})`);
   await ctx.close();
@@ -1975,13 +2001,15 @@ if (touched('/dscr/')) {
   await answerAll(page, { ...CASE_S, rate: '12.25' });
   await page.locator('[data-testid="options"] button[data-testid^="use-"]').first().click({ timeout: 3000 }).catch(() => v('UD1: case S offers no way that works'));
   await page.getByTestId('next').click();
-  await openFold(page, 'more-options');
+  await page.getByTestId('mode-pro').click();
   await openFold(page, 'paper');
   for (const kind of ['pdf', 'xlsx']) {
     const saved = page.waitForEvent('download');
     await page.getByTestId(`download-${kind}`).click();
     await saved;
   }
+  // The facts as a sentence to tap are Simple mode's; Professional mode has the fields themselves.
+  await page.getByTestId('mode-simple').click();
   await typeFact(page, 'amount', '1,23,45,678');
   await page.locator('[data-fact="rate"]').click();
   await page.getByTestId('ask-field').fill('twelve');
@@ -1993,7 +2021,7 @@ if (touched('/dscr/')) {
   for (const b of batches) { const r = check(b); if (!r.ok) v(`UD1: a batch the Worker would refuse (${r.why}): ${String(JSON.stringify(b)).slice(0, 120)}`); }
   const steps = batches.flatMap((b) => b.ev ?? []).map((e) => (e.f ? `${e.e} ${e.f}` : e.e));
   for (const want of ['open', 'tap start', 'tap ask-choice-firm', 'field ask-profit', 'field ask-amount', 'tap ask-next', 'result dscr-status-ready', 'tap next',
-    'more more-options', 'download pdf', 'download xlsx', 'error ask-rate']) if (!steps.includes(want)) v(`UD1: no "${want}" in the batches (seen: ${steps.join(', ').slice(-300)})`);
+    'tap mode-pro', 'download pdf', 'download xlsx', 'error ask-rate']) if (!steps.includes(want)) v(`UD1: no "${want}" in the batches (seen: ${steps.join(', ').slice(-300)})`);
   if (!steps.some((x) => /^tap use-/.test(x))) v(`UD1: using a way that works is not a step (seen: ${steps.join(', ').slice(-300)})`);
   if (!steps.at(-1)?.startsWith('leave error-ask-')) v(`UD1: leaving does not name the last step, an error (seen: ${steps.at(-1)})`);
   // The figures as typed, in digits, and as the page shows them; the times are left out, being the page's own.

@@ -31,6 +31,10 @@ const KEPT_VERSION = 1;
 const ORDER: FactId[] = ['borrower', 'profit', 'growth', 'amount', 'rate', 'years', 'emis', 'depreciation'];
 
 type View = { at: 'intro' } | { at: 'ask'; i: number; from: 'intro' | 'report'; single?: boolean } | { at: 'report' };
+/** Two ways in (NEW1c, Rahul, 12-11-2026): Simple ends on the answer and says what it filled in; Professional on every field. */
+type Mode = 'simple' | 'pro';
+/** The kept case: the answers and, for a professional, the mode. */
+type Kept = Case & { pro?: boolean };
 
 /** Where a case opens: nothing answered, the start; every needed fact answered, the report; else the next question. */
 function viewOf(c: Case): View {
@@ -65,11 +69,14 @@ function questionOf(c: Case, id: FactId): AskQuestion {
 export function DscrWorked() {
   const [c, setC] = useState<Case>(() => exampleCase(thisMonth()));
   const [view, setView] = useState<View>({ at: 'intro' });
+  const [mode, setMode] = useState<Mode>('simple');
   const home = useHomeCase<Case>((x) => { setC(x); setView({ at: 'report' }); }, () => ({ s: DSCR_HOME, mine: [] }));
-  useWorkedKept({
+  // The mode is kept with the answers, so a professional comes back to every field.
+  const kept = useMemo<Kept>(() => (mode === 'pro' ? { ...c, pro: true } : c), [c, mode]);
+  useWorkedKept<Kept>({
     tool: 'dscr', version: KEPT_VERSION, blank: () => exampleCase(thisMonth()), forward,
     isBlank: (x) => !x.mine.length && JSON.stringify(x.s) === JSON.stringify(exampleState(thisMonth())),
-  }, c, (x) => { setC(x); setView(viewOf(x)); });
+  }, kept, (x) => { setC({ s: x.s, mine: x.mine }); setMode(x.pro ? 'pro' : 'simple'); setView(viewOf(x)); });
   const p = useMemo(() => previewOf(c.s), [c.s]);
   const r = readingOf(c, p);
   const options = useMemo(() => (r.state === 'short' || r.state === 'cannot' ? optionsFor(c.s, p) : []), [c.s, p, r.state]);
@@ -93,6 +100,7 @@ export function DscrWorked() {
     if (from === 'report' && !single) remember(c);
     setView({ at: 'ask', i, from, single });
   };
+  const begin = (m: Mode) => { setMode(m); ask(0, 'intro'); };
   const answer = (i: number, t: string) => {
     if (view.at !== 'ask') return;
     const id = ORDER[i];
@@ -117,6 +125,19 @@ export function DscrWorked() {
   const isEmpty = c.mine.length === FACTS.length && JSON.stringify(c.s) === JSON.stringify(empty().s);
   const emptyForm = () => { remember(c); setEmptied(c); setC(empty()); setUsed(undefined); };
 
+  // Into Professional mode from anywhere: at the field asked for (a Change beside an assumption, the lender's tests), else
+  // at the top of the form, once the form is drawn.
+  const [goal, setGoal] = useState<string>();
+  const toPro = (where = '') => { setMode('pro'); setGoal(where); };
+  useEffect(() => {
+    if (goal === undefined || mode !== 'pro') return;
+    setGoal(undefined);
+    requestAnimationFrame(() => {
+      if (goal) goTo(goal)(new Event('click'));
+      else document.getElementById('more-options')?.scrollIntoView({ block: 'start' });
+    });
+  }, [goal, mode]);
+
   // A new screen starts at its top; the report's heading takes the focus, so a screen reader starts there too.
   const heading = useRef<HTMLHeadingElement>(null), first = useRef(true);
   useEffect(() => {
@@ -129,27 +150,30 @@ export function DscrWorked() {
   if (view.at === 'ask') {
     const id = ORDER[view.i];
     return <Ask q={questionOf(c, id)} at={view.i + 1} of={ORDER.length} single={view.single}
-      words={{ ...N.ask, last: N.ask.see }} problem={(t) => factProblem(id, t)} onBack={back}
+      words={{ ...N.ask, last: mode === 'pro' && !view.single ? N.ask.fields : N.ask.see }} problem={(t) => factProblem(id, t)} onBack={back}
       reads={(t) => (id === 'borrower' ? undefined : readBack(c, id, t))} onAnswer={(t) => answer(view.i, t)} />;
   }
 
   const target = c.s.target;
   if (view.at === 'intro') {
+    const way = 'flex min-h-12 w-full flex-col items-start rounded-card px-5 py-4 text-left';
     return <section data-testid="intro" aria-labelledby="dscr-title" class="flex min-h-[70svh] flex-col justify-center pb-16 sm:min-h-0 sm:py-10">
       <h1 id="dscr-title" ref={heading} tabIndex={-1} class="font-display text-[2rem] leading-[1.1] font-semibold tracking-[-0.01em] text-ink text-balance outline-none sm:text-[2.75rem]">{N.title}</h1>
       <p data-testid="intro-lead" class="mt-4 max-w-[34rem] text-lg text-ink-muted text-pretty">{N.intro.lead(target.average.trim() || '1.50')}</p>
-      <p class="mt-6 text-sm text-ink-muted">{N.intro.size(ORDER.length)}</p>
-      <div class="mt-2 flex flex-wrap items-center gap-3">
-        <button type="button" data-testid="start" class={MAIN} onClick={() => ask(0, 'intro')}>{N.intro.start}</button>
-        <button type="button" data-testid="see-example" class={QUIET} onClick={example}>{N.intro.example}</button>
+      <div role="group" aria-label="How to start" class="mt-7 grid max-w-[44rem] gap-3 sm:grid-cols-2">
+        <button type="button" data-testid="start" class={`${way} bg-ink text-canvas hover:bg-ink/85`} onClick={() => begin('simple')}>
+          <span class="text-lg font-semibold">{N.intro.simple}</span><span class="mt-0.5 text-base">{N.intro.simpleLine(ORDER.length)}</span></button>
+        <button type="button" data-testid="start-pro" class={`${way} border border-line bg-surface text-ink hover:bg-ink/6`} onClick={() => begin('pro')}>
+          <span class="text-lg font-semibold">{N.intro.pro}</span><span class="mt-0.5 text-base text-ink-muted">{N.intro.proLine(ORDER.length)}</span></button>
       </div>
+      <div class="mt-2 -ml-3"><button type="button" data-testid="see-example" class={QUIET} onClick={example}>{N.intro.example}</button></div>
       {cleared && <p role="status" class="mt-6 flex flex-wrap items-center gap-x-2 text-base text-ink-muted">{N.report.overDone}
         <button type="button" data-testid="clear-undo" class={`${QUIET} -ml-1`} onClick={() => { setC(cleared); setView(viewOf(cleared)); setCleared(undefined); }}>{N.report.undo}</button></p>}
       <p data-testid="kept-line" class="mt-10 text-sm text-ink-muted">{KEPT}</p>
     </section>;
   }
 
-  const left = exampleFacts(c), pencil = left.length > 0;
+  const left = exampleFacts(c), pencil = left.length > 0, pro = mode === 'pro';
   const mark = !pencil ? undefined : !c.mine.length ? (home ? N.report.home : N.report.example) : markOf(c);
   const levelN = Number(target.minimum);
   const levels = (p.marks ?? []).map((m) => ({
@@ -164,49 +188,84 @@ export function DscrWorked() {
   const next = pencil ? { kind: 'ask', label: N.report.yours, go: () => ask(Math.max(0, ORDER.findIndex((id) => !c.mine.includes(id))), 'report') }
     : { kind: 'paper', label: N.report.paper, go: () => openFold('paper') };
 
-  return <div data-testid="report" class="pb-24">
-    <div class="flex flex-wrap items-center justify-between gap-x-3">
-      <h1 id="dscr-title" ref={heading} tabIndex={-1} class="font-heading text-base font-semibold text-ink outline-none">{N.title}</h1>
-      <nav aria-label="Your answers" class="-mr-3 flex flex-wrap items-center">
-        {own && <button type="button" data-testid="change-answers" class={QUIET} onClick={() => ask(0, 'report')}>{N.report.change}</button>}
-        {past.length > 0 && <button type="button" data-testid="report-undo" class={QUIET} onClick={undo}>{N.report.undo}</button>}
-        {own ? <button type="button" data-testid="clear" class={QUIET} onClick={startOver}>{N.report.over}</button>
-          : <button type="button" data-testid="back-start" class={QUIET} onClick={() => setView({ at: 'intro' })}>{N.ask.back}</button>}
-      </nav>
-    </div>
-    {mark && <p data-testid="mark" class="mt-2 text-base text-ink-muted"><span class="mr-1.5 inline-flex items-center rounded-full bg-warn-tint px-2 py-0.5 text-sm font-semibold text-warn">{N.example}</span>{' '}
-      {home && !c.mine.length ? <span data-testid="home-case">{mark.replace(/^Example: /, '')}</span> : mark.replace(/^Example: /, '')}</p>}
-    <div class="mt-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-x-16">
-      <div>
-        <Reading text={r.text} state={r.state} pencil={pencil} />
-        <Tiles p={p} c={c} />
-        {levels.length > 0 && Number.isFinite(levelN) && <div class="mt-6"><Levels title={N.years.title} level={levelN} lineName={N.years.line(target.minimum)} belowName={`${N.years.below} ${target.minimum}`} rows={levels} /></div>}
-        {bars.length > 0 && <div class="mt-6"><Bars title={N.chart.title} aName={N.chart.cash} bName={N.chart.service} unit={N.chart.unit} tightName={N.chart.tight} rows={bars} /></div>}
-      </div>
-      <section id="front-door" aria-label="Your answers" class="mt-6 flex flex-col lg:mt-1">
-        {options.length > 0 && <Options options={options} onUse={use} />}
-        {options.length === 0 && (r.state === 'short' || r.state === 'cannot') && <p class="mb-4 text-base text-ink-muted">{N.options.none}</p>}
-        {used && <p role="status" data-testid="used" class="mb-4 flex flex-wrap items-center gap-x-2 text-base text-ink">{N.options.used(used.title)}
-          <button type="button" data-testid="undo" class={QUIET} onClick={undo}>{N.options.undo}</button></p>}
-        <FactLine facts={factsOf(c)} onTap={tap} label="Your answers, each one tappable" />
-        <div class="mt-5"><button type="button" data-testid="next" data-next={next.kind} class={MAIN} onClick={next.go}>{next.label}</button></div>
-      </section>
-    </div>
+  // The answer, the same in both modes: the reading, the figures a lender reads first and the two pictures.
+  const answerShown = <>
+    <Reading text={r.text} state={r.state} pencil={pencil} />
+    <Tiles p={p} c={c} />
+    {levels.length > 0 && Number.isFinite(levelN) && <div class="mt-6"><Levels title={N.years.title} level={levelN} lineName={N.years.line(target.minimum)} belowName={`${N.years.below} ${target.minimum}`} rows={levels} /></div>}
+    {bars.length > 0 && <div class="mt-6"><Bars title={N.chart.title} aName={N.chart.cash} bName={N.chart.service} unit={N.chart.unit} tightName={N.chart.tight} rows={bars} /></div>}
+  </>;
+  // What to do next: the ways that work when it falls short, then the one next step.
+  const nextStep = (facts: boolean) => <>
+    {options.length > 0 && <Options options={options} onUse={use} />}
+    {options.length === 0 && (r.state === 'short' || r.state === 'cannot') && <p class="mb-4 text-base text-ink-muted">{N.options.none}</p>}
+    {used && <p role="status" data-testid="used" class="mb-4 flex flex-wrap items-center gap-x-2 text-base text-ink">{N.options.used(used.title)}
+      <button type="button" data-testid="undo" class={QUIET} onClick={undo}>{N.options.undo}</button></p>}
+    {facts && <FactLine facts={factsOf(c)} onTap={tap} label="Your answers, each one tappable" />}
+    <div class="mt-5"><button type="button" data-testid="next" data-next={next.kind} class={MAIN} onClick={next.go}>{next.label}</button></div>
+  </>;
 
-    <div class="mt-12">
-      <Fold id="working" title={N.folds.working}><Working c={c} p={p} update={(f) => { remember(c); setC((x) => { const s = f(x.s); return { s, mine: withMine(x.mine, changedFacts(x.s, s)) }; }); }} /></Fold>
-      <Fold id="more-options" title={N.folds.pro} sub={N.folds.proSub}>
-        <Assumed p={p} />
-        {(!isEmpty || emptied) && <p class="mt-8 mb-6 flex flex-wrap items-center gap-x-2 text-base text-ink-muted">{N.blank.lead}
-          {!isEmpty && <button type="button" data-testid="dscr-clear" class={`${QUIET} -ml-1`} onClick={emptyForm}>{N.blank.go}</button>}
-          {isEmpty && emptied && <button type="button" data-testid="dscr-clear-undo" class={`${QUIET} -ml-1`} onClick={() => { setC(emptied); setEmptied(undefined); }}>{N.blank.undo}</button>}</p>}
-        <Professionals s={c.s} update={update} />
-      </Fold>
+  return <div data-testid="report" data-mode={mode} class="pb-24">
+    <div key="top" class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+      <h1 id="dscr-title" ref={heading} tabIndex={-1} class="font-heading text-base font-semibold text-ink outline-none">{N.title}</h1>
+      <ModeSwitch mode={mode} onPick={(m) => (m === 'pro' ? toPro() : setMode('simple'))} />
+    </div>
+    <nav key="nav" aria-label="Your answers" class="mt-1 -ml-3 flex flex-wrap items-center">
+      {own && !pro && <button type="button" data-testid="change-answers" class={QUIET} onClick={() => ask(0, 'report')}>{N.report.change}</button>}
+      {past.length > 0 && <button type="button" data-testid="report-undo" class={QUIET} onClick={undo}>{N.report.undo}</button>}
+      {own ? <button type="button" data-testid="clear" class={QUIET} onClick={startOver}>{N.report.over}</button>
+        : <button type="button" data-testid="back-start" class={QUIET} onClick={() => setView({ at: 'intro' })}>{N.ask.back}</button>}
+    </nav>
+    {mark && <p key="mark" data-testid="mark" class="mt-2 text-base text-ink-muted"><span class="mr-1.5 inline-flex items-center rounded-full bg-warn-tint px-2 py-0.5 text-sm font-semibold text-warn">{N.example}</span>{' '}
+      {home && !c.mine.length ? <span data-testid="home-case">{mark.replace(/^Example: /, '')}</span> : mark.replace(/^Example: /, '')}</p>}
+    {pro
+      // Professional: every field, filled in, beside the answer it moves (on a phone, the DSCR stays in view as you type).
+      ? <div key="pro" class="mt-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-x-12">
+        <section id="more-options" aria-label={N.mode.pro} class="min-w-0">
+          <div data-testid="pro-strip" class="sticky top-0 z-10 -mx-4 mb-3 flex flex-wrap items-center justify-between gap-x-3 border-b border-line bg-canvas px-4 py-1 sm:-mx-8 sm:px-8 lg:hidden">
+            <p class="text-base text-ink tabular-nums">{N.pro.strip(p.average ?? '—', p.lowest ?? '—')}</p>
+            <a href="#pro-result" class={`${QUIET} -mr-3`}>{N.pro.see}</a>
+          </div>
+          <p class="text-base text-ink-muted">{N.pro.lead}</p>
+          {p.assumed.length > 0 && <details data-testid="why-all" class="mt-3">
+            <summary class="inline-flex min-h-11 cursor-pointer items-center text-base font-medium text-link underline underline-offset-4">{N.pro.whyAll} ({p.assumed.length})</summary>
+            <Assumed p={p} onChange={toPro} />
+          </details>}
+          {(!isEmpty || emptied) && <p class="mt-2 mb-6 flex flex-wrap items-center gap-x-2 text-base text-ink-muted">{N.blank.lead}
+            {!isEmpty && <button type="button" data-testid="dscr-clear" class={`${QUIET} -ml-1`} onClick={emptyForm}>{N.blank.go}</button>}
+            {isEmpty && emptied && <button type="button" data-testid="dscr-clear-undo" class={`${QUIET} -ml-1`} onClick={() => { setC(emptied); setEmptied(undefined); }}>{N.blank.undo}</button>}</p>}
+          <Professionals s={c.s} update={update} />
+        </section>
+        <div id="pro-result" class="mt-12 scroll-mt-14 lg:sticky lg:top-4 lg:mt-0 lg:max-h-[calc(100svh-2rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
+          {answerShown}
+          <div class="mt-6 flex flex-col">{nextStep(false)}</div>
+        </div>
+      </div>
+      // Simple: the answer, the next step, and what we filled in, said once under it.
+      : <div key="simple" class="mt-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-x-16">
+        <div>{answerShown}</div>
+        <section id="front-door" aria-label="Your answers" class="mt-6 flex flex-col lg:mt-1">
+          {nextStep(true)}
+          <Filled p={p} onChange={toPro} />
+        </section>
+      </div>}
+
+    <div key="folds" class="mt-12">
+      <Fold id="working" title={N.folds.working}><Working c={c} p={p} toPro={toPro} update={(f) => { remember(c); setC((x) => { const s = f(x.s); return { s, mine: withMine(x.mine, changedFacts(x.s, s)) }; }); }} /></Fold>
       <Fold id="paper" title={N.folds.paper} class="border-b">
         <DownloadSection s={c.s} p={p} update={update} example={exampleNeeds(c)} bare />
       </Fold>
     </div>
-    <p data-testid="kept-line" class="mt-6 text-sm text-ink-muted">{KEPT}</p>
+    <p key="kept" data-testid="kept-line" class="mt-6 text-sm text-ink-muted">{KEPT}</p>
+  </div>;
+}
+
+/** The two ways in, switched on top of the report: Simple (the answer and what we filled in) and Professional (every field). */
+function ModeSwitch({ mode, onPick }: { mode: Mode; onPick: (m: Mode) => void }) {
+  return <div role="group" aria-label={N.mode.label} class="inline-flex rounded-full bg-ink/6 p-1">
+    {(['simple', 'pro'] as const).map((m) => <button key={m} type="button" data-testid={`mode-${m}`} aria-pressed={mode === m}
+      class={`min-h-11 rounded-full px-4 text-base text-ink ${mode === m ? 'bg-canvas font-semibold shadow-sm' : 'font-normal hover:bg-ink/6'}`}
+      onClick={() => mode !== m && onPick(m)}>{m === 'simple' ? N.mode.simple : N.mode.pro}</button>)}
   </div>;
 }
 
@@ -264,9 +323,10 @@ function Options({ options, onUse }: { options: OptionCard[]; onUse: (o: OptionC
   </div>;
 }
 
-/** See the working: where it stands, the verdict, the largest loan and the fewest instalments, each year against the
- * target, the other checks, the statement that adds up and the schedule. */
-function Working({ c, p, update }: { c: Case; p: Preview; update: Update }) {
+/** See the working: where it stands, the verdict, the largest loan and the fewest instalments, the other checks, the
+ * statement that adds up and the schedule. Each year against the target is the chart's, above, and is not said again here
+ * (Rahul, 12-11-2026). */
+function Working({ c, p, update, toPro }: { c: Case; p: Preview; update: Update; toPro: (where?: string) => void }) {
   const largest = p.largest?.amount, fewest = p.fewest?.instalments;
   return <div>
     <p data-testid="dscr-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class="mb-1 text-base text-ink">{statusText(p)}</p>
@@ -277,11 +337,7 @@ function Working({ c, p, update }: { c: Case; p: Preview; update: Update }) {
       {largest !== undefined && <button type="button" data-testid="use-amount" class={`${QUIET} -ml-3`} onClick={() => update((x) => ({ ...x, loan: { ...x.loan, amount: inr(largest) } }))}>Use {rs(largest)}</button>}</p>}
     {p.fewest && <p class="mt-2 flex flex-wrap items-center gap-x-2 text-ink"><span data-testid="dscr-fewest">{p.fewest.text}</span>
       {fewest !== undefined && <button type="button" data-testid="use-instalments" class={`${QUIET} -ml-3`} onClick={() => update((x) => ({ ...x, loan: { ...x.loan, instalments: String(fewest) } }))}>Use {fewest} instalments</button>}</p>}
-    {p.marks && p.marks.length > 0 && <ul data-testid="dscr-marks" class="mt-4 flex flex-wrap gap-2 text-sm">
-      {p.marks.map((m) => <li key={m.fy} data-testid={`mark-${m.fy}`} class={`rounded-full bg-surface px-2.5 py-0.5 ${!m.counted ? 'text-ink-muted' : m.meets ? 'text-good' : 'text-bad'}`}>
-        {m.fy}: {m.dscr}, {!m.counted ? 'not counted' : m.meets ? 'meets the target' : 'below the target'}</li>)}
-    </ul>}
-    {p.lender && <LenderLines v={p.lender} openMore={() => openFold('more-options', false)} />}
+    {p.lender && <LenderLines v={p.lender} openMore={() => toPro('lender')} />}
     {p.statement && <StatementTable st={p.statement} parts={p.partYears} />}
     {p.beforeStart && <p data-testid="dscr-before-start" class="mt-2 text-sm text-ink-muted">{p.beforeStart}</p>}
     {p.notCounted && <p data-testid="dscr-not-counted" class="mt-2 text-sm text-ink-muted">{p.notCounted}</p>}
@@ -293,23 +349,30 @@ function Working({ c, p, update }: { c: Case; p: Preview; update: Update }) {
 /** A reason as the borrower reads it: the pointer to our own files (its source, kept in the data) left off the screen. */
 const plain = (why: string) => why.replace(/\s*\([^()]*\b[\w/.-]+\.(?:md|json)\)/g, '');
 
-/** What we assumed, at the top of Professional mode: each as one line, its reason a tap away, and a way to its setting. */
-function Assumed({ p }: { p: Preview }) {
+/** What we filled in, each as one line, its reason a tap away, and a way to its field in Professional mode. */
+function Assumed({ p, onChange }: { p: Preview; onChange: (where?: string) => void }) {
   const rows = p.assumed.map((a) => ({ ...a, why: plain(a.why) }));
   if (!rows.length) return null;
-  return <div data-testid="dscr-assumed">
-    <h3 class="font-heading text-lg font-semibold text-ink">{N.pro.assumed}</h3>
-    <ul class="mt-2 divide-y divide-line border-y border-line">
-      {rows.map((a) => <li key={a.id} data-testid={`assumed-${a.id}`}>
-        <details class="group/a">
-          <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 py-2.5 [&::-webkit-details-marker]:hidden">
-            <span class="min-w-0"><span class="block font-medium text-ink">{a.what}</span><span class="block text-base text-ink-muted">{a.shown}</span></span>
-            <span class="shrink-0 text-sm font-medium text-link underline underline-offset-4">{N.pro.why}</span>
-          </summary>
-          <p class="pb-3 text-sm text-ink-muted">{a.why}.{a.where && <>{' '}<a href={`#${a.where}`} class="text-link underline underline-offset-4" onClick={goTo(a.where)}>Change</a></>}</p>
-        </details>
-      </li>)}
-    </ul>
-    <p class="mt-2 text-sm text-ink-muted">{N.pro.change}</p>
-  </div>;
+  return <ul data-testid="dscr-assumed" class="divide-y divide-line border-y border-line">
+    {rows.map((a) => <li key={a.id} data-testid={`assumed-${a.id}`}>
+      <details class="group/a">
+        <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 py-2.5 [&::-webkit-details-marker]:hidden">
+          <span class="min-w-0"><span class="block font-medium text-ink">{a.what}</span><span class="block text-base text-ink-muted">{a.shown}</span></span>
+          <span class="shrink-0 text-sm font-medium text-link underline underline-offset-4">{N.pro.why}</span>
+        </summary>
+        <p class="pb-3 text-sm text-ink-muted">{a.why}.{a.where && <>{' '}<a href={`#${a.where}`} class="text-link underline underline-offset-4" onClick={(e) => { e.preventDefault(); onChange(a.where); }}>{N.pro.change}</a></>}</p>
+      </details>
+    </li>)}
+  </ul>;
+}
+
+/** Simple mode says what it filled in from the answers (Rahul, 12-11-2026), and the way to change it. */
+function Filled({ p, onChange }: { p: Preview; onChange: (where?: string) => void }) {
+  if (!p.assumed.length) return null;
+  return <section data-testid="filled" aria-labelledby="filled-title" class="mt-8">
+    <h2 id="filled-title" class="font-heading text-lg font-semibold text-ink">{N.filled.title}</h2>
+    <p class="mt-1 text-base text-ink-muted">{N.filled.lead(p.assumed.length)}</p>
+    <div class="mt-3"><Assumed p={p} onChange={onChange} /></div>
+    <button type="button" data-testid="to-pro" onClick={() => onChange()} class={QUIET}>{N.filled.change}</button>
+  </section>;
 }

@@ -261,6 +261,8 @@ The owner's two reference films set the bar and the VID3 path (`docs/video/VID3-
 | 08-11-2026 | VID6b (Rahul's greenlight, silent; the five polish fixes; the 1080p master with motion blur, capped on fast moves after Gate 3; Gate 3 produce; Rahul's page) | M, high | 124 steps, 0.6 working hours plus two 25 min renders, 1 compaction; 1 reviewer agent, 9% of the cost; within M |
 | 10-11-2026 | UX3 (Rahul's two answers recorded; the deep dive, measured; `docs/CAPACITY-FIRST.md`, Rahul's page; CAP1's row) | none set: Rahul's ask | about 45 steps, 1 compaction; no agent; the cost guard warned |
 | 10-11-2026 | FIX1 (whole plans from `engine/solve.ts`, the part first year judged on its own months, "Fix it for me" on the page; RESULT1's row) | L, Extra | about 165 steps, several compactions, hours between steps (the cache lapsed: the cost guard warned); no agent; CI's full site check caught seven old figures the quick one skipped; within L |
+| 11-11-2026 | DEEP1 (four tools walked, twelve files opened, sources read; Rahul's page; `docs/DEEP1-FINDINGS.md`; NEW1's row) | L, Extra | about 70 steps, 3 compactions; 4 reading agents (56 steps); within L |
+| 12-11-2026 | PLAN2 (Rahul's six answers; the best of five plans in one, `docs/WORKED-PAGE.md`, for the build sessions; rule 14's reading; rows NEW1, PAPER1, READ1) | none set: Rahul's ask | about 35 steps, 1 compaction; no agent; the cost guard warned on reading the five plans whole |
 
 ## Rows set aside
 Set aside by the owner on 10-10-2026 until the business entity, GST and Razorpay account are ready (D-UX-42):

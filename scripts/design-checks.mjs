@@ -262,7 +262,8 @@ export const STATES = {
     // Fictional case S (tests/dscr-worked.test.ts): short of the target, the ways that work under the reading.
     plan: async (page) => facts(page, ['4.5 L', '0', '12 L', '12', '5']),
     used: async (page) => { await facts(page, ['4.5 L', '0', '12 L', '12', '5']); await page.getByTestId('use-longer').click(); },
-    pro: async (page) => { await page.getByTestId('see-example').click(); await fold(page, 'more-options'); },
+    // Professional mode (NEW1c): every field filled in, switched on from the top of the report.
+    pro: async (page) => { await page.getByTestId('see-example').click(); await page.getByTestId('mode-pro').click(); },
     // A case that meets the target with the working open, then the paper with the borrower and the lender named.
     result: async (page) => { await facts(page, ['5 L', '10', '10 L', '12', '5']); await fold(page, 'working'); },
     download: async (page) => {

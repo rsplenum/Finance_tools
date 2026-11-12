@@ -99,12 +99,22 @@ export const N = {
     used: (title: string) => `Used: ${title}.`, undo: 'Undo',
   },
   chart: { title: 'Cash for the loan against repayments, by year', cash: 'Cash available', service: 'Repayments due', unit: 'Rs. lakh', tight: 'tightest' },
-  folds: { working: 'See the working', pro: 'Professional mode', proSub: 'What we assumed, and every setting', paper: 'The paper' },
-  /** The page opens here (Rahul, 12-11-2026): what DSCR is in a few words, then the questions. */
+  folds: { working: 'See the working', paper: 'The paper' },
+  /** The page opens here (Rahul, 12-11-2026): what DSCR is in a few words, then a choice of two ways in (NEW1c, Rahul,
+   * 12-11-2026): Simple asks the questions and states what it filled in; Professional asks the same, then opens every field filled in. */
   intro: {
     lead: (target: string) => `Banks check it with the DSCR: the cash your business earns, divided by the loan repayments due each year. Most look for ${target} or more.`,
-    size: (n: number) => `${n} questions, about a minute`,
-    start: 'Start', example: 'See an example',
+    simple: 'Simple', simpleLine: (n: number) => `${n} questions, then your answer. We fill in the rest.`,
+    pro: 'Professional', proLine: (n: number) => `The same ${n} questions, then every field filled in, to change.`,
+    example: 'See an example',
+  },
+  /** The two ways, switched on top of the report. */
+  mode: { label: 'Mode', simple: 'Simple', pro: 'Professional' },
+  /** Simple mode states what it filled in, under the answer. */
+  filled: {
+    title: 'We filled in the rest',
+    lead: (n: number) => `${n === 1 ? 'One figure' : `${n} figures`} you were not asked. Tap Why for each reason.`,
+    change: 'Change them in Professional mode',
   },
   /** One question a screen. */
   ask: {
@@ -118,7 +128,7 @@ export const N = {
       amount: 'Type 12 L or 12,00,000.', rate: 'As the bank quotes it, like 12.', years: 'Like 5, or 7.5.',
       emis: 'All running loans, added up.', depreciation: 'As in your accounts. It lowers the tax.',
     },
-    next: 'Next', done: 'Done', see: 'See the report', back: 'Back', none: 'None', step: (i: number, n: number) => `${i} of ${n}`,
+    next: 'Next', done: 'Done', see: 'See the report', fields: 'See every field', back: 'Back', none: 'None', step: (i: number, n: number) => `${i} of ${n}`,
     reads: (t: string) => `Reads as ${t}`,
   },
   /** The report: what can be undone and started over sits on top, where it is looked for. */
@@ -132,7 +142,11 @@ export const N = {
     against: (t: string) => `Banks look for ${t}`, inYear: (fy: string) => `in ${fy}`, years: (n: number) => `over ${n} years`,
   },
   years: { title: 'DSCR by year', line: (t: string) => `Line: ${t}, the least a year should reach`, below: 'below', part: 'part year' },
-  pro: { assumed: 'We assumed', change: 'Change any of these below.', why: 'Why' },
+  pro: {
+    lead: 'Every field, filled in from your answers. Change any; the answer moves with it.',
+    why: 'Why', whyAll: 'Why these figures', change: 'Change',
+    strip: (avg: string, low: string) => `DSCR ${avg} average, ${low} lowest`, see: 'See the answer',
+  },
   /** For professionals, above the form: a projection typed from the start, with the stated assumptions kept. */
   blank: { lead: 'Typing a projection from the start?', go: 'Empty the form', undo: 'Undo' },
   needs: (what: string) => `Your own figure for ${what} (the example’s stands in)`,
