@@ -1,5 +1,7 @@
 # The plan from Rahul's thirteen questions (PLAN1, 09-11-2026; D-BIZ-27)
 
+> Folded into `docs/WORKED-PAGE.md` (PLAN2, 12-11-2026; D-UX-358), the one plan a build session reads. Read here only the sections that file names.
+
 A proposal until Rahul says yes, row by row. Rahul's page, with the reasons in full: the link in `docs/HANDOFF.md`. Measured on `main` at a215461, built and opened in a browser at 390 px and 1280 px.
 
 ## What is missing, in one line

@@ -66,6 +66,7 @@ Read this before building anything Rahul will look at. These are Rahul's correct
 - "you try to access them and you fail every time and you waste my tokens". Name blocked hosts before the work. (D-TECH-35)
 - "the cost is killing me". Tokens go to building and to checking that it works. (D-UX-349)
 - The two links Rahul sent with the deep dive showed the depth of research to match; they were read as design references. Say what you take each link for, and cover all of what a deep dive names. (D-UX-357, 11-11-2026)
+- "Most findings are just what I have been asking of claude for all this while." A deep dive that hands Rahul's own asks back as findings has found nothing. The measure Rahul has named all along: "reduce cognitive load", ask "the most high value inputs", ask less and do more ourselves; "the UI/UX is as much the product as the report". (D-UX-358, 12-11-2026)
 
 ## The one lesson under all of these
 
