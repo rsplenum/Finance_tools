@@ -42,7 +42,7 @@ import { roundKey, setupOf, termWords, writeTerms } from './rounds';
 import { AnswersColumn, foldGrid, SeeAnswer, useFold, type AnswerGroup } from '../Fold';
 import type { LinkTerms } from '../../../engine/dscr-linked';
 
-type Update = (f: (s: State) => State) => void;
+export type Update = (f: (s: State) => State) => void;
 /** What round 1 had in a field a later round changed, said under it while the rounds are kept. */
 type Was = (key: 'amount' | 'instalments') => string | undefined;
 const showDate = (iso: string) => iso.split('-').reverse().join('-');
@@ -552,15 +552,29 @@ function Working({ s, p, openMore, fold }: { s: State; p: Preview; openMore: () 
   </section>;
 }
 
+/** How the figures are worked out, for the worked page's See the working (NEW1): worked twice, rounding, how far the
+ * method was checked, and the lenders' tests with the promoters' loans as assumed. */
+export function WorkingNotes({ s, p }: { s: State; p: Preview }) {
+  const sure = p.verdict && !p.blocked && !p.needs.length ? sureLine(dscrMarks(s)) : '';
+  return <div data-testid="dscr-how" class={`mt-6 space-y-2 ${HINT}`}>
+    <p>{SHARED.twice}</p>
+    {sure && <p data-testid="dscr-sure">{sure}</p>}
+    <p>{SHARED.rounded} {W.nilLines}</p>
+    {p.lender && <div><p class="font-medium text-ink">{W.tests}</p>
+      {'assumed' in p.lender.promoters && <p data-testid="lender-promoters">{p.lender.promoters.assumed}.</p>}
+      <p>{LENDER.status} {LENDER.stress.map((x) => `${x.label}: ${x.how}.`).join(' ')} {LENDER.floor.why}.</p></div>}
+  </div>;
+}
+
 /** DSCR as lenders test it, beside the borrower's (D-UX-47): never part of the verdict. */
-function LenderLines({ v, openMore }: { v: LenderView; openMore: () => void }) {
+export function LenderLines({ v, openMore }: { v: LenderView; openMore: () => void }) {
   const line = (l: LenderLine, id: string) => <li key={id} data-testid={`lender-${id}`} class={l.below ? 'text-bad' : ''}>
     <b>{l.label}:</b> average {l.average}, lowest {l.lowest} in {l.lowestYear}{l.below ? ': the cash does not cover the debt service' : ''}
     {l.meets !== undefined ? (l.meets ? '; meets the target' : '; below the target') : ''}.
   </li>;
   const c = v.cash, a = v.audited, td = 'px-2 py-1 text-right tabular-nums';
   return <div data-testid="dscr-lender" class="mt-4 text-ink">
-    <p class="font-medium">As a lender tests it</p>
+    <p class="font-medium">More checks</p>
     {v.blocked && <p role="alert" class="mt-1 text-sm text-bad">{v.blocked}</p>}
     <ul class="mt-1 space-y-1 text-sm text-ink-muted">
       {v.stress.map((l, i) => line(l, LENDER.stress[i]?.id ?? String(i)))}
@@ -598,7 +612,7 @@ function LenderSection({ s, update, y }: { s: State; update: Update; y: Years })
   </div>;
   const aud = (k: keyof LenderText['audited'], label: string) => <TextField id={`fld-lender-audited-${k}`} label={label} unit="Rs." inputMode="decimal" value={l.audited[k]} tidy={tidyAmount}
     onCommit={(t) => set((x) => ({ ...x, audited: { ...x.audited, [k]: t } }))} />;
-  return <Section id="lender" title="As a lender tests it">
+  return <Section id="lender" title="More checks">
     <p class={`mt-1 ${HINT}`}>Optional. Each adds a line beside your DSCR; none changes it.</p>
     <h3 class="mt-4 font-medium text-ink">Sales, for the price and cost tests</h3>
     {byYear ? cells('sales', 'Sales') : <TextField id="fld-lender-sales" label="This year’s sales" unit="Rs." hint="They grow as the profit does." inputMode="decimal" value={l.sales[0] ?? ''}
@@ -625,18 +639,21 @@ function LenderSection({ s, update, y }: { s: State; update: Update; y: Years })
 /** The statement's missing facts, each a link to its box (UXR7, as on the CMA and the report). */
 const DOC_LINK = docLink([['The borrower', 'fld-borrower'], ['The lender', 'fld-lender'], ['Prepared by', 'fld-preparedBy'],
   ['The address', 'fld-address'], ['The loan', 'fld-purpose'], ['The GSTIN', 'fld-gstin']]);
-function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Update }) {
+/** `example` (NEW1): the worked page's facts still the example's, listed as needed, and every file marked Example; `bare`, inside the page's own fold. */
+export function DownloadSection({ s, p: page, update, example = [], bare }: { s: State; p: Preview; update: Update; example?: string[]; bare?: boolean }) {
+  const p = example.length ? { ...page, needs: [...page.needs, ...example] } : page, marked = example.length > 0;
   const f = s.doc, set = (patch: Partial<DocFacts>) => update((x) => ({ ...x, doc: { ...x.doc, ...patch } }));
   const english = (t = '') => (t.trim() && !printable(t) ? 'The document is in English: type this in English letters.' : undefined);
-  const gstinSaid = f.gstin?.trim() && !gstinOf(f.gstin) ? 'A GSTIN has 15 letters and digits, like 27ABCDE1234F1Z5.' : undefined;
+  const gstinSaid = f.gstin?.trim() && !gstinOf(f.gstin) ? 'A GSTIN has 15 letters and digits, as on the GST certificate.' : undefined;
   const own = docNeeds(f), provisional = allNeeds(s, p).length > 0, ready = !!p.statement && !p.blocked;
   const field = (id: keyof DocFacts, label: string, hint?: string) =>
     <TextField id={`fld-${id}`} label={label} hint={hint} value={f[id] ?? ''} onCommit={(t) => set({ [id]: t })}
       said={english(f[id]) ?? (id === 'gstin' ? gstinSaid : undefined)} invalid={!!english(f[id]) || (id === 'gstin' && !!gstinSaid)} />;
   // Before the statement shows figures the section is one line (UX8, review finding 9).
-  if (!ready) return <Folded id="download" title="Download the statement"><span data-testid="doc-wait">{p.blocked
-    ? 'No document while the two computations disagree.' : SHARED.wait}</span></Folded>;
-  return <Section id="download" title="Download the statement">
+  const wait = <span data-testid="doc-wait">{p.blocked ? 'No document while the two computations disagree.' : SHARED.wait}</span>;
+  if (!ready) return bare ? <div id="download"><p class={HINT}>{wait}</p></div> : <Folded id="download" title="Download the statement">{wait}</Folded>;
+  // A plain element either way, never a component made here, so a field keeps its focus across a render.
+  const body = <>
     <p class={`mt-2 ${HINT}`}>{SHARED.files}</p>
     {ready
       ? <div class="mt-5">
@@ -650,7 +667,7 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
           <div class="grid gap-4 pt-2 pb-4 sm:grid-cols-2">
             {field('address', 'Address', 'The business’s address.')}
             {field('purpose', 'Purpose of the loan', 'Like a new CNC machine.')}
-            {field('gstin', 'GSTIN, if registered', 'Like 27ABCDE1234F1Z5.')}
+            {field('gstin', 'GSTIN, if registered', '15 letters and digits, as on the GST certificate.')}
           </div>
         </details>
         <div class="mt-5">
@@ -659,19 +676,40 @@ function DownloadSection({ s, p, update }: { s: State; p: Preview; update: Updat
         </p>
         {provisional && <p class={HINT}>The document says so on every page and lists what is still needed{own.length ? ':' : '.'}</p>}
         {own.length > 0 && <ul data-testid="doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map(DOC_LINK)}</ul>}
-        <Downloads pre="" doc={(today) => statementDoc(s, p, today)} name={(kind) => fileName(s, p, kind)} />
+        <Downloads pre="" doc={(today) => statementDoc(s, p, today, marked)} name={(kind) => fileName(s, p, kind, marked)} />
         <InAppNote id="in-app" />
         </div>
       </div>
       : null}
-  </Section>;
+  </>;
+  return bare ? <div id="download">{body}</div> : <Section id="download" title="Download the statement">{body}</Section>;
+}
+
+/**
+ * For professionals (NEW1, docs/WORKED-PAGE.md §4): everything the old page's More options held, whole: where the yearly
+ * figures come from and how DSCR is worked out, the loan's every term or the years' own figures, the figures year by
+ * year, the lender's levels and the lender's tests. Written into the same state the worked page reads.
+ */
+export function Professionals({ s, update }: { s: State; update: Update }) {
+  const y = useMemo(() => yearsOf(s), [s]);
+  const p = useMemo(() => withFrontNeeds(s, preview(s), y.years[0]), [s, y]);
+  const rows = useMemo(() => rowsOf(s), [s]);
+  return <div>
+    <Start s={s} update={update} />
+    {p.started && <>
+      {s.source === 'plan' ? <Loan s={s} update={update} y={y} p={p} was={() => undefined} /> : <YearsSection s={s} update={update} y={y} />}
+      <Figures s={s} update={update} rows={rows} y={y} p={p} />
+      <TargetSection s={s} update={update} />
+      {s.source === 'plan' && <LenderSection s={s} update={update} y={y} />}
+    </>}
+  </div>;
 }
 
 const lineClass = (kind?: string) => kind === 'total' || kind === 'ratio'
   ? 'font-semibold text-ink' : 'text-ink';
 
 /** The DSCR statement: years across on wider screens (as in a project report), one card per year on phones; then the Total. */
-function StatementTable({ st, parts = {} }: { st: StatementView; parts?: Record<string, string> }) {
+export function StatementTable({ st, parts = {} }: { st: StatementView; parts?: Record<string, string> }) {
   const cols = st.years.length + 1 + (st.total ? 1 : 0);
   // On a phone a line that is nil every year is left off the cards; the table and the document keep it (finding 16).
   const shown = st.lines.filter((l) => l.kind || !l.n || l.n.some((x) => x !== 0));
@@ -736,7 +774,7 @@ function StatementTable({ st, parts = {} }: { st: StatementView; parts?: Record<
 }
 
 /** The repayment schedule: a line per financial year; each opens to its months. */
-function Schedule({ sch }: { sch: ScheduleView }) {
+export function Schedule({ sch }: { sch: ScheduleView }) {
   const cols = 'grid grid-cols-label gap-2 sm:grid-cols-label-wide';
   return <div data-testid="schedule" class="mt-8">
     <h3 class="font-semibold text-ink">{W.schedule}</h3>

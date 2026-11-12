@@ -22,7 +22,7 @@ export interface PolicySection extends Section { src: string[] }
 export const privacySections = (counting: boolean): PolicySection[] => [
   { h: 'What you type stays on your device', src: ['site/src/events.ts', 'site/src/download.ts', 'site/src/fields.tsx'], p: [
     'The figures, names and other details you type into a tool are worked out in your browser. They are not sent to us, and we cannot see them.',
-    'Downloads (PDF, Excel and Word) are made in your browser too. Your answers stay on your device. On the project report they are saved in your browser until you press Clear all, so you can come back to them; on the other tools they last only for this tab.',
+    'Downloads (PDF, Excel and Word) are made in your browser too. Your answers stay on your device. On the project report they are saved in your browser until you press Clear all, and on the DSCR until you press Start again from the example, so you can come back to them; on the other tools they last only for this tab.',
   ] },
   { h: 'What we count, never what you type', src: ['worker/src/event-shape.ts', 'worker/src/events.ts', 'worker/migrations/0001_events.sql', 'worker/wrangler.jsonc'], p: [
     'To make the tools better, we count which steps are used:',
