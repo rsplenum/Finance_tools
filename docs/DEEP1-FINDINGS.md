@@ -1,6 +1,8 @@
 # DEEP1: the findings and the plan (11-11-2026)
 
-Rahul's page: https://claude.ai/artifact/BuSQecNbGtRHGqskqEj7fU. The brief: `docs/DEEP1.md` (D-UX-357). Everything in §5 to §7 is a proposal until Rahul says yes; `CLAUDE.md` is unchanged.
+> Folded into `docs/WORKED-PAGE.md` (PLAN2, 12-11-2026; D-UX-358), the one plan a build session reads. Read here only the sections that file names.
+
+Rahul's page: https://claude.ai/artifact/BuSQecNbGtRHGqskqEj7fU. The brief: `docs/DEEP1.md` (D-UX-357). Rahul answered §7 on 12-11-2026 (D-UX-358, D-DOC-18, D-BIZ-29, D-TECH-114): the direction stands, with the load on the borrower as its measure; §1 to §4 are the evidence.
 
 ## 1. What was looked at
 - All four tools in every state of `STATES` (`scripts/design-checks.mjs`) at 360 px and 1280 px: 66 walks, counted by script (screens, words, fields, buttons, where the answer starts, charts, type sizes).

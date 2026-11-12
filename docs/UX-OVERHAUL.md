@@ -1,5 +1,7 @@
 # The report builder's rebuild (UX2, 10-11-2026; D-UX-346 to D-UX-349)
 
+> Folded into `docs/WORKED-PAGE.md` (PLAN2, 12-11-2026; D-UX-358), the one plan a build session reads. Read here only the sections that file names.
+
 Rahul, 10-11-2026: "The 'make it work' doesn't work on project report. The sections … a long long vertical scroll and so jam packed with information that it almost a mind bender … make a detailed intuitive UI/UX even if it means overhauling the whole damn thing … make a detailed plan that opus 5.5 can implement."
 
 Three rows, one fresh session each, in this order: **FIX1**, **RESULT1**, **STEPS1**. A session reads §2, its own row's section and §8, and nothing else here. The picture of every screen: `docs/design-reviews/2026-11-10-ux2/mock.html` (a hand-made stand-in; its blanks are figures only the engine may fill). Rahul's page: https://claude.ai/artifact/5HSrsyaP6dD49kMukjJkz5.
