@@ -173,6 +173,7 @@ The owner's two reference films set the bar and the VID3 path (`docs/video/VID3-
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 13-11-2026 | PAPER1 (the DSCR's three files on trial: page 1 at a glance, "₹" through one embedded face, bookmarks; the Excel model with an evaluator test; Word in step; lazy writers) | L, Extra | 248 steps, 9 compactions; no agent; at budget plus a quarter, with #201's merge. Rewriting the document tests for the new layout took about a fifth; the compactions were the cost of one long session |
 | 09-11-2026 | PLAN1 (the plan from Rahul's thirteen questions: `docs/PLAN.md` and Rahul's page) | none set: Rahul's ask | about 50 steps, 0.3 h, 1 compaction; no agent |
 | 09-11-2026 | LOOSE1 (the look freed from the checks: the taste counts report, the gates named in D-TECH-110; BUILD1's row) | S, high | about 45 steps, 0.2 h, no compaction; no agent; within S |
 | 28-10-2026 | LOOP1d: the fold on the report, the CMA and the estimate, one shape for four | L, Extra | about 110 steps, one compaction; a Python replace of an empty string grew a file to 770k lines (assert a match first) |
@@ -263,6 +264,9 @@ The owner's two reference films set the bar and the VID3 path (`docs/video/VID3-
 | 10-11-2026 | FIX1 (whole plans from `engine/solve.ts`, the part first year judged on its own months, "Fix it for me" on the page; RESULT1's row) | L, Extra | about 165 steps, several compactions, hours between steps (the cache lapsed: the cost guard warned); no agent; CI's full site check caught seven old figures the quick one skipped; within L |
 | 11-11-2026 | DEEP1 (four tools walked, twelve files opened, sources read; Rahul's page; `docs/DEEP1-FINDINGS.md`; NEW1's row) | L, Extra | about 70 steps, 3 compactions; 4 reading agents (56 steps); within L |
 | 12-11-2026 | PLAN2 (Rahul's six answers; the best of five plans in one, `docs/WORKED-PAGE.md`, for the build sessions; rule 14's reading; rows NEW1, PAPER1, READ1) | none set: Rahul's ask | about 35 steps, 1 compaction; no agent; the cost guard warned on reading the five plans whole |
+| 12-11-2026 | NEW1b (Rahul's phone review: questions first over the whole screen, the report, one Professional mode, Undo and Start over on the report; the checks walk the questions) | M, Extra | 120 steps, 3 compactions; no agent; at M: the checks for the new flow took a third |
+| 12-11-2026 | NEW1c (Rahul's notes on NEW1b: Simple and Professional at the start, the same eight questions; Simple lists what it filled in, Professional shows every field filled in; the years said once; D-UX-360) | M, Extra | about 60 steps, 1 compaction; no agent; within M. The desktop layout was looked at, not measured with `npm run look` |
+| 12-11-2026 | NEW1d (Rahul's horizontal journey for Professional, missed by NEW1c: chapters across, a rail, Next and Back, the pin under the top bar; D-UX-361) | M, Extra | 68 steps, 1 compaction; no agent; within M. Finding the lost ask in the transcripts took the first tenth |
 
 ## Rows set aside
 Set aside by the owner on 10-10-2026 until the business entity, GST and Razorpay account are ready (D-UX-42):

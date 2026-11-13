@@ -412,7 +412,7 @@ export function maxLoanAmount(proj: ProjectionYear[], loan: LoanInput, def: Defi
   const at = (amount: number) => must(plan(proj, { ...(loan as LoanTerms), amount }, def, start));
   return solve((): AmountAnswer | NoAnswer => {
     const first = shortfall(at(1).statement, target);
-    if (first) return { none: `No loan amount meets the target: even at Rs. 1, ${limitText(first)}.` };
+    if (first) return { none: `No loan amount meets the target: even at ₹1, ${limitText(first)}.` };
     let lo = 1, hi = 1024;
     while (!shortfall(at(hi).statement, target)) {
       lo = hi;
@@ -423,7 +423,7 @@ export function maxLoanAmount(proj: ProjectionYear[], loan: LoanInput, def: Defi
       const mid = Math.floor((lo + hi) / 2);
       if (shortfall(at(mid).statement, target)) hi = mid; else lo = mid;
     }
-    // The answer must top an unbroken range from Rs. 1. A year too weak to cover its other debts can make the
+    // The answer must top an unbroken range from ₹1. A year too weak to cover its other debts can make the
     // average rise with the loan; then there is no single answer.
     for (const f of [0.75, 0.5, 0.25, 0.1]) {
       if (shortfall(at(Math.max(1, Math.floor(lo * f))).statement, target))

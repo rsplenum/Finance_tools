@@ -3,7 +3,7 @@
  * the line's price growing only once it is full. Fictional case E (D-BIZ-02: invented figures), worked by hand below and
  * again by a short script: case R's costs, loan and working capital (tests/report.test.ts), a business selling Rs.
  * 70,00,000 today and growing 10% a year, adding the mock-up's line (docs/design-reviews/2026-10-29-or11b/, its `fill`
- * case): 5,00,000 boxes a year at Rs. 25, used 55%, 70%, then 85%, the price growing 5% a year once full; the line's
+ * case): 5,00,000 boxes a year at ₹25, used 55%, 70%, then 85%, the price growing 5% a year once full; the line's
  * first sales six months after the loan's first draw, in October 2026.
  */
 import { describe, it, expect } from 'vitest';
@@ -69,7 +69,7 @@ describe('an expansion with no sales today is a new business by its drivers', ()
 });
 
 describe('a new line by its products', () => {
-  // Boxes 20,000 a month at Rs. 25 and lids 10,000 at Rs. 12.50: 60,00,000 + 15,00,000 = 75,00,000 a year at full use;
+  // Boxes 20,000 a month at ₹25 and lids 10,000 at ₹12.50: 60,00,000 + 15,00,000 = 75,00,000 a year at full use;
   // 2026-27 at 55% for six months, 20,62,500, of which boxes 16,50,000 (66,000 boxes) and lids 4,12,500 (33,000 lids).
   const p = projectReport({ ...LINE, capacity: undefined, price: undefined, products: [{ name: 'Boxes', unitsMonth: 20000, price: 25 }, { name: 'Lids', unitsMonth: 10000, price: 12.5 }] }) as Report;
   it('adds up to the line, beside today\'s sales', () => {

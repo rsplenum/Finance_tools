@@ -36,9 +36,9 @@ Ask only for facts the page does not already have (such as the borrower's name a
 
 ## Limits to know
 
-- The PDF uses the standard Helvetica fonts, so Latin letters only. `printable()` checks what the user types; a name in Devanagari is asked for again in English letters. The Word copy keeps any letters.
+- The PDF prints in IBM Plex Sans cut to Latin letters and "₹" (D-DOC-19), so Latin letters only. `printable()` checks what the user types; a name in Devanagari is asked for again in English letters. The Word copy keeps any letters.
 - A short table stays on one page with its heading, and a long one continues under its header. Many year columns split into tables that fit the width, in the PDF and the Word copy alike (`measure` in `pdf.ts`).
-- The Excel copy holds the engine's exact figures as numbers, with lakh and crore formats (D-DOC-02); formulas only on a Check sheet that redoes the plain arithmetic beside those figures, with differences of 0 (the CMA, D-DOC-12; the DSCR's sensitivity analysis, a `sheetOnly` part kept out of the PDF and Word, D-DOC-13). It prints on A4, one page wide. A merged cell does not grow with its text in Excel, so `xlsx.ts` sets those rows' heights itself.
+- The Excel copy holds the engine's exact figures as numbers, with lakh and crore formats, and no formula anywhere (D-DOC-02, D-DOC-21): the reports are the business, and a sheet that works its figures out becomes a calculator for other reports. The accountant checks with their own formulas. It prints on A4, one page wide. A merged cell does not grow with its text in Excel, so `xlsx.ts` sets those rows' heights itself.
 - The Word copy must follow the schema's order of elements, or Word refuses the file even when other readers open it. `docx.ts` notes the order wherever it builds properties.
 
 ## Tests: text, not screenshots
@@ -51,6 +51,6 @@ Ask only for facts the page does not already have (such as the borrower's name a
 
 - `window.print()` prints the web page: a second layout to keep in step with the PDF. Opening the same PDF for printing keeps one layout.
 - A PDF library adds 100 KB or more to the page; our writer is small, but ours to maintain.
-- Formulas in the Excel copy show the working, but become a second copy of the method to keep in step with the engine.
+- Rahul has ruled: no formulas in the Excel copy (D-DOC-21). A formula would show the working, but lets one download make other reports, and is a second copy of the method.
 - The Word copy can be edited, so what reaches a lender may differ from what the page worked out; the PDF is the copy to send.
 - The files are made in the browser, so payment can gate the buttons, not the file itself.

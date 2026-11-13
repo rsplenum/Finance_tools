@@ -33,7 +33,7 @@ Keep on the page and out of the document: the assumptions, the verdict, the larg
 
 - A PDF in the standard Helvetica fonts holds Latin letters only: check what the user types, and ask for a name in Devanagari again in English letters. The Word copy keeps any letters.
 - A short table stays on one page with its heading, and a long one continues under its header. Many year columns split into tables that fit the width.
-- The Excel copy holds the exact figures as numbers, with lakh and crore formats and no formulas unless the owner chooses them; it prints on A4, one page wide. A merged cell does not grow with its text in Excel, so set those rows' heights.
+- The Excel copy holds the exact figures as numbers, with lakh and crore formats and no formulas: a sheet that works its figures out lets one download make other reports, and the reports are the business; it prints on A4, one page wide. A merged cell does not grow with its text in Excel, so set those rows' heights.
 - A Word file must follow the schema's order of elements, or Word refuses it even when other readers open it.
 
 ## Tests: text, not screenshots

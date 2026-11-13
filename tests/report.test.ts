@@ -92,7 +92,7 @@ describe('a missing fact is never assumed', () => {
  * engine by a short script from first principles (the scheme's rules as engine/data/report.json reads them; worked again
  * on 10-11-2026 for the fair part year, D-UX-350: interest before the first sales goes to the project's cost month by
  * month, and a first year of sales under 180 days takes half the depreciation):
- * P, a firm making 50,000 units a year at Rs. 200, used 60%, 70%, then 80%; land 2 lakh, building 6 lakh, plant 20 lakh,
+ * P, a firm making 50,000 units a year at ₹200, used 60%, 70%, then 80%; land 2 lakh, building 6 lakh, plant 20 lakh,
  * preliminary 50,000; a loan of 24 lakh sanctioned at 10%, drawn October 2026, 6 months' moratorium, 48 monthly
  * instalments of equal principal; sales from January 2027 (3 months on); variable costs 70%; fixed costs 12 lakh a full
  * year, growing 5%; a cash credit of 3 lakh at 11%; PMEGP, general category, a village, manufacturing.
@@ -139,8 +139,8 @@ describe('fictional case P: drivers, three months of sales in the first year, PM
 
 /**
  * Case P by products (D-UX-109), worked apart from the engine by a short script from first principles: as P, but two
- * lines instead of the capacity: roasted chana, 2,500 packs a month at full running at Rs. 200, and roasted peanuts, 1,500
- * at Rs. 200; 96,00,000 a year at full running. At 60%: 57,60,000, variable 40,32,000; stock and creditors 3,31,397.26,
+ * lines instead of the capacity: roasted chana, 2,500 packs a month at full running at ₹200, and roasted peanuts, 1,500
+ * at ₹200; 96,00,000 a year at full running. At 60%: 57,60,000, variable 40,32,000; stock and creditors 3,31,397.26,
  * debtors 4,73,424.66; the margin 1,73,424.66. PMEGP's cost 31,23,424.66, the margin money 7,80,856.16, the loan repaid
  * 16,19,143.84, its interest before the first sales 40,478.60; the project 30,63,903.25, the promoters 6,63,903.25, their
  * own share 13.56%. 2026-27 (three months): chana 4,500 packs, 9,00,000; peanuts 2,700 packs, 5,40,000; sales 14,40,000;
@@ -167,8 +167,8 @@ describe('fictional case P by products: the lines add up to sales', () => {
 });
 
 // Q: a service, special category, a town; building 10 lakh, plant 20 lakh, preliminary 1 lakh, no cash credit; 40,000
-// units at Rs. 150; variable 55%; fixed 9 lakh; 26 lakh sanctioned at 10%, drawn October 2026, 9 months' moratorium, 48
-// monthly instalments; sales from May 2027 (7 months on). PMEGP's cost 33,95,890.41 is above the Rs. 20 lakh ceiling, so
+// units at ₹150; variable 55%; fixed 9 lakh; 26 lakh sanctioned at 10%, drawn October 2026, 9 months' moratorium, 48
+// monthly instalments; sales from May 2027 (7 months on). PMEGP's cost 33,95,890.41 is above the ₹20 lakh ceiling, so
 // the margin money is 25% of 20 lakh, 5,00,000, and the loan repaid 21,00,000; its interest before May 2027 (October to
 // April) is 21,00,000 × 10/1200 × 7 = 1,22,500, in the project of 35,18,390.41. 2027-28 has 11 months of sales, a full
 // year's depreciation: sales 33,00,000, interest from May 1,79,375, write-off (1,00,000 + 1,22,500) ÷ 5 = 44,500, profit
@@ -186,7 +186,7 @@ describe('fictional case Q: sales start in the next year, above the ceiling, cas
     expect(two([q.interestBeforeStart, q.scheme?.cost, q.scheme?.subsidy, q.finance.termLoan, q.projectCost, q.finance.promoter, q.scheme?.ownPct]))
       .toEqual(['122500.00', '3395890.41', '500000.00', '2100000.00', '3518390.41', '918390.41', '23.44']);
     expect(q.cost.find((c) => c.id === 'idc')?.amount).toBeCloseTo(122500, 6);
-    expect(q.scheme?.flags).toEqual([PMEGP.notice, 'The project cost of Rs. 33,95,890 is above PMEGP\'s Rs. 20,00,000 for a service: the margin money is worked on Rs. 20,00,000, and the bank may lend the rest without it.']);
+    expect(q.scheme?.flags).toEqual([PMEGP.notice, 'The project cost of ₹33,95,890 is above PMEGP\'s ₹20,00,000 for a service: the margin money is worked on ₹20,00,000, and the bank may lend the rest without it.']);
     const a = q.years[0];
     expect([a.months, ...two([a.sales, a.pat, a.cash, a.dscr])]).toEqual([11, '3300000.00', '24854.00', '75604.00', '1.13']);
     expect(q.cashShort).toBeUndefined();
@@ -202,7 +202,7 @@ describe('fictional case Q: sales start in the next year, above the ceiling, cas
   });
   it('asks the scheme\'s facts, and a loan above the margin money', () => {
     expect(reportNeeds({ ...CASE_Q, scheme: { id: 'pmegp' } })).toEqual(['PMEGP: the borrower\'s category', 'PMEGP: a town or a village', 'PMEGP: manufacturing or a service']);
-    expect((projectReport({ ...CASE_Q, loan: { ...CASE_Q.loan, amount: 500000 } }) as Needs).needs).toEqual(['The term loan: more than PMEGP\'s margin money of Rs. 5,00,000, which is set off against it']);
+    expect((projectReport({ ...CASE_Q, loan: { ...CASE_Q.loan, amount: 500000 } }) as Needs).needs).toEqual(['The term loan: more than PMEGP\'s margin money of ₹5,00,000, which is set off against it']);
   });
 });
 

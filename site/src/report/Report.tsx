@@ -17,7 +17,8 @@ import { REPORT_HOME } from './home-case';
 import { reportExample } from './example';
 import { Bar, Benchmarks, Lever, PlanLever, targetOf } from '../Board';
 import { benchmarkFields, inSentence, listed, withBenchmark } from '../board-model';
-import { printable, sectionPages } from '../doc/pdf';
+import { printable } from '../doc/face';
+import { sectionPages } from '../doc/layout';
 import { isoDate } from '../download';
 import { monthText } from '../dscr/model';
 import { overdueNote, todayIso } from '../../../engine/review';
@@ -217,7 +218,7 @@ export function ReportCalculator() {
   const mark = (id: string, hint?: string) => { const c = used.find((u) => u.field === id); return c ? `Changed by the plan; it was ${c.was || 'empty'}.${hint ? ` ${hint}` : ''}` : hint; };
   // Each setter builds on the latest state (x), never on the one this render saw.
   const amount = (id: string, label: string, value: string, set: (x: ReportState, t: string) => ReportState, hint?: string) =>
-    <TextField id={id} label={label} unit="Rs." hint={mark(id, hint)} inputMode="decimal" value={value} tidy={tidyAmount}
+    <TextField id={id} label={label} unit="₹" hint={mark(id, hint)} inputMode="decimal" value={value} tidy={tidyAmount}
       invalid={bad(value, amountOf)} said={notUnderstood(value, amountOf, '10,00,000 or 10 L')} onCommit={(t) => update((x) => set(x, t))} />;
   // A figure with its unit in the box and no example there (UX9, review finding 6); one the page assumes says so in the box.
   const percent = (id: string, label: string, value: string, set: (x: ReportState, t: string) => ReportState, unit?: string, assumed?: string, hint?: string) =>
@@ -350,10 +351,10 @@ export function ReportCalculator() {
         {tick('fld-pmegp-confirmed', 'Each of these holds for my project', !!s.pmegpConfirmed, (x, pmegpConfirmed) => ({ ...x, pmegpConfirmed }))}
       </>}
       {s.scheme === 'mudra' && <div data-testid="rep-mudra">
-        <p class={`mt-2 ${HINT}`}>Mudra lends up to Rs. {tidyAmount(String(MUDRA.mostInAll))} in all, the term loan and the working-capital limit together, at the bank's own rate: {MUDRA.levels.map((v) => `${v.label} up to Rs. ${tidyAmount(String(v.upTo))}`).join(', ')}.</p>
+        <p class={`mt-2 ${HINT}`}>Mudra lends up to ₹{tidyAmount(String(MUDRA.mostInAll))} in all, the term loan and the working-capital limit together, at the bank's own rate: {MUDRA.levels.map((v) => `${v.label} up to ₹${tidyAmount(String(v.upTo))}`).join(', ')}.</p>
         <p data-testid="rep-mudra-level" class="mt-2 font-medium text-ink">{mudraLine(s)}</p>
-        <p data-testid="rep-mudra-collateral" class={`mt-2 ${HINT}`}>No collateral needed up to Rs. {tidyAmount(String(MUDRA.collateralFreeUpTo))}: {CGFMU.label.split(',')[0]} guarantees the loan, for a fee of {CGFMU.ratePct}% a year, in the projections as a finance cost. Apply on <a class="text-link underline underline-offset-4" href={MUDRA.apply.url} target="_blank" rel="noopener noreferrer">{MUDRA.apply.label}</a>.</p>
-        {tarunAsked(s) && tick('fld-tarun', 'The borrower has taken and repaid a Tarun loan', !!s.tarunRepaid, (x, tarunRepaid) => ({ ...x, tarunRepaid }), `Only then Tarun Plus, above Rs. ${tidyAmount(String(MUDRA.levels[MUDRA.levels.length - 2].upTo))}.`)}
+        <p data-testid="rep-mudra-collateral" class={`mt-2 ${HINT}`}>No collateral needed up to ₹{tidyAmount(String(MUDRA.collateralFreeUpTo))}: {CGFMU.label.split(',')[0]} guarantees the loan, for a fee of {CGFMU.ratePct}% a year, in the projections as a finance cost. Apply on <a class="text-link underline underline-offset-4" href={MUDRA.apply.url} target="_blank" rel="noopener noreferrer">{MUDRA.apply.label}</a>.</p>
+        {tarunAsked(s) && tick('fld-tarun', 'The borrower has taken and repaid a Tarun loan', !!s.tarunRepaid, (x, tarunRepaid) => ({ ...x, tarunRepaid }), `Only then Tarun Plus, above ₹${tidyAmount(String(MUDRA.levels[MUDRA.levels.length - 2].upTo))}.`)}
       </div>}
       <div class="mt-4 grid gap-4 @md:grid-cols-2">
         {amount('fld-tl-amount', 'Term loan you will ask for', s.loan.amount, (x, t) => ({ ...x, loan: { ...x.loan, amount: t } }))}
@@ -639,7 +640,7 @@ function Viable({ s, p, update, use, useWay, useFix, toField, answer, toCollater
     <p data-testid={`rep-work-chips-${c.key}`} class="mt-1 text-sm">{c.reaches ? <span class="text-good">{n ? `Meets all ${n}` : 'Cash stays at nil or above'}</span>
       : <>{c.fixes.length > 0 && <span class="text-good">Meets {listed(c.fixes.map(inSentence))}. </span>}<span class="text-bad">Leaves {listed(c.still.map(inSentence))} short</span></>}</p>
     {c.ask && <div class="mt-2">
-      <TextField id={`fld-${c.ask.id}-${c.key}`} label={c.ask.label} hint={c.ask.hint} unit="Rs." inputMode="decimal" value={c.ask.value} tidy={tidyAmount}
+      <TextField id={`fld-${c.ask.id}-${c.key}`} label={c.ask.label} hint={c.ask.hint} unit="₹" inputMode="decimal" value={c.ask.value} tidy={tidyAmount}
         invalid={bad(c.ask.value, amountOf)} said={notUnderstood(c.ask.value, amountOf, '50,00,000 or 50 L')}
         onCommit={(t) => update((x) => ({ ...x, [c.ask?.id as string]: t }))} />
       <p data-testid={`rep-work-ask-${c.key}`} class={`mt-1 ${HINT}`}>{c.ask.note}</p>
@@ -656,7 +657,7 @@ function Viable({ s, p, update, use, useWay, useFix, toField, answer, toCollater
   return <div class="mt-6">
     {pending && <div data-testid="rep-pending" class="mb-4 rounded-control border-l-4 border-warn bg-surface p-3">
       <TextField id="fld-pending" label={pending.label} hint={`${W.pending} ${pending.hint}`}
-        unit="Rs." inputMode="decimal" value="" tidy={tidyAmount} onCommit={answer} />
+        unit="₹" inputMode="decimal" value="" tidy={tidyAmount} onCommit={answer} />
     </div>}
     {ask && <div data-testid="rep-work" tabIndex={-1}>
       <h3 class="text-title text-ink">Make it work</h3>
@@ -727,7 +728,7 @@ function Viable({ s, p, update, use, useWay, useFix, toField, answer, toCollater
       <h3 class="text-title text-ink">{W.adjust}</h3>
       <p class={HINT}>{W.sliders}</p>
       <TextField id="fld-promotersMost" class="mt-3" label="The most the promoters can bring in all, if known" hint={W.most}
-        unit="Rs." inputMode="decimal" value={s.promotersMost} tidy={tidyAmount} invalid={bad(s.promotersMost, amountOf)}
+        unit="₹" inputMode="decimal" value={s.promotersMost} tidy={tidyAmount} invalid={bad(s.promotersMost, amountOf)}
         said={notUnderstood(s.promotersMost, amountOf, '10,00,000 or 10 L')} onCommit={(promotersMost) => update((x) => ({ ...x, promotersMost }))} />
       {b.steps.length > 0 && <ol data-testid="rep-plan-steps" class="mt-3 list-decimal space-y-0.5 pl-5 text-sm text-ink">{b.steps.map((t) => <li key={t}>{t}</li>)}</ol>}
       {b.promoters && <p data-testid="rep-plan-promoters" class={`mt-1 text-sm ${b.over ? 'font-medium text-bad' : 'text-ink'}`}>{b.promoters}</p>}

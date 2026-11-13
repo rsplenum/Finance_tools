@@ -52,7 +52,7 @@ export function fixOf(x: ReportInput, lv?: Levels): Fixes | undefined {
     const m = new Set(diagnose(r, y, 'fresh', lv).misses);
     return missed.every((id) => !m.has(id)) && kept.every((id) => !m.has(id)) ? r : undefined;
   };
-  /** The largest loan that meets at `n` instalments, rounded down to four figures (Rs. 1,75,00,000, not 1,75,06,137) so
+  /** The largest loan that meets at `n` instalments, rounded down to four figures (₹1,75,00,000, not 1,75,06,137) so
    * it reads as a person would borrow it: halving on that step, then checked below as `viable.ts` does. */
   const step = 10 ** Math.max(0, Math.floor(Math.log10(tl)) - 3);
   const largest = (n: number) => {

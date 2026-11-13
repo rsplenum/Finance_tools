@@ -60,7 +60,26 @@ export function taxOn(income: number, b: Borrower): number {
   return tax * (1 + b.cess / 100);
 }
 
-/** The tax in one line of plain words, from the rates: "25.168%", "31.2%; 34.944% above Rs. 1,00,00,000", or the slab rates. */
+/**
+ * The same tax laid out step by step, as the Excel copy's Workings redo it by formulas: the profit taxed (nil on a loss),
+ * each slab's tax, their total, after any rebate, with the surcharge and its marginal relief, the cess, and the tax
+ * (taxOn's figure); `caps`, at each surcharge threshold the tax there with the surcharge below it, which the relief adds
+ * the income above the threshold to.
+ */
+export function taxSteps(income: number, b: Borrower) {
+  const x = income > 0 ? income : 0;
+  const bands = b.slabs.map(([from, rate], k) => (Math.max(0, Math.min(x, k + 1 < b.slabs.length ? b.slabs[k + 1][0] : Infinity) - from) * rate) / 100);
+  const slabs = bands.reduce((a, t) => a + t, 0);
+  const rebated = !b.rebate ? slabs : x <= b.rebate.incomeUpTo ? Math.max(0, slabs - b.rebate.max) : Math.min(slabs, x - b.rebate.incomeUpTo);
+  const caps = b.surcharge.map(([from], j) => afterRebate(from, b) * (1 + (j ? b.surcharge[j - 1][1] : 0) / 100));
+  let passed = -1;
+  b.surcharge.forEach(([from], j) => { if (x > from) passed = j; });
+  const surcharged = passed < 0 ? rebated : Math.min(rebated * (1 + b.surcharge[passed][1] / 100), caps[passed] + (x - b.surcharge[passed][0]));
+  const cess = (surcharged * b.cess) / 100;
+  return { income: x, bands, slabs, rebated, caps, surcharged, cess, tax: x > 0 ? surcharged + cess : 0 };
+}
+
+/** The tax in one line of plain words, from the rates: "25.168%", "31.2%; 34.944% above ₹1,00,00,000", or the slab rates. */
 export function taxSummary(b: Borrower): string {
   const cess = 1 + b.cess / 100, pct = (x: number) => `${+x.toFixed(3)}%`;
   if (b.slabs.length > 1) {

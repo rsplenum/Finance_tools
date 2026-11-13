@@ -448,8 +448,6 @@ export interface Preview {
   statement?: StatementView;
   schedule?: ScheduleView;
   average?: string;
-  /** The engine's average, unrounded, for the Excel copy's Check sheet. */
-  averageN?: number;
   lowest?: string;
   lowestYear?: string;
   notCounted?: string;
@@ -619,7 +617,6 @@ function fillStatement(p: Preview, st: Statement, t: Target, def: Definition, pa
     p.notCounted = `Not counted: ${andList(skipped)} (${def.years === 'repayment' ? 'no term-loan instalment' : 'no interest or instalments due'}).`;
   if (st.average !== undefined && st.minimum) {
     p.average = ratioText(st.average, t.average);
-    p.averageN = st.average;
     p.lowest = ratioText(st.minimum.dscr, t.minimum);
     p.lowestYear = st.minimum.fy;
   }

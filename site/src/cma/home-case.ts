@@ -3,7 +3,7 @@
  * for a larger cash credit, its own godown in the fixed assets, no term loan. Home's CMA intro types it, and its button
  * opens the CMA filled with it. Every figure shown is the engine's; tests/home-story.test.ts holds them to the same case
  * worked by hand: the current ratio 97.9 ÷ 94.55 = 1.0354 in the estimate's year, short of a fresh limit's 1.10, and
- * Rs. 5,55,000 of capital brought in, the bank's borrowing less by as much, bringing it to 97.9 ÷ 89 = 1.10. Nobody's
+ * ₹5,55,000 of capital brought in, the bank's borrowing less by as much, bringing it to 97.9 ÷ 89 = 1.10. Nobody's
  * real data.
  */
 import { inr } from '../../../engine/util';

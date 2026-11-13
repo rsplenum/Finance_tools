@@ -192,7 +192,7 @@ describe('changed benchmarks on the CMA (BEN1)', () => {
     const k = cmaDiagnose(run(M), M, 'renewal', { currentRatio: 1.04 }).checks.find((c) => c.id === 'currentRatio');
     expect([k?.level, k?.byDefault, k?.meets]).toEqual([1.04, 1, true]);
   });
-  it('the collateral for a security cover of 1.25: Rs. 8,33,334', () => {
+  it('the collateral for a security cover of 1.25: ₹8,33,334', () => {
     expect(cmaCollateralNeeded(run(M), M, 'fresh', { securityCover: 1.25 })).toBe(833334);
     expect((cmaViable(M, 'fresh', { securityCover: 1.25 }) as CmaViability).collateral?.needed).toBe(833334);
   });

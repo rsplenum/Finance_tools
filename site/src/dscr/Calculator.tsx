@@ -25,7 +25,7 @@ import TAX_FILE from '../../../engine/data/tax.json';
 import { answerRule, AnswerBar, How, Why, BUTTON, CellInput, Choice, Counter, Dash, docLink, FILLED, Folded, goTo, HINT, Ledger, type LedgerRow, Section, SourceNote, STATE, TextField, Tick, InAppNote, Verdict, useHomeCase, useKept, useStart, StartLine, StartNotes, MoreOptions } from '../fields';
 import { Downloads } from '../Downloads';
 import { DSCR_HOME } from './home-case';
-import { printable } from '../doc/pdf';
+import { printable } from '../doc/face';
 import { isoDate } from '../download';
 import { workWords } from '../verdict';
 import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
@@ -122,11 +122,11 @@ export function DscrCalculator() {
 function railOf(s: State): AnswerGroup[] {
   const per = s.loan.repayment === 'quarterly' ? 3 : 1, k = numberOf(s.loan.instalments);
   const emi = s.modes.otherLoans === 'emi' ? s.running[0]?.emi : undefined, dep = s.modes.depreciation === 'none' ? undefined : s.cells.depreciation?.[0];
-  const money = (t?: string) => (t?.trim() ? `Rs. ${t}` : 'None');
+  const money = (t?: string) => (t?.trim() ? `₹${t}` : 'None');
   return [
     { title: 'You', rows: [['Who is the borrower', BORROWER_CHOICES.find((b) => b.id === s.borrower)?.label ?? '–']] },
     { title: 'The business', rows: [['Profit this year, before interest, depreciation and tax', money(s.cells.pbdit?.[0])], ['Growth in sales a year', `${s.rates.pbdit ?? ''}%`],
-      ['EMIs already paid', emi?.trim() ? `Rs. ${emi} a month` : 'None'], ['Depreciation a year', money(dep)]] },
+      ['EMIs already paid', emi?.trim() ? `₹${emi} a month` : 'None'], ['Depreciation a year', money(dep)]] },
     { title: 'The loan', rows: [['Loan amount', money(s.loan.amount)], ['Interest rate', `${s.loan.ratePct}% a year`], ['Repay over', k === undefined ? '–' : termWords(k * per)]] },
   ];
 }
@@ -147,18 +147,18 @@ function FrontDoor({ s, update, openMore, was, onSee }: { s: State; update: Upda
     <Choice name="fld-fd-borrower" legend={W.borrower} columns value={s.borrower as string | undefined}
       options={BORROWER_CHOICES.map((b) => ({ value: b.id, label: b.label }))} onChange={(id) => update((x) => withBorrower(x, id))} />
     <div class="mt-4 grid gap-4 @md:grid-cols-2">
-      <TextField id="fld-fd-profit" label={W.profit} unit="Rs." inputMode="decimal" value={s.cells.pbdit?.[0] ?? ''}
+      <TextField id="fld-fd-profit" label={W.profit} unit="₹" inputMode="decimal" value={s.cells.pbdit?.[0] ?? ''}
         tidy={tidyAmount} said={amountSaid(s.cells.pbdit?.[0] ?? '')}
         onCommit={(t) => update((x) => ({ ...first('pbdit', t)(x), modes: { ...x.modes, pbdit: 'grow' } }))} />
       <TextField id="fld-fd-growth" label={W.growth} unit="%" inputMode="decimal" hint={W.growthHint} value={s.rates.pbdit ?? ''}
         said={notUnderstood(s.rates.pbdit ?? '', numberOf, 'a number, like 10')} onCommit={(t) => update((x) => ({ ...x, rates: { ...x.rates, pbdit: t } }))} />
-      <TextField id="fld-fd-emis" label={W.emis} unit="Rs." hint={<>{W.emisHint}<Why id="fld-fd-emis-why">{emisAsk(s).replace(/\.?$/, '.')}</Why></>} inputMode="decimal" value={emi} tidy={tidyAmount}
+      <TextField id="fld-fd-emis" label={W.emis} unit="₹" hint={<>{W.emisHint}<Why id="fld-fd-emis-why">{emisAsk(s).replace(/\.?$/, '.')}</Why></>} inputMode="decimal" value={emi} tidy={tidyAmount}
         said={amountSaid(emi)} onCommit={(t) => update((x) => (t.trim()
           ? { ...x, modes: { ...x.modes, otherLoans: 'emi' }, running: [{ emi: t, last: x.running[0]?.last ?? '' }, ...x.running.slice(1)] }
           : { ...x, modes: { ...x.modes, otherLoans: 'none' } }))} />
-      <TextField id="fld-fd-depreciation" label={W.depreciation} unit="Rs." hint={W.empty} inputMode="decimal" value={dep} tidy={tidyAmount}
+      <TextField id="fld-fd-depreciation" label={W.depreciation} unit="₹" hint={W.empty} inputMode="decimal" value={dep} tidy={tidyAmount}
         said={amountSaid(dep)} onCommit={(t) => update((x) => (t.trim() ? { ...first('depreciation', t)(x), modes: { ...x.modes, depreciation: 'same' } } : { ...x, modes: { ...x.modes, depreciation: 'none' } }))} />
-      <TextField id="fld-fd-amount" label={W.amount} unit="Rs." hint={was('amount')} inputMode="decimal" value={s.loan.amount} tidy={tidyAmount}
+      <TextField id="fld-fd-amount" label={W.amount} unit="₹" hint={was('amount')} inputMode="decimal" value={s.loan.amount} tidy={tidyAmount}
         said={amountSaid(s.loan.amount)} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, amount: t } }))} />
       <TextField id="fld-fd-rate" label={W.rate} unit="%" inputMode="decimal" hint={W.rateHint} value={s.loan.ratePct}
         said={notUnderstood(s.loan.ratePct, numberOf, 'a number, like 12')} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, ratePct: t } }))} />
@@ -611,12 +611,12 @@ function LenderSection({ s, update, y }: { s: State; update: Update; y: Years })
     {y.years.map((fy, i) => <label key={fy} class="text-sm">{fy}<CellInput id={`fld-lender-${key}-${i}`} name={`${name} ${fy}`} decimal value={l[key][i] ?? ''} tidy={tidyAmount}
       onCommit={(t) => set((x) => ({ ...x, [key]: at(x[key], i, t) }))} /></label>)}
   </div>;
-  const aud = (k: keyof LenderText['audited'], label: string) => <TextField id={`fld-lender-audited-${k}`} label={label} unit="Rs." inputMode="decimal" value={l.audited[k]} tidy={tidyAmount}
+  const aud = (k: keyof LenderText['audited'], label: string) => <TextField id={`fld-lender-audited-${k}`} label={label} unit="₹" inputMode="decimal" value={l.audited[k]} tidy={tidyAmount}
     onCommit={(t) => set((x) => ({ ...x, audited: { ...x.audited, [k]: t } }))} />;
   return <Section id="lender" title="More checks">
     <p class={`mt-1 ${HINT}`}>Optional. Each adds a line beside your DSCR; none changes it.</p>
     <h3 class="mt-4 font-medium text-ink">Sales, for the price and cost tests</h3>
-    {byYear ? cells('sales', 'Sales') : <TextField id="fld-lender-sales" label="This year’s sales" unit="Rs." hint="They grow as the profit does." inputMode="decimal" value={l.sales[0] ?? ''}
+    {byYear ? cells('sales', 'Sales') : <TextField id="fld-lender-sales" label="This year’s sales" unit="₹" hint="They grow as the profit does." inputMode="decimal" value={l.sales[0] ?? ''}
       tidy={tidyAmount} said={notUnderstood(l.sales[0] ?? '', amountOf, '50,00,000 or 50 L')} onCommit={(t) => set((x) => ({ ...x, sales: [t] }))} />}
     <h3 class="mt-6 font-medium text-ink">Promoters’ loans repaid</h3>
     <p class={HINT}>Taken as kept in the business until this loan is repaid. If any is repaid sooner, type it by year; leave a year empty for none.</p>
@@ -625,7 +625,7 @@ function LenderSection({ s, update, y }: { s: State; update: Update; y: Years })
     <div class="mt-2 grid gap-3 sm:grid-cols-2">
       <TextField id="fld-lender-wc" label="Working capital needed, % of sales" unit="%" hint="Stock and debtors less creditors, as a share of sales." inputMode="decimal" value={l.wcPct}
         onCommit={(t) => set((x) => ({ ...x, wcPct: t }))} />
-      <TextField id="fld-lender-capex" label="Replacement capex a year" unit="Rs." hint="The same every year; 0 if none." inputMode="decimal" value={l.capex} tidy={tidyAmount}
+      <TextField id="fld-lender-capex" label="Replacement capex a year" unit="₹" hint="The same every year; 0 if none." inputMode="decimal" value={l.capex} tidy={tidyAmount}
         onCommit={(t) => set((x) => ({ ...x, capex: t }))} />
     </div>
     <h3 class="mt-6 font-medium text-ink">The last audited year</h3>

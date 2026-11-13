@@ -4,7 +4,7 @@ What only the owner can do or answer, moved out of `docs/HANDOFF.md` on 04-10-20
 
 - **Start NEW1, then test it on a phone** (PLAN2, 12-11-2026; D-UX-358). The one plan is `docs/WORKED-PAGE.md`. Open a new session on Opus 5.5 and paste: "Read `docs/WORKED-PAGE.md` as its first lines say, then build NEW1 from its §7. Budget L, at Extra." When its preview is up, open `/dscr/` on a phone beside the live page and say "better", or what is not. The same after each row.
 - **Before READ1: the Gemini key and one host** (D-TECH-114). Put the key in Cloudflare as the Worker secret `GEMINI_API_KEY` ("The AI key", below; never in a chat or a file) and allow `ai.google.dev` in the environment's network settings, so the session can read Google's own page for the model's name.
-- **After PAPER1: keep or tweak the papers' two changes** (D-DOC-18): page 1 with key figures and a chart; the Excel copy as a model with formulas.
+- **After PAPER1b: keep or tweak the papers** (D-DOC-18): page 1 with key figures and a chart; the Excel copy reads as the PDF does, every figure a number, no formulas (D-DOC-21).
 - **Before NEW3, one answer** (rule 12, D-UX-44): once the engine's checks tie on a statement that was read, may a whole year be confirmed with one tap, each figure still shown with its page and line; or must each figure be ticked?
 - **Optional, before NEW2**: public model project profiles for a few trades (KVIC's, NABARD's, a state's) as PDFs into `docs/inbox/`, so a trade's starting shape has a source. Nothing from your office (D-BIZ-02).
 - **Before PAY1, at the final launch**: the price of a paper (D-BIZ-29).

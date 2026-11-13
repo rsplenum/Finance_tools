@@ -16,7 +16,7 @@ import labour from '../engine/data/library/labour.json' with { type: 'json' };
 import { readdirSync } from 'node:fs';
 
 const date = (iso) => iso.split('-').reverse().join('-');
-const rs = (n) => `Rs. ${n.toLocaleString('en-IN')}`;
+const rs = (n) => `₹${n.toLocaleString('en-IN')}`;
 const borrowerLabel = (id) => tax.borrowers.find((b) => b.id === id)?.label ?? id;
 const list = (ids) => {
   const names = ids.map((id) => dscr.components[id].toLowerCase());
@@ -94,7 +94,7 @@ out.push(`- **Collateral**: realisable sale value ${ratios.collateral.rsvPct}% a
 
 // CMA data (engine/cma.ts).
 out.push(`## ${cma.title}`, '', `Dated ${date(cma.date)}. ${cma.status}`, '');
-out.push(`**The turnover method**: working capital needed ${cma.turnover.needPct}% of the turnover; the borrower's margin at least ${cma.turnover.marginPct}%; the limit the lower of the need less the margin and the need less the net working capital; flagged above Rs. ${(cma.turnover.maxLimit / 1e7).toFixed(0)} crore. (${cma.turnover.sure}) ${cma.turnover.source}.`, '');
+out.push(`**The turnover method**: working capital needed ${cma.turnover.needPct}% of the turnover; the borrower's margin at least ${cma.turnover.marginPct}%; the limit the lower of the need less the margin and the need less the net working capital; flagged above ₹${(cma.turnover.maxLimit / 1e7).toFixed(0)} crore. (${cma.turnover.sure}) ${cma.turnover.source}.`, '');
 out.push('**The heads asked** (each year)', '', ...cma.heads.map((h) => `- Form ${h.form}: ${h.label}${h.hint ? ` (${h.hint})` : ''}`), '');
 out.push('**What the page assumes until you change it**', '', ...cma.assumptions.map((a) => `- **${a.what}**: ${a.shown}. ${a.why}.`), '');
 
@@ -141,7 +141,7 @@ out.push('**How the rooms are drawn and measured**', '',
   rule('Air conditioners', `from ${levelName(A.ac.from)} in the living room and main bedroom, from ${levelName(A.ac.allBedroomsFrom)} in every bedroom.`, A.ac),
   rule('Debris', `one lot per bathroom and per ${A.debris.sqftPerLot} sq ft of floor taken up.`, A.debris),
   rule('Making good', `${A.makingGood.share * 100}% of the walls.`, A.makingGood),
-  rule('Cities', A.cities.list.map((c) => `${c.name} Rs. ${c.cost[0].toLocaleString('en-IN')}–${c.cost[1].toLocaleString('en-IN')} a sq ft`).join('; ') + '.', A.cities),
+  rule('Cities', A.cities.list.map((c) => `${c.name} ₹${c.cost[0].toLocaleString('en-IN')}–${c.cost[1].toLocaleString('en-IN')} a sq ft`).join('; ') + '.', A.cities),
   rule('The cities\' ranges', `read as for a house ${A.cities.range.for}; a new house is flagged with the answer outside its city's range at ${levelName(1)} to ${levelName(A.cities.range.upTo)}, and below it at any level (V1).`, A.cities.range),
   rule('GST', `${A.gst.pct}%.`, A.gst),
   rule('Check', `paint ${A.checks.paintRatio[0]}–${A.checks.paintRatio[1]} × the carpet area.`, A.checks),
@@ -184,7 +184,7 @@ const entries = new Map(files.flatMap((f) => f.entries.map((e) => [e.id, e])));
 const labourById = new Map(labour.labour.map((l) => [l.id, l]));
 const UNIT = { sqft: 'sq ft', sqm: 'sq m', rft: 'running ft', m: 'm', nos: 'each', set: 'set', lot: 'lot', kg: 'kg', cum: 'cu m', bag: 'bag', litre: 'litre' };
 const money = (x) => x.toLocaleString('en-IN');
-const range = (r) => (r[0] === r[1] ? `Rs. ${money(r[0])}` : `Rs. ${money(r[0])}–${money(r[1])}`);
+const range = (r) => (r[0] === r[1] ? `₹${money(r[0])}` : `₹${money(r[0])}–${money(r[1])}`);
 const numbered = [];
 const ref = (ids) => ids.filter((i) => i !== 'own').map((i) => { if (!numbered.includes(i)) numbered.push(i); return `[${numbered.indexOf(i) + 1}]`; }).join('') + (ids.includes('own') ? ' our rule' : '');
 const fixes = (fx) => (fx ?? []).map((f) => (typeof f === 'string' ? { id: f, n: 1 } : f));

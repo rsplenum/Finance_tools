@@ -24,8 +24,8 @@ export const ASSUMED_FACTS: FactId[] = ['emis', 'depreciation'];
 export interface Case { s: State; mine: FactId[] }
 
 /**
- * The example (§7 NEW1: fictional, round figures, passes). A partnership firm earning Rs. 6,00,000 a year before
- * interest, depreciation and tax, sales growing 5% a year, borrows Rs. 12,00,000 at 12% over 5 years (60 EMIs), drawn
+ * The example (§7 NEW1: fictional, round figures, passes). A partnership firm earning ₹6,00,000 a year before
+ * interest, depreciation and tax, sales growing 5% a year, borrows ₹12,00,000 at 12% over 5 years (60 EMIs), drawn
  * in `month`; no other loans, no depreciation. Worked twice in tests/dscr-worked.test.ts.
  */
 export function exampleState(month: string): State {
@@ -96,11 +96,11 @@ export function writeFact(s: State, id: FactId, t: string): State {
 export const changedFacts = (a: State, b: State) => FACTS.filter((id) => factText(a, id) !== factText(b, id));
 export const withMine = (mine: FactId[], add: FactId[]) => FACTS.filter((id) => mine.includes(id) || add.includes(id));
 
-/** An amount for skimming: whole lakh or crore when it is one (Rs. 6 lakh, Rs. 12.5 lakh), else every rupee. */
+/** An amount for skimming: whole lakh or crore when it is one (₹6 lakh, ₹12.5 lakh), else every rupee. */
 export function money(n: number): string {
   const r = Math.round(n);
   if (Math.abs(r) >= 1e5 && r % 1000 === 0) { try { return lakhCrore(r, { about: false }); } catch { /* every rupee */ } }
-  return `Rs. ${inr(r)}`;
+  return `₹${inr(r)}`;
 }
 
 export type Kind = 'ink' | 'example' | 'assumed';
@@ -113,7 +113,7 @@ export interface FactView {
 const SENTENCE: FactId[] = ['borrower', 'profit', 'growth', 'amount', 'rate', 'years', 'emis', 'depreciation'];
 const kindOf = (id: FactId, mine: FactId[]): Kind => (mine.includes(id) ? 'ink' : ASSUMED_FACTS.includes(id) ? 'assumed' : 'example');
 
-/** The facts as one sentence (§4 part 5): "A firm earning Rs. 6 lakh a year, growing 5% a year, borrows Rs. 12 lakh at 12% over 5 years." */
+/** The facts as one sentence (§4 part 5): "A firm earning ₹6 lakh a year, growing 5% a year, borrows ₹12 lakh at 12% over 5 years." */
 export function factsOf(c: Case): FactView[] {
   const { s, mine } = c, own = s.source !== 'plan';
   const n = (t: string) => amountOf(t);

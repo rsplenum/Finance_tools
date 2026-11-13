@@ -75,9 +75,9 @@ The screen is begun from a blank file. A tool's model and document code (`model.
 
 ## 5. The paper: the same reading, printed
 
-Rahul's word: build both changes, then they keep or tweak (D-DOC-18, on trial; D-DOC-02 and D-DOC-03 stand until Rahul has seen the files).
+Rahul's word: build both changes, then they keep or tweak (D-DOC-18, on trial; D-DOC-03 stands). The Excel half is settled: no formulas, because the reports are the business and a sheet that works its figures out is a calculator for other reports (D-DOC-21; D-DOC-02 stands).
 - **PDF.** Page 1 at a glance: who asks and for what, the key figures beside the lender's level (no verdict: the lender decides, D-DOC-03), the one chart, the status (Complete, or Provisional with what is missing, or Example). Then the working whole, as now ("the presentation needs working not curtailing the calculation", D-DOC-04). "₹" through one embedded face with tabular figures; bookmarks, a title, links from page 1 to each part.
-- **Excel.** A model an accountant can follow (the FAST Standard): Inputs, Workings, Statement, Checks; a label and a unit on every line; inputs marked; frozen headings; no Excel names. Every worked figure is a formula from the inputs; the engine's figure stands beside it on Checks and the difference is 0.
+- **Excel.** The same reading as the PDF, for an accountant to check with their own formulas: page 1's figures, the statement, the sensitivity analysis, the basis, the repayment schedule; a label and a unit on every line; frozen headings; the engine's figures as numbers in lakh and crore formats, and not one formula (D-DOC-21).
 - **Word.** The same reading and chart, heading styles, "₹", for a consultant to edit.
 - Made on the device, loaded only at the Download tap. "Extremely professional and polished, no childish or unnecessary items" (D-DOC-17).
 - The papers are free until the final launch and paid from then (D-BIZ-26, D-BIZ-29): keep the download behind one function so PAY1 can put the gate there.
@@ -123,7 +123,7 @@ Home, the films and the new modules wait until the tools are right. CHECKS2 is d
 - As §5. First a short bake-off on page 1 (20 steps at most): our own writer grown (`site/src/doc/pdf.ts`: an embedded TrueType face, vector bars, outlines) against a library loaded at the tap. Take whichever makes the better page; the `lender-documents` skill's "no library" is a lesson, not a line.
 - The face: open licence, with "₹" and tabular figures, taken from an npm package (no host to allow), its licence beside it. The screen moves from "Rs." to "₹" in the same row, never mixed.
 - `Doc` (`site/src/doc/doc.ts`) gains a chart block and a key-figures block that the three writers and the screen all draw from one description.
-- The formulas must be proven, not trusted: the cell's stored value is the engine's, so a wrong formula shows only when Excel works it again. A test works the sheet's own formulas (a small evaluator for the few functions we write, or LibreOffice in CI) on the golden cases and finds every difference 0.
+- No formula anywhere: the writer keeps no way to write one, and a test opens every Excel copy (DSCR and CMA, each golden case) and finds none, every figure the engine's.
 - Read back with `scripts/read-doc.mjs`; look at page 1 as a picture once.
 
 ### READ1: the Worker speaks Gemini

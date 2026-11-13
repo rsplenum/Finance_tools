@@ -69,7 +69,7 @@ export const REPORT_CASE: ReportState = REPORT_HOME;
 export const REPORT_FIX = (() => {
   const l = viableOf(REPORT_CASE)?.lines.find((x) => x.id === 'sales');
   if (!l?.move || !l.bars) throw new Error('The report case needs no higher sales.');
-  return { move: l.move, sales: l.bars.toText.replace(/^Rs\. /, ''), from: l.bars.nowText.replace(/^Rs\. /, '') };
+  return { move: l.move, sales: l.bars.toText.replace(/^₹/, ''), from: l.bars.nowText.replace(/^₹/, '') };
 })();
 export const REPORT_FIXED: ReportState = { ...REPORT_CASE, sales: REPORT_FIX.sales };
 /** The report's DSCR table read: each year's DSCR, and the lowest year's sum, cash available over debt service, with
@@ -110,11 +110,12 @@ export const CMA_FIX = (() => {
 })();
 export const CMA_FIXED: CmaState = applyCmaPlan(CMA_CASE, { ...CMA_AS_TYPED, capital: CMA_FIX.n }).s;
 /** The CMA read: each year's current ratio (the audited years shown, not judged), the worse year ahead with its sum, and the
- *  turnover-method limit for the projection, from the check table the Excel copy redoes. */
+ *  turnover-method limit for the projection, from the page's Ratios table and Form I. */
 export function cmaRead(s: CmaState) {
-  const v = cmaPreview(s).view, t = v?.check, row = (label: string) => t?.rows.find((r) => r.label.startsWith(label));
-  const cr = row('Current ratio'), nwc = row('Net working capital'), lim = row('The limit by the turnover method');
-  if (!v || !t || !cr || !nwc || !lim) throw new Error('The CMA case gives no ratios.');
+  const v = cmaPreview(s).view, table = (id: string) => v?.tables.find((t) => t.id === id);
+  const row = (id: string, label: string) => table(id)?.rows.find((r) => r.label.startsWith(label));
+  const cr = row('ratios', 'Current ratio'), lim = row('form1', 'Assessed by the turnover method');
+  if (!v || !cr || !lim) throw new Error('The CMA case gives no ratios.');
   const kinds = columnsOf(s.startYear).map((c) => (c.kind === 'audited' ? 'audited' : 'ahead'));
   const ahead = cr.n?.map((n, k) => ({ n: n ?? NaN, k })).filter((x) => kinds[x.k] === 'ahead') ?? [];
   const worst = ahead.reduce((a, x) => (x.n < a.n ? x : a));
@@ -259,7 +260,7 @@ export const DSCR_SCENE: ToolScene = (() => {
   const title = doc?.parts[0].blocks.find((b) => b.kind === 'title'), basis = partOf(doc, 'Basis'), schedule = partOf(doc, 'Repayment schedule');
   const months = p.schedule?.years.reduce((a, y) => a + y.months.length, 0);
   const signed = blocksOf(doc, 'signature').length > 0;
-  if (!doc || title?.kind !== 'title' || !title.sub || !basis || !schedule || months !== Number(f.instalments) || !signed || !partOf(doc, 'Check')) throw new Error('The scene\'s statement lacks a part it shows.');
+  if (!doc || title?.kind !== 'title' || !title.sub || !basis || !schedule || months !== Number(f.instalments) || !signed) throw new Error('The scene\'s statement lacks a part it shows.');
   // Each year's DSCR worked the second way (engine/dscr-check.ts); the largest difference, as the statement rounds a DSCR.
   const c = dscrCaseOf(STORY_FIXED), k = c && planCheck(c.proj, c.loan, c.def);
   const diff = Math.max(...L.years.map((y, i) => Math.abs(y.n - Number(k?.rows[i]?.dscr))));
@@ -277,7 +278,7 @@ export const DSCR_SCENE: ToolScene = (() => {
     statement: {
       title: 'DSCR statement', sub: title.sub, verdict: L.verdict,
       lines: [
-        { head: 'Worked out twice', text: `A second way and the Excel copy’s formulas agree: difference ${diff.toFixed(2)}.` },
+        { head: 'Worked out twice', text: `A second way agrees: difference ${diff.toFixed(2)}.` },
         { head: 'Every instalment', text: `Annex 2: the repayment schedule, all ${months} months.` },
         { head: 'Ready to sign', text: 'Signatory, date and place lines, in each copy.' },
       ],
@@ -303,7 +304,7 @@ export const CMA_SCENE: ToolScene = (() => {
   const doc = cmaDoc(CMA_FIXED, cmaPreview(CMA_FIXED), todayIso()), title = doc?.parts[0].blocks.find((b) => b.kind === 'title');
   const forms = blocksOf(doc, 'heading').filter((h) => /^Form [IVX]+\. /.test(h.text)).length;
   const sure = blocksOf(doc, 'heading').some((h) => h.text === 'How sure the rules are');
-  if (!doc || title?.kind !== 'title' || !title.sub || forms !== 6 || !partOf(doc, 'Check') || !partOf(doc, 'Ratios') || !sure
+  if (!doc || title?.kind !== 'title' || !title.sub || forms !== 6 || !partOf(doc, 'Ratios') || !sure
     || !blocksOf(doc, 'signature').length || !doc.footer?.includes(TWICE)) throw new Error('The CMA scene\'s document lacks a part it shows.');
   const what = 'current assets ÷ current liabilities', first = rows[0].label, last = rows.at(-1)?.label;
   return {
@@ -319,7 +320,7 @@ export const CMA_SCENE: ToolScene = (() => {
       title: 'CMA data', sub: title.sub,
       verdict: `The current ratio meets ${level.text} in every year ahead; the limit by the turnover method, ${f.limit.fy}, is ${lc(f.limit.text)}.`,
       lines: [
-        { head: 'Worked out twice', text: 'A second way agrees; the Excel copy redoes the main figures by formula.' },
+        { head: 'Worked out twice', text: 'A second way agrees.' },
         { head: 'Forms I to VI', text: `The limit, the operating statement, the balance sheet, working capital and the funds flow, ${first} to ${last}.` },
         { head: 'Its basis', text: 'The ratios a lender reads, each rule’s level with how sure it is.' },
       ],
@@ -411,12 +412,12 @@ export const ESTIMATE_SCENE: ToolScene = (() => {
       { k: 'Rooms', v: `${s.bhk} BHK` }, { k: 'Level', v: a.level }, { k: 'The two bedrooms', v: a.level, to: 'Basic' }],
     level, hub: { from: String(a.range?.of ?? items), to: String(items), unit: 'items', work: 'priced' }, panel: 'Running total, trade by trade', rows,
     weakest: { typed: total, fixed: total },
-    sum: { typed: { head: `The total, against the budget of Rs. ${B.text}`, lead: 'Rs. ', result: a.total }, fixed: { head: `The total, against the budget of Rs. ${B.text}`, lead: 'Rs. ', result: b.total } },
+    sum: { typed: { head: `The total, against the budget of ₹${B.text}`, lead: '₹', result: a.total }, fixed: { head: `The total, against the budget of ₹${B.text}`, lead: '₹', result: b.total } },
     chip: { typed: `Over budget ${level.text}`, fixed: `Within budget ${level.text}` },
     statement: {
-      title: title.text, sub: where, verdict: `Rs. ${b.total} in all, within the budget of ${level.text}, in figures and in words.`,
+      title: title.text, sub: where, verdict: `₹${b.total} in all, within the budget of ${level.text}, in figures and in words.`,
       lines: [
-        { head: 'Worked out twice', text: `A second way agrees: difference Rs. ${Math.round(diff)}.` },
+        { head: 'Worked out twice', text: `A second way agrees: difference ₹${Math.round(diff)}.` },
         { head: 'Every item', text: `Annex 1: the detailed estimate, each of the ${items} items with its quantity and rate.` },
         { head: 'What it assumes', text: 'Annex 2: every assumption, stated until you change it.' },
       ],

@@ -85,7 +85,7 @@ describe('CMA, case K worked outside the engine', () => {
   it('flags the projection against the borrower’s own past, and the short margin', () => {
     expect(r.flags.map((f) => f.id)).toEqual(['growth-proj', 'margin-2026-27', 'margin-2027-28']);
     expect(r.flags[0].text).toBe('2027-28 (projection): sales grow 16.85%, faster than in any audited year (at most 15.00%)');
-    expect(r.flags[2].text).toBe('2027-28: the net working capital, Rs. 23,80,000, is below the borrower’s 5% margin of Rs. 26,00,000, short by Rs. 2,20,000; the limit is worked on the 5% margin');
+    expect(r.flags[2].text).toBe('2027-28: the net working capital, ₹23,80,000, is below the borrower’s 5% margin of ₹26,00,000, short by ₹2,20,000; the limit is worked on the 5% margin');
   });
   it('counts promoters’ loans as the owners’ funds when told they stay in', () => {
     const q = ok({ ...CASE_K, quasiEquity: true });
@@ -110,7 +110,7 @@ describe('CMA, what it asks and refuses', () => {
   });
   it('lists a balance sheet that does not balance, and never makes it balance', () => {
     const x: CmaInput = { ...CASE_K, figures: { ...CASE_K.figures, a2: { ...CASE_K.figures.a2, cash: 1920000 + 5000 } } };
-    expect(cmaNeeds(x)).toEqual(['2024-25 (audited): the balance sheet does not balance: the assets are Rs. 5,000 more than the liabilities']);
+    expect(cmaNeeds(x)).toEqual(['2024-25 (audited): the balance sheet does not balance: the assets are ₹5,000 more than the liabilities']);
   });
   it('takes a younger business with fewer audited years, the oldest left out, and says so', () => {
     const r = ok({ ...CASE_K, figures: { a3: CASE_K.figures.a3, est: CASE_K.figures.est, proj: CASE_K.figures.proj } });
@@ -131,7 +131,7 @@ describe('CMA, what it asks and refuses', () => {
     // 120 L borrowed from banks, the rest from cash: 16 L above the limit of 104 L.
     const more = { ...CASE_K.figures.proj, bankWc: 12000000, cash: 5280000 + 2500000 } as Figures;
     expect(ok({ ...CASE_K, figures: { ...CASE_K.figures, proj: more } }).flags.find((f) => f.id === 'proposed')?.text)
-      .toBe('The projected balance sheet borrows Rs. 1,20,00,000 from banks for working capital, Rs. 16,00,000 more than the limit by the turnover method');
+      .toBe('The projected balance sheet borrows ₹1,20,00,000 from banks for working capital, ₹16,00,000 more than the limit by the turnover method');
   });
 });
 
@@ -150,7 +150,7 @@ describe('CMA, a year’s subtotals as it is typed (UX9, review finding 3)', () 
     expect(subtotalsOf({ ...proj, cash: undefined }, false)).toEqual({ grossProfit: 121 * L, netProfit: 42 * L });
     expect(subtotalsOf({}, false)).toEqual({});
   });
-  it('compares the sides and never makes them balance: 2024-25’s cash Rs. 5,000 over, the assets Rs. 5,000 more', () => {
+  it('compares the sides and never makes them balance: 2024-25’s cash ₹5,000 over, the assets ₹5,000 more', () => {
     const t = subtotalsOf({ ...(CASE_K.figures.a2 as Figures), cash: 1920000 + 5000 }, false);
     expect((t.assets as number) - (t.liabilities as number)).toBe(5000);
   });

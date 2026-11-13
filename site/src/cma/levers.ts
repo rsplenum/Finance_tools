@@ -24,7 +24,7 @@ export const CASE_CHOICES = [
 ];
 export const COLLATERAL_HINT = `Property or deposits offered as security. Its realisable sale value, ${LEVELS.collateral.rsvPct}% of it, counts in the security cover.`;
 
-const rs = (n: number) => `Rs. ${inr(n)}`;
+const rs = (n: number) => `₹${inr(n)}`;
 const pct = (t: number) => `${(Math.abs(t) / 10).toFixed(1)}%`;
 const fyOf = (s: CmaState) => { const c = columnsOf(s.startYear); return { e: c[3].fy, p: c[4].fy }; };
 const fig = (x: CmaInput, id: 'est' | 'proj') => x.figures[id] as Figures;
@@ -75,8 +75,8 @@ export function cmaViableOf(s: CmaState): ViableView | undefined {
   const lines: ViableLine[] = [], { e } = fyOf(s), sl = v.sales;
   if (v.meets) {
     if (sl) lines.push({ by: 'borrower', id: 'sales', head: 'Sales can fall', ...none, ...(sl.tenths < 0 ? {
-      move: pct(sl.tenths), bars: { now: sl.now, to: sl.needed, nowText: rs(sl.now), toText: `Rs. ${upRupees(sl.needed)}` },
-      text: `Sales in ${sl.fy} can fall ${pct(sl.tenths)}, to Rs. ${upRupees(sl.needed)} (from ${rs(sl.now)}), and every ratio still meets its level.`,
+      move: pct(sl.tenths), bars: { now: sl.now, to: sl.needed, nowText: rs(sl.now), toText: `₹${upRupees(sl.needed)}` },
+      text: `Sales in ${sl.fy} can fall ${pct(sl.tenths)}, to ₹${upRupees(sl.needed)} (from ${rs(sl.now)}), and every ratio still meets its level.`,
     } : { text: 'Sales cannot fall at all before a ratio misses its level.' }) });
   } else {
     lines.push(...boardLines(v, e));
@@ -183,7 +183,7 @@ export function cmaBoardOf(q: CmaPlanView, l: CmaLevers, s: CmaState): CmaBoard 
       : `With these changes it meets every ${ratiosWord(q.lv).replace('ratios', 'ratio')}${checks.some((k) => k.verdict === 'wait') ? ' that can be read' : ''}.`,
     line: miss.length ? `Misses ${miss.length}: ${listed(miss.map((k) => inSentence(k.label)))}` : 'Meets every benchmark',
     ...(l.capital ? { promoters: `The promoters bring ${rs(l.capital)} more as capital${q.most === undefined ? '' : over
-      ? `: Rs. ${upRupees(l.capital - q.most)} more than the ${rs(q.most)} they can` : `, within the ${rs(q.most)} they can`}.` } : {}),
+      ? `: ₹${upRupees(l.capital - q.most)} more than the ${rs(q.most)} they can` : `, within the ${rs(q.most)} they can`}.` } : {}),
   };
 }
 export const sameCmaLevers = (a: CmaLevers, b: CmaLevers) => CMA_LEVER_IDS.every((id) => a[id] === b[id]);

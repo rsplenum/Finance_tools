@@ -12,7 +12,7 @@ import { door } from '../site/src/dscr/home-case';
 
 const c = exampleCase('2026-11'), p = previewOf(c.s);
 
-/** By hand: Rs. 12,00,000 at 1% a month over 60, drawn and first paid in November 2026; years April to March. */
+/** By hand: ₹12,00,000 at 1% a month over 60, drawn and first paid in November 2026; years April to March. */
 function byHand(amount: number) {
   const r = 0.01, n = 60, emi = (amount * r * (1 + r) ** n) / ((1 + r) ** n - 1);
   const years: { fy: string; i: number; p: number }[] = [];
@@ -29,7 +29,7 @@ function byHand(amount: number) {
 }
 const TAX = 0.312, profitIn = (y: number) => 600000 * 1.05 ** y;
 
-describe('the example (a firm: Rs. 6 lakh a year, growing 5%; Rs. 12 lakh at 12% over 5 years)', () => {
+describe('the example (a firm: ₹6 lakh a year, growing 5%; ₹12 lakh at 12% over 5 years)', () => {
   const h = byHand(1200000);
   it('the EMI and each year, worked twice', () => {
     expect(h.emi).toBeCloseTo(26693.34, 2);
@@ -47,7 +47,7 @@ describe('the example (a firm: Rs. 6 lakh a year, growing 5%; Rs. 12 lakh at 12%
     expect((sumA / sumB).toFixed(2)).toBe(p.average);
     expect(p.average).toBe('1.83');
   });
-  it('the largest loan it carries, solved directly: about Rs. 14.39 lakh', () => {
+  it('the largest loan it carries, solved directly: about ₹14.39 lakh', () => {
     // Per rupee of loan a year's interest i and debt service s; cash = 0.688 × profit + 0.312 × interest. The lowest
     // year's level 1.25 and the average's 1.50 each give a loan; the smaller holds.
     const per = h.years.map((x) => ({ i: x.i / 1200000, s: (x.i + x.p) / 1200000 }));
@@ -57,7 +57,7 @@ describe('the example (a firm: Rs. 6 lakh a year, growing 5%; Rs. 12 lakh at 12%
     const most = Math.min(...each, avg);
     expect(Math.abs(p.largest!.amount! - most)).toBeLessThan(50);
     expect(readingOf(c, p)).toEqual({
-      state: 'carries', text: 'The example firm can carry up to about Rs. 14.39 lakh, more than the Rs. 12 lakh asked.',
+      state: 'carries', text: 'The example firm can carry up to about ₹14.39 lakh, more than the ₹12 lakh asked.',
       banker: 'Banks call this the DSCR: 1.83 on average, 1.47 in 2027-28, the tightest year. Lenders often ask for 1.50 and 1.25.',
     });
   });
@@ -70,7 +70,7 @@ describe('the example (a firm: Rs. 6 lakh a year, growing 5%; Rs. 12 lakh at 12%
   it('the facts as one sentence, every one the example’s; the mark; one next step', () => {
     const f = factsOf(c);
     expect(f.map((x) => `${x.before ?? ''}[${x.text}]${x.after ?? ''}`).join('')).toBe(
-      '[A firm] earning [Rs. 6 lakh] a year, growing [5%] a year, borrows [Rs. 12 lakh] at [12%] over [5 years]. [No other loans]; [no depreciation].');
+      '[A firm] earning [₹6 lakh] a year, growing [5%] a year, borrows [₹12 lakh] at [12%] over [5 years]. [No other loans]; [no depreciation].');
     expect(f.length).toBeLessThanOrEqual(8); // the front door's ceiling (rule 17)
     expect(f.filter((x) => x.kind === 'example').map((x) => x.id)).toEqual(['borrower', 'profit', 'growth', 'amount', 'rate', 'years']);
     expect(f.filter((x) => x.kind === 'assumed').map((x) => x.id)).toEqual(['emis', 'depreciation']);
@@ -88,7 +88,7 @@ describe('a figure from the first fact (rule 14, D-UX-358)', () => {
     expect(r.text.startsWith('Your business can carry')).toBe(true);
     expect(markOf(one)).toBe('Yours: the profit. Still the example’s: the loan, the years, the rate, who borrows and the growth.');
     expect(nextOf(one, r, 0)).toEqual({ kind: 'continue', label: 'Next: the loan' });
-    expect(factsOf(one).find((x) => x.id === 'profit')!.spoken).toBe('This year’s profit before interest, depreciation and tax: Rs. 5 lakh, yours');
+    expect(factsOf(one).find((x) => x.id === 'profit')!.spoken).toBe('This year’s profit before interest, depreciation and tax: ₹5 lakh, yours');
   });
   it('every fact the borrower’s: no mark, the paper next, nothing listed for the paper', () => {
     const all: Case = { s: c.s, mine: ['profit', 'amount', 'years', 'rate', 'borrower', 'growth'] };
@@ -98,12 +98,12 @@ describe('a figure from the first fact (rule 14, D-UX-358)', () => {
   });
 });
 
-describe('when it falls short: the home page’s case S (Rs. 4,50,000 a year, no growth; Rs. 12 lakh at 12% over 5 years)', () => {
+describe('when it falls short: the home page’s case S (₹4,50,000 a year, no growth; ₹12 lakh at 12% over 5 years)', () => {
   const s: Case = { s: door('60'), mine: [] }, ps = previewOf(s.s);
   it('the reading gives the loan it carries beside the one asked', () => {
     const r = readingOf(s, ps);
     expect(r.state).toBe('short');
-    expect(r.text).toBe('The example firm can carry about Rs. 9.56 lakh of the Rs. 12 lakh asked.');
+    expect(r.text).toBe('The example firm can carry about ₹9.56 lakh of the ₹12 lakh asked.');
   });
   it('whole options that work, as was → becomes; one applied meets, and its facts become the borrower’s', () => {
     const o = optionsFor(s.s, ps);

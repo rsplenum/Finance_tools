@@ -1,6 +1,6 @@
 /**
  * The holiday and the repayment, compared (engine/repayment.ts, OR5, D-UX-198) on fictional case G: case F's business
- * (tests/fix.test.ts) with a term loan of Rs. 2,50,00,000 at 9.3%, drawn in April 2027, a 6 months' holiday and 36 monthly
+ * (tests/fix.test.ts) with a term loan of ₹2,50,00,000 at 9.3%, drawn in April 2027, a 6 months' holiday and 36 monthly
  * instalments, its fixed costs model-worked so that the ways part on the lowest-year DSCR.
  *
  * By hand, as the second computation (scratchpad caseg.py, Python, month by month in 40-digit decimals): EMI by the annuity
@@ -44,7 +44,7 @@ describe('the repayment compared (OR5)', () => {
   it('proposes the cheapest that misses nothing: equal principal misses the lowest-year DSCR, so EMI', () => {
     const w = compareRepayments(G(33000000))!, [ep, emi, st] = w.ways;
     // The month of interest before the first sales (April 2027: 2,50,00,000 × 0.775% = 1,93,750) is in the project's
-    // cost and written off over five years (D-UX-350): 38,750 less profit in 2028-29 takes it under Rs. 1 crore, where
+    // cost and written off over five years (D-UX-350): 38,750 less profit in 2028-29 takes it under ₹1 crore, where
     // the surcharge steps down, so the cash available is 1,23,06,074.78 over the hand-worked 99,15,625 = 1.2411.
     expect(12306074.78 / BY_HAND['equal-principal'].service).toBeCloseTo(ep.lowest!.dscr, 8);
     expect(ep.lowest!.dscr.toFixed(4)).toBe('1.2411');

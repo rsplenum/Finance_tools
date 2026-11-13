@@ -7,7 +7,7 @@ import { KINDS, METHOD } from '../../../engine/estimate';
 import type { Block, Cell, Doc, Figure, Table } from '../doc/doc';
 import { forDocument } from '../doc/doc';
 import { ALL_ANSWERED } from '../verdict';
-import { printable } from '../doc/pdf';
+import { printable } from '../doc/face';
 import { SITE_NAME } from '../site';
 import { plainOf, quantityText, statusText, type EstimateFacts, type EstimatePreview, type EstimateState } from './model';
 
@@ -65,8 +65,8 @@ export function estimateDoc(s: EstimateState, p: EstimatePreview, today: string)
   if (needs.length) blocks.push({ kind: 'box', title: `Provisional: ${needs.length} still needed`, items: needs });
   blocks.push({ kind: 'table', table: abstract });
   blocks.push({ kind: 'figures', items: [
-    { label: 'Total estimated cost', value: `Rs. ${v.total}` },
-    ...(v.perSqft ? [{ label: 'Cost per sq ft', value: `Rs. ${v.perSqft}`, note: 'of built-up area' }] : []),
+    { label: 'Total estimated cost', value: `₹${v.total}` },
+    ...(v.perSqft ? [{ label: 'Cost per sq ft', value: `₹${v.perSqft}`, note: 'of built-up area' }] : []),
   ] });
   blocks.push({ kind: 'signature', lines: [`For ${by || 'the engineer or architect'}`, '', 'Signature and seal', 'Date:', 'Place:'] });
 

@@ -6,7 +6,7 @@
  * (engine/report.ts, its two computations); the levels come from engine/data/ratios.json and the user's own (BEN1), the
  * limits of each change from engine/data/solve.json through solve's axes.
  *
- * The figure: on the grid of the loan box's rounding (Rs. 1,000), by doubling up from the loan asked when it fits, else
+ * The figure: on the grid of the loan box's rounding (₹1,000), by doubling up from the loan asked when it fits, else
  * bisection down to the least loan the report takes; a fit is monotone in the loan (more loan, more to repay, the same
  * cash: D-POL-02), checked at three smaller loans, and no single figure is given where one misses. The loan asked, when
  * it fits and is off the grid, is itself the figure unless a grid point above it fits too.

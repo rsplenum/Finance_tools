@@ -11,14 +11,15 @@ import { inr } from '../engine/util';
 import { unpriced } from './unpriced';
 import { docText } from '../site/src/doc/doc';
 import { docxOf } from '../site/src/doc/docx';
-import { pdfOf, printable } from '../site/src/doc/pdf';
+import { pdfOf } from '../site/src/doc/pdf';
+import { printable } from '../site/src/doc/face';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import {
   EMPTY_PLAN, areaLabel, lakhs, roundRupees, floorsQuestion, drawerBrands, drawerView, inputOf, planNeeds, planPreview, withItem, withKind, withLevel, withPlotReset, withPlotSide, withAttached, withBalcony, withBathAdded, withBathTakenOut, withBedroomAdded, withExtra, withBedroomTakenOut, withBhk, withRoomLevel, withRoomReset, withRoomSide, withRoomWord, withSection, withSewer, withSlider, withUnit, type PlanState,
 } from '../site/src/estimate/plan-model';
 import { billDoc, billFileName, planDoc, planDocStatus, planFileName } from '../site/src/estimate/plan-document';
 import { BRAND_NOTICE, BRAND_NOTICE_SHORT, SITE_NAME } from '../site/src/site';
-import { docxLines, pdfPages, workbook } from '../scripts/read-doc.mjs';
+import { docxLines, formulaParts, pdfPages, workbook } from '../scripts/read-doc.mjs';
 
 const TODAY = '2026-10-03', MADE = new Date('2026-10-03T10:00:00Z');
 const FLAT: PlanState = { ...EMPTY_PLAN, kind: 'renovate', home: 'flat', city: 'pune', area: '1,000', bhk: '2', level: 2 };
@@ -97,7 +98,7 @@ describe('sliders, items and brands', () => {
     const f = view(up).sections.find((x) => x.id === 'flooring')!, base = view(FLAT).sections.find((x) => x.id === 'flooring')!;
     expect(f.levelName).toBe('Luxury');
     expect(f.over?.n).toBeCloseTo(f.n - base.n, 2);
-    expect(f.over?.text).toBe(`Rs. ${inr(f.n - base.n)} more than Standard`);
+    expect(f.over?.text).toBe(`₹${inr(f.n - base.n)} more than Standard`);
     expect(withSlider(up, 'flooring', 2, keys).sliders.flooring).toBeUndefined();
   });
   it('a new package sets every section to it again', () => {
@@ -124,12 +125,12 @@ describe('sliders, items and brands', () => {
     expect(d.groups.map((g) => g.open)).toEqual([true, false, false, false, false]);
     expect(d.groups[0].choices[0]).toMatchObject({ id: 'fl-gvt-800', mark: 'the level’s item', current: true });
     expect(d.groups[0].choices.slice(1).every((x) => x.mark === '' && !x.current)).toBe(true);
-    expect(d.groups[1].choices[0]).toMatchObject({ id: 'fl-vit-dc-600', rate: 'Rs. 111.65 a sq ft', mark: 'the level’s item', current: false });
+    expect(d.groups[1].choices[0]).toMatchObject({ id: 'fl-vit-dc-600', rate: '₹111.65 a sq ft', mark: 'the level’s item', current: false });
     expect(unpriced('fl-encaustic', () => drawerView(FLAT, view(FLAT), 'living:floor:floor-skirting'))?.groups[2].choices.find((x) => x.id === 'fl-encaustic')).toMatchObject({ rate: 'No rate yet', usable: false });
     const ids = d.groups.flatMap((g) => g.choices.map((x) => x.id));
     expect(ids.length).toBe(new Set(ids).size);
     expect(d.how.quantity).toMatch(/floor .* sq m, and skirting/);
-    expect(d.how.amount).toMatch(/^303\.03 sq ft × Rs\. [\d,.]+ = Rs\. [\d,]+$/);
+    expect(d.how.amount).toMatch(/^303\.03 sq ft × ₹[\d,.]+ = ₹[\d,]+$/);
   });
   it('the drawer follows the line\'s own level, names the package\'s level where it differs, and opens the level holding an item of your own', () => {
     const key = 'living:floor:floor-skirting';
@@ -149,7 +150,7 @@ describe('L1 on the page: the level\'s range under the total', () => {
   it('from the cheapest priced choice at the level in every item to the dearest, with how many items offer a choice; "as a package" when the estimate is not the package', () => {
     const r = (levelRuns(inputOf(FLAT)) as LevelRuns).range, v = view(FLAT);
     expect(r.low < v.n.total && v.n.total < r.high).toBe(true);
-    expect(v.range.text).toBe(`At Standard, the choices run from Rs. ${inr(r.low)} to Rs. ${inr(r.high)}: the cheapest in each item to the dearest. ${r.lines} of the ${r.of} items offer a choice.`);
+    expect(v.range.text).toBe(`At Standard, the choices run from ₹${inr(r.low)} to ₹${inr(r.high)}: the cheapest in each item to the dearest. ${r.lines} of the ${r.of} items offer a choice.`);
     const slid = withSlider(FLAT, 'flooring', 4, v.sections.find((x) => x.id === 'flooring')!.lines.map((l) => l.key));
     expect(view(slid).range.text).toBe(v.range.text.replace('At Standard,', 'At Standard as a package,'));
   });
@@ -163,11 +164,11 @@ describe('L1 on the page: the level\'s range under the total', () => {
 describe('UX8 on the page: the headline as precise as the estimate, one rule for figures (D-UX-106)', () => {
   it('rounds the headline to a tenth of a lakh, or a hundredth of a crore, and keeps the rupee under a lakh', () => {
     // The review's own case (docs/design-reviews/2026-10-18-tool-videos.md, finding 5): 21,38,356 is 21.38356 lakh.
-    expect(roundRupees(2138356)).toBe('Rs. 21.4 lakh');
-    expect(roundRupees(1736582)).toBe('Rs. 17.4 lakh');
-    expect(roundRupees(2490247)).toBe('Rs. 24.9 lakh');
-    expect(roundRupees(12345678)).toBe('Rs. 1.23 crore');
-    expect(roundRupees(85000)).toBe('Rs. 85,000');
+    expect(roundRupees(2138356)).toBe('₹21.4 lakh');
+    expect(roundRupees(1736582)).toBe('₹17.4 lakh');
+    expect(roundRupees(2490247)).toBe('₹24.9 lakh');
+    expect(roundRupees(12345678)).toBe('₹1.23 crore');
+    expect(roundRupees(85000)).toBe('₹85,000');
     expect(lakhs(840271)).toBe('8.40');
   });
   it('draws the range with the total at its place: (total - low) / (high - low), and its ends rounded as the headline', () => {
@@ -197,9 +198,9 @@ describe('a new house on the page (D-UX-23)', () => {
   });
   it('the document: titled for construction, the floors in the work, the built-up area, the cost a sq ft of it, the cement by hand, and the house in Annex 2', () => {
     const p = planPreview(HOUSE), lines = docText(planDoc(HOUSE, p, TODAY)!).split('\n');
-    for (const want of ['Estimate of cost of construction', 'Work: Build a new house, G+1, 3 BHK', 'Built-up area: 2,000 sq ft (185.81 sq m)', `Cost per sq ft: Rs. ${p.view!.perSqft} of built-up area`])
+    for (const want of ['Estimate of cost of construction', 'Work: Build a new house, G+1, 3 BHK', 'Built-up area: 2,000 sq ft (185.81 sq m)', `Cost per sq ft: ₹${p.view!.perSqft} of built-up area`])
       expect(lines, want).toContain(want);
-    // 0.4 bags a sq ft × 2,121.0940 sq ft (the built-up area and the stair cabin) = 848.44 bags × Rs. 372.60 = 3,16,128.74 (architect.test.ts).
+    // 0.4 bags a sq ft × 2,121.0940 sq ft (the built-up area and the stair cabin) = 848.44 bags × ₹372.60 = 3,16,128.74 (architect.test.ts).
     expect(lines.find((l) => l.includes('Whole house: OPC 53-grade cement'))).toMatch(/\| All \| 848\.44 \| bag \| 372\.60 \| 3,16,129$/);
     const at = lines.indexOf('Annex 3. What the estimate assumes');
     expect(lines.slice(at + 1).map((l) => l.split(':')[0])).toEqual(['The house', 'Floor to floor', 'The plot', 'Structure', 'Outside works', 'Water', 'Stages', 'Rooms', 'Bathrooms', 'Ceiling height', 'Doors and windows', 'Electrical points']);
@@ -227,7 +228,7 @@ describe('a new house on the page (D-UX-23)', () => {
     expect(view(half).plot?.bad).toBe('One side is missing. Type both sides.');
     expect(inputOf(both).plot).toEqual({ l: 12.192, b: 9.144 });
     expect(view(both).plot?.own).toBe(true);
-    expect(view(both).change?.text).toMatch(/^The plot to 40 × 30 ft: Rs\. [\d,]+ less$/);
+    expect(view(both).change?.text).toMatch(/^The plot to 40 × 30 ft: ₹[\d,]+ less$/);
     expect(view(withPlotSide(both, 'b', '5')).plot?.bad).toBe('Out of range. Type each side from 10 to 984 ft.');
     expect(withUnit(both, 'sqm').plot).toEqual({ l: '12.19', b: '9.14' });
     expect(inputOf(withPlotReset(both)).plot).toBeUndefined();
@@ -237,8 +238,8 @@ describe('a new house on the page (D-UX-23)', () => {
     const w = withSewer(HOUSE, true);
     expect(inputOf(w).sewer).toBe(true);
     // The septic tank's 84,680 out (architect.test.ts); Pune's own sewer charge is still to be found, so it is said.
-    expect(view(w).change?.text).toBe('The sewer in place of a septic tank: Rs. 84,680 less; the sewer connection is still to be priced');
-    expect(view(withSewer({ ...HOUSE, city: 'chennai' }, true)).change?.text).toMatch(/^The sewer in place of a septic tank: Rs\. [\d,]+ less$/);
+    expect(view(w).change?.text).toBe('The sewer in place of a septic tank: ₹84,680 less; the sewer connection is still to be priced');
+    expect(view(withSewer({ ...HOUSE, city: 'chennai' }, true)).change?.text).toMatch(/^The sewer in place of a septic tank: ₹[\d,]+ less$/);
     expect(inputOf({ ...FLAT, sewer: true }).sewer).toBeUndefined();
   });
 });
@@ -272,7 +273,7 @@ describe('E5b on the page: a floor added on a house', () => {
 });
 
 describe('the planning estimate to download', () => {
-  // At Basic, the living room's floor is 303.03 sq ft (architect.test.ts) of the tile priced at Rs. 111.65 in Pune
+  // At Basic, the living room's floor is 303.03 sq ft (architect.test.ts) of the tile priced at ₹111.65 in Pune
   // (library.test.ts): 303.03 × 111.65 = 33,833.30, shown as 33,833.
   const s: PlanState = { ...FLAT, level: 1, doc: { owner: 'Asha Rao', property: 'Flat 4, Example Towers, Pune', lender: '', preparedBy: '' } };
   const p = planPreview(s), doc = planDoc(s, p, TODAY)!, lines = docText(doc).split('\n');
@@ -283,7 +284,7 @@ describe('the planning estimate to download', () => {
     ]);
     expect(lines).toContain(`Total estimated cost | ${p.view!.total}`);
     expect(lines).toContain(`In words: ${p.view!.words}`);
-    expect(lines).toContain(`Cost per sq ft: Rs. ${p.view!.perSqft} of carpet area`);
+    expect(lines).toContain(`Cost per sq ft: ₹${p.view!.perSqft} of carpet area`);
     expect(planDocStatus(s, p)).toBe('All questions answered');
     expect(planFileName(s, p, 'pdf')).toBe('Planning estimate - Asha Rao.pdf');
   });
@@ -316,7 +317,8 @@ describe('the planning estimate to download', () => {
     expect(pages[0]).toContain(`Total estimated cost ${p.view!.total}`);
     expect(pages.some((x) => x.includes('Annex 1. Detailed estimate'))).toBe(true);
     expect(pages.some((x) => x.includes('Annex 2. What the estimate assumes'))).toBe(true);
-    const book = await workbook(xlsxOf(doc, MADE));
+    const bytes = xlsxOf(doc, MADE), book = await workbook(bytes);
+    expect(await formulaParts(bytes)).toEqual([]); // the engine's figures as numbers, never a formula (D-DOC-21)
     expect(book.map((x) => x.sheet)).toEqual(['Estimate', 'Detailed estimate', 'Assumptions']);
     expect(book[0].data.find((r) => r[0] === 'Total estimated cost')?.filter((c) => c !== null)).toEqual(['Total estimated cost', p.view!.n.total]);
     const row = book[1].data.find((r) => typeof r[0] === 'string' && r[0].includes('Living and dining: Double-charge vitrified tiles'))?.filter((c) => c !== null);
@@ -371,7 +373,8 @@ describe('the bill of quantities to download (E4a, D-UX-36)', () => {
     const pages = (await pdfPages(pdfOf(doc, MADE))).join('\n');
     expect(pages).toContain('Bill of quantities');
     expect(pages).toContain('Make offered');
-    const book = await workbook(xlsxOf(doc, MADE));
+    const bytes = xlsxOf(doc, MADE), book = await workbook(bytes);
+    expect(await formulaParts(bytes)).toEqual([]); // the engine's figures as numbers, never a formula (D-DOC-21)
     expect(book.map((x) => x.sheet)).toEqual(['Bill of quantities']);
     const row = book[0].data.find((r) => typeof r[1] === 'string' && r[1].startsWith('Double-charge vitrified tiles') && String(r[2]).startsWith('Living and dining'));
     expect(row?.[3]).toBe(tiles.reduce((t, l) => t + Math.round(l.n.qty * 100), 0) / 100);
@@ -391,7 +394,7 @@ describe('the bill of quantities to download (E4a, D-UX-36)', () => {
 describe('E3 on the page: the rooms, What changed, Compare and the movable sections', () => {
   const e = architect(inputOf(FLAT)) as ArchitectEstimate;
   const total = (s: PlanState) => (architect(inputOf(s)) as ArchitectEstimate).total;
-  const more = (s: PlanState) => { const by = Math.round((total(s) - e.total) * 100) / 100; return `Rs. ${inr(Math.abs(by))} ${by > 0 ? 'more' : 'less'}`; };
+  const more = (s: PlanState) => { const by = Math.round((total(s) - e.total) * 100) / 100; return `₹${inr(Math.abs(by))} ${by > 0 ? 'more' : 'less'}`; };
   it('the rooms with their planned sizes in feet; a size typed in feet reaches the engine in metres, the longer side its length, and What changed says what it did', () => {
     const v = view(FLAT);
     expect(v.rooms.map((r) => r.id)).toEqual(['living', 'bedroom-1', 'bedroom-2', 'kitchen', 'bath-1', 'bath-2', 'passage', 'balcony']);
@@ -427,12 +430,12 @@ describe('E3 on the page: the rooms, What changed, Compare and the movable secti
     expect(v.compare.rows.some((r) => r.id === 'furniture')).toBe(false);
     expect([v.compare.totals.map((c) => c.n), v.compare.yours]).toEqual([runs.totals, undefined]);
     const up = withSlider(FLAT, 'flooring', 4, []), uv = view(up), floor = uv.compare.rows.find((r) => r.id === 'flooring');
-    expect([floor?.cells.findIndex((c) => c.mine), floor?.yours, uv.compare.yours]).toEqual([3, undefined, `Yours: Rs. ${uv.total}`]);
+    expect([floor?.cells.findIndex((c) => c.mine), floor?.yours, uv.compare.yours]).toEqual([3, undefined, `Yours: ₹${uv.total}`]);
     expect(uv.change?.text).toBe(`Flooring to Luxury: ${more(up)}`);
   });
   it('Furniture switched on for a renovation: What changed names the pieces; the line goes when the answers change', () => {
     const s = withSection(FLAT, 'furniture', true), v = view(s);
-    expect(v.change).toEqual({ text: 'Furniture switched on: Rs. 1,88,974 more', n: 188974, items: '3-seater sofa, mid-range · 6-seater dining set · Queen bed with hydraulic storage · and 1 more' });
+    expect(v.change).toEqual({ text: 'Furniture switched on: ₹1,88,974 more', n: 188974, items: '3-seater sofa, mid-range · 6-seater dining set · Queen bed with hydraulic storage · and 1 more' });
     expect(view({ ...s, city: 'mumbai' }).change).toBeUndefined();
   });
   it('interiors: the movable items apart on the page and in the abstract (D-UX-19)', () => {
@@ -447,7 +450,7 @@ describe('E3 on the page: the rooms, What changed, Compare and the movable secti
 describe('R1 on the page: four size buttons on each room, the bar of shares and the knock-on', () => {
   const e = architect(inputOf(FLAT)) as ArchitectEstimate;
   const total = (s: PlanState) => (architect(inputOf(s)) as ArchitectEstimate).total;
-  const more = (s: PlanState, from: PlanState) => { const by = Math.round((total(s) - total(from)) * 100) / 100; return `Rs. ${inr(Math.abs(by))} ${by > 0 ? 'more' : 'less'}`; };
+  const more = (s: PlanState, from: PlanState) => { const by = Math.round((total(s) - total(from)) * 100) / 100; return `₹${inr(Math.abs(by))} ${by > 0 ? 'more' : 'less'}`; };
   it('every room Medium at first, the passage and the balcony without words; the bar shares the carpet area: 28, 21, 17, 10, 5, 5, the passage 10 and the walls 5', () => {
     const v = view(FLAT);
     expect(v.rooms.map((r) => [r.id, r.word])).toEqual([['living', 'medium'], ['bedroom-1', 'medium'], ['bedroom-2', 'medium'], ['kitchen', 'medium'], ['bath-1', 'medium'], ['bath-2', 'medium'], ['passage', null], ['balcony', null]]);
@@ -474,7 +477,7 @@ describe('R1 on the page: four size buttons on each room, the bar of shares and 
     expect(view(sized).rooms[0]).toMatchObject({ typed: true, word: 'medium' });
     const s = withRoomWord(sized, 'living', 'above', 'Living and dining');
     expect([s.rooms.living, inputOf(s).rooms, view(s).rooms[0].typed]).toEqual([undefined, undefined, false]);
-    expect(view(s).change?.text).toMatch(/^Living and dining to Above medium, in place of your size: the other rooms 1\.6% smaller · Rs\. [\d,]+ (more|less)$/);
+    expect(view(s).change?.text).toMatch(/^Living and dining to Above medium, in place of your size: the other rooms 1\.6% smaller · ₹[\d,]+ (more|less)$/);
     // Sizes typed past the carpet area keep the bar to its width; the note says why. The living room typed is 320 of 1,000
     // sq ft, 32%; the others keep 205.42 + 170 + 99.17 + 46.04 × 2 and the passage 100, so with it 986.67 sq ft, and the
     // walls' 50 make 1,036.67, 103.67%: the living room takes 32 / 1.036667 = 30.87% of the bar.
@@ -493,7 +496,7 @@ describe('R1 on the page: four size buttons on each room, the bar of shares and 
 const ADDED = [{ kind: 'pooja', name: 'Pooja room' }, { kind: 'study', name: 'Study' }, { kind: 'utility', name: 'Utility' }, { kind: 'store', name: 'Store room' }];
 describe('R2 on the page: rooms by buttons', () => {
   const total = (s: PlanState) => (architect(inputOf(s)) as ArchitectEstimate).total;
-  const by = (s: PlanState, from: PlanState) => { const x = Math.round((total(s) - total(from)) * 100) / 100; return `Rs. ${inr(Math.abs(x))} ${x > 0 ? 'more' : 'less'}`; };
+  const by = (s: PlanState, from: PlanState) => { const x = Math.round((total(s) - total(from)) * 100) / 100; return `₹${inr(Math.abs(x))} ${x > 0 ? 'more' : 'less'}`; };
   it('the owner\'s example: a 1BHK whose bathroom is attached to the bedroom, and no balcony; ticking it off brings the plan back', () => {
     const one: PlanState = { ...FLAT, bhk: '1', area: '600' };
     const s = withAttached(one, 'bedroom-1', true, 'Bedroom');
@@ -512,7 +515,7 @@ describe('R2 on the page: rooms by buttons', () => {
     expect([s.baths, view(s).rooms.filter((r) => r.id.startsWith('bath-')).map((r) => r.name)]).toEqual([['bedroom-1', null, null], ['Bathroom 1 (attached)', 'Bathroom 2', 'Bathroom 3']]);
     // 200 + 145 + 120 + 70 + 32.5 + 32.5 = 600, and a bathroom more at 32.5 makes 632.5: the others 600 / 632.5 of their
     // size, 5.1% smaller; taken out again, 632.5 / 600, 5.4% larger.
-    expect(view(s).change?.text).toMatch(/^A bathroom added: the other rooms 5\.1% smaller · Rs\. [\d,]+ (more|less)$/);
+    expect(view(s).change?.text).toMatch(/^A bathroom added: the other rooms 5\.1% smaller · ₹[\d,]+ (more|less)$/);
     const out = withBathTakenOut(s, 'bath-3', 'Bathroom 3');
     expect([out.baths, view(out).change?.text]).toEqual([undefined, `Bathroom 3 taken out: the other rooms 5.4% larger · ${by(out, s)}`]);
   });
@@ -543,7 +546,7 @@ describe('R2 on the page: rooms by buttons', () => {
 
 describe('R2b on the page: + Pooja room, + Study, + Utility and + Store room, each with its ×', () => {
   const total = (s: PlanState) => (architect(inputOf(s)) as ArchitectEstimate).total;
-  const by = (s: PlanState, from: PlanState) => { const x = Math.round((total(s) - total(from)) * 100) / 100; return `Rs. ${inr(Math.abs(x))} ${x > 0 ? 'more' : 'less'}`; };
+  const by = (s: PlanState, from: PlanState) => { const x = Math.round((total(s) - total(from)) * 100) / 100; return `₹${inr(Math.abs(x))} ${x > 0 ? 'more' : 'less'}`; };
   it('the four buttons beside R2a\'s, in order; one added leaves the others, and its room can be taken out', () => {
     expect(view(FLAT).add.extras).toEqual(ADDED);
     // A 2BHK of 1,000 sq ft at Medium: 200 + 145 + 120 + 70 + 32.5 + 32.5 = 600, and a pooja room at 40 makes 640: the

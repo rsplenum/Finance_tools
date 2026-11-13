@@ -102,7 +102,7 @@ export function cmaNeeds(x: CmaInput): string[] {
     const t = totals(v, !!x.quasiEquity);
     if (!money(t.assets, t.liabilities)) {
       const d = t.assets - t.liabilities;
-      needs.push(`${name}: the balance sheet does not balance: the assets are Rs. ${inr(Math.abs(d), Number.isInteger(d) ? 0 : 2)} ${d > 0 ? 'more' : 'less'} than the liabilities`);
+      needs.push(`${name}: the balance sheet does not balance: the assets are ₹${inr(Math.abs(d), Number.isInteger(d) ? 0 : 2)} ${d > 0 ? 'more' : 'less'} than the liabilities`);
     }
   }
   return needs;
@@ -178,7 +178,7 @@ function flowOf(y: CmaYear, b: CmaYear): FlowYear {
   };
 }
 
-const rsText = (n: number) => `Rs. ${inr(n, Number.isInteger(n) ? 0 : 2)}`;
+const rsText = (n: number) => `₹${inr(n, Number.isInteger(n) ? 0 : 2)}`;
 
 function flagsOf(years: CmaYear[], turnover: Turnover[], limit: number, proposed: number): Flag[] {
   const flags: Flag[] = [], audited = years.filter((y) => y.kind === 'audited'), ahead = years.filter((y) => y.kind !== 'audited');
@@ -203,7 +203,7 @@ function flagsOf(years: CmaYear[], turnover: Turnover[], limit: number, proposed
   for (const t of turnover) if (t.short > 0)
     flags.push({ id: `margin-${t.fy}`, text: `${t.fy}: the net working capital, ${rsText(t.nwc)}, is below the borrower’s 5% margin of ${rsText(t.margin)}, short by ${rsText(t.short)}; the limit is worked on the 5% margin` });
   if (proposed > limit + 0.005) flags.push({ id: 'proposed', text: `The projected balance sheet borrows ${rsText(proposed)} from banks for working capital, ${rsText(proposed - limit)} more than the limit by the turnover method` });
-  if (limit > TURNOVER.maxLimit) flags.push({ id: 'ceiling', text: `The limit is above Rs. 5 crore, where lenders assess by the working-capital gap (the second method), not the turnover method` });
+  if (limit > TURNOVER.maxLimit) flags.push({ id: 'ceiling', text: `The limit is above ₹5 crore, where lenders assess by the working-capital gap (the second method), not the turnover method` });
   for (const y of years) if (y.netWorth <= 0) flags.push({ id: `worth-${y.id}`, text: `${yearName(y.fy, y.kind)}: the net worth is nil or less, so the ratios on it are not worked out` });
   return flags;
 }

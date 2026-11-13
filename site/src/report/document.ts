@@ -18,7 +18,7 @@ import { soldBy } from '../../../engine/sold-by';
 import type { Block, Cell, Doc, Table } from '../doc/doc';
 import { forDocument } from '../doc/doc';
 import { ALL_ANSWERED } from '../verdict';
-import { printable } from '../doc/pdf';
+import { printable } from '../doc/face';
 import { monthText } from '../dscr/model';
 import { SITE_NAME } from '../site';
 import { ACTIVITY_CHOICES, AREA_CHOICES, CATEGORY_CHOICES, CGTMSE, HEADS, REPAYMENT_CHOICES, guaranteeOf, limitOf, plainOf, pmegpConditions, statusText, tidyAmount, wcByOf, withMode, type ReportFacts, type ReportPreview, type ReportState, type ReportWords, type ViewTable } from './model';
@@ -86,7 +86,7 @@ function tableOf(v: ViewTable, no?: string): Block[] {
   return [...(no === '' ? [] : [{ kind: 'heading', text: no ? `${no} ${v.title}` : v.title } as Block]), { kind: 'table', table: t }];
 }
 
-const amount = (t: string) => (t.trim() ? `Rs. ${tidyAmount(t)}` : 'None');
+const amount = (t: string) => (t.trim() ? `₹${tidyAmount(t)}` : 'None');
 
 /** The proposal as typed: the scheme, the guarantee, the loans, any subsidy, the collateral. */
 function proposal(s: ReportState): [string, string][] {
@@ -103,7 +103,7 @@ function proposal(s: ReportState): [string, string][] {
   // The limit as the page holds it: typed, or worked out by the engine (D-UX-112), with its rate as assumed. A worked limit
   // read "None" here while the cover gave its figure, and simple mode's rate read "undefined" (BUILD1: the live paper showed it).
   const worked = wcByOf(s) === 'worked', lim = worked ? limitOf(s) : undefined, rate = plainOf(e.wcRate);
-  const limit = worked ? (lim ? `Rs. ${inr(lim)}` : 'Worked out once the questions are answered') : amount(s.wcLimit);
+  const limit = worked ? (lim ? `₹${inr(lim)}` : 'Worked out once the questions are answered') : amount(s.wcLimit);
   pairs.push(['Working-capital limit applied for', `${limit}${(worked ? lim : plainOf(s.wcLimit)) && rate !== undefined ? ` at ${rate}% a year` : ''}`]);
   const g = guaranteeOf(s);
   if (g) pairs.push(['Guarantee', `${g === 'cgfmu' ? 'CGFMU' : 'CGTMSE'}${g === 'cgtmse' ? `; concessions: ${CGTMSE.groups.filter((_, k) => s.concessions?.[k]).map((t) => t.split(',')[0].toLowerCase()).join('; ') || 'none'}` : ''}${s.feeRate.trim() ? `; its fee at ${plainOf(s.feeRate)}% a year, as the lender quotes` : ''}`]);
@@ -123,7 +123,7 @@ function basis(s: ReportState): [string, string][] {
     if (s.salesBy === 'expansion') pairs.push(['Today\'s sales in a full first year', `${amount(s.sales)}, growing ${plainOf(s.salesGrowth)}% a year`]);
     for (const pr of s.products) {
       const u = soldBy(pr.unit);
-      pairs.push([`Sales: ${pr.name.trim()}`, `${pr.units.trim()} ${u.many} a month at full running, at Rs. ${tidyAmount(pr.price)} ${u.per}`]);
+      pairs.push([`Sales: ${pr.name.trim()}`, `${pr.units.trim()} ${u.many} a month at full running, at ₹${tidyAmount(pr.price)} ${u.per}`]);
     }
     pairs.push(['The prices', `Growing ${plainOf(s.priceGrowth)}% a year${s.salesBy === 'expansion' ? ' once the new line is full' : ''}`]);
     pairs.push([s.salesBy === 'expansion' ? 'The new line\'s use' : 'Use of the capacity', `${s.utilisation.split(/[,\s]+/).filter(Boolean).join('%, ')}% by year from the first sales`]);
@@ -177,7 +177,7 @@ export function draftDoc(s: ReportState, p: ReportPreview, today: string): Doc {
     ({ name, section: `${k}. ${TITLES[k - 1]}`, blocks: [numbered(k, TITLES[k - 1]), ...blocks, { kind: 'text', text: waits, small: true } as Block], ghost, ...(flow ? { flow } : {}) });
   const typed = HEADS.filter((h) => plainOf(s.cost[h.id] ?? '') !== undefined || s.cost[h.id]?.trim()).map((h) => [h.label, amount(s.cost[h.id])] as [string, string]);
   const asked = [...(s.loan.amount.trim() ? [['Term loan asked for', amount(s.loan.amount)] as [string, string]] : []), ...(s.loan.ratePct.trim() ? [['Interest rate', `${s.loan.ratePct.trim().replace(/%$/, '')}% a year`] as [string, string]] : [])];
-  const sells = s.salesBy === 'typed' ? [] : s.products.filter((pr) => pr.name.trim()).map((pr) => [`Sells: ${pr.name.trim()}`, [pr.units.trim() && `${pr.units.trim()} ${soldBy(pr.unit).many} a month at full running`, pr.price.trim() && `Rs. ${tidyAmount(pr.price)} ${soldBy(pr.unit).per}`].filter(Boolean).join(', at ') || 'Still needed'] as [string, string]);
+  const sells = s.salesBy === 'typed' ? [] : s.products.filter((pr) => pr.name.trim()).map((pr) => [`Sells: ${pr.name.trim()}`, [pr.units.trim() && `${pr.units.trim()} ${soldBy(pr.unit).many} a month at full running`, pr.price.trim() && `₹${tidyAmount(pr.price)} ${soldBy(pr.unit).per}`].filter(Boolean).join(', at ') || 'Still needed'] as [string, string]);
   return {
     ...headOf(s, today), mark: 'Draft',
     parts: [
@@ -204,7 +204,7 @@ export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc 
   // The figures as the page shows them, read off its tables by name: none worked out here.
   const shown = (id: string, label: (l: string) => boolean) => get(id).rows.find((r) => label(r.label));
   const loan = shown('finance', (l) => l.startsWith('Term loan')), limit = shown('wc', (l) => l === 'Limit applied for'), promoters = shown('finance', (l) => l.startsWith('Promoters'));
-  const asks = [loan && `Term loan of Rs. ${loan.values[0]}`, limit && limit.n?.[0] ? `working-capital limit of Rs. ${limit.values[0]}` : ''].filter(Boolean).join(' and a ');
+  const asks = [loan && `Term loan of ₹${loan.values[0]}`, limit && limit.n?.[0] ? `working-capital limit of ₹${limit.values[0]}` : ''].filter(Boolean).join(' and a ');
   const n = numbered;
   // The projections in brief: the rows a lender looks for first, year by year, as the statements show them.
   const brief = ([['pl', 'Sales'], ['pl', 'Profit after tax'], ['dscr', 'Cash available (A)'], ['dscr', 'Debt service (B)'], ['dscr', 'DSCR (A ÷ B)'], ['cf', 'Cash at the end of the year']] as const)
@@ -225,7 +225,7 @@ export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc 
         ...(p.flags.length ? [{ kind: 'box', title: 'PMEGP: to look at', items: p.flags } as Block] : []),
         { kind: 'figures', items: v.key.map(({ label, value, note }) => (label === 'Average DSCR' ? { label, value } : { label, value, ...(note ? { note } : {}) })) },
         { kind: 'heading', text: '1.1 The proposal' },
-        { kind: 'pairs', pairs: [...(promoters ? [[promoters.label, `Rs. ${promoters.values[0]}`] as [string, string]] : []), ...proposal(s)] },
+        { kind: 'pairs', pairs: [...(promoters ? [[promoters.label, `₹${promoters.values[0]}`] as [string, string]] : []), ...proposal(s)] },
         ...tableOf(glance, '1.2'),
       ]),
       sec(2, PARTS.business, [

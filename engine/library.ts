@@ -125,7 +125,7 @@ const r2 = (x: number) => Math.round(x * 100 + 1e-6) / 100;
 // One formatter for every call: toLocaleString builds a new one each time, which made pricing slow on a phone.
 const INR = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
 const inr = (x: number) => INR.format(x);
-/** A unit as the working says it: Rs. 75 a sq ft, Rs. 500 each. */
+/** A unit as the working says it: ₹75 a sq ft, ₹500 each. */
 export const PER: Record<Unit, string> = { sqft: 'a sq ft', sqm: 'a sq m', rft: 'a running ft', m: 'a metre', nos: 'each', set: 'a set', lot: 'a lot', kg: 'a kg', cum: 'a cu m', bag: 'a bag', litre: 'a litre' };
 const UNIT_WORD: Record<Unit, string> = { sqft: 'sq ft', sqm: 'sq m', rft: 'running ft', m: 'm', nos: 'nos', set: 'sets', lot: 'lots', kg: 'kg', cum: 'cu m', bag: 'bags', litre: 'litres' };
 
@@ -168,7 +168,7 @@ function rawPrice(id: string, city: number, end?: 0 | 1, cityId?: string): { rat
       if (!part) return null;
       base += p.n * part.rate;
       labour += p.n * part.labour;
-      how.push(`${p.n} × ${(ENTRIES.get(p.id) as Entry).name} at Rs. ${inr(r2(part.rate))}`);
+      how.push(`${p.n} × ${(ENTRIES.get(p.id) as Entry).name} at ₹${inr(r2(part.rate))}`);
     }
   } else {
     // A city's own charge stands as it is; any other rate is scaled by the city's factor.
@@ -179,15 +179,15 @@ function rawPrice(id: string, city: number, end?: 0 | 1, cityId?: string): { rat
       const each = e.pack ? m / (e.pack.qty * per(e.pack.unit, e.unit)) : m;
       base = each * k;
       how.push(e.pack
-        ? `Rs. ${inr(m)}, the middle of Rs. ${inr(band[0])}–${inr(band[1])} for ${e.pack.what ?? 'a pack'} covering ${e.pack.qty} ${UNIT_WORD[e.pack.unit]}, supplied and fixed: Rs. ${inr(r2(each))} ${PER[e.unit]}${scaled}`
-        : `Rs. ${inr(m)}, the middle of Rs. ${inr(band[0])}–${inr(band[1])} ${PER[e.unit]}, supplied and fixed${scaled}`);
+        ? `₹${inr(m)}, the middle of ₹${inr(band[0])}–${inr(band[1])} for ${e.pack.what ?? 'a pack'} covering ${e.pack.qty} ${UNIT_WORD[e.pack.unit]}, supplied and fixed: ₹${inr(r2(each))} ${PER[e.unit]}${scaled}`
+        : `₹${inr(m)}, the middle of ₹${inr(band[0])}–${inr(band[1])} ${PER[e.unit]}, supplied and fixed${scaled}`);
     } else {
       const each = e.pack ? m / (e.pack.qty * per(e.pack.unit, e.unit)) : m;
       const w = e.basis === 'supply' ? e.wastage ?? 0 : 0;
       base = each * (1 + w);
       how.push(e.pack
-        ? `Rs. ${inr(m)} for ${e.pack.what ?? 'a pack'} covering ${e.pack.qty} ${UNIT_WORD[e.pack.unit]}: Rs. ${inr(r2(each))} ${PER[e.unit]}`
-        : `Rs. ${inr(m)}, the middle of Rs. ${inr(band[0])}–${inr(band[1])} ${PER[e.unit]}`);
+        ? `₹${inr(m)} for ${e.pack.what ?? 'a pack'} covering ${e.pack.qty} ${UNIT_WORD[e.pack.unit]}: ₹${inr(r2(each))} ${PER[e.unit]}`
+        : `₹${inr(m)}, the middle of ₹${inr(band[0])}–${inr(band[1])} ${PER[e.unit]}`);
       if (w) how.push(`${+(w * 100).toFixed(2)}% wastage`);
     }
   }
@@ -196,7 +196,7 @@ function rawPrice(id: string, city: number, end?: 0 | 1, cityId?: string): { rat
     if (!l) throw new Error(`No labour ${f.id} for ${id}`);
     base += f.n * mid(l.rate) * city;
     labour += f.n * mid(l.rate) * city;
-    how.push(`${f.n > 1 ? `${f.n} × ` : ''}${l.name.charAt(0).toLowerCase() + l.name.slice(1)} at Rs. ${inr(mid(l.rate))}${city !== 1 ? ` × ${city.toFixed(3)}` : ''}`);
+    how.push(`${f.n > 1 ? `${f.n} × ` : ''}${l.name.charAt(0).toLowerCase() + l.name.slice(1)} at ₹${inr(mid(l.rate))}${city !== 1 ? ` × ${city.toFixed(3)}` : ''}`);
   }
   return { rate: base, labour, how };
 }

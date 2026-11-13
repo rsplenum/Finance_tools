@@ -55,7 +55,7 @@ interface TextProps {
   invalid?: boolean;
   type?: 'text' | 'month';
   inputMode?: 'decimal' | 'numeric' | 'text';
-  /** Inside the box (UX9, review finding 6): "Rs." before the figure; any other, like "%" or "days", after it. */
+  /** Inside the box (UX9, review finding 6): "₹" before the figure; any other, like "%" or "days", after it. */
   unit?: string;
   /** The estimate's own; the tools' boxes take none, since an example in the box looks typed (review finding 6). */
   placeholder?: string;
@@ -81,13 +81,13 @@ export function TextField(p: TextProps) {
   // A read-back saying the text was not understood marks the field wrong too, for screen readers and the error count (UD1).
   const bad = p.invalid || /^Not understood/.test(p.said ?? '');
   const tag = changed ? 'changed' : fixed !== undefined ? 'assumed' : '';
-  const pre = p.unit === 'Rs.', after = [pre ? '' : p.unit, tag].filter(Boolean).join(' · ');
+  const pre = p.unit === '₹', after = [pre ? '' : p.unit, tag].filter(Boolean).join(' · ');
   const pad = `${pre ? 'pl-11' : 'pl-3'} ${!after ? 'pr-3' : after.length < 4 ? 'pr-10' : after.length < 10 ? 'pr-24' : 'pr-36'}`;
   const slot = p.said ? 'said' : changed ? 'default' : p.hint ? 'hint' : '', UNIT = 'pointer-events-none absolute inset-y-0 flex items-center text-ink-muted';
   return <div class={`grid grid-rows-subgrid row-span-3 content-start gap-0 ${p.class ?? ''}`}>
     <label for={p.id} class={`${LABEL} self-end`}>{p.label}</label>
     <div class="relative mt-1">
-      {pre && <span id={`${p.id}-pre`} class={`${UNIT} left-3`}>Rs.</span>}
+      {pre && <span id={`${p.id}-pre`} class={`${UNIT} left-3`}>₹</span>}
       {after && <span id={`${p.id}-unit`} class={`${UNIT} right-3 text-sm`}>{after}</span>}
       <input id={p.id} type={p.type ?? 'text'} inputMode={p.inputMode} autocomplete="off" spellcheck={false} enterkeyhint="done"
         placeholder={p.placeholder} aria-invalid={bad || undefined} aria-describedby={[pre && `${p.id}-pre`, after && `${p.id}-unit`, slot && `${p.id}-${slot}`].filter(Boolean).join(' ') || undefined}
@@ -95,7 +95,7 @@ export function TextField(p: TextProps) {
     </div>
     {/* The read-back, or the error beside its field in the error colour (GOV.UK Error message), tied to the field for a screen reader. */}
     {p.said ? <p id={`${p.id}-said`} data-testid={`${p.id}-said`} aria-live="polite" class={`mt-1 text-sm break-words ${bad ? 'text-bad' : 'text-ink-muted'}`}>{p.said}</p>
-      : changed ? <p id={`${p.id}-default`} data-testid={`${p.id}-default`} class={HINT}>Default {fixed}{p.unit && p.unit !== 'Rs.' ? ` ${p.unit}` : ''}.{' '}
+      : changed ? <p id={`${p.id}-default`} data-testid={`${p.id}-default`} class={HINT}>Default {fixed}{p.unit && p.unit !== '₹' ? ` ${p.unit}` : ''}.{' '}
         <button type="button" data-testid={`${p.id}-reset`} class="text-link underline underline-offset-4" onClick={() => commit(fixed!)}>Reset<span class="sr-only"> {typeof p.label === 'string' ? p.label : ''} to the default</span></button></p>
       : p.hint && <p id={`${p.id}-hint`} class={HINT}>{p.hint}</p>}
   </div>;

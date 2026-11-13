@@ -6,6 +6,7 @@
  */
 import { useLayoutEffect, useRef } from 'preact/hooks';
 import type { Block, Doc, Part, Row, Table } from './doc/doc';
+import { Bars } from './worked/Bars';
 
 /** A part's place on the paper, by its name: what a step scrolls to. */
 export const sheetId = (part: string) => `sheet-${part.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
@@ -60,7 +61,7 @@ function BlockOf({ b, doc, pages }: { b: Block; doc: Doc; pages?: [string, numbe
     </div>;
     case 'contents': return <div>
       <p class="sheet-title">{b.title}</p>
-      <ol class="sheet-contents">{doc.parts.filter((x) => x.section && !x.sheetOnly).map((x) => {
+      <ol class="sheet-contents">{doc.parts.filter((x) => x.section).map((x) => {
         const page = pages?.find(([s]) => s === x.section)?.[1];
         return <li key={x.section}><span>{x.section}</span><span class="sheet-leader" aria-hidden="true" />{page !== undefined && <span>{page}</span>}</li>;
       })}</ol>
@@ -71,9 +72,15 @@ function BlockOf({ b, doc, pages }: { b: Block; doc: Doc; pages?: [string, numbe
     case 'list': return <ul class={b.small ? 'sheet-list sheet-muted' : 'sheet-list'}>{b.items.map((t, i) => <li key={i}>{t}</li>)}</ul>;
     case 'pairs': return <dl class="sheet-pairs">{b.pairs.map(([k, v]) => <div key={k}><dt>{k}</dt><dd><Fresh text={v} /></dd></div>)}</dl>;
     case 'facts': return <div class="sheet-facts">{b.lines.map((line, i) => <dl key={i}>{line.map(([k, v]) => <div key={k}><dt>{k}</dt><dd><Fresh text={v} /></dd></div>)}</dl>)}</div>;
-    case 'figures': return <dl class="sheet-figures">{b.items.map((f) => <div key={f.label}><dt>{f.label}</dt><dd class="sheet-figure"><Fresh text={f.value} /></dd>{f.note && <dd class="sheet-muted">{f.note}</dd>}</div>)}</dl>;
+    case 'figures': return <dl class="sheet-figures">{b.items.map((f) => <div key={f.label}><dt>{f.label}</dt><dd class="sheet-figure"><Fresh text={f.value} /></dd>{f.level && <dd class="sheet-text font-semibold">{f.level}</dd>}{f.note && <dd class="sheet-muted">{f.note}</dd>}</div>)}</dl>;
     case 'box': return <div class="sheet-box"><p class="sheet-box-title"><Fresh text={b.title} /></p><ul class="sheet-list">{b.items.map((t, i) => <li key={i}>{t}</li>)}</ul></div>;
     case 'table': return <TableOf t={b.table} />;
+    case 'chart': {
+      const c = b.chart;
+      return <Bars title={c.title} aName={c.names[0]} bName={c.names[1]} unit={c.unit} tightName={c.tightName}
+        rows={c.rows.map((r) => ({ key: r.label, label: r.label, a: r.values[0], b: r.values[1], aText: r.texts[0], bText: r.texts[1], tight: r.tight, note: r.note,
+          spoken: `${r.label}: ${c.names[0]} ${r.texts[0]}, ${c.names[1]} ${r.texts[1]}` }))} />;
+    }
     default: return <div class="sheet-sign">{b.lines.map((l, i) => <p key={i}>{l || ' '}</p>)}</div>;
   }
 }
@@ -81,7 +88,7 @@ function BlockOf({ b, doc, pages }: { b: Block; doc: Doc; pages?: [string, numbe
 /** The sheets: a part starts one unless it runs on (`flow`), and a cover stands alone on its own. */
 function sheetsOf(doc: Doc): { parts: Part[]; cover: boolean }[] {
   const out: { parts: Part[]; cover: boolean }[] = [];
-  for (const part of doc.parts.filter((x) => !x.sheetOnly)) {
+  for (const part of doc.parts) {
     const at = part.blocks.findIndex((b) => b.kind === 'cover');
     if (at >= 0) {
       out.push({ parts: [{ ...part, blocks: part.blocks.slice(0, at + 1) }], cover: true });

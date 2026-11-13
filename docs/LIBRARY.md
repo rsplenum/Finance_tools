@@ -18,37 +18,37 @@ Dated 02-10-2026; an item read on another day says so.
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Taking up old floor tiles | Taking up old floor tiles with their bedding, and stacking the debris |  | Rs. 10–25 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [1][2] |
+| Every level | Taking up old floor tiles | Taking up old floor tiles with their bedding, and stacking the debris |  | ₹10–25 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [1][2] |
 
 ### Stripping a bathroom (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Stripping a bathroom | Taking out the wall and floor tiles, the sanitaryware and the fittings of one bathroom |  | Rs. 8,000–18,000 a each, supplied and fixed; GST not stated: taken as the price paid | [3] |
+| Every level | Stripping a bathroom | Taking out the wall and floor tiles, the sanitaryware and the fittings of one bathroom |  | ₹8,000–18,000 a each, supplied and fixed; GST not stated: taken as the price paid | [3] |
 
 ### Debris removal (lot)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Debris removal, one lot | Loading the debris, carting it to an approved dump and paying the dumping charges: one lot |  | Rs. 4,000–12,000 a lot, supplied and fixed; GST not stated: taken as the price paid | [3] |
+| Every level | Debris removal, one lot | Loading the debris, carting it to an approved dump and paying the dumping charges: one lot |  | ₹4,000–12,000 a lot, supplied and fixed; GST not stated: taken as the price paid | [3] |
 
 ### Making good the plaster (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Cement plaster, 12 mm | Cement plaster 12 mm thick, 1:6, on internal walls, cured and finished |  | Rs. 25–35 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [4] |
+| Every level | Cement plaster, 12 mm | Cement plaster 12 mm thick, 1:6, on internal walls, cured and finished |  | ₹25–35 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [4] |
 
 ### Protecting the floors during the work (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Floor protection sheet | 3 mm polypropylene sheet laid over the finished floors for the length of the work |  | Rs. 2.2 a sq ft, material; GST not stated: taken as the price paid; read 04-10-2026 | [5] |
+| Every level | Floor protection sheet | 3 mm polypropylene sheet laid over the finished floors for the length of the work |  | ₹2.2 a sq ft, material; GST not stated: taken as the price paid; read 04-10-2026 | [5] |
 
 ### Deep cleaning at handover (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Deep cleaning | Deep cleaning of the whole home at handover: floors, tiles, glass, fittings and joinery |  | Rs. 8–15 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [6] |
+| Every level | Deep cleaning | Deep cleaning of the whole home at handover: floors, tiles, glass, fittings and joinery |  | ₹8–15 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [6] |
 
 ### New partition walls (sq ft)
 
@@ -56,7 +56,7 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| AAC block partition, 100 mm | — | AAC block wall 100 mm (4 in) thick in thin-bed mortar | Rs. 160–200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [7] |
+| AAC block partition, 100 mm | — | AAC block wall 100 mm (4 in) thick in thin-bed mortar | ₹160–200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [7] |
 
 ### Plaster (sq ft)
 
@@ -64,8 +64,8 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Cement plaster, 12 mm | — | Cement plaster 12 mm thick, 1:6, on internal walls, cured and finished | Rs. 25–35 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [4] |
-| Gypsum plaster | — | Gypsum plaster on internal walls, ready for paint | Rs. 32–55 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [8] |
+| Cement plaster, 12 mm | — | Cement plaster 12 mm thick, 1:6, on internal walls, cured and finished | ₹25–35 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [4] |
+| Gypsum plaster | — | Gypsum plaster on internal walls, ready for paint | ₹32–55 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [8] |
 
 ## Waterproofing
 
@@ -75,7 +75,7 @@ Dated 02-10-2026; an item read on another day says so.
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Flexible cementitious waterproofing | Two-component flexible cementitious waterproofing in two coats, on the floor, 300 mm up the walls and to 1.8 m in the shower, before tiling | Dr. Fixit, STP, Fosroc, MYK Laticrete | Rs. 80–120 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [9] |
+| Every level | Flexible cementitious waterproofing | Two-component flexible cementitious waterproofing in two coats, on the floor, 300 mm up the walls and to 1.8 m in the shower, before tiling | Dr. Fixit, STP, Fosroc, MYK Laticrete | ₹80–120 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [9] |
 
 Choices at each level: Basic 2, Standard 1, Premium 2, Luxury 2, Bespoke 1.
 
@@ -83,15 +83,15 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Acrylic liquid waterproofing | Basic | Acrylic liquid-applied waterproofing coating | Rs. 70–120 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [9] |
-| Polyurethane membrane | Premium | Polyurethane liquid membrane; recommended for bathrooms above the ground floor | Rs. 150–200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [9] |
-| Crystalline waterproofing | Luxury | Crystalline waterproofing that seals the concrete itself | Rs. 180–250 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [9] |
+| Acrylic liquid waterproofing | Basic | Acrylic liquid-applied waterproofing coating | ₹70–120 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [9] |
+| Polyurethane membrane | Premium | Polyurethane liquid membrane; recommended for bathrooms above the ground floor | ₹150–200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [9] |
+| Crystalline waterproofing | Luxury | Crystalline waterproofing that seals the concrete itself | ₹180–250 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [9] |
 
 ### Terrace and roof waterproofing (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | APP membrane | Torch-applied APP bitumen membrane on a terrace or shower floor |  | Rs. 140–260 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [10] |
+| Every level | APP membrane | Torch-applied APP bitumen membrane on a terrace or shower floor |  | ₹140–260 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [10] |
 
 Choices at each level: Basic 2, Standard 2, Premium 1, Luxury 1, Bespoke 1.
 
@@ -99,8 +99,8 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Brickbat coba | Basic | Brickbat coba laid to slope with a finishing screed, on a terrace | Rs. 80–120 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [10] |
-| Elastomeric terrace coating | Standard | Elastomeric waterproof coating on a terrace A two-component elastomeric coating Rs. 35 a sq ft from IndiaMART's sellers, the low end of HouseYog's Rs. 35–125. | Rs. 35–125 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [11] |
+| Brickbat coba | Basic | Brickbat coba laid to slope with a finishing screed, on a terrace | ₹80–120 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [10] |
+| Elastomeric terrace coating | Standard | Elastomeric waterproof coating on a terrace A two-component elastomeric coating Rs. 35 a sq ft from IndiaMART's sellers, the low end of HouseYog's Rs. 35–125. | ₹35–125 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [11] |
 
 ## Flooring
 
@@ -114,11 +114,11 @@ Dated 02-10-2026; an item read on another day says so.
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Double-charge vitrified tiles, 600 × 600 mm | Double-charge vitrified tiles 600 × 600 mm on tile adhesive, 2–3 mm joints, grouted, with 100 mm skirting of the same tiles | Kajaria, Somany, Johnson, Nitco, Orientbell | Rs. 30–95 a sq ft, material, 12% wastage; plus laying 600 × 600 mm tiles Rs. 25–40 and tile adhesive and grout Rs. 8–18; GST not stated: taken as the price paid | [20][21][22] |
-| Standard | Glazed vitrified tiles, 800 × 800 mm | Glazed vitrified tiles 800 × 800 mm on tile adhesive, grouted, with matching skirting | Kajaria, Somany, Simpolo, Johnson | Rs. 52–130 a sq ft, material, 12% wastage; plus laying 800 × 800 mm tiles Rs. 30–50 and tile adhesive and grout Rs. 8–18; GST not stated: taken as the price paid | [21][22] |
-| Premium | Large vitrified slabs, 800 × 1600 mm | Large glazed vitrified slabs 800 × 1600 mm on tile adhesive, levelled with clips, grouted, with matching skirting | Kajaria Eternity, Simpolo, Somany | Rs. 2,000–3,600 for a box of 2 slabs of 2.56 sq m, material, 12% wastage; plus laying large-format tiles and slabs (1200 × 600 mm and up) Rs. 60–120 and tile adhesive and grout Rs. 8–18; GST not stated: taken as the price paid | [21][22] |
-| Luxury | Indian white marble (Ambaji) | Ambaji white marble 18 mm laid in mortar, machine-polished, with marble skirting |  | Rs. 200–400 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70; GST not stated: taken as the price paid | [23] our rule |
-| Bespoke | Italian marble (Statuario) | Statuario Italian marble 18–20 mm laid in mortar, filled and mirror-polished, with marble skirting |  | Rs. 1,200 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70; GST not stated: taken as the price paid; read 04-10-2026 | [24] |
+| Basic | Double-charge vitrified tiles, 600 × 600 mm | Double-charge vitrified tiles 600 × 600 mm on tile adhesive, 2–3 mm joints, grouted, with 100 mm skirting of the same tiles | Kajaria, Somany, Johnson, Nitco, Orientbell | ₹30–95 a sq ft, material, 12% wastage; plus laying 600 × 600 mm tiles ₹25–40 and tile adhesive and grout ₹8–18; GST not stated: taken as the price paid | [20][21][22] |
+| Standard | Glazed vitrified tiles, 800 × 800 mm | Glazed vitrified tiles 800 × 800 mm on tile adhesive, grouted, with matching skirting | Kajaria, Somany, Simpolo, Johnson | ₹52–130 a sq ft, material, 12% wastage; plus laying 800 × 800 mm tiles ₹30–50 and tile adhesive and grout ₹8–18; GST not stated: taken as the price paid | [21][22] |
+| Premium | Large vitrified slabs, 800 × 1600 mm | Large glazed vitrified slabs 800 × 1600 mm on tile adhesive, levelled with clips, grouted, with matching skirting | Kajaria Eternity, Simpolo, Somany | ₹2,000–3,600 for a box of 2 slabs of 2.56 sq m, material, 12% wastage; plus laying large-format tiles and slabs (1200 × 600 mm and up) ₹60–120 and tile adhesive and grout ₹8–18; GST not stated: taken as the price paid | [21][22] |
+| Luxury | Indian white marble (Ambaji) | Ambaji white marble 18 mm laid in mortar, machine-polished, with marble skirting |  | ₹200–400 a sq ft, material, 10% wastage; plus laying marble or stone in mortar ₹100–200 and machine-polishing marble after laying ₹30–70; GST not stated: taken as the price paid | [23] our rule |
+| Bespoke | Italian marble (Statuario) | Statuario Italian marble 18–20 mm laid in mortar, filled and mirror-polished, with marble skirting |  | ₹1,200 a sq ft, material, 10% wastage; plus laying marble or stone in mortar ₹100–200 and machine-polishing marble after laying ₹30–70; GST not stated: taken as the price paid; read 04-10-2026 | [24] |
 
 Choices at each level: Basic 5, Standard 8, Premium 8, Luxury 6, Bespoke 4.
 
@@ -126,42 +126,42 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Ceramic floor tiles | Basic | Ceramic floor tiles on adhesive, grouted | Rs. 40–80 a sq ft, material, 10% wastage; plus laying 600 × 600 mm tiles Rs. 25–40 and tile adhesive and grout Rs. 8–18; GST not stated: taken as the price paid | [25][26] |
-| Glazed vitrified tiles, 600 × 600 mm | Basic | Branded glazed vitrified tiles 600 × 600 mm on adhesive, grouted | Rs. 40–75 a sq ft, material, 12% wastage; plus laying 600 × 600 mm tiles Rs. 25–40 and tile adhesive and grout Rs. 8–18; plus GST; read 04-10-2026 | [21] |
-| Glazed vitrified tiles, 600 × 1200 mm | Standard | Glazed vitrified tiles 600 × 1200 mm on adhesive, grouted | Rs. 48–130 a sq ft, material, 12% wastage; plus laying large-format tiles and slabs (1200 × 600 mm and up) Rs. 60–120 and tile adhesive and grout Rs. 8–18; plus GST | [27] |
-| Terrazzo tiles | Standard | Factory-made terrazzo tiles, laid and polished Precast terrazzo tiles, bought by the box; laying is extra. | Rs. 60–200 a sq ft, material, 10% wastage; plus laying 600 × 600 mm tiles Rs. 25–40 and tile adhesive and grout Rs. 8–18; GST not stated: taken as the price paid; read 10-10-2026 | [28] |
-| Kota stone | Basic | Kota stone laid in mortar and polished | Rs. 70–180 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [29] |
-| Cement terrazzo, cast in place | Premium | Cement terrazzo cast in place, ground and polished | Rs. 250–450 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [30] |
-| Epoxy terrazzo | Luxury | Epoxy terrazzo, poured and polished | Rs. 400–800 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [30] |
-| Indian white marble (Morwad or Rajnagar) | Premium | Morwad or Rajnagar white marble laid in mortar and polished | Rs. 80–200 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70; GST not stated: taken as the price paid | [23] |
-| Makrana white marble | Luxury | Makrana white marble laid in mortar and polished | Rs. 500 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70; GST not stated: taken as the price paid; read 04-10-2026 | [31] |
-| Italian marble (Carrara) | Luxury | Carrara Italian marble laid, filled and polished | Rs. 250–700 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70; GST not stated: taken as the price paid | [32] |
-| Italian marble (Botticino) | Luxury | Botticino Italian marble laid, filled and polished | Rs. 280–700 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70; GST not stated: taken as the price paid | [33] |
-| Italian marble (Calacatta) | Bespoke | Calacatta Italian marble laid, filled and mirror-polished | Rs. 800–1,850 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70; GST not stated: taken as the price paid | [34] |
-| Laminate wood flooring | Standard | Laminate wood flooring on an underlay, with skirting | Rs. 120–300 a sq ft, supplied and fixed; plus GST | [35] |
-| Engineered wood flooring | Luxury | Engineered wood flooring with a real-wood top layer, with skirting | Rs. 250–400 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [35] |
-| Solid hardwood flooring | Bespoke | Solid hardwood flooring, sanded and finished (Delhi NCR range) | Rs. 550–1,600 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [36] |
-| SPC click flooring | Standard | SPC (stone plastic composite) click flooring, waterproof, with skirting | Rs. 110–165 a sq ft, material, 10% wastage; plus installing spc flooring Rs. 35–55; GST not stated: taken as the price paid | [37] |
-| Premium SPC flooring | Premium | Premium SPC flooring with a thicker wear layer | Rs. 165–240 a sq ft, material, 10% wastage; plus installing spc flooring Rs. 35–55; GST not stated: taken as the price paid | [37] |
-| Sheet vinyl | Basic | Sheet vinyl flooring, glued down | Rs. 55–165 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [37] |
-| Vinyl planks (LVT) | Standard | Luxury vinyl planks | Rs. 85–395 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [37] |
-| WPC flooring | Premium | Wood plastic composite flooring | Rs. 130–400 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [37] |
-| Microcement | Bespoke | Seamless microcement floor laid by a specialist | Rs. 300–450 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [38] |
-| Granite flooring | Premium | Polished granite slabs laid in mortar Supplied, laid and polished: material Rs. 60–150, laying Rs. 40–70 and polishing Rs. 10–20 a sq ft, as reported. | Rs. 110–220 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [39] |
-| Epoxy floor coating | Standard | Self-levelling epoxy floor coating Professionally installed, materials and labour included, as reported; Studio Matrx gives Rs. 80–300 a sq ft for the material alone, before GST and laying. | Rs. 80–250 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [40][13] |
-| Athangudi tiles | Premium | Handmade Athangudi cement tiles from Chettinad The tile's price before GST and laying, as reported, with 10% wastage, the top of the guide's 5–10% for straight laying. Laid as ceramic tiles are, an assumption (Athangudi tiles are smaller and often laid in mortar); sealing is extra and not priced. | Rs. 80–250 a sq ft, material, 10% wastage; plus laying 600 × 600 mm tiles Rs. 25–40 and tile adhesive and grout Rs. 8–18; plus GST; read 04-10-2026 | [13] |
-| Encaustic cement tiles | Premium | Patterned encaustic cement tiles An installed, sealed cement-tile floor, all in, as the guide gives it; the tiles alone Rs. 120–400 a sq ft. | Rs. 250–500 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 10-10-2026 | [41] |
-| Carpet tiles | Standard | Carpet tiles on a bedroom or study floor Carpet tiles in a home theatre, by pile and quality, as reported; an acoustic underlay is Rs. 15–60 a sq ft more. | Rs. 80–400 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [42] |
+| Ceramic floor tiles | Basic | Ceramic floor tiles on adhesive, grouted | ₹40–80 a sq ft, material, 10% wastage; plus laying 600 × 600 mm tiles ₹25–40 and tile adhesive and grout ₹8–18; GST not stated: taken as the price paid | [25][26] |
+| Glazed vitrified tiles, 600 × 600 mm | Basic | Branded glazed vitrified tiles 600 × 600 mm on adhesive, grouted | ₹40–75 a sq ft, material, 12% wastage; plus laying 600 × 600 mm tiles ₹25–40 and tile adhesive and grout ₹8–18; plus GST; read 04-10-2026 | [21] |
+| Glazed vitrified tiles, 600 × 1200 mm | Standard | Glazed vitrified tiles 600 × 1200 mm on adhesive, grouted | ₹48–130 a sq ft, material, 12% wastage; plus laying large-format tiles and slabs (1200 × 600 mm and up) ₹60–120 and tile adhesive and grout ₹8–18; plus GST | [27] |
+| Terrazzo tiles | Standard | Factory-made terrazzo tiles, laid and polished Precast terrazzo tiles, bought by the box; laying is extra. | ₹60–200 a sq ft, material, 10% wastage; plus laying 600 × 600 mm tiles ₹25–40 and tile adhesive and grout ₹8–18; GST not stated: taken as the price paid; read 10-10-2026 | [28] |
+| Kota stone | Basic | Kota stone laid in mortar and polished | ₹70–180 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [29] |
+| Cement terrazzo, cast in place | Premium | Cement terrazzo cast in place, ground and polished | ₹250–450 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [30] |
+| Epoxy terrazzo | Luxury | Epoxy terrazzo, poured and polished | ₹400–800 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [30] |
+| Indian white marble (Morwad or Rajnagar) | Premium | Morwad or Rajnagar white marble laid in mortar and polished | ₹80–200 a sq ft, material, 10% wastage; plus laying marble or stone in mortar ₹100–200 and machine-polishing marble after laying ₹30–70; GST not stated: taken as the price paid | [23] |
+| Makrana white marble | Luxury | Makrana white marble laid in mortar and polished | ₹500 a sq ft, material, 10% wastage; plus laying marble or stone in mortar ₹100–200 and machine-polishing marble after laying ₹30–70; GST not stated: taken as the price paid; read 04-10-2026 | [31] |
+| Italian marble (Carrara) | Luxury | Carrara Italian marble laid, filled and polished | ₹250–700 a sq ft, material, 10% wastage; plus laying marble or stone in mortar ₹100–200 and machine-polishing marble after laying ₹30–70; GST not stated: taken as the price paid | [32] |
+| Italian marble (Botticino) | Luxury | Botticino Italian marble laid, filled and polished | ₹280–700 a sq ft, material, 10% wastage; plus laying marble or stone in mortar ₹100–200 and machine-polishing marble after laying ₹30–70; GST not stated: taken as the price paid | [33] |
+| Italian marble (Calacatta) | Bespoke | Calacatta Italian marble laid, filled and mirror-polished | ₹800–1,850 a sq ft, material, 10% wastage; plus laying marble or stone in mortar ₹100–200 and machine-polishing marble after laying ₹30–70; GST not stated: taken as the price paid | [34] |
+| Laminate wood flooring | Standard | Laminate wood flooring on an underlay, with skirting | ₹120–300 a sq ft, supplied and fixed; plus GST | [35] |
+| Engineered wood flooring | Luxury | Engineered wood flooring with a real-wood top layer, with skirting | ₹250–400 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [35] |
+| Solid hardwood flooring | Bespoke | Solid hardwood flooring, sanded and finished (Delhi NCR range) | ₹550–1,600 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [36] |
+| SPC click flooring | Standard | SPC (stone plastic composite) click flooring, waterproof, with skirting | ₹110–165 a sq ft, material, 10% wastage; plus installing spc flooring ₹35–55; GST not stated: taken as the price paid | [37] |
+| Premium SPC flooring | Premium | Premium SPC flooring with a thicker wear layer | ₹165–240 a sq ft, material, 10% wastage; plus installing spc flooring ₹35–55; GST not stated: taken as the price paid | [37] |
+| Sheet vinyl | Basic | Sheet vinyl flooring, glued down | ₹55–165 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [37] |
+| Vinyl planks (LVT) | Standard | Luxury vinyl planks | ₹85–395 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [37] |
+| WPC flooring | Premium | Wood plastic composite flooring | ₹130–400 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [37] |
+| Microcement | Bespoke | Seamless microcement floor laid by a specialist | ₹300–450 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [38] |
+| Granite flooring | Premium | Polished granite slabs laid in mortar Supplied, laid and polished: material Rs. 60–150, laying Rs. 40–70 and polishing Rs. 10–20 a sq ft, as reported. | ₹110–220 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [39] |
+| Epoxy floor coating | Standard | Self-levelling epoxy floor coating Professionally installed, materials and labour included, as reported; Studio Matrx gives Rs. 80–300 a sq ft for the material alone, before GST and laying. | ₹80–250 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [40][13] |
+| Athangudi tiles | Premium | Handmade Athangudi cement tiles from Chettinad The tile's price before GST and laying, as reported, with 10% wastage, the top of the guide's 5–10% for straight laying. Laid as ceramic tiles are, an assumption (Athangudi tiles are smaller and often laid in mortar); sealing is extra and not priced. | ₹80–250 a sq ft, material, 10% wastage; plus laying 600 × 600 mm tiles ₹25–40 and tile adhesive and grout ₹8–18; plus GST; read 04-10-2026 | [13] |
+| Encaustic cement tiles | Premium | Patterned encaustic cement tiles An installed, sealed cement-tile floor, all in, as the guide gives it; the tiles alone Rs. 120–400 a sq ft. | ₹250–500 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 10-10-2026 | [41] |
+| Carpet tiles | Standard | Carpet tiles on a bedroom or study floor Carpet tiles in a home theatre, by pile and quality, as reported; an acoustic underlay is Rs. 15–60 a sq ft more. | ₹80–400 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [42] |
 
 ### Floor finish, anti-skid (bathrooms and balconies) (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Anti-skid ceramic tiles, 300 × 300 mm | Anti-skid ceramic floor tiles 300 × 300 mm on adhesive, laid to fall to the floor trap, grouted | Kajaria, Somany, Johnson, Orientbell | Rs. 40–80 a sq ft, material, 10% wastage; plus laying 600 × 600 mm tiles Rs. 25–40 and tile adhesive and grout Rs. 8–18; GST not stated: taken as the price paid | [25][26] |
-| Standard | Matt vitrified tiles, 600 × 600 mm | Matt (anti-skid) vitrified tiles 600 × 600 mm on adhesive, laid to fall, grouted | Kajaria, Somany, Nitco | Rs. 40–75 a sq ft, material, 12% wastage; plus laying 600 × 600 mm tiles Rs. 25–40 and tile adhesive and grout Rs. 8–18; GST not stated: taken as the price paid; read 04-10-2026 | [21][20] |
-| Premium | Matt glazed vitrified tiles, 600 × 1200 mm | Matt glazed vitrified tiles 600 × 1200 mm on adhesive, laid to fall, grouted | Kajaria, Simpolo, Somany | Rs. 48–130 a sq ft, material, 12% wastage; plus laying large-format tiles and slabs (1200 × 600 mm and up) Rs. 60–120 and tile adhesive and grout Rs. 8–18; GST not stated: taken as the price paid | [27][22] |
-| Luxury | Matt porcelain slabs, 800 × 1600 mm | Large matt porcelain slabs 800 × 1600 mm on adhesive, laid to fall, grouted | Simpolo, Kajaria Eternity | Rs. 2,000–3,600 for a box of 2 slabs of 2.56 sq m, material, 12% wastage; plus laying large-format tiles and slabs (1200 × 600 mm and up) Rs. 60–120 and tile adhesive and grout Rs. 8–18; GST not stated: taken as the price paid | [21][22] |
-| Bespoke | Italian marble (Botticino), honed | Botticino Italian marble with a honed anti-skid finish, laid to fall |  | Rs. 250–700 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70; GST not stated: taken as the price paid; read 10-10-2026 | [43] |
+| Basic | Anti-skid ceramic tiles, 300 × 300 mm | Anti-skid ceramic floor tiles 300 × 300 mm on adhesive, laid to fall to the floor trap, grouted | Kajaria, Somany, Johnson, Orientbell | ₹40–80 a sq ft, material, 10% wastage; plus laying 600 × 600 mm tiles ₹25–40 and tile adhesive and grout ₹8–18; GST not stated: taken as the price paid | [25][26] |
+| Standard | Matt vitrified tiles, 600 × 600 mm | Matt (anti-skid) vitrified tiles 600 × 600 mm on adhesive, laid to fall, grouted | Kajaria, Somany, Nitco | ₹40–75 a sq ft, material, 12% wastage; plus laying 600 × 600 mm tiles ₹25–40 and tile adhesive and grout ₹8–18; GST not stated: taken as the price paid; read 04-10-2026 | [21][20] |
+| Premium | Matt glazed vitrified tiles, 600 × 1200 mm | Matt glazed vitrified tiles 600 × 1200 mm on adhesive, laid to fall, grouted | Kajaria, Simpolo, Somany | ₹48–130 a sq ft, material, 12% wastage; plus laying large-format tiles and slabs (1200 × 600 mm and up) ₹60–120 and tile adhesive and grout ₹8–18; GST not stated: taken as the price paid | [27][22] |
+| Luxury | Matt porcelain slabs, 800 × 1600 mm | Large matt porcelain slabs 800 × 1600 mm on adhesive, laid to fall, grouted | Simpolo, Kajaria Eternity | ₹2,000–3,600 for a box of 2 slabs of 2.56 sq m, material, 12% wastage; plus laying large-format tiles and slabs (1200 × 600 mm and up) ₹60–120 and tile adhesive and grout ₹8–18; GST not stated: taken as the price paid | [21][22] |
+| Bespoke | Italian marble (Botticino), honed | Botticino Italian marble with a honed anti-skid finish, laid to fall |  | ₹250–700 a sq ft, material, 10% wastage; plus laying marble or stone in mortar ₹100–200 and machine-polishing marble after laying ₹30–70; GST not stated: taken as the price paid; read 10-10-2026 | [43] |
 
 Choices at each level: Basic 2, Standard 1, Premium 1, Luxury 1, Bespoke 1.
 
@@ -169,17 +169,17 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Kota stone, anti-skid | Basic | Kota stone with a rough anti-skid finish, laid to fall | Rs. 70–180 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [29] |
+| Kota stone, anti-skid | Basic | Kota stone with a rough anti-skid finish, laid to fall | ₹70–180 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [29] |
 
 ### Stone floor (pooja room) (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Kota stone | Kota stone laid in mortar and polished |  | Rs. 70–180 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [29] |
-| Standard | Granite flooring | Polished granite slabs laid in mortar |  | Rs. 110–220 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [39] |
-| Premium | Indian white marble (Morwad or Rajnagar) | Morwad or Rajnagar white marble laid in mortar and polished |  | Rs. 80–200 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70; GST not stated: taken as the price paid | [23] |
-| Luxury | Makrana white marble | Makrana white marble laid in mortar and polished |  | Rs. 500 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70; GST not stated: taken as the price paid; read 04-10-2026 | [31] |
-| Bespoke | Italian marble (Statuario) | Statuario Italian marble 18–20 mm laid in mortar, filled and mirror-polished, with marble skirting |  | Rs. 1,200 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70; GST not stated: taken as the price paid; read 04-10-2026 | [24] |
+| Basic | Kota stone | Kota stone laid in mortar and polished |  | ₹70–180 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [29] |
+| Standard | Granite flooring | Polished granite slabs laid in mortar |  | ₹110–220 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [39] |
+| Premium | Indian white marble (Morwad or Rajnagar) | Morwad or Rajnagar white marble laid in mortar and polished |  | ₹80–200 a sq ft, material, 10% wastage; plus laying marble or stone in mortar ₹100–200 and machine-polishing marble after laying ₹30–70; GST not stated: taken as the price paid | [23] |
+| Luxury | Makrana white marble | Makrana white marble laid in mortar and polished |  | ₹500 a sq ft, material, 10% wastage; plus laying marble or stone in mortar ₹100–200 and machine-polishing marble after laying ₹30–70; GST not stated: taken as the price paid; read 04-10-2026 | [31] |
+| Bespoke | Italian marble (Statuario) | Statuario Italian marble 18–20 mm laid in mortar, filled and mirror-polished, with marble skirting |  | ₹1,200 a sq ft, material, 10% wastage; plus laying marble or stone in mortar ₹100–200 and machine-polishing marble after laying ₹30–70; GST not stated: taken as the price paid; read 04-10-2026 | [24] |
 
 Choices at each level: Basic 1, Standard 1, Premium 2, Luxury 1, Bespoke 1.
 
@@ -195,11 +195,11 @@ Dated 02-10-2026; an item read on another day says so.
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Economy emulsion | Putty, primer and two coats of an economy emulsion | Asian Paints Tractor, Berger Bison, Nerolac Beauty | Rs. 12–18 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [46][47] |
-| Standard | Premium emulsion | Putty, primer and two coats of a premium emulsion | Asian Paints Apcolite Premium, Berger Silk | Rs. 20–30 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [46] |
-| Premium | Luxury emulsion | Putty, primer and two coats of a luxury emulsion | Asian Paints Royale Luxury, Berger Silk Glamor, Dulux Velvet Touch | Rs. 28–45 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [48] |
-| Luxury | Top-of-range emulsion | Putty, primer and two coats of a top-of-range emulsion | Asian Paints Royale Aspira | Rs. 58–82 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [49] |
-| Bespoke | Top-of-range emulsion | Putty, primer and two coats of a top-of-range emulsion | Asian Paints Royale Aspira | Rs. 58–82 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [49] |
+| Basic | Economy emulsion | Putty, primer and two coats of an economy emulsion | Asian Paints Tractor, Berger Bison, Nerolac Beauty | ₹12–18 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [46][47] |
+| Standard | Premium emulsion | Putty, primer and two coats of a premium emulsion | Asian Paints Apcolite Premium, Berger Silk | ₹20–30 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [46] |
+| Premium | Luxury emulsion | Putty, primer and two coats of a luxury emulsion | Asian Paints Royale Luxury, Berger Silk Glamor, Dulux Velvet Touch | ₹28–45 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [48] |
+| Luxury | Top-of-range emulsion | Putty, primer and two coats of a top-of-range emulsion | Asian Paints Royale Aspira | ₹58–82 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [49] |
+| Bespoke | Top-of-range emulsion | Putty, primer and two coats of a top-of-range emulsion | Asian Paints Royale Aspira | ₹58–82 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [49] |
 
 ### Feature wall (sq ft)
 
@@ -208,8 +208,8 @@ Dated 02-10-2026; an item read on another day says so.
 | Basic | None at this level | | | | |
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
-| Luxury | Designer texture paint | Designer texture paint on a feature wall | Asian Paints Royale Play, Berger Illusions | Rs. 80–200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [50] |
-| Bespoke | Venetian plaster | Venetian plaster on a feature wall by a master applicator |  | Rs. 450–800 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [38] |
+| Luxury | Designer texture paint | Designer texture paint on a feature wall | Asian Paints Royale Play, Berger Illusions | ₹80–200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [50] |
+| Bespoke | Venetian plaster | Venetian plaster on a feature wall by a master applicator |  | ₹450–800 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [38] |
 
 Choices at each level: Basic 0, Standard 0, Premium 0, Luxury 3, Bespoke 4.
 
@@ -217,11 +217,11 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Premium texture (metallic, stone, pebble) | Luxury | Premium metallic, stone or pebble texture on a feature wall | Rs. 170–330 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [50] |
-| Lime wash | Luxury | Lime wash in layers by hand | Rs. 90–180 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [38] |
-| Microcement | Bespoke | Microcement on a wall, by a specialist | Rs. 300–450 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [38] |
-| Polished stucco | Bespoke | Polished stucco by hand | Rs. 300–500 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [38] |
-| Tadelakt | Bespoke | Tadelakt lime plaster, waterproof, by a rare artisan | Rs. 400–650 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [38] |
+| Premium texture (metallic, stone, pebble) | Luxury | Premium metallic, stone or pebble texture on a feature wall | ₹170–330 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [50] |
+| Lime wash | Luxury | Lime wash in layers by hand | ₹90–180 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [38] |
+| Microcement | Bespoke | Microcement on a wall, by a specialist | ₹300–450 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [38] |
+| Polished stucco | Bespoke | Polished stucco by hand | ₹300–500 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [38] |
+| Tadelakt | Bespoke | Tadelakt lime plaster, waterproof, by a rare artisan | ₹400–650 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [38] |
 
 ### Wallpaper (sq ft)
 
@@ -229,11 +229,11 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Vinyl wallpaper | Standard | Vinyl wallpaper, hung | Rs. 50–200 a sq ft, material, 10% wastage; plus hanging wallpaper Rs. 30; GST not stated: taken as the price paid | [51] our rule |
-| Non-woven wallpaper | Premium | Non-woven wallpaper, hung | Rs. 75–250 a sq ft, material, 10% wastage; plus hanging wallpaper Rs. 30; GST not stated: taken as the price paid | [51] our rule |
-| Fabric wallpaper | Luxury | Fabric-backed wallpaper, hung | Rs. 100–300 a sq ft, material, 10% wastage; plus hanging wallpaper Rs. 30; GST not stated: taken as the price paid | [51] our rule |
-| Foil wallpaper | Luxury | Metallic foil wallpaper, hung | Rs. 150–400 a sq ft, material, 10% wastage; plus hanging wallpaper Rs. 30; GST not stated: taken as the price paid | [51] our rule |
-| 3D wallpaper | Bespoke | 3D wallpaper, hung | Rs. 200–500 a sq ft, material, 10% wastage; plus hanging wallpaper Rs. 30; GST not stated: taken as the price paid | [51] our rule |
+| Vinyl wallpaper | Standard | Vinyl wallpaper, hung | ₹50–200 a sq ft, material, 10% wastage; plus hanging wallpaper ₹30; GST not stated: taken as the price paid | [51] our rule |
+| Non-woven wallpaper | Premium | Non-woven wallpaper, hung | ₹75–250 a sq ft, material, 10% wastage; plus hanging wallpaper ₹30; GST not stated: taken as the price paid | [51] our rule |
+| Fabric wallpaper | Luxury | Fabric-backed wallpaper, hung | ₹100–300 a sq ft, material, 10% wastage; plus hanging wallpaper ₹30; GST not stated: taken as the price paid | [51] our rule |
+| Foil wallpaper | Luxury | Metallic foil wallpaper, hung | ₹150–400 a sq ft, material, 10% wastage; plus hanging wallpaper ₹30; GST not stated: taken as the price paid | [51] our rule |
+| 3D wallpaper | Bespoke | 3D wallpaper, hung | ₹200–500 a sq ft, material, 10% wastage; plus hanging wallpaper ₹30; GST not stated: taken as the price paid | [51] our rule |
 
 ### Wall panelling (sq ft)
 
@@ -241,15 +241,15 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| PVC wall panels | Basic | PVC wall panels on a frame | Rs. 50–350 a sq ft, material; plus installing wall panels Rs. 20–50; GST not stated: taken as the price paid; read 04-10-2026 | [52] |
-| Fluted PVC panels | Standard | Fluted PVC panels, fixed | Rs. 80–180 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [53] |
-| Charcoal louvers | Standard | Charcoal louver panels, fixed | Rs. 120–300 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [54] |
-| Fluted WPC panels | Premium | Fluted WPC panels, fixed | Rs. 120–500 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [53] |
-| Fluted MDF panels | Premium | Fluted MDF panels, painted or laminated, fixed | Rs. 150–350 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [53] |
-| WPC wall panels | Premium | WPC wall panels, fixed | Rs. 200–600 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [55] |
-| Veneer panelling | Luxury | Natural wood veneer panelling, polished | Rs. 350–900 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [55] |
-| Fabric or leatherette panels | Bespoke | Upholstered fabric or leatherette panels, sound-absorbing | Rs. 500–1,500 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [55] |
-| Solid wood or designer panelling | Bespoke | Solid wood or designer panelling | Rs. 600–2,500 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [55] |
+| PVC wall panels | Basic | PVC wall panels on a frame | ₹50–350 a sq ft, material; plus installing wall panels ₹20–50; GST not stated: taken as the price paid; read 04-10-2026 | [52] |
+| Fluted PVC panels | Standard | Fluted PVC panels, fixed | ₹80–180 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [53] |
+| Charcoal louvers | Standard | Charcoal louver panels, fixed | ₹120–300 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [54] |
+| Fluted WPC panels | Premium | Fluted WPC panels, fixed | ₹120–500 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [53] |
+| Fluted MDF panels | Premium | Fluted MDF panels, painted or laminated, fixed | ₹150–350 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [53] |
+| WPC wall panels | Premium | WPC wall panels, fixed | ₹200–600 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [55] |
+| Veneer panelling | Luxury | Natural wood veneer panelling, polished | ₹350–900 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [55] |
+| Fabric or leatherette panels | Bespoke | Upholstered fabric or leatherette panels, sound-absorbing | ₹500–1,500 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [55] |
+| Solid wood or designer panelling | Bespoke | Solid wood or designer panelling | ₹600–2,500 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [55] |
 
 ### Exterior paint (a house) (sq ft)
 
@@ -259,21 +259,21 @@ In the library:
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Exterior emulsion, economy | Crack filling, exterior primer and two coats of an economy exterior emulsion | Asian Paints Ace Exterior | Rs. 14–22 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [48][58] |
-| Standard | Exterior emulsion, premium | Exterior primer and two coats of a premium weatherproof emulsion | Asian Paints Apex Ultima | Rs. 22–35 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [48] |
-| Premium | Exterior emulsion, top of range | Exterior primer and top-of-range weatherproof emulsion | Asian Paints Apex Ultima Protek | Rs. 28–42 a sq ft, supplied and fixed; plus GST | [48] |
-| Luxury | Exterior texture | Exterior texture finish with a top coat | Asian Paints Apex Duracast | Rs. 80–200 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [50] |
-| Bespoke | Exterior texture | Exterior texture finish with a top coat | Asian Paints Apex Duracast | Rs. 80–200 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [50] |
+| Basic | Exterior emulsion, economy | Crack filling, exterior primer and two coats of an economy exterior emulsion | Asian Paints Ace Exterior | ₹14–22 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [48][58] |
+| Standard | Exterior emulsion, premium | Exterior primer and two coats of a premium weatherproof emulsion | Asian Paints Apex Ultima | ₹22–35 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [48] |
+| Premium | Exterior emulsion, top of range | Exterior primer and top-of-range weatherproof emulsion | Asian Paints Apex Ultima Protek | ₹28–42 a sq ft, supplied and fixed; plus GST | [48] |
+| Luxury | Exterior texture | Exterior texture finish with a top coat | Asian Paints Apex Duracast | ₹80–200 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [50] |
+| Bespoke | Exterior texture | Exterior texture finish with a top coat | Asian Paints Apex Duracast | ₹80–200 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [50] |
 
 ### Stone on the back wall (pooja room) (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Kota stone on the walls | Kota stone fixed to the wall in mortar and polished |  | Rs. 70–180 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [29] our rule |
-| Standard | Indian white marble on the walls (Morwad or Rajnagar) | Morwad or Rajnagar white marble fixed to the wall in mortar and polished |  | Rs. 80–200 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70; GST not stated: taken as the price paid | [23] our rule |
-| Premium | Italian marble on the walls (Botticino) | Botticino Italian marble cladding, fixed and polished |  | Rs. 280–700 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70; GST not stated: taken as the price paid | [33] our rule |
-| Luxury | Makrana white marble on the walls | Makrana white marble fixed to the wall in mortar and polished |  | Rs. 500 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70; GST not stated: taken as the price paid; read 04-10-2026 | [31] our rule |
-| Bespoke | Italian marble on the walls (Statuario) | Statuario Italian marble fixed to the wall in mortar and mirror-polished |  | Rs. 1,200 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70; GST not stated: taken as the price paid; read 04-10-2026 | [24] our rule |
+| Basic | Kota stone on the walls | Kota stone fixed to the wall in mortar and polished |  | ₹70–180 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [29] our rule |
+| Standard | Indian white marble on the walls (Morwad or Rajnagar) | Morwad or Rajnagar white marble fixed to the wall in mortar and polished |  | ₹80–200 a sq ft, material, 10% wastage; plus laying marble or stone in mortar ₹100–200 and machine-polishing marble after laying ₹30–70; GST not stated: taken as the price paid | [23] our rule |
+| Premium | Italian marble on the walls (Botticino) | Botticino Italian marble cladding, fixed and polished |  | ₹280–700 a sq ft, material, 10% wastage; plus laying marble or stone in mortar ₹100–200 and machine-polishing marble after laying ₹30–70; GST not stated: taken as the price paid | [33] our rule |
+| Luxury | Makrana white marble on the walls | Makrana white marble fixed to the wall in mortar and polished |  | ₹500 a sq ft, material, 10% wastage; plus laying marble or stone in mortar ₹100–200 and machine-polishing marble after laying ₹30–70; GST not stated: taken as the price paid; read 04-10-2026 | [31] our rule |
+| Bespoke | Italian marble on the walls (Statuario) | Statuario Italian marble fixed to the wall in mortar and mirror-polished |  | ₹1,200 a sq ft, material, 10% wastage; plus laying marble or stone in mortar ₹100–200 and machine-polishing marble after laying ₹30–70; GST not stated: taken as the price paid; read 04-10-2026 | [24] our rule |
 
 Choices at each level: Basic 1, Standard 1, Premium 1, Luxury 1, Bespoke 2.
 
@@ -286,10 +286,10 @@ Dated 02-10-2026; an item read on another day says so.
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
 | Basic | None at this level | | | | |
-| Standard | POP false ceiling | Plaster of Paris false ceiling on a GI frame, with a cove for lights |  | Rs. 65–95 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [59] |
-| Premium | Gypsum board false ceiling | Gypsum board false ceiling on a GI frame, jointed and finished, with a cove | Saint-Gobain Gyproc, USG Boral | Rs. 75–110 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [60] |
+| Standard | POP false ceiling | Plaster of Paris false ceiling on a GI frame, with a cove for lights |  | ₹65–95 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [59] |
+| Premium | Gypsum board false ceiling | Gypsum board false ceiling on a GI frame, jointed and finished, with a cove | Saint-Gobain Gyproc, USG Boral | ₹75–110 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [60] |
 | Luxury | Gypsum false ceiling, designer multi-level | Gypsum board false ceiling on a GI frame with multi-level and profile work, and coves |  | Gypsum board false ceiling + Designer multi-level work, extra over a plain ceiling | [60][59] |
-| Bespoke | Wooden false ceiling | Wooden slat or panel false ceiling on a frame, with linear lights |  | Rs. 150–400 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [60] |
+| Bespoke | Wooden false ceiling | Wooden slat or panel false ceiling on a frame, with linear lights |  | ₹150–400 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [60] |
 
 Choices at each level: Basic 0, Standard 2, Premium 1, Luxury 4, Bespoke 3.
 
@@ -297,22 +297,22 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Designer multi-level work, extra over a plain ceiling | Luxury | Multi-level and profile work in the false ceiling, extra over a plain ceiling | Rs. 55–110 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [59] |
-| Metal grid ceiling | Standard | Exposed metal grid with mineral fibre tiles | Rs. 55–90 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [59] |
-| Stretch ceiling | Bespoke | PVC stretch membrane ceiling, with lights behind | Rs. 200–400 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [61] |
-| GI baffle ceiling | Luxury | GI baffle ceiling | Rs. 150–250 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [62] |
-| Aluminium baffle ceiling | Luxury | Aluminium baffle ceiling | Rs. 220–350 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [62] |
-| Acoustic polyester baffles | Bespoke | Acoustic polyester fibre baffles | Rs. 850–1,200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [62] |
+| Designer multi-level work, extra over a plain ceiling | Luxury | Multi-level and profile work in the false ceiling, extra over a plain ceiling | ₹55–110 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [59] |
+| Metal grid ceiling | Standard | Exposed metal grid with mineral fibre tiles | ₹55–90 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [59] |
+| Stretch ceiling | Bespoke | PVC stretch membrane ceiling, with lights behind | ₹200–400 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [61] |
+| GI baffle ceiling | Luxury | GI baffle ceiling | ₹150–250 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [62] |
+| Aluminium baffle ceiling | Luxury | Aluminium baffle ceiling | ₹220–350 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [62] |
+| Acoustic polyester baffles | Bespoke | Acoustic polyester fibre baffles | ₹850–1,200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [62] |
 
 ### Cove lighting (running ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
 | Basic | None at this level | | | | |
-| Standard | Cove lighting | LED strip in an aluminium profile with its driver, along the cove |  | Rs. 80–150 a running ft, supplied and fixed; GST not stated: taken as the price paid | [60][61] |
-| Premium | Cove lighting | LED strip in an aluminium profile with its driver, along the cove |  | Rs. 80–150 a running ft, supplied and fixed; GST not stated: taken as the price paid | [60][61] |
-| Luxury | Cove lighting | LED strip in an aluminium profile with its driver, along the cove |  | Rs. 80–150 a running ft, supplied and fixed; GST not stated: taken as the price paid | [60][61] |
-| Bespoke | Cove lighting | LED strip in an aluminium profile with its driver, along the cove |  | Rs. 80–150 a running ft, supplied and fixed; GST not stated: taken as the price paid | [60][61] |
+| Standard | Cove lighting | LED strip in an aluminium profile with its driver, along the cove |  | ₹80–150 a running ft, supplied and fixed; GST not stated: taken as the price paid | [60][61] |
+| Premium | Cove lighting | LED strip in an aluminium profile with its driver, along the cove |  | ₹80–150 a running ft, supplied and fixed; GST not stated: taken as the price paid | [60][61] |
+| Luxury | Cove lighting | LED strip in an aluminium profile with its driver, along the cove |  | ₹80–150 a running ft, supplied and fixed; GST not stated: taken as the price paid | [60][61] |
+| Bespoke | Cove lighting | LED strip in an aluminium profile with its driver, along the cove |  | ₹80–150 a running ft, supplied and fixed; GST not stated: taken as the price paid | [60][61] |
 
 ### Bathroom ceiling (sq ft)
 
@@ -320,9 +320,9 @@ Also in the library:
 |---|---|---|---|---|---|
 | Basic | None at this level | | | | |
 | Standard | None at this level | | | | |
-| Premium | PVC ceiling panels | PVC ceiling panels on a frame, moisture-proof |  | Rs. 60–110 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [60] |
-| Luxury | Aluminium ceiling | Aluminium clip-in or linear metal ceiling, moisture-proof |  | Rs. 120–300 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [60] |
-| Bespoke | Aluminium ceiling | Aluminium clip-in or linear metal ceiling, moisture-proof |  | Rs. 120–300 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [60] |
+| Premium | PVC ceiling panels | PVC ceiling panels on a frame, moisture-proof |  | ₹60–110 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [60] |
+| Luxury | Aluminium ceiling | Aluminium clip-in or linear metal ceiling, moisture-proof |  | ₹120–300 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [60] |
+| Bespoke | Aluminium ceiling | Aluminium clip-in or linear metal ceiling, moisture-proof |  | ₹120–300 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [60] |
 
 ## Bathrooms
 
@@ -332,21 +332,21 @@ Dated 02-10-2026; an item read on another day says so.
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Ceramic wall tiles | Ceramic wall tiles 300 × 450 mm on adhesive, grouted (a Rs. 60 a sq ft tile allowance) | Kajaria, Somany, Johnson, Orientbell | Rs. 60 a sq ft, material, 10% wastage; plus fixing wall tiles (walls are slower than floors) Rs. 35–60 and tile adhesive and grout Rs. 8–18; GST not stated: taken as the price paid | [63][26] |
-| Standard | Vitrified wall tiles | Vitrified wall tiles on adhesive, grouted (a Rs. 85 a sq ft tile allowance) | Kajaria, Somany, Nitco | Rs. 85 a sq ft, material, 10% wastage; plus fixing wall tiles (walls are slower than floors) Rs. 35–60 and tile adhesive and grout Rs. 8–18; GST not stated: taken as the price paid | [64][26] |
-| Premium | Glazed vitrified wall tiles | Glazed vitrified wall tiles on adhesive, grouted (a Rs. 130 a sq ft tile allowance) | Kajaria, Simpolo, Somany | Rs. 130 a sq ft, material, 12% wastage; plus fixing wall tiles (walls are slower than floors) Rs. 35–60 and tile adhesive and grout Rs. 8–18; GST not stated: taken as the price paid | [63][22] |
-| Luxury | Porcelain slabs on the walls, 800 × 1600 mm | Large porcelain slabs 800 × 1600 mm on adhesive, grouted | Simpolo, Kajaria Eternity | Rs. 2,000–3,600 for a box of 2 slabs of 2.56 sq m, material, 12% wastage; plus laying large-format tiles and slabs (1200 × 600 mm and up) Rs. 60–120 and tile adhesive and grout Rs. 8–18; GST not stated: taken as the price paid | [21][22] |
-| Bespoke | Italian marble on the walls (Botticino) | Botticino Italian marble cladding, fixed and polished |  | Rs. 280–700 a sq ft, material, 10% wastage; plus laying marble or stone in mortar Rs. 100–200 and machine-polishing marble after laying Rs. 30–70; GST not stated: taken as the price paid | [33] our rule |
+| Basic | Ceramic wall tiles | Ceramic wall tiles 300 × 450 mm on adhesive, grouted (a Rs. 60 a sq ft tile allowance) | Kajaria, Somany, Johnson, Orientbell | ₹60 a sq ft, material, 10% wastage; plus fixing wall tiles (walls are slower than floors) ₹35–60 and tile adhesive and grout ₹8–18; GST not stated: taken as the price paid | [63][26] |
+| Standard | Vitrified wall tiles | Vitrified wall tiles on adhesive, grouted (a Rs. 85 a sq ft tile allowance) | Kajaria, Somany, Nitco | ₹85 a sq ft, material, 10% wastage; plus fixing wall tiles (walls are slower than floors) ₹35–60 and tile adhesive and grout ₹8–18; GST not stated: taken as the price paid | [64][26] |
+| Premium | Glazed vitrified wall tiles | Glazed vitrified wall tiles on adhesive, grouted (a Rs. 130 a sq ft tile allowance) | Kajaria, Simpolo, Somany | ₹130 a sq ft, material, 12% wastage; plus fixing wall tiles (walls are slower than floors) ₹35–60 and tile adhesive and grout ₹8–18; GST not stated: taken as the price paid | [63][22] |
+| Luxury | Porcelain slabs on the walls, 800 × 1600 mm | Large porcelain slabs 800 × 1600 mm on adhesive, grouted | Simpolo, Kajaria Eternity | ₹2,000–3,600 for a box of 2 slabs of 2.56 sq m, material, 12% wastage; plus laying large-format tiles and slabs (1200 × 600 mm and up) ₹60–120 and tile adhesive and grout ₹8–18; GST not stated: taken as the price paid | [21][22] |
+| Bespoke | Italian marble on the walls (Botticino) | Botticino Italian marble cladding, fixed and polished |  | ₹280–700 a sq ft, material, 10% wastage; plus laying marble or stone in mortar ₹100–200 and machine-polishing marble after laying ₹30–70; GST not stated: taken as the price paid | [33] our rule |
 
 ### WC and basin (set)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Floor-mounted WC and a pedestal basin | Floor-mounted WC with cistern and seat cover, and a pedestal basin, fixed | Cera, Hindware, Parryware | Rs. 8,000–15,000 a set; plus 2 × fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [65] |
+| Basic | Floor-mounted WC and a pedestal basin | Floor-mounted WC with cistern and seat cover, and a pedestal basin, fixed | Cera, Hindware, Parryware | ₹8,000–15,000 a set; plus 2 × fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [65] |
 | Standard | Wall-hung WC with cistern, and a wall-hung basin | Extended wall-hung WC with a ceramic cistern, and a wall-hung basin, fixed | Jaquar Continental, Hindware Etios, Cera | Wall-hung WC with ceramic cistern + Wall-hung basin, fixed by 2 × fixing a sanitary fixture or fitting (plumber) | [66][67] |
 | Premium | Wall-hung WC with a concealed cistern, and a table-top basin | Wall-hung rimless WC with a concealed cistern, frame and flush plate, and a table-top basin, fixed | Jaquar, Geberit, Hindware, Cera | Wall-hung WC with ceramic cistern + Concealed cistern with frame and flush plate + Table-top basin, fixed by 2 × fixing a sanitary fixture or fitting (plumber) | [66][68][67] |
-| Luxury | Imported sanitaryware | Imported wall-hung WC with a concealed cistern, and a designer basin, fixed | Kohler, Duravit, Villeroy & Boch, Toto | Rs. 50,000–1,00,000 a set; plus 2 × fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [25][3] |
-| Bespoke | Smart WC and a designer stone basin | Smart WC with an integrated bidet seat, and a designer stone basin, fixed | Kohler, Toto | Rs. 1,00,000–1,50,000 a set; plus 2 × fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [69][25] |
+| Luxury | Imported sanitaryware | Imported wall-hung WC with a concealed cistern, and a designer basin, fixed | Kohler, Duravit, Villeroy & Boch, Toto | ₹50,000–1,00,000 a set; plus 2 × fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [25][3] |
+| Bespoke | Smart WC and a designer stone basin | Smart WC with an integrated bidet seat, and a designer stone basin, fixed | Kohler, Toto | ₹1,00,000–1,50,000 a set; plus 2 × fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [69][25] |
 
 Choices at each level: Basic 3, Standard 3, Premium 3, Luxury 3, Bespoke 3.
 
@@ -358,7 +358,7 @@ Also in the library:
 | Floor-mounted WC and a wall-hung basin | Basic | Floor-mounted EWC with its cistern, and a wall-hung basin, fixed | Floor-mounted WC with its cistern + Wall-hung basin, fixed by 2 × fixing a sanitary fixture or fitting (plumber) | [72][67] |
 | One-piece WC and a table-top basin | Standard | One-piece WC, and a table-top basin, fixed | One-piece WC + Table-top basin, fixed by 2 × fixing a sanitary fixture or fitting (plumber) | [73][67] |
 | Wall-hung WC bundle and a wall-hung basin | Standard | Wall-hung WC sold as a complete bundle, and a wall-hung basin, fixed Kohler's bundle is reported to hold the bowl and seat, the in-wall tank and flush plate sold separately (its spec sheet not opened): check before relying on this set. | Wall-hung WC bundle (Kohler Span) + Wall-hung basin, fixed by 2 × fixing a sanitary fixture or fitting (plumber) | [74][67] |
-| Branded wall-hung WC and a designer basin | Premium | Mid-range branded wall-hung WC and a designer basin, fixed | Rs. 20,000–40,000 a set; plus 2 × fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid; read 04-10-2026 | [75] |
+| Branded wall-hung WC and a designer basin | Premium | Mid-range branded wall-hung WC and a designer basin, fixed | ₹20,000–40,000 a set; plus 2 × fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid; read 04-10-2026 | [75] |
 | Wall-hung WC bundle and a table-top basin | Premium | Wall-hung WC sold as a bundle, and a table-top basin, fixed Kohler's bundle is reported to hold the bowl and seat, the in-wall tank and flush plate sold separately (its spec sheet not opened): check before relying on this set. | Wall-hung WC bundle (Kohler Vive) + Table-top basin, fixed by 2 × fixing a sanitary fixture or fitting (plumber) | [76][67] |
 | Wall-hung WC bundle and a square vessel basin | Luxury | Wall-hung WC sold as a bundle, and a square vessel basin, fixed Kohler's bundle is reported to hold the bowl and seat, the in-wall tank and flush plate sold separately (its spec sheet not opened): check before relying on this set. | Wall-hung WC bundle (Kohler ModernLife) + Square vessel basin (Kohler Vox), fixed by 2 × fixing a sanitary fixture or fitting (plumber) | [77][78] |
 | Imported wall-hung WC, concealed cistern and a vessel basin | Luxury | Imported wall-hung WC, a concealed cistern with its frame and flush plate, and a square vessel basin, fixed Built from parts listed separately; that they fit together, and arms, hoses and holders, are to be confirmed with the seller. | Imported wall-hung WC + Concealed cistern with frame and flush plate + Square vessel basin (Kohler Vox), fixed by 2 × fixing a sanitary fixture or fitting (plumber) | [79][68][78] |
@@ -375,9 +375,9 @@ Also in the library:
 |---|---|---|---|---|---|
 | Basic | Basic fittings | Pillar cock, wall mixer with an overhead shower, health faucet and four angle valves, fixed | Hindware | Pillar cock + Wall mixer + Overhead shower, 100 mm + Health faucet with hose + 2 × Angle valves, a pair, fixed by 3 × fixing a sanitary fixture or fitting (plumber) | [84][85] |
 | Standard | Branded mid-range fittings | Single-lever basin mixer, wall mixer with an overhead shower, health faucet and four angle valves, fixed | Jaquar Florentine | Single-lever basin mixer (Jaquar Florentine) + Wall mixer (Jaquar Florentine) + Overhead shower (Jaquar) + Health faucet (Jaquar) + 4 × Angle valve (Jaquar), fixed by 3 × fixing a sanitary fixture or fitting (plumber) | [86][87][88][85] |
-| Premium | Premium fittings with a concealed diverter | Premium basin mixer, concealed diverter with overhead and hand showers, health faucet and angle valves, fixed | Jaquar Alive, Kohler | Rs. 25,000–1,00,000 a set; plus 3 × fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [25] |
-| Luxury | Luxury fittings with a thermostatic shower | Luxury basin mixer, thermostatic shower system with rain and hand showers, health faucet and valves, fixed | Kohler, Grohe, Hansgrohe | Rs. 1,00,000–2,50,000 a set; plus 3 × fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [25] |
-| Bespoke | Designer fittings | Designer basin mixer, thermostatic rain shower system, health faucet and valves, fixed | Axor, Gessi, Dornbracht | Rs. 2,50,000 a set; plus 3 × fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [25] |
+| Premium | Premium fittings with a concealed diverter | Premium basin mixer, concealed diverter with overhead and hand showers, health faucet and angle valves, fixed | Jaquar Alive, Kohler | ₹25,000–1,00,000 a set; plus 3 × fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [25] |
+| Luxury | Luxury fittings with a thermostatic shower | Luxury basin mixer, thermostatic shower system with rain and hand showers, health faucet and valves, fixed | Kohler, Grohe, Hansgrohe | ₹1,00,000–2,50,000 a set; plus 3 × fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [25] |
+| Bespoke | Designer fittings | Designer basin mixer, thermostatic rain shower system, health faucet and valves, fixed | Axor, Gessi, Dornbracht | ₹2,50,000 a set; plus 3 × fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [25] |
 
 Choices at each level: Basic 3, Standard 3, Premium 3, Luxury 3, Bespoke 3.
 
@@ -386,10 +386,10 @@ Also in the library:
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
 | Basic fittings, another make | Basic | Pillar cock, wall mixer, overhead shower, health faucet and four angle valves, fixed | Pillar cock + Wall mixer (Cera) + Overhead shower (Cera) + Health faucet with hose + Angle valves, a set of four (Cera), fixed by 3 × fixing a sanitary fixture or fitting (plumber) | [89][84][85] |
-| Budget chrome fittings | Basic | Basic chrome taps, mixer, shower and health faucet for one bathroom, fixed | Rs. 8,000–20,000 a set; plus 3 × fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid; read 04-10-2026 | [75] |
-| Branded mid-range fittings, as a package | Standard | Mid-range branded taps, mixers and showers for one bathroom, fixed | Rs. 25,000–60,000 a set; plus 3 × fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid; read 04-10-2026 | [75] |
+| Budget chrome fittings | Basic | Basic chrome taps, mixer, shower and health faucet for one bathroom, fixed | ₹8,000–20,000 a set; plus 3 × fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid; read 04-10-2026 | [75] |
+| Branded mid-range fittings, as a package | Standard | Mid-range branded taps, mixers and showers for one bathroom, fixed | ₹25,000–60,000 a set; plus 3 × fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid; read 04-10-2026 | [75] |
 | Basin mixer, bath and shower mixer, and a rain shower | Standard | Single-control basin mixer, 4-way bath and shower mixer with a diverter, round rain shower with a ceiling arm, health faucet and four angle valves, fixed Built from parts listed separately; that they fit together, and arms, hoses and holders, are to be confirmed with the seller. | Single-control basin mixer (Kohler July) + Bath and shower mixer with a diverter (Kohler July) + Round rain shower with a ceiling arm (Kohler) + Health faucet with hose + 2 × Angle valves, a pair, fixed by 3 × fixing a sanitary fixture or fitting (plumber) | [90][91][92][85][84] |
-| Shower and bathroom combo | Premium | Square shower and bathroom fittings, sold as a combo, fixed The page's price and its MRP. It does not list what the combo holds. | Rs. 44,983–55,980 a set; plus 3 × fixing a sanitary fixture or fitting (plumber) Rs. 360–600; incl. GST; read 04-10-2026 | [93] |
+| Shower and bathroom combo | Premium | Square shower and bathroom fittings, sold as a combo, fixed The page's price and its MRP. It does not list what the combo holds. | ₹44,983–55,980 a set; plus 3 × fixing a sanitary fixture or fitting (plumber) ₹360–600; incl. GST; read 04-10-2026 | [93] |
 | Tall basin mixer, bath and shower mixer, and a square rain shower | Premium | Tall basin mixer, 4-way bath and shower mixer with a diverter, square rain shower with a wall arm, health faucet and four angle valves, fixed Built from parts listed separately; that they fit together, and arms, hoses and holders, are to be confirmed with the seller. | Tall basin mixer (Kohler Aleo+) + Bath and shower mixer with a diverter (Kohler July) + Square rain shower with a wall arm (Kohler) + Health faucet (Jaquar) + 4 × Angle valve (Jaquar), fixed by 3 × fixing a sanitary fixture or fitting (plumber) | [94][91][95][85][88] |
 | Thermostatic shower with a 453 mm rainhead | Luxury | Concealed thermostatic valve, 453 mm two-function rainhead, hand shower, rose gold tall basin mixer, health faucet and four angle valves, fixed Finishes as listed (valve BV, rainhead chrome, mixer rose gold); one finish throughout may cost more or less. Built from parts listed separately; that they fit together, and arms, hoses and holders, are to be confirmed with the seller. | Concealed thermostatic shower valve (Kohler Fluence) + Rainhead, 453 mm (Kohler Statement) + Hand shower (GROHE SmartActive 130) + Tall basin mixer, rose gold (Kohler Aleo) + Health faucet (Jaquar) + 4 × Angle valve (Jaquar), fixed by 3 × fixing a sanitary fixture or fitting (plumber) | [96][97][98][99][85][88] |
 | Thermostatic shower with a square head shower | Luxury | Concealed thermostatic valve, 310 mm square head shower set, hand shower, tall basin mixer, health faucet and four angle valves, fixed Finishes as listed (valve BV, the rest chrome); one finish throughout may cost more or less. Built from parts listed separately; that they fit together, and arms, hoses and holders, are to be confirmed with the seller. | Concealed thermostatic shower valve (Kohler Fluence) + Head shower set, 310 mm square + Hand shower (GROHE SmartActive 130) + Tall basin mixer (Kohler Aleo+) + Health faucet (Jaquar) + 4 × Angle valve (Jaquar), fixed by 3 × fixing a sanitary fixture or fitting (plumber) | [96][100][98][94][85][88] |
@@ -401,10 +401,10 @@ Also in the library:
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
 | Basic | None at this level | | | | |
-| Standard | 8 mm fixed glass partition | 8 mm toughened glass fixed partition with fittings |  | Rs. 440–660 a sq ft, supplied and fixed; plus GST | [104] |
-| Premium | 10 mm glass with a hinged door | 10 mm toughened glass partition with a hinged door |  | Rs. 660–990 a sq ft, supplied and fixed; plus GST | [105] |
-| Luxury | 10 mm glass sliding enclosure | 10 mm toughened glass sliding enclosure |  | Rs. 990–1,320 a sq ft, supplied and fixed; plus GST | [105] |
-| Bespoke | Frameless enclosure, imported hardware | Frameless glass enclosure in thicker glass with imported hardware |  | Rs. 1,200–2,000 a sq ft, supplied and fixed; plus GST | [104] |
+| Standard | 8 mm fixed glass partition | 8 mm toughened glass fixed partition with fittings |  | ₹440–660 a sq ft, supplied and fixed; plus GST | [104] |
+| Premium | 10 mm glass with a hinged door | 10 mm toughened glass partition with a hinged door |  | ₹660–990 a sq ft, supplied and fixed; plus GST | [105] |
+| Luxury | 10 mm glass sliding enclosure | 10 mm toughened glass sliding enclosure |  | ₹990–1,320 a sq ft, supplied and fixed; plus GST | [105] |
+| Bespoke | Frameless enclosure, imported hardware | Frameless glass enclosure in thicker glass with imported hardware |  | ₹1,200–2,000 a sq ft, supplied and fixed; plus GST | [104] |
 
 ### Vanity unit (each)
 
@@ -412,19 +412,19 @@ Also in the library:
 |---|---|---|---|---|---|
 | Basic | None at this level | | | | |
 | Standard | None at this level | | | | |
-| Premium | Vanity unit with a counter | Vanity unit with a counter and basin, fixed |  | Rs. 15,000–30,000 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [106][107] |
-| Luxury | Designer vanity with a quartz top | Designer vanity with a quartz top and basin, fixed |  | Rs. 30,000–60,000 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [106] |
-| Bespoke | Bespoke stone vanity | Bespoke stone vanity, fixed |  | Rs. 60,000 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [106] |
+| Premium | Vanity unit with a counter | Vanity unit with a counter and basin, fixed |  | ₹15,000–30,000 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [106][107] |
+| Luxury | Designer vanity with a quartz top | Designer vanity with a quartz top and basin, fixed |  | ₹30,000–60,000 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [106] |
+| Bespoke | Bespoke stone vanity | Bespoke stone vanity, fixed |  | ₹60,000 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [106] |
 
 ### Mirror (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Plain mirror, 18 × 24 in | Plain mirror 450 × 600 mm, fixed |  | Rs. 1,073–1,449 a each; GST not stated: taken as the price paid | [108] |
-| Standard | LED mirror | Mirror with LED lights, fixed |  | Rs. 3,500–5,500 a each; plus GST; read 04-10-2026 | [109] |
-| Premium | Backlit LED mirror, 18 × 24 in | Backlit LED mirror 450 × 600 mm, fixed |  | Rs. 3,500–5,500 a each; plus GST | [109] |
-| Luxury | Touch-sensor LED mirror, 24 × 36 in | Touch-sensor LED mirror in three light colours, 600 × 900 mm, fixed |  | Rs. 8,000–12,000 a each; plus GST | [109] |
-| Bespoke | Smart mirror cabinet | Mirror cabinet with LED lights, anti-fog and touch controls, fixed |  | Rs. 18,000–45,000 a each; GST not stated: taken as the price paid; read 10-10-2026 | [110] |
+| Basic | Plain mirror, 18 × 24 in | Plain mirror 450 × 600 mm, fixed |  | ₹1,073–1,449 a each; GST not stated: taken as the price paid | [108] |
+| Standard | LED mirror | Mirror with LED lights, fixed |  | ₹3,500–5,500 a each; plus GST; read 04-10-2026 | [109] |
+| Premium | Backlit LED mirror, 18 × 24 in | Backlit LED mirror 450 × 600 mm, fixed |  | ₹3,500–5,500 a each; plus GST | [109] |
+| Luxury | Touch-sensor LED mirror, 24 × 36 in | Touch-sensor LED mirror in three light colours, 600 × 900 mm, fixed |  | ₹8,000–12,000 a each; plus GST | [109] |
+| Bespoke | Smart mirror cabinet | Mirror cabinet with LED lights, anti-fog and touch controls, fixed |  | ₹18,000–45,000 a each; GST not stated: taken as the price paid; read 10-10-2026 | [110] |
 
 ### Accessories (set)
 
@@ -440,7 +440,7 @@ Also in the library:
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Storage geyser, 25 litres | 25-litre storage geyser, 5-star, fixed and connected | Orient, Bajaj, A. O. Smith, Havells | Rs. 6,899–14,500 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [112][113] |
+| Every level | Storage geyser, 25 litres | 25-litre storage geyser, 5-star, fixed and connected | Orient, Bajaj, A. O. Smith, Havells | ₹6,899–14,500 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [112][113] |
 
 ### Fittings and fixtures, one by one (each)
 
@@ -448,57 +448,57 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Wall-hung WC with ceramic cistern | Standard | Extended wall-hung WC with a ceramic cistern | Rs. 9,568–10,943 a each; incl. GST | [66] |
-| Wall-hung basin | Basic | Wall-hung wash basin | Rs. 1,250–6,455 a each; GST not stated: taken as the price paid | [67] |
-| Table-top basin | Standard | Table-top wash basin Hindware table-top basins, as listed. | Rs. 4,057–6,170 a each; GST not stated: taken as the price paid; read 04-10-2026 | [67] |
-| Pedestal basin | Basic | Pedestal wash basin | Rs. 5,555 a each; GST not stated: taken as the price paid | [67] |
-| Concealed cistern with frame and flush plate | Premium | Concealed cistern with its frame and flush plate | Rs. 8,690–10,350 a each; GST not stated: taken as the price paid | [68] |
-| Pillar cock | Basic | Pillar cock for the basin | Rs. 820 a each; incl. GST | [84] |
-| Wall mixer | Basic | Wall mixer with a provision for an overhead shower | Rs. 4,990 a each; incl. GST; read 04-10-2026 | [114] |
-| Overhead shower, 100 mm | Basic | 100 mm overhead shower with arm | Rs. 1,068–1,125 a each; incl. GST; read 04-10-2026 | [115] |
-| Health faucet with hose | Basic | Health faucet with a steel braided hose Cera's health faucets, as listed. | Rs. 936–2,025 a each; GST not stated: taken as the price paid; read 04-10-2026 | [85] |
-| Angle valves, a pair | Basic | Two angle valves with wall flanges | Rs. 999 a each; incl. GST | [84] |
-| Single-lever basin mixer (Jaquar Florentine) | Standard | Single-lever basin mixer | Rs. 3,700 a each; incl. GST; read 04-10-2026 | [116] |
-| Single-lever basin mixer (Jaquar Alive) | Premium | Single-lever basin mixer | Rs. 10,554 a each; incl. GST; read 04-10-2026 | [117] |
-| Wall mixer (Jaquar Florentine) | Standard | Wall mixer with a provision for an overhead shower | Rs. 5,600 a each; incl. GST | [87] |
-| Overhead shower (Jaquar) | Standard | Overhead shower with arm | Rs. 1,590–10,716 a each; GST not stated: taken as the price paid | [88] |
-| Health faucet (Jaquar) | Standard | Health faucet with a flexible hose Jaquar's health faucets, as listed. | Rs. 1,190–5,730 a each; GST not stated: taken as the price paid; read 04-10-2026 | [85] |
-| Angle valve (Jaquar) | Standard | Brass angle valve with a wall flange | Rs. 1,237 a each; GST not stated: taken as the price paid; read 04-10-2026 | [118] |
-| Towel rail, 600 mm | Basic | Stainless steel towel rail 600 mm | Rs. 1,450–1,576 a each; incl. GST; read 04-10-2026 | [111] |
-| Toilet-roll holder | Basic | Brass toilet-roll holder | Rs. 699 a each; incl. GST | [111] |
-| Double robe hook | Basic | Double coat and robe hook | Rs. 380–680 a each; incl. GST; read 04-10-2026 | [111] |
-| Towel rail, premium | Luxury | Premium towel rail | Rs. 1,415–10,619 a each; incl. GST | [111] |
-| Toilet-roll holder, premium | Luxury | Premium toilet-roll holder Flipkart's Continental brass holder at Rs. 900 (MRP 1,000) to Decure's Hotelier AHS-CHR-1551 at its regular price of 1,425 (sale 1,220), tax included. Until 10-10-2026 the library took Rs. 699–1,400 as reported. | Rs. 900–1,425 a each; incl. GST; read 10-10-2026 | [119][120] |
-| Robe hook, premium | Luxury | Premium robe hook Moglix's Jaquar robe and coat hooks, Rs. 294–1,325. It also lists the Rs. 1,325 Queen's double coat hook at Rs. 16,000, a figure it shows for many items that sell for far less, so that listing is left out. | Rs. 294–1,325 a each; incl. GST; read 04-10-2026 | [121] |
-| Stop cocks, a pair | Basic | Two concealed stop cocks | Rs. 2,140 a each; GST not stated: taken as the price paid; read 04-10-2026 | [122] |
-| Overhead shower (Cera) | Basic | Overhead shower | Rs. 1,716 a each; GST not stated: taken as the price paid; read 04-10-2026 | [123] |
-| Wall mixer (Cera) | Basic | Wall mixer | Rs. 3,315–3,381 a each; GST not stated: taken as the price paid; read 04-10-2026 | [124] |
-| Angle valves, a set of four (Cera) | Basic | Four angle valves with wall flanges | Rs. 2,966–3,296 a each; GST not stated: taken as the price paid; read 04-10-2026 | [125] |
-| Squatting pan (Indian WC) | Basic | Squatting pan Hindware's Orissa pan at Rs. 2,270 and another Indian pan at Rs. 1,730, as listed. | Rs. 1,500–2,340 a each; GST not stated: taken as the price paid; read 04-10-2026 | [126] |
-| PVC flushing cistern | Basic | PVC flushing cistern Benelave 1,220 and Cera 1,285, as listed. | Rs. 1,220–1,285 a each; GST not stated: taken as the price paid; read 04-10-2026 | [71] |
-| Floor-mounted WC with its cistern | Basic | Floor-mounted EWC with its cistern Hindware Slick EWC with a Sleek Smart cistern, as listed. | Rs. 6,220–6,700 a each; GST not stated: taken as the price paid; read 04-10-2026 | [72] |
-| One-piece WC | Standard | One-piece WC | Rs. 8,600 a each; GST not stated: taken as the price paid; read 04-10-2026 | [127] |
-| Wall-hung WC bundle (Kohler Span) | Standard | Wall-hung WC sold as a complete bundle The page's price and its MRP. It names a bundle but does not list what it holds; Kohler's spec sheets, as search summaries report them (not opened), list the bowl and seat, the in-wall tank and flush plate sold separately. | Rs. 9,489–13,000 a each; incl. GST; read 10-10-2026 | [74] |
-| Wall-hung WC bundle (Kohler Vive) | Premium | Wall-hung WC sold as a bundle The page's price and its MRP. It names a bundle but does not list what it holds; Kohler's spec sheets, as search summaries report them (not opened), list the bowl and seat, the in-wall tank and flush plate sold separately. | Rs. 22,039–29,000 a each; incl. GST; read 10-10-2026 | [76] |
-| Wall-hung WC bundle (Kohler ModernLife) | Luxury | Wall-hung WC sold as a bundle The page's price and its MRP. It names a bundle but does not list what it holds; Kohler's spec sheets, as search summaries report them (not opened), list the bowl and seat, the in-wall tank and flush plate sold separately. | Rs. 31,958.96–47,000 a each; incl. GST; read 10-10-2026 | [77] |
-| Square vessel basin (Kohler Vox) | Luxury | Square vessel basin without a faucet hole | Rs. 11,069–13,500 a each; incl. GST; read 04-10-2026 | [78] |
-| Imported wall-hung WC | Luxury | Imported wall-hung WC TOTO CW580M 23,500 and CW822MNW1 30,400, as listed. | Rs. 23,500–30,400 a each; GST not stated: taken as the price paid; read 04-10-2026 | [79] |
-| Smart one-piece WC (Kohler Innate) | Bespoke | One-piece elongated smart WC, dual flush | Rs. 3,79,999–4,00,000 a each; incl. GST; read 04-10-2026 | [80] |
-| Smart one-piece WC (Kohler Veil) | Bespoke | Smart one-piece WC | Rs. 6,79,999–8,50,000 a each; incl. GST; read 04-10-2026 | [82] |
-| Vessel basin (Kohler Veil) | Bespoke | Oval vessel basin | Rs. 38,399–48,000 a each; incl. GST; read 04-10-2026 | [81] |
-| Single-control basin mixer (Kohler July) | Standard | Single-control basin mixer, without drain | Rs. 5,039–7,110 a each; incl. GST; read 04-10-2026 | [90] |
-| Bath and shower mixer with a diverter (Kohler July) | Standard | 4-way bath and shower mixer with a diverter for a hand shower | Rs. 8,489–9,990 a each; incl. GST; read 04-10-2026 | [91] |
-| Round rain shower with a ceiling arm (Kohler) | Standard | Round rain shower with a ceiling-mount arm, polished chrome | Rs. 9,108–12,150 a each; incl. GST; read 04-10-2026 | [92] |
-| Square rain shower with a wall arm (Kohler) | Premium | Square rain shower with a wall-mount arm, polished chrome | Rs. 11,008–14,550 a each; incl. GST; read 04-10-2026 | [95] |
-| Tall basin mixer (Kohler Aleo+) | Premium | Tall single-handle basin mixer, 14 lpm | Rs. 15,449–18,850 a each; incl. GST; read 04-10-2026 | [94] |
-| Tall basin mixer, rose gold (Kohler Aleo) | Luxury | Tall single-handle basin mixer without drain, rose gold | Rs. 19,389–23,650 a each; incl. GST; read 04-10-2026 | [99] |
-| Basin mixer with a knob handle (Kohler Composed) | Bespoke | Single-handle basin mixer with a knob handle, BV finish | Rs. 43,999–55,000 a each; incl. GST; read 04-10-2026 | [102] |
-| Concealed thermostatic shower valve (Kohler Fluence) | Luxury | Recessed thermostatic bath and shower valve with its trim, BV finish | Rs. 32,389–39,500 a each; incl. GST; read 04-10-2026 | [96] |
-| Rainhead, 453 mm (Kohler Statement) | Luxury | Oblong 453 mm two-function rainhead, chrome | Rs. 60,639–75,800 a each; incl. GST; read 04-10-2026 | [97] |
-| Rainhead, 353 mm, AF finish (Kohler Statement) | Bespoke | Oblong 353 mm two-function rainhead, AF finish | Rs. 64,239–80,300 a each; incl. GST; read 04-10-2026 | [103] |
-| Thermostatic bath-shower column (Kohler Anthem) | Bespoke | Four-way thermostatic valve and bath-shower column with a multifunction rainhead and hand shower | Rs. 1,57,919–1,97,400 a each; incl. GST; read 04-10-2026 | [101] |
-| Hand shower (GROHE SmartActive 130) | Luxury | Hand shower | Rs. 11,990–16,000 a each; incl. GST; read 04-10-2026 | [98] |
-| Head shower set, 310 mm square | Luxury | 310 mm square head shower set | Rs. 28,699–72,150 a each; incl. GST; read 04-10-2026 | [100] |
+| Wall-hung WC with ceramic cistern | Standard | Extended wall-hung WC with a ceramic cistern | ₹9,568–10,943 a each; incl. GST | [66] |
+| Wall-hung basin | Basic | Wall-hung wash basin | ₹1,250–6,455 a each; GST not stated: taken as the price paid | [67] |
+| Table-top basin | Standard | Table-top wash basin Hindware table-top basins, as listed. | ₹4,057–6,170 a each; GST not stated: taken as the price paid; read 04-10-2026 | [67] |
+| Pedestal basin | Basic | Pedestal wash basin | ₹5,555 a each; GST not stated: taken as the price paid | [67] |
+| Concealed cistern with frame and flush plate | Premium | Concealed cistern with its frame and flush plate | ₹8,690–10,350 a each; GST not stated: taken as the price paid | [68] |
+| Pillar cock | Basic | Pillar cock for the basin | ₹820 a each; incl. GST | [84] |
+| Wall mixer | Basic | Wall mixer with a provision for an overhead shower | ₹4,990 a each; incl. GST; read 04-10-2026 | [114] |
+| Overhead shower, 100 mm | Basic | 100 mm overhead shower with arm | ₹1,068–1,125 a each; incl. GST; read 04-10-2026 | [115] |
+| Health faucet with hose | Basic | Health faucet with a steel braided hose Cera's health faucets, as listed. | ₹936–2,025 a each; GST not stated: taken as the price paid; read 04-10-2026 | [85] |
+| Angle valves, a pair | Basic | Two angle valves with wall flanges | ₹999 a each; incl. GST | [84] |
+| Single-lever basin mixer (Jaquar Florentine) | Standard | Single-lever basin mixer | ₹3,700 a each; incl. GST; read 04-10-2026 | [116] |
+| Single-lever basin mixer (Jaquar Alive) | Premium | Single-lever basin mixer | ₹10,554 a each; incl. GST; read 04-10-2026 | [117] |
+| Wall mixer (Jaquar Florentine) | Standard | Wall mixer with a provision for an overhead shower | ₹5,600 a each; incl. GST | [87] |
+| Overhead shower (Jaquar) | Standard | Overhead shower with arm | ₹1,590–10,716 a each; GST not stated: taken as the price paid | [88] |
+| Health faucet (Jaquar) | Standard | Health faucet with a flexible hose Jaquar's health faucets, as listed. | ₹1,190–5,730 a each; GST not stated: taken as the price paid; read 04-10-2026 | [85] |
+| Angle valve (Jaquar) | Standard | Brass angle valve with a wall flange | ₹1,237 a each; GST not stated: taken as the price paid; read 04-10-2026 | [118] |
+| Towel rail, 600 mm | Basic | Stainless steel towel rail 600 mm | ₹1,450–1,576 a each; incl. GST; read 04-10-2026 | [111] |
+| Toilet-roll holder | Basic | Brass toilet-roll holder | ₹699 a each; incl. GST | [111] |
+| Double robe hook | Basic | Double coat and robe hook | ₹380–680 a each; incl. GST; read 04-10-2026 | [111] |
+| Towel rail, premium | Luxury | Premium towel rail | ₹1,415–10,619 a each; incl. GST | [111] |
+| Toilet-roll holder, premium | Luxury | Premium toilet-roll holder Flipkart's Continental brass holder at Rs. 900 (MRP 1,000) to Decure's Hotelier AHS-CHR-1551 at its regular price of 1,425 (sale 1,220), tax included. Until 10-10-2026 the library took Rs. 699–1,400 as reported. | ₹900–1,425 a each; incl. GST; read 10-10-2026 | [119][120] |
+| Robe hook, premium | Luxury | Premium robe hook Moglix's Jaquar robe and coat hooks, Rs. 294–1,325. It also lists the Rs. 1,325 Queen's double coat hook at Rs. 16,000, a figure it shows for many items that sell for far less, so that listing is left out. | ₹294–1,325 a each; incl. GST; read 04-10-2026 | [121] |
+| Stop cocks, a pair | Basic | Two concealed stop cocks | ₹2,140 a each; GST not stated: taken as the price paid; read 04-10-2026 | [122] |
+| Overhead shower (Cera) | Basic | Overhead shower | ₹1,716 a each; GST not stated: taken as the price paid; read 04-10-2026 | [123] |
+| Wall mixer (Cera) | Basic | Wall mixer | ₹3,315–3,381 a each; GST not stated: taken as the price paid; read 04-10-2026 | [124] |
+| Angle valves, a set of four (Cera) | Basic | Four angle valves with wall flanges | ₹2,966–3,296 a each; GST not stated: taken as the price paid; read 04-10-2026 | [125] |
+| Squatting pan (Indian WC) | Basic | Squatting pan Hindware's Orissa pan at Rs. 2,270 and another Indian pan at Rs. 1,730, as listed. | ₹1,500–2,340 a each; GST not stated: taken as the price paid; read 04-10-2026 | [126] |
+| PVC flushing cistern | Basic | PVC flushing cistern Benelave 1,220 and Cera 1,285, as listed. | ₹1,220–1,285 a each; GST not stated: taken as the price paid; read 04-10-2026 | [71] |
+| Floor-mounted WC with its cistern | Basic | Floor-mounted EWC with its cistern Hindware Slick EWC with a Sleek Smart cistern, as listed. | ₹6,220–6,700 a each; GST not stated: taken as the price paid; read 04-10-2026 | [72] |
+| One-piece WC | Standard | One-piece WC | ₹8,600 a each; GST not stated: taken as the price paid; read 04-10-2026 | [127] |
+| Wall-hung WC bundle (Kohler Span) | Standard | Wall-hung WC sold as a complete bundle The page's price and its MRP. It names a bundle but does not list what it holds; Kohler's spec sheets, as search summaries report them (not opened), list the bowl and seat, the in-wall tank and flush plate sold separately. | ₹9,489–13,000 a each; incl. GST; read 10-10-2026 | [74] |
+| Wall-hung WC bundle (Kohler Vive) | Premium | Wall-hung WC sold as a bundle The page's price and its MRP. It names a bundle but does not list what it holds; Kohler's spec sheets, as search summaries report them (not opened), list the bowl and seat, the in-wall tank and flush plate sold separately. | ₹22,039–29,000 a each; incl. GST; read 10-10-2026 | [76] |
+| Wall-hung WC bundle (Kohler ModernLife) | Luxury | Wall-hung WC sold as a bundle The page's price and its MRP. It names a bundle but does not list what it holds; Kohler's spec sheets, as search summaries report them (not opened), list the bowl and seat, the in-wall tank and flush plate sold separately. | ₹31,958.96–47,000 a each; incl. GST; read 10-10-2026 | [77] |
+| Square vessel basin (Kohler Vox) | Luxury | Square vessel basin without a faucet hole | ₹11,069–13,500 a each; incl. GST; read 04-10-2026 | [78] |
+| Imported wall-hung WC | Luxury | Imported wall-hung WC TOTO CW580M 23,500 and CW822MNW1 30,400, as listed. | ₹23,500–30,400 a each; GST not stated: taken as the price paid; read 04-10-2026 | [79] |
+| Smart one-piece WC (Kohler Innate) | Bespoke | One-piece elongated smart WC, dual flush | ₹3,79,999–4,00,000 a each; incl. GST; read 04-10-2026 | [80] |
+| Smart one-piece WC (Kohler Veil) | Bespoke | Smart one-piece WC | ₹6,79,999–8,50,000 a each; incl. GST; read 04-10-2026 | [82] |
+| Vessel basin (Kohler Veil) | Bespoke | Oval vessel basin | ₹38,399–48,000 a each; incl. GST; read 04-10-2026 | [81] |
+| Single-control basin mixer (Kohler July) | Standard | Single-control basin mixer, without drain | ₹5,039–7,110 a each; incl. GST; read 04-10-2026 | [90] |
+| Bath and shower mixer with a diverter (Kohler July) | Standard | 4-way bath and shower mixer with a diverter for a hand shower | ₹8,489–9,990 a each; incl. GST; read 04-10-2026 | [91] |
+| Round rain shower with a ceiling arm (Kohler) | Standard | Round rain shower with a ceiling-mount arm, polished chrome | ₹9,108–12,150 a each; incl. GST; read 04-10-2026 | [92] |
+| Square rain shower with a wall arm (Kohler) | Premium | Square rain shower with a wall-mount arm, polished chrome | ₹11,008–14,550 a each; incl. GST; read 04-10-2026 | [95] |
+| Tall basin mixer (Kohler Aleo+) | Premium | Tall single-handle basin mixer, 14 lpm | ₹15,449–18,850 a each; incl. GST; read 04-10-2026 | [94] |
+| Tall basin mixer, rose gold (Kohler Aleo) | Luxury | Tall single-handle basin mixer without drain, rose gold | ₹19,389–23,650 a each; incl. GST; read 04-10-2026 | [99] |
+| Basin mixer with a knob handle (Kohler Composed) | Bespoke | Single-handle basin mixer with a knob handle, BV finish | ₹43,999–55,000 a each; incl. GST; read 04-10-2026 | [102] |
+| Concealed thermostatic shower valve (Kohler Fluence) | Luxury | Recessed thermostatic bath and shower valve with its trim, BV finish | ₹32,389–39,500 a each; incl. GST; read 04-10-2026 | [96] |
+| Rainhead, 453 mm (Kohler Statement) | Luxury | Oblong 453 mm two-function rainhead, chrome | ₹60,639–75,800 a each; incl. GST; read 04-10-2026 | [97] |
+| Rainhead, 353 mm, AF finish (Kohler Statement) | Bespoke | Oblong 353 mm two-function rainhead, AF finish | ₹64,239–80,300 a each; incl. GST; read 04-10-2026 | [103] |
+| Thermostatic bath-shower column (Kohler Anthem) | Bespoke | Four-way thermostatic valve and bath-shower column with a multifunction rainhead and hand shower | ₹1,57,919–1,97,400 a each; incl. GST; read 04-10-2026 | [101] |
+| Hand shower (GROHE SmartActive 130) | Luxury | Hand shower | ₹11,990–16,000 a each; incl. GST; read 04-10-2026 | [98] |
+| Head shower set, 310 mm square | Luxury | 310 mm square head shower set | ₹28,699–72,150 a each; incl. GST; read 04-10-2026 | [100] |
 
 ## Kitchen
 
@@ -512,11 +512,11 @@ Dated 02-10-2026; an item read on another day says so.
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Laminate modular kitchen | Base and wall units: BWR plywood carcass, laminate shutters, standard hardware | Hettich, Ebco | Rs. 9,500–14,000 a running ft, supplied and fixed; GST not stated: taken as the price paid | [128] |
-| Standard | Membrane modular kitchen | Base and wall units: BWR plywood carcass, membrane (PVC) shutters, branded hardware | Hettich, Hafele | Rs. 11,000–15,500 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [129] |
-| Premium | Acrylic modular kitchen | Base and wall units: BWP plywood carcass, high-gloss acrylic shutters, branded hardware with tandem drawers | Hettich, Hafele | Rs. 15,000–22,000 a running ft, supplied and fixed; GST not stated: taken as the price paid | [128] |
-| Luxury | PU lacquer modular kitchen | Base and wall units: BWP plywood carcass, PU lacquer shutters, premium hardware | Hafele, Blum | Rs. 18,000–28,000 a running ft, supplied and fixed; GST not stated: taken as the price paid | [128] |
-| Bespoke | Lacquered glass modular kitchen | Base and wall units: BWP plywood carcass, lacquered glass shutters, premium hardware | Blum | Rs. 22,000–32,000 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [129] |
+| Basic | Laminate modular kitchen | Base and wall units: BWR plywood carcass, laminate shutters, standard hardware | Hettich, Ebco | ₹9,500–14,000 a running ft, supplied and fixed; GST not stated: taken as the price paid | [128] |
+| Standard | Membrane modular kitchen | Base and wall units: BWR plywood carcass, membrane (PVC) shutters, branded hardware | Hettich, Hafele | ₹11,000–15,500 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [129] |
+| Premium | Acrylic modular kitchen | Base and wall units: BWP plywood carcass, high-gloss acrylic shutters, branded hardware with tandem drawers | Hettich, Hafele | ₹15,000–22,000 a running ft, supplied and fixed; GST not stated: taken as the price paid | [128] |
+| Luxury | PU lacquer modular kitchen | Base and wall units: BWP plywood carcass, PU lacquer shutters, premium hardware | Hafele, Blum | ₹18,000–28,000 a running ft, supplied and fixed; GST not stated: taken as the price paid | [128] |
+| Bespoke | Lacquered glass modular kitchen | Base and wall units: BWP plywood carcass, lacquered glass shutters, premium hardware | Blum | ₹22,000–32,000 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [129] |
 
 Choices at each level: Basic 4, Standard 3, Premium 3, Luxury 3, Bespoke 3.
 
@@ -524,27 +524,27 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Budget modular kitchen | Basic | Base and wall units: particle board or BWR plywood carcass, laminate shutters, local hardware | Rs. 3,500–6,000 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [134] |
-| Membrane modular kitchen on MDF | Basic | Base and wall units: MDF carcass, membrane (vinyl-wrapped) shutters | Rs. 7,000–10,000 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [128] |
-| Budget plywood modular kitchen | Basic | Base and wall units: budget plywood carcass, laminate shutters Quoted a running metre. | Rs. 15,000–25,000 a m, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [135] |
-| HDHMR or BWP modular kitchen | Standard | Base and wall units: BWP plywood or HDHMR carcass, laminate or membrane shutters, branded hardware | Rs. 6,000–10,000 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [134] |
+| Budget modular kitchen | Basic | Base and wall units: particle board or BWR plywood carcass, laminate shutters, local hardware | ₹3,500–6,000 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [134] |
+| Membrane modular kitchen on MDF | Basic | Base and wall units: MDF carcass, membrane (vinyl-wrapped) shutters | ₹7,000–10,000 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [128] |
+| Budget plywood modular kitchen | Basic | Base and wall units: budget plywood carcass, laminate shutters Quoted a running metre. | ₹15,000–25,000 a m, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [135] |
+| HDHMR or BWP modular kitchen | Standard | Base and wall units: BWP plywood or HDHMR carcass, laminate or membrane shutters, branded hardware | ₹6,000–10,000 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [134] |
 | Modular kitchen, base and wall units priced apart | Standard | A running foot each of base unit and wall unit: BWR plywood or PVC carcass, laminate shutters Hyderabad rates, as reported. | Base unit, modular + Wall unit, modular | [136] |
-| Mid-range modular kitchen, solid wood or premium plywood | Premium | Base and wall units: solid wood or premium plywood Quoted a running metre. | Rs. 25,000–45,000 a m, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [135] |
-| Mid-range modular kitchen | Premium | Base and wall units, mid-range: BWP or HDHMR carcass, Hettich or Ebco hardware | Rs. 6,000–10,000 a running ft, supplied and fixed; plus GST; read 04-10-2026 | [134] |
-| Back-painted glass modular kitchen | Luxury | Base and wall units: 18 mm BWR plywood carcass, lacquered or back-painted glass shutters | Rs. 18,000–28,000 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [129] |
-| Premium acrylic modular kitchen | Luxury | Base and wall units with premium acrylic shutters | Rs. 20,000–35,000 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [137] |
-| Premium modular kitchen, imported wood or system | Bespoke | Base and wall units in premium imported wood, or an imported modular system Quoted a running metre. | Rs. 45,000–80,000 a m, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [135] |
-| Aluminium profile kitchen, handleless | Bespoke | Base and wall units: aluminium frame carcass, aluminium profile shutters, handleless | Rs. 22,000–35,000 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [128] |
+| Mid-range modular kitchen, solid wood or premium plywood | Premium | Base and wall units: solid wood or premium plywood Quoted a running metre. | ₹25,000–45,000 a m, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [135] |
+| Mid-range modular kitchen | Premium | Base and wall units, mid-range: BWP or HDHMR carcass, Hettich or Ebco hardware | ₹6,000–10,000 a running ft, supplied and fixed; plus GST; read 04-10-2026 | [134] |
+| Back-painted glass modular kitchen | Luxury | Base and wall units: 18 mm BWR plywood carcass, lacquered or back-painted glass shutters | ₹18,000–28,000 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [129] |
+| Premium acrylic modular kitchen | Luxury | Base and wall units with premium acrylic shutters | ₹20,000–35,000 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [137] |
+| Premium modular kitchen, imported wood or system | Bespoke | Base and wall units in premium imported wood, or an imported modular system Quoted a running metre. | ₹45,000–80,000 a m, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [135] |
+| Aluminium profile kitchen, handleless | Bespoke | Base and wall units: aluminium frame carcass, aluminium profile shutters, handleless | ₹22,000–35,000 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [128] |
 
 ### Kitchen counter (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Granite counter | Granite counter 18–20 mm with a polished edge, fabricated and fixed |  | Rs. 250–500 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300; GST not stated: taken as the price paid | [138] our rule |
-| Standard | Quartz counter | Quartz (engineered stone) counter, fabricated and fixed |  | Rs. 400–800 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300; GST not stated: taken as the price paid | [139][140] our rule |
-| Premium | Solid-surface counter | Solid-surface (Corian) counter with seamless joints, fabricated and fixed | Corian | Rs. 700–1,500 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300; GST not stated: taken as the price paid | [141][142] our rule |
-| Luxury | Sintered stone counter | Sintered stone counter, fabricated and fixed |  | Rs. 1,600 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300; GST not stated: taken as the price paid | [143] our rule |
-| Bespoke | Italian marble counter (Calacatta) | Calacatta Italian marble counter, fabricated, sealed and fixed |  | Rs. 800–1,850 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300; GST not stated: taken as the price paid | [144] our rule |
+| Basic | Granite counter | Granite counter 18–20 mm with a polished edge, fabricated and fixed |  | ₹250–500 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter ₹200–300; GST not stated: taken as the price paid | [138] our rule |
+| Standard | Quartz counter | Quartz (engineered stone) counter, fabricated and fixed |  | ₹400–800 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter ₹200–300; GST not stated: taken as the price paid | [139][140] our rule |
+| Premium | Solid-surface counter | Solid-surface (Corian) counter with seamless joints, fabricated and fixed | Corian | ₹700–1,500 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter ₹200–300; GST not stated: taken as the price paid | [141][142] our rule |
+| Luxury | Sintered stone counter | Sintered stone counter, fabricated and fixed |  | ₹1,600 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter ₹200–300; GST not stated: taken as the price paid | [143] our rule |
+| Bespoke | Italian marble counter (Calacatta) | Calacatta Italian marble counter, fabricated, sealed and fixed |  | ₹800–1,850 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter ₹200–300; GST not stated: taken as the price paid | [144] our rule |
 
 Choices at each level: Basic 4, Standard 3, Premium 3, Luxury 3, Bespoke 3.
 
@@ -552,37 +552,37 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Premium solid surface | Bespoke | Premium solid-surface counter (DuPont and high-end finishes) | Rs. 1,500–4,000 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300; GST not stated: taken as the price paid | [142] |
-| Indian marble counter | Standard | Indian marble counter, fabricated and fixed | Rs. 170–750 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300; GST not stated: taken as the price paid; read 04-10-2026 | [145] |
-| Kota stone counter, polished | Basic | Polished Kota stone kitchen platform, about 24 mm A 2025 page, as reported. | Rs. 28–45 a sq ft, material, 10% wastage; plus fixing a kota stone kitchen platform Rs. 50–80; GST not stated: taken as the price paid; read 04-10-2026 | [146] |
-| Compact laminate counter | Basic | Compact laminate counter (resin through its thickness), fitted The guide's Rs. 120–350 a sq ft for the board, plus its Rs. 150–400 for fabricating and fixing. | Rs. 270–750 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 10-10-2026 | [147] |
-| Quartz counter, Indian entry range | Basic | Indian quartz (engineered stone) counter, entry range Delhi prices, as reported. | Rs. 180–300 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300; GST not stated: taken as the price paid; read 04-10-2026 | [148] |
-| Black Galaxy granite counter | Standard | Black Galaxy granite counter, 15–20 mm | Rs. 230–450 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300; GST not stated: taken as the price paid; read 04-10-2026 | [149] |
-| Makrana white marble counter | Premium | White Makrana marble counter, fabricated and fixed Makrana white marble slabs on IndiaMART, Rs. 150 (16 mm) to 850 (premium, 18 mm) a sq ft; a few listings far outside left aside. Was Rs. 1,500–2,500 fitted, from a page that would not open. | Rs. 150–850 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300; GST not stated: taken as the price paid; read 10-10-2026 | [150] |
-| Nano white counter | Premium | Nano white slab counter, sold as nano white granite | Rs. 380–400 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300; GST not stated: taken as the price paid; read 04-10-2026 | [151] |
-| Imported quartz counter | Luxury | Imported quartz (engineered stone) counter Delhi prices, as reported. | Rs. 600–1,500 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300; GST not stated: taken as the price paid; read 04-10-2026 | [148] |
-| Stainless steel counter | Luxury | Stainless steel counter, fitted The guide's Rs. 500–1,500 a sq ft for the steel (its card says fabricated), plus its Rs. 150–400 for fabricating and fixing. | Rs. 650–1,900 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 10-10-2026 | [147] |
-| Premium quartz counter | Bespoke | Premium quartz (engineered stone) counter Delhi prices. | Rs. 600–1,500 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter Rs. 200–300; GST not stated: taken as the price paid; read 04-10-2026 | [148] |
+| Premium solid surface | Bespoke | Premium solid-surface counter (DuPont and high-end finishes) | ₹1,500–4,000 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter ₹200–300; GST not stated: taken as the price paid | [142] |
+| Indian marble counter | Standard | Indian marble counter, fabricated and fixed | ₹170–750 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter ₹200–300; GST not stated: taken as the price paid; read 04-10-2026 | [145] |
+| Kota stone counter, polished | Basic | Polished Kota stone kitchen platform, about 24 mm A 2025 page, as reported. | ₹28–45 a sq ft, material, 10% wastage; plus fixing a kota stone kitchen platform ₹50–80; GST not stated: taken as the price paid; read 04-10-2026 | [146] |
+| Compact laminate counter | Basic | Compact laminate counter (resin through its thickness), fitted The guide's Rs. 120–350 a sq ft for the board, plus its Rs. 150–400 for fabricating and fixing. | ₹270–750 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 10-10-2026 | [147] |
+| Quartz counter, Indian entry range | Basic | Indian quartz (engineered stone) counter, entry range Delhi prices, as reported. | ₹180–300 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter ₹200–300; GST not stated: taken as the price paid; read 04-10-2026 | [148] |
+| Black Galaxy granite counter | Standard | Black Galaxy granite counter, 15–20 mm | ₹230–450 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter ₹200–300; GST not stated: taken as the price paid; read 04-10-2026 | [149] |
+| Makrana white marble counter | Premium | White Makrana marble counter, fabricated and fixed Makrana white marble slabs on IndiaMART, Rs. 150 (16 mm) to 850 (premium, 18 mm) a sq ft; a few listings far outside left aside. Was Rs. 1,500–2,500 fitted, from a page that would not open. | ₹150–850 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter ₹200–300; GST not stated: taken as the price paid; read 10-10-2026 | [150] |
+| Nano white counter | Premium | Nano white slab counter, sold as nano white granite | ₹380–400 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter ₹200–300; GST not stated: taken as the price paid; read 04-10-2026 | [151] |
+| Imported quartz counter | Luxury | Imported quartz (engineered stone) counter Delhi prices, as reported. | ₹600–1,500 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter ₹200–300; GST not stated: taken as the price paid; read 04-10-2026 | [148] |
+| Stainless steel counter | Luxury | Stainless steel counter, fitted The guide's Rs. 500–1,500 a sq ft for the steel (its card says fabricated), plus its Rs. 150–400 for fabricating and fixing. | ₹650–1,900 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 10-10-2026 | [147] |
+| Premium quartz counter | Bespoke | Premium quartz (engineered stone) counter Delhi prices. | ₹600–1,500 a sq ft, material, 10% wastage; plus fabricating and fixing a stone or quartz counter ₹200–300; GST not stated: taken as the price paid; read 04-10-2026 | [148] |
 
 ### Kitchen sink (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Stainless steel sink, single bowl | Stainless steel single-bowl sink with waste coupling, fixed | Nirali, Anupam | Rs. 800–9,500 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid; read 04-10-2026 | [152] |
-| Standard | Stainless steel 304 sink | Grade 304 stainless steel sink, fixed | Glen, Franke | Rs. 5,836–20,796 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [153] |
-| Premium | Quartz sink | Quartz composite sink, fixed | Carysil | Rs. 5,500–13,500 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [154] |
-| Luxury | Granite double-bowl sink with drainboard | Granite composite double-bowl sink with a drainboard, fixed | Franke | Rs. 20,792–21,192 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [152] |
-| Bespoke | Premium quartz sink, 39 × 19.5 in | Premium large quartz sink, fixed | Nirali Granio | Rs. 31,314 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; incl. GST | [155] |
+| Basic | Stainless steel sink, single bowl | Stainless steel single-bowl sink with waste coupling, fixed | Nirali, Anupam | ₹800–9,500 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid; read 04-10-2026 | [152] |
+| Standard | Stainless steel 304 sink | Grade 304 stainless steel sink, fixed | Glen, Franke | ₹5,836–20,796 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [153] |
+| Premium | Quartz sink | Quartz composite sink, fixed | Carysil | ₹5,500–13,500 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [154] |
+| Luxury | Granite double-bowl sink with drainboard | Granite composite double-bowl sink with a drainboard, fixed | Franke | ₹20,792–21,192 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [152] |
+| Bespoke | Premium quartz sink, 39 × 19.5 in | Premium large quartz sink, fixed | Nirali Granio | ₹31,314 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; incl. GST | [155] |
 
 ### Sink mixer (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Sink cock or mixer | Sink cock or basic sink mixer, fixed |  | Rs. 200–3,000 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [156] |
-| Standard | Wall-mounted sink mixer | Wall-mounted sink mixer with a swinging spout, fixed |  | Rs. 5,745–8,075 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid; read 04-10-2026 | [157] |
-| Premium | Single-lever sink mixer (Jaquar) | Single-lever sink mixer, fixed | Jaquar | Rs. 5,700–6,500 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; incl. GST; read 04-10-2026 | [158] |
-| Luxury | Single-lever sink mixer (Jaquar) | Single-lever sink mixer, fixed | Jaquar | Rs. 5,700–6,500 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; incl. GST; read 04-10-2026 | [158] |
-| Bespoke | Single-lever sink mixer (Jaquar) | Single-lever sink mixer, fixed | Jaquar | Rs. 5,700–6,500 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; incl. GST; read 04-10-2026 | [158] |
+| Basic | Sink cock or mixer | Sink cock or basic sink mixer, fixed |  | ₹200–3,000 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [156] |
+| Standard | Wall-mounted sink mixer | Wall-mounted sink mixer with a swinging spout, fixed |  | ₹5,745–8,075 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid; read 04-10-2026 | [157] |
+| Premium | Single-lever sink mixer (Jaquar) | Single-lever sink mixer, fixed | Jaquar | ₹5,700–6,500 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; incl. GST; read 04-10-2026 | [158] |
+| Luxury | Single-lever sink mixer (Jaquar) | Single-lever sink mixer, fixed | Jaquar | ₹5,700–6,500 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; incl. GST; read 04-10-2026 | [158] |
+| Bespoke | Single-lever sink mixer (Jaquar) | Single-lever sink mixer, fixed | Jaquar | ₹5,700–6,500 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; incl. GST; read 04-10-2026 | [158] |
 
 ### Cabinet hardware upgrade (set)
 
@@ -592,7 +592,7 @@ Also in the library:
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
 | Luxury | None at this level | | | | |
-| Bespoke | Top-grade hardware throughout | Top-grade hinges, drawer systems and lift-ups throughout, extra over standard hardware | Blum | Rs. 40,000–1,00,000 a set; GST not stated: taken as the price paid | [159] |
+| Bespoke | Top-grade hardware throughout | Top-grade hinges, drawer systems and lift-ups throughout, extra over standard hardware | Blum | ₹40,000–1,00,000 a set; GST not stated: taken as the price paid | [159] |
 
 ### Cabinet hardware, piece by piece (each)
 
@@ -600,14 +600,14 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Soft-close hinge | Standard | Soft-close hinge IndiaMART's sellers list Hettich soft-close hinges at Rs. 135–450 a piece, one 8 × 16 inch and one full-overlay hinge dearer. WoodAge calls its bands illustrative, not quotes. | Rs. 180–450 a each; GST not stated: taken as the price paid | [159][160][161] |
-| Soft-close hinge, top grade | Luxury | Soft-close hinge Its page gives Rs. 620–940 a pair for Blum's Clip Top Blumotion, but calls its bands illustrative, not quotes. | Rs. 620–940 for a pair of 2 each; GST not stated: taken as the price paid; read 04-10-2026 | [159] |
-| Soft-close drawer channel, a pair (Hettich, Hafele) | Standard | Soft-close drawer channels | Rs. 700–2,500 a each; GST not stated: taken as the price paid | [162] |
-| Soft-close drawer channel, a pair (Blum) | Luxury | Soft-close drawer channels | Rs. 1,800–4,500 a each; GST not stated: taken as the price paid | [163] |
-| Tandem drawer system | Premium | Tandem or box drawer system Hettich InnoTech's 520 mm tandem box Rs. 5,876 a set on IndiaMART, inside WoodAge's illustrative bands: Hettich Rs. 2,500–6,000 and Häfele Rs. 3,500–8,000 a drawer set. Plain slim boxes sell from Rs. 690. | Rs. 2,500–8,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [159][164] |
-| Tandem drawer system, top grade | Bespoke | Tandem or box drawer system WoodAge calls its bands illustrative, not quotes. | Rs. 5,000–12,000 a each; GST not stated: taken as the price paid | [159] |
-| Lift-up fitting | Premium | Lift-up fitting for a wall unit WoodAge calls its bands illustrative, not quotes. | Rs. 1,500–6,000 a each; GST not stated: taken as the price paid | [159] |
-| Lift-up fitting, top grade | Bespoke | Lift-up fitting for a wall unit WoodAge calls its bands illustrative, not quotes. | Rs. 3,500–10,000 a each; GST not stated: taken as the price paid | [159] |
+| Soft-close hinge | Standard | Soft-close hinge IndiaMART's sellers list Hettich soft-close hinges at Rs. 135–450 a piece, one 8 × 16 inch and one full-overlay hinge dearer. WoodAge calls its bands illustrative, not quotes. | ₹180–450 a each; GST not stated: taken as the price paid | [159][160][161] |
+| Soft-close hinge, top grade | Luxury | Soft-close hinge Its page gives Rs. 620–940 a pair for Blum's Clip Top Blumotion, but calls its bands illustrative, not quotes. | ₹620–940 for a pair of 2 each; GST not stated: taken as the price paid; read 04-10-2026 | [159] |
+| Soft-close drawer channel, a pair (Hettich, Hafele) | Standard | Soft-close drawer channels | ₹700–2,500 a each; GST not stated: taken as the price paid | [162] |
+| Soft-close drawer channel, a pair (Blum) | Luxury | Soft-close drawer channels | ₹1,800–4,500 a each; GST not stated: taken as the price paid | [163] |
+| Tandem drawer system | Premium | Tandem or box drawer system Hettich InnoTech's 520 mm tandem box Rs. 5,876 a set on IndiaMART, inside WoodAge's illustrative bands: Hettich Rs. 2,500–6,000 and Häfele Rs. 3,500–8,000 a drawer set. Plain slim boxes sell from Rs. 690. | ₹2,500–8,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [159][164] |
+| Tandem drawer system, top grade | Bespoke | Tandem or box drawer system WoodAge calls its bands illustrative, not quotes. | ₹5,000–12,000 a each; GST not stated: taken as the price paid | [159] |
+| Lift-up fitting | Premium | Lift-up fitting for a wall unit WoodAge calls its bands illustrative, not quotes. | ₹1,500–6,000 a each; GST not stated: taken as the price paid | [159] |
+| Lift-up fitting, top grade | Bespoke | Lift-up fitting for a wall unit WoodAge calls its bands illustrative, not quotes. | ₹3,500–10,000 a each; GST not stated: taken as the price paid | [159] |
 
 ### Kitchen units, base or wall, priced apart (running ft)
 
@@ -615,8 +615,8 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Base unit, modular | — | Base cabinet unit: BWR plywood or PVC carcass, laminate shutters A Hyderabad rate, as reported; the source advises BWR plywood or PVC under the sink, for the damp. | Rs. 5,000–9,000 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [136] |
-| Wall unit, modular | — | Wall cabinet unit: BWR plywood carcass, laminate shutters A Hyderabad rate, as reported. | Rs. 4,000–7,500 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [136] |
+| Base unit, modular | — | Base cabinet unit: BWR plywood or PVC carcass, laminate shutters A Hyderabad rate, as reported; the source advises BWR plywood or PVC under the sink, for the damp. | ₹5,000–9,000 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [136] |
+| Wall unit, modular | — | Wall cabinet unit: BWR plywood carcass, laminate shutters A Hyderabad rate, as reported. | ₹4,000–7,500 a running ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [136] |
 
 ## Wardrobes and storage
 
@@ -630,11 +630,11 @@ Dated 02-10-2026; an item read on another day says so.
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Hinged wardrobe, laminate | Hinged wardrobe: plywood carcass, laminate shutters, standard hinges and handles | Ebco, Hettich | Rs. 1,300–1,800 a sq ft, supplied and fixed; plus GST | [133][166] |
-| Standard | Hinged wardrobe, BWP plywood | Hinged wardrobe: BWP plywood or HDHMR carcass, laminate shutters, soft-close hinges | Hettich, Hafele | Rs. 1,800–2,600 a sq ft, supplied and fixed; plus GST | [133] |
-| Premium | Sliding wardrobe | Sliding wardrobe: BWP plywood carcass, laminate or acrylic shutters, branded sliding gear | Hettich, Hafele | Rs. 2,200–3,200 a sq ft, supplied and fixed; plus GST | [133] |
-| Luxury | Floor-to-ceiling wardrobe, acrylic, PU or veneer | Floor-to-ceiling wardrobe: BWP plywood carcass, acrylic, PU or veneer shutters, premium hardware | Hafele, Blum | Rs. 2,600–4,500 a sq ft, supplied and fixed; plus GST | [133] |
-| Bespoke | Floor-to-ceiling sliding wardrobe, glass or acrylic | Floor-to-ceiling sliding wardrobe in glass or acrylic, with internal lights and premium hardware | Blum, Hafele | Rs. 3,200–5,500 a sq ft, supplied and fixed; plus GST | [133] |
+| Basic | Hinged wardrobe, laminate | Hinged wardrobe: plywood carcass, laminate shutters, standard hinges and handles | Ebco, Hettich | ₹1,300–1,800 a sq ft, supplied and fixed; plus GST | [133][166] |
+| Standard | Hinged wardrobe, BWP plywood | Hinged wardrobe: BWP plywood or HDHMR carcass, laminate shutters, soft-close hinges | Hettich, Hafele | ₹1,800–2,600 a sq ft, supplied and fixed; plus GST | [133] |
+| Premium | Sliding wardrobe | Sliding wardrobe: BWP plywood carcass, laminate or acrylic shutters, branded sliding gear | Hettich, Hafele | ₹2,200–3,200 a sq ft, supplied and fixed; plus GST | [133] |
+| Luxury | Floor-to-ceiling wardrobe, acrylic, PU or veneer | Floor-to-ceiling wardrobe: BWP plywood carcass, acrylic, PU or veneer shutters, premium hardware | Hafele, Blum | ₹2,600–4,500 a sq ft, supplied and fixed; plus GST | [133] |
+| Bespoke | Floor-to-ceiling sliding wardrobe, glass or acrylic | Floor-to-ceiling sliding wardrobe in glass or acrylic, with internal lights and premium hardware | Blum, Hafele | ₹3,200–5,500 a sq ft, supplied and fixed; plus GST | [133] |
 
 Choices at each level: Basic 3, Standard 3, Premium 3, Luxury 2, Bespoke 3.
 
@@ -642,23 +642,23 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Economy wardrobe, engineered wood or particle board | Basic | Wardrobe in engineered wood or particle board | Rs. 700–1,100 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [167] |
-| PVC wardrobe | Basic | Wardrobe (cupboard) in PVC board | Rs. 200–950 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [168] |
-| Wardrobe, BWR or BWP plywood and laminate | Standard | Wardrobe: BWR or BWP plywood carcass, laminate shutters | Rs. 1,200–1,700 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [167] |
-| Modular wardrobe, laminate finish | Standard | Modular wardrobe with matt or gloss laminate shutters StudioMatrx's 2026 band for a basic laminate wardrobe, Rs. 1,300–1,800 a sq ft of front plus GST (1,534–2,124 with it), sits inside HouseYog's Rs. 1,200–2,200. | Rs. 1,200–2,200 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [133] |
-| Modular wardrobe, acrylic finish | Premium | Modular wardrobe with acrylic shutters | Rs. 2,200–3,000 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [169] |
-| Wardrobe, acrylic, glass or veneer | Premium | Wardrobe with acrylic, glass or veneer shutters | Rs. 1,900–2,500 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [167] |
-| Modular wardrobe, PU finish | Luxury | Modular wardrobe with PU (polyurethane) shutters | Rs. 2,500–3,200 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [169] |
-| Walk-in wardrobe, custom carpentry | Bespoke | Walk-in wardrobe in custom carpentry Metro labour; the guide says GST is additional. | Rs. 3,200–8,000 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [133] |
-| Wardrobe in hardwood, or a walk-in, high end | Bespoke | High-end wardrobe in hardwood, or a walk-in | Rs. 2,000–3,500 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [170] |
+| Economy wardrobe, engineered wood or particle board | Basic | Wardrobe in engineered wood or particle board | ₹700–1,100 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [167] |
+| PVC wardrobe | Basic | Wardrobe (cupboard) in PVC board | ₹200–950 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [168] |
+| Wardrobe, BWR or BWP plywood and laminate | Standard | Wardrobe: BWR or BWP plywood carcass, laminate shutters | ₹1,200–1,700 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [167] |
+| Modular wardrobe, laminate finish | Standard | Modular wardrobe with matt or gloss laminate shutters StudioMatrx's 2026 band for a basic laminate wardrobe, Rs. 1,300–1,800 a sq ft of front plus GST (1,534–2,124 with it), sits inside HouseYog's Rs. 1,200–2,200. | ₹1,200–2,200 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [133] |
+| Modular wardrobe, acrylic finish | Premium | Modular wardrobe with acrylic shutters | ₹2,200–3,000 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [169] |
+| Wardrobe, acrylic, glass or veneer | Premium | Wardrobe with acrylic, glass or veneer shutters | ₹1,900–2,500 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [167] |
+| Modular wardrobe, PU finish | Luxury | Modular wardrobe with PU (polyurethane) shutters | ₹2,500–3,200 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [169] |
+| Walk-in wardrobe, custom carpentry | Bespoke | Walk-in wardrobe in custom carpentry Metro labour; the guide says GST is additional. | ₹3,200–8,000 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [133] |
+| Wardrobe in hardwood, or a walk-in, high end | Bespoke | High-end wardrobe in hardwood, or a walk-in | ₹2,000–3,500 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [170] |
 
 ### Loft above the wardrobe (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Loft units | Loft units above the wardrobe, matching shutters |  | Rs. 900 a sq ft, supplied and fixed; plus GST | [133] |
-| Standard | Loft units | Loft units above the wardrobe, matching shutters |  | Rs. 900 a sq ft, supplied and fixed; plus GST | [133] |
-| Premium | Loft units | Loft units above the wardrobe, matching shutters |  | Rs. 900 a sq ft, supplied and fixed; plus GST | [133] |
+| Basic | Loft units | Loft units above the wardrobe, matching shutters |  | ₹900 a sq ft, supplied and fixed; plus GST | [133] |
+| Standard | Loft units | Loft units above the wardrobe, matching shutters |  | ₹900 a sq ft, supplied and fixed; plus GST | [133] |
+| Premium | Loft units | Loft units above the wardrobe, matching shutters |  | ₹900 a sq ft, supplied and fixed; plus GST | [133] |
 | Luxury | None at this level | | | | |
 | Bespoke | None at this level | | | | |
 
@@ -670,11 +670,11 @@ Also in the library:
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Storage unit, laminate | Fixed storage unit: plywood carcass, laminate shutters (the wardrobes' board and finish at this level) |  | Rs. 1,300–1,800 a sq ft, supplied and fixed; plus GST | [133] our rule |
-| Standard | Storage unit, BWP plywood | Fixed storage unit: BWP plywood or HDHMR carcass, laminate shutters, soft-close hardware |  | Rs. 1,800–2,600 a sq ft, supplied and fixed; plus GST | [133] our rule |
-| Premium | Storage unit, acrylic | Fixed storage unit: BWP plywood carcass, acrylic shutters |  | Rs. 2,200–3,200 a sq ft, supplied and fixed; plus GST | [133] our rule |
-| Luxury | Storage unit, PU or veneer | Fixed storage unit: BWP plywood carcass, PU or veneer shutters, premium hardware |  | Rs. 2,600–4,500 a sq ft, supplied and fixed; plus GST | [133] our rule |
-| Bespoke | Storage unit, glass or lacquer | Fixed storage unit in glass or lacquer, with lights |  | Rs. 3,200–5,500 a sq ft, supplied and fixed; plus GST | [133] our rule |
+| Basic | Storage unit, laminate | Fixed storage unit: plywood carcass, laminate shutters (the wardrobes' board and finish at this level) |  | ₹1,300–1,800 a sq ft, supplied and fixed; plus GST | [133] our rule |
+| Standard | Storage unit, BWP plywood | Fixed storage unit: BWP plywood or HDHMR carcass, laminate shutters, soft-close hardware |  | ₹1,800–2,600 a sq ft, supplied and fixed; plus GST | [133] our rule |
+| Premium | Storage unit, acrylic | Fixed storage unit: BWP plywood carcass, acrylic shutters |  | ₹2,200–3,200 a sq ft, supplied and fixed; plus GST | [133] our rule |
+| Luxury | Storage unit, PU or veneer | Fixed storage unit: BWP plywood carcass, PU or veneer shutters, premium hardware |  | ₹2,600–4,500 a sq ft, supplied and fixed; plus GST | [133] our rule |
+| Bespoke | Storage unit, glass or lacquer | Fixed storage unit in glass or lacquer, with lights |  | ₹3,200–5,500 a sq ft, supplied and fixed; plus GST | [133] our rule |
 
 ### Shutter finishes (part of the rate above) (sq ft)
 
@@ -682,22 +682,22 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Laminate shutters | Basic | Laminate shutter finish, its share of a wardrobe's rate | Rs. 350–650 a sq ft, supplied and fixed; plus GST | [133] |
-| Membrane shutters | Standard | Membrane shutter finish | Rs. 500–850 a sq ft, supplied and fixed; plus GST | [167] |
-| Veneer shutters | Premium | Veneer shutter finish | Rs. 600–1,100 a sq ft, supplied and fixed; plus GST | [167] |
-| Glass or mirror shutters | Luxury | Glass or mirror shutter finish | Rs. 700–1,400 a sq ft, supplied and fixed; plus GST | [167] |
-| Acrylic shutters | Luxury | Acrylic shutter finish | Rs. 900–1,500 a sq ft, supplied and fixed; plus GST | [167] |
-| PU paint shutters | Bespoke | PU paint shutter finish | Rs. 1,000–1,800 a sq ft, supplied and fixed; plus GST | [167] |
+| Laminate shutters | Basic | Laminate shutter finish, its share of a wardrobe's rate | ₹350–650 a sq ft, supplied and fixed; plus GST | [133] |
+| Membrane shutters | Standard | Membrane shutter finish | ₹500–850 a sq ft, supplied and fixed; plus GST | [167] |
+| Veneer shutters | Premium | Veneer shutter finish | ₹600–1,100 a sq ft, supplied and fixed; plus GST | [167] |
+| Glass or mirror shutters | Luxury | Glass or mirror shutter finish | ₹700–1,400 a sq ft, supplied and fixed; plus GST | [167] |
+| Acrylic shutters | Luxury | Acrylic shutter finish | ₹900–1,500 a sq ft, supplied and fixed; plus GST | [167] |
+| PU paint shutters | Bespoke | PU paint shutter finish | ₹1,000–1,800 a sq ft, supplied and fixed; plus GST | [167] |
 
 ### Store rack (each, movable)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Slotted angle steel rack, 5 shelves | Slotted angle steel rack with five shelves about 18 in deep, bolted together |  | Rs. 2,200–3,500 a each; GST not stated: taken as the price paid | [171] |
-| Standard | Mild steel slotted angle rack, 7 ft | Mild steel slotted angle storage rack about 7 ft high and 900 mm long |  | Rs. 4,500 a each; GST not stated: taken as the price paid | [171] |
-| Premium | Stainless steel slotted angle rack, 6 ft, 5 shelves | Stainless steel slotted angle rack 6 ft high with five shelves |  | Rs. 7,950 a each; GST not stated: taken as the price paid | [171] |
-| Luxury | Stainless steel slotted angle rack, 6 ft, 5 shelves | Stainless steel slotted angle rack 6 ft high with five shelves |  | Rs. 7,950 a each; GST not stated: taken as the price paid | [171] |
-| Bespoke | Stainless steel slotted angle rack, 6 ft, 5 shelves | Stainless steel slotted angle rack 6 ft high with five shelves |  | Rs. 7,950 a each; GST not stated: taken as the price paid | [171] |
+| Basic | Slotted angle steel rack, 5 shelves | Slotted angle steel rack with five shelves about 18 in deep, bolted together |  | ₹2,200–3,500 a each; GST not stated: taken as the price paid | [171] |
+| Standard | Mild steel slotted angle rack, 7 ft | Mild steel slotted angle storage rack about 7 ft high and 900 mm long |  | ₹4,500 a each; GST not stated: taken as the price paid | [171] |
+| Premium | Stainless steel slotted angle rack, 6 ft, 5 shelves | Stainless steel slotted angle rack 6 ft high with five shelves |  | ₹7,950 a each; GST not stated: taken as the price paid | [171] |
+| Luxury | Stainless steel slotted angle rack, 6 ft, 5 shelves | Stainless steel slotted angle rack 6 ft high with five shelves |  | ₹7,950 a each; GST not stated: taken as the price paid | [171] |
+| Bespoke | Stainless steel slotted angle rack, 6 ft, 5 shelves | Stainless steel slotted angle rack 6 ft high with five shelves |  | ₹7,950 a each; GST not stated: taken as the price paid | [171] |
 
 ## Doors and windows
 
@@ -707,11 +707,11 @@ Dated 02-10-2026; an item read on another day says so.
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Laminated flush main door | Laminated flush main door with frame, lock and hardware, fixed |  | Rs. 8,000–18,000 a each; plus fitting a main door: frame, shutter and hardware Rs. 2,000–8,000; GST not stated: taken as the price paid | [172] |
-| Standard | Solid teak main door | Solid teak main door with frame and hardware, fixed |  | Rs. 35,000–2,00,000 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [172] |
-| Premium | Branded steel safety door | Branded steel safety door: frame, shutter, lock and installation | Godrej, Tata Pravesh | Rs. 15,000–60,000 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [172] |
-| Luxury | Designer main door | Designer main door package: shutter, frame, hardware and installation |  | Rs. 35,000–80,000 a each, supplied and fixed; GST not stated: taken as the price paid | [172] |
-| Bespoke | Bespoke solid teak main door | Bespoke solid teak main door, carved or pivot-hung, with frame and hardware |  | Rs. 35,000–2,00,000 a each, supplied and fixed; GST not stated: taken as the price paid | [172] |
+| Basic | Laminated flush main door | Laminated flush main door with frame, lock and hardware, fixed |  | ₹8,000–18,000 a each; plus fitting a main door: frame, shutter and hardware ₹2,000–8,000; GST not stated: taken as the price paid | [172] |
+| Standard | Solid teak main door | Solid teak main door with frame and hardware, fixed |  | ₹35,000–2,00,000 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [172] |
+| Premium | Branded steel safety door | Branded steel safety door: frame, shutter, lock and installation | Godrej, Tata Pravesh | ₹15,000–60,000 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [172] |
+| Luxury | Designer main door | Designer main door package: shutter, frame, hardware and installation |  | ₹35,000–80,000 a each, supplied and fixed; GST not stated: taken as the price paid | [172] |
+| Bespoke | Bespoke solid teak main door | Bespoke solid teak main door, carved or pivot-hung, with frame and hardware |  | ₹35,000–2,00,000 a each, supplied and fixed; GST not stated: taken as the price paid | [172] |
 
 Choices at each level: Basic 3, Standard 3, Premium 3, Luxury 3, Bespoke 3.
 
@@ -719,16 +719,16 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Flush main door | Basic | Flush main door, fixed | Rs. 4,000–12,000 a each; plus fitting a main door: frame, shutter and hardware Rs. 2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [172] |
-| Pressed steel door set | Basic | Pressed or galvanised steel door set, fixed The source prices a set; fitting is added at HouseYog's 2,000–8,000. | Rs. 8,000–25,000 a each; plus fitting a main door: frame, shutter and hardware Rs. 2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [173][172] |
-| Engineered wood main door | Standard | Engineered wood main door, fixed | Rs. 12,000–35,000 a each; plus fitting a main door: frame, shutter and hardware Rs. 2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [172] |
-| Steel door, plain finish | Standard | Steel door, plain finish (Oyester), fixed Sold as a door set; its page does not list what the set holds, so ask the seller about the frame and lock. | Rs. 25,600–26,800 a each; plus fitting a main door: frame, shutter and hardware Rs. 2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [174][172] |
-| Steel door, embossed wood finish | Premium | Steel door, embossed wood finish (Pearl), fixed Sold with two tower bolts, a lever lock and a peephole, as listed; the page does not say whether the frame is included. | Rs. 35,199–36,299 a each; plus fitting a main door: frame, shutter and hardware Rs. 2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [175][172] |
+| Flush main door | Basic | Flush main door, fixed | ₹4,000–12,000 a each; plus fitting a main door: frame, shutter and hardware ₹2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [172] |
+| Pressed steel door set | Basic | Pressed or galvanised steel door set, fixed The source prices a set; fitting is added at HouseYog's 2,000–8,000. | ₹8,000–25,000 a each; plus fitting a main door: frame, shutter and hardware ₹2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [173][172] |
+| Engineered wood main door | Standard | Engineered wood main door, fixed | ₹12,000–35,000 a each; plus fitting a main door: frame, shutter and hardware ₹2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [172] |
+| Steel door, plain finish | Standard | Steel door, plain finish (Oyester), fixed Sold as a door set; its page does not list what the set holds, so ask the seller about the frame and lock. | ₹25,600–26,800 a each; plus fitting a main door: frame, shutter and hardware ₹2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [174][172] |
+| Steel door, embossed wood finish | Premium | Steel door, embossed wood finish (Pearl), fixed Sold with two tower bolts, a lever lock and a peephole, as listed; the page does not say whether the frame is included. | ₹35,199–36,299 a each; plus fitting a main door: frame, shutter and hardware ₹2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [175][172] |
 | Carved Burma teak main door | Premium | Polished, carved Burma teak shutter, Burma teak frame and hardware, fixed Hardware is priced as a room door's; a main door's may cost more. | Carved Burma teak door shutter, polished + Burma teak door frame + Door hardware set, fixed by fitting a main door: frame, shutter and hardware | [176][177][178][172] |
-| Carved teak main door | Luxury | Carved teak main door, fixed 1,50,000 and more, as reported. | Rs. 25,000–1,50,000 a each; plus fitting a main door: frame, shutter and hardware Rs. 2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [179][172] |
-| Steel door, Natural Series | Luxury | Steel door, Natural Series (Reflection), fixed Sold as a door set; its page does not list what the set holds, so ask the seller about the frame and lock. | Rs. 45,100 a each; plus fitting a main door: frame, shutter and hardware Rs. 2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [180][172] |
-| Pivot main door | Bespoke | Pivot-hung main door: a flush veneer, fluted timber or metal-clad leaf on a concealed pivot, fixed 2,00,000 and more, as reported; the trends guide gives 40,000–1,50,000 and more, finished. | Rs. 40,000–2,00,000 a each; plus fitting a main door: frame, shutter and hardware Rs. 2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [179][181][172] |
-| Steel double door | Bespoke | Double-leaf steel door, for a wide opening, fixed Sold with tower bolts, a door stopper, hinges, a lock and a peephole, as listed; the page does not say whether the frame is included. | Rs. 69,450 a each; plus fitting a main door: frame, shutter and hardware Rs. 2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [182][172] |
+| Carved teak main door | Luxury | Carved teak main door, fixed 1,50,000 and more, as reported. | ₹25,000–1,50,000 a each; plus fitting a main door: frame, shutter and hardware ₹2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [179][172] |
+| Steel door, Natural Series | Luxury | Steel door, Natural Series (Reflection), fixed Sold as a door set; its page does not list what the set holds, so ask the seller about the frame and lock. | ₹45,100 a each; plus fitting a main door: frame, shutter and hardware ₹2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [180][172] |
+| Pivot main door | Bespoke | Pivot-hung main door: a flush veneer, fluted timber or metal-clad leaf on a concealed pivot, fixed 2,00,000 and more, as reported; the trends guide gives 40,000–1,50,000 and more, finished. | ₹40,000–2,00,000 a each; plus fitting a main door: frame, shutter and hardware ₹2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [179][181][172] |
+| Steel double door | Bespoke | Double-leaf steel door, for a wide opening, fixed Sold with tower bolts, a door stopper, hinges, a lock and a peephole, as listed; the page does not say whether the frame is included. | ₹69,450 a each; plus fitting a main door: frame, shutter and hardware ₹2,000–8,000; GST not stated: taken as the price paid; read 04-10-2026 | [182][172] |
 
 ### Digital lock on the main door (each)
 
@@ -736,16 +736,16 @@ Also in the library:
 |---|---|---|---|---|---|
 | Basic | None at this level | | | | |
 | Standard | None at this level | | | | |
-| Premium | Digital lock | Digital lock with PIN and card | Godrej | Rs. 10,000–25,000 a each; GST not stated: taken as the price paid | [183] |
-| Luxury | Digital lock with fingerprint | Digital lock with fingerprint, PIN and app | Yale | Rs. 18,000–25,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [183] |
-| Bespoke | Five-way digital lock | Five-way digital lock for the front door | Hafele | Rs. 57,819 a each; GST not stated: taken as the price paid | [184] |
+| Premium | Digital lock | Digital lock with PIN and card | Godrej | ₹10,000–25,000 a each; GST not stated: taken as the price paid | [183] |
+| Luxury | Digital lock with fingerprint | Digital lock with fingerprint, PIN and app | Yale | ₹18,000–25,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [183] |
+| Bespoke | Five-way digital lock | Five-way digital lock for the front door | Hafele | ₹57,819 a each; GST not stated: taken as the price paid | [184] |
 
 ### Room door (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Laminated flush door | Laminated flush door, fixed in the existing frame with hardware |  | Rs. 3,000–7,000 a each, supplied and fixed; GST not stated: taken as the price paid | [178] |
-| Standard | Laminated door with a hardwood frame | Flush door laminated both sides, hardwood frame, hinges, lock and handle, fitted |  | Rs. 7,000–8,000 a each, supplied and fixed; GST not stated: taken as the price paid | [178] |
+| Basic | Laminated flush door | Laminated flush door, fixed in the existing frame with hardware |  | ₹3,000–7,000 a each, supplied and fixed; GST not stated: taken as the price paid | [178] |
+| Standard | Laminated door with a hardwood frame | Flush door laminated both sides, hardwood frame, hinges, lock and handle, fitted |  | ₹7,000–8,000 a each, supplied and fixed; GST not stated: taken as the price paid | [178] |
 | Premium | Membrane door | Membrane-pressed door with a WPC frame, hinges, lock and handle, fitted |  | Membrane door shutter + WPC door frame, ready-made + Door hardware set, fixed by fitting a door: frame, shutter and hardware | [185][186][178] |
 | Luxury | Veneered door | Veneered and polished door with a WPC frame, hinges, lock and handle, fitted |  | Veneered door shutter, polished + WPC door frame, ready-made + Door hardware set, fixed by fitting a door: frame, shutter and hardware | [187][186][178] |
 | Bespoke | Veneered door with concealed hinges | Veneered and polished door on three concealed hinges, with a WPC frame, lock and handle, fitted |  | Veneered door shutter, polished + WPC door frame, ready-made + Door hardware set + 3 × Concealed hinge, fixed by fitting a door: frame, shutter and hardware | [187][188][178] |
@@ -756,16 +756,16 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Laminated flush door with a WPC frame | Basic | Laminated flush shutter, WPC frame and a lever privacy set, fitted The source's sum: shutter 2,000, WPC frame 2,000, lever privacy set 1,500, labour 1,000. | Rs. 6,500–8,000 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [189] |
-| WPC door, fully fitted | Basic | WPC door with its frame and hardware, fitted | Rs. 5,000–10,000 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [186] |
+| Laminated flush door with a WPC frame | Basic | Laminated flush shutter, WPC frame and a lever privacy set, fitted The source's sum: shutter 2,000, WPC frame 2,000, lever privacy set 1,500, labour 1,000. | ₹6,500–8,000 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [189] |
+| WPC door, fully fitted | Basic | WPC door with its frame and hardware, fitted | ₹5,000–10,000 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [186] |
 | BWP flush door with a WPC frame | Standard | BWP or laminated flush shutter, WPC frame, hinges, lock and handle, fitted | Flush door shutter, BWP or laminated + WPC door frame, ready-made + Door hardware set, fixed by fitting a door: frame, shutter and hardware | [178][186] |
 | Veneered door in the existing frame | Standard | Veneered and polished shutter with hinges, lock and handle, fitted to the existing frame | Veneered door shutter, polished + Door hardware set, fixed by fitting a door: frame, shutter and hardware | [187][178] |
-| Solid-core flush door with a sal or teak frame | Premium | Solid-core laminated flush shutter (BWR or BWP), sal or teak frame, mortise privacy set with seals, fitted The source's sum: shutter 4,500, frame 3,500, mortise set with seals 3,000, labour 1,500. | Rs. 12,000–14,000 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [189] |
+| Solid-core flush door with a sal or teak frame | Premium | Solid-core laminated flush shutter (BWR or BWP), sal or teak frame, mortise privacy set with seals, fitted The source's sum: shutter 4,500, frame 3,500, mortise set with seals 3,000, labour 1,500. | ₹12,000–14,000 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [189] |
 | Panel door with a WPC frame | Premium | Panel door shutter, WPC frame, hinges, lock and handle, fitted | Panel door shutter + WPC door frame, ready-made + Door hardware set, fixed by fitting a door: frame, shutter and hardware | [179][186][178] |
-| Designer veneer or fluted door with a CP teak frame | Luxury | Premium veneer or fluted designer shutter, CP teak frame and an acoustic seal set, fitted 24,000 and more, as reported. The source's sum: shutter 8,000, frame 5,000, acoustic seal set 6,000, labour 2,500. | Rs. 20,000–24,000 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [189] |
+| Designer veneer or fluted door with a CP teak frame | Luxury | Premium veneer or fluted designer shutter, CP teak frame and an acoustic seal set, fitted 24,000 and more, as reported. The source's sum: shutter 8,000, frame 5,000, acoustic seal set 6,000, labour 2,500. | ₹20,000–24,000 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [189] |
 | Solid wood door with a WPC frame | Luxury | Solid wood door shutter, WPC frame, hinges, lock and handle, fitted | Solid wood door shutter + WPC door frame, ready-made + Door hardware set, fixed by fitting a door: frame, shutter and hardware | [179][186][178] |
-| Concealed-frame door | Bespoke | Concealed-frame (invisible) door, flush with the wall, fitted 30,000 and more a door, as reported. | Rs. 12,000–30,000 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [181] |
-| Pocket sliding door | Bespoke | Pocket door: kit, leaf (WPC or solid core, IS 2202), soft-close track and a pull, fitted The source's parts: kit 6,000–15,000, leaf 2,000–6,000, track 2,500–7,000, pull and latch 800–3,000, labour 2,000–5,000; a designer pocket door 35,000–45,000. | Rs. 12,000–30,000 a each, supplied and fixed; plus GST; read 04-10-2026 | [190] |
+| Concealed-frame door | Bespoke | Concealed-frame (invisible) door, flush with the wall, fitted 30,000 and more a door, as reported. | ₹12,000–30,000 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [181] |
+| Pocket sliding door | Bespoke | Pocket door: kit, leaf (WPC or solid core, IS 2202), soft-close track and a pull, fitted The source's parts: kit 6,000–15,000, leaf 2,000–6,000, track 2,500–7,000, pull and latch 800–3,000, labour 2,000–5,000; a designer pocket door 35,000–45,000. | ₹12,000–30,000 a each, supplied and fixed; plus GST; read 04-10-2026 | [190] |
 
 ### Bathroom door (each)
 
@@ -777,11 +777,11 @@ Also in the library:
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Aluminium sliding window, domal section | Aluminium domal-section 2-track sliding window with glass, fixed |  | Rs. 450–650 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [191] |
-| Standard | uPVC sliding window | uPVC sliding window with glass, fixed |  | Rs. 450–1,200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [192] |
-| Premium | uPVC sliding window, premium brand | Premium-brand uPVC sliding window with toughened glass, fixed | Fenesta | Rs. 1,200–1,600 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [193] |
-| Luxury | uPVC window, double glazed | uPVC window with double-glazed units, fixed | Fenesta | Rs. 950–1,400 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [193] |
-| Bespoke | System aluminium window, double glazed | Certified system aluminium window with double glazing and branded hardware, fixed | Schüco, Tostem | Rs. 1,180–2,680 a sq ft, supplied and fixed; plus GST | [194] |
+| Basic | Aluminium sliding window, domal section | Aluminium domal-section 2-track sliding window with glass, fixed |  | ₹450–650 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [191] |
+| Standard | uPVC sliding window | uPVC sliding window with glass, fixed |  | ₹450–1,200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [192] |
+| Premium | uPVC sliding window, premium brand | Premium-brand uPVC sliding window with toughened glass, fixed | Fenesta | ₹1,200–1,600 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [193] |
+| Luxury | uPVC window, double glazed | uPVC window with double-glazed units, fixed | Fenesta | ₹950–1,400 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [193] |
+| Bespoke | System aluminium window, double glazed | Certified system aluminium window with double glazing and branded hardware, fixed | Schüco, Tostem | ₹1,180–2,680 a sq ft, supplied and fixed; plus GST | [194] |
 
 Choices at each level: Basic 3, Standard 3, Premium 3, Luxury 3, Bespoke 3.
 
@@ -789,26 +789,26 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Aluminium 2-track sliding window, premium 29 mm | Premium | Premium 29 mm aluminium 2-track sliding window | Rs. 1,200–1,400 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [195] |
-| System casement window | Bespoke | System aluminium casement window | Rs. 1,280–2,920 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [195] |
-| Aluminium 2-track sliding door | Premium | Aluminium 2-track sliding door to a balcony A 2-track French sliding door, as listed. | Rs. 1,850–2,250 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [195] |
-| Aluminium window, basic | Basic | Basic aluminium window, fixed The source says quotations usually include fabrication, supply and installation. | Rs. 300–550 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [196] |
-| Aluminium 2-track sliding window, 27 mm domal | Basic | 27 mm domal-section aluminium 2-track sliding window, 6 mm clear glass, standard powder coat, basic hardware, no mesh, fixed | Rs. 550–850 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [197] |
-| Powder-coated aluminium window | Standard | Powder-coated aluminium window, fixed The source says quotations usually include fabrication, supply and installation. | Rs. 450–950 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [196] |
-| Aluminium casement window | Standard | Top-hung aluminium casement window with glass and multipoint locking, without mesh, fixed WoodenMax gives one installed band, Rs. 750–1,050 a sq ft before GST, with glass, mesh and multipoint locks toward the top; its live rates for a top-hung casement without a mesh run Rs. 4,558 for 1.5 × 3 ft to 11,194 for 2.5 × 5 ft, about 1,013 to 896 a sq ft. Until 10-10-2026 the library took 750–850 as reported. Comaron's 2026 table gives casements Rs. 500–850 a sq ft with hardware and glass, and installation 100–230 more. | Rs. 750–1,050 a sq ft, supplied and fixed; plus GST; read 10-10-2026 | [198][199] |
-| Aluminium sliding system window | Luxury | Aluminium sliding system window, fixed 1,800 and more, as reported; quotations usually include fabrication, supply and installation. | Rs. 650–1,800 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [196] |
-| Slim aluminium window, luxury series | Luxury | Slim-profile aluminium window, luxury series, fixed | Rs. 900–1,500 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [200] |
-| Wooden window | Bespoke | Wooden window, fixed 3,000 and more, as reported; quotations usually include fabrication, supply and installation. | Rs. 1,000–3,000 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [196] |
+| Aluminium 2-track sliding window, premium 29 mm | Premium | Premium 29 mm aluminium 2-track sliding window | ₹1,200–1,400 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [195] |
+| System casement window | Bespoke | System aluminium casement window | ₹1,280–2,920 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [195] |
+| Aluminium 2-track sliding door | Premium | Aluminium 2-track sliding door to a balcony A 2-track French sliding door, as listed. | ₹1,850–2,250 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [195] |
+| Aluminium window, basic | Basic | Basic aluminium window, fixed The source says quotations usually include fabrication, supply and installation. | ₹300–550 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [196] |
+| Aluminium 2-track sliding window, 27 mm domal | Basic | 27 mm domal-section aluminium 2-track sliding window, 6 mm clear glass, standard powder coat, basic hardware, no mesh, fixed | ₹550–850 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [197] |
+| Powder-coated aluminium window | Standard | Powder-coated aluminium window, fixed The source says quotations usually include fabrication, supply and installation. | ₹450–950 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [196] |
+| Aluminium casement window | Standard | Top-hung aluminium casement window with glass and multipoint locking, without mesh, fixed WoodenMax gives one installed band, Rs. 750–1,050 a sq ft before GST, with glass, mesh and multipoint locks toward the top; its live rates for a top-hung casement without a mesh run Rs. 4,558 for 1.5 × 3 ft to 11,194 for 2.5 × 5 ft, about 1,013 to 896 a sq ft. Until 10-10-2026 the library took 750–850 as reported. Comaron's 2026 table gives casements Rs. 500–850 a sq ft with hardware and glass, and installation 100–230 more. | ₹750–1,050 a sq ft, supplied and fixed; plus GST; read 10-10-2026 | [198][199] |
+| Aluminium sliding system window | Luxury | Aluminium sliding system window, fixed 1,800 and more, as reported; quotations usually include fabrication, supply and installation. | ₹650–1,800 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [196] |
+| Slim aluminium window, luxury series | Luxury | Slim-profile aluminium window, luxury series, fixed | ₹900–1,500 a sq ft, supplied and fixed; plus GST; read 04-10-2026 | [200] |
+| Wooden window | Bespoke | Wooden window, fixed 3,000 and more, as reported; quotations usually include fabrication, supply and installation. | ₹1,000–3,000 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [196] |
 
 ### Mosquito mesh (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
 | Basic | None at this level | | | | |
-| Standard | Pleated mosquito mesh | Pleated mosquito mesh on the windows |  | Rs. 200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [201] |
-| Premium | Pleated mosquito mesh | Pleated mosquito mesh on the windows |  | Rs. 200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [201] |
-| Luxury | Pleated mosquito mesh | Pleated mosquito mesh on the windows |  | Rs. 200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [201] |
-| Bespoke | Pleated mosquito mesh | Pleated mosquito mesh on the windows |  | Rs. 200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [201] |
+| Standard | Pleated mosquito mesh | Pleated mosquito mesh on the windows |  | ₹200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [201] |
+| Premium | Pleated mosquito mesh | Pleated mosquito mesh on the windows |  | ₹200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [201] |
+| Luxury | Pleated mosquito mesh | Pleated mosquito mesh on the windows |  | ₹200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [201] |
+| Bespoke | Pleated mosquito mesh | Pleated mosquito mesh on the windows |  | ₹200 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [201] |
 
 ### Door shutters, frames and hardware, one by one (each)
 
@@ -816,22 +816,22 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Membrane door shutter | Premium | Membrane-pressed door shutter | Rs. 2,000–8,000 a each; GST not stated: taken as the price paid | [185] |
-| Veneered door shutter, polished | Luxury | Veneered and polished door shutter | Rs. 4,000–9,000 a each; GST not stated: taken as the price paid | [187] |
-| WPC door shutter | Standard | WPC door shutter | Rs. 2,000–4,500 a each; GST not stated: taken as the price paid | [186] |
-| Flush door shutter, MR grade | Basic | Commercial (MR) flush door shutter From Rs. 1,200, as reported. | Rs. 1,200 a each; GST not stated: taken as the price paid | [178] |
-| Flush door shutter, BWP or laminated | Standard | BWP or laminated flush door shutter | Rs. 2,000–4,000 a each; GST not stated: taken as the price paid | [178] |
-| WPC door frame, ready-made | Standard | Ready-made WPC door frame | Rs. 1,500–3,500 a each; GST not stated: taken as the price paid | [186] |
-| Door hardware set | Basic | Hinges, lock or latch, handle and stopper | Rs. 800–3,000 a each; GST not stated: taken as the price paid | [178] |
-| Concealed hinge | Bespoke | Concealed door hinge | Rs. 65–848 a each; GST not stated: taken as the price paid | [188] |
-| Panel door shutter | Premium | Panel door shutter | Rs. 4,000–12,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [179] |
-| Solid wood door shutter | Luxury | Solid wood door shutter 25,000 and more, as reported. | Rs. 10,000–25,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [179] |
-| Carved Burma teak door shutter, polished | Premium | Polished, carved Burma teak door shutter One Bengaluru listing's price a piece, for a carved door 81 × 39 in. | Rs. 13,499 a each; GST not stated: taken as the price paid; read 04-10-2026 | [202] |
-| Burma teak door frame | Premium | Burma teak door frame One price for sizes from 4 × 3 to 6 × 4 ft, as listed; a 7 ft door's frame may cost more. | Rs. 15,666 a each; GST not stated: taken as the price paid; read 04-10-2026 | [203] |
-| Pooja door, engineered wood or veneered panel | — | Engineered wood or veneered panel pooja door, made (fitting and hardware extra) | Rs. 6,000–18,000 a each; GST not stated: taken as the price paid | [204] |
-| Pooja door, carved solid wood | — | Carved solid sal, sheesham or mango pooja door, made (fitting and hardware extra) | Rs. 12,000–40,000 a each; GST not stated: taken as the price paid | [204] |
-| Pooja door, carved solid teak | — | Carved solid teak (Burma or CP) pooja door, made (fitting and hardware extra) Rs. 1,50,000 and more for a carved door, as reported. | Rs. 25,000–1,50,000 a each; GST not stated: taken as the price paid | [204] |
-| Pooja door hardware | — | Hinges, handles and fittings for a pooja door | Rs. 1,500–8,000 a each; GST not stated: taken as the price paid | [204] |
+| Membrane door shutter | Premium | Membrane-pressed door shutter | ₹2,000–8,000 a each; GST not stated: taken as the price paid | [185] |
+| Veneered door shutter, polished | Luxury | Veneered and polished door shutter | ₹4,000–9,000 a each; GST not stated: taken as the price paid | [187] |
+| WPC door shutter | Standard | WPC door shutter | ₹2,000–4,500 a each; GST not stated: taken as the price paid | [186] |
+| Flush door shutter, MR grade | Basic | Commercial (MR) flush door shutter From Rs. 1,200, as reported. | ₹1,200 a each; GST not stated: taken as the price paid | [178] |
+| Flush door shutter, BWP or laminated | Standard | BWP or laminated flush door shutter | ₹2,000–4,000 a each; GST not stated: taken as the price paid | [178] |
+| WPC door frame, ready-made | Standard | Ready-made WPC door frame | ₹1,500–3,500 a each; GST not stated: taken as the price paid | [186] |
+| Door hardware set | Basic | Hinges, lock or latch, handle and stopper | ₹800–3,000 a each; GST not stated: taken as the price paid | [178] |
+| Concealed hinge | Bespoke | Concealed door hinge | ₹65–848 a each; GST not stated: taken as the price paid | [188] |
+| Panel door shutter | Premium | Panel door shutter | ₹4,000–12,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [179] |
+| Solid wood door shutter | Luxury | Solid wood door shutter 25,000 and more, as reported. | ₹10,000–25,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [179] |
+| Carved Burma teak door shutter, polished | Premium | Polished, carved Burma teak door shutter One Bengaluru listing's price a piece, for a carved door 81 × 39 in. | ₹13,499 a each; GST not stated: taken as the price paid; read 04-10-2026 | [202] |
+| Burma teak door frame | Premium | Burma teak door frame One price for sizes from 4 × 3 to 6 × 4 ft, as listed; a 7 ft door's frame may cost more. | ₹15,666 a each; GST not stated: taken as the price paid; read 04-10-2026 | [203] |
+| Pooja door, engineered wood or veneered panel | — | Engineered wood or veneered panel pooja door, made (fitting and hardware extra) | ₹6,000–18,000 a each; GST not stated: taken as the price paid | [204] |
+| Pooja door, carved solid wood | — | Carved solid sal, sheesham or mango pooja door, made (fitting and hardware extra) | ₹12,000–40,000 a each; GST not stated: taken as the price paid | [204] |
+| Pooja door, carved solid teak | — | Carved solid teak (Burma or CP) pooja door, made (fitting and hardware extra) Rs. 1,50,000 and more for a carved door, as reported. | ₹25,000–1,50,000 a each; GST not stated: taken as the price paid | [204] |
+| Pooja door hardware | — | Hinges, handles and fittings for a pooja door | ₹1,500–8,000 a each; GST not stated: taken as the price paid | [204] |
 
 ### Grills (sq ft)
 
@@ -839,8 +839,8 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Invisible grill, SS 316 | Luxury | SS 316 invisible grill on a balcony or window | Rs. 130–250 a sq ft, material; plus installing an invisible grill Rs. 50–150; GST not stated: taken as the price paid | [205][201] |
-| MS grill, by weight | Basic | Mild steel window grill, priced by the kilogram | Rs. 95–150 a kg, supplied and fixed | [206] |
+| Invisible grill, SS 316 | Luxury | SS 316 invisible grill on a balcony or window | ₹130–250 a sq ft, material; plus installing an invisible grill ₹50–150; GST not stated: taken as the price paid | [205][201] |
+| MS grill, by weight | Basic | Mild steel window grill, priced by the kilogram | ₹95–150 a kg, supplied and fixed | [206] |
 
 ### Sills and frames, by the running foot (running ft)
 
@@ -848,20 +848,20 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Sal or teak door frame | Standard | Sal or teak wood door frame, per running foot | Rs. 350–900 a running ft; plus GST | [178] |
-| Granite window sill | Standard | Granite window sill, per running foot | Rs. 160–200 a running ft, supplied and fixed; GST not stated: taken as the price paid | [207] |
-| Marble window sill | Basic | Marble window sill, per running foot | Rs. 75–90 a running ft, supplied and fixed; GST not stated: taken as the price paid | [207] |
-| Granite door frame | Standard | Granite door frame, per running foot | Rs. 100–230 a running ft; GST not stated: taken as the price paid; read 04-10-2026 | [208] |
+| Sal or teak door frame | Standard | Sal or teak wood door frame, per running foot | ₹350–900 a running ft; plus GST | [178] |
+| Granite window sill | Standard | Granite window sill, per running foot | ₹160–200 a running ft, supplied and fixed; GST not stated: taken as the price paid | [207] |
+| Marble window sill | Basic | Marble window sill, per running foot | ₹75–90 a running ft, supplied and fixed; GST not stated: taken as the price paid | [207] |
+| Granite door frame | Standard | Granite door frame, per running foot | ₹100–230 a running ft; GST not stated: taken as the price paid; read 04-10-2026 | [208] |
 
 ### Railings (running ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | MS railing | Mild steel railing, painted |  | Rs. 250–600 a running ft, supplied and fixed; GST not stated: taken as the price paid | [209] |
-| Standard | SS 304 pipe railing | SS 304 pipe railing |  | Rs. 700–1,200 a running ft, supplied and fixed; GST not stated: taken as the price paid | [209] |
-| Premium | SS railing with glass on brackets | SS railing with glass panels on brackets |  | Rs. 900–1,600 a running ft, supplied and fixed; GST not stated: taken as the price paid | [209] |
-| Luxury | Frameless glass railing on spigots | Frameless glass railing on spigots |  | Rs. 1,400–2,500 a running ft, supplied and fixed; GST not stated: taken as the price paid | [209] |
-| Bespoke | Frameless staircase glass railing | Frameless staircase glass railing |  | Rs. 2,450–3,350 a running ft, supplied and fixed; plus GST | [210] |
+| Basic | MS railing | Mild steel railing, painted |  | ₹250–600 a running ft, supplied and fixed; GST not stated: taken as the price paid | [209] |
+| Standard | SS 304 pipe railing | SS 304 pipe railing |  | ₹700–1,200 a running ft, supplied and fixed; GST not stated: taken as the price paid | [209] |
+| Premium | SS railing with glass on brackets | SS railing with glass panels on brackets |  | ₹900–1,600 a running ft, supplied and fixed; GST not stated: taken as the price paid | [209] |
+| Luxury | Frameless glass railing on spigots | Frameless glass railing on spigots |  | ₹1,400–2,500 a running ft, supplied and fixed; GST not stated: taken as the price paid | [209] |
+| Bespoke | Frameless staircase glass railing | Frameless staircase glass railing |  | ₹2,450–3,350 a running ft, supplied and fixed; plus GST | [210] |
 
 Choices at each level: Basic 1, Standard 1, Premium 1, Luxury 2, Bespoke 2.
 
@@ -869,17 +869,17 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Glass railing in a channel | Luxury | Glass railing in a continuous channel | Rs. 1,200–2,200 a running ft, supplied and fixed; GST not stated: taken as the price paid | [209] |
-| Frameless balcony glass railing | Bespoke | Frameless balcony glass railing, 12 mm toughened or laminated glass | Rs. 1,850–2,850 a running ft, supplied and fixed; plus GST | [211] |
+| Glass railing in a channel | Luxury | Glass railing in a continuous channel | ₹1,200–2,200 a running ft, supplied and fixed; GST not stated: taken as the price paid | [209] |
+| Frameless balcony glass railing | Bespoke | Frameless balcony glass railing, 12 mm toughened or laminated glass | ₹1,850–2,850 a running ft, supplied and fixed; plus GST | [211] |
 
 ### Pooja room door (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Plywood pooja door, simple design | Plywood pooja room door of a simple design, fitted |  | Rs. 4,000–8,000 a each; plus fitting a door: frame, shutter and hardware Rs. 800–3,000; GST not stated: taken as the price paid | [212][178] |
+| Basic | Plywood pooja door, simple design | Plywood pooja room door of a simple design, fitted |  | ₹4,000–8,000 a each; plus fitting a door: frame, shutter and hardware ₹800–3,000; GST not stated: taken as the price paid | [212][178] |
 | Standard | Veneered pooja door, engineered wood | Engineered wood or veneered panel pooja room door with its hardware, fitted |  | Pooja door, engineered wood or veneered panel + Pooja door hardware, fixed by fitting a door: frame, shutter and hardware | [204][178] |
 | Premium | Carved solid wood pooja door (sal, sheesham or mango) | Carved solid sal, sheesham or mango pooja room door with its hardware, fitted |  | Pooja door, carved solid wood + Pooja door hardware, fixed by fitting a door: frame, shutter and hardware | [204][178] |
-| Luxury | Solid teak pooja door with brass fittings | Solid teak pooja room door with brass fittings, fitted |  | Rs. 30,000–80,000 a each; plus fitting a door: frame, shutter and hardware Rs. 800–3,000; GST not stated: taken as the price paid | [212][178] |
+| Luxury | Solid teak pooja door with brass fittings | Solid teak pooja room door with brass fittings, fitted |  | ₹30,000–80,000 a each; plus fitting a door: frame, shutter and hardware ₹800–3,000; GST not stated: taken as the price paid | [212][178] |
 | Bespoke | Carved solid teak pooja door | Carved solid teak (Burma or CP) pooja room door with its hardware, fitted |  | Pooja door, carved solid teak + Pooja door hardware, fixed by fitting a door: frame, shutter and hardware | [204][178] |
 
 Choices at each level: Basic 1, Standard 2, Premium 1, Luxury 1, Bespoke 1.
@@ -888,7 +888,7 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| CNC-carved pooja door, MDF or teak | Standard | CNC-carved MDF or teak pooja room door, fitted The source does not say whether fitting or hardware is in its price; fitting is added at the labour rate. | Rs. 10,000–25,000 a each; plus fitting a door: frame, shutter and hardware Rs. 800–3,000; GST not stated: taken as the price paid | [212][178] |
+| CNC-carved pooja door, MDF or teak | Standard | CNC-carved MDF or teak pooja room door, fitted The source does not say whether fitting or hardware is in its price; fitting is added at the labour rate. | ₹10,000–25,000 a each; plus fitting a door: frame, shutter and hardware ₹800–3,000; GST not stated: taken as the price paid | [212][178] |
 
 ## Electrical and lights
 
@@ -902,11 +902,11 @@ Dated 02-10-2026; an item read on another day says so.
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Concealed wiring, standard switches | One point: ISI copper wire in concealed conduit, with a standard modular switch or socket and plate | Anchor Roma, GM, Finolex | Rs. 900–1,400 a each, supplied and fixed; GST not stated: taken as the price paid | [214][213] |
-| Standard | Concealed wiring, branded wire and plates | One point: branded FR copper wire in concealed conduit, with branded modular switches and plates | Polycab, Havells, Legrand Mylinc, Schneider Livia | Rs. 1,400–2,200 a each, supplied and fixed; GST not stated: taken as the price paid | [214][213] |
-| Premium | Concealed wiring, premium switches | One point: branded FR copper wire, premium modular switches and plates, extra dedicated circuits | Legrand Arteor, Schneider Zencelo, Legrand Myrius | Rs. 2,300–3,800 a each, supplied and fixed; GST not stated: taken as the price paid | [214][213] |
-| Luxury | Concealed wiring, premium switches | One point: branded FR copper wire, premium modular switches and plates, extra dedicated circuits | Legrand Arteor, Schneider Zencelo, Legrand Myrius | Rs. 2,300–3,800 a each, supplied and fixed; GST not stated: taken as the price paid | [214][213] |
-| Bespoke | KNX wired automation | One point on a KNX wired automation system: lights, scenes, curtains and climate | Schneider KNX, ABB KNX, Lutron | Rs. 8,000–18,000 a each, supplied and fixed; GST not stated: taken as the price paid | [215] |
+| Basic | Concealed wiring, standard switches | One point: ISI copper wire in concealed conduit, with a standard modular switch or socket and plate | Anchor Roma, GM, Finolex | ₹900–1,400 a each, supplied and fixed; GST not stated: taken as the price paid | [214][213] |
+| Standard | Concealed wiring, branded wire and plates | One point: branded FR copper wire in concealed conduit, with branded modular switches and plates | Polycab, Havells, Legrand Mylinc, Schneider Livia | ₹1,400–2,200 a each, supplied and fixed; GST not stated: taken as the price paid | [214][213] |
+| Premium | Concealed wiring, premium switches | One point: branded FR copper wire, premium modular switches and plates, extra dedicated circuits | Legrand Arteor, Schneider Zencelo, Legrand Myrius | ₹2,300–3,800 a each, supplied and fixed; GST not stated: taken as the price paid | [214][213] |
+| Luxury | Concealed wiring, premium switches | One point: branded FR copper wire, premium modular switches and plates, extra dedicated circuits | Legrand Arteor, Schneider Zencelo, Legrand Myrius | ₹2,300–3,800 a each, supplied and fixed; GST not stated: taken as the price paid | [214][213] |
+| Bespoke | KNX wired automation | One point on a KNX wired automation system: lights, scenes, curtains and climate | Schneider KNX, ABB KNX, Lutron | ₹8,000–18,000 a each, supplied and fixed; GST not stated: taken as the price paid | [215] |
 
 Choices at each level: Basic 5, Standard 5, Premium 4, Luxury 4, Bespoke 3.
 
@@ -914,8 +914,8 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Concealed wiring, a local electrician's rate | Basic | One light or fan point, wired with material, at a local electrician's rate Light point 400–700, fan point 500–900, 16 A point 900–1,500, AC point 1,500–4,000, as reported; whether the switch and plate are included is not stated. | Rs. 400–900 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [216] |
-| Concealed wiring to CPWD's specification | Standard | One light point: 1.5 sq mm FRLS or HFFR copper wire in steel conduit, modular switch and plate, GI box, earthed (CPWD DSR 2025) Group A 1,440, B 1,684, C 2,101 a point, from the CPWD electrical schedule as quoted; the page does not name the city. | Rs. 1,440–2,101 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [217] |
+| Concealed wiring, a local electrician's rate | Basic | One light or fan point, wired with material, at a local electrician's rate Light point 400–700, fan point 500–900, 16 A point 900–1,500, AC point 1,500–4,000, as reported; whether the switch and plate are included is not stated. | ₹400–900 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [216] |
+| Concealed wiring to CPWD's specification | Standard | One light point: 1.5 sq mm FRLS or HFFR copper wire in steel conduit, modular switch and plate, GI box, earthed (CPWD DSR 2025) Group A 1,440, B 1,684, C 2,101 a point, from the CPWD electrical schedule as quoted; the page does not name the city. | ₹1,440–2,101 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [217] |
 | Wiring a point, Legrand Britzy switches | Basic | One point: 7 m each of 1.5 and 2.5 sq mm copper wire, 5 m of 20 mm PVC conduit, half a 4-module box, a Legrand Britzy 6A switch, half a 6A socket and half a 4-module plate, and the electrician's labour Quantities are our own rule from clyfthome's figures: 700 to 1,100 m of wire for a 2BHK of 50 to 75 points is about 14 m a point, split evenly between 1.5 and 2.5 sq mm; conduit is about a third of the wire, as a circuit's wires share one pipe. Half the points carry a 6A socket, which takes two modules (moglix's Arteor listing), so a light point and a socket point share one 4-module box and plate. Not included: the distribution board, the mains to it, earthing and a fan's regulator; a 16A or AC point is priced as a 6A one. Each switch, socket and plate runs from the seller's price to its MRP. | 7 × Copper house wire, 1.5 sq mm + 7 × Copper house wire, 2.5 sq mm + 5 × PVC conduit, 20 mm + Concealed metal box, 4 modules + Legrand Britzy 6A one-way switch + Legrand Britzy 6A 3-pin socket + Legrand Britzy 4-module plate, fixed by electrician's labour, wiring a point and fitting its switch | [216][218][219][220][221][213] our rule |
 | Wiring a point, Anchor Roma switches | Basic | One point: 7 m each of 1.5 and 2.5 sq mm copper wire, 5 m of 20 mm PVC conduit, half a 4-module box, an Anchor Roma 6A switch, half a 6A socket and half a Deko 4-module plate, and the electrician's labour Quantities are our own rule from clyfthome's figures: 700 to 1,100 m of wire for a 2BHK of 50 to 75 points is about 14 m a point, split evenly between 1.5 and 2.5 sq mm; conduit is about a third of the wire, as a circuit's wires share one pipe. Half the points carry a 6A socket, which takes two modules (moglix's Arteor listing), so a light point and a socket point share one 4-module box and plate. Not included: the distribution board, the mains to it, earthing and a fan's regulator; a 16A or AC point is priced as a 6A one. Each switch, socket and plate runs from the seller's price to its MRP. | 7 × Copper house wire, 1.5 sq mm + 7 × Copper house wire, 2.5 sq mm + 5 × PVC conduit, 20 mm + Concealed metal box, 4 modules + Anchor Roma 6A one-way switch + Anchor Roma 6A 3-pin socket + Anchor Roma Deko 4-module plate, fixed by electrician's labour, wiring a point and fitting its switch | [216][218][219][222][221][213] our rule |
 | Wiring a point, Anchor Roma switches with Tresa plates | Standard | One point: 7 m each of 1.5 and 2.5 sq mm copper wire, 5 m of 20 mm PVC conduit, half a 4-module box, an Anchor Roma 6A switch, half a 6A socket and half a Tresa 4-module plate, and the electrician's labour Quantities are our own rule from clyfthome's figures: 700 to 1,100 m of wire for a 2BHK of 50 to 75 points is about 14 m a point, split evenly between 1.5 and 2.5 sq mm; conduit is about a third of the wire, as a circuit's wires share one pipe. Half the points carry a 6A socket, which takes two modules (moglix's Arteor listing), so a light point and a socket point share one 4-module box and plate. Not included: the distribution board, the mains to it, earthing and a fan's regulator; a 16A or AC point is priced as a 6A one. Each switch, socket and plate runs from the seller's price to its MRP. | 7 × Copper house wire, 1.5 sq mm + 7 × Copper house wire, 2.5 sq mm + 5 × PVC conduit, 20 mm + Concealed metal box, 4 modules + Anchor Roma 6A one-way switch + Anchor Roma 6A 3-pin socket + Anchor Roma Tresa 4-module plate, fixed by electrician's labour, wiring a point and fitting its switch | [216][218][219][222][221][213] our rule |
@@ -941,9 +941,9 @@ Also in the library:
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | LED panel light | LED panel light, 15–18 W, fixed | Wipro Garnet, Philips, Syska | Rs. 300–790 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [250] |
-| Standard | COB LED downlight | COB LED downlight or spot, fixed |  | Rs. 405–650 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [251] |
-| Premium | COB swivel downlight | Premium COB swivel downlight, fixed | Polycab Pearl | Rs. 2,250–4,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST | [252] |
+| Basic | LED panel light | LED panel light, 15–18 W, fixed | Wipro Garnet, Philips, Syska | ₹300–790 a each; plus electrician, fixing a light, fan or fitting ₹25–70; GST not stated: taken as the price paid | [250] |
+| Standard | COB LED downlight | COB LED downlight or spot, fixed |  | ₹405–650 a each; plus electrician, fixing a light, fan or fitting ₹25–70; incl. GST; read 04-10-2026 | [251] |
+| Premium | COB swivel downlight | Premium COB swivel downlight, fixed | Polycab Pearl | ₹2,250–4,800 a each; plus electrician, fixing a light, fan or fitting ₹25–70; incl. GST | [252] |
 | Luxury | COB downlight with a metre of profile light | Premium COB downlight and one metre of LED profile light, fixed |  | COB swivel downlight + LED profile light, a metre | [252][253] |
 | Bespoke | COB downlight with a metre of profile light | Premium COB downlight and one metre of LED profile light, fixed |  | COB swivel downlight + LED profile light, a metre | [252][253] |
 
@@ -953,17 +953,17 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Magnetic track, a metre | Luxury | Magnetic track channel, one metre (spots extra) | Rs. 400–770 a each; incl. GST | [254] |
-| LED batten, 20 W | Basic | 20 W LED batten (tube light), fixed | Rs. 359 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [255] |
-| LED batten, three colour settings, 20 W | Basic | 20 W LED batten with three colour settings (3-in-1), fixed | Rs. 299–699 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [256] |
-| Recessed colour-changing panel, 10 W | Standard | 10 W recessed LED panel, 130 × 130 mm, colour-changing (CCT), fixed A pack of four, as its page's title and size say. | Rs. 1,799 for a pack of four of 4 each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 10-10-2026 | [257] |
-| Smart LED batten, tunable white, 20 W | Standard | 20 W Wi-Fi LED batten, tunable white, app and voice control, fixed Philips 749 (MRP 2,299) and Wipro 729 (MRP 2,480), as listed. | Rs. 729–2,480 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [258][259] |
-| Smart downlight, white ambiance (Philips Hue Garnea) | Premium | 7 W smart recessed downlight, white ambiance, fixed A Hue Bridge, for control of the whole house, is not priced. | Rs. 1,699–1,950 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [260] |
-| Smart LED batten, white and colour, 20 W | Premium | 20 W Wi-Fi LED batten, tunable white and RGB colour, fixed The 24 W was seen at 1,664–2,999. | Rs. 1,299–2,690 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [261] |
+| Magnetic track, a metre | Luxury | Magnetic track channel, one metre (spots extra) | ₹400–770 a each; incl. GST | [254] |
+| LED batten, 20 W | Basic | 20 W LED batten (tube light), fixed | ₹359 a each; plus electrician, fixing a light, fan or fitting ₹25–70; incl. GST; read 04-10-2026 | [255] |
+| LED batten, three colour settings, 20 W | Basic | 20 W LED batten with three colour settings (3-in-1), fixed | ₹299–699 a each; plus electrician, fixing a light, fan or fitting ₹25–70; incl. GST; read 04-10-2026 | [256] |
+| Recessed colour-changing panel, 10 W | Standard | 10 W recessed LED panel, 130 × 130 mm, colour-changing (CCT), fixed A pack of four, as its page's title and size say. | ₹1,799 for a pack of four of 4 each; plus electrician, fixing a light, fan or fitting ₹25–70; incl. GST; read 10-10-2026 | [257] |
+| Smart LED batten, tunable white, 20 W | Standard | 20 W Wi-Fi LED batten, tunable white, app and voice control, fixed Philips 749 (MRP 2,299) and Wipro 729 (MRP 2,480), as listed. | ₹729–2,480 a each; plus electrician, fixing a light, fan or fitting ₹25–70; incl. GST; read 04-10-2026 | [258][259] |
+| Smart downlight, white ambiance (Philips Hue Garnea) | Premium | 7 W smart recessed downlight, white ambiance, fixed A Hue Bridge, for control of the whole house, is not priced. | ₹1,699–1,950 a each; plus electrician, fixing a light, fan or fitting ₹25–70; incl. GST; read 04-10-2026 | [260] |
+| Smart LED batten, white and colour, 20 W | Premium | 20 W Wi-Fi LED batten, tunable white and RGB colour, fixed The 24 W was seen at 1,664–2,999. | ₹1,299–2,690 a each; plus electrician, fixing a light, fan or fitting ₹25–70; incl. GST; read 04-10-2026 | [261] |
 | COB downlight with two metres of profile light | Luxury | Premium COB downlight and two metres of LED profile light, fixed | COB swivel downlight + 2 × LED profile light, a metre | [252][253] |
-| Smart recessed spotlight, white and colour (Philips Hue Centura) | Bespoke | Smart round recessed spotlight, white and colour ambiance, fixed A pack of one; the Hue Bridge is sold separately. | Rs. 13,482 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [262] |
-| Smart ceiling light, 52 W (Philips Hue Semeru) | Bespoke | 52 W smart ceiling light, white ambiance, fixed A Hue Bridge, for control of the whole house, is not priced. | Rs. 37,490 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [263] |
-| Smart bathroom ceiling light, 40 W (Philips Hue Adore) | Bespoke | 40 W smart bathroom ceiling light, white ambiance, fixed A Hue Bridge, for control of the whole house, is not priced. | Rs. 18,436–28,990 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 04-10-2026 | [264] |
+| Smart recessed spotlight, white and colour (Philips Hue Centura) | Bespoke | Smart round recessed spotlight, white and colour ambiance, fixed A pack of one; the Hue Bridge is sold separately. | ₹13,482 a each; plus electrician, fixing a light, fan or fitting ₹25–70; incl. GST; read 04-10-2026 | [262] |
+| Smart ceiling light, 52 W (Philips Hue Semeru) | Bespoke | 52 W smart ceiling light, white ambiance, fixed A Hue Bridge, for control of the whole house, is not priced. | ₹37,490 a each; plus electrician, fixing a light, fan or fitting ₹25–70; incl. GST; read 04-10-2026 | [263] |
+| Smart bathroom ceiling light, 40 W (Philips Hue Adore) | Bespoke | 40 W smart bathroom ceiling light, white ambiance, fixed A Hue Bridge, for control of the whole house, is not priced. | ₹18,436–28,990 a each; plus electrician, fixing a light, fan or fitting ₹25–70; incl. GST; read 04-10-2026 | [264] |
 
 ### Chandelier (each)
 
@@ -973,27 +973,27 @@ Also in the library:
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
 | Luxury | None at this level | | | | |
-| Bespoke | Decorative LED chandelier | Decorative LED chandelier over the dining table, fixed |  | Rs. 9,700–76,100 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [265] |
+| Bespoke | Decorative LED chandelier | Decorative LED chandelier over the dining table, fixed |  | ₹9,700–76,100 a each; plus electrician, fixing a light, fan or fitting ₹25–70; GST not stated: taken as the price paid | [265] |
 
 ### Ceiling fans (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Ceiling fan, 1200 mm | 1200 mm ceiling fan, fixed | Crompton, Usha, Orient | Rs. 1,180–2,500 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid; read 10-10-2026 | [266][267] |
-| Standard | BLDC fan with remote | 1200 mm energy-saving BLDC fan with remote, fixed | Orient Zeno, Havells Ambrose, Atomberg Renesa | Rs. 2,498–3,499 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid; read 04-10-2026 | [268] |
-| Premium | Premium BLDC fan | Premium BLDC fan with remote and app, fixed | Atomberg | Rs. 3,500–10,500 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [269] |
-| Luxury | Designer fan | Designer ceiling fan, fixed | Polycab Superia | Rs. 8,999–15,999 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; incl. GST; read 10-10-2026 | [270] |
-| Bespoke | Premium designer fan | Premium designer ceiling fan, fixed |  | Rs. 23,900–24,000 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid; read 10-10-2026 | [270][271] |
+| Basic | Ceiling fan, 1200 mm | 1200 mm ceiling fan, fixed | Crompton, Usha, Orient | ₹1,180–2,500 a each; plus electrician, fixing a light, fan or fitting ₹25–70; GST not stated: taken as the price paid; read 10-10-2026 | [266][267] |
+| Standard | BLDC fan with remote | 1200 mm energy-saving BLDC fan with remote, fixed | Orient Zeno, Havells Ambrose, Atomberg Renesa | ₹2,498–3,499 a each; plus electrician, fixing a light, fan or fitting ₹25–70; GST not stated: taken as the price paid; read 04-10-2026 | [268] |
+| Premium | Premium BLDC fan | Premium BLDC fan with remote and app, fixed | Atomberg | ₹3,500–10,500 a each; plus electrician, fixing a light, fan or fitting ₹25–70; GST not stated: taken as the price paid | [269] |
+| Luxury | Designer fan | Designer ceiling fan, fixed | Polycab Superia | ₹8,999–15,999 a each; plus electrician, fixing a light, fan or fitting ₹25–70; incl. GST; read 10-10-2026 | [270] |
+| Bespoke | Premium designer fan | Premium designer ceiling fan, fixed |  | ₹23,900–24,000 a each; plus electrician, fixing a light, fan or fitting ₹25–70; GST not stated: taken as the price paid; read 10-10-2026 | [270][271] |
 
 ### Exhaust fans (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Exhaust fan, 150 mm | 150 mm exhaust fan, fixed | Usha Technix | Rs. 700–1,000 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [272] |
-| Standard | Exhaust fan, 150 mm, copper winding | 150 mm exhaust fan with copper winding, fixed | Crompton Ventair | Rs. 1,000–1,500 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [272] |
-| Premium | Exhaust fan, 150 mm, premium | 150 mm exhaust fan, 110 CFM, copper winding, fixed | Havells VentilAir DX | Rs. 1,200–1,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [272][273] |
-| Luxury | Exhaust fan, 150 mm, premium | 150 mm exhaust fan, 110 CFM, copper winding, fixed | Havells VentilAir DX | Rs. 1,200–1,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [272][273] |
-| Bespoke | Exhaust fan, 150 mm, premium | 150 mm exhaust fan, 110 CFM, copper winding, fixed | Havells VentilAir DX | Rs. 1,200–1,800 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [272][273] |
+| Basic | Exhaust fan, 150 mm | 150 mm exhaust fan, fixed | Usha Technix | ₹700–1,000 a each; plus electrician, fixing a light, fan or fitting ₹25–70; GST not stated: taken as the price paid | [272] |
+| Standard | Exhaust fan, 150 mm, copper winding | 150 mm exhaust fan with copper winding, fixed | Crompton Ventair | ₹1,000–1,500 a each; plus electrician, fixing a light, fan or fitting ₹25–70; GST not stated: taken as the price paid | [272] |
+| Premium | Exhaust fan, 150 mm, premium | 150 mm exhaust fan, 110 CFM, copper winding, fixed | Havells VentilAir DX | ₹1,200–1,800 a each; plus electrician, fixing a light, fan or fitting ₹25–70; GST not stated: taken as the price paid | [272][273] |
+| Luxury | Exhaust fan, 150 mm, premium | 150 mm exhaust fan, 110 CFM, copper winding, fixed | Havells VentilAir DX | ₹1,200–1,800 a each; plus electrician, fixing a light, fan or fitting ₹25–70; GST not stated: taken as the price paid | [272][273] |
+| Bespoke | Exhaust fan, 150 mm, premium | 150 mm exhaust fan, 110 CFM, copper winding, fixed | Havells VentilAir DX | ₹1,200–1,800 a each; plus electrician, fixing a light, fan or fitting ₹25–70; GST not stated: taken as the price paid | [272][273] |
 
 ### Electrical parts, one by one (each)
 
@@ -1001,57 +1001,57 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| 12-way double-door distribution board | — | 12-way double-door SPN distribution board | Rs. 1,931–3,372 a each; incl. GST; read 04-10-2026 | [274] |
-| Single-pole MCB | — | Single-pole MCB | Rs. 109–259 a each; GST not stated: taken as the price paid | [248] |
-| 4-pole RCCB, 63 A, 30 mA | — | 4-pole RCCB, 63 A, 30 mA Havells, ABB and Legrand selling prices, as listed. | Rs. 3,931–5,027 a each; GST not stated: taken as the price paid; read 04-10-2026 | [249] |
-| LED profile light, a metre | — | LED profile light, one metre | Rs. 100–1,000 a each; GST not stated: taken as the price paid | [253] |
-| Earthing pit, GI pipe | — | GI pipe earthing pit | Rs. 3,000–4,500 a each, supplied and fixed; GST not stated: taken as the price paid | [275] |
-| Earthing pit, copper plate | — | Copper plate earthing pit | Rs. 6,000–9,000 a each, supplied and fixed; GST not stated: taken as the price paid | [275] |
-| Modular switch, budget range | Basic | Modular switch, budget range | Rs. 25–50 a each; GST not stated: taken as the price paid | [276] |
-| Modular switch, mid range (per module) | Standard | Modular switch, mid range, per module | Rs. 200–400 a each; GST not stated: taken as the price paid | [276] |
-| Modular switch, premium range (per module) | Luxury | Modular switch, premium range, per module | Rs. 400–1,000 a each; GST not stated: taken as the price paid | [276] |
-| Switch plate, 4 modules | — | 4-module switchboard plate | Rs. 300–700 a each; GST not stated: taken as the price paid | [276] |
-| Copper house wire, 1.5 sq mm | — | Copper house wire, 1.5 sq mm, by the metre The page's range a metre; it names no make or grade. | Rs. 25–40 a m; GST not stated: taken as the price paid; read 05-10-2026 | [216] |
-| Copper house wire, 2.5 sq mm | — | Copper house wire, 2.5 sq mm, by the metre The page's range a metre; it names no make or grade. | Rs. 40–60 a m; GST not stated: taken as the price paid; read 05-10-2026 | [216] |
-| PVC conduit, 20 mm | — | PVC conduit pipe, 20 mm, in 3 m lengths One seller's price for a 3 m pipe; the gauge is not stated. | Rs. 100 for a 3 m pipe of 3 m; GST not stated: taken as the price paid; read 05-10-2026 | [218] |
-| Concealed metal box, 4 modules | — | Galvanised iron concealed box for a 4-module plate One seller's listed price; no MRP shown. | Rs. 109 a each; GST not stated: taken as the price paid; read 05-10-2026 | [219] |
-| Legrand Britzy 6A one-way switch | — | Legrand Britzy 673401, 6A one-way white switch The page's price and its MRP. | Rs. 30–56 a each; incl. GST; read 05-10-2026 | [220] |
-| Legrand Britzy 6A 3-pin socket | — | Legrand Britzy 673427, 6A 3-pin white socket The page's price and its MRP. | Rs. 92–168 a each; incl. GST; read 05-10-2026 | [220] |
-| Legrand Britzy 4-module plate | — | Legrand Britzy 673494, 4-module white cover plate with frame The page's price and its MRP. | Rs. 105–190 a each; incl. GST; read 05-10-2026 | [220] |
-| Anchor Roma 6A one-way switch | — | Anchor Roma 21011, 6A one-way switch The page's price and its MRP. | Rs. 62–80 a each; incl. GST; read 05-10-2026 | [222] |
-| Anchor Roma 6A 3-pin socket | — | Anchor Roma 21102, 6A 3-pin socket The page's price and its MRP. | Rs. 145–188 a each; incl. GST; read 05-10-2026 | [222] |
-| Anchor Roma Deko 4-module plate | — | Anchor Roma Deko 21339WH, 4-module white cover plate with frame The page's price and its MRP. | Rs. 125–162 a each; incl. GST; read 05-10-2026 | [222] |
-| Anchor Roma Tresa 4-module plate | — | Anchor Roma Tresa 30249WH, 4-module white cover plate with frame The page's price and its MRP. | Rs. 187–243 a each; incl. GST; read 05-10-2026 | [222] |
-| Legrand Mylinc 6A one-way switch | — | Legrand Mylinc 675501, 6A one-way switch The page's price and its MRP. | Rs. 63–114 a each; incl. GST; read 05-10-2026 | [223] |
-| Legrand Mylinc 6A 3-pin socket | — | Legrand Mylinc 675551, 6A 3-pin white socket The page's price and its MRP. | Rs. 180–328 a each; incl. GST; read 05-10-2026 | [223] |
-| Legrand Mylinc 4-module plate | — | Legrand Mylinc 675564, 4-module white cover plate with frame The page's price and its MRP. | Rs. 167–304 a each; incl. GST; read 05-10-2026 | [223] |
-| Legrand Myrius Nextgen 6A switch | — | Legrand Myrius Nextgen 679200, 6A white switch The page's price and its MRP. | Rs. 95–166 a each; incl. GST; read 05-10-2026 | [224] |
-| Legrand Myrius Nextgen 6A socket | — | Legrand Myrius Nextgen 679235, 6A white socket The page's price and its MRP. | Rs. 169–296 a each; incl. GST; read 05-10-2026 | [224] |
-| Legrand Myrius Nextgen 4-module plate | — | Legrand Myrius Nextgen 679524, 4-module ice white cover plate with frame The page's price and its MRP. | Rs. 257–450 a each; incl. GST; read 05-10-2026 | [224] |
-| Legrand Myrius 6A one-way switch | — | Legrand Myrius 673000, 6A one-way white switch The page's price and its MRP. | Rs. 99–180 a each; incl. GST; read 05-10-2026 | [224] |
-| Legrand Myrius 6A socket with shutter | — | Legrand Myrius 673186, 6A white socket with safety shutter The page's price and its MRP. | Rs. 166–302 a each; incl. GST; read 05-10-2026 | [224] |
-| Legrand Myrius 4-module plate | — | Legrand Myrius 673204, 4-module white cover plate with frame The page's price and its MRP. | Rs. 207–376 a each; incl. GST; read 05-10-2026 | [224] |
-| Legrand Arteor 6A one-way switch | — | Legrand Arteor 573400, 6A one-way white switch The page's price and its MRP. | Rs. 112–238 a each; incl. GST; read 05-10-2026 | [225] |
-| Legrand Arteor 6A 3-pin socket | — | Legrand Arteor 573424, 6A 3-pin white socket The page's price and its MRP. | Rs. 190–380 a each; incl. GST; read 05-10-2026 | [225] |
-| Legrand Arteor 4-module plate | — | Legrand Arteor 575730, 4-module white cover plate with frame The page's price and its MRP. | Rs. 218–436 a each; incl. GST; read 05-10-2026 | [225] |
-| Havells Reo Elegant 6A one-way switch | — | Havells Reo Elegant AHRSXXW061, 6A one-way white switch The page's price and its MRP. | Rs. 22–39 a each; incl. GST; read 10-10-2026 | [226] |
-| Havells Reo Elegant 6A 3-pin socket | — | Havells Reo Elegant AHRKPXW063, 6A 3-pin white socket The page's price and its MRP. | Rs. 69–114 a each; incl. GST; read 10-10-2026 | [227] |
-| Havells Reo Elegant 4-module plate | — | Havells Reo Elegant AHRPLCWV04, 4-module white glossy cover plate The page's price and its MRP. | Rs. 83–133 a each; incl. GST; read 10-10-2026 | [228] |
-| Schneider Livia 10A one-way switch | — | Schneider Livia P1001, 10A one-way white switch The page's price and its MRP. | Rs. 89–162 a each; incl. GST; read 10-10-2026 | [229] |
-| Schneider Livia 6A 3-pin socket | — | Schneider Livia P2005NS, 6A 3-pin 2-module white socket with shutter The page's price and its MRP. | Rs. 186–309 a each; incl. GST; read 10-10-2026 | [230] |
-| Schneider Livia 4-module frame | — | Schneider Livia P0704, 4-module white grid and cover frame The page's price and its MRP. | Rs. 147–265 a each; incl. GST; read 10-10-2026 | [231] |
-| Schneider Zencelo 6A one-way switch | — | Schneider Zencelo IN8401(BZ), 6A one-way bronze full-flat switch with an on-indicator Moglix's price to Industrybuying's, a pack of 10 at Rs. 6,910 divided out. | Rs. 229–691 a each; incl. GST; read 10-10-2026 | [232][233] |
-| Schneider Zencelo 6A 3-pin socket | — | Schneider Zencelo IN8426UNS_BZ, 6A 3-pin 2-module bronze socket with shutter The page's price and its MRP. | Rs. 549–992 a each; incl. GST; read 10-10-2026 | [234] |
-| Schneider Zencelo 4-module frame | — | Schneider Zencelo IN8404C(BZ), 4-module dark grey grid and cover frame The page's price and its MRP, for a pack of 10. | Rs. 3,040–7,730 for a pack of 10 each; incl. GST; read 10-10-2026 | [235] |
-| Crabtree Murano 10A one-way switch | — | Crabtree Murano ACMSXXW101, 10A one-way white switch The page's price and its MRP, for a pack of 20. | Rs. 2,359–2,800 for a pack of 20 each; incl. GST; read 10-10-2026 | [236] |
-| Crabtree Murano 6A 3-pin socket | — | Crabtree Murano ACMKPXW063, 6A 3-pin white shuttered socket The page's price and its MRP, for a pack of 10. | Rs. 2,309–2,750 for a pack of 10 each; incl. GST; read 10-10-2026 | [237] |
-| Crabtree Murano 4-module plate | — | Crabtree Murano ACMPLCWV04, 4-module pearl white combined plate The page's price and its MRP, for a pack of 5. | Rs. 1,799–2,145 for a pack of 5 each; incl. GST; read 10-10-2026 | [238] |
-| Schneider Unica Pure 6A one-way switch | — | Schneider Unica Pure UNS61SW1M_GY, 6A one-way volcanic grey switch Moglix's price to Industrybuying's, a pack of 20 at Rs. 5,781 divided out. | Rs. 183–289.05 a each; incl. GST; read 10-10-2026 | [239][240] |
-| Schneider Unica Pure 6A 3-pin socket | — | Schneider Unica Pure UNS6SK3P2MNS_GY, 6A 3-pin 2-module grey socket with shutter The page's price and its MRP. | Rs. 339–590 a each; incl. GST; read 10-10-2026 | [241] |
-| Schneider Unica Pure 4-module frame | — | Schneider Unica Pure UNSCP4M_GY, 4-module volcanic grey cover frame Moglix's price to Industrybuying's MRP, a pack of 14 at Rs. 8,386 divided out. | Rs. 329–599 a each; incl. GST; read 10-10-2026 | [242][243] |
-| Schneider Unica Pure 4-module aluminium plate | — | Schneider Unica Pure UNPCP4M_ML, 4-module aluminium alloy pewter grey cover plate The page's price and its MRP. | Rs. 1,883–3,954 a each; incl. GST; read 10-10-2026 | [244] |
-| Crabtree Murano 4-channel touch switch | — | Crabtree Murano ACMSEIW064, 4-channel touch and IR controlled white switch The page's price and its MRP. | Rs. 4,069–4,834 a each; incl. GST; read 10-10-2026 | [245] |
-| Crabtree Murano 4-module glass plate | — | Crabtree Murano ACMPGCWV04, 4-module arctic white Glassique combined plate The page's price and its MRP, for a pack of 5. | Rs. 6,119–7,280 for a pack of 5 each; incl. GST; read 10-10-2026 | [246] |
+| 12-way double-door distribution board | — | 12-way double-door SPN distribution board | ₹1,931–3,372 a each; incl. GST; read 04-10-2026 | [274] |
+| Single-pole MCB | — | Single-pole MCB | ₹109–259 a each; GST not stated: taken as the price paid | [248] |
+| 4-pole RCCB, 63 A, 30 mA | — | 4-pole RCCB, 63 A, 30 mA Havells, ABB and Legrand selling prices, as listed. | ₹3,931–5,027 a each; GST not stated: taken as the price paid; read 04-10-2026 | [249] |
+| LED profile light, a metre | — | LED profile light, one metre | ₹100–1,000 a each; GST not stated: taken as the price paid | [253] |
+| Earthing pit, GI pipe | — | GI pipe earthing pit | ₹3,000–4,500 a each, supplied and fixed; GST not stated: taken as the price paid | [275] |
+| Earthing pit, copper plate | — | Copper plate earthing pit | ₹6,000–9,000 a each, supplied and fixed; GST not stated: taken as the price paid | [275] |
+| Modular switch, budget range | Basic | Modular switch, budget range | ₹25–50 a each; GST not stated: taken as the price paid | [276] |
+| Modular switch, mid range (per module) | Standard | Modular switch, mid range, per module | ₹200–400 a each; GST not stated: taken as the price paid | [276] |
+| Modular switch, premium range (per module) | Luxury | Modular switch, premium range, per module | ₹400–1,000 a each; GST not stated: taken as the price paid | [276] |
+| Switch plate, 4 modules | — | 4-module switchboard plate | ₹300–700 a each; GST not stated: taken as the price paid | [276] |
+| Copper house wire, 1.5 sq mm | — | Copper house wire, 1.5 sq mm, by the metre The page's range a metre; it names no make or grade. | ₹25–40 a m; GST not stated: taken as the price paid; read 05-10-2026 | [216] |
+| Copper house wire, 2.5 sq mm | — | Copper house wire, 2.5 sq mm, by the metre The page's range a metre; it names no make or grade. | ₹40–60 a m; GST not stated: taken as the price paid; read 05-10-2026 | [216] |
+| PVC conduit, 20 mm | — | PVC conduit pipe, 20 mm, in 3 m lengths One seller's price for a 3 m pipe; the gauge is not stated. | ₹100 for a 3 m pipe of 3 m; GST not stated: taken as the price paid; read 05-10-2026 | [218] |
+| Concealed metal box, 4 modules | — | Galvanised iron concealed box for a 4-module plate One seller's listed price; no MRP shown. | ₹109 a each; GST not stated: taken as the price paid; read 05-10-2026 | [219] |
+| Legrand Britzy 6A one-way switch | — | Legrand Britzy 673401, 6A one-way white switch The page's price and its MRP. | ₹30–56 a each; incl. GST; read 05-10-2026 | [220] |
+| Legrand Britzy 6A 3-pin socket | — | Legrand Britzy 673427, 6A 3-pin white socket The page's price and its MRP. | ₹92–168 a each; incl. GST; read 05-10-2026 | [220] |
+| Legrand Britzy 4-module plate | — | Legrand Britzy 673494, 4-module white cover plate with frame The page's price and its MRP. | ₹105–190 a each; incl. GST; read 05-10-2026 | [220] |
+| Anchor Roma 6A one-way switch | — | Anchor Roma 21011, 6A one-way switch The page's price and its MRP. | ₹62–80 a each; incl. GST; read 05-10-2026 | [222] |
+| Anchor Roma 6A 3-pin socket | — | Anchor Roma 21102, 6A 3-pin socket The page's price and its MRP. | ₹145–188 a each; incl. GST; read 05-10-2026 | [222] |
+| Anchor Roma Deko 4-module plate | — | Anchor Roma Deko 21339WH, 4-module white cover plate with frame The page's price and its MRP. | ₹125–162 a each; incl. GST; read 05-10-2026 | [222] |
+| Anchor Roma Tresa 4-module plate | — | Anchor Roma Tresa 30249WH, 4-module white cover plate with frame The page's price and its MRP. | ₹187–243 a each; incl. GST; read 05-10-2026 | [222] |
+| Legrand Mylinc 6A one-way switch | — | Legrand Mylinc 675501, 6A one-way switch The page's price and its MRP. | ₹63–114 a each; incl. GST; read 05-10-2026 | [223] |
+| Legrand Mylinc 6A 3-pin socket | — | Legrand Mylinc 675551, 6A 3-pin white socket The page's price and its MRP. | ₹180–328 a each; incl. GST; read 05-10-2026 | [223] |
+| Legrand Mylinc 4-module plate | — | Legrand Mylinc 675564, 4-module white cover plate with frame The page's price and its MRP. | ₹167–304 a each; incl. GST; read 05-10-2026 | [223] |
+| Legrand Myrius Nextgen 6A switch | — | Legrand Myrius Nextgen 679200, 6A white switch The page's price and its MRP. | ₹95–166 a each; incl. GST; read 05-10-2026 | [224] |
+| Legrand Myrius Nextgen 6A socket | — | Legrand Myrius Nextgen 679235, 6A white socket The page's price and its MRP. | ₹169–296 a each; incl. GST; read 05-10-2026 | [224] |
+| Legrand Myrius Nextgen 4-module plate | — | Legrand Myrius Nextgen 679524, 4-module ice white cover plate with frame The page's price and its MRP. | ₹257–450 a each; incl. GST; read 05-10-2026 | [224] |
+| Legrand Myrius 6A one-way switch | — | Legrand Myrius 673000, 6A one-way white switch The page's price and its MRP. | ₹99–180 a each; incl. GST; read 05-10-2026 | [224] |
+| Legrand Myrius 6A socket with shutter | — | Legrand Myrius 673186, 6A white socket with safety shutter The page's price and its MRP. | ₹166–302 a each; incl. GST; read 05-10-2026 | [224] |
+| Legrand Myrius 4-module plate | — | Legrand Myrius 673204, 4-module white cover plate with frame The page's price and its MRP. | ₹207–376 a each; incl. GST; read 05-10-2026 | [224] |
+| Legrand Arteor 6A one-way switch | — | Legrand Arteor 573400, 6A one-way white switch The page's price and its MRP. | ₹112–238 a each; incl. GST; read 05-10-2026 | [225] |
+| Legrand Arteor 6A 3-pin socket | — | Legrand Arteor 573424, 6A 3-pin white socket The page's price and its MRP. | ₹190–380 a each; incl. GST; read 05-10-2026 | [225] |
+| Legrand Arteor 4-module plate | — | Legrand Arteor 575730, 4-module white cover plate with frame The page's price and its MRP. | ₹218–436 a each; incl. GST; read 05-10-2026 | [225] |
+| Havells Reo Elegant 6A one-way switch | — | Havells Reo Elegant AHRSXXW061, 6A one-way white switch The page's price and its MRP. | ₹22–39 a each; incl. GST; read 10-10-2026 | [226] |
+| Havells Reo Elegant 6A 3-pin socket | — | Havells Reo Elegant AHRKPXW063, 6A 3-pin white socket The page's price and its MRP. | ₹69–114 a each; incl. GST; read 10-10-2026 | [227] |
+| Havells Reo Elegant 4-module plate | — | Havells Reo Elegant AHRPLCWV04, 4-module white glossy cover plate The page's price and its MRP. | ₹83–133 a each; incl. GST; read 10-10-2026 | [228] |
+| Schneider Livia 10A one-way switch | — | Schneider Livia P1001, 10A one-way white switch The page's price and its MRP. | ₹89–162 a each; incl. GST; read 10-10-2026 | [229] |
+| Schneider Livia 6A 3-pin socket | — | Schneider Livia P2005NS, 6A 3-pin 2-module white socket with shutter The page's price and its MRP. | ₹186–309 a each; incl. GST; read 10-10-2026 | [230] |
+| Schneider Livia 4-module frame | — | Schneider Livia P0704, 4-module white grid and cover frame The page's price and its MRP. | ₹147–265 a each; incl. GST; read 10-10-2026 | [231] |
+| Schneider Zencelo 6A one-way switch | — | Schneider Zencelo IN8401(BZ), 6A one-way bronze full-flat switch with an on-indicator Moglix's price to Industrybuying's, a pack of 10 at Rs. 6,910 divided out. | ₹229–691 a each; incl. GST; read 10-10-2026 | [232][233] |
+| Schneider Zencelo 6A 3-pin socket | — | Schneider Zencelo IN8426UNS_BZ, 6A 3-pin 2-module bronze socket with shutter The page's price and its MRP. | ₹549–992 a each; incl. GST; read 10-10-2026 | [234] |
+| Schneider Zencelo 4-module frame | — | Schneider Zencelo IN8404C(BZ), 4-module dark grey grid and cover frame The page's price and its MRP, for a pack of 10. | ₹3,040–7,730 for a pack of 10 each; incl. GST; read 10-10-2026 | [235] |
+| Crabtree Murano 10A one-way switch | — | Crabtree Murano ACMSXXW101, 10A one-way white switch The page's price and its MRP, for a pack of 20. | ₹2,359–2,800 for a pack of 20 each; incl. GST; read 10-10-2026 | [236] |
+| Crabtree Murano 6A 3-pin socket | — | Crabtree Murano ACMKPXW063, 6A 3-pin white shuttered socket The page's price and its MRP, for a pack of 10. | ₹2,309–2,750 for a pack of 10 each; incl. GST; read 10-10-2026 | [237] |
+| Crabtree Murano 4-module plate | — | Crabtree Murano ACMPLCWV04, 4-module pearl white combined plate The page's price and its MRP, for a pack of 5. | ₹1,799–2,145 for a pack of 5 each; incl. GST; read 10-10-2026 | [238] |
+| Schneider Unica Pure 6A one-way switch | — | Schneider Unica Pure UNS61SW1M_GY, 6A one-way volcanic grey switch Moglix's price to Industrybuying's, a pack of 20 at Rs. 5,781 divided out. | ₹183–289.05 a each; incl. GST; read 10-10-2026 | [239][240] |
+| Schneider Unica Pure 6A 3-pin socket | — | Schneider Unica Pure UNS6SK3P2MNS_GY, 6A 3-pin 2-module grey socket with shutter The page's price and its MRP. | ₹339–590 a each; incl. GST; read 10-10-2026 | [241] |
+| Schneider Unica Pure 4-module frame | — | Schneider Unica Pure UNSCP4M_GY, 4-module volcanic grey cover frame Moglix's price to Industrybuying's MRP, a pack of 14 at Rs. 8,386 divided out. | ₹329–599 a each; incl. GST; read 10-10-2026 | [242][243] |
+| Schneider Unica Pure 4-module aluminium plate | — | Schneider Unica Pure UNPCP4M_ML, 4-module aluminium alloy pewter grey cover plate The page's price and its MRP. | ₹1,883–3,954 a each; incl. GST; read 10-10-2026 | [244] |
+| Crabtree Murano 4-channel touch switch | — | Crabtree Murano ACMSEIW064, 4-channel touch and IR controlled white switch The page's price and its MRP. | ₹4,069–4,834 a each; incl. GST; read 10-10-2026 | [245] |
+| Crabtree Murano 4-module glass plate | — | Crabtree Murano ACMPGCWV04, 4-module arctic white Glassique combined plate The page's price and its MRP, for a pack of 5. | ₹6,119–7,280 for a pack of 5 each; incl. GST; read 10-10-2026 | [246] |
 
 ## Plumbing
 
@@ -1061,13 +1061,13 @@ Dated 02-10-2026; an item read on another day says so.
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Water supply point | One water point: concealed CPVC pipes and fittings to the outlet, tested, with labour | Astral, Ashirvad, Supreme | Rs. 1,200–3,500 a each, supplied and fixed; GST not stated: taken as the price paid | [277] |
+| Every level | Water supply point | One water point: concealed CPVC pipes and fittings to the outlet, tested, with labour | Astral, Ashirvad, Supreme | ₹1,200–3,500 a each, supplied and fixed; GST not stated: taken as the price paid | [277] |
 
 ### Drainage points (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Drainage point | One drainage point: UPVC/SWR pipes and fittings to the stack, with labour | Supreme, Prince, Finolex | Rs. 700–2,600 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [277] |
+| Every level | Drainage point | One drainage point: UPVC/SWR pipes and fittings to the stack, with labour | Supreme, Prince, Finolex | ₹700–2,600 a each, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [277] |
 
 ### Pipes and labour, one by one (each)
 
@@ -1075,20 +1075,20 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| CPVC pipe, 15 mm, a metre | — | CPVC pipe ½ in | Rs. 70–130 a m; GST not stated: taken as the price paid | [277] |
-| CPVC pipe, 20–25 mm, a metre | — | CPVC pipe ¾–1 in | Rs. 120–230 a m; GST not stated: taken as the price paid | [277] |
-| SWR pipe, 110 mm, a metre | — | SWR drainage pipe 110 mm, in 3 m lengths | Rs. 490 for a pipe of 3 m; read 04-10-2026 | [278] |
-| Plumber, a day | — | Skilled plumber, one day of 8–10 hours | Rs. 500–2,200 a each, supplied and fixed; read 04-10-2026 | [279] |
+| CPVC pipe, 15 mm, a metre | — | CPVC pipe ½ in | ₹70–130 a m; GST not stated: taken as the price paid | [277] |
+| CPVC pipe, 20–25 mm, a metre | — | CPVC pipe ¾–1 in | ₹120–230 a m; GST not stated: taken as the price paid | [277] |
+| SWR pipe, 110 mm, a metre | — | SWR drainage pipe 110 mm, in 3 m lengths | ₹490 for a pipe of 3 m; read 04-10-2026 | [278] |
+| Plumber, a day | — | Skilled plumber, one day of 8–10 hours | ₹500–2,200 a each, supplied and fixed; read 04-10-2026 | [279] |
 
 ### Two-way tap for the washing machine (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Two-way brass bib cock, chrome (Plantex) | Brass two-way bib cock with a wall flange, for a washing machine and a bucket, fixed | Plantex | Rs. 1,403 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; incl. GST | [280] |
-| Standard | Two-way bib cock with a wall flange, chrome (Essco DLX-CHR-512ANKN) | Two-way bib cock with a wall flange and two outlets, chrome, fixed | Essco by Jaquar | Rs. 1,935–2,150 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [281] |
-| Premium | Two-way bib cock with a wall flange, brass, chrome (Hindware Fluid F400003CP) | Brass two-way bib cock with a wall flange, chrome, fixed | Hindware | Rs. 2,151–2,850 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [282] |
-| Luxury | Two-way bib cock with a wall flange, brass, chrome (Hindware Starc F530004CP) | Brass two-way bib cock with a wall flange, chrome, fixed | Hindware | Rs. 2,548–2,850 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [282] |
-| Bespoke | Two-way bib cock with a wall flange, brass, chrome (Hindware Starc F530004CP) | Brass two-way bib cock with a wall flange, chrome, fixed | Hindware | Rs. 2,548–2,850 a each; plus fixing a sanitary fixture or fitting (plumber) Rs. 360–600; GST not stated: taken as the price paid | [282] |
+| Basic | Two-way brass bib cock, chrome (Plantex) | Brass two-way bib cock with a wall flange, for a washing machine and a bucket, fixed | Plantex | ₹1,403 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; incl. GST | [280] |
+| Standard | Two-way bib cock with a wall flange, chrome (Essco DLX-CHR-512ANKN) | Two-way bib cock with a wall flange and two outlets, chrome, fixed | Essco by Jaquar | ₹1,935–2,150 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [281] |
+| Premium | Two-way bib cock with a wall flange, brass, chrome (Hindware Fluid F400003CP) | Brass two-way bib cock with a wall flange, chrome, fixed | Hindware | ₹2,151–2,850 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [282] |
+| Luxury | Two-way bib cock with a wall flange, brass, chrome (Hindware Starc F530004CP) | Brass two-way bib cock with a wall flange, chrome, fixed | Hindware | ₹2,548–2,850 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [282] |
+| Bespoke | Two-way bib cock with a wall flange, brass, chrome (Hindware Starc F530004CP) | Brass two-way bib cock with a wall flange, chrome, fixed | Hindware | ₹2,548–2,850 a each; plus fixing a sanitary fixture or fitting (plumber) ₹360–600; GST not stated: taken as the price paid | [282] |
 
 ## Appliances
 
@@ -1098,21 +1098,21 @@ Dated 02-10-2026; an item read on another day says so.
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Auto-clean chimney, 60 cm | 60 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Glen, Elica | Rs. 11,000–18,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [283] |
-| Standard | Auto-clean chimney, 60 cm | 60 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Glen, Elica | Rs. 11,000–18,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [283] |
-| Premium | Auto-clean chimney, 90 cm | 90 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Elica | Rs. 18,000–30,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [283] |
-| Luxury | Auto-clean chimney, 90 cm | 90 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Elica | Rs. 18,000–30,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [283] |
-| Bespoke | Auto-clean chimney, 90 cm | 90 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Elica | Rs. 18,000–30,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [283] |
+| Basic | Auto-clean chimney, 60 cm | 60 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Glen, Elica | ₹11,000–18,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [283] |
+| Standard | Auto-clean chimney, 60 cm | 60 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Glen, Elica | ₹11,000–18,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [283] |
+| Premium | Auto-clean chimney, 90 cm | 90 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Elica | ₹18,000–30,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [283] |
+| Luxury | Auto-clean chimney, 90 cm | 90 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Elica | ₹18,000–30,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [283] |
+| Bespoke | Auto-clean chimney, 90 cm | 90 cm filterless auto-clean chimney, fixed with its duct | Kaff, Faber, Elica | ₹18,000–30,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [283] |
 
 ### Built-in hob (each, appliance)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
 | Basic | None at this level | | | | |
-| Standard | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | Rs. 13,000–33,000 a each; incl. GST | [284] |
-| Premium | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | Rs. 13,000–33,000 a each; incl. GST | [284] |
-| Luxury | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | Rs. 13,000–33,000 a each; incl. GST | [284] |
-| Bespoke | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | Rs. 13,000–33,000 a each; incl. GST | [284] |
+| Standard | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | ₹13,000–33,000 a each; incl. GST | [284] |
+| Premium | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | ₹13,000–33,000 a each; incl. GST | [284] |
+| Luxury | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | ₹13,000–33,000 a each; incl. GST | [284] |
+| Bespoke | Built-in hob | Built-in gas hob, fixed in the counter | IFB, Faber, Elica | ₹13,000–33,000 a each; incl. GST | [284] |
 
 ### Built-in oven (each, appliance)
 
@@ -1121,8 +1121,8 @@ Dated 02-10-2026; an item read on another day says so.
 | Basic | None at this level | | | | |
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
-| Luxury | Built-in oven | Built-in electric oven in a tall unit | Faber, IFB, Kaff | Rs. 27,257–79,667 a each; incl. GST | [285] |
-| Bespoke | Premium built-in oven | Premium high-capacity built-in oven | Bosch, Siemens, Hafele | Rs. 38,363–1,12,990 a each; incl. GST; read 04-10-2026 | [285] |
+| Luxury | Built-in oven | Built-in electric oven in a tall unit | Faber, IFB, Kaff | ₹27,257–79,667 a each; incl. GST | [285] |
+| Bespoke | Premium built-in oven | Premium high-capacity built-in oven | Bosch, Siemens, Hafele | ₹38,363–1,12,990 a each; incl. GST; read 04-10-2026 | [285] |
 
 ### Dishwasher (each, appliance)
 
@@ -1131,18 +1131,18 @@ Dated 02-10-2026; an item read on another day says so.
 | Basic | None at this level | | | | |
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
-| Luxury | Dishwasher | Dishwasher, connected | Bosch, IFB, LG | Rs. 18,490–54,990 a each; GST not stated: taken as the price paid; read 04-10-2026 | [286] |
-| Bespoke | Dishwasher | Dishwasher, connected | Bosch, IFB, LG | Rs. 18,490–54,990 a each; GST not stated: taken as the price paid; read 04-10-2026 | [286] |
+| Luxury | Dishwasher | Dishwasher, connected | Bosch, IFB, LG | ₹18,490–54,990 a each; GST not stated: taken as the price paid; read 04-10-2026 | [286] |
+| Bespoke | Dishwasher | Dishwasher, connected | Bosch, IFB, LG | ₹18,490–54,990 a each; GST not stated: taken as the price paid; read 04-10-2026 | [286] |
 
 ### Water purifier (each, appliance)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
 | Basic | None at this level | | | | |
-| Standard | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | Rs. 10,000–22,000 a each; GST not stated: taken as the price paid | [287] |
-| Premium | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | Rs. 10,000–22,000 a each; GST not stated: taken as the price paid | [287] |
-| Luxury | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | Rs. 10,000–22,000 a each; GST not stated: taken as the price paid | [287] |
-| Bespoke | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | Rs. 10,000–22,000 a each; GST not stated: taken as the price paid | [287] |
+| Standard | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | ₹10,000–22,000 a each; GST not stated: taken as the price paid | [287] |
+| Premium | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | ₹10,000–22,000 a each; GST not stated: taken as the price paid | [287] |
+| Luxury | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | ₹10,000–22,000 a each; GST not stated: taken as the price paid | [287] |
+| Bespoke | RO water purifier | RO and UV water purifier, wall-mounted and connected | Kent, Aquaguard, A. O. Smith | ₹10,000–22,000 a each; GST not stated: taken as the price paid | [287] |
 
 ### Air conditioners (each, appliance)
 
@@ -1150,9 +1150,9 @@ Dated 02-10-2026; an item read on another day says so.
 |---|---|---|---|---|---|
 | Basic | None at this level | | | | |
 | Standard | None at this level | | | | |
-| Premium | Split AC, 1.5 ton, 5-star inverter | 1.5-ton 5-star inverter split AC, installed with 3 m of copper pipe | Voltas, Daikin, Godrej, LG | Rs. 31,290–51,663 a each; plus installing a split ac with up to 3 m of pipe Rs. 1,500–3,500; GST not stated: taken as the price paid | [288][289] |
-| Luxury | Split AC, 1.5 ton, 5-star inverter | 1.5-ton 5-star inverter split AC, installed with 3 m of copper pipe | Voltas, Daikin, Godrej, LG | Rs. 31,290–51,663 a each; plus installing a split ac with up to 3 m of pipe Rs. 1,500–3,500; GST not stated: taken as the price paid | [288][289] |
-| Bespoke | Split AC, 1.5 ton, 5-star inverter | 1.5-ton 5-star inverter split AC, installed with 3 m of copper pipe | Voltas, Daikin, Godrej, LG | Rs. 31,290–51,663 a each; plus installing a split ac with up to 3 m of pipe Rs. 1,500–3,500; GST not stated: taken as the price paid | [288][289] |
+| Premium | Split AC, 1.5 ton, 5-star inverter | 1.5-ton 5-star inverter split AC, installed with 3 m of copper pipe | Voltas, Daikin, Godrej, LG | ₹31,290–51,663 a each; plus installing a split ac with up to 3 m of pipe ₹1,500–3,500; GST not stated: taken as the price paid | [288][289] |
+| Luxury | Split AC, 1.5 ton, 5-star inverter | 1.5-ton 5-star inverter split AC, installed with 3 m of copper pipe | Voltas, Daikin, Godrej, LG | ₹31,290–51,663 a each; plus installing a split ac with up to 3 m of pipe ₹1,500–3,500; GST not stated: taken as the price paid | [288][289] |
+| Bespoke | Split AC, 1.5 ton, 5-star inverter | 1.5-ton 5-star inverter split AC, installed with 3 m of copper pipe | Voltas, Daikin, Godrej, LG | ₹31,290–51,663 a each; plus installing a split ac with up to 3 m of pipe ₹1,500–3,500; GST not stated: taken as the price paid | [288][289] |
 
 ## Smart home and security
 
@@ -1164,9 +1164,9 @@ Dated 02-10-2026; an item read on another day says so.
 |---|---|---|---|---|---|
 | Basic | None at this level | | | | |
 | Standard | None at this level | | | | |
-| Premium | Video door phone | Video door phone with an indoor screen, fixed | Godrej, Hikvision | Rs. 5,919–19,299 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [290] |
-| Luxury | Video door phone | Video door phone with an indoor screen, fixed | Godrej, Hikvision | Rs. 5,919–19,299 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [290] |
-| Bespoke | Video door phone | Video door phone with an indoor screen, fixed | Godrej, Hikvision | Rs. 5,919–19,299 a each; plus electrician, fixing a light, fan or fitting Rs. 25–70; GST not stated: taken as the price paid | [290] |
+| Premium | Video door phone | Video door phone with an indoor screen, fixed | Godrej, Hikvision | ₹5,919–19,299 a each; plus electrician, fixing a light, fan or fitting ₹25–70; GST not stated: taken as the price paid | [290] |
+| Luxury | Video door phone | Video door phone with an indoor screen, fixed | Godrej, Hikvision | ₹5,919–19,299 a each; plus electrician, fixing a light, fan or fitting ₹25–70; GST not stated: taken as the price paid | [290] |
+| Bespoke | Video door phone | Video door phone with an indoor screen, fixed | Godrej, Hikvision | ₹5,919–19,299 a each; plus electrician, fixing a light, fan or fitting ₹25–70; GST not stated: taken as the price paid | [290] |
 
 ### Smart switches (each)
 
@@ -1175,7 +1175,7 @@ Dated 02-10-2026; an item read on another day says so.
 | Basic | None at this level | | | | |
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
-| Luxury | Wi-Fi smart switch, per light point | Wi-Fi smart switch module for one light point, app and voice control |  | Rs. 800–1,500 a each; GST not stated: taken as the price paid | [291] |
+| Luxury | Wi-Fi smart switch, per light point | Wi-Fi smart switch module for one light point, app and voice control |  | ₹800–1,500 a each; GST not stated: taken as the price paid | [291] |
 | Bespoke | None at this level | | | | |
 
 ### CCTV (set)
@@ -1185,8 +1185,8 @@ Dated 02-10-2026; an item read on another day says so.
 | Basic | None at this level | | | | |
 | Standard | None at this level | | | | |
 | Premium | None at this level | | | | |
-| Luxury | CCTV, 4 cameras | Four cameras with a recorder, a hard disk and cabling | Hikvision, CP Plus | Rs. 8,000–18,000 a set; plus installing a 4-camera cctv set Rs. 2,000–4,000; GST not stated: taken as the price paid | [292] |
-| Bespoke | CCTV, 4 cameras | Four cameras with a recorder, a hard disk and cabling | Hikvision, CP Plus | Rs. 8,000–18,000 a set; plus installing a 4-camera cctv set Rs. 2,000–4,000; GST not stated: taken as the price paid | [292] |
+| Luxury | CCTV, 4 cameras | Four cameras with a recorder, a hard disk and cabling | Hikvision, CP Plus | ₹8,000–18,000 a set; plus installing a 4-camera cctv set ₹2,000–4,000; GST not stated: taken as the price paid | [292] |
+| Bespoke | CCTV, 4 cameras | Four cameras with a recorder, a hard disk and cabling | Hikvision, CP Plus | ₹8,000–18,000 a set; plus installing a 4-camera cctv set ₹2,000–4,000; GST not stated: taken as the price paid | [292] |
 
 ### Smart-home parts and packages (each)
 
@@ -1194,10 +1194,10 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Wi-Fi smart switch, premium, 1 gang | Bespoke | Premium Wi-Fi smart switch, one gang | Rs. 4,000–8,000 a each; GST not stated: taken as the price paid | [291] |
-| Smart home, 2BHK, basic | Premium | Smart switches, a door lock, curtains and a video door phone for a 2BHK, basic | Rs. 50,000–1,00,000 a set, supplied and fixed; GST not stated: taken as the price paid | [291] |
-| Smart home, 3BHK, basic | Premium | Smart home for a 3BHK, basic | Rs. 1,00,000–2,00,000 a set, supplied and fixed; GST not stated: taken as the price paid | [291] |
-| KNX automation, a 3BHK | Bespoke | KNX wired automation for a 3BHK, basic Rs. 4–8.5 lakh for a 2–3 BHK flat, as listed. | Rs. 4,00,000–8,50,000 a set, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [215] |
+| Wi-Fi smart switch, premium, 1 gang | Bespoke | Premium Wi-Fi smart switch, one gang | ₹4,000–8,000 a each; GST not stated: taken as the price paid | [291] |
+| Smart home, 2BHK, basic | Premium | Smart switches, a door lock, curtains and a video door phone for a 2BHK, basic | ₹50,000–1,00,000 a set, supplied and fixed; GST not stated: taken as the price paid | [291] |
+| Smart home, 3BHK, basic | Premium | Smart home for a 3BHK, basic | ₹1,00,000–2,00,000 a set, supplied and fixed; GST not stated: taken as the price paid | [291] |
+| KNX automation, a 3BHK | Bespoke | KNX wired automation for a 3BHK, basic Rs. 4–8.5 lakh for a 2–3 BHK flat, as listed. | ₹4,00,000–8,50,000 a set, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [215] |
 
 ## Furniture and furnishings (movable)
 
@@ -1213,11 +1213,11 @@ Movable items, in sections of their own: Furniture and Soft furnishings, on for 
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | 3-seater sofa, entry | 3-seater sofa: plywood or engineered frame, polyester upholstery |  | Rs. 25,000–45,000 a each; GST not stated: taken as the price paid | [295] |
-| Standard | 3-seater sofa, mid-range | 3-seater sofa: part-hardwood frame, better weave or leatherette |  | Rs. 50,000–90,000 a each; GST not stated: taken as the price paid | [295] |
-| Premium | 3-seater sofa, leather or suede | 3-seater sofa in leather, nubuck or suede, with lumbar cushions | Durian Cardiff, Durian Veronica, Durian Hensley | Rs. 1,26,720–1,59,940 a each; incl. GST; read 04-10-2026 | [296] |
-| Luxury | 3-seater leather sofa, powered recliners | 3-seater leather sofa with dual-motor recliners | Durian Splendor | Rs. 2,24,100 a each; incl. GST | [296] |
-| Bespoke | Sofa, imported Italian or made to order | Sofa fully imported from Italy, or made to order to a high degree of customisation |  | Rs. 5,00,000–15,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [297] |
+| Basic | 3-seater sofa, entry | 3-seater sofa: plywood or engineered frame, polyester upholstery |  | ₹25,000–45,000 a each; GST not stated: taken as the price paid | [295] |
+| Standard | 3-seater sofa, mid-range | 3-seater sofa: part-hardwood frame, better weave or leatherette |  | ₹50,000–90,000 a each; GST not stated: taken as the price paid | [295] |
+| Premium | 3-seater sofa, leather or suede | 3-seater sofa in leather, nubuck or suede, with lumbar cushions | Durian Cardiff, Durian Veronica, Durian Hensley | ₹1,26,720–1,59,940 a each; incl. GST; read 04-10-2026 | [296] |
+| Luxury | 3-seater leather sofa, powered recliners | 3-seater leather sofa with dual-motor recliners | Durian Splendor | ₹2,24,100 a each; incl. GST | [296] |
+| Bespoke | Sofa, imported Italian or made to order | Sofa fully imported from Italy, or made to order to a high degree of customisation |  | ₹5,00,000–15,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [297] |
 
 Choices at each level: Basic 4, Standard 4, Premium 3, Luxury 3, Bespoke 3.
 
@@ -1225,28 +1225,28 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| 3-seater sofa, hardwood frame | Basic | 3-seater sofa: hardwood frame, high-density foam | Rs. 14,554–18,289 a each; incl. GST; read 04-10-2026 | [298] |
-| 3-seater sofa, neem wood frame | Basic | 3-seater sofa: neem wood frame, removable cushions | Rs. 21,157–26,311 a each; incl. GST; read 04-10-2026 | [299] |
-| 3-seater sofa, removable covers | Basic | 3-seater sofa with a washable cover (Hakebo grey-green) | Rs. 38,990 a each; incl. GST; read 04-10-2026 | [300] |
-| 3-seater sofa, larger cushions | Standard | 3-seater sofa, plus range | Rs. 43,529–74,882 a each; incl. GST; read 04-10-2026 | [301] |
-| 3-seater sofa, deep seat | Standard | 3-seater sofa (Kelinge cover) | Rs. 50,990 a each; incl. GST; read 04-10-2026 | [300] |
-| 3-seater sofa, wide armrests | Standard | 3-seater sofa with wide armrests (Gunnared cover) | Rs. 58,990 a each; incl. GST; read 04-10-2026 | [300] |
-| 3-seater sofa, Indian premium | Premium | Sofa by an Indian brand: quality foam, imported fabric | Rs. 80,000–1,50,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [297] |
-| 3-seater sofa, wooden legs | Premium | 3-seater sofa, Gunnared cover on wooden legs | Rs. 75,490 a each; incl. GST; read 04-10-2026 | [300] |
-| Sofa, Italian design made in India | Luxury | Sofa of Italian design, made in India in Italian materials | Rs. 1,50,000–5,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [297] |
-| Sofa set 3 + 2, premium store | Luxury | A 3-seater and a 2-seater sofa, a premium store's typical set The maker's ticket size for a 3 + 2 set, reported in 2024. | Rs. 1,50,000–3,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [302] |
-| Sofa, imported from an Italian maker | Bespoke | An Italian maker's sofa, imported and bought in India, per piece | Rs. 5,00,000–50,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [303] |
-| Sofa set 3 + 2, luxury store | Bespoke | A 3-seater and a 2-seater sofa, a luxury store's typical set The maker's ticket size for a 3 + 2 set, reported in 2024. | Rs. 5,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [302] |
+| 3-seater sofa, hardwood frame | Basic | 3-seater sofa: hardwood frame, high-density foam | ₹14,554–18,289 a each; incl. GST; read 04-10-2026 | [298] |
+| 3-seater sofa, neem wood frame | Basic | 3-seater sofa: neem wood frame, removable cushions | ₹21,157–26,311 a each; incl. GST; read 04-10-2026 | [299] |
+| 3-seater sofa, removable covers | Basic | 3-seater sofa with a washable cover (Hakebo grey-green) | ₹38,990 a each; incl. GST; read 04-10-2026 | [300] |
+| 3-seater sofa, larger cushions | Standard | 3-seater sofa, plus range | ₹43,529–74,882 a each; incl. GST; read 04-10-2026 | [301] |
+| 3-seater sofa, deep seat | Standard | 3-seater sofa (Kelinge cover) | ₹50,990 a each; incl. GST; read 04-10-2026 | [300] |
+| 3-seater sofa, wide armrests | Standard | 3-seater sofa with wide armrests (Gunnared cover) | ₹58,990 a each; incl. GST; read 04-10-2026 | [300] |
+| 3-seater sofa, Indian premium | Premium | Sofa by an Indian brand: quality foam, imported fabric | ₹80,000–1,50,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [297] |
+| 3-seater sofa, wooden legs | Premium | 3-seater sofa, Gunnared cover on wooden legs | ₹75,490 a each; incl. GST; read 04-10-2026 | [300] |
+| Sofa, Italian design made in India | Luxury | Sofa of Italian design, made in India in Italian materials | ₹1,50,000–5,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [297] |
+| Sofa set 3 + 2, premium store | Luxury | A 3-seater and a 2-seater sofa, a premium store's typical set The maker's ticket size for a 3 + 2 set, reported in 2024. | ₹1,50,000–3,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [302] |
+| Sofa, imported from an Italian maker | Bespoke | An Italian maker's sofa, imported and bought in India, per piece | ₹5,00,000–50,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [303] |
+| Sofa set 3 + 2, luxury store | Bespoke | A 3-seater and a 2-seater sofa, a luxury store's typical set The maker's ticket size for a 3 + 2 set, reported in 2024. | ₹5,00,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [302] |
 
 ### Dining set (set, movable)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | 6-seater dining set, wooden, economy | 6-seater wooden dining table and chairs |  | Rs. 15,000 a set; GST not stated: taken as the price paid | [304] |
-| Standard | 6-seater dining set | 6-seater dining table and chairs |  | Rs. 12,999–74,989 a set; incl. GST; read 04-10-2026 | [305] |
-| Premium | 6-seater dining set, marble top | Sheesham wood table with a marble top, six upholstered chairs | Wooden Street Vivara | Rs. 98,999 a set; incl. GST | [306] |
-| Luxury | 6-seater dining set, designer, marble-finished top | Marble-finished table on a veneer base, six chairs | Durian Cardinal | Rs. 1,86,450 a set; incl. GST; read 04-10-2026 | [307] |
-| Bespoke | 6-seater dining set, teak, made to order | Teak wood table (teak-ply top) and six teak chairs, lacquer polish with copper and gold accents, sizes made to order | Curves & Carvings DTC0056 | Rs. 3,24,995 a set; incl. GST; read 04-10-2026 | [308] |
+| Basic | 6-seater dining set, wooden, economy | 6-seater wooden dining table and chairs |  | ₹15,000 a set; GST not stated: taken as the price paid | [304] |
+| Standard | 6-seater dining set | 6-seater dining table and chairs |  | ₹12,999–74,989 a set; incl. GST; read 04-10-2026 | [305] |
+| Premium | 6-seater dining set, marble top | Sheesham wood table with a marble top, six upholstered chairs | Wooden Street Vivara | ₹98,999 a set; incl. GST | [306] |
+| Luxury | 6-seater dining set, designer, marble-finished top | Marble-finished table on a veneer base, six chairs | Durian Cardinal | ₹1,86,450 a set; incl. GST; read 04-10-2026 | [307] |
+| Bespoke | 6-seater dining set, teak, made to order | Teak wood table (teak-ply top) and six teak chairs, lacquer polish with copper and gold accents, sizes made to order | Curves & Carvings DTC0056 | ₹3,24,995 a set; incl. GST; read 04-10-2026 | [308] |
 
 Choices at each level: Basic 3, Standard 4, Premium 4, Luxury 3, Bespoke 3.
 
@@ -1254,28 +1254,28 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| 6-seater dining set, MDF top on steel | Basic | Table and six chairs: 18 mm MDF top with marble-finish PVC lamination, 0.8 mm powder-coated mild steel frame | Rs. 16,900 a set; incl. GST; read 04-10-2026 | [309] |
-| 6-seater dining set, solid wood | Basic | Solid wood table and six chairs | Rs. 35,260 a set; incl. GST; read 04-10-2026 | [310] |
-| 6-seater dining set, sheesham | Standard | Sheesham wood table and six chairs | Rs. 51,398 a set; incl. GST; read 04-10-2026 | [311] |
-| 6-seater dining set, sheesham, cushioned chairs | Standard | Sheesham wood table and six cushioned chairs, honey finish Sale price as listed, honey finish (walnut Rs. 49,989). | Rs. 51,999 a set; incl. GST; read 10-10-2026 | [312] |
-| 4-seater dining set, ash veneer | Standard | Ash veneer table, 140 × 78 cm, and four birch chairs A table and four chairs. | Rs. 60,790 a set; incl. GST; read 04-10-2026 | [313] |
-| 6-seater dining set, sheesham, marble top | Premium | Sheesham wood table with a marble top and six chairs, teak finish Sale price as listed. | Rs. 99,989 a set; incl. GST; read 04-10-2026 | [314] |
-| 6-seater dining set, Italian marble top | Premium | Italian marble table and six chairs Sale price as listed. | Rs. 1,30,000 a set; incl. GST; read 04-10-2026 | [315] |
-| 4-seater dining set, oak veneer | Premium | Oak veneer table, 140 × 85 cm, brown stained, and four upholstered chairs A table and four chairs. | Rs. 85,790 a set; incl. GST; read 04-10-2026 | [316] |
-| 6-seater dining set, quartz top, cane and brass | Luxury | Sheesham wood table with a quartz top, six chairs with cane and brass accents Sale price as listed. | Rs. 1,59,999 a set; incl. GST; read 04-10-2026 | [317] |
-| 6-seater dining set, composite marble top | Luxury | Composite marble top on a solid wood base, six chairs Sale price as listed. | Rs. 1,36,400 a set; incl. GST; read 04-10-2026 | [318] |
-| 6-seater dining set, teak, antique French style | Bespoke | Teak wood table and six chairs, antique French style | Rs. 2,98,995 a set; incl. GST; read 04-10-2026 | [319] |
-| Dining set, teak, vintage Indian style | Bespoke | Teak wood dining table set, vintage Indian style The number of chairs was not in the report. | Rs. 3,54,995 a set; incl. GST; read 04-10-2026 | [320] |
+| 6-seater dining set, MDF top on steel | Basic | Table and six chairs: 18 mm MDF top with marble-finish PVC lamination, 0.8 mm powder-coated mild steel frame | ₹16,900 a set; incl. GST; read 04-10-2026 | [309] |
+| 6-seater dining set, solid wood | Basic | Solid wood table and six chairs | ₹35,260 a set; incl. GST; read 04-10-2026 | [310] |
+| 6-seater dining set, sheesham | Standard | Sheesham wood table and six chairs | ₹51,398 a set; incl. GST; read 04-10-2026 | [311] |
+| 6-seater dining set, sheesham, cushioned chairs | Standard | Sheesham wood table and six cushioned chairs, honey finish Sale price as listed, honey finish (walnut Rs. 49,989). | ₹51,999 a set; incl. GST; read 10-10-2026 | [312] |
+| 4-seater dining set, ash veneer | Standard | Ash veneer table, 140 × 78 cm, and four birch chairs A table and four chairs. | ₹60,790 a set; incl. GST; read 04-10-2026 | [313] |
+| 6-seater dining set, sheesham, marble top | Premium | Sheesham wood table with a marble top and six chairs, teak finish Sale price as listed. | ₹99,989 a set; incl. GST; read 04-10-2026 | [314] |
+| 6-seater dining set, Italian marble top | Premium | Italian marble table and six chairs Sale price as listed. | ₹1,30,000 a set; incl. GST; read 04-10-2026 | [315] |
+| 4-seater dining set, oak veneer | Premium | Oak veneer table, 140 × 85 cm, brown stained, and four upholstered chairs A table and four chairs. | ₹85,790 a set; incl. GST; read 04-10-2026 | [316] |
+| 6-seater dining set, quartz top, cane and brass | Luxury | Sheesham wood table with a quartz top, six chairs with cane and brass accents Sale price as listed. | ₹1,59,999 a set; incl. GST; read 04-10-2026 | [317] |
+| 6-seater dining set, composite marble top | Luxury | Composite marble top on a solid wood base, six chairs Sale price as listed. | ₹1,36,400 a set; incl. GST; read 04-10-2026 | [318] |
+| 6-seater dining set, teak, antique French style | Bespoke | Teak wood table and six chairs, antique French style | ₹2,98,995 a set; incl. GST; read 04-10-2026 | [319] |
+| Dining set, teak, vintage Indian style | Bespoke | Teak wood dining table set, vintage Indian style The number of chairs was not in the report. | ₹3,54,995 a set; incl. GST; read 04-10-2026 | [320] |
 
 ### Bed (each, movable)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Queen bed with box storage | Queen bed with box storage |  | Rs. 11,600 a each; incl. GST; read 04-10-2026 | [321] |
-| Standard | Queen bed with hydraulic storage | Engineered-wood queen bed with hydraulic storage | Royaloak Baleno, Wakefit Leo | Rs. 19,990 a each; incl. GST; read 04-10-2026 | [321] |
-| Premium | Solid wood queen bed | Solid wood queen bed with an upholstered headboard | Durian Leeds, Durian York, Durian Cayman | Rs. 43,200–48,330 a each; incl. GST; read 04-10-2026 | [322] |
-| Luxury | Premium queen bed with hydraulic storage | Premium queen bed with hydraulic storage | Wooden Street Bacon | Rs. 59,999 a each; incl. GST; read 10-10-2026 | [323] |
-| Bespoke | King bed, handcrafted teak | Handcrafted teak wood king bed | Curves & Carvings | Rs. 1,34,995–1,74,995 a each; incl. GST; read 04-10-2026 | [324][325] |
+| Basic | Queen bed with box storage | Queen bed with box storage |  | ₹11,600 a each; incl. GST; read 04-10-2026 | [321] |
+| Standard | Queen bed with hydraulic storage | Engineered-wood queen bed with hydraulic storage | Royaloak Baleno, Wakefit Leo | ₹19,990 a each; incl. GST; read 04-10-2026 | [321] |
+| Premium | Solid wood queen bed | Solid wood queen bed with an upholstered headboard | Durian Leeds, Durian York, Durian Cayman | ₹43,200–48,330 a each; incl. GST; read 04-10-2026 | [322] |
+| Luxury | Premium queen bed with hydraulic storage | Premium queen bed with hydraulic storage | Wooden Street Bacon | ₹59,999 a each; incl. GST; read 10-10-2026 | [323] |
+| Bespoke | King bed, handcrafted teak | Handcrafted teak wood king bed | Curves & Carvings | ₹1,34,995–1,74,995 a each; incl. GST; read 04-10-2026 | [324][325] |
 
 Choices at each level: Basic 3, Standard 3, Premium 3, Luxury 3, Bespoke 3.
 
@@ -1283,26 +1283,26 @@ Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Queen bed frame, upholstered | Basic | Upholstered queen bed frame, 160 × 200 cm (Vissle dark grey) | Rs. 14,490 a each; incl. GST; read 04-10-2026 | [326] |
-| Queen bed frame with storage | Basic | Queen bed frame with storage, 160 × 200 cm (white, Luröy slats) | Rs. 24,990 a each; incl. GST; read 04-10-2026 | [326] |
-| Queen bed frame, high | Standard | High queen bed frame, 160 × 200 cm (white, Lönset slats) | Rs. 26,990 a each; incl. GST; read 04-10-2026 | [326] |
-| Queen bed frame, stained wood | Standard | Queen bed frame, 160 × 200 cm, dark brown stained | Rs. 28,990 a each; incl. GST; read 04-10-2026 | [326] |
-| Sheesham queen bed, hydraulic storage | Premium | Sheesham wood queen bed with hydraulic storage, walnut finish Sale price as listed. | Rs. 48,999 a each; incl. GST; read 04-10-2026 | [327] |
-| Queen bed, hydraulic storage, honey finish | Premium | Queen bed with hydraulic storage, honey finish Sale price as listed. | Rs. 59,999 a each; incl. GST; read 04-10-2026 | [328] |
-| Sheesham queen bed, upholstered, hydraulic storage | Luxury | Sheesham wood upholstered queen bed with hydraulic storage Sale price as listed. | Rs. 68,149 a each; incl. GST; read 04-10-2026 | [329] |
-| Sheesham queen bed with cane, hydraulic storage | Luxury | Sheesham wood queen bed with cane detailing and hydraulic storage Sale price as listed. | Rs. 63,499 a each; incl. GST; read 04-10-2026 | [330] |
-| King bed, teak | Bespoke | Teak wood king bed | Rs. 1,24,995 a each; incl. GST; read 04-10-2026 | [325] |
-| Leather bed, Italian design, made to order | Bespoke | Italian leather bed, queen or king, made in India to order in bespoke sizes | Rs. 1,20,000–3,50,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [331] |
+| Queen bed frame, upholstered | Basic | Upholstered queen bed frame, 160 × 200 cm (Vissle dark grey) | ₹14,490 a each; incl. GST; read 04-10-2026 | [326] |
+| Queen bed frame with storage | Basic | Queen bed frame with storage, 160 × 200 cm (white, Luröy slats) | ₹24,990 a each; incl. GST; read 04-10-2026 | [326] |
+| Queen bed frame, high | Standard | High queen bed frame, 160 × 200 cm (white, Lönset slats) | ₹26,990 a each; incl. GST; read 04-10-2026 | [326] |
+| Queen bed frame, stained wood | Standard | Queen bed frame, 160 × 200 cm, dark brown stained | ₹28,990 a each; incl. GST; read 04-10-2026 | [326] |
+| Sheesham queen bed, hydraulic storage | Premium | Sheesham wood queen bed with hydraulic storage, walnut finish Sale price as listed. | ₹48,999 a each; incl. GST; read 04-10-2026 | [327] |
+| Queen bed, hydraulic storage, honey finish | Premium | Queen bed with hydraulic storage, honey finish Sale price as listed. | ₹59,999 a each; incl. GST; read 04-10-2026 | [328] |
+| Sheesham queen bed, upholstered, hydraulic storage | Luxury | Sheesham wood upholstered queen bed with hydraulic storage Sale price as listed. | ₹68,149 a each; incl. GST; read 04-10-2026 | [329] |
+| Sheesham queen bed with cane, hydraulic storage | Luxury | Sheesham wood queen bed with cane detailing and hydraulic storage Sale price as listed. | ₹63,499 a each; incl. GST; read 04-10-2026 | [330] |
+| King bed, teak | Bespoke | Teak wood king bed | ₹1,24,995 a each; incl. GST; read 04-10-2026 | [325] |
+| Leather bed, Italian design, made to order | Bespoke | Italian leather bed, queen or king, made in India to order in bespoke sizes | ₹1,20,000–3,50,000 a each; GST not stated: taken as the price paid; read 04-10-2026 | [331] |
 
 ### Mattress (each, movable)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Foam mattress, queen | Queen foam mattress |  | Rs. 4,499–6,499 a each; GST not stated: taken as the price paid | [332] |
-| Standard | Mattress, queen | Queen mattress: memory foam or pocket spring |  | Rs. 10,000–25,000 a each | [333] |
-| Premium | Latex mattress, queen | Queen latex mattress |  | Rs. 17,090–24,490 a each; GST not stated: taken as the price paid | [334] |
-| Luxury | Premium mattress, queen | Queen mattress: natural latex, advanced memory foam or hybrid |  | Rs. 25,000 a each | [335] |
-| Bespoke | Imported memory-foam mattress | Imported pressure-relieving memory-foam mattress | Tempur | Rs. 1,76,388 a each; GST not stated: taken as the price paid | [336] |
+| Basic | Foam mattress, queen | Queen foam mattress |  | ₹4,499–6,499 a each; GST not stated: taken as the price paid | [332] |
+| Standard | Mattress, queen | Queen mattress: memory foam or pocket spring |  | ₹10,000–25,000 a each | [333] |
+| Premium | Latex mattress, queen | Queen latex mattress |  | ₹17,090–24,490 a each; GST not stated: taken as the price paid | [334] |
+| Luxury | Premium mattress, queen | Queen mattress: natural latex, advanced memory foam or hybrid |  | ₹25,000 a each | [335] |
+| Bespoke | Imported memory-foam mattress | Imported pressure-relieving memory-foam mattress | Tempur | ₹1,76,388 a each; GST not stated: taken as the price paid | [336] |
 
 ### Curtains (set, movable)
 
@@ -1320,16 +1320,16 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Curtains, one layer, economy, a window | — | Polyester or a cheap blend, stitched, for a window of about 4 × 7 ft | Rs. 800–2,500 a each; GST not stated: taken as the price paid | [337] |
-| Curtains, one layer, mid-range, a window | — | Cotton or cotton-poly, stitched, for a window of about 4 × 7 ft | Rs. 3,000–7,000 a each; GST not stated: taken as the price paid | [337] |
-| Curtains, sheer and blackout, mid-range, a window | — | Two layers, a sheer and a blackout, stitched, for a window of about 4 × 7 ft | Rs. 6,000–12,000 a each; GST not stated: taken as the price paid | [337] |
-| Curtains, two layers, premium, a window | — | Two layers in linen, velvet or a heavy weave, lined, for a window of about 4 × 7 ft Rs. 35,000 and up at the top, as reported. | Rs. 15,000–35,000 a each; GST not stated: taken as the price paid | [337] |
-| Motorised curtain track with its motor | — | Aluminium motorised curtain track with a motor and remote TradeIndia lists it at Rs. 12,500; the top of the band, Rs. 15,000, was reported from an IndiaMART listing that could not be opened. | Rs. 12,500–15,000 a each | [338] |
-| Fitting a motorised curtain | — | Fitting and setting up a motorised curtain track | Rs. 2,000–4,000 a each, supplied and fixed; GST not stated: taken as the price paid | [339] |
-| Curtain stitching, a panel | — | Stitching one curtain panel | Rs. 150–600 a each, supplied and fixed; GST not stated: taken as the price paid | [337] |
-| Curtain fabric, a metre | — | Curtain fabric, one metre | Rs. 150–2,500 a m; GST not stated: taken as the price paid | [337] |
-| Curtain rod or track, a metre | — | Rod or track with brackets and rings, one metre | Rs. 200–1,500 a m; GST not stated: taken as the price paid | [337] |
-| Curtain installation, a window | — | Installing the curtains of one window | Rs. 150–500 a each, supplied and fixed; GST not stated: taken as the price paid | [337] |
+| Curtains, one layer, economy, a window | — | Polyester or a cheap blend, stitched, for a window of about 4 × 7 ft | ₹800–2,500 a each; GST not stated: taken as the price paid | [337] |
+| Curtains, one layer, mid-range, a window | — | Cotton or cotton-poly, stitched, for a window of about 4 × 7 ft | ₹3,000–7,000 a each; GST not stated: taken as the price paid | [337] |
+| Curtains, sheer and blackout, mid-range, a window | — | Two layers, a sheer and a blackout, stitched, for a window of about 4 × 7 ft | ₹6,000–12,000 a each; GST not stated: taken as the price paid | [337] |
+| Curtains, two layers, premium, a window | — | Two layers in linen, velvet or a heavy weave, lined, for a window of about 4 × 7 ft Rs. 35,000 and up at the top, as reported. | ₹15,000–35,000 a each; GST not stated: taken as the price paid | [337] |
+| Motorised curtain track with its motor | — | Aluminium motorised curtain track with a motor and remote TradeIndia lists it at Rs. 12,500; the top of the band, Rs. 15,000, was reported from an IndiaMART listing that could not be opened. | ₹12,500–15,000 a each | [338] |
+| Fitting a motorised curtain | — | Fitting and setting up a motorised curtain track | ₹2,000–4,000 a each, supplied and fixed; GST not stated: taken as the price paid | [339] |
+| Curtain stitching, a panel | — | Stitching one curtain panel | ₹150–600 a each, supplied and fixed; GST not stated: taken as the price paid | [337] |
+| Curtain fabric, a metre | — | Curtain fabric, one metre | ₹150–2,500 a m; GST not stated: taken as the price paid | [337] |
+| Curtain rod or track, a metre | — | Rod or track with brackets and rings, one metre | ₹200–1,500 a m; GST not stated: taken as the price paid | [337] |
+| Curtain installation, a window | — | Installing the curtains of one window | ₹150–500 a each, supplied and fixed; GST not stated: taken as the price paid | [337] |
 
 ### Blinds (sq ft, movable)
 
@@ -1337,9 +1337,9 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Custom blinds | Basic | Custom roller or venetian blinds | Rs. 100 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [340] |
-| Zebra blinds | Standard | Zebra (day and night) blinds | Rs. 185 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [340] |
-| Horizontal blinds | Premium | Horizontal blinds | Rs. 350 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [340] |
+| Custom blinds | Basic | Custom roller or venetian blinds | ₹100 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [340] |
+| Zebra blinds | Standard | Zebra (day and night) blinds | ₹185 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [340] |
+| Horizontal blinds | Premium | Horizontal blinds | ₹350 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [340] |
 
 ## Building a house: materials, labour and treatment
 
@@ -1351,19 +1351,19 @@ For building a house (E5, thin): the structure costed at one specification from 
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Soil treatment against termites (IS 6313 Part 2) | Chemical treatment of the foundation trenches, the plinth fill and the ground round the house before the floor is laid |  | Rs. 8–10 a sq ft, supplied and fixed | [341][342] |
+| Every level | Soil treatment against termites (IS 6313 Part 2) | Chemical treatment of the foundation trenches, the plinth fill and the ground round the house before the floor is laid |  | ₹8–10 a sq ft, supplied and fixed | [341][342] |
 
 ### Cement (bag)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | OPC 53-grade cement, 50 kg | Ordinary Portland cement, 53 grade, a 50 kg bag (city range) | UltraTech, ACC, Ambuja | Rs. 320–400 a bag, material, 3.5% wastage; GST not stated: taken as the price paid; read 04-10-2026 | [343] |
+| Every level | OPC 53-grade cement, 50 kg | Ordinary Portland cement, 53 grade, a 50 kg bag (city range) | UltraTech, ACC, Ambuja | ₹320–400 a bag, material, 3.5% wastage; GST not stated: taken as the price paid; read 04-10-2026 | [343] |
 
 Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| PPC cement, 50 kg | — | Portland pozzolana cement, a 50 kg bag | Rs. 340–410 a bag, material, 3.5% wastage; GST not stated: taken as the price paid; read 04-10-2026 | [344][345] |
+| PPC cement, 50 kg | — | Portland pozzolana cement, a 50 kg bag | ₹340–410 a bag, material, 3.5% wastage; GST not stated: taken as the price paid; read 04-10-2026 | [344][345] |
 
 ### Reinforcement steel (kg)
 
@@ -1373,61 +1373,61 @@ Also in the library:
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | TMT bars Fe 500D, 12 mm | TMT reinforcement bars Fe 500D, 12 mm | Tata Tiscon, JSW Neosteel, SAIL | Rs. 42–58 a kg, material, 4% wastage; GST not stated: taken as the price paid; read 04-10-2026 | [343][347] |
+| Every level | TMT bars Fe 500D, 12 mm | TMT reinforcement bars Fe 500D, 12 mm | Tata Tiscon, JSW Neosteel, SAIL | ₹42–58 a kg, material, 4% wastage; GST not stated: taken as the price paid; read 04-10-2026 | [343][347] |
 
 ### Sand (cu m)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | M-sand | Manufactured sand |  | Rs. 1,600–2,100 a cu m, material, 7.5% wastage; GST not stated: taken as the price paid | [352][345] |
+| Every level | M-sand | Manufactured sand |  | ₹1,600–2,100 a cu m, material, 7.5% wastage; GST not stated: taken as the price paid | [352][345] |
 
 Also in the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| River sand | — | River sand | Rs. 1,700 a cu m, material, 7.5% wastage; GST not stated: taken as the price paid; read 04-10-2026 | [352][345] |
+| River sand | — | River sand | ₹1,700 a cu m, material, 7.5% wastage; GST not stated: taken as the price paid; read 04-10-2026 | [352][345] |
 
 ### Coarse aggregate (cu m)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Coarse aggregate, 20 mm | 20 mm crushed stone aggregate |  | Rs. 1,800–2,300 a cu m, material, 7.5% wastage; GST not stated: taken as the price paid | [343][345] |
+| Every level | Coarse aggregate, 20 mm | 20 mm crushed stone aggregate |  | ₹1,800–2,300 a cu m, material, 7.5% wastage; GST not stated: taken as the price paid | [343][345] |
 
 ### Bricks (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Red brick | Standard red clay brick |  | Rs. 8–10 a each, material, 6.5% wastage; GST not stated: taken as the price paid | [343][345] |
+| Every level | Red brick | Standard red clay brick |  | ₹8–10 a each, material, 6.5% wastage; GST not stated: taken as the price paid | [343][345] |
 
 ### AAC blocks (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | AAC block, 200 mm | AAC block 200 mm thick |  | Rs. 63–100 a each, material, 6.5% wastage; GST not stated: taken as the price paid; read 10-10-2026 | [353] |
+| Every level | AAC block, 200 mm | AAC block 200 mm thick |  | ₹63–100 a each, material, 6.5% wastage; GST not stated: taken as the price paid; read 10-10-2026 | [353] |
 
 ### Labour: excavation and foundation (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Excavation and foundation, labour only | Excavation, footings, the plinth beam and backfilling, by the sq ft of built-up area |  | Rs. 60–90 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [354] |
+| Every level | Excavation and foundation, labour only | Excavation, footings, the plinth beam and backfilling, by the sq ft of built-up area |  | ₹60–90 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [354] |
 
 ### Labour: RCC frame and slabs (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | RCC frame and slabs, labour only | Columns, beams and slabs: bar bending, shuttering, concreting and curing, by the sq ft of built-up area |  | Rs. 140–220 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [354] |
+| Every level | RCC frame and slabs, labour only | Columns, beams and slabs: bar bending, shuttering, concreting and curing, by the sq ft of built-up area |  | ₹140–220 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [354] |
 
 ### Labour: brick walls (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Brick walls, labour only | Brick or block walls, by the sq ft of built-up area |  | Rs. 70–120 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [354] |
+| Every level | Brick walls, labour only | Brick or block walls, by the sq ft of built-up area |  | ₹70–120 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [354] |
 
 ### Labour: plaster (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Plaster, labour only | Plaster inside and outside, by the sq ft of built-up area |  | Rs. 40–70 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [354] |
+| Every level | Plaster, labour only | Plaster inside and outside, by the sq ft of built-up area |  | ₹40–70 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [354] |
 
 ## Building a house: outside works, water and stairs
 
@@ -1439,51 +1439,51 @@ For building a house (E5): the compound wall, gate and paving round the plot; th
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Brick compound wall, 230 mm, plastered | A 230 mm (9-inch) brick wall about 1.5 m (5 ft) high on a footing with a plinth beam, plastered both sides |  | Rs. 1,200–1,500 a running ft, supplied and fixed; GST not stated: taken as the price paid | [355] |
+| Every level | Brick compound wall, 230 mm, plastered | A 230 mm (9-inch) brick wall about 1.5 m (5 ft) high on a footing with a plinth beam, plastered both sides |  | ₹1,200–1,500 a running ft, supplied and fixed; GST not stated: taken as the price paid | [355] |
 
 ### Main gate (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | MS gate, fabricated | A mild steel gate of two leaves, fabricated, primed and painted, fixed to its posts |  | Rs. 150–450 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [356] |
-| Standard | MS main gate, designed | A mild steel main gate with a designed panel (laser-cut or framed sheet), painted |  | Rs. 550–700 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [356] |
-| Premium | SS 304 sliding gate | A stainless steel (SS 304) sliding gate on a track |  | Rs. 1,200–1,400 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [357] |
-| Luxury | SS 304 sliding gate with a motor | A stainless steel (SS 304) sliding gate with a motor and remote |  | Rs. 1,750–2,000 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [357] |
-| Bespoke | Automatic sliding gate, designer | An automatic motorised sliding gate, made to a design |  | Rs. 2,800 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [357] |
+| Basic | MS gate, fabricated | A mild steel gate of two leaves, fabricated, primed and painted, fixed to its posts |  | ₹150–450 a sq ft, supplied and fixed; GST not stated: taken as the price paid; read 04-10-2026 | [356] |
+| Standard | MS main gate, designed | A mild steel main gate with a designed panel (laser-cut or framed sheet), painted |  | ₹550–700 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [356] |
+| Premium | SS 304 sliding gate | A stainless steel (SS 304) sliding gate on a track |  | ₹1,200–1,400 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [357] |
+| Luxury | SS 304 sliding gate with a motor | A stainless steel (SS 304) sliding gate with a motor and remote |  | ₹1,750–2,000 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [357] |
+| Bespoke | Automatic sliding gate, designer | An automatic motorised sliding gate, made to a design |  | ₹2,800 a sq ft, supplied and fixed; GST not stated: taken as the price paid | [357] |
 
 ### Paving round the house (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Basic | Concrete paver blocks, 60 mm | Interlocking concrete paver blocks 60 mm thick, laid on sand and compacted |  | Rs. 40–80 a sq ft, material; plus laying paver blocks on sand, with compaction Rs. 10–16; GST not stated: taken as the price paid | [358] |
-| Standard | Exposed aggregate concrete | Concrete cast with decorative aggregate and washed to show the stones: seamless and anti-skid |  | Rs. 60–180 a sq ft, supplied and fixed; plus GST | [359] |
-| Premium | Sandstone pavers | Natural sandstone pavers laid in mortar |  | Rs. 60–140 a sq ft, material; plus laying marble or stone in mortar Rs. 100–200; GST not stated: taken as the price paid | [360] |
-| Luxury | Granite pavers, flamed | Flamed granite pavers laid in mortar |  | Rs. 120–250 a sq ft, material; plus laying marble or stone in mortar Rs. 100–200; GST not stated: taken as the price paid | [360] |
-| Bespoke | Granite pavers, flamed | Flamed granite pavers laid in mortar |  | Rs. 120–250 a sq ft, material; plus laying marble or stone in mortar Rs. 100–200; GST not stated: taken as the price paid | [360] |
+| Basic | Concrete paver blocks, 60 mm | Interlocking concrete paver blocks 60 mm thick, laid on sand and compacted |  | ₹40–80 a sq ft, material; plus laying paver blocks on sand, with compaction ₹10–16; GST not stated: taken as the price paid | [358] |
+| Standard | Exposed aggregate concrete | Concrete cast with decorative aggregate and washed to show the stones: seamless and anti-skid |  | ₹60–180 a sq ft, supplied and fixed; plus GST | [359] |
+| Premium | Sandstone pavers | Natural sandstone pavers laid in mortar |  | ₹60–140 a sq ft, material; plus laying marble or stone in mortar ₹100–200; GST not stated: taken as the price paid | [360] |
+| Luxury | Granite pavers, flamed | Flamed granite pavers laid in mortar |  | ₹120–250 a sq ft, material; plus laying marble or stone in mortar ₹100–200; GST not stated: taken as the price paid | [360] |
+| Bespoke | Granite pavers, flamed | Flamed granite pavers laid in mortar |  | ₹120–250 a sq ft, material; plus laying marble or stone in mortar ₹100–200; GST not stated: taken as the price paid | [360] |
 
 ### Sump (underground tank) (litre)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | RCC sump | An underground RCC water tank: excavation, concrete, plaster and waterproofing, with a manhole cover |  | Rs. 20–25 a litre, supplied and fixed | [361] |
+| Every level | RCC sump | An underground RCC water tank: excavation, concrete, plaster and waterproofing, with a manhole cover |  | ₹20–25 a litre, supplied and fixed | [361] |
 
 ### Overhead tank (litre)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Overhead tank, three-layer plastic | A three-layer plastic water tank on the stair cabin's roof | Sintex, Supreme, Vectus | Rs. 7–12 a litre; GST not stated: taken as the price paid | [362] |
+| Every level | Overhead tank, three-layer plastic | A three-layer plastic water tank on the stair cabin's roof | Sintex, Supreme, Vectus | ₹7–12 a litre; GST not stated: taken as the price paid | [362] |
 
 ### Septic tank and soak pit (litre)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | RCC septic tank with a soak pit | An RCC septic tank with its inlet, outlet and vent pipes and covers, and a soak pit |  | Rs. 75,000–1,10,000 for a 3BHK's tank of 6,500–8,000 litres of 7250 litre, supplied and fixed; GST not stated: taken as the price paid | [363] |
+| Every level | RCC septic tank with a soak pit | An RCC septic tank with its inlet, outlet and vent pipes and covers, and a soak pit |  | ₹75,000–1,10,000 for a 3BHK's tank of 6,500–8,000 litres of 7250 litre, supplied and fixed; GST not stated: taken as the price paid | [363] |
 
 ### Sewer connection (each)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
-| Every level | Sewer connection | The house's drain to the road's manhole, and the city's charges for joining it |  | Chennai Rs. 24,500–26,500 a each, each city's own charge; other cities to be found; GST not stated: taken as the price paid; read 04-10-2026 | [364][365][366] |
+| Every level | Sewer connection | The house's drain to the road's manhole, and the city's charges for joining it |  | Chennai ₹24,500–26,500 a each, each city's own charge; other cities to be found; GST not stated: taken as the price paid; read 04-10-2026 | [364][365][366] |
 
 ### Rainwater harvesting (each)
 
@@ -1497,17 +1497,17 @@ In the library:
 
 | Item | Usual level | Specification | Rate | Sources |
 |---|---|---|---|---|
-| Recharge pit, 4–5 ft | — | A recharge pit 4–5 ft deep with its filter media | Rs. 8,000–15,000 a each, supplied and fixed; GST not stated: taken as the price paid | [362] |
-| Mesh filter | — | A basic mesh filter for the roof's water | Rs. 2,000–5,000 a each; GST not stated: taken as the price paid | [362] |
-| Pipes and fittings | — | Downpipes and fittings from the roof to the pit | Rs. 2,000–10,000 a each; GST not stated: taken as the price paid | [362] |
-| Labour | — | Labour to lay the pipes and build the pit, a small home | Rs. 8,000–15,000 a each, supplied and fixed; GST not stated: taken as the price paid | [362] |
+| Recharge pit, 4–5 ft | — | A recharge pit 4–5 ft deep with its filter media | ₹8,000–15,000 a each, supplied and fixed; GST not stated: taken as the price paid | [362] |
+| Mesh filter | — | A basic mesh filter for the roof's water | ₹2,000–5,000 a each; GST not stated: taken as the price paid | [362] |
+| Pipes and fittings | — | Downpipes and fittings from the roof to the pit | ₹2,000–10,000 a each; GST not stated: taken as the price paid | [362] |
+| Labour | — | Labour to lay the pipes and build the pit, a small home | ₹8,000–15,000 a each, supplied and fixed; GST not stated: taken as the price paid | [362] |
 
 ### Stair treads, risers and landings (sq ft)
 
 | Level | Item | Specification | Brands, as examples | Rate | Sources |
 |---|---|---|---|---|---|
 | Basic | Kota stone steps | Kota stone on the treads, risers and landings, laid and polished |  | Kota stone |  |
-| Standard | Granite steps | Polished granite treads and risers, and granite on the landings, laid in mortar |  | Rs. 140–250 a sq ft, material; plus laying marble or stone in mortar Rs. 100–200; GST not stated: taken as the price paid | [367] |
+| Standard | Granite steps | Polished granite treads and risers, and granite on the landings, laid in mortar |  | ₹140–250 a sq ft, material; plus laying marble or stone in mortar ₹100–200; GST not stated: taken as the price paid | [367] |
 | Premium | Indian marble steps | Indian white marble on the treads, risers and landings, laid and polished |  | Indian white marble (Ambaji) |  |
 | Luxury | Italian marble steps (Botticino) | Italian Botticino marble on the treads, risers and landings, laid and polished |  | Italian marble (Botticino) |  |
 | Bespoke | Italian marble steps (Statuario) | Italian Statuario marble on the treads, risers and landings, laid and polished |  | Italian marble (Statuario) |  |
@@ -1531,27 +1531,27 @@ Dated 04-10-2026. Each note's sources were read on their pages on 04-10-2026 (E2
 
 | Labour | Rate | Sources |
 |---|---|---|
-| Laying 600 × 600 mm tiles | Rs. 25–40 a sq ft | [15][371] |
-| Laying 800 × 800 mm tiles | Rs. 30–50 a sq ft | [15] |
-| Laying large-format tiles and slabs (1200 × 600 mm and up) | Rs. 60–120 a sq ft | [15] |
-| Fixing wall tiles (walls are slower than floors) | Rs. 35–60 a sq ft | [15] |
-| Tile adhesive and grout | Rs. 8–18 a sq ft | [15] |
-| Laying marble or stone in mortar | Rs. 100–200 a sq ft | [372][373] |
-| Machine-polishing marble after laying | Rs. 30–70 a sq ft | [372][374] |
-| Installing SPC flooring | Rs. 35–55 a sq ft | [37] |
-| Fabricating and fixing a stone or quartz counter | Rs. 200–300 a sq ft | [141] |
-| Fixing a Kota stone kitchen platform | Rs. 50–80 a sq ft; read 04-10-2026 | [146] |
-| Fixing a sanitary fixture or fitting (plumber) | Rs. 360–600 a each | [375] |
-| Hanging wallpaper | Rs. 30 a sq ft | [376] |
-| Installing wall panels | Rs. 20–50 a sq ft; read 04-10-2026 | [55] |
-| Fitting a door: frame, shutter and hardware | Rs. 800–3,000 a each; read 04-10-2026 | [178] |
-| Fitting a main door: frame, shutter and hardware | Rs. 2,000–8,000 a each; read 04-10-2026 | [172] |
-| Electrician, fixing a light, fan or fitting | Rs. 25–70 a each | [213] |
-| Installing a split AC with up to 3 m of pipe | Rs. 1,500–3,500 a each | [289] |
-| Installing a 4-camera CCTV set | Rs. 2,000–4,000 a set | [292] |
-| Installing an invisible grill | Rs. 50–150 a sq ft | [205] |
-| Laying paver blocks on sand, with compaction | Rs. 10–16 a sq ft | [377] |
-| Electrician's labour, wiring a point and fitting its switch | Rs. 180–350 a each; read 05-10-2026 | [213] |
+| Laying 600 × 600 mm tiles | ₹25–40 a sq ft | [15][371] |
+| Laying 800 × 800 mm tiles | ₹30–50 a sq ft | [15] |
+| Laying large-format tiles and slabs (1200 × 600 mm and up) | ₹60–120 a sq ft | [15] |
+| Fixing wall tiles (walls are slower than floors) | ₹35–60 a sq ft | [15] |
+| Tile adhesive and grout | ₹8–18 a sq ft | [15] |
+| Laying marble or stone in mortar | ₹100–200 a sq ft | [372][373] |
+| Machine-polishing marble after laying | ₹30–70 a sq ft | [372][374] |
+| Installing SPC flooring | ₹35–55 a sq ft | [37] |
+| Fabricating and fixing a stone or quartz counter | ₹200–300 a sq ft | [141] |
+| Fixing a Kota stone kitchen platform | ₹50–80 a sq ft; read 04-10-2026 | [146] |
+| Fixing a sanitary fixture or fitting (plumber) | ₹360–600 a each | [375] |
+| Hanging wallpaper | ₹30 a sq ft | [376] |
+| Installing wall panels | ₹20–50 a sq ft; read 04-10-2026 | [55] |
+| Fitting a door: frame, shutter and hardware | ₹800–3,000 a each; read 04-10-2026 | [178] |
+| Fitting a main door: frame, shutter and hardware | ₹2,000–8,000 a each; read 04-10-2026 | [172] |
+| Electrician, fixing a light, fan or fitting | ₹25–70 a each | [213] |
+| Installing a split AC with up to 3 m of pipe | ₹1,500–3,500 a each | [289] |
+| Installing a 4-camera CCTV set | ₹2,000–4,000 a set | [292] |
+| Installing an invisible grill | ₹50–150 a sq ft | [205] |
+| Laying paver blocks on sand, with compaction | ₹10–16 a sq ft | [377] |
+| Electrician's labour, wiring a point and fitting its switch | ₹180–350 a each; read 05-10-2026 | [213] |
 
 ## Sources
 

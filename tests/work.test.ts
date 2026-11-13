@@ -1,8 +1,8 @@
 /**
  * The report's one Make it work (engine/work.ts, OR11d, D-UX-249 to D-UX-252): the causes, the ways that keep the loan,
  * the ways that change it and those that do not reach, each a run of the whole report. Fictional cases only (D-BIZ-02):
- * case R at Rs. 70,00,000 of sales (tests/report.test.ts, the mock-up's worked example), case P (the mock-up's PMEGP
- * unit at Rs. 150 a unit) and the mock-up's fill case (5,00,000 boxes a year at Rs. 25, filling 55%, 70%, 85%).
+ * case R at ₹70,00,000 of sales (tests/report.test.ts, the mock-up's worked example), case P (the mock-up's PMEGP
+ * unit at ₹150 a unit) and the mock-up's fill case (5,00,000 boxes a year at ₹25, filling 55%, 70%, 85%).
  *
  * Case R by hand, 2026-27 (a full year: drawn in April, no holiday, 60 equal-principal instalments): principal 5,00,000;
  * interest (12 × 25,00,000 − 41,666.67 × 66) × 10% ÷ 12 = 2,27,083.33; service 7,27,083.33. Depreciation 4,20,000,
@@ -44,7 +44,7 @@ const icP = (units: number, price: number, use = 85, v = 70) => {
   return (((run * 3) / 12) * (1 - v / 100) - 300000 - 180000 - (50000 + loan) / 5) / (loan + (300000 * 0.11 * 3) / 12);
 };
 
-describe('Make it work on case R at Rs. 70,00,000 (D-UX-249, D-UX-250)', () => {
+describe('Make it work on case R at ₹70,00,000 (D-UX-249, D-UX-250)', () => {
   const w = work(R);
   it('names what holds it back, year by year, and when the cash runs out', () => {
     expect(w.missed).toEqual(['currentRatio', 'dscrAverage', 'dscrLowest', 'interestCover']);
@@ -54,7 +54,7 @@ describe('Make it work on case R at Rs. 70,00,000 (D-UX-249, D-UX-250)', () => {
     expect([w.cash?.fy, Math.round(w.cash?.need as number)]).toEqual(['2027-28', 175955]);
   });
 
-  it('keeps the loan with more sales: Rs. 82,11,000 in 2026-27, a plant selling Rs. 1,41,43,206 at full use', () => {
+  it('keeps the loan with more sales: ₹82,11,000 in 2026-27, a plant selling ₹1,41,43,206 at full use', () => {
     const s = way(w.keep, 'sales');
     expect([s.change.sales, s.ask]).toEqual([8211000, { id: 'plantSales', need: 14143206 }]);
     // D-UX-250 by hand: 12,11,000 × 35% more profit, PBT 3,51,766.67, tax 1,09,751.20: 9,09,098.80 ÷ 7,27,083.33.
@@ -64,7 +64,7 @@ describe('Make it work on case R at Rs. 70,00,000 (D-UX-249, D-UX-250)', () => {
     expect((8211000 * 1.1 ** 4) / 0.85).toBeCloseTo(14143206, 0); // the busiest year, 2030-31, at 85%
   });
 
-  it('or some more sales with a longer repayment: Rs. 76,37,000 and 84 instalments', () => {
+  it('or some more sales with a longer repayment: ₹76,37,000 and 84 instalments', () => {
     const s = way(w.keep, 'salesLonger'), x = withChange(R, s.change);
     expect([s.change.sales, s.change.instalments, s.ask]).toEqual([7637000, 84, { id: 'plantSales', need: 15916955 }]);
     // By hand: 25,00,000 ÷ 84 a month; interest (12 × 25,00,000 − 29,761.90 × 66) × 10% ÷ 12 = 2,33,630.95, with the
@@ -85,7 +85,7 @@ describe('Make it work on case R at Rs. 70,00,000 (D-UX-249, D-UX-250)', () => {
     expect(check(withChange(R, v.change), 'dscrLowest')).toBeCloseTo(dscrR(7000000, 58.9), 6);
   });
 
-  it('changes the loan by fix.ts: Rs. 9,35,000 over the typed 5 years, or Rs. 10,03,000 over 3', () => {
+  it('changes the loan by fix.ts: ₹9,35,000 over the typed 5 years, or ₹10,03,000 over 3', () => {
     expect(w.change.map((c) => [c.id, c.change.amount, c.change.instalments])).toEqual([['fix', 935000, undefined], ['fix', 1003000, 36]]);
     expect(w.change.map((c) => c.promotersMore)).toEqual([1565000, 1497000]);
   });
@@ -101,9 +101,9 @@ describe('Make it work on case R at Rs. 70,00,000 (D-UX-249, D-UX-250)', () => {
   });
 });
 
-describe('Make it work on case P at Rs. 150 a unit (D-UX-249: the price and the plant, by hand)', () => {
+describe('Make it work on case P at ₹150 a unit (D-UX-249: the price and the plant, by hand)', () => {
   const w = work(P);
-  it('says more use cannot reach, then a price of Rs. 178.70 at 85% use', () => {
+  it('says more use cannot reach, then a price of ₹178.70 at 85% use', () => {
     expect(w.useCannot?.still).toEqual(['dscrAverage', 'dscrLowest', 'interestCover']);
     // FIX1: the use it would need passes 100% of the plant, so none is named; nor does any way's change.
     expect(w.useCannot?.needed).toBeUndefined();

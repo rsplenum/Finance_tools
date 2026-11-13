@@ -28,7 +28,7 @@ export const STATEMENT_K: Doc = {
   parts: [
     { name: 'Balance sheet', blocks: [
       { kind: 'title', text: 'Balance sheet as at 31 March 2026' },
-      { kind: 'text', text: 'All amounts in Rs. lakh unless stated otherwise' },
+      { kind: 'text', text: 'All amounts in ₹ lakh unless stated otherwise' },
       table([
         head('Equity and liabilities'),
         row('Share capital', '1', '30.00', '30.00'),
@@ -73,7 +73,7 @@ export const STATEMENT_K: Doc = {
       { kind: 'title', text: 'Notes to the financial statements' },
       table([
         head('1 Share capital'),
-        row('Equity shares of Rs. 10 each, fully paid', '', '30.00', '30.00'),
+        row('Equity shares of ₹10 each, fully paid', '', '30.00', '30.00'),
         head('2 Reserves and surplus'),
         row('Opening balance', '', '11.20', '0.00'),
         row('Add: profit for the year', '', '30.40', '26.20'),

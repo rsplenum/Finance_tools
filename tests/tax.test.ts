@@ -6,19 +6,19 @@
 import { describe, it, expect } from 'vitest';
 import DSCR from '../engine/data/dscr.json';
 import { taxCheck } from '../engine/dscr-check';
-import { BORROWERS, borrowerOf, taxOn, taxSummary, type Borrower } from '../engine/tax';
+import { BORROWERS, borrowerOf, taxOn, taxSteps, taxSummary, type Borrower } from '../engine/tax';
 
 const of = (id: string) => borrowerOf(id) as Borrower;
 /** Both computations, rounded to the paisa. */
 const both = (income: number, id: string) => [taxOn(income, of(id)), taxCheck(income, of(id))].map((t) => Math.round(t * 100) / 100);
 
 describe('a proprietor: the new regime\'s slab rates, the rebate and the cess', () => {
-  it('nothing up to Rs. 12,00,000: the rebate takes the whole tax', () => {
+  it('nothing up to ₹12,00,000: the rebate takes the whole tax', () => {
     // 8,00,000: 4,00,000 at 5% = 20,000, all rebated. 12,00,000: 20,000 + 4,00,000 at 10% = 60,000, the most rebated.
     for (const income of [0, 300000, 800000, 1200000]) expect(both(income, 'proprietor')).toEqual([0, 0]);
     expect(both(-500000, 'proprietor')).toEqual([0, 0]);
   });
-  it('just above Rs. 12,00,000, never more than the income above it (marginal relief), plus 4% cess', () => {
+  it('just above ₹12,00,000, never more than the income above it (marginal relief), plus 4% cess', () => {
     // 12,50,000: slab tax 60,000 + 50,000 at 15% = 67,500, but at most 50,000 (the income above 12,00,000); cess 2,000.
     expect(both(1250000, 'proprietor')).toEqual([52000, 52000]);
     // 13,00,000: 60,000 + 15,000 = 75,000, less than 1,00,000, so no relief; cess 3,000.
@@ -41,7 +41,7 @@ describe('a proprietor: the new regime\'s slab rates, the rebate and the cess', 
     // 30,00,000: 3,00,000 + 6,00,000 at 30% = 4,80,000; cess 19,200.
     expect(both(3000000, 'proprietor')).toEqual([499200, 499200]);
   });
-  it('the surcharge above Rs. 50,00,000 and Rs. 1 crore, with marginal relief at each', () => {
+  it('the surcharge above ₹50,00,000 and ₹1 crore, with marginal relief at each', () => {
     // 50,00,000 exactly: 3,00,000 + 26,00,000 at 30% = 10,80,000, no surcharge; cess 43,200.
     expect(both(5000000, 'proprietor')).toEqual([1123200, 1123200]);
     // 51,00,000: 11,10,000 + 10% = 12,21,000, but at most 10,80,000 + 1,00,000 = 11,80,000; cess 47,200.
@@ -54,7 +54,7 @@ describe('a proprietor: the new regime\'s slab rates, the rebate and the cess', 
 });
 
 describe('a firm or LLP and a company: the rates as before', () => {
-  it('a firm pays 31.2%, and 34.944% above Rs. 1 crore, with marginal relief just above it', () => {
+  it('a firm pays 31.2%, and 34.944% above ₹1 crore, with marginal relief just above it', () => {
     // 50,00,000 at 30% = 15,00,000; cess 60,000. 2,00,00,000: 60,00,000 + 12% = 67,20,000; cess 2,68,800.
     expect(both(5000000, 'firm')).toEqual([1560000, 1560000]);
     expect(both(20000000, 'firm')).toEqual([6988800, 6988800]);
@@ -68,8 +68,8 @@ describe('a firm or LLP and a company: the rates as before', () => {
   });
   it('read back in plain words from the rates', () => {
     expect(BORROWERS.map((b) => [b.id, taxSummary(b)])).toEqual([
-      ['proprietor', 'slab rates of 5% to 30% with 4% cess, nothing up to Rs. 12,00,000 of profit'],
-      ['firm', '31.2%; 34.944% above Rs. 1,00,00,000'],
+      ['proprietor', 'slab rates of 5% to 30% with 4% cess, nothing up to ₹12,00,000 of profit'],
+      ['firm', '31.2%; 34.944% above ₹1,00,00,000'],
       ['company', '25.168%'],
     ]);
   });
@@ -94,5 +94,31 @@ describe('the data', () => {
         before = t;
       }
     }
+  });
+});
+
+describe('the tax step by step (the Excel copy lays it out so)', () => {
+  // Around every slab, rebate and surcharge threshold, and a loss: the steps end at taxOn's figure, and each step holds.
+  const points = (b: Borrower) => [-50000, 0, 1, ...[...b.slabs.map(([f]) => f), ...(b.rebate ? [b.rebate.incomeUpTo] : []), ...b.surcharge.map(([f]) => f)]
+    .flatMap((t) => [t - 1000, t, t + 1, t + 1000, t + 250000]), 3e8].filter((x, i, a) => a.indexOf(x) === i);
+  for (const b of BORROWERS) it(`${b.label}: the steps give taxOn's tax at ${points(b).length} incomes`, () => {
+    for (const x of points(b)) {
+      const s = taxSteps(x, b), want = taxOn(x, b);
+      expect(Math.abs(s.tax - want)).toBeLessThanOrEqual(1e-6 * Math.max(1, want));
+      expect(s.bands.length).toBe(b.slabs.length);
+      expect(Math.abs(s.slabs - s.bands.reduce((a, t) => a + t, 0))).toBeLessThan(1e-9);
+      expect(s.cess).toBeCloseTo((s.surcharged * b.cess) / 100, 9);
+    }
+  });
+  it('a proprietor at ₹60,00,000: the slabs to ₹24 lakh, then 30%, with 10% surcharge and its cap', () => {
+    // Worked by hand from the slabs of engine/data/tax.json: 4 lakh at nil, then 20,000 + 40,000 + 60,000 + 80,000 +
+    // 1,00,000 for the five slabs of 4 lakh, and 30% of the 36 lakh above 24 lakh (10,80,000): 13,80,000.
+    const s = taxSteps(6000000, borrowerOf('proprietor') as Borrower);
+    expect(s.slabs).toBeCloseTo(1380000, 6);
+    // At ₹50 lakh the slab tax is 3,00,000 + 30% of 26 lakh = 10,80,000; no surcharge below it, so the cap is that.
+    expect(s.caps[0]).toBeCloseTo(1080000, 6);
+    // 10% surcharge: 15,18,000; the relief's cap 10,80,000 + 10,00,000 = 20,80,000 is higher, so 15,18,000; cess 4%.
+    expect(s.surcharged).toBeCloseTo(1518000, 6);
+    expect(s.tax).toBeCloseTo(1578720, 6);
   });
 });

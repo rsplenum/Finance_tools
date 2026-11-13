@@ -18,7 +18,7 @@ import { W } from './words';
 import { plain, SHARED } from '../words';
 import { ESTIMATE_HOME } from './home-case';
 import { AnswersColumn, foldGrid, SeeAnswer, useFold, type AnswerGroup } from '../Fold';
-import { printable } from '../doc/pdf';
+import { printable } from '../doc/face';
 import { BRAND_NOTICE } from '../site';
 import { isoDate, save, type FileKind } from '../download';
 import { Downloads } from '../Downloads';
@@ -239,8 +239,8 @@ function Answer({ v, toLevel }: { v: PlanView; toLevel: (l: Level) => void }) {
     <div data-answer class={answerRule(true)}>
       <p data-testid="pl-total" data-result={'ready'} class={`figure text-section ${INK}`}>{v.headline}</p>
       {v.rangeBar ? <Range r={v.rangeBar} /> : v.range.text && <p data-testid="pl-range" class={`mt-1 text-sm ${INK}`}>{v.range.text}</p>}
-      <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="whitespace-nowrap tabular-nums">Rs. {v.perSqft}</span> a sq ft of {v.perName.toLowerCase()}</p>
-      <p data-testid="pl-exact" class={`mt-1 text-sm ${MUTED}`}>{W.exact} <span class="whitespace-nowrap tabular-nums">Rs. {v.total}</span></p>
+      <p class={`mt-1 ${MUTED}`}><span data-testid="pl-per-sqft" class="whitespace-nowrap tabular-nums">₹{v.perSqft}</span> a sq ft of {v.perName.toLowerCase()}</p>
+      <p data-testid="pl-exact" class={`mt-1 text-sm ${MUTED}`}>{W.exact} <span class="whitespace-nowrap tabular-nums">₹{v.total}</span></p>
     </div>
     <p data-testid="pl-mark" class={`mt-2 flex items-start gap-1.5 text-sm ${MUTED}`}><Tick />{W.mark}</p>
     {/* Edged, never filled: the chosen level takes an edge in ink (UX7: the accent is for links alone) (principle 6; F4 asks a filled control to be a pill).
@@ -249,7 +249,7 @@ function Answer({ v, toLevel }: { v: PlanView; toLevel: (l: Level) => void }) {
       {v.strip.map((x) => <button key={x.level} type="button" data-testid={`pl-strip-${x.level}`} aria-pressed={x.current} onClick={() => toLevel(x.level)}
         class={`min-h-11 min-w-0 rounded-control px-0 text-center ${x.current ? 'border-2 border-ink py-1' : 'border border-edge py-1.25'}`}>
         <span class={`block text-xs leading-tight sm:text-sm ${x.current ? "font-semibold" : ""} ${INK}`}>{x.name}</span>
-        <span class={`block text-xs leading-tight tabular-nums sm:text-sm ${MUTED}`}>{x.total}<span class="sr-only"> (Rs. {x.full})</span></span>
+        <span class={`block text-xs leading-tight tabular-nums sm:text-sm ${MUTED}`}>{x.total}<span class="sr-only"> (₹{x.full})</span></span>
       </button>)}
     </div>
     <p class={`mt-1 text-sm ${MUTED}`}>{W.levels}</p>
@@ -291,7 +291,7 @@ function Sections({ s, v, update }: { s: PlanState; v: PlanView; update: Update 
   const list = [...v.sections.filter((x) => x.on).sort((a, b) => b.pkg - a.pkg), ...v.sections.filter((x) => !x.on)];
   return <Section id="pl-sections" title="By section">
     {/* A table's figures in full rupees, the unit in the column's head (UX8, review finding 4); over the amounts, clear of the chevron. */}
-    <p class={`mt-4 pr-7 text-right text-sm ${MUTED}`}>Rs.</p>
+    <p class={`mt-4 pr-7 text-right text-sm ${MUTED}`}>₹</p>
     <ul data-testid="pl-bar" class="divide-y divide-line">
       {list.map((x) => {
         // The section's own level, named on its line only when it differs from the package.
@@ -335,7 +335,7 @@ function Sections({ s, v, update }: { s: PlanState; v: PlanView; update: Update 
         </li>;
       })}
     </ul>
-    {v.split && <p data-testid="pl-split" class={`mt-3 text-sm ${INK}`}>{v.split.map((x, i) => <Fragment key={x.label}>{i ? ' · ' : ''}{x.label} <span class="whitespace-nowrap">Rs. {x.amount}</span></Fragment>)}</p>}
+    {v.split && <p data-testid="pl-split" class={`mt-3 text-sm ${INK}`}>{v.split.map((x, i) => <Fragment key={x.label}>{i ? ' · ' : ''}{x.label} <span class="whitespace-nowrap">₹{x.amount}</span></Fragment>)}</p>}
   </Section>;
 }
 
@@ -362,7 +362,7 @@ function Item({ s, l, open, d, groups, setGroup, toggle, update }: { s: PlanStat
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0">
         <p class={`text-sm ${INK}`}><span class={MUTED}>{l.room}:</span> {l.item}{l.chosen ? ' (your choice)' : ''}</p>
-        <p class={`text-sm tabular-nums ${MUTED}`}>{l.qty} {l.unit} × <span class="whitespace-nowrap">Rs. {l.rate}</span> = <span class={`whitespace-nowrap font-medium ${INK}`}>Rs. {l.amount}</span></p>
+        <p class={`text-sm tabular-nums ${MUTED}`}>{l.qty} {l.unit} × <span class="whitespace-nowrap">₹{l.rate}</span> = <span class={`whitespace-nowrap font-medium ${INK}`}>₹{l.amount}</span></p>
       </div>
       <button type="button" data-testid={`pl-open-${l.key}`} aria-expanded={open} class={`shrink-0 ${BUTTON}`} onClick={toggle}>{open ? 'Close' : 'Change'}</button>
     </div>
@@ -446,13 +446,13 @@ function Drawer({ s, l, d, groups, setGroup, update }: { s: PlanState; l: LineVi
 
 /** Compare (A8): each section that is on, and the total, at the five levels as a package; the estimate's own level marked. */
 function Compare({ v }: { v: PlanView }) {
-  const cell = (c: PlanView['compare']['totals'][number], name: string, i: number) => <td key={i} aria-label={`${name}, ${LEVEL_NAMES[i]}: Rs. ${c.full}${c.mine ? ', your level' : ''}`}
+  const cell = (c: PlanView['compare']['totals'][number], name: string, i: number) => <td key={i} aria-label={`${name}, ${LEVEL_NAMES[i]}: ₹${c.full}${c.mine ? ', your level' : ''}`}
     class={`px-1 py-1 text-right ${c.mine ? 'rounded-control bg-surface font-semibold' : ''}`}>{c.text}</td>;
   return <details data-testid="pl-compare" class="mt-3">
     <summary class={SUMMARY}>Compare the five levels, section by section</summary>
     <div class="mt-2 overflow-x-auto">
       <table class={`w-full text-sm tabular-nums ${INK}`}>
-        <caption class={`text-left text-sm ${MUTED}`}>Each section at each level as a package, in Rs. lakh; yours marked.</caption>
+        <caption class={`text-left text-sm ${MUTED}`}>Each section at each level as a package, in ₹ lakh; yours marked.</caption>
         <thead><tr class={MUTED}><th scope="col" class="py-1 pr-1 text-left font-normal">Section</th>{LEVEL_NAMES.map((n) => <th key={n} scope="col" class="px-1 py-1 text-right font-normal">{n}</th>)}</tr></thead>
         <tbody class="divide-y divide-line">
           {v.compare.rows.map((r) => <tr key={r.id} data-testid={`pl-compare-${r.id}`}>
@@ -477,7 +477,7 @@ function Stages({ v }: { v: PlanView }) {
     <div class="mt-2 overflow-x-auto">
       <table class={`w-full text-sm tabular-nums ${INK}`}>
         <caption class={`text-left text-sm ${MUTED}`}>The structure split by published shares; the rest from the estimate's own items. For planning a loan's payments, not a lender's own schedule.</caption>
-        <thead><tr class={MUTED}><th scope="col" class="py-1 pr-1 text-left font-normal">Stage</th><th scope="col" class="px-1 py-1 text-right font-normal">Rs.</th>
+        <thead><tr class={MUTED}><th scope="col" class="py-1 pr-1 text-left font-normal">Stage</th><th scope="col" class="px-1 py-1 text-right font-normal">₹</th>
           <th scope="col" class="px-1 py-1 text-right font-normal">Share</th><th scope="col" class="px-1 py-1 text-right font-normal">By then</th></tr></thead>
         <tbody class="divide-y divide-line">
           {st.map((x) => <tr key={x.id} data-testid={`pl-stage-${x.id}`}>

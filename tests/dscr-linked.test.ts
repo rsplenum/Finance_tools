@@ -1,9 +1,9 @@
 /**
  * Linked sliders (engine/dscr-linked.ts, LOOP1, O12) on fictional case S of tests/dscr-plan.test.ts, whose figures were
  * worked outside the engine (model-worked): the repayment alone meets at 80 EMIs (79 miss); the loan alone at most
- * Rs. 9,78,928.88, a cut of 2,21,072; with Rs. 1,00,000 brought the loan 11,00,000 meets at 70 EMIs (69 miss). The room
+ * ₹9,78,928.88, a cut of 2,21,072; with ₹1,00,000 brought the loan 11,00,000 meets at 70 EMIs (69 miss). The room
  * is 120 instalments (180 − 60). Strains: 80 EMIs use 20 ÷ 120 = 0.1667 of the room; the loan at 9,70,000 (the largest in
- * whole Rs. 10,000) uses 2,30,000 of what the borrower can bring: 0.767 of 3 L, 0.1533 of 15 L.
+ * whole ₹10,000) uses 2,30,000 of what the borrower can bring: 0.767 of 3 L, 0.1533 of 15 L.
  */
 import { describe, it, expect } from 'vitest';
 import { fyRange, shortfall, type ProjectionYear } from '../engine/dscr';

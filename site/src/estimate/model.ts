@@ -173,7 +173,7 @@ function checkLine(r: QuoteResult, unit: string): CheckLine {
   const name = r.family ? FAMILIES.get(r.family)?.name ?? '' : '';
   const by = r.how === 'words' ? `Matched by its words to ${name}. ` : r.how === 'picked' ? `Taken as ${name}. ` : '';
   const reported = r.reported ? ' Its item’s rate is as reported, not yet checked against its page.' : '';
-  const band = r.band ? `Rs. ${money(r.band.low)}–${money(r.band.high)} ${UNIT_PER[unit] ?? `a ${unit}`}` : '';
+  const band = r.band ? `₹${money(r.band.low)}–${money(r.band.high)} ${UNIT_PER[unit] ?? `a ${unit}`}` : '';
   const at = levelsText(r);
   const text = r.where === 'not-matched' ? 'Not matched to the library: pick what it is to compare its rate.'
     : r.where === 'left-out' ? `${by}Left out of the quotation: no rate.`

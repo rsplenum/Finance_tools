@@ -46,7 +46,7 @@ export interface ReportState {
    * mode today's sales (`sales`, `salesGrowth`) beside a new line by its products (D-UX-251 (a)). */
   salesBy: 'drivers' | 'typed' | 'expansion'; products: ProductRow[]; utilisation: string; priceGrowth: string; monthsToStart: string;
   scheme: Scheme; category?: Category; area?: Area; activity?: Activity;
-  /** PMEGP's conditions confirmed; on Mudra, a Tarun loan repaid (only then Tarun Plus, above Rs. 10 lakh). */
+  /** PMEGP's conditions confirmed; on Mudra, a Tarun loan repaid (only then Tarun Plus, above ₹10 lakh). */
   pmegpConfirmed?: boolean; tarunRepaid?: boolean;
   /** CGTMSE's guarantee ticked, on a loan not under Mudra, and its concessions ticked (CGTMSE.groups, in order); a fee
    * rate typed from the sanction letter (% a year), over the scheme's, in expert mode. */
@@ -109,8 +109,8 @@ export function mudraLine(s: ReportState): string {
   const tl = amountOf(s.loan.amount), wc = limitOf(s);
   if (tl === undefined || wc === undefined) return 'Its level shows once the term loan and the working-capital limit are typed.';
   const v = mudraLevel(tl + wc);
-  return v ? `${v.label}: the term loan and the limit come to Rs. ${rupees(tl + wc)}${v.onlyAfterTarun ? ', only for a borrower who has repaid a Tarun loan' : ''}.`
-    : `The term loan and the limit come to Rs. ${rupees(tl + wc)}, above the Rs. ${rupees(MUDRA.mostInAll)} Mudra lends in all.`;
+  return v ? `${v.label}: the term loan and the limit come to ₹${rupees(tl + wc)}${v.onlyAfterTarun ? ', only for a borrower who has repaid a Tarun loan' : ''}.`
+    : `The term loan and the limit come to ₹${rupees(tl + wc)}, above the ₹${rupees(MUDRA.mostInAll)} Mudra lends in all.`;
 }
 /** Mudra's Tarun Plus, which asks whether a Tarun loan was repaid: above Tarun's most, or once ticked. */
 export const tarunAsked = (s: ReportState) => s.scheme === 'mudra' && (!!s.tarunRepaid || (amountOf(s.loan.amount) ?? 0) + (limitOf(s) ?? 0) > (MUDRA.levels.find((v) => v.id === 'tarun') as { upTo: number }).upTo);
@@ -218,7 +218,7 @@ export function workedLine(s: ReportState): string | undefined {
   if (wcByOf(s) !== 'worked') return undefined;
   const w = workedLimit(inputOf(s));
   const { mpbfSharePct: share, turnoverBankPct: bank } = WORKING_CAPITAL;
-  return w ? `Worked out: Rs. ${inr(w.limit)}. It is the lower of ${share}% of stock and debtors less creditors, Rs. ${inr(w.need)}, and ${bank}% of a full first year's sales, Rs. ${inr(w.turnover)}.`
+  return w ? `Worked out: ₹${inr(w.limit)}. It is the lower of ${share}% of stock and debtors less creditors, ₹${inr(w.need)}, and ${bank}% of a full first year's sales, ₹${inr(w.turnover)}.`
     : 'Worked out once the sales, the costs and the days are in.';
 }
 /** A side's costs added up from its heads, in words, while any is typed (expert mode). */
@@ -226,7 +226,7 @@ export function headsSum(s: ReportState, side: 'variable' | 'fixed'): string | u
   if (!typedHeads(s.heads?.[side]).length) return undefined;
   const c = costsOf(inputOf(s)), n = side === 'variable' ? c.variablePct : c.fixedCosts;
   if (n === undefined || !Number.isFinite(n)) return undefined;
-  return side === 'variable' ? `Materials and other variable costs: ${+n.toFixed(2)}% of sales, the heads added up.` : `Fixed costs: Rs. ${figText(n)} in a full first year, the heads added up.`;
+  return side === 'variable' ? `Materials and other variable costs: ${+n.toFixed(2)}% of sales, the heads added up.` : `Fixed costs: ₹${figText(n)} in a full first year, the heads added up.`;
 }
 
 /** What expert mode set apart from simple mode's assumptions, listed in simple mode with its value (D-UX-112). */
@@ -234,10 +234,10 @@ export function changedOf(s: ReportState): string[] {
   if (!simple(s)) return [];
   const out: string[] = [], x = inputOf(s);
   const others = HEADS.filter((h) => !SIMPLE_COST.includes(h.id) && s.cost[h.id].trim());
-  if (others.length) out.push(`The cost of the project: ${others.map((h) => `${h.label.toLowerCase()} Rs. ${s.cost[h.id]}`).join(', ')}`);
-  if (s.scheme !== 'pmegp' && s.subsidy.trim()) out.push(`A capital subsidy of Rs. ${s.subsidy}`);
-  if (s.unsecured.trim()) out.push(`Unsecured loans of Rs. ${s.unsecured}`);
-  if (s.cashAtStart?.trim()) out.push(`Rs. ${s.cashAtStart} of your own money kept in the business`);
+  if (others.length) out.push(`The cost of the project: ${others.map((h) => `${h.label.toLowerCase()} ₹${s.cost[h.id]}`).join(', ')}`);
+  if (s.scheme !== 'pmegp' && s.subsidy.trim()) out.push(`A capital subsidy of ₹${s.subsidy}`);
+  if (s.unsecured.trim()) out.push(`Unsecured loans of ₹${s.unsecured}`);
+  if (s.cashAtStart?.trim()) out.push(`₹${s.cashAtStart} of your own money kept in the business`);
   if (s.loan.disbursed.trim()) out.push(`The loan first drawn in ${s.loan.disbursed}`);
   if (s.salesBy === 'typed') out.push('Sales typed by year, in place of the products');
   else {
@@ -248,7 +248,7 @@ export function changedOf(s: ReportState): string[] {
   const days = (['stock', 'debtors', 'creditors'] as const).filter((k) => s.days[k] !== EMPTY.days[k]);
   if (days.length) out.push(`Days of ${days.map((k) => `${k} ${s.days[k]}`).join(', ')}`);
   const v = typedHeads(s.heads?.variable), f = typedHeads(s.heads?.fixed);
-  if (v.length || f.length) out.push(`Costs by head: ${[...v.map(([id, t]) => `${LABEL[id].toLowerCase()} ${t}%`), ...f.map(([id, t]) => `${LABEL[id].toLowerCase()} Rs. ${t} a month`)].join(', ')}`);
+  if (v.length || f.length) out.push(`Costs by head: ${[...v.map(([id, t]) => `${LABEL[id].toLowerCase()} ${t}%`), ...f.map(([id, t]) => `${LABEL[id].toLowerCase()} ₹${t} a month`)].join(', ')}`);
   if (s.fixedGrowth.trim()) out.push(`Fixed costs growing ${s.fixedGrowth}% a year`);
   if (s.wcRate.trim() && (x.wcLimit ?? 0) > 0) out.push(`The limit's rate: ${s.wcRate}%`);
   if (guaranteeOf(s) === 'cgtmse' && s.security === 'property') out.push('A CGTMSE guarantee beside the property');
@@ -384,10 +384,10 @@ export function viewOf(r: Report): ReportView {
     id: 'finance', title: 'Means of finance', first: 'Source', columns: ['Rupees'],
     rows: [
       { label: `Promoters’ contribution (${f.promoterPct.toFixed(2)}%)`, values: [rupees(f.promoter)], n: [f.promoter] },
-      ...(sc ? [{ label: `PMEGP margin money, ${sc.ratePct}% of Rs. ${rupees(sc.base)}: a deposit for ${PMEGP.lockInYears} years, then set off against the loan`, values: [rupees(f.subsidy)], n: [f.subsidy] }]
+      ...(sc ? [{ label: `PMEGP margin money, ${sc.ratePct}% of ₹${rupees(sc.base)}: a deposit for ${PMEGP.lockInYears} years, then set off against the loan`, values: [rupees(f.subsidy)], n: [f.subsidy] }]
         : f.subsidy ? [{ label: 'Capital subsidy', values: [rupees(f.subsidy)], n: [f.subsidy] }] : []),
       ...(f.unsecured ? [{ label: 'Unsecured loans', values: [rupees(f.unsecured)], n: [f.unsecured] }] : []),
-      { label: sc ? `Term loan: Rs. ${rupees(sc.sanctioned)} applied for, less the margin money` : r.mudra ? `Term loan under Mudra (${r.mudra.level.label}), with no collateral` : 'Term loan', values: [rupees(f.termLoan)], n: [f.termLoan] },
+      { label: sc ? `Term loan: ₹${rupees(sc.sanctioned)} applied for, less the margin money` : r.mudra ? `Term loan under Mudra (${r.mudra.level.label}), with no collateral` : 'Term loan', values: [rupees(f.termLoan)], n: [f.termLoan] },
       { label: 'Total means of finance', values: [rupees(f.total)], n: [f.total], kind: 'total' },
       ...(f.kept ? [{ label: 'Besides, the promoters’ money kept in the business as cash at the start', values: [rupees(f.kept)], n: [f.kept] }] : []),
     ],
@@ -502,10 +502,10 @@ export function viewOf(r: Report): ReportView {
   return {
     years, tables: [cost, finance, ...(collateral ? [collateral] : []), ...(sales ? [sales] : []), pl, bs, cf, dscr, bep, keyRatios, wc, schedule],
     key: [
-      { label: 'Cost of the project', value: `Rs. ${rupees(r.projectCost)}` },
-      ...(sc ? [{ label: 'PMEGP margin money', value: `Rs. ${rupees(sc.subsidy)}`, note: `${sc.ratePct}% of Rs. ${rupees(sc.base)}, set off after ${PMEGP.lockInYears} years` }] : []),
-      ...(r.mudra ? [{ label: 'Mudra', value: r.mudra.level.label, note: `Rs. ${rupees(r.mudra.total)} in all, the term loan and the limit; no collateral up to Rs. ${rupees(r.mudra.collateralFreeUpTo)}` }] : []),
-      ...(g ? [{ label: `Guarantee fee (${g.id.toUpperCase()})`, value: `${g.ratePct}% a year`, note: `Rs. ${rupees(g.total)} over the loan${g.beforeStart > 0.005 ? `, Rs. ${rupees(g.beforeStart)} of it before sales start` : ''}` }] : []),
+      { label: 'Cost of the project', value: `₹${rupees(r.projectCost)}` },
+      ...(sc ? [{ label: 'PMEGP margin money', value: `₹${rupees(sc.subsidy)}`, note: `${sc.ratePct}% of ₹${rupees(sc.base)}, set off after ${PMEGP.lockInYears} years` }] : []),
+      ...(r.mudra ? [{ label: 'Mudra', value: r.mudra.level.label, note: `₹${rupees(r.mudra.total)} in all, the term loan and the limit; no collateral up to ₹${rupees(r.mudra.collateralFreeUpTo)}` }] : []),
+      ...(g ? [{ label: `Guarantee fee (${g.id.toUpperCase()})`, value: `${g.ratePct}% a year`, note: `₹${rupees(g.total)} over the loan${g.beforeStart > 0.005 ? `, ₹${rupees(g.beforeStart)} of it before sales start` : ''}` }] : []),
       ...(r.average !== undefined ? [{ label: 'Average DSCR', value: ratio(r.average), note: 'cash for repayment over all years ÷ all repayments', check: 'dscrAverage' }] : []),
       ...(r.lowest ? [{ label: 'Lowest DSCR', value: ratio(r.lowest.dscr), note: `in ${r.lowest.fy}`, check: 'dscrLowest' }] : []),
     ],
@@ -527,7 +527,7 @@ export interface ReportPreview {
 
 /** Cash running out in words (D-UX-247): the first year under nil, then the amount short at the lowest, and its year when later. */
 const runsOut = (c: NonNullable<Report['cashShort']>, rs: (n: number) => string) =>
-  `Cash runs out in ${c.first}: Rs. ${rs(c.need)} short at its lowest${c.fy === c.first ? '' : `, in ${c.fy}`}.`;
+  `Cash runs out in ${c.first}: ₹${rs(c.need)} short at its lowest${c.fy === c.first ? '' : `, in ${c.fy}`}.`;
 export function preview(s: ReportState): ReportPreview {
   const x = inputOf(s), r = projectReport(x);
   if ('blocked' in r) return { needs: [], blocked: r.blocked, flags: [] };
@@ -539,7 +539,7 @@ export function preview(s: ReportState): ReportPreview {
   const sc = d.checks.find((k) => k.id === 'securityCover') as RatioCheck, need = sc.meets ? undefined : collateralNeeded(r, x, 'fresh', lv);
   const collateralNote = need === undefined ? undefined : need === 0
     ? `Security cover: the project’s own assets reach ${sc.level.toFixed(2)} without collateral.`
-    : `Security cover: collateral with a market value of Rs. ${rupees(need)} or more brings it to ${sc.level.toFixed(2)}.`;
+    : `Security cover: collateral with a market value of ₹${rupees(need)} or more brings it to ${sc.level.toFixed(2)}.`;
   return {
     needs: open, view: viewOf(r), flags: r.scheme?.flags ?? [], checks,
     ...(d.misses.length ? { misses: `${verdictWords('benchmark', d.checks.length, d.misses.length, d.checks.filter((k) => k.meets === undefined).length)}: ${listed(d.misses.map(labelOf))}.` } : {}),
@@ -552,7 +552,7 @@ export function preview(s: ReportState): ReportPreview {
 function hybridLine(r: Report): string | undefined {
   const g = r.guarantee;
   return g?.id === 'cgtmse' && g.collateral > 0
-    ? `CGTMSE guarantees Rs. ${rupees(g.guaranteed)} of the loans' Rs. ${rupees(g.cover)}; the property's Rs. ${rupees(g.collateral)} backs the rest, set against the term loan first. Its fee is on that part only.`
+    ? `CGTMSE guarantees ₹${rupees(g.guaranteed)} of the loans' ₹${rupees(g.cover)}; the property's ₹${rupees(g.collateral)} backs the rest, set against the term loan first. Its fee is on that part only.`
     : undefined;
 }
 
@@ -597,10 +597,10 @@ export function repaymentView(s: ReportState): RepaymentView | undefined {
     const low = w.checks.find((k) => k.id === 'dscrLowest'), every = w.frequency === 'quarterly' ? 'quarter' : 'month';
     const lowest = w.lowest && low ? `${ratioAt(w.lowest.dscr, low)} in ${w.lowest.fy}` : '—';
     return {
-      value: valueOf(w), label: wayLabel(w), interest: `Rs. ${rupees(w.interest)}`, meets: !w.misses.length, proposed: w === c.proposed, now: w === c.now,
+      value: valueOf(w), label: wayLabel(w), interest: `₹${rupees(w.interest)}`, meets: !w.misses.length, proposed: w === c.proposed, now: w === c.now,
       least: i === 0 && !c.proposed && c.ways.length > 1,
-      instalments: w.style === 'emi' ? `Rs. ${rupees(w.first)} a month` : w.style === 'stepped' ? `Rs. ${rupees(w.first)} a month in the first year, rising to Rs. ${rupees(w.last)}`
-        : `Rs. ${rupees(w.first)} the first ${every}, falling to Rs. ${rupees(w.last)}`,
+      instalments: w.style === 'emi' ? `₹${rupees(w.first)} a month` : w.style === 'stepped' ? `₹${rupees(w.first)} a month in the first year, rising to ₹${rupees(w.last)}`
+        : `₹${rupees(w.first)} the first ${every}, falling to ₹${rupees(w.last)}`,
       lines: !asked.length ? [{ text: `Lowest-year DSCR ${lowest}. Meets every benchmark.`, meets: true }]
         // More than two in question: the bars above show each, so a way says only what it misses.
         : asked.length > 2 ? [w.misses.length ? { text: `Misses ${listed(w.misses.map(labelOf))}.`, meets: false } : { text: 'Meets every benchmark.', meets: true }]
@@ -640,43 +640,43 @@ const years = (n: number, perYear: number) => {
  * typed, the borrower's first, then the lender's. Each card: the lever, how far it moves (and a bar of now against needed),
  * the ratios it brings to their level and those it leaves short, and whether it is within reach. */
 /** Cash running out that a change leaves. */
-const cashLeft = (o: Outcome) => (o.cashNeed ? `Cash still runs out: the promoters would need Rs. ${upRupees(o.cashNeed)} more.` : undefined);
+const cashLeft = (o: Outcome) => (o.cashNeed ? `Cash still runs out: the promoters would need ₹${upRupees(o.cashNeed)} more.` : undefined);
 const chips = (o: Outcome) => ({ fixes: o.fixes.map(labelOf), still: o.still.map(labelOf) });
 
 export function viableOf(s: ReportState): ViableView | undefined {
   const lv = levelsOf(s.benchmarks), v = makeViable(inputOf(s), lv);
   if ('needs' in v || 'blocked' in v) return undefined;
   const lines: ViableLine[] = [], sl = v.sales, push = (l: Omit<ViableLine, 'by'>, by: ViableLine['by'] = 'borrower') => lines.push({ ...l, by });
-  const none = { fixes: [], still: [] }, rs = (x: number) => `Rs. ${rupees(x)}`;
+  const none = { fixes: [], still: [] }, rs = (x: number) => `₹${rupees(x)}`;
   const smaller = (id: string, head: string, l: NonNullable<typeof v.loan>, text: string) =>
     push({ id, head, text, move: `${rs(l.now - l.largest)} less`, bars: { now: l.now, to: l.largest, nowText: rs(l.now), toText: rs(l.largest) }, note: cashLeft(l), ...chips(l) });
   if (sl && v.meets) {
     push({ id: 'sales', head: 'Sales can fall', ...none, ...(sl.tenths < 0 ? {
-      move: `${(-sl.tenths / 10).toFixed(1)}%`, bars: { now: sl.now, to: sl.needed, nowText: rs(sl.now), toText: `Rs. ${upRupees(sl.needed)}` },
+      move: `${(-sl.tenths / 10).toFixed(1)}%`, bars: { now: sl.now, to: sl.needed, nowText: rs(sl.now), toText: `₹${upRupees(sl.needed)}` },
       // The fall is the card's figure (`move`), so the words do not repeat it (review finding 10).
-      text: `To Rs. ${upRupees(sl.needed)} in ${sl.fy} (from Rs. ${rupees(sl.now)}), and every ratio still meets its level.`,
+      text: `To ₹${upRupees(sl.needed)} in ${sl.fy} (from ₹${rupees(sl.now)}), and every ratio still meets its level.`,
     } : { text: 'Sales cannot fall at all before a ratio misses its level.' }) });
   } else if (sl) {
     const u = sl.use, distinct = u ? u.needed.filter((x, k) => k === 0 || Math.abs(x - u.needed[k - 1]) > 1e-9) : [], top = u ? Math.max(...u.needed) : 0;
     push({ id: 'sales', head: 'Higher sales', move: `+${(sl.tenths / 10).toFixed(1)}%`, ...chips(sl),
-      bars: { now: sl.now, to: sl.needed, nowText: rs(sl.now), toText: `Rs. ${upRupees(sl.needed)}` },
-      text: `Sales ${(sl.tenths / 10).toFixed(1)}% higher in every year: Rs. ${upRupees(sl.needed)} in ${sl.fy} instead of Rs. ${rupees(sl.now)}.`,
+      bars: { now: sl.now, to: sl.needed, nowText: rs(sl.now), toText: `₹${upRupees(sl.needed)}` },
+      text: `Sales ${(sl.tenths / 10).toFixed(1)}% higher in every year: ₹${upRupees(sl.needed)} in ${sl.fy} instead of ₹${rupees(sl.now)}.`,
       ...(u?.overFull ? { reach: { out: true, text: `Out of reach at this capacity: it needs ${upPct(top)}% of it. Only a higher price or a larger capacity can carry it.` } }
         : u?.overMost ? { reach: { out: false, text: `Above the ${LEVELS.capacity.mostUsePct}% use of the capacity a plan takes at most: give the reason it can.` } } : {}),
       note: [
-        sl.price && u ? `That is a price of Rs. ${(Math.ceil(sl.price.needed * 100 - 1e-6) / 100).toFixed(2)} ${soldBy(s.products[0]?.unit).per} (now Rs. ${sl.price.now}) at the same use, or the use of the capacity at ${distinct.map((x) => `${upPct(x)}%`).join(', then ')} at the same price.`
+        sl.price && u ? `That is a price of ₹${(Math.ceil(sl.price.needed * 100 - 1e-6) / 100).toFixed(2)} ${soldBy(s.products[0]?.unit).per} (now ₹${sl.price.now}) at the same use, or the use of the capacity at ${distinct.map((x) => `${upPct(x)}%`).join(', then ')} at the same price.`
           : u ? `That is every price ${(sl.tenths / 10).toFixed(1)}% higher at the same use, or the use of the capacity at ${distinct.map((x) => `${upPct(x)}%`).join(', then ')} at the same prices.` : '',
         cashLeft(sl) ?? '',
       ].filter(Boolean).join(' ') || undefined });
   } else if (v.salesNone) push({ id: 'sales', head: 'Higher sales', text: v.salesNone, ...none });
-  if (v.loan) smaller('loan', 'A smaller term loan', v.loan, `A term loan of at most Rs. ${rupees(v.loan.largest)} (now Rs. ${rupees(v.loan.now)}), the promoters bringing Rs. ${upRupees(v.loan.more)} more.`);
+  if (v.loan) smaller('loan', 'A smaller term loan', v.loan, `A term loan of at most ₹${rupees(v.loan.largest)} (now ₹${rupees(v.loan.now)}), the promoters bringing ₹${upRupees(v.loan.more)} more.`);
   else if (v.loanNone) push({ id: 'loan', head: 'A smaller term loan', text: v.loanNone, ...none });
-  if (v.wc) smaller('wc', 'A smaller working-capital limit', v.wc, `A working-capital limit of at most Rs. ${rupees(v.wc.largest)} (now Rs. ${rupees(v.wc.now)}), ${v.wc.more >= 0.5 ? `the promoters bringing Rs. ${upRupees(v.wc.more)} more as margin` : 'with no more margin from the promoters'}.`);
+  if (v.wc) smaller('wc', 'A smaller working-capital limit', v.wc, `A working-capital limit of at most ₹${rupees(v.wc.largest)} (now ₹${rupees(v.wc.now)}), ${v.wc.more >= 0.5 ? `the promoters bringing ₹${upRupees(v.wc.more)} more as margin` : 'with no more margin from the promoters'}.`);
   else if (v.wcNone) push({ id: 'wc', head: 'A smaller working-capital limit', text: v.wcNone, ...none });
   if (v.collateral && v.collateral.now !== undefined && v.collateral.needed > v.collateral.now) {
     const c = v.collateral as { now: number; needed: number };
     push({ id: 'collateral', head: 'More collateral', move: `+${rs(c.needed - c.now)}`, bars: { now: c.now, to: c.needed, nowText: rs(c.now), toText: rs(c.needed) },
-      text: `Collateral with a market value of Rs. ${rupees(c.needed)} (now Rs. ${rupees(c.now)}), for the security cover.`,
+      text: `Collateral with a market value of ₹${rupees(c.needed)} (now ₹${rupees(c.now)}), for the security cover.`,
       fixes: [labelOf('securityCover')], still: v.diagnosis.misses.filter((id) => id !== 'securityCover').map(labelOf) });
   }
   const longest = LEVELS.term.longestMonths;
@@ -722,7 +722,7 @@ export interface WorkView {
 const ratioText = (v: number, level: number) => { const t = v.toFixed(2); return (+t >= level) === (v >= level - 1e-9) ? t : v.toFixed(4); };
 const pctOf = (n: number) => `${+n.toFixed(2)}%`;
 const usesOf = (u?: number[]) => (u ?? []).map(pctOf).join(', ');
-const priceText = (n: number) => `Rs. ${inr(n, Number.isInteger(n) ? 0 : 2)}`;
+const priceText = (n: number) => `₹${inr(n, Number.isInteger(n) ? 0 : 2)}`;
 
 /** Make it work on the page: none while the report has no figures, or misses nothing (the security cover aside) and its cash
  * stays at nil or above. */
@@ -730,7 +730,7 @@ export function workView(s: ReportState): WorkView | undefined {
   const x = inputOf(s), lv = levelsOf(s.benchmarks), sales = amountOf(s.plantSales ?? ''), cost = amountOf(s.plantCost ?? '');
   const w = makeWork(x, { levels: lv, ...(sales !== undefined && sales > 0 ? { plantSales: sales } : {}), ...(cost !== undefined && cost > 0 ? { plantCost: cost } : {}) });
   if ('needs' in w || 'blocked' in w || (w.meets && !w.cash)) return undefined;
-  const rs = (n?: number) => `Rs. ${rupees(n ?? 0)}`, label = (ids: RatioId[]) => ids.map(labelOf);
+  const rs = (n?: number) => `₹${rupees(n ?? 0)}`, label = (ids: RatioId[]) => ids.map(labelOf);
   const perYear = x.loan.frequency === 'quarterly' ? 4 : 12, n0 = x.loan.instalments as number, prods = x.products ?? [];
   const unit = soldBy(s.products[0]?.unit), first = w.years[0], most = LEVELS.capacity.mostUsePct;
   const at85 = (c: Change) => (c.utilisationPct ? `, with the use of the capacity at ${most}% in every year (now ${usesOf(x.utilisationPct)})` : '');
@@ -759,17 +759,17 @@ export function workView(s: ReportState): WorkView | undefined {
     instalments: (c) => ['A longer repayment', `${c.instalments} instalments, ${years(c.instalments as number, perYear)} (now ${n0}), if the lender agrees.`],
   };
   const askOf = (a: NonNullable<WorkWay['ask']>): WorkAsk => (a.id === 'plantSales' ? {
-    id: a.id, label: 'What can the plant sell in a year, running full? (Rs.)', hint: `At most ${most}% of it in the busiest year.`, value: s.plantSales ?? '',
-    note: a.given === undefined ? `It needs a plant that sells ${`Rs. ${upRupees(a.need)}`} a year running full: give what yours can, and the report stays provisional until then.`
-      : a.within ? `Within the plant: it needs Rs. ${upRupees(a.need)} a year running full.` : `Beyond the plant: it needs Rs. ${upRupees(a.need)} a year running full, more than the ${rs(a.given)} it can sell.`,
+    id: a.id, label: 'What can the plant sell in a year, running full? (₹)', hint: `At most ${most}% of it in the busiest year.`, value: s.plantSales ?? '',
+    note: a.given === undefined ? `It needs a plant that sells ${`₹${upRupees(a.need)}`} a year running full: give what yours can, and the report stays provisional until then.`
+      : a.within ? `Within the plant: it needs ₹${upRupees(a.need)} a year running full.` : `Beyond the plant: it needs ₹${upRupees(a.need)} a year running full, more than the ${rs(a.given)} it can sell.`,
   } : {
-    id: a.id, label: 'What would the larger plant cost? (Rs.)', hint: 'Its machinery and building in all.', value: s.plantCost ?? '',
+    id: a.id, label: 'What would the larger plant cost? (₹)', hint: 'Its machinery and building in all.', value: s.plantCost ?? '',
     note: a.given === undefined ? 'Until it is given, the figures use today’s plant’s cost, and the report stays provisional.' : 'The machinery takes what the larger plant adds; the promoters bring their share of it.',
   });
   const card = (v: WorkWay, k: number): WorkCard => {
     const [head, text] = words[v.id](v.change), notes: string[] = [];
-    if (v.promotersMore !== undefined && v.promotersMore >= 0.5 && v.id !== 'cash') notes.push(`The promoters bring Rs. ${upRupees(v.promotersMore)} more.`);
-    if (v.cashNeed) notes.push(`Cash still runs out: the promoters would need Rs. ${upRupees(v.cashNeed)} more at the start.`);
+    if (v.promotersMore !== undefined && v.promotersMore >= 0.5 && v.id !== 'cash') notes.push(`The promoters bring ₹${upRupees(v.promotersMore)} more.`);
+    if (v.cashNeed) notes.push(`Cash still runs out: the promoters would need ₹${upRupees(v.cashNeed)} more at the start.`);
     // A part first year (D-UX-252 (5)): kept as the engine reads it, and said on the card that moves it.
     if (v.id === 'use1' && first && first.months < 12) notes.push(`${first.fy} has ${first.months} month${first.months === 1 ? '' : 's'} of sales: its use counts for those months only. Whether a part year counts is the lender’s rule.`);
     return { id: v.id, key: `${v.id}-${k}`, head, text, notes, fixes: label(v.fixes), still: label(v.still), reaches: !v.still.length, change: v.change, ...(v.ask ? { ask: askOf(v.ask) } : {}) };
@@ -808,7 +808,7 @@ export interface PlanView {
   most?: number; promotersNow: number; leastLoan: number; termRoom: number; monthsEach: number; salesMost?: number;
   /** The instalments lever at its lowest (0 or less): the lowest-year DSCR still meets there (OR2b). */
   fewest: number;
-  /** On Mudra, when the promoters' most and Mudra's Rs. 20 lakh in all cannot fund the project (D-UX-111). */
+  /** On Mudra, when the promoters' most and Mudra's ₹20 lakh in all cannot fund the project (D-UX-111). */
   mudraShort?: string;
 }
 
@@ -828,9 +828,9 @@ export function planOf(s: ReportState, held: Partial<Levers> = {}): PlanView | u
   const r = x.scheme?.id === 'mudra' && most !== undefined ? projectReport(x) : undefined;
   const short = r && !('needs' in r) && !('blocked' in r) ? mudraShort(r, most as number) : undefined;
   return {
-    ...(short !== undefined ? { mudraShort: `On Mudra, the promoters’ Rs. ${rupees(most as number)} and Mudra’s Rs. ${rupees(MUDRA.mostInAll)} in all leave Rs. ${rupees(short)} of the project unfunded. A loan to a small enterprise outside Mudra, which CGTMSE can guarantee, can be larger: choose None for the scheme, then a CGTMSE guarantee.` } : {}),
+    ...(short !== undefined ? { mudraShort: `On Mudra, the promoters’ ₹${rupees(most as number)} and Mudra’s ₹${rupees(MUDRA.mostInAll)} in all leave ₹${rupees(short)} of the project unfunded. A loan to a small enterprise outside Mudra, which CGTMSE can guarantee, can be larger: choose None for the scheme, then a CGTMSE guarantee.` } : {}),
     x, lv, levers: q.levers, cards: LEVER_IDS.filter((id) => show[id]).map((id) => ({ id, by: id === 'moratorium' || id === 'instalments' ? 'lender' : 'borrower', head: head(id) })),
-    limits: `The limits kept: ${most !== undefined ? `the promoters bring at most Rs. ${rupees(most)} in all` : 'no more of the promoters’ money, since the most they can bring is not typed'}; ${L.sales === undefined
+    limits: `The limits kept: ${most !== undefined ? `the promoters bring at most ₹${rupees(most)} in all` : 'no more of the promoters’ money, since the most they can bring is not typed'}; ${L.sales === undefined
       ? 'sales with no limit known, so a lender will test them against the market' : `the use of the capacity at most ${LEVELS.capacity.mostUsePct}% in any year`}; the whole loan within ${LEVELS.term.longestMonths} months; unsecured loans and fixed costs only as you set them.`,
     ...(limited.length ? { atLimit: `At the limit: ${listed(limited)}.` } : {}),
     ...(most !== undefined ? { most } : {}), promotersNow: q.promoters.now, leastLoan: L.leastLoan, termRoom: L.termRoom, monthsEach: L.monthsEach, fewest: L.fewest,
@@ -845,7 +845,7 @@ export interface BoardView {
 }
 
 export function boardOf(q: PlanView, l: Levers): BoardView {
-  const x = q.x, y = withLevers(x, l), rs = (n?: number) => `Rs. ${rupees(n ?? 0)}`, had = x.collateral ?? 0;
+  const x = q.x, y = withLevers(x, l), rs = (n?: number) => `₹${rupees(n ?? 0)}`, had = x.collateral ?? 0;
   const room = (x.loan.amount as number) - q.leastLoan, typed = x.salesBy === 'typed', pct = (t: number) => `${(t / 10).toFixed(1)}%`;
   const uses = (u?: number[]) => (u ?? []).map((p) => `${p}%`).join(', ');
   const moves: Record<LeverId, BoardMove> = {
@@ -887,7 +887,7 @@ export function boardOf(q: PlanView, l: Levers): BoardView {
       : `With these changes it meets every ${ratiosWord(q.lv).replace('ratios', 'ratio')}${checks.some((c) => c.verdict === 'wait') ? ' that can be read' : ''}.`,
     line: miss.length ? `Misses ${miss.length}: ${listed(miss.map((c) => inSentence(c.label)))}` : 'Meets every benchmark',
     promoters: `The promoters bring ${rs(p)} in all (now ${rs(q.promotersNow)})${q.most === undefined ? '' : over
-      ? `: Rs. ${upRupees(p - q.most)} more than the ${rs(q.most)} they can` : `, within the ${rs(q.most)} they can`}.`,
+      ? `: ₹${upRupees(p - q.most)} more than the ${rs(q.most)} they can` : `, within the ${rs(q.most)} they can`}.`,
   };
 }
 /** Typed sales have no known limit: the slider runs to double, or the plan's if more. */
@@ -963,8 +963,8 @@ export function applyPlan(s: ReportState, l: Levers): { s: ReportState; changes:
 export const undoPlan = (s: ReportState, changes: PlanChange[]) => changes.reduce((t, c) => (same(get(t, c.key), c.now) ? put(t, c.key, c.was) : t), s);
 /** A question Make it work leaves open (D-UX-252 (1)): its words in the needs, its box's label and hint. */
 export const PENDING: Record<NonNullable<ReportState['pending']>, { need: string; label: string; hint: string }> = {
-  plantSales: { need: 'The plant: what it can sell in a year, running full (Rs.)', label: 'What can the plant sell in a year, running full? (Rs.)', hint: `The way you used needs the busiest year at most ${LEVELS.capacity.mostUsePct}% of it.` },
-  plantCost: { need: 'The larger plant: its cost of machinery and building (Rs.)', label: 'What would the larger plant cost? (Rs.)', hint: 'Its machinery and building in all: the machinery takes what it adds.' },
+  plantSales: { need: 'The plant: what it can sell in a year, running full (₹)', label: 'What can the plant sell in a year, running full? (₹)', hint: `The way you used needs the busiest year at most ${LEVELS.capacity.mostUsePct}% of it.` },
+  plantCost: { need: 'The larger plant: its cost of machinery and building (₹)', label: 'What would the larger plant cost? (₹)', hint: 'Its machinery and building in all: the machinery takes what it adds.' },
 };
 
 /** "Use this" on a way of Make it work (OR11d): its figures written into the answers, each with what it was, for the
@@ -1027,7 +1027,7 @@ export function solvedOf(s: ReportState): FixView | undefined {
     if ('needs' in q || 'blocked' in q) return undefined;
     const read = (d: { checks: RatioCheck[] }) => d.checks.filter((c) => c.meets !== undefined), met = (d: { checks: RatioCheck[] }) => d.checks.filter((c) => c.meets).length;
     const before = `${met(q.base.diagnosis)} of ${read(q.base.diagnosis).length}`, names = s.products.map((r, i) => r.name.trim() || `line ${i + 1}`);
-    const months = (n: number) => `${n} month${n === 1 ? '' : 's'}`, money = (n: number) => (n ? `Rs. ${figText(n)}` : 'none');
+    const months = (n: number) => `${n} month${n === 1 ? '' : 's'}`, money = (n: number) => (n ? `₹${figText(n)}` : 'none');
     const plans = q.plans.filter((p) => p.works).flatMap((p): FixCard[] => {
       const change = changeOf(p), y = inputOf(applyWay(s, { change }).s), r = projectReport(y);
       if ('needs' in r || 'blocked' in r) return [];
@@ -1047,7 +1047,7 @@ export function solvedOf(s: ReportState): FixView | undefined {
       });
       const more = r.finance.promoter + r.finance.kept - p.promoters.now, n = read(d).length;
       return [{ id: p.id, title: SOLVE.plans.find((k) => k.id === p.id)?.label ?? p.id, lines, change,
-        ...(Math.abs(more) >= 0.5 ? { brings: more > 0 ? `You bring Rs. ${upRupees(more)} more.` : `You bring Rs. ${rupees(-more)} less.` } : {}),
+        ...(Math.abs(more) >= 0.5 ? { brings: more > 0 ? `You bring ₹${upRupees(more)} more.` : `You bring ₹${rupees(-more)} less.` } : {}),
         passes: `Passes all ${n} checks${q.base.report.cashShort ? ', and cash never runs out' : ''}`, counts: `Before: ${before}. Now: ${met(d)} of ${n}.` }];
     });
     if (plans.length) return { plans };
@@ -1086,7 +1086,7 @@ export function carryView(s: ReportState): CarryView | undefined {
   const c = carry(x, { levels: lv, ...(most !== undefined && most >= 0 ? { promotersMost: most } : {}) });
   const view = (): CarryView | undefined => {
     if ('needs' in c || 'blocked' in c) return undefined;
-    const rs = (n: number) => `Rs. ${rupees(n)}`, months = (n: number) => `${n} month${n === 1 ? '' : 's'}`;
+    const rs = (n: number) => `₹${rupees(n)}`, months = (n: number) => `${n} month${n === 1 ? '' : 's'}`;
     const names = s.products.map((r, i) => r.name.trim() || `line ${i + 1}`);
     const low = levelFor('dscrLowest', 'fresh', lv), avg = levelFor('dscrAverage', 'fresh', lv);
     const line = c.carries > 0 ? `Your business can carry a loan of ${rs(c.carries)}. You asked ${rs(c.asked)}.`
@@ -1139,7 +1139,7 @@ export function carryView(s: ReportState): CarryView | undefined {
     const top = Math.max(c.asked, c.carries);
     return { line, bar, how, gap: c.gap > 0, share: top > 0 ? (100 * c.carries) / top : 0, asked: top > 0 ? (100 * c.asked) / top : 0, closers,
       ...(after ? { after } : {}),
-      ...(c.keepReady !== undefined ? { keepReady: `Cash runs short before the sales come in, whatever the loan: keep Rs. ${upRupees(c.keepReady)} more of your own ready.` } : {}) };
+      ...(c.keepReady !== undefined ? { keepReady: `Cash runs short before the sales come in, whatever the loan: keep ₹${upRupees(c.keepReady)} more of your own ready.` } : {}) };
   };
   carried = { on, v: view() };
   return carried.v;
@@ -1163,7 +1163,7 @@ export { AS_TYPED, LEVER_IDS, inSentence, type BoardMove, type CheckRow, type Le
 
 // ---- Check and confirm (OR8, the owner's O13) ----
 
-const rs = (n?: number) => (n === undefined || !Number.isFinite(n) ? '—' : `Rs. ${inr(n)}`);
+const rs = (n?: number) => (n === undefined || !Number.isFinite(n) ? '—' : `₹${inr(n)}`);
 const num = (n?: number, unit = '') => (n === undefined || !Number.isFinite(n) ? '—' : `${Number.isInteger(n) ? inr(n) : inr(n, 2)}${unit}`);
 const labelIn = <T,>(cs: { value: T; label: string }[], v?: T) => cs.find((c) => c.value === v)?.label ?? '—';
 /** A row of the years' words, a run of the same at its end said once ("60% in 2026-27, 70% from 2027-28"). */
@@ -1179,7 +1179,7 @@ export function checkOf(s: ReportState, p: ReportPreview): CheckGroup[] {
   const v = p.view;
   if (!v) return [];
   const x = inputOf(s), table = (id: string) => v.tables.find((t) => t.id === id);
-  const rows = (id: string) => (table(id)?.rows ?? []).filter((r) => r.kind !== 'head').map((r) => ({ label: r.label, value: `Rs. ${r.values[0]}` }));
+  const rows = (id: string) => (table(id)?.rows ?? []).filter((r) => r.kind !== 'head').map((r) => ({ label: r.label, value: `₹${r.values[0]}` }));
   const g = guaranteeOf(s), own = 'The project’s own assets only', backs = s.scheme === 'mudra' ? 'A CGFMU guarantee, under Mudra, with no collateral'
     : simple(s) ? (s.security === 'neither' ? own : labelIn(SECURITY_CHOICES, s.security))
       : [x.collateral ? 'Property' : '', g === 'cgtmse' ? 'a CGTMSE guarantee' : ''].filter(Boolean).join(' and ') || own;

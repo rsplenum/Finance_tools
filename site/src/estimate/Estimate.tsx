@@ -6,7 +6,7 @@
  */
 import { useMemo, useState } from 'preact/hooks';
 import { answerRule, BUTTON, Choice, docLink, FILLED, goTo, HINT, Section, SelectField, STATE, TextField, Tick, InAppNote, useKept } from '../fields';
-import { printable } from '../doc/pdf';
+import { printable } from '../doc/face';
 import { Downloads } from '../Downloads';
 import { docNeeds, docStatus, estimateDoc, fileName } from './document';
 import {
@@ -77,10 +77,10 @@ function Items({ s, update, p, q }: { s: EstimateState; update: Update; p: Estim
             <TextField id={`fld-item-${n}-quantity`} label="Quantity" inputMode="decimal" value={it.quantity} invalid={bad(it.quantity, plainOf)}
               said={bad(it.quantity, plainOf) ? 'Not understood. Type a number, like 45 or 12.5.' : undefined} onCommit={(quantity) => set(i, { quantity })} />
             <SelectField id={`fld-item-${n}-unit`} label="Unit" value={it.unit} placeholder="Choose a unit" options={UNIT_CHOICES} onChange={(unit) => set(i, { unit })} />
-            <TextField id={`fld-item-${n}-rate`} label={`Rate (Rs.${it.unit ? ` per ${it.unit}` : ''})`} inputMode="decimal" value={it.rate} tidy={tidyRate}
+            <TextField id={`fld-item-${n}-rate`} label={`Rate (₹${it.unit ? ` per ${it.unit}` : ''})`} inputMode="decimal" value={it.rate} tidy={tidyRate}
               invalid={bad(it.rate, rateOf)} said={bad(it.rate, rateOf) ? 'Not understood. Type 9,500 or 1.85 L.' : undefined} onCommit={(rate) => set(i, { rate })} />
             <p class="self-end text-sm text-ink">Amount: <span data-testid={`item-${n}-amount`} class="font-medium tabular-nums">
-              {p.amounts[i] ? `Rs. ${p.amounts[i]}` : '—'}</span></p>
+              {p.amounts[i] ? `₹${p.amounts[i]}` : '—'}</span></p>
           </div>
           {q?.lines[i] && <p data-testid={`item-${n}-check`} class={`mt-3 text-sm ${q.lines[i].flagged ? 'font-medium text-warn' : MUTED}`}>{q.lines[i].text}</p>}
           {q && !it.from && (q.lines[i]?.where === 'not-matched' || it.pick) && <SelectField id={`fld-item-${n}-pick`} class="mt-2 max-w-sm" label="What it is in the library"
@@ -162,7 +162,7 @@ function Result({ p }: { p: EstimatePreview }) {
           </tr>)}
         </tbody>
       </table>
-      {v.perSqft && <p class="mt-3 text-ink">Cost per sq ft of built-up area: <span data-testid="est-per-sqft" class="font-semibold tabular-nums">Rs. {v.perSqft}</span></p>}
+      {v.perSqft && <p class="mt-3 text-ink">Cost per sq ft of built-up area: <span data-testid="est-per-sqft" class="font-semibold tabular-nums">₹{v.perSqft}</span></p>}
       <p class={`mt-2 text-sm ${MUTED}`}>Each item's amount is on its card; the download lists them all.</p>
     </>}
     </div>

@@ -244,7 +244,7 @@ export function makeWork(x: ReportInput, o: WorkInput = {}): Work | Needs | Bloc
       }
     }
   }
-  // The promoters' money kept in the business as cash at the start, in whole Rs. 1,000: it mends the cushion, the own
+  // The promoters' money kept in the business as cash at the start, in whole ₹1,000: it mends the cushion, the own
   // money and the cash, never the earnings (D-UX-249 (d)).
   const k0 = (x.cashAtStart ?? 0) / 1000, cashMost = Math.ceil(Math.max(base.projectCost, 1e7) * 10 / 1000);
   const c = lever(Math.floor(k0), Math.floor(k0) + cashMost, (k) => ({ ...x, cashAtStart: k * 1000 }), true);
