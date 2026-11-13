@@ -648,23 +648,28 @@ if (touched('/dscr/')) {
   pdf = await save('download-pdf');
   if (pdf.name !== 'DSCR statement - Asha Traders.pdf') v(`the PDF is named "${pdf.name}"`);
   pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
-  // Page 1: the borrower's name, the lender, the whole working, the average and the lowest year, the signature (P1g).
-  const first = pages[0].split('\n');
-  for (const want of ['Asha Traders', 'Average DSCR Lowest year', '1.16 0.84', 'For Asha Traders', 'Profit before tax 1,59,000 2,48,000 3,51,000 4,56,500 12,14,500',
-    'Cash available (A) 4,00,392 4,22,624 4,45,488 4,73,072 17,41,576', 'DSCR (A ÷ B) 1.17 0.84 0.98 2.26 1.16'])
+  // Page 1 at a glance (D-DOC-18): the borrower, the lender, the average and the lowest year, the status. Page 2: the
+  // whole working and the signature (P1g).
+  const first = pages[0].split('\n'), second = (pages[1] ?? '').split('\n');
+  for (const want of ['Asha Traders', 'Average DSCR Lowest year', '1.16 0.84', 'Status Complete'])
     if (!first.includes(want)) v(`the PDF's first page has no line "${want}"`);
+  for (const want of ['1. The statement', 'For Asha Traders', 'Profit before tax 1,59,000 2,48,000 3,51,000 4,56,500 12,14,500',
+    'Cash available (A) 4,00,392 4,22,624 4,45,488 4,73,072 17,41,576', 'DSCR (A ÷ B) 1.17 0.84 0.98 2.26 1.16'])
+    if (!second.includes(want)) v(`the PDF's second page has no line "${want}"`);
   if (!first.some((l) => l.startsWith('Lender Example Bank, Pune branch Prepared on '))) v("the PDF's first page does not name the lender");
   if (pages.length < 3 || pages.join('\n').includes('Provisional')) v(`the PDF has ${pages.length} pages, or still says provisional`);
   if (!pages.join('\n').includes('Annex 1. The basis') || !pages.join('\n').includes('Annex 2. Repayment schedule')) v('the PDF does not hold its two annexes');
   // What stays on the page only (D-DOC-03, and the owner on 02-10-2026): the assumptions, the verdict, the largest loan,
   // the fewest instalments, the lender's target, how far the method was checked, and the rules for building the figures.
-  const ONLY_ON_THE_PAGE = ['Assumed until changed', 'Misses', 'can carry a loan', 'The fewest instalments', 'target', 'checked', 'How the figures are built', 'Status'];
+  // The status went onto page 1 with D-DOC-18.
+  const ONLY_ON_THE_PAGE = ['Assumed until changed', 'Misses', 'can carry a loan', 'The fewest instalments', 'target', 'checked', 'How the figures are built'];
   for (const not of ONLY_ON_THE_PAGE) if (pages.join('\n').includes(not)) v(`the PDF says "${not}"`);
   const xlsx = await save('download-xlsx');
   if (xlsx.name !== 'DSCR statement - Asha Traders.xlsx') v(`the Excel copy is named "${xlsx.name}"`);
   const book = await workbook(xlsx.bytes).catch((e) => v(`the Excel copy is not read: ${e.message}`)) ?? [];
-  const cash = book[0]?.data.find((r) => r[0] === 'Cash available (A)')?.filter((c) => c !== null);
-  if (book.map((x) => x.sheet).join('|') !== 'DSCR statement|Basis|Repayment schedule|Check' || JSON.stringify(cash) !== JSON.stringify(['Cash available (A)', 400392, 422624, 445488, 473072, 1741576]))
+  // The engine's figures as numbers, on whichever sheet carries the statement (its layout is PAPER1b's, D-DOC-21).
+  const cash = book.flatMap((x) => x.data).find((r) => r[0] === 'Cash available (A)' && r.some((c) => typeof c === 'number'))?.filter((c) => typeof c === 'number') ?? [];
+  if (JSON.stringify(cash.slice(0, 4)) !== JSON.stringify([400392, 422624, 445488, 473072]) || cash.length > 5 || (cash.length === 5 && cash[4] !== 1741576))
     v(`the Excel copy holds sheets ${JSON.stringify(book.map((x) => x.sheet))} and cash available ${JSON.stringify(cash)}`);
   const cells = book.flatMap((x) => x.data.flat()).filter((c) => typeof c === 'string').join('\n');
   for (const not of ONLY_ON_THE_PAGE) if (cells.includes(not)) v(`the Excel copy says "${not}"`);
