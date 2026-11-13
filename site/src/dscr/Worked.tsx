@@ -335,10 +335,15 @@ function Working({ p, update, toPro }: { c: Case; p: Preview; update: Update; to
     <p data-testid="dscr-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class="mb-1 text-base text-ink">{statusText(p)}</p>
     {p.needs.length > 0 && <ul data-testid="dscr-needs" class="mb-3 list-disc space-y-0.5 pl-5 text-base text-ink-muted">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>}
     {p.blocked && <p data-testid="dscr-blocked" role="alert" class="text-bad">{p.blocked}</p>}
-    {p.verdict && <Targets v={p.verdict} />}
-    <Room p={p} onAmount={(n) => update((x) => ({ ...x, loan: { ...x.loan, amount: inr(n) } }))}
-      onFewest={(n) => update((x) => ({ ...x, loan: { ...x.loan, instalments: String(n) } }))} />
-    {p.lender && <LenderLines v={p.lender} openMore={() => toPro('lender')} />}
+    {/* On a desktop, two columns (Rahul, 13-11-2026: "a lot of whitespace left on the right"): the targets and the
+        bank's other checks on the left, room to move on the right; a phone keeps the order, one under the other. */}
+    <div data-testid="dscr-glance" class="md:grid md:grid-cols-2 md:grid-rows-[auto_1fr] md:items-start md:gap-x-10">
+      {p.verdict && <div class="md:col-start-1 md:row-start-1"><Targets v={p.verdict} /></div>}
+      <div class="md:col-start-2 md:row-span-2 md:row-start-1 md:*:mt-3">
+        <Room p={p} onAmount={(n) => update((x) => ({ ...x, loan: { ...x.loan, amount: inr(n) } }))}
+          onFewest={(n) => update((x) => ({ ...x, loan: { ...x.loan, instalments: String(n) } }))} /></div>
+      {p.lender && <div class="md:col-start-1 md:row-start-2"><LenderLines v={p.lender} openMore={() => toPro('lender')} /></div>}
+    </div>
     {p.statement && <StatementTable st={p.statement} parts={p.partYears} />}
     {p.beforeStart && <p data-testid="dscr-before-start" class="mt-2 text-sm text-ink-muted">{p.beforeStart}</p>}
     {p.notCounted && <p data-testid="dscr-not-counted" class="mt-2 text-sm text-ink-muted">{p.notCounted}</p>}
