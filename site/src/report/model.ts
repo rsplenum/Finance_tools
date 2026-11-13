@@ -18,7 +18,7 @@ import { BORROWERS } from '../../../engine/tax';
 import { inr } from '../../../engine/util';
 import { soldBy } from '../../../engine/sold-by';
 import { GUARANTEES } from '../../../engine/guarantee';
-import type { Draft, Dropped, NoteId } from '../../../engine/narrative';
+import type { Draft, Dropped, NoteId, SectionId } from '../../../engine/narrative';
 import type { CheckGroup, CheckLine } from '../CheckStep';
 import {
   inSentence, labelOf, listed, ratioAt, rowOf, upPct, upRupees, type BoardMove, type CheckRow, type ViableLine, type ViableView,
@@ -80,7 +80,8 @@ export interface ReportState {
   words?: ReportWords;
 }
 /** The notes as typed; the six sections, by AI from them (`ai`) or as the borrower writes; what the check left out; the tick. */
-export interface ReportWords { notes: Record<NoteId, string>; draft?: Draft; ai?: boolean; dropped?: Dropped[]; confirmed?: boolean }
+/** `fromAnswers`: the sections the AI drafted from the other answers, their note left empty (WORDS1). */
+export interface ReportWords { notes: Record<NoteId, string>; draft?: Draft; ai?: boolean; dropped?: Dropped[]; fromAnswers?: SectionId[]; confirmed?: boolean }
 
 /** A product or service as typed: what it is, how many a month at full running, its price a unit, and what it is sold by
  * (OR6; none is the piece, so a draft kept before the unit still opens). */

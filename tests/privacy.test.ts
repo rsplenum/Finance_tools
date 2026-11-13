@@ -63,7 +63,7 @@ describe('the privacy page against the code', () => {
     expect(calls.sort()).toEqual(['site/src/cma/Read.tsx', 'site/src/events.ts', 'site/src/report/Words.tsx']);
     expect(read('site/src/cma/Read.tsx')).toMatch(/JSON\.stringify\(\{ lines \}\)/);
     const keys = read('engine/narrative.ts').match(/export interface NarrativeInput \{([^}]+)\}/)?.[1].match(/\w+(?=:)/g);
-    expect(keys).toEqual(['name', 'activity', 'address', 'constitution', 'scheme', 'products', 'covers', 'finance', 'notes']);
+    expect(keys).toEqual(['name', 'activity', 'address', 'constitution', 'scheme', 'stage', 'products', 'covers', 'finance', 'notes']);
   });
   it('logs only the kind of an AI failure, and no request', () => {
     // Every AI call goes through ai.ts (READ1): the route's name, the provider, and a status or an error's kind.
