@@ -28,7 +28,7 @@ export function Targets({ v }: { v: NonNullable<Preview['verdict']> }) {
     <ul class="mt-2 space-y-3">
       {v.rows.map((r) => <li key={r.id}>
         <p class="flex flex-wrap items-baseline justify-between gap-x-3 text-base text-ink">
-          <span>{r.id === 'minimum' ? P.lowest(r.fy) : P.average}</span>
+          <span>{r.id === 'minimum' ? P.lowest(r.fy) : P.average}</span>{' '}
           <span class="tabular-nums"><b class={r.ok ? '' : 'text-bad'}>{r.text}</b> <span class="text-sm text-ink-muted">{P.needs(r.targetText)}</span></span>
         </p>
         <div aria-hidden="true" class="relative mt-1 h-3 rounded-full bg-ink/8">
@@ -58,7 +58,7 @@ export function Room({ p, onAmount, onFewest }: { p: Preview; onAmount: (n: numb
 function Amounts({ most, asked, limit }: { most: number; asked: number; limit?: string }) {
   const top = Math.max(most, asked), over = asked > most;
   const bar = (label: string, n: number, cls: string) => <li>
-    <p class="flex flex-wrap items-baseline justify-between gap-x-3 text-base"><span class="text-ink-muted">{label}</span><b class="text-ink tabular-nums">{rs(n)}</b></p>
+    <p class="flex flex-wrap items-baseline justify-between gap-x-3 text-base"><span class="text-ink-muted">{label}</span>{' '}<b class="text-ink tabular-nums">{rs(n)}</b></p>
     <div aria-hidden="true" class="mt-1 h-3 rounded-full bg-ink/8"><div class={`h-3 rounded-full ${cls} motion-safe:transition-[width] motion-safe:duration-300`} style={{ width: pct(n, top) }} /></div>
   </li>;
   return <div data-testid="dscr-largest" class="mt-2">
@@ -135,13 +135,13 @@ export function Waterfall({ st, get }: { st: StatementView; get: (l: Line) => { 
   return <div data-testid="waterfall" class="mt-1 text-sm">
     <ul class="space-y-1.5">
       {steps.map((s, j) => <li key={j} class={s.tone === 'owed' || (s.tone === 'part' && steps[j - 1]?.tone === 'cash') ? 'pt-2' : ''}>
-        <p class={`flex justify-between gap-3 ${s.total ? 'font-semibold text-ink' : 'text-ink'}`}><span>{s.label}</span><span data-line={s.id} class="text-right tabular-nums">{s.text}</span></p>
+        <p class={`flex justify-between gap-3 ${s.total ? 'font-semibold text-ink' : 'text-ink'}`}><span>{s.label}</span>{' '}<span data-line={s.id} class="text-right tabular-nums">{s.text}</span></p>
         <div aria-hidden="true" class="relative mt-0.5 h-2.5">
           {lo < 0 && <span class="absolute inset-y-0 w-px bg-line" style={{ left: `${at(0)}%` }} />}
           <span class={`absolute inset-y-0 rounded-sm ${TONE[s.tone]}`} style={{ left: `${at(Math.min(s.from, s.to))}%`, width: `max(3px, ${Math.abs(s.to - s.from) / span * 100}%)` }} />
         </div>
       </li>)}
     </ul>
-    {ratio && <p class="mt-3 flex justify-between gap-3 border-t border-line pt-2 font-semibold text-ink"><span>{ratio.label}</span><span data-line="dscr" class="tabular-nums">{ratio.text}</span></p>}
+    {ratio && <p class="mt-3 flex justify-between gap-3 border-t border-line pt-2 font-semibold text-ink"><span>{ratio.label}</span>{' '}<span data-line="dscr" class="tabular-nums">{ratio.text}</span></p>}
   </div>;
 }
