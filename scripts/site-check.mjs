@@ -1505,12 +1505,34 @@ if (touched('/project-report/')) {
   // The Worker answers 503 then; a 200 with the same error keeps the console clean and takes the page's same path.
   await page.route('**/api/draft', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: '{"error":"Drafting the words is not switched on yet: write them yourself."}' }));
   await page.locator('[data-testid="rep-words"] > summary').click();
-  for (const [id, t] of Object.entries(reply.notes)) await leave(page, `#fld-rep-note-${id}`, t);
   await page.getByTestId('rep-words-draft').click();
   await expectText(page, v, 'rep-words-error', 'Drafting the words is not switched on yet: write them yourself.', 'the words while drafting is off');
   await expectText(page, v, 'rep-words-by', 'Your own words: a box left empty stays out.', 'the boxes to write in');
   let asked;
   await page.unroute('**/api/draft');
+  // WORDS1: the notes left empty, the AI drafts the process, the market and the promoter from the other answers, with
+  // blanks for what only the borrower knows (tests/fixtures/draft-r-blank.json); each blank is a box in its sentence, and
+  // the tick waits until all four are filled.
+  const blankReply = JSON.parse(await readFile(new URL('../tests/fixtures/draft-r-blank.json', import.meta.url), 'utf8'));
+  await page.route('**/api/draft', (r) => { asked = r.request().postDataJSON(); return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ draft: blankReply.draft }) }); });
+  await page.getByTestId('rep-words-draft').click();
+  await expectFigures(page, v, 'rep-words-dropped', '… 3 …', 'WORDS1: three sentences dropped from a draft with the notes empty');
+  if (asked?.stage !== 'new' || Object.values(asked?.notes ?? { x: 1 }).some(Boolean)) v(`WORDS1: the words were drafted from ${JSON.stringify(asked).slice(0, 160)}`);
+  if (await page.getByTestId('rep-words-blank').count() !== 4) v(`WORDS1: ${await page.getByTestId('rep-words-blank').count()} blanks to fill in, not 4`);
+  if (await page.getByText('Drafted from your other answers, as you left its note empty.').count() !== 3) v('WORDS1: the three sections drafted from the other answers do not say so');
+  await expectText(page, v, 'rep-words-open', 'Fill in the 4 blanks above first.', 'WORDS1: the blanks to fill before the tick');
+  if (!(await page.getByTestId('rep-words-true').isDisabled())) v('WORDS1: the words can be ticked with blanks open');
+  await layout(page, v, 'the report’s words with blanks, 390 px');
+  for (const t of ['mills in Gujarat', 'visits to packers in Chakan', 'Asha Rao and Ravi Rao', 'eight years in a packaging firm’s stores']) {
+    const box = page.getByTestId('rep-words-blank').first();
+    await box.fill(t);
+    await box.press('Enter');
+  }
+  if (await page.getByTestId('rep-words-blank').count()) v('WORDS1: blanks left open after all four were filled');
+  if (!(await page.locator('#fld-rep-words-promoter').inputValue()).includes('run by Asha Rao and Ravi Rao. They bring eight years in a packaging firm’s stores to the firm.')) v('WORDS1: the filled blanks are not in the promoter’s words');
+  if (await page.getByTestId('rep-words-true').isDisabled()) v('WORDS1: the tick stays locked with every blank filled');
+  await page.unroute('**/api/draft');
+  for (const [id, t] of Object.entries(reply.notes)) await leave(page, `#fld-rep-note-${id}`, t);
   await page.route('**/api/draft', (r) => { asked = r.request().postDataJSON(); return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ draft: reply.draft }) }); });
   await page.getByTestId('rep-words-draft').click();
   await expectFigures(page, v, 'rep-words-dropped', '… 2 …', 'the words: two sentences dropped');

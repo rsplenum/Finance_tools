@@ -3,7 +3,7 @@
  * figure of the project), its answer checked (engine/narrative.ts), what the document still needs, and the words as
  * sections of the document once the borrower ticks them as true. Pure, no DOM.
  */
-import { NOTES, SECTIONS, checkDraft, type NarrativeInput, type NoteId } from '../../../engine/narrative';
+import { NOTES, SECTIONS, blanksOf, checkDraft, type NarrativeInput, type NoteId } from '../../../engine/narrative';
 import { BORROWERS } from '../../../engine/tax';
 import { PMEGP } from '../../../engine/report';
 import { printable } from '../doc/face';
@@ -28,6 +28,7 @@ export function narrativeOf(s: ReportState): NarrativeInput {
   return {
     name: s.doc.name.trim(), activity: s.doc.activity.trim(), address: s.doc.address.trim(),
     constitution: BORROWERS.find((b) => b.id === s.borrower)?.label ?? '', scheme,
+    stage: s.salesBy === 'expansion' ? 'expansion' : 'new',
     products: s.salesBy !== 'typed' ? s.products.map((p) => p.name.trim()).filter(Boolean) : [],
     covers: HEADS.filter((h) => s.cost[h.id].trim() && !/^[0.,\s]*$/.test(s.cost[h.id])).map((h) => h.label),
     finance,
@@ -37,21 +38,28 @@ export function narrativeOf(s: ReportState): NarrativeInput {
 
 /** The AI's answer, checked against what was sent: the new words, not yet ticked. */
 export function drafted(w: ReportWords, answer: unknown, sent: NarrativeInput): ReportWords {
-  const { draft, dropped } = checkDraft(answer, sent);
-  return { notes: w.notes, draft, ai: true, dropped, confirmed: false };
+  const { draft, dropped, fromAnswers } = checkDraft(answer, sent);
+  return { notes: w.notes, draft, ai: true, dropped, fromAnswers, confirmed: false };
 }
 
 const written = (w?: ReportWords) => SECTIONS.some((x) => w?.draft?.[x.id].trim());
-/** What the document still needs from the words: the tick once there are any, then English letters. None without words. */
+/** The blanks still open in the words, all sections together (WORDS1): the tick waits until there are none. */
+export const openBlanks = (w?: ReportWords): number => SECTIONS.reduce((n, x) => n + blanksOf(w?.draft?.[x.id] ?? '').length, 0);
+/** Ticked, and no blank left open since: only then do the words count. */
+export const wordsTrue = (w?: ReportWords): boolean => !!w?.confirmed && openBlanks(w) === 0;
+
+/** What the document still needs from the words: its blanks filled, the tick, then English letters. None without words. */
 export function wordsNeeds(w?: ReportWords): string[] {
   if (!written(w)) return [];
+  const open = openBlanks(w);
+  if (open) return [`The report’s words: fill in ${open === 1 ? 'the blank' : `the ${open} blanks`} in [brackets], then tick that they are true`];
   if (!w?.confirmed) return ['The report’s words: read them, then tick that they are true'];
   return SECTIONS.every((x) => printable(w.draft?.[x.id] ?? '')) ? [] : ['The report’s words, in English letters'];
 }
 
-/** The words as sections of the document, each with its heading; only once ticked, and a section left empty is left out. */
+/** The words as sections of the document, each with its heading; only once ticked with no blank open, a section left empty left out. */
 export function wordsSections(w?: ReportWords): [string, string][] {
-  if (!w?.confirmed || !written(w)) return [];
+  if (!w || !wordsTrue(w) || !written(w)) return [];
   return SECTIONS.flatMap((x): [string, string][] => {
     const t = w.draft?.[x.id].trim();
     return t ? [[x.label, t]] : [];

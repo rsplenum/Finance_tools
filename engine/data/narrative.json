@@ -1,10 +1,10 @@
 {
   "title": "The project report's words as an AI draft",
-  "date": "2026-10-21",
+  "date": "2026-11-13",
   "sure": "illustrative",
-  "reviewBy": "2027-10-21",
-  "status": "Set by Claude at the owner's request (REP2, D-AI-01, D-AI-02): an AI drafts six short sections from the user's own inputs, in simple words; this file's checks drop any sentence that holds a figure the user did not type, or a claim a new business cannot have. Nothing goes in the document until the borrower ticks that the words are true.",
-  "source": "D-AI-01 (the owner's answer 3 in REP1, 20-10-2026) and Finline's report as the owner met it, finding 6 (docs/design-inputs/finline-2026-10-20.md): a business not yet started called reputable and well-established, with a strong market presence, a loyal customer base and CSR work with NGOs.",
+  "reviewBy": "2027-11-13",
+  "status": "Set by Claude at the owner's request (REP2, D-AI-01, D-AI-02; WORDS1, 13-11-2026): an AI drafts six short sections from the user's own inputs, in simple words. A section whose note is left empty is drafted from the other answers: a plan said as a plan, and a fact only the user knows left as a marked blank to fill in. This file's checks drop any sentence that holds a figure the user did not type, a claim a new business cannot have, a figure in a blank, or a fact only the user can give (experience, education, orders) that nothing the user typed says. Nothing goes in the document until every blank is filled and the borrower ticks that the words are true.",
+  "source": "D-AI-01 (the owner's answer 3 in REP1, 20-10-2026) and Finline's report as the owner met it, finding 6 (docs/design-inputs/finline-2026-10-20.md): a business not yet started called reputable and well-established, with a strong market presence, a loyal customer base and CSR work with NGOs. WORDS1: the owner's ask of 13-11-2026, the process, market and promoter written too, \"without over assuming anything but we can make calculated reasonable recommendations based on user input\".",
   "sections": [
     {
       "id": "introduction",
@@ -19,20 +19,23 @@
     {
       "id": "process",
       "label": "The process",
-      "from": "how the products are made or the service given, from the user's note on the process only",
-      "note": "process"
+      "from": "how the products are made or the service given, from the user's note on the process",
+      "note": "process",
+      "without": "what the business does, its products and what the project's cost covers: the work as it plans to do it, with a blank for where its materials will come from"
     },
     {
       "id": "market",
       "label": "The market",
-      "from": "who will buy and where, from the user's note on the market only",
-      "note": "market"
+      "from": "who will buy and where, from the user's note on the market",
+      "note": "market",
+      "without": "the products, the place in the address, whether it is a new unit or a new line, and the scheme: who it plans to sell to and where, with a blank for how it will find its first buyers"
     },
     {
       "id": "promoter",
       "label": "The promoter",
-      "from": "the promoter's education and work so far, from the user's note on the promoter only",
-      "note": "promoter"
+      "from": "the promoter's education and work so far, from the user's note on the promoter",
+      "note": "promoter",
+      "without": "the business's name, its constitution and the scheme: who runs it, with blanks for the promoters' names, their education and their years in this trade"
     },
     {
       "id": "conclusion",
@@ -128,5 +131,25 @@
     "m.a",
     "b.tech",
     "m.tech"
-  ]
+  ],
+  "blank": {
+    "pattern": "\\[([^\\[\\]]*)\\]",
+    "max": 60,
+    "why": "a blank must name what to fill in, in words, without a figure"
+  },
+  "guesses": [
+    {
+      "pattern": "\\bexperience[ds]?\\b|\\bexpert\\w*|\\bskilled\\b|\\bworked\\b|\\byears? (?:in|of|with|at)\\b|\\bknow-?how\\b|\\bveteran\\b",
+      "why": "experience you have not told us of"
+    },
+    {
+      "pattern": "\\bdegrees?\\b|\\bgraduat\\w*|\\bdiploma\\w*|\\bqualifi\\w*|\\bcertifi\\w*|\\b[bm]\\.\\s?(?:com|sc|a|tech|e|ed)\\b|\\bmba\\b|\\biti\\b|\\bpolytechnic\\b|\\btrained\\b",
+      "why": "education you have not told us of"
+    },
+    {
+      "pattern": "\\borders\\b|\\b(?:an?|firm|purchase|confirmed|advance) order\\b|\\bin talks\\b|\\btalks with\\b|\\btie-?ups?\\b|\\btied up\\b|\\bagreements?\\b|\\bcontracts?\\b|\\bmou\\b|\\bletters? of intent\\b",
+      "why": "buyers or orders you have not told us of"
+    }
+  ],
+  "maxBlanks": 3
 }

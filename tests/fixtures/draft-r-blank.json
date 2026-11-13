@@ -1,0 +1,11 @@
+{
+  "about": "A reply in the shape POST /api/draft returns, written by hand for fictional case R (Asha Packaging, tests/report-page.test.ts) with its three notes left empty (WORDS1); not the model's. The process, the market and the promoter are drafted from the other answers, plans said as plans, with four blanks to fill. Three sentences in it must be dropped: the process's last (experience the user never gave), the market's last (orders the user never gave) and the promoter's last (a figure in a blank).",
+  "draft": {
+    "introduction": "Asha Packaging is a partnership firm that will make corrugated boxes at Plot 4, Example MIDC, Pune. It seeks a term loan from a bank to set up the unit.",
+    "products": "Asha Packaging will make corrugated boxes for packing goods. It will make them to the sizes its buyers ask for.",
+    "process": "Asha Packaging will make the boxes in its own building, on its own plant and machinery. It plans to buy its paper from [where your paper will come from]. The partners have long experience in making boxes.",
+    "market": "Asha Packaging plans to sell its boxes to units near Pune that pack their goods in boxes. As a new unit, it will look for its first buyers through [how you will find your first buyers]. It has firm orders from two buyers.",
+    "promoter": "Asha Packaging is a partnership firm run by [the partners’ names]. They bring [your years in this trade] to the firm. Each partner has worked for [your 8 years in packaging].",
+    "conclusion": "The project sets out to make corrugated boxes for buyers near Pune, and the tables of this report set out its cost, how it is financed and how the loan is repaid."
+  }
+}

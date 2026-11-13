@@ -15,7 +15,7 @@ export const CAP_DAYS = 2;
 export const PRIVACY_DATE = '25-10-2026';
 
 /** What a draft of the report's words sends (engine/narrative.ts, NarrativeInput), in words. */
-export const DRAFT_SENDS = 'the business’s name, address, activity, constitution, scheme and products, the loan’s uses and sources, and your notes';
+export const DRAFT_SENDS = 'the business’s name, address, activity, constitution, scheme and products, whether it is a new unit or a new line, the loan’s uses and sources, and your notes';
 
 export interface PolicySection extends Section { src: string[] }
 
