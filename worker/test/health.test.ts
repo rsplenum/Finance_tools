@@ -11,12 +11,12 @@ describe('health route', () => {
     const r = await call('/health');
     expect(r.status).toBe(200);
     expect(r.headers.get('cache-control')).toBe('no-store');
-    expect(await r.json()).toEqual({ ok: true, missing: [] });
+    expect(await r.json()).toEqual({ ok: true, missing: [], ai: null });
   });
   it('names a missing binding and is not ok', async () => {
     const r = await call('/health', { DB: {} } as unknown as Env);
     expect(r.status).toBe(503);
-    expect(await r.json()).toEqual({ ok: false, missing: ['KV', 'EVENTS_LIMIT'] });
+    expect(await r.json()).toEqual({ ok: false, missing: ['KV', 'EVENTS_LIMIT'], ai: null });
   });
   it('rejects other methods and unknown paths', async () => {
     expect((await call('/health', bound, 'POST')).status).toBe(405);

@@ -1,4 +1,4 @@
-// API Worker (D-TECH-01): a health route, POST /read (U1, D-UX-48) and POST /e (UD1, D-TECH-37) with its nightly prune. Razorpay orders, webhook checks and download tokens come later.
+// API Worker (D-TECH-01): a health route, POST /read (U1, D-UX-48), POST /draft (REP2) and POST /e (UD1, D-TECH-37) with its nightly prune. Razorpay orders, webhook checks and download tokens come later.
 // The D1 and KV IDs are the owner's (DEP1, 19-10-2026, docs/CLOUDFLARE.md §2); IDs are not secrets.
 // Secrets never go in this file: use `wrangler secret put` or the dashboard.
 {
@@ -19,7 +19,10 @@
   // Reading statements (D-UX-48): the model, its effort (empty for a model without one), reads per address and in all
   // per day (the owner pays for each), and the site origins allowed to call from another host (POST /e takes batches only from these too) ("." starts a subdomain suffix; never ".pages.dev", which admits anyone's site).
   // Drafting the report's words (REP2, D-AI-02): the model, its effort, drafts per address and in all per day, apart from reads.
-  // The ANTHROPIC_API_KEY is a secret: `wrangler secret put ANTHROPIC_API_KEY`. Without it /read and /draft answer 503.
+  // Which AI (READ1, D-TECH-114, worker/src/ai.ts): Claude when the ANTHROPIC_API_KEY secret is set, else Gemini when the
+  // GEMINI_API_KEY secret is (`wrangler secret put …`); with neither, /read and /draft answer 503. GEMINI_*: read from
+  // ai.google.dev on 13-11-2026: gemini-4-carbon, "Stable", Google's "strongest reasoning model", with no free tier (so
+  // nothing sent can reach the unpaid tier, whose content Google may use); thinking levels low, medium or high.
   "vars": {
     "READ_MODEL": "claude-opus-5-5",
     "READ_EFFORT": "medium",
@@ -29,6 +32,10 @@
     "DRAFT_EFFORT": "low",
     "DRAFT_PER_IP": "3",
     "DRAFT_PER_DAY": "50",
+    "GEMINI_READ_MODEL": "gemini-4-carbon",
+    "GEMINI_READ_THINKING": "medium",
+    "GEMINI_DRAFT_MODEL": "gemini-4-carbon",
+    "GEMINI_DRAFT_THINKING": "low",
     "READ_ORIGINS": "https://finance-tools-9if.pages.dev,.finance-tools-9if.pages.dev"
   },
   // SEC1 (D-TECH-54): batches to POST /e per address, held in Cloudflare's memory for the period, nothing stored. The

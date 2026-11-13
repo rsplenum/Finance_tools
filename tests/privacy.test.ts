@@ -19,6 +19,14 @@ describe('the privacy page against the code', () => {
       for (const f of s.src) expect(existsSync(f), `${s.h}: ${f}`).toBe(true);
     }
   });
+  it('names each company whose AI the Worker can call, and Google only on its paid terms (READ1)', () => {
+    const ai = read('worker/src/ai.ts');
+    expect(ai).toContain('generativelanguage.googleapis.com');
+    expect(ai).toContain("from '@anthropic-ai/sdk'");
+    expect(text).toMatch(/Google \(Gemini\) or Anthropic \(Claude\)/);
+    expect(text).toMatch(/Google only on its paid terms/);
+    expect(read('site/src/report/Words.tsx')).toMatch(/Google’s or Anthropic’s/);
+  });
   it('states the Worker’s own keeping times', () => {
     // The Worker's modules need its own types, so their numbers are read from the source.
     expect(read('worker/src/events.ts')).toContain(`export const KEEP_DAYS = ${KEEP_DAYS};`);
@@ -58,12 +66,13 @@ describe('the privacy page against the code', () => {
     expect(keys).toEqual(['name', 'activity', 'address', 'constitution', 'scheme', 'products', 'covers', 'finance', 'notes']);
   });
   it('logs only the kind of an AI failure, and no request', () => {
-    for (const f of ['worker/src/read.ts', 'worker/src/draft.ts']) {
-      const logs = read(f).match(/console\.\w+\([^\n]*/g) ?? [];
-      expect(logs.length, f).toBe(1);
-      expect(logs[0]).toMatch(/e\.status : \(e as Error\)\?\.name\)/);
-    }
-    expect(worker.filter((f) => /console\./.test(read(f))).sort()).toEqual(['worker/src/draft.ts', 'worker/src/read.ts']);
+    // Every AI call goes through ai.ts (READ1): the route's name, the provider, and a status or an error's kind.
+    expect(read('worker/src/ai.ts').match(/console\.\w+\([^\n]*/g)).toEqual([
+      "console.error(`${job.name} failed`, 'anthropic', e instanceof Anthropic.APIError ? e.status : (e as Error)?.name);",
+      "console.error(`${job.name} failed`, 'gemini', r.status);",
+      "console.error(`${job.name} failed`, 'gemini', (e as Error)?.name);",
+    ]);
+    expect(worker.filter((f) => /console\./.test(read(f))).sort()).toEqual(['worker/src/ai.ts']);
     expect(read('worker/wrangler.jsonc')).toMatch(/"invocation_logs": false/);
   });
 });
