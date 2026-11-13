@@ -1,14 +1,21 @@
 /**
- * The builder's steps for a script (BUILD1, D-UX-340): the project report keeps every step on the page and shows one, so a
- * script that fills a field or presses a button first goes to the step that holds it. `stepped(page)` wraps a Playwright
+ * The builder's steps for a script (BUILD1, D-UX-340): the project report, and the DSCR's Professional mode (NEW1e), keep
+ * every step on the page and show one, so a script that fills a field or presses a button first goes to the step that holds it. `stepped(page)` wraps a Playwright
  * page so each act does that by itself; the site check, the design checks and the load measure all drive the page through it.
  */
 const STEP_ACTS = new Set(['check', 'uncheck', 'setChecked', 'fill', 'click', 'dblclick', 'focus', 'selectOption', 'press', 'type', 'pressSequentially', 'tap', 'hover', 'isVisible', 'waitFor', 'scrollIntoViewIfNeeded']);
 const isLocator = (x) => !!x && typeof x === 'object' && typeof x.count === 'function' && typeof x.click === 'function' && typeof x.then !== 'function';
 async function stepTo(page, loc) {
   if (!(await loc.count())) return;
-  const id = await loc.first().evaluate((el) => { const st = el.closest('[data-step]'); return st ? (st.hidden ? st.dataset.step : null) : el.closest('[hidden]') ? 'business' : null; });
-  if (id) await page.getByTestId(`rep-step-${id}`).click();
+  const id = await loc.first().evaluate((el) => {
+    // The DSCR's guided steps (NEW1e, site/src/worked/Steps.tsx): the rail's button for the step that holds the box.
+    const tab = el.closest('[data-step-panel]');
+    if (tab) return tab.hidden ? `step-${tab.dataset.stepPanel}` : null;
+    const st = el.closest('[data-step]');
+    if (st) return st.hidden ? `rep-step-${st.dataset.step}` : null;
+    return el.closest('[hidden]') && document.querySelector('[data-testid="rep-step-business"]') ? 'rep-step-business' : null;
+  });
+  if (id) await page.getByTestId(id).click();
 }
 const steppedLocator = (page, loc) => new Proxy(loc, { get(t, k) {
   const val = t[k];

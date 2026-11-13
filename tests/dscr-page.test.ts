@@ -70,7 +70,7 @@ describe('fictional case A from the loan terms', () => {
     const p = preview({ ...CASE_A, target: TARGETS });
     expect(p.needs).toEqual([]);
     expect(p.verdict).toEqual({ meets: false, missed: 2, text: 'Misses 2 of 2 targets: the lowest year, 2027-28, is 1.16 against 1.20; the average is 1.45 against 1.50.' });
-    expect(p.largest).toEqual({ text: 'Your business can carry a loan of ₹11,59,646. You asked ₹12,00,000. What sets it: the lowest year, 2027-28.', amount: 1159646 });
+    expect(p.largest).toEqual({ text: 'The largest loan your business can repay is ₹11,59,646. You asked ₹12,00,000. What limits it: the lowest year, 2027-28.', amount: 1159646 });
     // More instalments add interest, which pulls the average further below 1.50 within these four years.
     expect(p.fewest).toEqual({ text: 'Even 14 instalments, the most the projections cover (to 2029-30), miss the target: the average is below the target. Add later years to try a longer repayment.' });
     expect(barText(p)).toBe('Average 1.45 · lowest 1.16 in 2027-28 · does not work yet: 2 ratios short · all questions answered');
@@ -78,12 +78,12 @@ describe('fictional case A from the loan terms', () => {
   it('meets the target at the largest loan, with nothing more to offer', () => {
     const p = preview({ ...CASE_A, loan: { ...CASE_A.loan, amount: '11,59,646' }, target: TARGETS });
     expect(p.verdict).toEqual({ meets: true, missed: 0, text: 'Meets both targets: the lowest year, 2027-28, is 1.20 against 1.20; the average is 1.50 against 1.50.' });
-    expect(p.largest).toEqual({ text: 'Your business can carry a loan of ₹11,59,646. You asked ₹11,59,646. What sets it: the lowest year, 2027-28.' });
-    expect(p.fewest).toEqual({ text: 'The fewest instalments for ₹11,59,646 are 12 quarterly.' });
+    expect(p.largest).toEqual({ text: 'The largest loan your business can repay is ₹11,59,646. You asked ₹11,59,646. What limits it: the lowest year, 2027-28.' });
+    expect(p.fewest).toEqual({ text: 'The shortest repayment that works for ₹11,59,646: 12 quarterly instalments.' });
   });
   it('offers the fewest instalments for a lowest-year target alone: 13', () => {
     const p = preview({ ...CASE_A, target: { average: '', minimum: '1.2' } });
-    expect(p.fewest).toEqual({ text: 'The fewest instalments for ₹12,00,000 are 13 quarterly.', instalments: 13 });
+    expect(p.fewest).toEqual({ text: 'The shortest repayment that works for ₹12,00,000: 13 quarterly instalments.', instalments: 13 });
     expect(p.verdict?.text).toBe('Misses the target: the lowest year, 2027-28, is 1.16 against 1.20.');
   });
   it('asks for a later year only once one is added, and the offers stay within the years given', () => {

@@ -1,5 +1,6 @@
-/** Site name and the tools, in build order (docs/PROJECT.md). A tool gets `href` only once its page exists. */
-export const SITE_NAME = 'FinSight';
+/** Site name (Rahul, 13-11-2026: "From now on The website name is project finsight") and the tools, in build order
+ * (docs/PROJECT.md). A tool gets `href` only once its page exists. */
+export const SITE_NAME = 'Project FinSight';
 
 /**
  * The notice wherever brand names show (D-BIZ-03, rule 4 of docs/TRADEMARKS.md, word for word), in the same type as the

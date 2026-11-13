@@ -305,7 +305,7 @@ export function ReportCalculator() {
     <div class="builder-ask">
       <StartLine c={c} home={home} />
       <nav aria-label="Steps" data-steps class="mt-4">
-        <ol class="steps">{STEPS.map(([id, name], i) => {
+        <ol class="steps" style={{ '--n': STEPS.length, '--i': at }}>{STEPS.map(([id, name], i) => {
           const open = figures || p.needs.length ? left[id] : 0, done = id === 'check' ? ok : id !== 'download' && typed && !p.blocked && !left[id];
           return <li key={id} data-state={id === step ? 'now' : done ? 'done' : ''}>
             <button type="button" data-testid={`rep-step-${id}`} aria-current={id === step ? 'step' : undefined}
@@ -517,7 +517,7 @@ export function ReportCalculator() {
         <p data-testid="rep-answer-bar" data-answer aria-live="polite" class="text-sm font-medium text-ink">{barText(s, p, cv)}</p>
         <div class="mt-1.5 flex items-center gap-2">
           {back && <button type="button" data-testid="rep-back" class={BUTTON} onClick={() => go(back[0])}>Back</button>}
-          <button type="button" data-testid="rep-peek" class={`${BUTTON} lg:hidden`} onClick={see}>See the paper</button>
+          <button type="button" data-testid="rep-peek" class={`${BUTTON} lg:hidden`} onClick={see}>See the report</button>
           {next && <button type="button" data-testid="rep-next" class={`ml-auto ${step === 'check' && figures && !ok ? BUTTON : NEXT}`} onClick={() => go(next[0])}>Next<span class="max-sm:sr-only">: {next[1]}</span></button>}
         </div>
       </div>

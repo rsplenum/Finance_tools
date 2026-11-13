@@ -36,7 +36,7 @@ import {
 } from './model';
 import { Levels } from './Levels';
 import { N, W } from './words';
-import { Journey, type Chapter } from '../worked/Journey';
+import { Steps, type Step } from '../worked/Steps';
 import { SHARED } from '../words';
 import { Rounds } from './MakeItWork';
 import { roundKey, setupOf, termWords, writeTerms } from './rounds';
@@ -575,7 +575,7 @@ export function LenderLines({ v, openMore }: { v: LenderView; openMore: () => vo
   </li>;
   const c = v.cash, a = v.audited, td = 'px-2 py-1 text-right tabular-nums';
   return <div data-testid="dscr-lender" class="mt-4 text-ink">
-    <p class="font-medium">More checks</p>
+    <p class="font-medium">The bank’s other checks</p>
     {v.blocked && <p role="alert" class="mt-1 text-sm text-bad">{v.blocked}</p>}
     <ul class="mt-1 space-y-1 text-sm text-ink-muted">
       {v.stress.map((l, i) => line(l, LENDER.stress[i]?.id ?? String(i)))}
@@ -613,7 +613,7 @@ function LenderSection({ s, update, y }: { s: State; update: Update; y: Years })
   </div>;
   const aud = (k: keyof LenderText['audited'], label: string) => <TextField id={`fld-lender-audited-${k}`} label={label} unit="₹" inputMode="decimal" value={l.audited[k]} tidy={tidyAmount}
     onCommit={(t) => set((x) => ({ ...x, audited: { ...x.audited, [k]: t } }))} />;
-  return <Section id="lender" title="More checks">
+  return <Section id="lender" title="The bank’s other checks">
     <p class={`mt-1 ${HINT}`}>Optional. Each adds a line beside your DSCR; none changes it.</p>
     <h3 class="mt-4 font-medium text-ink">Sales, for the price and cost tests</h3>
     {byYear ? cells('sales', 'Sales') : <TextField id="fld-lender-sales" label="This year’s sales" unit="₹" hint="They grow as the profit does." inputMode="decimal" value={l.sales[0] ?? ''}
@@ -689,23 +689,23 @@ export function DownloadSection({ s, p: page, update, example = [], bare }: { s:
 /**
  * For professionals (NEW1, docs/WORKED-PAGE.md §4): everything the old page's More options held, whole: where the yearly
  * figures come from and how DSCR is worked out, the loan's every term or the years' own figures, the figures year by
- * year, the lender's levels and the lender's tests. Written into the same state the worked page reads. Laid out as a
- * journey across, a chapter at a time (NEW1d, Rahul, 12-11-2026), in place of one long scroll.
+ * year, the lender's levels and the lender's tests. Written into the same state the worked page reads. Laid out as
+ * guided steps, one at a time (NEW1e, Rahul, 13-11-2026), in place of one long scroll and of NEW1d's track across.
  */
-export function Professionals({ s, update, pin, lead, end }: { s: State; update: Update; pin?: ComponentChildren; lead?: ComponentChildren; end?: ComponentChildren }) {
+export function Professionals({ s, update, bar, lead, end }: { s: State; update: Update; bar?: ComponentChildren; lead?: ComponentChildren; end?: ComponentChildren }) {
   const y = useMemo(() => yearsOf(s), [s]);
   const p = useMemo(() => withFrontNeeds(s, preview(s), y.years[0]), [s, y]);
   const rows = useMemo(() => rowsOf(s), [s]);
   const plan = s.source === 'plan', stop = N.pro.stops;
-  const chapters: Chapter[] = [{ id: 'how', short: stop.how, body: <Section id="how" title={N.pro.how}><Start s={s} update={update} /></Section> }];
+  const steps: Step[] = [{ id: 'how', name: stop.how, body: <Section id="how" title={N.pro.how}><Start s={s} update={update} /></Section> }];
   if (p.started) {
-    chapters.push(plan ? { id: 'loan', short: stop.loan, body: <Loan s={s} update={update} y={y} p={p} was={() => undefined} /> }
-      : { id: 'years', short: stop.years, body: <YearsSection s={s} update={update} y={y} /> });
-    chapters.push({ id: 'figures', short: plan ? stop.business : stop.figures, body: <Figures s={s} update={update} rows={rows} y={y} p={p} /> });
-    chapters.push({ id: 'target', short: stop.target, body: <TargetSection s={s} update={update} /> });
-    if (plan) chapters.push({ id: 'lender', short: stop.lender, body: <LenderSection s={s} update={update} y={y} /> });
+    steps.push(plan ? { id: 'loan', name: stop.loan, body: <Loan s={s} update={update} y={y} p={p} was={() => undefined} /> }
+      : { id: 'years', name: stop.years, body: <YearsSection s={s} update={update} y={y} /> });
+    steps.push({ id: 'figures', name: plan ? stop.business : stop.figures, body: <Figures s={s} update={update} rows={rows} y={y} p={p} /> });
+    steps.push({ id: 'target', name: stop.target, body: <TargetSection s={s} update={update} /> });
+    if (plan) steps.push({ id: 'lender', name: stop.lender, body: <LenderSection s={s} update={update} y={y} /> });
   }
-  return <Journey chapters={chapters} words={N.pro.journey} pin={pin} lead={lead} end={end} />;
+  return <Steps steps={steps} words={N.pro.steps} bar={bar} lead={lead} end={end} />;
 }
 
 const lineClass = (kind?: string) => kind === 'total' || kind === 'ratio'
@@ -736,9 +736,9 @@ export function StatementTable({ st, parts = {} }: { st: StatementView; parts?: 
           </tr>
         </thead>
         <tbody>
-          {st.lines.map((l) => l.kind === 'head'
-            ? <tr key={l.label}><th colSpan={cols} scope="colgroup" class="pt-4 pb-1 text-left text-xs font-semibold tracking-wide text-ink-muted uppercase">{l.label}</th></tr>
-            : <tr key={l.label} class={`border-b border-line ${l.kind ? 'border-t border-t-ink/25' : ''}`}>
+          {st.lines.map((l, j) => l.kind === 'head'
+            ? <tr key={j}><th colSpan={cols} scope="colgroup" class="pt-4 pb-1 text-left text-xs font-semibold tracking-wide text-ink-muted uppercase">{l.label}</th></tr>
+            : <tr key={j} class={`border-b border-line ${l.kind ? 'border-t border-t-ink/25' : ''}`}>
               <th scope="row" class={`py-1.5 pr-3 text-left font-normal ${lineClass(l.kind)}`}>{l.label}</th>
               {l.values.map((v, i) => <td key={i} data-testid={l.id ? `${l.id}-${st.years[i]}` : undefined}
                 class={`px-2 py-1.5 text-right tabular-nums ${!st.counted[i] && l.kind === 'ratio' ? `font-semibold ${MUTED}` : lineClass(l.kind)}`}>{v}</td>)}
@@ -755,9 +755,9 @@ export function StatementTable({ st, parts = {} }: { st: StatementView; parts?: 
           {ratio && <span class="tabular-nums group-open:hidden">DSCR {ratio.values[i]}</span>}
         </summary>
         <div class="mt-1 text-sm">
-          {shown.map((l) => l.kind === 'head'
-            ? <p key={l.label} class={`pt-2 text-xs font-semibold tracking-wide uppercase ${MUTED}`}>{l.label}</p>
-            : <p key={l.label} class={`flex justify-between gap-3 py-0.5 ${lineClass(l.kind)}`}>
+          {shown.map((l, j) => l.kind === 'head'
+            ? <p key={j} class={`pt-2 text-xs font-semibold tracking-wide uppercase ${MUTED}`}>{l.label}</p>
+            : <p key={j} class={`flex justify-between gap-3 py-0.5 ${lineClass(l.kind)}`}>
               <span>{l.label}</span><span data-line={l.id} class="text-right tabular-nums">{l.values[i]}</span>
             </p>)}
         </div>
@@ -765,9 +765,9 @@ export function StatementTable({ st, parts = {} }: { st: StatementView; parts?: 
       {st.total && <div data-testid="card-total" class="rounded-control border-l-4 border-ink bg-surface p-3">
         <p class="font-medium text-ink">Total{st.total.sub && <span class={`ml-2 text-xs font-normal ${MUTED}`}>{st.total.sub}</span>}</p>
         <div class="mt-1 text-sm">
-          {shown.map((l) => l.kind === 'head'
-            ? <p key={l.label} class={`pt-2 text-xs font-semibold tracking-wide uppercase ${MUTED}`}>{l.label}</p>
-            : <p key={l.label} class={`flex justify-between gap-3 py-0.5 ${lineClass(l.kind)}`}>
+          {shown.map((l, j) => l.kind === 'head'
+            ? <p key={j} class={`pt-2 text-xs font-semibold tracking-wide uppercase ${MUTED}`}>{l.label}</p>
+            : <p key={j} class={`flex justify-between gap-3 py-0.5 ${lineClass(l.kind)}`}>
               <span>{l.label}</span><span data-line={l.id} class="text-right tabular-nums">{l.total?.text ?? ''}</span>
             </p>)}
         </div>

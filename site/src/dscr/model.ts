@@ -726,7 +726,7 @@ export function preview(s: State): Preview {
   const most = maxLoanAmount(proj, terms, def, target, y.start);
   if ('amount' in most) p.largest = {
     // What the business can carry, beside the loan asked (CAP1): the same sentence as the report's, no new box.
-    text: `Your business can carry a loan of ${rs(most.amount)}.${amount !== undefined ? ` You asked ${rs(amount)}.` : ''} What sets it: ${limitedBy(most.limitedBy)}.`,
+    text: `The largest loan your business can repay is ${rs(most.amount)}.${amount !== undefined ? ` You asked ${rs(amount)}.` : ''} What limits it: ${limitedBy(most.limitedBy)}.`,
     ...(most.amount !== amount ? { amount: most.amount } : {}),
   };
   else if ('none' in most) p.largest = { text: most.none };
@@ -741,7 +741,7 @@ export function preview(s: State): Preview {
       && (loan.moratoriumMonths ?? 0) + few.instalments * PERIOD_MONTHS[loan.frequency ?? 'monthly'] > LEVELS.term.longestMonths))) {
       p.fewest = { text: `No repayment within ${LEVELS.term.longestMonths} months meets the target.` };
     } else if ('instalments' in few) p.fewest = {
-      text: `The fewest instalments for ${rs(amount)} are ${few.instalments} ${loan.frequency === 'quarterly' ? 'quarterly' : 'monthly'}.`,
+      text: `The shortest repayment that works for ${rs(amount)}: ${few.instalments} ${loan.frequency === 'quarterly' ? 'quarterly' : 'monthly'} instalments.`,
       ...(few.instalments !== loan.instalments ? { instalments: few.instalments } : {}),
     };
     else if ('none' in few) p.fewest = { text: few.none };

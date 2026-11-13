@@ -223,8 +223,8 @@ export function DscrWorked() {
       ? <div key="pro" class="mt-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-x-12">
         <section id="more-options" aria-label={N.mode.pro} class="min-w-0">
           <Professionals s={c.s} update={update}
-            pin={<div data-testid="pro-strip" class="-mx-4 flex flex-wrap items-center justify-between gap-x-3 border-b border-line bg-canvas px-4 py-1 sm:-mx-8 sm:px-8">
-              <p class="text-base text-ink tabular-nums">{N.pro.strip(p.average ?? '—', p.lowest ?? '—')}</p>
+            bar={<div data-testid="pro-strip" aria-live="polite" class="flex flex-wrap items-center justify-between gap-x-3 lg:hidden">
+              <p class="text-sm font-medium text-ink tabular-nums">{N.pro.strip(p.average ?? '—', p.lowest ?? '—')}</p>
               <a href="#pro-result" class={`${QUIET} -mr-3`}>{N.pro.see}</a>
             </div>}
             lead={<>
@@ -337,9 +337,9 @@ function Working({ c, p, update, toPro }: { c: Case; p: Preview; update: Update;
     {p.blocked && <p data-testid="dscr-blocked" role="alert" class="text-bad">{p.blocked}</p>}
     {p.verdict && <p data-testid="dscr-verdict" class="mt-2 text-ink">{p.verdict.text}</p>}
     {p.largest && <p class="mt-2 flex flex-wrap items-center gap-x-2 text-ink"><span data-testid="dscr-largest">{p.largest.text}</span>
-      {largest !== undefined && <button type="button" data-testid="use-amount" class={`${QUIET} -ml-3`} onClick={() => update((x) => ({ ...x, loan: { ...x.loan, amount: inr(largest) } }))}>Use {rs(largest)}</button>}</p>}
+      {largest !== undefined && <button type="button" data-testid="use-amount" class={`${QUIET} -ml-3`} onClick={() => update((x) => ({ ...x, loan: { ...x.loan, amount: inr(largest) } }))}>Make the loan {rs(largest)}</button>}</p>}
     {p.fewest && <p class="mt-2 flex flex-wrap items-center gap-x-2 text-ink"><span data-testid="dscr-fewest">{p.fewest.text}</span>
-      {fewest !== undefined && <button type="button" data-testid="use-instalments" class={`${QUIET} -ml-3`} onClick={() => update((x) => ({ ...x, loan: { ...x.loan, instalments: String(fewest) } }))}>Use {fewest} instalments</button>}</p>}
+      {fewest !== undefined && <button type="button" data-testid="use-instalments" class={`${QUIET} -ml-3`} onClick={() => update((x) => ({ ...x, loan: { ...x.loan, instalments: String(fewest) } }))}>Repay in {fewest} instalments</button>}</p>}
     {p.lender && <LenderLines v={p.lender} openMore={() => toPro('lender')} />}
     {p.statement && <StatementTable st={p.statement} parts={p.partYears} />}
     {p.beforeStart && <p data-testid="dscr-before-start" class="mt-2 text-sm text-ink-muted">{p.beforeStart}</p>}
@@ -352,21 +352,32 @@ function Working({ c, p, update, toPro }: { c: Case; p: Preview; update: Update;
 /** A reason as the borrower reads it: the pointer to our own files (its source, kept in the data) left off the screen. */
 const plain = (why: string) => why.replace(/\s*\([^()]*\b[\w/.-]+\.(?:md|json)\)/g, '');
 
-/** What we filled in, each as one line, its reason a tap away, and a way to its field in Professional mode. */
+/** What we filled in (NEW1e, Rahul, 13-11-2026: "The assumptions list is so ugly way of showing it"): grouped as a
+ * borrower thinks of them, each a card with what it is and what we took, in plain words; a tap opens the reason in place,
+ * and Change goes to its box, in its step of Professional mode. The figures shown are the data file's own. */
 function Assumed({ p, onChange }: { p: Preview; onChange: (where?: string) => void }) {
-  const rows = p.assumed.map((a) => ({ ...a, why: plain(a.why) }));
+  const F = N.filled, rows = p.assumed.map((a) => ({ ...a, why: plain(a.why), what: F.plain[a.id]?.[0] ?? a.what, shown: F.plain[a.id]?.[1] ?? a.shown }));
   if (!rows.length) return null;
-  return <ul data-testid="dscr-assumed" class="divide-y divide-line border-y border-line">
-    {rows.map((a) => <li key={a.id} data-testid={`assumed-${a.id}`}>
-      <details class="group/a">
-        <summary class="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 py-2.5 [&::-webkit-details-marker]:hidden">
-          <span class="min-w-0"><span class="block font-medium text-ink">{a.what}</span><span class="block text-base text-ink-muted">{a.shown}</span></span>
-          <span class="shrink-0 text-sm font-medium text-link underline underline-offset-4">{N.pro.why}</span>
-        </summary>
-        <p class="pb-3 text-sm text-ink-muted">{a.why}.{a.where && <>{' '}<a href={`#${a.where}`} class="text-link underline underline-offset-4" onClick={(e) => { e.preventDefault(); onChange(a.where); }}>{N.pro.change}</a></>}</p>
-      </details>
-    </li>)}
-  </ul>;
+  const groups = (Object.keys(F.groups) as (keyof typeof F.groups)[]).map((g) => [g, rows.filter((a) => (F.of[a.id] ?? 'profit') === g)] as const).filter(([, r]) => r.length);
+  return <div data-testid="dscr-assumed" class="assumed-groups">
+    {groups.map(([g, list]) => <section key={g} aria-labelledby={`assumed-${g}`} class="assumed-group">
+      <h3 id={`assumed-${g}`} class="assumed-head">{F.groups[g]}</h3>
+      <ul>
+        {list.map((a) => <li key={a.id} data-testid={`assumed-${a.id}`}>
+          <details class="assumed">
+            <summary class="assumed-row">
+              <span class="min-w-0 flex-1"><span class="block text-sm text-ink-muted">{a.what}</span><span class="block font-medium text-ink">{a.shown}</span></span>
+              <span class="assumed-why">{N.pro.why}<svg aria-hidden="true" viewBox="0 0 16 16" class="assumed-chev"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
+            </summary>
+            <div class="assumed-body">
+              <p>{a.why}.</p>
+              {a.where && <a href={`#${a.where}`} class={`${QUIET} -ml-3`} onClick={(e) => { e.preventDefault(); onChange(a.where); }}>{F.change1}<span class="sr-only">: {a.what}</span></a>}
+            </div>
+          </details>
+        </li>)}
+      </ul>
+    </section>)}
+  </div>;
 }
 
 /** Simple mode says what it filled in from the answers (Rahul, 12-11-2026), and the way to change it. */
