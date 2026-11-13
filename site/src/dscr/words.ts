@@ -28,7 +28,7 @@ export const W = {
   instalment: 'Each instalment',
   interest: 'Interest over the whole loan',
   yearByYear: 'Year by year',
-  openYear: 'In rupees. Open a year for its working.',
+  openYear: 'In rupees. Tap a year to see how it adds up.',
   inRupees: 'In rupees.',
   nilLines: 'On a phone, lines that are nil every year are left out; the statement keeps them.',
   schedule: 'Repayment schedule',
@@ -49,7 +49,7 @@ export const W = {
 export const N = {
   title: 'Can your business repay the loan?',
   example: 'Example',
-  paperLink: 'The paper',
+  paperLink: 'The report',
   reading: {
     example: (noun: string) => `The example ${noun}`,
     yours: 'Your business',
@@ -92,14 +92,14 @@ export const N = {
     range: (lo: number, hi: number) => `Type a number from ${lo} to ${hi}.`,
   },
   next: {
-    own: 'Use your own figures', continue: (what: string) => `Next: ${what}`, options: 'See ways to make it work', change: 'Change your figures', paper: 'Get the paper',
+    own: 'Use your own figures', continue: (what: string) => `Next: ${what}`, options: 'See ways to make it work', change: 'Change your figures', paper: 'Get the report',
   },
   options: {
     title: 'Ways that work', lead: 'Each one meets the lender’s levels. Pick one; you can undo it.', use: 'Use this', none: 'No change to the loan alone makes it work. Change your answers, or open Professional mode.',
     used: (title: string) => `Used: ${title}.`, undo: 'Undo',
   },
   chart: { title: 'Cash for the loan against repayments, by year', cash: 'Cash available', service: 'Repayments due', unit: '₹ lakh', tight: 'tightest' },
-  folds: { working: 'See the working', paper: 'The paper' },
+  folds: { working: 'How it adds up', paper: 'The report' },
   /** The page opens here (Rahul, 12-11-2026): what DSCR is in a few words, then a choice of two ways in (NEW1c, Rahul,
    * 12-11-2026): Simple asks the questions and states what it filled in; Professional asks the same, then opens every field filled in. */
   intro: {
@@ -110,11 +110,66 @@ export const N = {
   },
   /** The two ways, switched on top of the report. */
   mode: { label: 'Mode', simple: 'Simple', pro: 'Professional' },
+  /** The working as pictures (PIC1, Rahul, 13-11-2026: "A picture or graphics speaks a thousand words"): each picture's
+   * few words; every figure in them is the engine's. */
+  pic: {
+    lowest: (fy?: string) => (fy ? `Lowest year, ${fy}` : 'Lowest year'),
+    average: 'Average of the years',
+    needs: (t: string) => `needs ${t}`,
+    room: 'Room to move',
+    most: 'Most it can repay',
+    asked: 'You asked',
+    over: 'More than it can repay',
+    limit: (l: string) => `What limits it: ${l}.`,
+    fewest: (n: number, per: number) => `${n} ${per === 4 ? 'quarterly' : 'monthly'} instalments: the fewest that work.`,
+    key: { fewest: 'The fewest that work', spare: 'Your term, beyond them', yours: 'Your term', more: 'Needed beyond your term' },
+    row: (i: number) => `Year ${i}`,
+    useAmount: (x: string) => `Make the loan ${x}`,
+    useFewest: (n: number) => `Repay in ${n} instalments`,
+    stress: 'The bank’s harder tests',
+    locked: 'Add this year’s sales to see these',
+    lowestShort: 'lowest',
+    build: 'How the cash covers the bank',
+    a: 'Cash available (A)',
+    b: 'Owed to the bank (B)',
+    ratio: 'DSCR = A ÷ B',
+  },
   /** Simple mode states what it filled in, under the answer. */
   filled: {
     title: 'We filled in the rest',
-    lead: (n: number) => `${n === 1 ? 'One figure' : `${n} figures`} you were not asked. Tap Why for each reason.`,
+    lead: (n: number) => `${n === 1 ? 'One thing' : `${n} things`} you were not asked, set the usual way. Tap one to see why.`,
     change: 'Change them in Professional mode',
+    /** Grouped as a borrower thinks of them (NEW1e, Rahul, 13-11-2026: "The assumptions list is so ugly"). */
+    groups: { loan: 'Your loan', profit: 'Your profit', borrowing: 'Other borrowing', tax: 'Tax', test: 'The bank’s test' },
+    of: {
+      loanStart: 'loan', start: 'loan', margin: 'profit', asset: 'profit', depreciation: 'profit', nonCash: 'profit',
+      otherLoans: 'borrowing', interest: 'borrowing', interestNone: 'borrowing', promoters: 'borrowing', tax: 'tax', proprietorTax: 'tax', method: 'test', target: 'test',
+    } as Record<string, 'loan' | 'profit' | 'borrowing' | 'tax' | 'test'>,
+    /** The page's plain words for each (engine/data/defaults.json keeps the CA's, for the statement); figures stay the data file's. */
+    plain: {
+      loanStart: ['When the loan starts', 'Paid out this month, repaid by EMI every month, with no break'],
+      start: ['The first year counted', 'The year the loan is paid out'],
+      margin: ['Profit as sales grow', 'Grows in step with sales'],
+      asset: ['Extra income from what the loan buys', 'None, beyond the growth'],
+      depreciation: ['Depreciation', 'The same as this year, every year'],
+      nonCash: ['Other non-cash costs and lease rent', 'None'],
+      otherLoans: ['Loans you already repay', 'None'],
+      interest: ['Interest on other borrowing', 'The same as this year, on top of this loan’s'],
+      interestNone: ['Interest on a cash credit or overdraft', 'None: the profit you gave is before all interest'],
+      promoters: ['Money the owners lent the business', 'Stays in until this loan is repaid'],
+      proprietorTax: ['Tax for a proprietor', 'The new tax regime’s slab rates, the business the only income'],
+      method: ['How the bank works it out', 'The usual way for a term loan'],
+    } as Record<string, [string, string]>,
+    change1: 'Change',
+    /** Each assumption as a chip: a few words; the full line opens under it. A figure stays the data file's. */
+    chip: {
+      loanStart: 'Paid out now, EMI monthly', start: 'Counted from the payout year', margin: 'Profit grows with sales',
+      asset: 'No extra income from the loan', depreciation: 'Depreciation stays the same', nonCash: 'No lease rent or write-offs',
+      otherLoans: 'No other loans', interest: 'Other interest stays the same', interestNone: 'No overdraft interest',
+      promoters: 'Owners’ money stays in', proprietorTax: 'New tax regime', method: 'The usual term-loan way',
+    } as Record<string, string>,
+    /** A chip that is the data file's figure, in a few words around it. */
+    figure: { tax: (x: string) => `Tax at ${x}` } as Record<string, (x: string) => string>,
   },
   /** One question a screen. */
   ask: {
@@ -128,14 +183,14 @@ export const N = {
       amount: 'Type 12 L or 12,00,000.', rate: 'As the bank quotes it, like 12.', years: 'Like 5, or 7.5.',
       emis: 'All running loans, added up.', depreciation: 'As in your accounts. It lowers the tax.',
     },
-    next: 'Next', done: 'Done', see: 'See the report', fields: 'See every field', back: 'Back', none: 'None', step: (i: number, n: number) => `${i} of ${n}`,
+    next: 'Next', done: 'Done', see: 'See your answer', fields: 'See every field', back: 'Back', none: 'None', step: (i: number, n: number) => `${i} of ${n}`,
     reads: (t: string) => `Reads as ${t}`,
   },
   /** The report: what can be undone and started over sits on top, where it is looked for. */
   report: {
     change: 'Change answers', undo: 'Undo', over: 'Start over', overDone: 'Started over.',
     example: 'Example: a fictional firm.', home: 'Example: the home page’s fictional firm.', yours: 'Answer the 8 questions',
-    paper: 'Get the paper',
+    paper: 'Get the report',
   },
   tiles: {
     average: 'DSCR, average', lowest: 'Tightest year', emi: 'EMI a month', interest: 'Interest, whole loan',
@@ -144,10 +199,10 @@ export const N = {
   years: { title: 'DSCR by year', line: (t: string) => `Line: ${t}, the least a year should reach`, below: 'below', part: 'part year' },
   pro: {
     lead: 'Every field, filled in from your answers. Change any; the answer moves with it.',
-    why: 'Why', whyAll: 'Why these figures', change: 'Change',
+    why: 'Why', whyAll: 'What we filled in', change: 'Change',
     strip: (avg: string, low: string) => `DSCR ${avg} average, ${low} lowest`, see: 'See the answer',
-    /** The journey across (NEW1d): its stops' short names, and the words that move along it. */
-    journey: { label: 'Steps', step: (i: number, n: number) => `Step ${i} of ${n}`, next: (name: string) => `Next: ${name}`, back: 'Back' },
+    /** The guided steps (NEW1e): their short names, and the words that move along them. */
+    steps: { label: 'Steps', step: (i: number, n: number) => `Step ${i} of ${n}`, next: (name: string) => `Next: ${name}`, back: 'Back', done: 'done' },
     stops: { how: 'Method', loan: 'Loan', years: 'Years', business: 'Business', figures: 'Figures', target: 'Target', lender: 'Checks' },
     how: 'How it is worked out',
   },

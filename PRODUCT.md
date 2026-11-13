@@ -56,7 +56,7 @@ Each comes as the PDF a lender reads, an Excel copy for an accountant and a Word
 
 ## Brand Commitments
 
-- **Name:** FinSight (the owner, 13-10-2026).
+- **Name:** Project FinSight (the owner, 13-11-2026; FinSight from 13-10-2026).
 - **Voice:** plain words on screen, the owner's words; a chartered accountant's terms in the documents. Every quoted figure has its source.
 - **Brands of others** are named only as `docs/TRADEMARKS.md` allows.
 

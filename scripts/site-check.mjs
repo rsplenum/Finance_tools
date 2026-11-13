@@ -131,7 +131,7 @@ async function open(path, { scheme = 'light', stored, blockScripts = false, at =
   if (!blockScripts) await page.waitForFunction(() => ![...document.querySelectorAll('astro-island[ssr]')].some((i) => !i.closest('details:not([open])')), null, { timeout: 10000 })
     .catch(() => v('an interactive part did not start'));
   const isDark = () => page.evaluate(() => document.documentElement.classList.contains('dark'));
-  return { page: path.startsWith('/project-report/') ? stepped(page) : page, ctx, v, isDark };
+  return { page: /^\/(project-report|dscr)\//.test(path) ? stepped(page) : page, ctx, v, isDark };
 }
 
 
@@ -370,7 +370,7 @@ async function enterCaseA(page) {
 }
 
 async function layout(page, v, step) {
-  // Colours are read at rest: a fade under way (the journey's stops, 0.3 s, NEW1d) is not what a reader reads.
+  // Colours are read at rest: a fade under way (a step coming in, 0.3 s, NEW1e) is not what a reader reads.
   await page.waitForFunction(() => !document.getAnimations().some((a) => a instanceof CSSTransition && a.playState === 'running'), null, { timeout: 3000 }).catch(() => {});
   const f = await page.evaluate(audit);
   if (f.wide) v(`${step}: horizontal scroll: ${f.wide}`);
@@ -541,7 +541,7 @@ if (touched('/dscr/')) {
   // depreciation are asked (only the later years were typed).
   await expectFigures(page, v, 'dscr-status', '2', 'a first year with interest only');
   if (!(await page.isChecked('#fld-start-2026-27'))) v("the figures do not start in the loan's first year as assumed");
-  await expectText(page, v, 'assumed-start', /^The first year of the figures ?The year the loan is first drawn ?Why ?\S.*\.( Change)?$/, 'the start assumption listed, with its reason');
+  await expectText(page, v, 'assumed-start', /^Counted from the payout year ?The first year counted: The year the loan is paid out\. ?\S.*\. ?(Change: The first year counted)?$/, 'the start assumption listed, with its reason');
   await expectFigures(page, v, page.getByTestId('start-question').locator('p').first(), '2026-27 72,000', 'the question about the first year');
   await page.check('#fld-start-2027-28');
   await expectFigures(page, v, 'dscr-status', '7', 'figures starting in 2027-28');
@@ -662,7 +662,7 @@ if (touched('/dscr/')) {
   // What stays on the page only (D-DOC-03, and the owner on 02-10-2026): the assumptions, the verdict, the largest loan,
   // the fewest instalments, the lender's target, how far the method was checked, and the rules for building the figures.
   // The status went onto page 1 with D-DOC-18.
-  const ONLY_ON_THE_PAGE = ['Assumed until changed', 'Misses', 'can carry a loan', 'The fewest instalments', 'target', 'checked', 'How the figures are built'];
+  const ONLY_ON_THE_PAGE = ['Assumed until changed', 'Misses', 'largest loan your business', 'The shortest repayment', 'target', 'checked', 'How the figures are built'];
   for (const not of ONLY_ON_THE_PAGE) if (pages.join('\n').includes(not)) v(`the PDF says "${not}"`);
   const xlsx = await save('download-xlsx');
   if (xlsx.name !== 'DSCR statement - Asha Traders.xlsx') v(`the Excel copy is named "${xlsx.name}"`);
@@ -710,7 +710,7 @@ if (touched('/dscr/')) {
   await expectFigures(page, v, 'tax-by', '5% 30% 4% 12,00,000', "a proprietor's tax");
   await expectFigures(page, v, 'tax-2026-27', '0', "a proprietor's tax");
   await expectFigures(page, v, 'dscr-average', '1.41', "a proprietor's tax");
-  await expectText(page, v, 'assumed-proprietorTax', /^A proprietor's tax ?The new regime's slab rates, on the business's profit as the only income ?Why ?\S.*\.( Change)?$/, "a proprietor's tax, with its reason");
+  await expectText(page, v, 'assumed-proprietorTax', /^New tax regime ?Tax for a proprietor: The new tax regime’s slab rates, the business the only income\. ?\S.*\. ?(Change.*)?$/, "a proprietor's tax, with its reason");
   await page.check('#fld-otherLoansInterest-emi');
   await expectText(page, v, 'emis-ask', 'All EMIs a month, business and personal (home, car, personal loans).', "a proprietor's EMIs");
   await leave(page, '#fld-emi-1', '20000');
@@ -738,7 +738,7 @@ if (touched('/dscr/')) {
   await fromBlank(page);
   await page.check('#fld-source-own');
   await page.check('#fld-method-common');
-  await page.waitForSelector('#fld-firstYear', { timeout: 3000 }).catch(() => v('own figures: the years are not asked'));
+  await page.locator('#fld-firstYear').waitFor({ state: 'attached', timeout: 3000 }).catch(() => v('own figures: the years are not asked'));
   if (await page.locator('#fld-loanAmount').count()) v('own figures: the loan amount is asked though it does not change the answer');
   await leave(page, '#fld-firstYear', '2026-27');
   await leave(page, '#fld-yearCount', '3');
@@ -876,24 +876,25 @@ if (touched('/dscr/')) {
   await ceiling(page, v, 0, 'the report in Professional mode', '[data-testid="report"]');
   if (!(await page.getByTestId('pro-strip').isVisible())) v('Professional, 375 px: the DSCR is not kept in sight above the fields');
   await layout(page, v, 'Professional mode, 375 px');
-  // The fields as a journey across (NEW1d, Rahul: "make it horizontal journey"): chapters side by side on a track, a
-  // stop for each on the rail, Next at a chapter's foot; a box taken by focus (Tab, a Change link) brings its chapter
-  // and stands in sight, the track its height.
-  const j = page.getByTestId('journey'), now = () => j.getAttribute('data-chapter-now');
-  const across = await page.getByTestId('journey-track').evaluate((t) => t.scrollWidth > t.clientWidth * 3);
-  if (!across) v('Professional: the fields do not lie across as a journey');
-  if (await j.locator('nav button').count() !== 5) v('Professional: the journey has not five stops for a projection');
+  // The fields as guided steps (NEW1e, Rahul: "grouped in to sensible and reasonable tabs and guided", never a scroll
+  // across): five named steps on a rail, one shown at a time; Next names the next step, moves the rail and takes the focus
+  // to it; the bar at the foot keeps the DSCR in sight; a Change link to a box in another step opens that step at the box.
+  const steps = page.getByTestId('steps'), now = () => steps.getAttribute('data-step-now');
+  if (await page.locator('[data-step-panel]:not([hidden])').count() !== 1) v('Professional: not one step shown at a time');
+  if (await page.locator('[data-steps] button').count() !== 5) v('Professional: not five steps for a projection');
+  if ((await page.getByTestId('next-how').innerText()).replace(/\s*→\s*$/, '').trim() !== 'Next: Loan') v('Professional: Next does not name the next step');
   await page.getByTestId('next-how').click();
-  await page.waitForFunction(() => document.querySelector('[data-testid="stop-loan"]')?.getAttribute('aria-current') === 'step', null, { timeout: 4000 }).catch(() => v('Professional: Next does not move the journey to the loan'));
+  if (await now() !== 'loan' || await page.getByTestId('step-loan').getAttribute('aria-current') !== 'step') v('Professional: Next does not move the steps to the loan');
+  await page.waitForFunction(() => document.activeElement?.matches('[data-step-panel="loan"] [data-step-title]'), null, { timeout: 2000 }).catch(() => v('Professional: Next does not take the focus to the step'));
   const inSight = (sel) => page.locator(sel).evaluate((e) => { const r = e.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight; });
-  await page.locator('#fld-targetAverage').focus();
-  await page.waitForTimeout(400);
-  if (await now() !== 'target' || !(await inSight('#fld-targetAverage'))) v(`Professional: a box taken by focus does not bring its chapter (at ${await now()})`);
-  await page.keyboard.press('Shift+Tab');
-  await page.waitForTimeout(400);
-  if (await now() !== 'figures' || !(await inSight('*:focus'))) v(`Professional: Shift+Tab back a chapter leaves the box out of sight (at ${await now()})`);
-  if (await page.getByTestId('journey-track').evaluate((t) => t.scrollTop)) v('Professional: the track scrolled up or down inside itself');
-  await layout(page, v, 'Professional mode, 375 px, along the journey');
+  if (!(await inSight('[data-testid="pro-strip"]'))) v('Professional, 375 px: the DSCR is not in sight in the bar at the foot');
+  await page.getByTestId('why-all').locator(':scope > summary').click();
+  await page.getByTestId('assumed-target').locator('summary').click();
+  await page.getByTestId('assumed-target').getByRole('link').click();
+  await page.waitForFunction(() => document.querySelector('[data-testid="steps"]')?.getAttribute('data-step-now') === 'target' && document.activeElement?.closest('[data-step-panel="target"]'), null, { timeout: 4000 })
+    .catch(async () => v(`Professional: a Change link does not open its step at its box (at ${await now()})`));
+  if (!(await inSight('*:focus'))) v('Professional: the box a Change link opens is out of sight');
+  await layout(page, v, 'Professional mode, 375 px, at the target step');
   await page.getByTestId('mode-simple').click();
   if (await page.locator('#more-options').count()) v('Simple mode still shows every field');
   if (!(await page.getByTestId('filled').isVisible())) v('Simple mode does not say what it filled in');

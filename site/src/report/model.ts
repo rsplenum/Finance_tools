@@ -1089,7 +1089,7 @@ export function carryView(s: ReportState): CarryView | undefined {
     const rs = (n: number) => `₹${rupees(n)}`, months = (n: number) => `${n} month${n === 1 ? '' : 's'}`;
     const names = s.products.map((r, i) => r.name.trim() || `line ${i + 1}`);
     const low = levelFor('dscrLowest', 'fresh', lv), avg = levelFor('dscrAverage', 'fresh', lv);
-    const line = c.carries > 0 ? `Your business can carry a loan of ${rs(c.carries)}. You asked ${rs(c.asked)}.`
+    const line = c.carries > 0 ? `The largest loan your business can repay is ${rs(c.carries)}. You asked ${rs(c.asked)}.`
       : `Your business cannot carry a term loan on these figures yet. You asked ${rs(c.asked)}.`;
     const bar = c.gap > 0 ? `Carries ${rs(c.carries)} of ${rs(c.asked)}` : `Carries the ${rs(c.asked)} asked`;
     const l = c.limitedBy, h = c.how, pays = `can pay up to ${rs(Math.floor(h.forInstalments))} of instalments and interest`;

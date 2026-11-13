@@ -22,7 +22,7 @@ describe('case S on the front door', () => {
     expect([c.proj.length, c.proj[0].fy, c.proj.at(-1)?.fy, c.shown, c.proj.every((y) => y.pbdit === 450000)]).toEqual([16, '2026-27', '2041-42', 6, true]);
   });
   it('the fewest instalments read the same later years as the board', () => {
-    expect(preview(S).fewest).toEqual({ text: 'The fewest instalments for ₹12,00,000 are 80 monthly.', instalments: 80 });
+    expect(preview(S).fewest).toEqual({ text: 'The shortest repayment that works for ₹12,00,000: 80 monthly instalments.', instalments: 80, fewest: 80, now: 60, per: 12 });
     expect(preview(door('2,50,000')).fewest?.text).toBe('No repayment within 180 months meets the target.');
   });
   it('the bars, each with the cash it is short of', () => {

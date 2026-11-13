@@ -93,7 +93,7 @@ describe('a figure from the first fact (rule 14, D-UX-358)', () => {
   it('every fact the borrower’s: no mark, the paper next, nothing listed for the paper', () => {
     const all: Case = { s: c.s, mine: ['profit', 'amount', 'years', 'rate', 'borrower', 'growth'] };
     expect(markOf(all)).toBeUndefined();
-    expect(nextOf(all, readingOf(all, p), 0)).toEqual({ kind: 'paper', label: 'Get the paper' });
+    expect(nextOf(all, readingOf(all, p), 0)).toEqual({ kind: 'paper', label: 'Get the report' });
     expect(exampleNeeds(all)).toEqual([]);
   });
 });
