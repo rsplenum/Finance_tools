@@ -146,6 +146,10 @@ export const N = {
     lead: 'Every field, filled in from your answers. Change any; the answer moves with it.',
     why: 'Why', whyAll: 'Why these figures', change: 'Change',
     strip: (avg: string, low: string) => `DSCR ${avg} average, ${low} lowest`, see: 'See the answer',
+    /** The journey across (NEW1d): its stops' short names, and the words that move along it. */
+    journey: { label: 'Steps', step: (i: number, n: number) => `Step ${i} of ${n}`, next: (name: string) => `Next: ${name}`, back: 'Back' },
+    stops: { how: 'Method', loan: 'Loan', years: 'Years', business: 'Business', figures: 'Figures', target: 'Target', lender: 'Checks' },
+    how: 'How it is worked out',
   },
   /** For professionals, above the form: a projection typed from the start, with the stated assumptions kept. */
   blank: { lead: 'Typing a projection from the start?', go: 'Empty the form', undo: 'Undo' },

@@ -29,6 +29,8 @@ function settling() {
 function header() {
   const bar = document.querySelector<HTMLElement>('[data-header]');
   if (!bar) return;
+  // Its height, for what pins under it (the DSCR's Professional strip, global.css): one row or three as the width allows.
+  new ResizeObserver(() => document.documentElement.style.setProperty('--bar-h', `${bar.offsetHeight}px`)).observe(bar);
   let last = scrollY;
   addEventListener('scroll', () => {
     const y = scrollY;

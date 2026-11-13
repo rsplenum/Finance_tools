@@ -222,19 +222,22 @@ export function DscrWorked() {
       // Professional: every field, filled in, beside the answer it moves (on a phone, the DSCR stays in view as you type).
       ? <div key="pro" class="mt-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-x-12">
         <section id="more-options" aria-label={N.mode.pro} class="min-w-0">
-          <div data-testid="pro-strip" class="sticky top-0 z-10 -mx-4 mb-3 flex flex-wrap items-center justify-between gap-x-3 border-b border-line bg-canvas px-4 py-1 sm:-mx-8 sm:px-8 lg:hidden">
-            <p class="text-base text-ink tabular-nums">{N.pro.strip(p.average ?? '—', p.lowest ?? '—')}</p>
-            <a href="#pro-result" class={`${QUIET} -mr-3`}>{N.pro.see}</a>
-          </div>
-          <p class="text-base text-ink-muted">{N.pro.lead}</p>
-          {p.assumed.length > 0 && <details data-testid="why-all" class="mt-3">
+          <Professionals s={c.s} update={update}
+            pin={<div data-testid="pro-strip" class="-mx-4 flex flex-wrap items-center justify-between gap-x-3 border-b border-line bg-canvas px-4 py-1 sm:-mx-8 sm:px-8">
+              <p class="text-base text-ink tabular-nums">{N.pro.strip(p.average ?? '—', p.lowest ?? '—')}</p>
+              <a href="#pro-result" class={`${QUIET} -mr-3`}>{N.pro.see}</a>
+            </div>}
+            lead={<>
+              <p class="mt-3 text-base text-ink-muted">{N.pro.lead}</p>
+              {(!isEmpty || emptied) && <p class="mt-1 flex flex-wrap items-center gap-x-2 text-base text-ink-muted">{N.blank.lead}
+                {!isEmpty && <button type="button" data-testid="dscr-clear" class={`${QUIET} -ml-1`} onClick={emptyForm}>{N.blank.go}</button>}
+                {isEmpty && emptied && <button type="button" data-testid="dscr-clear-undo" class={`${QUIET} -ml-1`} onClick={() => { setC(emptied); setEmptied(undefined); }}>{N.blank.undo}</button>}</p>}
+            </>}
+            end={<a href="#pro-result" data-testid="pro-see" class={`${MAIN} lg:hidden`}>{N.pro.see}</a>} />
+          {p.assumed.length > 0 && <details data-testid="why-all" class="mt-8">
             <summary class="inline-flex min-h-11 cursor-pointer items-center text-base font-medium text-link underline underline-offset-4">{N.pro.whyAll} ({p.assumed.length})</summary>
             <Assumed p={p} onChange={toPro} />
           </details>}
-          {(!isEmpty || emptied) && <p class="mt-2 mb-6 flex flex-wrap items-center gap-x-2 text-base text-ink-muted">{N.blank.lead}
-            {!isEmpty && <button type="button" data-testid="dscr-clear" class={`${QUIET} -ml-1`} onClick={emptyForm}>{N.blank.go}</button>}
-            {isEmpty && emptied && <button type="button" data-testid="dscr-clear-undo" class={`${QUIET} -ml-1`} onClick={() => { setC(emptied); setEmptied(undefined); }}>{N.blank.undo}</button>}</p>}
-          <Professionals s={c.s} update={update} />
         </section>
         <div id="pro-result" class="mt-12 scroll-mt-14 lg:sticky lg:top-4 lg:mt-0 lg:max-h-[calc(100svh-2rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
           {answerShown}

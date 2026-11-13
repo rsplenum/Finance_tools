@@ -35,7 +35,8 @@ import {
   type DocFacts, type LenderLine, type LenderText, type LenderView, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 import { Levels } from './Levels';
-import { W } from './words';
+import { N, W } from './words';
+import { Journey, type Chapter } from '../worked/Journey';
 import { SHARED } from '../words';
 import { Rounds } from './MakeItWork';
 import { roundKey, setupOf, termWords, writeTerms } from './rounds';
@@ -688,21 +689,23 @@ export function DownloadSection({ s, p: page, update, example = [], bare }: { s:
 /**
  * For professionals (NEW1, docs/WORKED-PAGE.md §4): everything the old page's More options held, whole: where the yearly
  * figures come from and how DSCR is worked out, the loan's every term or the years' own figures, the figures year by
- * year, the lender's levels and the lender's tests. Written into the same state the worked page reads.
+ * year, the lender's levels and the lender's tests. Written into the same state the worked page reads. Laid out as a
+ * journey across, a chapter at a time (NEW1d, Rahul, 12-11-2026), in place of one long scroll.
  */
-export function Professionals({ s, update }: { s: State; update: Update }) {
+export function Professionals({ s, update, pin, lead, end }: { s: State; update: Update; pin?: ComponentChildren; lead?: ComponentChildren; end?: ComponentChildren }) {
   const y = useMemo(() => yearsOf(s), [s]);
   const p = useMemo(() => withFrontNeeds(s, preview(s), y.years[0]), [s, y]);
   const rows = useMemo(() => rowsOf(s), [s]);
-  return <div>
-    <Start s={s} update={update} />
-    {p.started && <>
-      {s.source === 'plan' ? <Loan s={s} update={update} y={y} p={p} was={() => undefined} /> : <YearsSection s={s} update={update} y={y} />}
-      <Figures s={s} update={update} rows={rows} y={y} p={p} />
-      <TargetSection s={s} update={update} />
-      {s.source === 'plan' && <LenderSection s={s} update={update} y={y} />}
-    </>}
-  </div>;
+  const plan = s.source === 'plan', stop = N.pro.stops;
+  const chapters: Chapter[] = [{ id: 'how', short: stop.how, body: <Section id="how" title={N.pro.how}><Start s={s} update={update} /></Section> }];
+  if (p.started) {
+    chapters.push(plan ? { id: 'loan', short: stop.loan, body: <Loan s={s} update={update} y={y} p={p} was={() => undefined} /> }
+      : { id: 'years', short: stop.years, body: <YearsSection s={s} update={update} y={y} /> });
+    chapters.push({ id: 'figures', short: plan ? stop.business : stop.figures, body: <Figures s={s} update={update} rows={rows} y={y} p={p} /> });
+    chapters.push({ id: 'target', short: stop.target, body: <TargetSection s={s} update={update} /> });
+    if (plan) chapters.push({ id: 'lender', short: stop.lender, body: <LenderSection s={s} update={update} y={y} /> });
+  }
+  return <Journey chapters={chapters} words={N.pro.journey} pin={pin} lead={lead} end={end} />;
 }
 
 const lineClass = (kind?: string) => kind === 'total' || kind === 'ratio'
