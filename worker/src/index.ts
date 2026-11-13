@@ -8,6 +8,7 @@
  */
 import { events, prune } from './events';
 import { draft } from './draft';
+import { providerOf } from './ai';
 import { read, type ReadEnv } from './read';
 
 const BINDINGS = ['DB', 'KV', 'EVENTS_LIMIT'] as const;
@@ -30,9 +31,10 @@ export default {
     }
     if (pathname !== '/health') return json({ error: 'not found' }, 404);
     if (req.method !== 'GET' && req.method !== 'HEAD') return json({ error: 'method not allowed' }, 405, { allow: 'GET, HEAD' });
-    // A missing binding is reported by name, never assumed present.
+    // A missing binding is reported by name, never assumed present; `ai` names whose AI reads and drafts (READ1), or null
+    // when no key is set, so a key saved on the wrong project shows here. Never the key itself.
     const missing = BINDINGS.filter((b) => !env[b]);
-    return json({ ok: missing.length === 0, missing }, missing.length ? 503 : 200);
+    return json({ ok: missing.length === 0, missing, ai: providerOf(env) ?? null }, missing.length ? 503 : 200);
   },
   async scheduled(_event, env) {
     await prune(env);

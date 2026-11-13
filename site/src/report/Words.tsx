@@ -56,7 +56,7 @@ export function Words({ s, update }: { s: ReportState; update: Update }) {
   return <details data-testid="rep-words" class="mt-6 border-t border-line pt-3">
     <summary class="flex min-h-11 cursor-pointer flex-wrap items-center gap-x-2 font-medium text-ink">The report’s words
       <span data-testid="rep-words-state" class="text-sm font-normal text-ink-muted">{w.confirmed && !need ? 'ticked as true: in the document' : need ? 'not yet in the document' : 'optional'}</span></summary>
-    <p class={HINT}>An introduction, the products, the process, the market, the promoter and a conclusion, in simple words. AI drafts them from your answers and these notes, without a figure; you change what is wrong and tick that they are true. What you type goes to Anthropic’s AI to draft and is not kept.</p>
+    <p class={HINT}>An introduction, the products, the process, the market, the promoter and a conclusion, in simple words. AI drafts them from your answers and these notes, without a figure; you change what is wrong and tick that they are true. What you type goes to an AI, Google’s or Anthropic’s, to draft, and we do not keep it.</p>
     {NOTES.map((n) => <Area key={n.id} id={`fld-rep-note-${n.id}`} label={`${n.label}, if you like`} hint={n.hint} rows={3} max={NARRATIVE.maxNote}
       value={w.notes[n.id]} onCommit={(t) => set((x) => ({ ...x, notes: { ...x.notes, [n.id]: t } }))} />)}
     <div class="mt-4 flex flex-wrap items-center gap-2">
