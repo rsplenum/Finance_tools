@@ -61,7 +61,7 @@ function BlockOf({ b, doc, pages }: { b: Block; doc: Doc; pages?: [string, numbe
     </div>;
     case 'contents': return <div>
       <p class="sheet-title">{b.title}</p>
-      <ol class="sheet-contents">{doc.parts.filter((x) => x.section && !x.sheetOnly).map((x) => {
+      <ol class="sheet-contents">{doc.parts.filter((x) => x.section).map((x) => {
         const page = pages?.find(([s]) => s === x.section)?.[1];
         return <li key={x.section}><span>{x.section}</span><span class="sheet-leader" aria-hidden="true" />{page !== undefined && <span>{page}</span>}</li>;
       })}</ol>
@@ -88,7 +88,7 @@ function BlockOf({ b, doc, pages }: { b: Block; doc: Doc; pages?: [string, numbe
 /** The sheets: a part starts one unless it runs on (`flow`), and a cover stands alone on its own. */
 function sheetsOf(doc: Doc): { parts: Part[]; cover: boolean }[] {
   const out: { parts: Part[]; cover: boolean }[] = [];
-  for (const part of doc.parts.filter((x) => !x.sheetOnly)) {
+  for (const part of doc.parts) {
     const at = part.blocks.findIndex((b) => b.kind === 'cover');
     if (at >= 0) {
       out.push({ parts: [{ ...part, blocks: part.blocks.slice(0, at + 1) }], cover: true });

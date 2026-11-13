@@ -1,8 +1,8 @@
 /**
  * The CMA data as a document to download, written as a PDF and an Excel workbook (site/src/doc/): page 1 Form I with the
- * limit, what to look at and what is still needed, signed; then Forms II and III; Forms IV to VI; the ratios; and a check
- * whose cells in the Excel copy are formulas on Forms II and III beside the engine's figures, for a lender to re-check
- * them. Built from the page's state and preview only: the tables are the page's (model.ts), every figure the engine's.
+ * limit, what to look at and what is still needed, signed; then Forms II and III; Forms IV to VI; and the ratios. The
+ * Excel copy holds every figure as a number, never a formula (D-DOC-21). Built from the page's state and preview only:
+ * the tables are the page's (model.ts), every figure the engine's.
  */
 import type { Block, Cell, Doc, Table } from '../doc/doc';
 import { forDocument } from '../doc/doc';
@@ -35,16 +35,16 @@ export function fileName(s: CmaState, p: CmaPreview, ext: string): string {
 const dmy = (iso: string) => iso.split('-').reverse().join('-');
 const ok = (t: string) => (t.trim() && printable(t) ? t.trim() : '');
 
-/** A table of the page as a table of the document: the engine's figures beside the words, and the rows' names and formulas for the Excel copy. */
+/** A table of the page as a table of the document: the engine's figures beside the words, and the engine's numbers for the Excel copy. */
 function tableOf(v: ViewTable): Block[] {
   const t: Table = {
     columns: [{ label: v.first }, ...v.columns.map((label) => ({ label }))],
     rows: v.rows.map((r) => (r.kind === 'head'
       ? { kind: 'head', cells: [{ text: r.label }] }
-      : { ...(r.kind ? { kind: r.kind } : {}), ...(r.ref ? { ref: r.ref } : {}), cells: [{ text: r.label }, ...r.values.map((text, i): Cell => {
+      : { ...(r.kind ? { kind: r.kind } : {}), cells: [{ text: r.label }, ...r.values.map((text, i): Cell => {
         const x = r.n?.[i];
         return x === undefined || !Number.isFinite(x) || text === '—' ? { text }
-          : { text, figure: { value: x, kind: r.fig ?? 'amount', decimals: (text.replace('%', '').split('.')[1] ?? '').length, ...(r.formula ? { formula: r.formula } : {}) } };
+          : { text, figure: { value: x, kind: r.fig ?? 'amount', decimals: (text.replace('%', '').split('.')[1] ?? '').length } };
       })] })),
   };
   return [{ kind: 'heading', text: v.title }, { kind: 'table', table: t }];
@@ -71,7 +71,7 @@ export function cmaDoc(s: CmaState, p: CmaPreview, today: string): Doc | undefin
     header: `CMA data${name ? ` · ${name}` : ''}`,
     ...(needs.length ? { mark: 'Provisional' } : {}),
     footer: `Made with ${SITE_NAME} on ${dmy(today)} from the figures entered; every figure worked out twice.`,
-    workbookNote: 'Each cell holds the exact figure worked out on the page, in whole rupees. The Check sheet redoes the main figures by formulas on the Forms II and III sheet, beside the figures, with their differences.',
+    workbookNote: 'Each cell holds the exact figure worked out on the page, in whole rupees; there are no formulas.',
     ...(by || name ? { author: by || name } : {}),
     creator: SITE_NAME,
     parts: [
@@ -84,7 +84,6 @@ export function cmaDoc(s: CmaState, p: CmaPreview, today: string): Doc | undefin
         { kind: 'heading', text: 'How sure the rules are' }, { kind: 'list', items: [
           `The turnover method's shares: ${sureLower(CMA_FILE.turnover as Marked)}; lenders apply their own norms.`,
           `The levels the ratios are read against: ${sureLower(RATIOS_FILE as Marked)}; each lender sets its own.`] }] },
-      { name: 'Check', blocks: [{ kind: 'title', text: 'Check', small: true }, ...tableOf(v.check)] },
     ],
   };
 }

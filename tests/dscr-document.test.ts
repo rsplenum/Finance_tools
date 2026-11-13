@@ -1,8 +1,8 @@
 /**
  * The DSCR statement to download (site/src/dscr/document.ts), tested on its text: the document as built, the PDF as
  * pdf.js reads it back, the Excel copy as read-excel-file reads it back, and the Word copy as mammoth reads it back
- * (scripts/read-doc.mjs). The Excel copy is a model (PAPER1, D-DOC-18): its formulas are worked again from the file alone
- * by tests/xlsx-eval.ts, written apart from the writer. Figures: fictional cases A and A′ (docs/GOLDEN-CASES.md), worked
+ * (scripts/read-doc.mjs). The three read alike, part for part, and the Excel copy holds the engine's figures as numbers,
+ * never a formula (D-DOC-21). Figures: fictional cases A and A′ (docs/GOLDEN-CASES.md), worked
  * by hand in tests/dscr.test.ts and tests/dscr-page.test.ts; model-worked until the owner confirms them.
  */
 import { describe, it, expect } from 'vitest';
@@ -15,13 +15,12 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf } from '../site/src/doc/pdf';
 import { printable } from '../site/src/doc/face';
 import { xlsxOf } from '../site/src/doc/xlsx';
-import { crc32 } from '../site/src/doc/zip';
+import { crc32, zip } from '../site/src/doc/zip';
 import { docNeeds, docStatus, fileName, gstinOf, sourceForLender, statementDoc } from '../site/src/dscr/document';
 import { ASSUMED, BORROWER_CHOICES, START, preview, tidyAmount, withBorrower, type Preview, type State } from '../site/src/dscr/model';
 import { barsOf, exampleState } from '../site/src/dscr/worked';
 import { SITE_NAME } from '../site/src/site';
-import { docxLines, docxPart, pdfPages, workbook, zipPart } from '../scripts/read-doc.mjs';
-import { Book, type Value } from './xlsx-eval';
+import { docxLines, docxPart, formulaParts, pdfPages, workbook, zipPart } from '../scripts/read-doc.mjs';
 
 const TODAY = '2026-09-30', MADE = new Date('2026-09-30T10:00:00Z');
 const FACTS = { borrower: 'Asha Traders', lender: 'Example Bank, Pune branch', preparedBy: '' };
@@ -59,12 +58,10 @@ const P: State = withBorrower({
   running: [{ emi: '25,000', last: '' }, { emi: '15,000', last: '2027-12' }], asset: { yearly: '3,60,000', from: '2026-10' },
 }, 'proprietor');
 
-/** The reading the PDF and the Word copy print: the document without the Excel model's sheets. */
-const paper = (d: Doc): Doc => ({ ...d, parts: d.parts.filter((x) => !x.sheetOnly) });
 const build = (s: State) => {
   const p = preview(s), doc = statementDoc(s, p, TODAY);
   if (!doc) throw new Error('no document');
-  const text = docText(paper(doc));
+  const text = docText(doc);
   return { p, doc, text, lines: text.split('\n') };
 };
 /**
@@ -178,12 +175,9 @@ describe('fictional case A′, complete: the statement for the lender', () => {
     for (const a of p.assumed) expect(text).not.toContain(a.why);
     expect(text).not.toMatch(/^(Extra income from the new asset|Loans already running|Other non-cash charges[^:]*):/m);
   });
-  it('prints the reading on paper and works the model in Excel: page 1, the statement and two annexes; Inputs to Checks', () => {
-    expect(doc.parts.map((x) => `${x.name}${x.paperOnly ? ' (paper)' : x.sheetOnly ? ' (Excel)' : ''}`)).toEqual([
-      'At a glance (paper)', 'DSCR statement (paper)', 'Inputs (Excel)', 'Schedule (Excel)', 'Workings (Excel)', 'Statement (Excel)',
-      'Basis (paper)', 'Repayment schedule (paper)', 'Checks (Excel)',
-    ]);
-    expect(paper(doc).parts.map((x) => x.blocks[0].kind === 'title' && x.blocks[0].text)).toEqual(['Asha Traders', '1. The statement', 'Annex 1. The basis', 'Annex 2. Repayment schedule']);
+  it('reads alike in all three files: page 1, the statement and two annexes, each a page and a sheet (D-DOC-21)', () => {
+    expect(doc.parts.map((x) => x.name)).toEqual(['At a glance', 'DSCR statement', 'Basis', 'Repayment schedule']);
+    expect(doc.parts.map((x) => x.blocks[0].kind === 'title' && x.blocks[0].text)).toEqual(['Asha Traders', '1. The statement', 'Annex 1. The basis', 'Annex 2. Repayment schedule']);
     expect(text).toContain('2026-27 | 1,41,000 | 2,00,000 | 10,00,000');
     // December 2026, by hand: interest 1% of 12,00,000 = 12,000; the first quarterly instalment of 1,00,000.
     expect(text).toContain('Dec 2026 | 1 | 12,00,000 | 12,000 | 1,00,000 | 1,12,000 | 11,00,000');
@@ -278,35 +272,29 @@ const sheetOf = (book: Sheet[], name: string) => book.find((x) => x.sheet === na
 const rowOf = (data: unknown[][], label: string) => data.filter((r) => r[0] === label).map((r) => r.filter((c) => c !== null)).filter((r) => r.length > 1).pop();
 
 describe('the Excel copy, read back by read-excel-file', () => {
-  it('fictional case A′: a model in the FAST Standard (Inputs, Schedule, Workings, Statement, Checks), who asks and the status on top', async () => {
-    const { doc } = build(A2), book: Sheet[] = await workbook(xlsxOf(doc, MADE));
-    expect(book.map((x) => x.sheet)).toEqual(['Inputs', 'Schedule', 'Workings', 'Statement', 'Checks']);
-    const inputs = sheetOf(book, 'Inputs'), row = (l: string) => rowOf(inputs, l);
-    expect(inputs.slice(0, 2).map((r) => r[0])).toEqual(['Asha Traders', 'Debt service coverage ratio (DSCR), 2026-27 to 2029-30']);
-    expect(row('Lender')).toEqual(['Lender', 'Example Bank, Pune branch']);
-    expect(row('Loan asked')).toEqual(['Loan asked', '₹12,00,000 at 12% a year, 12 instalments, equal principal every quarter']);
-    expect(row('Status')).toEqual(['Status', 'Complete']);
-    expect(inputs.flat()).toContain(doc.workbookNote);
-    expect(doc.workbookNote).toMatch(/^The model, for an accountant to follow \(the FAST Standard\)\./);
-    // The inputs as typed, as numbers a formula can use: 12 L is 12,00,000; the month first drawn a date.
-    expect(row('Amount')).toEqual(['Amount', 1200000, 'Rupees']);
-    expect(row('Interest rate')).toEqual(['Interest rate', 12, '% a year, charged monthly']);
-    expect(row('First drawn')).toEqual(['First drawn', new Date(Date.UTC(2026, 3, 1)), 'Month']);
-    expect(row('Instalments')).toEqual(['Instalments', 12, 'Number']);
-    expect(row('Profit before interest, depreciation and tax')).toEqual(['Profit before interest, depreciation and tax', 'Grows by the % each year', 500000, 10]);
-    expect(row('Tax rate (%)')).toEqual(['Tax rate (%)', 'The same every year', 31.2]);
-    const statement = sheetOf(book, 'Statement'), s = (l: string) => rowOf(statement, l);
-    expect(s('Rupees')).toEqual(['Rupees', '2026-27', '2027-28', '2028-29', '2029-30']);
-    expect(s('Cash available (A)')).toEqual(['Cash available (A)', 400392, 422624, 445488, 473072]);
-    expect(s('Debt service (B)')).toEqual(['Debt service (B)', 341000, 502000, 454000, 209000]);
+  it("fictional case A′: the PDF's parts as sheets, page 1 on top, the engine's figures as numbers and not one formula", async () => {
+    const { p, doc } = build(A2), bytes = xlsxOf(doc, MADE), book: Sheet[] = await workbook(bytes);
+    expect(book.map((x) => x.sheet)).toEqual(['At a glance', 'DSCR statement', 'Basis', 'Repayment schedule']);
+    expect(await formulaParts(bytes)).toEqual([]);
+    const glance = sheetOf(book, 'At a glance'), g = (l: string) => rowOf(glance, l);
+    expect(glance.slice(0, 2).map((r) => r[0])).toEqual(['Asha Traders', 'Debt service coverage ratio (DSCR), 2026-27 to 2029-30']);
+    expect(g('Lender')?.slice(0, 2)).toEqual(['Lender', 'Example Bank, Pune branch']);
+    expect(g('Loan asked')).toEqual(['Loan asked', '₹12,00,000 at 12% a year, 12 instalments, equal principal every quarter']);
+    expect(g('Status')).toEqual(['Status', 'Complete']);
+    expect(doc.workbookNote).toBe('Each cell holds the exact figure worked out on the page, shown in whole rupees; there are no formulas.');
+    expect(glance.flat()).toContain(doc.workbookNote);
+    const statement = sheetOf(book, 'DSCR statement'), row = (l: string) => rowOf(statement, l);
+    expect(row('Rupees')).toEqual(['Rupees', '2026-27', '2027-28', '2028-29', '2029-30', 'Total']);
+    expect(row('Cash available (A)')).toEqual(['Cash available (A)', 400392, 422624, 445488, 473072, 1741576]);
+    expect(row('Debt service (B)')).toEqual(['Debt service (B)', 341000, 502000, 454000, 209000, 1506000]);
     // The DSCR as the engine gave it, not rounded: 4,00,392 ÷ 3,41,000 and so on, and the average 17,41,576 ÷ 15,06,000.
-    expect(s('DSCR (A ÷ B)')).toEqual(['DSCR (A ÷ B)', 400392 / 341000, 422624 / 502000, 445488 / 454000, 473072 / 209000]);
-    expect(s('Average: total A ÷ total B, years counted')?.[1]).toBeCloseTo(1741576 / 1506000, 12);
-    expect(s('In')).toEqual(['In', '2027-28']);
-    // The loan month by month: 42 months, April 2026 to September 2029.
-    const months = sheetOf(book, 'Schedule').filter((r) => r[1] instanceof Date);
-    expect(months).toHaveLength(42);
-    expect(months[8].slice(0, 5)).toEqual([9, new Date(Date.UTC(2026, 11, 1)), 2026, 1200000, 12000]);
+    expect(row('DSCR (A ÷ B)')).toEqual(['DSCR (A ÷ B)', 400392 / 341000, 422624 / 502000, 445488 / 454000, 473072 / 209000, 1741576 / 1506000]);
+    for (const l of p.statement!.lines) if (l.n) expect(row(l.label)?.slice(1)).toEqual([...l.n, l.total?.n]);
+    expect(sheetOf(book, 'Basis').flat()).toContain('Common term-loan DSCR.');
+    // The loan month by month: 42 months, April 2026 to September 2029; December 2026 as worked by hand above.
+    const months = sheetOf(book, 'Repayment schedule');
+    expect(months.find((r) => r[0] === 'Dec 2026')?.filter((c) => c !== null)).toEqual(['Dec 2026', 1, 1200000, 12000, 100000, 112000, 1100000]);
+    expect(months.filter((r) => /^[A-Z][a-z]{2} \d{4}$/.test(String(r[0])))).toHaveLength(42);
   });
   it('own yearly figures: no loan and no schedule, the figures as entered, the years not counted said once', async () => {
     const { doc, lines } = build(OWN);
@@ -316,17 +304,23 @@ describe('the Excel copy, read back by read-excel-file', () => {
     expect(lines).toContain('Not counted: 2026-27 (no term-loan instalment).');
     expect(lines.join('\n')).not.toMatch(/target/i);
     expect(lines).not.toContain('The loan');
-    const book: Sheet[] = await workbook(xlsxOf(doc, MADE));
-    expect(book.map((x) => x.sheet)).toEqual(['Inputs', 'Workings', 'Statement', 'Checks']);
-    const statement = sheetOf(book, 'Statement');
-    expect(rowOf(statement, 'Rupees')).toEqual(['Rupees', '2026-27', '2027-28', '2028-29']);
-    expect(rowOf(statement, 'Cash available (A)')).toEqual(['Cash available (A)', 150000, 160000, 160000]);
-    // 2026-27 is worked and marked 0, not counted: the average is 3,20,000 ÷ 2,60,000.
-    expect(rowOf(statement, 'Counted: a year with a term-loan instalment (1)')).toEqual(['Counted: a year with a term-loan instalment (1)', 0, 1, 1]);
-    expect(rowOf(statement, 'Average: total A ÷ total B, years counted')?.[1]).toBeCloseTo(320000 / 260000, 12);
+    const bytes = xlsxOf(doc, MADE), book: Sheet[] = await workbook(bytes);
+    expect(book.map((x) => x.sheet)).toEqual(['At a glance', 'DSCR statement', 'Basis']);
+    expect(await formulaParts(bytes)).toEqual([]);
+    // The Total column leaves out 2026-27, not counted: 1,60,000 + 1,60,000.
+    const statement = sheetOf(book, 'DSCR statement');
+    expect(rowOf(statement, 'Rupees')).toEqual(['Rupees', '2026-27 (not counted)', '2027-28', '2028-29', 'Total (years counted)']);
+    expect(rowOf(statement, 'Cash available (A)')).toEqual(['Cash available (A)', 150000, 160000, 160000, 320000]);
   });
   it('a stored zip that any reader opens: the checksum is the standard one', () => {
     expect(crc32(new TextEncoder().encode('123456789')).toString(16)).toBe('cbf43926');
+  });
+  it('the formula finder finds a formula in a cell or a chart, so its empty answer above means none (D-DOC-21)', async () => {
+    const part = (name: string, x: string) => ({ name, data: new TextEncoder().encode(x) });
+    const plain = '<sheetData><row r="1"><c r="A1"><v>1</v></c></row></sheetData><fonts count="1"/><fills count="1"/>';
+    expect(await formulaParts(zip([part('xl/worksheets/sheet1.xml', plain)], MADE))).toEqual([]);
+    expect(await formulaParts(zip([part('xl/worksheets/sheet1.xml', '<c r="A1"><f>B1+C1</f><v>2</v></c>'),
+      part('xl/charts/chart1.xml', "<c:numRef><c:f>'Sheet'!$B$1</c:f></c:numRef>"), part('xl/styles.xml', plain)], MADE))).toEqual(['xl/worksheets/sheet1.xml', 'xl/charts/chart1.xml']);
   });
 });
 
@@ -380,16 +374,18 @@ describe('the Word copy, read back by mammoth', () => {
 });
 
 describe('one document, three files', () => {
-  it('the same words on top of each file; the reading on paper, the model in Excel', async () => {
+  it('the same words in each file, part for part', async () => {
     const { doc } = build(A2), pdf = (await pdfPages(pdfOf(doc, MADE))).join('\n'), word = (await docxLines(docxOf(doc, MADE))).lines.join('\n');
     const cells = (await workbook(xlsxOf(doc, MADE))).flatMap((x: Sheet) => x.data.flat()).filter((c: unknown): c is string => typeof c === 'string');
     const where = (t: string) => [pdf.includes(t), cells.some((c) => c.includes(t)), word.includes(t)];
     for (const t of ['Asha Traders', 'Example Bank, Pune branch', 'Debt service coverage ratio (DSCR), 2026-27 to 2029-30', '₹12,00,000 at 12% a year, 12 instalments, equal principal every quarter'])
       expect(where(t)).toEqual([true, true, true]);
-    for (const t of ['Common term-loan DSCR.', 'Annex 1. The basis', 'Annex 2. Repayment schedule', 'Authorised signatory']) expect(where(t)).toEqual([true, false, true]);
-    for (const t of ['Largest difference anywhere', 'Workings']) expect(where(t)).toEqual([false, true, false]);
+    for (const t of ['Common term-loan DSCR.', 'Annex 1. The basis', 'Annex 2. Repayment schedule', 'Authorised signatory']) expect(where(t)).toEqual([true, true, true]);
     const doc2: Doc = { ...doc, parts: doc.parts.slice(0, 2) };
     expect((await pdfPages(pdfOf(doc2, MADE))).join('\n')).not.toContain('Repayment schedule');
+  });
+  it('not one formula in any Excel copy, whatever the case: every figure a number as the engine gave it (D-DOC-21)', async () => {
+    for (const c of [A2, CASE_A, OWN, MEAN, P, CASE_AL, exampleState('2026-09')]) expect(await formulaParts(xlsxOf(build(c).doc, MADE))).toEqual([]);
   });
 });
 
@@ -445,12 +441,11 @@ const rowsOf = (d: Doc, part: string) => d.parts.find((x) => x.name === part)!.b
 
 describe('fictional case A with the lenders\' tests: the sensitivity analysis (D1b)', () => {
   const { p, doc, text, lines } = build(CASE_AL);
-  it('puts it in section 2, after the statement, which points to it; the Checks sheet is last', () => {
-    expect(doc.parts.map((x) => x.name)).toEqual(['At a glance', 'DSCR statement', 'Inputs', 'Schedule', 'Workings', 'Statement', 'Sensitivity', 'Basis', 'Repayment schedule', 'Checks']);
-    expect(doc.parts.map((x) => !!x.sheetOnly)).toEqual([false, false, true, true, true, true, false, false, false, true]);
+  it('puts it in section 2, after the statement, which points to it', () => {
+    expect(doc.parts.map((x) => x.name)).toEqual(['At a glance', 'DSCR statement', 'Sensitivity', 'Basis', 'Repayment schedule']);
     expect(lines).toContain('The sensitivity analysis in section 2 tests this DSCR as a lender may; it does not change it.');
     expect(lines.filter((l) => l === '2. Sensitivity analysis')).toHaveLength(2);
-    // Without a test that has figures (case A′: nothing typed), no section, no check, and no pointer.
+    // Without a test that has figures (case A′: nothing typed), no section and no pointer.
     const a2 = build(A2);
     expect(a2.doc.parts.map((x) => x.name)).not.toContain('Sensitivity');
     expect(a2.text).not.toMatch(/sensitivity/i);
@@ -483,7 +478,7 @@ describe('fictional case A with the lenders\' tests: the sensitivity analysis (D
     const sources = sourcesOf(CASE_AL, p);
     expect(figuresIn(text).filter((f) => !sources.includes(f))).toEqual([]);
   });
-  it('the PDF and the Word copy: the sensitivity analysis on page 3, after the statement; the Checks sheet in neither', async () => {
+  it('the PDF and the Word copy: the sensitivity analysis on page 3, after the statement', async () => {
     const pages = await pdfPages(pdfOf(doc, MADE)), all = pages.join('\n');
     expect(pages[1]).toContain('The sensitivity analysis in section 2 tests this DSCR as a lender may; it does not change it.');
     expect(pages[1]).toMatch(/Authorised signatory/);
@@ -495,98 +490,11 @@ describe('fictional case A with the lenders\' tests: the sensitivity analysis (D
     expect(word).toContain('2. Sensitivity analysis');
     expect(word).not.toMatch(/redone/);
   });
-  it('the Excel copy: a Sensitivity sheet before Checks, whose formulas name the other sheets\' cells; every difference 0', async () => {
+  it('the Excel copy: the Sensitivity sheet after the statement, its figures as numbers and not one formula', async () => {
     const bytes = xlsxOf(doc, MADE), book: Sheet[] = await workbook(bytes);
-    expect(book.map((x) => x.sheet)).toEqual(['Inputs', 'Schedule', 'Workings', 'Statement', 'Sensitivity', 'Checks']);
+    expect(book.map((x) => x.sheet)).toEqual(['At a glance', 'DSCR statement', 'Sensitivity', 'Basis', 'Repayment schedule']);
     expect(rowOf(sheetOf(book, 'Sensitivity'), 'Cash left')).toEqual(['Cash left', -40750, -69000, 59500, 330750]);
-    const sheet = await zipPart(bytes, 'xl/worksheets/sheet6.xml');
-    expect(sheet).toMatch(/<f>'Statement'!B\d+\/\('Statement'!B\d+\+'Sensitivity'!B\d+\)<\/f>/);
-    expect(sheet).toMatch(/<f>'Sensitivity'!B\d+-'Sensitivity'!B\d+-'Sensitivity'!B\d+-'Sensitivity'!B\d+<\/f><v>-40750<\/v>/);
-    // Worked again from the file alone: the redone figures by hand above, and every difference 0.
-    const b = await Book.read(bytes);
-    expect(b.line('Checks', 'Cash left, redone: A less working capital, capex and B')).toEqual([-40750, -69000, 59500, 330750]);
-    expect(b.line('Checks', "DSCR, redone: the Statement's A ÷ (its B + promoters' loans)")[1]).toBeCloseTo(583000 / 602000, 12);
-    expect(b.line('Checks', 'Margin, redone: that profit ÷ sales × 100')).toEqual([20]);
-    const zeros = [...b.lines('Checks', 'Difference'), ...b.lines('Checks', "Cash available, the Statement's"), ...b.lines('Checks', "Debt service, the Statement's")].flat();
-    // Six lines against the page and two of the cash check over four years; promoters', cash left and cover over four;
-    // the audited year's four.
-    expect(zeros).toHaveLength(6 * 4 + 2 * 4 + 3 * 4 + 4);
-    expect(zeros.filter((v) => v !== 0)).toEqual([]);
-  });
-});
-
-// The Excel model (PAPER1, D-DOC-18): every worked figure a formula from the inputs, the engine's figure beside it on
-// Checks. Worked again here from the file alone by tests/xlsx-eval.ts. By hand: case A′ 17,41,576 ÷ 15,06,000 = 1.156;
-// case A 21,86,500 ÷ 15,06,000 = 1.452; own figures 1.231 by totals and 1.238 by mean (above); the worked example
-// (tests/dscr-worked.test.ts): EMI 26,693.34, DSCR 3.23, 1.47, 1.52, 1.56, 1.61, 2.83, average 1.83, lowest 1.47 in 2027-28.
-describe('the Excel model, worked again from the file alone (PAPER1)', () => {
-  const read = async (s: State) => {
-    const { p, doc } = build(s);
-    return { p, b: await Book.read(xlsxOf(doc, MADE)) };
-  };
-  /** Every formula, worked again, gives the figure cached beside it; every difference on Checks is 0. */
-  const agrees = (b: Book) => {
-    let n = 0;
-    for (const sheet of b.sheets) for (const [ref, , cached] of b.formulas(sheet)) {
-      if (cached === undefined) continue;
-      const v = b.value(sheet, ref);
-      n++;
-      if (typeof cached === 'number') expect(v, `${sheet}!${ref}`).toBeCloseTo(cached, 9);
-      else expect(v, `${sheet}!${ref}`).toBe(cached);
-    }
-    expect(b.lines('Checks', 'Difference').flat().filter((v) => v !== 0)).toEqual([]);
-    for (const l of ['Average DSCR', 'Lowest DSCR', 'Year of the lowest (0 when the same)']) expect(b.line('Checks', l).at(-1)).toBe(0);
-    expect(b.line('Checks', 'Largest difference anywhere (0 when the model and the page agree)')).toEqual([0]);
-    return n;
-  };
-  const two = (v: Value[]) => v.map((x) => Number(x).toFixed(2));
-  it('case A′, by totals: every formula agrees and every difference is 0; the DSCR, the average and the lowest year as by hand', async () => {
-    const { b } = await read(A2);
-    expect(b.sheets).toEqual(['Inputs', 'Schedule', 'Workings', 'Statement', 'Checks']);
-    expect(agrees(b)).toBeGreaterThan(300);
-    expect(two(b.line('Statement', 'DSCR (A ÷ B)'))).toEqual(['1.17', '0.84', '0.98', '2.26']);
-    expect(b.line('Statement', 'Average: total A ÷ total B, years counted')[0]).toBeCloseTo(1741576 / 1506000, 9);
-    expect(b.line('Statement', 'Lowest year')[0]).toBeCloseTo(422624 / 502000, 9);
-    expect(b.line('Statement', 'In')).toEqual(['2027-28']);
-  });
-  it("case A, the CA's projection: its four years and the average, as on the page", async () => {
-    const { b } = await read(CASE_A);
-    agrees(b);
-    expect(two(b.line('Statement', 'DSCR (A ÷ B)'))).toEqual(['1.20', '1.16', '1.33', '2.82']);
-    expect(b.line('Statement', 'Average: total A ÷ total B, years counted')[0]).toBeCloseTo(2186500 / 1506000, 9);
-  });
-  it('a year not counted: its DSCR worked, left out of the average by the Counted line', async () => {
-    const { b } = await read(OWN);
-    expect(b.sheets).toEqual(['Inputs', 'Workings', 'Statement', 'Checks']);
-    agrees(b);
-    expect(b.line('Statement', 'DSCR (A ÷ B)')).toEqual([3, 160000 / 140000, 160000 / 120000]);
-    expect(b.line('Statement', 'Counted: a year with a term-loan instalment (1)')).toEqual([0, 1, 1]);
-    expect(b.line('Statement', 'Average: total A ÷ total B, years counted')[0]).toBeCloseTo(320000 / 260000, 12);
-  });
-  it('by mean: the average is the mean of the years counted, against the page\'s figure', async () => {
-    const { p, b } = await read(MEAN);
-    expect(p.averageN).toBeCloseTo((160000 / 140000 + 160000 / 120000) / 2, 12);
-    agrees(b);
-    expect(b.line('Statement', 'Average: the mean of the years counted')[0]).toBeCloseTo((160000 / 140000 + 160000 / 120000) / 2, 12);
-  });
-  it('loans already running, the new asset, a proprietor\'s slab tax, and the lenders\' tests: every formula agrees', async () => {
-    for (const s of [P, CASE_AL]) expect(agrees((await read(s)).b)).toBeGreaterThan(300);
-  });
-  it('the worked example: the EMI, each year\'s DSCR, the average and the lowest year, as its golden case gives them', async () => {
-    const { b } = await read(exampleState('2026-11'));
-    agrees(b);
-    expect(b.line('Schedule', 'EMI')[0]).toBeCloseTo(26693.34, 2);
-    expect(two(b.line('Statement', 'DSCR (A ÷ B)'))).toEqual(['3.23', '1.47', '1.52', '1.56', '1.61', '2.83']);
-    expect(two(b.lines('Statement', 'Average: ')[0])).toEqual(['1.83']);
-    expect(two(b.line('Statement', 'Lowest year'))).toEqual(['1.47']);
-    expect(b.line('Statement', 'In')).toEqual(['2027-28']);
-  });
-  it('type over an input and the model works again: Checks then shows how far it moved from the page', async () => {
-    const { b } = await read(A2);
-    b.set('Inputs', b.inputAt('Inputs', 'Interest rate'), 14);
-    // 14% a year on 12,00,000 is 14,000 a month against 12,000: 2026-27's interest rises, and the model leaves the page.
-    expect(Number(b.line('Workings', 'Interest on the new loan (Schedule)')[0])).toBeGreaterThan(141000);
-    expect(Number(b.line('Checks', 'Largest difference anywhere (0 when the model and the page agree)')[0])).toBeGreaterThan(0);
+    expect(await formulaParts(bytes)).toEqual([]);
   });
 });
 

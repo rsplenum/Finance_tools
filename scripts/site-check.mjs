@@ -17,7 +17,7 @@ import { readFile, readdir } from 'node:fs/promises';
 import { join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
-import { docxLines, docxPart, pdfPages, workbook, zipPart } from './read-doc.mjs';
+import { docxLines, docxPart, formulaParts, pdfPages, workbook } from './read-doc.mjs';
 import { DIST, serveDist } from './serve-dist.mjs';
 import { designChecks, FIXED_AT } from './design-checks.mjs';
 import { questionsCheck } from './load-measure.mjs';
@@ -667,10 +667,12 @@ if (touched('/dscr/')) {
   const xlsx = await save('download-xlsx');
   if (xlsx.name !== 'DSCR statement - Asha Traders.xlsx') v(`the Excel copy is named "${xlsx.name}"`);
   const book = await workbook(xlsx.bytes).catch((e) => v(`the Excel copy is not read: ${e.message}`)) ?? [];
-  // The engine's figures as numbers, on whichever sheet carries the statement (its layout is PAPER1b's, D-DOC-21).
+  // The PDF's parts as sheets, the engine's figures as numbers, and not one formula (D-DOC-21).
   const cash = book.flatMap((x) => x.data).find((r) => r[0] === 'Cash available (A)' && r.some((c) => typeof c === 'number'))?.filter((c) => typeof c === 'number') ?? [];
-  if (JSON.stringify(cash.slice(0, 4)) !== JSON.stringify([400392, 422624, 445488, 473072]) || cash.length > 5 || (cash.length === 5 && cash[4] !== 1741576))
+  if (book.map((x) => x.sheet).join('|') !== 'At a glance|DSCR statement|Basis|Repayment schedule' || JSON.stringify(cash) !== JSON.stringify([400392, 422624, 445488, 473072, 1741576]))
     v(`the Excel copy holds sheets ${JSON.stringify(book.map((x) => x.sheet))} and cash available ${JSON.stringify(cash)}`);
+  const withFormulas = await formulaParts(xlsx.bytes);
+  if (withFormulas.length) v(`the Excel copy holds formulas in ${withFormulas.join(', ')}`);
   const cells = book.flatMap((x) => x.data.flat()).filter((c) => typeof c === 'string').join('\n');
   for (const not of ONLY_ON_THE_PAGE) if (cells.includes(not)) v(`the Excel copy says "${not}"`);
   word = await save('download-docx');
@@ -1912,9 +1914,9 @@ if (touched('/cma/')) {
   if (/DSCR|benchmark|viable/i.test(text)) v('the CMA PDF carries the levels or the plan (MV4 keeps them on the page)');
   const xlsx = (await save('cma-download-xlsx')).bytes;
   const book = await workbook(xlsx).catch((e) => v(`the CMA Excel copy is not read: ${e.message}`)) ?? [];
-  if (book.map((x) => x.sheet).join('|') !== 'Summary|Forms II and III|Forms IV to VI|Ratios|Check') v(`the CMA Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))}`);
-  const formulas = ((await zipPart(xlsx, 'xl/worksheets/sheet5.xml')) ?? '').match(/<f>/g)?.length ?? 0;
-  if (formulas !== 52) v(`the CMA Excel copy's Check sheet holds ${formulas} formulas, want 52`);
+  if (book.map((x) => x.sheet).join('|') !== 'Summary|Forms II and III|Forms IV to VI|Ratios') v(`the CMA Excel copy holds ${JSON.stringify(book.map((x) => x.sheet))}`);
+  const formulas = await formulaParts(xlsx);
+  if (formulas.length) v(`the CMA Excel copy holds formulas in ${formulas.join(', ')}`);
   // The Word copy, as on the other tools (UXR5b, P10).
   const word = await docxLines((await save('cma-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
   if (word.messages.length || !word.lines.some((l) => l.includes('1,04,00,000'))) v(`the CMA Word copy reads back ${JSON.stringify(word.lines.slice(0, 4))} ${JSON.stringify(word.messages).slice(0, 120)}`);

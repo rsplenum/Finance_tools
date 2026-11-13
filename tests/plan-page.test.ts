@@ -19,7 +19,7 @@ import {
 } from '../site/src/estimate/plan-model';
 import { billDoc, billFileName, planDoc, planDocStatus, planFileName } from '../site/src/estimate/plan-document';
 import { BRAND_NOTICE, BRAND_NOTICE_SHORT, SITE_NAME } from '../site/src/site';
-import { docxLines, pdfPages, workbook } from '../scripts/read-doc.mjs';
+import { docxLines, formulaParts, pdfPages, workbook } from '../scripts/read-doc.mjs';
 
 const TODAY = '2026-10-03', MADE = new Date('2026-10-03T10:00:00Z');
 const FLAT: PlanState = { ...EMPTY_PLAN, kind: 'renovate', home: 'flat', city: 'pune', area: '1,000', bhk: '2', level: 2 };
@@ -317,7 +317,8 @@ describe('the planning estimate to download', () => {
     expect(pages[0]).toContain(`Total estimated cost ${p.view!.total}`);
     expect(pages.some((x) => x.includes('Annex 1. Detailed estimate'))).toBe(true);
     expect(pages.some((x) => x.includes('Annex 2. What the estimate assumes'))).toBe(true);
-    const book = await workbook(xlsxOf(doc, MADE));
+    const bytes = xlsxOf(doc, MADE), book = await workbook(bytes);
+    expect(await formulaParts(bytes)).toEqual([]); // the engine's figures as numbers, never a formula (D-DOC-21)
     expect(book.map((x) => x.sheet)).toEqual(['Estimate', 'Detailed estimate', 'Assumptions']);
     expect(book[0].data.find((r) => r[0] === 'Total estimated cost')?.filter((c) => c !== null)).toEqual(['Total estimated cost', p.view!.n.total]);
     const row = book[1].data.find((r) => typeof r[0] === 'string' && r[0].includes('Living and dining: Double-charge vitrified tiles'))?.filter((c) => c !== null);
@@ -372,7 +373,8 @@ describe('the bill of quantities to download (E4a, D-UX-36)', () => {
     const pages = (await pdfPages(pdfOf(doc, MADE))).join('\n');
     expect(pages).toContain('Bill of quantities');
     expect(pages).toContain('Make offered');
-    const book = await workbook(xlsxOf(doc, MADE));
+    const bytes = xlsxOf(doc, MADE), book = await workbook(bytes);
+    expect(await formulaParts(bytes)).toEqual([]); // the engine's figures as numbers, never a formula (D-DOC-21)
     expect(book.map((x) => x.sheet)).toEqual(['Bill of quantities']);
     const row = book[0].data.find((r) => typeof r[1] === 'string' && r[1].startsWith('Double-charge vitrified tiles') && String(r[2]).startsWith('Living and dining'));
     expect(row?.[3]).toBe(tiles.reduce((t, l) => t + Math.round(l.n.qty * 100), 0) / 100);

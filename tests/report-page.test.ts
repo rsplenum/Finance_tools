@@ -21,7 +21,7 @@ import { benchmarkFields, levelsOf, withBenchmark } from '../site/src/board-mode
 import { sameValue } from '../site/src/amount';
 import { SITE_NAME } from '../site/src/site';
 import { SOLD_BY, soldBy } from '../engine/sold-by';
-import { docxLines, pdfPages, workbook } from '../scripts/read-doc.mjs';
+import { docxLines, formulaParts, pdfPages, workbook } from '../scripts/read-doc.mjs';
 
 const TODAY = '2026-10-02', MADE = new Date('2026-10-02T10:00:00Z');
 const R: ReportState = {
@@ -134,7 +134,8 @@ describe('the project report to download', () => {
     expect(pages[1]).toMatch(/1\. The project at a glance[ .]*3/);
     expect(pages.join('\n')).toContain('Total cost of the project 37,86,301');
     expect(pages.join('\n')).toContain('Total assets 55,81,804');
-    const book = await workbook(xlsxOf(doc, MADE));
+    const bytes = xlsxOf(doc, MADE), book = await workbook(bytes);
+    expect(await formulaParts(bytes)).toEqual([]); // the engine's figures as numbers, never a formula (D-DOC-21)
     expect(book.map((x) => x.sheet)).toEqual(doc.parts.map((x) => x.name));
     const pat = book[5].data.find((r) => r[0] === 'Profit after tax')?.filter((c) => c !== null);
     expect((pat?.[1] as number).toFixed(2)).toBe('1154406.67');

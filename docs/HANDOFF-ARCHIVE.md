@@ -173,6 +173,7 @@ The owner's two reference films set the bar and the VID3 path (`docs/video/VID3-
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 13-11-2026 | PAPER1 (the DSCR's three files on trial: page 1 at a glance, "₹" through one embedded face, bookmarks; the Excel model with an evaluator test; Word in step; lazy writers) | L, Extra | 248 steps, 9 compactions; no agent; at budget plus a quarter, with #201's merge. Rewriting the document tests for the new layout took about a fifth; the compactions were the cost of one long session |
 | 09-11-2026 | PLAN1 (the plan from Rahul's thirteen questions: `docs/PLAN.md` and Rahul's page) | none set: Rahul's ask | about 50 steps, 0.3 h, 1 compaction; no agent |
 | 09-11-2026 | LOOSE1 (the look freed from the checks: the taste counts report, the gates named in D-TECH-110; BUILD1's row) | S, high | about 45 steps, 0.2 h, no compaction; no agent; within S |
 | 28-10-2026 | LOOP1d: the fold on the report, the CMA and the estimate, one shape for four | L, Extra | about 110 steps, one compaction; a Python replace of an empty string grew a file to 770k lines (assert a match first) |

@@ -1,8 +1,7 @@
 /**
  * A document's chart (doc.ts `Chart`) as a DrawingML chart part, for the Word copy and the Excel copy: two series as bars
  * across, the years top to bottom as on the page and in the PDF, each figure at its bar's end, the tight year's bars in
- * amber. In the Excel copy the series read the model's own cells (`refs`), so the chart follows the figures when an input
- * changes; in the Word copy they hold the figures as given. Pure text, no DOM.
+ * amber. In both copies the series hold the figures as given, never references to cells (D-DOC-21). Pure text, no DOM.
  */
 import type { Chart } from './doc';
 
@@ -19,26 +18,21 @@ export const chartSize = (c: Chart, width: number) => ({ w: width, h: 74 + c.row
 /** Points to EMU, DrawingML's unit. */
 export const emu = (pt: number) => Math.round(pt * 12700);
 
-/** Where the Excel copy's labels and two series are, as ranges ('Statement'!$C$4:$H$4). */
-export interface ChartRefs { labels: string; a: string; b: string }
-
 const INK = '1A1A1A', LIGHT = 'A0A6B3', AMBER = 'B45309', AMBER_LIGHT = 'F0C080', RULE = 'BFBFBF';
 const fill = (c: string) => `<c:spPr><a:solidFill><a:srgbClr val="${c}"/></a:solidFill></c:spPr>`;
 const text = (size: number, bold = false, color = INK) => `<c:txPr><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="${size}" b="${bold ? 1 : 0}">`
   + `<a:solidFill><a:srgbClr val="${color}"/></a:solidFill></a:defRPr></a:pPr><a:endParaRPr lang="en-IN"/></a:p></c:txPr>`;
 
 /** The chart part. Element order follows the schema (CT_ChartSpace, CT_Chart, CT_BarChart, CT_BarSer, CT_DLbls, the axes). */
-export function chartXml(c: Chart, refs?: ChartRefs): string {
+export function chartXml(c: Chart): string {
   const scale = c.scale ?? 1, decimals = c.decimals ?? 0, n = c.rows.length;
   const format = decimals ? `#,##0.${'0'.repeat(decimals)}` : '#,##0';
   const tight = c.rows.findIndex((r) => r.tight);
   const labels = `<c:ptCount val="${n}"/>${c.rows.map((r, i) => `<c:pt idx="${i}"><c:v>${xml(r.label)}</c:v></c:pt>`).join('')}`;
   const values = (k: 0 | 1) => `<c:formatCode>${xml(format)}</c:formatCode><c:ptCount val="${n}"/>`
     + c.rows.map((r, i) => `<c:pt idx="${i}"><c:v>${Number((r.values[k] / scale).toFixed(10))}</c:v></c:pt>`).join('');
-  const cat = refs ? `<c:cat><c:strRef><c:f>${xml(refs.labels)}</c:f><c:strCache>${labels}</c:strCache></c:strRef></c:cat>`
-    : `<c:cat><c:strLit>${labels}</c:strLit></c:cat>`;
-  const val = (k: 0 | 1) => (refs ? `<c:val><c:numRef><c:f>${xml(k ? refs.b : refs.a)}</c:f><c:numCache>${values(k)}</c:numCache></c:numRef></c:val>`
-    : `<c:val><c:numLit>${values(k)}</c:numLit></c:val>`);
+  const cat = `<c:cat><c:strLit>${labels}</c:strLit></c:cat>`;
+  const val = (k: 0 | 1) => `<c:val><c:numLit>${values(k)}</c:numLit></c:val>`;
   const series = (k: 0 | 1) => `<c:ser><c:idx val="${k}"/><c:order val="${k}"/><c:tx><c:v>${xml(c.names[k])}</c:v></c:tx>${fill(k ? LIGHT : INK)}`
     + '<c:invertIfNegative val="0"/>'
     + (tight >= 0 ? `<c:dPt><c:idx val="${tight}"/><c:invertIfNegative val="0"/><c:bubble3D val="0"/>${fill(k ? AMBER_LIGHT : AMBER)}</c:dPt>` : '')

@@ -2,8 +2,8 @@
  * Reads a downloaded document back with readers written by others, so the tests check the files as a PDF reader, a
  * spreadsheet and a word processor read them, not as our own writers meant them: pdf.js (Firefox's PDF reader) for the
  * PDF's text, page by page; read-excel-file for the workbook's sheets and cells; mammoth for the Word file's paragraphs
- * and tables, and JSZip for its header and footer (mammoth reads only the body). Used by tests/dscr-document.test.ts and
- * the site check.
+ * and tables, and JSZip for its header and footer (mammoth reads only the body) and for any formula in a workbook. Used
+ * by the document tests and the site check.
  */
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import readExcelFile from 'read-excel-file/node';
@@ -63,4 +63,13 @@ export async function docxPart(bytes, name) {
 /** One part of a zipped file (an Excel or Word copy) as text, or undefined. */
 export async function zipPart(bytes, name) {
   return (await JSZip.loadAsync(Buffer.from(bytes))).file(name)?.async('string');
+}
+
+/** The parts of a zipped workbook that hold a formula: `<f>` in a cell, or `<c:f>` (a cell reference) in a chart (D-DOC-21). */
+export async function formulaParts(bytes) {
+  const zip = await JSZip.loadAsync(Buffer.from(bytes)), out = [];
+  for (const [name, file] of Object.entries(zip.files)) {
+    if (!file.dir && name.endsWith('.xml') && /<(?:c:)?f[ >]/.test(await file.async('string'))) out.push(name);
+  }
+  return out;
 }

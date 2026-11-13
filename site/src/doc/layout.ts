@@ -375,7 +375,7 @@ function table(L: Layout, t: Table) {
 
 /** The document laid out: its pages, and the page each part starts on. */
 export function lay(doc: Doc) {
-  const L = new Layout(), parts = doc.parts.filter((p) => !p.sheetOnly), sections = parts.filter((p) => p.section), starts = new Map<Part, number>();
+  const L = new Layout(), parts = doc.parts, sections = parts.filter((p) => p.section), starts = new Map<Part, number>();
   L.sectioned = sections.length > 0;
   parts.forEach((part, i) => {
     if (i && part.flow) { L.y -= 22; L.room(160); }

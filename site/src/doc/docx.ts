@@ -208,7 +208,7 @@ export function docxOf(doc: Doc, made: Date): Uint8Array<ArrayBuffer> {
   // A part that flows runs on under the one before it; a cover's page has no header or footer (`titlePg`).
   const entries = doc.parts.some((p) => p.section) ? sectionPages(doc) : [], covered = doc.parts.some((p) => p.blocks.some((b) => b.kind === 'cover'));
   const charts: Chart[] = [];
-  const body = doc.parts.filter((p) => !p.sheetOnly).map((part, i) => (i && part.flow ? spacer(360) : '')
+  const body = doc.parts.map((part, i) => (i && part.flow ? spacer(360) : '')
     + part.blocks.map((b, k) => block(b, i > 0 && k === 0 && !part.flow, entries, charts)).join('')).join('');
   const sect = `<w:sectPr><w:headerReference w:type="default" r:id="rId2"/>${covered ? '<w:headerReference w:type="first" r:id="rId4"/>' : ''}`
     + `<w:footerReference w:type="default" r:id="rId3"/>${covered ? '<w:footerReference w:type="first" r:id="rId5"/>' : ''}`

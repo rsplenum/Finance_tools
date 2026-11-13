@@ -5,37 +5,21 @@ import { questionsLeft } from '../verdict';
  * text shown and, for the Excel copy, the number the engine gave.
  */
 
-/** A figure as the engine gave it: an amount in rupees, a ratio, a count or a quantity (as typed), and the decimals shown. */
-export interface Figure {
-  /** `month`: a month as Excel's serial day number of its first day, shown as "Apr 2026". */
-  value: number; kind: 'amount' | 'ratio' | 'count' | 'quantity' | 'month'; decimals: number;
-  /** In the Excel copy: an input of the model, in blue on a pale yellow fill (the FAST Standard's mark), to be typed over. */
-  input?: boolean;
-  /** In the Excel copy: a zero shows as an empty cell (a count that is only there in some rows). */
-  hideZero?: boolean;
-  /**
-   * In the Excel copy only, a formula (without "=") that redoes the figure from other cells, `value` being what the engine
-   * gave: `{ref}` is this column's cell in the row named `ref` on the same sheet, `{Part!ref}` on another part's sheet,
-   * `{ref@3}` the cell in the table's column 3 (0 the labels), `{ref@$3}` the same cell fixed ($D$9, for a range or a
-   * constant), and `{ref@-1}` the cell one column to the left (the year before).
-   */
-  formula?: string;
-  /** A formula that gives words (the year of the lowest DSCR): the words, shown until Excel works it again. A formula
-   * whose `value` is not a number (NaN) gives an empty cell until then. */
-  result?: string;
-}
+/**
+ * A figure as the engine gave it: an amount in rupees, a ratio, a count or a quantity (as typed), and the decimals shown.
+ * The Excel copy holds `value` as a number, never a formula (D-DOC-21).
+ */
+export interface Figure { value: number; kind: 'amount' | 'ratio' | 'count' | 'quantity'; decimals: number }
 export interface Cell { text: string; figure?: Figure }
 /** `head` names a group of rows, on a shaded band; `total` rows are in bold under a rule, and a `ratio` row between two. */
 export type RowKind = 'head' | 'total' | 'ratio';
-/** `ref` names the row for a formula (Figure.formula). */
-export interface Row { cells: Cell[]; kind?: RowKind; ref?: string }
+export interface Row { cells: Cell[]; kind?: RowKind }
 /** `wrap`: a column of words, left-aligned and wrapped, taking this share of the width the other columns leave. */
 export interface Column { label: string; sub?: string; wrap?: number }
 /** The first column names each row, and is repeated when the other columns are split across pages. */
 /** `unit`: what its figures are in ("Amount in rupees"), said above the table at the right. */
 /** `freeze`: in the Excel copy, the headings and this many columns of names stay in view as the sheet scrolls. */
-/** `headRef`: names the headings' row for a formula, as `Row.ref` does (the years, for a chart's labels). */
-export interface Table { columns: Column[]; rows: Row[]; size?: 'small'; unit?: string; freeze?: number; headRef?: string }
+export interface Table { columns: Column[]; rows: Row[]; size?: 'small'; unit?: string; freeze?: number }
 
 /** A figure in a shaded strip: its name, the figure, the level the lender looks for (in bold) and a note under it. */
 export interface KeyFigure { label: string; value: string; level?: string; note?: string }
@@ -48,8 +32,6 @@ export interface Chart {
   title: string; unit: string; names: [string, string]; tightName: string;
   /** In the Word and Excel charts: the values divided by `scale` (100000 for lakh) and shown to `decimals`, as `texts` are. */
   scale?: number; decimals?: number;
-  /** In the Excel copy: the model's cells the chart reads, as formula references ({Statement!cashLakh@$2}:{Statement!cashLakh@$7}). */
-  sheet?: { labels: string; a: string; b: string };
   rows: { label: string; values: [number, number]; texts: [string, string]; tight?: boolean; note?: string }[];
 }
 
@@ -74,11 +56,9 @@ export type Block =
   | { kind: 'chart'; chart: Chart }
   | { kind: 'signature'; lines: string[] };
 
-/** A part is a sheet in the Excel copy, and starts a new page in the PDF and the Word copy; `sheetOnly` (a check sheet of formulas) is in the Excel copy alone. */
+/** A part is a sheet in the Excel copy, and starts a new page in the PDF and the Word copy: the three files read alike. */
 export interface Part {
-  name: string; blocks: Block[]; sheetOnly?: boolean;
-  /** In the PDF and the Word copy alone: the reading, whose figures the Excel copy's model sheets hold as formulas. */
-  paperOnly?: boolean;
+  name: string; blocks: Block[];
   /** Its line in the contents (like "1. The project at a glance"). */
   section?: string;
   /** Runs on under the part before it, in the PDF and the Word copy, rather than from a new page. */
@@ -107,7 +87,7 @@ export function docText(d: Doc): string {
   const cells = (r: Row) => r.cells.map((c) => c.text).join(' | ');
   for (const part of d.parts) for (const b of part.blocks) {
     if (b.kind === 'cover') out.push(b.kicker, b.title, b.sub ?? '', ...b.lines, ...b.facts.map(([k, v]) => `${k}: ${v}`), ...(b.mark ? [b.mark.title, b.mark.text] : []));
-    else if (b.kind === 'contents') out.push(b.title, ...d.parts.filter((x) => x.section && !x.sheetOnly).map((x) => x.section as string));
+    else if (b.kind === 'contents') out.push(b.title, ...d.parts.filter((x) => x.section).map((x) => x.section as string));
     else if (b.kind === 'title') out.push(b.text, b.sub ?? '');
     else if (b.kind === 'heading' || b.kind === 'text') out.push(b.text);
     else if (b.kind === 'list') out.push(...b.items);

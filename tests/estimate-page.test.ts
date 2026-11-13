@@ -11,7 +11,7 @@ import { xlsxOf } from '../site/src/doc/xlsx';
 import { docStatus, estimateDoc, fileName } from '../site/src/estimate/document';
 import { EMPTY, preview, withHead, type EstimateState, type ItemText } from '../site/src/estimate/model';
 import { SITE_NAME } from '../site/src/site';
-import { docxLines, pdfPages, workbook } from '../scripts/read-doc.mjs';
+import { docxLines, formulaParts, pdfPages, workbook } from '../scripts/read-doc.mjs';
 
 const TODAY = '2026-10-02', MADE = new Date('2026-10-02T10:00:00Z');
 const item = (head: string, description: string, quantity: string, unit: string, rate: string): ItemText => ({ head, description, quantity, unit, rate });
@@ -80,7 +80,8 @@ describe('the estimate to download', () => {
     const pages = await pdfPages(pdfOf(doc, MADE));
     expect(pages[0]).toContain('Total estimated cost 20,84,875');
     expect(pages[1]).toContain('Annex 1. Detailed estimate');
-    const book = await workbook(xlsxOf(doc, MADE));
+    const bytes = xlsxOf(doc, MADE), book = await workbook(bytes);
+    expect(await formulaParts(bytes)).toEqual([]); // the engine's figures as numbers, never a formula (D-DOC-21)
     expect(book.map((x) => x.sheet)).toEqual(['Estimate', 'Detailed estimate']);
     expect(book[0].data.find((r) => r[0] === 'Total estimated cost')?.filter((c) => c !== null)).toEqual(['Total estimated cost', 2084874.5]);
     expect(book[1].data.find((r) => r[0] === '1.1 Excavation for foundations')?.filter((c) => c !== null)).toEqual(['1.1 Excavation for foundations', 45, 'cum', 350, 15750]);

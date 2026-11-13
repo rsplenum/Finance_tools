@@ -84,7 +84,7 @@ export function pdfOf(doc: Doc, made: Date): Uint8Array<ArrayBuffer> {
   });
   // Bookmarks: the first page's part (unless it is a section itself), then each section, in order.
   const marks: { title: string; page: number; y: number }[] = [];
-  const first = doc.parts.find((p) => !p.sheetOnly), firstTop = first && L.tops.get(first);
+  const first = doc.parts[0], firstTop = first && L.tops.get(first);
   if (first && firstTop && !first.section && sections.length) marks.push({ title: first.name, ...firstTop });
   for (const x of sections) { const t = L.tops.get(x); if (t) marks.push({ title: x.section as string, ...t }); }
   const items = marks.map(() => take());
