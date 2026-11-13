@@ -47,10 +47,10 @@ describe('the project report page', () => {
     expect(p.needs[0]).toBe('Who the borrower is: it sets the tax');
     expect(p.needs).not.toContain('Days of stock, 0 to 365');
     expect(EMPTY.days).toEqual({ stock: '30', debtors: '30', creditors: '30' });
-    expect(DATA.assumptions.map((a) => a.id)).toEqual(['simpleCost', 'simpleFunds', 'simpleDrawn', 'simpleRepaid', 'simpleMoratorium', 'simpleFixedGrowth', 'simpleWcRate', 'days', 'wcUsed', 'drawings', 'tax', 'utilisation', 'price',
+    expect(DATA.assumptions.map((a) => a.id)).toEqual(['simpleCost', 'simpleFunds', 'simpleDrawn', 'simpleRepaid', 'simpleMoratorium', 'simpleFixedGrowth', 'simpleWcRate', 'holidayInterest', 'days', 'wcUsed', 'drawings', 'tax', 'utilisation', 'price',
       'guaranteeFee', 'guaranteeFirst', 'cgtmseOther', 'cgtmseRate', 'cgtmseWc', 'cgtmseHybrid', 'cgtmsePmegp']);
-    expect(assumptionsOf(EMPTY).length).toBe(6);
-    expect(assumptionsOf({ ...EMPTY, salesBy: 'typed' }).map((a) => a.id)).toEqual(['days', 'wcUsed', 'drawings', 'tax']);
+    expect(assumptionsOf(EMPTY).length).toBe(7);
+    expect(assumptionsOf({ ...EMPTY, salesBy: 'typed' }).map((a) => a.id)).toEqual(['holidayInterest', 'days', 'wcUsed', 'drawings', 'tax']);
   });
   it('case R as typed: the hand-worked first year in every table', () => {
     const p = preview(R);

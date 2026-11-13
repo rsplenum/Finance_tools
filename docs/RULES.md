@@ -153,6 +153,7 @@ Working capital: The second method of lending (Tandon Committee): the bank finan
 - **The holiday before the first instalment**: Until the month you start selling. The owner's rule (D-UX-112): no instalment before the first sales; a lender may give more.
 - **Fixed costs: growth a year**: 5% a year. On the careful side: costs rise each year while the price is held where it is.
 - **The working-capital limit's rate**: The term loan's rate. Banks often price the two alike; type the sanction's rate in expert mode.
+- **Interest in the holiday**: Paid each month: before the first sale by the promoters in a new unit, by the business's own earnings in an expansion. The usual (D-POL-13); a lender may add it to the loan instead.
 - **Stock, debtors and creditors**: 30 days each: stock and creditors of the year's materials and other variable costs, debtors of the year's sales. A common level for a small business; type the business's own.
 - **The working-capital limit**: Fully used from the first sales, and its interest paid, in every year. On the careful side: more interest, lower profit.
 - **Drawings and dividends**: None: the profits stay in the business. Type them in the figures if the owners take money out.

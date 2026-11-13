@@ -49,49 +49,60 @@ function steppedForm(t: LoanTerms, r: number) {
  * the balance after j instalments. */
 function closedForm(t: LoanTerms) {
   const r = t.ratePct / 1200, p = t.frequency === 'quarterly' ? 3 : 1, n = t.instalments, m = t.moratoriumMonths;
-  const stepped = t.style === 'stepped' ? steppedForm(t, r) : undefined;
-  const emi = stepped ? stepped.first : t.style !== 'emi' ? 0 : r === 0 ? t.amount / n : (t.amount * r) / (1 - Math.pow(1 + r, -n));
+  // The holiday's interest added (D-POL-13): the balance when it ends is the loan grown at the rate for its months, and
+  // the instalments are worked on that; paid, the loan itself.
+  const added = t.holidayInterest === 'added' && m > 0, A = added ? t.amount * Math.pow(1 + r, m) : t.amount;
+  const stepped = t.style === 'stepped' ? steppedForm({ ...t, amount: A }, r) : undefined;
+  const emi = stepped ? stepped.first : t.style !== 'emi' ? 0 : r === 0 ? A / n : (A * r) / (1 - Math.pow(1 + r, -n));
   const paidBefore = (k: number) => Math.min(n, Math.max(0, Math.floor((k - m) / p)));
   const balance = (j: number): number => {
     if (j >= n) return 0;
     if (stepped) return stepped.balance(j);
-    if (t.style === 'equal-principal') return (t.amount * (n - j)) / n;
-    if (r === 0) return t.amount - emi * j;
+    if (t.style === 'equal-principal') return (A * (n - j)) / n;
+    if (r === 0) return A - emi * j;
     const g = Math.pow(1 + r, j);
-    return t.amount * g - (emi * (g - 1)) / r;
+    return A * g - (emi * (g - 1)) / r;
   };
-  return { r, n, months: m + n * p, emi, paidBefore, balance };
+  /** The balance as month k starts: in an added holiday the loan grown for k months, else after the instalments paid. */
+  const at = (k: number) => (added && k < m ? t.amount * Math.pow(1 + r, k) : balance(paidBefore(k)));
+  /** The interest of month k added to the balance, not paid. */
+  const addedIn = (k: number) => (added && k < m ? r * at(k) : 0);
+  return { r, n, months: m + n * p, emi, A, paidBefore, balance, at, addedIn };
 }
 
-/** The level instalment in closed form: the EMI, a stepped loan's first instalment, or the loan ÷ the number of instalments. */
-export const levelCheck = (t: LoanTerms) => (t.style === 'equal-principal' ? t.amount / t.instalments : closedForm(t).emi);
+/** The level instalment in closed form: the EMI, a stepped loan's first instalment, or the balance after the holiday ÷
+ * the number of instalments. */
+export const levelCheck = (t: LoanTerms) => { const c = closedForm(t); return t.style === 'equal-principal' ? c.A / t.instalments : c.emi; };
 
-export interface MonthCheck { month: string; opening: number; interest: number; principal: number; paid: number; closing: number }
+export interface MonthCheck { month: string; opening: number; interest: number; principal: number; paid: number; closing: number; added: number }
 
 /** Every month from the closed-form balances, the month named by Date arithmetic. */
 export function monthsCheck(t: LoanTerms): MonthCheck[] {
-  const { r, months, paidBefore, balance } = closedForm(t), [y, m] = t.disbursed.split('-').map(Number);
+  const { r, months, at, addedIn } = closedForm(t), [y, m] = t.disbursed.split('-').map(Number);
   return Array.from({ length: months }, (_, k) => {
-    const opening = balance(paidBefore(k)), closing = balance(paidBefore(k + 1));
-    // Paid in the month: the fall in the balance plus the month's interest.
-    return { month: new Date(Date.UTC(y, m - 1 + k, 1)).toISOString().slice(0, 7), opening, interest: r * opening, principal: opening - closing, paid: opening - closing + r * opening, closing };
+    const opening = at(k), closing = at(k + 1), added = addedIn(k);
+    // Paid in the month: the fall in the balance plus the month's interest, less any of it added to the balance.
+    return { month: new Date(Date.UTC(y, m - 1 + k, 1)).toISOString().slice(0, 7), opening, interest: r * opening, principal: opening - closing + added, paid: opening - closing + r * opening, closing, added };
   });
 }
 
 export function scheduleCheck(t: LoanTerms): YearDebt[] {
-  const { r, months, paidBefore, balance } = closedForm(t);
+  const { r, months, at, addedIn } = closedForm(t);
   const out: YearDebt[] = [];
-  let opening = t.amount;
+  let opening = t.amount, added = 0;
   for (let k = 0; k < months; k++) {
     const fy = fyLabel(t.disbursed, k);
     let row = out[out.length - 1];
     if (!row || row.fy !== fy) {
-      opening = balance(paidBefore(k));
+      opening = at(k); added = 0;
       out.push(row = { fy, interest: 0, principal: 0, closing: opening });
     }
-    row.interest += r * balance(paidBefore(k));
-    row.closing = balance(paidBefore(k + 1));
-    row.principal = opening - row.closing;
+    row.interest += r * at(k);
+    added += addedIn(k);
+    row.closing = at(k + 1);
+    // Principal repaid in the year: the fall in the balance, with the interest added to it put back.
+    row.principal = opening - row.closing + added;
+    if (added > 0) row.added = added;
   }
   return out;
 }
@@ -133,6 +144,8 @@ export function planCheck(proj: ProjectionYear[], loan: LoanTerms, def: Definiti
   return summarise(proj.map((y) => {
     const p = y as Required<ProjectionYear>, d = debt.get(y.fy);
     const tl = p.otherLoansInterest + (d?.interest ?? 0) - (y.interestFromCost === undefined ? 0 : y.interestFromCost), principal = (d?.principal ?? 0) + p.otherLoansPrincipal;
+    // The interest charged in the year but added to the loan: never paid, so never cash out nor debt service.
+    const paidTl = tl - ((d?.added ?? 0) - (y.addedFromCost === undefined ? 0 : y.addedFromCost));
     const earned = p.pbdit + p.assetIncome;
     const profitBeforeTax = earned - p.depreciation - p.nonCash - tl - p.interestOther;
     const schedule = TAX.borrowers.find((b) => b.id === y.taxBy) as Borrower | undefined;
@@ -140,9 +153,9 @@ export function planCheck(proj: ProjectionYear[], loan: LoanTerms, def: Definiti
     const lease = def.leases === 'yes' ? y.leaseRentals ?? 0 : 0;
     const available = earned - tax
       - (def.interest === 'all-borrowings' ? 0 : p.interestOther)
-      - (def.interest === 'none' ? tl : 0)
+      - (def.interest === 'none' ? paidTl : 0)
       + lease;
-    const interest = def.interest === 'none' ? 0 : def.interest === 'term-loans' ? tl : tl + p.interestOther;
+    const interest = def.interest === 'none' ? 0 : def.interest === 'term-loans' ? paidTl : paidTl + p.interestOther;
     return { ...row(y.fy, available, principal + interest + lease + p.existingEmis, principal + p.existingEmis, def), pbt: profitBeforeTax, tax };
   }), def);
 }

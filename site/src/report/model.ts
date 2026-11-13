@@ -13,7 +13,7 @@ import { AS_TYPED, LEVER_IDS, makePlan, withLevers, type LeverId, type Levers } 
 import { makeWork, plantMachinery, type Cause, type Change, type Way as WorkWay, type WayId } from '../../../engine/work';
 import { SOLVE, solve, type PlanId, type Solution } from '../../../engine/solve';
 import { compareRepayments, periodOf, type Way } from '../../../engine/repayment';
-import { STEPPED } from '../../../engine/loan';
+import { STEPPED, type HolidayInterest } from '../../../engine/loan';
 import { BORROWERS } from '../../../engine/tax';
 import { inr } from '../../../engine/util';
 import { soldBy } from '../../../engine/sold-by';
@@ -38,7 +38,7 @@ export interface ReportFacts { name: string; activity: string; address: string; 
 export interface ReportState {
   borrower?: string;
   cost: Record<HeadId, string>;
-  loan: { amount: string; ratePct: string; disbursed: string; moratoriumMonths: string; instalments: string; repayment?: Repayment };
+  loan: { amount: string; ratePct: string; disbursed: string; moratoriumMonths: string; instalments: string; repayment?: Repayment; holidayInterest?: HolidayInterest };
   subsidy: string; unsecured: string;
   /** The collateral's market value (D-UX-52), when property backs the loan. */
   collateral: string;
@@ -102,6 +102,8 @@ export const REPAYMENT_CHOICES: { value: Repayment; label: string }[] = [
   { value: 'emi', label: 'EMI every month' }, { value: 'monthly', label: 'Equal principal every month' },
   { value: 'stepped', label: 'Stepped: less at first, rising each year' }, { value: 'quarterly', label: 'Equal principal every quarter' },
 ];
+/** The holiday's interest (D-POL-13, IDC1): paid as it falls due, the stated assumption, or added to the loan. */
+export const HOLIDAY_INTEREST_CHOICES: { value: HolidayInterest; label: string }[] = [{ value: 'paid', label: 'Paid each month' }, { value: 'added', label: 'Added to the loan' }];
 export const SCHEME_CHOICES: { value: Scheme; label: string }[] = [{ value: '', label: 'None' }, { value: 'pmegp', label: 'PMEGP' }, { value: 'mudra', label: 'Mudra' }];
 export const CGTMSE = GUARANTEES.cgtmse, CGFMU = GUARANTEES.cgfmu;
 /** On Mudra, its level by the term loan and the limit typed; until both are typed, what it waits for. */
@@ -149,7 +151,7 @@ export function assumptionsOf(s: ReportState) {
   const g = guaranteeOf(s), own = !s.feeRate.trim(), limit = (limitOf(s) ?? 0) > 0;
   const shows: Record<string, boolean> = {
     simpleCost: HEADS.every((h) => SIMPLE_COST.includes(h.id) || !s.cost[h.id].trim()), simpleFunds: !s.unsecured.trim() && (s.scheme === 'pmegp' || !s.subsidy.trim()),
-    simpleDrawn: !s.loan.disbursed.trim(), simpleRepaid: !s.loan.repayment, simpleMoratorium: !s.loan.moratoriumMonths.trim(),
+    simpleDrawn: !s.loan.disbursed.trim(), simpleRepaid: !s.loan.repayment, simpleMoratorium: !s.loan.moratoriumMonths.trim(), holidayInterest: !s.loan.holidayInterest,
     simpleFixedGrowth: !s.fixedGrowth.trim(), simpleWcRate: !s.wcRate.trim() && limit,
     guaranteeFee: !!g && own, guaranteeFirst: !!g, cgtmseOther: g === 'cgtmse' && own, cgtmseRate: g === 'cgtmse' && own,
     cgtmseWc: g === 'cgtmse' && limit, cgtmsePmegp: g === 'cgtmse' && s.scheme === 'pmegp', cgtmseHybrid: g === 'cgtmse' && !!collateralText(s).trim(),
@@ -320,6 +322,7 @@ function fieldsOf(s: ReportState): ReportInput {
     loan: {
       amount: amountOf(s.loan.amount), ratePct: plainOf(s.loan.ratePct), disbursed: parseMonth(s.loan.disbursed), moratoriumMonths: plainOf(s.loan.moratoriumMonths),
       instalments: plainOf(s.loan.instalments), ...(r ? { frequency: r === 'quarterly' ? 'quarterly' : 'monthly', style: r === 'emi' || r === 'stepped' ? r : 'equal-principal' } : {}),
+      ...(s.loan.holidayInterest ? { holidayInterest: s.loan.holidayInterest } : {}),
     },
     subsidy: s.scheme === 'pmegp' ? undefined : opt(s.subsidy), unsecured: opt(s.unsecured), cashAtStart: opt(s.cashAtStart ?? ''),
     ...(s.salesBy === 'expansion' ? { existingEmis: opt(s.existingEmis ?? '') } : {}), collateral: opt(collateralText(s)),
@@ -388,6 +391,10 @@ export function viewOf(r: Report): ReportView {
         : f.subsidy ? [{ label: 'Capital subsidy', values: [rupees(f.subsidy)], n: [f.subsidy] }] : []),
       ...(f.unsecured ? [{ label: 'Unsecured loans', values: [rupees(f.unsecured)], n: [f.unsecured] }] : []),
       { label: sc ? `Term loan: ₹${rupees(sc.sanctioned)} applied for, less the margin money` : r.mudra ? `Term loan under Mudra (${r.mudra.level.label}), with no collateral` : 'Term loan', values: [rupees(f.termLoan)], n: [f.termLoan] },
+      // Who pays the interest before the first sale (the cost's line, D-POL-13): the loan when it is added, an
+      // expansion's own earnings when paid; a new unit's promoters pay it within their contribution.
+      ...(f.interestAdded > 0.005 ? [{ label: 'Interest before the first sale, added to the term loan', values: [rupees(f.interestAdded)], n: [f.interestAdded] }] : []),
+      ...(f.earnings > 0.005 ? [{ label: 'Interest before the first sale, paid from the business’s own earnings', values: [rupees(f.earnings)], n: [f.earnings] }] : []),
       { label: 'Total means of finance', values: [rupees(f.total)], n: [f.total], kind: 'total' },
       ...(f.kept ? [{ label: 'Besides, the promoters’ money kept in the business as cash at the start', values: [rupees(f.kept)], n: [f.kept] }] : []),
     ],
@@ -522,6 +529,8 @@ export interface ReportPreview {
   hybrid?: string;
   /** Which benchmarks are the user's, and a looser one's warning (BEN1). */
   benchmarks?: string;
+  /** A new unit paying the interest before its first sale: the amount to keep ready (D-POL-13). */
+  ready?: string;
 }
 
 
@@ -541,7 +550,8 @@ export function preview(s: ReportState): ReportPreview {
     ? `Security cover: the project’s own assets reach ${sc.level.toFixed(2)} without collateral.`
     : `Security cover: collateral with a market value of ₹${rupees(need)} or more brings it to ${sc.level.toFixed(2)}.`;
   return {
-    needs: open, view: viewOf(r), flags: r.scheme?.flags ?? [], checks,
+    needs: open, view: viewOf(r), flags: [...r.scheme?.flags ?? [], ...(r.idc.short ? [`The business pays ₹${rupees(r.idc.business)} of interest before the new line’s first sale from its own earnings, but has ₹${rupees(Math.max(0, r.idc.short.spare))} to spare in ${r.idc.short.fy} after its loans.`] : [])], checks,
+    ...(r.idc.promoters > 0.005 ? { ready: `Keep ₹${rupees(r.idc.promoters)} ready for interest before your first sale: it is part of your share of the cost.` } : {}),
     ...(d.misses.length ? { misses: `${verdictWords('benchmark', d.checks.length, d.misses.length, d.checks.filter((k) => k.meets === undefined).length)}: ${listed(d.misses.map(labelOf))}.` } : {}),
     ...(collateralNote ? { collateralNote } : {}), ...(own ? { benchmarks: own } : {}), ...(hybridLine(r) ? { hybrid: hybridLine(r) } : {}),
     ...(c ? { runsOut: c.first, short: `${runsOut(c, rupees)} The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.` } : {}),
@@ -1073,6 +1083,8 @@ export interface CarryCloser { id: CloserId; text: string; reach: string; closes
 export interface CarryView {
   line: string; bar: string; how: string; gap: boolean; share: number; asked: number;
   closers: CarryCloser[]; after?: string; keepReady?: string;
+  /** The holiday's interest added to the loan, when cash runs short and the promoters pay it (D-POL-13): in words. */
+  addInterest?: { text: string; reach: string };
 }
 const CLOSER_LABEL: Record<CloserId, string> = {
   term: 'Instalments', holiday: 'Holiday before the first instalment', use: 'Use of the capacity by year', price: 'Price', own: 'Your own money in the project',
@@ -1139,7 +1151,9 @@ export function carryView(s: ReportState): CarryView | undefined {
     const top = Math.max(c.asked, c.carries);
     return { line, bar, how, gap: c.gap > 0, share: top > 0 ? (100 * c.carries) / top : 0, asked: top > 0 ? (100 * c.asked) / top : 0, closers,
       ...(after ? { after } : {}),
-      ...(c.keepReady !== undefined ? { keepReady: `Cash runs short before the sales come in, whatever the loan: keep ₹${upRupees(c.keepReady)} more of your own ready.` } : {}) };
+      ...(c.keepReady !== undefined ? { keepReady: `Cash runs short before the sales come in, whatever the loan: keep ₹${upRupees(c.keepReady)} more of your own ready.` } : {}),
+      ...(c.addInterest ? { addInterest: { text: `Add the holiday’s interest to the loan: ${rs(c.addInterest.less)} less of your own money in all`,
+        reach: `${c.addInterest.keepReady === undefined ? 'Cash stays at nil or above' : `Still ₹${upRupees(c.addInterest.keepReady)} short`}; the business then carries ${rs(c.addInterest.carries)}` } } : {}) };
   };
   carried = { on, v: view() };
   return carried.v;

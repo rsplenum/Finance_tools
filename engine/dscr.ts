@@ -32,6 +32,9 @@ export interface ProjectionYear {
   /** The part of this year's interest on the new loan that is paid from the project's cost: the months before the first
    * sales (the project report). It is left out of the year's profit and of its debt service. */
   interestFromCost?: number;
+  /** Of `interestFromCost`, the part added to the loan in the holiday (D-POL-13): the rest of the year's added interest
+   * is a cost of the year that is not paid, a non-cash charge. */
+  addedFromCost?: number;
   /** EMIs paid in the year on loans already running, interest and principal together. */
   existingEmis?: number;
   /** A tax rate, or instead who the borrower is (`taxBy`, an id in engine/data/tax.json), which sets the tax. */
@@ -73,7 +76,7 @@ export const BENCHMARKS = DATA.benchmarks;
 export const OPTIONS = DATA.options;
 export const COMPONENTS = DATA.components;
 
-export const PROJECTION_LABELS: Record<Exclude<keyof ProjectionYear, 'fy' | 'taxBy' | 'interestFromCost'>, string> = {
+export const PROJECTION_LABELS: Record<Exclude<keyof ProjectionYear, 'fy' | 'taxBy' | 'interestFromCost' | 'addedFromCost'>, string> = {
   pbdit: 'Profit before interest, depreciation and tax',
   assetIncome: 'Extra income from the new asset',
   depreciation: 'Depreciation',
@@ -87,7 +90,9 @@ export const PROJECTION_LABELS: Record<Exclude<keyof ProjectionYear, 'fy' | 'tax
 };
 /** Debt service that planning adds to the method's: existing EMIs, in full under every method (docs/RULES.md). */
 export const PLAN_SERVICE: Component[] = ['existingEmis'];
-export const LOAN_LABELS: Record<keyof LoanTerms, string> = {
+export const HOLIDAY_INTEREST_LABEL = 'Interest in the holiday (paid each month, or added to the loan)';
+/** The loan's facts that must be typed; the holiday's interest is optional (absent: paid, the stated assumption). */
+export const LOAN_LABELS: Record<Exclude<keyof LoanTerms, 'holidayInterest'>, string> = {
   amount: 'Loan amount',
   ratePct: 'Interest rate (% a year)',
   disbursed: 'Month the loan is drawn (like 2026-04)',
@@ -178,6 +183,7 @@ function loanNeeds(l: LoanInput): string[] {
   if (l.style !== 'equal-principal' && l.style !== 'emi' && l.style !== 'stepped') needs.push(L.style);
   else if (l.style === 'emi' && l.frequency === 'quarterly') needs.push('Monthly instalments for an EMI (it is worked monthly only), or equal instalments of principal');
   else if (l.style === 'stepped' && l.frequency === 'quarterly') needs.push('Monthly instalments for a stepped repayment (it is worked monthly only), or equal instalments of principal');
+  if (l.holidayInterest !== undefined && l.holidayInterest !== 'paid' && l.holidayInterest !== 'added') needs.push(HOLIDAY_INTEREST_LABEL);
   return needs;
 }
 
@@ -271,7 +277,7 @@ export function dscrStatement(years: YearFigures[], def: Definition, data: Data 
 function scheduleDisagrees(debt: YearDebt[], check: YearDebt[]): string {
   for (let i = 0; i < Math.max(debt.length, check.length); i++) {
     const a = debt[i], b = check[i];
-    if (!a || !b || a.fy !== b.fy || !money(a.interest, b.interest) || !money(a.principal, b.principal) || !money(a.closing, b.closing))
+    if (!a || !b || a.fy !== b.fy || !money(a.interest, b.interest) || !money(a.principal, b.principal) || !money(a.closing, b.closing) || !money(a.added ?? 0, b.added ?? 0))
       return `the loan schedule${a ? ` in ${a.fy}` : ''}`;
   }
   return '';
@@ -299,12 +305,15 @@ function plan(all: ProjectionYear[], loan: LoanTerms, def: Definition, start?: s
   const years: YearFigures[] = proj.map((y) => {
     const p = y as Required<ProjectionYear>, d = byFy.get(y.fy);
     const interestTL = (d?.interest ?? 0) - (y.interestFromCost ?? 0) + p.otherLoansInterest, principalTL = (d?.principal ?? 0) + p.otherLoansPrincipal;
+    // The holiday's interest added to the loan in the year, not paid (D-POL-13): a cost in the profit, a non-cash charge
+    // in the cash available, and no debt service.
+    const added = (d?.added ?? 0) - (y.addedFromCost ?? 0);
     // Existing EMIs are not split into interest and principal, so none of their interest is set against tax (errs low).
     const pbt = p.pbdit + p.assetIncome - p.depreciation - p.nonCash - interestTL - p.interestOther;
     const by = borrowerOf(y.taxBy), tax = by ? taxOn(pbt, by) : pbt > 0 ? pbt * p.taxPct / 100 : 0, pat = pbt - tax;
     profit.push({ fy: y.fy, pbdit: p.pbdit, assetIncome: p.assetIncome, depreciation: p.depreciation, nonCash: p.nonCash, interestTL, interestOther: p.interestOther, pbt, tax, pat });
     return {
-      fy: y.fy, pat, depreciation: p.depreciation, nonCash: p.nonCash, interestTL, principalTL, interestOther: p.interestOther, existingEmis: p.existingEmis,
+      fy: y.fy, pat, depreciation: p.depreciation, nonCash: p.nonCash + added, interestTL: interestTL - added, principalTL, interestOther: p.interestOther, existingEmis: p.existingEmis,
       ...(isNum(y.leaseRentals) ? { leaseRentals: y.leaseRentals } : {}),
     };
   });
@@ -351,7 +360,7 @@ export function amortization(loan: LoanInput): Amortization | Needs | Blocked {
   const t = loan as LoanTerms, rows = months(t), check = monthsCheck(t);
   for (let i = 0; i < Math.max(rows.length, check.length); i++) {
     const a = rows[i], b = check[i];
-    if (!a || !b || a.month !== b.month || (['opening', 'interest', 'principal', 'paid', 'closing'] as const).some((k) => !money(a[k], b[k])))
+    if (!a || !b || a.month !== b.month || (['opening', 'interest', 'principal', 'paid', 'closing'] as const).some((k) => !money(a[k], b[k])) || !money(a.added ?? 0, b.added))
       return blocked(`the repayment schedule${a ? ` in ${a.month}` : ''}`);
   }
   const years = schedule(t), off = scheduleDisagrees(years, scheduleCheck(t));

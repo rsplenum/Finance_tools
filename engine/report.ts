@@ -7,7 +7,7 @@
  */
 import DATA from './data/report.json';
 import { PRESETS, amortization, isFy, loanTimeline, planStatement, type Blocked, type Definition, type LoanInput, type Needs, type Plan, type ProjectionYear } from './dscr';
-import { fyOf, monthAfter, type LoanTerms } from './loan';
+import { fyOf, monthAfter, type HolidayInterest, type LoanTerms } from './loan';
 import { monthsOf, series } from './project';
 import { GUARANTEES, cgtmseRate, guaranteeFee, type FeeYear, type GuaranteeId } from './guarantee';
 import { guaranteeFeeCheck, pmegpCheck, reportCheck, workedLimitCheck } from './report-check';
@@ -143,7 +143,14 @@ export interface Report {
    * keeps every year at nil or above (OR11a2, D-UX-247). */
   cashShort?: { first: string; fy: string; lowest: number; need: number };
   cost: CostLine[]; fixedAssets: number; marginMoney: number; projectCost: number;
-  finance: { termLoan: number; subsidy: number; unsecured: number; promoter: number; total: number; promoterPct: number; kept: number };
+  /** The means of finance: the term loan as drawn; `interestAdded`, the interest before the first sale added to it;
+   * `earnings`, the part of that interest an expansion pays from the business's own earnings; the promoters the rest. */
+  finance: { termLoan: number; interestAdded: number; earnings: number; subsidy: number; unsecured: number; promoter: number; total: number; promoterPct: number; kept: number };
+  /** The interest on the term loan before the first sale (the cost's `idc` line, D-POL-13, IDC1) by who pays it: added to
+   * the loan, the promoters (a new unit), the business's own earnings (an expansion). `later`: the holiday's interest
+   * after the first sale added to the loan, a cost of its year never paid in cash. `short`: an expansion whose spare cash
+   * in its first year in the report, after its loans, is less than its part. */
+  idc: { way: HolidayInterest; total: number; loan: number; promoters: number; business: number; later: number; short?: { fy: string; spare: number } };
   /** The collateral's market value, realisable sale value and distress sale value (engine/data/ratios.json). */
   collateral?: { market: number; rsv: number; dsv: number };
   wcLimit: number; years: ReportYear[]; average?: number; lowest?: { dscr: number; fy: string }; plan: Plan;
@@ -364,6 +371,11 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   if (!('years' in debt)) return debt;
   const interestBeforeStart = debt.months.reduce((t, m) => t + (m.month < start ? m.interest : 0), 0);
   const early = debt.months.reduce((t, m) => t + (m.month < start && m.fy === first ? m.interest : 0), 0);
+  // The holiday's interest added to the loan (D-POL-13): before the first sale it funds that part of the cost; after it,
+  // a cost of its year that is never paid in cash (`later`).
+  const interestAdded = debt.months.reduce((t, m) => t + (m.month < start ? m.added ?? 0 : 0), 0);
+  const earlyAdded = debt.months.reduce((t, m) => t + (m.month < start && m.fy === first ? m.added ?? 0 : 0), 0);
+  const later = debt.months.reduce((t, m) => t + (m.month >= start ? m.added ?? 0 : 0), 0);
   // A first year of sales shorter than 180 days takes half the year's depreciation (report.json, depreciationSource).
   const [sy, sm] = start.split('-').map(Number), marchEnd = Date.UTC(sm >= 4 ? sy + 1 : sy, 3, 1), DAY = 86400000;
   const daysOfSales = Math.round((marchEnd - Date.UTC(sy, sm - 1, 1)) / DAY), FIRST = DATA.firstYearDepreciation;
@@ -408,22 +420,30 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     otherLoansInterest: 0, otherLoansPrincipal: 0, existingEmis: expansion ? x.existingEmis ?? 0 : 0, taxBy: x.taxBy,
   }));
   if (early > 0) proj[0].interestFromCost = early;
+  if (earlyAdded > 0) proj[0].addedFromCost = earlyAdded;
   const plan = planStatement(proj, loan, DSCR_METHOD, first > when.years[0] ? first : undefined);
   if (!('statement' in plan)) return plan;
   // Worked a second way: the whole years before from the statement's own schedule, the months of the first year from the
   // loan in closed form (dscr-check.ts).
   const earlyCheck = monthsCheck(loan as LoanTerms).reduce((t, m) => t + (m.month < start && m.month >= `${first.slice(0, 4)}-04` ? m.interest : 0), 0);
   if (!money(plan.beforeStart.reduce((t, d) => t + d.interest, 0) + earlyCheck, interestBeforeStart)) return blocked('the interest before the first sales');
+  const sum = (f: (m: { month: string; added: number }) => boolean) => monthsCheck(loan as LoanTerms).reduce((t, m) => t + (f(m) ? m.added : 0), 0);
+  if (!money(sum((m) => m.month < start), interestAdded) || !money(sum((m) => m.month >= start), later)) return blocked('the interest added to the loan');
 
   const projectCost = fixedAssets + prelimAll + marginMoney;
-  const subsidy = scheme ? scheme.subsidy : x.subsidy ?? 0, unsecured = x.unsecured ?? 0, termLoan = loan.amount as number, promoter = projectCost - termLoan - subsidy - unsecured;
-  if (promoter < 0) return { needs: ['The term loan, subsidy and unsecured loans come to more than the cost of the project'] };
-  // The capital: the promoters' share of the project and the money they keep in the business as cash (OR11d).
-  const kept = x.cashAtStart ?? 0, capital = promoter + kept;
+  // Who pays the interest before the first sale that is not added to the loan: a new unit's promoters, from their own
+  // money, since nothing is sold yet; an expansion's business, from what it already earns (D-POL-13).
+  const earnings = expansion ? interestBeforeStart - interestAdded : 0;
+  const subsidy = scheme ? scheme.subsidy : x.subsidy ?? 0, unsecured = x.unsecured ?? 0, termLoan = loan.amount as number;
+  const promoter = projectCost - termLoan - interestAdded - earnings - subsidy - unsecured;
+  if (promoter < -0.005) return { needs: ['The term loan, subsidy and unsecured loans come to more than the cost of the project'] };
+  // The capital: the promoters' share of the project, an expansion's own earnings put into it, and the money the promoters
+  // keep in the business as cash (OR11d).
+  const kept = x.cashAtStart ?? 0, capital = promoter + earnings + kept;
   if (scheme) {
     // The promoters' own share of PMEGP's project cost: what they bring, less the land and the interest before the first
     // sales, which that cost leaves out.
-    const own = promoter - cost.land - interestBeforeStart - feeBeforeStart, sc = scheme;
+    const own = promoter - cost.land - (interestBeforeStart - interestAdded - earnings) - feeBeforeStart, sc = scheme;
     sc.ownPct = sc.cost > 0 ? (own / sc.cost) * 100 : 0;
     sc.flags.push(PMEGP.notice);
     if (!(x.scheme as PmegpInput).confirmed) sc.flags.push('PMEGP\'s conditions are not yet confirmed: the scheme finances the project only if each holds.');
@@ -435,6 +455,8 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
   const collateral = isNum(x.collateral) ? { market: x.collateral, rsv: (x.collateral * RATIOS.collateral.rsvPct) / 100, dsv: (x.collateral * RATIOS.collateral.dsvPct) / 100 } : undefined;
   const out: ReportYear[] = [];
   let cash = 0, retained = 0, accumulated = 0, written = 0, prev = { stock: 0, debtors: 0, creditors: 0 };
+  // The term loan's growth in a year by the interest added to it: in the first, all added up to its end.
+  const grew = (k: number) => debt.years.reduce((t, d) => t + ((k ? d.fy === fys[k] : d.fy <= first) ? d.added ?? 0 : 0), 0);
   let byProductOk = true, headsOk = true;
   rows.forEach((r, k) => {
     const p = plan.profit[k], d = plan.schedule.find((s) => s.fy === r.fy), st = plan.statement.rows[k], lv = level(k);
@@ -452,7 +474,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     const principal = d?.principal ?? 0, tlLeft = d?.closing ?? 0;
     retained += p.pat; accumulated += r.depreciation; written += r.preliminary;
     const flow: Flow = {
-      capital: k ? 0 : capital, subsidy: k ? 0 : subsidy, unsecured: k ? 0 : unsecured, termLoan: k ? 0 : termLoan,
+      capital: k ? 0 : capital, subsidy: k ? 0 : subsidy, unsecured: k ? 0 : unsecured, termLoan: (k ? 0 : termLoan) + grew(k),
       pat: p.pat, depreciation: r.depreciation, preliminary: r.preliminary, wcLoan: k ? 0 : limit, creditors: lv.creditors - prev.creditors, sources: 0,
       fixedAssets: k ? 0 : fixedAssets, preliminarySpent: k ? 0 : prelimAll, stock: lv.stock - prev.stock, debtors: lv.debtors - prev.debtors, repaid: principal, uses: 0,
       net: 0, opening: cash, closing: 0,
@@ -504,6 +526,12 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
       ?? ((y.bepSales === undefined) !== (c.bepSales === undefined) || (y.bepSales !== undefined && !money(y.bepSales, c.bepSales as number)) ? 'bepSales' : undefined);
     if (off) return blocked(`${off} in ${y.fy}`);
   }
+  // Who pays the interest before the first sale; an expansion paying it from its earnings is flagged when its first
+  // year's cash after its loans (the DSCR's available less its service) is less than its part.
+  const st0 = plan.statement.rows[0], spare = st0 ? st0.available - st0.service : 0;
+  const idc: Report['idc'] = { way: loan.holidayInterest === 'added' ? 'added' : 'paid', total: interestBeforeStart, loan: interestAdded,
+    promoters: interestBeforeStart - interestAdded - earnings, business: earnings, later,
+    ...(earnings > 0.005 && spare < earnings - 0.005 ? { short: { fy: fys[0], spare } } : {}) };
   // Cash below nil: the promoters' money more, brought in at the start, that keeps every year's cash at nil or above. It
   // lifts each year's cash by the same amount and changes no profit, so it is the lowest cash turned positive.
   const low = out.reduce((m, y) => (y.cash < m.cash ? y : m)), lowCheck = Math.min(...check.map((c) => c.cash));
@@ -517,7 +545,8 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
       ...(feeBeforeStart > 0 ? [{ id: 'fee' as const, label: 'Guarantee fee before sales start', amount: feeBeforeStart }] : []),
       ...(marginMoney > 0 ? [{ id: 'margin' as const, label: 'Margin for working capital', amount: marginMoney }] : [])],
     fixedAssets, marginMoney, projectCost, ...(collateral ? { collateral } : {}),
-    finance: { termLoan, subsidy, unsecured, promoter, total: termLoan + subsidy + unsecured + promoter, promoterPct: (promoter / projectCost) * 100, kept },
+    finance: { termLoan, interestAdded, earnings, subsidy, unsecured, promoter, total: termLoan + interestAdded + earnings + subsidy + unsecured + promoter, promoterPct: (promoter / projectCost) * 100, kept },
+    idc,
     wcLimit: limit, years: out, ...(plan.statement.average !== undefined ? { average: plan.statement.average } : {}),
     ...(plan.statement.minimum ? { lowest: plan.statement.minimum } : {}), plan,
     loanInterest: debt.totalInterest, firstInstalment: debt.months.find((m) => m.instalment === 1)?.paid ?? 0,

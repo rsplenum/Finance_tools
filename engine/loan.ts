@@ -17,13 +17,19 @@ export interface LoanTerms {
   instalments: number;
   frequency: Frequency;
   style: RepaymentStyle;
+  /** The interest in the holiday (D-POL-13, IDC1): paid as it falls due (absent: the stated assumption), or added to the
+   * loan at each month's end, the instalments then worked on the larger balance. */
+  holidayInterest?: HolidayInterest;
 }
+export type HolidayInterest = 'paid' | 'added';
 
-/** One financial year of the schedule: interest and principal paid in it, balance at its end. */
-export interface YearDebt { fy: string; interest: number; principal: number; closing: number }
+/** One financial year of the schedule: interest charged and principal paid in it, balance at its end; `added`, the part
+ * of the interest added to the loan and not paid (a holiday's, when added). */
+export interface YearDebt { fy: string; interest: number; principal: number; closing: number; added?: number }
 
-/** One month of the loan ('YYYY-MM'): balance at its start, interest charged and paid, principal repaid, all paid, balance at its end. */
-export interface MonthRow { month: string; fy: string; opening: number; interest: number; principal: number; paid: number; closing: number; instalment?: number }
+/** One month of the loan ('YYYY-MM'): balance at its start, interest charged, principal repaid, all paid, balance at its
+ * end; `added`, the interest added to the balance in place of paying it (a holiday month, when added). */
+export interface MonthRow { month: string; fy: string; opening: number; interest: number; principal: number; paid: number; closing: number; instalment?: number; added?: number }
 
 export const PERIOD_MONTHS: Record<Frequency, number> = { monthly: 1, quarterly: 3 };
 
@@ -93,10 +99,24 @@ export function stepOf(t: Pick<LoanTerms, 'ratePct' | 'instalments'>): number {
 export const termMonths = (t: Pick<LoanTerms, 'moratoriumMonths' | 'instalments' | 'frequency'>) =>
   t.moratoriumMonths + t.instalments * PERIOD_MONTHS[t.frequency];
 
-/** The level instalment: the EMI, the principal of each equal instalment, or a stepped loan's first instalment. */
-export const levelInstalment = (t: LoanTerms) =>
-  t.style === 'emi' ? annuity(t.amount, t.ratePct / 1200, t.instalments)
-    : t.style === 'stepped' ? t.amount / stepFactor(t.instalments, t.ratePct / 1200, 1 + stepOf(t)) : t.amount / t.instalments;
+/** Whether the holiday's interest is added to the loan: only with a holiday and a rate. */
+const adds = (t: Pick<LoanTerms, 'holidayInterest' | 'moratoriumMonths'>) => t.holidayInterest === 'added' && t.moratoriumMonths > 0;
+
+/** The balance when the holiday ends: the loan, with each holiday month's interest added at its end when it is added
+ * (run forward month by month; the check has the closed form amount × (1 + r)^months). */
+export function afterHoliday(t: Pick<LoanTerms, 'amount' | 'ratePct' | 'moratoriumMonths' | 'holidayInterest'>): number {
+  let b = t.amount;
+  if (adds(t)) for (let k = 0; k < t.moratoriumMonths; k++) b += b * (t.ratePct / 1200);
+  return b;
+}
+
+/** The level instalment: the EMI, the principal of each equal instalment, or a stepped loan's first instalment, on the
+ * balance when the holiday ends. */
+export const levelInstalment = (t: LoanTerms) => {
+  const a = afterHoliday(t);
+  return t.style === 'emi' ? annuity(a, t.ratePct / 1200, t.instalments)
+    : t.style === 'stepped' ? a / stepFactor(t.instalments, t.ratePct / 1200, 1 + stepOf(t)) : a / t.instalments;
+};
 
 /** Instalment `k` (from 1) of an EMI or a stepped loan, interest and principal together. */
 const instalmentAt = (t: LoanTerms, level: number, step: number, k: number) =>
@@ -105,11 +125,17 @@ const instalmentAt = (t: LoanTerms, level: number, step: number, k: number) =>
 /** The loan month by month, from the month it is drawn to the last instalment. */
 export function months(t: LoanTerms): MonthRow[] {
   const r = t.ratePct / 1200, p = PERIOD_MONTHS[t.frequency], level = levelInstalment(t), step = t.style === 'stepped' ? stepOf(t) : 0;
-  const rows: MonthRow[] = [];
+  const rows: MonthRow[] = [], add = adds(t);
   let balance = t.amount;
   for (let k = 0; k < termMonths(t); k++) {
     const { year, month } = monthAfter(t.disbursed, k);
     const opening = balance, interest = balance * r, since = k + 1 - t.moratoriumMonths;
+    if (add && since <= 0) {
+      // A holiday month whose interest is added: nothing is paid, and the balance grows by the month's interest.
+      balance += interest;
+      rows.push({ month: `${year}-${String(month).padStart(2, '0')}`, fy: fyOf(year, month), opening, interest, principal: 0, paid: 0, closing: balance, added: interest });
+      continue;
+    }
     let principal = 0, instalment: number | undefined;
     if (since > 0 && since % p === 0) {
       instalment = since / p;
@@ -130,6 +156,7 @@ export function schedule(t: LoanTerms): YearDebt[] {
     if (!row) years.set(m.fy, row = { fy: m.fy, interest: 0, principal: 0, closing: 0 });
     row.interest += m.interest;
     row.principal += m.principal;
+    if (m.added) row.added = (row.added ?? 0) + m.added;
     row.closing = m.closing;
   }
   return [...years.values()];
