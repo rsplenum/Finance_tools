@@ -32,10 +32,10 @@ import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from '
 import {
   ASSUMED, BORROWER_CHOICES, checkNext, dscrMarks, EXAMPLE_TARGETS, GROUP_TITLES, NO_LENDER, OPTION_KEYS, amountOf, barText, choicesOf, emisAsk, frontDoor, loanRead, modeOf, monthText, numberOf,
   parseFy, presetText, preview, rowValues, rowsOf, statusText, sureLine, targetText, tidyAmount, withBorrower, withFrontNeeds, FRONT, frontAt, withPlanStart, withSource, yearsOf,
-  type DocFacts, type LenderLine, type LenderText, type LenderView, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type ScheduleView, type State, type StatementView, type Years,
+  type DocFacts, type LenderLine, type LenderText, type LenderView, type Line, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 import { Levels } from './Levels';
-import { Mark, Waterfall } from './Pictures';
+import { Cover, Mark } from './Pictures';
 import { N, W } from './words';
 import { Steps, type Step } from '../worked/Steps';
 import { SHARED } from '../words';
@@ -725,6 +725,9 @@ const lineClass = (kind?: string) => kind === 'total' || kind === 'ratio'
 export function StatementTable({ st, parts = {} }: { st: StatementView; parts?: Record<string, string> }) {
   const cols = st.years.length + 1 + (st.total ? 1 : 0);
   const ratio = st.lines.find((l) => l.kind === 'ratio');
+  const of = (id: Line['id']) => st.lines.find((l) => l.id === id);
+  // One scale for every year's cash (A) against what is owed (B), so that two years open side by side compare.
+  const top = Math.max(0, ...[of('available'), of('service')].flatMap((l) => (l?.n ?? []).map((x) => x ?? 0)));
   // A sheet lying flat: only the answer's casts the shadow (UX8, D-UX-106).
   return <div class="paper mt-8 rounded-card p-4 sm:p-6">
     <h3 class="font-semibold text-ink">{W.yearByYear}</h3>
@@ -762,14 +765,35 @@ export function StatementTable({ st, parts = {} }: { st: StatementView; parts?: 
           {parts[fy] && <span class={`ml-2 text-xs font-normal ${MUTED}`}>{parts[fy]}</span>}</span>
           {ratio && <span class="tabular-nums group-open:hidden">DSCR {ratio.values[i]}</span>}
         </summary>
-        <Waterfall st={st} get={(l) => ({ n: l.n?.[i], text: l.values[i] ?? '' })} />
+        <Column st={st} at={(l) => l.values[i] ?? ''} />
+        <Cover a={of('available')?.n?.[i]} b={of('service')?.n?.[i]} top={top} />
+        <div class="h-2" />
       </details>)}
-      {st.total && <div data-testid="card-total" class="rounded-control border-l-4 border-ink bg-surface p-3">
+      {st.total && <div data-testid="card-total" class="rounded-control bg-surface p-3">
         <p class="font-medium text-ink">Total{st.total.sub && <span class={`ml-2 text-xs font-normal ${MUTED}`}>{st.total.sub}</span>}</p>
-        <Waterfall st={st} get={(l) => ({ n: l.total?.n, text: l.total?.text ?? '' })} />
+        <Column st={st} at={(l) => l.total?.text ?? ''} />
+        <Cover a={of('available')?.total?.n} b={of('service')?.total?.n} top={Math.max(of('available')?.total?.n ?? 0, of('service')?.total?.n ?? 0)} />
       </div>}
     </div>
   </div>;
+}
+
+/**
+ * One column of the statement on a phone, as the wide table has it: the label left, the figure right and aligned, a rule
+ * over each subtotal and the DSCR (PIC2, Rahul, 13-11-2026: "a clean table, ruled subtotals, figures aligned"). Each
+ * figure keeps its `data-line`.
+ */
+function Column({ st, at }: { st: StatementView; at: (l: Line) => string }) {
+  return <table class="w-full border-collapse text-sm">
+    <tbody>
+      {st.lines.map((l, j) => l.kind === 'head'
+        ? <tr key={j}><th colSpan={2} scope="colgroup" class="pt-3 pb-1 text-left text-xs font-semibold tracking-wide text-ink-muted uppercase">{l.label}</th></tr>
+        : <tr key={j} class={l.kind === 'ratio' ? 'border-t-2 border-double border-ink/40' : l.kind ? 'border-t border-ink/25' : ''}>
+          <th scope="row" class={`py-1 pr-3 text-left align-top font-normal ${lineClass(l.kind)}`}>{l.label}</th>
+          <td data-line={l.id} class={`py-1 text-right align-top whitespace-nowrap tabular-nums ${lineClass(l.kind)}`}>{at(l)}</td>
+        </tr>)}
+    </tbody>
+  </table>;
 }
 
 /** The repayment schedule: a line per financial year; each opens to its months. */

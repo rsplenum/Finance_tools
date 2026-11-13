@@ -541,7 +541,7 @@ if (touched('/dscr/')) {
   // depreciation are asked (only the later years were typed).
   await expectFigures(page, v, 'dscr-status', '2', 'a first year with interest only');
   if (!(await page.isChecked('#fld-start-2026-27'))) v("the figures do not start in the loan's first year as assumed");
-  await expectText(page, v, 'assumed-start', /^Counted from the payout year ?The first year counted: The year the loan is paid out\. ?\S.*\. ?(Change: The first year counted)?$/, 'the start assumption listed, with its reason');
+  await expectText(page, v, 'assumed-start', /^The first year counted ?The year the loan is paid out ?\S.*\. ?(Change: The first year counted)?$/, 'the start assumption listed, with its reason');
   await expectFigures(page, v, page.getByTestId('start-question').locator('p').first(), '2026-27 72,000', 'the question about the first year');
   await page.check('#fld-start-2027-28');
   await expectFigures(page, v, 'dscr-status', '7', 'figures starting in 2027-28');
@@ -710,7 +710,7 @@ if (touched('/dscr/')) {
   await expectFigures(page, v, 'tax-by', '5% 30% 4% 12,00,000', "a proprietor's tax");
   await expectFigures(page, v, 'tax-2026-27', '0', "a proprietor's tax");
   await expectFigures(page, v, 'dscr-average', '1.41', "a proprietor's tax");
-  await expectText(page, v, 'assumed-proprietorTax', /^New tax regime ?Tax for a proprietor: The new tax regime’s slab rates, the business the only income\. ?\S.*\. ?(Change.*)?$/, "a proprietor's tax, with its reason");
+  await expectText(page, v, 'assumed-proprietorTax', /^Tax for a proprietor ?The new tax regime’s slab rates, the business the only income ?\S.*\. ?(Change.*)?$/, "a proprietor's tax, with its reason");
   await page.check('#fld-otherLoansInterest-emi');
   await expectText(page, v, 'emis-ask', 'All EMIs a month, business and personal (home, car, personal loans).', "a proprietor's EMIs");
   await leave(page, '#fld-emi-1', '20000');

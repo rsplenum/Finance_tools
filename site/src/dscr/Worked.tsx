@@ -335,10 +335,15 @@ function Working({ p, update, toPro }: { c: Case; p: Preview; update: Update; to
     <p data-testid="dscr-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class="mb-1 text-base text-ink">{statusText(p)}</p>
     {p.needs.length > 0 && <ul data-testid="dscr-needs" class="mb-3 list-disc space-y-0.5 pl-5 text-base text-ink-muted">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>}
     {p.blocked && <p data-testid="dscr-blocked" role="alert" class="text-bad">{p.blocked}</p>}
-    {p.verdict && <Targets v={p.verdict} />}
-    <Room p={p} onAmount={(n) => update((x) => ({ ...x, loan: { ...x.loan, amount: inr(n) } }))}
-      onFewest={(n) => update((x) => ({ ...x, loan: { ...x.loan, instalments: String(n) } }))} />
-    {p.lender && <LenderLines v={p.lender} openMore={() => toPro('lender')} />}
+    {/* On a desktop, two columns (Rahul, 13-11-2026: "a lot of whitespace left on the right"): the targets and the
+        bank's other checks on the left, room to move on the right; a phone keeps the order, one under the other. */}
+    <div data-testid="dscr-glance" class="md:grid md:grid-cols-2 md:grid-rows-[auto_1fr] md:items-start md:gap-x-10">
+      {p.verdict && <div class="md:col-start-1 md:row-start-1"><Targets v={p.verdict} /></div>}
+      <div class="md:col-start-2 md:row-span-2 md:row-start-1 md:*:mt-3">
+        <Room p={p} onAmount={(n) => update((x) => ({ ...x, loan: { ...x.loan, amount: inr(n) } }))}
+          onFewest={(n) => update((x) => ({ ...x, loan: { ...x.loan, instalments: String(n) } }))} /></div>
+      {p.lender && <div class="md:col-start-1 md:row-start-2"><LenderLines v={p.lender} openMore={() => toPro('lender')} /></div>}
+    </div>
     {p.statement && <StatementTable st={p.statement} parts={p.partYears} />}
     {p.beforeStart && <p data-testid="dscr-before-start" class="mt-2 text-sm text-ink-muted">{p.beforeStart}</p>}
     {p.notCounted && <p data-testid="dscr-not-counted" class="mt-2 text-sm text-ink-muted">{p.notCounted}</p>}
@@ -350,28 +355,30 @@ function Working({ p, update, toPro }: { c: Case; p: Preview; update: Update; to
 /** A reason as the borrower reads it: the pointer to our own files (its source, kept in the data) left off the screen. */
 const plain = (why: string) => why.replace(/\s*\([^()]*\b[\w/.-]+\.(?:md|json)\)/g, '');
 
-/** What we filled in (NEW1e, then PIC1, Rahul, 13-11-2026: "text is the worst way to display verbose information"):
- * each assumption a chip of a few words, under its group as a borrower thinks of them; a tap opens it in place, the
- * whole line, the reason, and Change to its box in Professional mode. A figure in a chip is the data file's own. */
+/**
+ * What we filled in, as a term sheet (PIC2, Rahul, 13-11-2026: "We still haven't figured out the 'We filled in the rest'
+ * section"): under each group's head, a ruled line for each assumption, what it is on the left and as taken on the
+ * right, the way a lender's key facts statement or a "check your answers" page lays out what was settled. A tap on a
+ * line opens its reason and Change, to its box in Professional mode. A figure on a line is the data file's own.
+ */
 function Assumed({ p, onChange }: { p: Preview; onChange: (where?: string) => void }) {
   const F = N.filled;
-  const rows = p.assumed.map((a) => {
-    const what = F.plain[a.id]?.[0] ?? a.what, shown = F.plain[a.id]?.[1] ?? a.shown, chip = F.chip[a.id];
-    // Without a chip of its own words the chip is the figure itself (the tax rate, the target), and is not said twice.
-    return { ...a, why: plain(a.why), what, chip: chip ?? (F.figure[a.id]?.(a.shown) ?? a.shown), line: chip ? `${what}: ${shown}.` : `${what}.` };
-  });
+  const rows = p.assumed.map((a) => ({ ...a, why: plain(a.why), what: F.plain[a.id]?.[0] ?? a.what, shown: F.plain[a.id]?.[1] ?? a.shown }));
   if (!rows.length) return null;
   const groups = (Object.keys(F.groups) as (keyof typeof F.groups)[]).map((g) => [g, rows.filter((a) => (F.of[a.id] ?? 'profit') === g)] as const).filter(([, r]) => r.length);
-  return <div data-testid="dscr-assumed" class="assumed-groups">
+  return <div data-testid="dscr-assumed" class="terms">
     {groups.map(([g, list]) => <section key={g} aria-labelledby={`assumed-${g}`}>
-      <h3 id={`assumed-${g}`} class="assumed-head">{F.groups[g]}</h3>
-      <ul class="assumed-chips">
-        {list.map((a) => <li key={a.id} data-testid={`assumed-${a.id}`}>
+      <h3 id={`assumed-${g}`} class="terms-head">{F.groups[g]}</h3>
+      <ul class="terms-list">
+        {list.map((a) => <li key={a.id} data-testid={`assumed-${a.id}`} class="terms-row">
           <details class="assumed">
-            <summary class="assumed-chip">{a.chip}<svg aria-hidden="true" viewBox="0 0 16 16" class="assumed-chev"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /></svg></summary>
-            <div class="assumed-body">
-              <p class="font-medium text-ink">{a.line}</p>
-              <p class="mt-1">{a.why}.</p>
+            <summary class="terms-line">
+              <span class="terms-what">{a.what}</span>{' '}
+              <span class="terms-value">{a.shown}</span>
+              <svg aria-hidden="true" viewBox="0 0 16 16" class="assumed-chev"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </summary>
+            <div class="terms-why">
+              <p>{a.why}.</p>
               {a.where && <a href={`#${a.where}`} class={`${QUIET} -ml-3`} onClick={(e) => { e.preventDefault(); onChange(a.where); }}>{F.change1}<span class="sr-only">: {a.what}</span></a>}
             </div>
           </details>
@@ -387,7 +394,7 @@ function Filled({ p, onChange }: { p: Preview; onChange: (where?: string) => voi
   return <section data-testid="filled" aria-labelledby="filled-title" class="mt-8">
     <h2 id="filled-title" class="font-heading text-lg font-semibold text-ink">{N.filled.title}</h2>
     <p class="mt-1 text-base text-ink-muted">{N.filled.lead(p.assumed.length)}</p>
-    <div class="mt-3"><Assumed p={p} onChange={onChange} /></div>
+    <div class="mt-5"><Assumed p={p} onChange={onChange} /></div>
     <button type="button" data-testid="to-pro" onClick={() => onChange()} class={QUIET}>{N.filled.change}</button>
   </section>;
 }

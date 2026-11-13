@@ -1,12 +1,13 @@
 /**
  * The working as pictures (PIC1, Rahul, 13-11-2026: "A picture or graphics speaks a thousand words … text is the worst
  * way to display verbose information"): the targets as bars against their levels, the room to move as two bars and a
- * grid of instalments, and a year's statement as a waterfall from profit to cash, against what is owed. Every figure is
- * the engine's, as `model.ts` hands it in; nothing is worked out here but each bar's share of the longest.
+ * grid of instalments, and a year's cash (A) against what is owed (B). In ink and grey: a hue only where a target is met
+ * or missed (PIC2, Rahul, 13-11-2026: "The over use of color bars has brought down the sophistication and professional
+ * vibe"). Every figure is the engine's, as `model.ts` hands it in; nothing is worked out here but each bar's share.
  */
 import { rs } from '../../../engine/util';
 import { QUIET } from '../worked/parts';
-import type { Line, Preview, StatementView } from './model';
+import type { Preview } from './model';
 import { N } from './words';
 
 const P = N.pic;
@@ -32,7 +33,7 @@ export function Targets({ v }: { v: NonNullable<Preview['verdict']> }) {
           <span class="tabular-nums"><b class={r.ok ? '' : 'text-bad'}>{r.text}</b> <span class="text-sm text-ink-muted">{P.needs(r.targetText)}</span></span>
         </p>
         <div aria-hidden="true" class="relative mt-1 h-3 rounded-full bg-ink/8">
-          <div class={`h-3 rounded-full ${r.ok ? 'bg-good' : 'bg-bad'} motion-safe:transition-[width] motion-safe:duration-300`} style={{ width: pct(r.value, top) }} />
+          <div class={`h-3 rounded-full ${r.ok ? 'bg-ink-muted/45' : 'bg-bad'} motion-safe:transition-[width] motion-safe:duration-300`} style={{ width: pct(r.value, top) }} />
           <div class="absolute -top-1 -bottom-1 w-0.5 rounded-full bg-ink" style={{ left: `calc(${(100 * r.target) / top}% - 1px)` }} />
         </div>
       </li>)}
@@ -63,8 +64,8 @@ function Amounts({ most, asked, limit }: { most: number; asked: number; limit?: 
   </li>;
   return <div data-testid="dscr-largest" class="mt-2">
     <ul class="space-y-2.5">
-      {bar(P.most, most, 'bg-good')}
-      {bar(over ? `${P.asked}: ${P.over.toLowerCase()}` : P.asked, asked, over ? 'bg-bad' : 'bg-ink/45')}
+      {bar(P.most, most, 'bg-ink-muted/60')}
+      {bar(over ? `${P.asked}: ${P.over.toLowerCase()}` : P.asked, asked, over ? 'bg-bad' : 'bg-ink-muted/30')}
     </ul>
     {limit && <p class="mt-2 text-sm text-ink-muted">{P.limit(limit)}</p>}
   </div>;
@@ -89,59 +90,18 @@ function Instalments({ n, now, per }: { n: number; now: number; per: number }) {
   </div>;
 }
 
-/** A step of the waterfall: a line of the statement as a bar from where the running figure stood to where it goes. */
-interface Step { label: string; text: string; from: number; to: number; tone: 'base' | 'less' | 'add' | 'cash' | 'owed' | 'part'; id?: string; total?: boolean }
-
 /**
- * A column of the statement (a year, or the Total) as a waterfall: the profit down to what is left after tax, the
- * non-cash costs and the loan's interest added back up to the cash available (A); then what is owed (B), built up from
- * nothing on the same scale. The figures and their words are the statement's own lines, in their order.
+ * A year's cash available (A) against what is owed to the bank (B), the table's own figures, on one scale for all the
+ * years so that two years open side by side compare: ink for the cash, grey for what is owed; the DSCR is A over B.
  */
-export function stepsOf(st: StatementView, get: (l: Line) => { n?: number; text: string }) {
-  const steps: Step[] = [];
-  let run = 0, owed = 0, side: 'in' | 'owed' = 'in', last: number | undefined, ratio: { label: string; text: string } | undefined;
-  for (const l of st.lines) {
-    if (l.kind === 'head') continue;
-    const { n, text } = get(l);
-    if (l.kind === 'ratio') { ratio = { label: l.label, text }; continue; }
-    if (n === undefined) continue;
-    if (side === 'in') {
-      if (l.kind === 'total') {
-        steps.push({ label: l.label, text, from: 0, to: n, tone: l.id === 'available' ? 'cash' : 'base', id: l.id, total: true });
-        run = n; last = n;
-        if (l.id === 'available') side = 'owed';
-      } else if (n === 0) continue;
-      else if (/^Less:/.test(l.label)) { steps.push({ label: l.label, text, from: run, to: run - n, tone: 'less', id: l.id }); run -= n; last = undefined; }
-      else if (/^Add:/.test(l.label)) { steps.push({ label: l.label, text, from: run, to: run + n, tone: 'add', id: l.id }); run += n; last = undefined; }
-      // The cash's first line carries the profit after tax just shown: it is not drawn twice.
-      else if (last !== undefined && n === last) continue;
-      else { steps.push({ label: l.label, text, from: 0, to: n, tone: 'base', id: l.id }); run = n; last = n; }
-    } else if (l.id === 'service') steps.push({ label: l.label, text, from: 0, to: n, tone: 'owed', id: l.id, total: true });
-    else if (n !== 0) { steps.push({ label: l.label, text, from: owed, to: owed + n, tone: 'part', id: l.id }); owed += n; }
-  }
-  return { steps, ratio };
-}
-
-const TONE: Record<Step['tone'], string> = {
-  base: 'bg-ink/45', less: 'bg-bad/70', add: 'bg-good/80', cash: 'bg-ink', owed: 'bg-ink-muted/60', part: 'bg-ink-muted/35',
-};
-
-/** The waterfall of one column; each line's figure keeps its `data-line`, as the cards had it. */
-export function Waterfall({ st, get }: { st: StatementView; get: (l: Line) => { n?: number; text: string } }) {
-  const { steps, ratio } = stepsOf(st, get);
-  if (!steps.length) return null;
-  const lo = Math.min(0, ...steps.flatMap((s) => [s.from, s.to])), hi = Math.max(1, ...steps.flatMap((s) => [s.from, s.to])), span = hi - lo;
-  const at = (x: number) => (100 * (x - lo)) / span;
-  return <div data-testid="waterfall" class="mt-1 text-sm">
-    <ul class="space-y-1.5">
-      {steps.map((s, j) => <li key={j} class={s.tone === 'owed' || (s.tone === 'part' && steps[j - 1]?.tone === 'cash') ? 'pt-2' : ''}>
-        <p class={`flex justify-between gap-3 ${s.total ? 'font-semibold text-ink' : 'text-ink'}`}><span>{s.label}</span>{' '}<span data-line={s.id} class="text-right tabular-nums">{s.text}</span></p>
-        <div aria-hidden="true" class="relative mt-0.5 h-2.5">
-          {lo < 0 && <span class="absolute inset-y-0 w-px bg-line" style={{ left: `${at(0)}%` }} />}
-          <span class={`absolute inset-y-0 rounded-sm ${TONE[s.tone]}`} style={{ left: `${at(Math.min(s.from, s.to))}%`, width: `max(3px, ${Math.abs(s.to - s.from) / span * 100}%)` }} />
-        </div>
-      </li>)}
-    </ul>
-    {ratio && <p class="mt-3 flex justify-between gap-3 border-t border-line pt-2 font-semibold text-ink"><span>{ratio.label}</span>{' '}<span data-line="dscr" class="tabular-nums">{ratio.text}</span></p>}
+export function Cover({ a, b, top }: { a?: number; b?: number; top: number }) {
+  if (a === undefined || b === undefined || !(top > 0)) return null;
+  const bar = (key: string, label: string, n: number, cls: string) => <div class="grid grid-cols-[1.25rem_1fr] items-center gap-2">
+    <span title={label} class="text-xs font-medium text-ink-muted">{key}</span>
+    <span class="h-2 rounded-full bg-ink/6"><span class={`block h-2 rounded-full ${cls}`} style={{ width: pct(n, top) }} /></span>
+  </div>;
+  return <div aria-hidden="true" data-testid="cover" class="mt-3 mb-1 space-y-1.5">
+    {bar('A', P.a, a, 'bg-ink/75')}
+    {bar('B', P.b, b, 'bg-ink-muted/35')}
   </div>;
 }

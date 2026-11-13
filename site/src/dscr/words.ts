@@ -137,7 +137,7 @@ export const N = {
   /** Simple mode states what it filled in, under the answer. */
   filled: {
     title: 'We filled in the rest',
-    lead: (n: number) => `${n === 1 ? 'One thing' : `${n} things`} you were not asked, set the usual way. Tap one to see why.`,
+    lead: (n: number) => `${n === 1 ? 'One thing' : `${n} things`} you were not asked, set the usual way. Tap a line to see why.`,
     change: 'Change them in Professional mode',
     /** Grouped as a borrower thinks of them (NEW1e, Rahul, 13-11-2026: "The assumptions list is so ugly"). */
     groups: { loan: 'Your loan', profit: 'Your profit', borrowing: 'Other borrowing', tax: 'Tax', test: 'The bank’s test' },
@@ -145,8 +145,10 @@ export const N = {
       loanStart: 'loan', start: 'loan', margin: 'profit', asset: 'profit', depreciation: 'profit', nonCash: 'profit',
       otherLoans: 'borrowing', interest: 'borrowing', interestNone: 'borrowing', promoters: 'borrowing', tax: 'tax', proprietorTax: 'tax', method: 'test', target: 'test',
     } as Record<string, 'loan' | 'profit' | 'borrowing' | 'tax' | 'test'>,
-    /** The page's plain words for each (engine/data/defaults.json keeps the CA's, for the statement); figures stay the data file's. */
+    /** Each line of the term sheet, what it is and as taken, in the page's plain words (engine/data/defaults.json keeps
+     * the CA's, for the statement). The target and the tax rate keep the data file's own figures: a name only. */
     plain: {
+      target: ['The bank’s target'], tax: ['Tax rate'],
       loanStart: ['When the loan starts', 'Paid out this month, repaid by EMI every month, with no break'],
       start: ['The first year counted', 'The year the loan is paid out'],
       margin: ['Profit as sales grow', 'Grows in step with sales'],
@@ -159,17 +161,8 @@ export const N = {
       promoters: ['Money the owners lent the business', 'Stays in until this loan is repaid'],
       proprietorTax: ['Tax for a proprietor', 'The new tax regime’s slab rates, the business the only income'],
       method: ['How the bank works it out', 'The usual way for a term loan'],
-    } as Record<string, [string, string]>,
+    } as Record<string, [string, string?]>,
     change1: 'Change',
-    /** Each assumption as a chip: a few words; the full line opens under it. A figure stays the data file's. */
-    chip: {
-      loanStart: 'Paid out now, EMI monthly', start: 'Counted from the payout year', margin: 'Profit grows with sales',
-      asset: 'No extra income from the loan', depreciation: 'Depreciation stays the same', nonCash: 'No lease rent or write-offs',
-      otherLoans: 'No other loans', interest: 'Other interest stays the same', interestNone: 'No overdraft interest',
-      promoters: 'Owners’ money stays in', proprietorTax: 'New tax regime', method: 'The usual term-loan way',
-    } as Record<string, string>,
-    /** A chip that is the data file's figure, in a few words around it. */
-    figure: { tax: (x: string) => `Tax at ${x}` } as Record<string, (x: string) => string>,
   },
   /** One question a screen. */
   ask: {
