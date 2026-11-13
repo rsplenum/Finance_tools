@@ -1,6 +1,6 @@
 /**
  * The fix beside the miss (engine/fix.ts, OR2, D-UX-177) on fictional case F, the owner's OR1 figures (building
- * Rs. 50,00,000, plant Rs. 2,50,00,000, a term loan of Rs. 2,50,00,000 over 15 years after a month's holiday), the rate
+ * ₹50,00,000, plant ₹2,50,00,000, a term loan of ₹2,50,00,000 over 15 years after a month's holiday), the rate
  * (9.3%) and the sales model-worked so that only the fixed-asset cover misses, as on the owner's recording.
  *
  * By hand, as the second computation: sales begin in November 2026, 151 days before 31 March, so the first year takes
@@ -41,11 +41,11 @@ describe('the fix beside the miss (OR2)', () => {
     expect(132 / 180).toBeGreaterThan(13860000 / 25000000);
   });
 
-  it('proposes the least strained fix first: 11 years and Rs. 1,72,20,000; then the 15 years kept and Rs. 1,11,40,000', () => {
+  it('proposes the least strained fix first: 11 years and ₹1,72,20,000; then the 15 years kept and ₹1,11,40,000', () => {
     const f = fixOf(F)!;
     expect(f.missed).toEqual(['facr']);
     expect(f.fixes.map((k) => [k.instalments.needed, k.loan.needed, k.loan.more])).toEqual([[132, 17220000, 7719705], [180, 11140000, 13752585]]);
-    // By hand: each meets, and Rs. 10,000 more (the step at four figures) misses. The promoters bring the loan's cut less
+    // By hand: each meets, and ₹10,000 more (the step at four figures) misses. The promoters bring the loan's cut less
     // the interest before the first sales that a smaller loan saves (a month at 9.3%: 77,80,000 × 9.3% ÷ 12 = 60,295).
     expect([7780000 - (7780000 * 9.3) / 1200, 13860000 - (13860000 * 9.3) / 1200]).toEqual([7719705, 13752585]);
     expect(lowest(17220000, 132)).toBeGreaterThanOrEqual(1.2);
@@ -79,10 +79,10 @@ describe('the fix beside the miss (OR2)', () => {
 
 // The sliders on case F (OR11d): the board opens as typed, the fix no longer standing in for the plan (D-UX-182 retired);
 // held at the fix's levers, it agrees with "Use this". The fewest instalments the board takes is where the lowest-year DSCR
-// still meets (the instalments free, the loan held at the fix's): by the engine, 1.2937 at 12 instalments of Rs. 1,72,20,000 and 1.1891 at 11, under 1.25, in 2026-27 (five
+// still meets (the instalments free, the loan held at the fix's): by the engine, 1.2937 at 12 instalments of ₹1,72,20,000 and 1.1891 at 11, under 1.25, in 2026-27 (five
 // instalments by 31 March); the term loan as typed, 2.5 crore, reaches its bound at 17.
 describe('The sliders on case F (OR11d)', () => {
-  it('open as typed, and held at the fix work: the promoters bring Rs. 77,19,705 more', () => {
+  it('open as typed, and held at the fix work: the promoters bring ₹77,19,705 more', () => {
     const f = fixOf(F)!.fixes[0];
     expect((makePlan(F, { typed: true }) as Plan).levers).toEqual(AS_TYPED);
     const q = makePlan(F, { typed: true, held: f.levers }) as Plan;

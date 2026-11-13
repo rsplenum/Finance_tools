@@ -1,7 +1,7 @@
 /**
  * Make it viable on the DSCR front door (engine/dscr-plan.ts, MV5, D-UX-57) on fictional case S: a firm (tax 31.2%), this
- * year's profit before interest, depreciation and tax Rs. 4,50,000 with no growth, no depreciation and no running EMIs; a
- * loan of Rs. 12,00,000 at 12% by 60 monthly EMIs, drawn in October 2026 with the first EMI that month. Target: average
+ * year's profit before interest, depreciation and tax ₹4,50,000 with no growth, no depreciation and no running EMIs; a
+ * loan of ₹12,00,000 at 12% by 60 monthly EMIs, drawn in October 2026 with the first EMI that month. Target: average
  * 1.50, lowest year 1.20. Worked outside the engine by a separate loop of the EMI schedule and closed forms (model-worked):
  * - Each year's cash available is P − 0.312 (P − I) for profit P and the loan's interest I in it; its service the EMIs in
  *   it (6 in 2026-27, 12 a year to 2030-31, 6 in 2031-32). EMI 26,693.3372.
@@ -9,13 +9,13 @@
  *   3,20,320.05). Short of cash: 1.2 × 3,20,320.05 − 3,21,236.40 = 63,147.66 in 2030-31; 1.5 × 16,01,600.23 −
  *   19,82,899.27 = 4,19,501.08 over the loan.
  * - The loan alone (interest and service per rupee lent): the average binds, L ≤ 6 × 0.688 P ÷ (1.5 ΣS − 0.312 ΣI) =
- *   9,78,928.88, so Rs. 9,78,928, a cut of 2,21,072 (the lowest year's bound is 9,96,706.46).
+ *   9,78,928.88, so ₹9,78,928, a cut of 2,21,072 (the lowest year's bound is 9,96,706.46).
  * - The profit alone: the average binds, P ≥ (1.5 ΣS − 0.312 ΣI) ÷ (6 × 0.688) = 5,51,623.32, so 1,01,624 more (the
  *   lowest year's bound is 5,41,784.39).
  * - The repayment alone: 80 EMIs meet (lowest 1.205230, average 1.514052); 79 miss the lowest (1.192663).
- * - With the borrower able to bring Rs. 1,00,000: the loan 11,00,000, then 70 EMIs (lowest 1.207466, average 1.500407);
+ * - With the borrower able to bring ₹1,00,000: the loan 11,00,000, then 70 EMIs (lowest 1.207466, average 1.500407);
  *   69 miss the lowest (1.192966).
- * - At Rs. 2,50,000 of profit: no repayment within 180 months meets; the nearest, min(lowest ÷ 1.20, average ÷ 1.50), is
+ * - At ₹2,50,000 of profit: no repayment within 180 months meets; the nearest, min(lowest ÷ 1.20, average ÷ 1.50), is
  *   175 EMIs (0.830485: the last year then holds one EMI against a whole year's cash, which lifts the average), and
  *   there the average binds: P ≥ 3,08,817.86, so 58,818 more.
  */
@@ -74,17 +74,17 @@ describe('the levers together, in the owner’s order', () => {
     const p = makeDscrPlan(CASE_S) as DscrPlan;
     expect([p.levers, p.works, p.atLimit]).toEqual([{ cut: 0, more: 20, profit: 0 }, true, []]);
   });
-  it('with Rs. 1,00,000 from the borrower: all of it off the loan, then 10 more EMIs', () => {
+  it('with ₹1,00,000 from the borrower: all of it off the loan, then 10 more EMIs', () => {
     const p = makeDscrPlan(CASE_S, { most: 100000 }) as DscrPlan;
     expect([p.levers, p.works, p.atLimit]).toEqual([{ cut: 100000, more: 10, profit: 0 }, true, ['cut']]);
     expect(p.plan.statement.minimum?.dscr).toBeCloseTo(1.207466, 6);
     expect(p.plan.statement.average).toBeCloseTo(1.500407, 6);
     expect(at(CASE_S, { cut: 100000, more: 9 }).minimum?.dscr).toBeCloseTo(1.192966, 6);
   });
-  it('with Rs. 3,00,000 from the borrower: the cut the target needs, no more', () => {
+  it('with ₹3,00,000 from the borrower: the cut the target needs, no more', () => {
     expect((makeDscrPlan(CASE_S, { most: 300000 }) as DscrPlan).levers).toEqual({ cut: 221072, more: 0, profit: 0 });
   });
-  it('at Rs. 2,50,000 of profit: the nearest repayment, then the profit for the rest', () => {
+  it('at ₹2,50,000 of profit: the nearest repayment, then the profit for the rest', () => {
     const weak = { ...CASE_S, proj: proj(250000) }, v = dscrViable(weak) as DscrViability, p = makeDscrPlan(weak) as DscrPlan;
     expect(v.more.none).toBe('Even 120 more instalments, the whole term 180 months, miss the target.');
     expect([p.levers, p.works, p.atLimit]).toEqual([{ cut: 0, more: 115, profit: 58818 }, true, []]);

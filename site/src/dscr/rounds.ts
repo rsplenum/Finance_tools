@@ -16,7 +16,7 @@ import type { Linked, RoundView as Round, Said } from '../MakeItWork';
 import { dscrCaseOf, type State } from './model';
 
 export const STEP = 10000;
-const rs = (n: number, d = 0) => `Rs. ${inr(n, d)}`;
+const rs = (n: number, d = 0) => `₹${inr(n, d)}`;
 /** Enough decimals that a ratio never reads as meeting a level it misses (money-maths-checks). */
 const ratio = (x: number, level: number) => ((Number(x.toFixed(2)) >= level) === (x >= level) ? x.toFixed(2) : x.toFixed(4));
 const per = (c: DscrCase) => (c.loan.frequency === 'quarterly' ? 3 : 1);

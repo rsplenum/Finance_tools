@@ -31,8 +31,8 @@ const rupees = (n: number) => inr(n);
 const rateText = (n: number) => inr(n, Number.isInteger(n) ? 0 : 2);
 /** A line's quantity as estimates show it: areas and lengths to two places, counts whole. */
 const lineQty = (n: number, u: Unit) => (['nos', 'set', 'lot', 'bag', 'kg', 'litre'].includes(u) && Number.isInteger(n) ? inr(n) : inr(n, 2));
-export const rateWords = (n: number, u: Unit) => `Rs. ${rateText(n)} ${UNIT_RATE[u]}`;
-/** One rule for writing figures on screen (UX8, review finding 4): full rupees in tables, "Rs." in the column head; a
+export const rateWords = (n: number, u: Unit) => `₹${rateText(n)} ${UNIT_RATE[u]}`;
+/** One rule for writing figures on screen (UX8, review finding 4): full rupees in tables, "₹" in the column head; a
  * summary chip (the strip, Compare) in lakh to two places, its unit in its group's head, so five fit across a phone. */
 export const lakhs = (n: number) => inr(n / 1e5, 2);
 /** The headline (UX8, review finding 5): as precise as the estimate, lakh to one place, crore to two; under a lakh to the
@@ -195,7 +195,7 @@ function viewOf(s: PlanState, e: ArchitectEstimate, runs: LevelRuns, over: Recor
     return {
       id: t.id, no: sectionNo, name: t.name, on: t.on, slider: t.slider, level: t.level, levelName: t.level ? levelName(t.level) : '',
       amount: rupees(t.amount), n: t.amount, pkg: runs.sections[t.id]?.[e.level - 1] ?? t.amount,
-      ...(Math.round(d) !== 0 ? { over: { text: `Rs. ${rupees(Math.abs(d))} ${d > 0 ? 'more' : 'less'} than ${pkg}`, n: d } } : {}),
+      ...(Math.round(d) !== 0 ? { over: { text: `₹${rupees(Math.abs(d))} ${d > 0 ? 'more' : 'less'} than ${pkg}`, n: d } } : {}),
       spec: specOf(ls), where: whereOf(ls, e), mixed: chosen + roomLevel, mixedText: mixedText ? `Mixed (${mixedText})` : '', lines,
       ...(SECTION_WHY.has(t.id) ? { why: SECTION_WHY.get(t.id) } : {}),
       brands: ls.some((l) => namesBrand(l.entryName, l.brands)),
@@ -241,7 +241,7 @@ function rangeOf(e: ArchitectEstimate, runs: LevelRuns): PlanView['range'] {
   const r = runs.range, name = levelName(e.level), items = (n: number) => `${n} item${n === 1 ? '' : 's'}`;
   const at = `At ${name}${Math.abs(e.total - runs.totals[e.level - 1]) >= 0.005 ? ' as a package' : ''}`;
   const text = !r.of ? '' : r.lines
-    ? `${at}, the choices run from Rs. ${rupees(r.low)} to Rs. ${rupees(r.high)}: the cheapest in each item to the dearest. ${r.lines} of the ${items(r.of)} offer a choice.`
+    ? `${at}, the choices run from ₹${rupees(r.low)} to ₹${rupees(r.high)}: the cheapest in each item to the dearest. ${r.lines} of the ${items(r.of)} offer a choice.`
     : `${at}, each of the ${items(r.of)} has one choice.`;
   return { text, low: r.low, high: r.high, lines: r.lines, of: r.of };
 }
@@ -312,15 +312,15 @@ function compareOf(e: ArchitectEstimate, runs: LevelRuns, sections: SectionView[
   const differs = (now: number, ns: number[], at: number) => Math.abs(now - ns[at - 1]) >= 0.005;
   const rows = sections.filter((x) => x.on && (runs.sections[x.id] ?? []).some((n) => n > 0)).map((x) => {
     const ns = runs.sections[x.id], at = x.level ?? e.level;
-    return { id: x.id, name: x.name, cells: cells(ns, at), ...(differs(x.n, ns, at) ? { yours: `Yours: Rs. ${x.amount}` } : {}) };
+    return { id: x.id, name: x.name, cells: cells(ns, at), ...(differs(x.n, ns, at) ? { yours: `Yours: ₹${x.amount}` } : {}) };
   });
-  return { rows, totals: cells(runs.totals, e.level), ...(differs(e.total, runs.totals, e.level) ? { yours: `Yours: Rs. ${rupees(e.total)}` } : {}) };
+  return { rows, totals: cells(runs.totals, e.level), ...(differs(e.total, runs.totals, e.level) ? { yours: `Yours: ₹${rupees(e.total)}` } : {}) };
 }
 
-/** "Bathrooms to Luxury: Rs. 6,71,648 more", and the items it brought in, up to three; any it brought in without a rate yet. */
+/** "Bathrooms to Luxury: ₹6,71,648 more", and the items it brought in, up to three; any it brought in without a rate yet. */
 function changeText(c: Change & { what: string }): ChangeView {
   const names = [...new Set(c.swaps.flatMap((x) => (x.to ? [x.to] : [])))];
-  const by = Math.round(c.by) === 0 ? 'no change in the total' : `Rs. ${rupees(Math.abs(c.by))} ${c.by > 0 ? 'more' : 'less'}`;
+  const by = Math.round(c.by) === 0 ? 'no change in the total' : `₹${rupees(Math.abs(c.by))} ${c.by > 0 ? 'more' : 'less'}`;
   const others = c.others === undefined ? '' : `the other rooms ${+(Math.abs(c.others) * 100).toFixed(1)}% ${c.others < 0 ? 'smaller' : 'larger'} · `;
   const still = !c.unpriced?.length ? '' : c.unpriced.length === 1 ? `; the ${c.unpriced[0].toLowerCase()} is still to be priced` : `; ${c.unpriced.length} lines are still to be priced`;
   return { text: `${c.what}: ${others}${by}${still}`, n: c.by, items: names.length ? `${names.slice(0, 3).join(' · ')}${names.length > 3 ? ` · and ${names.length - 3} more` : ''}` : '' };
@@ -437,8 +437,8 @@ export function drawerView(s: PlanState, v: PlanView, key: string): DrawerView |
     key, fixed: c.fixed, groups,
     how: {
       quantity: line.how,
-      rate: [...line.rateHow, `= Rs. ${line.rate} ${UNIT_RATE[unitOf(line.unit)]}`],
-      amount: `${line.qty} ${line.unit} × Rs. ${line.rate} = Rs. ${line.amount}`,
+      rate: [...line.rateHow, `= ₹${line.rate} ${UNIT_RATE[unitOf(line.unit)]}`],
+      amount: `${line.qty} ${line.unit} × ₹${line.rate} = ₹${line.amount}`,
     },
   };
 }

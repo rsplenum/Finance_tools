@@ -54,13 +54,19 @@ export const STEPPED = DATA.stepped;
 /** Per rupee of the loan, the instalments' present value at a first instalment of 1, each year's `rise` times the
  * year before's: a running sum (the check has the closed form). An EMI's is the annuity factor, at `rise` 1. */
 function stepFactor(n: number, r: number, rise: number): number {
-  let f = 0, v = 1, at = 1;
-  for (let k = 1; k <= n; k++) {
+  return stepWeights(n, r, rise).reduce((f, w) => f + w, 0);
+}
+
+/** Each instalment's part of `stepFactor`, from the first: the step reached by then, discounted to the day the loan is
+ * drawn. The Excel copy's schedule sets them beside the months and adds them up. */
+export function stepWeights(n: number, r: number, rise: number): number[] {
+  const out: number[] = [];
+  for (let k = 1, v = 1, at = 1; k <= n; k++) {
     v /= 1 + r;
     if (k > 1 && (k - 1) % STEP_EVERY === 0) at *= rise;
-    f += at * v;
+    out.push(at * v);
   }
-  return f;
+  return out;
 }
 
 /** A stepped loan's step, as a fraction a year: the data's, lowered so the last year's instalment is at most

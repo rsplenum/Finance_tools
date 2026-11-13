@@ -33,7 +33,7 @@ describe('what the AI is given', () => {
       covers: ['Building and civil works', 'Plant and machinery', 'Furniture and fixtures', 'Preliminary and pre-operative expenses'],
       finance: ['The promoters’ own money', 'A term loan from a bank'], notes: REPLY.notes,
     });
-    expect(JSON.stringify(SENT)).not.toMatch(/\d{2},\d{2}|lakh|Rs\.|25 L|1\.2 Cr/);
+    expect(JSON.stringify(SENT)).not.toMatch(/\d{2},\d{2}|lakh|₹|25 L|1\.2 Cr/);
   });
   it('PMEGP in words, and the products by name', () => {
     const x = narrativeOf({ ...R, scheme: 'pmegp', category: 'general', area: 'rural', salesBy: 'drivers', products: [{ name: 'Boxes', units: '1,000', price: '20' }, { name: ' ', units: '', price: '' }] });
@@ -67,7 +67,7 @@ describe('the check on the reply', () => {
   });
   it('fails a figure the user did not type, and every rupee, percentage, lakh and crore; passes the user’s own numbers', () => {
     const typed = new Set(['20', '3']);
-    for (const t of ['It will cost Rs. 37.86 lakh.', 'Sales grow 10% a year.', 'It earns ₹5,000.', 'Two crore boxes.', 'Ten per cent more.', 'It starts in 2027.', 'Within 25 km.'])
+    for (const t of ['It will cost ₹37.86 lakh.', 'Sales grow 10% a year.', 'It earns ₹5,000.', 'Two crore boxes.', 'Ten per cent more.', 'It starts in 2027.', 'Within 25 km.'])
       expect(faultOf(t, typed), t).toBe('a figure: the report\'s tables carry every figure');
     for (const t of ['Within 20 km.', 'Talks with 3 buyers.', 'Mrs. Rao runs it.', 'It will run two machines.']) expect(faultOf(t, typed), t).toBeUndefined();
   });

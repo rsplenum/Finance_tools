@@ -14,7 +14,7 @@ import { AnswerBar, BUTTON, CellInput, Choice, Counter, Dash, FILLED, Folded, HI
 import { Downloads } from '../Downloads';
 import { AnswersColumn, foldGrid, SeeAnswer, useFold, type AnswerGroup } from '../Fold';
 import { CMA_HOME } from './home-case';
-import { printable } from '../doc/pdf';
+import { printable } from '../doc/face';
 import { inr } from '../../../engine/util';
 import { cmaDoc, docNeeds, docStatus, fileName } from './document';
 import { ReadStatement } from './Read';
@@ -59,7 +59,7 @@ export function CmaCalculator() {
   const top = <>
     <Section id="limit" title="The limit">
       <div class="mt-4 max-w-sm">
-        <TextField id="fld-cma-existing" label={W.existing} hint={W.existingHint} unit="Rs." inputMode="decimal" value={s.existingLimit}
+        <TextField id="fld-cma-existing" label={W.existing} hint={W.existingHint} unit="₹" inputMode="decimal" value={s.existingLimit}
           tidy={tidyAmount} invalid={bad(s.existingLimit)} said={bad(s.existingLimit) ? 'Not understood. Type 70,00,000 or 70 L.' : undefined}
           onCommit={(existingLimit) => update((x) => ({ ...x, existingLimit }))} />
       </div>
@@ -80,7 +80,7 @@ export function CmaCalculator() {
           <span>Count unsecured loans from promoters as the owners’ funds<span class={`block text-sm ${MUTED}`}>{was('fld-cma-quasi') ?? 'Only when they stay in the business till the bank’s loan is repaid.'}</span></span>
         </label>
         <div class="mt-4 max-w-sm">
-          <TextField id="fld-cma-collateral" label="Collateral’s market value (0 if none)" hint={was('fld-cma-collateral') ?? COLLATERAL_HINT} unit="Rs." inputMode="decimal" value={s.collateral}
+          <TextField id="fld-cma-collateral" label="Collateral’s market value (0 if none)" hint={was('fld-cma-collateral') ?? COLLATERAL_HINT} unit="₹" inputMode="decimal" value={s.collateral}
             tidy={tidyAmount} invalid={bad(s.collateral)} said={bad(s.collateral) ? 'Not understood. Type 50,00,000 or 50 L.' : undefined}
             onCommit={(collateral) => update((x) => ({ ...x, collateral }))} />
         </div>
@@ -109,7 +109,7 @@ export function CmaCalculator() {
 /** The answers as typed, for the rail (UXR5): the limit, each year's net sales and whether its balance sheet balances
  * (the same check as under Form III), and the two more options. */
 function railOf(s: CmaState): AnswerGroup[] {
-  const cols = columnsOf(s.startYear), typed = (t: string) => (t.trim() ? `Rs. ${t.trim()}` : '—');
+  const cols = columnsOf(s.startYear), typed = (t: string) => (t.trim() ? `₹${t.trim()}` : '—');
   const balance = (c: (typeof cols)[number]) => { const t = subtotals(s, c.id);
     if (t.blocked || t.assets === undefined || t.liabilities === undefined) return '—';
     const d = t.assets - t.liabilities;
@@ -138,7 +138,7 @@ const SUBTOTALS = { II: ['Gross profit', 'Net profit'], III: ['Total liabilities
 /** How sure a year's figures are, drawn on its head (UX9, review finding 3): audited solid, the estimate dashed, the
  * projection dashed and lighter, as the answer's rule is solid once final (docs/archive/DESIGN-SITE.md). */
 const SURE = { audited: 'border-ink', estimate: 'border-dashed border-ink', projection: 'border-dashed border-ink-muted' } as const;
-const rs = (n: number) => `Rs. ${inr(n, Number.isInteger(n) ? 0 : 2)}`;
+const rs = (n: number) => `₹${inr(n, Number.isInteger(n) ? 0 : 2)}`;
 
 /** The figures of one form, the full width from 1024 px, heads down and years across (UX9, review finding 3); below, a
  * card a year, each cell named by its row (review finding 13; docs/DESIGN.md, Table). One set of fields serves both, a
@@ -173,7 +173,7 @@ function Grid({ form, title, s, update, was, year, pick }: { form: 'II' | 'III';
         {c.fy}<span aria-hidden="true" class={`mt-1 w-8 border-t-2 ${SURE[c.kind]}`} /><span class="sr-only">, {KIND[c.kind]}</span></button>)}
     </div>
     <div aria-hidden="true" data-years-strip data-testid={`cma-years-${form}`} class="sticky top-18 z-10 mt-3 hidden bg-canvas text-sm @min-[52rem]:grid @min-[52rem]:grid-cols-years @min-[52rem]:gap-x-3">
-      <p class="flex items-end border-b border-line py-2 pr-3 font-medium text-ink-muted">Rs.</p>
+      <p class="flex items-end border-b border-line py-2 pr-3 font-medium text-ink-muted">₹</p>
       {cols.map((c) => <p key={c.id} class="relative flex flex-col items-end justify-end border-b border-line pt-2 pb-2 font-medium whitespace-nowrap text-ink-muted">
         {head(c)}<span class={`text-xs font-normal ${MUTED}`}>{KIND[c.kind]}</span></p>)}
     </div>
@@ -262,7 +262,7 @@ function Result({ s, p, update, use, used, undo, keep, fold, note }: { s: CmaSta
         {/* Folded, from 1024 px the rail beside gives today's limit: it is not said twice (D-UX-237). */}
         {(v?.key ?? outline.map((label) => ({ label, value: undefined, note: undefined }))).map((k, i) => <div key={k.label} class={fold && i === 1 ? 'lg:hidden' : undefined}>
           <dt class={`text-sm ${MUTED}`}>{k.label}</dt>
-          <dd data-testid={`cma-key-${i}`} class="figure text-2xl text-ink">{k.value ?? (i === 1 && now !== undefined ? `Rs. ${s.existingLimit}`
+          <dd data-testid={`cma-key-${i}`} class="figure text-2xl text-ink">{k.value ?? (i === 1 && now !== undefined ? `₹${s.existingLimit}`
             : <Dash what={k.label} to={i === 1 ? 'fld-cma-existing' : 'cma-figures'} />)}</dd>
           {k.note && <dd class={`text-sm ${MUTED}`}>{k.note}</dd>}
         </div>)}

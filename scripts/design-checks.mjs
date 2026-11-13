@@ -212,7 +212,7 @@ const sixQuestions = async (page, level = true) => {
   if (level) await page.click('field=Basic…');
 };
 // Case R on the default path, simple mode (REP3, D-UX-112): building 10 L, plant 20 L, a 20 L loan at 10% over 5 years,
-// 15,000 boxes a month at Rs. 100, variable costs 65%, fixed costs 1 L a month, the limit worked out, nothing behind the
+// 15,000 boxes a month at ₹100, variable costs 65%, fixed costs 1 L a month, the limit worked out, nothing behind the
 // loan; selling from three months after this month, so that it holds on any date. It meets every default benchmark, as
 // case R does, so the answer state reads the same kind of answer as before simple mode.
 /** The day every page's clock is fixed to (openAt); a case that works out a month from "now" reads this, never the real date. */

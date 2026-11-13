@@ -7,7 +7,7 @@ export const W = {
   wait: 'Answer the six to see the estimate.',
   mark: 'A planning estimate.',
   exact: 'Exact:',
-  levels: 'Each level as a package, in Rs. lakh. Tap one to switch.',
+  levels: 'Each level as a package, in ₹ lakh. Tap one to switch.',
   assumes: 'What the estimate assumes',
   owner: 'Owner’s name',
   property: 'Property’s address',

@@ -27,7 +27,7 @@ export function Ask(p: {
   /** Editing one answer from the report: Done goes back to it. */
   single?: boolean;
   problem: (t: string) => string | undefined;
-  /** What a figure typed reads as (Rs. 6 lakh), from the tool's engine; undefined when it says nothing new. */
+  /** What a figure typed reads as (₹6 lakh), from the tool's engine; undefined when it says nothing new. */
   reads: (t: string) => string | undefined;
   onAnswer: (t: string) => void;
   onBack: () => void;
@@ -84,13 +84,13 @@ export function Ask(p: {
           class={`min-h-14 rounded-control border px-4 text-left text-lg ${text === c.value ? 'border-ink bg-ink font-semibold text-canvas' : 'border-edge bg-field text-ink hover:bg-ink/6'}`}>{c.label}</button>)}
       </div>
       : <div class="relative mt-4">
-        {q.unit === 'Rs.' && <span aria-hidden="true" class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-2xl text-ink-muted">Rs.</span>}
+        {q.unit === '₹' && <span aria-hidden="true" class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-2xl text-ink-muted">₹</span>}
         <input ref={box} id={id} data-testid="ask-field" type="text" inputMode={q.inputMode ?? 'decimal'} autoComplete="off" enterKeyHint={p.single || p.at === p.of ? 'done' : 'next'}
           value={text} aria-describedby={`${hintId} ask-said`} aria-invalid={!!said}
           onInput={(e) => { setText((e.currentTarget as HTMLInputElement).value); setSaid(undefined); }}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); go(text); } }}
-          class={`min-h-16 w-full min-w-0 rounded-control border border-edge bg-field text-[1.75rem] font-semibold text-ink tabular-nums outline-none focus:border-focus focus:ring-2 focus:ring-focus ${q.unit === 'Rs.' ? 'pl-16' : 'pl-4'} ${q.unit && q.unit !== 'Rs.' ? 'pr-24' : 'pr-4'}`} />
-        {q.unit && q.unit !== 'Rs.' && <span aria-hidden="true" class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-2xl text-ink-muted">{q.unit}</span>}
+          class={`min-h-16 w-full min-w-0 rounded-control border border-edge bg-field text-[1.75rem] font-semibold text-ink tabular-nums outline-none focus:border-focus focus:ring-2 focus:ring-focus ${q.unit === '₹' ? 'pl-16' : 'pl-4'} ${q.unit && q.unit !== '₹' ? 'pr-24' : 'pr-4'}`} />
+        {q.unit && q.unit !== '₹' && <span aria-hidden="true" class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-2xl text-ink-muted">{q.unit}</span>}
       </div>}
     <p id="ask-said" data-testid="ask-said" aria-live="polite" class={`mt-1.5 min-h-6 text-base ${said ? 'font-medium text-bad' : 'text-ink-muted'}`}>{said ?? (read ? p.words.reads(read) : '')}</p>
     {!q.choices && <div class="mt-2 flex flex-wrap items-center gap-3">

@@ -894,9 +894,9 @@ function flags(ctx: Ctx, bhk: Bhk, carpetSqft: number, lines: Line[], unpriced: 
       // the estimate is out of line and the flag goes with the answer; above it at Premium and up is to be expected.
       const c = R.cities.list.find((x) => x.id === ctx.input.city), range = R.cities.range, level = ctx.input.level as Level;
       if (c && (perSqft < c.cost[0] || perSqft > c.cost[1])) {
-        const reported = `houses in ${c.name} ${range.for} are reported at Rs. ${inr(c.cost[0])}–${inr(c.cost[1])} a sq ft (as reported)`;
-        if (perSqft < c.cost[0] || level <= range.upTo) check(`This estimate comes to Rs. ${inr(perSqft)} a sq ft of built-up area; ${reported}.`, total);
-        else note(`At ${LEVEL_NAMES[level - 1]} this estimate comes to Rs. ${inr(perSqft)} a sq ft of built-up area; ${reported}, and dearer finishes cost more.`, total);
+        const reported = `houses in ${c.name} ${range.for} are reported at ₹${inr(c.cost[0])}–${inr(c.cost[1])} a sq ft (as reported)`;
+        if (perSqft < c.cost[0] || level <= range.upTo) check(`This estimate comes to ₹${inr(perSqft)} a sq ft of built-up area; ${reported}.`, total);
+        else note(`At ${LEVEL_NAMES[level - 1]} this estimate comes to ₹${inr(perSqft)} a sq ft of built-up area; ${reported}, and dearer finishes cost more.`, total);
       }
     }
   }
@@ -954,7 +954,7 @@ function disagreement(e: ArchitectEstimate, c: ArchitectCheck): string {
 
 
 /**
- * Each section's amount less the same section in the package (every slider, room level and own item set aside), for "Rs. X more
+ * Each section's amount less the same section in the package (every slider, room level and own item set aside), for "₹X more
  * than the package". Worked twice: from the two estimates, and from the second computation's sections of the same two
  * inputs; blocked when they disagree.
  */

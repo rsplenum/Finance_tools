@@ -28,14 +28,14 @@ describe('the quotation check', () => {
     expect(R.quote.why).toContain('20%');
   });
 
-  it('bands the false ceiling at Premium in Mumbai: Rs. 75–110 a sq ft fitted, × 1.2749681', () => {
+  it('bands the false ceiling at Premium in Mumbai: ₹75–110 a sq ft fitted, × 1.2749681', () => {
     expect(fc.from).toEqual({ entry: 'fc-gypsum', family: 'false-ceiling', levels: [3] });
     // 75 × 1.2749681 = 95.6226; 110 × 1.2749681 = 140.2465.
     const r = at(120);
     expect([r.band, r.where, r.off, r.flagged, r.how, r.reported]).toEqual([{ low: 95.62, high: 140.25 }, 'within', 0, false, 'bill', false]);
   });
 
-  it('flags only beyond 20%: Rs. 76.50 is 19.996% below Rs. 95.62, Rs. 76.49 is 20.006%', () => {
+  it('flags only beyond 20%: ₹76.50 is 19.996% below ₹95.62, ₹76.49 is 20.006%', () => {
     // 0.8 × 95.62 = 76.496 and 1.2 × 140.25 = 168.30.
     expect([at(76.5).where, at(76.5).off, at(76.5).flagged]).toEqual(['below', 20, false]);
     expect([at(76.49).off, at(76.49).flagged]).toEqual([20, true]);
@@ -52,21 +52,21 @@ describe('the quotation check', () => {
     expect([at(undefined).where, at(undefined).band]).toEqual(['left-out', null]);
   });
 
-  it('takes the cheapest choice at the level: mid-range kitchen units at Rs. 6,000 a running ft plus GST come to Rs. 9,026.77', () => {
+  it('takes the cheapest choice at the level: mid-range kitchen units at ₹6,000 a running ft plus GST come to ₹9,026.77', () => {
     const k = lines.find((x) => x.b.entry === 'kc-acrylic') as (typeof lines)[number];
-    // 6,000 × 1.18 = 7,080 × 1.2749681 = 9,026.77; the high end Rs. 22,000 × 1.2749681 = 28,049.30 a running ft.
+    // 6,000 × 1.18 = 7,080 × 1.2749681 = 9,026.77; the high end ₹22,000 × 1.2749681 = 28,049.30 a running ft.
     expect(one([{ words: 'x', unit: TYPED_UNIT[k.b.unit], rate: 20000, from: k.from }], ctx)[0].band).toEqual({ low: 9026.77, high: 28049.3 });
     expect(checkRate('kc-mid-zen', 'mumbai', 0)).toBe(9026.77);
   });
 
-  it('turns metres into running feet: kitchen units at Rs. 25,000–45,000 a metre come to Rs. 9,715.26–17,487.46 a running ft', () => {
+  it('turns metres into running feet: kitchen units at ₹25,000–45,000 a metre come to ₹9,715.26–17,487.46 a running ft', () => {
     // 25,000 × 1.2749681 = 31,874.20 a metre × 0.3048 = 9,715.26; 45,000 × 0.3048 = 13,716 a running ft × 1.2749681 = 17,487.46.
     const from = { entry: 'kc-mid-m', family: 'cabinets', levels: [] };
     expect(one([{ words: 'x', unit: 'rft', rate: 12000, from }], ctx)[0].band).toEqual({ low: 9715.26, high: 17487.46 });
   });
 
   it('adds GST to the material of a rate quoted before it, never to its fixing labour, at either end', () => {
-    // Athangudi tiles Rs. 80 + 10% wastage = 88 × 1.18 = 103.84, plus (25 + 8) × 1.2749681 = 42.07 of labour: 145.91.
+    // Athangudi tiles ₹80 + 10% wastage = 88 × 1.18 = 103.84, plus (25 + 8) × 1.2749681 = 42.07 of labour: 145.91.
     // High end: 250 × 1.1 × 1.18 = 324.50, plus (40 + 18) × 1.2749681 = 73.95: 398.45. With GST on the labour too, 153.49.
     const c = cityFactor('mumbai') as number;
     expect([price('fl-athangudi', c, 18, 0)?.rate, price('fl-athangudi', c, 18, 1)?.rate]).toEqual([145.91, 398.45]);
@@ -83,7 +83,7 @@ describe('the quotation check', () => {
     const c = billLines(home({ level: 2, items: { 'living:floor:floor-skirting': 'fl-marble-statuario' } }));
     const s = c.lines.find((x) => x.b.entry === 'fl-marble-statuario') as (typeof c.lines)[number];
     expect(s.from.levels).toEqual([5]);
-    // Level 5's floors in Mumbai: microcement Rs. 300 fitted × 1.2749681 = 382.49 the lowest; Calacatta the dearest, 2,379.24.
+    // Level 5's floors in Mumbai: microcement ₹300 fitted × 1.2749681 = 382.49 the lowest; Calacatta the dearest, 2,379.24.
     expect(one([{ words: 'x', unit: 'sqft', rate: 1500, from: s.from }], c.ctx)[0].band).toEqual({ low: 382.49, high: 2379.24 });
   });
 });
@@ -96,8 +96,8 @@ describe('a line typed by hand', () => {
     expect(['Door', 'Kitchen sink mixer', 'Miscellaneous'].map(matchWords)).toEqual([null, null, null]);
   });
   it('takes the level the estimate puts its family at, and says not matched otherwise until one is picked', () => {
-    // The floor at Premium in Mumbai: granite Rs. 110 fitted × 1.2749681 = 140.25 the lowest, encaustic tiles Rs. 500 = 637.48 the dearest.
-    // Rs. 670 is 32.52 over 637.48: 5.10%, within the 20%.
+    // The floor at Premium in Mumbai: granite ₹110 fitted × 1.2749681 = 140.25 the lowest, encaustic tiles ₹500 = 637.48 the dearest.
+    // ₹670 is 32.52 over 637.48: 5.10%, within the 20%.
     const [floor, door, picked] = one([
       { words: 'Vitrified floor tiles', unit: 'sqft', rate: 670 }, { words: 'Door', unit: 'nos', rate: 9000 }, { words: 'Door', unit: 'nos', rate: 9000, pick: 'main-door' },
     ], ctx);

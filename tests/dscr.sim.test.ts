@@ -208,7 +208,7 @@ function runSeed(seed: number): { cases: number; violations: string[]; seen: Rec
     } else if ('none' in most) {
       seen.noAmount++;
       const tiny = planAt({ ...loan, amount: 1 });
-      if (tiny && meets(tiny.statement, target) && !/^No (single answer|upper limit)/.test(most.none)) bad(`"${most.none}" though Rs. 1 meets the target`);
+      if (tiny && meets(tiny.statement, target) && !/^No (single answer|upper limit)/.test(most.none)) bad(`"${most.none}" though ₹1 meets the target`);
     } else bad(`largest loan gave ${JSON.stringify(most)}`);
 
     // Shortest repayment (every third case, on a quarter of the loan so that answers exist): meets the target, and every

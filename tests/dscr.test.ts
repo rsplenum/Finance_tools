@@ -71,8 +71,8 @@ describe('fictional case A, common definition', () => {
 describe('the loan that meets a target (fictional case A)', () => {
   // Every schedule figure scales with the loan: at k × 12 lakh, cash available in a year = 0.75 × (PBDIT − 50,000)
   // + 0.25 × depreciation + 0.25 × k × interest, and debt service = k × (interest + principal).
-  // Average: (21,10,000 + 76,500 k) / (15,06,000 k) ≥ 1.5  →  k ≤ 21,10,000 / 21,82,500  →  Rs. 11,60,137.
-  // 2027-28: (5,57,500 + 25,500 k) / (5,02,000 k) ≥ 1.2  →  k ≤ 5,57,500 / 5,76,900  →  Rs. 11,59,646.
+  // Average: (21,10,000 + 76,500 k) / (15,06,000 k) ≥ 1.5  →  k ≤ 21,10,000 / 21,82,500  →  ₹11,60,137.
+  // 2027-28: (5,57,500 + 25,500 k) / (5,02,000 k) ≥ 1.2  →  k ≤ 5,57,500 / 5,76,900  →  ₹11,59,646.
   const { amount: _, ...terms } = LOAN;
   it('average of 1.50', () => {
     expect(maxLoanAmount(CASE_A, terms, COMMON, { average: 1.5 })).toMatchObject({ amount: 1160137, limitedBy: { kind: 'average' } });
@@ -173,7 +173,7 @@ describe('the repayment schedule, month by month', () => {
     const a = amortization({ amount: 1000000, ratePct: 12, disbursed: '2026-04', moratoriumMonths: 0, instalments: 12, frequency: 'monthly', style: 'emi' }) as Amortization;
     expect(a.totalInterest.toFixed(2)).toBe('66185.46');
   });
-  it('a textbook EMI: Rs. 10,00,000 at 12% for 12 months is Rs. 88,848.79; month 1 is 10,000 interest and 78,848.79 principal', () => {
+  it('a textbook EMI: ₹10,00,000 at 12% for 12 months is ₹88,848.79; month 1 is 10,000 interest and 78,848.79 principal', () => {
     const a = amortization({ amount: 1000000, ratePct: 12, disbursed: '2026-04', moratoriumMonths: 0, instalments: 12, frequency: 'monthly', style: 'emi' }) as Amortization;
     expect(a.level.toFixed(2)).toBe('88848.79');
     expect([a.months[0].interest.toFixed(2), a.months[0].principal.toFixed(2), a.months[0].instalment]).toEqual(['10000.00', '78848.79', 1]);

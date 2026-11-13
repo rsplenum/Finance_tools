@@ -80,9 +80,9 @@ describe('Mudra: the level and the guarantee fee by CGFMU', () => {
   it('stops above 20 L in all, and above 10 L unless a Tarun loan was repaid', () => {
     const big = { ...CASE_M, cost: { machinery: 3000000 }, loan: { ...CASE_M.loan, amount: 1900000 } };
     const over = reportNeeds({ ...big, scheme: { id: 'mudra', tarunRepaid: true } });
-    expect(over.some((n) => n.startsWith('Mudra: the term loan and the working-capital limit come to Rs. 21,00,000, Rs. 1,00,000 above') && n.includes('CGTMSE'))).toBe(true);
+    expect(over.some((n) => n.startsWith('Mudra: the term loan and the working-capital limit come to ₹21,00,000, ₹1,00,000 above') && n.includes('CGTMSE'))).toBe(true);
     const plus = { ...big, loan: { ...big.loan, amount: 900000 }, wcLimit: 200000 };
-    expect(reportNeeds({ ...plus, scheme: { id: 'mudra' } }).some((n) => n.startsWith('Mudra: the loans come to Rs. 11,00,000, above Tarun'))).toBe(true);
+    expect(reportNeeds({ ...plus, scheme: { id: 'mudra' } }).some((n) => n.startsWith('Mudra: the loans come to ₹11,00,000, above Tarun'))).toBe(true);
     expect(report({ ...plus, scheme: { id: 'mudra', tarunRepaid: true } }).mudra?.level.id).toBe('tarunPlus');
   });
   it('takes no collateral: one typed is refused; the security cover is shown, not counted; no collateral change offered', () => {
@@ -132,15 +132,15 @@ describe('CGTMSE when ticked', () => {
     const r = report({ ...CGTMSE_M, collateral: 900000 });
     expect([r.guarantee?.guaranteed, r.guarantee?.collateral]).toEqual([100000, 900000]);
     close(fees(r), [82.5, 330, 330, 330, 330]);
-    expect(reportNeeds({ ...CGTMSE_M, collateral: 1000000 })).toContain('CGTMSE: the collateral\'s market value of Rs. 10,00,000 backs the loans\' Rs. 10,00,000 in full, leaving nothing for CGTMSE to guarantee: leave CGTMSE out, or lower the collateral to the part it backs');
+    expect(reportNeeds({ ...CGTMSE_M, collateral: 1000000 })).toContain('CGTMSE: the collateral\'s market value of ₹10,00,000 backs the loans\' ₹10,00,000 in full, leaving nothing for CGTMSE to guarantee: leave CGTMSE out, or lower the collateral to the part it backs');
   });
   it('beside property, the slab is still that of the loans in all (CGS-I para 8, note 5): 12 L in all at 0.50%, though 7 L is guaranteed', () => {
     const r = report({ ...CGTMSE_M, wcLimit: 400000, collateral: 500000 });
     expect([r.guarantee?.ratePct, r.guarantee?.cover, r.guarantee?.guaranteed]).toEqual([0.5, 1200000, 700000]);
   });
-  it('above Rs. 10 crore in all it stops', () => {
+  it('above ₹10 crore in all it stops', () => {
     const x = { ...CGTMSE_M, cost: { machinery: 150000000 }, loan: { ...CGTMSE_M.loan, amount: 100000000 } };
-    expect(reportNeeds(x).some((n) => n.startsWith('CGTMSE: the loans come to Rs. 10,02,00,000, above the Rs. 10,00,00,000 it guarantees in all'))).toBe(true);
+    expect(reportNeeds(x).some((n) => n.startsWith('CGTMSE: the loans come to ₹10,02,00,000, above the ₹10,00,00,000 it guarantees in all'))).toBe(true);
   });
   it('under PMEGP, the margin money counts in the outstanding until it is set off after 3 years', () => {
     // CASE_P's loans: 24 L sanctioned, 3 L limit: 27 L in all, so 0.55%. The loan repaid is 24 L less the margin money.

@@ -74,7 +74,7 @@ describe('the lender\'s steps never trade a level met', () => {
 });
 
 describe('collateral, last', () => {
-  it('case R with a 20 lakh limit and 3 lakh typed: only the cover misses, Rs. 4,36,226 in all (viable.test.ts)', () => {
+  it('case R with a 20 lakh limit and 3 lakh typed: only the cover misses, ₹4,36,226 in all (viable.test.ts)', () => {
     const x = { ...CASE_R, wcLimit: 2000000, collateral: 300000 };
     const p = makePlan(x) as Plan;
     expect(p.levers).toEqual({ ...AS_TYPED, collateral: 136226 });

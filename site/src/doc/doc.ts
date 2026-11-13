@@ -7,12 +7,22 @@ import { questionsLeft } from '../verdict';
 
 /** A figure as the engine gave it: an amount in rupees, a ratio, a count or a quantity (as typed), and the decimals shown. */
 export interface Figure {
-  value: number; kind: 'amount' | 'ratio' | 'count' | 'quantity'; decimals: number;
+  /** `month`: a month as Excel's serial day number of its first day, shown as "Apr 2026". */
+  value: number; kind: 'amount' | 'ratio' | 'count' | 'quantity' | 'month'; decimals: number;
+  /** In the Excel copy: an input of the model, in blue on a pale yellow fill (the FAST Standard's mark), to be typed over. */
+  input?: boolean;
+  /** In the Excel copy: a zero shows as an empty cell (a count that is only there in some rows). */
+  hideZero?: boolean;
   /**
    * In the Excel copy only, a formula (without "=") that redoes the figure from other cells, `value` being what the engine
-   * gave: `{ref}` is this column's cell in the row named `ref` on the same sheet, `{Part!ref}` on another part's sheet, and `{ref@3}` the cell in the table's column 3 (0 the labels).
+   * gave: `{ref}` is this column's cell in the row named `ref` on the same sheet, `{Part!ref}` on another part's sheet,
+   * `{ref@3}` the cell in the table's column 3 (0 the labels), `{ref@$3}` the same cell fixed ($D$9, for a range or a
+   * constant), and `{ref@-1}` the cell one column to the left (the year before).
    */
   formula?: string;
+  /** A formula that gives words (the year of the lowest DSCR): the words, shown until Excel works it again. A formula
+   * whose `value` is not a number (NaN) gives an empty cell until then. */
+  result?: string;
 }
 export interface Cell { text: string; figure?: Figure }
 /** `head` names a group of rows, on a shaded band; `total` rows are in bold under a rule, and a `ratio` row between two. */
@@ -23,10 +33,25 @@ export interface Row { cells: Cell[]; kind?: RowKind; ref?: string }
 export interface Column { label: string; sub?: string; wrap?: number }
 /** The first column names each row, and is repeated when the other columns are split across pages. */
 /** `unit`: what its figures are in ("Amount in rupees"), said above the table at the right. */
-export interface Table { columns: Column[]; rows: Row[]; size?: 'small'; unit?: string }
+/** `freeze`: in the Excel copy, the headings and this many columns of names stay in view as the sheet scrolls. */
+/** `headRef`: names the headings' row for a formula, as `Row.ref` does (the years, for a chart's labels). */
+export interface Table { columns: Column[]; rows: Row[]; size?: 'small'; unit?: string; freeze?: number; headRef?: string }
 
-/** A figure in a shaded strip: its name, the figure, and a note under it. */
-export interface KeyFigure { label: string; value: string; note?: string }
+/** A figure in a shaded strip: its name, the figure, the level the lender looks for (in bold) and a note under it. */
+export interface KeyFigure { label: string; value: string; level?: string; note?: string }
+/**
+ * Two amounts a year as bars from a common start, each with its figure at its end, the tightest year shaded and named
+ * (`tightName`); the same chart on the page (Bars.tsx), in the PDF, the Word copy and the Excel copy. `texts` are the
+ * figures as shown; `values` the engine's, for the bars' lengths and the Excel chart's cells.
+ */
+export interface Chart {
+  title: string; unit: string; names: [string, string]; tightName: string;
+  /** In the Word and Excel charts: the values divided by `scale` (100000 for lakh) and shown to `decimals`, as `texts` are. */
+  scale?: number; decimals?: number;
+  /** In the Excel copy: the model's cells the chart reads, as formula references ({Statement!cashLakh@$2}:{Statement!cashLakh@$7}). */
+  sheet?: { labels: string; a: string; b: string };
+  rows: { label: string; values: [number, number]; texts: [string, string]; tight?: boolean; note?: string }[];
+}
 
 /** A cover page: no running header or footer on it, and the next block starts a new page. */
 export interface Cover { kicker: string; title: string; sub?: string; lines: string[]; facts: [string, string][]; mark?: { title: string; text: string } }
@@ -34,7 +59,7 @@ export interface Cover { kicker: string; title: string; sub?: string; lines: str
 export type Block =
   | ({ kind: 'cover' } & Cover)
   /** The parts with a `section`, in order, each with its page in the PDF; a contents field in the Word copy; links in the Excel copy. */
-  | { kind: 'contents'; title: string }
+  | { kind: 'contents'; title: string; compact?: boolean }
   /** `small` for the title of an annex. */
   | { kind: 'title'; text: string; sub?: string; small?: boolean }
   | { kind: 'heading'; text: string }
@@ -46,11 +71,14 @@ export type Block =
   | { kind: 'figures'; items: KeyFigure[] }
   | { kind: 'box'; title: string; items: string[] }
   | { kind: 'table'; table: Table }
+  | { kind: 'chart'; chart: Chart }
   | { kind: 'signature'; lines: string[] };
 
 /** A part is a sheet in the Excel copy, and starts a new page in the PDF and the Word copy; `sheetOnly` (a check sheet of formulas) is in the Excel copy alone. */
 export interface Part {
   name: string; blocks: Block[]; sheetOnly?: boolean;
+  /** In the PDF and the Word copy alone: the reading, whose figures the Excel copy's model sheets hold as formulas. */
+  paperOnly?: boolean;
   /** Its line in the contents (like "1. The project at a glance"). */
   section?: string;
   /** Runs on under the part before it, in the PDF and the Word copy, rather than from a new page. */
@@ -85,7 +113,8 @@ export function docText(d: Doc): string {
     else if (b.kind === 'list') out.push(...b.items);
     else if (b.kind === 'pairs') out.push(...b.pairs.map(([k, v]) => `${k}: ${v}`));
     else if (b.kind === 'facts') out.push(...b.lines.flat().map(([k, v]) => `${k}: ${v}`));
-    else if (b.kind === 'figures') out.push(...b.items.map((f) => `${f.label}: ${f.value}${f.note ? ` ${f.note}` : ''}`));
+    else if (b.kind === 'figures') out.push(...b.items.map((f) => `${f.label}: ${f.value}${f.level ? ` ${f.level}` : ''}${f.note ? ` ${f.note}` : ''}`));
+    else if (b.kind === 'chart') out.push(b.chart.title, b.chart.unit, b.chart.names.join(' | '), ...b.chart.rows.map((r) => `${r.label}${r.tight ? ` (${b.chart.tightName})` : r.note ? ` (${r.note})` : ''}: ${r.texts.join(' | ')}`));
     else if (b.kind === 'box') out.push(b.title, ...b.items);
     else if (b.kind === 'table') out.push(b.table.unit ?? '', b.table.columns.map((c) => c.label + (c.sub ? ` (${c.sub})` : '')).join(' | '), ...b.table.rows.map(cells));
     else out.push(...b.lines);

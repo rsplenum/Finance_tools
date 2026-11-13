@@ -174,7 +174,7 @@ export function viewOf(r: Cma, quasi: boolean): CmaView {
   const ratiosT: ViewTable = {
     id: 'ratios', title: 'Ratios', first: 'Ratio', columns: years,
     rows: [
-      ratios('Current ratio', (y) => y.currentRatio), line('Net working capital (Rs.)', (y) => y.nwc),
+      ratios('Current ratio', (y) => y.currentRatio), line('Net working capital (₹)', (y) => y.nwc),
       ratios('Outside liabilities to net worth', (y) => y.tolTnw), ratios('Term liabilities to net worth', (y) => y.debtEquity),
       ratios('Interest cover: profit before interest, depreciation and tax ÷ interest', (y) => y.interestCover),
       ratios('Net profit to net sales', (y) => y.netMarginPct, pct), ratios('Growth in sales', (y) => y.growthPct, pct),
@@ -184,8 +184,8 @@ export function viewOf(r: Cma, quasi: boolean): CmaView {
   return {
     tables: [formI, formII, formIII, formIV, formV, formVI, ratiosT], check: checkOf(r, years), years,
     key: [
-      { label: `Limit by the turnover method, ${last.fy}`, value: `Rs. ${inr(r.limit)}`, note: `${TURNOVER.needPct}% of the turnover less the larger of the ${TURNOVER.marginPct}% margin and the net working capital` },
-      { label: 'Limit you have today', value: `Rs. ${inr(r.existingLimit)}` },
+      { label: `Limit by the turnover method, ${last.fy}`, value: `₹${inr(r.limit)}`, note: `${TURNOVER.needPct}% of the turnover less the larger of the ${TURNOVER.marginPct}% margin and the net working capital` },
+      { label: 'Limit you have today', value: `₹${inr(r.existingLimit)}` },
       { label: `Current ratio, ${last.fy}`, value: ratio(last.currentRatio) },
     ],
     flags: r.flags.map((x) => x.text),

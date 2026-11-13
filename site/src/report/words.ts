@@ -6,7 +6,7 @@
 import { NOTES, SECTIONS, checkDraft, type NarrativeInput, type NoteId } from '../../../engine/narrative';
 import { BORROWERS } from '../../../engine/tax';
 import { PMEGP } from '../../../engine/report';
-import { printable } from '../doc/pdf';
+import { printable } from '../doc/face';
 import { AREA_CHOICES, CATEGORY_CHOICES, HEADS, guaranteeOf, type ReportState, type ReportWords } from './model';
 
 export const NO_NOTES = Object.fromEntries(NOTES.map((n) => [n.id, ''])) as Record<NoteId, string>;

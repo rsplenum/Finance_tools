@@ -1,6 +1,6 @@
 /**
  * Make it viable (engine/viable.ts, D-UX-50, D-UX-52) on fictional case R (tests/report.test.ts, worked by hand there),
- * with its sales cut to 70 lakh so it misses, and on case P (drivers, PMEGP) with its price cut to Rs. 150. The levels are
+ * with its sales cut to 70 lakh so it misses, and on case P (drivers, PMEGP) with its price cut to ₹150. The levels are
  * a fresh loan's (engine/data/ratios.json, D-UX-51).
  *
  * Case R at 70 lakh, year 1 (2026-27), by hand. Profit before tax 0.35 × 70,00,000 − 18,00,000 − 4,20,000 − 20,000 −
@@ -131,7 +131,7 @@ describe('the collateral and the security cover', () => {
   });
 });
 
-describe('case P at Rs. 150 a unit: the drivers and PMEGP', () => {
+describe('case P at ₹150 a unit: the drivers and PMEGP', () => {
   const v = makeViable(P) as Viability, s = v.sales as NonNullable<Viability['sales']>;
   it('the price that meets, and the use of the capacity beyond full', () => {
     expect(v.meets).toBe(false);
@@ -171,7 +171,7 @@ describe('changed benchmarks on the project report (BEN1)', () => {
   it('a blank, nil or wrong figure leaves the default', () => {
     expect(at(weak, { dscrLowest: 0, currentRatio: NaN }).misses).toEqual(misses(weak));
   });
-  it('the security cover at 1.10 meets on the project\'s own assets; at 1.15 it needs Rs. 2,14,004, in the plan too', () => {
+  it('the security cover at 1.10 meets on the project\'s own assets; at 1.15 it needs ₹2,14,004, in the plan too', () => {
     const big = { ...CASE_R, wcLimit: 2000000 }, r = projectReport(big) as Report;
     const sc = at(big, { securityCover: 1.1 }).checks.find((c) => c.id === 'securityCover');
     expect([sc?.meets, sc?.own, sc?.worst?.toFixed(4), collateralNeeded(r, big, 'fresh', { securityCover: 1.1 })]).toEqual([true, true, '1.1018', 0]);

@@ -7,7 +7,7 @@
 import type { Block, Cell, Doc, Table } from '../doc/doc';
 import { forDocument } from '../doc/doc';
 import { ALL_ANSWERED } from '../verdict';
-import { printable } from '../doc/pdf';
+import { printable } from '../doc/face';
 import { SITE_NAME } from '../site';
 import { sureLower, type Marked } from '../../../engine/sure';
 import CMA_FILE from '../../../engine/data/cma.json';

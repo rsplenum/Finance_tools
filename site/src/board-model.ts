@@ -36,7 +36,7 @@ const SHORT_OF: Record<Shortfall, string> = {
   pbdit: 'profit before interest, depreciation and tax',
 };
 const shortText = (k: RatioCheck, over: string) => k.short && k.short.amount > 0
-  ? `Short by Rs. ${upRupees(k.short.amount)} of ${SHORT_OF[k.short.of]}${k.fy ? ` in ${k.fy}` : `, in total ${over}`}.` : undefined;
+  ? `Short by ₹${upRupees(k.short.amount)} of ${SHORT_OF[k.short.of]}${k.fy ? ` in ${k.fy}` : `, in total ${over}`}.` : undefined;
 /** Where the bar ends: 0 at nil or below, the level at the middle, full past twice the level (or net worth at or below nil). */
 export const barOf = (k: RatioCheck) => (k.why ? 100 : k.worst === undefined ? 0 : Math.max(0, Math.min(100, (k.worst / (2 * k.level)) * 100)));
 export const labelOf = (id: RatioId) => inSentence(LEVELS.ratios.find((r) => r.id === id)?.label ?? id);
@@ -93,7 +93,7 @@ export const upPct = (x: number) => (Math.ceil(x * 10 - 1e-6) / 10).toFixed(1);
 /** A lever's card on the board: how far it moves, now against needed, the ratios it brings to their level and leaves. */
 export interface ViableLine {
   id: string; by: 'borrower' | 'lender'; head: string; text: string; note?: string;
-  /** How far it moves, in one figure ("+17.3%", "Rs. 15,64,221 less", "+6 months"); none when no answer. */
+  /** How far it moves, in one figure ("+17.3%", "₹15,64,221 less", "+6 months"); none when no answer. */
   move?: string;
   /** Now and needed, for two bars side by side; the longer is the full width. */
   bars?: { now: number; to: number; nowText: string; toText: string };

@@ -1,9 +1,11 @@
 /**
  * The DSCR statement as a document to download, one document written three times (site/src/doc/): a PDF for the lender,
- * an Excel copy for the accountant and a Word copy to edit. Laid out as a chartered accountant's statement (P1g): page 1
- * the whole working, signed; then the sensitivity analysis when the lenders' tests have figures (D1b); Annex 1 the basis;
- * Annex 2 the repayment schedule; and in the Excel copy alone, a Check sheet of formulas. Built from the page's state and preview
- * only, reusing the statement and schedule views of model.ts: every figure is the engine's, and none is computed here.
+ * an Excel copy for the accountant and a Word copy to edit (WORKED-PAGE §5, D-DOC-18 on trial). The PDF and the Word copy:
+ * page 1 at a glance (who asks and for what, the two key figures beside the lender's level, no verdict, the chart, the
+ * status and the contents); 1 the whole working, signed; 2 the sensitivity analysis when the lenders' tests have figures
+ * (D1b); Annex 1 the basis; Annex 2 the repayment schedule. The Excel copy: the model (workbook.ts: Inputs, Schedule,
+ * Workings, Statement, every worked figure a formula), the sensitivity analysis, and Checks. Built from the page's state
+ * and preview only, reusing the statement and schedule views of model.ts: every figure is the engine's, none computed here.
  * While anything is missing the document says provisional and lists it; its own facts are asked beside the download, once.
  */
 import DSCR from '../../../engine/data/dscr.json';
@@ -11,15 +13,18 @@ import { overdueNote, todayIso } from '../../../engine/review';
 import { LENDER } from '../../../engine/lender';
 import { COMPONENTS, OPTIONS, PLAN_SERVICE, componentsOf, targetNeeds, type Component, type Definition } from '../../../engine/dscr';
 import { parseMonth } from '../../../engine/parse';
-import type { Block, Cell, Doc, Figure, KeyFigure, Part, Row, Table } from '../doc/doc';
+import { levelFor } from '../../../engine/ratios';
+import type { Block, Cell, Chart, Doc, Figure, KeyFigure, Part, Row, Table } from '../doc/doc';
 import { forDocument } from '../doc/doc';
-import { printable } from '../doc/pdf';
+import { printable } from '../doc/face';
 import { SITE_NAME } from '../site';
 import {
   BORROWER_CHOICES, GROUP_TITLES, amountOf, definitionOf, loanRead, modeOf, monthText, numberOf, presetOf, rowsOf, runningLoan, statusText,
   targetOf, tidyAmount, yearsOf,
   type DocFacts, type LenderView, type OptionKey, type Preview, type RowDef, type RowMode, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
+import { SHEET, workbookOf } from './workbook';
+import { barsOf } from './worked';
 
 /** What the document needs that the page does not ask: the borrower's name and the lender, in letters the PDF prints. */
 export function docNeeds(f: DocFacts): string[] {
@@ -95,7 +100,7 @@ const REPAID = { emi: 'EMI every month', monthly: 'Equal principal every month',
 function loanFacts(s: State, p: Preview, y: Years): [string, string][][] {
   const l = s.loan, rate = numberOf(l.ratePct), month = parseMonth(l.disbursed), m = numberOf(l.moratoriumMonths), k = numberOf(l.instalments);
   const lines: [string, string][][] = [
-    [['Amount', amountOf(l.amount) === undefined ? 'Still needed' : `Rs. ${tidyAmount(l.amount)}`], ['Interest rate', rate === undefined ? 'Still needed' : `${rate}% a year`]],
+    [['Amount', amountOf(l.amount) === undefined ? 'Still needed' : `₹${tidyAmount(l.amount)}`], ['Interest rate', rate === undefined ? 'Still needed' : `${rate}% a year`]],
     [['First drawn', month ? monthText(month) : 'Still needed'], ['Moratorium', m === undefined ? 'Still needed' : m ? `${m} month${m === 1 ? '' : 's'}, interest paid` : 'None']],
     [['Repaid', l.repayment ? REPAID[l.repayment] : 'Still needed'], ['Instalments', k === undefined ? 'Still needed' : `${k}${l.repayment ? ` ${l.repayment === 'quarterly' ? 'quarterly' : 'monthly'}` : ''}`]],
   ];
@@ -106,11 +111,14 @@ function loanFacts(s: State, p: Preview, y: Years): [string, string][][] {
 }
 
 /** The average and the lowest year, in a strip under the working. The verdict, the largest loan, the fewest instalments and the lender's target stay on the page. */
-function keyFigures(def: Definition, p: Preview): KeyFigure[] {
+function keyFigures(s: State, def: Definition, p: Preview): KeyFigure[] {
   if (p.average === undefined) return [];
+  // The lender's level (D-DOC-18): the target typed on the page, else the usual level (engine/data/ratios.json). No verdict.
+  const t = targetOf(s), level = (typed: number | undefined, id: 'dscrAverage' | 'dscrLowest') => (typed !== undefined && Number.isFinite(typed)
+    ? `Lender's level ${typed.toFixed(2)}` : `Usual level ${levelFor(id, 'fresh').toFixed(2)}`);
   return [
-    { label: 'Average DSCR', value: p.average, note: lower(choiceLabel(def, 'average')) },
-    { label: 'Lowest year', value: p.lowest ?? '', note: `in ${p.lowestYear}` },
+    { label: 'Average DSCR', value: p.average, level: level(t.average, 'dscrAverage'), note: lower(choiceLabel(def, 'average')) },
+    { label: 'Lowest year', value: p.lowest ?? '', level: level(t.minimum, 'dscrLowest'), note: `in ${p.lowestYear}` },
   ];
 }
 
@@ -150,12 +158,12 @@ const ASSUMPTION_OF: Record<string, string> = {
   pbdit: 'margin', assetIncome: 'asset', depreciation: 'depreciation', interestOther: 'interest', otherLoans: 'otherLoans', nonCash: 'nonCash', leaseRentals: 'nonCash', taxPct: 'tax',
 };
 
-/** A figure as typed, read back: Rs. 1,50,000, or 25%. */
+/** A figure as typed, read back: ₹1,50,000, or 25%. */
 function typed(t: string | undefined, percent?: boolean): string {
   const text = t?.trim() ?? '';
   if (!text) return 'still needed';
   const n = percent ? numberOf(text) : amountOf(text);
-  return n === undefined ? `"${text}" (not understood)` : percent ? `${n}%` : `Rs. ${tidyAmount(text)}`;
+  return n === undefined ? `"${text}" (not understood)` : percent ? `${n}%` : `₹${tidyAmount(text)}`;
 }
 
 /** How a line was given, in words. */
@@ -217,7 +225,7 @@ function schedulePart(sch: ScheduleView): Part {
   const money = (text: string, value: number) => cell(text, value, 'amount');
   const table = (t: Table): Block => ({ kind: 'table', table: t });
   return {
-    name: 'Repayment schedule',
+    name: 'Repayment schedule', section: 'Annex 2. Repayment schedule',
     blocks: [
       { kind: 'title', text: 'Annex 2. Repayment schedule', small: true },
       { kind: 'text', text: 'In rupees, rounded; totals use the exact figures.', small: true },
@@ -244,9 +252,9 @@ function schedulePart(sch: ScheduleView): Part {
 
 // ---- The sensitivity analysis (D1b): the lenders' tests of D-UX-47 as the page shows them, and the Excel copy's check ----
 
-const STATEMENT = 'DSCR statement', SENSITIVITY = 'Sensitivity', CHECK = 'Check';
-/** An amount as the view words it, without its "Rs." (the table says rupees), and the engine's figure. */
-const money = (text: string, value: number, formula?: string): Cell => ({ text: text.replace(/^Rs\. /, ''), figure: { value, kind: 'amount', decimals: 0, ...(formula ? { formula } : {}) } });
+const STATEMENT_PART = 'DSCR statement', SENSITIVITY = 'Sensitivity', CHECK = 'Check';
+/** An amount as the view words it, without its "₹" (the table says rupees), and the engine's figure. */
+const money = (text: string, value: number, formula?: string): Cell => ({ text: text.replace(/^₹ ?/, ''), figure: { value, kind: 'amount', decimals: 0, ...(formula ? { formula } : {}) } });
 const ratio = (text: string, value: number | undefined, formula?: string): Cell => (value === undefined || !Number.isFinite(value) ? { text }
   : { text, figure: { value, kind: 'ratio', decimals: (text.split('.')[1] ?? '').length, ...(formula ? { formula } : {}) } });
 /** A row of the check: 0 in each year it checks, from a formula that is 0 when the two figures agree. */
@@ -259,8 +267,8 @@ const hasFigures = (v: LenderView) => v.stress.length > 0 || 'line' in v.promote
 function sensitivityPart(v: LenderView, years: string[]): Part {
   const lines = [...v.stress, ...('line' in v.promoters ? [v.promoters.line] : [])];
   const blocks: Block[] = [
-    { kind: 'title', text: 'Sensitivity analysis', small: true },
-    { kind: 'text', text: "Our own tests beside the DSCR on page 1, not a lender's norm: each lender sets its own cases. They do not change the DSCR on page 1.", small: true },
+    { kind: 'title', text: '2. Sensitivity analysis', small: true },
+    { kind: 'text', text: "Our own tests beside the DSCR in section 1, not a lender's norm: each lender sets its own cases. They do not change that DSCR.", small: true },
   ];
   if (v.blocked) blocks.push({ kind: 'box', title: 'Not shown', items: [v.blocked] });
   if (lines.length) {
@@ -316,19 +324,19 @@ function sensitivityPart(v: LenderView, years: string[]): Part {
     if (said.length) blocks.push({ kind: 'list', items: said, small: true });
   }
   else if (a) blocks.push({ kind: 'box', title: 'The last audited year still needs', items: a.needs });
-  return { name: SENSITIVITY, blocks };
+  return { name: SENSITIVITY, section: '2. Sensitivity analysis', blocks };
 }
 
 /**
- * The Check sheet's first table (D2, D-DOC-10): each year's DSCR redone from page 1's A and B, and the average by the
+ * The Check sheet's first table (D2, D-DOC-10): each year's DSCR redone from the Statement's A and B, and the average by the
  * method chosen over the years counted: by totals, A and B added up over those years and divided; by mean, the mean of
- * their DSCRs. A year not counted keeps its DSCR checked and is left out of the average.
+ * their DSC₹A year not counted keeps its DSCR checked and is left out of the average.
  */
 function statementCheck(st: StatementView, p: Preview): Block[] {
   const line = (id: string) => st.lines.find((l) => l.id === id);
   const dscr = line('dscr'), a = line('available'), b = line('service');
   if (!dscr?.n || !a?.n || !b?.n || p.average === undefined || p.averageN === undefined) return [];
-  const S = (ref: string, k?: number) => `{${STATEMENT}!${ref}${k === undefined ? '' : `@${k}`}}`;
+  const S = (ref: string, k?: number) => `{${STATEMENT_PART}!${ref}${k === undefined ? '' : `@${k}`}}`;
   const has = dscr.n.map((n) => n !== undefined && Number.isFinite(n)), counted = has.flatMap((h, i) => (h && st.counted[i] ? [i + 1] : []));
   const blank: Cell[] = st.years.map(() => ({ text: '' })), totals = !!st.total && !!a.total && !!b.total && !!dscr.total;
   const diff = (label: string, years: string | undefined, end: string): Row => ({ cells: [{ text: label },
@@ -358,14 +366,15 @@ function statementCheck(st: StatementView, p: Preview): Block[] {
  * formulas on the cells of the other sheets beside the engine's figure, with their differences of 0. The stress lines
  * stay numbers: their tax is worked again by slab. Not in the PDF or the Word copy.
  */
-function checkPart(st: StatementView, p: Preview, v?: LenderView): Part | undefined {
-  const blocks: Block[] = [...statementCheck(st, p)], years = st.years;
+function checkPart(st: StatementView, p: Preview, v?: LenderView, model?: Block[]): Part | undefined {
+  const STATEMENT = model ? SHEET.statement : STATEMENT_PART;
+  const blocks: Block[] = model ? [...model] : [...statementCheck(st, p)], years = st.years;
   const table = (heading: string, columns: Table['columns'], rows: Row[]) => blocks.push({ kind: 'heading', text: heading }, { kind: 'table', table: { columns, rows } });
   const across: Table['columns'] = [{ label: 'Rupees' }, ...years.map((label) => ({ label }))];
   if (v && 'line' in v.promoters) {
     const y = v.promoters.years, has = y.map((r) => r.n.dscr !== undefined);
     table("Promoters' loans repaid", across, [
-      { ref: 'promotersDscr', cells: [{ text: "DSCR, redone: page 1's A ÷ (page 1's B + promoters' loans)" },
+      { ref: 'promotersDscr', cells: [{ text: "DSCR, redone: the Statement's A ÷ (its B + promoters' loans)" },
         ...y.map((r) => ratio(r.dscr, r.n.dscr, `{${STATEMENT}!available}/({${STATEMENT}!service}+{${SENSITIVITY}!promoters})`))] },
       zero('Difference (0 if they agree)', `{promotersDscr}-{${SENSITIVITY}!promotersDscr}`, has),
     ]);
@@ -375,8 +384,8 @@ function checkPart(st: StatementView, p: Preview, v?: LenderView): Part | undefi
     const all = c.rows.map(() => true), has = c.rows.map((r) => r.n.cover !== undefined);
     const S = (ref: string) => `{${SENSITIVITY}!${ref}}`;
     table('Cash after working capital and replacement capex', across, [
-      zero("Cash available, page 1's less this test's (0 if they agree)", `{${STATEMENT}!available}-${S('cashAvailable')}`, all),
-      zero("Debt service, page 1's less this test's (0 if they agree)", `{${STATEMENT}!service}-${S('cashService')}`, all),
+      zero("Cash available, the Statement's less this test's (0 if they agree)", `{${STATEMENT}!available}-${S('cashAvailable')}`, all),
+      zero("Debt service, the Statement's less this test's (0 if they agree)", `{${STATEMENT}!service}-${S('cashService')}`, all),
       { ref: 'cashLeft', cells: [{ text: 'Cash left, redone: A less working capital, capex and B' },
         ...c.rows.map((r) => money(r.left, r.n.left, `${S('cashAvailable')}-${S('cashWc')}-${S('cashCapex')}-${S('cashService')}`))] },
       zero('Difference (0 if they agree)', `{cashLeft}-${S('cashLeft')}`, all),
@@ -401,9 +410,11 @@ function checkPart(st: StatementView, p: Preview, v?: LenderView): Part | undefi
     ]);
   }
   if (!blocks.length) return undefined;
-  return { name: CHECK, sheetOnly: true, blocks: [
-    { kind: 'title', text: 'Check', small: true },
-    { kind: 'text', text: `Page 1's DSCR for each year and its average${v ? ', then the sensitivity figures whose arithmetic is plain,' : ''} redone by formulas on the cells of the other sheets beside the engine's figures, with their differences (0 when they agree).${v ? ' The stress lines stay numbers: their tax is worked again by slab.' : ''}`, small: true },
+  return { name: model ? SHEET.checks : CHECK, sheetOnly: true, blocks: [
+    { kind: 'title', text: model ? SHEET.checks : 'Check', small: true },
+    { kind: 'text', text: model
+      ? `The model's figures beside the page's, each year and for the answer${v ? ', then the sensitivity figures whose arithmetic is plain, redone on the Statement sheet' : ''}, with their differences: 0 when they agree.${v ? ' The stress lines stay numbers: their tax is worked again by slab.' : ''}`
+      : `The DSCR for each year and its average${v ? ', then the sensitivity figures whose arithmetic is plain,' : ''} redone by formulas on the cells of the other sheets beside the engine's figures, with their differences (0 when they agree).${v ? ' The stress lines stay numbers: their tax is worked again by slab.' : ''}`, small: true },
     ...blocks,
   ] };
 }
@@ -412,7 +423,7 @@ function checkPart(st: StatementView, p: Preview, v?: LenderView): Part | undefi
 function basisPart(s: State, p: Preview, def: Definition, y: Years): Part {
   const entered = enteredPairs(s, p, y);
   return {
-    name: 'Basis',
+    name: 'Basis', section: 'Annex 1. The basis',
     blocks: [
       { kind: 'title', text: 'Annex 1. The basis', small: true },
       ...(entered.length ? [{ kind: 'heading', text: s.source === 'plan' ? 'The business figures entered' : 'The figures entered' } as Block, { kind: 'pairs', pairs: entered } as Block] : []),
@@ -440,32 +451,71 @@ export function statementDoc(s: State, p: Preview, today: string, example = fals
   if (two.length) facts.push(two);
   if (by) facts.push([['Prepared by', by]]);
 
-  // Page 1: who and what, then the whole working as the page shows it, every line, and the answer under it; signed.
-  const blocks: Block[] = [
+  const lender = p.lender && hasFigures(p.lender) ? p.lender : undefined;
+  const status = example ? 'Example' : needs.length ? `Provisional: ${needs.length} still needed` : 'Complete';
+  const bars = barsOf(p), plan = s.source === 'plan';
+  const chart: Chart | undefined = bars.length ? {
+    title: plan ? 'Cash available against repayments due' : 'Cash available against debt service', unit: '₹ lakh',
+    names: ['Cash available', plan ? 'Repayments due' : 'Debt service'], tightName: 'tightest', scale: 100000, decimals: 2,
+    rows: bars.map((b) => ({ label: b.fy, values: [b.cash, b.service] as [number, number], texts: [b.cashText, b.serviceText] as [string, string],
+      ...(b.tight ? { tight: true } : {}), ...(b.part ? { note: b.part } : !b.counted ? { note: 'not counted' } : {}) })),
+  } : undefined;
+  const key = keyFigures(s, def, p);
+
+  // Page 1 at a glance (WORKED-PAGE §5): who asks and for what, the key figures beside the lender's level (no verdict:
+  // the lender decides, D-DOC-03), the chart, the status, and the contents, each line a link to its part.
+  const asked = loanAsked(s);
+  const glance: Block[] = [
     { kind: 'title', text: borrower || 'DSCR statement', sub: `Debt service coverage ratio (DSCR), ${years.length > 1 ? `${years[0]} to ${years[years.length - 1]}` : years[0]}` },
-    { kind: 'facts', lines: facts },
+    { kind: 'facts', lines: [facts[0], ...(asked ? [[['Loan asked', asked]] as [string, string][]] : []), ...facts.slice(1), [['Status', status]]] },
   ];
-  if (needs.length) blocks.push({ kind: 'box', title: `${example ? 'Example' : 'Provisional'}: ${needs.length} still needed`, items: needs });
-  if (s.source === 'plan') blocks.push({ kind: 'heading', text: 'The loan' }, { kind: 'facts', lines: loanFacts(s, p, y) });
+  if (needs.length) glance.push({ kind: 'box', title: `${example ? 'Example' : 'Provisional'}: ${needs.length} still needed`, items: needs });
+  if (key.length) glance.push({ kind: 'figures', items: key });
+  if (chart) glance.push({ kind: 'chart', chart });
+  glance.push({ kind: 'contents', title: 'Contents', compact: true });
+  const wb = workbookOf(s, chart, glance.slice(0, 2));
+
+  // 1. The statement: the whole working as the page shows it, every line, and the answer under it; signed.
+  const blocks: Block[] = [{ kind: 'title', text: '1. The statement', small: true }];
+  if (plan) blocks.push({ kind: 'heading', text: 'The loan' }, { kind: 'facts', lines: loanFacts(s, p, y) });
   blocks.push({ kind: 'table', table: statementTable(st) });
   const notes = [p.beforeStart, p.notCounted, ...p.notes].filter((x): x is string => !!x);
   if (notes.length) blocks.push({ kind: 'list', items: notes, small: true });
-  const key = keyFigures(def, p);
-  if (key.length) blocks.push({ kind: 'figures', items: key });
-  const lender = p.lender && hasFigures(p.lender) ? p.lender : undefined, check = checkPart(st, p, lender);
-  if (lender) blocks.push({ kind: 'text', text: 'The sensitivity analysis on the next page tests this DSCR as a lender may; it does not change it.', small: true });
+  if (key.length) blocks.push({ kind: 'figures', items: key.map(({ level: _, ...k }) => k) });
+  if (lender) blocks.push({ kind: 'text', text: 'The sensitivity analysis in section 2 tests this DSCR as a lender may; it does not change it.', small: true });
   blocks.push({ kind: 'signature', lines: [`For ${borrower || 'the borrower'}`, '', 'Authorised signatory', 'Date:', 'Place:'] });
+  const check = checkPart(st, p, lender, wb?.checks);
+  const model = wb ? 'The model, for an accountant to follow (the FAST Standard). Inputs, in blue on a pale yellow fill, are as entered on the page; '
+    + `${wb.sheets.some((x) => x.name === SHEET.schedule) ? 'the Schedule, ' : ''}the Workings and the Statement work every figure from them by formulas; `
+    + 'Checks sets the page\'s figures beside the model\'s, and each difference is 0. Excel works the formulas again on opening: type over an input to try another figure, and Checks shows how far it moves from the page.'
+    : undefined;
 
   return {
     title: `DSCR statement${borrower ? `, ${borrower}` : ''}`,
     header: `DSCR statement${borrower ? ` · ${borrower}` : ''}`,
     ...(example ? { mark: 'Example' } : needs.length ? { mark: 'Provisional' } : {}),
     footer: `Made with ${SITE_NAME} on ${dmy(today)} from the figures entered; every figure worked out twice. Not a CA's certificate.`,
-    workbookNote: check ? `Each cell holds the exact figure worked out on the page, shown in whole rupees. The Check sheet redoes page 1's DSCR and its average${lender ? ' and the sensitivity figures whose arithmetic is plain' : ''} by formulas, beside the engine's figures, with their differences.`
-      : 'Each cell holds the exact figure worked out on the page, shown in whole rupees; there are no formulas.',
+    workbookNote: model ?? (check ? `Each cell holds the exact figure worked out on the page, shown in whole rupees. The Check sheet redoes the DSCR and its average${lender ? ' and the sensitivity figures whose arithmetic is plain' : ''} by formulas, beside the engine's figures, with their differences.`
+      : 'Each cell holds the exact figure worked out on the page, shown in whole rupees; there are no formulas.'),
     ...(by || borrower ? { author: by || borrower } : {}),
     creator: SITE_NAME,
-    parts: [{ name: STATEMENT, blocks }, ...(lender ? [sensitivityPart(lender, years)] : []), basisPart(s, p, def, y), ...(p.schedule ? [schedulePart(p.schedule)] : []),
-      ...(check ? [check] : [])],
+    parts: [
+      { name: 'At a glance', paperOnly: true, blocks: glance },
+      { name: STATEMENT_PART, section: '1. The statement', ...(wb ? { paperOnly: true } : {}), blocks },
+      ...(wb?.sheets ?? []),
+      ...(lender ? [sensitivityPart(lender, years)] : []),
+      { ...basisPart(s, p, def, y), ...(wb ? { paperOnly: true } : {}) },
+      ...(p.schedule ? [{ ...schedulePart(p.schedule), ...(wb ? { paperOnly: true } : {}) }] : []),
+      ...(check ? [check] : []),
+    ],
   };
+}
+
+/** The loan asked for, in one line: "₹50,00,000 at 10.5% a year, 84 EMIs every month"; undefined for own figures. */
+function loanAsked(s: State): string | undefined {
+  if (s.source !== 'plan') return undefined;
+  const l = s.loan, amount = amountOf(l.amount), rate = numberOf(l.ratePct), k = numberOf(l.instalments);
+  if (amount === undefined) return undefined;
+  return [`₹${tidyAmount(l.amount)}`, rate === undefined ? '' : ` at ${rate}% a year`,
+    k === undefined || !l.repayment ? '' : `, ${k} instalments, ${lower(REPAID[l.repayment])}`].join('');
 }

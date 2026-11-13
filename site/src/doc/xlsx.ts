@@ -5,7 +5,8 @@
  * the engine's figure until the spreadsheet works it out. A stored zip (zip.ts); no
  * library. Pure: bytes in memory, no DOM.
  */
-import type { Block, Cell, Column, Doc, Row } from './doc';
+import type { Block, Cell, Chart, Column, Doc, Row } from './doc';
+import { CHART_REL, CHART_TYPE, CHART_URI, chartSize, chartXml, emu, tightLine } from './chart';
 import { zip } from './zip';
 
 const MAIN = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
@@ -20,19 +21,21 @@ const xml = (t: string) => t.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g
 
 /** Lakh and crore grouping ([>=1,00,00,000] 1,00,00,000; [>=1,00,000] 1,00,000; else 99,999), in rupees or to the paisa. */
 const INDIAN = (dec: string) => `[>=10000000]##\\,##\\,##\\,##0${dec};[>=100000]##\\,##\\,##0${dec};##,##0${dec}`;
-const FORMATS = [INDIAN(''), INDIAN('.00'), '0.0000'];
-/** Number formats: rupees, to the paisa, a ratio to 2 and to 4 decimals, a count, a quantity (Excel's General). */
-const NUMBER_FORMATS = [164, 165, 2, 166, 1, 0];
+const FORMATS = [INDIAN(''), INDIAN('.00'), '0.0000', 'mmm yyyy', '0;-0;;@'];
+/** Number formats: rupees, to the paisa, a ratio to 2 and to 4 decimals, a count, a quantity (Excel's General), a month, a count whose zero is blank. */
+const NUMBER_FORMATS = [164, 165, 2, 166, 1, 0, 167, 168];
 
-// Fonts: plain, bold, the title, muted, an annex's title, a key figure. Fills: none, gray125 (required), shaded, amber.
+// Fonts: plain, bold, the title, muted, an annex's title, a key figure, a cover's kicker, a cover's title, a link, an
+// input (blue). Fills: none, gray125 (required), shaded, amber, an input's pale yellow.
 // Borders: none, a rule above, a rule below, rules above and below.
 // Then a cover's kicker, a cover's title, and a link to a sheet.
 const FONTS = ['<sz val="11"/>', '<b/><sz val="11"/>', '<b/><sz val="16"/>', '<sz val="10"/><color rgb="FF545454"/>', '<b/><sz val="13"/>', '<b/><sz val="14"/>',
-  '<b/><sz val="10"/><color rgb="FF1C335C"/>', '<b/><sz val="22"/>', '<u/><sz val="11"/><color rgb="FF1C335C"/>']
+  '<b/><sz val="10"/><color rgb="FF1C335C"/>', '<b/><sz val="22"/>', '<u/><sz val="11"/><color rgb="FF1C335C"/>', '<sz val="11"/><color rgb="FF0B44B8"/>']
   .map((f) => `<font>${f}<name val="Calibri"/><family val="2"/></font>`);
 const FILLS = ['<patternFill patternType="none"/>', '<patternFill patternType="gray125"/>',
   '<patternFill patternType="solid"><fgColor rgb="FFECECEC"/><bgColor indexed="64"/></patternFill>',
-  '<patternFill patternType="solid"><fgColor rgb="FFFFF4DC"/><bgColor indexed="64"/></patternFill>'].map((f) => `<fill>${f}</fill>`);
+  '<patternFill patternType="solid"><fgColor rgb="FFFFF4DC"/><bgColor indexed="64"/></patternFill>',
+  '<patternFill patternType="solid"><fgColor rgb="FFFFFBE0"/><bgColor indexed="64"/></patternFill>'].map((f) => `<fill>${f}</fill>`);
 const RULE = '<color rgb="FF444444"/>';
 const BORDERS = [['', ''], [`<top style="thin">${RULE}</top>`, ''], ['', `<bottom style="thin">${RULE}</bottom>`], [`<top style="thin">${RULE}</top>`, `<bottom style="thin">${RULE}</bottom>`]]
   .map(([top, bottom]) => `<border><left/><right/>${top || '<top/>'}${bottom || '<bottom/>'}<diagonal/></border>`);
@@ -51,7 +54,9 @@ const S = {
 };
 /** A figure's style: its number format, plain, in bold under a rule (a total), or in bold between two (a ratio). */
 const NUMBER = NUMBER_FORMATS.map((fmt) => [style({ fmt }), style({ fmt, font: 1, border: 1 }), style({ fmt, font: 1, border: 3 })]);
-const C = { kicker: style({ font: 6 }), title: style({ font: 7 }), link: style({ font: 8 }), unit: style({ font: 3, align: 'right' }) };
+/** An input of the model: blue on pale yellow, in its number format. */
+const INPUT = NUMBER_FORMATS.map((fmt) => style({ fmt, font: 9, fill: 4 }));
+const C = { kicker: style({ font: 6 }), title: style({ font: 7 }), link: style({ font: 8 }), unit: style({ font: 3, align: 'right' }), level: style({ font: 1, fill: 2, wrap: true }) };
 
 const STYLES = () => `${HEAD}<styleSheet xmlns="${MAIN}">
 <numFmts count="${FORMATS.length}">${FORMATS.map((f, i) => `<numFmt numFmtId="${164 + i}" formatCode="${xml(f)}"/>`).join('')}</numFmts>
@@ -69,21 +74,23 @@ const STYLES = () => `${HEAD}<styleSheet xmlns="${MAIN}">
 
 // ---- Sheets ----
 
-type XCell = { text: string; style: number } | { value: number; style: number; formula?: string } | { style: number };
+type XCell = { text: string; style: number } | { value: number; style: number; formula?: string; result?: string } | { style: number };
 /**
  * A row of cells. `across`: its first cell runs across every column of the sheet, wrapped (its height estimated); `span`:
  * a fact, its value across the columns after its name; `table`: a table's row, which sets the columns' widths.
  */
-interface XRow { cells: XCell[]; across?: boolean; span?: number; size?: number; table?: boolean; ref?: string; link?: string; tall?: number }
+interface XRow { cells: XCell[]; across?: boolean; span?: number; size?: number; table?: boolean; ref?: string; link?: string; tall?: number; chart?: Chart; freeze?: number }
 
 /** Column letters: 0 → A, 26 → AA. */
 const column = (i: number): string => (i < 26 ? String.fromCharCode(65 + i) : column(Math.floor(i / 26) - 1) + column(i % 26));
 
 function numberCell(c: Cell, kind?: Row['kind']): XCell {
   const f = c.figure, k = kind === 'ratio' ? 2 : kind ? 1 : 0;
-  if (!f || !Number.isFinite(f.value)) return { text: c.text, style: kind === 'ratio' ? S.ratioRight : S.right };
-  const fmt = f.kind === 'quantity' ? 0 : f.kind === 'count' ? 1 : f.kind === 'ratio' ? (f.decimals > 2 ? 166 : 2) : f.decimals > 0 ? 165 : 164;
-  return { value: f.value === 0 ? 0 : f.value, style: NUMBER[NUMBER_FORMATS.indexOf(fmt)][k], ...(f.formula ? { formula: f.formula } : {}) };
+  if (!f || (!Number.isFinite(f.value) && !f.formula)) return { text: c.text, style: kind === 'ratio' ? S.ratioRight : S.right };
+  const fmt = f.kind === 'month' ? 167 : f.kind === 'quantity' ? 0 : f.kind === 'count' ? (f.hideZero ? 168 : 1)
+    : f.kind === 'ratio' ? (f.decimals > 2 ? 166 : 2) : f.decimals > 0 ? 165 : 164;
+  const at = NUMBER_FORMATS.indexOf(fmt);
+  return { value: f.value === 0 ? 0 : f.value, style: f.input ? INPUT[at] : NUMBER[at][k], ...(f.formula ? { formula: f.formula } : {}), ...(f.result !== undefined ? { result: f.result } : {}) };
 }
 
 /** The rows of one sheet, from a part's blocks: text across the sheet, facts as name and value, tables across; `links`, the contents' lines and their sheets. */
@@ -118,14 +125,22 @@ function sheetRows(blocks: Block[], notes: string[] = [], links: [string, string
     else if (b.kind === 'facts') for (const [k, v] of b.lines.flat()) fact(k, v);
     else if (b.kind === 'figures') {
       blank();
-      for (const f of b.items) rows.push({ cells: [{ text: f.label, style: S.figLabel }, { text: f.value, style: S.figValue }, { text: f.note ?? '', style: S.figNote }] });
+      for (const f of b.items) rows.push({ cells: [{ text: f.label, style: S.figLabel }, { text: f.value, style: S.figValue }, ...(f.level ? [{ text: f.level, style: C.level }] : []), { text: f.note ?? '', style: S.figNote }] });
     } else if (b.kind === 'box') { line(b.title, S.boxTitle); for (const i of b.items) line(`• ${i}`, S.boxItem); }
     else if (b.kind === 'signature') { blank(); for (const l of b.lines) { if (l) rows.push({ cells: [{ text: l, style: S.plain }] }); else blank(); } }
-    else {
+    else if (b.kind === 'chart') {
+      // The chart floats over blank rows kept for it (a row is 15 points), with the line naming its amber year under it.
+      blank();
+      rows.push({ cells: [], chart: b.chart });
+      for (let k = Math.ceil(chartSize(b.chart, CHART_W).h / 15); k > 0; k--) blank();
+      const t = tightLine(b.chart);
+      if (t) line(t, S.mutedWrap, 10);
+      blank();
+    } else {
       const t = b.table, width = t.columns.length;
       blank();
       if (t.unit) rows.push({ cells: [...Array.from({ length: width - 1 }, () => ({ style: S.plain })), { text: t.unit, style: C.unit }] });
-      rows.push({ cells: t.columns.map((c, i) => ({ text: c.sub ? `${c.label} (${c.sub})` : c.label, style: i && !c.wrap ? S.headRight : S.headLeft })), table: true });
+      rows.push({ cells: t.columns.map((c, i) => ({ text: c.sub ? `${c.label} (${c.sub})` : c.label, style: i && !c.wrap ? S.headRight : S.headLeft })), table: true, ...(t.freeze !== undefined ? { freeze: t.freeze } : {}), ...(t.headRef ? { ref: t.headRef } : {}) });
       for (const r of t.rows) rows.push({ cells: tableRow(r, width, t.columns), table: r.kind !== 'head', ...(r.ref ? { ref: r.ref } : {}) });
     }
   }
@@ -135,7 +150,7 @@ function sheetRows(blocks: Block[], notes: string[] = [], links: [string, string
 /** A group's name shaded across the table; a ratio between rules; totals in bold under a rule. */
 const tableRow = (r: Row, width: number, columns: Column[]): XCell[] => r.kind === 'head'
   ? [{ text: r.cells[0]?.text ?? '', style: S.group }, ...Array.from({ length: width - 1 }, () => ({ style: S.group }))]
-  : r.cells.map((c, i) => (i && !columns[i]?.wrap ? numberCell(c, r.kind) : { text: c.text, style: r.kind === 'ratio' ? S.ratioLabel : r.kind ? S.boldWrap : S.wrap }));
+  : r.cells.map((c, i) => ((i || c.figure) && !columns[i]?.wrap ? numberCell(c, r.kind) : { text: c.text, style: r.kind === 'ratio' ? S.ratioLabel : r.kind ? S.boldWrap : S.wrap }));
 
 /**
  * Widths in characters: the first column as wide as the names in it (within limits; a longer one wraps), the others as
@@ -151,8 +166,14 @@ function widths(rows: XRow[]): number[] {
   return [first, ...Array.from({ length: cols - 1 }, (_, j) => Math.min(words(j + 1) ? 40 : 21, Math.max(11, ...table.map((r) => len(r.cells[j + 1]) + 3))))];
 }
 
-/** One sheet: no gridlines, A4 one page wide (landscape when its table is wide), the document's header and footer. */
-function sheetXml(doc: Doc, rows: XRow[], shared: (t: string) => number, formula: (f: string, col: string) => string): string {
+/** A chart's width on a sheet, in points: about the width of A4's text. */
+const CHART_W = 500;
+
+/**
+ * One sheet: no gridlines, A4 one page wide (landscape when its table is wide), the document's header and footer; the
+ * headings (and a table's first columns) frozen where a table asks; `drawing`, the relationship of its charts, if any.
+ */
+function sheetXml(doc: Doc, rows: XRow[], shared: (t: string) => number, formula: (f: string, col: number) => string, drawing?: string): string {
   const w = widths(rows), last = w.length - 1, merges: string[] = [], links: string[] = [];
   const total = w.reduce((a, x) => a + x, 0);
   const data = rows.map((r, i) => {
@@ -173,7 +194,9 @@ function sheetXml(doc: Doc, rows: XRow[], shared: (t: string) => number, formula
     else if (lines > 1) ht = ` ht="${(lines * (r.size === 10 && from >= 0 ? 13.2 : 14.6) + 1.2).toFixed(1)}" customHeight="1"`;
     const cells = r.cells.map((c, j) => {
       const ref = `${column(j)}${n}`;
-      if ('value' in c) return `<c r="${ref}" s="${c.style}">${c.formula ? `<f>${xml(formula(c.formula, column(j)))}</f>` : ''}<v>${c.value}</v></c>`;
+      // A formula giving words carries them as its last result; one not yet worked out, none.
+      if ('value' in c) return `<c r="${ref}" s="${c.style}"${c.result !== undefined ? ' t="str"' : ''}>${c.formula ? `<f>${xml(formula(c.formula, j))}</f>` : ''}`
+        + `${c.result !== undefined ? `<v>${xml(c.result)}</v>` : Number.isFinite(c.value) ? `<v>${c.value}</v>` : ''}</c>`;
       if (!('text' in c) || !c.text) return `<c r="${ref}" s="${c.style}"/>`;
       return `<c r="${ref}" s="${c.style}" t="s"><v>${shared(c.text)}</v></c>`;
     }).join('');
@@ -181,8 +204,13 @@ function sheetXml(doc: Doc, rows: XRow[], shared: (t: string) => number, formula
   }).join('');
   // Header and footer codes: &L left, &R right, &P the page, &N the pages; a literal & is &&.
   const hf = (t: string) => xml(t.replace(/&/g, '&&'));
+  // Frozen: the rows down to the first frozen table's headings, and that table's first columns.
+  const at = rows.findIndex((r) => r.freeze !== undefined), x = at >= 0 ? rows[at].freeze ?? 0 : 0, y = at + 1;
+  const active = x ? 'bottomRight' : 'bottomLeft';
+  const pane = at < 0 ? '' : `<pane${x ? ` xSplit="${x}"` : ''} ySplit="${y}" topLeftCell="${column(x)}${y + 1}" activePane="${active}" state="frozen"/>`
+    + `<selection pane="${active}" activeCell="${column(x)}${y + 1}" sqref="${column(x)}${y + 1}"/>`;
   return `${HEAD}<worksheet xmlns="${MAIN}" xmlns:r="${REL}"><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>`
-    + '<sheetViews><sheetView showGridLines="0" workbookViewId="0"/></sheetViews>'
+    + `<sheetViews><sheetView showGridLines="0" workbookViewId="0"${pane ? `>${pane}</sheetView>` : '/>'}</sheetViews>`
     + `<cols>${w.map((x, i) => `<col min="${i + 1}" max="${i + 1}" width="${x}" customWidth="1"/>`).join('')}</cols>`
     + `<sheetData>${data}</sheetData>`
     + (merges.length ? `<mergeCells count="${merges.length}">${merges.map((m) => `<mergeCell ref="${m}"/>`).join('')}</mergeCells>` : '')
@@ -190,7 +218,8 @@ function sheetXml(doc: Doc, rows: XRow[], shared: (t: string) => number, formula
     + '<pageMargins left="0.5" right="0.5" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>'
     + `<pageSetup paperSize="9" orientation="${total > 120 ? 'landscape' : 'portrait'}" fitToWidth="1" fitToHeight="0"/>`
     + `<headerFooter><oddHeader>&amp;L&amp;8${hf(doc.header)}${doc.mark ? `&amp;R&amp;8&amp;B${hf(doc.mark)}` : ''}</oddHeader>`
-    + `<oddFooter>&amp;L&amp;8${hf(doc.footer)}&amp;R&amp;8Page &amp;P of &amp;N</oddFooter></headerFooter></worksheet>`;
+    + `<oddFooter>&amp;L&amp;8${hf(doc.footer)}&amp;R&amp;8Page &amp;P of &amp;N</oddFooter></headerFooter>`
+    + `${drawing ? `<drawing r:id="${drawing}"/>` : ''}</worksheet>`;
 }
 
 /** The document as an Excel workbook. */
@@ -202,24 +231,49 @@ export function xlsxOf(doc: Doc, made: Date): Uint8Array<ArrayBuffer> {
     if (!index.has(t)) { index.set(t, strings.length); strings.push(t); }
     return index.get(t)!;
   };
-  // The footer the PDF prints on every page is also said once, under the first title, with the note about the cells.
-  const names = doc.parts.map((p) => p.name.replace(/[[\]:*?/\\]/g, ' ').slice(0, 31));
-  const links = doc.parts.flatMap((p, i) => (p.section && !p.sheetOnly ? [[p.section, names[i]] as [string, string]] : []));
-  const all = doc.parts.map((part, i) => sheetRows(part.blocks, i ? [] : [doc.footer, doc.workbookNote ?? ''].filter(Boolean), links));
-  // A formula's {ref} or {Part!ref} becomes the cell in this column of the row so named; {ref@3}, in the table's column 3.
+  // The footer the PDF prints on every page is also said once, under the first title, with the note about the cells. A
+  // part for the paper alone (its figures held as formulas on the model's sheets) has no sheet.
+  const parts = doc.parts.filter((p) => !p.paperOnly);
+  const names = parts.map((p) => p.name.replace(/[[\]:*?/\\]/g, ' ').slice(0, 31));
+  const links = parts.flatMap((p, i) => (p.section && !p.sheetOnly ? [[p.section, names[i]] as [string, string]] : []));
+  const all = parts.map((part, i) => sheetRows(part.blocks, i ? [] : [doc.footer, doc.workbookNote ?? ''].filter(Boolean), links));
+  // A formula's {ref} or {Part!ref} becomes the cell in this column of the row so named; {ref@3}, in the table's column 3;
+  // {ref@$3}, that cell fixed; {ref@-1}, one column to the left.
   const rowOf = all.map((rows) => new Map(rows.flatMap((r, i) => (r.ref ? [[r.ref, i + 1] as const] : []))));
-  const resolve = (part: number) => (f: string, col: string) => f.replace(/\{(?:([^!}]+)!)?([^}@]+)(?:@(\d+))?\}/g, (_, sheet: string | undefined, ref: string, at?: string) => {
-    const k = sheet === undefined ? part : doc.parts.findIndex((p) => p.name === sheet), n = rowOf[k]?.get(ref);
-    if (n === undefined) throw new Error(`No row "${ref}" for a formula`);
-    return `${sheet === undefined ? '' : `'${names[k].replace(/'/g, "''")}'!`}${at === undefined ? col : column(Number(at))}${n}`;
+  const resolve = (part: number) => (f: string, col: number) => f.replace(/\{(?:([^!}]+)!)?([^}@]+)(?:@([-+]?)(\$?)(\d+))?\}/g,
+    (_, sheet: string | undefined, ref: string, sign?: string, fixed?: string, at?: string) => {
+      const k = sheet === undefined ? part : parts.findIndex((p) => p.name === sheet), n = rowOf[k]?.get(ref);
+      if (n === undefined) throw new Error(`No row "${ref}"${sheet ? ` on "${sheet}"` : ''} for a formula`);
+      const c = at === undefined ? col : sign ? col + (sign === '-' ? -1 : 1) * Number(at) : Number(at);
+      if (c < 0) throw new Error(`No column left of the first for "${ref}"`);
+      return `${sheet === undefined ? '' : `'${names[k].replace(/'/g, "''")}'!`}${fixed ? `$${column(c)}$${n}` : `${column(c)}${n}`}`;
+    // A range on another sheet names the sheet once: 'Schedule'!$C$5:$C$90.
+    }).replace(/('(?:[^']|'')+'!)(\$?[A-Z]+\$?\d+):\1/g, '$1$2:');
+  // Charts float on their sheets, each over the rows kept for it; their series read the cells the document names.
+  const charts: { sheet: number; row: number; chart: Chart }[] = [];
+  all.forEach((rows, i) => rows.forEach((r, j) => { if (r.chart) charts.push({ sheet: i, row: j, chart: r.chart }); }));
+  const drawn = [...new Set(charts.map((c) => c.sheet))];
+  const sheets = all.map((rows, i) => sheetXml(doc, rows, shared, resolve(i), drawn.includes(i) ? 'rId1' : undefined));
+  const DRAW = 'http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing', DML = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+  const drawings = drawn.map((sheet) => `${HEAD}<xdr:wsDr xmlns:xdr="${DRAW}" xmlns:a="${DML}">${charts.map((c, k) => ({ ...c, k })).filter((c) => c.sheet === sheet).map(({ row, chart, k }) => {
+    const { w, h } = chartSize(chart, CHART_W);
+    return `<xdr:oneCellAnchor><xdr:from><xdr:col>0</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${row}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from>`
+      + `<xdr:ext cx="${emu(w)}" cy="${emu(h)}"/><xdr:graphicFrame macro=""><xdr:nvGraphicFramePr><xdr:cNvPr id="${k + 2}" name="Chart ${k + 1}" descr="${xml(chart.title)}"/><xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr>`
+      + `<xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm><a:graphic><a:graphicData uri="${CHART_URI}"><c:chart xmlns:c="${CHART_URI}" xmlns:r="${REL}" r:id="rId${k + 1}"/></a:graphicData></a:graphic>`
+      + '</xdr:graphicFrame><xdr:clientData/></xdr:oneCellAnchor>';
+  }).join('')}</xdr:wsDr>`);
+  const chartFiles = charts.map(({ sheet, chart }) => {
+    const ref = (f: string) => resolve(sheet)(f, 0);
+    return chartXml(chart, chart.sheet ? { labels: ref(chart.sheet.labels), a: ref(chart.sheet.a), b: ref(chart.sheet.b) } : undefined);
   });
-  const sheets = all.map((rows, i) => sheetXml(doc, rows, shared, resolve(i)));
   const enc = (t: string) => new TextEncoder().encode(t);
   return zip([
     { name: '[Content_Types].xml', data: enc(`${HEAD}<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">`
       + '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>'
       + '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
       + sheets.map((_, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')
+      + drawings.map((_, d) => `<Override PartName="/xl/drawings/drawing${d + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>`).join('')
+      + chartFiles.map((_, k) => `<Override PartName="/xl/charts/chart${k + 1}.xml" ContentType="${CHART_TYPE}"/>`).join('')
       + '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'
       + '<Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>'
       + '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>') },
@@ -236,6 +290,12 @@ export function xlsxOf(doc: Doc, made: Date): Uint8Array<ArrayBuffer> {
       + `<Relationship Id="rId${sheets.length + 1}" Type="${REL}/styles" Target="styles.xml"/>`
       + `<Relationship Id="rId${sheets.length + 2}" Type="${REL}/sharedStrings" Target="sharedStrings.xml"/></Relationships>`) },
     ...sheets.map((s, i) => ({ name: `xl/worksheets/sheet${i + 1}.xml`, data: enc(s) })),
+    ...drawn.map((sheet, d) => ({ name: `xl/worksheets/_rels/sheet${sheet + 1}.xml.rels`, data: enc(`${HEAD}<Relationships xmlns="${PKG}">`
+      + `<Relationship Id="rId1" Type="${REL}/drawing" Target="../drawings/drawing${d + 1}.xml"/></Relationships>`) })),
+    ...drawings.map((x, d) => ({ name: `xl/drawings/drawing${d + 1}.xml`, data: enc(x) })),
+    ...drawn.map((sheet, d) => ({ name: `xl/drawings/_rels/drawing${d + 1}.xml.rels`, data: enc(`${HEAD}<Relationships xmlns="${PKG}">`
+      + charts.map((c, k) => (c.sheet === sheet ? `<Relationship Id="rId${k + 1}" Type="${CHART_REL}" Target="../charts/chart${k + 1}.xml"/>` : '')).join('') + '</Relationships>') })),
+    ...chartFiles.map((x, k) => ({ name: `xl/charts/chart${k + 1}.xml`, data: enc(x) })),
     { name: 'xl/styles.xml', data: enc(STYLES()) },
     { name: 'xl/sharedStrings.xml', data: enc(`${HEAD}<sst xmlns="${MAIN}" count="${used}" uniqueCount="${strings.length}">`
       + strings.map((t) => `<si><t xml:space="preserve">${xml(t)}</t></si>`).join('') + '</sst>') },

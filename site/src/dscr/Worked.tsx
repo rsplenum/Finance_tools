@@ -62,7 +62,7 @@ function forward(old: { v: number; c: unknown } | { legacy: unknown }): Case | u
 function questionOf(c: Case, id: FactId): AskQuestion {
   const mine = c.mine.includes(id), base = { id, question: N.ask.q[id], hint: N.ask.hint[id] };
   if (id === 'borrower') return { ...base, value: mine ? c.s.borrower ?? '' : '', choices: BORROWER_CHOICES.map((b) => ({ value: b.id, label: b.label })) };
-  const unit = id === 'profit' || id === 'amount' || id === 'emis' || id === 'depreciation' ? 'Rs.' : id === 'years' ? 'years' : '%';
+  const unit = id === 'profit' || id === 'amount' || id === 'emis' || id === 'depreciation' ? '₹' : id === 'years' ? 'years' : '%';
   return { ...base, value: mine ? factText(c.s, id) : '', unit, none: ASSUMED_FACTS.includes(id) };
 }
 
@@ -182,7 +182,7 @@ export function DscrWorked() {
   }));
   const bars = barsOf(p).map((b) => ({
     key: b.fy, label: b.fy, a: b.cash, b: b.service, aText: b.cashText, bText: b.serviceText, tight: b.tight, note: b.part ? 'part year' : undefined,
-    spoken: `${b.fy}${b.tight ? `, ${N.chart.tight}` : ''}${b.part ? `, ${b.part}` : ''}: ${N.chart.cash} Rs. ${b.cashText} lakh, ${N.chart.service} Rs. ${b.serviceText} lakh`,
+    spoken: `${b.fy}${b.tight ? `, ${N.chart.tight}` : ''}${b.part ? `, ${b.part}` : ''}: ${N.chart.cash} ₹${b.cashText} lakh, ${N.chart.service} ₹${b.serviceText} lakh`,
   }));
   const tap = (id: string) => ask(ORDER.indexOf(id as FactId), 'report', true);
   const next = pencil ? { kind: 'ask', label: N.report.yours, go: () => ask(Math.max(0, ORDER.findIndex((id) => !c.mine.includes(id))), 'report') }
@@ -274,7 +274,7 @@ function ModeSwitch({ mode, onPick }: { mode: Mode; onPick: (m: Mode) => void })
 
 const KEPT = 'Your answers stay on this device, in this browser only.';
 
-/** What a figure typed reads as, in the engine's words (Rs. 6 lakh), or nothing when it is said as typed. */
+/** What a figure typed reads as, in the engine's words (₹6 lakh), or nothing when it is said as typed. */
 function readBack(c: Case, id: FactId, t: string): string | undefined {
   if (factProblem(id, t) || !t.trim()) return undefined;
   const text = factsOf({ s: writeFact(c.s, id, t), mine: [...c.mine, id] }).find((f) => f.id === id)?.text;

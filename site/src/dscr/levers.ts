@@ -16,7 +16,7 @@ import { inr } from '../../../engine/util';
 import { listed, upPct, upRupees, type BoardMove, type CheckRow, type ViableLine, type ViableView } from '../board-model';
 import { amountOf, dscrCaseOf, numberOf, type LenderView, type State } from './model';
 
-const rs = (n: number) => `Rs. ${inr(n)}`;
+const rs = (n: number) => `₹${inr(n)}`;
 /** A ratio to two places, or four when two would read as meeting a level it misses (1.4996 against 1.50). */
 const ratio = (x: number, level: number) => ((Number(x.toFixed(2)) >= level) === (x >= level) ? x.toFixed(2) : x.toFixed(4));
 /** Where the bar ends: the level at the middle, full past twice the level. */
@@ -37,9 +37,9 @@ function targetRows(st: Statement, t: Target, c: DscrCase): CheckRow[] {
     verdict: x === undefined ? 'wait' : x >= level ? 'meets' : 'misses', bar: bar(x, level), at: 'least', ...(short ? { short } : {}),
   });
   if (t.average !== undefined) out.push(row('average', AVERAGE, t.average, st.average, 'over the loan',
-    k.average ? `Short by Rs. ${upRupees(k.average)} of cash to pay the loan, in total over the loan.` : undefined));
+    k.average ? `Short by ₹${upRupees(k.average)} of cash to pay the loan, in total over the loan.` : undefined));
   if (t.minimum !== undefined) out.push(row('lowest', LOWEST, t.minimum, st.minimum?.dscr, `in ${st.minimum?.fy ?? ''}`,
-    k.lowest ? `Short by Rs. ${upRupees(k.lowest.amount)} of cash to pay the loan in ${k.lowest.fy}.` : undefined));
+    k.lowest ? `Short by ₹${upRupees(k.lowest.amount)} of cash to pay the loan in ${k.lowest.fy}.` : undefined));
   return out;
 }
 const asTyped = (c: DscrCase) => { const r = runDscr(c, DSCR_AS_TYPED); return 'statement' in r ? r.statement : undefined; };
@@ -81,7 +81,7 @@ export function dscrViableOf(s: State): ViableView | undefined {
     const k = v[id].needed;
     if (!k) return {};
     if (id === 'cut') return { move: `${rs(k)} less`, bars: { now: a, to: a - k, nowText: rs(a), toText: rs(a - k) } };
-    if (id === 'profit') return { move: `+${upPct((k / p) * 100)}%`, bars: { now: p, to: p + k, nowText: rs(p), toText: `Rs. ${upRupees(p + k)}` } };
+    if (id === 'profit') return { move: `+${upPct((k / p) * 100)}%`, bars: { now: p, to: p + k, nowText: rs(p), toText: `₹${upRupees(p + k)}` } };
     return { move: `+${k} ${unit(k)}`, bars: { now: months(c, 0), to: months(c, k), nowText: termText(months(c, 0)), toText: termText(months(c, k)) } };
   }
 }
@@ -133,7 +133,7 @@ export function dscrBoardOf(q: DscrPlanView, l: DscrLevers): DscrBoard {
   ].filter((x): x is string => !!x);
   const r = runDscr(c, l), over = q.most !== undefined && l.cut > q.most + 1e-6;
   const own = l.cut ? `You bring ${rs(l.cut)} in place of the loan${q.most === undefined ? '' : over
-    ? `: Rs. ${upRupees(l.cut - q.most)} more than the ${rs(q.most)} you can` : `, within the ${rs(q.most)} you can`}.` : undefined;
+    ? `: ₹${upRupees(l.cut - q.most)} more than the ${rs(q.most)} you can` : `, within the ${rs(q.most)} you can`}.` : undefined;
   if (!('statement' in r)) {
     const why = 'blocked' in r ? r.blocked : `No figures with these changes: ${r.needs.join('; ')}.`;
     return { checks: [], works: false, verdict: why, still: [], line: 'No figures', steps, moves, ...(own ? { own, over } : {}) };

@@ -70,7 +70,7 @@ describe('fictional case A from the loan terms', () => {
     const p = preview({ ...CASE_A, target: TARGETS });
     expect(p.needs).toEqual([]);
     expect(p.verdict).toEqual({ meets: false, missed: 2, text: 'Misses 2 of 2 targets: the lowest year, 2027-28, is 1.16 against 1.20; the average is 1.45 against 1.50.' });
-    expect(p.largest).toEqual({ text: 'Your business can carry a loan of Rs. 11,59,646. You asked Rs. 12,00,000. What sets it: the lowest year, 2027-28.', amount: 1159646 });
+    expect(p.largest).toEqual({ text: 'Your business can carry a loan of ₹11,59,646. You asked ₹12,00,000. What sets it: the lowest year, 2027-28.', amount: 1159646 });
     // More instalments add interest, which pulls the average further below 1.50 within these four years.
     expect(p.fewest).toEqual({ text: 'Even 14 instalments, the most the projections cover (to 2029-30), miss the target: the average is below the target. Add later years to try a longer repayment.' });
     expect(barText(p)).toBe('Average 1.45 · lowest 1.16 in 2027-28 · does not work yet: 2 ratios short · all questions answered');
@@ -78,12 +78,12 @@ describe('fictional case A from the loan terms', () => {
   it('meets the target at the largest loan, with nothing more to offer', () => {
     const p = preview({ ...CASE_A, loan: { ...CASE_A.loan, amount: '11,59,646' }, target: TARGETS });
     expect(p.verdict).toEqual({ meets: true, missed: 0, text: 'Meets both targets: the lowest year, 2027-28, is 1.20 against 1.20; the average is 1.50 against 1.50.' });
-    expect(p.largest).toEqual({ text: 'Your business can carry a loan of Rs. 11,59,646. You asked Rs. 11,59,646. What sets it: the lowest year, 2027-28.' });
-    expect(p.fewest).toEqual({ text: 'The fewest instalments for Rs. 11,59,646 are 12 quarterly.' });
+    expect(p.largest).toEqual({ text: 'Your business can carry a loan of ₹11,59,646. You asked ₹11,59,646. What sets it: the lowest year, 2027-28.' });
+    expect(p.fewest).toEqual({ text: 'The fewest instalments for ₹11,59,646 are 12 quarterly.' });
   });
   it('offers the fewest instalments for a lowest-year target alone: 13', () => {
     const p = preview({ ...CASE_A, target: { average: '', minimum: '1.2' } });
-    expect(p.fewest).toEqual({ text: 'The fewest instalments for Rs. 12,00,000 are 13 quarterly.', instalments: 13 });
+    expect(p.fewest).toEqual({ text: 'The fewest instalments for ₹12,00,000 are 13 quarterly.', instalments: 13 });
     expect(p.verdict?.text).toBe('Misses the target: the lowest year, 2027-28, is 1.16 against 1.20.');
   });
   it('asks for a later year only once one is added, and the offers stay within the years given', () => {
@@ -162,7 +162,7 @@ describe('own yearly figures', () => {
 describe('the repayment schedule (fictional case A)', () => {
   it('reads the instalment back, and shows every month by year', () => {
     const sch = preview(CASE_A).schedule!;
-    expect(sch.level).toBe('Principal Rs. 1,00,000 a quarter, and interest on the balance every month.');
+    expect(sch.level).toBe('Principal ₹1,00,000 a quarter, and interest on the balance every month.');
     expect(sch.years.map((y) => [y.fy, y.interest, y.principal, y.closing])).toEqual([
       ['2026-27', '1,41,000', '2,00,000', '10,00,000'], ['2027-28', '1,02,000', '4,00,000', '6,00,000'],
       ['2028-29', '54,000', '4,00,000', '2,00,000'], ['2029-30', '9,000', '2,00,000', '0'],
@@ -179,7 +179,7 @@ describe('the repayment schedule (fictional case A)', () => {
   });
   it('an EMI is read back to the paisa', () => {
     const emi: State = { ...CASE_A, loan: { ...CASE_A.loan, amount: '10 L', moratoriumMonths: '0', instalments: '12', repayment: 'emi' } };
-    expect(preview(emi).schedule?.level).toBe('EMI Rs. 88,848.79 a month, interest included; banks round it up to the next rupee.');
+    expect(preview(emi).schedule?.level).toBe('EMI ₹88,848.79 a month, interest included; banks round it up to the next rupee.');
   });
 });
 
@@ -218,7 +218,7 @@ describe('a first year with interest only (the owner\'s report: "1 year is not a
       'The first year of your figures: 2026-27 or 2027-28',
       'Profit before interest, depreciation and tax for 2026-27', 'Depreciation for 2026-27',
     ]);
-    expect([p.leadingInterest, p.statement]).toEqual([[{ fy: '2026-27', amount: 'Rs. 2,50,000' }], undefined]);
+    expect([p.leadingInterest, p.statement]).toEqual([[{ fy: '2026-27', amount: '₹2,50,000' }], undefined]);
   });
   it('starting in 2027-28 keeps each figure under its year, completes the preview and says what was left out', () => {
     const s = withPlanStart(LATE, '2027-28');
@@ -226,7 +226,7 @@ describe('a first year with interest only (the owner\'s report: "1 year is not a
     expect([s.cells.pbdit[0], s.cells.depreciation[4], s.cells.taxPct[0], s.cells.interestOther[0]]).toEqual(['18 L', '2.2 L', '25.168', '1 L']);
     const p = preview(s);
     expect([p.needs, p.statement?.years[0]]).toEqual([[], '2027-28']);
-    expect(p.beforeStart).toBe('Left out: 2026-27, before your figures start. Its interest (Rs. 2,50,000) is taken as paid from the project cost (capitalised), not from profits.');
+    expect(p.beforeStart).toBe('Left out: 2026-27, before your figures start. Its interest (₹2,50,000) is taken as paid from the project cost (capitalised), not from profits.');
     expect(loanRead(yearsOf(s))).toMatch(/The loan runs over 2026-27 to 2031-32\.$/);
   });
   it('starting in 2026-27 asks for its figures; going back restores the columns', () => {
@@ -339,7 +339,7 @@ describe('who the borrower is, loans already running and the new asset (P1e)', (
     cells: { ...ASSUMED.cells, pbdit: ['5,00,000'], depreciation: ['1,50,000'], interestOther: ['50,000'] },
     rates: { pbdit: '10' },
   };
-  it('a proprietor pays no tax on these profits (under Rs. 12,00,000): the DSCR rises from 1.16 to 1.41', () => {
+  it('a proprietor pays no tax on these profits (under ₹12,00,000): the DSCR rises from 1.16 to 1.41', () => {
     // Profit before tax 1,59,000 to 4,56,500, all under 12,00,000: no tax. Cash 4,50,000, 5,00,000, 5,55,000, 6,15,500
     // against 3,41,000, 5,02,000, 4,54,000, 2,09,000: 1.32, 1.00 (0.9960), 1.22, 2.94 (2.94498: rounded from 2.9450 it would wrongly read 2.95);
     // average 21,20,500 / 15,06,000 = 1.41.
@@ -358,7 +358,7 @@ describe('who the borrower is, loans already running and the new asset (P1e)', (
       'EMIs a month on the company\'s own loans',
     ]);
     expect(BORROWER_CHOICES.map((b) => [b.id, b.tax])).toEqual([
-      ['proprietor', 'slab rates of 5% to 30% with 4% cess, nothing up to Rs. 12,00,000 of profit'], ['firm', '31.2%; 34.944% above Rs. 1,00,00,000'], ['company', '25.168%'],
+      ['proprietor', 'slab rates of 5% to 30% with 4% cess, nothing up to ₹12,00,000 of profit'], ['firm', '31.2%; 34.944% above ₹1,00,00,000'], ['company', '25.168%'],
     ]);
   });
   it('EMIs a month are debt service every month, until the last EMI when it is given', () => {

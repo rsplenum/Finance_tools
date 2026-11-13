@@ -263,6 +263,9 @@ The owner's two reference films set the bar and the VID3 path (`docs/video/VID3-
 | 10-11-2026 | FIX1 (whole plans from `engine/solve.ts`, the part first year judged on its own months, "Fix it for me" on the page; RESULT1's row) | L, Extra | about 165 steps, several compactions, hours between steps (the cache lapsed: the cost guard warned); no agent; CI's full site check caught seven old figures the quick one skipped; within L |
 | 11-11-2026 | DEEP1 (four tools walked, twelve files opened, sources read; Rahul's page; `docs/DEEP1-FINDINGS.md`; NEW1's row) | L, Extra | about 70 steps, 3 compactions; 4 reading agents (56 steps); within L |
 | 12-11-2026 | PLAN2 (Rahul's six answers; the best of five plans in one, `docs/WORKED-PAGE.md`, for the build sessions; rule 14's reading; rows NEW1, PAPER1, READ1) | none set: Rahul's ask | about 35 steps, 1 compaction; no agent; the cost guard warned on reading the five plans whole |
+| 12-11-2026 | NEW1b (Rahul's phone review: questions first over the whole screen, the report, one Professional mode, Undo and Start over on the report; the checks walk the questions) | M, Extra | 120 steps, 3 compactions; no agent; at M: the checks for the new flow took a third |
+| 12-11-2026 | NEW1c (Rahul's notes on NEW1b: Simple and Professional at the start, the same eight questions; Simple lists what it filled in, Professional shows every field filled in; the years said once; D-UX-360) | M, Extra | about 60 steps, 1 compaction; no agent; within M. The desktop layout was looked at, not measured with `npm run look` |
+| 12-11-2026 | NEW1d (Rahul's horizontal journey for Professional, missed by NEW1c: chapters across, a rail, Next and Back, the pin under the top bar; D-UX-361) | M, Extra | 68 steps, 1 compaction; no agent; within M. Finding the lost ask in the transcripts took the first tenth |
 
 ## Rows set aside
 Set aside by the owner on 10-10-2026 until the business entity, GST and Razorpay account are ready (D-UX-42):

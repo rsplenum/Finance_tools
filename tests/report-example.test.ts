@@ -2,7 +2,7 @@
  * The page's worked example (site/src/report/example.ts, D-UX-342), model-worked until the owner confirms. Opened on
  * 15-10-2026: three months on is January, under six months of 2026-27, so sales start in April 2027; the loan is drawn
  * in October 2026 with a holiday of 6 months, then 60 EMIs. Its first year, 2027-28, by hand:
- *   Full running: (3,000 + 2,000) kg × Rs. 220 × 12 = 1,32,00,000; at 60% in the first year: 79,20,000.
+ *   Full running: (3,000 + 2,000) kg × ₹220 × 12 = 1,32,00,000; at 60% in the first year: 79,20,000.
  *   Variable costs at 68%: 53,85,600. Fixed costs 1,00,000 × 12 = 12,00,000. Before interest, depreciation and tax: 13,34,400.
  *   Depreciation: machinery 15% of 20,00,000 = 3,00,000; building 10% of 6,00,000 = 60,000; 3,60,000 in all.
  *   Interest before sales: 18,00,000 × 10% × 6 ÷ 12 = 90,000, written off over five years: 18,000 a year.
@@ -53,18 +53,18 @@ describe('the project report’s worked example', () => {
     expect([cell(p, 'pl', 'Sales'), cell(p, 'pl', 'Profit before interest, depreciation and tax'), cell(p, 'dscr', 'Debt service (B)'), cell(p, 'pl', 'Less: interest on the term loan'),
       cell(p, 'wc', 'Limit applied for'), cell(p, 'pl', 'Profit before tax'), cell(p, 'pl', 'Less: tax'), cell(p, 'dscr', 'Cash available (A)'), cell(p, 'dscr', 'DSCR (A ÷ B)')])
       .toEqual([rs(sales), rs(ebitda), rs(emi * 12), rs(interest), rs(limit), rs(pbt), rs(tax), rs(cash), dscr.toFixed(2)]);
-    expect(p.view!.key.map((k) => `${k.label}: ${k.value}`)).toEqual(['Cost of the project: Rs. 29,63,403', 'Average DSCR: 2.91', 'Lowest DSCR: 2.31']);
+    expect(p.view!.key.map((k) => `${k.label}: ${k.value}`)).toEqual(['Cost of the project: ₹29,63,403', 'Average DSCR: 2.91', 'Lowest DSCR: 2.31']);
   });
 
   it('its paper states every line: the limit as worked out, simple mode’s months and fixed costs, nothing "undefined"', () => {
     vi.setSystemTime(new Date('2026-10-15T12:00:00'));
     const s = reportExample(), text = JSON.stringify(paperDoc(s, preview(s), '2026-10-15'));
     expect(text).not.toMatch(/undefined|NaN/);
-    // The limit is the engine's (Rs. 3,77,556 in the hand working above), at the loan's rate as simple mode assumes.
-    expect(text).toContain('["Working-capital limit applied for","Rs. 3,77,556 at 10% a year"]');
-    // April 2027 is six months from October 2026; Rs. 1 L a month is Rs. 12,00,000 a year, growing 5% (defaults.json).
+    // The limit is the engine's (₹3,77,556 in the hand working above), at the loan's rate as simple mode assumes.
+    expect(text).toContain('["Working-capital limit applied for","₹3,77,556 at 10% a year"]');
+    // April 2027 is six months from October 2026; ₹1 L a month is ₹12,00,000 a year, growing 5% (defaults.json).
     expect(text).toContain('["Months from the loan to the first sales","6"]');
-    expect(text).toContain('["Fixed costs in a full first year","Rs. 12,00,000, growing 5% a year"]');
+    expect(text).toContain('["Fixed costs in a full first year","₹12,00,000, growing 5% a year"]');
   });
   it('passes every check and needs nothing more, whichever month it is opened in', () => {
     for (let m = 0; m < 24; m++) {

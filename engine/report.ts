@@ -40,7 +40,7 @@ export type Activity = keyof typeof PMEGP.ceiling;
 export type SchemeInput = PmegpInput | MudraInput;
 /** `confirmed`: the borrower confirms PMEGP's conditions (engine/data/report.json); unconfirmed, the report flags them. */
 export interface PmegpInput { id: 'pmegp'; category?: Category; area?: Area; activity?: Activity; confirmed?: boolean }
-/** `tarunRepaid`: the borrower has repaid a Tarun loan, which alone opens Tarun Plus, above Rs. 10 lakh. */
+/** `tarunRepaid`: the borrower has repaid a Tarun loan, which alone opens Tarun Plus, above ₹10 lakh. */
 export interface MudraInput { id: 'mudra'; tarunRepaid?: boolean }
 /** The guarantee on the loans: CGFMU's on a Mudra loan, always; on another loan CGTMSE's when ticked, with the number of
  * its concessions that apply (0 to 3). A rate typed from the sanction letter (% a year) takes the place of the scheme's. */
@@ -157,11 +157,11 @@ const money = (a: number, b: number) => Math.abs(a - b) <= Math.max(0.01, 1e-9 *
 const blocked = (where: string): Blocked => ({ blocked: `The two computations disagree on ${where}, so no figures are shown. Please report this.` });
 const DSCR_METHOD = (PRESETS.find((p) => p.id === DATA.dscrMethod) as { choice: Definition }).choice;
 
-/** Mudra's level for the term loan and the limit in all; none above the Rs. 20 lakh it lends in all. */
+/** Mudra's level for the term loan and the limit in all; none above the ₹20 lakh it lends in all. */
 export const mudraLevel = (total: number): MudraLevel | undefined => MUDRA.levels.find((v) => total <= v.upTo);
 
 /** On a Mudra loan, what the cost of the project as worked needs beyond the promoters' most, the subsidy, the unsecured
- * loans and the largest term loan within Mudra's Rs. 20 lakh in all (the limit as typed); none when they fund it (D-UX-111). */
+ * loans and the largest term loan within Mudra's ₹20 lakh in all (the limit as typed); none when they fund it (D-UX-111). */
 export function mudraShort(r: Report, promotersMost: number): number | undefined {
   if (!r.mudra) return undefined;
   const short = r.projectCost - r.finance.subsidy - r.finance.unsecured - promotersMost - (MUDRA.mostInAll - r.wcLimit);
@@ -254,8 +254,8 @@ export function reportNeeds(x: ReportInput): string[] {
   if (!(isNum(x.monthsToStart) && Number.isInteger(x.monthsToStart) && x.monthsToStart >= 0)) needs.push('Months from the loan to the first sales (0 if at once)');
   if (x.scheme?.id === 'mudra' && isNum(l.amount) && isNum(x.wcLimit)) {
     const total = l.amount + x.wcLimit, most = MUDRA.mostInAll, tarun = (MUDRA.levels.find((v) => v.id === 'tarun') as MudraLevel).upTo;
-    if (total > most) needs.push(`Mudra: the term loan and the working-capital limit come to Rs. ${inr(total)}, Rs. ${inr(total - most)} above the Rs. ${inr(most)} Mudra lends in all. Lower them by Rs. ${inr(total - most)}, the promoters bringing more, or choose no scheme: a loan to a small enterprise, which CGTMSE can guarantee`);
-    else if (total > tarun && !x.scheme.tarunRepaid) needs.push(`Mudra: the loans come to Rs. ${inr(total)}, above Tarun's Rs. ${inr(tarun)}. Tarun Plus, up to Rs. ${inr(most)}, is only for a borrower who has repaid a Tarun loan: tick that if so, or lower the loans to Rs. ${inr(tarun)}`);
+    if (total > most) needs.push(`Mudra: the term loan and the working-capital limit come to ₹${inr(total)}, ₹${inr(total - most)} above the ₹${inr(most)} Mudra lends in all. Lower them by ₹${inr(total - most)}, the promoters bringing more, or choose no scheme: a loan to a small enterprise, which CGTMSE can guarantee`);
+    else if (total > tarun && !x.scheme.tarunRepaid) needs.push(`Mudra: the loans come to ₹${inr(total)}, above Tarun's ₹${inr(tarun)}. Tarun Plus, up to ₹${inr(most)}, is only for a borrower who has repaid a Tarun loan: tick that if so, or lower the loans to ₹${inr(tarun)}`);
   }
   if (x.scheme?.id === 'mudra' && x.collateral !== undefined) needs.push('Mudra: a Mudra loan takes no collateral, so leave its market value empty');
   const g = x.guarantee;
@@ -263,11 +263,11 @@ export function reportNeeds(x: ReportInput): string[] {
   if (g?.ratePct !== undefined && !(isNum(g.ratePct) && g.ratePct >= 0)) needs.push('The guarantee fee: a rate of 0 or more (% a year)');
   if (g?.cgtmse && x.scheme?.id !== 'mudra' && g.ratePct === undefined && isNum(l.amount) && isNum(x.wcLimit) && cgtmseRate(l.amount + x.wcLimit, 0) === undefined) {
     const most = GUARANTEES.cgtmse.slabs[GUARANTEES.cgtmse.slabs.length - 1].upTo;
-    needs.push(`CGTMSE: the loans come to Rs. ${inr(l.amount + x.wcLimit)}, above the Rs. ${inr(most)} it guarantees in all; untick it`);
+    needs.push(`CGTMSE: the loans come to ₹${inr(l.amount + x.wcLimit)}, above the ₹${inr(most)} it guarantees in all; untick it`);
   }
   // Beside collateral CGTMSE guarantees only the part it does not back (hybrid security): nothing, once it backs them all.
   if (g?.cgtmse && x.scheme?.id !== 'mudra' && isNum(l.amount) && isNum(x.wcLimit) && isNum(x.collateral) && x.collateral >= l.amount + x.wcLimit)
-    needs.push(`CGTMSE: the collateral's market value of Rs. ${inr(x.collateral)} backs the loans' Rs. ${inr(l.amount + x.wcLimit)} in full, leaving nothing for CGTMSE to guarantee: leave CGTMSE out, or lower the collateral to the part it backs`);
+    needs.push(`CGTMSE: the collateral's market value of ₹${inr(x.collateral)} backs the loans' ₹${inr(l.amount + x.wcLimit)} in full, leaving nothing for CGTMSE to guarantee: leave CGTMSE out, or lower the collateral to the part it backs`);
   if (x.scheme?.id === 'pmegp') {
     const sc = x.scheme;
     if (!sc.category || !(sc.category in PMEGP.ownPct)) needs.push('PMEGP: the borrower\'s category');
@@ -351,7 +351,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     const sc = x.scheme as Required<PmegpInput>, ratePct = PMEGP.subsidyPct[sc.category][sc.area], ceiling = PMEGP.ceiling[sc.activity];
     const pc = fixedAssets - cost.land + prelim + marginMoney + limit, base = pc > ceiling ? ceiling : pc, subsidy = (ratePct / 100) * base;
     if (!money(subsidy, pmegpCheck(pc, ratePct, ceiling))) return blocked('the PMEGP margin money');
-    if (subsidy >= sanctioned) return { needs: [`The term loan: more than PMEGP's margin money of Rs. ${inr(subsidy)}, which is set off against it`] };
+    if (subsidy >= sanctioned) return { needs: [`The term loan: more than PMEGP's margin money of ₹${inr(subsidy)}, which is set off against it`] };
     scheme = { id: 'pmegp', label: PMEGP.label, cost: pc, base, ratePct, subsidy, sanctioned, ownPct: 0, ownMinPct: PMEGP.ownPct[sc.category],
       workingCapitalPct: pc > 0 ? ((marginMoney + limit) / pc) * 100 : 0, workingCapitalMaxPct: PMEGP.workingCapitalMaxPct[sc.activity], ceiling, flags: [] };
   }
@@ -427,7 +427,7 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     sc.ownPct = sc.cost > 0 ? (own / sc.cost) * 100 : 0;
     sc.flags.push(PMEGP.notice);
     if (!(x.scheme as PmegpInput).confirmed) sc.flags.push('PMEGP\'s conditions are not yet confirmed: the scheme finances the project only if each holds.');
-    if (sc.cost > sc.ceiling) sc.flags.push(`The project cost of Rs. ${inr(sc.cost)} is above PMEGP's Rs. ${inr(sc.ceiling)} for ${(x.scheme as PmegpInput).activity === 'service' ? 'a service' : 'manufacturing'}: the margin money is worked on Rs. ${inr(sc.ceiling)}, and the bank may lend the rest without it.`);
+    if (sc.cost > sc.ceiling) sc.flags.push(`The project cost of ₹${inr(sc.cost)} is above PMEGP's ₹${inr(sc.ceiling)} for ${(x.scheme as PmegpInput).activity === 'service' ? 'a service' : 'manufacturing'}: the margin money is worked on ₹${inr(sc.ceiling)}, and the bank may lend the rest without it.`);
     if (sc.ownPct < sc.ownMinPct - 1e-9) sc.flags.push(`The promoters bring ${sc.ownPct.toFixed(2)}% of PMEGP's project cost; the scheme asks at least ${sc.ownMinPct}%.`);
     if (sc.workingCapitalPct > sc.workingCapitalMaxPct + 1e-9) sc.flags.push(`Working capital is ${sc.workingCapitalPct.toFixed(2)}% of PMEGP's project cost; the scheme allows at most ${sc.workingCapitalMaxPct}%.`);
   }

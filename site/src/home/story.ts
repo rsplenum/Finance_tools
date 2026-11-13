@@ -69,7 +69,7 @@ export const REPORT_CASE: ReportState = REPORT_HOME;
 export const REPORT_FIX = (() => {
   const l = viableOf(REPORT_CASE)?.lines.find((x) => x.id === 'sales');
   if (!l?.move || !l.bars) throw new Error('The report case needs no higher sales.');
-  return { move: l.move, sales: l.bars.toText.replace(/^Rs\. /, ''), from: l.bars.nowText.replace(/^Rs\. /, '') };
+  return { move: l.move, sales: l.bars.toText.replace(/^₹/, ''), from: l.bars.nowText.replace(/^₹/, '') };
 })();
 export const REPORT_FIXED: ReportState = { ...REPORT_CASE, sales: REPORT_FIX.sales };
 /** The report's DSCR table read: each year's DSCR, and the lowest year's sum, cash available over debt service, with
@@ -259,7 +259,7 @@ export const DSCR_SCENE: ToolScene = (() => {
   const title = doc?.parts[0].blocks.find((b) => b.kind === 'title'), basis = partOf(doc, 'Basis'), schedule = partOf(doc, 'Repayment schedule');
   const months = p.schedule?.years.reduce((a, y) => a + y.months.length, 0);
   const signed = blocksOf(doc, 'signature').length > 0;
-  if (!doc || title?.kind !== 'title' || !title.sub || !basis || !schedule || months !== Number(f.instalments) || !signed || !partOf(doc, 'Check')) throw new Error('The scene\'s statement lacks a part it shows.');
+  if (!doc || title?.kind !== 'title' || !title.sub || !basis || !schedule || months !== Number(f.instalments) || !signed || !partOf(doc, 'Checks')) throw new Error('The scene\'s statement lacks a part it shows.');
   // Each year's DSCR worked the second way (engine/dscr-check.ts); the largest difference, as the statement rounds a DSCR.
   const c = dscrCaseOf(STORY_FIXED), k = c && planCheck(c.proj, c.loan, c.def);
   const diff = Math.max(...L.years.map((y, i) => Math.abs(y.n - Number(k?.rows[i]?.dscr))));
@@ -411,12 +411,12 @@ export const ESTIMATE_SCENE: ToolScene = (() => {
       { k: 'Rooms', v: `${s.bhk} BHK` }, { k: 'Level', v: a.level }, { k: 'The two bedrooms', v: a.level, to: 'Basic' }],
     level, hub: { from: String(a.range?.of ?? items), to: String(items), unit: 'items', work: 'priced' }, panel: 'Running total, trade by trade', rows,
     weakest: { typed: total, fixed: total },
-    sum: { typed: { head: `The total, against the budget of Rs. ${B.text}`, lead: 'Rs. ', result: a.total }, fixed: { head: `The total, against the budget of Rs. ${B.text}`, lead: 'Rs. ', result: b.total } },
+    sum: { typed: { head: `The total, against the budget of ₹${B.text}`, lead: '₹', result: a.total }, fixed: { head: `The total, against the budget of ₹${B.text}`, lead: '₹', result: b.total } },
     chip: { typed: `Over budget ${level.text}`, fixed: `Within budget ${level.text}` },
     statement: {
-      title: title.text, sub: where, verdict: `Rs. ${b.total} in all, within the budget of ${level.text}, in figures and in words.`,
+      title: title.text, sub: where, verdict: `₹${b.total} in all, within the budget of ${level.text}, in figures and in words.`,
       lines: [
-        { head: 'Worked out twice', text: `A second way agrees: difference Rs. ${Math.round(diff)}.` },
+        { head: 'Worked out twice', text: `A second way agrees: difference ₹${Math.round(diff)}.` },
         { head: 'Every item', text: `Annex 1: the detailed estimate, each of the ${items} items with its quantity and rate.` },
         { head: 'What it assumes', text: 'Annex 2: every assumption, stated until you change it.' },
       ],

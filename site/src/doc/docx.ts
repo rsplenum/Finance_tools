@@ -4,11 +4,14 @@
  * header and footer on every page with its number, and each part from a new page. Word letters are not limited to
  * Latin. A stored zip (zip.ts); no library. Pure: bytes in memory, no DOM.
  */
-import type { Block, Cover, Doc, Row, Table } from './doc';
-import { WIDTH, measure, sectionPages } from './pdf';
+import type { Block, Chart, Cover, Doc, Row, Table } from './doc';
+import { WIDTH, measure, sectionPages } from './layout';
+import { CHART_REL, CHART_TYPE, CHART_URI, chartSize, chartXml, emu, tightLine } from './chart';
 import { zip } from './zip';
 
 const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+const WP = 'http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing';
+const DML = 'http://schemas.openxmlformats.org/drawingml/2006/main';
 const R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
 const PKG = 'http://schemas.openxmlformats.org/package/2006/relationships';
 const HEAD = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
@@ -101,7 +104,7 @@ function cover(c: Cover): string {
     + spacer(1600)
     + table([key, TEXT_W - key], c.facts.map(([k, v], i) => row(cell(para(run(k, { size: 20, color: MUTED }), { before: 40, after: 60, gap: LABEL_GAP }), { width: key, ...(i ? {} : { top: RULE }) })
       + cell(para(run(v, { size: 20 }), { before: 40, after: 60 }), { width: TEXT_W - key, ...(i ? {} : { top: RULE }) }))), 0)
-    + (c.mark ? spacer(240) + block({ kind: 'box', title: c.mark.title, items: [c.mark.text] }, false, []) : '')
+    + (c.mark ? spacer(240) + block({ kind: 'box', title: c.mark.title, items: [c.mark.text] }, false, [], []) : '')
     + pageBreak;
 }
 
@@ -113,8 +116,18 @@ function contents(title: string, entries: [string, number][]): string {
   return para(run(title), { style: 'TOCHeading' }) + lines.join('') + `<w:p>${f('end')}</w:p>`;
 }
 
-/** One block; `newPage` for the first block of every part after the first; `entries`, the contents' lines. */
-function block(b: Block, newPage: boolean, entries: [string, number][]): string {
+/** A chart, inline across the text's width and kept with the line under it that names the amber year; `k` counts the charts from 0. */
+function chart(c: Chart, k: number): string {
+  const { w, h } = chartSize(c, WIDTH), alt = `${c.title} (${c.unit}). ${c.rows.map((r) => `${r.label}: ${c.names[0]} ${r.texts[0]}, ${c.names[1]} ${r.texts[1]}`).join('; ')}.`;
+  const tight = tightLine(c);
+  return spacer(80) + `<w:p><w:pPr><w:keepNext/><w:spacing w:after="40"/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0">`
+    + `<wp:extent cx="${emu(w)}" cy="${emu(h)}"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="${k + 1}" name="Chart ${k + 1}" descr="${xml(alt)}"/>`
+    + `<wp:cNvGraphicFramePr/><a:graphic xmlns:a="${DML}"><a:graphicData uri="${CHART_URI}"><c:chart xmlns:c="${CHART_URI}" r:id="rIdChart${k + 1}"/></a:graphicData></a:graphic>`
+    + '</wp:inline></w:drawing></w:r></w:p>' + (tight ? para(run(tight, { size: 16, color: MUTED }), { after: 120 }) : spacer(120));
+}
+
+/** One block; `newPage` for the first block of every part after the first; `entries`, the contents' lines; `charts`, the charts so far. */
+function block(b: Block, newPage: boolean, entries: [string, number][], charts: Chart[]): string {
   switch (b.kind) {
     case 'cover':
       return cover(b);
@@ -147,6 +160,7 @@ function block(b: Block, newPage: boolean, entries: [string, number][]): string 
       const w = Math.floor(TEXT_W / Math.max(1, b.items.length));
       return spacer(120) + table(b.items.map(() => w), [row(b.items.map((f) => cell(
         para(run(f.label, { size: 16, color: MUTED }), { before: 100, after: 0 }) + para(run(f.value, { bold: true, size: 28 }), { after: 0 })
+          + (f.level ? para(run(f.level, { bold: true, size: 17 }), { after: 0 }) : '')
           + para(run(f.note ?? '', { size: 16, color: MUTED }), { after: 100 }),
         { width: w, fill: SHADE })).join(''))], 160) + spacer(160);
     }
@@ -156,6 +170,8 @@ function block(b: Block, newPage: boolean, entries: [string, number][]): string 
     case 'table':
       return spacer(80) + (b.table.unit ? para(run(b.table.unit, { size: 15, color: MUTED }), { keepNext: true, right: true, after: 40 }) : '')
         + figuresTable(b.table) + spacer(80);
+    case 'chart':
+      return chart(b.chart, charts.push(b.chart) - 1);
     case 'signature':
       // Kept together on one page, with room to sign above "Authorised signatory".
       return b.lines.map((l, i) => para(run(l), { keepNext: i < b.lines.length - 1, before: i === 0 ? 480 : i === 2 ? 480 : 120, after: 0 })).join('');
@@ -191,8 +207,9 @@ const tab = (size: number) => `<w:r><w:rPr><w:sz w:val="${size}"/></w:rPr><w:tab
 export function docxOf(doc: Doc, made: Date): Uint8Array<ArrayBuffer> {
   // A part that flows runs on under the one before it; a cover's page has no header or footer (`titlePg`).
   const entries = doc.parts.some((p) => p.section) ? sectionPages(doc) : [], covered = doc.parts.some((p) => p.blocks.some((b) => b.kind === 'cover'));
+  const charts: Chart[] = [];
   const body = doc.parts.filter((p) => !p.sheetOnly).map((part, i) => (i && part.flow ? spacer(360) : '')
-    + part.blocks.map((b, k) => block(b, i > 0 && k === 0 && !part.flow, entries)).join('')).join('');
+    + part.blocks.map((b, k) => block(b, i > 0 && k === 0 && !part.flow, entries, charts)).join('')).join('');
   const sect = `<w:sectPr><w:headerReference w:type="default" r:id="rId2"/>${covered ? '<w:headerReference w:type="first" r:id="rId4"/>' : ''}`
     + `<w:footerReference w:type="default" r:id="rId3"/>${covered ? '<w:footerReference w:type="first" r:id="rId5"/>' : ''}`
     + `<w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1200" w:right="840" w:bottom="1200" w:left="840" w:header="600" w:footer="560" w:gutter="0"/>${covered ? '<w:titlePg/>' : ''}</w:sectPr>`;
@@ -207,6 +224,7 @@ export function docxOf(doc: Doc, made: Date): Uint8Array<ArrayBuffer> {
       + '<Override PartName="/word/footer1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>'
       + (covered ? '<Override PartName="/word/header2.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>'
         + '<Override PartName="/word/footer2.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>' : '')
+      + charts.map((_, k) => `<Override PartName="/word/charts/chart${k + 1}.xml" ContentType="${CHART_TYPE}"/>`).join('')
       + '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/></Types>') },
     { name: '_rels/.rels', data: enc(`${HEAD}<Relationships xmlns="${PKG}"><Relationship Id="rId1" Type="${R}/officeDocument" Target="word/document.xml"/>`
       + `<Relationship Id="rId2" Type="${PKG}/metadata/core-properties" Target="docProps/core.xml"/></Relationships>`) },
@@ -218,11 +236,13 @@ export function docxOf(doc: Doc, made: Date): Uint8Array<ArrayBuffer> {
       + `<Relationship Id="rId1" Type="${R}/styles" Target="styles.xml"/><Relationship Id="rId2" Type="${R}/header" Target="header1.xml"/>`
       + `<Relationship Id="rId3" Type="${R}/footer" Target="footer1.xml"/>`
       + (covered ? `<Relationship Id="rId4" Type="${R}/header" Target="header2.xml"/><Relationship Id="rId5" Type="${R}/footer" Target="footer2.xml"/>` : '')
+      + charts.map((_, k) => `<Relationship Id="rIdChart${k + 1}" Type="${CHART_REL}" Target="charts/chart${k + 1}.xml"/>`).join('')
       + '</Relationships>') },
-    { name: 'word/document.xml', data: enc(`${HEAD}<w:document xmlns:w="${W}" xmlns:r="${R}"><w:body>${body}${sect}</w:body></w:document>`) },
+    { name: 'word/document.xml', data: enc(`${HEAD}<w:document xmlns:w="${W}" xmlns:r="${R}" xmlns:wp="${WP}"><w:body>${body}${sect}</w:body></w:document>`) },
     { name: 'word/styles.xml', data: enc(STYLES(entries.length > 0)) },
     { name: 'word/header1.xml', data: enc(band('hdr', doc.header, doc.mark ? `${tab(15)}${run(doc.mark, { bold: true, size: 15 })}` : '')) },
     { name: 'word/footer1.xml', data: enc(band('ftr', doc.footer, `${tab(15)}${run('Page ', { size: 15, color: MUTED })}${field('PAGE')}${run(' of ', { size: 15, color: MUTED })}${field('NUMPAGES')}`)) },
     ...(covered ? [{ name: 'word/header2.xml', data: enc(blank('hdr')) }, { name: 'word/footer2.xml', data: enc(blank('ftr')) }] : []),
+    ...charts.map((c, k) => ({ name: `word/charts/chart${k + 1}.xml`, data: enc(chartXml(c)) })),
   ], made);
 }

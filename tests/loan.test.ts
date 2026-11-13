@@ -28,7 +28,7 @@ describe('equal instalments of principal', () => {
       ['2029-30', 9000, 200000, 0],
     ]);
   });
-  it('at no interest, and a loan of Rs. 1 still has an instalment', () => {
+  it('at no interest, and a loan of ₹1 still has an instalment', () => {
     expect(table({ amount: 12000, ratePct: 0, disbursed: '2027-01', moratoriumMonths: 0, instalments: 12, frequency: 'monthly', style: 'equal-principal' }))
       .toEqual([['2026-27', 0, 3000, 9000], ['2027-28', 0, 9000, 0]]);
     expect(table({ amount: 1, ratePct: 10, disbursed: '2026-04', moratoriumMonths: 0, instalments: 1, frequency: 'monthly', style: 'equal-principal' })[0][2]).toBe(1);

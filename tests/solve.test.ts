@@ -19,7 +19,7 @@ const by = (s: Solved, id: string) => s.plans.find((p) => p.id === id) as Soluti
 const moves = (p: Solution) => p.moves.map((m) => [m.id, m.from, m.to]);
 
 /** A plan's inputs written here from its moves, apart from the solver, with move `one` a unit of its box back toward the
- * typed figure: Rs. 1,000, a month, an instalment, 0.1 of a point of use in every year under the most, 0.1% of the
+ * typed figure: ₹1,000, a month, an instalment, 0.1 of a point of use in every year under the most, 0.1% of the
  * typed price (written up to the paisa), 0.1 of a point of growth. */
 function written(x: ReportInput, ms: Move[], one?: Move): ReportInput {
   const y: ReportInput = { ...x, loan: { ...x.loan } }, most = LEVELS.capacity.mostUsePct, r1 = (v: number) => Math.round(v * 10) / 10;
@@ -57,7 +57,7 @@ describe('The part first year on Sample Metals with fuller margins (case H)', ()
     expect(s.base.report.years[0].interestCover).toBeCloseTo(icH(7500000), 9);
   });
 
-  it('Borrow less: Rs. 56,43,000, the least cut to the thousand, by hand', () => {
+  it('Borrow less: ₹56,43,000, the least cut to the thousand, by hand', () => {
     const p = by(s, 'borrowLess');
     expect([p.works, moves(p)]).toEqual([true, [['loan', 7500000, 5643000]]]);
     expect([icH(5643000).toFixed(5), icH(5644000).toFixed(5)]).toEqual(['1.50011', '1.49986']);

@@ -62,7 +62,7 @@ describe('the estimate to download', () => {
     expect(lines).toContain('1. Earthwork | 15,750');
     expect(lines).toContain('Total of the works | 20,24,150');
     expect(lines).toContain('Total estimated cost | 20,84,875');
-    expect(lines).toContain('Cost per sq ft: Rs. 1,737 of built-up area');
+    expect(lines).toContain('Cost per sq ft: ₹1,737 of built-up area');
     expect(docStatus(E, p)).toBe('All questions answered');
     expect(fileName(E, p, 'pdf')).toBe('Estimate - Asha Traders.pdf');
   });

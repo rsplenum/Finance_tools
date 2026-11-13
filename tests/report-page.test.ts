@@ -55,7 +55,7 @@ describe('the project report page', () => {
   it('case R as typed: the hand-worked first year in every table', () => {
     const p = preview(R);
     expect(p.needs).toEqual([]);
-    expect(p.view!.key.map((k) => k.value)).toEqual(['Rs. 37,86,301', p.view!.key[1].value, p.view!.key[2].value]);
+    expect(p.view!.key.map((k) => k.value)).toEqual(['₹37,86,301', p.view!.key[1].value, p.view!.key[2].value]);
     expect(row(p, 'pl', 'Profit after tax')?.values[0]).toBe('11,54,407');
     expect(row(p, 'bs', 'Total liabilities')?.values[0]).toBe('55,81,804');
     expect(row(p, 'bs', 'Total assets')?.values[0]).toBe('55,81,804');
@@ -69,7 +69,7 @@ describe('the project report page', () => {
   it('case P as typed: the drivers, three months of sales and the PMEGP margin money', () => {
     const p = preview(P);
     expect([p.needs, p.flags, p.short]).toEqual([[], [DATA.schemes.pmegp.notice], undefined]);
-    expect(p.view!.key.find((k) => k.label === 'PMEGP margin money')?.value).toBe('Rs. 7,80,856');
+    expect(p.view!.key.find((k) => k.label === 'PMEGP margin money')?.value).toBe('₹7,80,856');
     expect([row(p, 'sales', 'Pieces sold')?.values[0], row(p, 'sales', 'Total sales')?.values.slice(0, 2)]).toEqual(['4,500', ['14,40,000', '67,20,000']]);
     expect(row(p, 'pl', 'Months of sales')?.values).toEqual(['3', '12', '12', '12', '12']);
     expect(row(p, 'pl', 'Use of the capacity')?.values).toEqual(['60%', '70%', '80%', '80%', '80%']);
@@ -78,10 +78,10 @@ describe('the project report page', () => {
   it('PMEGP asks its three facts; cash running out names its first year and the amount, and keeps the document provisional', () => {
     expect(preview({ ...P, category: undefined, area: undefined, activity: undefined }).needs.length).toBe(3);
     const t = { ...P, fixed: '25 L' }, q = preview(t);
-    // The first year under nil read off the cash row: the first value with a minus (D-UX-247). Each year is Rs. 40,479
+    // The first year under nil read off the cash row: the first value with a minus (D-UX-247). Each year is ₹40,479
     // above the figures before D-UX-350: the interest before the first sales, now in the project's cost, comes from the promoters.
     expect(row(q, 'cf', 'Cash at the end of the year')?.values).toEqual(['-2,41,729', '-15,10,780', '-25,82,604', '-36,72,856', '-48,67,334']);
-    expect(q.short).toBe('Cash runs out in 2026-27: Rs. 48,67,334 short at its lowest, in 2030-31. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.');
+    expect(q.short).toBe('Cash runs out in 2026-27: ₹48,67,334 short at its lowest, in 2030-31. The promoters would need that much more, or the costs or loans be changed, to keep it at nil or above.');
     expect(q.runsOut).toBe('2026-27');
     // A result, not a question (OR11's O1): out of the count, into the verdict; the file stays provisional (D-UX-49).
     expect(statusText(q)).toBe('All questions answered');
@@ -93,7 +93,7 @@ describe('the project report to download', () => {
   const p = preview(R), doc = reportDoc(R, p, TODAY)!, text = docText(doc), lines = text.split('\n');
   it('a cover, the contents, then sections 1 to 7, the annex and the declaration, signed', () => {
     expect(lines.slice(3, 11)).toEqual([
-      'Project report', 'Asha Packaging', 'Manufacture of corrugated boxes', 'Term loan of Rs. 25,00,000 and a working-capital limit of Rs. 5,00,000',
+      'Project report', 'Asha Packaging', 'Manufacture of corrugated boxes', 'Term loan of ₹25,00,000 and a working-capital limit of ₹5,00,000',
       'Projections for 2026-27 to 2030-31', 'Address: Plot 4, Example MIDC, Pune', 'Constitution: Partnership firm or LLP', 'Prepared on: 02-10-2026',
     ]);
     expect(lines.slice(11, 21)).toEqual([
@@ -101,7 +101,7 @@ describe('the project report to download', () => {
       '4. The basis of the projections', '5. Projected financial statements', '6. DSCR, break-even, ratios and working capital',
       '7. Repayment of the term loan', 'Annex. How the figures are worked out, and the rules’ sources', 'Declaration',
     ]);
-    expect(lines).toContain('Cost of the project: Rs. 37,86,301');
+    expect(lines).toContain('Cost of the project: ₹37,86,301');
     expect(lines).toContain('Total cost of the project | 37,86,301');
     expect(lines).toContain('Amounts in rupees; DSCR in times');
     expect(lines).toContain('For Asha Packaging');
@@ -155,7 +155,7 @@ describe('the PMEGP report to download', () => {
   const p = preview(P), doc = reportDoc(P, p, TODAY)!, text = docText(doc);
   it('names the scheme, the drivers and the rules used, with their source and date', () => {
     expect(text).toContain('Scheme: PMEGP; general category; a village; manufacturing');
-    expect(text).toContain('Sales: Roasted chana: 2,500 pieces a month at full running, at Rs. 200 a piece');
+    expect(text).toContain('Sales: Roasted chana: 2,500 pieces a month at full running, at ₹200 a piece');
     expect(text).toContain('Sales by product');
     expect(text).toContain('Months from the loan to the first sales: 3');
     expect(text).toContain('PMEGP: the rules used');
@@ -186,9 +186,9 @@ describe('the Mudra report (SCH1)', () => {
     expect(text).toContain('The guarantee fee: CGFMU');
   });
   it('says when the promoters\' most and Mudra\'s 20 lakh cannot fund the project, and stops above Tarun unticked', () => {
-    expect(planOf({ ...M, promotersMost: '5 L' })?.mudraShort).toContain('leave Rs. 17,86,301 of the project unfunded');
+    expect(planOf({ ...M, promotersMost: '5 L' })?.mudraShort).toContain('leave ₹17,86,301 of the project unfunded');
     expect(planOf({ ...M, promotersMost: '30 L' })?.mudraShort).toBeUndefined();
-    expect(preview({ ...M, tarunRepaid: false }).needs[0]).toMatch(/^Mudra: the loans come to Rs\. 15,00,000, above Tarun's/);
+    expect(preview({ ...M, tarunRepaid: false }).needs[0]).toMatch(/^Mudra: the loans come to ₹15,00,000, above Tarun's/);
   });
 });
 
@@ -227,39 +227,39 @@ describe('the lender\'s levels and make it viable, in words', () => {
     expect([p.misses, p.collateralNote]).toEqual(['Misses 4 of 8 benchmarks: current ratio, average DSCR, DSCR in the lowest year and interest cover.', undefined]);
     // The bars (the level at the middle) and the rupees short, rounded up from tests/viable.test.ts's hand figures.
     expect(p.checks?.map((c) => [c.id, c.bar.toFixed(1), c.short])).toEqual([
-      ['currentRatio', '42.5', 'Short by Rs. 1,44,139 of current assets (stock, debtors and cash) in 2026-27.'], ['tolTnw', '35.8', undefined], ['debtEquity', '31.1', undefined],
-      ['dscrAverage', '42.2', expect.stringMatching(/^Short by Rs\. [\d,]+ of cash to pay the loan, in total over the loan\.$/)],
-      ['dscrLowest', '32.7', 'Short by Rs. 3,13,855 of cash to pay the loan in 2026-27.'], ['interestCover', '24.8', 'Short by Rs. 2,13,125 of profit before interest and tax in 2026-27.'],
+      ['currentRatio', '42.5', 'Short by ₹1,44,139 of current assets (stock, debtors and cash) in 2026-27.'], ['tolTnw', '35.8', undefined], ['debtEquity', '31.1', undefined],
+      ['dscrAverage', '42.2', expect.stringMatching(/^Short by ₹[\d,]+ of cash to pay the loan, in total over the loan\.$/)],
+      ['dscrLowest', '32.7', 'Short by ₹3,13,855 of cash to pay the loan in 2026-27.'], ['interestCover', '24.8', 'Short by ₹2,13,125 of profit before interest and tax in 2026-27.'],
       ['facr', '57.9', undefined], ['securityCover', '62.2', undefined],
     ]);
   });
   it('the borrower\'s changes first, then the lender\'s, each a card with how far it moves and what it fixes', () => {
     const v = viableOf(weak);
     expect(v?.lines.map((l) => [l.by, l.text])).toEqual([
-      ['borrower', 'Sales 17.3% higher in every year: Rs. 82,11,000 in 2026-27 instead of Rs. 70,00,000.'],
-      ['borrower', 'A term loan of at most Rs. 9,35,779 (now Rs. 25,00,000), the promoters bringing Rs. 15,64,221 more.'],
-      ['borrower', 'A working-capital limit of at most Rs. 3,80,877 (now Rs. 5,00,000), the promoters bringing Rs. 1,19,123 more as margin.'],
+      ['borrower', 'Sales 17.3% higher in every year: ₹82,11,000 in 2026-27 instead of ₹70,00,000.'],
+      ['borrower', 'A term loan of at most ₹9,35,779 (now ₹25,00,000), the promoters bringing ₹15,64,221 more.'],
+      ['borrower', 'A working-capital limit of at most ₹3,80,877 (now ₹5,00,000), the promoters bringing ₹1,19,123 more as margin.'],
       ['lender', expect.stringMatching(/^A holiday of \d+ months before the first instalment \(now 0\), the whole loan within 180 months\.$/)],
       ['lender', expect.stringMatching(/^\d+ monthly instalments, .+ \(now 60\), the whole loan within 180 months\.$/)],
     ]);
-    expect(v?.lines.map((l) => [l.head, l.move])).toEqual([['Higher sales', '+17.3%'], ['A smaller term loan', 'Rs. 15,64,221 less'], ['A smaller working-capital limit', 'Rs. 1,19,123 less'],
+    expect(v?.lines.map((l) => [l.head, l.move])).toEqual([['Higher sales', '+17.3%'], ['A smaller term loan', '₹15,64,221 less'], ['A smaller working-capital limit', '₹1,19,123 less'],
       ['A longer holiday', expect.stringMatching(/^\+\d+ months?$/)], ['A longer repayment', expect.stringMatching(/^\+\d+ instalments?$/)]]);
-    expect(v?.lines[0].bars).toEqual({ now: expect.closeTo(7000000, 6), to: expect.closeTo(8211000, 6), nowText: 'Rs. 70,00,000', toText: 'Rs. 82,11,000' });
+    expect(v?.lines[0].bars).toEqual({ now: expect.closeTo(7000000, 6), to: expect.closeTo(8211000, 6), nowText: '₹70,00,000', toText: '₹82,11,000' });
     expect([v?.lines[0].reach, v?.lines[2].fixes, v?.lines[2].still]).toEqual([undefined, ['current ratio'], ['average DSCR', 'DSCR in the lowest year', 'interest cover']]);
     expect(v?.lines[2].note).toMatch(/^Cash still runs out/);
     expect([v?.lines[3].fixes, v?.lines[3].still]).toEqual([['current ratio', 'average DSCR', 'DSCR in the lowest year'], ['interest cover', 'fixed-asset cover']]);
   });
   it('as typed, it meets and says how far sales can fall', () => {
     expect(preview(R).misses).toBeUndefined();
-    expect(viableOf(R)?.lines.map((l) => l.text)).toEqual(['To Rs. 82,20,000 in 2026-27 (from Rs. 1,20,00,000), and every ratio still meets its level.']);
+    expect(viableOf(R)?.lines.map((l) => l.text)).toEqual(['To ₹82,20,000 in 2026-27 (from ₹1,20,00,000), and every ratio still meets its level.']);
   });
   it('the collateral typed: its values in the report, the security cover read, and the collateral it needs', () => {
     const s = { ...R, wcLimit: '20 L', collateral: '3 L' }, p = preview(s), v = viableOf(s);
     expect(p.checks?.at(-1)).toEqual({ id: 'securityCover', label: 'Security cover', level: '1.20 or more', worst: '1.17 in 2026-27', verdict: 'misses', at: 'least',
-      bar: expect.closeTo(48.7, 1), short: expect.stringMatching(/^Short by Rs\. 1,22,60[34] of security in 2026-27\.$/) });
+      bar: expect.closeTo(48.7, 1), short: expect.stringMatching(/^Short by ₹1,22,60[34] of security in 2026-27\.$/) });
     expect(p.view?.tables.find((t) => t.id === 'collateral')?.rows.map((r) => r.values[0])).toEqual(['3,00,000', '2,70,000', '2,40,000']);
-    expect(v?.lines.find((l) => l.id === 'collateral')?.text).toBe('Collateral with a market value of Rs. 4,36,226 (now Rs. 3,00,000), for the security cover.');
-    expect(v?.lines.find((l) => l.id === 'wc')?.text).toBe('A working-capital limit of at most Rs. 18,97,831 (now Rs. 20,00,000), with no more margin from the promoters.');
+    expect(v?.lines.find((l) => l.id === 'collateral')?.text).toBe('Collateral with a market value of ₹4,36,226 (now ₹3,00,000), for the security cover.');
+    expect(v?.lines.find((l) => l.id === 'wc')?.text).toBe('A working-capital limit of at most ₹18,97,831 (now ₹20,00,000), with no more margin from the promoters.');
   });
   it('reads the loan period back in all, and names one past 180 months (D-UX-174)', () => {
     // 12 months' holiday and 170 monthly instalments: 182 months, 15 years 2 months; the instalments 14 years 2 months.
@@ -283,21 +283,21 @@ describe('the plan on the board, in words, used and undone', () => {
     expect(planOf(weak, { promoters: 0 })?.levers).toEqual(AS_TYPED);
     expect(L).toEqual({ ...AS_TYPED, wc: 119123, promoters: 123260, sales: 143 });
     expect(b?.steps).toEqual([
-      'A working-capital limit of Rs. 3,80,877 (now Rs. 5,00,000).',
-      'A term loan of Rs. 23,76,740 (now Rs. 25,00,000), the promoters bringing the rest.',
-      'Sales of Rs. 80,01,000 in a full first year (now Rs. 70,00,000), 14.3% higher.']);
+      'A working-capital limit of ₹3,80,877 (now ₹5,00,000).',
+      'A term loan of ₹23,76,740 (now ₹25,00,000), the promoters bringing the rest.',
+      'Sales of ₹80,01,000 in a full first year (now ₹70,00,000), 14.3% higher.']);
     expect([b?.works, b?.verdict, b?.line]).toEqual([true, 'With these changes it meets every default benchmark ratio.', 'Meets every benchmark']);
-    expect(b?.promoters).toBe('The promoters bring Rs. 11,99,999 in all (now Rs. 8,75,342), within the Rs. 12,00,000 they can.');
-    expect(q?.limits).toMatch(/^The limits kept: the promoters bring at most Rs\. 12,00,000 in all; sales with no limit known/);
+    expect(b?.promoters).toBe('The promoters bring ₹11,99,999 in all (now ₹8,75,342), within the ₹12,00,000 they can.');
+    expect(q?.limits).toMatch(/^The limits kept: the promoters bring at most ₹12,00,000 in all; sales with no limit known/);
     expect(q?.cards.map((c) => c.id)).toEqual(['wc', 'promoters', 'unsecured', 'fixed', 'sales', 'moratorium', 'instalments']);
-    expect([b?.moves.sales.move, b?.moves.sales.to, b?.moves.fixed.move]).toEqual(['+14.3%', 'Rs. 80,01,000 in a full first year', 'As typed']);
+    expect([b?.moves.sales.move, b?.moves.sales.to, b?.moves.fixed.move]).toEqual(['+14.3%', '₹80,01,000 in a full first year', 'As typed']);
   });
   it('a slider moved back: still misses, named with its shortfall; the most passed is said', () => {
     const c = q && boardOf(q, { ...L, sales: 100 });
     expect(c?.works).toBe(false);
     expect(c?.line).toBe('Misses 1: DSCR in the lowest year');
-    expect(c?.still[0]).toMatch(/^DSCR in the lowest year: 1\.1\d in 2026-27, level 1\.25 or more\. Short by Rs\. [\d,]+ of cash to pay the loan in 2026-27\.$/);
-    expect(q && boardOf(q, { ...L, promoters: 200000 }).promoters).toMatch(/: Rs\. 76,7\d\d more than the Rs\. 12,00,000 they can\.$/);
+    expect(c?.still[0]).toMatch(/^DSCR in the lowest year: 1\.1\d in 2026-27, level 1\.25 or more\. Short by ₹[\d,]+ of cash to pay the loan in 2026-27\.$/);
+    expect(q && boardOf(q, { ...L, promoters: 200000 }).promoters).toMatch(/: ₹76,7\d\d more than the ₹12,00,000 they can\.$/);
   });
   it('"Use this plan" writes the engine\'s figures, and undo puts back only those still as written', () => {
     const { s, changes } = applyPlan(weak, L);
@@ -341,12 +341,12 @@ describe('Make it work on the page, used and undone (OR11d)', () => {
     expect(inputOf(FS)).toEqual({ ...F, products: F.products?.map((p) => ({ ...p, unit: 'piece' })) });
     const w = workView(FS)!;
     expect(w.held.map((h) => [h.cause, h.head, h.rows.map((r) => r.id)])).toEqual([['assets', 'The assets wear out faster than the loan is repaid', ['facr']]]);
-    expect([w.misses, w.cash, w.amount, w.keep, w.dscrLevel]).toEqual([1, undefined, 'Rs. 2,50,00,000', [], '1.25']);
+    expect([w.misses, w.cash, w.amount, w.keep, w.dscrLevel]).toEqual([1, undefined, '₹2,50,00,000', [], '1.25']);
     expect(w.keepNot.map((c) => [c.id, c.still])).toEqual([['price', ['fixed-asset cover']], ['capacity', ['fixed-asset cover']], ['growth', ['fixed-asset cover']], ['cash', ['fixed-asset cover']]]);
-    // tests/fix.test.ts by hand: Rs. 1,11,40,000 over the typed 15 years, or Rs. 1,72,20,000 over 11.
+    // tests/fix.test.ts by hand: ₹1,11,40,000 over the typed 15 years, or ₹1,72,20,000 over 11.
     expect(w.change.map((c) => [c.head, c.text, c.notes, c.reaches])).toEqual([
-      ['Borrow less', 'A term loan of Rs. 1,11,40,000 (now Rs. 2,50,00,000).', ['The promoters bring Rs. 1,37,52,585 more.'], true],
-      ['Borrow less and repay in 11 years', 'A term loan of Rs. 1,72,20,000 (now Rs. 2,50,00,000), repaid in 11 years instead of 15 years.', ['The promoters bring Rs. 77,19,705 more.'], true]]);
+      ['Borrow less', 'A term loan of ₹1,11,40,000 (now ₹2,50,00,000).', ['The promoters bring ₹1,37,52,585 more.'], true],
+      ['Borrow less and repay in 11 years', 'A term loan of ₹1,72,20,000 (now ₹2,50,00,000), repaid in 11 years instead of 15 years.', ['The promoters bring ₹77,19,705 more.'], true]]);
     expect([w.changeNone, w.changeNot.map((c) => c.id)]).toEqual([undefined, ['wc']]);
   });
   it('Use this writes the way, every level then meets, and the undo gives back the figures as typed', () => {
@@ -359,19 +359,19 @@ describe('Make it work on the page, used and undone (OR11d)', () => {
     }
   });
   it('a card\'s question left open keeps the report provisional; its answer closes it, and the undo takes both back', () => {
-    // Case R at Rs. 70,00,000 (tests/work.test.ts by hand): sales of Rs. 82,11,000, a plant selling Rs. 1,41,43,206 running full.
+    // Case R at ₹70,00,000 (tests/work.test.ts by hand): sales of ₹82,11,000, a plant selling ₹1,41,43,206 running full.
     const sales = workView(REPORT_HOME)!.keep[0];
-    expect([sales.head, sales.text, sales.ask?.id, sales.ask?.note]).toEqual(['Sell more', 'Sales of Rs. 82,11,000 in a full first year (now Rs. 70,00,000).', 'plantSales',
-      'It needs a plant that sells Rs. 1,41,43,206 a year running full: give what yours can, and the report stays provisional until then.']);
+    expect([sales.head, sales.text, sales.ask?.id, sales.ask?.note]).toEqual(['Sell more', 'Sales of ₹82,11,000 in a full first year (now ₹70,00,000).', 'plantSales',
+      'It needs a plant that sells ₹1,41,43,206 a year running full: give what yours can, and the report stays provisional until then.']);
     const { s, changes } = applyWay(REPORT_HOME, sales);
-    expect(changes.map((c) => c.text ?? `${c.label}: ${c.was} → ${c.now}`)).toEqual(['Sales: 70,00,000 → 82,11,000', 'A question left: What can the plant sell in a year, running full? (Rs.)']);
+    expect(changes.map((c) => c.text ?? `${c.label}: ${c.was} → ${c.now}`)).toEqual(['Sales: 70,00,000 → 82,11,000', 'A question left: What can the plant sell in a year, running full? (₹)']);
     expect([preview(s).misses, preview(s).needs]).toEqual([undefined, [PENDING.plantSales.need]]);
     const a = answerPending(s, '1.5 Cr');
     expect([a.s.pending, a.s.plantSales, preview(a.s).needs, a.changes]).toEqual([undefined, '1.5 Cr', [], []]);
     expect(answerPending(s, 'a lot')).toEqual({ s, changes: [] });
     expect(undoPlan(s, changes)).toEqual(REPORT_HOME);
     // Typed on the card, the plant's sales say whether the way is within it.
-    expect(workView({ ...REPORT_HOME, plantSales: '1.5 Cr' })!.keep[0].ask?.note).toBe('Within the plant: it needs Rs. 1,41,43,206 a year running full.');
+    expect(workView({ ...REPORT_HOME, plantSales: '1.5 Cr' })!.keep[0].ask?.note).toBe('Within the plant: it needs ₹1,41,43,206 a year running full.');
   });
   it('the larger plant\'s cost goes to its machinery, beyond the building as typed', () => {
     // 3,00,00,000 for the plant, less the building's 50,00,000: machinery of 2,50,00,000.
@@ -422,7 +422,7 @@ describe('simple and expert modes', () => {
     expect(preview({ ...S, security: 'hybrid' }).needs).toEqual(['The collateral: its market value, for the part CGTMSE does not guarantee']);
     const h: ReportState = { ...S, security: 'hybrid', collateral: '5 L' }, x = inputOf(h);
     expect([x.collateral, x.guarantee]).toEqual([500000, { cgtmse: true, concessions: 0 }]);
-    expect(preview(h).hybrid).toMatch(/^CGTMSE guarantees Rs\. [\d,]+ of the loans' Rs\. [\d,]+; the property's Rs\. 5,00,000 backs the rest, set against the term loan first\. Its fee is on that part only\.$/);
+    expect(preview(h).hybrid).toMatch(/^CGTMSE guarantees ₹[\d,]+ of the loans' ₹[\d,]+; the property's ₹5,00,000 backs the rest, set against the term loan first\. Its fee is on that part only\.$/);
     expect(assumptionsOf(h).some((a) => a.id === 'cgtmseHybrid')).toBe(true);
     expect(assumptionsOf({ ...S, security: 'cgtmse' }).some((a) => a.id === 'cgtmseHybrid')).toBe(false);
     const e = withMode(h, 'expert');
@@ -462,8 +462,8 @@ describe('simple and expert modes', () => {
     const w = repaymentView(S)!, c = compareRepayments(inputOf(S))!;
     expect(holidayAssumed(S)).toBe('3');
     expect(w.rows.map((r) => [r.value, r.now])).toEqual([['monthly', false], ['emi', true], ['stepped', false]]);
-    expect(w.rows.map((r) => r.interest)).toEqual(c.ways.map((k) => `Rs. ${inr(k.interest)}`));
-    expect(w.rows[1].instalments).toBe(`Rs. ${inr(c.ways[1].first)} a month`);
+    expect(w.rows.map((r) => r.interest)).toEqual(c.ways.map((k) => `₹${inr(k.interest)}`));
+    expect(w.rows[1].instalments).toBe(`₹${inr(c.ways[1].first)} a month`);
     expect(w.rows[2].label).toBe('Stepped: rising 10% a year');
     expect(w.notes[0]).toMatch(/^A stepped instalment is level within each year and rises each new year by up to 10%\. The last year's is held to 2 times the first year's at most/);
     const p = w.rows.find((r) => r.proposed);
@@ -491,7 +491,7 @@ describe('sold by (OR6)', () => {
     expect([row(b, 'sales', 'Kg sold')?.values[0], row(b, 'sales', 'Price a kg')?.values[0]]).toEqual([row(a, 'sales', 'Pieces sold')?.values[0], row(a, 'sales', 'Price a piece')?.values[0]]);
     expect(preview({ ...kg, products: [{ ...kg.products[0], price: '' }] }).needs).toContain('Sales, line 1: the price a kg');
     const pk = { ...P, products: P.products.map((p) => ({ ...p, unit: 'kg' })) };
-    expect(docText(reportDoc(pk, preview(pk), TODAY)!)).toContain('Sales: Roasted chana: 2,500 kg a month at full running, at Rs. 200 a kg');
+    expect(docText(reportDoc(pk, preview(pk), TODAY)!)).toContain('Sales: Roasted chana: 2,500 kg a month at full running, at ₹200 a kg');
   });
   it('every unit has its words, and an unknown or missing one is the piece', () => {
     expect(SOLD_BY.map((u) => u.id)).toEqual(['piece', 'kg', 'tonne', 'litre', 'metre', 'sqft', 'hour', 'day', 'job', 'month']);
@@ -510,24 +510,24 @@ describe('check and confirm (OR8)', () => {
   };
   const lines = (s: ReportState) => Object.fromEntries(checkOf(s, preview(s)).map((g) => [g.id, g.lines.map((l) => `${l.label}: ${l.value}`)]));
   it('reads back case P, its cost and finance from the tables', () => {
-    const p = preview(P), g = lines(P), table = (id: string) => p.view!.tables.find((t) => t.id === id)!.rows.map((r) => `${r.label}: Rs. ${r.values[0]}`);
+    const p = preview(P), g = lines(P), table = (id: string) => p.view!.tables.find((t) => t.id === id)!.rows.map((r) => `${r.label}: ₹${r.values[0]}`);
     expect(g.business).toEqual(['Who the borrower is: Partnership firm or LLP', 'A government scheme: PMEGP', 'What backs the loan: The project’s own assets only']);
     expect(g.cost).toEqual(table('cost'));
-    expect(g.cost.at(-1)).toBe('Total cost of the project: Rs. 30,63,903');
+    expect(g.cost.at(-1)).toBe('Total cost of the project: ₹30,63,903');
     expect(g.finance).toEqual(table('finance'));
     expect(g.loan).toEqual(['Interest rate: 10% a year', 'Loan period: 4 years 6 months in all: a holiday of 6 months, then 4 years of instalments', 'How it is repaid: Equal principal every month']);
-    expect(g.sales).toEqual(['Roasted chana: 2,500 pieces a month at full running, at Rs. 200 a piece', 'Roasted peanuts: 1,500 pieces a month at full running, at Rs. 200 a piece',
+    expect(g.sales).toEqual(['Roasted chana: 2,500 pieces a month at full running, at ₹200 a piece', 'Roasted peanuts: 1,500 pieces a month at full running, at ₹200 a piece',
       'Use of the capacity: 60% in 2026-27, 70% in 2027-28, 80% from 2028-29']);
-    expect(g.costs).toEqual(['Materials and other variable costs: 70% of sales', 'Fixed costs: Rs. 12,00,000 in a full first year', 'Fixed costs: growth a year: 5%']);
-    expect(g.wc).toEqual(['The working-capital limit: Rs. 3,00,000, as typed', 'Its interest rate: 11% a year']);
+    expect(g.costs).toEqual(['Materials and other variable costs: 70% of sales', 'Fixed costs: ₹12,00,000 in a full first year', 'Fixed costs: growth a year: 5%']);
+    expect(g.wc).toEqual(['The working-capital limit: ₹3,00,000, as typed', 'Its interest rate: 11% a year']);
   });
   it('reads back simple mode: the fixed costs a month, the limit worked out, what backs the loan', () => {
     const g = lines(S);
     expect(g.business[2]).toBe('What backs the loan: The project’s own assets only');
     expect(g.loan[2]).toBe('How it is repaid: EMI every month');
-    expect(g.costs).toEqual(['Materials and other variable costs: 70% of sales', 'Fixed costs: Rs. 1,00,000 a month']);
-    expect(g.wc).toEqual(['The working-capital limit: Rs. 2,72,219, worked out', 'Its interest rate: 10% a year']);
-    expect(lines({ ...S, security: 'hybrid', collateral: '8 L' }).business.slice(2)).toEqual(['What backs the loan: Property for part, CGTMSE for the rest', 'The collateral’s market value: Rs. 8,00,000']);
+    expect(g.costs).toEqual(['Materials and other variable costs: 70% of sales', 'Fixed costs: ₹1,00,000 a month']);
+    expect(g.wc).toEqual(['The working-capital limit: ₹2,72,219, worked out', 'Its interest rate: 10% a year']);
+    expect(lines({ ...S, security: 'hybrid', collateral: '8 L' }).business.slice(2)).toEqual(['What backs the loan: Property for part, CGTMSE for the rest', 'The collateral’s market value: ₹8,00,000']);
     expect(lines({ ...S, wcBy: 'none' }).wc).toEqual(['The working-capital limit: None needed']);
     expect(lines({ ...S, scheme: 'mudra', loan: { ...S.loan, amount: '5 L' }, wcBy: 'typed', wcLimit: '1 L' }).business[2]).toBe('What backs the loan: A CGFMU guarantee, under Mudra, with no collateral');
   });
@@ -549,7 +549,7 @@ describe('check and confirm (OR8)', () => {
 });
 
 // Case E (tests/expansion.test.ts) as typed on the page: case R selling 70 lakh today, beside a new line of 5,00,000
-// boxes a year at Rs. 25 used 55%, 70%, 85%, its first sales six months after the loan (D-UX-251 (a), OR11c).
+// boxes a year at ₹25 used 55%, 70%, 85%, its first sales six months after the loan (D-UX-251 (a), OR11c).
 describe('today\'s sales and a new line, on the page', () => {
   const E: ReportState = { ...R, salesBy: 'expansion', sales: '70 L', monthsToStart: '6', products: [{ name: 'Boxes', units: '41,666.67', price: '25', unit: '' }], utilisation: '55, 70, 85', priceGrowth: '5' };
   it('asks both, and the tables show the sales in two', () => {
@@ -569,7 +569,7 @@ describe('today\'s sales and a new line, on the page', () => {
 
 // Fix it for me (FIX1, D-UX-351) on fictional Sample Metals (tests/fixtures/solve-part-year.json), typed as text. The
 // plans are engine/solve.ts's, worked by hand in tests/solve.test.ts: Earn more is the use at 85% in every year with the
-// price at Rs. 251.25; Balanced is a loan of Rs. 54,66,000, a limit of Rs. 18,00,000 and the use from 80.5%; Borrow
+// price at ₹251.25; Balanced is a loan of ₹54,66,000, a limit of ₹18,00,000 and the use from 80.5%; Borrow
 // less leaves interest cover short in the part first year, so it is not offered. What the promoters bring more is read
 // here a second way: the project's cost less the term loan, after against before.
 const SM: ReportState = {
@@ -589,11 +589,11 @@ describe('Fix it for me on the page (FIX1)', () => {
     const v = solvedOf(SM)!;
     expect(v.nearest).toBeUndefined();
     expect(v.plans.map((c) => [c.id, c.title, c.lines, c.passes, c.counts])).toEqual([
-      ['earnMore', 'Earn more', ['Use of the capacity by year: 50%, 65%, 80% → 85%, 85%, 85%', 'Price: Rs. 250 → Rs. 251.25'], 'Passes all 8 checks, and cash never runs out', 'Before: 3 of 8. Now: 8 of 8.'],
-      ['balanced', 'Balanced', ['Term loan: Rs. 75,00,000 → Rs. 54,66,000', 'Working-capital limit: Rs. 20,00,000 → Rs. 18,00,000', 'Use of the capacity by year: 50%, 65%, 80% → 80.5%, 85%, 85%'], 'Passes all 8 checks, and cash never runs out', 'Before: 3 of 8. Now: 8 of 8.']]);
+      ['earnMore', 'Earn more', ['Use of the capacity by year: 50%, 65%, 80% → 85%, 85%, 85%', 'Price: ₹250 → ₹251.25'], 'Passes all 8 checks, and cash never runs out', 'Before: 3 of 8. Now: 8 of 8.'],
+      ['balanced', 'Balanced', ['Term loan: ₹75,00,000 → ₹54,66,000', 'Working-capital limit: ₹20,00,000 → ₹18,00,000', 'Use of the capacity by year: 50%, 65%, 80% → 80.5%, 85%, 85%'], 'Passes all 8 checks, and cash never runs out', 'Before: 3 of 8. Now: 8 of 8.']]);
     for (const c of v.plans) {
       const more = Math.ceil(own(applySolution(SM, c).s) - own(SM) - 1e-6);
-      expect(c.brings).toBe(`You bring Rs. ${inr(more)} more.`);
+      expect(c.brings).toBe(`You bring ₹${inr(more)} more.`);
     }
   });
   it('Use this plan writes the figures as typed text, every check then passes, and the undo gives back the answers', () => {
@@ -608,8 +608,8 @@ describe('Fix it for me on the page (FIX1)', () => {
       ['Use of the capacity: 50, 65, 80 → 80.5, 85, 85', 'Term loan: 75 L → 54,66,000', 'Working-capital limit: 20 L → 18,00,000']]);
   });
   it('keeps within the most the promoters can bring, and names what the nearest leaves short when none passes', () => {
-    // The promoters bring Rs. 26,81,250 now (the cost of Rs. 1,01,81,250 less the loan); Earn more asks Rs. 11,59,555 more.
-    expect(solvedOf({ ...SM, promotersMost: '40 L' })?.plans.map((c) => [c.id, c.brings])).toEqual([['earnMore', 'You bring Rs. 11,59,555 more.']]);
+    // The promoters bring ₹26,81,250 now (the cost of ₹1,01,81,250 less the loan); Earn more asks ₹11,59,555 more.
+    expect(solvedOf({ ...SM, promotersMost: '40 L' })?.plans.map((c) => [c.id, c.brings])).toEqual([['earnMore', 'You bring ₹11,59,555 more.']]);
     expect(solvedOf({ ...SM, promotersMost: '35 L' })).toEqual({ plans: [], nearest: { still: [{ text: 'Interest cover stays short', field: 'fld-utilisation', box: 'Use of the capacity' }] } });
     const none = solvedOf({ ...SM, variablePct: '97' })!;
     expect(none.plans).toEqual([]);

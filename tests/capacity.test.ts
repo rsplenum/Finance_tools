@@ -40,7 +40,7 @@ describe('the figure', () => {
     // Source: Edward Bodmer, "Sculpting and Debt Fees (Including Fees for DSRA L/C)", edbodmer.com (read 11-11-2026):
     // "If there were no fees in the example, the debt would be 800 rather than 700 for the DSCR target of 1.5 on 600 per
     // year of debt. Here 600/1.5 is 400 and the total debt service over 2 periods is 800." (The interest rate is zero.)
-    // Here in thousands of rupees: Rs. 6,00,000 a year for the loan, 24 monthly instalments in two whole financial years
+    // Here in thousands of rupees: ₹6,00,000 a year for the loan, 24 monthly instalments in two whole financial years
     // (drawn in March 2027, a month's holiday, repaid April 2027 to March 2029), the lender's level 1.5 for both DSCRs.
     const x: ReportInput = { ...loanOnly(600000, { ratePct: 0, instalments: 24, amount: 1000000, style: 'equal-principal', moratorium: 1, disbursed: '2027-03' }) };
     const lv = { dscrLowest: 1.5, dscrAverage: 1.5 }, c = got(x, lv);
@@ -54,8 +54,8 @@ describe('the figure', () => {
     expect(Math.round(c.how.forInstalments)).toBe(400000);
   });
 
-  it("Rahul's example of §1: Rs. 8,00,000 a year of instalments at 10%, worked by the schedule and the annuity's closed form", () => {
-    // Rs. 10,00,000 a year for the loan at the lowest year's 1.25 leaves Rs. 8,00,000 for the instalments, Rs. 66,666.67 a
+  it("Rahul's example of §1: ₹8,00,000 a year of instalments at 10%, worked by the schedule and the annuity's closed form", () => {
+    // ₹10,00,000 a year for the loan at the lowest year's 1.25 leaves ₹8,00,000 for the instalments, ₹66,666.67 a
     // month. The closed form: the loan an annuity of A a month repays over n months at r a month is A × (1 − (1 + r)^−n) ÷ r.
     const A = 800000 / 12, r = 0.1 / 12, pv = (n: number) => (A * (1 - (1 + r) ** -n)) / r;
     const table: [number, number][] = [[60, 3137691], [84, 4015778], [120, 5044744], [180, 6203829]];
@@ -67,7 +67,7 @@ describe('the figure', () => {
       expect(c.carries).toBe(Math.floor(figure / 1000) * 1000);
       expect(c.limitedBy.check).toBe('dscrLowest');
     }
-    // However long: the interest alone on Rs. 80,00,000 takes the whole Rs. 8,00,000.
+    // However long: the interest alone on ₹80,00,000 takes the whole ₹8,00,000.
     expect(A / r).toBeCloseTo(8000000, 6);
     expect(got(loanOnly(1000000, { ratePct: 10, instalments: 180, amount: 10000000, style: 'emi' }), { dscrAverage: 1.25 }).carries).toBeLessThan(8000000);
   });

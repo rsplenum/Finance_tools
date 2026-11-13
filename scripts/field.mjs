@@ -1,5 +1,5 @@
 /**
- * Finds a field the way a person does, by its label, never by an id (D-TECH-111): `field=Loan amount (Rs.)` is the input,
+ * Finds a field the way a person does, by its label, never by an id (D-TECH-111): `field=Loan amount (₹)` is the input,
  * select or textarea whose label says that; `field=Who is borrowing? > A firm` is the choice "A firm" in the group so
  * named (a fieldset's legend, or a labelled group); a label ending in `…` is the one that starts so (a choice's label
  * runs into its description). Importing this file registers the engine with Playwright, so the

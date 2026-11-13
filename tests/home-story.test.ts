@@ -20,7 +20,7 @@
  * stock 16% + debtors 17% of sales + cash 3 + other; current liabilities the bank's 55.25 to 74.15 + creditors 8% of
  * sales + other. 2026-27 (sales 280): 44.8 + 47.6 + 3 + 2.5 = 97.9 over 68.65 + 22.4 + 3.5 = 94.55, 1.0354, below the
  * fresh limit's 1.10. 2027-28 (sales 310): 108.3 over 102.95, 1.0520. The capital that lifts 2026-27 to 1.10 is
- * 94.55 − 97.9 ÷ 1.1 = 5.5500 lakh (Rs. 5,55,000), which repays the bank: 97.9 ÷ 89 = 1.1000, and 108.3 ÷ 97.4 =
+ * 94.55 − 97.9 ÷ 1.1 = 5.5500 lakh (₹5,55,000), which repays the bank: 97.9 ÷ 89 = 1.1000, and 108.3 ÷ 97.4 =
  * 1.1119 in 2027-28. The turnover-method limit for 2027-28: 25% of 310 = 77.5, less the larger of 5% of sales (15.5)
  * and the net working capital (108.3 − 102.95 = 5.35), so 62 lakh. Each year balances: capital + reserves + current
  * liabilities = net block + 2 + current assets (95, 103.1, 113.5, 124.9, 135.05).
@@ -76,7 +76,7 @@ const sum = (x: { lead: string; result: string }) => `${x.lead}${x.result}`;
 describe('the DSCR scene', () => {
   const s = DSCR_SCENE;
   it('the seven inputs of the front door (D-UX-10) in lakh (NUM1), the term changed to 91, and the target', () => {
-    expect(s.inputs.map((i) => i.v)).toEqual(['A firm', 'Rs. 4.5 lakh', '0%', 'None', 'Rs. 12 lakh', '12%', '60 instalments']);
+    expect(s.inputs.map((i) => i.v)).toEqual(['A firm', '₹4.5 lakh', '0%', 'None', '₹12 lakh', '12%', '60 instalments']);
     expect(s.inputs.filter((i) => i.to).map((i) => i.to)).toEqual(['91 instalments']);
     expect([s.level.text, s.level.label, s.hub.from, s.hub.to]).toEqual(['1.25', 'target 1.25', '60', '91']);
   });
@@ -126,8 +126,8 @@ describe('the project report scene', () => {
     expect([p.weakest.typed, p.weakest.fixed]).toEqual([0, 0]);
   });
   it('its amounts in lakh (NUM1); the sales the one card that changes', () => {
-    expect(p.inputs.map((i) => i.v)).toEqual(['Rs. 33 lakh', 'Rs. 25 lakh', '10%', '60 instalments', '65% of sales', 'Rs. 18 lakh a year', 'Rs. 70 lakh']);
-    expect(p.inputs.filter((i) => i.to).map((i) => i.to)).toEqual(['Rs. 82.11 lakh']);
+    expect(p.inputs.map((i) => i.v)).toEqual(['₹33 lakh', '₹25 lakh', '10%', '60 instalments', '65% of sales', '₹18 lakh a year', '₹70 lakh']);
+    expect(p.inputs.filter((i) => i.to).map((i) => i.to)).toEqual(['₹82.11 lakh']);
   });
   it('each sum within a rupee of the hand-worked first year', () => {
     const interest = (12 * 2500000 - 2500000 / 60 * 66) * 10 / 1200;
@@ -141,7 +141,7 @@ describe('the project report scene', () => {
     expect((year1(8211000)[0] / year1(8211000)[1]).toFixed(6)).toBe('1.250336');
   });
   it('the report beat: every test met, read off the report built for the case', () => {
-    expect(p.statement.verdict).toMatch(/^Meets all eight tests a lender reads: the lowest DSCR is 1\.25 against 1\.25; the project costs about Rs\. 34\.75 lakh\.$/);
+    expect(p.statement.verdict).toMatch(/^Meets all eight tests a lender reads: the lowest DSCR is 1\.25 against 1\.25; the project costs about ₹34\.75 lakh\.$/);
     expect(reportPreview(REPORT_FIXED).checks?.map((c) => c.verdict)).toEqual(Array(8).fill('meets'));
     expect(p.statement.files).toEqual(['PDF', 'Excel', 'Word']);
   });
@@ -150,11 +150,11 @@ describe('the project report scene', () => {
 describe('the estimate scene', () => {
   const e = ESTIMATE_SCENE, total = (t: string) => Number(t.replace(/[^\d]/g, '')), last = e.rows.length - 1;
   it('its budget in lakh (NUM1); the two bedrooms the one card that changes', () => {
-    expect([e.level.text, e.level.at, e.inputs.find((i) => i.to)?.k, e.inputs.find((i) => i.to)?.to]).toEqual(['Rs. 12 lakh', 'most', 'The two bedrooms', 'Basic']);
+    expect([e.level.text, e.level.at, e.inputs.find((i) => i.to)?.k, e.inputs.find((i) => i.to)?.to]).toEqual(['₹12 lakh', 'most', 'The two bedrooms', 'Basic']);
   });
   it('Standard everywhere over the budget, Basic bedrooms within it, each total the second computation\'s', () => {
     expect([e.rows[last].label, e.rows[last].typed?.text, e.rows[last].fixed.text, e.chip.typed, e.chip.fixed]).toEqual(
-      ['Total', '12,47,185', '11,65,322', 'Over budget Rs. 12 lakh', 'Within budget Rs. 12 lakh']);
+      ['Total', '12,47,185', '11,65,322', 'Over budget ₹12 lakh', 'Within budget ₹12 lakh']);
     const [at, fixed] = [ESTIMATE_CASE, ESTIMATE_FIXED].map((s) => architectCheck(inputOf(s)).total);
     expect(Math.abs(total(sum(e.sum.typed)) - at)).toBeLessThanOrEqual(0.5);
     expect(Math.abs(total(sum(e.sum.fixed)) - fixed)).toBeLessThanOrEqual(0.5);
@@ -174,8 +174,8 @@ describe('the estimate scene', () => {
     expect(e.rows.every((r) => r.fixed.meets)).toBe(true);
   });
   it('the estimate beat: the second computation\'s difference, every item and the assumptions', () => {
-    expect(e.statement.lines.map((l) => l.text).join(' ')).toMatch(/difference Rs\. 0\..*each of the \d+ items/);
-    expect(e.statement.verdict).toBe('Rs. 11,65,322 in all, within the budget of Rs. 12 lakh, in figures and in words.');
+    expect(e.statement.lines.map((l) => l.text).join(' ')).toMatch(/difference ₹0\..*each of the \d+ items/);
+    expect(e.statement.verdict).toBe('₹11,65,322 in all, within the budget of ₹12 lakh, in figures and in words.');
   });
 });
 
@@ -201,15 +201,15 @@ describe('the CMA scene, case W', () => {
     expect(CMA_FIX.n).toBe(555000);
     expect([sum(c.sum.fixed), c.chip.fixed]).toEqual(['97,90,000 ÷ 89,00,000 = 1.10', 'Meets 1.10']);
     expect(c.rows.at(-1)?.fixed.text).toBe((ca(4) / (cl(4) - 5.55)).toFixed(2));
-    expect(c.inputs.filter((i) => i.to).map((i) => i.to)).toEqual(['+Rs. 5.55 lakh']);
+    expect(c.inputs.filter((i) => i.to).map((i) => i.to)).toEqual(['+₹5.55 lakh']);
   });
   it('the turnover-method limit for the projection, by hand', () => {
     const lim = 0.25 * sales[4] - Math.max(0.05 * sales[4], ca(4) - cl(4));
     expect(lim).toBeCloseTo(62, 9);
-    expect(c.statement.verdict).toContain('the limit by the turnover method, 2027-28, is Rs. 62 lakh.');
+    expect(c.statement.verdict).toContain('the limit by the turnover method, 2027-28, is ₹62 lakh.');
   });
   it('its amounts in lakh and crore (NUM1): sales 200 and 310 lakh are 2 and 3.1 crore', () => {
-    expect(c.inputs.map((i) => i.v).slice(3, 6)).toEqual(['Rs. 2 crore', 'Rs. 3.1 crore', 'Rs. 65 lakh']);
+    expect(c.inputs.map((i) => i.v).slice(3, 6)).toEqual(['₹2 crore', '₹3.1 crore', '₹65 lakh']);
     expect(c.statement.files).toEqual(['PDF', 'Excel']);
   });
 });

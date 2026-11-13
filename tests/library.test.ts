@@ -179,10 +179,10 @@ describe('the rules: every slot fits its family', () => {
 });
 
 describe('rates, worked by hand', () => {
-  it('a tile: the middle of Rs. 30–95 is 62.50, with 12% wastage 70.00, plus laying 32.50 and adhesive 13.00 = 115.50 a sq ft', () => {
+  it('a tile: the middle of ₹30–95 is 62.50, with 12% wastage 70.00, plus laying 32.50 and adhesive 13.00 = 115.50 a sq ft', () => {
     expect(price('fl-vit-dc-600', 1, 18)?.rate).toBe(115.5);
   });
-  it('a box price: Rs. 2,800 (the middle of 2,000–3,600) for 2.56 sq m = 27.5556 sq ft is 101.61 a sq ft; with 12% wastage 113.81, plus 90 and 13 = 216.81', () => {
+  it('a box price: ₹2,800 (the middle of 2,000–3,600) for 2.56 sq m = 27.5556 sq ft is 101.61 a sq ft; with 12% wastage 113.81, plus 90 and 13 = 216.81', () => {
     expect(price('fl-slab-800x1600', 1, 18)?.rate).toBe(216.81);
   });
   it('the city scales labour, not the product: the same tile in Pune (× 0.915427) is 70.00 + 45.50 × 0.915427 = 111.65', () => {
@@ -192,7 +192,7 @@ describe('rates, worked by hand', () => {
   it('GST is added to the material its source quotes before GST, not to the labour that fixes it (E2): glazed vitrified 600 mm, 57.50 + 12% = 64.40, + 18% = 75.992, + laying 32.50 + adhesive 13 = 121.49', () => {
     expect(price('fl-gvt-600', 1, 18)?.rate).toBe(121.49);
   });
-  it('a rate quoted before GST has 18% added: 8 mm shower glass, the middle of Rs. 440–660 is 550, with GST 649.00', () => {
+  it('a rate quoted before GST has 18% added: 8 mm shower glass, the middle of ₹440–660 is 550, with GST 649.00', () => {
     expect(price('ss-8-fixed', 1, 18)?.rate).toBe(649);
   });
   it('a set adds its parts: Jaquar Continental accessories, towel rail 1,513 (1,450–1,576) + 699 + robe hook 530 (380–680) = 2,742', () => {
@@ -212,7 +212,7 @@ describe('rates, worked by hand', () => {
   it('an item still to be found has no rate', () => {
     expect(unpriced('fl-encaustic', () => price('fl-encaustic', 1, 18))).toBeNull();
   });
-  it('a city\'s own charge stands as it is: the sewer connection in Chennai (× 1,830 ÷ 1,960.83 = 0.933277 for other rates) is the middle of Rs. 24,500–26,500, 25,500; none yet in Mumbai', () => {
+  it('a city\'s own charge stands as it is: the sewer connection in Chennai (× 1,830 ÷ 1,960.83 = 0.933277 for other rates) is the middle of ₹24,500–26,500, 25,500; none yet in Mumbai', () => {
     const chennai = 1830 / (11765 / 6), at = (end?: 0 | 1) => price('sewer-connection', chennai, 18, end, 'chennai')?.rate;
     expect([at(), at(0), at(1)]).toEqual([25500, 24500, 26500]);
     expect([checkRate('sewer-connection', 'chennai'), checkRate('sewer-connection', 'chennai', 0), checkRate('sewer-connection', 'chennai', 1)]).toEqual([25500, 24500, 26500]);
