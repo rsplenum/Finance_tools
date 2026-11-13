@@ -173,6 +173,7 @@ The owner's two reference films set the bar and the VID3 path (`docs/video/VID3-
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 13-11-2026 | PAPER1b (every Excel copy values only, D-DOC-21: the DSCR's sheets the PDF's parts; the model, `workbook.ts`, the Check sheets and `Figure.formula` removed; `formulaParts` finds none in any copy) | M, Extra | about 95 steps, 2 compactions; no agent. The quick check's browser run passed 590 s here: run it in the background |
 | 13-11-2026 | PAPER1 (the DSCR's three files on trial: page 1 at a glance, "₹" through one embedded face, bookmarks; the Excel model with an evaluator test; Word in step; lazy writers) | L, Extra | 248 steps, 9 compactions; no agent; at budget plus a quarter, with #201's merge. Rewriting the document tests for the new layout took about a fifth; the compactions were the cost of one long session |
 | 09-11-2026 | PLAN1 (the plan from Rahul's thirteen questions: `docs/PLAN.md` and Rahul's page) | none set: Rahul's ask | about 50 steps, 0.3 h, 1 compaction; no agent |
 | 09-11-2026 | LOOSE1 (the look freed from the checks: the taste counts report, the gates named in D-TECH-110; BUILD1's row) | S, high | about 45 steps, 0.2 h, no compaction; no agent; within S |
@@ -375,3 +376,6 @@ Budgets and actuals, moved from the handoff on 12-11-2026:
 
 ## Moved on 13-11-2026 by PIC1
 NEW1b rebuilt the DSCR (PR #199, merged) from Rahul's phone review (D-UX-359): what a DSCR is in a line, the eight questions one a screen over the whole screen (the box and Next above a phone's keyboard), then the report with its figures and chart, the working, Undo and Start over on the report. NEW1c, on Rahul's word, made two ways in (D-UX-360): Simple ends on the answer and lists what it filled in; Professional asks the same eight, then shows every field filled in; a switch on the report moves between them, and the years against the target are shown once, in the chart. NEW1d built Rahul's ask that NEW1c missed (D-UX-361): Professional's fields as a journey across, chapters on a snapping track with a rail of stops, Next and Back, the DSCR pinned above on a phone (`site/src/worked/Journey.tsx`).
+
+## Moved on 13-11-2026 by PIC2
+PIC1 turned Rahul's "text, text, text" note into pictures (D-UX-365; on NEW1e's PR #203, `site/src/dscr/Pictures.tsx`): the targets as bars against their level, the room to move as two bars and a grid of instalments, the bank's harder tests as tiles, a year on a phone as a waterfall from profit to cash against what is owed, and what we filled in as chips by group (both replaced by PIC2).
