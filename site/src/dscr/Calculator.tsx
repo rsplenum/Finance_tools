@@ -27,7 +27,7 @@ import { Downloads } from '../Downloads';
 import { DSCR_HOME } from './home-case';
 import { printable } from '../doc/face';
 import { isoDate } from '../download';
-import { workWords } from '../verdict';
+import { verdictWords, workWords } from '../verdict';
 import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
 import {
   ASSUMED, BORROWER_CHOICES, checkNext, dscrMarks, EXAMPLE_TARGETS, GROUP_TITLES, NO_LENDER, OPTION_KEYS, amountOf, barText, choicesOf, emisAsk, frontDoor, loanRead, modeOf, monthText, numberOf,
@@ -35,6 +35,7 @@ import {
   type DocFacts, type LenderLine, type LenderText, type LenderView, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 import { Levels } from './Levels';
+import { Mark, Waterfall } from './Pictures';
 import { N, W } from './words';
 import { Steps, type Step } from '../worked/Steps';
 import { SHARED } from '../words';
@@ -569,20 +570,29 @@ export function WorkingNotes({ s, p }: { s: State; p: Preview }) {
 
 /** DSCR as lenders test it, beside the borrower's (D-UX-47): never part of the verdict. */
 export function LenderLines({ v, openMore }: { v: LenderView; openMore: () => void }) {
-  const line = (l: LenderLine, id: string) => <li key={id} data-testid={`lender-${id}`} class={l.below ? 'text-bad' : ''}>
-    <b>{l.label}:</b> average {l.average}, lowest {l.lowest} in {l.lowestYear}{l.below ? ': the cash does not cover the debt service' : ''}
-    {l.meets !== undefined ? (l.meets ? '; meets the target' : '; below the target') : ''}.
+  // Each test a tile (PIC1): its name, its two figures large, and a mark for the target; the words read as one line.
+  const tile = (l: LenderLine, id: string) => <li key={id} data-testid={`lender-${id}`} class="rounded-control bg-surface p-3">
+    <p class="text-sm text-ink-muted">{l.label}</p>
+    <p class="mt-1 text-sm text-ink-muted"><span class="sr-only">: </span>average <b class={`text-lg tabular-nums ${l.below ? 'text-bad' : 'text-ink'}`}>{l.average}</b>,
+      lowest <b class={`text-lg tabular-nums ${l.below ? 'text-bad' : 'text-ink'}`}>{l.lowest}</b> in {l.lowestYear}</p>
+    {l.below && <p class="mt-1 text-sm text-bad"><span class="sr-only">: </span>The cash does not cover the debt service</p>}
+    {l.meets !== undefined && <p class={`mt-1 flex items-center gap-1.5 text-sm ${l.meets ? 'text-good' : 'text-bad'}`}><span class="sr-only">; </span><Mark ok={l.meets} small />
+      {verdictWords('target', 1, l.meets ? 0 : 1)}</p>}
   </li>;
+  const locked = v.ask && !v.stress.length;
   const c = v.cash, a = v.audited, td = 'px-2 py-1 text-right tabular-nums';
   return <div data-testid="dscr-lender" class="mt-4 text-ink">
     <p class="font-medium">The bank’s other checks</p>
     {v.blocked && <p role="alert" class="mt-1 text-sm text-bad">{v.blocked}</p>}
-    <ul class="mt-1 space-y-1 text-sm text-ink-muted">
-      {v.stress.map((l, i) => line(l, LENDER.stress[i]?.id ?? String(i)))}
-      {v.ask && <li data-testid="lender-ask"><a href="#lender" onClick={openMore} class="inline-flex min-h-6 items-center text-link">{v.ask}</a></li>}
-      {'line' in v.promoters && line(v.promoters.line, 'promoters')}
-      {v.notStressed && <li>{v.notStressed}.</li>}
+    <ul class="mt-2 grid max-w-xl grid-cols-2 gap-2">
+      {v.stress.map((l, i) => tile(l, LENDER.stress[i]?.id ?? String(i)))}
+      {locked && LENDER.stress.map((x) => <li key={x.id} aria-hidden="true" class="rounded-control border border-dashed border-edge p-3">
+        <p class="text-sm text-ink-muted">{x.label}</p><p class="mt-1 text-lg font-semibold text-ink-muted">?</p>
+      </li>)}
+      {'line' in v.promoters && tile(v.promoters.line, 'promoters')}
     </ul>
+    {v.ask && <p data-testid="lender-ask" class="mt-2 text-sm"><a href="#lender" onClick={openMore} class="inline-flex min-h-11 items-center text-link underline underline-offset-4">{v.ask}</a></p>}
+    {v.notStressed && <p class="mt-2 text-sm text-ink-muted">{v.notStressed}.</p>}
     {v.needs.length > 0 && <ul class="mt-1 list-disc pl-5 text-sm text-warn">{v.needs.map((n) => <li key={n}>{n}</li>)}</ul>}
     {c && ('needs' in c
       ? <div data-testid="lender-cash-needs" class="mt-3 text-sm"><p class="font-medium">The cash check still needs</p><ul class="list-disc pl-5">{c.needs.map((n) => <li key={n}>{n}</li>)}</ul></div>
@@ -714,8 +724,6 @@ const lineClass = (kind?: string) => kind === 'total' || kind === 'ratio'
 /** The DSCR statement: years across on wider screens (as in a project report), one card per year on phones; then the Total. */
 export function StatementTable({ st, parts = {} }: { st: StatementView; parts?: Record<string, string> }) {
   const cols = st.years.length + 1 + (st.total ? 1 : 0);
-  // On a phone a line that is nil every year is left off the cards; the table and the document keep it (finding 16).
-  const shown = st.lines.filter((l) => l.kind || !l.n || l.n.some((x) => x !== 0));
   const ratio = st.lines.find((l) => l.kind === 'ratio');
   // A sheet lying flat: only the answer's casts the shadow (UX8, D-UX-106).
   return <div class="paper mt-8 rounded-card p-4 sm:p-6">
@@ -754,23 +762,11 @@ export function StatementTable({ st, parts = {} }: { st: StatementView; parts?: 
           {parts[fy] && <span class={`ml-2 text-xs font-normal ${MUTED}`}>{parts[fy]}</span>}</span>
           {ratio && <span class="tabular-nums group-open:hidden">DSCR {ratio.values[i]}</span>}
         </summary>
-        <div class="mt-1 text-sm">
-          {shown.map((l, j) => l.kind === 'head'
-            ? <p key={j} class={`pt-2 text-xs font-semibold tracking-wide uppercase ${MUTED}`}>{l.label}</p>
-            : <p key={j} class={`flex justify-between gap-3 py-0.5 ${lineClass(l.kind)}`}>
-              <span>{l.label}</span><span data-line={l.id} class="text-right tabular-nums">{l.values[i]}</span>
-            </p>)}
-        </div>
+        <Waterfall st={st} get={(l) => ({ n: l.n?.[i], text: l.values[i] ?? '' })} />
       </details>)}
       {st.total && <div data-testid="card-total" class="rounded-control border-l-4 border-ink bg-surface p-3">
         <p class="font-medium text-ink">Total{st.total.sub && <span class={`ml-2 text-xs font-normal ${MUTED}`}>{st.total.sub}</span>}</p>
-        <div class="mt-1 text-sm">
-          {shown.map((l, j) => l.kind === 'head'
-            ? <p key={j} class={`pt-2 text-xs font-semibold tracking-wide uppercase ${MUTED}`}>{l.label}</p>
-            : <p key={j} class={`flex justify-between gap-3 py-0.5 ${lineClass(l.kind)}`}>
-              <span>{l.label}</span><span data-line={l.id} class="text-right tabular-nums">{l.total?.text ?? ''}</span>
-            </p>)}
-        </div>
+        <Waterfall st={st} get={(l) => ({ n: l.total?.n, text: l.total?.text ?? '' })} />
       </div>}
     </div>
   </div>;

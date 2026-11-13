@@ -110,6 +110,30 @@ export const N = {
   },
   /** The two ways, switched on top of the report. */
   mode: { label: 'Mode', simple: 'Simple', pro: 'Professional' },
+  /** The working as pictures (PIC1, Rahul, 13-11-2026: "A picture or graphics speaks a thousand words"): each picture's
+   * few words; every figure in them is the engine's. */
+  pic: {
+    lowest: (fy?: string) => (fy ? `Lowest year, ${fy}` : 'Lowest year'),
+    average: 'Average of the years',
+    needs: (t: string) => `needs ${t}`,
+    room: 'Room to move',
+    most: 'Most it can repay',
+    asked: 'You asked',
+    over: 'More than it can repay',
+    limit: (l: string) => `What limits it: ${l}.`,
+    fewest: (n: number, per: number) => `${n} ${per === 4 ? 'quarterly' : 'monthly'} instalments: the fewest that work.`,
+    key: { fewest: 'The fewest that work', spare: 'Your term, beyond them', yours: 'Your term', more: 'Needed beyond your term' },
+    row: (i: number) => `Year ${i}`,
+    useAmount: (x: string) => `Make the loan ${x}`,
+    useFewest: (n: number) => `Repay in ${n} instalments`,
+    stress: 'The bank’s harder tests',
+    locked: 'Add this year’s sales to see these',
+    lowestShort: 'lowest',
+    build: 'How the cash covers the bank',
+    a: 'Cash available (A)',
+    b: 'Owed to the bank (B)',
+    ratio: 'DSCR = A ÷ B',
+  },
   /** Simple mode states what it filled in, under the answer. */
   filled: {
     title: 'We filled in the rest',
@@ -137,6 +161,15 @@ export const N = {
       method: ['How the bank works it out', 'The usual way for a term loan'],
     } as Record<string, [string, string]>,
     change1: 'Change',
+    /** Each assumption as a chip: a few words; the full line opens under it. A figure stays the data file's. */
+    chip: {
+      loanStart: 'Paid out now, EMI monthly', start: 'Counted from the payout year', margin: 'Profit grows with sales',
+      asset: 'No extra income from the loan', depreciation: 'Depreciation stays the same', nonCash: 'No lease rent or write-offs',
+      otherLoans: 'No other loans', interest: 'Other interest stays the same', interestNone: 'No overdraft interest',
+      promoters: 'Owners’ money stays in', proprietorTax: 'New tax regime', method: 'The usual term-loan way',
+    } as Record<string, string>,
+    /** A chip that is the data file's figure, in a few words around it. */
+    figure: { tax: (x: string) => `Tax at ${x}` } as Record<string, (x: string) => string>,
   },
   /** One question a screen. */
   ask: {

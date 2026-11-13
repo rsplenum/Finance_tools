@@ -16,12 +16,13 @@ import { Levels } from '../worked/Levels';
 import { Fold, FactLine, MAIN, openFold, QUIET, Reading } from '../worked/parts';
 import { DownloadSection, LenderLines, Professionals, Schedule, StatementTable, type Update } from './Calculator';
 import { DSCR_HOME } from './home-case';
-import { inr, rs } from '../../../engine/util';
+import { inr } from '../../../engine/util';
 import { BORROWER_CHOICES, frontDoor, statusText, type Preview, type State } from './model';
 import {
   ASSUMED_FACTS, applyOption, barsOf, changedFacts, exampleCase, exampleFacts, exampleNeeds, exampleState, FACTS, factProblem, factsOf, factText,
   markOf, optionsFor, previewOf, readingOf, WALK, withMine, writeFact, type Case, type FactId, type OptionCard,
 } from './worked';
+import { Room, Targets } from './Pictures';
 import { N } from './words';
 
 const thisMonth = () => isoDate(new Date()).slice(0, 7);
@@ -326,20 +327,17 @@ function Options({ options, onUse }: { options: OptionCard[]; onUse: (o: OptionC
   </div>;
 }
 
-/** See the working: where it stands, the verdict, the largest loan and the fewest instalments, the other checks, the
- * statement that adds up and the schedule. Each year against the target is the chart's, above, and is not said again here
- * (Rahul, 12-11-2026). */
-function Working({ c, p, update, toPro }: { c: Case; p: Preview; update: Update; toPro: (where?: string) => void }) {
-  const largest = p.largest?.amount, fewest = p.fewest?.instalments;
+/** See the working, as pictures (PIC1, Rahul, 13-11-2026: "A picture or graphics speaks a thousand words"): where it
+ * stands, each target as a bar against its level, the room to move, the other checks, the statement that adds up and the
+ * schedule. Each year against the target is the chart's, above, and is not said again here (Rahul, 12-11-2026). */
+function Working({ p, update, toPro }: { c: Case; p: Preview; update: Update; toPro: (where?: string) => void }) {
   return <div>
     <p data-testid="dscr-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class="mb-1 text-base text-ink">{statusText(p)}</p>
     {p.needs.length > 0 && <ul data-testid="dscr-needs" class="mb-3 list-disc space-y-0.5 pl-5 text-base text-ink-muted">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>}
     {p.blocked && <p data-testid="dscr-blocked" role="alert" class="text-bad">{p.blocked}</p>}
-    {p.verdict && <p data-testid="dscr-verdict" class="mt-2 text-ink">{p.verdict.text}</p>}
-    {p.largest && <p class="mt-2 flex flex-wrap items-center gap-x-2 text-ink"><span data-testid="dscr-largest">{p.largest.text}</span>
-      {largest !== undefined && <button type="button" data-testid="use-amount" class={`${QUIET} -ml-3`} onClick={() => update((x) => ({ ...x, loan: { ...x.loan, amount: inr(largest) } }))}>Make the loan {rs(largest)}</button>}</p>}
-    {p.fewest && <p class="mt-2 flex flex-wrap items-center gap-x-2 text-ink"><span data-testid="dscr-fewest">{p.fewest.text}</span>
-      {fewest !== undefined && <button type="button" data-testid="use-instalments" class={`${QUIET} -ml-3`} onClick={() => update((x) => ({ ...x, loan: { ...x.loan, instalments: String(fewest) } }))}>Repay in {fewest} instalments</button>}</p>}
+    {p.verdict && <Targets v={p.verdict} />}
+    <Room p={p} onAmount={(n) => update((x) => ({ ...x, loan: { ...x.loan, amount: inr(n) } }))}
+      onFewest={(n) => update((x) => ({ ...x, loan: { ...x.loan, instalments: String(n) } }))} />
     {p.lender && <LenderLines v={p.lender} openMore={() => toPro('lender')} />}
     {p.statement && <StatementTable st={p.statement} parts={p.partYears} />}
     {p.beforeStart && <p data-testid="dscr-before-start" class="mt-2 text-sm text-ink-muted">{p.beforeStart}</p>}
@@ -352,25 +350,28 @@ function Working({ c, p, update, toPro }: { c: Case; p: Preview; update: Update;
 /** A reason as the borrower reads it: the pointer to our own files (its source, kept in the data) left off the screen. */
 const plain = (why: string) => why.replace(/\s*\([^()]*\b[\w/.-]+\.(?:md|json)\)/g, '');
 
-/** What we filled in (NEW1e, Rahul, 13-11-2026: "The assumptions list is so ugly way of showing it"): grouped as a
- * borrower thinks of them, each a card with what it is and what we took, in plain words; a tap opens the reason in place,
- * and Change goes to its box, in its step of Professional mode. The figures shown are the data file's own. */
+/** What we filled in (NEW1e, then PIC1, Rahul, 13-11-2026: "text is the worst way to display verbose information"):
+ * each assumption a chip of a few words, under its group as a borrower thinks of them; a tap opens it in place, the
+ * whole line, the reason, and Change to its box in Professional mode. A figure in a chip is the data file's own. */
 function Assumed({ p, onChange }: { p: Preview; onChange: (where?: string) => void }) {
-  const F = N.filled, rows = p.assumed.map((a) => ({ ...a, why: plain(a.why), what: F.plain[a.id]?.[0] ?? a.what, shown: F.plain[a.id]?.[1] ?? a.shown }));
+  const F = N.filled;
+  const rows = p.assumed.map((a) => {
+    const what = F.plain[a.id]?.[0] ?? a.what, shown = F.plain[a.id]?.[1] ?? a.shown, chip = F.chip[a.id];
+    // Without a chip of its own words the chip is the figure itself (the tax rate, the target), and is not said twice.
+    return { ...a, why: plain(a.why), what, chip: chip ?? (F.figure[a.id]?.(a.shown) ?? a.shown), line: chip ? `${what}: ${shown}.` : `${what}.` };
+  });
   if (!rows.length) return null;
   const groups = (Object.keys(F.groups) as (keyof typeof F.groups)[]).map((g) => [g, rows.filter((a) => (F.of[a.id] ?? 'profit') === g)] as const).filter(([, r]) => r.length);
   return <div data-testid="dscr-assumed" class="assumed-groups">
-    {groups.map(([g, list]) => <section key={g} aria-labelledby={`assumed-${g}`} class="assumed-group">
+    {groups.map(([g, list]) => <section key={g} aria-labelledby={`assumed-${g}`}>
       <h3 id={`assumed-${g}`} class="assumed-head">{F.groups[g]}</h3>
-      <ul>
+      <ul class="assumed-chips">
         {list.map((a) => <li key={a.id} data-testid={`assumed-${a.id}`}>
           <details class="assumed">
-            <summary class="assumed-row">
-              <span class="min-w-0 flex-1"><span class="block text-sm text-ink-muted">{a.what}</span><span class="block font-medium text-ink">{a.shown}</span></span>
-              <span class="assumed-why">{N.pro.why}<svg aria-hidden="true" viewBox="0 0 16 16" class="assumed-chev"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
-            </summary>
+            <summary class="assumed-chip">{a.chip}<svg aria-hidden="true" viewBox="0 0 16 16" class="assumed-chev"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /></svg></summary>
             <div class="assumed-body">
-              <p>{a.why}.</p>
+              <p class="font-medium text-ink">{a.line}</p>
+              <p class="mt-1">{a.why}.</p>
               {a.where && <a href={`#${a.where}`} class={`${QUIET} -ml-3`} onClick={(e) => { e.preventDefault(); onChange(a.where); }}>{F.change1}<span class="sr-only">: {a.what}</span></a>}
             </div>
           </details>

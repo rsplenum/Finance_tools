@@ -452,11 +452,15 @@ export interface Preview {
   lowestYear?: string;
   notCounted?: string;
   notes: string[];
-  /** `missed`: how many of the targets fall short, for the plain head (OR3). */
-  verdict?: { meets: boolean; text: string; missed: number };
-  /** Largest loan on these terms; `amount` when it differs from the one entered, to offer it. */
-  largest?: { text: string; amount?: number };
-  fewest?: { text: string; instalments?: number };
+  /** `missed`: how many of the targets fall short, for the plain head (OR3); `rows`, each target against its figure, for
+   * the picture (`Pictures.tsx`), and `head`, the verdict's words before its colon. */
+  verdict?: { meets: boolean; text: string; missed: number; head?: string; rows?: TargetRow[] };
+  /** Largest loan on these terms; `amount` when it differs from the one entered, to offer it; `most`, `asked` and
+   * `limit` for the picture. */
+  largest?: { text: string; amount?: number; most?: number; asked?: number; limit?: string };
+  /** The fewest instalments that work; `instalments` when it differs from those entered, to offer it; `fewest`, `now`
+   * and `per` (instalments a year) for the picture. */
+  fewest?: { text: string; instalments?: number; fewest?: number; now?: number; per?: number };
   /** The loan's years with interest only and no instalment, and that interest, to ask which year the figures start in. */
   leadingInterest?: { fy: string; amount: string }[];
   /** The years left out because the figures start later, in words. */
@@ -470,6 +474,9 @@ export interface Preview {
   /** DSCR as lenders test it, beside the borrower's: it never changes the verdict (D-UX-47). */
   lender?: LenderView;
 }
+
+/** One target in the verdict's picture: its figure (`value`, `text`) against the level (`target`, `targetText`). */
+export interface TargetRow { id: 'minimum' | 'average'; fy?: string; value: number; text: string; target: number; targetText: string; ok: boolean }
 
 /** A DSCR line beside the borrower's: average and lowest year, `below` under 1.00 (the cash does not cover the debt service). */
 export interface LenderLine {
@@ -550,15 +557,22 @@ function verdictOf(st: Statement, t: Target): Preview['verdict'] {
   if (!st.minimum || st.average === undefined) return undefined; // no year counts; the engine's note says why
   const dry = shortfall(st, {});
   if (dry) return { meets: false, missed: 1, text: `${verdictWords('target', 1, 1)}: ${limitText(dry)}.` };
-  const parts: { ok: boolean; text: string }[] = [];
-  if (t.minimum !== undefined)
-    parts.push({ ok: !shortfall(st, { minimum: t.minimum }), text: `the lowest year, ${st.minimum.fy}, is ${ratioText(st.minimum.dscr, t.minimum)} against ${targetText(t.minimum)}` });
-  if (t.average !== undefined)
-    parts.push({ ok: !shortfall(st, { average: t.average }), text: `the average is ${ratioText(st.average, t.average)} against ${targetText(t.average)}` });
-  const short = parts.filter((p) => !p.ok);
+  const parts: { ok: boolean; text: string; row: TargetRow }[] = [];
+  if (t.minimum !== undefined) {
+    const ok = !shortfall(st, { minimum: t.minimum }), text = ratioText(st.minimum.dscr, t.minimum);
+    parts.push({ ok, text: `the lowest year, ${st.minimum.fy}, is ${text} against ${targetText(t.minimum)}`,
+      row: { id: 'minimum', fy: st.minimum.fy, value: st.minimum.dscr, text, target: t.minimum, targetText: targetText(t.minimum), ok } });
+  }
+  if (t.average !== undefined) {
+    const ok = !shortfall(st, { average: t.average }), text = ratioText(st.average, t.average);
+    parts.push({ ok, text: `the average is ${text} against ${targetText(t.average)}`,
+      row: { id: 'average', value: st.average, text, target: t.average, targetText: targetText(t.average), ok } });
+  }
+  const short = parts.filter((p) => !p.ok), rows = parts.map((p) => p.row);
+  const head = verdictWords('target', parts.length, short.length);
   return short.length
-    ? { meets: false, missed: short.length, text: `${verdictWords('target', parts.length, short.length)}: ${short.map((p) => p.text).join('; ')}.` }
-    : { meets: true, missed: 0, text: `${verdictWords('target', parts.length, 0)}: ${parts.map((p) => p.text).join('; ')}.` };
+    ? { meets: false, missed: short.length, head, rows, text: `${head}: ${short.map((p) => p.text).join('; ')}.` }
+    : { meets: true, missed: 0, head, rows, text: `${head}: ${parts.map((p) => p.text).join('; ')}.` };
 }
 
 const lower = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
@@ -727,7 +741,7 @@ export function preview(s: State): Preview {
   if ('amount' in most) p.largest = {
     // What the business can carry, beside the loan asked (CAP1): the same sentence as the report's, no new box.
     text: `The largest loan your business can repay is ${rs(most.amount)}.${amount !== undefined ? ` You asked ${rs(amount)}.` : ''} What limits it: ${limitedBy(most.limitedBy)}.`,
-    ...(most.amount !== amount ? { amount: most.amount } : {}),
+    ...(most.amount !== amount ? { amount: most.amount } : {}), most: most.amount, asked: amount, limit: limitedBy(most.limitedBy),
   };
   else if ('none' in most) p.largest = { text: most.none };
   else if ('blocked' in most) p.blocked = most.blocked;
@@ -743,6 +757,7 @@ export function preview(s: State): Preview {
     } else if ('instalments' in few) p.fewest = {
       text: `The shortest repayment that works for ${rs(amount)}: ${few.instalments} ${loan.frequency === 'quarterly' ? 'quarterly' : 'monthly'} instalments.`,
       ...(few.instalments !== loan.instalments ? { instalments: few.instalments } : {}),
+      fewest: few.instalments, now: loan.instalments, per: 12 / PERIOD_MONTHS[loan.frequency ?? 'monthly'],
     };
     else if ('none' in few) p.fewest = { text: few.none };
     else if ('blocked' in few) p.blocked = few.blocked;

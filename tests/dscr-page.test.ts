@@ -69,21 +69,25 @@ describe('fictional case A from the loan terms', () => {
   it('says what limits the result and offers the loan that meets the target', () => {
     const p = preview({ ...CASE_A, target: TARGETS });
     expect(p.needs).toEqual([]);
-    expect(p.verdict).toEqual({ meets: false, missed: 2, text: 'Misses 2 of 2 targets: the lowest year, 2027-28, is 1.16 against 1.20; the average is 1.45 against 1.50.' });
-    expect(p.largest).toEqual({ text: 'The largest loan your business can repay is ₹11,59,646. You asked ₹12,00,000. What limits it: the lowest year, 2027-28.', amount: 1159646 });
+    expect(p.verdict).toMatchObject({ meets: false, missed: 2, text: 'Misses 2 of 2 targets: the lowest year, 2027-28, is 1.16 against 1.20; the average is 1.45 against 1.50.',
+      head: 'Misses 2 of 2 targets', rows: [{ id: 'minimum', fy: '2027-28', text: '1.16', target: 1.2, targetText: '1.20', ok: false }, { id: 'average', text: '1.45', target: 1.5, targetText: '1.50', ok: false }] });
+    expect(p.largest).toEqual({ text: 'The largest loan your business can repay is ₹11,59,646. You asked ₹12,00,000. What limits it: the lowest year, 2027-28.', amount: 1159646,
+      most: 1159646, asked: 1200000, limit: 'the lowest year, 2027-28' });
     // More instalments add interest, which pulls the average further below 1.50 within these four years.
     expect(p.fewest).toEqual({ text: 'Even 14 instalments, the most the projections cover (to 2029-30), miss the target: the average is below the target. Add later years to try a longer repayment.' });
     expect(barText(p)).toBe('Average 1.45 · lowest 1.16 in 2027-28 · does not work yet: 2 ratios short · all questions answered');
   });
   it('meets the target at the largest loan, with nothing more to offer', () => {
     const p = preview({ ...CASE_A, loan: { ...CASE_A.loan, amount: '11,59,646' }, target: TARGETS });
-    expect(p.verdict).toEqual({ meets: true, missed: 0, text: 'Meets both targets: the lowest year, 2027-28, is 1.20 against 1.20; the average is 1.50 against 1.50.' });
-    expect(p.largest).toEqual({ text: 'The largest loan your business can repay is ₹11,59,646. You asked ₹11,59,646. What limits it: the lowest year, 2027-28.' });
-    expect(p.fewest).toEqual({ text: 'The shortest repayment that works for ₹11,59,646: 12 quarterly instalments.' });
+    expect(p.verdict).toMatchObject({ meets: true, missed: 0, text: 'Meets both targets: the lowest year, 2027-28, is 1.20 against 1.20; the average is 1.50 against 1.50.',
+      head: 'Meets both targets', rows: [{ id: 'minimum', fy: '2027-28', text: '1.20', ok: true }, { id: 'average', text: '1.50', ok: true }] });
+    expect(p.largest).toEqual({ text: 'The largest loan your business can repay is ₹11,59,646. You asked ₹11,59,646. What limits it: the lowest year, 2027-28.',
+      most: 1159646, asked: 1159646, limit: 'the lowest year, 2027-28' });
+    expect(p.fewest).toEqual({ text: 'The shortest repayment that works for ₹11,59,646: 12 quarterly instalments.', fewest: 12, now: 12, per: 4 });
   });
   it('offers the fewest instalments for a lowest-year target alone: 13', () => {
     const p = preview({ ...CASE_A, target: { average: '', minimum: '1.2' } });
-    expect(p.fewest).toEqual({ text: 'The shortest repayment that works for ₹12,00,000: 13 quarterly instalments.', instalments: 13 });
+    expect(p.fewest).toEqual({ text: 'The shortest repayment that works for ₹12,00,000: 13 quarterly instalments.', instalments: 13, fewest: 13, now: 12, per: 4 });
     expect(p.verdict?.text).toBe('Misses the target: the lowest year, 2027-28, is 1.16 against 1.20.');
   });
   it('asks for a later year only once one is added, and the offers stay within the years given', () => {
@@ -151,7 +155,8 @@ describe('own yearly figures', () => {
     expect(p.statement?.lines.some((l) => l.label === 'Profit')).toBe(false); // own figures start from profit after tax
     expect(line(p, 'available')).toEqual(['1,50,000', '1,60,000', '1,60,000']);
     expect(p.notCounted).toBe('Not counted: 2026-27 (no term-loan instalment).');
-    expect(p.verdict).toEqual({ meets: false, missed: 1, text: 'Misses the target: the average is 1.23 against 1.50.' });
+    expect(p.verdict).toMatchObject({ meets: false, missed: 1, text: 'Misses the target: the average is 1.23 against 1.50.', head: 'Misses the target',
+      rows: [{ id: 'average', text: '1.23', target: 1.5, ok: false }] });
     expect(p.largest).toBeUndefined();
   });
   it('asks for the years before the figures', () => {
