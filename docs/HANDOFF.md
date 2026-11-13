@@ -31,4 +31,5 @@ One row runs at a time and writes the shared docs itself (D-TECH-70). Bring `mai
 ## Budgets and actuals
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 13-11-2026 | PIC1 (the DSCR's working as pictures, D-UX-365: the targets as bars against their levels, room to move as two bars and an instalment grid, the bank's tests as tiles, a year on a phone as a waterfall, what we filled in as chips) | M | about 150 steps, 3 compactions; no agent. Run the site check with `CHROMIUM_PATH=/opt/pw-browsers/chromium` here |
 | 13-11-2026 | PAPER1b (every Excel copy values only, D-DOC-21: the DSCR's sheets the PDF's parts; the model, `workbook.ts`, the Check sheets and `Figure.formula` removed; `formulaParts` finds none in any copy) | M, Extra | about 95 steps, 2 compactions; no agent. The quick check's browser run passed 590 s here: run it in the background |
