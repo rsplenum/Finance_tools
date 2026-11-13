@@ -29,7 +29,7 @@ import { FixIt } from './FixIt';
 import { CheckStep } from '../CheckStep';
 import { Downloads } from '../Downloads';
 import {
-  CGFMU, CGTMSE, MUDRA, PMEGP, PMEGP_SHED, REPORT_REVIEW_BY, pmegpConditions, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, NO_PRODUCT, REPAYMENT_CHOICES, SCHEME_CHOICES,
+  CGFMU, CGTMSE, MUDRA, PMEGP, PMEGP_SHED, REPORT_REVIEW_BY, pmegpConditions, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, NO_PRODUCT, REPAYMENT_CHOICES, HOLIDAY_INTEREST_CHOICES, SCHEME_CHOICES,
   COST_HEADS, MODE_CHOICES, SECURITY_CHOICES, SIMPLE_COST, WC_CHOICES, changedOf, headsSum, holidayAssumed, periodLine, repaymentView, wcByOf, withMode, workedLine, type Mode,
   AS_TYPED, COLLATERAL_HINT, withProperty, amountOf, applyPlan, applySolution, assumptionsOf, boardOf, applyWay, answerPending, PENDING, workView, guaranteeOf, mudraLine, plainOf, planOf, preview, sameLevers, statusText, tarunAsked, tidyAmount, undoPlan, viableOf,
   checkKey, checkOf, carryView, applyCloser, type CarryCloser, type CarryView, type FixCard, type LeverId, type Levers, type PlanChange, type WorkCard, type WorkView, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
@@ -48,7 +48,7 @@ const focusNext = (sel: string) => requestAnimationFrame(() => document.querySel
 // The box that changes an assumption, if one does (review finding 8); in simple mode, it opens expert mode first.
 const ASSUMED_BOX: Record<string, string> = {
   days: 'fld-days-stock', utilisation: 'fld-utilisation', price: 'fld-priceGrowth', simpleCost: 'fld-cost-land', simpleFunds: 'fld-unsecured', simpleDrawn: 'fld-tl-disbursed',
-  simpleMoratorium: 'fld-tl-moratorium', simpleFixedGrowth: 'fld-fixedGrowth', simpleWcRate: 'fld-wcRate',
+  simpleMoratorium: 'fld-tl-moratorium', holidayInterest: 'fld-tl-holiday-interest', simpleFixedGrowth: 'fld-fixedGrowth', simpleWcRate: 'fld-wcRate',
 };
 /** Of those, the boxes simple mode asks too (OR5: the holiday), reached without switching. */
 const IN_SIMPLE = new Set(['fld-tl-moratorium']);
@@ -388,6 +388,8 @@ export function ReportCalculator() {
         <span key={c.text} class={c.within ? '' : 'text-bad'}> {c.text}</span>)}</p>}
       {!simple && <Choice name="fld-tl-repayment" legend="How it is repaid" options={REPAYMENT_CHOICES} value={s.loan.repayment}
         onChange={(repayment) => update((x) => ({ ...x, loan: { ...x.loan, repayment } }))} />}
+      {!simple && <Choice name="fld-tl-holiday-interest" legend="Interest in the holiday" options={HOLIDAY_INTEREST_CHOICES} value={s.loan.holidayInterest}
+        onChange={(holidayInterest) => update((x) => ({ ...x, loan: { ...x.loan, holidayInterest } }))} />}
       {simple && s.scheme !== 'mudra' && <>
         <Choice name="fld-security" legend="What backs the loan besides the project's own assets?" options={SECURITY_CHOICES} value={s.security}
           onChange={(security) => update((x) => ({ ...x, security }))} />
@@ -776,7 +778,7 @@ function Result({ s, p, cv, useCloser, update, use, useWay, useFix, toField, ans
     {/* The answer as paper, there from load (docs/archive/DESIGN-SITE.md): the verdict in words and the key figures above the
         status (review finding 3); one tone a meaning, and the status plain when complete, never green under a miss. */}
     <div class="paper shadow-paper rounded-card p-4 sm:p-6">
-      {cv && <Carries c={cv} use={useCloser} />}
+      {cv && <Carries c={cv} use={useCloser} add={() => update((x) => ({ ...x, loan: { ...x.loan, holidayInterest: 'added' } }))} />}
       {/* The answer is the paper's heading (UX7): a flat claim, its rule solid once final and dashed while provisional. */}
       {verdict && <Verdict id={p.misses ? 'rep-misses' : 'rep-verdict'} work={verdict.work} text={verdict.text} rule={answerRule(!p.blocked && !p.needs.length)} />}
       {p.short && <p data-testid="rep-short" class="mt-3 text-sm font-medium text-bad">{p.short}</p>}
@@ -801,6 +803,7 @@ function Result({ s, p, cv, useCloser, update, use, useWay, useFix, toField, ans
           </div>;
         })}
       </dl>}
+      {p.ready && <p data-testid="rep-idc-ready" class="mt-3 text-sm text-ink">{p.ready}</p>}
       {p.flags.length > 0 && <ul data-testid="rep-flags" class="mt-3 list-disc space-y-0.5 pl-5 text-sm text-warn">{p.flags.map((n) => <li key={n}>{n}</li>)}</ul>}
       {v && !p.blocked && <Viable s={s} p={p} update={update} use={use} useWay={useWay} useFix={useFix} toField={toField} answer={answer} toCollateral={toCollateral} />}
     </div>
@@ -810,7 +813,7 @@ function Result({ s, p, cv, useCloser, update, use, useWay, useFix, toField, ans
 /** What the business can carry, first (CAP1, docs/CAPACITY-FIRST.md §4 rule 1): the figure beside the loan asked, one bar
  * (the loan carried in ink, the gap to the loan asked dashed, the asked a line, as the ratios' bars), the tightest year,
  * and the changes that close the gap, each alone with its Use this. */
-function Carries({ c, use }: { c: CarryView; use: (k: CarryCloser) => void }) {
+function Carries({ c, use, add }: { c: CarryView; use: (k: CarryCloser) => void; add: () => void }) {
   return <div data-testid="rep-carry" class="mb-4">
     <p data-testid="rep-carry-line" class="text-title text-ink">{c.line}</p>
     <div aria-hidden="true" class="relative mt-2 h-3 rounded-full bg-surface">
@@ -820,6 +823,9 @@ function Carries({ c, use }: { c: CarryView; use: (k: CarryCloser) => void }) {
     </div>
     <p data-testid="rep-carry-how" class="mt-1 text-sm text-ink-muted">{c.how}</p>
     {c.keepReady && <p data-testid="rep-carry-ready" class="mt-1 text-sm font-medium text-warn">{c.keepReady}</p>}
+    {c.addInterest && <p data-testid="rep-carry-add-interest" class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span class="text-sm text-ink">{c.addInterest.text}</span><span class={`text-sm ${MUTED}`}>{c.addInterest.reach}</span>
+      <button type="button" data-testid="rep-carry-use-interest" class={`ml-auto ${BUTTON}`} onClick={add}>Use this</button></p>}
     {c.closers.length > 0 && <>
       <h3 class="mt-3 text-sm font-medium text-ink">What closes the gap, each alone</h3>
       <ul data-testid="rep-carry-closers" class="mt-1 divide-y divide-line">{c.closers.map((k) => <li key={k.id} data-testid={`rep-carry-${k.id}`} class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">

@@ -40,6 +40,13 @@ export interface Carry {
   nearest?: CloserId;
   /** When cash runs short whatever the loan: the promoters' money more that keeps it at nil or above (the report's). */
   keepReady?: number;
+  /** When cash runs short and the promoters pay the holiday's interest before the first sale: that interest added to the
+   * loan instead (D-POL-13, IDC1), offered only when it lowers all the promoters bring (their share and the cash kept
+   * ready). The loan grows by what their share falls, so the cash at the start is the same; the larger instalments after
+   * can make the shortfall later deeper, and then it is not offered. `promoters` the part of their share they no longer
+   * bring, `less` the fall in all they bring, `keepReady` what is still short after (none when nothing is), `carries`
+   * the largest loan then, and `input` the report's inputs with it. */
+  addInterest?: { promoters: number; less: number; keepReady?: number; carries: number; input: ReportInput };
   /** The bank's other checks at the loan asked; they never bend the figure. */
   also: RatioCheck[];
   /** The report at the loan asked. */
@@ -110,6 +117,13 @@ export function carry(x: ReportInput, o: CarryInput = {}): Carry | Needs | Block
   const also = diagnose(base, x, 'fresh', lv).checks.filter((c) => c.id !== 'dscrLowest' && c.id !== 'dscrAverage');
   const keepReady = base.cashShort && cashOwn(x) ? base.cashShort.need : undefined;
   const out: Carry = { asked, carries, gap, limitedBy: limit, how, closers: [], verdict: 'carries', also, report: base, ...(keepReady !== undefined ? { keepReady } : {}) };
+  if (keepReady !== undefined && x.loan.holidayInterest !== 'added' && base.idc.promoters > 0.005) {
+    const y: ReportInput = { ...x, loan: { ...x.loan, holidayInterest: 'added' } }, r = run(y), most = largest(y);
+    const less = isReport(r) ? base.finance.promoter + keepReady - (r.finance.promoter + (r.cashShort?.need ?? 0)) : 0;
+    if (isReport(r) && less > 0.005 && !('blocked' in most)) {
+      out.addInterest = { promoters: base.finance.promoter - r.finance.promoter, less, carries: most.carries, input: y, ...(r.cashShort ? { keepReady: r.cashShort.need } : {}) };
+    }
+  }
   if (gap <= 0) return out;
 
   // The changes, each alone at the loan asked. A change need not help steadily (a longer term reaches into later, weaker

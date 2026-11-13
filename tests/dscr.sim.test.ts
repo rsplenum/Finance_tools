@@ -226,7 +226,7 @@ function runSeed(seed: number): { cases: number; violations: string[]; seen: Rec
     }
 
     // Drop one fact: the engine must name it and show no figures.
-    const loanKeys = Object.keys(LOAN_LABELS) as (keyof LoanTerms)[];
+    const loanKeys = Object.keys(LOAN_LABELS) as (keyof typeof LOAN_LABELS)[];
     const projKeys = (Object.keys(PROJECTION_LABELS) as (keyof typeof PROJECTION_LABELS)[]).filter((k) => k !== 'leaseRentals' || def.leases === 'yes');
     let dropped: ReturnType<typeof planStatement>, expected: string;
     if (rnd() < 0.3) {
