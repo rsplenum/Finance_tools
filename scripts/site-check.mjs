@@ -888,7 +888,7 @@ if (touched('/dscr/')) {
   await page.waitForFunction(() => document.activeElement?.matches('[data-step-panel="loan"] [data-step-title]'), null, { timeout: 2000 }).catch(() => v('Professional: Next does not take the focus to the step'));
   const inSight = (sel) => page.locator(sel).evaluate((e) => { const r = e.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight; });
   if (!(await inSight('[data-testid="pro-strip"]'))) v('Professional, 375 px: the DSCR is not in sight in the bar at the foot');
-  await page.getByTestId('why-all').locator('summary').click();
+  await page.getByTestId('why-all').locator(':scope > summary').click();
   await page.getByTestId('assumed-target').locator('summary').click();
   await page.getByTestId('assumed-target').getByRole('link').click();
   await page.waitForFunction(() => document.querySelector('[data-testid="steps"]')?.getAttribute('data-step-now') === 'target' && document.activeElement?.closest('[data-step-panel="target"]'), null, { timeout: 4000 })
