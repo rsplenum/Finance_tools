@@ -133,7 +133,7 @@ export const N = {
       interest: ['Interest on other borrowing', 'The same as this year, on top of this loan’s'],
       interestNone: ['Interest on a cash credit or overdraft', 'None: the profit you gave is before all interest'],
       promoters: ['Money the owners lent the business', 'Stays in until this loan is repaid'],
-      proprietorTax: ['Tax for a proprietor', 'Today’s slab rates, the business the only income'],
+      proprietorTax: ['Tax for a proprietor', 'The new tax regime’s slab rates, the business the only income'],
       method: ['How the bank works it out', 'The usual way for a term loan'],
     } as Record<string, [string, string]>,
     change1: 'Change',

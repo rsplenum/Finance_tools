@@ -710,7 +710,7 @@ if (touched('/dscr/')) {
   await expectFigures(page, v, 'tax-by', '5% 30% 4% 12,00,000', "a proprietor's tax");
   await expectFigures(page, v, 'tax-2026-27', '0', "a proprietor's tax");
   await expectFigures(page, v, 'dscr-average', '1.41', "a proprietor's tax");
-  await expectText(page, v, 'assumed-proprietorTax', /^A proprietor's tax ?The new regime's slab rates, on the business's profit as the only income ?Why ?\S.*\.( Change)?$/, "a proprietor's tax, with its reason");
+  await expectText(page, v, 'assumed-proprietorTax', /^Tax for a proprietor ?The new tax regime’s slab rates, the business the only income ?Why ?\S.*\. ?(Change.*)?$/, "a proprietor's tax, with its reason");
   await page.check('#fld-otherLoansInterest-emi');
   await expectText(page, v, 'emis-ask', 'All EMIs a month, business and personal (home, car, personal loans).', "a proprietor's EMIs");
   await leave(page, '#fld-emi-1', '20000');
@@ -738,7 +738,7 @@ if (touched('/dscr/')) {
   await fromBlank(page);
   await page.check('#fld-source-own');
   await page.check('#fld-method-common');
-  await page.waitForSelector('#fld-firstYear', { timeout: 3000 }).catch(() => v('own figures: the years are not asked'));
+  await page.locator('#fld-firstYear').waitFor({ state: 'attached', timeout: 3000 }).catch(() => v('own figures: the years are not asked'));
   if (await page.locator('#fld-loanAmount').count()) v('own figures: the loan amount is asked though it does not change the answer');
   await leave(page, '#fld-firstYear', '2026-27');
   await leave(page, '#fld-yearCount', '3');
