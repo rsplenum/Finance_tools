@@ -122,7 +122,8 @@ function barText(s: ReportState, p: ReportPreview, c?: CarryView) {
 }
 
 /** The builder's steps (BUILD1, D-UX-340): one topic a step, in the order a report is made. */
-const STEPS = [['business', 'The business'], ['cost', 'The cost'], ['loan', 'The loan'], ['sales', 'Sales and costs'], ['check', 'Check'], ['download', 'Download']] as const;
+/** Each step: its id, its heading, and its one word on the progress line, where six names share a phone's width (Rahul, 15-11-2026). */
+const STEPS = [['business', 'The business', 'Business'], ['cost', 'The cost', 'Cost'], ['loan', 'The loan', 'Loan'], ['sales', 'Sales and costs', 'Sales'], ['check', 'Check', 'Check'], ['download', 'Download', 'Download']] as const;
 type StepId = typeof STEPS[number][0];
 /** The step last open on this device, beside the answers saved there (D-UX-341); the first step is not kept. */
 const STEP_KEY = 'report-step';
@@ -305,7 +306,7 @@ export function ReportCalculator() {
     <div class="builder-ask">
       <StartLine c={c} home={home} />
       <nav aria-label="Steps" data-steps class="mt-4">
-        <ol class="steps" style={{ '--n': STEPS.length, '--i': at }}>{STEPS.map(([id, name], i) => {
+        <ol class="steps" style={{ '--n': STEPS.length, '--i': at }}>{STEPS.map(([id, , name], i) => {
           const open = figures || p.needs.length ? left[id] : 0, done = id === 'check' ? ok : id !== 'download' && typed && !p.blocked && !left[id];
           return <li key={id} data-state={id === step ? 'now' : done ? 'done' : ''}>
             <button type="button" data-testid={`rep-step-${id}`} aria-current={id === step ? 'step' : undefined}

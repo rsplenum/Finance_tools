@@ -427,7 +427,10 @@ html:has([data-header][data-away]:not(:focus-within)) [data-years-strip] { top: 
 .steps li:has(~ li[data-state='now'])::after, .steps li[data-state='now']::after { transform: scaleX(1); }
 .steps button { position: relative; z-index: 1; display: flex; width: 100%; min-height: 2.75rem; flex-direction: column; align-items: center; gap: 0.25rem; border-radius: 0.75rem; color: var(--ink-muted); }
 .step-dot { display: grid; width: 1.75rem; height: 1.75rem; place-items: center; border-radius: 999px; border: 2px solid var(--line); background: var(--canvas); font-size: 0.8125rem; font-weight: 600; font-variant-numeric: tabular-nums; }
-.step-name { padding-inline: 0.125rem; text-align: center; font-size: 0.8125rem; line-height: 1.2; overflow-wrap: anywhere; }
+/* A name is one word or two and reads whole on one line, never folded or broken inside. Six of them on a screen
+ * narrower than 360 px go a size down, so that one name never touches the next. */
+.step-name { padding-inline: 0.125rem; text-align: center; font-size: 0.8125rem; line-height: 1.2; white-space: nowrap; }
+@media (width < 22.5rem) { .steps:has(> :nth-child(6)) .step-name { font-size: 0.6875rem; } }
 .steps li[data-state='done'] .step-dot { border-color: var(--ink); color: var(--ink); }
 .steps li[data-state='now'] .step-dot { border-color: var(--ink); background: var(--ink); color: var(--canvas); }
 .steps li[data-state='now'] button { color: var(--ink); font-weight: 600; }

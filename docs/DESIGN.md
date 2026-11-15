@@ -75,7 +75,7 @@ Tool pages: `docs/archive/DESIGN-SITE.md`. Home: FinSight's order (F13); each to
 Each tool is reviewed empty, partly filled, provisional (a fact missing), with an error, with a result, missing a default benchmark ratio, an optional input empty, at the download, with focus and hover; at 360 px and on a desktop, 1024 too for a change in `lg:`, light and dark. `npm run design-review -- /dscr/` drives the states listed in `scripts/design-review.mjs` and prints what it measures; screenshots (`--shots <dir>`) only for pages a change touches.
 
 ## Measured checks (`scripts/design-checks.mjs`, in the site check)
-On every page at 360 and 1280 px, light and dark: axe-core (WCAG 2.2 A and AA), text 4.5:1 and large 3:1, edges and focus 3:1, targets 24 px, 44 px on a phone, every control by Tab, the focus kept and never under a sticky band, no sideways scroll at 320 px, still under reduced motion; the token count reports. What they cannot see goes to the critic.
+On every page at 360 and 1280 px, light and dark: axe-core (WCAG 2.2 A and AA), text 4.5:1 and large 3:1, edges and focus 3:1, targets 24 px, 44 px on a phone, a step's name on the progress line whole on one line and clear of the next (also at 320 px), every control by Tab, the focus kept and never under a sticky band, no sideways scroll at 320 px, still under reduced motion; the token count reports. What they cannot see goes to the critic.
 
 ## Acceptable and unacceptable
 - Acceptable: the DSCR's verdict in a sentence with the average and the lowest year beside it, the years marked against the target. Unacceptable: the verdict only as a colour, or below the table.
