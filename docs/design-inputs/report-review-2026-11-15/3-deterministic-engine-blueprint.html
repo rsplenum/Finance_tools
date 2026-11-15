@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FinSight — Deterministic Engine, AI-Accelerated Development</title>
+<style>
+:root{--ink:#18252d;--muted:#5b6a72;--paper:#faf9f6;--white:#fff;--line:#dce1de;--teal:#176b63;--tealbg:#e7f1ee;--blue:#315b78;--bluebg:#eaf0f5;--amber:#93601c;--amberbg:#fbf1df;--red:#a3443b;--redbg:#f8eae7}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:1160px;margin:auto;padding:40px 26px 90px}h1,h2,h3,h4{line-height:1.13;letter-spacing:-.025em;margin:0 0 .65em}h1{font-size:clamp(2.5rem,6vw,4.8rem);max-width:980px}h2{font-size:clamp(1.8rem,3.5vw,2.7rem)}h3{font-size:1.25rem}h4{font-size:1rem;letter-spacing:0}p{margin:.35em 0 1em;max-width:80ch}.k{font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:850;color:var(--teal)}.lede{font-size:1.2rem;color:var(--muted);max-width:880px;line-height:1.5}header{padding:24px 0 36px;border-bottom:1px solid var(--line)}.meta{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0}.pill{font-size:11px;border:1px solid var(--line);border-radius:99px;padding:5px 10px;color:var(--muted);font-weight:700}.verdict{background:#173d3a;color:white;padding:22px 24px;border-radius:15px;margin-top:22px}.verdict p{color:#e0eeea;margin-bottom:0}.verdict h2{color:white;margin:.2em 0}.verdict strong{color:#bde7dc}
+nav{position:sticky;top:0;z-index:4;background:rgba(250,249,246,.96);backdrop-filter:blur(10px);margin:0 -26px;padding:10px 26px;border-bottom:1px solid var(--line);display:flex;gap:7px;overflow:auto;white-space:nowrap}nav a{font-size:12px;font-weight:750;text-decoration:none;color:var(--muted);padding:7px 9px;border-radius:7px}nav a:hover{background:var(--tealbg);color:var(--teal)}
+section{padding:60px 0 12px;border-bottom:1px solid var(--line);scroll-margin-top:65px}.intro{font-size:1.08rem;color:var(--muted);max-width:880px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px}.card{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:18px 19px;min-width:0}.card p:last-child{margin-bottom:0}.num{font-size:2rem;font-weight:800;color:var(--teal);line-height:1}.tag{font-size:10px;text-transform:uppercase;letter-spacing:.12em;font-weight:850;color:var(--teal)}.call{padding:17px 19px;background:var(--tealbg);border-left:4px solid var(--teal);border-radius:0 9px 9px 0;margin:18px 0}.warn{background:var(--amberbg);border-color:var(--amber)}.danger{background:var(--redbg);border-color:var(--red)}table{width:100%;border-collapse:collapse;margin:16px 0 24px;background:white;font-size:14px}th{text-align:left;background:#edf1ee;color:#46545b;font-size:11px;text-transform:uppercase;letter-spacing:.08em;padding:11px 12px}td{padding:11px 12px;border-top:1px solid var(--line);vertical-align:top}td:first-child{font-weight:700}.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:20px 0}.flow div{background:white;border:1px solid var(--line);border-radius:9px;padding:12px;font-size:13px;font-weight:750}.flow small{display:block;color:var(--muted);font-weight:500;margin-top:5px}.flow b{color:var(--teal)}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#17252d;color:#eaf1ef;padding:17px;border-radius:10px;font-size:12px;line-height:1.55;overflow:auto}.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em;background:#edf1ee;padding:2px 5px;border-radius:4px}.stage{display:grid;grid-template-columns:60px 1fr 2fr;gap:14px;padding:15px 0;border-top:1px solid var(--line)}.stage .n{font-size:1.5rem;color:var(--teal);font-weight:800}.stage p{margin:0;color:var(--muted);font-size:14px}.stage h4{margin:0}.badge{display:inline-block;border-radius:5px;padding:3px 7px;font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}.green{background:var(--tealbg);color:var(--teal)}.gold{background:var(--amberbg);color:var(--amber)}.red{background:var(--redbg);color:var(--red)}.blue{background:var(--bluebg);color:var(--blue)}.small{font-size:12px;color:var(--muted)}footer{padding-top:35px;font-size:13px;color:var(--muted)}
+@media(max-width:760px){.wrap{padding:23px 16px 60px}nav{margin:0 -16px;padding:8px 16px}.grid,.grid3{grid-template-columns:1fr}.flow{grid-template-columns:1fr}.stage{grid-template-columns:38px 1fr}.stage p{grid-column:2}.verdict{padding:18px}}
+@media print{nav{display:none}.wrap{max-width:none;padding:0 10mm}section{break-before:page}.card,.stage{break-inside:avoid}.verdict{print-color-adjust:exact}}
+</style></head><body><div class="wrap">
+<header>
+<div class="k">FinSight · Technical strategy and product architecture</div>
+<h1>Build the engine with AI. Run the business on deterministic code.</h1>
+<p class="lede">A detailed architecture for creating highly customised, lender-oriented project reports with minimal runtime AI, auditable calculations, reusable content components and combinatorial report assembly.</p>
+<div class="meta"><span class="pill">15 November 2026</span><span class="pill">Architecture decision brief</span><span class="pill">Development: AI-intensive</span><span class="pill">Runtime: deterministic-first</span></div>
+<div class="verdict"><div class="k" style="color:#bde7dc">Recommendation</div><h2>Yes — this is the right strategy, provided we engineer verification as seriously as generation.</h2><p>Use AI agents aggressively during development to research, design, code, generate tests, challenge assumptions and improve the content library. At runtime, use typed project data, deterministic calculations, rules, reusable content blocks and a document compiler. Invoke AI only for user-authorised tasks that genuinely need language understanding or open-ended synthesis.</p></div>
+</header>
+<nav><a href="#answer">Verdict</a><a href="#limits">Limits</a><a href="#combinatorics">Millions of reports</a><a href="#architecture">Architecture</a><a href="#content">Content system</a><a href="#variation">Variation</a><a href="#ai">AI allocation</a><a href="#controls">Audit & testing</a><a href="#roadmap">Roadmap</a><a href="#economics">Economics</a></nav>
+
+<section id="answer"><div class="k">01 · Is the user’s thesis correct?</div><h2>Correct in principle. Add one critical safeguard: independent verification.</h2>
+<p class="intro">Your core argument is sound. A report-generation business should not pay an LLM to re-derive financial logic, recompose standard schedules or rewrite the same predictable explanations for every customer. Those jobs are better handled by code that is deterministic, versioned and testable.</p>
+<div class="grid3">
+<div class="card"><div class="num">01</div><h3>Lower marginal cost</h3><p>Once code, rules and templates exist, another report mainly consumes compute, storage and rendering resources—not a fresh sequence of expensive model inferences.</p></div>
+<div class="card"><div class="num">02</div><h3>Reproducibility</h3><p>Same inputs, same engine version and same configuration should produce the same calculations and substantially the same document. Differences can be traced to changed inputs, rules, data or software versions.</p></div>
+<div class="card"><div class="num">03</div><h3>Auditability</h3><p>Every output can be traced to a formula, rule, content block, source record or renderer. A defect can be isolated, corrected and regression-tested.</p></div>
+</div>
+<div class="call"><strong>The qualification:</strong> deterministic software is not synonymous with correct software. A hard-coded wrong tax treatment or a mistaken working-capital formula will be repeatably wrong. Correctness comes from specifications, independent review, test fixtures, reconciliations, version control and controlled releases.</div>
+<h3>What should be deterministic?</h3>
+<table><thead><tr><th>Work</th><th>Default approach</th><th>Reason</th></tr></thead><tbody>
+<tr><td>Financial arithmetic</td><td><span class="badge green">Code only</span></td><td>Exact formulas, traceable inputs, reproducible outputs.</td></tr>
+<tr><td>Technical quantities</td><td><span class="badge green">Code + validated assumptions</span></td><td>Capacity, consumption, yield, utilities and staffing can be calculated from explicit methods and project inputs.</td></tr>
+<tr><td>Report structure</td><td><span class="badge green">Rules engine</span></td><td>Sections should appear because the project needs them, not because a model improvises.</td></tr>
+<tr><td>Charts and tables</td><td><span class="badge green">Code</span></td><td>Visuals must be consistent with the canonical data.</td></tr>
+<tr><td>Standard explanations</td><td><span class="badge green">Narrative templates + rules</span></td><td>Common financial and operational interpretations can be authored, reviewed and reused.</td></tr>
+<tr><td>Unstructured documents</td><td><span class="badge gold">Optional AI extraction</span></td><td>OCR and language models can help convert quotations, licences and notes into structured facts; humans or validation rules confirm them.</td></tr>
+<tr><td>Open-ended market synthesis</td><td><span class="badge gold">Selective AI / research</span></td><td>Useful where source material is varied, but claims must retain source references and confidence labels.</td></tr>
+</tbody></table>
+</section>
+
+<section id="limits"><div class="k">02 · Know the boundary</div><h2>What code can do exceptionally well — and what it cannot know.</h2>
+<div class="grid">
+<div class="card"><span class="badge green">Strong fit for code</span><h3>Repeatable transformation</h3><ul><li>Calculate from defined inputs.</li><li>Apply explicit policy and accounting rules.</li><li>Generate schedules, tables and charts.</li><li>Check totals, ratios, units and cross-document consistency.</li><li>Select relevant sections based on project attributes.</li><li>Render the same content in HTML and PDF.</li></ul></div>
+<div class="card"><span class="badge gold">Requires evidence or judgement</span><h3>World interpretation</h3><ul><li>Whether customers will actually buy.</li><li>Whether a promoter can execute the plan.</li><li>Whether a supplier quotation is commercially credible.</li><li>Whether a market claim is representative.</li><li>Whether a proposed technology is appropriate in a specific context.</li><li>Whether an unusual risk has been overlooked.</li></ul></div>
+</div>
+<p>Code can calculate a reachable sales plan from customer count, conversion, order size and price assumptions. It cannot invent the customers. Code can estimate electricity consumption from machine load, operating hours and load factor. It cannot know the actual local supply reliability without evidence. Code can produce a risk register from known risk categories; it cannot guarantee that all project-specific risks have been discovered.</p>
+<div class="call warn"><strong>Design principle:</strong> when the system does not know, it must ask, disclose an assumption, flag a gap or offer optional AI-assisted research. It must never fill an evidence gap with confident-sounding prose.</div>
+</section>
+
+<section id="combinatorics"><div class="k">03 · The millions-of-permutations question</div><h2>Do not write millions of templates. Compose reports from reusable parts.</h2>
+<p class="intro">The mistaken assumption is that every different report needs its own complete template. It does not. A report is a composition of modules, content blocks, data, rules, evidence and presentation choices. A relatively small library can produce a very large number of valid combinations.</p>
+<div class="call"><strong>Analogy:</strong> a newspaper does not have a separately authored edition for every reader. It has reusable story units, sections, editorial rules, data and layouts. A content-management system assembles the edition. FinSight can assemble a project report in the same way—but with stricter financial and evidence controls.</div>
+<h3>Six dimensions create variation</h3>
+<table><thead><tr><th>Dimension</th><th>Illustrative choices</th><th>What changes</th></tr></thead><tbody>
+<tr><td>Project archetype</td><td>Manufacturing, trading, services, construction, hospitality, processing</td><td>Technical chapters, operating metrics, input schemas.</td></tr>
+<tr><td>Project purpose</td><td>Greenfield, expansion, modernisation, replacement, diversification</td><td>Baseline analysis, existing capacity, incremental cost and benefits.</td></tr>
+<tr><td>Scale and complexity</td><td>Micro, small, medium; simple to complex</td><td>Depth, schedules, evidence requirements and annexes.</td></tr>
+<tr><td>Evidence profile</td><td>Quotation-backed, order-backed, promoter-estimated, incomplete</td><td>Evidence labels, caveats, open items and supporting exhibits.</td></tr>
+<tr><td>Financial profile</td><td>Term loan, working capital, mixed funding, phased investment</td><td>Debt schedules, working capital analysis, repayment sections.</td></tr>
+<tr><td>Operating context</td><td>Location, technology, product mix, shifts, seasonality, supply chain</td><td>Specific calculations, risks, tables, narrative and exhibits.</td></tr>
+</tbody></table>
+<h3>Illustrative combination count</h3>
+<p>Suppose the report composer has six independent configuration dimensions with only a few options each. The number of possible configurations multiplies—not adds.</p>
+<div class="grid3">
+<div class="card"><div class="num">6</div><h4>Project archetypes</h4><p class="small">Manufacturing, trading, services, construction, hospitality, processing</p></div>
+<div class="card"><div class="num">5</div><h4>Project purposes</h4><p class="small">Greenfield, expansion, modernisation, replacement, diversification</p></div>
+<div class="card"><div class="num">4</div><h4>Evidence profiles</h4><p class="small">Strong, mixed, assumption-led, incomplete</p></div>
+<div class="card"><div class="num">3</div><h4>Report depths</h4><p class="small">Profile, standard report, detailed DPR</p></div>
+<div class="card"><div class="num">4</div><h4>Funding structures</h4><p class="small">Term loan, working capital, mixed, phased</p></div>
+<div class="card"><div class="num">4</div><h4>Operating patterns</h4><p class="small">Single shift, multiple shifts, seasonal, project-based</p></div>
+</div>
+<div class="call"><strong>6 × 5 × 4 × 3 × 4 × 4 = 5,760</strong> possible configurations before product mix, geography, scale, risk profile, chapter selection, evidence and narrative choices are considered. This is illustrative combinatorics, not 5,760 manually authored templates.</div>
+<p>Not every theoretical combination is valid. A rule engine must enforce compatibility. For example, a hotel occupancy model should not appear in a fabrication project; a greenfield project should not be forced to provide historical plant utilisation; an expansion report needs existing capacity and incremental capacity analysis.</p>
+<h3>The correct model: constrained composition</h3>
+<div class="flow"><div><b>Inputs</b><small>Project facts and evidence</small></div><div><b>Classification</b><small>Archetype and complexity</small></div><div><b>Rules</b><small>Required and excluded modules</small></div><div><b>Composition</b><small>Blocks, exhibits, narratives</small></div><div><b>Compiler</b><small>HTML and PDF</small></div></div>
+<p>Variation is not random. It is purposeful: the selected content must fit the project's actual facts and analytical needs.</p>
+</section>
+
+<section id="architecture"><div class="k">04 · The proposed technical architecture</div><h2>A report compiler with one canonical project model.</h2>
+<p class="intro">Every subsystem should read and write defined data contracts. Avoid independent modules copying values into their own stores. One canonical project model feeds calculations, narrative slots, tables, charts, checks and output documents.</p>
+<div class="flow"><div><b>Project model</b><small>Facts, inputs, evidence, assumptions</small></div><div><b>Domain engines</b><small>Technical and financial calculations</small></div><div><b>Rule engine</b><small>Sections, validations, conditions</small></div><div><b>Content compiler</b><small>Narratives, exhibits, schedules</small></div><div><b>Renderer</b><small>HTML, PDF, annexures</small></div></div>
+<div class="grid">
+<div class="card"><h3>1. Canonical project schema</h3><p>Typed, versioned entities for borrower, promoter, project, products, location, capacity, assets, costs, funding, operations, assumptions, evidence and financial periods. Every field has a definition, unit, validation rule and source status.</p></div>
+<div class="card"><h3>2. Domain calculation services</h3><p>Separate pure functions for production capacity, input consumption, cost estimation, working capital, depreciation, taxation, P&L, balance sheet, cash flow, debt schedule, DSCR, break-even and scenarios.</p></div>
+<div class="card"><h3>3. Rules and orchestration</h3><p>Determines which modules apply, what inputs are required, which conditions are satisfied, what exhibits are useful, what caveats are necessary and which sections should be omitted.</p></div>
+<div class="card"><h3>4. Content block library</h3><p>Reusable paragraphs, tables, callouts, process diagrams, metric cards, risk rows, evidence notes and exhibit definitions. Each block declares required data and applicability conditions.</p></div>
+<div class="card"><h3>5. Narrative assembly</h3><p>Combines authored templates, rule-driven sentence variants and approved metric references. It selects language based on actual results, project attributes and evidence status.</p></div>
+<div class="card"><h3>6. Document compiler</h3><p>Orders blocks, applies layouts, page rules, headers, footers, page numbering, cross-references and annex bookmarks. The same source content feeds HTML and PDF.</p></div>
+</div>
+<h3>Illustrative data contract</h3>
+<pre>{
+  "project": {
+    "type": "manufacturing",
+    "purpose": "greenfield",
+    "report_depth": "standard",
+    "currency": "INR",
+    "location_id": "LOC-001"
+  },
+  "capacity": {
+    "product_id": "SKU-001",
+    "installed_units_per_year": 10000,
+    "working_days": 300,
+    "shifts_per_day": 1,
+    "evidence_status": "promoter_estimate"
+  },
+  "assumptions": [{
+    "id": "ASP-PRICE-001",
+    "name": "average_selling_price",
+    "value": 1000,
+    "unit": "INR/unit",
+    "period": "FY2027-28",
+    "source_id": "SRC-009",
+    "confidence": "medium"
+  }],
+  "metrics": [{
+    "id": "FIN-DSCR-MIN",
+    "value": 1.42,
+    "unit": "times",
+    "period": "projection_period",
+    "engine_version": "2.4.0"
+  }]
+}</pre>
+<p class="small">Illustrative schema only. The production schema must define decimal precision, nullability, validation, IDs, provenance and period conventions.</p>
+</section>
+
+<section id="content"><div class="k">05 · How the content library works</div><h2>Think in content atoms, not whole-document templates.</h2>
+<p class="intro">A content atom is the smallest reusable unit that makes one useful contribution to the report. Atoms are composed into sections; sections into chapters; chapters into a report profile. Each atom has a contract.</p>
+<table><thead><tr><th>Atom type</th><th>Example</th><th>Contract</th></tr></thead><tbody>
+<tr><td>Fact block</td><td>Promoter and enterprise profile</td><td>Required fields, evidence labels, display rules.</td></tr>
+<tr><td>Analytical block</td><td>Capacity utilisation analysis</td><td>Metric inputs, formula IDs, interpretation conditions.</td></tr>
+<tr><td>Table block</td><td>Machinery and equipment schedule</td><td>Column schema, units, totals, source references.</td></tr>
+<tr><td>Exhibit block</td><td>Sales ramp-up chart</td><td>Decision question, dataset, chart type, caption.</td></tr>
+<tr><td>Narrative block</td><td>Debt servicing interpretation</td><td>Approved metric tokens, conditional wording, caveats.</td></tr>
+<tr><td>Evidence block</td><td>Quotation register</td><td>Document ID, date, supplier, scope, exclusions.</td></tr>
+<tr><td>Risk block</td><td>Raw material price risk</td><td>Trigger, exposure, mitigation, owner, scenario link.</td></tr>
+</tbody></table>
+<h3>Example: one DSCR explanation, multiple valid outputs</h3>
+<p>The narrative is not generated from scratch. A tested rule selects a carefully written interpretation based on the metric, the period and the evidence.</p>
+<div class="grid">
+<div class="card"><span class="badge green">Condition A</span><h4>Coverage above the configured comfort threshold</h4><p>“Projected cash accruals provide coverage of scheduled debt service throughout the forecast period. The lowest coverage occurs in {period}, at {minimum_dscr} times.”</p></div>
+<div class="card"><span class="badge gold">Condition B</span><h4>Coverage positive but tight</h4><p>“Debt service remains covered in the base projection, although the margin is limited in {period}. The repayment profile is sensitive to {driver}.”</p></div>
+<div class="card"><span class="badge red">Condition C</span><h4>Coverage below 1.0x</h4><p>“The base projection indicates a debt-service shortfall in {period}. The funding and repayment structure requires revision before the forecast can support the proposed obligation.”</p></div>
+</div>
+<p class="small">Thresholds must be configurable by product policy and context, not treated as universal lending standards. These are illustrative editorial patterns, not credit decisions.</p>
+<h3>Blocks need metadata</h3>
+<pre>{
+  "block_id": "debt_service.interpretation.v1",
+  "block_type": "conditional_narrative",
+  "requires": ["FIN-DSCR-MIN", "FIN-DSCR-BY-YEAR"],
+  "conditions": [
+    "coverage_status == 'adequate'",
+    "coverage_status == 'tight'",
+    "coverage_status == 'shortfall'"
+  ],
+  "outputs": ["paragraph"],
+  "evidence_policy": "calculated_from_stated_assumptions",
+  "version": "1.0.0"
+}</pre>
+</section>
+
+<section id="variation"><div class="k">06 · Make reports feel individual</div><h2>Variation should come from facts, analysis, selection and editorial composition.</h2>
+<p class="intro">A deterministic report can still be highly individual. Personalisation does not require free-form prose on every page. It requires the system to select and compose the right content for this project's actual circumstances.</p>
+<div class="grid">
+<div class="card"><h3>Data-driven variation</h3><p>Different products, capacity, prices, locations, operating days, funding mix, costs, customers, suppliers and timelines produce different tables, calculations and conclusions.</p></div>
+<div class="card"><h3>Rule-driven variation</h3><p>Expansion projects get existing-vs-proposed capacity. Seasonal businesses get seasonality analysis. High receivables get debtor-cycle analysis. Import-dependent projects get foreign-exchange and supply-chain risks where material.</p></div>
+<div class="card"><h3>Evidence-driven variation</h3><p>Order-backed sales, quotations, promoter estimates and missing evidence receive different labels, explanations and annex references. The system never pretends they are equivalent.</p></div>
+<div class="card"><h3>Editorial variation</h3><p>Alternative approved headings, sentence patterns, section openings, exhibit arrangements and levels of detail keep the output natural without randomising facts or changing meaning.</p></div>
+</div>
+<h3>Example: expansion versus greenfield</h3>
+<table><thead><tr><th>Report element</th><th>Greenfield project</th><th>Expansion project</th></tr></thead><tbody>
+<tr><td>Business baseline</td><td>Promoter experience and proposed business model.</td><td>Existing operations, historical performance and current capacity.</td></tr>
+<tr><td>Capacity analysis</td><td>Proposed installed and practical capacity.</td><td>Existing capacity, utilisation, bottleneck and incremental capacity.</td></tr>
+<tr><td>Market analysis</td><td>Initial market entry and customer acquisition.</td><td>Incremental demand, existing customers, new segments and cannibalisation.</td></tr>
+<tr><td>Project cost</td><td>Full initial setup cost.</td><td>Incremental investment, replacement and integration costs.</td></tr>
+<tr><td>Financial model</td><td>Start-up ramp-up and stabilisation.</td><td>Existing base plus incremental project economics.</td></tr>
+<tr><td>Risk analysis</td><td>Execution, commissioning and market-entry risk.</td><td>Disruption to current operations, integration and demand risk.</td></tr>
+</tbody></table>
+<div class="call"><strong>Do not use random variation.</strong> Randomly changing adjectives, headings or chart styles can make reports look different while reducing coherence. Use controlled editorial variants selected by meaning, audience and report context. Every variant should preserve the same factual proposition.</div>
+<h3>How many templates do we actually need?</h3>
+<p>Think of a library of perhaps dozens of chapter layouts, hundreds of content atoms and a controlled set of narrative patterns—not hundreds of complete reports. The exact count should emerge from user testing and real project diversity. A good content atom should be reusable across many reports, but it should not be forced into contexts where it does not fit.</p>
+</section>
+
+<section id="ai"><div class="k">07 · Maximise AI during development; minimise it at runtime</div><h2>Use AI as the engineering workforce, not as the production calculator.</h2>
+<p class="intro">AI agents can be used extensively to research domain methods, draft specifications, create code, generate test fixtures, review edge cases, write documentation, inspect code dependencies and improve the content library. But AI-generated code must pass independent verification before it is trusted.</p>
+<div class="grid">
+<div class="card"><span class="badge green">Development-time AI: high</span><h3>Where to use agents aggressively</h3><ul><li>Research accounting, banking, technical and industry methodologies.</li><li>Translate specifications into typed schemas and pure functions.</li><li>Generate implementation code and migration scripts.</li><li>Create unit, integration, property-based and regression tests.</li><li>Generate edge cases and adversarial examples.</li><li>Review code for defects, security, performance and maintainability.</li><li>Draft and challenge narrative libraries.</li><li>Build sample reports and compare them against reference outputs.</li><li>Document formulas, assumptions, data lineage and release notes.</li></ul></div>
+<div class="card"><span class="badge gold">Runtime AI: selective</span><h3>Where to use models only when justified</h3><ul><li>Extract structured facts from uploaded quotations or documents.</li><li>Summarise a user-supplied market study.</li><li>Draft an unusual project-specific narrative from approved evidence.</li><li>Help the user describe their process or business in structured fields.</li><li>Conduct optional research with citations and explicit source dates.</li><li>Translate or simplify language for a selected audience.</li></ul></div>
+</div>
+<h3>AI development workflow</h3>
+<div class="flow"><div><b>Specify</b><small>Human-approved requirements</small></div><div><b>Generate</b><small>AI writes code and tests</small></div><div><b>Challenge</b><small>Separate review and edge cases</small></div><div><b>Execute</b><small>Tests, static checks, benchmarks</small></div><div><b>Approve</b><small>Human sign-off and release</small></div></div>
+<div class="call danger"><strong>Do not let the same agent be the sole author and judge.</strong> It may reproduce the same mistaken assumption in implementation and tests. Use independently specified reference cases, manually checked calculations, external standards where relevant and independent review. AI review is useful, but it is not an oracle.</div>
+<h3>Suggested runtime AI policy</h3>
+<table><thead><tr><th>Runtime task</th><th>Default</th><th>Escalation condition</th></tr></thead><tbody>
+<tr><td>Generate standard report</td><td>Zero AI calls</td><td>None required.</td></tr>
+<tr><td>Calculate financial schedules</td><td>Zero AI calls</td><td>Never delegate arithmetic to LLM.</td></tr>
+<tr><td>Interpret standard ratios</td><td>Rules and templates</td><td>Optional explanation for genuinely unusual patterns.</td></tr>
+<tr><td>Read uploaded documents</td><td>Local parsing/OCR where practical</td><td>AI extraction if document complexity justifies it; user confirmation required.</td></tr>
+<tr><td>Research market claims</td><td>Structured source library and user evidence</td><td>Explicit paid/optional research feature with source capture.</td></tr>
+<tr><td>Personalised narrative</td><td>Conditional content library</td><td>Optional AI drafting from approved facts; validate claims and metric references.</td></tr>
+</tbody></table>
+</section>
+
+<section id="controls"><div class="k">08 · Auditability, verification and release discipline</div><h2>Make every number and paragraph traceable.</h2>
+<p class="intro">A robust engine needs more than unit tests. It needs specifications, independent reference calculations, data lineage, version control, regression tests and report-level reconciliation.</p>
+<div class="grid">
+<div class="card"><h3>Formula registry</h3><p>Each formula has an ID, definition, units, inputs, outputs, applicable project types, rounding policy, source/methodology, owner and version.</p></div>
+<div class="card"><h3>Assumption registry</h3><p>Each assumption stores value, unit, period, source, evidence class, date, confidence, user confirmation and dependent calculations.</p></div>
+<div class="card"><h3>Metric lineage</h3><p>Each displayed metric points to the exact calculation output, formula version and upstream assumptions. Charts and narrative bind to the same metric ID.</p></div>
+<div class="card"><h3>Report build manifest</h3><p>Each report records schema version, engine version, ruleset version, content-library version, renderer version, source snapshot and generation time.</p></div>
+</div>
+<h3>Testing strategy</h3>
+<table><thead><tr><th>Test layer</th><th>What it catches</th><th>Example</th></tr></thead><tbody>
+<tr><td>Unit tests</td><td>Incorrect formula or boundary behaviour.</td><td>Interest calculation, depreciation, DSCR numerator/denominator.</td></tr>
+<tr><td>Property-based tests</td><td>General invariants across many generated inputs.</td><td>Increasing debt service without changing cash flow must not improve DSCR.</td></tr>
+<tr><td>Golden-master tests</td><td>Unexpected output changes after code/content updates.</td><td>Known project inputs must match approved reference schedules.</td></tr>
+<tr><td>Integration tests</td><td>Broken links between modules.</td><td>Project cost reconciles with funding and opening balance sheet.</td></tr>
+<tr><td>Cross-document tests</td><td>Different values for the same metric.</td><td>Executive summary DSCR equals annex DSCR.</td></tr>
+<tr><td>Scenario tests</td><td>Incorrect propagation of shocks.</td><td>Higher raw-material cost flows through P&L, cash flow and DSCR.</td></tr>
+<tr><td>Renderer tests</td><td>Clipping, broken pagination, unreadable charts.</td><td>Long company name, wide table, 30-year projection, missing optional sections.</td></tr>
+<tr><td>Security tests</td><td>Unauthorised access to paid or sensitive data.</td><td>Unpaid user cannot fetch full report JSON or paid PDF from an endpoint.</td></tr>
+</tbody></table>
+<h3>Financial integrity controls</h3>
+<ul><li>Use decimal arithmetic and explicit rounding policies for money; avoid accidental binary floating-point drift in financial totals.</li><li>Store currency, scale (rupees/lakhs/crores), unit and financial period as explicit metadata.</li><li>Define sign conventions for income, expenses, assets, liabilities and cash flows.</li><li>Reconcile opening and closing balances, sources and uses, debt balances and cash movements.</li><li>Never silently substitute a default for missing critical data.</li><li>Distinguish zero, unknown, not applicable and not provided.</li><li>Recalculate all dependent outputs when an assumption changes.</li><li>Keep historical report versions immutable; issue a new version when assumptions or engine logic change.</li></ul>
+<div class="call warn"><strong>Auditability is not just “we can read the code”.</strong> It means a reviewer can trace a reported figure from the printed page back through its metric ID, calculation, formula version, inputs and evidence. Build that lineage into the product from day one.</div>
+</section>
+
+<section id="roadmap"><div class="k">09 · Build sequence</div><h2>Develop the engine in layers, not as one giant agent task.</h2>
+<p class="intro">The best way to use AI to its technical limit is to give it bounded, testable work packages with explicit contracts and independent acceptance criteria.</p>
+<div class="stage"><div class="n">01</div><div><h4>Domain specification</h4><span class="badge blue">Foundation</span></div><p>Define project archetypes, report depths, data dictionary, financial periods, evidence classes, units, sign conventions and the boundaries of what FinSight claims to provide.</p></div>
+<div class="stage"><div class="n">02</div><div><h4>Canonical schema</h4><span class="badge blue">Foundation</span></div><p>Build typed schemas, validation, stable IDs, source records, assumption records and versioned migrations. No report design yet.</p></div>
+<div class="stage"><div class="n">03</div><div><h4>Financial core</h4><span class="badge green">Critical path</span></div><p>Implement project cost, means of finance, depreciation, P&L, balance sheet, cash flow, working capital, debt schedule, DSCR and scenario propagation. Validate independently.</p></div>
+<div class="stage"><div class="n">04</div><div><h4>First industry module</h4><span class="badge green">Critical path</span></div><p>Start with manufacturing: capacity, process, equipment, inputs, yield, manpower, utilities and implementation. Validate with real project examples and technical references.</p></div>
+<div class="stage"><div class="n">05</div><div><h4>Content atoms and rules</h4><span class="badge blue">Composition</span></div><p>Build section rules, narrative patterns, exhibit contracts, evidence labels, omission rules and project-specific chapter composition.</p></div>
+<div class="stage"><div class="n">06</div><div><h4>HTML/PDF compiler</h4><span class="badge blue">Presentation</span></div><p>Build one shared semantic report tree, accessible HTML, A4 print styles, page breaks, repeat table headers, annex bookmarks and visual regression tests.</p></div>
+<div class="stage"><div class="n">07</div><div><h4>Real-project validation</h4><span class="badge gold">Field test</span></div><p>Run diverse anonymised project cases through the system. Have an independent credit/finance reviewer and a technical reviewer assess completeness, evidence and usability.</p></div>
+<div class="stage"><div class="n">08</div><div><h4>Additional archetypes</h4><span class="badge blue">Scale</span></div><p>Add trading, services, food processing, construction and hospitality by extending schemas and domain modules—not cloning the entire report generator.</p></div>
+<div class="stage"><div class="n">09</div><div><h4>Selective AI and commercial controls</h4><span class="badge gold">Optimisation</span></div><p>Add optional document extraction, evidence-assisted drafting, research, entitlements, payments, retention controls and cost telemetry.</p></div>
+<h3>How to instruct the coding agents</h3>
+<p>Every task should include: business requirement, mathematical or domain specification, input/output schema, invariants, examples, edge cases, prohibited behaviour, test requirements and acceptance criteria. Ask agents to explain assumptions and produce tests before implementation. Require a separate review pass and execute the tests in CI. Do not accept “looks correct” as an acceptance result.</p>
+</section>
+
+<section id="economics"><div class="k">10 · Economics and operating model</div><h2>Make AI cost optional, visible and attributable.</h2>
+<p class="intro">A deterministic-first architecture makes the cost of a normal report predictable. It does not make the service literally free: hosting, storage, rendering, payment processing, support, data acquisition and security still cost money.</p>
+<table><thead><tr><th>Cost category</th><th>Standard report</th><th>Optional advanced service</th><th>Cost control</th></tr></thead><tbody>
+<tr><td>Compute</td><td>Rules, calculations and rendering</td><td>Large document processing / batch research</td><td>Cache immutable outputs; queue heavy tasks; profile CPU and memory.</td></tr>
+<tr><td>AI inference</td><td>None by default</td><td>Extraction, drafting, research, translation</td><td>Explicit opt-in, token budgets, model routing, reuse extracted facts.</td></tr>
+<tr><td>External data</td><td>Stored reference data / user evidence</td><td>Fresh market or location research</td><td>Show source date and charge for data-intensive work where justified.</td></tr>
+<tr><td>PDF generation</td><td>Template renderer</td><td>Very large reports or image-heavy files</td><td>Render on demand; avoid repeated regeneration of unchanged versions.</td></tr>
+<tr><td>Storage</td><td>Project model and final artifact</td><td>Uploaded documents and evidence archive</td><td>Retention policy, compression, deletion controls.</td></tr>
+<tr><td>Quality assurance</td><td>Automated validations</td><td>Human expert review, if offered</td><td>Price expert review separately; never imply it is included automatically.</td></tr>
+</tbody></table>
+<h3>Suggested commercial packaging</h3>
+<div class="grid3">
+<div class="card"><h3>Core report</h3><p>Deterministic calculations, standard content library, project-specific report composition and PDF/Excel export.</p><p class="small">No runtime AI required.</p></div>
+<div class="card"><h3>Evidence assist</h3><p>Optional document extraction, quotation parsing, evidence classification and guided narrative assistance.</p><p class="small">AI usage metered or included with limits.</p></div>
+<div class="card"><h3>Research / expert tier</h3><p>Fresh market research, specialist technical modules or professional review where a qualified expert is engaged.</p><p class="small">Separate scope, price and disclaimers.</p></div>
+</div>
+<div class="call"><strong>Cost principle:</strong> do not spend an LLM token to repeat a calculation, format a standard table, select an obvious chapter or rewrite a stable explanation. Spend AI only where it creates value that code and existing evidence cannot provide economically.</div>
+<h3>Final answer to the central question</h3>
+<p>Yes, it is possible to generate millions of distinct, project-specific report configurations from a finite software system. The challenge is not the number of combinations. It is designing the configuration rules so that each combination is valid, relevant, evidence-aware and coherent. Start with a small set of archetypes and content atoms, prove the architecture on real projects, then expand the library based on actual gaps—not imagined template counts.</p>
+</section>
+
+<section id="sources"><div class="k">11 · Research and reference base</div><h2>Why the architecture is defensible</h2>
+<p class="small">The following external research supports the design principles. The proposed FinSight architecture is an engineering recommendation, not a claim that any single source prescribes this exact system.</p>
+<p><strong>UNIDO — Manual for the Preparation of Industrial Feasibility Studies.</strong> The manual's feasibility-study contents include executive summary, project background, market analysis and marketing concept, raw materials and supplies, location/site/environment, engineering, organisation, human resources, implementation and financial analysis. It is a strong source for the substantive modules the report compiler must support.<br><a href="https://www.unido.org/sites/default/files/files/2021-02/manual_for_the_preparation_of_industrial_feasibility_studies.pdf" target="_blank" rel="noopener">Official manual</a></p>
+<p><strong>PROBE — Benchmarking code generation in large language models (2026).</strong> The study evaluates functional correctness, proximity to valid solutions and code quality, and reports that generated code can fail on basic errors and harder tasks. This supports using AI to accelerate development but not treating generated code as production-ready without verification.<br><a href="https://link.springer.com/article/10.1007/s10664-026-10904-5" target="_blank" rel="noopener">Research paper</a></p>
+<p><strong>From Generation to Verification (2026).</strong> A reproducible study compares LLM-assisted workflows and finds that greater verification activity did not automatically produce statistically significant correctness gains in its tested setting; more intensive verification also incurred substantially higher token and latency costs. This is a useful warning against assuming that simply adding more AI review loops guarantees quality.<br><a href="https://www.mdpi.com/2073-431X/15/11/825" target="_blank" rel="noopener">Research paper</a></p>
+<p><strong>Guidelines for empirical studies in software engineering involving LLMs (2026).</strong> Useful context for defining evaluation protocols, validity and measurement when testing AI-assisted engineering workflows.<br><a href="https://link.springer.com/article/10.1007/s10664-026-10922-3" target="_blank" rel="noopener">Research paper</a></p>
+<p><strong>Code review caution (2026).</strong> Research reports that LLM reviewers can misclassify correct implementations as non-compliant and that plausible explanations are not a substitute for executed verification. This reinforces independent tests and human review for critical calculations.<br><a href="https://link.springer.com/article/10.1007/s10515-026-00638-5" target="_blank" rel="noopener">Research paper</a></p>
+<div class="call warn"><strong>Scope boundary:</strong> this blueprint does not certify accounting, tax, engineering, lending or regulatory rules. Each such rule must be sourced, reviewed by an appropriately qualified person, versioned and updated as the relevant requirements change.</div>
+</section>
+<footer>FinSight · Deterministic Engine and AI-Assisted Development Blueprint · 15 November 2026<br>Internal technical strategy. All example values and thresholds are illustrative, not professional advice or lending policy.</footer>
+</div></body></html>
