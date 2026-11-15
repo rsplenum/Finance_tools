@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FinSight | Project Report — Review & Overhaul Blueprint</title>
+<style>
+:root{--ink:#17232b;--muted:#5d6b73;--paper:#fbfaf7;--white:#fff;--line:#d9dfdc;--teal:#176b63;--teal2:#e7f1ee;--amber:#9b641c;--amberbg:#fbf1df;--red:#a3443b;--redbg:#f8eae7;--blue:#315b78;--bluebg:#eaf0f5;--shadow:0 12px 36px rgba(23,35,43,.07)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:var(--teal);text-decoration-thickness:1px;text-underline-offset:3px}a:hover{text-decoration-thickness:2px}
+.wrap{max-width:1180px;margin:auto;padding:42px 28px 90px}
+.kicker{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--teal)}
+h1,h2,h3,h4{line-height:1.13;letter-spacing:-.025em;margin:0 0 .65em}h1{font-size:clamp(2.5rem,6vw,5rem);max-width:900px;font-weight:720}h2{font-size:clamp(1.8rem,3.3vw,2.8rem);font-weight:690}h3{font-size:1.28rem;font-weight:700}h4{font-size:1rem;letter-spacing:0}
+p{margin:.35em 0 1em;max-width:78ch}.lede{font-size:1.23rem;line-height:1.5;color:var(--muted);max-width:850px}
+header{padding:28px 0 34px;border-bottom:1px solid var(--line)}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin:24px 0}.pill{display:inline-flex;padding:5px 10px;border:1px solid var(--line);border-radius:99px;font-size:12px;color:var(--muted);font-weight:650}
+.verdict{margin:28px 0 0;padding:22px 24px;background:#173d3a;color:#fff;border-radius:16px;box-shadow:var(--shadow)}.verdict strong{color:#c8eee5}.verdict p{margin:8px 0 0;color:#e3eeeb}
+nav{position:sticky;top:0;z-index:5;background:rgba(251,250,247,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);margin:0 -28px;padding:10px 28px;display:flex;gap:8px;overflow:auto;white-space:nowrap}
+nav a{font-size:12px;font-weight:700;text-decoration:none;padding:7px 10px;border-radius:7px;color:var(--muted)}nav a:hover{background:var(--teal2);color:var(--teal)}
+section{padding:64px 0 10px;border-bottom:1px solid var(--line);scroll-margin-top:70px}
+.intro{color:var(--muted);font-size:1.08rem;max-width:850px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.card{background:var(--white);border:1px solid var(--line);border-radius:13px;padding:19px 20px;box-shadow:0 2px 8px rgba(23,35,43,.025);min-width:0}
+.card p:last-child{margin-bottom:0}.card h3{margin-bottom:8px}
+.status{font-size:10px;font-weight:850;letter-spacing:.13em;text-transform:uppercase;display:inline-block;padding:4px 8px;border-radius:5px;margin-bottom:10px}
+.approve{background:var(--teal2);color:var(--teal)}.reject{background:var(--redbg);color:var(--red)}.revise{background:var(--amberbg);color:var(--amber)}.defer{background:var(--bluebg);color:var(--blue)}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:18px 0 24px;background:var(--white);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th{text-align:left;background:#eef1ee;color:#45535a;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:12px 13px}
+td{vertical-align:top;padding:12px 13px;border-top:1px solid var(--line)}td:first-child{font-weight:680}
+.callout{padding:18px 20px;border-left:4px solid var(--teal);background:var(--teal2);border-radius:0 10px 10px 0;margin:20px 0}
+.warn{border-left-color:var(--amber);background:var(--amberbg)}.danger{border-left-color:var(--red);background:var(--redbg)}
+.small{font-size:13px;color:var(--muted)}.muted{color:var(--muted)}
+ul,ol{padding-left:1.25em}li{margin:.3em 0}
+.num{font-size:2rem;font-weight:780;letter-spacing:-.05em;color:var(--teal);line-height:1.1}
+.metric{font-size:12px;color:var(--muted);font-weight:650}
+.flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:20px 0}
+.flow div{background:var(--white);border:1px solid var(--line);padding:13px;border-radius:9px;font-size:13px;font-weight:700;position:relative}
+.flow div:not(:last-child):after{content:"→";position:absolute;right:-13px;top:28%;z-index:1;color:var(--teal);font-size:17px}
+.flow span{display:block;font-size:11px;color:var(--muted);font-weight:500;margin-top:5px}
+.pageplan{counter-reset:page}.page{display:grid;grid-template-columns:70px minmax(180px, .9fr) 2fr;gap:18px;padding:17px 0;border-top:1px solid var(--line);align-items:start}.page:before{counter-increment:page;content:counter(page,decimal-leading-zero);font-size:1.5rem;color:var(--teal);font-weight:750}.page h4{margin:0}.page p{margin:0;color:var(--muted);font-size:14px}.page .evidence{font-size:12px;color:var(--blue);font-weight:650;margin-top:5px}
+.exhibit{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0}
+.good,.bad{padding:15px;border-radius:10px;font-size:14px}.good{background:var(--teal2)}.bad{background:var(--redbg)}
+.tag{font-size:10px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}
+.source{font-size:13px;color:var(--muted);padding:14px 0;border-top:1px solid var(--line)}
+.source strong{color:var(--ink)}.source a{overflow-wrap:anywhere}
+footer{padding-top:40px;color:var(--muted);font-size:13px}
+@media(max-width:760px){.wrap{padding:24px 17px 60px}nav{margin:0 -17px;padding:9px 17px}.grid,.grid3,.exhibit{grid-template-columns:1fr}.flow{grid-template-columns:1fr}.flow div:not(:last-child):after{content:"↓";right:12px;top:auto;bottom:-18px}.page{grid-template-columns:42px 1fr;gap:8px}.page p{grid-column:2}.page .evidence{grid-column:2}.verdict{padding:18px}.lede{font-size:1.08rem}}
+@media print{nav{display:none}.wrap{max-width:none;padding:0 12mm}.card{break-inside:avoid;box-shadow:none}section{break-before:page;padding-top:12mm}header{break-after:page}.verdict{print-color-adjust:exact}.page{break-inside:avoid}a{color:inherit}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<div class="kicker">FinSight · Product and document architecture review</div>
+<h1>The project report needs a stronger argument, not more decoration.</h1>
+<p class="lede">Independent review of the uploaded “Project Report Redesign” proposal and its 15-page Meera Foods specimen. This is a product-level redesign brief: what to keep, what to change, what is missing, and the report architecture FinSight should build toward.</p>
+<div class="meta"><span class="pill">Reviewed: 15 November 2026</span><span class="pill">Source: uploaded ZIP · index.html + 15 page images</span><span class="pill">External benchmarks: UNIDO · World Bank · ADB</span><span class="pill">Audience: borrower, banker, credit analyst</span></div>
+<div class="verdict"><div class="kicker" style="color:#9dd8cb">Overall verdict</div><h2 style="color:white;margin:.25em 0">Approve the direction. Do not approve the specimen as the final report standard.</h2><p>The proposal improves the interface and introduces a proper narrative layer, but its specimen is still a financial summary with a thin business story. It has more exhibits than evidence. It needs a stronger project logic, a defensible market and operating case, traceable assumptions, and a hierarchy that makes each page answer one decision question.</p></div>
+</header>
+<nav>
+<a href="#diagnosis">Diagnosis</a><a href="#decisions">Approve / reject</a><a href="#benchmark">Benchmarks</a><a href="#architecture">New architecture</a><a href="#exhibits">Exhibit rules</a><a href="#content">Missing meat</a><a href="#engine">Data & AI</a><a href="#product">Product build</a><a href="#acceptance">Acceptance tests</a><a href="#sources">Sources</a>
+</nav>
+
+<section id="diagnosis">
+<div class="kicker">01 · Diagnosis</div><h2>Your criticism is correct. Here is the deeper problem.</h2>
+<p class="intro">The sample is clean and legible. The weakness is not primarily typography. It is the relationship between evidence, explanation and financial output. The report shows that the numbers reconcile; it does not yet show, with comparable depth, why the project should exist, how it will operate, where its customers will come from, and why its assumptions deserve belief.</p>
+<div class="grid3">
+<div class="card"><div class="num">01</div><h3>Financially articulate</h3><p>Project cost, means of finance, projected P&L, balance sheet, cash flow, DSCR and sensitivities are visible. This is the strongest part of the specimen and should remain the deterministic core.</p></div>
+<div class="card"><div class="num">02</div><h3>Commercially under-evidenced</h3><p>Products, market, sales and promoter sections mostly state a story. They do not yet show enough customer, competitor, price, channel, sourcing or capacity evidence to support the story.</p></div>
+<div class="card"><div class="num">03</div><h3>Exhibit-led, not question-led</h3><p>Several charts are introduced because a chart exists, not because a visual is the clearest proof. The reader must decode chart, table and prose that often repeat one another.</p></div>
+</div>
+<h3 style="margin-top:30px">Forensic findings from the proposal and specimen</h3>
+<table>
+<thead><tr><th>Finding</th><th>Where it appears</th><th>Why it weakens the report</th><th>Required correction</th></tr></thead>
+<tbody>
+<tr><td>Cover chart is misplaced</td><td>Specimen page 1</td><td>A multi-year sales chart on the cover competes with the project identity and makes the cover feel like a dashboard export.</td><td>Cover should identify the project, promoter, location, report type, date, confidentiality and version. Put the key decision summary on page 2.</td></tr>
+<tr><td>Executive summary and later chapters repeat the same financial story</td><td>Page 2 key figures and five-year summary; pages 6–9; statements 11–13</td><td>The reader sees the same project cost, loan, sales, profit and repayment metrics in multiple forms without a clear reason for each repetition.</td><td>Use a compact decision summary once. Later chapters explain drivers and evidence; statements carry the full numeric record. Cross-reference instead of restating.</td></tr>
+<tr><td>Chart + table + prose stack</td><td>Pages 6–9, especially sales, repayment and sensitivity</td><td>Three presentations of the same values create cognitive load. The reader must reconcile visual encodings with a table and then read a paragraph that repeats the takeaway.</td><td>Give each exhibit one job. If the table is the precise evidence, use a short interpretation. If the chart reveals a pattern, do not reproduce every plotted value in adjacent prose.</td></tr>
+<tr><td>Visuals do not consistently prove a claim</td><td>Page 5 process/product, page 6 funding mix, page 7 sales, page 8 DSCR, page 9 sensitivity</td><td>Some visuals are decorative or restate a simple relationship that a two-line table would show more clearly.</td><td>Require an exhibit brief: question, insight, source, unit, period, decision implication. If it cannot pass, remove it.</td></tr>
+<tr><td>Market analysis is too thin</td><td>Page 5 “products, process, market”</td><td>Photo placeholders and general narrative do not demonstrate demand, target customers, competition, pricing power, route to market or achievable sales volume.</td><td>Add market definition, demand evidence, customer segments, competitor comparison, price evidence, channels, order pipeline and sales build-up.</td></tr>
+<tr><td>Operating model is under-specified</td><td>Pages 4–5</td><td>Promoter story and process strip do not explain the actual operating system: capacity, utilization, inputs, yield, manpower, utilities, quality, maintenance and bottlenecks.</td><td>Show a capacity bridge and an operating model with quantities, equipment, shifts, input-output ratios and resource requirements.</td></tr>
+<tr><td>Risks are not connected to model assumptions</td><td>Page 10</td><td>A risk list is useful, but risk statements need owners, triggers, mitigations and financial consequences. Otherwise it is a generic checklist.</td><td>Link each material risk to the relevant assumption, leading indicator, mitigation, owner and contingency. Show which risks are already stress-tested.</td></tr>
+<tr><td>Scenario analysis is too simplistic</td><td>Page 9: sales −10%, costs +10%, rate +1%</td><td>Independent shocks may miss combined downside and project-specific risks. No rationale for shock sizes or recovery actions is visible.</td><td>Provide base, downside and severe-but-plausible scenarios. State shock rationale, interactions, cash shortfall, DSCR impact and management response.</td></tr>
+<tr><td>“At a glance” is too dense</td><td>Page 2</td><td>A key-figure rail plus a five-year table plus narrative creates a mini-report inside the report.</td><td>Make page 2 a decision brief: project, ask, total cost, promoter contribution, lender request, readiness, 3–5 critical findings and open conditions.</td></tr>
+<tr><td>Contents page is not a navigation system</td><td>Page 3</td><td>A list of sections helps, but there is no indication of which evidence is in the main body and which is in schedules/annexes.</td><td>Use a short contents page with section names, page numbers, annex index and a “where to find” guide for key credit questions.</td></tr>
+<tr><td>Promoter and project credibility are too lightly evidenced</td><td>Pages 4 and 15</td><td>Promoter background, execution experience, net worth, role allocation, contribution proof and declarations are not sufficiently developed in the specimen.</td><td>Add promoter capability and contribution evidence, legal entity details, ownership, existing obligations, experience and governance. Keep sensitive personal data out of unnecessary narrative.</td></tr>
+<tr><td>Assumptions and source notes are too detached</td><td>Page 14 notes</td><td>Ten notes for the whole report are unlikely to provide adequate traceability for market, capacity, pricing, costs and working capital assumptions.</td><td>Attach source/method/date/confidence to each material assumption at the point of use; consolidate detailed basis in an assumption register.</td></tr>
+<tr><td>Fifteen pages are treated as a universal target</td><td>Proposal summary and specimen</td><td>A small service business and a machinery-heavy manufacturing unit do not need the same scope. A fixed page count encourages omissions or padding.</td><td>Use a core report plus project-specific modules and annexes. Page count should emerge from scope and evidence, not be a design target.</td></tr>
+<tr><td>Annual reports are the wrong primary model</td><td>Proposal section 3</td><td>Annual reports are primarily historical corporate disclosures. Their visual polish is useful, but their information architecture is not the best template for an investment proposal.</td><td>Use UNIDO feasibility-study logic and lender appraisal documents for structure; borrow annual-report restraint, typography and navigability only.</td></tr>
+</tbody></table>
+<div class="callout warn"><strong>Important distinction:</strong> “Meat” does not mean adding pages, paragraphs or charts. It means adding decision-grade evidence: quantities, sources, comparisons, operating logic, assumptions, constraints and consequences. A 12-page report with that evidence is stronger than a 35-page report full of generic prose.</div>
+</section>
+
+<section id="decisions">
+<div class="kicker">02 · Disposition</div><h2>What I approve, reject, revise and defer</h2>
+<p class="intro">The proposal contains several sound product decisions. The problem is that some are presented as if they solve report quality, when they mainly solve interface, rendering or monetisation.</p>
+<div class="grid">
+<div class="card"><span class="status approve">Approve</span><h3>Promoter-authored narrative sections</h3><p>Keep a proper narrative layer for promoter profile, project rationale, products, process, market, implementation and risks. AI can help structure and draft it, but the borrower must review and attest to the facts.</p></div>
+<div class="card"><span class="status approve">Approve</span><h3>Deterministic figures and figure slots</h3><p>Keep the calculation engine as the sole authority for financial values. Use typed data bindings rather than letting a language model invent or retype numbers. Add provenance, units, periods and rounding rules to each slot.</p></div>
+<div class="card"><span class="status approve">Approve</span><h3>One visual language across screen and PDF</h3><p>HTML/CSS as a shared presentation layer is a sensible direction. It can improve layout consistency, accessibility and iteration. The exact PDF rendering vendor is an implementation choice, not a product principle.</p></div>
+<div class="card"><span class="status approve">Approve</span><h3>Risk register and scenario analysis</h3><p>Keep them, but deepen them. Risks should connect to assumptions, triggers, owners and mitigation. Scenarios should show combined downside and cash consequences.</p></div>
+<div class="card"><span class="status revise">Revise</span><h3>Two-thirds questions / one-third preview</h3><p>Potentially useful for the builder, but it is not a report-quality solution. Test it on desktop and mobile. The question interface should progressively reveal relevant inputs, not make every project look like a long form.</p></div>
+<div class="card"><span class="status revise">Revise</span><h3>Fifteen-page specimen</h3><p>Keep it as a visual prototype, not as the universal document specification. Build a short project profile, standard bankable report and detailed DPR as distinct output depths.</p></div>
+<div class="card"><span class="status revise">Revise</span><h3>Optional “The write-up” step</h3><p>Rename it “Project narrative & evidence”. It should be a guided evidence workflow. Some minimum project facts are essential; optional photos cannot substitute for market, promoter or technical evidence.</p></div>
+<div class="card"><span class="status reject">Reject</span><h3>Annual reports as the report blueprint</h3><p>Do not use listed-company annual reports as the primary structure. Borrow their editorial discipline, not their purpose or chapter order.</p></div>
+<div class="card"><span class="status reject">Reject</span><h3>“A shop window” as the only free preview concept</h3><p>A sample page and teaser chart can support paid conversion, but the preview must still communicate what the user has created. Do not let monetisation dictate the report's information architecture.</p></div>
+<div class="card"><span class="status reject">Reject</span><h3>Digit-scanning as the only AI guardrail</h3><p>A digit checker is brittle. It can miss written numbers, units and implied numerical claims; it can also block legitimate dates or user-supplied facts. Use structured slots and provenance validation instead.</p></div>
+<div class="card"><span class="status defer">Defer</span><h3>Server-side report generation and payment gate</h3><p>Decide after a threat model, privacy design and cost test. Server rendering can protect paid document assembly only if sensitive report data and the paid artifact are not already exposed in client state or APIs.</p></div>
+<div class="card"><span class="status defer">Defer</span><h3>Photos and browser storage architecture</h3><p>Useful for project evidence, but first define upload consent, file limits, retention, deletion, malware handling, image compression and how photos are referenced in the final report.</p></div>
+</div>
+<div class="callout danger"><strong>Security correction:</strong> moving PDF rendering to a server does not automatically secure the report. If the browser already receives all detailed financial outputs, statement data or report JSON, a user can still inspect those responses. Entitlement checks, sensitive data access and paid artifact generation must be enforced server-side. Treat the “server print” idea as one part of a wider access-control design.</div>
+</section>
+
+<section id="benchmark">
+<div class="kicker">03 · What top-tier project studies teach us</div><h2>Use feasibility-study logic, not annual-report imitation.</h2>
+<p class="intro">I reviewed authoritative project-preparation and appraisal references. They are not all direct templates for a small Indian MSME loan report, but together they establish the right content logic: market, inputs, site, engineering, organisation, implementation, finance, risk and evidence must connect.</p>
+<div class="grid">
+<div class="card"><h3>UNIDO · Industrial feasibility study manual</h3><p><strong>Most relevant structural benchmark.</strong> Its contents cover project background, market analysis and marketing concept, raw materials and supplies, location/site/environment, engineering and technology, organisation and overheads, human resources, implementation planning and budgeting, and financial analysis.</p><p>Its key lesson is integration: market requirements shape the production programme; capacity shapes inputs and equipment; those shape costs; implementation timing shapes funding needs. It explicitly treats assumptions and alternatives as things to justify, not merely list.</p><p><a href="https://www.unido.org/sites/default/files/files/2021-02/manual_for_the_preparation_of_industrial_feasibility_studies.pdf" target="_blank" rel="noopener">Read UNIDO manual</a></p></div>
+<div class="card"><h3>World Bank · Project Appraisal Document approach</h3><p><strong>Best benchmark for decision architecture.</strong> A PAD joins strategic context, project description, objectives, components, implementation arrangements, monitoring, risk and appraisal analysis. The detailed material is moved into annexes rather than forcing every technical schedule into the main narrative.</p><p>FinSight should borrow the layered structure: decision summary first, coherent argument in the body, inspectable technical and financial schedules in annexes.</p><p><a href="https://documents1.worldbank.org/curated/en/986001468010231537/pdf/951680WP0P12930BLIC00webTTL0toolkit.pdf" target="_blank" rel="noopener">Read World Bank project-financing toolkit</a></p></div>
+<div class="card"><h3>ADB · Prefeasibility study contents</h3><p><strong>Best benchmark for a concise study.</strong> ADB's toolkit gives a typical prefeasibility report sequence: executive summary, location map, introduction/background, project description, implementation plan, sustainability, financial and economic analysis, stakeholder comments, key risks, conclusions and annexes. It describes a 12–20 page PFS, but that is a prefeasibility context—not a universal page limit for FinSight.</p><p><a href="https://www.adb.org/sites/default/files/institutional-document/161535/toolkit-rapid-economic-assessment-cities.pdf" target="_blank" rel="noopener">Read ADB toolkit</a></p></div>
+<div class="card"><h3>UNIDO · Current industrial-park feasibility framing</h3><p><strong>Best reminder of scope.</strong> UNIDO describes site-specific feasibility as combining market identification and demand forecasts, phased master planning, technical designs, cost-benefit analysis, social/environmental assessment, institutional mapping, infrastructure, financing and economic impact.</p><p>For smaller projects, scale the depth down—but do not erase the categories that are material to that project.</p><p><a href="https://ipp.unido.org/services/feasibility-studies" target="_blank" rel="noopener">Read UNIDO feasibility-study overview</a></p></div>
+</div>
+<h3 style="margin-top:30px">The common architecture</h3>
+<div class="flow">
+<div>Why this project?<span>Need, objective, promoter, location</span></div>
+<div>Can it sell?<span>Demand, customers, competition, price</span></div>
+<div>Can it operate?<span>Capacity, inputs, technology, people</span></div>
+<div>Can it be delivered?<span>Cost, approvals, schedule, funding</span></div>
+<div>Can it repay?<span>Cash flow, debt service, risks, resilience</span></div>
+</div>
+<p class="small">Benchmark interpretation: FinSight is not a World Bank PAD, UNIDO consultant feasibility study or independent TEV report. It should adopt their analytical discipline while clearly labelling its own output as a promoter-prepared project report supported by FinSight tools.</p>
+</section>
+
+<section id="architecture">
+<div class="kicker">04 · Proposed report architecture</div><h2>A modular report with a clear narrative spine.</h2>
+<p class="intro">The main body should read like a guided argument. Put the answer first, explain the basis, then move detailed schedules to annexes. Each project type activates only the modules that matter.</p>
+<div class="callout"><strong>Recommended default:</strong> 16–24 pages for a standard bankable MSME project report, excluding detailed annexes. This is a design range, not a rule. A simple trading/service proposal may be shorter; a manufacturing or construction project may need a longer technical annex or a separate DPR.</div>
+<div class="pageplan">
+<div class="page"><h4>Cover & document control</h4><p>Project title, legal borrower/promoter, location, report type, date, version, confidentiality, preparer statement. No chart. No financial dashboard.</p><div class="evidence">Evidence: verified identity, project location, version metadata.</div></div>
+<div class="page"><h4>Executive decision brief</h4><p>One-page answer: what is proposed, total project cost, funding ask, promoter contribution, purpose, expected operating scale, readiness, 3–5 key strengths, 3–5 material risks and conditions still open.</p><div class="evidence">Evidence: engine summary + verified project facts.</div></div>
+<div class="page"><h4>Project at a glance</h4><p>Project configuration, products/services, capacity, location, implementation period, employment, key facilities and a compact “how it works” strip. Avoid repeating the full five-year forecast.</p><div class="evidence">Evidence: project profile, capacity basis, site details.</div></div>
+<div class="page"><h4>Promoter & enterprise</h4><p>Ownership/legal form, promoter experience relevant to this project, roles, existing business track record, financial contribution, management gaps and external support required.</p><div class="evidence">Evidence: KYC/entity docs where appropriate, experience records, net-worth/contribution support.</div></div>
+<div class="page"><h4>Project rationale & objectives</h4><p>What problem/opportunity is being addressed? Why this location, product, scale and timing? What alternatives were considered and why was this configuration selected?</p><div class="evidence">Evidence: promoter rationale, local context, alternatives and selection logic.</div></div>
+<div class="page"><h4>Products, customers & value proposition</h4><p>Product/service specifications, grades/SKUs, use cases, target segments, quality standards, differentiation and expected customer value. Avoid generic “high demand” claims.</p><div class="evidence">Evidence: product catalogue, samples/specifications, customer conversations, orders or enquiries.</div></div>
+<div class="page"><h4>Market & competition</h4><p>Define geography and market boundary. Segment demand, identify buyer types, competitors/substitutes, price bands, distribution channels, seasonality, procurement behaviour and barriers to entry.</p><div class="evidence">Evidence: dated sources, market survey, competitor observations, quotations, customer pipeline.</div></div>
+<div class="page"><h4>Sales & revenue build-up</h4><p>Show how forecast sales are built from units × price × ramp-up, by product/customer/channel. Explain utilisation ramp, conversion assumptions, capacity constraints, credit terms and concentration.</p><div class="evidence">Evidence: engine-linked volume/price drivers + order book or reasoned market assumptions.</div></div>
+<div class="page"><h4>Technical & operating plan</h4><p>Process description, capacity, shift pattern, equipment, layout, production yield, quality control, maintenance, technology choice, bottlenecks, make/buy decisions and operating workflow.</p><div class="evidence">Evidence: machinery quotations, process data, layout, technical specifications, capacity calculations.</div></div>
+<div class="page"><h4>Location, site & infrastructure</h4><p>Site ownership/lease, access, zoning/use, built-up area, utilities, water, power, transport, waste handling, connectivity and site readiness. Flag approvals and dependencies.</p><div class="evidence">Evidence: site documents, utility availability, maps/photos, local approvals and quotations.</div></div>
+<div class="page"><h4>Inputs, suppliers & manpower</h4><p>Raw materials, packaging, consumables, suppliers, price/availability, inventory policy, logistics, manpower by role/shift, wages, training and key-person dependencies.</p><div class="evidence">Evidence: supplier quotations, lead times, wage basis, input-output norms.</div></div>
+<div class="page"><h4>Implementation & readiness</h4><p>Milestones from sanction to commissioning: land/site, approvals, civil works, machinery order, installation, recruitment, trial runs and commercial production. Identify critical path and long-lead items.</p><div class="evidence">Evidence: dated milestone plan, quotations, approval status, responsible owner.</div></div>
+<div class="page"><h4>Project cost & means of finance</h4><p>Land/building, plant and machinery, installation, preliminary/pre-operative expenses, contingency, margin for working capital and funding sources. Explain estimates and promoter contribution evidence.</p><div class="evidence">Evidence: quotations, estimates, invoices, valuation and funding confirmation.</div></div>
+<div class="page"><h4>Financial viability & repayment</h4><p>Projected P&L, balance sheet, cash flow, working capital, break-even, DSCR, debt schedule, repayment source and key assumptions. Explain the drivers; do not repeat every statement line in prose.</p><div class="evidence">Evidence: deterministic engine output, linked assumptions, debt terms.</div></div>
+<div class="page"><h4>Risks, sensitivities & mitigations</h4><p>Market, input, execution, technology, regulatory, environmental, people, customer concentration and financial risks. Include downside scenarios, trigger indicators, mitigation owners and residual exposure.</p><div class="evidence">Evidence: risk register linked to assumptions and scenario engine.</div></div>
+<div class="page"><h4>Conclusion, conditions & declarations</h4><p>Neutral summary of the case, unresolved information, conditions before implementation, promoter declaration, basis/limitations and preparation disclaimer. Do not issue a fake credit sanction recommendation.</p><div class="evidence">Evidence: completion checklist, user attestations, open-items register.</div></div>
+</div>
+<h3 style="margin-top:28px">Annexes: the supporting record</h3>
+<div class="grid3">
+<div class="card"><h4>A · Financial schedules</h4><p>Detailed P&L, balance sheet, cash flow, DSCR, repayment schedule, working capital assessment, depreciation, tax assumptions, sensitivity workings.</p></div>
+<div class="card"><h4>B · Technical schedules</h4><p>Equipment list, specifications, capacity calculations, raw-material norms, manpower, utility loads, process flow, layout, civil estimate and implementation chart.</p></div>
+<div class="card"><h4>C · Evidence pack</h4><p>Promoter documents, site records, quotations, supplier evidence, market sources, customer letters/orders, approvals and photographs—with dates and labels.</p></div>
+</div>
+</section>
+
+<section id="exhibits">
+<div class="kicker">05 · Visual and editorial system</div><h2>Every chart must earn its place.</h2>
+<p class="intro">The report should not be a chart gallery. Charts are for patterns, comparisons, composition and relationships. Tables are for exact values and auditability. Prose is for reasoning, context and implications.</p>
+<table>
+<thead><tr><th>Question the reader has</th><th>Best format</th><th>Do not do this</th></tr></thead>
+<tbody>
+<tr><td>What is the project asking for?</td><td>Compact fact panel / decision brief</td><td>Large chart of five-year sales on the cover.</td></tr>
+<tr><td>How does the business work?</td><td>Process flow with inputs, activities, outputs and bottlenecks</td><td>Generic decorative flow with no quantities or operational meaning.</td></tr>
+<tr><td>How was sales forecast built?</td><td>Driver table: product × volume × price × ramp-up, plus concise commentary</td><td>Stacked chart, full table and paragraph all repeating revenue values.</td></tr>
+<tr><td>Can the project repay?</td><td>Debt-service coverage table with annual DSCR and minimum DSCR highlighted; optional cash available vs debt service chart if trend adds insight</td><td>Metric rail, chart, table and prose all repeating the same DSCR figures.</td></tr>
+<tr><td>What happens under stress?</td><td>Scenario comparison table with assumptions, DSCR, cash shortfall and actions; chart only if comparison is clearer visually</td><td>Three unrelated shock bars without combined downside or explanation.</td></tr>
+<tr><td>Where does the money go?</td><td>Sources-and-uses table; simple composition bar only if categories are meaningful</td><td>Two horizontal bars that duplicate the table without adding insight.</td></tr>
+<tr><td>What are the statements?</td><td>Financial schedules in annexes, with clear units, periods and note references</td><td>Reprinting statement totals in every chapter.</td></tr>
+</tbody></table>
+<div class="exhibit">
+<div class="bad"><div class="tag" style="color:var(--red)">Weak pattern</div><h3>Chart + table + paragraph</h3><p>Chart plots annual sales. Table lists the same annual sales. Paragraph says sales rise every year. Three objects, one fact, little additional insight.</p></div>
+<div class="good"><div class="tag" style="color:var(--teal)">Better pattern</div><h3>Claim + evidence + implication</h3><p>“The first-year sales plan requires 42% capacity utilisation.” A driver table shows volume, price and ramp-up. A short note explains the customer pipeline and what must be secured before full utilisation.</p></div>
+</div>
+<h3>Mandatory exhibit design contract</h3>
+<ol>
+<li><strong>Question:</strong> What decision or uncertainty does this exhibit address?</li>
+<li><strong>Finding:</strong> A one-sentence, evidence-backed title—not a generic label.</li>
+<li><strong>Evidence:</strong> Source, date, unit, period, definition and whether actual, quoted, estimated or assumed.</li>
+<li><strong>Interpretation:</strong> What does it mean for project design, operations, funding or risk?</li>
+<li><strong>Non-duplication:</strong> Does another table, chart or paragraph already do this job?</li>
+<li><strong>Accessibility:</strong> Labels, contrast, grayscale legibility, no colour-only meaning, readable at A4 print size.</li>
+</ol>
+<div class="callout"><strong>Editorial rule:</strong> One exhibit should make one point. The title states the finding; the visual/table proves it; the adjacent prose explains why it matters. Do not narrate the axes back to the reader.</div>
+<h3>Specific treatment of the current specimen</h3>
+<ul>
+<li><strong>Page 1:</strong> remove the chart. Use a restrained cover.</li>
+<li><strong>Page 2:</strong> reduce to a decision brief. Move detailed five-year values to the financial chapter/annex.</li>
+<li><strong>Page 5:</strong> retain the process diagram only if it explains the actual production/service system. Replace empty photo frames with optional evidence images in an annex or site section.</li>
+<li><strong>Page 6:</strong> sources-and-uses table should be primary. Keep one funding composition visual only if it improves comprehension.</li>
+<li><strong>Page 7:</strong> use the sales build-up as a driver table. Keep a chart only if it shows product mix, ramp-up or margin trend not obvious from the table.</li>
+<li><strong>Page 8:</strong> repayment page should answer “what cash pays the debt?” and show the lowest coverage year, not merely display a DSCR bar.</li>
+<li><strong>Page 9:</strong> combine sensitivities into a scenario matrix; show assumptions and resulting cash/DSCR together.</li>
+<li><strong>Pages 11–13:</strong> keep full statements in annexes, with consistent units, sign conventions and cross-references.</li>
+<li><strong>Page 14:</strong> replace generic notes with an assumption and evidence register; key evidence should also appear beside the relevant claim.</li>
+</ul>
+</section>
+
+<section id="content">
+<div class="kicker">06 · The missing meat</div><h2>Build an evidence engine, not a prose generator.</h2>
+<p class="intro">The write-up step should not ask the AI to make a thin report sound impressive. It should help the borrower supply, structure and verify the information that a lender would otherwise have to chase.</p>
+<div class="grid">
+<div class="card"><h3>Market evidence</h3><ul><li>Target customer groups and buying criteria</li><li>Geography and reachable market—not unsupported national TAM</li><li>Competitor/substitute table: product, price, capacity/scale where known, strengths and gaps</li><li>Customer pipeline: enquiry, trial, order, repeat buyer, LOI—clearly distinguished</li><li>Pricing basis, channel margin, credit period, seasonality and concentration</li></ul></div>
+<div class="card"><h3>Technical and operating evidence</h3><ul><li>Installed capacity and practical capacity, shifts and working days</li><li>Capacity utilisation ramp and bottleneck</li><li>Process flow, yield, rejection/scrap, quality checks</li><li>Equipment list, supplier, quotation date, installation and maintenance</li><li>Raw materials, consumption norms, supplier alternatives, lead times</li><li>Power, water, fuel, labour and waste requirements</li></ul></div>
+<div class="card"><h3>Promoter and execution evidence</h3><ul><li>Relevant experience and track record</li><li>Ownership, legal form, management roles and key-person dependencies</li><li>Promoter contribution: source, amount, timing and proof status</li><li>Site control, access, land/building readiness</li><li>Approvals: required, obtained, pending, not applicable—with owner and due date</li></ul></div>
+<div class="card"><h3>Financial assumption evidence</h3><ul><li>Unit price and volume build-up, not only annual totals</li><li>Raw material and conversion cost drivers</li><li>Receivable, inventory and payable days</li><li>Fixed/variable cost classification and capacity dependence</li><li>Depreciation, tax, interest, repayment and working-capital basis</li><li>Quotation validity, escalation and contingency basis</li></ul></div>
+</div>
+<h3 style="margin-top:28px">A standard evidence label</h3>
+<table>
+<thead><tr><th>Field</th><th>Example</th><th>Why it matters</th></tr></thead>
+<tbody>
+<tr><td>Evidence class</td><td>Verified document / third-party source / quotation / customer indication / promoter estimate / model assumption</td><td>Stops an assumption being presented as a fact.</td></tr>
+<tr><td>Source and date</td><td>Supplier quotation Q-104, dated 12 Oct 2026</td><td>Allows a reviewer to judge freshness and trace the basis.</td></tr>
+<tr><td>Scope</td><td>Machine model, ex-works price, excludes GST and freight</td><td>Prevents false comparisons and omitted costs.</td></tr>
+<tr><td>Confidence</td><td>High / medium / low, with reason</td><td>Shows where diligence is still needed.</td></tr>
+<tr><td>Owner / next action</td><td>Promoter to obtain revised installation quote before sanction</td><td>Turns gaps into actionable conditions.</td></tr>
+</tbody></table>
+<div class="callout warn"><strong>Do not invent market data.</strong> If FinSight cannot substantiate a market-size claim, it should say “not independently verified” or use promoter-supplied evidence with a clear label. A candid limitation increases credibility; fabricated precision destroys it.</div>
+</section>
+
+<section id="engine">
+<div class="kicker">07 · Calculation, AI and provenance</div><h2>Keep the maths deterministic. Make the narrative traceable.</h2>
+<p class="intro">The proposal’s “figure slot” idea is directionally right, but the control system should be more rigorous than scanning for digits.</p>
+<div class="flow">
+<div>Source facts<span>User input / document / source</span></div>
+<div>Typed assumptions<span>Value, unit, period, evidence class</span></div>
+<div>Calculation engine<span>Versioned formulas and outputs</span></div>
+<div>Narrative binding<span>Approved metric IDs and citations</span></div>
+<div>Report renderer<span>Same data for HTML and PDF</span></div>
+</div>
+<h3>Required architecture</h3>
+<ol>
+<li><strong>Canonical project model:</strong> one typed schema for project facts, assumptions, source records, financial outputs, evidence status and user attestations.</li>
+<li><strong>Metric registry:</strong> every calculated figure has a stable ID, formula/version, unit, currency, period, rounding rule and source lineage.</li>
+<li><strong>AI narrative contract:</strong> the model can summarise, explain and place approved metric references. It cannot calculate, silently alter assumptions or claim that an unverified input is independently verified.</li>
+<li><strong>Structured citations:</strong> each material claim points to one or more source IDs or is labelled as promoter assertion/model assumption. “AI generated” is not evidence.</li>
+<li><strong>Consistency validation:</strong> compare every displayed value across summary, charts, tables and annexes against the same canonical metric. Validate signs, units, dates, periods, totals and rounding.</li>
+<li><strong>Human review:</strong> promoter confirms factual narrative and evidence. FinSight displays unresolved fields and low-confidence assumptions instead of hiding them.</li>
+<li><strong>Versioning:</strong> report version records model version, assumption set, generation timestamp and source snapshot. Regeneration after a changed assumption must update all dependent sections.</li>
+</ol>
+<h3>Why digit scanning is insufficient</h3>
+<table>
+<thead><tr><th>Failure mode</th><th>Example</th><th>Better control</th></tr></thead>
+<tbody>
+<tr><td>Numbers written as words</td><td>“twenty per cent”, “one lakh”</td><td>AI may only refer to approved metric tokens for model-derived numerical claims; validate semantic claims against source fields.</td></tr>
+<tr><td>Wrong unit or period</td><td>₹ lakh shown as ₹ crore; FY 2028 shown as calendar 2028</td><td>Typed units and period metadata; schema-level validation.</td></tr>
+<tr><td>Correct value, wrong context</td><td>Peak-year DSCR described as minimum DSCR</td><td>Metric IDs encode meaning, not just value; test narrative-to-metric mapping.</td></tr>
+<tr><td>Manual duplication drift</td><td>Summary says ₹18 lakh while annex says ₹18.5 lakh</td><td>Single source of truth; render all repeated values from the same object.</td></tr>
+<tr><td>Unverified source disguised as fact</td><td>Promoter says “large confirmed demand” without order evidence</td><td>Evidence class and status labels; no unsupported upgrade in wording.</td></tr>
+</tbody></table>
+<div class="callout danger"><strong>Important product truth:</strong> deterministic arithmetic does not make the whole report “verified”. The output is only as reliable as its inputs, assumptions, source quality and model logic. Use labels such as “calculated from stated assumptions”, “promoter-provided”, “supported by quotation” and “independently sourced” precisely.</div>
+</section>
+
+<section id="product">
+<div class="kicker">08 · Product and implementation</div><h2>Separate report depth, evidence collection and document delivery.</h2>
+<h3>Three output levels</h3>
+<table>
+<thead><tr><th>Product</th><th>Purpose</th><th>Scope</th><th>Positioning</th></tr></thead>
+<tbody>
+<tr><td>Project profile</td><td>Early discussion / initial bank conversation</td><td>Short project summary, promoter, market snapshot, project cost, means of finance, key assumptions and preliminary financials.</td><td>Clearly preliminary; not a full feasibility study.</td></tr>
+<tr><td>Standard bankable project report</td><td>Typical MSME term-loan / business-loan proposal</td><td>Full narrative spine, market and operating evidence, project cost, financial projections, DSCR, risks, implementation plan and annexes.</td><td>Promoter-prepared report supported by FinSight calculations and drafting tools.</td></tr>
+<tr><td>Detailed project report (DPR)</td><td>Complex manufacturing, construction, expansion or infrastructure-type projects</td><td>Deeper technical design, capacity calculations, site/layout, alternatives, procurement, approvals, implementation budget, environmental/social issues where material, detailed annexes.</td><td>Do not imply independent engineering certification or TEV status unless a qualified professional has actually provided it.</td></tr>
+</tbody></table>
+<h3>Suggested builder flow</h3>
+<div class="flow">
+<div>Project setup<span>Project type, scale, location, purpose</span></div>
+<div>Promoter & market<span>People, customers, demand, competition</span></div>
+<div>Technical plan<span>Process, capacity, site, inputs, resources</span></div>
+<div>Financial model<span>Cost, funding, projections, repayment</span></div>
+<div>Review & report<span>Evidence gaps, narrative approval, export</span></div>
+</div>
+<p>Do not force every user through every field. Use project-type-specific pathways and progressive disclosure. But do not label essential evidence optional simply to preserve a low question count. A project report can be incomplete; the product must make that incompleteness visible.</p>
+<h3>Build order: do not build the PDF first</h3>
+<table>
+<thead><tr><th>Phase</th><th>Deliverable</th><th>Exit condition</th></tr></thead>
+<tbody>
+<tr><td>1 · Content model</td><td>Project schema, evidence register, assumption register, report modules, output-depth rules.</td><td>Every report section has a defined question, required inputs, evidence status and output rule.</td></tr>
+<tr><td>2 · Editorial prototype</td><td>One realistic manufacturing report and one service/trading report, built with real-ish but clearly labelled sample evidence.</td><td>Credit reviewer can find answers without reading duplicated content; no generic filler.</td></tr>
+<tr><td>3 · Calculation binding</td><td>Metric registry, narrative slots, consistency checks, scenario engine and statement schedules.</td><td>Same metric matches in narrative, summary, chart, table and annex.</td></tr>
+<tr><td>4 · Renderer</td><td>Responsive HTML report, print stylesheet, PDF export, page numbering, headers/footers and annex bookmarks.</td><td>Screen and PDF content match; no clipped tables, orphan headings or unreadable chart labels.</td></tr>
+<tr><td>5 · Evidence workflow</td><td>Upload/notes/photos, source metadata, user review, missing-evidence prompts and attestations.</td><td>Every material claim is either sourced, labelled as an assumption, or flagged as missing.</td></tr>
+<tr><td>6 · Payments and security</td><td>Server-side entitlement, paid artifact generation, retention/deletion policy, access controls and audit events.</td><td>Unpaid clients cannot fetch paid report data/artifacts through browser state or unprotected endpoints.</td></tr>
+</tbody></table>
+</section>
+
+<section id="acceptance">
+<div class="kicker">09 · Definition of world-class</div><h2>Acceptance tests for the next version.</h2>
+<p class="intro">Do not sign off because the PDF looks polished. Sign off when a reader can understand, challenge and verify the project efficiently.</p>
+<div class="grid">
+<div class="card"><h3>Reader comprehension</h3><ul><li>A banker can explain the project, funding ask and repayment source after reading the first two pages.</li><li>Each main chapter answers a distinct question.</li><li>No paragraph merely repeats a chart or table.</li><li>Critical risks and missing evidence are easy to find.</li></ul></div>
+<div class="card"><h3>Evidence quality</h3><ul><li>Every material market/technical/cost claim has a source or explicit assumption label.</li><li>Dates, units and evidence classes are visible.</li><li>Promoter claims are not presented as independent verification.</li><li>Open conditions have owners and due dates where appropriate.</li></ul></div>
+<div class="card"><h3>Financial integrity</h3><ul><li>All displayed financial values reconcile to the canonical engine.</li><li>Scenario results recompute the whole affected model, not isolated chart values.</li><li>Units, signs, rounding and financial years are consistent.</li><li>Assumptions can be changed and the report regenerated without manual patching.</li></ul></div>
+<div class="card"><h3>Document craft</h3><ul><li>Charts remain readable in A4 print and grayscale.</li><li>Tables have repeat headers and do not split awkwardly.</li><li>Every page has a clear hierarchy and purposeful whitespace.</li><li>Annexes are navigable; document version and basis are clear.</li></ul></div>
+</div>
+<h3 style="margin-top:28px">A practical reviewer test</h3>
+<p>Give the report to a credit professional who did not build the model. Ask them to find, without assistance: (1) what is being established; (2) who will run it; (3) who will buy; (4) how much can be produced/sold; (5) what evidence supports the sales plan; (6) how much money is required and where it goes; (7) what cash pays the instalments; (8) what can go wrong; (9) what remains unverified. Record time-to-answer and unanswered questions. That is a better quality metric than page count or visual polish.</p>
+<div class="callout"><strong>My final recommendation:</strong> keep the financial engine and rebuild the report around a project-evidence model. The report should tell a single coherent story: promoter → opportunity → market → operating design → implementation → investment cost → cash generation → repayment → risks and conditions. Charts are supporting instruments, not the structure of the story.</div>
+</section>
+
+<section id="sources">
+<div class="kicker">10 · Research base</div><h2>References and how they were used</h2>
+<p class="small">These sources inform the recommended structure and analytical scope. They are not a claim that FinSight output is equivalent to a formal UNIDO feasibility study, World Bank appraisal document or independent technical-economic viability study.</p>
+<div class="source"><strong>1. UNIDO, Manual for the Preparation of Industrial Feasibility Studies</strong> (Behrens & Hawranek; revised edition, 1991; second printing 1995). Used for the integrated sequence covering project background, market analysis, raw materials, location/site/environment, engineering, organisation, human resources, implementation planning and financial analysis. It stresses justification of assumptions, alternatives and interdependencies.<br><a href="https://www.unido.org/sites/default/files/files/2021-02/manual_for_the_preparation_of_industrial_feasibility_studies.pdf" target="_blank" rel="noopener">Official PDF</a></div>
+<div class="source"><strong>2. World Bank, Task Team Leader Toolkit: Investment Project Financing — The Project Cycle.</strong> Used as a model for project description, strategic context, implementation arrangements, monitoring, risk, appraisal summary and supporting annexes.<br><a href="https://documents1.worldbank.org/curated/en/986001468010231537/pdf/951680WP0P12930BLIC00webTTL0toolkit.pdf" target="_blank" rel="noopener">Official World Bank document</a></div>
+<div class="source"><strong>3. Asian Development Bank, Tool Kit for Rapid Economic Assessment, Planning, and Development of Cities in Asia</strong> (2015). Its prefeasibility-study contents provide a concise sequence including executive summary, project location, background, project description, implementation, sustainability, financial/economic analysis, stakeholder comments, risk, conclusions and annexes.<br><a href="https://www.adb.org/sites/default/files/institutional-document/161535/toolkit-rapid-economic-assessment-cities.pdf" target="_blank" rel="noopener">Official ADB PDF</a></div>
+<div class="source"><strong>4. UNIDO Sustainable Industrial Park Platform, “Feasibility Studies”.</strong> Used for the contemporary emphasis on site-specific market/demand work, phased planning, technical design, cost-benefit analysis, social/environmental assessment, infrastructure, financial structuring and economic impact.<br><a href="https://ipp.unido.org/services/feasibility-studies" target="_blank" rel="noopener">Official UNIDO page</a></div>
+<p class="small">Review scope: the uploaded ZIP contained <code>index.html</code>, 15 specimen page images and supporting interface screenshots. This review evaluates the proposal and visible specimen; it does not inspect FinSight’s underlying calculation code, production repository, API security, or actual PDF generation pipeline.</p>
+</section>
+<footer>FinSight · Project Report Overhaul Blueprint · Prepared 15 November 2026<br>Internal product-design working document. Not a credit appraisal, legal opinion, engineering certification or independent feasibility study.</footer>
+</div>
+</body></html>

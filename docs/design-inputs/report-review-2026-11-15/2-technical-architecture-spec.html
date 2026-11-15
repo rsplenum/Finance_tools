@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FinSight — Technical Architecture & Implementation Specification</title>
+<style>
+:root{--ink:#17242c;--muted:#596a72;--paper:#faf9f6;--white:#fff;--line:#d9e0dc;--teal:#176b63;--tealbg:#e7f1ee;--blue:#315b78;--bluebg:#eaf0f5;--amber:#93601c;--amberbg:#fbf1df;--red:#a3443b;--redbg:#f8eae7}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.65 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:1200px;margin:auto;padding:38px 26px 90px}h1,h2,h3,h4{line-height:1.13;letter-spacing:-.025em;margin:0 0 .65em}h1{font-size:clamp(2.4rem,5.8vw,4.6rem);max-width:1000px}h2{font-size:clamp(1.75rem,3.4vw,2.65rem)}h3{font-size:1.22rem}h4{font-size:1rem;letter-spacing:0}p{margin:.35em 0 1em;max-width:86ch}ul,ol{padding-left:1.25em}li{margin:.3em 0}.k{font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:850;color:var(--teal)}.lede{font-size:1.16rem;color:var(--muted);max-width:930px;line-height:1.5}header{padding:22px 0 34px;border-bottom:1px solid var(--line)}.meta{display:flex;gap:8px;flex-wrap:wrap;margin:20px 0}.pill{font-size:11px;border:1px solid var(--line);padding:5px 10px;border-radius:99px;color:var(--muted);font-weight:700}.verdict{background:#173d3a;color:white;border-radius:15px;padding:22px 24px;margin-top:22px}.verdict h2{color:white;margin:.2em 0}.verdict p{color:#e2efeb;margin:0}.verdict .k{color:#bde7dc}
+nav{position:sticky;top:0;z-index:5;background:rgba(250,249,246,.96);backdrop-filter:blur(12px);margin:0 -26px;padding:9px 26px;border-bottom:1px solid var(--line);display:flex;gap:6px;overflow:auto;white-space:nowrap}nav a{font-size:11px;font-weight:800;color:var(--muted);text-decoration:none;padding:7px 8px;border-radius:7px}nav a:hover{background:var(--tealbg);color:var(--teal)}
+section{padding:58px 0 12px;border-bottom:1px solid var(--line);scroll-margin-top:65px}.intro{font-size:1.04rem;color:var(--muted);max-width:920px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.card{background:white;border:1px solid var(--line);border-radius:12px;padding:17px 18px;min-width:0}.card p:last-child{margin-bottom:0}.n{font-size:1.8rem;font-weight:850;color:var(--teal);line-height:1}.tag{font-size:10px;text-transform:uppercase;letter-spacing:.12em;font-weight:850;color:var(--teal)}.call{padding:16px 18px;border-left:4px solid var(--teal);background:var(--tealbg);border-radius:0 9px 9px 0;margin:18px 0}.warn{border-color:var(--amber);background:var(--amberbg)}.danger{border-color:var(--red);background:var(--redbg)}table{width:100%;border-collapse:collapse;margin:15px 0 23px;background:white;font-size:13px}th{text-align:left;background:#edf1ee;color:#45545b;padding:10px 11px;font-size:10px;letter-spacing:.08em;text-transform:uppercase}td{padding:10px 11px;border-top:1px solid var(--line);vertical-align:top}td:first-child{font-weight:700}.flow{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:18px 0}.flow div{background:white;border:1px solid var(--line);border-radius:9px;padding:11px;font-size:12px;font-weight:800}.flow small{display:block;color:var(--muted);font-weight:500;margin-top:5px}.badge{display:inline-block;border-radius:5px;padding:3px 7px;font-size:9px;font-weight:850;text-transform:uppercase;letter-spacing:.09em}.g{background:var(--tealbg);color:var(--teal)}.b{background:var(--bluebg);color:var(--blue)}.a{background:var(--amberbg);color:var(--amber)}.r{background:var(--redbg);color:var(--red)}pre{background:#17252d;color:#e8f0ed;border-radius:10px;padding:16px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace}.code{font: .9em ui-monospace,monospace;background:#edf1ee;padding:2px 5px;border-radius:4px}.phase{display:grid;grid-template-columns:52px 1.1fr 2.4fr;gap:13px;padding:15px 0;border-top:1px solid var(--line)}.phase .idx{font-size:1.45rem;font-weight:850;color:var(--teal)}.phase h4{margin:0}.phase p{font-size:13px;color:var(--muted);margin:0}.phase ul{font-size:13px;margin:6px 0}.small{font-size:11px;color:var(--muted)}.check{color:var(--teal);font-weight:800}footer{padding-top:32px;color:var(--muted);font-size:12px}
+@media(max-width:760px){.wrap{padding:22px 15px 60px}nav{margin:0 -15px;padding:8px 15px}.grid,.grid3{grid-template-columns:1fr}.flow{grid-template-columns:1fr}.phase{grid-template-columns:34px 1fr}.phase p,.phase ul{grid-column:2}.verdict{padding:18px}}
+@media print{nav{display:none}.wrap{max-width:none;padding:0 9mm}section{break-before:page}.card,.phase{break-inside:avoid}.verdict{print-color-adjust:exact}}
+</style></head><body><div class="wrap">
+<header>
+<div class="k">FinSight · Architecture decision record + implementation specification</div>
+<h1>One project model. Two report depths. A deterministic report factory.</h1>
+<p class="lede">Detailed technical architecture and phased implementation specification based on the selected product direction: both standard bankable project reports and detailed DPRs, with selective runtime AI and AI-intensive engineering-time development.</p>
+<div class="meta"><span class="pill">Decision baseline: 15 November 2026</span><span class="pill">Existing stack: Astro 7 · Preact · TypeScript · Tailwind 4</span><span class="pill">Cloudflare: Workers · D1 · KV</span><span class="pill">Testing: Vitest · Playwright</span><span class="pill">Development: Claude Code + agents</span></div>
+<div class="verdict"><div class="k">Architecture decision</div><h2>Build a deterministic core with optional AI services around it.</h2><p>Standard report generation must work with zero LLM inference. Detailed DPR generation uses the same canonical project model and core calculations, with deeper technical modules, evidence requirements and annexes. AI is an optional assistant for extraction, research and difficult narrative—not the authority for calculations, facts or report structure.</p></div>
+</header>
+<nav><a href="#decisions">Decisions</a><a href="#principles">Principles</a><a href="#system">System</a><a href="#data">Data model</a><a href="#engines">Engines</a><a href="#reports">Report compiler</a><a href="#ai">AI boundary</a><a href="#api">APIs</a><a href="#security">Security</a><a href="#phases">Phases</a><a href="#tests">Tests</a><a href="#operations">Operations</a><a href="#acceptance">Acceptance</a></nav>
+
+<section id="decisions"><div class="k">01 · Frozen product decisions</div><h2>Two report products, one shared engine.</h2>
+<table><thead><tr><th>Decision</th><th>Specification</th><th>Consequence</th></tr></thead><tbody>
+<tr><td>Report scope</td><td><strong>Both:</strong> standard bankable project report and detailed project report (DPR).</td><td>Two report profiles over a shared project model, calculation core, evidence system and compiler.</td></tr>
+<tr><td>Runtime AI</td><td><strong>Selective:</strong> no AI required for ordinary report generation; optional AI for document extraction, evidence assistance, research and unusual narrative.</td><td>AI calls are feature-gated, consented, budgeted, logged and never authoritative for figures.</td></tr>
+<tr><td>Development AI</td><td>Maximise use of coding agents for research, specifications, implementation, test generation, review and documentation.</td><td>Agent output remains untrusted until independently tested and approved.</td></tr>
+<tr><td>Calculation authority</td><td>Versioned deterministic TypeScript functions.</td><td>One calculation result is reused in every report location and export.</td></tr>
+<tr><td>Existing product baseline</td><td>Retain Astro 7, Preact, Tailwind CSS 4, pure TypeScript engine, Cloudflare Workers, D1 and KV; Vitest, TypeScript checks and Playwright.</td><td>Extend the existing system rather than introduce a wholesale platform rewrite.</td></tr>
+<tr><td>Existing product modules</td><td>DSCR, Construction Estimate, CMA, Project Report and Make-it-viable.</td><td>Reuse shared calculations and data contracts where appropriate; avoid duplicating logic across tools.</td></tr>
+</tbody></table>
+<div class="call warn"><strong>Baseline caveat:</strong> the stack and repository details above are carried forward from the latest available FinSight project handoff context. Before implementation, the first phase must verify them against the current repository, lockfile, deployed environment and branch state. A remembered architecture summary is not a substitute for inspecting the current source of truth.</div>
+</section>
+
+<section id="principles"><div class="k">02 · Architecture principles</div><h2>Non-negotiable engineering rules.</h2>
+<div class="grid">
+<div class="card"><span class="badge g">P01</span><h3>One canonical project model</h3><p>All inputs, evidence, assumptions, calculations, narrative references and document outputs must resolve to a versioned project model. No report section should maintain its own conflicting copy of a financial value.</p></div>
+<div class="card"><span class="badge g">P02</span><h3>Pure calculation functions</h3><p>Core financial and technical calculations should be deterministic functions with explicit inputs and outputs. No network, UI, database or LLM dependency inside the calculation domain.</p></div>
+<div class="card"><span class="badge g">P03</span><h3>Evidence-aware claims</h3><p>Every material claim is linked to a source, user assertion, quotation, calculation or explicit assumption. The system must not convert unverified input into verified fact through polished prose.</p></div>
+<div class="card"><span class="badge g">P04</span><h3>Rules before generative choice</h3><p>Report inclusion, exclusions, required fields and standard interpretations are controlled by versioned rules. AI may suggest but cannot silently override them.</p></div>
+<div class="card"><span class="badge g">P05</span><h3>One semantic document tree</h3><p>HTML preview and PDF export must be generated from the same report representation and metric bindings. Avoid separate HTML and PDF logic that drifts.</p></div>
+<div class="card"><span class="badge g">P06</span><h3>Reproducible releases</h3><p>Every generated report records schema, engine, rules, content library and renderer versions, plus the immutable input snapshot used to generate it.</p></div>
+<div class="card"><span class="badge a">P07</span><h3>AI is an adapter, not a dependency</h3><p>Core product functionality must continue if an AI provider is unavailable, expensive, rate-limited or disabled. AI-assisted tasks degrade gracefully to manual structured entry.</p></div>
+<div class="card"><span class="badge a">P08</span><h3>Progressive depth</h3><p>Standard reports collect the minimum evidence required for a credible bankable proposal. DPR mode activates deeper technical, environmental, implementation and annex requirements where applicable.</p></div>
+</div>
+</section>
+
+<section id="system"><div class="k">03 · Target system architecture</div><h2>Keep the browser, domain engine and document services cleanly separated.</h2>
+<div class="flow"><div>Astro / Preact UI<small>Project workflow, evidence, review</small></div><div>Worker API<small>Auth, orchestration, validation</small></div><div>Domain packages<small>Pure TypeScript calculations</small></div><div>Report compiler<small>Rules, content tree, templates</small></div><div>HTML / PDF<small>Preview and final artefacts</small></div></div>
+<div class="grid">
+<div class="card"><h3>Presentation layer</h3><ul><li>Astro pages for routing, static content and server-rendered shells.</li><li>Preact islands for project wizard, calculators, evidence review and report preview.</li><li>Tailwind CSS 4 plus FinSight design tokens and semantic component library.</li><li>UI state is not the authoritative storage for calculations or payment entitlements.</li></ul></div>
+<div class="card"><h3>Application/API layer</h3><ul><li>Cloudflare Workers expose authenticated, versioned API routes.</li><li>Validate request schemas at the boundary.</li><li>Enforce user, organisation, project and document permissions.</li><li>Orchestrate calculation, report build, export, AI tasks and payment status.</li></ul></div>
+<div class="card"><h3>Domain layer</h3><ul><li>Pure TypeScript packages: project model, finance, technical modules, rules, evidence and report composition.</li><li>No UI imports and no direct Cloudflare bindings in domain packages.</li><li>Decimal-safe monetary arithmetic, explicit units and periods.</li><li>Deterministic versioned outputs.</li></ul></div>
+<div class="card"><h3>Persistence and artefacts</h3><ul><li>D1 for relational metadata, project records, report manifests, evidence metadata and job state.</li><li>KV for cache/configuration only—not the source of truth or financial ledger.</li><li>Object storage (Cloudflare R2, subject to current account and deployment verification) for uploaded source documents and generated artefacts.</li><li>Queues for long-running extraction/rendering jobs if volume justifies asynchronous processing.</li></ul></div>
+</div>
+<h3>Logical package boundaries</h3>
+<pre>src/
+  domain/
+    project-model/
+    units-money-periods/
+    evidence-provenance/
+    finance-core/
+    technical-core/
+    industry-modules/
+      manufacturing/
+      trading/
+      services/
+      construction/
+      food-processing/
+      hospitality/
+    rules-engine/
+    content-library/
+    report-composer/
+    report-validation/
+  application/
+    use-cases/
+    ports/
+    services/
+  adapters/
+    cloudflare-d1/
+    cloudflare-kv/
+    object-storage/
+    ai-providers/
+    pdf-renderer/
+    payment-provider/
+  workers/
+    api/
+    jobs/
+  web/
+    astro/
+    preact/
+    design-system/
+  tests/
+    fixtures/
+    golden/
+    property/
+    integration/
+    visual/</pre>
+<p class="small">This is a proposed logical layout, not an assertion that the current repository already uses these exact directories. Phase 0 maps existing files and reuses working modules before moving or renaming anything.</p>
+</section>
+
+<section id="data"><div class="k">04 · Canonical project data model</div><h2>Model facts, assumptions, evidence and calculations separately.</h2>
+<p class="intro">This separation is the most important data-design decision. A project fact is not the same thing as a model assumption; a source document is not the same thing as a verified claim; a calculated metric is not a manually typed number.</p>
+<table><thead><tr><th>Entity</th><th>Purpose</th><th>Key fields</th></tr></thead><tbody>
+<tr><td>Organisation</td><td>Account or borrower workspace</td><td>organisation_id, legal_name, entity_type, owners, permissions</td></tr>
+<tr><td>Project</td><td>Project identity and classification</td><td>project_id, organisation_id, archetype, purpose, report_depth, location, status</td></tr>
+<tr><td>Promoter</td><td>People and responsibilities</td><td>promoter_id, role, experience, contribution, evidence references</td></tr>
+<tr><td>Product / service</td><td>What the business sells</td><td>product_id, description, unit, price basis, specifications, customer segments</td></tr>
+<tr><td>Operating plan</td><td>How it produces or delivers</td><td>capacity, shifts, working days, process steps, yield, manpower, utilities</td></tr>
+<tr><td>Asset / cost item</td><td>Project investment</td><td>cost_item_id, category, quantity, unit_rate, tax, source, timing</td></tr>
+<tr><td>Funding source</td><td>How the project is funded</td><td>source_id, type, amount, timing, conditions, evidence</td></tr>
+<tr><td>Assumption</td><td>Explicit model input</td><td>assumption_id, value, unit, period, source_id, confidence, owner, confirmed_at</td></tr>
+<tr><td>Evidence source</td><td>Origin of a claim/input</td><td>source_id, type, filename/url, date, issuer, scope, extraction_status, hash</td></tr>
+<tr><td>Calculation run</td><td>Immutable computation event</td><td>run_id, project_snapshot_id, engine_version, input_hash, output_hash, timestamp</td></tr>
+<tr><td>Metric</td><td>Typed calculation output</td><td>metric_id, value, unit, currency, period, formula_id, lineage, status</td></tr>
+<tr><td>Report build</td><td>Immutable generated document</td><td>report_id, profile, versions, manifest, artefact_uri, validation_status</td></tr>
+<tr><td>AI task</td><td>Optional assisted workflow</td><td>task_id, provider/model, purpose, consent, cost, input references, output status</td></tr>
+</tbody></table>
+<h3>Required data semantics</h3>
+<ul><li>Represent money with explicit currency and scale; use decimal-safe arithmetic and controlled rounding.</li><li>Represent quantities with units; never infer whether 10 means kg, tonnes, units or lakh rupees.</li><li>Represent financial periods explicitly: Indian financial year, month, quarter, date and forecast year.</li><li>Distinguish <code>unknown</code>, <code>not_provided</code>, <code>not_applicable</code> and numeric zero.</li><li>Each assumption must record whether it is user-entered, extracted, externally sourced or defaulted from a reference library.</li><li>Every external reference datum must have source, observation date, geography, applicability and expiry/review policy.</li><li>Never overwrite an issued report's input snapshot. Changes create a new project revision and report build.</li></ul>
+<h3>Example metric contract</h3>
+<pre>{
+  "metric_id": "FIN.DSCR.MIN",
+  "value": "1.42",
+  "unit": "times",
+  "period": "projection_period",
+  "currency": null,
+  "formula_id": "FIN.DSCR.V2",
+  "engine_version": "finance-core@2.4.0",
+  "input_snapshot": "snap_01J...",
+  "lineage": [
+    "FIN.CASH_AVAILABLE.FY2027_28",
+    "FIN.DEBT_SERVICE.FY2027_28"
+  ],
+  "status": "calculated_from_stated_assumptions"
+}</pre>
+</section>
+
+<section id="engines"><div class="k">05 · Calculation and domain engines</div><h2>Build a shared financial core, then industry-specific technical modules.</h2>
+<h3>Financial core: shared across report depths and product modules</h3>
+<table><thead><tr><th>Subsystem</th><th>Responsibilities</th><th>Outputs / invariants</th></tr></thead><tbody>
+<tr><td>Project cost</td><td>Land, building, plant, installation, preliminary expenses, contingency, margin for working capital.</td><td>Cost head totals; source and timing; total project cost reconciliation.</td></tr>
+<tr><td>Means of finance</td><td>Promoter contribution, term loan, subsidy/grant if eligible, unsecured loans and other funding.</td><td>Sources equal uses; eligibility and timing conditions explicit.</td></tr>
+<tr><td>Operating model</td><td>Volume, price, capacity ramp, product mix, variable/fixed costs.</td><td>Revenue and cost drivers by period and product.</td></tr>
+<tr><td>Working capital</td><td>Inventory, receivables, payables, operating cycle, margin and bank finance assumptions.</td><td>Working capital requirement and cash conversion cycle; avoid double-counting.</td></tr>
+<tr><td>Depreciation and tax</td><td>Asset classes, useful life/method, tax assumptions and applicable regime.</td><td>Versioned schedule; tax rules require dated professional review.</td></tr>
+<tr><td>Debt schedule</td><td>Drawdown, moratorium, interest, repayment frequency, fees and balance.</td><td>Opening + drawdown − repayment = closing debt; interest reconciles to schedule.</td></tr>
+<tr><td>Statements</td><td>Projected P&L, balance sheet and cash flow.</td><td>Balance sheet balances; cash movement reconciles; retained earnings roll forward.</td></tr>
+<tr><td>Viability</td><td>DSCR, break-even, debt service, cash accrual and sensitivities.</td><td>Every ratio has explicit definition and numerator/denominator lineage.</td></tr>
+<tr><td>Scenario engine</td><td>Apply shocks to underlying drivers and recalculate dependent schedules.</td><td>Whole-model recomputation, not manually adjusted chart values.</td></tr>
+</tbody></table>
+<h3>Technical engine modules</h3>
+<div class="grid">
+<div class="card"><h3>Manufacturing</h3><p>Installed/practical capacity, shift and working-day calendar, process routing, cycle time, yield, rejection, material consumption, machine load, utilities, labour and bottleneck analysis.</p></div>
+<div class="card"><h3>Trading</h3><p>SKU mix, purchase/sales margin, stock days, supplier/customer credit, shrinkage, inventory funding, turnover and concentration.</p></div>
+<div class="card"><h3>Services</h3><p>Billable capacity, staff utilisation, service hours, rate card, client ramp, contract coverage, delivery costs and receivables.</p></div>
+<div class="card"><h3>Construction</h3><p>BOQ quantities, material/labour rates, work packages, contractor costs, milestones, retention, escalation and cash-flow timing.</p></div>
+<div class="card"><h3>Food processing</h3><p>Input-output ratios, batch yields, process loss, packaging, cold storage, quality controls, utilities and seasonality.</p></div>
+<div class="card"><h3>Hospitality</h3><p>Room/seat capacity, occupancy, average rate, covers, seasonality, channel commission, staffing and fixed operating costs.</p></div>
+</div>
+<div class="call warn"><strong>Do not hard-code generic “industry norms” as truth.</strong> Technical modules need explicit assumptions, source metadata, geography and effective dates. A reference range can inform a user but must not silently replace project-specific evidence or supplier specifications.</div>
+<h3>Calculation engine interface</h3>
+<pre>type CalculationContext = {
+  projectSnapshot: ProjectSnapshot;
+  assumptions: AssumptionSet;
+  referenceData: ReferenceDataSnapshot;
+  engineVersion: string;
+};
+
+type CalculationResult = {
+  metrics: Metric[];
+  schedules: Schedule[];
+  warnings: ValidationIssue[];
+  lineage: MetricLineage[];
+  inputHash: string;
+  outputHash: string;
+};
+
+function calculateProject(
+  context: CalculationContext
+): CalculationResult;</pre>
+<p>Keep the core pure: the caller supplies all inputs and receives a result. Persistence, API calls and logging belong in application adapters around the calculation function.</p>
+</section>
+
+<section id="reports"><div class="k">06 · Two report depths, one compiler</div><h2>Standard report and DPR are profiles—not separate products built from scratch.</h2>
+<table><thead><tr><th>Capability</th><th>Standard bankable report</th><th>Detailed project report</th></tr></thead><tbody>
+<tr><td>Purpose</td><td>Typical MSME loan proposal and lender discussion.</td><td>More complex investment, technical and implementation appraisal.</td></tr>
+<tr><td>Project narrative</td><td>Promoter, rationale, products, market, operating model.</td><td>Deeper alternatives, design basis, technology selection and project configuration.</td></tr>
+<tr><td>Market</td><td>Customer segments, competitors, pricing, sales build-up and evidence.</td><td>Deeper demand assessment, market sizing methodology, channel strategy, scenarios and source annexes.</td></tr>
+<tr><td>Technical</td><td>Process, capacity, machinery, site, inputs, manpower and utilities at proportionate depth.</td><td>Detailed process design, equipment specifications, layouts, utility loads, implementation packages and technical assumptions.</td></tr>
+<tr><td>Implementation</td><td>Milestones, approvals, procurement and commissioning.</td><td>Detailed work breakdown, critical path, procurement packages, dependencies and contingency.</td></tr>
+<tr><td>Financial</td><td>Project cost, means of finance, projected statements, working capital, DSCR and sensitivities.</td><td>Same shared financial core plus detailed capex basis, phased cash flow, scenario cases and expanded schedules.</td></tr>
+<tr><td>Risk</td><td>Material risk register with mitigations and financial links.</td><td>Deeper technical, execution, environmental/social, supply-chain and financial risk assessment where relevant.</td></tr>
+<tr><td>Annexes</td><td>Core financial schedules, quotations, key evidence.</td><td>Expanded technical schedules, BOQ/equipment details, layouts, source studies, approvals and supporting calculations.</td></tr>
+</tbody></table>
+<h3>Report compiler pipeline</h3>
+<div class="flow"><div>Project snapshot<small>Immutable input revision</small></div><div>Profile resolver<small>Standard / DPR</small></div><div>Rule evaluation<small>Include / exclude / require</small></div><div>Document AST<small>Ordered semantic blocks</small></div><div>Renderer<small>HTML / PDF</small></div></div>
+<p>The compiler should produce a semantic document tree, not concatenate strings. Example block types: <code>Heading</code>, <code>Paragraph</code>, <code>MetricReference</code>, <code>Table</code>, <code>Chart</code>, <code>ProcessDiagram</code>, <code>EvidenceNote</code>, <code>RiskRegister</code>, <code>PageBreak</code>, <code>AnnexReference</code>.</p>
+<h3>Rule definition example</h3>
+<pre>{
+  "rule_id": "REPORT.MANUFACTURING.CAPACITY",
+  "applies_when": {
+    "project.archetype": "manufacturing"
+  },
+  "required_inputs": [
+    "operating_plan.installed_capacity",
+    "operating_plan.working_days",
+    "operating_plan.shifts"
+  ],
+  "include_blocks": [
+    "manufacturing.capacity_summary",
+    "manufacturing.utilisation_schedule",
+    "manufacturing.bottleneck_analysis"
+  ],
+  "severity_if_missing": "blocking_for_dpr",
+  "standard_report_policy": "show_gap_and_qualification",
+  "dpr_policy": "require_completion_or_explicit_exception"
+}</pre>
+<h3>Exhibit selection rule</h3>
+<p>An exhibit is included only if it answers a decision question and adds information not already communicated more clearly by a nearby table. Each exhibit declares its source metric IDs, units, period, title, interpretation and print constraints. A chart is not selected just because a dataset exists.</p>
+</section>
+
+<section id="ai"><div class="k">07 · Selective runtime AI architecture</div><h2>AI services are optional, bounded and non-authoritative.</h2>
+<div class="grid">
+<div class="card"><span class="badge g">Zero-AI default</span><h3>Core report build</h3><p>Project data → calculation engine → rule engine → content composition → validation → HTML/PDF. No LLM call in this path.</p></div>
+<div class="card"><span class="badge a">Optional AI adapter</span><h3>Document extraction</h3><p>Uploaded quotation or licence → extraction proposal → schema validation → user confirmation → canonical project model. AI output is never automatically treated as verified fact.</p></div>
+<div class="card"><span class="badge a">Optional AI adapter</span><h3>Evidence-assisted narrative</h3><p>Approved facts and source excerpts → constrained draft → metric-token validation → claim/source checks → user approval. The model cannot invent numbers or change calculation outputs.</p></div>
+<div class="card"><span class="badge a">Optional AI adapter</span><h3>Research assistance</h3><p>Explicitly requested research → retrieved dated sources → extracted claims → source register → user review. No unsourced market-size or competitor assertions.</p></div>
+</div>
+<h3>AI task contract</h3>
+<pre>type AiTaskRequest = {
+  taskId: string;
+  purpose: "document_extraction" |
+          "narrative_draft" |
+          "research_assist" |
+          "translation";
+  projectId: string;
+  userConsentId: string;
+  allowedSourceIds: string[];
+  outputSchemaVersion: string;
+  tokenBudget: number;
+  retentionPolicy: "no_persist" | "persist_with_consent";
+};
+
+type AiTaskResult = {
+  proposedFields?: ProposedField[];
+  draftBlocks?: DraftBlock[];
+  citations?: SourceReference[];
+  unresolvedQuestions: string[];
+  providerModel: string;
+  usage: { inputTokens: number; outputTokens: number };
+  status: "proposed" | "needs_review" | "rejected" | "approved";
+};</pre>
+<h3>Guardrails</h3>
+<ul><li>Do not send full project data to an AI provider when only a single document or paragraph is needed.</li><li>Redact unnecessary personal, financial-account and identity data before external processing.</li><li>Require explicit user action for optional AI tasks and explain the purpose.</li><li>Use strict JSON schemas and validate outputs before they enter the project model.</li><li>All extracted facts remain “unconfirmed” until validated by deterministic checks or user approval.</li><li>Never allow AI to write directly to financial metric tables, formula registries or issued report records.</li><li>Store provider, model, purpose, usage, cost, consent and status for each task.</li><li>Provide manual entry fallback if AI is unavailable.</li></ul>
+</section>
+
+<section id="api"><div class="k">08 · API and persistence contracts</div><h2>Version the boundary between the UI and the engine.</h2>
+<table><thead><tr><th>Endpoint / use case</th><th>Input</th><th>Output</th><th>Notes</th></tr></thead><tbody>
+<tr><td>POST /api/v1/projects</td><td>Project creation schema</td><td>project_id, revision_id</td><td>Authenticated, tenant-scoped.</td></tr>
+<tr><td>PATCH /api/v1/projects/{id}</td><td>Validated project changes</td><td>New revision and validation issues</td><td>Use optimistic concurrency; do not mutate issued snapshots.</td></tr>
+<tr><td>POST /api/v1/projects/{id}/calculate</td><td>Revision ID, calculation profile</td><td>Calculation run ID and metrics</td><td>Deterministic; idempotent for same snapshot and engine version.</td></tr>
+<tr><td>POST /api/v1/projects/{id}/reports</td><td>Revision, report profile, options</td><td>Report build ID and status</td><td>Standard or DPR; records all versions.</td></tr>
+<tr><td>GET /api/v1/reports/{id}</td><td>Report ID</td><td>Manifest, validation and preview status</td><td>Permission checked on every request.</td></tr>
+<tr><td>POST /api/v1/reports/{id}/export</td><td>Format and entitlement</td><td>Export job ID</td><td>PDF/HTML/XLSX as applicable; signed short-lived download URL.</td></tr>
+<tr><td>POST /api/v1/ai-tasks</td><td>Purpose, source IDs, consent, schema</td><td>Task ID</td><td>Separate optional service; strict budget and permissions.</td></tr>
+<tr><td>POST /api/v1/evidence</td><td>Metadata and upload reference</td><td>Evidence ID</td><td>Object storage, hash, malware scanning and retention status.</td></tr>
+</tbody></table>
+<h3>Persistence recommendation</h3>
+<ul><li><strong>D1:</strong> organisations, users/roles, projects, revisions, structured assumptions, evidence metadata, calculation manifests, report manifests, entitlements, AI task metadata and audit events. Design for D1 transaction and query constraints.</li><li><strong>R2:</strong> source files, generated PDFs, large report artefacts and immutable export objects. Store object key, hash, size, content type and retention state in D1.</li><li><strong>KV:</strong> cache static reference lookups, feature flags and non-authoritative derived cache. Never use KV as the sole store for project facts, balances or audit history.</li><li><strong>Queues:</strong> optional for large PDF rendering, OCR, extraction and bulk regeneration. Jobs must be idempotent and retry-safe.</li><li><strong>Secrets:</strong> provider keys and payment credentials belong in Worker secrets, never frontend bundles or repository files.</li></ul>
+</section>
+
+<section id="security"><div class="k">09 · Security, privacy and commercial integrity</div><h2>Do not confuse hiding the PDF with protecting the data.</h2>
+<ul><li>Enforce authentication, organisation/project ownership and paid entitlements at the Worker/API boundary.</li><li>Do not send paid report contents or full financial schedules to an unpaid browser if those are intended to be gated.</li><li>Use short-lived signed object URLs for exports and verify access before issuing them.</li><li>Separate preview data from full report data at the API contract—not merely with CSS blur or hidden UI.</li><li>Apply upload limits, allowed MIME types, content hashing, malware scanning and safe file handling.</li><li>Define retention, deletion, backup and user export policies for personal and business documents.</li><li>Keep audit events for project revisions, report builds, exports, payments, AI tasks and permission changes.</li><li>Use tenant isolation tests to ensure one organisation cannot access another organisation's projects or artefacts.</li><li>Document that FinSight-generated reports are promoter-prepared and do not imply independent TEV, engineering certification, audit or lender approval.</li></ul>
+<div class="call danger"><strong>Threat-model requirement:</strong> the browser must not receive complete paid content merely because the final PDF is server-generated. If the browser can retrieve the underlying report JSON or calculation payload, the paywall is bypassable. Design preview and paid-content APIs separately.</div>
+</section>
+
+<section id="phases"><div class="k">10 · Phased implementation specification</div><h2>Build in gated phases with tangible exit criteria.</h2>
+<div class="phase"><div class="idx">0</div><div><h4>Repository and architecture audit</h4><span class="badge b">Gate 0</span></div><div><p>Inspect current source of truth before designing migrations.</p><ul><li>Map existing Astro/Preact/TypeScript structure, Workers routes, D1 schema, KV use and deployment bindings.</li><li>Inventory existing DSCR, CMA, construction estimate, project report and viability code.</li><li>Map formulas, duplicate logic, current tests, data contracts and report generation paths.</li><li>Identify current UI/API trust boundaries and any browser-exposed paid data.</li><li>Produce architecture map, dependency graph, risk register and reuse/deprecate decisions.</li></ul><p><strong>Exit:</strong> repository-backed current-state architecture document and approved target-state delta. No speculative rewrite.</p></div></div>
+<div class="phase"><div class="idx">1</div><div><h4>Domain specification and canonical schema</h4><span class="badge b">Gate 1</span></div><div><p>Establish the common language and data contracts.</p><ul><li>Define project archetypes, purposes, report depths and required fields.</li><li>Define units, currency scales, Indian financial-year conventions and null semantics.</li><li>Define project revision, evidence, assumption, calculation-run, metric and report-build schemas.</li><li>Define formula registry and reference-data versioning.</li><li>Write JSON Schema or equivalent runtime validators and migration rules.</li></ul><p><strong>Exit:</strong> schema reviewed with example fixtures for greenfield manufacturing, expansion, trading and services.</p></div></div>
+<div class="phase"><div class="idx">2</div><div><h4>Financial core consolidation</h4><span class="badge g">Gate 2 · Critical</span></div><div><p>Make the shared financial engine authoritative across modules.</p><ul><li>Consolidate project cost, means of finance, revenue/expense drivers, working capital, depreciation/tax assumptions, debt schedule, statements, DSCR, break-even and sensitivities.</li><li>Use pure functions and decimal-safe calculations.</li><li>Introduce stable metric IDs, formula IDs, lineage and immutable calculation manifests.</li><li>Remove duplicate formula implementations only after parity tests demonstrate equivalence.</li><li>Build independent reference cases and reconcile to manually checked examples.</li></ul><p><strong>Exit:</strong> golden tests, invariants, cross-module parity and no unexplained output drift.</p></div></div>
+<div class="phase"><div class="idx">3</div><div><h4>Evidence and assumption system</h4><span class="badge b">Gate 3</span></div><div><p>Make the report honest about what is known and what is assumed.</p><ul><li>Implement source registry, evidence classes, source date, issuer, scope, hash and confidence.</li><li>Link every material assumption and claim to evidence or a declared assumption.</li><li>Build missing-evidence rules and open-items register.</li><li>Add user confirmation and evidence status transitions.</li><li>Define retention, deletion and upload policy.</li></ul><p><strong>Exit:</strong> report can distinguish verified document, third-party source, quotation, promoter assertion, model assumption and missing evidence.</p></div></div>
+<div class="phase"><div class="idx">4</div><div><h4>Manufacturing technical module</h4><span class="badge g">Gate 4 · First vertical</span></div><div><p>Use manufacturing to prove the full system before adding more industries.</p><ul><li>Capacity, utilisation ramp, shift calendar, process routing, cycle time, yield/rejection and bottlenecks.</li><li>Machinery/equipment schedule and quotation basis.</li><li>Material consumption and supplier/lead-time records.</li><li>Manpower, utilities, quality and maintenance inputs.</li><li>Technical assumptions flow into operating costs and financial projections.</li></ul><p><strong>Exit:</strong> one complete manufacturing project can be modelled from project setup through technical schedules and financial projections without AI inference.</p></div></div>
+<div class="phase"><div class="idx">5</div><div><h4>Rules engine and report composition</h4><span class="badge b">Gate 5</span></div><div><p>Generate valid report variants from reusable blocks.</p><ul><li>Implement report profiles: standard and DPR.</li><li>Implement project-type and project-purpose rules.</li><li>Implement content atom contracts, conditional narrative patterns and exhibit-selection rules.</li><li>Build document AST and section/annex dependency graph.</li><li>Validate missing required blocks, incompatible modules and repeated content.</li></ul><p><strong>Exit:</strong> same project model generates meaningfully different standard and DPR outputs; expansion and greenfield reports differ appropriately.</p></div></div>
+<div class="phase"><div class="idx">6</div><div><h4>HTML/PDF compiler and editorial QA</h4><span class="badge b">Gate 6</span></div><div><p>Make the output a professional document, not a decorated dashboard.</p><ul><li>Shared semantic document tree for HTML preview and PDF.</li><li>Implement A4 typography, grid, tables, page numbers, running headers, footers and annex references.</li><li>Implement chart rules: every exhibit must answer a question and avoid adjacent duplication.</li><li>Test long tables, page splits, missing modules, images, grayscale and mobile preview.</li><li>Add report comparison/diff between revisions.</li></ul><p><strong>Exit:</strong> visual regression suite and reviewer-approved standard report and DPR specimens.</p></div></div>
+<div class="phase"><div class="idx">7</div><div><h4>Optional AI adapters</h4><span class="badge a">Gate 7</span></div><div><p>Add runtime AI only after the deterministic workflow works.</p><ul><li>Document extraction with structured proposal and user confirmation.</li><li>Evidence-assisted narrative for non-standard cases.</li><li>Optional market research with source capture and date labels.</li><li>AI task budgets, consent, provider/model logging, retention and fallback.</li><li>Prompt-injection and malicious-document handling.</li></ul><p><strong>Exit:</strong> AI can be disabled without breaking report generation; AI output cannot alter financial metrics or bypass evidence controls.</p></div></div>
+<div class="phase"><div class="idx">8</div><div><h4>Commercial hardening and further archetypes</h4><span class="badge a">Gate 8</span></div><div><p>Secure, scale and expand from actual customer needs.</p><ul><li>Payment entitlement and preview/full-document API separation.</li><li>Organisation, role and project permissions.</li><li>Object storage, signed URLs, asynchronous jobs and observability.</li><li>Add trading and services next; then construction, food processing and hospitality based on demand.</li><li>Measure report build time, AI cost per task, support incidents and evidence completion.</li></ul><p><strong>Exit:</strong> secure paid document delivery, operational metrics and repeatable module onboarding process.</p></div></div>
+</section>
+
+<section id="tests"><div class="k">11 · Quality and acceptance strategy</div><h2>Definition of done for the engine.</h2>
+<table><thead><tr><th>Area</th><th>Required acceptance test</th><th>Release blocker?</th></tr></thead><tbody>
+<tr><td>Arithmetic</td><td>Independent reference calculations, unit tests, property tests and rounding cases pass.</td><td>Yes</td></tr>
+<tr><td>Reconciliation</td><td>Sources equal uses; balance sheet balances; cash flow reconciles; debt schedule rolls forward.</td><td>Yes</td></tr>
+<tr><td>Metric consistency</td><td>Same metric ID renders identical value/unit/period in summary, narrative, chart and annex.</td><td>Yes</td></tr>
+<tr><td>Evidence honesty</td><td>Promoter estimates are never labelled as verified; missing material evidence is visible.</td><td>Yes</td></tr>
+<tr><td>Report composition</td><td>Invalid project/module combinations are blocked or explicitly qualified.</td><td>Yes</td></tr>
+<tr><td>Standard/DPR distinction</td><td>DPR adds substantive depth and required technical schedules, not merely more pages.</td><td>Yes</td></tr>
+<tr><td>Reproducibility</td><td>Same immutable input snapshot and version set produces the same semantic output.</td><td>Yes</td></tr>
+<tr><td>Rendering</td><td>No clipped tables, orphan headings, missing fonts, unreadable charts or broken annex references.</td><td>Yes</td></tr>
+<tr><td>Security</td><td>Tenant isolation, entitlement, signed URL and preview/full-data tests pass.</td><td>Yes</td></tr>
+<tr><td>AI isolation</td><td>Core report build passes with AI provider disabled and zero AI calls.</td><td>Yes</td></tr>
+<tr><td>Performance</td><td>Set service-level targets after baseline measurement; test representative small and large reports.</td><td>Targeted</td></tr>
+</tbody></table>
+<h3>Suggested golden project suite</h3>
+<ul><li>Greenfield small manufacturing with quotation-backed machinery but promoter-estimated sales.</li><li>Existing manufacturing expansion with historical revenue and incremental capacity.</li><li>Trading business with high inventory and receivable days.</li><li>Service enterprise with staff utilisation and contract-based revenue.</li><li>Project with incomplete evidence and a financial shortfall.</li><li>Project with missing/zero/negative values, unusual repayment structure and multiple product lines.</li><li>DPR with long technical annexes, multiple quotations and phased implementation.</li></ul>
+</section>
+
+<section id="operations"><div class="k">12 · Operating model, observability and governance</div><h2>Make the system maintainable after the first launch.</h2>
+<div class="grid">
+<div class="card"><h3>Version governance</h3><p>Semantic versions for engine packages, formula registry, schemas, report rules, content library and renderer. Breaking changes require migration plans and regenerated golden outputs.</p></div>
+<div class="card"><h3>Audit trail</h3><p>Record project edits, assumption approvals, evidence changes, calculation runs, report builds, exports, payments, AI tasks and permission changes.</p></div>
+<div class="card"><h3>Observability</h3><p>Measure API latency, calculation duration, render duration, queue retries, report failures, validation warnings, storage use and AI spend by task.</p></div>
+<div class="card"><h3>Support diagnostics</h3><p>Every report gets a non-sensitive build ID and diagnostic manifest so support can reproduce the build without exposing customer data unnecessarily.</p></div>
+</div>
+<h3>AI cost and provider controls</h3>
+<ul><li>Set a maximum spend and token budget per task and per account.</li><li>Route tasks to the smallest capable model; reserve stronger models for genuinely complex work.</li><li>Cache reusable extraction or research results where lawful and appropriate.</li><li>Do not call AI for repeated template assembly or standard interpretations.</li><li>Track cost per successful extraction, approved narrative block and report—not merely total tokens.</li><li>Provide user-visible indication when an optional AI task may incur cost or use an external provider.</li></ul>
+<h3>Operational KPIs</h3>
+<table><thead><tr><th>KPI</th><th>What it tells us</th></tr></thead><tbody>
+<tr><td>Zero-AI report success rate</td><td>Whether core product works independently of LLM providers.</td></tr>
+<tr><td>Calculation defect rate</td><td>Reliability of formulas and engine releases.</td></tr>
+<tr><td>Cross-report inconsistency count</td><td>Whether duplicated values or stale bindings exist.</td></tr>
+<tr><td>Evidence completeness by report type</td><td>Whether users are providing enough substance.</td></tr>
+<tr><td>Reviewer time-to-answer</td><td>Whether report structure reduces lender cognitive load.</td></tr>
+<tr><td>Report regeneration cost/time</td><td>Efficiency of compiler and rendering infrastructure.</td></tr>
+<tr><td>AI cost per paid report</td><td>Whether selective AI remains economically justified.</td></tr>
+<tr><td>Human correction rate</td><td>Quality of extraction and narrative assistance.</td></tr>
+</tbody></table>
+</section>
+
+<section id="acceptance"><div class="k">13 · Final architecture acceptance checklist</div><h2>What must be true before we call this architecture implemented.</h2>
+<div class="card">
+<ul>
+<li><span class="check">□</span> Current repository and deployed architecture have been inspected and mapped.</li>
+<li><span class="check">□</span> Standard report and DPR are profiles over one canonical project model.</li>
+<li><span class="check">□</span> Financial and technical calculations are deterministic, versioned and independently tested.</li>
+<li><span class="check">□</span> Every important metric has a stable ID, formula ID, unit, period and lineage.</li>
+<li><span class="check">□</span> Every material claim is sourced, labelled as an assumption or shown as missing.</li>
+<li><span class="check">□</span> Report composition uses reusable content atoms and compatibility rules—not whole-document duplication.</li>
+<li><span class="check">□</span> HTML and PDF are rendered from the same semantic document tree.</li>
+<li><span class="check">□</span> A standard report can be generated with the AI provider disabled.</li>
+<li><span class="check">□</span> AI outputs are proposals, validated and confirmed before becoming project facts.</li>
+<li><span class="check">□</span> Paid report data is protected at the API boundary, not just hidden in the interface.</li>
+<li><span class="check">□</span> Golden project suite, regression tests, visual tests and tenant-isolation tests pass.</li>
+<li><span class="check">□</span> Engine, rules, content and renderer versions are captured in every report manifest.</li>
+</ul>
+</div>
+<div class="call"><strong>Final recommendation:</strong> approve this architecture as the target direction. Do not begin by rewriting the existing FinSight codebase. Start with a repository audit, map what already works, identify duplicated or weak boundaries, and implement the canonical model and report compiler incrementally. The aim is to turn the existing product into a coherent report factory—not to discard working assets in pursuit of architectural purity.</div>
+</section>
+
+<footer>FinSight · Technical Architecture & Phased Implementation Specification · 15 November 2026<br>Decision: both report depths · selective runtime AI · deterministic calculation and composition core.<br>Internal engineering specification. Technical, tax, accounting and regulatory methodologies require qualified review before production use.</footer>
+</div></body></html>

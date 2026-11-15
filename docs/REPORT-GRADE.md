@@ -3,6 +3,7 @@
 The design brief for the report's rows (NEW2, WRITE1, PAPER2, PAY1 in `docs/WORKED-PAGE.md` §7). A design session: nothing in the product changed. A row's session reads §1, its own parts of §3 to §7, and §8. Where a line here stands in the way of a better report, set it aside and say so in one line; only `CLAUDE.md`'s hard lines do not bend.
 
 - Rahul's page, with the before and after: https://claude.ai/artifact/9Uq9Tf7RuRo7HnF4j1ijHN
+- **Weighed against three outside papers on 15-11-2026: `docs/REPORT-REVIEW.md`** (the specimen's changes, the rows, saving reports; D-DOC-24). Where they differ, that file is the later word.
 - The specimen, 15 pages: `docs/design-reference/report-specimen/specimen.pdf` (rebuild: §3).
 
 ## 1. Rahul's words (the contract)
@@ -60,7 +61,7 @@ Our PDF writer draws text, tables and bars, and each new look costs three writer
 - **New parts,** one description each, drawn the same on screen and on paper: an exhibit, a key-figure rail, a photo, a note reference, a chart.
 - **Word and Excel keep our writers.** Word carries the write-up to edit, with each chart as a picture made from the same SVG. Excel holds the figures as numbers, no formula (D-DOC-21).
 - **The look check.** A contact sheet of every page, looked at once per change to the paper, and a test that no page runs over. Text checks still guard every figure.
-- **Before the layout is fixed,** read at source what could not be read today: SEBI's listing rules, Schedule V (the page did not open), and the integrated-reporting framework's own text (IFRS's page gave only the six capitals: "financial, manufactured, intellectual, human, social and relationship, and natural"). Until then the specimen's order (story first, statements and notes behind, a highlights page, risks beside the answer to each) rests on general knowledge of annual reports.
+- **Set aside by `docs/REPORT-REVIEW.md` §3:** the paper follows UNIDO's feasibility manual, not annual reports. Kept for the record: before the layout is fixed, read at source what could not be read today: SEBI's listing rules, Schedule V (the page did not open), and the integrated-reporting framework's own text (IFRS's page gave only the six capitals: "financial, manufactured, intellectual, human, social and relationship, and natural"). Until then the specimen's order (story first, statements and notes behind, a highlights page, risks beside the answer to each) rests on general knowledge of annual reports.
 - **If Rahul says no to the server (§8):** the builder ships to the browser and the browser's own print makes the PDF; the gate is then an honour gate, and that is said plainly.
 
 ## 6. The screen: a shop window, not the workshop (NEW2)
@@ -74,7 +75,7 @@ Our PDF writer draws text, tables and bars, and each new look costs three writer
 ## 7. The write-up (WRITE1)
 
 - **A step of its own,** fifth of six: The business, The cost, The loan, Sales and costs, **The write-up**, **Check and download**.
-- **Who writes what.** The engine writes what reads the figures (the summary's findings, cost and finance, sales and profit, repayment, if things go worse), as findings with slots. The AI drafts what describes (the business and its promoters; products, process and market; the risks and what the promoters will do), from the answers already given, with WORDS1's blanks for what only the borrower knows (D-AI-03). The user reads, changes and confirms each section; an unconfirmed section stays out of the paper, and the check step lists what is left.
+- **Superseded by D-DOC-24 (15-11-2026):** the factory makes every chapter from rules and a library of pre-written pieces; AI only fills gaps (`docs/REPORT-REVIEW.md` §3). The old line, kept for the record: **Who writes what.** The engine writes what reads the figures (the summary's findings, cost and finance, sales and profit, repayment, if things go worse), as findings with slots. The AI drafts what describes (the business and its promoters; products, process and market; the risks and what the promoters will do), from the answers already given, with WORDS1's blanks for what only the borrower knows (D-AI-03). The user reads, changes and confirms each section; an unconfirmed section stays out of the paper, and the check step lists what is left.
 - **Nothing required** (rule 17: the count does not rise; Rahul's to confirm). Offered under each section: the user's own notes, deeper detail where the loan needs it (raw materials, power and water, people, the timetable), and photos.
 - **Photos** (the promoters, the site, the machines, the product): chosen or taken on the device, decoded, made smaller (the long edge about 1,600 px) and saved again as JPEG, which drops the location data, then kept in IndexedDB with a caption. Nothing is sent until the download, and then only on Rahul's yes (§8). The privacy page's words change with it: a draft for the lawyer.
 - **No market figure of ours** (rule 13): the market is the promoter's words; sourced public figures are a later row.
