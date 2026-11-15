@@ -4,28 +4,39 @@
  * pages as small pictures, open or, before the gate, the first one real and the rest blank. Beside the questions from
  * 1024 px; on a phone behind "See the report". Every figure is the engine's (companion.ts).
  */
+import type { ComponentChildren } from 'preact';
 import type { Doc } from '../doc/doc';
 import { Paper, sheetCount } from '../Paper';
 import { Bars } from '../worked/Bars';
 import { FILLED } from '../fields';
+import { Outline } from './CheckPage';
 import { chartRows, outlineOf, readingOf, type StepKey } from './companion';
 import type { CarryView, ReportPreview, ReportState } from './model';
 import { levelFor } from '../../../engine/ratios';
 import { levelsOf } from '../board-model';
 
-export function Companion({ s, p, cv, left, ok, step, go, paper, pages, open, onOpen, sheet }: {
+export function Companion({ s, p, cv, left, ok, step, go, paper, pages, open, onOpen, sheet, check }: {
   s: ReportState; p: ReportPreview; cv?: CarryView; left: Record<StepKey, number>; ok: boolean; step: StepKey; go: (id: StepKey) => void;
   paper: Doc; pages: [string, number][]; open: boolean; onOpen: () => void;
   /** In the sheet on a phone, whose own head names it: no second heading. */
   sheet?: boolean;
+  /** On the check from 1024 px (Rahul's desktop note, 15-11-2026; D-UX-374): the panel keeps its column and its place, and
+   * its top holds the answer, then the check page's parts as links and the pages. The rest of the panel is the page beside. */
+  check?: { answer: ComponentChildren; parts?: { id: string; label: string; mark?: string }[] };
 }) {
+  const head = <div class="flex items-center gap-2">
+    {!sheet && <h2 class="text-base font-semibold text-ink">Your report</h2>}
+    <span data-testid="rep-chip" class="rounded-full bg-ink/6 px-2.5 py-0.5 text-xs font-medium text-ink-muted">{open ? paper.mark ?? 'Ready' : 'Sample'}</span>
+  </div>;
+  if (check) return <div data-testid="rep-companion" data-check class="companion">
+    {head}
+    <div class="mt-3">{check.answer}</div>
+    {check.parts && <div class="mt-5"><Outline items={check.parts} /></div>}
+    {check.parts && <button type="button" data-testid="rep-pages" class={`mt-4 ${FILLED}`} onClick={onOpen}>See the pages</button>}
+  </div>;
   const r = readingOf(p, cv), level = levelFor('dscrLowest', 'fresh', levelsOf(s.benchmarks)), rows = chartRows(p, level), items = outlineOf(s, p, left, ok, step), n = sheetCount(paper);
-  const chip = open ? paper.mark ?? 'Ready' : 'Sample';
   return <div data-testid="rep-companion" class="companion">
-    <div class="flex items-center gap-2">
-      {!sheet && <h2 class="text-base font-semibold text-ink">Your report</h2>}
-      <span data-testid="rep-chip" class="rounded-full bg-ink/6 px-2.5 py-0.5 text-xs font-medium text-ink-muted">{chip}</span>
-    </div>
+    {head}
     <div data-testid="rep-reading" class="mt-3 border-b border-line pb-3" aria-live="polite">
       {r.wait ? <p class="text-sm text-ink-muted">{r.wait}</p> : <>
         {r.line && <p data-testid="rep-reading-line" class="text-lg leading-snug font-semibold text-ink">{r.line}</p>}

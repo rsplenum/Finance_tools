@@ -162,7 +162,7 @@ export function assumptionsOf(s: ReportState) {
   };
   return ASSUMPTIONS.filter((a) => (shows[a.id] ?? true) && ('simple' in a ? simple(s) : true) && (s.salesBy !== 'typed' || (a.id !== 'utilisation' && a.id !== 'price'))
     && (a.id !== 'days' || days.length > 0) && (a.id !== 'utilisation' || s.utilisation === EMPTY.utilisation) && (a.id !== 'price' || s.priceGrowth === EMPTY.priceGrowth))
-    .map((a) => (a.id === 'days' && days.length < 3 ? { ...a, shown: days.map((k) => `${k} ${EMPTY.days[k]} days`).join(', ') }
+    .map((a) => (a.id === 'days' && days.length < 3 ? { ...a, brief: days.map((k) => `${k} ${EMPTY.days[k]} days`).join(', '), shown: days.map((k) => `${k} ${EMPTY.days[k]} days`).join(', ') }
       : a.id === 'simpleFunds' && s.scheme === 'pmegp' ? { ...a, shown: 'No unsecured loans' } : a));
 }
 /** The fixed assets simple mode asks; the other heads are its assumption of none. */
