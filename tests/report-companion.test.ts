@@ -1,7 +1,8 @@
 /**
  * The companion beside the report's questions (NEW2, site/src/report/companion.ts). It works out nothing: the picture's
- * rows are the engine's DSCR table in lakh, and its tightest year must be the year the engine's own lowest-DSCR check
- * names (a second path to the same year); the reading is the checks' own figures; the outline counts needs already listed.
+ * rows are the engine's DSCR table in lakh, and a year is marked only when its DSCR is below the usual level (Rahul's
+ * review of NEW2): the marked year must be one the engine's own lowest-DSCR check names (a second path to the same year);
+ * the reading is the checks' own figures; the outline counts needs already listed.
  */
 import { describe, expect, it } from 'vitest';
 import { EMPTY, preview } from '../site/src/report/model';
@@ -11,8 +12,8 @@ import { chartRows, outlineOf, readingOf, type StepKey } from '../site/src/repor
 const none: Record<StepKey, number> = { business: 0, cost: 0, loan: 0, sales: 0, words: 0, check: 0 };
 
 describe('the companion', () => {
-  it('draws the DSCR table as bars, the tightest year the one the lowest-DSCR check names', () => {
-    const s = reportExample(new Date(2026, 9, 15)), p = preview(s), rows = chartRows(p);
+  it('draws the DSCR table as bars, marking a year only below the level, the one the lowest-DSCR check names', () => {
+    const s = reportExample(new Date(2026, 9, 15)), p = preview(s), rows = chartRows(p, 1.25);
     const t = p.view!.tables.find((x) => x.id === 'dscr')!, a = t.rows.find((r) => r.label === 'Cash available (A)')!;
     expect(rows.length).toBeGreaterThan(2);
     rows.forEach((r) => {
@@ -20,10 +21,15 @@ describe('the companion', () => {
       expect(r.a).toBe(a.n![i]);
       expect(r.aText).toBe((a.n![i]! / 100000).toFixed(2));
     });
-    const tight = rows.filter((r) => r.tight);
-    expect(tight).toHaveLength(1);
     const low = p.checks!.find((c) => c.id === 'dscrLowest')!;
-    expect(low.worst).toContain(`in ${tight[0].label}`);
+    // The example meets the level: no year is marked, and none is called the tightest.
+    expect([low.verdict, rows.filter((r) => r.tight)]).toEqual(['meets', []]);
+    // Raised above its lowest DSCR, the level marks that year, and the words say below what.
+    const above = Number(low.value) + 0.01, tight = chartRows(p, above).filter((r) => r.tight);
+    expect(tight.length).toBeGreaterThan(0);
+    expect(tight.map((r) => r.label)).toContain(low.worst.match(/in (\d{4}-\d{2})/)![1]);
+    expect(tight[0].spoken).toContain(`below the usual ${above}`);
+    expect(rows.some((r) => r.spoken.includes('tightest'))).toBe(false);
   });
 
   it('reads the lowest and average DSCR as the checks give them, and waits without figures', () => {

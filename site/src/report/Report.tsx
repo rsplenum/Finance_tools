@@ -287,7 +287,7 @@ export function ReportCalculator() {
   // The sheet over the page holds the companion (a phone's "See the report") or the paper itself ("Open the full report").
   const [view, setView] = useState<'companion' | 'paper'>('companion'), viewed = useRef(view);
   viewed.current = view;
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   useEffect(() => { setOpen(paperOpen()); }, []);
   useEffect(() => {
     setToday(isoDate(new Date()));
@@ -319,7 +319,7 @@ export function ReportCalculator() {
   // The companion: beside the questions from 1024 px, in the sheet on a phone; a section of its outline opens its step.
   const toStep = (id: StepId) => { if (peek.current?.open) peek.current.close(); go(id); };
   const companion = <Companion s={s} p={p} cv={cv} left={leftOf(s, p)} ok={ok} step={step} go={toStep} paper={paper} pages={pages} open={open} onOpen={openPaper} sheet={!wide} />;
-  // Locked (before PAY1, for review only: ?paper=locked), the paper shows its first page and no more.
+  // Locked (Rahul's review of NEW2; open only with ?paper=open until PAY1), the paper shows its first page, the rest blank.
   const sheets = <div data-testid="rep-paper"><Paper doc={paper} pages={pages} label="Your project report so far" only={open ? undefined : 1} /></div>;
   const left = leftOf(s, p), at = STEPS.findIndex(([id]) => id === step), back = STEPS[at - 1], next = STEPS[at + 1];
   const stepOf = (id: StepId, body: ComponentChildren) => {
@@ -533,9 +533,11 @@ export function ReportCalculator() {
           <Result s={s} p={p} cv={cv} update={update} use={use} useWay={useWay} useRepay={useRepay} useFix={useFix} toField={toField} answer={answer} used={used} counts={fixNote?.on === used ? fixNote.text : undefined} undo={undo} keep={() => setUsed([])} toCollateral={toCollateral} toBox={toBox} ok={ok} />
           {figures && <CheckStep pre="rep" groups={checkOf(s, p)} to="benchmarks" state={ok ? 'done' : checked ? 'lapsed' : 'open'}
             benchmarks={(p.checks ?? []).map((c) => ({ label: c.label, value: c.byDefault === undefined ? c.level : `${c.level}, yours (default ${c.byDefault}${c.looser ? ', looser than a bank may accept' : ''})` }))}
-            confirm={seen ? 'These are right' : 'These are right: show the report'} onConfirm={confirm} />}
+            confirm="These are right" onConfirm={confirm} />}
           <Download s={s} p={p} ok={ok} />
-          {p.view && (ok || seen) && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
+          {/* The statements on the screen only once the pages are open (PAY1; ?paper=open for now): locked, the report is not
+              shown whole to be copied (Rahul's review of NEW2, point 1). */}
+          {open && p.view && (ok || seen) && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
           <How><p>{SHARED.twice}</p><p>{W.bars}</p><Ledger inside id="assumed" testid="rep-assumed" rows={assumptionsOf(s).map((a) => {
             const to = ASSUMED_BOX[a.id];
             return { ...a, to, go: to && simple && !IN_SIMPLE.has(to) ? toExpert(to) : undefined };
@@ -543,7 +545,8 @@ export function ReportCalculator() {
         </>)}
       </div>
       {/* The mode is the report's More options (UXR1's S12, S19): under the questions of each step, closed while simple. */}
-      <div hidden={step === 'words'}>
+      {/* Not on the write-up, and not on the check: once the report is ready, how much to ask is past (Rahul's review of NEW2). */}
+      <div hidden={step === 'words' || step === 'check'}>
         <MoreOptions what="every figure, and the costs by head" open={more} onToggle={setMore}>
           <Choice name="fld-mode" legend="How much to ask" options={MODE_CHOICES} value={s.mode ?? 'expert'} columns onChange={toMode} />
         </MoreOptions>
@@ -553,7 +556,8 @@ export function ReportCalculator() {
         <p data-testid="rep-answer-bar" data-answer aria-live="polite" class="text-sm font-medium text-ink">{barText(s, p)}</p>
         <div class="mt-1.5 flex items-center gap-2">
           {back && <button type="button" data-testid="rep-back" class={BUTTON} onClick={() => go(back[0])}>Back</button>}
-          <button type="button" data-testid="rep-peek" class={`${BUTTON} lg:hidden`} onClick={see}>See the report</button>
+          {/* On the check the step itself reads the report: one way on, the confirm (Rahul's review of NEW2, point 9). */}
+          {step !== 'check' && <button type="button" data-testid="rep-peek" class={`${BUTTON} lg:hidden`} onClick={see}>See the report</button>}
           {next && <button type="button" data-testid="rep-next" class={`ml-auto ${step === 'check' && figures && !ok ? BUTTON : NEXT}`} onClick={() => go(next[0])}>Next<span class="max-sm:sr-only">: {next[1]}</span></button>}
         </div>
       </div>
@@ -903,13 +907,13 @@ function Tune({ s, p, base, ways, update, use }: {
     </details>}
     <Benchmarks pre="rep" fields={benchmarkFields('fresh', s.benchmarks)} reset={() => update((t) => ({ ...t, benchmarks: undefined }))}
       set={(id, t) => update((u) => ({ ...u, benchmarks: withBenchmark(u.benchmarks, id, t) }))} />
-    {/* The room when every level meets (D-UX-50): how far sales can fall. */}
-    {!p.misses && !v && <button type="button" data-testid="rep-viable" class={`mt-4 ${BUTTON}`} onClick={() => {
+    {/* The room when every level meets (D-UX-50): how far sales can fall, costs rise and the rate climb. It folds back
+        (Rahul's review of NEW2, point 4): the same button closes it, as the CMA's does. */}
+    {!p.misses && <button type="button" data-testid="rep-viable" aria-expanded={!!v} aria-controls="rep-viable-box" class={`mt-4 ${BUTTON}`} onClick={() => {
+      if (v) { setV(undefined); return; }
       const x = viableOf(s); if (x) setV({ on: base, v: x });
-      // The button removes itself, so the focus moves to what replaces it (WCAG 2.4.3; DESIGN-LESSONS lesson 1).
-      focusNext('[data-testid="rep-viable-box"]');
-    }}>{W.room}</button>}
-    {v && !p.misses && <div data-testid="rep-viable-box" tabIndex={-1} class="mt-4 border-t-2 border-ink pt-4">
+    }}>{v ? 'Close' : W.room}</button>}
+    {v && !p.misses && <div id="rep-viable-box" data-testid="rep-viable-box" tabIndex={-1} class="mt-4 border-t-2 border-ink pt-4">
       <h4 class="font-medium text-ink">{v.title}</h4>
       {/* The title says "the room" once (review finding 10), so the borrower's group takes no heading of its own. */}
       {group('borrower', v.meets ? undefined : 'Your changes')}

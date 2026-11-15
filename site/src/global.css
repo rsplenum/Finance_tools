@@ -418,8 +418,11 @@ html:has([data-header][data-away]:not(:focus-within)) [data-years-strip] { top: 
 .thumbs .sheets { display: contents; }
 .thumbs .sheet { overflow: hidden; }
 .thumbs .sheet-in { max-height: 141.4cqw; overflow: hidden; }
-.thumb-ghost .sheet-ghost { gap: 4cqw; margin-top: 8cqw; }
-.thumb-ghost .sheet-ghost span { height: 2.6cqw; }
+.thumbs .sheet-locked .sheet-ghost { gap: 4cqw; margin-top: 8cqw; }
+.thumbs .sheet-locked .sheet-ghost span { height: 2.6cqw; }
+.thumbs .sheet-lock { display: none; }
+/* A locked page in the paper itself: blank lines under the words that say when it opens. */
+.sheet-lock { margin: 0; font-weight: 600; color: var(--ink-muted); text-align: center; }
 .thumbs[data-locked] > .sheets > .sheet:first-child { position: relative; }
 .thumbs[data-locked] > .sheets > .sheet:first-child::after { content: 'Sample'; position: absolute; inset: auto 0 12% 0; background: var(--warn-tint); color: var(--ink); text-align: center; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.04em; padding: 2px 0; }
 /* The progress line: six steps on one line, each a button; the one in hand filled, a finished one ticked. */

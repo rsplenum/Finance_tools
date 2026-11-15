@@ -103,11 +103,13 @@ function sheetsOf(doc: Doc): { parts: Part[]; cover: boolean }[] {
 export const sheetCount = (doc: Doc) => sheetsOf(doc).length;
 
 /** `pages`: each section's page in the PDF, for the contents; `label` names the region for a screen reader; `only`: the
- * first so many sheets, as the side's small pictures show while the pages are locked; `bare`: no ids, for a second
- * copy on the page (the small pictures beside the paper itself). */
+ * first so many sheets, while the pages are locked, the rest blank sheets that say they open with the download
+ * (Rahul's review of NEW2: no page past the first is there to copy); `bare`: no ids, for a second copy on the page (the
+ * small pictures beside the paper itself). */
 export function Paper({ doc, pages, label, only, bare }: { doc: Doc; pages?: [string, number][]; label: string; only?: number; bare?: boolean }) {
+  const all = sheetsOf(doc), locked = only === undefined ? 0 : Math.max(0, all.length - only);
   return <div role="group" aria-label={label} class="sheets">
-    {sheetsOf(doc).slice(0, only).map((sh, n) => <div key={n} class="sheet paper shadow-paper">
+    {all.slice(0, only).map((sh, n) => <div key={n} class="sheet paper shadow-paper">
       <div class="sheet-in">
         {!sh.cover && <p class="sheet-run"><span>{doc.header}</span>{doc.mark && <strong>{doc.mark}</strong>}</p>}
         <div class="sheet-body">
@@ -117,6 +119,12 @@ export function Paper({ doc, pages, label, only, bare }: { doc: Doc; pages?: [st
           </div>)}
         </div>
         {!sh.cover && <p class="sheet-run sheet-foot"><span>{doc.footer}</span></p>}
+      </div>
+    </div>)}
+    {Array.from({ length: locked }, (_, n) => <div key={`locked-${n}`} data-locked-sheet class="sheet paper shadow-paper sheet-locked">
+      <div class="sheet-in">
+        <p class="sheet-lock">Page {n + 2} opens with the download</p>
+        <div class="sheet-ghost" aria-hidden="true">{Array.from({ length: 12 }, (_, k) => <span key={k} />)}</div>
       </div>
     </div>)}
   </div>;

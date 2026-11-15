@@ -7,7 +7,7 @@
  * engine and its second computation. A change aims at every ratio it can bring to its level; what it cannot is named.
  */
 import { collateralNeeded, diagnose, LEVELS, termMonths, type Diagnosis, type Levels, type RatioId } from './ratios';
-import { projectReport, type Report, type ReportInput } from './report';
+import { costsOf, projectReport, type Report, type ReportInput } from './report';
 import type { Blocked, Needs } from './dscr';
 
 /** What a change does: the levels missed as typed that it meets, and those still missed with it. */
@@ -23,11 +23,19 @@ export interface SalesLever extends Outcome {
 /** A loan made smaller, the promoters bringing `more`. */
 export interface Smaller extends Outcome { now: number; largest: number; more: number }
 export interface Longer extends Outcome { now: number; needed: number }
+/** The room, when every level meets: the farthest a figure can move against the business with every level still met.
+ * `tenths`: of a per cent for the costs, of a percentage point for the interest rate; `capped`: still meeting at the
+ * farthest tried (100% more costs, 30 points more interest). */
+export interface CostsRoom { tenths: number; capped: boolean; variable: { now: number; most: number }; fixed: { now: number; most: number } }
+export interface RateRoom { tenths: number; capped: boolean; term: { now: number; most: number }; wc?: { now: number; most: number } }
 export interface Viability {
   diagnosis: Diagnosis;
   /** True when every ratio that can be read meets its level. */
   meets: boolean;
   sales?: SalesLever; salesNone?: string;
+  /** Only when every level meets (Rahul's review of NEW2): how far the costs can rise and the interest rate climb. */
+  costs?: CostsRoom; costsNone?: string;
+  rate?: RateRoom; rateNone?: string;
   loan?: Smaller; loanNone?: string;
   wc?: Smaller; wcNone?: string;
   /** The collateral's market value that brings the security cover to its level, and the value typed, if any. */
@@ -36,7 +44,20 @@ export interface Viability {
   instalments?: Longer & { perYear: number }; instalmentsNone?: string;
 }
 
-const GRID = 1000, MAX_FACTOR = 100;
+const GRID = 1000, MAX_FACTOR = 100, RATE_CAP = 300;
+/** The farthest step k in [0, cap] at which `okK` still holds, `okK(0)` holding: doubling, then halving; none when a step
+ * below the answer fails or one above it holds (the ratios do not move one way). */
+function farthest(okK: (k: number) => boolean, cap: number): { tenths: number; capped: boolean } | undefined {
+  if (okK(cap)) return { tenths: cap, capped: true };
+  let lo = 0, hi = 1;
+  while (okK(hi)) { lo = hi; hi = Math.min(hi * 2, cap); }
+  while (hi - lo > 1) {
+    const m = Math.floor((lo + hi) / 2);
+    if (okK(m)) lo = m; else hi = m;
+  }
+  const broken = [1, 2, 5, 10, 50].some((d) => lo - d >= 0 && !okK(lo - d)) || [1, 10, 100].some((d) => lo + d <= cap && okK(lo + d));
+  return broken ? undefined : { tenths: lo, capped: false };
+}
 const isReport = (r: Report | Needs | Blocked): r is Report => !('needs' in r) && !('blocked' in r);
 /** The report with sales scaled by `f`: the price (every product's) under the drivers (capacity × use × price), or the typed sales. */
 const scaled = (x: ReportInput, f: number): ReportInput =>
@@ -110,7 +131,23 @@ export function makeViable(x: ReportInput, lv?: Levels): Viability | Needs | Blo
       };
     }
   }
-  if (!missed.length) return out;
+  if (!missed.length) {
+    // The room beside the fall in sales (Rahul's review of NEW2, point 4): how far the costs can rise (the variable share
+    // and the fixed costs by the same share) and how far the interest rate can climb (the term loan's and the
+    // working-capital limit's by the same points), every level still met. Both only lower the ratios, so the moves that
+    // meet are one range from nothing; checked below and above the answer, as for sales.
+    const okIn = (y: ReportInput) => ok(run(y)), cs = costsOf(x), v0 = cs.variablePct as number, f0 = cs.fixedCosts as number;
+    const costsAt = (k: number): ReportInput => ({ ...x, variablePct: v0 * (1 + k / GRID), fixedCosts: f0 * (1 + k / GRID) });
+    const c = farthest((k) => okIn(costsAt(k)), GRID);
+    if (!c) out.costsNone = 'No single answer: the ratios do not fall steadily as the costs rise here.';
+    else out.costs = { ...c, variable: { now: v0, most: v0 * (1 + c.tenths / GRID) }, fixed: { now: f0, most: f0 * (1 + c.tenths / GRID) } };
+    const r0 = x.loan.ratePct as number, w0 = (x.wcLimit ?? 0) > 0 ? x.wcRatePct : undefined;
+    const rateAt = (k: number): ReportInput => ({ ...x, loan: { ...x.loan, ratePct: r0 + k / 10 }, ...(w0 !== undefined ? { wcRatePct: w0 + k / 10 } : {}) });
+    const r = farthest((k) => okIn(rateAt(k)), RATE_CAP);
+    if (!r) out.rateNone = 'No single answer: the ratios do not fall steadily as the interest rate climbs here.';
+    else out.rate = { ...r, term: { now: r0, most: r0 + r.tenths / 10 }, ...(w0 !== undefined ? { wc: { now: w0, most: w0 + r.tenths / 10 } } : {}) };
+    return out;
+  }
 
   // A smaller loan, the promoters bringing the rest: the largest, to the rupee, that meets every level it can reach. Less
   // loan means less to repay and less interest, so the ratios rise as the loan falls; checked at points below.

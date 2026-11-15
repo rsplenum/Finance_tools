@@ -16,24 +16,23 @@ const inLakh = (n: number) => (n / 1e5).toFixed(2);
 
 /**
  * The picture (one chart, docs/WORKED-PAGE.md §4 part 3): the cash a year has for the loan (A) against what is due on it
- * (B), from the DSCR table the engine fills; the year of the lowest DSCR marked. A year with nothing due says so.
+ * (B), from the DSCR table the engine fills. Only a year below the usual level for the lowest DSCR (`level`) is marked:
+ * a year that meets it is not called the tightest (Rahul's review of NEW2, point 6). A year with nothing due says so.
  */
-export function chartRows(p: ReportPreview): BarRow[] {
+export function chartRows(p: ReportPreview, level?: number): BarRow[] {
   const t = p.view?.tables.find((x) => x.id === 'dscr');
   if (!t || p.blocked) return [];
   const row = (label: string) => t.rows.find((r) => r.label === label);
   const a = row('Cash available (A)'), b = row('Debt service (B)'), d = row('DSCR (A ÷ B)');
   if (!a?.n || !b?.n || !d?.n) return [];
   const years = t.columns.filter((c) => c !== 'Total');
-  let low: number | undefined;
-  years.forEach((_, i) => { const x = d.n![i]; if (x !== undefined && Number.isFinite(x) && (low === undefined || x < d.n![low]!)) low = i; });
   return years.flatMap((fy, i) => {
     const cash = a.n![i], due = b.n![i];
     if (cash === undefined || due === undefined) return [];
-    const tight = i === low, note = due ? undefined : 'nothing due';
+    const x = d.n![i], tight = level !== undefined && due > 0 && x !== undefined && Number.isFinite(x) && x < level, note = due ? undefined : 'nothing due';
     return [{
       key: fy, label: fy, a: cash, b: due, aText: inLakh(cash), bText: inLakh(due), ...(tight ? { tight } : {}), ...(note ? { note } : {}),
-      spoken: `${fy}: cash for the loan ₹${inLakh(cash)} lakh, due ₹${inLakh(due)} lakh${tight ? ', the tightest year' : ''}${note ? `, ${note}` : ''}`,
+      spoken: `${fy}: cash for the loan ₹${inLakh(cash)} lakh, due ₹${inLakh(due)} lakh${tight ? `, below the usual ${level}` : ''}${note ? `, ${note}` : ''}`,
     }];
   });
 }

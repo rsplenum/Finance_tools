@@ -1364,7 +1364,7 @@ const confirmReport = async (page, v, why) => {
   await page.getByTestId('rep-confirmed').waitFor({ timeout: 5000 }).catch(() => v(`the report's check did not fold once confirmed (${why})`));
 };
 if (touched('/project-report/')) {
-  const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
+  const { ctx, page, v } = await open('/project-report/?paper=open', { scheme: 'light' });
   if (!(await page.isChecked('field=Simple…'))) v('the project report opens in expert mode');
   await ceiling(page, v, REP_DEFAULT, 'the project report');
   if (!(await page.locator('#more-options >> field=Simple…').count())) v('S12: the choice of how much to ask is not under More options');
@@ -1389,7 +1389,7 @@ if (touched('/project-report/')) {
   await expectText(page, v, 'rep-doc-wait', 'The PDF, an Excel copy and a Word copy come here, once you confirm the figures above.', 'the download before the check');
   await expectFigures(page, v, 'rep-confirm-cost', '… 37,86,301 …', 'the check: the cost of the project');
   await expectFigures(page, v, 'rep-confirm-sales', '… 1,20,00,000 … 10% …', 'the check: the sales as typed');
-  await expectText(page, v, 'rep-confirm-document', /Business’s nameNot given yet/, 'the check: the first page, not given yet');
+  await expectText(page, v, 'rep-confirm-document', /Business’s name: Not given yet/, 'the check: the first page, not given yet');
   await expectFigures(page, v, 'rep-confirm-benchmarks', '… 1.50 …', 'the check: the benchmarks, a table');
   await confirmReport(page, v, 'case R');
   await expectText(page, v, 'rep-status-go', 'answer it', 'the status link after the check');
@@ -1421,6 +1421,13 @@ if (touched('/project-report/')) {
   const there = async () => (await Promise.all(['rep-viable', 'rep-viable-box', 'rep-plan'].map(async (id) => `${id} ${await page.getByTestId(id).count()}`))).join(', ');
   await expectText(page, (m) => there().then((t) => v(`${m} (${t})`)), 'rep-text-sales', /^To ₹82,20,000 in 2026-27/, 'how far sales can fall');
   await expectFigures(page, v, 'rep-move-sales', '31.5%', 'how far sales can fall, its figure');
+  // Rahul's review of NEW2 (point 4): the costs and the rate beside the sales (tests/viable.test.ts by hand), and the room folds back.
+  await expectFigures(page, v, 'rep-move-costs', '13.8%', 'how far the costs can rise, its figure');
+  await expectText(page, v, 'rep-text-costs', /^Variable costs to 73\.97% of sales \(from 65%\) and fixed costs to ₹20,48,400 a year/, 'how far the costs can rise');
+  await expectText(page, v, 'rep-text-rate', /^The term loan’s rate to 40% \(from 10%\) and the working-capital limit’s to 41% \(from 11%\)/, 'how far the interest rate can climb');
+  if (await page.getByTestId('rep-viable').getAttribute('aria-expanded') !== 'true' || await page.getByTestId('rep-viable').textContent() !== 'Close') v('the open room has no "Close" (Rahul\'s review of NEW2)');
+  await page.getByTestId('rep-viable').click();
+  if (await page.getByTestId('rep-viable-box').count()) v('"Close" does not fold the room back (Rahul\'s review of NEW2)');
   // Make it work (OR11d, D-UX-249) on case R at 70 lakh (tests/work.test.ts by hand): sales of 82,11,000 keep the loan,
   // with a plant that sells 1,41,43,206 running full, asked inside the card; or 9,35,000 borrowed (fix.ts). "Use this"
   // writes the way, marked, its question left open and the report provisional; Undo puts the figures back. Below, the
@@ -1572,6 +1579,8 @@ if (touched('/project-report/')) {
   await expectFigures(page, v, 'rep-paper', '… 37,86,301 …', 'BUILD1, the paper\'s cost of the project');
   await expectFigures(page, v, 'rep-paper', '… 3 …', 'BUILD1, the paper\'s words');
   await page.getByTestId('rep-peek-close').click();
+  // "See the report" stands on every step but the Check (Rahul's review of NEW2): the words step for the phone's walk.
+  await page.getByTestId('rep-step-words').click();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByTestId('rep-peek').waitFor({ timeout: 5000 }).catch(() => v('BUILD1: no "See the report" on a phone'));
   if (await page.locator('dialog[open]').count()) v('BUILD1: the report covers the questions on a phone before it is asked for');
@@ -1592,7 +1601,7 @@ if (touched('/project-report/')) {
 // With fixed costs of 25 L, the engine's cash (checked by report-check.ts's own route) goes lowest in 2030-31,
 // 48,67,334 short (tests/report-page.test.ts).
 if (touched('/project-report/')) {
-  const { ctx, page, v } = await open('/project-report/', { scheme: 'dark' });
+  const { ctx, page, v } = await open('/project-report/?paper=open', { scheme: 'dark' });
   await openMore(page); await page.check('field=Expert…');
   await page.check('field=Partnership firm or LLP');
   await page.check('field=PMEGP');
@@ -1732,7 +1741,7 @@ if (touched('/project-report/')) {
 // 12,00,000 and of 3,00,000 for 12 months, 15,000. Above 20 L in all it stops. With no scheme and CGTMSE ticked, its slab
 // for 15 L is 0.55%: 6,600 on the term loan and 1,650 on the limit, 8,250.
 if (touched('/project-report/')) {
-  const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
+  const { ctx, page, v } = await open('/project-report/?paper=open', { scheme: 'light' });
   await openMore(page);
   for (const id of ['field=Expert…', 'field=Partnership firm or LLP', 'field=Mudra', 'field=Equal principal every month']) await page.check(id);
   for (const [id, value] of [['field=Building and civil works', '10 L'], ['field=Plant and machinery', '20 L'], ['field=Furniture and fixtures', '2 L'], ['field=Preliminary and pre-operative expenses', '1 L'],
@@ -1832,6 +1841,21 @@ if (touched('/project-report/')) {
   await expectText(page, v, 'rep-to-work', 'See the ways to make it work', 'CHECK1: the answer leads to the ways');
   await expectFigures(page, v, 'rep-misses-work', '… short …', 'OR11a: cash running out in the verdict');
   if ((await page.getByTestId('rep-step-check').getAttribute('aria-current')) !== 'step') v('BUILD1: home\'s case does not open on the Check step');
+  // Rahul's review of NEW2: on the Check step one way on (no "See the report", no More options), and the pages locked by
+  // default: the first real, the rest blank, the statements not on the screen even once confirmed (?paper=open shows them).
+  if (await page.getByTestId('rep-peek').count()) v('NEW2 review: "See the report" still stands on the Check step');
+  if (await page.locator('#more-options').isVisible()) v('NEW2 review: More options still shows on the Check step');
+  if (await page.getByTestId('rep-confirm').textContent() !== 'These are right') v('NEW2 review: the confirm is not "These are right"');
+  await confirmReport(page, v, 'NEW2 review, home');
+  if (await page.getByTestId('rep-pl').count()) v('NEW2 review: the statements show on the screen while the pages are locked');
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expectText(page, v, 'rep-locked', /^Page 1 shows here\. The other \d+ open with the download\.$/, 'NEW2 review: the pages locked by default');
+  await page.locator('.builder-paper [data-testid="rep-open-paper"]').click();
+  await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2 review: "See the first page" does not open the paper'));
+  const sheets = await page.locator('dialog[open] [data-testid="rep-paper"] .sheet').count(), blank = await page.locator('dialog[open] [data-locked-sheet]').count();
+  if (sheets < 3 || blank !== sheets - 1) v(`NEW2 review: the locked paper shows ${sheets - blank} of ${sheets} pages, want the first alone`);
+  if (/Profit after tax|DSCR \(A ÷ B\)|Total assets/.test(await page.getByTestId('rep-paper').textContent())) v('NEW2 review: the locked paper still holds the statements');
+  await page.getByTestId('rep-peek-close').click();
   await ctx.close();
 }
 // BUILD1 (D-UX-340 to D-UX-342): the builder. Six steps on the progress line and one shown; Next and Back walk them and

@@ -82,7 +82,7 @@ export function cmaViableOf(s: CmaState): ViableView | undefined {
     lines.push(...boardLines(v, e));
   }
   return {
-    meets: v.meets, title: v.meets ? 'Every ratio meets a lender’s level: the room' : 'The levers: any one of these alone', lines, foot: FOOT(c, lv),
+    meets: v.meets, title: v.meets ? 'Every ratio meets the benchmarks: the room' : 'The levers: any one of these alone', lines, foot: FOOT(c, lv),
   };
 }
 

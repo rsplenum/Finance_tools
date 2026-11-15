@@ -21,38 +21,27 @@ const toBox = (id: string) => (e: Event) => {
   goTo(id)(e);
 };
 
-function Group({ pre, g, railed }: { pre: string; g: CheckGroup; railed?: boolean }) {
-  return <div data-testid={`${pre}-confirm-${g.id}`} class={`rounded-control bg-surface p-3${railed ? ' lg:hidden' : ''}`}>
+/** A group as one compact row (Rahul's review of NEW2, point 7: the long list of cards read as a form to fill again):
+ * its title and "Change" on one line, its lines run on as "label: value", wrapped. */
+function Row({ pre, id, title, to, lines, note, table, railed }: { pre: string; id: string; title: string; to: string; lines: CheckLine[]; note?: string; table?: boolean; railed?: boolean }) {
+  return <li data-testid={`${pre}-confirm-${id}`} class={`py-2.5${railed ? ' lg:hidden' : ''}`}>
     <div class="flex items-baseline justify-between gap-2">
-      <h3 class="font-medium text-ink">{g.title}</h3>
-      <a href={`#${g.to}`} onClick={toBox(g.to)} aria-label={`Change: ${g.title}`} class="inline-flex min-h-11 items-center text-sm text-link underline underline-offset-4">Change</a>
+      <h3 class="text-sm font-semibold text-ink">{title}</h3>
+      <a href={`#${to}`} onClick={toBox(to)} aria-label={`Change: ${title}`} class="-my-3 inline-flex min-h-11 shrink-0 items-center text-sm text-link underline underline-offset-4">Change</a>
     </div>
-    <dl class="mt-1 space-y-1.5">{g.lines.map((l) => <div key={l.label}>
-      <dt class="text-sm text-ink-muted">{l.label}</dt><dd class="text-ink tabular-nums">{l.value}</dd>
-    </div>)}</dl>
-  </div>;
-}
-
-/** The benchmarks as a table (the owner: a list of label over value was not intuitive), a ratio a row and its target. */
-function Benchmarks({ pre, lines, to }: { pre: string; lines: CheckLine[]; to: string }) {
-  const title = 'The benchmarks it is judged against';
-  return <div data-testid={`${pre}-confirm-benchmarks`} class="rounded-control bg-surface p-3">
-    <div class="flex items-baseline justify-between gap-2">
-      <h3 class="font-medium text-ink">{title}</h3>
-      <a href={`#${to}`} onClick={toBox(to)} aria-label={`Change: ${title}`} class="inline-flex min-h-11 items-center text-sm text-link underline underline-offset-4">Change</a>
-    </div>
-    <p data-testid={`${pre}-confirm-standard`} class="text-sm text-ink-muted">{STANDARD}</p>
-    <table class="mt-2 w-full border-collapse text-sm">
-      <thead><tr class="border-b border-line">
-        <th scope="col" class="py-1.5 pr-3 text-left font-medium text-ink-muted">Ratio</th>
-        <th scope="col" class="py-1.5 text-right font-medium text-ink-muted">Target</th>
-      </tr></thead>
-      <tbody>{lines.map((l) => <tr key={l.label} class="border-b border-line last:border-b-0">
-        <th scope="row" class="py-1.5 pr-3 text-left font-normal text-ink">{l.label}</th>
-        <td class="py-1.5 text-right text-ink tabular-nums">{l.value}</td>
+    {/* The benchmarks stay a table, a ratio a row and its target (the owner: label over value was not intuitive). */}
+    {table ? <table class="w-full border-collapse text-sm">
+      <thead class="sr-only"><tr><th scope="col">Ratio</th><th scope="col">Target</th></tr></thead>
+      <tbody>{lines.map((l) => <tr key={l.label}>
+        <th scope="row" class="py-0.5 pr-3 text-left font-normal text-ink-muted">{l.label}</th>
+        <td class="py-0.5 text-right text-ink tabular-nums">{l.value}</td>
       </tr>)}</tbody>
-    </table>
-  </div>;
+    </table> : <p class="text-sm leading-relaxed text-ink">{lines.map((l, i) => <span key={l.label}>
+      {i > 0 && <span aria-hidden="true" class="px-1.5 text-ink-muted">·</span>}
+      <span class="text-ink-muted">{l.label}: </span><span class="tabular-nums">{l.value}</span>
+    </span>)}</p>}
+    {note && <p data-testid={`${pre}-confirm-standard`} class="mt-0.5 text-xs text-ink-muted">{note}</p>}
+  </li>;
 }
 
 /** `benchmarks`: the ratios and their targets ("1.10 or more"); `to`, the box that changes them; `confirm`, the button's words;
@@ -60,10 +49,12 @@ function Benchmarks({ pre, lines, to }: { pre: string; lines: CheckLine[]; to: s
 export function CheckStep({ pre, groups, benchmarks, to, state, confirm, onConfirm, railed }: {
   pre: string; groups: CheckGroup[]; benchmarks: CheckLine[]; to: string; state: CheckState; confirm: string; onConfirm: () => void; railed?: boolean;
 }) {
-  const list = <div class={`mt-4 grid gap-3 sm:grid-cols-2${railed ? ' lg:grid-cols-1' : ''}`}>
-    {railed && <p data-testid={`${pre}-confirm-railed`} class={`hidden lg:block ${HINT}`}>What you gave is in your answers, beside.</p>}
-    {groups.map((g) => <Group key={g.id} pre={pre} g={g} railed={railed} />)}
-    <Benchmarks pre={pre} lines={benchmarks} to={to} />
+  const list = <div class="mt-3 rounded-control bg-surface px-3">
+    {railed && <p data-testid={`${pre}-confirm-railed`} class={`hidden pt-3 lg:block ${HINT}`}>What you gave is in your answers, beside.</p>}
+    <ul class="divide-y divide-line">
+      {groups.map((g) => <Row key={g.id} pre={pre} id={g.id} title={g.title} to={g.to} lines={g.lines} railed={railed} />)}
+      <Row pre={pre} id="benchmarks" title="The benchmarks it is judged against" to={to} lines={benchmarks} note={STANDARD} table />
+    </ul>
   </div>;
   if (state === 'done') return <details id="check" data-testid={`${pre}-confirmed`} class="mt-10 border-t border-line pt-3">
     <summary class={`min-h-11 cursor-pointer ${STATE} items-center text-ink`}><Tick />Checked: what you gave and the benchmarks</summary>
@@ -72,7 +63,7 @@ export function CheckStep({ pre, groups, benchmarks, to, state, confirm, onConfi
   return <Section id="check" title="Check your figures">
     {state === 'lapsed'
       ? <p role="status" data-testid={`${pre}-confirm-lapsed`} class="mt-2 text-sm font-medium text-warn">Your figures changed since you checked them: check them again.</p>
-      : <p class={`max-w-prose ${HINT}`}>Before the report: what you gave, and the benchmarks it is judged against.</p>}
+      : <p class={`max-w-prose ${HINT}`}>What you gave, and the benchmarks it is judged against. Change a line, or confirm them.</p>}
     {list}
     <button type="button" data-testid={`${pre}-confirm`} class={`mt-4 ${FILLED}`} onClick={onConfirm}>{confirm}</button>
   </Section>;

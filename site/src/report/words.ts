@@ -103,7 +103,7 @@ export const W = {
   years: 'Year by year, against',
   tune: 'Fine-tune it yourself',
   ways: 'Ways to repay',
-  room: 'How far can sales fall?',
+  room: 'How far can sales fall, costs rise or the rate climb?',
   // The download when a benchmark misses or cash runs out: said plainly, the way to mend it first (D-DOC-03: not blocked).
   docMiss: 'A lender reads the same on its pages.',
   docAs: 'Or download it as it stands',
