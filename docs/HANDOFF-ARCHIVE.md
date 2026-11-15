@@ -2,6 +2,11 @@
 
 Past state and each session's results, moved out of `docs/HANDOFF.md` on 04-10-2026 so that what every session reads stays short (D-TECH-29). Never read it whole: grep it.
 
+## A budget line moved out on 15-11-2026 (NEW2's review)
+| Date | Row | Budget | Actual |
+|---|---|---|---|
+| 14-11-2026 | REPORT-GRADE (the report's design: Rahul's three points measured, a 15-page specimen, the screen drawn, the plan's rows) | L | about 95 steps, 3 compactions; the `fetcher` once (Cloudflare's and IFRS's pages; SEBI's did not open). The specimen as a web page printed by Chromium cost about 25 steps for 15 pages |
+
 ## State moved out on 15-11-2026 (NEW2)
 Also 15-11-2026: **STEP1 put the report's step names on one line on a phone (D-UX-367; PR #209, merged): Business, Cost, Loan, Sales, Check, Download, one word a step, each heading keeping its full name; the design checks fail a name on two lines, too near the next or off the screen at 360 px and 320 px. Done when Rahul says the line reads right on `/project-report/?case=home`.**
 
