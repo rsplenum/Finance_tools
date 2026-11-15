@@ -18,6 +18,9 @@ import { PLAIN, SHORT, W } from './words';
 import { SHARED } from '../words';
 import { REPORT_HOME } from './home-case';
 import { reportExample } from './example';
+import { DOOR, PENCIL, doorProblem, doorReads, doorState, pencilLeft, type DoorFacts, type DoorId } from './door';
+import { Ask, type AskQuestion } from '../worked/Ask';
+import { MAIN, QUIET } from '../worked/parts';
 import { Bar, Benchmarks, Lever, PlanLever } from '../Board';
 import { benchmarkFields, inSentence, listed, withBenchmark } from '../board-model';
 import { printable } from '../doc/face';
@@ -211,10 +214,23 @@ export function ReportCalculator() {
   const [checked, setChecked] = useState<string>();
   const [seen, setSeen] = useState(false);
   const ok = checked === key;
-  const confirm = () => { setChecked(key); setSeen(true); focusNext('[data-testid="rep-confirmed"] > summary'); };
+  const confirm = () => { setChecked(key); setSeen(true); if (s.pencil) update((x) => ({ ...x, pencil: undefined })); focusNext('[data-testid="rep-confirmed"] > summary'); };
   const undo = () => { setS((x) => undoPlan(x, used)); setUsed([]); };
   // Clear all, with an undo until the next figure is typed (review finding 5), as on every tool (UXR5b, S16).
   const c = useStart('rep', s, setS, () => blank, () => reportExample(), () => { setUsed([]); setChecked(undefined); setSeen(false); });
+  // The front door (NEW2b): on a page with nothing typed, five questions one a screen, then the check with the largest loan
+  // the cash carries; the rest stands on the example in pencil (door.ts). The steps stay below it, for whoever goes straight in.
+  const door = !typed && !home && !c.undoable;
+  const [asking, setAsking] = useState<number>(), [facts, setFacts] = useState<DoorFacts>({});
+  const walk = () => { setFacts({}); setAsking(0); };
+  const answered = (id: DoorId, t: string) => {
+    const f = { ...facts, [id]: t.trim() }, i = (asking ?? 0) + 1;
+    setFacts(f);
+    if (i < DOOR.length) { setAsking(i); return; }
+    setAsking(undefined); setS(doorState(f)); setUsed([]); setChecked(undefined); setSeen(false);
+    // The answer comes first: the check's heading at the top of the screen, the largest loan under it.
+    requestAnimationFrame(() => { go('check'); requestAnimationFrame(() => document.getElementById('step-check-h')?.scrollIntoView({ block: 'start' })); });
+  };
   // The security cover's row links to the collateral field (review finding 4); in simple mode, property is chosen first.
   const toCollateral = (e: Event) => { e.preventDefault(); if (simple && !withProperty(s)) update((x) => ({ ...x, security: 'property' })); requestAnimationFrame(() => reach('fld-collateral', (el) => { into.current(el); el.focus(); })); };
   // A missing figure's link: to its box, in expert mode when only it has one.
@@ -330,9 +346,13 @@ export function ReportCalculator() {
       {body}
     </section>;
   };
-  return <div ref={root} data-builder class="builder" onClickCapture={linked}>
+  const id = asking === undefined ? undefined : DOOR[asking];
+  return <>{id && <Ask q={doorQuestion(id, facts)} at={(asking ?? 0) + 1} of={DOOR.length} words={ASK_WORDS}
+    problem={(t) => doorProblem(id, t, facts)} reads={(t) => doorReads(id, t, facts)} onAnswer={(t) => answered(id, t)}
+    onBack={() => setAsking(asking ? asking - 1 : undefined)} />}
+  <div ref={root} data-builder class="builder" onClickCapture={linked}>
     <div class="builder-ask">
-      <StartLine c={c} home={home} />
+      {door ? <Door start={walk} example={c.fill} /> : <StartLine c={c} home={home} />}
       <nav aria-label="Steps" data-steps class="mt-4">
         <ol class="steps" style={{ '--n': STEPS.length, '--i': at }}>{STEPS.map(([id, , name], i) => {
           const open = figures || p.needs.length ? left[id] : 0, done = id === 'check' ? ok : id === 'words' ? wordsTrue(s.words) && !left.words : typed && !p.blocked && !left[id];
@@ -574,6 +594,38 @@ export function ReportCalculator() {
         ? <div data-paper-scroll class="peek-body"><div class={`peek-paper${large ? ' peek-large' : ''}`} onClick={zoom}>{sheets}</div></div>
         : <div class="peek-body">{!wide && companion}</div>}
     </dialog>
+  </div></>;
+}
+
+/** The front door (NEW2b): the question the report answers first, and the two ways in. */
+function Door({ start, example }: { start: () => void; example?: () => void }) {
+  return <div data-testid="rep-door" class="mt-2">
+    <h2 class="font-display text-[1.5rem] leading-[1.2] font-semibold text-ink text-balance">How much loan can your project carry?</h2>
+    <p class={`mt-1.5 ${MUTED}`}>Five questions, about a minute. The rest starts from a worked example, marked for you to make your own.</p>
+    <div class="mt-4 flex flex-wrap items-center gap-3">
+      <button type="button" data-testid="rep-door-start" class={MAIN} onClick={start}>Start: five questions</button>
+      {example && <button type="button" data-testid="rep-example" class={QUIET} onClick={example}>See the worked example</button>}
+    </div>
+  </div>;
+}
+const ASK_WORDS = { next: 'Next', done: 'Done', last: 'See what it carries', back: 'Back', none: 'None', step: (i: number, n: number) => `Question ${i} of ${n}`, reads: (t: string) => `Reads as ${t}` };
+const DOOR_ASK: Record<DoorId, Omit<AskQuestion, 'id' | 'value'>> = {
+  what: { question: 'What does the business make or sell?', hint: 'In a few words, like “Packaged atta” or “Tailoring”.', inputMode: 'text' },
+  cost: { question: 'What will the project cost?', hint: 'The building or shed, the machines and the equipment. Not the working capital.', unit: '₹' },
+  loan: { question: 'How much loan will you ask for?', hint: 'The term loan for the project; you bring the rest.', unit: '₹' },
+  sales: { question: 'What will you sell in a year, running full?', hint: 'At full use of the machines and today’s prices. The first year counts 60% of it.', unit: '₹' },
+  left: { question: 'What is left of that in a year, after running costs?', hint: 'Sales less materials, wages, power, rent and the like; before interest, depreciation and tax.', unit: '₹' },
+};
+const doorQuestion = (id: DoorId, f: DoorFacts): AskQuestion => ({ id, value: f[id] ?? '', ...DOOR_ASK[id] });
+
+/** What the front door left on the example (NEW2b): listed on the check until changed, or kept with "These are right". */
+function Pencil({ s, to }: { s: ReportState; to: (id: string) => (e: Event) => void }) {
+  const left = pencilLeft(s);
+  if (!left.length) return null;
+  return <div data-testid="rep-pencil" class="mb-4 rounded-control border border-dashed border-edge p-3 text-sm">
+    <p class="text-ink"><span class="font-semibold">In pencil, still the example’s:</span> {listed(left.map((k) => PENCIL[k].words(s)))}.</p>
+    <p class={`mt-1 ${MUTED}`}>The figure above stands on them. Change any that is not yours; “These are right”, at the end, keeps them.</p>
+    <button type="button" data-testid="rep-pencil-change" class={`mt-2 ${BUTTON}`} onClick={to(PENCIL[left[0]].box)}>Make them yours</button>
   </div>;
 }
 
@@ -685,6 +737,8 @@ function Result({ s, p, cv, update, use, useWay, useRepay, useFix, toField, answ
     {/* The answer as paper, there from load (docs/archive/DESIGN-SITE.md): one tone a meaning, never green under a miss. */}
     <div class="paper shadow-paper rounded-card p-4 sm:p-6">
       {cv && <Carries c={cv} add={() => update((x) => ({ ...x, loan: { ...x.loan, holidayInterest: 'added' } }))} />}
+      {/* Under the figure it bears on: what the front door left on the example (NEW2b). */}
+      <Pencil s={s} to={toField} />
       {/* The answer is the paper's heading (UX7): a flat claim, its rule solid once final and dashed while provisional. */}
       {verdict && <h3 data-testid={`${p.misses ? 'rep-misses' : 'rep-verdict'}-work`} data-answer
         class={`flex items-center gap-2 text-title ${verdict.work.startsWith('Does not') ? 'text-bad' : 'text-ink'} ${answerRule(!p.needs.length)}`}>

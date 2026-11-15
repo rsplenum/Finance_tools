@@ -78,6 +78,9 @@ export interface ReportState {
   heads?: { variable?: Record<string, string>; fixed?: Record<string, string> };
   /** The report's words (REP2, D-AI-02): the three notes, the sections as drafted and changed, and the borrower's tick. */
   words?: ReportWords;
+  /** The facts the front door left on the example's figures (NEW2b, door.ts), each as written: in pencil while unchanged,
+   * until "These are right". Not an input of the report. */
+  pencil?: Record<string, string>;
 }
 /** The notes as typed; the six sections, by AI from them (`ai`) or as the borrower writes; what the check left out; the tick. */
 /** `fromAnswers`: the sections the AI drafted from the other answers, their note left empty (WORDS1). */
