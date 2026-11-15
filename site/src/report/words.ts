@@ -77,20 +77,50 @@ export const W = {
   holiday: 'The holiday runs until then, unless you type another.',
   heads: 'A side with heads typed is added up from them.',
   pending: 'Answer this to finish the report.',
-  viable: 'Whole plans that pass every check, or one change at a time. Each changes your answers; you can undo it.',
-  fix: 'Fix it for me',
+  // The Check step (CHECK1): one flow, each thing said once. The answer, why, the ways that make it work in one list
+  // under one button's words, then the fine-tuning.
+  toWork: 'See the ways to make it work',
+  work: 'Make it work',
+  workLead: 'Each way below meets every benchmark on its own. Pick one: it changes your answers, and you can undo it.',
+  workLeadCash: 'Each way below keeps the cash from running out. Pick one: it changes your answers, and you can undo it.',
+  workLeadBoth: 'Each way below meets every benchmark and keeps the cash from running out, on its own. Pick one: it changes your answers, and you can undo it.',
+  workWait: 'Working out the ways…',
+  workNone: 'No way can be worked out for these figures.',
+  keep: 'Keep the loan you asked for',
+  less: 'Or change the loan', lessOnly: 'Change the loan',
+  repay: 'Repay another way',
+  use: 'Use this',
+  mix: 'A mix of smaller changes',
+  mixAsk: 'Show mixes of smaller changes',
+  mixLead: 'Several small changes together, where one large change is too much.',
+  mixOnly: 'No single change makes it work. These mixes do: each passes every check.',
   fixWait: 'Working it out…',
-  fixLead: 'Up to three whole plans, each passing every check.',
-  fixOne: 'One plan passes every check.',
-  fixMany: 'These plans pass every check. Pick one.',
-  fixUse: 'Use this plan',
   fixNone: 'No plan can be worked out for these figures.',
   fixNearest: 'The nearest',
   fixNearestLead: 'No plan within the limits passes every check. The nearest still leaves these short; each button goes to the figure to change.',
-  one: 'Or change one thing',
-  oneNone: 'No single change makes it work.',
-  adjust: 'Adjust it yourself',
+  met: 'What it meets',
+  cash: 'Not enough cash in hand',
+  years: 'Year by year, against',
+  tune: 'Fine-tune it yourself',
+  ways: 'Ways to repay',
+  room: 'How far can sales fall?',
+  // The download when a benchmark misses or cash runs out: said plainly, the way to mend it first (D-DOC-03: not blocked).
+  docMiss: 'A lender reads the same on its pages.',
+  docAs: 'Or download it as it stands',
+  adjust: 'Try your own changes',
   bars: 'Each ratio in its worst year. The line is the level lenders commonly look for.',
-  sliders: 'Each slider moves one figure, from your figures as they stand. Nothing above changes until you use it.',
+  sliders: 'Each slider moves one figure, from your figures as they stand. The score stays in view as you move them; nothing changes until you use it.',
   most: 'Without it, the sliders take no limit.',
+};
+
+/** The benchmarks in plain words (docs/UX-OVERHAUL.md §4.1): said first, the banker's name after. */
+export const PLAIN: Record<string, string> = {
+  dscrAverage: 'Earns enough to repay, on average', dscrLowest: 'Earns enough to repay, every year', interestCover: 'Profit covers the interest',
+  tolTnw: 'All debts against your own money', debtEquity: 'Long-term loans against your own money', facr: 'Machines and building against the loan left',
+  currentRatio: 'Stock and dues against bills to pay', securityCover: 'Security against the loans',
+};
+/** The same in two or three words, for the score that stays in view under the sliders. */
+export const SHORT: Record<string, string> = {
+  dscrAverage: 'Repays, on average', dscrLowest: 'Repays, every year', interestCover: 'Interest cover', tolTnw: 'All debts',
+  debtEquity: 'Long-term loans', facr: 'Assets to loan', currentRatio: 'Short-term cushion', securityCover: 'Security',
 };

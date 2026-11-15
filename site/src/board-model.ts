@@ -11,6 +11,8 @@ const rupees = (x: number) => inr(x);
 /** A ratio against its level (D-UX-51), in words: the level, its worst year, and whether it meets. */
 export interface CheckRow {
   id: string; label: string; level: string; worst: string; verdict: 'meets' | 'misses' | 'wait';
+  /** The ratio alone, as `worst` begins: for a score in a few words (the report's sliders). None while it cannot be read. */
+  value?: string;
   /** The bar (MV2b): the ratio's length on a track from 0 to twice its level, so the level sits at the middle; 0 to 100. */
   bar: number; at: 'least' | 'most';
   /** When it misses: the rupees its worst year needs, in words (engine/ratios.ts). */
@@ -46,6 +48,7 @@ export const rowOf = (k: RatioCheck, over = 'over the loan'): CheckRow => ({
   id: k.id, label: k.label, level: levelText(k),
   worst: k.na ? k.na : k.why ? `Net worth at or below nil in ${k.fy}` : k.worst === undefined ? (k.id === 'securityCover' ? 'Type the collateral’s value' : '—') : `${ratioAt(k.worst, k)}${k.fy ? ` in ${k.fy}` : ` ${over}`}${k.own ? ' on the project’s own assets' : ''}`,
   verdict: k.meets === undefined ? 'wait' : k.meets ? 'meets' : 'misses', bar: barOf(k), at: k.at,
+  ...(k.na || k.why || k.worst === undefined ? {} : { value: ratioAt(k.worst, k) }),
   ...(shortText(k, over) ? { short: shortText(k, over) } : {}),
   ...(k.byDefault !== undefined ? { byDefault: k.byDefault.toFixed(2), looser: looser(k) } : {}),
 });
