@@ -1444,8 +1444,19 @@ if (touched('/project-report/')) {
   if (await page.getByTestId('rep-work-not').count() || await page.getByTestId('rep-work-change-not').count()) v('the ways that do not reach are still listed (FIX1, D-UX-352)');
   await shortOnce(page, v, 'case R at 70 lakh of sales');
   if (await page.getByTestId('rep-checks').getByText('Interest cover').count() > await page.locator('#benchmarks').getByText('Interest cover').count()) v('a ratio under a cause is listed again below it (D-UX-237)');
+  // The sliders as when it missed (Rahul, 15-11-2026: "there regardless", as they are when the project fails).
+  const ranges = page.locator('[data-testid="rep-plan"] input[type="range"]');
+  await page.getByTestId('rep-levers').click();
+  await ranges.first().waitFor({ timeout: 5000 }).catch(() => {});
+  const slid = await ranges.count();
+  await page.getByTestId('rep-levers').click();
   await page.getByTestId('rep-work-use-sales-0').click();
   await expectFigures(page, v, 'rep-used', '… 70,00,000 … 82,11,000 …', 'the way used, its question left');
+  await page.getByTestId('rep-levers').click();
+  await ranges.first().waitFor({ timeout: 5000 }).catch(() => {});
+  const after = await ranges.count();
+  if (!slid || after !== slid) v(`Fine-tune it yourself: ${slid} sliders while it missed, ${after} once a way is used (Rahul, 15-11-2026: the same, regardless)`);
+  await page.getByTestId('rep-levers').click();
   // The figures changed since the check: it asks again; the tables stay, the downloads wait (OR8).
   await expectText(page, v, 'rep-confirm-lapsed', 'Your figures changed since you checked them: check them again.', 'the check after a way is used');
   if (!(await page.getByTestId('rep-pl').count()) || await page.getByTestId('rep-download-pdf').count()) v('after a change the tables went, or the downloads stayed (OR8)');
