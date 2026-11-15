@@ -185,6 +185,7 @@ The owner's two reference films set the bar and the VID3 path (`docs/video/VID3-
 ## Budgets and actuals, rows moved from HANDOFF
 | Date | Row | Budget | Actual |
 |---|---|---|---|
+| 13-11-2026 | PIC1 (the DSCR's working as pictures, D-UX-365: the targets as bars against their levels, room to move as two bars and an instalment grid, the bank's tests as tiles, a year on a phone as a waterfall, what we filled in as chips) | M | about 150 steps, 3 compactions; no agent. Run the site check with `CHROMIUM_PATH=/opt/pw-browsers/chromium` here |
 | 13-11-2026 | PAPER1b (every Excel copy values only, D-DOC-21: the DSCR's sheets the PDF's parts; the model, `workbook.ts`, the Check sheets and `Figure.formula` removed; `formulaParts` finds none in any copy) | M, Extra | about 95 steps, 2 compactions; no agent. The quick check's browser run passed 590 s here: run it in the background |
 | 13-11-2026 | PAPER1 (the DSCR's three files on trial: page 1 at a glance, "₹" through one embedded face, bookmarks; the Excel model with an evaluator test; Word in step; lazy writers) | L, Extra | 248 steps, 9 compactions; no agent; at budget plus a quarter, with #201's merge. Rewriting the document tests for the new layout took about a fifth; the compactions were the cost of one long session |
 | 09-11-2026 | PLAN1 (the plan from Rahul's thirteen questions: `docs/PLAN.md` and Rahul's page) | none set: Rahul's ask | about 50 steps, 0.3 h, 1 compaction; no agent |
