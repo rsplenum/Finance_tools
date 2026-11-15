@@ -100,7 +100,7 @@ export function Summary({ s, p, update, state, onConfirm, open, setOpen, live, s
       <div class="flex items-baseline justify-between gap-2">
         <h4 id={`sum-${g.id}-h`} class="sum-title">{g.title}</h4>
         {pencil && <span data-testid={`rep-pencil-${g.id}`} class="sum-pencil-tag">✎ In pencil</span>}
-        <a href={`#${g.to}`} onClick={toStep(g.to)} aria-label={`All of it: ${g.title}, in its step`} class={`-my-2 ml-auto inline-flex min-h-6 items-center px-1 text-xs ${MUTED} underline underline-offset-4`}>All of it</a>
+        <a href={`#${g.to}`} onClick={toStep(g.to)} aria-label={`All of it: ${g.title}, in its step`} class={`ml-auto inline-flex min-h-6 items-center px-1 text-xs ${MUTED} underline underline-offset-4`}>All of it</a>
       </div>
       {g.lines.map((l) => <Line key={l.id} l={l} update={update} open={open === l.id} setOpen={setOpen} />)}
       {g.id === 'business' && scheme}
@@ -203,7 +203,7 @@ export function Ratios({ s, p, update, head, w, emphasis, setEmphasis, collatera
           return [<tr key={c.id} data-testid={`rep-check-${c.id}`} data-moved={moved.includes(c.id) || undefined} data-verdict={c.verdict}>
             <th scope="row" class="text-left font-normal"><span class="block text-ink">{PLAIN[c.id] ?? c.label}</span><span class={`block text-xs ${MUTED}`}>{c.label}</span></th>
             <td class="text-right">
-              <button type="button" data-testid={`rep-bm-${c.id}`} aria-expanded={open} aria-label={`${c.label}: benchmark ${c.level}. Change it`}
+              <button type="button" data-testid={`rep-bm-${c.id}`} aria-expanded={open} aria-label={`${short(c)}: the benchmark for ${c.label} (${c.level}). Change it`}
                 class="bm-cell" data-own={c.byDefault !== undefined || undefined} onClick={() => setAt(open ? undefined : c.id)}>{short(c)}</button>
               {c.byDefault !== undefined && <span class={`block text-xs ${c.looser ? 'text-warn' : MUTED}`}>yours; {c.byDefault}{c.looser ? ', looser' : ''}</span>}
             </td>
