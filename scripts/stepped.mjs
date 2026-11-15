@@ -15,7 +15,11 @@ async function stepTo(page, loc) {
     if (st) return st.hidden ? `rep-step-${st.dataset.step}` : null;
     return el.closest('[hidden]') && document.querySelector('[data-testid="rep-step-business"]') ? 'rep-step-business' : null;
   });
-  if (id) await page.getByTestId(id).click();
+  if (!id) return;
+  await page.getByTestId(id).click();
+  // The step's heading takes the focus on the next frame (`go` in Steps.tsx and Report.tsx): an act sent before that
+  // frame loses the focus half-way, so a box filled with '' kept its text about one run in six.
+  await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => done())));
 }
 const steppedLocator = (page, loc) => new Proxy(loc, { get(t, k) {
   const val = t[k];
