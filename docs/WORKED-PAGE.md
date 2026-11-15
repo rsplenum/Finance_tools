@@ -144,7 +144,7 @@ Home, the films and the new modules wait until the tools are right. CHECKS2 is d
 
 ### WRITE1: the report's write-up
 - As `docs/REPORT-GRADE.md` §4 and §7. "Draft the words" becomes **The write-up**, the fifth step of six: the engine writes what reads the figures, the AI drafts what describes (the business and its promoters; products, process and market; the risks), the user reads, changes and confirms each section. An unconfirmed section stays out of the paper (D-AI-03).
-- **Figure slots**, on Rahul's yes (§8 there): the catalogue as one pure engine function, `fill` and the digit check in the engine, on the Worker and on the page; findings with `claim`, each tested true and false. The AI is sent slot names and findings in words, never an amount. Without the yes, the row ships with D-AI-02's "no figure" as it stands.
+- **Figure slots**, Rahul's yes of 15-11-2026 (D-DOC-23): the catalogue as one pure engine function, `fill` and the digit check in the engine, on the Worker and on the page; findings with `claim`, each tested true and false. The AI is sent slot names and findings in words, never an amount. Without the yes, the row ships with D-AI-02's "no figure" as it stands.
 - **Nothing required** (rule 17): notes, deeper detail and photos are offered. Photos are made smaller and re-saved on the device, kept in IndexedDB; none is sent.
 - Traps: `tests/narrative.test.ts` and WORDS1's two checks (no figure in a blank; nothing the borrower never typed) stay; the privacy page's words (a draft for the lawyer); never a "TEV study".
 

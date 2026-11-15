@@ -40,7 +40,7 @@ The build prints `{"pages":15,…,"overflow":[]}`; a page that runs over is name
 
 ## 4. Figure slots: how AI words carry the engine's figures (rule 12)
 
-Today a draft may hold no figure (D-AI-02), so its words read thin. The answer keeps rule 12 to the letter and sets that line of D-AI-02 aside, **on Rahul's yes** (§8).
+Today a draft may hold no figure (D-AI-02), so its words read thin. The answer keeps rule 12 to the letter and sets that line of D-AI-02 aside, **on Rahul's yes of 15-11-2026** (D-DOC-23).
 
 - **A slot** is a name in the text: `{dscr.low}`, `{dscr.low.fy}`, `{loan}`. The writer, a person or the AI, never types a digit. The catalogue is one pure engine function (the specimen's `SLOT` in `build.cjs` is the start), each value formatted as the paper prints it.
 - **`fill(text, slots)`** puts the engine's figure in each slot, and throws on an unknown slot and on any digit outside a slot. Three things are not figures: a cross-reference ("note 2", "Exhibit 10", "Section 8"), the user's own typed words, and a blank still to fill (D-AI-03).
@@ -80,11 +80,11 @@ Our PDF writer draws text, tables and bars, and each new look costs three writer
 - **No market figure of ours** (rule 13): the market is the promoter's words; sourced public figures are a later row.
 - **Names.** The paper is the promoters' project report, prepared by them with FinSight's help on the words, with no opinion on the loan. Never a "TEV study": lenders use that name for an independent consultant's report. Never an architect (rule 21).
 
-## 8. Waits on Rahul
+## 8. Rahul's answers, and what still waits
 
-1. **May the paper be made on our server at the download?** The answers and photos travel for the seconds it takes and nothing is kept; the reading stays on the device. Recommended: yes. Without it the gate is an honour gate.
-2. **May AI words carry the engine's figures through slots?** Recommended: yes.
-3. When their rows come: the price and what one payment covers; the name "The write-up"; that its step has no required question.
+1. **The paper made on our server at the download:** yes (15-11-2026, D-DOC-23). The answers and photos travel for the seconds it takes and nothing is kept; the reading stays on the device.
+2. **AI words carry the engine's figures through slots:** yes (15-11-2026, D-DOC-23).
+3. Still to come, when their rows come: their rows come: the price and what one payment covers; the name "The write-up"; that its step has no required question.
 
 ## 9. What held us back, and the answer to each
 
