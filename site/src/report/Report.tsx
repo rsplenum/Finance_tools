@@ -18,11 +18,11 @@ import { PLAIN, SHORT, W } from './words';
 import { SHARED } from '../words';
 import { REPORT_HOME } from './home-case';
 import { reportExample } from './example';
-import { DOOR, PENCIL, doorProblem, doorReads, doorState, pencilLeft, type DoorFacts, type DoorId } from './door';
+import { DOOR, doorProblem, doorReads, doorState, type DoorFacts, type DoorId } from './door';
 import { Ask, type AskQuestion } from '../worked/Ask';
 import { MAIN, QUIET } from '../worked/parts';
-import { Bar, Benchmarks, Lever, PlanLever } from '../Board';
-import { benchmarkFields, inSentence, listed, withBenchmark } from '../board-model';
+import { Lever, PlanLever } from '../Board';
+import { inSentence, listed } from '../board-model';
 import { printable } from '../doc/face';
 import { sectionPages } from '../doc/layout';
 import { isoDate } from '../download';
@@ -32,13 +32,15 @@ import { sureLower, type Marked } from '../../../engine/sure';
 import { allNeeds, docNeeds, docStatus, fileName, paperDoc, PARTS, reportDoc } from './document';
 import { Words } from './Words';
 import { FixIt } from './FixIt';
-import { CheckStep } from '../CheckStep';
+import { Live, Outline, Ratios, Summary, WhatIf } from './CheckPage';
+import type { CheckState } from '../CheckStep';
+import { pencilCount } from './check';
 import { Downloads } from '../Downloads';
 import {
   CGFMU, CGTMSE, MUDRA, PMEGP, PMEGP_SHED, REPORT_REVIEW_BY, pmegpConditions, ACTIVITY_CHOICES, AREA_CHOICES, BORROWER_CHOICES, CATEGORY_CHOICES, EMPTY, HEADS, NO_PRODUCT, REPAYMENT_CHOICES, HOLIDAY_INTEREST_CHOICES, SCHEME_CHOICES,
   COST_HEADS, MODE_CHOICES, SECURITY_CHOICES, SIMPLE_COST, WC_CHOICES, changedOf, headsSum, holidayAssumed, periodLine, repaymentView, wcByOf, withMode, workedLine, type Mode,
   AS_TYPED, COLLATERAL_HINT, withProperty, amountOf, applyPlan, applySolution, assumptionsOf, boardOf, applyWay, answerPending, PENDING, workView, guaranteeOf, mudraLine, plainOf, planOf, preview, sameLevers, statusText, tarunAsked, tidyAmount, undoPlan, viableOf,
-  checkKey, checkOf, carryView, heldOf, applyRepay, type CheckRow, type Repayment, type CarryView, type FixCard, type LeverId, type Levers, type PlanChange, type WorkCard, type WorkView, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
+  checkKey, carryView, heldOf, applyRepay, type CheckRow, type Repayment, type CarryView, type FixCard, type LeverId, type Levers, type PlanChange, type WorkCard, type WorkView, type PlanView, type ReportFacts, type ReportPreview, type ReportState,
   type ViableView, type ViewRow, type ViewTable,
 } from './model';
 
@@ -214,7 +216,7 @@ export function ReportCalculator() {
   const [checked, setChecked] = useState<string>();
   const [seen, setSeen] = useState(false);
   const ok = checked === key;
-  const confirm = () => { setChecked(key); setSeen(true); if (s.pencil) update((x) => ({ ...x, pencil: undefined })); focusNext('[data-testid="rep-confirmed"] > summary'); };
+  const confirm = () => { setChecked(key); setSeen(true); if (s.pencil) update((x) => ({ ...x, pencil: undefined })); focusNext('[data-testid="rep-confirmed"]'); };
   const undo = () => { setS((x) => undoPlan(x, used)); setUsed([]); };
   // Clear all, with an undo until the next figure is typed (review finding 5), as on every tool (UXR5b, S16).
   const c = useStart('rep', s, setS, () => blank, () => reportExample(), () => { setUsed([]); setChecked(undefined); setSeen(false); });
@@ -350,7 +352,7 @@ export function ReportCalculator() {
   return <>{id && <Ask q={doorQuestion(id, facts)} at={(asking ?? 0) + 1} of={DOOR.length} words={ASK_WORDS}
     problem={(t) => doorProblem(id, t, facts)} reads={(t) => doorReads(id, t, facts)} onAnswer={(t) => answered(id, t)}
     onBack={() => setAsking(asking ? asking - 1 : undefined)} />}
-  <div ref={root} data-builder class="builder" onClickCapture={linked}>
+  <div ref={root} data-builder data-at={step} class="builder" onClickCapture={linked}>
     <div class="builder-ask">
       {door ? <Door start={walk} example={c.fill} /> : <StartLine c={c} home={home} />}
       <nav aria-label="Steps" data-steps class="mt-4">
@@ -550,10 +552,8 @@ export function ReportCalculator() {
           <div id="words"><Words s={s} update={update} /></div>
         </>)}
         {stepOf('check', <>
-          <Result s={s} p={p} cv={cv} update={update} use={use} useWay={useWay} useRepay={useRepay} useFix={useFix} toField={toField} answer={answer} used={used} counts={fixNote?.on === used ? fixNote.text : undefined} undo={undo} keep={() => setUsed([])} toCollateral={toCollateral} toBox={toBox} ok={ok} />
-          {figures && <CheckStep pre="rep" groups={checkOf(s, p)} to="benchmarks" state={ok ? 'done' : checked ? 'lapsed' : 'open'}
-            benchmarks={(p.checks ?? []).map((c) => ({ label: c.label, value: c.byDefault === undefined ? c.level : `${c.level}, yours (default ${c.byDefault}${c.looser ? ', looser than a bank may accept' : ''})` }))}
-            confirm="These are right" onConfirm={confirm} />}
+          <Result s={s} p={p} cv={cv} update={update} use={use} useWay={useWay} useRepay={useRepay} useFix={useFix} toField={toField} answer={answer} used={used} counts={fixNote?.on === used ? fixNote.text : undefined} undo={undo} keep={() => setUsed([])} toCollateral={toCollateral} toBox={toBox} ok={ok}
+            state={ok ? 'done' : checked ? 'lapsed' : 'open'} onConfirm={confirm} openPaper={openPaper}>
           <Download s={s} p={p} ok={ok} />
           {/* The statements on the screen only once the pages are open (PAY1; ?paper=open for now): locked, the report is not
               shown whole to be copied (Rahul's review of NEW2, point 1). */}
@@ -562,6 +562,7 @@ export function ReportCalculator() {
             const to = ASSUMED_BOX[a.id];
             return { ...a, to, go: to && simple && !IN_SIMPLE.has(to) ? toExpert(to) : undefined };
           })} /></How>
+          </Result>
         </>)}
       </div>
       {/* The mode is the report's More options (UXR1's S12, S19): under the questions of each step, closed while simple. */}
@@ -617,17 +618,6 @@ const DOOR_ASK: Record<DoorId, Omit<AskQuestion, 'id' | 'value'>> = {
   left: { question: 'What is left of that in a year, after running costs?', hint: 'Sales less materials, wages, power, rent and the like; before interest, depreciation and tax.', unit: '₹' },
 };
 const doorQuestion = (id: DoorId, f: DoorFacts): AskQuestion => ({ id, value: f[id] ?? '', ...DOOR_ASK[id] });
-
-/** What the front door left on the example (NEW2b): listed on the check until changed, or kept with "These are right". */
-function Pencil({ s, to }: { s: ReportState; to: (id: string) => (e: Event) => void }) {
-  const left = pencilLeft(s);
-  if (!left.length) return null;
-  return <div data-testid="rep-pencil" class="mb-4 rounded-control border border-dashed border-edge p-3 text-sm">
-    <p class="text-ink"><span class="font-semibold">In pencil, still the example’s:</span> {listed(left.map((k) => PENCIL[k].words(s)))}.</p>
-    <p class={`mt-1 ${MUTED}`}>The figure above stands on them. Change any that is not yours; “These are right”, at the end, keeps them.</p>
-    <button type="button" data-testid="rep-pencil-change" class={`mt-2 ${BUTTON}`} onClick={to(PENCIL[left[0]].box)}>Make them yours</button>
-  </div>;
-}
 
 const head = (label: string, key: string | number) => <p key={key} class={`pt-2 text-xs font-semibold tracking-wide uppercase ${MUTED}`}>{label}</p>;
 const line = (label: string, value: string | undefined, kind: ViewRow['kind'], key: string | number) =>
@@ -690,10 +680,11 @@ const mendable = (p: ReportPreview) => !!p.view && !p.blocked && (!!p.short || !
  * once, the misses first under their cause with the rupees short. Under the paper, "Make it work": every way in one list,
  * each with the same "Use this" and the same undo; then the fine-tuning, closed. The status shows only while a question
  * is left: "All questions answered" beside a miss read as a pass. */
-function Result({ s, p, cv, update, use, useWay, useRepay, useFix, toField, answer, used, counts, undo, keep, toCollateral, toBox, ok }: {
+function Result({ s, p, cv, update, use, useWay, useRepay, useFix, toField, answer, used, counts, undo, keep, toCollateral, toBox, ok, state, onConfirm, openPaper, children }: {
   s: ReportState; p: ReportPreview; cv?: CarryView; update: Update; use: (l: Levers) => void; useWay: (w: WorkCard) => void; useRepay: (r: RepayRow) => void;
   useFix: (c: FixCard) => void; toField: (id: string) => (e: Event) => void; answer: (t: string) => void; used: PlanChange[]; counts?: string; undo: () => void;
   keep: () => void; toCollateral: (e: Event) => void; toBox: (need: string) => (e: Event) => void; ok: boolean;
+  state: CheckState; onConfirm: () => void; openPaper: () => void; children: ComponentChildren;
 }) {
   const v = p.view, figures = !!v && !p.blocked, verdict = verdictOf(p), own = figures && !p.needs.length ? docNeeds(s.doc, s.words) : [];
   const result = p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready';
@@ -718,60 +709,102 @@ function Result({ s, p, cv, update, use, useWay, useRepay, useFix, toField, answ
     return q && q.view && !q.blocked && !q.misses && !q.short ? r : undefined;
   }, [ways, ask]);
   const pending = s.pending ? PENDING[s.pending] : undefined;
-  return <section id="report" aria-labelledby="report-h" class="mt-4">
+  // The figure being changed in place (D-UX-372): on a phone the rest of the page dims to it; a tap outside finishes it.
+  const [editing, setEditing] = useState<string>();
+  // "Change the benchmarks": the table's benchmarks stand out as what to tap (the third way in, from Fine-tune too).
+  const [bm, setBm] = useState(false);
+  const toBenchmarks = (e?: Event) => {
+    e?.preventDefault(); setBm(true);
+    requestAnimationFrame(() => {
+      const t = document.getElementById('benchmarks');
+      t?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+      t?.focus({ preventScroll: true });
+    });
+  };
+  const pencils = pencilCount(s);
+  // Met on the project's own assets, the cover reads once: no note, no ask (UX5b, the critic's finding 3).
+  const collateral = (c: CheckRow) => (p.collateralNote || (!s.collateral.trim() && c.verdict !== 'meets')) && <p data-testid="rep-collateral-note" class={HINT}>
+    {p.collateralNote}{!s.collateral.trim() && <>{p.collateralNote ? ' ' : ''}<a href="#fld-collateral" data-testid="rep-to-collateral" onClick={toCollateral}
+      class="text-link underline underline-offset-4">Type its market value</a>.</>}</p>;
+  // What the scheme and the guarantee add, once (CHECK1), beside the scheme in the summary's business section.
+  const schemeNotes = figures && scheme.length > 0 && <dl data-testid="rep-scheme" class="mt-3 space-y-2 border-t border-line pt-3 text-sm">{scheme.map((k) => <div key={k.label}>
+    <dt class="text-ink-muted">{k.label}</dt>
+    <dd class="font-medium tabular-nums text-ink">{k.value}</dd>
+    <dd class={HINT}>{k.note}</dd>
+  </div>)}</dl>;
+  const outline = [
+    { id: 'check', label: 'Your figures', ...(pencils ? { mark: `✎ ${pencils}` } : {}) }, { id: 'benchmarks', label: 'The benchmark ratios' }, { id: 'what-if', label: 'What if' },
+    ...(ask ? [{ id: 'make-it-work', label: W.work }] : []), { id: 'fine-tune', label: W.tune }, { id: 'download', label: 'Download' },
+  ];
+  // From 1024 px the answer stands at the left as the page scrolls past it (D-UX-372): the figure, the verdict, what is
+  // left, the report's parts as links and its pages; on a phone the same block heads the page and the links fold away.
+  return <section id="report" aria-labelledby="report-h" class="check-page mt-4" data-editing={editing ? '' : undefined}>
     <h2 id="report-h" tabIndex={-1} class="sr-only">The project report</h2>
-    {used.length > 0 && <div data-testid="rep-used" role="status" class="mb-3 rounded-control border-l-4 border-ink bg-surface p-3">
-      <p class="font-medium text-ink">Used: these figures changed.</p>
-      {counts && <p data-testid="rep-used-counts" class="mt-1 text-sm font-medium text-good">{counts}</p>}
-      <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink tabular-nums">{used.map((c) => <li key={c.key}>{c.text ?? `${c.label}: ${c.was || 'none'} → ${c.now}`}</li>)}</ul>
-      <div class="mt-2 flex flex-wrap gap-2">
-        <button type="button" data-testid="rep-undo" class={BUTTON} onClick={undo}>Undo</button>
-        <button type="button" data-testid="rep-keep" class={BUTTON} onClick={keep}>Keep these</button>
+    <div class="check-rail">
+      {used.length > 0 && <div data-testid="rep-used" role="status" class="mb-3 rounded-control border-l-4 border-ink bg-surface p-3">
+        <p class="font-medium text-ink">Used: these figures changed.</p>
+        {counts && <p data-testid="rep-used-counts" class="mt-1 text-sm font-medium text-good">{counts}</p>}
+        <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink tabular-nums">{used.map((c) => <li key={c.key}>{c.text ?? `${c.label}: ${c.was || 'none'} → ${c.now}`}</li>)}</ul>
+        <div class="mt-2 flex flex-wrap gap-2">
+          <button type="button" data-testid="rep-undo" class={BUTTON} onClick={undo}>Undo</button>
+          <button type="button" data-testid="rep-keep" class={BUTTON} onClick={keep}>Keep these</button>
+        </div>
+      </div>}
+      {/* A question the way just used left open (D-UX-252 (1)): asked at once, above the answer it holds back. */}
+      {pending && <div data-testid="rep-pending" class="mb-3 rounded-control border-l-4 border-warn bg-surface p-3">
+        <TextField id="fld-pending" label={pending.label} hint={`${W.pending} ${pending.hint}`}
+          unit="₹" inputMode="decimal" value="" tidy={tidyAmount} onCommit={answer} />
+      </div>}
+      {/* The answer as paper (Rahul, 15-11-2026): the largest loan, then the verdict in a word with the why below, then
+          what to keep ready. One tone a meaning, never green under a miss. */}
+      <div class="paper shadow-paper rounded-card p-4 sm:p-6 lg:p-5">
+        {cv && <Carries c={cv} ready={false} add={() => update((x) => ({ ...x, loan: { ...x.loan, holidayInterest: 'added' } }))} />}
+        {verdict && <div class={`flex flex-wrap items-baseline gap-x-3 gap-y-1 ${answerRule(!p.needs.length)}`}>
+          <h3 data-testid={`${p.misses ? 'rep-misses' : 'rep-verdict'}-work`} data-answer
+            class={`flex items-center gap-2 text-title ${verdict.work.startsWith('Does not') ? 'text-bad' : 'text-ink'}`}>
+            {verdict.work === 'Works' && <Tick />}{verdict.work}</h3>
+          {figures && p.checks && <a href="#benchmarks" data-testid="rep-to-ratios" class="text-sm text-link underline underline-offset-4">Scroll to find out<span aria-hidden="true"> ↓</span></a>}
+        </div>}
+        {cv?.keepReady && <p data-testid="rep-carry-ready" class="mt-2 font-medium text-warn">{cv.keepReady}</p>}
+        {figures && pencils > 0 && <p data-testid="rep-pencil" class={`mt-2 text-sm ${MUTED}`}>
+          <a href="#check" class="text-link underline underline-offset-4">{pencils === 1 ? '1 figure is' : `${pencils} figures are`} still the example’s</a>: marked ✎ in your figures below.</p>}
+        {ask && <a href="#make-it-work" data-testid="rep-to-work" class={`mt-3 inline-flex items-center ${FILLED}`} onClick={toWork}>{W.toWork}</a>}
+        {(!figures || p.needs.length > 0 || own.length > 0) && <Counter id="rep-status" result={result} text={v ? docStatus(s, p) : statusText(p)} rule={!verdict} answer={!verdict}
+          class={verdict ? 'mt-3' : ''} plain={!!verdict} go={goOf(s, p, toBox, ok)}>
+          {/* One child, so the status stays one line when nothing is left (Counter reads any child as a list). */}
+          {p.needs.length > 0 ? <ul data-testid="rep-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => {
+            const b = boxOf(n);
+            return <li key={n}>{b ? <a href={`#${b[1]}`} onClick={toBox(n)} class="inline-flex min-h-6 items-center text-link">{n}</a> : n}</li>;
+          })}</ul> : own.length > 0 && <ul data-testid="rep-doc-left" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map(docItem)}</ul>}
+        </Counter>}
+        {p.blocked && <p role="alert" class={`mt-3 ${answerRule(true)} text-ink`}>{p.blocked}</p>}
+        {p.ready && <p data-testid="rep-idc-ready" class="mt-3 text-sm text-ink">{p.ready}</p>}
+        {p.flags.length > 0 && <ul data-testid="rep-flags" class="mt-3 list-disc space-y-0.5 pl-5 text-sm text-warn">{p.flags.map((n) => <li key={n}>{n}</li>)}</ul>}
       </div>
-    </div>}
-    {/* A question the way just used left open (D-UX-252 (1)): asked at once, above the answer it holds back. */}
-    {pending && <div data-testid="rep-pending" class="mb-3 rounded-control border-l-4 border-warn bg-surface p-3">
-      <TextField id="fld-pending" label={pending.label} hint={`${W.pending} ${pending.hint}`}
-        unit="₹" inputMode="decimal" value="" tidy={tidyAmount} onCommit={answer} />
-    </div>}
-    {/* The answer as paper, there from load (docs/archive/DESIGN-SITE.md): one tone a meaning, never green under a miss. */}
-    <div class="paper shadow-paper rounded-card p-4 sm:p-6">
-      {cv && <Carries c={cv} add={() => update((x) => ({ ...x, loan: { ...x.loan, holidayInterest: 'added' } }))} />}
-      {/* Under the figure it bears on: what the front door left on the example (NEW2b). */}
-      <Pencil s={s} to={toField} />
-      {/* The answer is the paper's heading (UX7): a flat claim, its rule solid once final and dashed while provisional. */}
-      {verdict && <h3 data-testid={`${p.misses ? 'rep-misses' : 'rep-verdict'}-work`} data-answer
-        class={`flex items-center gap-2 text-title ${verdict.work.startsWith('Does not') ? 'text-bad' : 'text-ink'} ${answerRule(!p.needs.length)}`}>
-        {verdict.work === 'Works' && <Tick />}{verdict.work}</h3>}
-      {ask && <a href="#make-it-work" data-testid="rep-to-work" class={`mt-3 inline-flex items-center ${FILLED}`} onClick={toWork}>{W.toWork}</a>}
-      {(!figures || p.needs.length > 0 || own.length > 0) && <Counter id="rep-status" result={result} text={v ? docStatus(s, p) : statusText(p)} rule={!verdict} answer={!verdict}
-        class={verdict ? 'mt-3' : ''} plain={!!verdict} go={goOf(s, p, toBox, ok)}>
-        {/* One child, so the status stays one line when nothing is left (Counter reads any child as a list). */}
-        {p.needs.length > 0 ? <ul data-testid="rep-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{p.needs.map((n) => {
-          const b = boxOf(n);
-          return <li key={n}>{b ? <a href={`#${b[1]}`} onClick={toBox(n)} class="inline-flex min-h-6 items-center text-link">{n}</a> : n}</li>;
-        })}</ul> : own.length > 0 && <ul data-testid="rep-doc-left" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map(docItem)}</ul>}
-      </Counter>}
-      {p.blocked && <p role="alert" class={`mt-3 ${answerRule(true)} text-ink`}>{p.blocked}</p>}
-      {p.ready && <p data-testid="rep-idc-ready" class="mt-3 text-sm text-ink">{p.ready}</p>}
-      {p.flags.length > 0 && <ul data-testid="rep-flags" class="mt-3 list-disc space-y-0.5 pl-5 text-sm text-warn">{p.flags.map((n) => <li key={n}>{n}</li>)}</ul>}
-      {figures && verdict && p.checks && <Score s={s} p={p} head={verdict.head} w={w} toCollateral={toCollateral} />}
-      {/* What the scheme and the guarantee add, once (CHECK1): the cost is in the check of figures, the DSCRs in the score. */}
-      {figures && scheme.length > 0 && <dl data-testid="rep-scheme" class="mt-4 space-y-2 border-t border-line pt-3 text-sm">{scheme.map((k) => <div key={k.label}>
-        <dt class="text-ink-muted">{k.label}</dt>
-        <dd class="font-medium tabular-nums text-ink">{k.value}</dd>
-        <dd class={HINT}>{k.note}</dd>
-      </div>)}</dl>}
+      {figures && <div class="check-rail-more">
+        <Outline items={outline} />
+        <div class="mt-4 flex flex-wrap gap-2">
+          <button type="button" data-testid="rep-rail-paper" class={BUTTON} onClick={openPaper}>See the pages</button>
+          <a href="#download" data-testid="rep-rail-download" class={`inline-flex items-center ${BUTTON}`}>Download</a>
+        </div>
+      </div>}
     </div>
-    {ask && <Work s={s} p={p} w={w} waiting={work?.on !== wbase} repay={repay} useWay={useWay} useRepay={useRepay} useFix={useFix} toField={toField} />}
-    {figures && <Tune s={s} p={p} base={base} ways={ways} update={update} use={use} />}
+    <div class="check-main">
+      {figures && <Summary s={s} p={p} update={update} state={state} onConfirm={onConfirm} open={editing} setOpen={setEditing}
+        live={<Live cv={cv} work={verdict?.work} />} scheme={schemeNotes} toStep={toField} />}
+      {figures && verdict && p.checks && <Ratios s={s} p={p} update={update} head={verdict.head} w={w} emphasis={bm} setEmphasis={setBm} collateral={collateral} />}
+      {figures && p.checks && <WhatIf s={s} names={Object.fromEntries(p.checks.map((c) => [c.id, c.label]))} />}
+      {ask && <Work s={s} p={p} w={w} waiting={work?.on !== wbase} repay={repay} useWay={useWay} useRepay={useRepay} useFix={useFix} toField={toField} />}
+      {figures && <Tune s={s} p={p} base={base} ways={ways} update={update} use={use} toBenchmarks={toBenchmarks} />}
+      {children}
+    </div>
   </section>;
 }
 
 /** What the business can carry, first (CAP1, docs/CAPACITY-FIRST.md §4 rule 1): the figure beside the loan asked, one bar
  * (the loan carried in ink, the gap to the loan asked dashed, the asked a line, as the ratios' bars) and the tightest
  * year. What closes the gap is "Make it work", said once there (CHECK1). */
-function Carries({ c, add }: { c: CarryView; add: () => void }) {
+function Carries({ c, add, ready = true }: { c: CarryView; add: () => void; ready?: boolean }) {
   return <div data-testid="rep-carry" class="mb-4">
     <p data-testid="rep-carry-line" class="text-title text-ink">{c.line}</p>
     <div aria-hidden="true" class="relative mt-2 h-3 rounded-full bg-surface">
@@ -780,48 +813,10 @@ function Carries({ c, add }: { c: CarryView; add: () => void }) {
       <div class="absolute -inset-y-1 w-0.5 bg-ink" style={{ left: `calc(${c.asked}% - 2px)` }} />
     </div>
     <p data-testid="rep-carry-how" class="mt-1 text-sm text-ink-muted">{c.how}</p>
-    {c.keepReady && <p data-testid="rep-carry-ready" class="mt-1 text-sm font-medium text-warn">{c.keepReady}</p>}
+    {ready && c.keepReady && <p data-testid="rep-carry-ready" class="mt-1 text-sm font-medium text-warn">{c.keepReady}</p>}
     {c.addInterest && <p data-testid="rep-carry-add-interest" class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
       <span class="text-sm text-ink">{c.addInterest.text}</span><span class={`text-sm ${MUTED}`}>{c.addInterest.reach}</span>
       <button type="button" data-testid="rep-carry-use-interest" class={`ml-auto ${BUTTON}`} onClick={add}>{W.use}</button></p>}
-  </div>;
-}
-
-/** Every benchmark once (D-UX-237): the misses first, under what causes them, each with its bar and the rupees its
- * worst year is short; cash running out as a cause of its own (D-UX-247); then what it meets, in words alone while
- * anything misses, so the eye goes to the misses. The plain name leads, the banker's follows (docs/UX-OVERHAUL.md §4.1). */
-function Score({ s, p, head, w, toCollateral }: { s: ReportState; p: ReportPreview; head: string; w?: WorkView; toCollateral: (e: Event) => void }) {
-  const checks = p.checks ?? [], held = heldOf(checks), caused = new Set(held.flatMap((h) => h.rows.map((r) => r.id)));
-  const rest = checks.filter((c) => c.verdict !== 'meets' && !caused.has(c.id)), met = checks.filter((c) => c.verdict === 'meets');
-  const some = held.length + rest.length > 0 || !!p.short;
-  const row = (c: CheckRow, slim?: boolean) => <Bar key={c.id} c={c} plain={PLAIN[c.id]} slim={slim}>
-    {/* Met on the project's own assets, the cover reads once: no note, no ask (UX5b, the critic's finding 3). */}
-    {c.id === 'securityCover' && (p.collateralNote || (!s.collateral.trim() && c.verdict !== 'meets')) && <p data-testid="rep-collateral-note" class={HINT}>
-      {p.collateralNote}{!s.collateral.trim() && <>{p.collateralNote ? ' ' : ''}<a href="#fld-collateral" data-testid="rep-to-collateral" onClick={toCollateral}
-        class="text-link underline underline-offset-4">Type its market value</a>.</>}</p>}
-  </Bar>;
-  return <div data-testid="rep-checks" class="mt-5 border-t border-line pt-4">
-    <h3 data-testid={p.misses ? 'rep-misses' : 'rep-verdict'} class="font-medium text-ink">{head}</h3>
-    {p.benchmarks && <p data-testid="rep-benchmarks-note" class="mt-1 text-sm text-warn">{p.benchmarks}</p>}
-    {held.map((h) => <div key={h.cause} data-testid={`rep-cause-${h.cause}`} class="mt-3">
-      <p class="font-medium text-bad">{h.head}</p>
-      <p class="text-sm text-ink">{h.text}</p>
-      <ul class="mt-1 divide-y divide-line">{h.rows.map((c) => row(c))}</ul>
-      {h.cause === 'earns' && w && w.years.length > 0 && <>
-        <p class={`mt-1 text-xs ${MUTED}`}>{W.years} {w.dscrLevel}</p>
-        <ul data-testid="rep-work-years" class="flex flex-wrap gap-x-4 gap-y-0.5 text-sm tabular-nums">{w.years.map((y) => <li key={y.fy}>
-          <span class={MUTED}>{y.fy}{y.months < 12 ? ` (${y.months} months)` : ''}</span> <span class={tone(y.meets)}>{y.dscr}</span></li>)}</ul>
-      </>}
-    </div>)}
-    {p.short && <div data-testid="rep-cause-cash" class="mt-3">
-      <p class="font-medium text-bad">{W.cash}</p>
-      <p data-testid="rep-short" class="text-sm text-ink">{p.short}</p>
-    </div>}
-    {rest.length > 0 && <ul class="mt-3 divide-y divide-line">{rest.map((c) => row(c))}</ul>}
-    {met.length > 0 && <>
-      {some && <h4 class="mt-4 text-sm font-medium text-ink">{W.met}</h4>}
-      <ul class="mt-1 divide-y divide-line">{met.map((c) => row(c, some))}</ul>
-    </>}
   </div>;
 }
 
@@ -871,8 +866,8 @@ function Work({ s, p, w, waiting, repay, useWay, useRepay, useFix, toField }: {
  * the slider that changed them (the owner's note 10; the design lesson "the answer stays in view of the control that
  * changes it"). The ways to repay compared (OR5), the benchmarks (BEN1), and with every level met, how far sales can
  * fall (D-UX-50). */
-function Tune({ s, p, base, ways, update, use }: {
-  s: ReportState; p: ReportPreview; base: string; ways?: ReturnType<typeof repaymentView>; update: Update; use: (l: Levers) => void;
+function Tune({ s, p, base, ways, update, use, toBenchmarks }: {
+  s: ReportState; p: ReportPreview; base: string; ways?: ReturnType<typeof repaymentView>; update: Update; use: (l: Levers) => void; toBenchmarks: (e: Event) => void;
 }) {
   const [worked, setV] = useState<{ on: string; v: ViableView }>();
   const [planned, setPlan] = useState<{ on: string; plan: PlanView | undefined }>();
@@ -907,9 +902,9 @@ function Tune({ s, p, base, ways, update, use }: {
       <ul class="mt-1 space-y-2">{cs.map((c) => <PlanLever key={c.id} id={c.id} head={c.head} m={b.moves[c.id]} value={lv[c.id]} set={(n) => move(c.id, n)} />)}</ul>
     </>;
   };
-  const mark = (c: CheckRow) => (c.verdict === 'meets' ? ['✓', 'Meets', 'text-good'] : c.verdict === 'misses' ? ['✕', 'Misses', 'text-bad'] : ['–', 'Not read yet', MUTED]);
-  return <section data-testid="rep-tune" aria-labelledby="rep-tune-h" class="mt-8">
-    <h3 id="rep-tune-h" class="text-title text-ink">{W.tune}</h3>
+  const mark = (c: CheckRow) => (c.verdict === 'meets' ? ['✓', 'Meets', 'text-good'] : c.verdict === 'misses' ? ['✗', 'Misses', 'text-bad'] : ['–', 'Not read yet', MUTED]);
+  return <section id="fine-tune" data-testid="rep-tune" aria-labelledby="rep-tune-h" class="mt-8">
+    <h3 id="rep-tune-h" class="text-title text-ink">{p.misses ? `Or ${W.tune.toLowerCase()}` : W.tune}</h3>
     {p.misses && <details data-testid="rep-sliders" class="mt-2" open={open} onToggle={(e) => setOpenOn((e.currentTarget as HTMLDetailsElement).open ? base : undefined)}>
       <summary data-testid="rep-levers" class={FOLD}>{W.adjust}</summary>
       {plan && b && <div data-testid="rep-plan">
@@ -923,14 +918,19 @@ function Tune({ s, p, base, ways, update, use }: {
             moves, in two or three words each. Only its first line is read out as it changes. */}
         <div data-testid="rep-plan-line" data-pinned-score class="sticky z-[5] mt-3 border-y border-line bg-canvas py-2" style={{ bottom: 'var(--builder-bar-h, 0px)' }}>
           <p data-testid="rep-plan-count" aria-live="polite" class={`text-sm font-medium ${tone(b.works && !b.cash)}`}>With these changes: {b.count}</p>
-          {b.checks && <ul class="mt-1 grid grid-cols-2 gap-x-4 gap-y-0.5 sm:grid-cols-4">{b.checks.map((c) => {
-            const [sign, said, ink] = mark(c);
-            return <li key={c.id} data-testid={`rep-plan-chip-${c.id}`} class="flex items-baseline gap-1 text-xs">
-              <span aria-hidden="true" class={ink}>{sign}</span><span class="sr-only">{said}: </span>
-              <span class={`min-w-0 truncate ${MUTED}`}>{SHORT[c.id] ?? c.label}</span>
-              <span class={`ml-auto font-medium tabular-nums ${ink}`}>{c.value ?? '—'}</span>
-            </li>;
-          })}</ul>}
+          {/* The ratio table follows the sliders down (Rahul, 15-11-2026): each benchmark, its figure as they move, ✓ or ✗. */}
+          {b.checks && <table class="plan-table mt-1 w-full border-collapse text-xs">
+            <thead class="sr-only"><tr><th scope="col">Ratio</th><th scope="col">Benchmark</th><th scope="col">With these changes</th></tr></thead>
+            <tbody class="grid grid-cols-1 gap-x-6 sm:grid-cols-2">{b.checks.map((c) => {
+              const [sign, said, ink] = mark(c);
+              return <tr key={c.id} data-testid={`rep-plan-chip-${c.id}`} class="flex items-baseline gap-2">
+                <th scope="row" class={`min-w-0 flex-1 truncate text-left font-normal ${MUTED}`}>{SHORT[c.id] ?? c.label}</th>
+                <td class={`tabular-nums ${MUTED}`}>{c.level.replace(/ or more$/, '+').replace(/ or less$/, ' max')}</td>
+                <td class={`w-14 text-right font-medium tabular-nums ${ink}`}><span class="sr-only">{said}: </span>{c.value ?? '—'}</td>
+                <td aria-hidden="true" class={`w-3 ${ink}`}>{sign}</td>
+              </tr>;
+            })}</tbody>
+          </table>}
         </div>
         {b.steps.length > 0 && <ol data-testid="rep-plan-steps" class="mt-3 list-decimal space-y-0.5 pl-5 text-sm text-ink">{b.steps.map((t) => <li key={t}>{t}</li>)}</ol>}
         {b.promoters && <p data-testid="rep-plan-promoters" class={`mt-1 text-sm ${b.over ? 'font-medium text-bad' : 'text-ink'}`}>{b.promoters}</p>}
@@ -959,8 +959,9 @@ function Tune({ s, p, base, ways, update, use }: {
       </li>)}</ul>
       {ways.notes.map((n) => <p key={n} class={HINT}>{n}</p>)}
     </details>}
-    <Benchmarks pre="rep" fields={benchmarkFields('fresh', s.benchmarks)} reset={() => update((t) => ({ ...t, benchmarks: undefined }))}
-      set={(id, t) => update((u) => ({ ...u, benchmarks: withBenchmark(u.benchmarks, id, t) }))} />
+    {/* The third way in (Rahul, 15-11-2026): the bank's own benchmarks, changed in the ratio table itself. */}
+    <p class="mt-3"><a href="#benchmarks" data-testid="rep-to-benchmarks" onClick={toBenchmarks} class="inline-flex min-h-11 items-center font-medium text-link underline underline-offset-4">
+      {p.misses ? 'Or choose the benchmarks' : 'Choose the benchmarks'}<span aria-hidden="true">&nbsp;→</span></a></p>
     {/* The room when every level meets (D-UX-50): how far sales can fall, costs rise and the rate climb. It folds back
         (Rahul's review of NEW2, point 4): the same button closes it, as the CMA's does. */}
     {!p.misses && <button type="button" data-testid="rep-viable" aria-expanded={!!v} aria-controls="rep-viable-box" class={`mt-4 ${BUTTON}`} onClick={() => {

@@ -1390,7 +1390,8 @@ if (touched('/project-report/')) {
   await expectFigures(page, v, 'rep-confirm-cost', '… 37,86,301 …', 'the check: the cost of the project');
   await expectFigures(page, v, 'rep-confirm-sales', '… 1,20,00,000 … 10% …', 'the check: the sales as typed');
   await expectText(page, v, 'rep-confirm-document', /Business’s name: Not given yet/, 'the check: the first page, not given yet');
-  await expectFigures(page, v, 'rep-confirm-benchmarks', '… 1.50 …', 'the check: the benchmarks, a table');
+  await expectFigures(page, v, 'rep-bm-dscrAverage', '1.50', 'the check: the benchmarks, in the ratio table (D-UX-372)');
+  if (await page.getByTestId('rep-confirm-benchmarks').count()) v('the benchmarks are listed twice: in the summary and in the ratio table (D-UX-372)');
   await confirmReport(page, v, 'case R');
   await expectText(page, v, 'rep-status-go', 'answer it', 'the status link after the check');
   const cells = async (table, label) => (await page.getByTestId(table).locator('tr', { has: page.locator('th', { hasText: label }) }).first().locator('td').allTextContents());
@@ -1402,10 +1403,11 @@ if (touched('/project-report/')) {
   // The lender's levels and Make it viable (D-UX-50 to D-UX-52): case R meets every level that can be read, so the button
   // asks how far sales can fall (tests/viable.test.ts by hand); the security cover meets on the project's own assets, read once (UX5b).
   if (await page.getByTestId('rep-misses').count()) v('case R is said to miss a lender\'s level');
-  await expectFigures(page, v, 'rep-check-dscrLowest', '… meets … 2.51 … 2026-27 … 1.25 …', 'the lowest DSCR against its level, in the score');
+  await expectFigures(page, v, 'rep-check-dscrLowest', '… 1.25 … meets … 2.51 … 2026-27 …', 'the lowest DSCR against its benchmark, in the ratio table');
   if (await page.getByTestId('rep-checks').getByText('DSCR in the lowest year').count() > await page.locator('#benchmarks').getByText('DSCR in the lowest year').count()) v('the lowest DSCR is shown twice: on its key figure and as a bar (review finding 9)');
-  // Every benchmark box holds its default (OR4, O10); a changed one is tinted, tagged, and says its default with a reset.
-  await page.locator('#benchmarks').evaluate((d) => d.open = true);
+  // A benchmark changes in the table itself (D-UX-372): its box holds the default (OR4, O10); a changed one is tinted,
+  // tagged, and says its default with a reset.
+  await page.getByTestId('rep-bm-dscrLowest').click();
   await expectValue(page, v, 'field=DSCR in the lowest year', '1.25', 'the lowest DSCR\'s benchmark box filled with its default');
   await leave(page, 'field=DSCR in the lowest year', '1.5');
   if (await page.locator('#fld-bm-dscrLowest[data-changed="own"]').count() !== 1) v('a changed benchmark box is not marked changed (OR4)');
@@ -1413,7 +1415,7 @@ if (touched('/project-report/')) {
   await page.getByTestId('fld-bm-dscrLowest-reset').click();
   await expectValue(page, v, 'field=DSCR in the lowest year', '1.25', 'Reset puts the default back');
   if (await page.locator('#fld-bm-dscrLowest[data-changed]').count() || await page.getByTestId('rep-benchmarks-reset').count()) v('a reset benchmark still reads as changed (OR4)');
-  await page.locator('#benchmarks').evaluate((d) => d.open = false);
+  await page.getByTestId('rep-bm-done-dscrLowest').click();
   await expectFigures(page, v, 'rep-check-securityCover', '… meets …', 'the security cover before the collateral, on the own assets');
   if (await page.getByTestId('rep-collateral-note').count()) v('the security cover met on the own assets still asks for the collateral (UX5b)');
   await page.getByTestId('rep-viable').click();
@@ -1571,16 +1573,21 @@ if (touched('/project-report/')) {
   // document's own blocks, never a second copy, one tap away. All answered and worded, at 1280 px the companion stands in
   // its pane and "Open the full report" shows the engine's figures and the words; on a phone one tap opens the companion
   // over the questions, one more the paper, and one closes it.
+  // On the check the page takes the companion's column (D-UX-372): its rail, at the left, opens the pages.
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.locator('.builder-paper [data-testid="rep-companion"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2: no companion beside the questions at 1280 px'));
-  if (await page.locator('.builder-paper [data-testid="rep-paper"]').count()) v('NEW2: the paper itself stands beside the questions');
-  await page.getByTestId('rep-open-paper').click();
-  await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2: "Open the full report" does not open the paper at 1280 px'));
+  if (await page.locator('.builder-paper').isVisible()) v('D-UX-372: the companion still stands beside the check at 1280 px');
+  await page.getByTestId('rep-rail-paper').click();
+  await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('D-UX-372: "See the pages" does not open the paper at 1280 px'));
   await expectFigures(page, v, 'rep-paper', '… 37,86,301 …', 'BUILD1, the paper\'s cost of the project');
   await expectFigures(page, v, 'rep-paper', '… 3 …', 'BUILD1, the paper\'s words');
   await page.getByTestId('rep-peek-close').click();
-  // "See the report" stands on every step but the Check (Rahul's review of NEW2): the words step for the phone's walk.
+  // "See the report" stands on every step but the Check (Rahul's review of NEW2): the words step for the companion and the phone's walk.
   await page.getByTestId('rep-step-words').click();
+  await page.locator('.builder-paper [data-testid="rep-companion"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2: no companion beside the questions at 1280 px'));
+  if (await page.locator('.builder-paper [data-testid="rep-paper"]').count()) v('NEW2: the paper itself stands beside the questions');
+  await page.locator('.builder-paper [data-testid="rep-open-paper"]').click();
+  await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2: "Open the full report" does not open the paper at 1280 px'));
+  await page.getByTestId('rep-peek-close').click();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByTestId('rep-peek').waitFor({ timeout: 5000 }).catch(() => v('BUILD1: no "See the report" on a phone'));
   if (await page.locator('dialog[open]').count()) v('BUILD1: the report covers the questions on a phone before it is asked for');
@@ -1851,8 +1858,8 @@ if (touched('/project-report/')) {
   if (await page.getByTestId('rep-pl').count()) v('NEW2 review: the statements show on the screen while the pages are locked');
   await page.setViewportSize({ width: 1280, height: 900 });
   await expectText(page, v, 'rep-locked', /^Page 1 shows here\. The other \d+ open with the download\.$/, 'NEW2 review: the pages locked by default');
-  await page.locator('.builder-paper [data-testid="rep-open-paper"]').click();
-  await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2 review: "See the first page" does not open the paper'));
+  await page.getByTestId('rep-rail-paper').click();
+  await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2 review: "See the pages" in the check\'s rail does not open the paper (D-UX-372)'));
   const sheets = await page.locator('dialog[open] [data-testid="rep-paper"] .sheet').count(), blank = await page.locator('dialog[open] [data-locked-sheet]').count();
   if (sheets < 3 || blank !== sheets - 1) v(`NEW2 review: the locked paper shows ${sheets - blank} of ${sheets} pages, want the first alone`);
   if (/Profit after tax|DSCR \(A ÷ B\)|Total assets/.test(await page.getByTestId('rep-paper').textContent())) v('NEW2 review: the locked paper still holds the statements');

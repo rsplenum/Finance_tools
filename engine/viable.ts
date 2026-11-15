@@ -60,7 +60,7 @@ function farthest(okK: (k: number) => boolean, cap: number): { tenths: number; c
 }
 const isReport = (r: Report | Needs | Blocked): r is Report => !('needs' in r) && !('blocked' in r);
 /** The report with sales scaled by `f`: the price (every product's) under the drivers (capacity × use × price), or the typed sales. */
-const scaled = (x: ReportInput, f: number): ReportInput =>
+export const scaled = (x: ReportInput, f: number): ReportInput =>
   x.salesBy === 'typed' ? { ...x, sales: (x.sales as number) * f }
     : x.products ? { ...x, products: x.products.map((p) => ({ ...p, price: (p.price as number) * f })) } : { ...x, price: (x.price as number) * f };
 /** The one price a unit, when the business sells one thing; none for several products. */

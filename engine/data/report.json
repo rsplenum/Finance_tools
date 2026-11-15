@@ -30,6 +30,18 @@
     "variable": [{ "id": "materials", "label": "Materials" }, { "id": "power", "label": "Power and fuel" }, { "id": "otherVariable", "label": "Other variable costs", "hint": "Packing, freight, commission" }],
     "fixed": [{ "id": "wages", "label": "Wages and salaries" }, { "id": "rent", "label": "Rent" }, { "id": "repairs", "label": "Repairs and maintenance" }, { "id": "insurance", "label": "Insurance" }, { "id": "admin", "label": "Admin and other overheads" }]
   },
+  "whatIf": {
+    "date": "2026-11-15",
+    "source": "Rahul's note on the check page (15-11-2026): 'Sensitivity Analysis — Sales / Cost / ROI', ROI read as a bank reads it, the rate of interest",
+    "status": "Our own tests, not a lender's norm: each lender sets its own sensitivity cases. Shown beside the ratios; they never change the verdict. The sales and costs move as the room's do (engine/viable.ts): sales by every product's price, costs by the variable share and the fixed costs together, the rate on the term loan and the working-capital limit together",
+    "sure": "illustrative",
+    "cases": [
+      { "id": "sales", "label": "Sales 10% lower", "salesPct": -10 },
+      { "id": "costs", "label": "Costs 10% higher", "costsPct": 10 },
+      { "id": "rate", "label": "Interest rate 1 point higher", "ratePoints": 1 },
+      { "id": "all", "label": "All three at once", "salesPct": -10, "costsPct": 10, "ratePoints": 1 }
+    ]
+  },
   "assumptions": [
     { "id": "simpleCost", "simple": true, "what": "The rest of the cost of the project", "value": 0, "shown": "None: no land, furniture, other fixed assets, contingency or preliminary expenses", "why": "Type them in expert mode if the project has them" },
     { "id": "simpleFunds", "simple": true, "what": "Other funds", "value": 0, "shown": "No capital subsidy and no unsecured loans", "why": "Type them in expert mode if the project has them" },
