@@ -97,7 +97,7 @@ export function Summary({ s, p, update, state, onConfirm, open, setOpen, live, s
     const here = g.lines.some((l) => l.id === open), pencil = g.lines.some((l) => l.pencil);
     return <section key={g.id} data-testid={`rep-confirm-${g.id}`} aria-labelledby={`sum-${g.id}-h`} class="sum-section dim-able" data-here={here || undefined}>
       {here && live}
-      <div class="flex items-baseline justify-between gap-2">
+      <div class="mb-1 flex items-baseline justify-between gap-2">
         <h4 id={`sum-${g.id}-h`} class="sum-title">{g.title}</h4>
         {pencil && <span data-testid={`rep-pencil-${g.id}`} class="sum-pencil-tag">✎ In pencil</span>}
         <a href={`#${g.to}`} onClick={toStep(g.to)} aria-label={`All of it: ${g.title}, in its step`} class={`ml-auto inline-flex min-h-6 items-center px-1 text-xs ${MUTED} underline underline-offset-4`}>All of it</a>
