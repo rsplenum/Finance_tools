@@ -2,7 +2,7 @@
  * Design checks (DT1, D-UX-58), measured as text; each rule, the friction it removes and its evidence: docs/DESIGN.md,
  * "Measured checks". The site check runs `designChecks` on every built page at 360 px and at 1280 px, light and dark:
  * axe-core (WCAG 2.2 A and AA); the edges of fields at 3:1 and a visible focus at 3:1 (WCAG 1.4.11, 2.4.7); targets of
- * 24 by 24 px (2.5.8) and, at 360 px, fields and buttons filled with the accent 44 px tall; every control reached by Tab (2.1.1) and, once focused, not hidden under a sticky band (2.4.11); no
+ * 24 by 24 px (2.5.8) and, at 360 px, fields and buttons filled with the accent 44 px tall; a step's name on the progress line whole on one line, at 360 px and at 320 px; every control reached by Tab (2.1.1) and, once focused, not hidden under a sticky band (2.4.11); no
  * sideways scroll at 320 px (1.4.10); nothing moving under reduced motion (2.3.3). Every finding is a violation: there is no
  * list of known defects to hide one behind (CHECKS1, D-TECH-113).
  * `measure` is also what scripts/design-review.mjs prints for each state of a page.
@@ -29,7 +29,7 @@ function inPage(phone) {
   const name = (el) => `${el.tagName.toLowerCase()}${el.id ? `#${el.id}` : ''} "${(el.getAttribute('aria-label') || el.textContent || el.value || '').trim().replace(/\s+/g, ' ').slice(0, 30)}"`;
   const FIELD = 'input:not([type=hidden]):not([type=radio]):not([type=checkbox]):not([type=range]):not([type=file]), select, textarea';
   const TARGET = 'a[href], button, input:not([type=hidden]), select, textarea, summary, [role=button], [tabindex]:not([tabindex="-1"])';
-  const out = { edges: [], small: [], short: [] };
+  const out = { edges: [], small: [], short: [], folded: [] };
   // WCAG 1.4.11: a field is known by its edge, so the edge (or its own fill) stands 3:1 against what is behind it.
   for (const el of document.querySelectorAll(FIELD)) {
     if (!shown(el) || el.disabled) continue;
@@ -55,6 +55,14 @@ function inPage(phone) {
       || ((u.r.width < 24 || u.r.height < 24) && !u.inline && Math.hypot(c.x - (u.r.left + u.r.right) / 2, c.y - (u.r.top + u.r.bottom) / 2) < 24)));
     if (clash) out.small.push(`${name(t.el)} ${Math.round(r.width)}×${Math.round(r.height)} px`);
   }
+  // A step's name on the progress line reads whole on one line, clear of the next name and inside the screen.
+  const names = [...document.querySelectorAll('.steps .step-name')].filter(shown).map((el) => { const t = document.createRange(); t.selectNodeContents(el); return { el, r: t.getBoundingClientRect(), line: parseFloat(getComputedStyle(el).lineHeight) }; });
+  names.forEach(({ el, r, line }, i) => {
+    const next = names[i + 1], gap = next && Math.abs(next.r.top - r.top) < line ? next.r.left - r.right : Infinity;
+    if (r.height > line * 1.5) out.folded.push(`${name(el)} on ${Math.round(r.height / line)} lines`);
+    else if (gap < 4) out.folded.push(`${name(el)} ${gap.toFixed(1)} px from the next name`);
+    else if (r.left < 0 || r.right > innerWidth) out.folded.push(`${name(el)} runs off the screen`);
+  });
   if (phone) {
     // The main controls: fields, and buttons filled with the accent (the main action, docs/DESIGN.md).
     const probe = document.body.appendChild(Object.assign(document.createElement('i'), { style: 'background: var(--accent)' }));
@@ -170,6 +178,7 @@ export async function measure(page, { phone, keys = true } = {}) {
   for (const x of m.edges) lines.push(`field edge below 3:1: ${x}`);
   for (const x of m.small) lines.push(`target below 24 px: ${x}`);
   for (const x of m.short) lines.push(`below 44 px on a phone: ${x}`);
+  for (const x of m.folded) lines.push(`step name not on one clear line: ${x}`);
   if (keys) {
     const k = await keyboard(page);
     for (const x of k.unseen) lines.push(`focus not seen: ${x}`);
@@ -408,6 +417,7 @@ export async function designChecks({ browser, BASE, pages, violations }) {
       const { ctx, page } = await openAt(browser, BASE + path, { width: { width: 320, height: 700 } });
       const wide = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       if (wide > 0) note(`${path} 320 px: scrolls sideways by ${wide} px`);
+      for (const x of (await page.evaluate(inPage, true)).folded) note(`${path} 320 px: step name not on one clear line: ${x}`);
       await ctx.close();
     }
     {
