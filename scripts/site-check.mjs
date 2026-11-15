@@ -239,11 +239,11 @@ async function expectFigures(page, v, what, want, step) {
 }
 /**
  * Rule 17's count, the same way on every tool: the fields asked inside `scope` and outside More options, the document's
- * facts, the benchmarks and the statement reader; a typed box, a pick or a tick once, a choice once whatever its options.
+ * facts and write-up (`#words`, in the download before NEW2), the benchmarks and the statement reader; a typed box, a pick or a tick once, a choice once whatever its options.
  * Only Rahul raises a ceiling.
  */
 const asked = (page, scope = 'main') => page.locator(scope).first().evaluate((root) => {
-  const els = [...root.querySelectorAll('input:not([type="hidden"]), select, textarea')].filter((e) => !e.closest('#more-options, #download, #benchmarks, #read'));
+  const els = [...root.querySelectorAll('input:not([type="hidden"]), select, textarea')].filter((e) => !e.closest('#more-options, #download, #words, #benchmarks, #read'));
   return new Set(els.map((e) => (e.type === 'radio' ? `radio:${e.name || e.closest('fieldset')?.textContent}` : e))).size;
 });
 async function ceiling(page, v, max, what, scope) {
@@ -1364,7 +1364,7 @@ const confirmReport = async (page, v, why) => {
   await page.getByTestId('rep-confirmed').waitFor({ timeout: 5000 }).catch(() => v(`the report's check did not fold once confirmed (${why})`));
 };
 if (touched('/project-report/')) {
-  const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
+  const { ctx, page, v } = await open('/project-report/?paper=open', { scheme: 'light' });
   if (!(await page.isChecked('field=Simple…'))) v('the project report opens in expert mode');
   await ceiling(page, v, REP_DEFAULT, 'the project report');
   if (!(await page.locator('#more-options >> field=Simple…').count())) v('S12: the choice of how much to ask is not under More options');
@@ -1386,10 +1386,10 @@ if (touched('/project-report/')) {
   if (await page.evaluate(() => document.activeElement?.id) !== 'fld-rep-name') v('"answer it" does not land on the business\'s name (the owner, 26-10-2026)');
   // Before the check (OR8, the owner's O13): what was collected and the benchmarks, the owner's line; no table, no download.
   if (await page.getByTestId('rep-pl').count() || await page.getByTestId('rep-download-pdf').count()) v('the report shows its tables or downloads before its check (OR8)');
-  await expectText(page, v, 'rep-doc-wait', 'A PDF, an Excel copy and a Word copy, once you have checked your figures. Go to Check', 'the download before the check');
+  await expectText(page, v, 'rep-doc-wait', 'The PDF, an Excel copy and a Word copy come here, once you confirm the figures above.', 'the download before the check');
   await expectFigures(page, v, 'rep-confirm-cost', '… 37,86,301 …', 'the check: the cost of the project');
   await expectFigures(page, v, 'rep-confirm-sales', '… 1,20,00,000 … 10% …', 'the check: the sales as typed');
-  await expectText(page, v, 'rep-confirm-document', /Business’s nameNot given yet/, 'the check: the first page, not given yet');
+  await expectText(page, v, 'rep-confirm-document', /Business’s name: Not given yet/, 'the check: the first page, not given yet');
   await expectFigures(page, v, 'rep-confirm-benchmarks', '… 1.50 …', 'the check: the benchmarks, a table');
   await confirmReport(page, v, 'case R');
   await expectText(page, v, 'rep-status-go', 'answer it', 'the status link after the check');
@@ -1421,6 +1421,13 @@ if (touched('/project-report/')) {
   const there = async () => (await Promise.all(['rep-viable', 'rep-viable-box', 'rep-plan'].map(async (id) => `${id} ${await page.getByTestId(id).count()}`))).join(', ');
   await expectText(page, (m) => there().then((t) => v(`${m} (${t})`)), 'rep-text-sales', /^To ₹82,20,000 in 2026-27/, 'how far sales can fall');
   await expectFigures(page, v, 'rep-move-sales', '31.5%', 'how far sales can fall, its figure');
+  // Rahul's review of NEW2 (point 4): the costs and the rate beside the sales (tests/viable.test.ts by hand), and the room folds back.
+  await expectFigures(page, v, 'rep-move-costs', '13.8%', 'how far the costs can rise, its figure');
+  await expectText(page, v, 'rep-text-costs', /^Variable costs to 73\.97% of sales \(from 65%\) and fixed costs to ₹20,48,400 a year/, 'how far the costs can rise');
+  await expectText(page, v, 'rep-text-rate', /^The term loan’s rate to 40% \(from 10%\) and the working-capital limit’s to 41% \(from 11%\)/, 'how far the interest rate can climb');
+  if (await page.getByTestId('rep-viable').getAttribute('aria-expanded') !== 'true' || await page.getByTestId('rep-viable').textContent() !== 'Close') v('the open room has no "Close" (Rahul\'s review of NEW2)');
+  await page.getByTestId('rep-viable').click();
+  if (await page.getByTestId('rep-viable-box').count()) v('"Close" does not fold the room back (Rahul\'s review of NEW2)');
   // Make it work (OR11d, D-UX-249) on case R at 70 lakh (tests/work.test.ts by hand): sales of 82,11,000 keep the loan,
   // with a plant that sells 1,41,43,206 running full, asked inside the card; or 9,35,000 borrowed (fix.ts). "Use this"
   // writes the way, marked, its question left open and the report provisional; Undo puts the figures back. Below, the
@@ -1560,20 +1567,29 @@ if (touched('/project-report/')) {
   if (!worded.includes('2. Promoters and the business') || !worded.includes('It is in talks with 3 buyers.') || /reputed|lakh/.test(worded)) v(`the report PDF holds its words as ${worded.slice(worded.indexOf('2. Promoters'), 200)}`);
   const wordedDocx = await docxLines((await save('rep-download-docx')).bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
   if (wordedDocx.messages.length || !wordedDocx.lines.some((l) => /^2\.\d The promoter$/.test(l))) v(`the report's Word copy lacks its words ${JSON.stringify(wordedDocx.messages).slice(0, 120)}`);
-  // BUILD1 (D-UX-340): the paper beside the questions is the document's own blocks, never a second copy. All answered and
-  // worded, at 1280 px it stands in its pane with the engine's figures and the words; on a phone one tap opens it over the
-  // questions and one closes it.
+  // BUILD1 (D-UX-340), NEW2 (WORKED-PAGE §7): beside the questions the companion, never the paper; the paper is the
+  // document's own blocks, never a second copy, one tap away. All answered and worded, at 1280 px the companion stands in
+  // its pane and "Open the full report" shows the engine's figures and the words; on a phone one tap opens the companion
+  // over the questions, one more the paper, and one closes it.
   await page.setViewportSize({ width: 1280, height: 900 });
-  await page.getByTestId('rep-paper').waitFor({ timeout: 5000 }).catch(() => v('BUILD1: no paper beside the questions at 1280 px'));
+  await page.locator('.builder-paper [data-testid="rep-companion"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2: no companion beside the questions at 1280 px'));
+  if (await page.locator('.builder-paper [data-testid="rep-paper"]').count()) v('NEW2: the paper itself stands beside the questions');
+  await page.getByTestId('rep-open-paper').click();
+  await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2: "Open the full report" does not open the paper at 1280 px'));
   await expectFigures(page, v, 'rep-paper', '… 37,86,301 …', 'BUILD1, the paper\'s cost of the project');
   await expectFigures(page, v, 'rep-paper', '… 3 …', 'BUILD1, the paper\'s words');
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByTestId('rep-peek').waitFor({ timeout: 5000 }).catch(() => v('BUILD1: no "See the paper" on a phone'));
-  if (await page.locator('dialog[open]').count()) v('BUILD1: the paper covers the questions on a phone before it is asked for');
-  await page.getByTestId('rep-peek').click();
-  await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('BUILD1: "See the paper" does not open the paper on a phone'));
   await page.getByTestId('rep-peek-close').click();
-  await page.waitForFunction(() => !document.querySelector('dialog[open]'), null, { timeout: 5000 }).catch(() => v('BUILD1: the paper does not close back to the questions'));
+  // "See the report" stands on every step but the Check (Rahul's review of NEW2): the words step for the phone's walk.
+  await page.getByTestId('rep-step-words').click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByTestId('rep-peek').waitFor({ timeout: 5000 }).catch(() => v('BUILD1: no "See the report" on a phone'));
+  if (await page.locator('dialog[open]').count()) v('BUILD1: the report covers the questions on a phone before it is asked for');
+  await page.getByTestId('rep-peek').click();
+  await page.locator('dialog[open] [data-testid="rep-companion"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2: "See the report" does not open the companion on a phone'));
+  await page.getByTestId('rep-open-paper').click();
+  await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2: "Open the full report" does not open the paper on a phone'));
+  await page.getByTestId('rep-peek-close').click();
+  await page.waitForFunction(() => !document.querySelector('dialog[open]'), null, { timeout: 5000 }).catch(() => v('BUILD1: the report does not close back to the questions'));
   await ctx.close();
 }
 
@@ -1585,7 +1601,7 @@ if (touched('/project-report/')) {
 // With fixed costs of 25 L, the engine's cash (checked by report-check.ts's own route) goes lowest in 2030-31,
 // 48,67,334 short (tests/report-page.test.ts).
 if (touched('/project-report/')) {
-  const { ctx, page, v } = await open('/project-report/', { scheme: 'dark' });
+  const { ctx, page, v } = await open('/project-report/?paper=open', { scheme: 'dark' });
   await openMore(page); await page.check('field=Expert…');
   await page.check('field=Partnership firm or LLP');
   await page.check('field=PMEGP');
@@ -1725,7 +1741,7 @@ if (touched('/project-report/')) {
 // 12,00,000 and of 3,00,000 for 12 months, 15,000. Above 20 L in all it stops. With no scheme and CGTMSE ticked, its slab
 // for 15 L is 0.55%: 6,600 on the term loan and 1,650 on the limit, 8,250.
 if (touched('/project-report/')) {
-  const { ctx, page, v } = await open('/project-report/', { scheme: 'light' });
+  const { ctx, page, v } = await open('/project-report/?paper=open', { scheme: 'light' });
   await openMore(page);
   for (const id of ['field=Expert…', 'field=Partnership firm or LLP', 'field=Mudra', 'field=Equal principal every month']) await page.check(id);
   for (const [id, value] of [['field=Building and civil works', '10 L'], ['field=Plant and machinery', '20 L'], ['field=Furniture and fixtures', '2 L'], ['field=Preliminary and pre-operative expenses', '1 L'],
@@ -1825,6 +1841,22 @@ if (touched('/project-report/')) {
   await expectText(page, v, 'rep-to-work', 'See the ways to make it work', 'CHECK1: the answer leads to the ways');
   await expectFigures(page, v, 'rep-misses-work', '… short …', 'OR11a: cash running out in the verdict');
   if ((await page.getByTestId('rep-step-check').getAttribute('aria-current')) !== 'step') v('BUILD1: home\'s case does not open on the Check step');
+  // Rahul's review of NEW2: on the Check step one way on (no "See the report", no More options), and the pages locked by
+  // default: the first real, the rest blank, the statements not on the screen even once confirmed (?paper=open shows them).
+  if (await page.getByTestId('rep-peek').count()) v('NEW2 review: "See the report" still stands on the Check step');
+  // Read in place: the stepped page's isVisible would first walk to the step that holds it (scripts/stepped.mjs).
+  if (await page.evaluate(() => !!document.getElementById('more-options')?.checkVisibility())) v('NEW2 review: More options still shows on the Check step');
+  if (await page.getByTestId('rep-confirm').textContent() !== 'These are right') v('NEW2 review: the confirm is not "These are right"');
+  await confirmReport(page, v, 'NEW2 review, home');
+  if (await page.getByTestId('rep-pl').count()) v('NEW2 review: the statements show on the screen while the pages are locked');
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await expectText(page, v, 'rep-locked', /^Page 1 shows here\. The other \d+ open with the download\.$/, 'NEW2 review: the pages locked by default');
+  await page.locator('.builder-paper [data-testid="rep-open-paper"]').click();
+  await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2 review: "See the first page" does not open the paper'));
+  const sheets = await page.locator('dialog[open] [data-testid="rep-paper"] .sheet').count(), blank = await page.locator('dialog[open] [data-locked-sheet]').count();
+  if (sheets < 3 || blank !== sheets - 1) v(`NEW2 review: the locked paper shows ${sheets - blank} of ${sheets} pages, want the first alone`);
+  if (/Profit after tax|DSCR \(A ÷ B\)|Total assets/.test(await page.getByTestId('rep-paper').textContent())) v('NEW2 review: the locked paper still holds the statements');
+  await page.getByTestId('rep-peek-close').click();
   await ctx.close();
 }
 // BUILD1 (D-UX-340 to D-UX-342): the builder. Six steps on the progress line and one shown; Next and Back walk them and
@@ -1839,8 +1871,10 @@ if (touched('/project-report/')) {
   if (await shown() !== 'business' || (await page.getByTestId('rep-step-business').getAttribute('aria-current')) !== 'step') v(`BUILD1: the page opens on ${await shown()}, want the business alone`);
   if (await page.getByTestId('rep-back').count()) v('BUILD1: Back shows on the first step');
   await leave(page, 'field=Business’s name', 'Meera Foods');
-  await expectText(page, v, 'rep-paper', /Meera Foods/, 'BUILD1, the name typed on the paper');
-  await expectText(page, v, 'rep-paper', /Draft/, 'BUILD1, the paper marked a draft before the check');
+  await page.getByTestId('rep-peek').click();
+  await expectText(page, v, 'rep-thumbs', /Meera Foods/, 'BUILD1, the name typed on the pages');
+  await expectText(page, v, 'rep-thumbs', /Draft/, 'BUILD1, the pages marked a draft before the check');
+  await page.getByTestId('rep-peek-close').click();
   await page.getByTestId('rep-next').click();
   await page.waitForFunction(() => document.activeElement?.id === 'step-cost-h', null, { timeout: 5000 }).catch(() => v('BUILD1: Next does not take the focus to the next step\'s heading'));
   if (await shown() !== 'cost') v(`BUILD1: Next from the business shows ${await shown()}`);
@@ -1855,7 +1889,7 @@ if (touched('/project-report/')) {
   await page.getByTestId('rep-step-check').click();
   await expectText(page, v, 'rep-verdict', /./, 'D-UX-342, the worked example\'s verdict');
   if (await page.getByTestId('rep-misses').count()) v('D-UX-342: the worked example misses a check');
-  await expectFigures(page, v, 'rep-paper', '… 2.31 …', 'D-UX-342, the example\'s lowest DSCR on the paper');
+  await expectFigures(page, v, 'rep-reading', '… 2.31 …', 'D-UX-342, the example\'s lowest DSCR beside the questions');
   await page.getByTestId('rep-clear').click();
   if ((await kept())[0]) v('D-UX-341: Clear all leaves the answers on the device');
   await ctx.close();

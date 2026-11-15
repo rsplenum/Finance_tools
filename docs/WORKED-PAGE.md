@@ -104,12 +104,12 @@ One fresh session each, on its own branch. Every row is a whole thing Rahul open
 | 2 | **PAPER1** The DSCR's three files | L, Extra | the PDF, Excel and Word copies |
 | 3 | **READ1** The Worker reads and drafts with the Gemini key | M, high | the CMA's "Read a statement" and the report's "Draft the words", working |
 | 4 | **NEW2** The project report's screen | L, Extra | `/project-report/` on the preview |
-| 4a | **SPEC2** The specimen redrawn to the review, each paragraph marked with the rule and piece that made it (waits on Rahul's yes, `docs/REPORT-REVIEW.md` §4) | M, Extra | the specimen PDFs: roasted snacks and one service case |
+| 4a | **SPEC2** The specimen redrawn to the review, each paragraph marked with the rule and piece that made it (yes, D-DOC-26; `docs/REPORT-REVIEW.md` §4) | M, Extra | the specimen PDFs: roasted snacks and one service case |
 | 4b | **LIB1** The report factory's core: rules, library, compiler, document tree; the brief and financial chapters made by code (D-DOC-24) | L, Extra | the report's text for both cases, on the preview |
 | 4c | **LIB2** The first trade packs and the descriptive chapters: roasted snacks first, then two more manufacturing trades | L, Extra | the same reports whole, a second trade beside the first |
 | 4d | **WRITE1** The write-up as read and confirm | M, Extra | the write-up step, on the preview |
 | 5 | **IDC1** (done), then **PAPER2a** the paper from the document tree, then **PAPER2b** its operating and market pages and annexes B, C | L, Extra each | the three files |
-| 5b | **REC1** Every paper its own record: number, version, input fingerprint (waits on Rahul, `docs/REPORT-REVIEW.md` §9) | M, high | two versions of one report, side by side |
+| 5b | **REC1** Every paper its own record: number, version, input fingerprint (yes, D-DOC-26; `docs/REPORT-REVIEW.md` §9) | M, high | two versions of one report, side by side |
 | 6 | **NEW3** The CMA from the audited statement | L, Extra | `/cma/` on the preview |
 | 7 | **NEW4** The estimate and its files | L, Extra | `/estimate/` on the preview |
 | 8 | **CASE1** One business, typed once | L, Extra | a case made in one tool filling the others |
@@ -139,6 +139,7 @@ Home, the films and the new modules wait until the tools are right. CHECKS2 is d
 - The privacy page names who reads the lines: its words change with the provider (a draft for the lawyer).
 
 ### NEW2: the project report's screen
+- **Built 15-11-2026 (D-UX-369):** the stage, the companion (its outline a fixed list until the factory's first row lands, `docs/REPORT-REVIEW.md` §5), the six steps and the locked state. **Left for NEW2b:** "Asks first" (the four facts, the rest in pencil) and the engine's read-back under each answer.
 - **Asks first:** what the business makes or sells, the project's cost and the loan wanted, a year's sales and what is left of it. From those: "can carry Rs. … of Rs. … asked" (`engine/capacity.ts` `carry`), the rest standing on the example or on the trade's shape, in pencil.
 - **Does itself:** the closers and FIX1's whole plans as the next step (`engine/solve.ts`); "The bank will also look at" as one short list, third; starting shapes by trade from public model profiles, each figure with its source, only where the profile is in `docs/inbox/` (else the example's shape); the words are the factory's (LIB1, LIB2), confirmed in WRITE1. The remaining answers are walked by topic in the ladder's order, each topic 1.5 phone screens or fewer.
 - **The questions hold the stage** (REPORT-GRADE, 14-11-2026: today the questions get 448 px of a 1440 px screen and the report 856): on a desktop about two-thirds to the questions, a step line of six across the top (The business, The cost, The loan, Sales and costs, The write-up, Check and download), the engine's read-back under each answer.

@@ -9,7 +9,7 @@ import { docxOf } from '../site/src/doc/docx';
 import { pdfOf } from '../site/src/doc/pdf';
 import { xlsxOf } from '../site/src/doc/xlsx';
 import { allNeeds, docStatus, fileName, reportDoc } from '../site/src/report/document';
-import { AS_TYPED, EMPTY, PENDING, applyPlan, applySolution, applyWay, answerPending, checkKey, checkOf, assumptionsOf, boardOf, changedOf, holidayAssumed, inputOf, periodLine, planOf, preview, repaymentView, solvedOf, statusText, undoPlan, viableOf, withMode, workView, type ReportState } from '../site/src/report/model';
+import { AS_TYPED, EMPTY, PENDING, applyPlan, applySolution, applyWay, answerPending, heldOf, checkKey, checkOf, assumptionsOf, boardOf, changedOf, holidayAssumed, inputOf, periodLine, planOf, preview, repaymentView, solvedOf, statusText, undoPlan, viableOf, withMode, workView, type ReportState } from '../site/src/report/model';
 import { compareRepayments } from '../engine/repayment';
 import { inr } from '../engine/util';
 import { makePlan, withLevers } from '../engine/plan';
@@ -250,9 +250,13 @@ describe('the lender\'s levels and make it viable, in words', () => {
     expect(v?.lines[2].note).toMatch(/^Cash still runs out/);
     expect([v?.lines[3].fixes, v?.lines[3].still]).toEqual([['current ratio', 'average DSCR', 'DSCR in the lowest year'], ['interest cover', 'fixed-asset cover']]);
   });
-  it('as typed, it meets and says how far sales can fall', () => {
+  it('as typed, it meets and says how far sales can fall, costs rise and the rate climb (tests/viable.test.ts by hand)', () => {
     expect(preview(R).misses).toBeUndefined();
-    expect(viableOf(R)?.lines.map((l) => l.text)).toEqual(['To ₹82,20,000 in 2026-27 (from ₹1,20,00,000), and every ratio still meets its level.']);
+    expect(viableOf(R)?.lines.map((l) => [l.move, l.text])).toEqual([
+      ['31.5%', 'To ₹82,20,000 in 2026-27 (from ₹1,20,00,000), and every ratio still meets its level.'],
+      ['13.8%', 'Variable costs to 73.97% of sales (from 65%) and fixed costs to ₹20,48,400 a year (from ₹18,00,000), together, and every ratio still meets its level.'],
+      ['+30.0 points or more', 'The term loan’s rate to 40% (from 10%) and the working-capital limit’s to 41% (from 11%), and every ratio still meets its level.'],
+    ]);
   });
   it('the collateral typed: its values in the report, the security cover read, and the collateral it needs', () => {
     const s = { ...R, wcLimit: '20 L', collateral: '3 L' }, p = preview(s), v = viableOf(s);
@@ -358,6 +362,19 @@ describe('Make it work on the page, used and undone (OR11d)', () => {
       expect([preview(s).misses, preview(s).needs, workView(s)]).toEqual([undefined, [], undefined]);
       expect(undoPlan(s, changes)).toEqual(FS);
     }
+  });
+  it('a better margin that moves the share by less than one point is still written (Rahul\'s review of NEW2)', () => {
+    // Case R at ₹70,00,000 of sales with a loan of ₹12,00,000: the DSCRs carry it, the interest cover alone misses.
+    const t: ReportState = { ...REPORT_HOME, loan: { ...REPORT_HOME.loan, amount: '12,00,000' } };
+    const misses = (x: ReportState) => preview(x).checks?.filter((c) => c.verdict === 'misses').map((c) => c.id);
+    expect(misses(t)).toEqual(['interestCover']);
+    expect(heldOf(preview(t).checks ?? []).map((h) => h.head)).toEqual(['Profit thin against the interest']);
+    const margin = workView(t)!.keep.find((c) => c.id === 'variable')!;
+    const { s, changes } = applyWay(t, margin);
+    expect(changes.map((c) => `${c.label}: ${c.was} → ${c.now}`)).toEqual([`Variable costs (% of sales): 65 → ${margin.change.variablePct}`]);
+    expect(margin.change.variablePct).toBeGreaterThan(64);
+    expect(misses(s)).toEqual([]);
+    expect(undoPlan(s, changes)).toEqual(t);
   });
   it('a card\'s question left open keeps the report provisional; its answer closes it, and the undo takes both back', () => {
     // Case R at ₹70,00,000 (tests/work.test.ts by hand): sales of ₹82,11,000, a plant selling ₹1,41,43,206 running full.

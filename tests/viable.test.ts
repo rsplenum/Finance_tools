@@ -115,6 +115,32 @@ describe('case R at 70 lakh: each change alone, against every ratio', () => {
 // stock 6,41,095.89 and debtors 9,86,301.37, 44,07,397.26. A cover of 1.20 needs 48,00,000: a realisable sale value of
 // 3,92,602.74, a market value of 4,36,225.27 (÷ 0.90), 4,36,226 to the rupee; year 2 secures 35,00,000 with 42,07,136.99,
 // already 1.20.
+describe('the room as typed: how far the costs can rise and the interest rate climb (Rahul\'s review of NEW2, point 4)', () => {
+  // Case R, year 1 by hand (the header): with the costs × f, profit before tax 1,20,00,000 − f (78,00,000 + 18,00,000) −
+  // 7,22,083.33 must reach the 3,51,411.09 a DSCR of 1.25 needs: f ≤ 1,09,26,505.58 ÷ 96,00,000 = 1.138177, so 13.8%.
+  it('case R: costs can rise 13.8% together, 13.9% misses the lowest DSCR', () => {
+    const c = (makeViable(CASE_R) as Viability).costs;
+    expect([c?.tenths, c?.capped, c?.variable.most.toFixed(2), c?.fixed.most.toFixed(2)]).toEqual([138, false, '73.97', '2048400.00']);
+    const at = (t: number) => ({ ...CASE_R, variablePct: 65 * (1 + t / 1000), fixedCosts: 1800000 * (1 + t / 1000) });
+    expect([misses(at(138)), misses(at(139))]).toEqual([[], ['dscrLowest']]);
+  });
+  // Case R at 90 lakh, year 1, the rates up Δ points: term-loan interest 22,708.33 (10 + Δ), the limit's 5,000 (11 + Δ);
+  // profit before tax 6,27,916.67 − 27,708.33 Δ; cash available 10,99,090 + 3,645 Δ against 1.25 × service 9,08,854.17 +
+  // 28,385.42 Δ: Δ ≤ 1,90,235.83 ÷ 24,740.42 = 7.689, so 7.6 points (interest cover's 1.50 allows 11.7).
+  it('case R at 90 lakh: the rate can climb 7.6 points, 7.7 misses the lowest DSCR; at 1.2 crore, 30 points or more', () => {
+    const x = { ...CASE_R, sales: 9000000 }, r = (makeViable(x) as Viability).rate;
+    expect([r?.tenths, r?.capped, r?.term.most.toFixed(1), r?.wc?.most.toFixed(1)]).toEqual([76, false, '17.6', '18.6']);
+    const at = (t: number) => ({ ...x, loan: { ...x.loan, ratePct: 10 + t / 10 }, wcRatePct: 11 + t / 10 });
+    expect([misses(at(76)), misses(at(77))]).toEqual([[], ['dscrLowest']]);
+    expect((makeViable(x) as Viability).costs?.tenths).toBe(36);
+    expect([(makeViable(CASE_R) as Viability).rate?.tenths, (makeViable(CASE_R) as Viability).rate?.capped]).toEqual([300, true]);
+  });
+  it('a case that misses gets no room, only the changes', () => {
+    const v = makeViable(weak) as Viability;
+    expect([v.costs, v.rate]).toEqual([undefined, undefined]);
+  });
+});
+
 describe('the collateral and the security cover', () => {
   const big = { ...CASE_R, wcLimit: 2000000 };
   it('until typed: no security cover, and the market value it needs', () => {

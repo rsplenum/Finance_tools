@@ -10,6 +10,9 @@ import { parseMonth } from '../../../engine/parse';
 import { SOLD_BY, soldBy } from '../../../engine/sold-by';
 import { verdictWords, workWords } from '../verdict';
 import { Paper, sheetId, still } from '../Paper';
+import { Companion } from './Companion';
+import { paperOpen } from './gate';
+import { wordsNeeds, wordsTrue } from './words';
 import { answerRule, BUTTON, reach, Choice, Counter, FILLED, goTo, HINT, How, Ledger, SelectField, STATE, TextField, Tick, InAppNote, useHomeCase, useStart, StartLine, MoreOptions, useKept } from '../fields';
 import { PLAIN, SHORT, W } from './words';
 import { SHARED } from '../words';
@@ -120,25 +123,32 @@ function barText(s: ReportState, p: ReportPreview) {
 }
 
 /** The builder's steps (BUILD1, D-UX-340): one topic a step, in the order a report is made. */
-/** Each step: its id, its heading, and its one word on the progress line, where six names share a phone's width (Rahul, 15-11-2026). */
-const STEPS = [['business', 'The business', 'Business'], ['cost', 'The cost', 'Cost'], ['loan', 'The loan', 'Loan'], ['sales', 'Sales and costs', 'Sales'], ['check', 'Check', 'Check'], ['download', 'Download', 'Download']] as const;
+/** Each step: its id, its heading, and its one word on the progress line, where six names share a phone's width (Rahul, 15-11-2026).
+ * NEW2 (WORKED-PAGE §7): the write-up is a step of its own, and the files come in the Check step, once the figures are confirmed. */
+const STEPS = [['business', 'The business', 'Business'], ['cost', 'The cost', 'Cost'], ['loan', 'The loan', 'Loan'], ['sales', 'Sales and costs', 'Sales'], ['words', 'The write-up', 'Write-up'], ['check', 'Check and download', 'Check']] as const;
 type StepId = typeof STEPS[number][0];
 /** The step last open on this device, beside the answers saved there (D-UX-341); the first step is not kept. */
 const STEP_KEY = 'report-step';
-const savedStep = (): StepId | undefined => { try { return localStorage.getItem('draft:report:v1') ? STEPS.find(([id]) => id === localStorage.getItem(STEP_KEY))?.[0] : undefined; } catch { return undefined; } };
+const savedStep = (): StepId | undefined => {
+  try {
+    const at = localStorage.getItem(STEP_KEY) === 'download' ? 'check' : localStorage.getItem(STEP_KEY); // the old last step is in Check now
+    return localStorage.getItem('draft:report:v1') ? STEPS.find(([id]) => id === at)?.[0] : undefined;
+  } catch { return undefined; }
+};
 const saveStep = (id: StepId) => { try { if (id === 'business') localStorage.removeItem(STEP_KEY); else localStorage.setItem(STEP_KEY, id); } catch { /* the step is a convenience */ } };
 /** The step a box is asked in, by its id, for the count on the progress line; a link finds its step in the page itself. */
-const stepOfBox = (id: string): StepId => /^fld-(rep-|borrower)/.test(id) ? 'business' : id === 'cost' || id.startsWith('fld-cost-') ? 'cost' : id === 'fld-pending' ? 'check'
+const stepOfBox = (id: string): StepId => /^fld-rep-(note|blank|words)/.test(id) ? 'words' : /^fld-(rep-|borrower)/.test(id) ? 'business' : id === 'cost' || id.startsWith('fld-cost-') ? 'cost' : id === 'fld-pending' ? 'check'
   : /^fld-(tl-|years|scheme|category|area|activity|pmegp|tarun|subsidy|unsecured|cashAtStart|existingEmis|security|collateral|cgtmse|concession|feeRate|wc|days-)/.test(id) ? 'loan' : 'sales';
 /** What each step still needs: the engine's needs by their boxes, and the first page's facts on the first step. */
 function leftOf(s: ReportState, p: ReportPreview): Record<StepId, number> {
-  const out: Record<StepId, number> = { business: 0, cost: 0, loan: 0, sales: 0, check: 0, download: 0 };
+  const out: Record<StepId, number> = { business: 0, cost: 0, loan: 0, sales: 0, words: 0, check: 0 };
   for (const n of p.needs) { const b = boxOf(n); out[b ? stepOfBox(b[1]) : 'sales']++; }
   out.business += docNeeds(s.doc, s.words).filter(docBox).length;
+  out.words = wordsNeeds(s.words).length;
   return out;
 }
 /** The part of the paper a step fills: where the paper stands while the step is open. */
-const partOf = (step: StepId, figures: boolean) => ({ business: PARTS.cover, cost: PARTS.cost, loan: figures ? PARTS.repayment : PARTS.cost, sales: PARTS.basis, check: PARTS.glance, download: PARTS.cover })[step];
+const partOf = (step: StepId, figures: boolean) => ({ business: PARTS.cover, cost: PARTS.cost, loan: figures ? PARTS.repayment : PARTS.cost, sales: PARTS.basis, words: PARTS.business, check: PARTS.glance })[step];
 /** The one filled button of a step: the way on. */
 const NEXT = FILLED.replace('sm:min-h-0', '');
 /** A group of questions in a step: named only where the step holds more than one. */
@@ -274,9 +284,15 @@ export function ReportCalculator() {
   useEffect(() => { if (home) flip('check', false); }, [home]);
   // The paper: the document the PDF is written from (document.ts), a draft until the figures are checked.
   const [today, setToday] = useState(''), [wide, setWide] = useState(true), [large, setLarge] = useState(false);
+  // The sheet over the page holds the companion (a phone's "See the report") or the paper itself ("Open the full report").
+  const [view, setView] = useState<'companion' | 'paper'>('companion'), viewed = useRef(view);
+  viewed.current = view;
+  const [open, setOpen] = useState(false);
+  useEffect(() => { setOpen(paperOpen()); }, []);
   useEffect(() => {
     setToday(isoDate(new Date()));
-    const m = matchMedia('(min-width: 64rem)'), set = () => { setWide(m.matches); if (m.matches && peek.current?.open) peek.current.close(); };
+    // Widened, the companion stands beside the questions again: a sheet that held it closes; the paper stays open.
+    const m = matchMedia('(min-width: 64rem)'), set = () => { setWide(m.matches); if (m.matches && peek.current?.open && viewed.current === 'companion') peek.current.close(); };
     set();
     m.addEventListener('change', set);
     return () => m.removeEventListener('change', set);
@@ -286,10 +302,10 @@ export function ReportCalculator() {
   const pages = useMemo(() => sectionPages(paper), [paper]);
   // The paper stands at the part the step fills.
   const stand = (smooth: boolean) => {
-    const box = wide ? pane.current : peek.current?.querySelector<HTMLElement>('[data-paper-scroll]'), el = document.getElementById(sheetId(partOf(step, figures)));
+    const box = peek.current?.querySelector<HTMLElement>('[data-paper-scroll]'), el = document.getElementById(sheetId(partOf(step, figures)));
     if (box && el) box.scrollTo({ top: box.scrollTop + el.getBoundingClientRect().top - box.getBoundingClientRect().top - 12, behavior: smooth && !still() ? 'smooth' : 'auto' });
   };
-  useEffect(() => { stand(true); }, [step, wide, figures]);
+  useEffect(() => { stand(true); }, [step, view, figures]);
   /** A tap on the paper brings it close where it was tapped, and a second tap takes it back: the phone's way to read a line. */
   const zoom = (e: MouseEvent) => {
     const box = (e.currentTarget as HTMLElement).parentElement!, sheet = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -298,8 +314,13 @@ export function ReportCalculator() {
     setLarge(!large);
     requestAnimationFrame(() => { const r = inner.getBoundingClientRect(); box.scrollTo({ left: Math.max(0, fx * r.width - x + 12), top: Math.max(0, fy * r.height - y + 12) }); });
   };
-  const see = () => { peek.current?.showModal(); requestAnimationFrame(() => stand(false)); };
-  const sheets = <div data-testid="rep-paper"><Paper doc={paper} pages={pages} label="Your project report so far" /></div>;
+  const see = () => { setView('companion'); peek.current?.showModal(); };
+  const openPaper = () => { setView('paper'); if (!peek.current?.open) peek.current?.showModal(); requestAnimationFrame(() => stand(false)); };
+  // The companion: beside the questions from 1024 px, in the sheet on a phone; a section of its outline opens its step.
+  const toStep = (id: StepId) => { if (peek.current?.open) peek.current.close(); go(id); };
+  const companion = <Companion s={s} p={p} cv={cv} left={leftOf(s, p)} ok={ok} step={step} go={toStep} paper={paper} pages={pages} open={open} onOpen={openPaper} sheet={!wide} />;
+  // Locked (Rahul's review of NEW2; open only with ?paper=open until PAY1), the paper shows its first page, the rest blank.
+  const sheets = <div data-testid="rep-paper"><Paper doc={paper} pages={pages} label="Your project report so far" only={open ? undefined : 1} /></div>;
   const left = leftOf(s, p), at = STEPS.findIndex(([id]) => id === step), back = STEPS[at - 1], next = STEPS[at + 1];
   const stepOf = (id: StepId, body: ComponentChildren) => {
     const i = STEPS.findIndex(([x]) => x === id);
@@ -314,7 +335,7 @@ export function ReportCalculator() {
       <StartLine c={c} home={home} />
       <nav aria-label="Steps" data-steps class="mt-4">
         <ol class="steps" style={{ '--n': STEPS.length, '--i': at }}>{STEPS.map(([id, , name], i) => {
-          const open = figures || p.needs.length ? left[id] : 0, done = id === 'check' ? ok : id !== 'download' && typed && !p.blocked && !left[id];
+          const open = figures || p.needs.length ? left[id] : 0, done = id === 'check' ? ok : id === 'words' ? wordsTrue(s.words) && !left.words : typed && !p.blocked && !left[id];
           return <li key={id} data-state={id === step ? 'now' : done ? 'done' : ''}>
             <button type="button" data-testid={`rep-step-${id}`} aria-current={id === step ? 'step' : undefined}
               onClick={() => go(id)}>
@@ -503,21 +524,29 @@ export function ReportCalculator() {
           </div>
           </>}
         </Group>)}
+        {stepOf('words', <>
+          <p class={`mt-2 ${HINT}`}>A few paragraphs in words go before the figures: what the business makes, how, for whom, and who runs it. They are optional.</p>
+          {/* The write-up is the document's own words, counted with them outside rule 17's ceiling (it sat in the download before NEW2). */}
+          <div id="words"><Words s={s} update={update} /></div>
+        </>)}
         {stepOf('check', <>
           <Result s={s} p={p} cv={cv} update={update} use={use} useWay={useWay} useRepay={useRepay} useFix={useFix} toField={toField} answer={answer} used={used} counts={fixNote?.on === used ? fixNote.text : undefined} undo={undo} keep={() => setUsed([])} toCollateral={toCollateral} toBox={toBox} ok={ok} />
           {figures && <CheckStep pre="rep" groups={checkOf(s, p)} to="benchmarks" state={ok ? 'done' : checked ? 'lapsed' : 'open'}
             benchmarks={(p.checks ?? []).map((c) => ({ label: c.label, value: c.byDefault === undefined ? c.level : `${c.level}, yours (default ${c.byDefault}${c.looser ? ', looser than a bank may accept' : ''})` }))}
-            confirm={seen ? 'These are right' : 'These are right: show the report'} onConfirm={confirm} />}
-          {p.view && (ok || seen) && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
+            confirm="These are right" onConfirm={confirm} />}
+          <Download s={s} p={p} ok={ok} />
+          {/* The statements on the screen only once the pages are open (PAY1; ?paper=open for now): locked, the report is not
+              shown whole to be copied (Rahul's review of NEW2, point 1). */}
+          {open && p.view && (ok || seen) && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
           <How><p>{SHARED.twice}</p><p>{W.bars}</p><Ledger inside id="assumed" testid="rep-assumed" rows={assumptionsOf(s).map((a) => {
             const to = ASSUMED_BOX[a.id];
             return { ...a, to, go: to && simple && !IN_SIMPLE.has(to) ? toExpert(to) : undefined };
           })} /></How>
         </>)}
-        {stepOf('download', <Download s={s} p={p} update={update} ok={ok} />)}
       </div>
       {/* The mode is the report's More options (UXR1's S12, S19): under the questions of each step, closed while simple. */}
-      <div hidden={at > 4}>
+      {/* Not on the write-up, and not on the check: once the report is ready, how much to ask is past (Rahul's review of NEW2). */}
+      <div hidden={step === 'words' || step === 'check'}>
         <MoreOptions what="every figure, and the costs by head" open={more} onToggle={setMore}>
           <Choice name="fld-mode" legend="How much to ask" options={MODE_CHOICES} value={s.mode ?? 'expert'} columns onChange={toMode} />
         </MoreOptions>
@@ -527,19 +556,23 @@ export function ReportCalculator() {
         <p data-testid="rep-answer-bar" data-answer aria-live="polite" class="text-sm font-medium text-ink">{barText(s, p)}</p>
         <div class="mt-1.5 flex items-center gap-2">
           {back && <button type="button" data-testid="rep-back" class={BUTTON} onClick={() => go(back[0])}>Back</button>}
-          <button type="button" data-testid="rep-peek" class={`${BUTTON} lg:hidden`} onClick={see}>See the report</button>
+          {/* On the check the step itself reads the report: one way on, the confirm (Rahul's review of NEW2, point 9). */}
+          {step !== 'check' && <button type="button" data-testid="rep-peek" class={`${BUTTON} lg:hidden`} onClick={see}>See the report</button>}
           {next && <button type="button" data-testid="rep-next" class={`ml-auto ${step === 'check' && figures && !ok ? BUTTON : NEXT}`} onClick={() => go(next[0])}>Next<span class="max-sm:sr-only">: {next[1]}</span></button>}
         </div>
       </div>
     </div>
-    <div ref={pane} class="builder-paper" role="region" aria-label="Your report so far" tabIndex={0}>{wide && sheets}</div>
-    <dialog ref={peek} data-testid="rep-peek-sheet" aria-labelledby="peek-h" class="peek">
+    <div ref={pane} class="builder-paper" role="region" aria-label="Your report" tabIndex={0}>{wide && companion}</div>
+    <dialog ref={peek} data-testid="rep-peek-sheet" aria-labelledby="peek-h" class="peek" onClose={() => { setView('companion'); setLarge(false); }}>
       <div class="peek-head">
-        <h2 id="peek-h" class="mr-auto font-medium text-ink">Your report so far</h2>
-        <button type="button" data-testid="rep-peek-size" class={BUTTON} aria-pressed={large} onClick={() => setLarge(!large)}>Larger</button>
+        <h2 id="peek-h" class="mr-auto font-medium text-ink">{view === 'paper' ? 'Your report so far' : 'Your report'}</h2>
+        {view === 'paper' && !wide && <button type="button" data-testid="rep-peek-outline" class={BUTTON} onClick={() => setView('companion')}>Outline</button>}
+        {view === 'paper' && <button type="button" data-testid="rep-peek-size" class={BUTTON} aria-pressed={large} onClick={() => setLarge(!large)}>Larger</button>}
         <button type="button" data-testid="rep-peek-close" class={NEXT} onClick={() => peek.current?.close()}>Back to the questions</button>
       </div>
-      <div data-paper-scroll class="peek-body"><div class={large ? 'peek-large' : ''} onClick={zoom}>{!wide && sheets}</div></div>
+      {view === 'paper'
+        ? <div data-paper-scroll class="peek-body"><div class={`peek-paper${large ? ' peek-large' : ''}`} onClick={zoom}>{sheets}</div></div>
+        : <div class="peek-body">{!wide && companion}</div>}
     </dialog>
   </div>;
 }
@@ -874,13 +907,13 @@ function Tune({ s, p, base, ways, update, use }: {
     </details>}
     <Benchmarks pre="rep" fields={benchmarkFields('fresh', s.benchmarks)} reset={() => update((t) => ({ ...t, benchmarks: undefined }))}
       set={(id, t) => update((u) => ({ ...u, benchmarks: withBenchmark(u.benchmarks, id, t) }))} />
-    {/* The room when every level meets (D-UX-50): how far sales can fall. */}
-    {!p.misses && !v && <button type="button" data-testid="rep-viable" class={`mt-4 ${BUTTON}`} onClick={() => {
+    {/* The room when every level meets (D-UX-50): how far sales can fall, costs rise and the rate climb. It folds back
+        (Rahul's review of NEW2, point 4): the same button closes it, as the CMA's does. */}
+    {!p.misses && <button type="button" data-testid="rep-viable" aria-expanded={!!v} aria-controls="rep-viable-box" class={`mt-4 ${BUTTON}`} onClick={() => {
+      if (v) { setV(undefined); return; }
       const x = viableOf(s); if (x) setV({ on: base, v: x });
-      // The button removes itself, so the focus moves to what replaces it (WCAG 2.4.3; DESIGN-LESSONS lesson 1).
-      focusNext('[data-testid="rep-viable-box"]');
-    }}>{W.room}</button>}
-    {v && !p.misses && <div data-testid="rep-viable-box" tabIndex={-1} class="mt-4 border-t-2 border-ink pt-4">
+    }}>{v ? 'Close' : W.room}</button>}
+    {v && !p.misses && <div id="rep-viable-box" data-testid="rep-viable-box" tabIndex={-1} class="mt-4 border-t-2 border-ink pt-4">
       <h4 class="font-medium text-ink">{v.title}</h4>
       {/* The title says "the room" once (review finding 10), so the borrower's group takes no heading of its own. */}
       {group('borrower', v.meets ? undefined : 'Your changes')}
@@ -911,16 +944,15 @@ function Facts({ s, update }: { s: ReportState; update: Update }) {
 /** The files. A report that misses a benchmark, or runs out of cash, never reads as ready (the owner's note 12; D-UX-247):
  * the Check step's own words, the way to mend it first, the files after and quieter. Never blocked: the lender decides
  * (D-DOC-03), and its pages say the same. */
-function Download({ s, p, update, ok }: { s: ReportState; p: ReportPreview; update: Update; ok: boolean }) {
+function Download({ s, p, ok }: { s: ReportState; p: ReportPreview; ok: boolean }) {
   const own = docNeeds(s.doc, s.words), ready = !!p.view && !p.blocked && ok;
   // Before the report shows figures the section is one line (UX8, review finding 9).
-  if (!ready) return <Group id="download"><p data-testid="rep-doc-wait" class="mt-2 text-ink">{p.blocked
-    ? 'No document while the two computations disagree.' : `A PDF, an Excel copy and a Word copy, once ${p.view ? 'you have checked your figures' : 'the report shows figures'}.`}
-    {!p.blocked && <> <a href="#report" data-testid="rep-to-check" class="text-link underline underline-offset-4">Go to Check</a></>}</p></Group>;
+  if (!ready) return <Group id="download"><p data-testid="rep-doc-wait" class={`mt-6 ${HINT}`}>{p.blocked
+    ? 'No document while the two computations disagree.' : `The PDF, an Excel copy and a Word copy come here, once ${p.view ? 'you confirm the figures above' : 'the report shows figures'}.`}</p></Group>;
   const verdict = verdictOf(p), missed = !!verdict && (!!p.misses || !!p.runsOut), mend = mendable(p);
   return <Group id="download">
-    <p class={`mt-2 ${HINT}`}>{SHARED.files}</p>
-    <Words s={s} update={update} />
+    <h3 class="mt-6 text-lg font-medium text-ink">Download</h3>
+    <p class={`mt-1 ${HINT}`}>{SHARED.files}</p>
     <div class="mt-5">
       {missed && <div data-testid="rep-doc-miss" class={answerRule(true)}>
         <p class={`${STATE} text-bad`}>{verdict.work}</p>
