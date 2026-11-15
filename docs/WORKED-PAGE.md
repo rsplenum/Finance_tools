@@ -105,9 +105,9 @@ One fresh session each, on its own branch. Every row is a whole thing Rahul open
 | 3 | **READ1** The Worker reads and drafts with the Gemini key | M, high | the CMA's "Read a statement" and the report's "Draft the words", working |
 | 4 | **NEW2** The project report's screen | L, Extra | `/project-report/` on the preview |
 | 4b | **WRITE1** The report's write-up | M, high | the write-up step, on the preview |
-| 5a | **SPEC2** The specimen redrawn to the review (proposed, `docs/REPORT-REVIEW.md` §2) | M, Extra | the new specimen PDF, manufacturing and one service case |
+| 5a | **SPEC2** The specimen redrawn to the review (yes, D-DOC-25; `docs/REPORT-REVIEW.md` §2) | M, Extra | the new specimen PDF, manufacturing and one service case |
 | 5 | **IDC1** (done), then **PAPER2a** the report's paper to SPEC2, then **PAPER2b** its operating and market chapters and annexes B, C | L, Extra each | the three files |
-| 5b | **REC1** Every paper its own record: number, version, input fingerprint (proposed, waits on Rahul, `docs/REPORT-REVIEW.md` §5) | M, high | two versions of one report, side by side |
+| 5b | **REC1** Every paper its own record: number, version, input fingerprint (yes, D-DOC-25; `docs/REPORT-REVIEW.md` §5) | M, high | two versions of one report, side by side |
 | 6 | **NEW3** The CMA from the audited statement | L, Extra | `/cma/` on the preview |
 | 7 | **NEW4** The estimate and its files | L, Extra | `/estimate/` on the preview |
 | 8 | **CASE1** One business, typed once | L, Extra | a case made in one tool filling the others |
@@ -137,6 +137,7 @@ Home, the films and the new modules wait until the tools are right. CHECKS2 is d
 - The privacy page names who reads the lines: its words change with the provider (a draft for the lawyer).
 
 ### NEW2: the project report's screen
+- **Built 15-11-2026 (D-UX-369):** the stage, the companion, the six steps and the locked state. **Left for NEW2b:** "Asks first" (the four facts, the rest in pencil) and the engine's read-back under each answer.
 - **Asks first:** what the business makes or sells, the project's cost and the loan wanted, a year's sales and what is left of it. From those: "can carry Rs. … of Rs. … asked" (`engine/capacity.ts` `carry`), the rest standing on the example or on the trade's shape, in pencil.
 - **Does itself:** the closers and FIX1's whole plans as the next step (`engine/solve.ts`); "The bank will also look at" as one short list, third; starting shapes by trade from public model profiles, each figure with its source, only where the profile is in `docs/inbox/` (else the example's shape); the words are WRITE1's. The remaining answers are walked by topic in the ladder's order, each topic 1.5 phone screens or fewer.
 - **The questions hold the stage** (REPORT-GRADE, 14-11-2026: today the questions get 448 px of a 1440 px screen and the report 856): on a desktop about two-thirds to the questions, a step line of six across the top (The business, The cost, The loan, Sales and costs, The write-up, Check and download), the engine's read-back under each answer.

@@ -406,12 +406,22 @@ html:has([data-header][data-away]:not(:focus-within)) [data-years-strip] { top: 
 .sheet-ghost span:nth-child(3n) { width: 72%; }
 .sheet-ghost span:nth-child(4n + 1) { width: 88%; }
 
-/* The builder (BUILD1, D-UX-340): the questions a step at a time, the paper beside from 1024 px. */
+/* The builder (BUILD1, D-UX-340; NEW2): the questions hold the stage, a step at a time; beside them from 1024 px the
+   companion (what the report reads, its picture, its outline, its pages small), never the paper itself (WORKED-PAGE §7). */
 .builder-paper { display: none; }
 @media (width >= 64rem) {
-  .builder { display: grid; grid-template-columns: clamp(22rem, 34vw, 28rem) minmax(0, 1fr); column-gap: 2.5rem; align-items: start; }
-  .builder-paper { display: block; position: sticky; top: 4.5rem; height: calc(100dvh - 5.5rem); overflow-y: auto; overscroll-behavior: contain; border-radius: var(--radius-card); background: var(--surface); padding: 1.25rem; }
+  .builder { display: grid; grid-template-columns: minmax(0, 1fr) clamp(20rem, 31vw, 28rem); column-gap: 2.5rem; align-items: start; }
+  .builder-paper { display: block; position: sticky; top: 4.5rem; max-height: calc(100dvh - 5.5rem); overflow-y: auto; overscroll-behavior: contain; border-radius: var(--radius-card); background: var(--surface); padding: 1.25rem; }
 }
+/* The pages as small pictures, four to a row: the paper's own sheets, or the first and blanks while locked. */
+.thumbs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; }
+.thumbs .sheets { display: contents; }
+.thumbs .sheet { overflow: hidden; }
+.thumbs .sheet-in { max-height: 141.4cqw; overflow: hidden; }
+.thumb-ghost .sheet-ghost { gap: 4cqw; margin-top: 8cqw; }
+.thumb-ghost .sheet-ghost span { height: 2.6cqw; }
+.thumbs[data-locked] > .sheets > .sheet:first-child { position: relative; }
+.thumbs[data-locked] > .sheets > .sheet:first-child::after { content: 'Sample'; position: absolute; inset: auto 0 12% 0; background: var(--warn-tint); color: var(--ink); text-align: center; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.04em; padding: 2px 0; }
 /* The progress line: six steps on one line, each a button; the one in hand filled, a finished one ticked. */
 /* The rail of steps (BUILD1; NEW1e, every tool's): a dot a step on a line, its name under it. The dot of the step in hand
  * is filled and wears a ring that glides to it along the rail (`--i` of `--n`); a step left behind takes a tick and the
@@ -464,9 +474,10 @@ html:has([data-pinned-score]) { scroll-padding-bottom: calc(var(--builder-bar-h,
 .peek[open] { display: flex; flex-direction: column; }
 .peek-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; border-bottom: 1px solid var(--line); background: var(--canvas); padding: 0.5rem 1rem; }
 .peek-body { flex: 1; overflow: auto; overscroll-behavior: contain; padding: 0.75rem; }
-.peek-body > div { cursor: zoom-in; }
-.peek-large { width: 220%; }
-.peek-body > .peek-large { cursor: zoom-out; }
+.peek-paper { margin-inline: auto; max-width: 52rem; cursor: zoom-in; }
+.peek-paper.peek-large { width: 220%; max-width: none; cursor: zoom-out; }
+@media (width >= 64rem) { .peek-paper.peek-large { width: auto; max-width: 84rem; } }
+.peek-body > .companion { margin-inline: auto; max-width: 32rem; padding: 0.25rem 0.25rem 1.5rem; }
 
 
 /* What we filled in, as a term sheet (PIC2, `site/src/dscr/Worked.tsx`): a small head for each group, then a ruled line

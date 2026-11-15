@@ -50,7 +50,7 @@ Each exhibit carries a contract (question, finding as its title, source, unit, p
 - *Organisations, roles, tenant isolation, malware scanning, audit trail.* Only if reports are kept on our server (§5); then they are needed, and Cloudflare has no scanner of its own: a service to choose.
 - Paper 3's 2026 research citations were not opened (rule 9); they argue for testing AI-written code, which we do.
 
-## 5. "Saved and referred to again and again": Rahul's to decide
+## 5. "Saved and referred to again and again": settled
 
 Today nothing is kept on our side: the answers live on the device, the paper is made and forgotten (D-UX-341, D-DOC-23, the privacy page). Three ways to meet Rahul's word, each a step on the last:
 
@@ -58,7 +58,7 @@ Today nothing is kept on our side: the answers live on the device, the paper is 
 2. **A list on the device** (CASE1): every report and its versions, opened, compared, sent as a file.
 3. **A library in our cloud, with sign-in:** reports and their PDFs kept for the borrower across devices. This reverses D-DOC-23's "nothing is kept" and the privacy page, needs sign-in (D-BIZ-26 said no sign-up at launch), a retention and deletion policy, India's data-protection law, the lawyer, and the security work in §4.
 
-**Recommended:** 1 and 2 now; 3 with PAY1, since a paying customer will expect to download again. Rahul's: yes, or 3 sooner.
+**Settled (D-DOC-25, 15-11-2026, on Rahul's "you figure it out"):** 1 and 2 now; 3 with PAY1, since a paying customer will expect to download again.
 
 ## 6. Is it possible, and how big
 

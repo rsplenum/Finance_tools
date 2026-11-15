@@ -99,14 +99,19 @@ function sheetsOf(doc: Doc): { parts: Part[]; cover: boolean }[] {
   return out;
 }
 
-/** `pages`: each section's page in the PDF, for the contents; `label` names the region for a screen reader. */
-export function Paper({ doc, pages, label }: { doc: Doc; pages?: [string, number][]; label: string }) {
+/** How many sheets the paper runs to: the pages a reader sees, as small pictures or locked. */
+export const sheetCount = (doc: Doc) => sheetsOf(doc).length;
+
+/** `pages`: each section's page in the PDF, for the contents; `label` names the region for a screen reader; `only`: the
+ * first so many sheets, as the side's small pictures show while the pages are locked; `bare`: no ids, for a second
+ * copy on the page (the small pictures beside the paper itself). */
+export function Paper({ doc, pages, label, only, bare }: { doc: Doc; pages?: [string, number][]; label: string; only?: number; bare?: boolean }) {
   return <div role="group" aria-label={label} class="sheets">
-    {sheetsOf(doc).map((sh, n) => <div key={n} class="sheet paper shadow-paper">
+    {sheetsOf(doc).slice(0, only).map((sh, n) => <div key={n} class="sheet paper shadow-paper">
       <div class="sheet-in">
         {!sh.cover && <p class="sheet-run"><span>{doc.header}</span>{doc.mark && <strong>{doc.mark}</strong>}</p>}
         <div class="sheet-body">
-          {sh.parts.map((part) => <div key={part.name} id={sheetId(part.name)} data-part={part.name} class="sheet-part">
+          {sh.parts.map((part) => <div key={part.name} id={bare ? undefined : sheetId(part.name)} data-part={part.name} class="sheet-part">
             {part.blocks.map((b, i) => <BlockOf key={i} b={b} doc={doc} pages={pages} />)}
             {part.ghost ? <div class="sheet-ghost" aria-hidden="true">{Array.from({ length: part.ghost }, (_, i) => <span key={i} />)}</div> : null}
           </div>)}
