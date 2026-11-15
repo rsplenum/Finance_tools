@@ -7,8 +7,9 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/ho
 import { parseMonth } from '../../../engine/parse';
 import { levelFor, type RatioId } from '../../../engine/ratios';
 import { whatIfTable, type WhatIfRow } from '../../../engine/what-if';
-import { benchmarkFields, levelsOf, listed, withBenchmark, type CheckRow } from '../board-model';
-import { BUTTON, FILLED, HINT, TextField, Tick, useDraft } from '../fields';
+import { benchmarkFields, levelsOf, withBenchmark, type CheckRow } from '../board-model';
+import { BUTTON, HINT, SourceNote, TextField, Tick, goTo, useDraft } from '../fields';
+import { plain, SHARED } from '../words';
 import { summaryOf, type Box, type Pick, type SumLine, type SumSection } from './check';
 import { amountOf, heldOf, inputOf, plainOf, type CarryView, type ReportPreview, type ReportState, type WorkView } from './model';
 import { PLAIN, SHORT, W } from './words';
@@ -81,8 +82,8 @@ export const Live = ({ cv, work }: { cv?: CarryView; work?: string }) => <p data
 
 /** "Check your figures" (Rahul, 15-11-2026): the whole report as one summary that reads as a finished one; touch a figure
  * to change it where it sits, never a trip back. What is still the example's is marked where it is. */
-export function Summary({ s, p, update, state, onConfirm, open, setOpen, live, scheme, toStep }: {
-  s: ReportState; p: ReportPreview; update: Update; state: 'open' | 'lapsed' | 'done'; onConfirm: () => void;
+export function Summary({ s, p, update, state, open, setOpen, live, scheme, toStep, assumed }: {
+  s: ReportState; p: ReportPreview; update: Update; state: 'open' | 'lapsed' | 'done'; assumed: Assumption[];
   open?: string; setOpen: (id?: string) => void; live: preact.ComponentChildren; scheme: preact.ComponentChildren; toStep: (to: string) => (e: Event) => void;
 }) {
   const secs = summaryOf(s, p), root = useRef<HTMLDivElement>(null);
@@ -97,7 +98,7 @@ export function Summary({ s, p, update, state, onConfirm, open, setOpen, live, s
     const here = g.lines.some((l) => l.id === open), pencil = g.lines.some((l) => l.pencil);
     return <section key={g.id} data-testid={`rep-confirm-${g.id}`} aria-labelledby={`sum-${g.id}-h`} class="sum-section dim-able" data-here={here || undefined}>
       {here && live}
-      <div class="mb-1 flex items-baseline justify-between gap-2">
+      <div class="mb-1 flex items-center justify-between gap-2">
         <h4 id={`sum-${g.id}-h`} class="sum-title">{g.title}</h4>
         {pencil && <span data-testid={`rep-pencil-${g.id}`} class="sum-pencil-tag">✎ In pencil</span>}
         <a href={`#${g.to}`} onClick={toStep(g.to)} aria-label={`All of it: ${g.title}, in its step`} class={`ml-auto inline-flex min-h-6 items-center px-1 text-xs ${MUTED} underline underline-offset-4`}>All of it</a>
@@ -111,12 +112,35 @@ export function Summary({ s, p, update, state, onConfirm, open, setOpen, live, s
       <h3 id="check-h" class="text-title text-ink">Check your figures</h3>
       {state === 'done' && <p data-testid="rep-confirmed" class={`flex items-center gap-1.5 text-sm font-medium text-ink`}><Tick />Checked</p>}
     </div>
-    <p class={`max-w-prose ${HINT}`}>Your report in one page. Tap any figure in blue to change it here; <span class="sum-pencil">✎</span> marks what is still the example’s.</p>
+    <p class={`max-w-prose ${HINT}`}>Your report in one page. Tap an underlined figure to change it here; <span class="sum-pencil">✎</span> marks what is still the example’s.</p>
     <div ref={root} class="paper shadow-paper sum-paper mt-3 rounded-card">
       {secs.map(section)}
+      <Assumed rows={assumed} />
     </div>
-    {state === 'lapsed' && <p role="status" data-testid="rep-confirm-lapsed" class="mt-3 text-sm font-medium text-warn">Your figures changed since you checked them: check them again.</p>}
-    {state !== 'done' && <button type="button" data-testid="rep-confirm" class={`mt-4 ${FILLED}`} onClick={onConfirm}>These are right</button>}
+  </section>;
+}
+
+/** One thing the report assumes until changed (D-UX-32): what, its value in a few words, the whole of it and why. */
+export interface Assumption { id: string; what: string; brief?: string; shown: string; why: string; to?: string; go?: (e: Event) => void }
+
+/** What we assumed (Rahul, 15-11-2026: the list under "How this is worked out" opened into "a volcano of text"): the
+ * summary's last section, set as its lines are, closed to its count. Each a line, its value in a few words; one that a
+ * box changes is tapped to reach it. The whole of each, and why, under one "What each means". */
+function Assumed({ rows }: { rows: Assumption[] }) {
+  if (!rows.length) return null;
+  return <section id="assumed" data-testid="rep-assumed-section" aria-labelledby="assumed-h" class="sum-section dim-able">
+    <details data-testid="rep-assumed" class="group">
+      <summary class="flex min-h-11 cursor-pointer items-center gap-2 [&::-webkit-details-marker]:hidden">
+        <h4 id="assumed-h" class="sum-title">{SHARED.assumed}: {rows.length}</h4>
+        <span class="ml-auto text-xs text-link underline underline-offset-4"><span class="group-open:hidden">{SHARED.show}</span><span class="hidden group-open:inline">{SHARED.hide}</span></span>
+      </summary>
+      {rows.map((r) => <div key={r.id} data-testid={`rep-assumed-${r.id}`} class="sum-line">
+        <span class="sum-label">{r.what}</span><span class="sr-only">: </span>
+        {r.to ? <a href={`#${r.to}`} onClick={r.go ?? goTo(r.to)} aria-label={`${r.brief ?? r.shown}: ${r.what}. Change it`} class="sum-value sum-edit no-underline">{r.brief ?? r.shown}</a>
+          : <span class="sum-value">{r.brief ?? r.shown}</span>}
+      </div>)}
+      <div class="mt-2"><SourceNote what="What each means, and why">{rows.map((r) => <span key={r.id} class="mt-1 block"><b>{r.what}:</b> {r.shown}. {plain(r.why)}.</span>)}</SourceNote></div>
+    </details>
   </section>;
 }
 
@@ -250,36 +274,43 @@ const dscr = (x: number | undefined, level: number, misses: boolean) => {
   return misses && Number(two) >= level ? x.toFixed(4) : two;
 };
 /** What if (Rahul, 15-11-2026: "Sensitivity Analysis — Sales / Cost / ROI", ROI the rate of interest): the report run
- * again with sales lower, costs higher and the rate higher, each alone and all three at once, against the same benchmarks. */
+ * again with sales lower, costs higher and the rate higher, each alone and all three at once, against the same benchmarks.
+ * Set as the ratio table is (Rahul's second note, 15-11-2026): the case and what it misses in a line under it, the two
+ * DSCRs, ✓ or ✗; every row two lines, nothing wider than a phone, no note under it. */
+/** "Average DSCR" reads "average DSCR" inside a line; "DSCR in the lowest year" stays. */
+const lowerFirst = (x: string) => (/^[A-Z][a-z]/.test(x) ? x[0].toLowerCase() + x.slice(1) : x);
 export function WhatIf({ s, names }: { s: ReportState; names: Record<string, string> }) {
   const on = JSON.stringify({ ...s, promotersMost: '', plantSales: '', plantCost: '', doc: '', words: '' });
   const t = useMemo(() => whatIfTable(inputOf(s), levelsOf(s.benchmarks)), [on]);
   if (!t) return null;
   const lv = levelsOf(s.benchmarks), low = levelFor('dscrLowest', 'fresh', lv), avg = levelFor('dscrAverage', 'fresh', lv);
-  const row = (r: WhatIfRow, typed?: boolean) => {
-    const bad = r.misses.length > 0 || !!r.cashShort;
-    return <tr key={r.id} data-testid={`rep-whatif-${r.id}`} class={typed ? 'whatif-typed' : ''}>
-      <th scope="row" class="text-left font-normal text-ink">{r.label}</th>
-      <td class={`text-right tabular-nums ${r.misses.includes('dscrLowest' as RatioId) ? 'text-bad' : 'text-ink'}`}>{dscr(r.lowest, low, r.misses.includes('dscrLowest' as RatioId))}{r.lowestFy && <span class={`block text-xs ${MUTED}`}>{r.lowestFy}</span>}</td>
-      <td class={`text-right tabular-nums ${r.misses.includes('dscrAverage' as RatioId) ? 'text-bad' : 'text-ink'}`}>{dscr(r.average, avg, r.misses.includes('dscrAverage' as RatioId))}</td>
-      <td class={`text-left ${bad ? 'text-bad' : 'text-good'}`}>{bad
-        ? <>✗ {r.misses.length ? `Misses ${listed(r.misses.map((id) => names[id] ?? SHORT[id] ?? id))}` : ''}{r.cashShort ? `${r.misses.length ? '; c' : 'C'}ash runs short in ${r.cashShort}` : ''}</>
-        : '✓ Meets all'}</td>
+  const row = (r: WhatIfRow) => {
+    const bad = r.misses.length > 0 || !!r.cashShort, ink = bad ? 'text-bad' : 'text-good';
+    const miss = (id: string) => r.misses.includes(id as RatioId);
+    // In a line, so every row is two: one benchmark by name, more by their count; the ratio table above names them.
+    const n = r.misses.length, said = bad ? [n === 1 ? `Misses ${lowerFirst(names[r.misses[0]] ?? SHORT[r.misses[0]] ?? r.misses[0])}` : n ? `Misses ${n} benchmarks` : '', r.cashShort ? 'cash runs short' : '']
+      .filter(Boolean).join('; ').replace(/^c/, 'C') : 'Meets every benchmark';
+    return <tr key={r.id} data-testid={`rep-whatif-${r.id}`} data-verdict={bad ? 'misses' : 'meets'}>
+      <th scope="row" class="text-left font-normal"><span class="block text-ink">{r.label}</span><span class={`block text-xs ${bad ? 'text-bad' : MUTED}`}>{said}</span></th>
+      <td class={`text-right tabular-nums ${miss('dscrLowest') ? 'text-bad' : 'text-ink'}`}>{dscr(r.lowest, low, miss('dscrLowest'))}</td>
+      <td class={`text-right tabular-nums ${miss('dscrAverage') ? 'text-bad' : 'text-ink'}`}>{dscr(r.average, avg, miss('dscrAverage'))}</td>
+      <td class={`text-center text-base font-semibold ${ink}`}><span aria-hidden="true">{bad ? '✗' : '✓'}</span><span class="sr-only">{bad ? 'Misses' : 'Meets'}</span></td>
     </tr>;
   };
   return <section id="what-if" data-testid="rep-whatif" aria-labelledby="what-if-h" class="dim-able mt-10">
     <h3 id="what-if-h" class="text-title text-ink">What if</h3>
-    <p class={`max-w-prose ${HINT}`}>The same report with one thing worse, then all three at once, read against the same benchmarks.</p>
-    <div class="paper mt-3 overflow-x-auto rounded-card" tabIndex={0} role="region" aria-label="What if">
-      <table class="ratio-table w-full min-w-[30rem] border-collapse text-sm">
+    <p class={`max-w-prose ${HINT}`}>Your report with one thing worse, then all three at once.</p>
+    <div class="paper mt-3 overflow-hidden rounded-card">
+      <table class="ratio-table whatif-table w-full border-collapse text-sm">
         <thead><tr>
-          <th scope="col" class="text-left">If</th><th scope="col" class="text-right">DSCR, lowest year <span class="font-normal">({low.toFixed(2)}+)</span></th>
-          <th scope="col" class="text-right">DSCR, average <span class="font-normal">({avg.toFixed(2)}+)</span></th><th scope="col" class="text-left">Benchmarks</th>
+          <th scope="col" class="text-left">If</th>
+          <th scope="col" class="text-right">Lowest DSCR<span class="block font-normal">{low.toFixed(2)}+</span></th>
+          <th scope="col" class="text-right">Average DSCR<span class="block font-normal">{avg.toFixed(2)}+</span></th>
+          <th scope="col" class="w-8"><span class="sr-only">Meets or misses</span></th>
         </tr></thead>
-        <tbody>{row(t.typed, true)}{t.rows.map((r) => row(r))}</tbody>
+        <tbody>{[t.typed, ...t.rows].map(row)}</tbody>
       </table>
     </div>
-    <p data-testid="rep-whatif-note" class={`mt-2 max-w-prose text-xs ${MUTED}`}>Our own tests, not a lender’s norm: each lender sets its own, and they never change the verdict above. The loan, the limit and the cost stay as asked; sales fall by the price, costs rise as materials and fixed costs together, and the rate rises on the term loan and the working-capital limit.</p>
   </section>;
 }
 

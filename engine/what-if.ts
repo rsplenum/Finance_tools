@@ -48,7 +48,7 @@ export function whatIfTable(x: ReportInput, lv?: Levels): { typed: WhatIfRow; ro
       ...(r.cashShort ? { cashShort: r.cashShort.first } : {}),
     };
   };
-  return { typed: row('typed', 'As you typed it', x), rows: (WHAT_IF.cases as Case[]).map((c) => row(c.id, c.label, moved(x, c))) };
+  return { typed: row('typed', 'As planned', x), rows: (WHAT_IF.cases as Case[]).map((c) => row(c.id, c.label, moved(x, c))) };
 }
 
 /** Each case's lowest and average DSCR and the benchmarks it misses; undefined when the report as typed cannot be worked. */

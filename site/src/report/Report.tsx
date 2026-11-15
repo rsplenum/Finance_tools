@@ -13,7 +13,7 @@ import { Paper, sheetId, still } from '../Paper';
 import { Companion } from './Companion';
 import { paperOpen } from './gate';
 import { wordsNeeds, wordsTrue } from './words';
-import { answerRule, BUTTON, reach, Choice, Counter, FILLED, goTo, HINT, How, Ledger, SelectField, STATE, TextField, Tick, InAppNote, useHomeCase, useStart, StartLine, MoreOptions, useKept } from '../fields';
+import { answerRule, BUTTON, reach, Choice, Counter, FILLED, goTo, HINT, How, SelectField, STATE, TextField, Tick, InAppNote, useHomeCase, useStart, StartLine, MoreOptions, useKept } from '../fields';
 import { PLAIN, SHORT, W } from './words';
 import { SHARED } from '../words';
 import { REPORT_HOME } from './home-case';
@@ -32,7 +32,7 @@ import { sureLower, type Marked } from '../../../engine/sure';
 import { allNeeds, docNeeds, docStatus, fileName, paperDoc, PARTS, reportDoc } from './document';
 import { Words } from './Words';
 import { FixIt } from './FixIt';
-import { Live, Outline, Ratios, Summary, WhatIf } from './CheckPage';
+import { Live, Outline, Ratios, Summary, WhatIf, type Assumption } from './CheckPage';
 import type { CheckState } from '../CheckStep';
 import { pencilCount } from './check';
 import { Downloads } from '../Downloads';
@@ -216,7 +216,13 @@ export function ReportCalculator() {
   const [checked, setChecked] = useState<string>();
   const [seen, setSeen] = useState(false);
   const ok = checked === key;
-  const confirm = () => { setChecked(key); setSeen(true); if (s.pencil) update((x) => ({ ...x, pencil: undefined })); focusNext('[data-testid="rep-confirmed"]'); };
+  // The bar's way on at the check (Rahul, 15-11-2026): to the confirm, or once confirmed, to the files.
+  const toDownload = () => {
+    const t = document.querySelector<HTMLElement>(ok ? '[data-testid="rep-download-pdf"]' : '[data-testid="rep-confirm"]');
+    t?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+    t?.focus({ preventScroll: true });
+  };
+  const confirm = () => { setChecked(key); setSeen(true); if (s.pencil) update((x) => ({ ...x, pencil: undefined })); focusNext('#download-h'); };
   const undo = () => { setS((x) => undoPlan(x, used)); setUsed([]); };
   // Clear all, with an undo until the next figure is typed (review finding 5), as on every tool (UXR5b, S16).
   const c = useStart('rep', s, setS, () => blank, () => reportExample(), () => { setUsed([]); setChecked(undefined); setSeen(false); });
@@ -553,15 +559,15 @@ export function ReportCalculator() {
         </>)}
         {stepOf('check', <>
           <Result s={s} p={p} cv={cv} update={update} use={use} useWay={useWay} useRepay={useRepay} useFix={useFix} toField={toField} answer={answer} used={used} counts={fixNote?.on === used ? fixNote.text : undefined} undo={undo} keep={() => setUsed([])} toCollateral={toCollateral} toBox={toBox} ok={ok}
-            state={ok ? 'done' : checked ? 'lapsed' : 'open'} onConfirm={confirm} openPaper={openPaper}>
-          <Download s={s} p={p} ok={ok} />
+            state={ok ? 'done' : checked ? 'lapsed' : 'open'} openPaper={openPaper} assumed={assumptionsOf(s).map((a) => {
+              const to = ASSUMED_BOX[a.id];
+              return { ...a, to, go: to && simple && !IN_SIMPLE.has(to) ? toExpert(to) : undefined };
+            })}>
+          <Download s={s} p={p} ok={ok} lapsed={!!checked && !ok} onConfirm={confirm} />
           {/* The statements on the screen only once the pages are open (PAY1; ?paper=open for now): locked, the report is not
               shown whole to be copied (Rahul's review of NEW2, point 1). */}
           {open && p.view && (ok || seen) && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
-          <How><p>{SHARED.twice}</p><p>{W.bars}</p><Ledger inside id="assumed" testid="rep-assumed" rows={assumptionsOf(s).map((a) => {
-            const to = ASSUMED_BOX[a.id];
-            return { ...a, to, go: to && simple && !IN_SIMPLE.has(to) ? toExpert(to) : undefined };
-          })} /></How>
+          <How><p>{SHARED.twice}</p><p>{W.bars}</p></How>
           </Result>
         </>)}
       </div>
@@ -579,6 +585,7 @@ export function ReportCalculator() {
           {back && <button type="button" data-testid="rep-back" class={BUTTON} onClick={() => go(back[0])}>Back</button>}
           {/* On the check the step itself reads the report: one way on, the confirm (Rahul's review of NEW2, point 9). */}
           {step !== 'check' && <button type="button" data-testid="rep-peek" class={`${BUTTON} lg:hidden`} onClick={see}>See the report</button>}
+          {step === 'check' && p.view && !p.blocked && <button type="button" data-testid="rep-get" class={`ml-auto ${NEXT}`} onClick={toDownload}>{ok ? 'Download' : 'Get the report'}</button>}
           {next && <button type="button" data-testid="rep-next" class={`ml-auto ${step === 'check' && figures && !ok ? BUTTON : NEXT}`} onClick={() => go(next[0])}>Next<span class="max-sm:sr-only">: {next[1]}</span></button>}
         </div>
       </div>
@@ -680,11 +687,11 @@ const mendable = (p: ReportPreview) => !!p.view && !p.blocked && (!!p.short || !
  * once, the misses first under their cause with the rupees short. Under the paper, "Make it work": every way in one list,
  * each with the same "Use this" and the same undo; then the fine-tuning, closed. The status shows only while a question
  * is left: "All questions answered" beside a miss read as a pass. */
-function Result({ s, p, cv, update, use, useWay, useRepay, useFix, toField, answer, used, counts, undo, keep, toCollateral, toBox, ok, state, onConfirm, openPaper, children }: {
+function Result({ s, p, cv, update, use, useWay, useRepay, useFix, toField, answer, used, counts, undo, keep, toCollateral, toBox, ok, state, openPaper, assumed, children }: {
   s: ReportState; p: ReportPreview; cv?: CarryView; update: Update; use: (l: Levers) => void; useWay: (w: WorkCard) => void; useRepay: (r: RepayRow) => void;
   useFix: (c: FixCard) => void; toField: (id: string) => (e: Event) => void; answer: (t: string) => void; used: PlanChange[]; counts?: string; undo: () => void;
   keep: () => void; toCollateral: (e: Event) => void; toBox: (need: string) => (e: Event) => void; ok: boolean;
-  state: CheckState; onConfirm: () => void; openPaper: () => void; children: ComponentChildren;
+  state: CheckState; openPaper: () => void; assumed: Assumption[]; children: ComponentChildren;
 }) {
   const v = p.view, figures = !!v && !p.blocked, verdict = verdictOf(p), own = figures && !p.needs.length ? docNeeds(s.doc, s.words) : [];
   const result = p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready';
@@ -783,14 +790,12 @@ function Result({ s, p, cv, update, use, useWay, useRepay, useFix, toField, answ
       </div>
       {figures && <div class="check-rail-more">
         <Outline items={outline} />
-        <div class="mt-4 flex flex-wrap gap-2">
-          <button type="button" data-testid="rep-rail-paper" class={BUTTON} onClick={openPaper}>See the pages</button>
-          <a href="#download" data-testid="rep-rail-download" class={`inline-flex items-center ${BUTTON}`}>Download</a>
-        </div>
+        {/* The way to the files is the bar's "Get the report", in reach on every screen; the rail keeps the pages. */}
+        <button type="button" data-testid="rep-rail-paper" class={`mt-3 ${BUTTON}`} onClick={openPaper}>See the pages</button>
       </div>}
     </div>
     <div class="check-main">
-      {figures && <Summary s={s} p={p} update={update} state={state} onConfirm={onConfirm} open={editing} setOpen={setEditing}
+      {figures && <Summary s={s} p={p} update={update} state={state} assumed={assumed} open={editing} setOpen={setEditing}
         live={<Live cv={cv} work={verdict?.work} />} scheme={schemeNotes} toStep={toField} />}
       {figures && verdict && p.checks && <Ratios s={s} p={p} update={update} head={verdict.head} w={w} emphasis={bm} setEmphasis={setBm} collateral={collateral} />}
       {figures && p.checks && <WhatIf s={s} names={Object.fromEntries(p.checks.map((c) => [c.id, c.label]))} />}
@@ -884,7 +889,7 @@ function Tune({ s, p, base, ways, update, use, toBenchmarks }: {
     setPlan({ on: base, plan: q }); setTouched(ids); if (q) setLv(q.levers);
   };
   // Open, the sliders start from the figures as typed.
-  useEffect(() => { if (open && p.misses && !plan) replan([], AS_TYPED); }, [open, base, !!p.misses]);
+  useEffect(() => { if (open && !plan) replan([], AS_TYPED); }, [open, base]);
   useEffect(() => { if (plan) replan(touched, lv); }, [s.promotersMost]);
   const b = useMemo(() => (plan ? boardOf(plan, lv) : undefined), [plan, lv]);
   const move = (id: LeverId, n: number) => { setLv((l) => ({ ...l, [id]: n })); if (!touched.includes(id)) setTouched([...touched, id]); };
@@ -905,7 +910,8 @@ function Tune({ s, p, base, ways, update, use, toBenchmarks }: {
   const mark = (c: CheckRow) => (c.verdict === 'meets' ? ['✓', 'Meets', 'text-good'] : c.verdict === 'misses' ? ['✗', 'Misses', 'text-bad'] : ['–', 'Not read yet', MUTED]);
   return <section id="fine-tune" data-testid="rep-tune" aria-labelledby="rep-tune-h" class="mt-8">
     <h3 id="rep-tune-h" class="text-title text-ink">{p.misses ? `Or ${W.tune.toLowerCase()}` : W.tune}</h3>
-    {p.misses && <details data-testid="rep-sliders" class="mt-2" open={open} onToggle={(e) => setOpenOn((e.currentTarget as HTMLDetailsElement).open ? base : undefined)}>
+    {/* Always there (Rahul, 15-11-2026): a report that works, by itself or by a way used, is still the borrower's to tune. */}
+    <details data-testid="rep-sliders" class="mt-2" open={open} onToggle={(e) => setOpenOn((e.currentTarget as HTMLDetailsElement).open ? base : undefined)}>
       <summary data-testid="rep-levers" class={FOLD}>{W.adjust}</summary>
       {plan && b && <div data-testid="rep-plan">
         <p class={HINT}>{W.sliders}</p>
@@ -942,7 +948,7 @@ function Tune({ s, p, base, ways, update, use, toBenchmarks }: {
           {!sameLevers(lv, AS_TYPED) && <button type="button" data-testid="rep-plan-back" class={BUTTON} onClick={() => replan([], AS_TYPED)}>Back to as typed</button>}
         </div>
       </div>}
-    </details>}
+    </details>
     {ways && <details data-testid="rep-repayment" class="mt-2">
       <summary class={FOLD}>{W.ways}</summary>
       <p data-testid="rep-repayment-lead" class="mt-1 text-sm text-ink">{ways.lead}</p>
@@ -999,14 +1005,22 @@ function Facts({ s, update }: { s: ReportState; update: Update }) {
 /** The files. A report that misses a benchmark, or runs out of cash, never reads as ready (the owner's note 12; D-UX-247):
  * the Check step's own words, the way to mend it first, the files after and quieter. Never blocked: the lender decides
  * (D-DOC-03), and its pages say the same. */
-function Download({ s, p, ok }: { s: ReportState; p: ReportPreview; ok: boolean }) {
+function Download({ s, p, ok, lapsed, onConfirm }: { s: ReportState; p: ReportPreview; ok: boolean; lapsed: boolean; onConfirm: () => void }) {
   const own = docNeeds(s.doc, s.words), ready = !!p.view && !p.blocked && ok;
   // Before the report shows figures the section is one line (UX8, review finding 9).
-  if (!ready) return <Group id="download"><p data-testid="rep-doc-wait" class={`mt-6 ${HINT}`}>{p.blocked
-    ? 'No document while the two computations disagree.' : `The PDF, an Excel copy and a Word copy come here, once ${p.view ? 'you confirm the figures above' : 'the report shows figures'}.`}</p></Group>;
+  if (!p.view || p.blocked) return <Group id="download"><p data-testid="rep-doc-wait" class={`mt-6 ${HINT}`}>{p.blocked
+    ? 'No document while the two computations disagree.' : 'The PDF, an Excel copy and a Word copy come here, once the report shows figures.'}</p></Group>;
+  // The way to the files at the end of the page, where a reader who scrolled past everything lands (Rahul, 15-11-2026: at
+  // the bottom there was only "Works" and Back). The bar's "Get the report" comes here too.
+  if (!ready) return <Group id="download">
+    <h3 id="download-h" tabIndex={-1} class="mt-6 text-lg font-medium text-ink">Your report</h3>
+    <p data-testid="rep-doc-wait" class={`mt-1 ${HINT}`}>The PDF, an Excel copy and a Word copy come here once you confirm your figures.</p>
+    {lapsed && <p role="status" data-testid="rep-confirm-lapsed" class="mt-2 text-sm font-medium text-warn">Your figures changed since you checked them: check them again.</p>}
+    <button type="button" data-testid="rep-confirm" class={`mt-3 ${FILLED}`} onClick={onConfirm}>These are right</button>
+  </Group>;
   const verdict = verdictOf(p), missed = !!verdict && (!!p.misses || !!p.runsOut), mend = mendable(p);
   return <Group id="download">
-    <h3 class="mt-6 text-lg font-medium text-ink">Download</h3>
+    <h3 id="download-h" tabIndex={-1} class="mt-6 text-lg font-medium text-ink">Download</h3>
     <p class={`mt-1 ${HINT}`}>{SHARED.files}</p>
     <div class="mt-5">
       {missed && <div data-testid="rep-doc-miss" class={answerRule(true)}>

@@ -39,3 +39,13 @@ describe('the check page summary', () => {
     expect({ ...s2, scheme: s.scheme }).toEqual(s);
   });
 });
+
+// What we assumed reads each assumption in a few words (Rahul, 15-11-2026): the short value never carries a figure the
+// whole one does not, so the two can never say different things.
+import { ASSUMPTIONS } from '../engine/report';
+describe('the assumptions in a few words', () => {
+  it('each has a short value whose figures all stand in its whole value', () => {
+    const odd = ASSUMPTIONS.filter((a) => !('brief' in a) || ((a as { brief: string }).brief.match(/\d+/g) ?? []).some((n) => !a.shown.includes(n))).map((a) => a.id);
+    expect(odd).toEqual([]);
+  });
+});

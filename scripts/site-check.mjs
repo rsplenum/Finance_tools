@@ -1386,7 +1386,7 @@ if (touched('/project-report/')) {
   if (await page.evaluate(() => document.activeElement?.id) !== 'fld-rep-name') v('"answer it" does not land on the business\'s name (the owner, 26-10-2026)');
   // Before the check (OR8, the owner's O13): what was collected and the benchmarks, the owner's line; no table, no download.
   if (await page.getByTestId('rep-pl').count() || await page.getByTestId('rep-download-pdf').count()) v('the report shows its tables or downloads before its check (OR8)');
-  await expectText(page, v, 'rep-doc-wait', 'The PDF, an Excel copy and a Word copy come here, once you confirm the figures above.', 'the download before the check');
+  await expectText(page, v, 'rep-doc-wait', 'The PDF, an Excel copy and a Word copy come here once you confirm your figures.', 'the download before the check');
   await expectFigures(page, v, 'rep-confirm-cost', '… 37,86,301 …', 'the check: the cost of the project');
   await expectFigures(page, v, 'rep-confirm-sales', '… 1,20,00,000 … 10% …', 'the check: the sales as typed');
   await expectText(page, v, 'rep-confirm-document', /Business’s name: Not given yet/, 'the check: the first page, not given yet');
@@ -1854,9 +1854,19 @@ if (touched('/project-report/')) {
   // Read in place: the stepped page's isVisible would first walk to the step that holds it (scripts/stepped.mjs).
   if (await page.evaluate(() => !!document.getElementById('more-options')?.checkVisibility())) v('NEW2 review: More options still shows on the Check step');
   if (await page.getByTestId('rep-confirm').textContent() !== 'These are right') v('NEW2 review: the confirm is not "These are right"');
+  // Rahul, 15-11-2026: the way to the report from anywhere on the check, the bar's own button, which finds the confirm
+  // by the download before it and the download after; What if reads the plan "as planned"; the sliders are always there.
+  await page.getByTestId('rep-get').click();
+  if (await page.evaluate(() => document.activeElement?.dataset.testid) !== 'rep-confirm') v('the bar\'s "Get the report" does not lead to the confirm (Rahul, 15-11-2026)');
+  if (!/^As planned/.test(await page.getByTestId('rep-whatif-typed').locator('th').textContent())) v('What if: the first row is not the plan "as planned" (Rahul, 15-11-2026)');
+  if (!(await page.getByTestId('rep-sliders').count())) v('Fine-tune it yourself is missing (Rahul, 15-11-2026: always there)');
   await confirmReport(page, v, 'NEW2 review, home');
+  if (await page.getByTestId('rep-get').textContent() !== 'Download') v('the bar\'s button does not read "Download" once confirmed');
   if (await page.getByTestId('rep-pl').count()) v('NEW2 review: the statements show on the screen while the pages are locked');
   await page.setViewportSize({ width: 1280, height: 900 });
+  // The rail stands clear of the bar on a laptop (Rahul's desktop note, 15-11-2026: its outline ran under the bar).
+  const [railEnd, barTop] = await page.evaluate(() => [document.querySelector('.check-rail').getBoundingClientRect().bottom, document.querySelector('[data-builder-bar]').getBoundingClientRect().top]);
+  if (railEnd > barTop + 1) v(`the check's rail runs ${Math.round(railEnd - barTop)} px under the bar at 1280 × 900`);
   await expectText(page, v, 'rep-locked', /^Page 1 shows here\. The other \d+ open with the download\.$/, 'NEW2 review: the pages locked by default');
   await page.getByTestId('rep-rail-paper').click();
   await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2 review: "See the pages" in the check\'s rail does not open the paper (D-UX-372)'));

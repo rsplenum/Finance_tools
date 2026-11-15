@@ -417,11 +417,17 @@ html:has([data-header][data-away]:not(:focus-within)) [data-years-strip] { top: 
    itself: from 1024 px the answer stands at the left as the page scrolls (the rail: the figure, the verdict, what is left,
    the report's parts as links, its pages and the download); on a phone the same block heads the page. */
 @media (width >= 64rem) {
+  /* A report's measure, not the screen's (Rahul's desktop note, 15-11-2026: the summary ran a laptop's whole width, its
+     figures a long dotted line from their words): the page, its heading with it, at most 74rem and centred; the summary
+     and the tables about 47rem beside the rail. */
+  [data-tool]:has(.builder[data-at="check"]) { max-width: 74rem; }
   .builder[data-at="check"] { grid-template-columns: minmax(0, 1fr); }
   .builder[data-at="check"] .builder-paper { display: none; }
-  .check-page { display: grid; grid-template-columns: 17.5rem minmax(0, 1fr); column-gap: 2.5rem; align-items: start; }
-  .check-rail { position: sticky; top: 4.5rem; max-height: calc(100dvh - 5.5rem - var(--builder-bar-h, 0px)); overflow-y: auto; overscroll-behavior: contain; padding-bottom: 1rem; }
-  .check-rail .text-title { font-size: 1.25rem; line-height: 1.35; }
+  .check-page { display: grid; grid-template-columns: 20rem minmax(0, 1fr); column-gap: 3rem; align-items: start; }
+  /* The rail fits above the bar on a laptop (it was cut under it): no header above it to clear, the answer set smaller. */
+  .check-rail { position: sticky; top: 1rem; max-height: calc(100dvh - 1.5rem - var(--builder-bar-h, 0px)); overflow-y: auto; overscroll-behavior: contain; padding-bottom: 0.25rem; }
+  .check-rail .text-title { font-size: 1.125rem; line-height: 1.4; }
+  .check-rail .check-outline-link { min-height: 2rem; }
 }
 .check-rail-more { display: none; }
 @media (width >= 64rem) { .check-rail-more { display: block; margin-top: 1.25rem; } }
@@ -495,7 +501,6 @@ html:has([data-header][data-away]:not(:focus-within)) [data-years-strip] { top: 
 @media (prefers-reduced-motion: no-preference) {
   .ratio-table tr > * { transition: background-color 600ms ease; }
 }
-.whatif-typed > * { background: var(--color-surface); }
 
 /* The wheel: a column of figures that turns under the thumb, one at a time, the chosen one in the lens. */
 .wheel { position: relative; width: 6.5rem; }
@@ -562,7 +567,13 @@ html:has([data-header][data-away]:not(:focus-within)) [data-years-strip] { top: 
 button:hover > .step-arrow { translate: 0.25rem 0; }
 .builder-bar { position: sticky; bottom: 0; z-index: 10; margin: 2.5rem -1rem 0; border-top: 1px solid var(--line); background: var(--canvas); padding: 0.5rem 1rem calc(0.625rem + env(safe-area-inset-bottom)); }
 @media (width >= 40rem) { .builder-bar { margin-inline: -2rem; padding-inline: 2rem; } }
-@media (width >= 64rem) { .builder-bar { margin-inline: 0; padding-inline: 0; } }
+@media (width >= 64rem) {
+  .builder-bar { margin-inline: 0; padding-inline: 0; }
+  /* The check's bar in one row on a desktop: the answer, then Back and the way on, so it takes a line, not two. */
+  .builder[data-at="check"] .builder-bar { display: flex; align-items: center; gap: 1.5rem; }
+  .builder[data-at="check"] .builder-bar > [data-answer] { flex: 1 1 auto; min-width: 0; }
+  .builder[data-at="check"] .builder-bar > div { margin-top: 0; flex: none; }
+}
 html:has([data-builder-bar]) { scroll-padding-bottom: 7.5rem; }
 /* The sliders' score pins itself above the answer bar (CHECK1): a focused slider stays clear of both. */
 html:has([data-pinned-score]) { scroll-padding-bottom: calc(var(--builder-bar-h, 6rem) + 10rem); }
