@@ -14,7 +14,7 @@ export interface AskQuestion {
   id: string; question: string; hint: string;
   /** The answer so far, in the box. */
   value: string;
-  unit?: string; inputMode?: 'decimal' | 'numeric';
+  unit?: string; inputMode?: 'decimal' | 'numeric' | 'text';
   /** A fact chosen, not typed (who the borrower is). */
   choices?: { value: string; label: string }[];
   /** A fact that may be nil: a None button, and an empty box is none. */
