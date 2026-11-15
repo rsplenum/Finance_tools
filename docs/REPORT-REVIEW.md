@@ -72,7 +72,7 @@ Unchanged from `docs/WORKED-PAGE.md` §7 and `docs/REPORT-GRADE.md` §6: the que
 | 5 | **WRITE1** the write-up as read and confirm, with the brief reader (D-DOC-25: the borrower's words in, clean facts and statements out, each confirmed; Sonnet high and Gemini medium measured on the same briefs, cost per report recorded): gaps named in place, one tap a chapter, More options for depth, photos on the device; AI only where §3 says, marked, slots only, its digit and words checks (numbers in words refused outside a slot) | M, Extra | the step on the preview |
 | 6 | **PAPER2a** the paper from the document tree to SPEC2: brief, financial chapters, scenarios, Annex A, the register, the version line; Word follows (no formula, D-DOC-21) | L, Extra | the three files |
 | 7 | **PAPER2b** the operating and market chapters as printed pages, Annexes B and C | L, Extra | the three files |
-| 8 | **REC1** every paper its own record (waits on Rahul's yes, §9) | M, high | two versions of one report |
+| 8 | **REC1** every paper its own record (yes, D-DOC-26) | M, high | two versions of one report |
 | 9 | **NEW3, NEW4, CASE1, PAY1** as `docs/WORKED-PAGE.md` §7 | L, L, L, M | as there |
 | later | **LIB3 onward**, one research row per trade group (trading, services, then by demand: the logged gaps say which); **DPR1**, the detailed report as a second profile over the same rules | L each | the new trade's report |
 
@@ -95,7 +95,9 @@ Where the papers and I still part, as the first reading said: no audit-first pha
 - **Moved off the default path:** `engine/narrative.ts`, `engine/data/narrative.json` and the Worker's `/draft` (D-AI-01 to D-AI-03) become the gap filler of §3; their checks (claims, guesses, blanks) become the library's tests too. WORDS1's blanks are the first form of the library's named gaps.
 - **Superseded:** D-AI-01's "the report's narrative is drafted by AI" and WRITE1's "the AI drafts what describes" (D-DOC-24 says so).
 
-## 9. Waiting on Rahul
+## 9. Rahul's answers
+
+**Settled 15-11-2026 (D-DOC-26), on Rahul's "yes to SPEC2 and REC1 / how saved reports are kept: you figure it out":** both rows yes; reports kept as (a) and (b) now, (c) with PAY1, since a paying customer will expect to download again. The two questions as they were put:
 
 1. **How reports are kept** ("saved and referred to again and again"). Today nothing is kept on our side. (a) The paper is its own record (REC1, no account): number, version, date, engine and library version, a fingerprint of the answers, on every page; a new version never overwrites an old one; the same answers and versions remake the same paper, which the factory now guarantees. (b) A list on the device (CASE1): every report and its versions. (c) A library in our cloud with sign-in: across devices, but it reverses D-DOC-23's "nothing is kept" and the privacy page, needs sign-in (D-BIZ-26: none at launch), a retention policy, India's data-protection law and the lawyer. **Recommended:** (a) and (b) now, (c) with PAY1.
 2. **A yes to SPEC2 and REC1** as §6 places them.
