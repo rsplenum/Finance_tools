@@ -799,6 +799,9 @@ function Answer({ s, p, cv, update, used, counts, undo, keep, answer, toBox, ok,
           what to keep ready. One tone a meaning, never green under a miss. */}
       <div class="paper shadow-paper rounded-card p-4 sm:p-6 lg:p-5">
         {cv && <Carries c={cv} ready={false} add={() => update((x) => ({ ...x, loan: { ...x.loan, holidayInterest: 'added' } }))} />}
+        {/* The project's worth beside the largest loan (NPV1): its value at the loan's rate and its return, then the
+            promoters' own return; the table is in the pages, 6.5. */}
+        {figures && p.worth && <p data-testid="rep-worth" class={`-mt-2 mb-4 text-sm ${MUTED}`}>{p.worth}</p>}
         {verdict && <div class={`flex flex-wrap items-baseline gap-x-3 gap-y-1 ${answerRule(!p.needs.length)}`}>
           <h3 data-testid={`${p.misses ? 'rep-misses' : 'rep-verdict'}-work`} data-answer
             class={`flex items-center gap-2 text-title ${verdict.work.startsWith('Does not') ? 'text-bad' : 'text-ink'}`}>

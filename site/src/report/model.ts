@@ -18,6 +18,7 @@ import { BORROWERS } from '../../../engine/tax';
 import { inr } from '../../../engine/util';
 import { soldBy } from '../../../engine/sold-by';
 import { GUARANTEES } from '../../../engine/guarantee';
+import { worthOf, type Worth } from '../../../engine/worth';
 import type { Draft, Dropped, NoteId, SectionId } from '../../../engine/narrative';
 import type { CheckGroup, CheckLine } from '../CheckStep';
 import {
@@ -378,7 +379,41 @@ const costRows = (ys: ReportYear[]): ViewRow[] => {
   ];
 };
 
-export function viewOf(r: Report): ReportView {
+/** The project's worth (NPV1, engine/worth.ts) as a table: what is put in at the first draw, what comes back each year and
+ * at the end, then the net present value at the term loan's rate and the internal rate of return, the project's and the
+ * promoters' side by side (their present value at the loan's rate would mean little, so it is not shown). A figure not
+ * given shows "—". */
+const worthTable = (w: Worth): ViewTable => {
+  const at = (flows: Worth['project']['flows'], k: number) => flows[k]?.amount;
+  const p = w.project.flows, q = w.promoters.flows, n = p.length, last = p[n - 1].fy as string;
+  const pair = (label: string, a?: number, b?: number, kind?: RowKind): ViewRow => ({ label, values: [rupees(a as number), rupees(b as number)], n: [a, b], ...(kind ? { kind } : {}) });
+  return {
+    id: 'worth', title: 'The project’s worth, discounted', first: 'Rupees', columns: ['The project', 'The promoters'],
+    rows: [
+      pair('Put in at the first draw', at(p, 0), at(q, 0)),
+      ...p.slice(1, n - 1).map((f, k) => pair(`In ${f.fy}`, f.amount, at(q, k + 1))),
+      pair(`Left at the end of ${last}, at book value`, at(p, n - 1), at(q, n - 1)),
+      pair(`Net present value at ${w.ratePct}% a year, the term loan’s rate`, w.project.npv, undefined, 'total'),
+      { label: 'Internal rate of return, a year', values: [pct(w.project.irrPct), pct(w.promoters.irrPct)], n: [w.project.irrPct, w.promoters.irrPct], kind: 'ratio', fig: 'ratio' },
+    ],
+  };
+};
+
+/** The worth in words beside the largest loan: the project's value at the loan's rate and its return, then the promoters'
+ * return; or why a figure is not given. */
+export function worthLine(w: Worth | { why: string }): string {
+  if ('why' in w) return `${w.why}.`;
+  const p = w.project, q = w.promoters, rs = (x: number) => `₹${rupees(Math.abs(x))}`;
+  const value = p.npv === undefined ? '' : p.npv >= 0
+    ? `At ${w.ratePct}% a year, the loan’s rate, the project is worth ${rs(p.npv)} more than it costs`
+    : `At ${w.ratePct}% a year, the loan’s rate, the project is worth ${rs(p.npv)} less than it costs`;
+  const back = p.irrPct !== undefined ? `it returns ${p.irrPct.toFixed(1)}% a year` : `its return is not given: ${p.why}`;
+  const own = q.irrPct !== undefined ? `your own money ${q.irrPct.toFixed(1)}% a year` : `your own money’s return is not given: ${q.why}`;
+  return `${value ? `${value}; ${back}` : back.charAt(0).toUpperCase() + back.slice(1)}, ${own}.`;
+}
+
+export function viewOf(r: Report, x?: ReportInput): ReportView {
+  const w = x ? worthOf(r, x) : undefined, worth = w && !('why' in w) ? w : undefined;
   const ys = r.years, years = ys.map((y) => y.fy), any = (f: (y: ReportYear) => number) => ys.some((y) => Math.abs(f(y)) > 0.005);
   const t = r.plan.statement.total, pt = r.plan.profitTotal, total = (x?: number) => (t && x !== undefined ? rupees(x) : '');
   const cost: ViewTable = {
@@ -511,7 +546,7 @@ export function viewOf(r: Report): ReportView {
     rows: r.plan.schedule.map((d) => ({ label: d.fy, values: [rupees(d.interest), rupees(d.principal), rupees(d.closing)], n: [d.interest, d.principal, d.closing] })),
   };
   return {
-    years, tables: [cost, finance, ...(collateral ? [collateral] : []), ...(sales ? [sales] : []), pl, bs, cf, dscr, bep, keyRatios, wc, schedule],
+    years, tables: [cost, finance, ...(collateral ? [collateral] : []), ...(sales ? [sales] : []), pl, bs, cf, dscr, bep, keyRatios, ...(worth ? [worthTable(worth)] : []), wc, schedule],
     key: [
       { label: 'Cost of the project', value: `₹${rupees(r.projectCost)}` },
       ...(sc ? [{ label: 'PMEGP margin money', value: `₹${rupees(sc.subsidy)}`, note: `${sc.ratePct}% of ₹${rupees(sc.base)}, set off after ${PMEGP.lockInYears} years` }] : []),
@@ -519,6 +554,8 @@ export function viewOf(r: Report): ReportView {
       ...(g ? [{ label: `Guarantee fee (${g.id.toUpperCase()})`, value: `${g.ratePct}% a year`, note: `₹${rupees(g.total)} over the loan${g.beforeStart > 0.005 ? `, ₹${rupees(g.beforeStart)} of it before sales start` : ''}` }] : []),
       ...(r.average !== undefined ? [{ label: 'Average DSCR', value: ratio(r.average), note: 'cash for repayment over all years ÷ all repayments', check: 'dscrAverage' }] : []),
       ...(r.lowest ? [{ label: 'Lowest DSCR', value: ratio(r.lowest.dscr), note: `in ${r.lowest.fy}`, check: 'dscrLowest' }] : []),
+      ...(worth?.project.irrPct !== undefined ? [{ label: 'The project’s return (IRR)', value: pct(worth.project.irrPct), note: `a year; worth ₹${rupees(Math.abs(worth.project.npv as number))} ${(worth.project.npv as number) >= 0 ? 'more' : 'less'} than its cost at ${worth.ratePct}%, the term loan’s rate` }] : []),
+      ...(worth?.promoters.irrPct !== undefined ? [{ label: 'The promoters’ return (IRR)', value: pct(worth.promoters.irrPct), note: 'a year, on their own money' }] : []),
     ],
   };
 }
@@ -535,6 +572,8 @@ export interface ReportPreview {
   benchmarks?: string;
   /** A new unit paying the interest before its first sale: the amount to keep ready (D-POL-13). */
   ready?: string;
+  /** The project's worth and return, and the promoters' return, in words (NPV1, engine/worth.ts). */
+  worth?: string;
 }
 
 
@@ -554,7 +593,7 @@ export function preview(s: ReportState): ReportPreview {
     ? `Security cover: the project’s own assets reach ${sc.level.toFixed(2)} without collateral.`
     : `Security cover: collateral with a market value of ₹${rupees(need)} or more brings it to ${sc.level.toFixed(2)}.`;
   return {
-    needs: open, view: viewOf(r), flags: [...r.scheme?.flags ?? [], ...(r.idc.short ? [`The business pays ₹${rupees(r.idc.business)} of interest before the new line’s first sale from its own earnings, but has ₹${rupees(Math.max(0, r.idc.short.spare))} to spare in ${r.idc.short.fy} after its loans.`] : [])], checks,
+    needs: open, view: viewOf(r, x), worth: worthLine(worthOf(r, x)), flags: [...r.scheme?.flags ?? [], ...(r.idc.short ? [`The business pays ₹${rupees(r.idc.business)} of interest before the new line’s first sale from its own earnings, but has ₹${rupees(Math.max(0, r.idc.short.spare))} to spare in ${r.idc.short.fy} after its loans.`] : [])], checks,
     ...(r.idc.promoters > 0.005 ? { ready: `Keep ₹${rupees(r.idc.promoters)} ready for interest before your first sale: it is part of your share of the cost.` } : {}),
     ...(d.misses.length ? { misses: `${verdictWords('benchmark', d.checks.length, d.misses.length, d.checks.filter((k) => k.meets === undefined).length)}: ${listed(d.misses.map(labelOf))}.` } : {}),
     ...(collateralNote ? { collateralNote } : {}), ...(own ? { benchmarks: own } : {}), ...(hybridLine(r) ? { hybrid: hybridLine(r) } : {}),
