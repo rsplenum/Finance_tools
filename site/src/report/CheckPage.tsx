@@ -314,9 +314,9 @@ export function WhatIf({ s, names }: { s: ReportState; names: Record<string, str
   </section>;
 }
 
-/** The report's parts, as links, beside the answer on a desktop: what is in pencil marked. */
+/** The check page's parts, as links, under the answer in the "Your report" panel on a desktop: what is in pencil marked. */
 export function Outline({ items }: { items: { id: string; label: string; mark?: string }[] }) {
-  return <nav aria-label="The report" data-testid="rep-outline" class="check-outline">
+  return <nav aria-label="In this report" data-testid="rep-parts" class="check-outline">
     <p class={`text-xs font-semibold tracking-wide uppercase ${MUTED}`}>In this report</p>
     <ol class="mt-1">{items.map((i) => <li key={i.id}><a href={`#${i.id}`} class="check-outline-link">{i.label}{i.mark && <span class="sum-pencil"> {i.mark}</span>}</a></li>)}</ol>
   </nav>;

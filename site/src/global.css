@@ -413,51 +413,38 @@ html:has([data-header][data-away]:not(:focus-within)) [data-years-strip] { top: 
   .builder { display: grid; grid-template-columns: minmax(0, 1fr) clamp(20rem, 31vw, 28rem); column-gap: 2.5rem; align-items: start; }
   .builder-paper { display: block; position: sticky; top: 4.5rem; max-height: calc(100dvh - 5.5rem); overflow-y: auto; overscroll-behavior: contain; border-radius: var(--radius-card); background: var(--surface); padding: 1.25rem; }
 }
-/* The check page (D-UX-372, Rahul's notes of 15-11-2026). On the check the builder gives the companion's column to the page
-   itself: from 1024 px the answer stands at the left as the page scrolls (the rail: the figure, the verdict, what is left,
-   the report's parts as links, its pages and the download); on a phone the same block heads the page. */
-@media (width >= 64rem) {
-  /* A report's measure, not the screen's (Rahul's desktop note, 15-11-2026: the summary ran a laptop's whole width, its
-     figures a long dotted line from their words): the page, its heading with it, at most 74rem and centred; the summary
-     and the tables about 47rem beside the rail. */
-  [data-tool]:has(.builder[data-at="check"]) { max-width: 74rem; }
-  .builder[data-at="check"] { grid-template-columns: minmax(0, 1fr); }
-  .builder[data-at="check"] .builder-paper { display: none; }
-  .check-page { display: grid; grid-template-columns: 20rem minmax(0, 1fr); column-gap: 3rem; align-items: start; }
-  /* The rail fits above the bar on a laptop (it was cut under it): no header above it to clear, the answer set smaller. */
-  .check-rail { position: sticky; top: 1rem; max-height: calc(100dvh - 1.5rem - var(--builder-bar-h, 0px)); overflow-y: auto; overscroll-behavior: contain; padding-bottom: 0.25rem; }
-  .check-rail .text-title { font-size: 1.125rem; line-height: 1.4; }
-  .check-rail .check-outline-link { min-height: 2rem; }
-}
-.check-rail-more { display: none; }
-@media (width >= 64rem) { .check-rail-more { display: block; margin-top: 1.25rem; } }
+/* The check page (D-UX-372, D-UX-374). From 1024 px it takes the questions' column and the "Your report" panel keeps its
+   own, its place and its width (Rahul's desktop note, 15-11-2026: the panel gave way on the check and the page jumped
+   from the write-up); the panel's top then holds the answer, the check's parts as links and the pages. On a phone the
+   answer heads the page. */
+.builder-paper .companion[data-check] .text-title { font-size: 1.125rem; line-height: 1.4; }
+.builder-paper .check-outline-link { min-height: 1.75rem; }
 .check-outline ol { list-style: none; padding: 0; }
 .check-outline-link { display: flex; min-height: 2.25rem; align-items: center; gap: 0.25rem; border-left: 2px solid var(--color-line); padding-left: 0.75rem; color: var(--color-ink); font-size: 0.875rem; }
 .check-outline-link:hover { border-left-color: var(--color-ink); }
 .check-main > * { scroll-margin-top: 5rem; }
 .check-main > section:first-child { margin-top: 0; }
-@media (width < 64rem) { .check-main { margin-top: 2rem; } }
+.check-main { margin-top: 2rem; }
 
-/* The summary: a finished report, label and figure joined by a dotted leader, totals under a rule. A figure in the link
-   colour changes where it sits; a figure still the example's carries a pencil. */
+/* The summary: a finished report set as a statement (Rahul, 15-11-2026: the dotted leaders, with an underline under each
+   figure, read as clutter): the words at the left, the figure at the right, a hairline between lines, totals under a rule.
+   A long figure wraps at the right, never under the words. */
 .sum-paper { padding: 0.5rem 1rem 1rem; }
 @media (width >= 40rem) { .sum-paper { padding: 0.75rem 1.5rem 1.25rem; } }
 .sum-section { padding-top: 0.875rem; transition: opacity 160ms ease; }
 .sum-section + .sum-section { border-top: 1px solid var(--color-line); margin-top: 0.75rem; }
 .sum-title { font-family: var(--font-heading); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-ink-muted); }
-.sum-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; padding: 0.125rem 0; font-size: 0.9375rem; color: var(--color-ink); }
+.sum-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; padding: 0.4375rem 0; font-size: 0.9375rem; color: var(--color-ink); }
+.sum-line + .sum-line { border-top: 1px solid var(--color-line); }
 .sum-label { flex: 0 1 auto; min-width: 0; }
-/* The leader: a dotted line between the words and the figure, as a printed report sets them. */
 .sum-value { text-align: right; font-variant-numeric: tabular-nums; }
-.sum-line:not([data-open]) { display: grid; grid-template-columns: auto minmax(1rem, 1fr) auto; }
-.sum-line:not([data-open])::before { content: ""; grid-column: 2; grid-row: 1; align-self: end; margin-bottom: 0.35em; border-bottom: 1px dotted var(--color-edge); }
-.sum-line:not([data-open]) > .sum-label { grid-column: 1; grid-row: 1; }
-.sum-line:not([data-open]) > .sum-value { grid-column: 3; grid-row: 1; }
-.sum-line[data-total] { margin-top: 0.25rem; border-top: 1px solid var(--color-ink); padding-top: 0.25rem; font-weight: 600; }
-.sum-line[data-total]::before { border-bottom-color: transparent; }
+.sum-line:not([data-open]) { display: grid; grid-template-columns: minmax(40%, 1fr) minmax(0, max-content); column-gap: 1rem; }
+@media (width >= 40rem) { .sum-line:not([data-open]) { column-gap: 1.5rem; } }
+.sum-line[data-total] { margin-top: 0.125rem; border-top: 1px solid var(--color-ink); font-weight: 600; }
 .sum-worked { color: var(--color-ink); }
-.sum-edit { margin: -0.375rem -0.375rem; min-height: 2.25rem; border-radius: 0.375rem; padding: 0.375rem; color: var(--color-link); text-decoration: underline dotted; text-underline-offset: 0.25em; text-decoration-thickness: 1px; cursor: text; }
-.sum-edit:hover { background: var(--color-surface); text-decoration-style: solid; }
+/* A figure that changes where it sits: the link colour and one thin underline, firm on hover. */
+.sum-edit { margin: -0.375rem -0.375rem; min-height: 2.25rem; border-radius: 0.375rem; padding: 0.375rem; color: var(--color-link); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 0.3em; text-decoration-color: color-mix(in oklab, currentColor 45%, transparent); cursor: text; }
+.sum-edit:hover { background: var(--color-surface); text-decoration-color: currentColor; }
 @media (pointer: coarse) { .sum-edit { min-height: 2.75rem; } }
 .sum-pencil { color: var(--color-warn); }
 .sum-pencil-tag { border: 1px dashed var(--color-warn); border-radius: 999px; padding: 0 0.5rem; font-size: 0.75rem; color: var(--color-warn); }
@@ -482,10 +469,10 @@ html:has([data-header][data-away]:not(:focus-within)) [data-years-strip] { top: 
 }
 /* Focus by dimming (D-UX-372 (a)): on a touch screen narrower than 1024 px, while a figure is changed, the rest of the page
    steps back so the line and its keyboard hold the eye; no blur (it smears the figures one reads against, and costs a
-   phone's frames). Not on a desktop: the rail must stay readable beside the line. */
+   phone's frames). Not on a desktop: the answer in the panel must stay readable beside the line. */
 @media (width < 64rem) and (pointer: coarse) {
-  .check-page[data-editing] :is(.check-rail, .check-main > :not(#check), #check > :not(.sum-paper), .sum-section:not([data-here])) { opacity: 0.35; }
-  .check-page :is(.check-rail, .check-main > *, #check > *) { transition: opacity 160ms ease; }
+  #report[data-editing] :is(.check-answer, .check-main > :not(#check), #check > :not(.sum-paper), .sum-section:not([data-here])) { opacity: 0.35; }
+  #report :is(.check-answer, .check-main > *, #check > *) { transition: opacity 160ms ease; }
 }
 
 /* The benchmark ratios: one table, the benchmark a tap to change, the row a change moved lit for a moment. */

@@ -1584,17 +1584,22 @@ if (touched('/project-report/')) {
   // document's own blocks, never a second copy, one tap away. All answered and worded, at 1280 px the companion stands in
   // its pane and "Open the full report" shows the engine's figures and the words; on a phone one tap opens the companion
   // over the questions, one more the paper, and one closes it.
-  // On the check the page takes the companion's column (D-UX-372): its rail, at the left, opens the pages.
+  // On the check the builder keeps its two columns (Rahul's desktop note, 15-11-2026; D-UX-374): the check page takes the
+  // questions' column, and the "Your report" panel keeps its place and width, its top the answer and "See the pages".
   await page.setViewportSize({ width: 1280, height: 900 });
-  if (await page.locator('.builder-paper').isVisible()) v('D-UX-372: the companion still stands beside the check at 1280 px');
-  await page.getByTestId('rep-rail-paper').click();
-  await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('D-UX-372: "See the pages" does not open the paper at 1280 px'));
+  const panelAt = () => page.evaluate(() => { const r = document.querySelector('.builder-paper')?.getBoundingClientRect(); return r?.width ? `${Math.round(r.left)} px from the left, ${Math.round(r.width)} px wide` : 'hidden'; });
+  const panelCheck = await panelAt();
+  if (panelCheck === 'hidden') v('D-UX-374: the "Your report" panel leaves the check at 1280 px');
+  if (!(await page.locator('.builder-paper [data-testid="rep-carry"]').count())) v('D-UX-374: the panel beside the check does not hold the answer at 1280 px');
+  await page.locator('.builder-paper [data-testid="rep-pages"]').click();
+  await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('D-UX-374: "See the pages" in the panel does not open the paper at 1280 px'));
   await expectFigures(page, v, 'rep-paper', '… 37,86,301 …', 'BUILD1, the paper\'s cost of the project');
   await expectFigures(page, v, 'rep-paper', '… 3 …', 'BUILD1, the paper\'s words');
   await page.getByTestId('rep-peek-close').click();
   // "See the report" stands on every step but the Check (Rahul's review of NEW2): the words step for the companion and the phone's walk.
   await page.getByTestId('rep-step-words').click();
   await page.locator('.builder-paper [data-testid="rep-companion"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2: no companion beside the questions at 1280 px'));
+  if (await panelAt() !== panelCheck) v(`D-UX-374: the panel moves between the write-up and the check at 1280 px (${await panelAt()}, then ${panelCheck})`);
   if (await page.locator('.builder-paper [data-testid="rep-paper"]').count()) v('NEW2: the paper itself stands beside the questions');
   await page.locator('.builder-paper [data-testid="rep-open-paper"]').click();
   await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2: "Open the full report" does not open the paper at 1280 px'));
@@ -1875,16 +1880,17 @@ if (touched('/project-report/')) {
   if (await page.getByTestId('rep-get').textContent() !== 'Download') v('the bar\'s button does not read "Download" once confirmed');
   if (await page.getByTestId('rep-pl').count()) v('NEW2 review: the statements show on the screen while the pages are locked');
   await page.setViewportSize({ width: 1280, height: 900 });
-  // The rail stands clear of the bar on a laptop (Rahul's desktop note, 15-11-2026: its outline ran under the bar).
-  const [railEnd, barTop] = await page.evaluate(() => [document.querySelector('.check-rail').getBoundingClientRect().bottom, document.querySelector('[data-builder-bar]').getBoundingClientRect().top]);
-  if (railEnd > barTop + 1) v(`the check's rail runs ${Math.round(railEnd - barTop)} px under the bar at 1280 × 900`);
-  await expectText(page, v, 'rep-locked', /^Page 1 shows here\. The other \d+ open with the download\.$/, 'NEW2 review: the pages locked by default');
-  await page.getByTestId('rep-rail-paper').click();
-  await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2 review: "See the pages" in the check\'s rail does not open the paper (D-UX-372)'));
+  // The panel stands clear of the bar on a laptop (Rahul's desktop notes, 15-11-2026: the outline ran under the bar; D-UX-374).
+  const [panel, bar] = await page.evaluate(() => [document.querySelector('.builder-paper').getBoundingClientRect().toJSON(), document.querySelector('[data-builder-bar]').getBoundingClientRect().toJSON()]);
+  if (bar.right > panel.left + 1 && bar.top < panel.bottom) v(`the bar runs ${Math.round(bar.right - panel.left)} px under the "Your report" panel on the check at 1280 × 900`);
+  await page.locator('.builder-paper [data-testid="rep-pages"]').click();
+  await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2 review: "See the pages" in the panel beside the check does not open the paper (D-UX-374)'));
   const sheets = await page.locator('dialog[open] [data-testid="rep-paper"] .sheet').count(), blank = await page.locator('dialog[open] [data-locked-sheet]').count();
   if (sheets < 3 || blank !== sheets - 1) v(`NEW2 review: the locked paper shows ${sheets - blank} of ${sheets} pages, want the first alone`);
   if (/Profit after tax|DSCR \(A ÷ B\)|Total assets/.test(await page.getByTestId('rep-paper').textContent())) v('NEW2 review: the locked paper still holds the statements');
   await page.getByTestId('rep-peek-close').click();
+  await page.getByTestId('rep-step-words').click();
+  await expectText(page, v, 'rep-locked', /^Page 1 shows here\. The other \d+ open with the download\.$/, 'NEW2 review: the pages locked by default');
   await ctx.close();
 }
 // BUILD1 (D-UX-340 to D-UX-342): the builder. Six steps on the progress line and one shown; Next and Back walk them and

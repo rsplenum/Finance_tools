@@ -32,7 +32,7 @@ import { sureLower, type Marked } from '../../../engine/sure';
 import { allNeeds, docNeeds, docStatus, fileName, paperDoc, PARTS, reportDoc } from './document';
 import { Words } from './Words';
 import { FixIt } from './FixIt';
-import { Live, Outline, Ratios, Summary, WhatIf, type Assumption } from './CheckPage';
+import { Live, Ratios, Summary, WhatIf, type Assumption } from './CheckPage';
 import type { CheckState } from '../CheckStep';
 import { pencilCount } from './check';
 import { Downloads } from '../Downloads';
@@ -342,7 +342,12 @@ export function ReportCalculator() {
   const openPaper = () => { setView('paper'); if (!peek.current?.open) peek.current?.showModal(); requestAnimationFrame(() => stand(false)); };
   // The companion: beside the questions from 1024 px, in the sheet on a phone; a section of its outline opens its step.
   const toStep = (id: StepId) => { if (peek.current?.open) peek.current.close(); go(id); };
-  const companion = <Companion s={s} p={p} cv={cv} left={leftOf(s, p)} ok={ok} step={step} go={toStep} paper={paper} pages={pages} open={open} onOpen={openPaper} sheet={!wide} />;
+  // The check's answer: at the head of the check page on a phone; from 1024 px at the head of the panel, which keeps its
+  // column on every step (Rahul's desktop note, 15-11-2026: it gave way on the check, and the page jumped).
+  const answerEl = <Answer s={s} p={p} cv={cv} update={update} used={used} counts={fixNote?.on === used ? fixNote.text : undefined} undo={undo}
+    keep={() => setUsed([])} answer={answer} toBox={toBox} ok={ok} beside={wide} />;
+  const companion = <Companion s={s} p={p} cv={cv} left={leftOf(s, p)} ok={ok} step={step} go={toStep} paper={paper} pages={pages} open={open} onOpen={openPaper} sheet={!wide}
+    check={wide && step === 'check' ? { answer: answerEl, parts: figures ? partsOf(s, p) : undefined } : undefined} />;
   // Locked (Rahul's review of NEW2; open only with ?paper=open until PAY1), the paper shows its first page, the rest blank.
   const sheets = <div data-testid="rep-paper"><Paper doc={paper} pages={pages} label="Your project report so far" only={open ? undefined : 1} /></div>;
   const left = leftOf(s, p), at = STEPS.findIndex(([id]) => id === step), back = STEPS[at - 1], next = STEPS[at + 1];
@@ -558,8 +563,8 @@ export function ReportCalculator() {
           <div id="words"><Words s={s} update={update} /></div>
         </>)}
         {stepOf('check', <>
-          <Result s={s} p={p} cv={cv} update={update} use={use} useWay={useWay} useRepay={useRepay} useFix={useFix} toField={toField} answer={answer} used={used} counts={fixNote?.on === used ? fixNote.text : undefined} undo={undo} keep={() => setUsed([])} toCollateral={toCollateral} toBox={toBox} ok={ok}
-            state={ok ? 'done' : checked ? 'lapsed' : 'open'} openPaper={openPaper} assumed={assumptionsOf(s).map((a) => {
+          <Result s={s} p={p} cv={cv} update={update} use={use} useWay={useWay} useRepay={useRepay} useFix={useFix} toField={toField} toCollateral={toCollateral}
+            state={ok ? 'done' : checked ? 'lapsed' : 'open'} top={wide ? undefined : answerEl} assumed={assumptionsOf(s).map((a) => {
               const to = ASSUMED_BOX[a.id];
               return { ...a, to, go: to && simple && !IN_SIMPLE.has(to) ? toExpert(to) : undefined };
             })}>
@@ -687,14 +692,14 @@ const mendable = (p: ReportPreview) => !!p.view && !p.blocked && (!!p.short || !
  * once, the misses first under their cause with the rupees short. Under the paper, "Make it work": every way in one list,
  * each with the same "Use this" and the same undo; then the fine-tuning, closed. The status shows only while a question
  * is left: "All questions answered" beside a miss read as a pass. */
-function Result({ s, p, cv, update, use, useWay, useRepay, useFix, toField, answer, used, counts, undo, keep, toCollateral, toBox, ok, state, openPaper, assumed, children }: {
+function Result({ s, p, cv, update, use, useWay, useRepay, useFix, toField, toCollateral, state, assumed, top, children }: {
   s: ReportState; p: ReportPreview; cv?: CarryView; update: Update; use: (l: Levers) => void; useWay: (w: WorkCard) => void; useRepay: (r: RepayRow) => void;
-  useFix: (c: FixCard) => void; toField: (id: string) => (e: Event) => void; answer: (t: string) => void; used: PlanChange[]; counts?: string; undo: () => void;
-  keep: () => void; toCollateral: (e: Event) => void; toBox: (need: string) => (e: Event) => void; ok: boolean;
-  state: CheckState; openPaper: () => void; assumed: Assumption[]; children: ComponentChildren;
+  useFix: (c: FixCard) => void; toField: (id: string) => (e: Event) => void; toCollateral: (e: Event) => void;
+  state: CheckState; assumed: Assumption[];
+  /** The answer, at the head of the page on a phone; empty from 1024 px, where the panel beside the page holds it. */
+  top?: ComponentChildren; children: ComponentChildren;
 }) {
-  const v = p.view, figures = !!v && !p.blocked, verdict = verdictOf(p), own = figures && !p.needs.length ? docNeeds(s.doc, s.words) : [];
-  const result = p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready';
+  const v = p.view, figures = !!v && !p.blocked, verdict = verdictOf(p);
   const scheme = v?.key.filter((k) => k.note && !k.check) ?? [];
   // Make it work (OR11d) runs the report a few hundred times (a quarter to a third of a second), so it is worked after the
   // figures rest and paint, and shown only on the figures it was worked on.
@@ -715,7 +720,6 @@ function Result({ s, p, cv, update, use, useWay, useRepay, useFix, toField, answ
     const r = ask ? ways?.rows.find((x) => x.proposed && !x.now) : undefined, q = r && preview(applyRepay(s, r.value).s);
     return q && q.view && !q.blocked && !q.misses && !q.short ? r : undefined;
   }, [ways, ask]);
-  const pending = s.pending ? PENDING[s.pending] : undefined;
   // The figure being changed in place (D-UX-372): on a phone the rest of the page dims to it; a tap outside finishes it.
   const [editing, setEditing] = useState<string>();
   // "Change the benchmarks": the table's benchmarks stand out as what to tap (the third way in, from Fine-tune too).
@@ -728,7 +732,6 @@ function Result({ s, p, cv, update, use, useWay, useRepay, useFix, toField, answ
       t?.focus({ preventScroll: true });
     });
   };
-  const pencils = pencilCount(s);
   // Met on the project's own assets, the cover reads once: no note, no ask (UX5b, the critic's finding 3).
   const collateral = (c: CheckRow) => (p.collateralNote || (!s.collateral.trim() && c.verdict !== 'meets')) && <p data-testid="rep-collateral-note" class={HINT}>
     {p.collateralNote}{!s.collateral.trim() && <>{p.collateralNote ? ' ' : ''}<a href="#fld-collateral" data-testid="rep-to-collateral" onClick={toCollateral}
@@ -739,15 +742,45 @@ function Result({ s, p, cv, update, use, useWay, useRepay, useFix, toField, answ
     <dd class="font-medium tabular-nums text-ink">{k.value}</dd>
     <dd class={HINT}>{k.note}</dd>
   </div>)}</dl>;
-  const outline = [
-    { id: 'check', label: 'Your figures', ...(pencils ? { mark: `✎ ${pencils}` } : {}) }, { id: 'benchmarks', label: 'The benchmark ratios' }, { id: 'what-if', label: 'What if' },
-    ...(ask ? [{ id: 'make-it-work', label: W.work }] : []), { id: 'fine-tune', label: W.tune }, { id: 'download', label: 'Download' },
-  ];
-  // From 1024 px the answer stands at the left as the page scrolls past it (D-UX-372): the figure, the verdict, what is
-  // left, the report's parts as links and its pages; on a phone the same block heads the page and the links fold away.
-  return <section id="report" aria-labelledby="report-h" class="check-page mt-4" data-editing={editing ? '' : undefined}>
+  // On a phone the answer heads the page; from 1024 px it heads the "Your report" panel beside it (`top` is then empty).
+  return <section id="report" aria-labelledby="report-h" class="mt-4" data-editing={editing ? '' : undefined}>
     <h2 id="report-h" tabIndex={-1} class="sr-only">The project report</h2>
-    <div class="check-rail">
+    {top && <div class="check-answer">{top}</div>}
+    <div class="check-main">
+      {figures && <Summary s={s} p={p} update={update} state={state} assumed={assumed} open={editing} setOpen={setEditing}
+        live={<Live cv={cv} work={verdict?.work} />} scheme={schemeNotes} toStep={toField} />}
+      {figures && verdict && p.checks && <Ratios s={s} p={p} update={update} head={verdict.head} w={w} emphasis={bm} setEmphasis={setBm} collateral={collateral} />}
+      {figures && p.checks && <WhatIf s={s} names={Object.fromEntries(p.checks.map((c) => [c.id, c.label]))} />}
+      {ask && <Work s={s} p={p} w={w} waiting={work?.on !== wbase} repay={repay} useWay={useWay} useRepay={useRepay} useFix={useFix} toField={toField} />}
+      {figures && <Tune s={s} p={p} base={base} ways={ways} update={update} use={use} toBenchmarks={toBenchmarks} />}
+      {children}
+    </div>
+  </section>;
+}
+
+/** The check page's parts as links, under the answer in the "Your report" panel on a desktop: what is in pencil marked. */
+function partsOf(s: ReportState, p: ReportPreview) {
+  const pencils = pencilCount(s);
+  return [
+    { id: 'check', label: 'Your figures', ...(pencils ? { mark: `✎ ${pencils}` } : {}) }, { id: 'benchmarks', label: 'The benchmark ratios' }, { id: 'what-if', label: 'What if' },
+    ...(mendable(p) ? [{ id: 'make-it-work', label: W.work }] : []), { id: 'fine-tune', label: W.tune }, { id: 'download', label: 'Download' },
+  ];
+}
+
+/** The check's answer (D-UX-372; the answer as paper, Rahul, 15-11-2026): the largest loan, then the verdict in a word with
+ * "Scroll to find out", then what to keep ready; one tone a meaning, never green under a miss. Above it what a way just
+ * used changed, and a question it left open. On a phone it heads the check page; from 1024 px it heads the "Your report"
+ * panel, which stands beside every step (Rahul's desktop note, 15-11-2026, D-UX-374: the panel no longer gives way). */
+function Answer({ s, p, cv, update, used, counts, undo, keep, answer, toBox, ok, beside }: {
+  s: ReportState; p: ReportPreview; cv?: CarryView; update: Update; used: PlanChange[]; counts?: string; undo: () => void; keep: () => void;
+  answer: (t: string) => void; toBox: (need: string) => (e: Event) => void; ok: boolean;
+  /** In the panel beside the figures, not above them. */
+  beside: boolean;
+}) {
+  const v = p.view, figures = !!v && !p.blocked, verdict = verdictOf(p), own = figures && !p.needs.length ? docNeeds(s.doc, s.words) : [];
+  const result = p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready', ask = mendable(p), pencils = pencilCount(s);
+  const pending = s.pending ? PENDING[s.pending] : undefined;
+  return <>
       {used.length > 0 && <div data-testid="rep-used" role="status" class="mb-3 rounded-control border-l-4 border-ink bg-surface p-3">
         <p class="font-medium text-ink">Used: these figures changed.</p>
         {counts && <p data-testid="rep-used-counts" class="mt-1 text-sm font-medium text-good">{counts}</p>}
@@ -774,7 +807,7 @@ function Result({ s, p, cv, update, use, useWay, useRepay, useFix, toField, answ
         </div>}
         {cv?.keepReady && <p data-testid="rep-carry-ready" class="mt-2 font-medium text-warn">{cv.keepReady}</p>}
         {figures && pencils > 0 && <p data-testid="rep-pencil" class={`mt-2 text-sm ${MUTED}`}>
-          <a href="#check" class="text-link underline underline-offset-4">{pencils === 1 ? '1 figure is' : `${pencils} figures are`} still the example’s</a>: marked ✎ in your figures below.</p>}
+          <a href="#check" class="text-link underline underline-offset-4">{pencils === 1 ? '1 figure is' : `${pencils} figures are`} still the example’s</a>: marked ✎ in your figures{beside ? '' : ' below'}.</p>}
         {ask && <a href="#make-it-work" data-testid="rep-to-work" class={`mt-3 inline-flex items-center ${FILLED}`} onClick={toWork}>{W.toWork}</a>}
         {(!figures || p.needs.length > 0 || own.length > 0) && <Counter id="rep-status" result={result} text={v ? docStatus(s, p) : statusText(p)} rule={!verdict} answer={!verdict}
           class={verdict ? 'mt-3' : ''} plain={!!verdict} go={goOf(s, p, toBox, ok)}>
@@ -788,22 +821,7 @@ function Result({ s, p, cv, update, use, useWay, useRepay, useFix, toField, answ
         {p.ready && <p data-testid="rep-idc-ready" class="mt-3 text-sm text-ink">{p.ready}</p>}
         {p.flags.length > 0 && <ul data-testid="rep-flags" class="mt-3 list-disc space-y-0.5 pl-5 text-sm text-warn">{p.flags.map((n) => <li key={n}>{n}</li>)}</ul>}
       </div>
-      {figures && <div class="check-rail-more">
-        <Outline items={outline} />
-        {/* The way to the files is the bar's "Get the report", in reach on every screen; the rail keeps the pages. */}
-        <button type="button" data-testid="rep-rail-paper" class={`mt-3 ${BUTTON}`} onClick={openPaper}>See the pages</button>
-      </div>}
-    </div>
-    <div class="check-main">
-      {figures && <Summary s={s} p={p} update={update} state={state} assumed={assumed} open={editing} setOpen={setEditing}
-        live={<Live cv={cv} work={verdict?.work} />} scheme={schemeNotes} toStep={toField} />}
-      {figures && verdict && p.checks && <Ratios s={s} p={p} update={update} head={verdict.head} w={w} emphasis={bm} setEmphasis={setBm} collateral={collateral} />}
-      {figures && p.checks && <WhatIf s={s} names={Object.fromEntries(p.checks.map((c) => [c.id, c.label]))} />}
-      {ask && <Work s={s} p={p} w={w} waiting={work?.on !== wbase} repay={repay} useWay={useWay} useRepay={useRepay} useFix={useFix} toField={toField} />}
-      {figures && <Tune s={s} p={p} base={base} ways={ways} update={update} use={use} toBenchmarks={toBenchmarks} />}
-      {children}
-    </div>
-  </section>;
+  </>;
 }
 
 /** What the business can carry, first (CAP1, docs/CAPACITY-FIRST.md §4 rule 1): the figure beside the loan asked, one bar
