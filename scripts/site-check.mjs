@@ -1844,7 +1844,8 @@ if (touched('/project-report/')) {
   // Rahul's review of NEW2: on the Check step one way on (no "See the report", no More options), and the pages locked by
   // default: the first real, the rest blank, the statements not on the screen even once confirmed (?paper=open shows them).
   if (await page.getByTestId('rep-peek').count()) v('NEW2 review: "See the report" still stands on the Check step');
-  if (await page.locator('#more-options').isVisible()) v('NEW2 review: More options still shows on the Check step');
+  // Read in place: the stepped page's isVisible would first walk to the step that holds it (scripts/stepped.mjs).
+  if (await page.evaluate(() => !!document.getElementById('more-options')?.checkVisibility())) v('NEW2 review: More options still shows on the Check step');
   if (await page.getByTestId('rep-confirm').textContent() !== 'These are right') v('NEW2 review: the confirm is not "These are right"');
   await confirmReport(page, v, 'NEW2 review, home');
   if (await page.getByTestId('rep-pl').count()) v('NEW2 review: the statements show on the screen while the pages are locked');
