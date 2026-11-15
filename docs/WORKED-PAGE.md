@@ -104,7 +104,8 @@ One fresh session each, on its own branch. Every row is a whole thing Rahul open
 | 2 | **PAPER1** The DSCR's three files | L, Extra | the PDF, Excel and Word copies |
 | 3 | **READ1** The Worker reads and drafts with the Gemini key | M, high | the CMA's "Read a statement" and the report's "Draft the words", working |
 | 4 | **NEW2** The project report's screen | L, Extra | `/project-report/` on the preview |
-| 5 | **IDC1**, then **PAPER2** the report's files | M; L, Extra | the cost page each way; the three files |
+| 4b | **WRITE1** The report's write-up | M, high | the write-up step, on the preview |
+| 5 | **IDC1** (done), then **PAPER2** the report's paper, to the specimen | M; L, Extra | the cost page each way; the three files |
 | 6 | **NEW3** The CMA from the audited statement | L, Extra | `/cma/` on the preview |
 | 7 | **NEW4** The estimate and its files | L, Extra | `/estimate/` on the preview |
 | 8 | **CASE1** One business, typed once | L, Extra | a case made in one tool filling the others |
@@ -135,16 +136,24 @@ Home, the films and the new modules wait until the tools are right. CHECKS2 is d
 
 ### NEW2: the project report's screen
 - **Asks first:** what the business makes or sells, the project's cost and the loan wanted, a year's sales and what is left of it. From those: "can carry Rs. … of Rs. … asked" (`engine/capacity.ts` `carry`), the rest standing on the example or on the trade's shape, in pencil.
-- **Does itself:** the closers and FIX1's whole plans as the next step (`engine/solve.ts`); "The bank will also look at" as one short list, third; starting shapes by trade from public model profiles, each figure with its source, only where the profile is in `docs/inbox/` (else the example's shape); the words drafted once READ1 is in. The remaining answers are walked by topic in the ladder's order, each topic 1.5 phone screens or fewer.
-- The paper's page 1 shows beside the answers at a size that reads (never an A4 sheet shrunk into a pane).
-- Read `docs/CAPACITY-FIRST.md` §1, §4, §5.3, §7 and `docs/UX-OVERHAUL.md` §2, §4.2, §4.3, §8. If it will not fit one L, the reading and the next step come first and the walk is the next row.
+- **Does itself:** the closers and FIX1's whole plans as the next step (`engine/solve.ts`); "The bank will also look at" as one short list, third; starting shapes by trade from public model profiles, each figure with its source, only where the profile is in `docs/inbox/` (else the example's shape); the words are WRITE1's. The remaining answers are walked by topic in the ladder's order, each topic 1.5 phone screens or fewer.
+- **The questions hold the stage** (REPORT-GRADE, 14-11-2026: today the questions get 448 px of a 1440 px screen and the report 856): on a desktop about two-thirds to the questions, a step line of six across the top (The business, The cost, The loan, Sales and costs, The write-up, Check and download), the engine's read-back under each answer.
+- **The side is a companion, never the paper** (`docs/REPORT-GRADE.md` §6): the reading, one chart, the report's outline with what each section still needs, and the pages as small pictures. Page 1 is real and marked "Sample"; the other pages hold no text until the download. Today's pane is the whole paper, selectable and printable, so a gate would guard nothing. The locked state is built and can be seen for review; every user sees the open one until PAY1.
+- The specimen and the drawn screen: `docs/design-reference/report-specimen/` (`screen.cjs` draws both states).
+- Read `docs/REPORT-GRADE.md` §1, §2, §6, §8, `docs/CAPACITY-FIRST.md` §1, §4, §5.3, §7 and `docs/UX-OVERHAUL.md` §2, §4.2, §4.3, §8. If it will not fit one L, the reading and the next step come first and the walk is the next row.
+
+### WRITE1: the report's write-up
+- As `docs/REPORT-GRADE.md` §4 and §7. "Draft the words" becomes **The write-up**, the fifth step of six: the engine writes what reads the figures, the AI drafts what describes (the business and its promoters; products, process and market; the risks), the user reads, changes and confirms each section. An unconfirmed section stays out of the paper (D-AI-03).
+- **Figure slots**, on Rahul's yes (§8 there): the catalogue as one pure engine function, `fill` and the digit check in the engine, on the Worker and on the page; findings with `claim`, each tested true and false. The AI is sent slot names and findings in words, never an amount. Without the yes, the row ships with D-AI-02's "no figure" as it stands.
+- **Nothing required** (rule 17): notes, deeper detail and photos are offered. Photos are made smaller and re-saved on the device, kept in IndexedDB; none is sent.
+- Traps: `tests/narrative.test.ts` and WORDS1's two checks (no figure in a blank; nothing the borrower never typed) stay; the privacy page's words (a draft for the lawyer); never a "TEV study".
 
 ### PAPER2, NEW3, NEW4, CASE1, PAY1
-- **PAPER2:** §5 for the report, with the list in `docs/PLAN.md` ("The project report's paper") and what-if rows, each an engine function worked twice. IDC1 runs before it, as its row in `docs/HANDOFF.md` says.
+- **PAPER2:** the report's paper made to the specimen (`docs/REPORT-GRADE.md` §3, §5; `docs/design-reference/report-specimen/specimen.pdf`), with the list in `docs/PLAN.md` ("The project report's paper") and what-if rows, each an engine function worked twice. One pure builder returns the paper as a web document; Playwright prints it for review and in CI, and on Rahul's yes the Worker prints it through Cloudflare's Browser Run. New parts: exhibit, key-figure rail, photo, note reference, chart. A contact sheet looked at once per change, and a test that no page runs over. First read SEBI's Schedule V and the integrated-reporting framework at source (rule 9). Word and Excel follow with our own writers (no formula, D-DOC-21). If it will not fit one L: the PDF first, Word and Excel as the next row. IDC1 is done.
 - **NEW3:** the first figure from one fact (the sales expected, by the turnover method in `engine/data/cma.json`); then "Give us the audited statement": read, shown with page and line, cross-checked, confirmed; the years ahead start as the engine's projection on stated assumptions, in pencil; the grid stays under For professionals for those who type. Rahul's, before it is built: may a year be confirmed with one tap once the engine's checks tie, each figure still shown with its page and line (D-UX-44 says each figure is confirmed)?
 - **NEW4:** the same five parts; "fit my budget" as whole options from an engine function; the cost by head as the picture; its files as §5. Never "architect" (rule 21).
 - **CASE1:** the device's list of cases; a case saved, opened and sent as a file; every tool reads it; the preparer's name on the paper.
-- **PAY1:** the gate at the download, at the final launch; Rahul sets the price; the finish count from the Worker's `/api/e`.
+- **PAY1:** the gate at the download, at the final launch; Rahul sets the price and what one payment covers; the finish count from the Worker's `/api/e`. The paper is made on the server behind the gate (`docs/REPORT-GRADE.md` §5, §6), so the paid paper never sits in the browser unpaid; the privacy words say what travels and that nothing is kept (a draft for the lawyer).
 
 ## 8. How a build session works
 

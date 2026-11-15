@@ -256,7 +256,7 @@ describe('the lender\'s levels and make it viable, in words', () => {
   });
   it('the collateral typed: its values in the report, the security cover read, and the collateral it needs', () => {
     const s = { ...R, wcLimit: '20 L', collateral: '3 L' }, p = preview(s), v = viableOf(s);
-    expect(p.checks?.at(-1)).toEqual({ id: 'securityCover', label: 'Security cover', level: '1.20 or more', worst: '1.17 in 2026-27', verdict: 'misses', at: 'least',
+    expect(p.checks?.at(-1)).toEqual({ id: 'securityCover', label: 'Security cover', level: '1.20 or more', worst: '1.17 in 2026-27', value: '1.17', verdict: 'misses', at: 'least',
       bar: expect.closeTo(48.7, 1), short: expect.stringMatching(/^Short by ₹1,22,60[34] of security in 2026-27\.$/) });
     expect(p.view?.tables.find((t) => t.id === 'collateral')?.rows.map((r) => r.values[0])).toEqual(['3,00,000', '2,70,000', '2,40,000']);
     expect(v?.lines.find((l) => l.id === 'collateral')?.text).toBe('Collateral with a market value of ₹4,36,226 (now ₹3,00,000), for the security cover.');
@@ -363,7 +363,7 @@ describe('Make it work on the page, used and undone (OR11d)', () => {
     // Case R at ₹70,00,000 (tests/work.test.ts by hand): sales of ₹82,11,000, a plant selling ₹1,41,43,206 running full.
     const sales = workView(REPORT_HOME)!.keep[0];
     expect([sales.head, sales.text, sales.ask?.id, sales.ask?.note]).toEqual(['Sell more', 'Sales of ₹82,11,000 in a full first year (now ₹70,00,000).', 'plantSales',
-      'It needs a plant that sells ₹1,41,43,206 a year running full: give what yours can, and the report stays provisional until then.']);
+      'It needs a plant that sells ₹1,41,43,206 a year running full. Use this, and you are asked what yours can sell.']);
     const { s, changes } = applyWay(REPORT_HOME, sales);
     expect(changes.map((c) => c.text ?? `${c.label}: ${c.was} → ${c.now}`)).toEqual(['Sales: 70,00,000 → 82,11,000', 'A question left: What can the plant sell in a year, running full? (₹)']);
     expect([preview(s).misses, preview(s).needs]).toEqual([undefined, [PENDING.plantSales.need]]);

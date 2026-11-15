@@ -457,6 +457,8 @@ button:hover > .step-arrow { translate: 0.25rem 0; }
 @media (width >= 40rem) { .builder-bar { margin-inline: -2rem; padding-inline: 2rem; } }
 @media (width >= 64rem) { .builder-bar { margin-inline: 0; padding-inline: 0; } }
 html:has([data-builder-bar]) { scroll-padding-bottom: 7.5rem; }
+/* The sliders' score pins itself above the answer bar (CHECK1): a focused slider stays clear of both. */
+html:has([data-pinned-score]) { scroll-padding-bottom: calc(var(--builder-bar-h, 6rem) + 10rem); }
 /* The paper on a phone: the whole screen, one tap from any step, and one back. */
 .peek { width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; border: 0; padding: 0; background: var(--surface); color: var(--ink); }
 .peek[open] { display: flex; flex-direction: column; }

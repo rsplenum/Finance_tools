@@ -14,21 +14,25 @@ const INK = { meets: 'text-good', misses: 'text-bad', wait: MUTED } as const;
  * middle; a bar at the end of the track says "off the scale" under its end, so 3.62 and 2.51 are not read as one (report
  * finding 11). Under it the rupees its worst year is short, from the engine; `children`, the row's own link (the report's
  * collateral). */
-export function Bar({ c, pre = 'rep', children }: { c: CheckRow; pre?: string; children?: ComponentChildren }) {
+export function Bar({ c, pre = 'rep', plain, slim, children }: { c: CheckRow; pre?: string;
+  /** Its name in plain words, said first, the banker's after (the report's Check step). */
+  plain?: string;
+  /** No drawn bar, the words alone: a check met beside ones that miss, so the eye goes to the misses (CHECK1). */
+  slim?: boolean; children?: ComponentChildren }) {
   const off = c.verdict !== 'wait' && c.bar >= 100;
   return <li data-testid={`${pre}-check-${c.id}`} class="py-1.5">
-    <p class="text-sm text-ink">{c.label}</p>
-    <div aria-hidden="true" class="relative mt-1 h-3 rounded-full bg-surface">
+    <p class="text-sm text-ink">{plain ?? c.label}{plain && <span class={`text-xs ${MUTED}`}> · {c.label}</span>}</p>
+    {!slim && <div aria-hidden="true" class="relative mt-1 h-3 rounded-full bg-surface">
       {/* The bar in ink, the benchmark the one line (UX7, D-UX-104); a miss's gap to the line dashed, never coloured: the
           words under it say meets or misses. */}
       <div class={`h-3 rounded-full ${c.verdict === 'wait' ? 'bg-line' : 'bg-ink-muted'}`} style={{ width: `${c.verdict === 'misses' ? Math.min(Math.max(c.bar, 3), 50) : c.bar}%` }} />
       {c.verdict === 'misses' && <div data-testid={`${pre}-gap-${c.id}`} class="absolute inset-y-0 rounded-full border-2 border-dashed border-ink-muted"
         style={{ left: `${Math.min(Math.max(c.bar, 3), 50)}%`, width: `${Math.abs(Math.max(c.bar, 3) - 50)}%` }} />}
       <div class="absolute -inset-y-1 left-1/2 w-0.5 bg-ink" />
-    </div>
+    </div>}
     <div class="mt-0.5 flex items-baseline justify-between gap-3">
       <p class="text-sm"><span class={`tabular-nums ${INK[c.verdict]}`}>{c.verdict === 'misses' ? 'Misses: ' : c.verdict === 'meets' ? 'Meets: ' : ''}{c.worst}</span>
-        <span class={`text-xs ${MUTED}`}> · {targetOf(c)}{c.at === 'most' ? ', a shorter bar is better' : ''}</span></p>
+        <span class={`text-xs ${MUTED}`}> · {targetOf(c)}{c.at === 'most' && !slim ? ', a shorter bar is better' : ''}</span></p>
       {off && <p data-testid={`${pre}-off-${c.id}`} class={`shrink-0 text-xs ${MUTED}`}>off the scale</p>}
     </div>
     {c.short && <p data-testid={`${pre}-short-${c.id}`} class="text-sm font-medium text-bad">{c.short}</p>}

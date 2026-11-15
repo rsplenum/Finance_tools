@@ -68,3 +68,4 @@ Six first principles, from the review of Rahul's videos of the four tools (D-UX-
 - A fix on a shared part is looked at on every page that uses it.
 - Ask what each section says that no other does.
 - Show Rahul the new beside the old, as something they can open.
+- For a paper's look, draw the target first as a web page and print it with Chromium (REPORT-GRADE, 14-11-2026: 15 pages with charts in about 25 steps, `docs/design-reference/report-specimen/`). It shows what our writers cannot yet do before a row is spent finding out, and gives the build row a picture to match. Look at a contact sheet of every page once; a count of words does not see a page that runs over.
