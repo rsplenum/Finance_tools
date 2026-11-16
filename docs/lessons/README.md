@@ -7,7 +7,7 @@ A lesson says what happened and what we took from it. It is there to make the ne
 | Working on | Read |
 | --- | --- |
 | Anything Rahul will look at: a page, a flow, a paper, a film | `rahul.md` (Rahul's own words) |
-| A page's layout, look or flow | `design.md` |
+| A page's layout, look or flow | `design.md`; for a tool's page, `docs/PATTERNS.md` (the project report's settled patterns, to reuse) |
 | The words on a page | `words.md` |
 | A check, a test, or a finding from a review | `checks.md` |
 | A session's cost, tools and handoff | `sessions.md` |
