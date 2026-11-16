@@ -15,6 +15,12 @@ import type { CarryView, ReportPreview, ReportState } from './model';
 import { levelFor } from '../../../engine/ratios';
 import { levelsOf } from '../board-model';
 
+/** The report sample while the pages are locked (Rahul's review of the check, 16-11-2026): its first three pages, the
+ * cover, the contents and the report at a glance, real; the rest open with the download. */
+export const SAMPLE = 3;
+export const SAMPLE_WORDS = 'View report sample';
+export const lockedWords = (n: number) => (n > SAMPLE ? `Pages 1 to ${SAMPLE} show here. The other ${n - SAMPLE} open with the download.` : 'Every page shows here.');
+
 export function Companion({ s, p, cv, left, ok, step, go, paper, pages, open, onOpen, sheet, check }: {
   s: ReportState; p: ReportPreview; cv?: CarryView; left: Record<StepKey, number>; ok: boolean; step: StepKey; go: (id: StepKey) => void;
   paper: Doc; pages: [string, number][]; open: boolean; onOpen: () => void;
@@ -32,7 +38,7 @@ export function Companion({ s, p, cv, left, ok, step, go, paper, pages, open, on
     {head}
     <div class="mt-3">{check.answer}</div>
     {check.parts && <div class="mt-5"><Outline items={check.parts} /></div>}
-    {check.parts && <button type="button" data-testid="rep-pages" class={`mt-4 ${FILLED}`} onClick={onOpen}>See the pages</button>}
+    {check.parts && <button type="button" data-testid="rep-pages" class={`mt-4 ${FILLED}`} onClick={onOpen}>{open ? 'See the pages' : SAMPLE_WORDS}</button>}
   </div>;
   const r = readingOf(p, cv), level = levelFor('dscrLowest', 'fresh', levelsOf(s.benchmarks)), rows = chartRows(p, level), items = outlineOf(s, p, left, ok, step), n = sheetCount(paper);
   return <div data-testid="rep-companion" class="companion">
@@ -63,10 +69,11 @@ export function Companion({ s, p, cv, left, ok, step, go, paper, pages, open, on
     <h3 class="mt-4 text-sm font-semibold text-ink">The pages</h3>
     {/* Small pictures of the pages, a mouse's way in; the button below is everyone's. */}
     <div data-testid="rep-thumbs" class="thumbs mt-2 cursor-zoom-in" data-locked={open ? undefined : ''} aria-hidden="true" onClick={onOpen}>
-      <Paper doc={paper} pages={pages} label="" bare only={open ? undefined : 1} />
+      <Paper doc={paper} pages={pages} label="" bare only={open ? undefined : SAMPLE} />
     </div>
-    {/* Locked (Rahul's review of NEW2, before PAY1): the first page is real, the rest blank until the download. */}
-    {!open && <p data-testid="rep-locked" class="mt-2 text-sm text-ink-muted">Page 1 shows here. The other {n - 1} open with the download.</p>}
-    <button type="button" data-testid="rep-open-paper" class={`mt-3 ${FILLED}`} onClick={onOpen}>{open ? 'Open the full report' : 'See the first page'}</button>
+    {/* Locked (before PAY1): the sample's three pages are real (Rahul's review of the check, 16-11-2026: the cover, the
+        contents and the report at a glance), the rest blank until the download. */}
+    {!open && <p data-testid="rep-locked" class="mt-2 text-sm text-ink-muted">{lockedWords(n)}</p>}
+    <button type="button" data-testid="rep-open-paper" class={`mt-3 ${FILLED}`} onClick={onOpen}>{open ? 'Open the full report' : SAMPLE_WORDS}</button>
   </div>;
 }

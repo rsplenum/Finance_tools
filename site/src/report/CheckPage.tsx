@@ -7,7 +7,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/ho
 import { parseMonth } from '../../../engine/parse';
 import { levelFor, type RatioId } from '../../../engine/ratios';
 import { whatIfTable, type WhatIfRow } from '../../../engine/what-if';
-import { benchmarkFields, levelsOf, withBenchmark, type CheckRow } from '../board-model';
+import { benchmarkFields, levelsOf, withBenchmark, type CheckRow, type ViableLine, type ViableView } from '../board-model';
 import { BUTTON, HINT, SourceNote, TextField, Tick, goTo, useDraft } from '../fields';
 import { plain, SHARED } from '../words';
 import { summaryOf, type Box, type Pick, type SumLine, type SumSection } from './check';
@@ -207,13 +207,11 @@ export function Ratios({ s, p, update, head, w, emphasis, setEmphasis, collatera
   const set = (id: string, t: string) => update((u) => ({ ...u, benchmarks: withBenchmark(u.benchmarks, id, t) }));
   const mark = (c: CheckRow) => (c.verdict === 'meets' ? ['✓', 'Meets', 'text-good'] : c.verdict === 'misses' ? ['✗', 'Misses', 'text-bad'] : ['–', 'Not read yet', MUTED]);
   return <section id="benchmarks" data-testid="rep-checks" tabIndex={-1} aria-labelledby="benchmarks-h" class="dim-able mt-10" data-emphasis={emphasis || undefined}>
-    <div class="flex flex-wrap items-baseline justify-between gap-x-3">
-      <h3 id="benchmarks-h" class="text-title text-ink">The benchmark ratios</h3>
-      <button type="button" data-testid="rep-bm-edit" aria-pressed={emphasis} class="inline-flex min-h-11 items-center text-sm font-medium text-link underline underline-offset-4"
-        onClick={() => { setEmphasis(!emphasis); if (emphasis) setAt(undefined); }}>{emphasis ? 'Done' : 'Change the benchmarks'}</button>
-    </div>
+    {/* No "Change the benchmarks" beside the heading (Rahul's review of the check, 16-11-2026, point 2): the line under it
+        says to tap one. Fine-tune's link lights the benchmarks up a moment, until one is tapped. */}
+    <h3 id="benchmarks-h" class="text-title text-ink">The benchmark ratios</h3>
     <p data-testid={p.misses ? 'rep-misses' : 'rep-verdict'} class={`mt-1 font-medium ${p.misses ? 'text-bad' : 'text-ink'}`}>{head}</p>
-    <p class={HINT}>{emphasis ? 'Tap a benchmark to change it to your bank’s.' : 'Each bank sets its own: tap a benchmark to change it.'}</p>
+    <p class={HINT}>Each bank sets its own: tap a benchmark to change it.</p>
     {p.benchmarks && <p data-testid="rep-benchmarks-note" class="mt-1 text-sm text-warn">{p.benchmarks}</p>}
     <div class="paper mt-3 overflow-hidden rounded-card">
       <table class="ratio-table w-full border-collapse text-sm">
@@ -228,7 +226,7 @@ export function Ratios({ s, p, update, head, w, emphasis, setEmphasis, collatera
             <th scope="row" class="text-left font-normal"><span class="block text-ink">{PLAIN[c.id] ?? c.label}</span><span class={`block text-xs ${MUTED}`}>{c.label}</span></th>
             <td class="text-right">
               <button type="button" data-testid={`rep-bm-${c.id}`} aria-expanded={open} aria-label={`${short(c)}: the benchmark for ${c.label} (${c.level}). Change it`}
-                class="bm-cell" data-own={c.byDefault !== undefined || undefined} onClick={() => setAt(open ? undefined : c.id)}>{short(c)}</button>
+                class="bm-cell" data-own={c.byDefault !== undefined || undefined} onClick={() => { setAt(open ? undefined : c.id); setEmphasis(false); }}>{short(c)}</button>
               {c.byDefault !== undefined && <span class={`block text-xs ${c.looser ? 'text-warn' : MUTED}`}>yours; {c.byDefault}{c.looser ? ', looser' : ''}</span>}
             </td>
             <td class={`text-right tabular-nums ${ink}`}><span class="sr-only">{said}: </span>{figOf(c.worst)[0]}{figOf(c.worst)[1] && <span class={`block text-xs ${MUTED}`}>{figOf(c.worst)[1]}</span>}</td>
@@ -279,11 +277,24 @@ const dscr = (x: number | undefined, level: number, misses: boolean) => {
  * DSCRs, ✓ or ✗; every row two lines, nothing wider than a phone, no note under it. */
 /** "Average DSCR" reads "average DSCR" inside a line; "DSCR in the lowest year" stays. */
 const lowerFirst = (x: string) => (/^[A-Z][a-z]/.test(x) ? x[0].toLowerCase() + x.slice(1) : x);
-export function WhatIf({ s, names }: { s: ReportState; names: Record<string, string> }) {
+/** How far each can go before a benchmark misses (D-UX-50), in What if (Rahul's review of the check, 16-11-2026, point 3:
+ * the room and What if asked the same question twice on one screen): under each case that moves one thing, the engine's
+ * break point, and a gauge of how much of that room the case's own test takes. */
+const ROOM: Record<string, string> = { sales: 'Holds until sales fall', costs: 'Holds until costs rise', rate: 'Holds until the rate climbs' };
+function Room({ l, by }: { l: ViableLine; by?: number }) {
+  if (!l.move || l.at === undefined) return <span data-testid={`rep-room-${l.id}`} class={`room ${l.text.includes('cannot') ? 'text-bad' : MUTED}`}>{l.text.includes('cannot') ? 'No room: any change misses a benchmark' : l.text}</span>;
+  const share = by === undefined || l.at <= 0 ? undefined : Math.min(1, by / l.at);
+  return <span data-testid={`rep-room-${l.id}`} class="room">
+    <span class="room-said">{ROOM[l.id]} <b data-testid={`rep-room-move-${l.id}`} class="tabular-nums">{l.move.replace(/^\+/, '')}</b></span>
+    {share !== undefined && <span class="room-gauge" aria-hidden="true"><span class="room-fill" style={{ width: `${share * 100}%` }} /></span>}
+  </span>;
+}
+export function WhatIf({ s, names, room }: { s: ReportState; names: Record<string, string>; room?: ViableView }) {
   const on = JSON.stringify({ ...s, promotersMost: '', plantSales: '', plantCost: '', doc: '', words: '' });
   const t = useMemo(() => whatIfTable(inputOf(s), levelsOf(s.benchmarks)), [on]);
   if (!t) return null;
   const lv = levelsOf(s.benchmarks), low = levelFor('dscrLowest', 'fresh', lv), avg = levelFor('dscrAverage', 'fresh', lv);
+  const lineOf = (id: string) => room?.lines.find((l) => l.id === id && ROOM[id]);
   const row = (r: WhatIfRow) => {
     const bad = r.misses.length > 0 || !!r.cashShort, ink = bad ? 'text-bad' : 'text-good';
     const miss = (id: string) => r.misses.includes(id as RatioId);
@@ -291,7 +302,8 @@ export function WhatIf({ s, names }: { s: ReportState; names: Record<string, str
     const n = r.misses.length, said = bad ? [n === 1 ? `Misses ${lowerFirst(names[r.misses[0]] ?? SHORT[r.misses[0]] ?? r.misses[0])}` : n ? `Misses ${n} benchmarks` : '', r.cashShort ? 'cash runs short' : '']
       .filter(Boolean).join('; ').replace(/^c/, 'C') : 'Meets every benchmark';
     return <tr key={r.id} data-testid={`rep-whatif-${r.id}`} data-verdict={bad ? 'misses' : 'meets'}>
-      <th scope="row" class="text-left font-normal"><span class="block text-ink">{r.label}</span><span class={`block text-xs ${bad ? 'text-bad' : MUTED}`}>{said}</span></th>
+      <th scope="row" class="text-left font-normal"><span class="block text-ink">{r.label}</span><span class={`block text-xs ${bad ? 'text-bad' : MUTED}`}>{said}</span>
+        {lineOf(r.id) && <Room l={lineOf(r.id) as ViableLine} by={r.by} />}</th>
       <td class={`text-right tabular-nums ${miss('dscrLowest') ? 'text-bad' : 'text-ink'}`}>{dscr(r.lowest, low, miss('dscrLowest'))}</td>
       <td class={`text-right tabular-nums ${miss('dscrAverage') ? 'text-bad' : 'text-ink'}`}>{dscr(r.average, avg, miss('dscrAverage'))}</td>
       <td class={`text-center text-base font-semibold ${ink}`}><span aria-hidden="true">{bad ? '✗' : '✓'}</span><span class="sr-only">{bad ? 'Misses' : 'Meets'}</span></td>
@@ -299,7 +311,7 @@ export function WhatIf({ s, names }: { s: ReportState; names: Record<string, str
   };
   return <section id="what-if" data-testid="rep-whatif" aria-labelledby="what-if-h" class="dim-able mt-10">
     <h3 id="what-if-h" class="text-title text-ink">What if</h3>
-    <p class={`max-w-prose ${HINT}`}>Your report with one thing worse, then all three at once.</p>
+    <p class={`max-w-prose ${HINT}`}>{room ? 'Your report with one thing worse, then all three at once; under each, how far it can go before a benchmark misses.' : 'Your report with one thing worse, then all three at once.'}</p>
     <div class="paper mt-3 overflow-hidden rounded-card">
       <table class="ratio-table whatif-table w-full border-collapse text-sm">
         <thead><tr>
@@ -311,6 +323,11 @@ export function WhatIf({ s, names }: { s: ReportState; names: Record<string, str
         <tbody>{[t.typed, ...t.rows].map(row)}</tbody>
       </table>
     </div>
+    {room && <details data-testid="rep-room-more" class="mt-2">
+      <summary class="cursor-pointer py-1 text-sm font-medium text-link underline underline-offset-4">The figures behind it</summary>
+      <ul class="mt-1 space-y-1.5 text-sm text-ink">{room.lines.filter((l) => ROOM[l.id]).map((l) => <li key={l.id} data-testid={`rep-room-text-${l.id}`}>{l.text}</li>)}</ul>
+      <p class={`max-w-prose ${HINT}`}>{room.foot}</p>
+    </details>}
   </section>;
 }
 

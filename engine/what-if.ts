@@ -18,6 +18,8 @@ export interface WhatIfRow {
   lowest?: number; lowestFy?: string; average?: number;
   /** The benchmarks missed under the case; `cashShort`, the first year cash runs out, if it does. */
   misses: RatioId[]; cashShort?: string;
+  /** A case that moves one thing: how far it moves it (% for sales and costs, points for the rate). */
+  by?: number;
 }
 
 /** The input moved by one case: none of its parts left out. */
@@ -48,7 +50,8 @@ export function whatIfTable(x: ReportInput, lv?: Levels): { typed: WhatIfRow; ro
       ...(r.cashShort ? { cashShort: r.cashShort.first } : {}),
     };
   };
-  return { typed: row('typed', 'As planned', x), rows: (WHAT_IF.cases as Case[]).map((c) => row(c.id, c.label, moved(x, c))) };
+  const one = (c: Case) => { const m = [c.salesPct, c.costsPct, c.ratePoints].filter((n) => n); return m.length === 1 ? { by: Math.abs(m[0] as number) } : {}; };
+  return { typed: row('typed', 'As planned', x), rows: (WHAT_IF.cases as Case[]).map((c) => ({ ...row(c.id, c.label, moved(x, c)), ...one(c) })) };
 }
 
 /** Each case's lowest and average DSCR and the benchmarks it misses; undefined when the report as typed cannot be worked. */

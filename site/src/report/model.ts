@@ -412,6 +412,22 @@ export function worthLine(w: Worth | { why: string }): string {
   return `${value ? `${value}; ${back}` : back.charAt(0).toUpperCase() + back.slice(1)}, ${own}.`;
 }
 
+/** The worth as three tiles beside the largest loan (Rahul's review of the check, 16-11-2026, point 7: the line read as
+ * a load of text): the project's return, the promoters' own, and its value at the loan's rate; a figure the engine does
+ * not give stays out, and why it is not given goes under the tiles. */
+export interface WorthTile { id: 'irr' | 'own' | 'npv'; label: string; value: string; note: string; tone?: 'good' | 'bad' }
+export function worthTiles(w: Worth | { why: string }): { tiles: WorthTile[]; why: string[] } | undefined {
+  if ('why' in w) return undefined;
+  const p = w.project, q = w.promoters, tiles: WorthTile[] = [], why: string[] = [];
+  if (p.irrPct !== undefined) tiles.push({ id: 'irr', label: 'The project’s return', value: `${p.irrPct.toFixed(1)}%`, note: 'a year (IRR)' });
+  else why.push(`The project’s return is not given: ${p.why}.`);
+  if (q.irrPct !== undefined) tiles.push({ id: 'own', label: 'Your own money’s return', value: `${q.irrPct.toFixed(1)}%`, note: 'a year (promoters’ IRR)' });
+  else why.push(`Your own money’s return is not given: ${q.why}.`);
+  if (p.npv !== undefined) tiles.push({ id: 'npv', label: `Worth at ${w.ratePct}%, the loan’s rate`, value: `${p.npv < 0 ? '−' : '+'}₹${rupees(Math.abs(p.npv))}`,
+    note: p.npv < 0 ? 'less than it costs (NPV)' : 'more than it costs (NPV)', tone: p.npv < 0 ? 'bad' : 'good' });
+  return tiles.length ? { tiles, why } : undefined;
+}
+
 export function viewOf(r: Report, x?: ReportInput): ReportView {
   const w = x ? worthOf(r, x) : undefined, worth = w && !('why' in w) ? w : undefined;
   const ys = r.years, years = ys.map((y) => y.fy), any = (f: (y: ReportYear) => number) => ys.some((y) => Math.abs(f(y)) > 0.005);
@@ -574,12 +590,15 @@ export interface ReportPreview {
   ready?: string;
   /** The project's worth and return, and the promoters' return, in words (NPV1, engine/worth.ts). */
   worth?: string;
+  /** The same as tiles, when the engine gives a figure. */
+  worthTiles?: { tiles: WorthTile[]; why: string[] };
 }
 
 
 /** Cash running out in words (D-UX-247): the first year under nil, then the amount short at the lowest, and its year when later. */
 const runsOut = (c: NonNullable<Report['cashShort']>, rs: (n: number) => string) =>
   `Cash runs out in ${c.first}: ₹${rs(c.need)} short at its lowest${c.fy === c.first ? '' : `, in ${c.fy}`}.`;
+const worthOf2 = (r: Report, x: ReportInput) => { const w = worthOf(r, x), tiles = worthTiles(w); return { worth: worthLine(w), ...(tiles ? { worthTiles: tiles } : {}) }; };
 export function preview(s: ReportState): ReportPreview {
   const x = inputOf(s), r = projectReport(x);
   if ('blocked' in r) return { needs: [], blocked: r.blocked, flags: [] };
@@ -593,7 +612,7 @@ export function preview(s: ReportState): ReportPreview {
     ? `Security cover: the project’s own assets reach ${sc.level.toFixed(2)} without collateral.`
     : `Security cover: collateral with a market value of ₹${rupees(need)} or more brings it to ${sc.level.toFixed(2)}.`;
   return {
-    needs: open, view: viewOf(r, x), worth: worthLine(worthOf(r, x)), flags: [...r.scheme?.flags ?? [], ...(r.idc.short ? [`The business pays ₹${rupees(r.idc.business)} of interest before the new line’s first sale from its own earnings, but has ₹${rupees(Math.max(0, r.idc.short.spare))} to spare in ${r.idc.short.fy} after its loans.`] : [])], checks,
+    needs: open, view: viewOf(r, x), ...worthOf2(r, x), flags: [...r.scheme?.flags ?? [], ...(r.idc.short ? [`The business pays ₹${rupees(r.idc.business)} of interest before the new line’s first sale from its own earnings, but has ₹${rupees(Math.max(0, r.idc.short.spare))} to spare in ${r.idc.short.fy} after its loans.`] : [])], checks,
     ...(r.idc.promoters > 0.005 ? { ready: `Keep ₹${rupees(r.idc.promoters)} ready for interest before your first sale: it is part of your share of the cost.` } : {}),
     ...(d.misses.length ? { misses: `${verdictWords('benchmark', d.checks.length, d.misses.length, d.checks.filter((k) => k.meets === undefined).length)}: ${listed(d.misses.map(labelOf))}.` } : {}),
     ...(collateralNote ? { collateralNote } : {}), ...(own ? { benchmarks: own } : {}), ...(hybridLine(r) ? { hybrid: hybridLine(r) } : {}),
@@ -627,7 +646,12 @@ export function periodLine(s: ReportState): { text: string; checks: { text: stri
 /** A way to repay as the comparison shows it: the engine's figures in words, none worked out here. `lines`: the ratios in
  * question on this way, each with its tone. */
 export interface WayLine { text: string; meets?: boolean }
-export interface WayRow { value: Repayment; label: string; interest: string; instalments: string; lines: WayLine[]; meets: boolean; proposed: boolean; now: boolean; least: boolean }
+export interface WayRow {
+  value: Repayment; label: string; interest: string; instalments: string; lines: WayLine[]; meets: boolean; proposed: boolean; now: boolean; least: boolean;
+  /** The card's figures (Rahul's review of the check, 16-11-2026, point 8): the first instalment and what it does after,
+   * and the engine's own amounts, for the instalments' shape and the interest's bar. */
+  style: Way['style']; first: string; per: string; then: string; firstN: number; lastN: number; interestN: number;
+}
 export interface RepaymentView { lead: string; rows: WayRow[]; notes: string[] }
 const valueOf = (w: Way): Repayment => (w.frequency === 'quarterly' ? 'quarterly' : w.style === 'equal-principal' ? 'monthly' : w.style);
 const stepText = (w: Way) => `${+(w.step * 100).toFixed(1)}%`;
@@ -651,6 +675,9 @@ export function repaymentView(s: ReportState): RepaymentView | undefined {
     const lowest = w.lowest && low ? `${ratioAt(w.lowest.dscr, low)} in ${w.lowest.fy}` : '—';
     return {
       value: valueOf(w), label: wayLabel(w), interest: `₹${rupees(w.interest)}`, meets: !w.misses.length, proposed: w === c.proposed, now: w === c.now,
+      style: w.style, first: `₹${rupees(w.first)}`, per: w.style === 'emi' ? `a ${every}` : `the first ${w.style === 'stepped' ? 'year, a month' : every}`,
+      then: w.style === 'emi' ? `the same every ${every}` : w.style === 'stepped' ? `rising each year to ₹${rupees(w.last)}` : `falling to ₹${rupees(w.last)}`,
+      firstN: w.first, lastN: w.last, interestN: w.interest,
       least: i === 0 && !c.proposed && c.ways.length > 1,
       instalments: w.style === 'emi' ? `₹${rupees(w.first)} a month` : w.style === 'stepped' ? `₹${rupees(w.first)} a month in the first year, rising to ₹${rupees(w.last)}`
         : `₹${rupees(w.first)} the first ${every}, falling to ₹${rupees(w.last)}`,
@@ -705,7 +732,7 @@ export function viableOf(s: ReportState): ViableView | undefined {
     push({ id, head, text, move: `${rs(l.now - l.largest)} less`, bars: { now: l.now, to: l.largest, nowText: rs(l.now), toText: rs(l.largest) }, note: cashLeft(l), ...chips(l) });
   if (sl && v.meets) {
     push({ id: 'sales', head: 'Sales can fall', ...none, ...(sl.tenths < 0 ? {
-      move: `${(-sl.tenths / 10).toFixed(1)}%`, bars: { now: sl.now, to: sl.needed, nowText: rs(sl.now), toText: `₹${upRupees(sl.needed)}` },
+      move: `${(-sl.tenths / 10).toFixed(1)}%`, at: -sl.tenths / 10, bars: { now: sl.now, to: sl.needed, nowText: rs(sl.now), toText: `₹${upRupees(sl.needed)}` },
       // The fall is the card's figure (`move`), so the words do not repeat it (review finding 10).
       text: `To ₹${upRupees(sl.needed)} in ${sl.fy} (from ₹${rupees(sl.now)}), and every ratio still meets its level.`,
     } : { text: 'Sales cannot fall at all before a ratio misses its level.' }) });
@@ -714,14 +741,14 @@ export function viableOf(s: ReportState): ViableView | undefined {
     if (v.costs) {
       const c = v.costs;
       push({ id: 'costs', head: 'Costs can rise', ...none, ...(c.tenths > 0 ? {
-        move: `${(c.tenths / 10).toFixed(1)}%${or(c.capped)}`,
+        move: `${(c.tenths / 10).toFixed(1)}%${or(c.capped)}`, at: c.tenths / 10,
         text: `Variable costs to ${pc(c.variable.most)} of sales (from ${pc(c.variable.now)}) and fixed costs to ₹${rupees(c.fixed.most)} a year (from ₹${rupees(c.fixed.now)}), together, and every ratio still meets its level.`,
       } : { text: 'Costs cannot rise at all before a ratio misses its level.' }) });
     } else if (v.costsNone) push({ id: 'costs', head: 'Costs can rise', text: v.costsNone, ...none });
     if (v.rate) {
       const r = v.rate;
       push({ id: 'rate', head: 'The interest rate can rise', ...none, ...(r.tenths > 0 ? {
-        move: `+${(r.tenths / 10).toFixed(1)} points${or(r.capped)}`,
+        move: `+${(r.tenths / 10).toFixed(1)} points${or(r.capped)}`, at: r.tenths / 10,
         text: `The term loan’s rate to ${pc(r.term.most)} (from ${pc(r.term.now)})${r.wc ? ` and the working-capital limit’s to ${pc(r.wc.most)} (from ${pc(r.wc.now)})` : ''}, and every ratio still meets its level.`,
       } : { text: 'The interest rate cannot rise at all before a ratio misses its level.' }) });
     } else if (v.rateNone) push({ id: 'rate', head: 'The interest rate can rise', text: v.rateNone, ...none });
@@ -1192,7 +1219,8 @@ export function carryView(s: ReportState): CarryView | undefined {
     const low = levelFor('dscrLowest', 'fresh', lv), avg = levelFor('dscrAverage', 'fresh', lv);
     const line = c.carries > 0 ? `The largest loan your business can repay is ${rs(c.carries)}. You asked ${rs(c.asked)}.`
       : `Your business cannot carry a term loan on these figures yet. You asked ${rs(c.asked)}.`;
-    const bar = c.gap > 0 ? `Carries ${rs(c.carries)} of ${rs(c.asked)}` : `Carries the ${rs(c.asked)} asked`;
+    // Rahul's review of the check (16-11-2026, point 6): "Carries the … asked" read as jargon.
+    const bar = c.carries <= 0 ? `Cannot repay a term loan yet` : c.gap > 0 ? `Can repay ${rs(c.carries)} of the ${rs(c.asked)} loan` : `Can repay the full ${rs(c.asked)} loan`;
     const l = c.limitedBy, h = c.how, pays = `can pay up to ${rs(Math.floor(h.forInstalments))} of instalments and interest`;
     const why = (l.why ?? '').replace(/\.$/, '');
     const how = l.check === 'cash' ? `A larger loan runs the cash short in ${l.fy}.`
