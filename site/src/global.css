@@ -614,6 +614,11 @@ html:has([data-pinned-score]) { scroll-padding-bottom: calc(var(--builder-bar-h,
 .bar-status[data-tone="good"] .bar-head { color: var(--color-good); }
 .bar-status[data-tone="bad"] .bar-head { color: var(--color-bad); }
 .bar-rest { color: var(--color-ink-muted); }
+.bar-status { max-height: 5rem; transition: max-height 0.24s ease, opacity 0.2s ease, transform 0.24s ease; }
+/* The verdict handed to the answer above while it is in view: the bar keeps only its buttons. */
+.bar-status[data-away] { max-height: 0; overflow: hidden; opacity: 0; transform: translateY(0.5rem); }
+.builder-bar:has(> .bar-status[data-away]) > div { margin-top: 0; }
+@media (prefers-reduced-motion: reduce) { .bar-status { transition: none; } }
 
 /* The project's worth under the largest loan (point 7, and Rahul's second look): ruled lines on a phone, the figure on
  * the right; from 30rem three across, split by hairlines, flush with the answer's edges. No boxes, no inset. */

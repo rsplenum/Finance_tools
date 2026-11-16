@@ -128,13 +128,42 @@ function barText(s: ReportState, p: ReportPreview) {
   return [said, (left || !said) && docStatus(s, p)].filter(Boolean).join(' · ');
 }
 
+/** The verdict in one place at a time (Rahul, 16-11-2026: "Works" twice on the screen at the top of the check): while the
+ * answer's own verdict is in view, above the bar, the bar's folds away; scrolled past, the bar takes it up. */
+function useVerdictInView(bar: { current: HTMLElement | null }) {
+  const [seen, setSeen] = useState(false);
+  // Looked up on every scroll (the panel's own too) and every render: the verdict comes and goes with the figures.
+  const look = () => {
+    const foot = (bar.current?.closest('[data-builder-bar]')?.getBoundingClientRect().top ?? innerHeight) - 8;
+    setSeen([...document.querySelectorAll('[data-verdict-head]')].some((h) => {
+      const r = h.getBoundingClientRect();
+      if (!r.height || r.bottom < 0 || r.top > foot) return false;
+      // Inside a scrolling panel it must be within the panel's own view as well.
+      for (let a = h.parentElement; a && a !== document.body; a = a.parentElement) {
+        if (getComputedStyle(a).overflowY === 'visible') continue;
+        const c = a.getBoundingClientRect();
+        if (r.bottom < c.top || r.top > c.bottom) return false;
+      }
+      return true;
+    }));
+  };
+  useEffect(look);
+  useEffect(() => {
+    let f = 0;
+    const soon = () => { cancelAnimationFrame(f); f = requestAnimationFrame(look); };
+    addEventListener('scroll', soon, { capture: true, passive: true }); addEventListener('resize', soon);
+    return () => { cancelAnimationFrame(f); removeEventListener('scroll', soon, { capture: true }); removeEventListener('resize', soon); };
+  }, []);
+  return seen;
+}
+
 /** The answer bar (Rahul's review of the check, 16-11-2026, point 6: "Works" read as bland): the verdict in its tone, a
  * tick, a cross or a dot in a tinted ring, the verdict's words strong and the rest quiet. Its words are barText's, whole. */
 function BarStatus({ s, p }: { s: ReportState; p: ReportPreview }) {
-  const said = barText(s, p), vd = p.checks?.length ? verdictOf(p) : undefined;
+  const said = barText(s, p), vd = p.checks?.length ? verdictOf(p) : undefined, me = useRef<HTMLParagraphElement>(null), away = useVerdictInView(me);
   const tone = !vd ? 'none' : vd.work.startsWith('Does not') ? 'bad' : vd.work === 'Works' ? 'good' : 'warn';
   const m = /^(.*?)(: | · |$)(.*)$/.exec(said) as RegExpExecArray;
-  return <p data-testid="rep-answer-bar" data-answer aria-live="polite" data-tone={tone} class="bar-status">
+  return <p ref={me} data-testid="rep-answer-bar" data-answer aria-live="polite" data-tone={tone} data-away={away && vd ? '' : undefined} class="bar-status">
     <span class="bar-icon" aria-hidden="true">{tone === 'good' ? <svg viewBox="0 0 16 16" width="14" height="14"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
       : tone === 'bad' ? <svg viewBox="0 0 16 16" width="12" height="12"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg>
         : <svg viewBox="0 0 16 16" width="10" height="10"><circle cx="8" cy="8" r="4" fill="currentColor" /></svg>}</span>
@@ -830,11 +859,13 @@ function Answer({ s, p, cv, update, used, counts, undo, keep, answer, toBox, ok,
         {/* The project's worth beside the largest loan (NPV1): its value at the loan's rate and its return, then the
             promoters' own return; the table is in the pages, 6.5. */}
         {figures && (p.worthTiles ? <WorthTiles w={p.worthTiles} /> : p.worth && <p data-testid="rep-worth" class={`-mt-2 mb-4 text-sm ${MUTED}`}>{p.worth}</p>)}
-        {verdict && <div class={`flex flex-wrap items-baseline gap-x-3 gap-y-1 ${answerRule(!p.needs.length)}`}>
-          <h3 data-testid={`${p.misses ? 'rep-misses' : 'rep-verdict'}-work`} data-answer
+        {/* The tick alone marks it (Rahul, 16-11-2026: the tick and the rule beside "Works" said it twice). "Scroll to find
+            out" only under a miss: it leads to the reasons, then Make it work. */}
+        {verdict && <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 data-testid={`${p.misses ? 'rep-misses' : 'rep-verdict'}-work`} data-answer data-verdict-head
             class={`flex items-center gap-2 text-title ${verdict.work.startsWith('Does not') ? 'text-bad' : 'text-ink'}`}>
             {verdict.work === 'Works' && <Tick />}{verdict.work}</h3>
-          {figures && p.checks && <a href="#benchmarks" data-testid="rep-to-ratios" class="text-sm text-link underline underline-offset-4">Scroll to find out<span aria-hidden="true"> ↓</span></a>}
+          {figures && p.checks && verdict.work.startsWith('Does not') && <a href="#benchmarks" data-testid="rep-to-ratios" class="text-sm text-link underline underline-offset-4">Scroll to find out<span aria-hidden="true"> ↓</span></a>}
         </div>}
         {cv?.keepReady && <p data-testid="rep-carry-ready" class="mt-2 font-medium text-warn">{cv.keepReady}</p>}
         {figures && pencils > 0 && <p data-testid="rep-pencil" class={`mt-2 text-sm ${MUTED}`}>
