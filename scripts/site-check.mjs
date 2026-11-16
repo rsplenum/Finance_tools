@@ -1419,14 +1419,16 @@ if (touched('/project-report/')) {
   await expectFigures(page, v, 'rep-check-securityCover', '… meets …', 'the security cover before the collateral, on the own assets');
   if (await page.getByTestId('rep-collateral-note').count()) v('the security cover met on the own assets still asks for the collateral (UX5b)');
   // How far it can go sits under each one-thing case in What if (Rahul's review of the check, 16-11-2026, point 3; tests/viable.test.ts
-  // by hand): the figure under the case, its full words under "The figures behind it"; the old "How far" button is gone.
+  // by hand): the figure under the case, each figure now and how far it holds under "The figures behind it"; the old "How far" button is gone.
   if (await page.getByTestId('rep-viable').count() || await page.getByTestId('rep-bm-edit').count()) v('the check keeps "How far" or "Change the benchmarks" (Rahul\'s review, 16-11-2026)');
   await expectFigures(page, v, 'rep-room-move-sales', '31.5%', 'how far sales can fall, under the sales case');
   await expectFigures(page, v, 'rep-room-move-costs', '13.8%', 'how far the costs can rise, under the costs case');
   await page.getByTestId('rep-room-more').locator('summary').click();
-  await expectText(page, v, 'rep-room-text-sales', /^To ₹82,20,000 in 2026-27/, 'how far sales can fall');
-  await expectText(page, v, 'rep-room-text-costs', /^Variable costs to 73\.97% of sales \(from 65%\) and fixed costs to ₹20,48,400 a year/, 'how far the costs can rise');
-  await expectText(page, v, 'rep-room-text-rate', /^The term loan’s rate to 40% \(from 10%\) and the working-capital limit’s to 41% \(from 11%\)/, 'how far the interest rate can climb');
+  await expectText(page, v, 'rep-span-to-sales', /^₹82,20,000$/, 'how far sales can fall');
+  await expectText(page, v, 'rep-span-to-variable', /^73\.97%$/, 'how far the variable costs can rise');
+  await expectText(page, v, 'rep-span-to-fixed', /^₹20,48,400$/, 'how far the fixed costs can rise');
+  await expectText(page, v, 'rep-span-to-term', /^40% or more$/, 'how far the term loan\'s rate can climb');
+  await expectText(page, v, 'rep-span-to-wcRate', /^41% or more$/, 'how far the working-capital rate can climb');
   if (!(await page.getByTestId('rep-sample').count())) v('the check has no "View report sample" beside the download (Rahul\'s review, 16-11-2026)');
   // Make it work (OR11d, D-UX-249) on case R at 70 lakh (tests/work.test.ts by hand): sales of 82,11,000 keep the loan,
   // with a plant that sells 1,41,43,206 running full, asked inside the card; or 9,35,000 borrowed (fix.ts). "Use this"

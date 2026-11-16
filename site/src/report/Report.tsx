@@ -855,14 +855,14 @@ function Answer({ s, p, cv, update, used, counts, undo, keep, answer, toBox, ok,
   </>;
 }
 
-/** The project's worth as three tiles under the largest loan (Rahul's review of the check, 16-11-2026, point 7): each
- * figure large, its name above and what it means below; a figure not given says why under them. */
+/** The project's worth under the largest loan (Rahul's review of the check, 16-11-2026, point 7; his second look the same
+ * day: the tiles read as a first draft, boxed and indented, the third alone on a row): a ruled line each on a phone, the
+ * name and its term left, the figure right; three across a wider panel, split by hairlines. A figure not given says why. */
 function WorthTiles({ w }: { w: NonNullable<ReportPreview['worthTiles']> }) {
-  return <div data-testid="rep-worth" class="-mt-1 mb-5">
-    <dl class="worth-tiles">{w.tiles.map((x) => <div key={x.id} data-testid={`rep-worth-${x.id}`} class="worth-tile">
-      <dt class="worth-label">{x.label}</dt>
-      <dd class={`worth-value ${x.tone === 'bad' ? 'text-bad' : 'text-ink'}`}>{x.value}</dd>
-      <dd class="worth-note">{x.note}</dd>
+  return <div data-testid="rep-worth" class="worth-wrap -mt-1 mb-5">
+    <dl class="worth">{w.tiles.map((x) => <div key={x.id} data-testid={`rep-worth-${x.id}`} class="worth-item">
+      <dt class="worth-name"><span class="worth-label">{x.label}</span><span class="worth-note">{x.note}</span></dt>
+      <dd class={`worth-value ${x.tone === 'bad' ? 'text-bad' : 'text-ink'}`}>{x.value}{x.unit && <span class="worth-unit"> {x.unit}</span>}</dd>
     </div>)}</dl>
     {w.why.map((x) => <p key={x} class={HINT}>{x}</p>)}
   </div>;

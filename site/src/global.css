@@ -615,14 +615,27 @@ html:has([data-pinned-score]) { scroll-padding-bottom: calc(var(--builder-bar-h,
 .bar-status[data-tone="bad"] .bar-head { color: var(--color-bad); }
 .bar-rest { color: var(--color-ink-muted); }
 
-/* The project's worth as tiles under the largest loan (point 7): three to a row, two on a narrow phone. */
-.worth-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin: 0; }
-.worth-tile:last-child:nth-child(odd) { grid-column: 1 / -1; }
-@container (width >= 30rem) { .worth-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } .worth-tile:last-child:nth-child(odd) { grid-column: auto; } }
-.worth-tile { border-radius: var(--radius-control, 0.5rem); background: var(--color-surface); padding: 0.625rem 0.75rem; }
-.worth-label { font-size: 0.75rem; line-height: 1.3; color: var(--color-ink-muted); }
-.worth-value { margin: 0.125rem 0 0; font-size: 1.25rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.25; }
-.worth-note { margin: 0; font-size: 0.75rem; line-height: 1.3; color: var(--color-ink-muted); }
+/* The project's worth under the largest loan (point 7, and Rahul's second look): ruled lines on a phone, the figure on
+ * the right; from 30rem three across, split by hairlines, flush with the answer's edges. No boxes, no inset. */
+.worth-wrap { container-type: inline-size; }
+.worth { margin: 0; border-top: 1px solid var(--color-line); border-bottom: 1px solid var(--color-line); }
+.worth-item { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; padding: 0.625rem 0; }
+.worth-item + .worth-item { border-top: 1px solid var(--color-line); }
+.worth-name { display: flex; min-width: 0; flex-direction: column; }
+.worth-label { font-size: 0.875rem; line-height: 1.3; color: var(--color-ink); }
+.worth-note { font-size: 0.75rem; line-height: 1.3; color: var(--color-ink-muted); }
+.worth-value { margin: 0; flex: none; font-size: 1.25rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; text-align: right; }
+.worth-unit { font-size: 0.75rem; font-weight: 400; color: var(--color-ink-muted); }
+@container (width >= 30rem) {
+  .worth { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
+  .worth-item { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 0.125rem; padding: 0.75rem 1rem; }
+  .worth-name { display: contents; }
+  .worth-label { order: 1; } .worth-value { order: 2; } .worth-note { order: 3; }
+  .worth-item:first-child { padding-left: 0; }
+  .worth-item:last-child { padding-right: 0; }
+  .worth-item + .worth-item { border-top: 0; border-left: 1px solid var(--color-line); }
+  .worth-value { text-align: left; font-size: 1.5rem; }
+}
 
 /* The report sample's three pages on the check (point 1). */
 .sample-thumbs { grid-template-columns: repeat(3, minmax(0, 1fr)); max-width: 28rem; }

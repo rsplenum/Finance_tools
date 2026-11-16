@@ -295,6 +295,7 @@ export function WhatIf({ s, names, room }: { s: ReportState; names: Record<strin
   if (!t) return null;
   const lv = levelsOf(s.benchmarks), low = levelFor('dscrLowest', 'fresh', lv), avg = levelFor('dscrAverage', 'fresh', lv);
   const lineOf = (id: string) => room?.lines.find((l) => l.id === id && ROOM[id]);
+  const spans = room?.lines.filter((l) => ROOM[l.id]).flatMap((l) => l.span ?? []) ?? [], own = benchmarkFields('fresh', s.benchmarks).some((f) => f.value.trim());
   const row = (r: WhatIfRow) => {
     const bad = r.misses.length > 0 || !!r.cashShort, ink = bad ? 'text-bad' : 'text-good';
     const miss = (id: string) => r.misses.includes(id as RatioId);
@@ -323,10 +324,21 @@ export function WhatIf({ s, names, room }: { s: ReportState; names: Record<strin
         <tbody>{[t.typed, ...t.rows].map(row)}</tbody>
       </table>
     </div>
-    {room && <details data-testid="rep-room-more" class="mt-2">
+    {/* The figures behind it (Rahul's second look, 16-11-2026: three sentences and a paragraph read as a load): one small
+        table, each figure now and how far it holds, the same words once in a line under it. */}
+    {room && spans.length > 0 && <details data-testid="rep-room-more" class="mt-2">
       <summary class="cursor-pointer py-1 text-sm font-medium text-link underline underline-offset-4">The figures behind it</summary>
-      <ul class="mt-1 space-y-1.5 text-sm text-ink">{room.lines.filter((l) => ROOM[l.id]).map((l) => <li key={l.id} data-testid={`rep-room-text-${l.id}`}>{l.text}</li>)}</ul>
-      <p class={`max-w-prose ${HINT}`}>{room.foot}</p>
+      <div class="paper mt-2 overflow-hidden rounded-card">
+        <table class="ratio-table span-table w-full border-collapse text-sm">
+          <thead><tr><th scope="col" class="text-left"><span class="sr-only">Figure</span></th><th scope="col" class="text-right">Now</th><th scope="col" class="text-right">Holds to</th></tr></thead>
+          <tbody>{spans.map((x) => <tr key={x.id} data-testid={`rep-span-${x.id}`}>
+            <th scope="row" class="text-left font-normal text-ink">{x.what}</th>
+            <td class={`text-right tabular-nums ${MUTED}`}>{x.now}</td>
+            <td data-testid={`rep-span-to-${x.id}`} class="text-right tabular-nums font-medium text-ink">{x.to}</td>
+          </tr>)}</tbody>
+        </table>
+      </div>
+      <p class={`mt-2 max-w-prose ${HINT}`}>Each alone, the rest as you typed, against {own ? 'your benchmarks' : 'the default benchmarks (a fresh loan’s, not yet checked against an RBI publication)'}. Plan only for what the business can really reach: a lender tests sales against the market and the capacity.</p>
     </details>}
   </section>;
 }

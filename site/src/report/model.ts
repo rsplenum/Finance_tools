@@ -415,16 +415,18 @@ export function worthLine(w: Worth | { why: string }): string {
 /** The worth as three tiles beside the largest loan (Rahul's review of the check, 16-11-2026, point 7: the line read as
  * a load of text): the project's return, the promoters' own, and its value at the loan's rate; a figure the engine does
  * not give stays out, and why it is not given goes under the tiles. */
-export interface WorthTile { id: 'irr' | 'own' | 'npv'; label: string; value: string; note: string; tone?: 'good' | 'bad' }
+export interface WorthTile { id: 'irr' | 'own' | 'npv'; label: string; value: string; unit?: string; note: string; tone?: 'good' | 'bad' }
 export function worthTiles(w: Worth | { why: string }): { tiles: WorthTile[]; why: string[] } | undefined {
   if ('why' in w) return undefined;
   const p = w.project, q = w.promoters, tiles: WorthTile[] = [], why: string[] = [];
-  if (p.irrPct !== undefined) tiles.push({ id: 'irr', label: 'The project’s return', value: `${p.irrPct.toFixed(1)}%`, note: 'a year (IRR)' });
+  // Rahul's second look (16-11-2026): the tiles read as a first draft. Each now a ruled line on a phone, three across a
+  // wider panel: the name, the figure with its unit, the term a banker knows it by. The NPV's sign is said in its name.
+  if (p.irrPct !== undefined) tiles.push({ id: 'irr', label: 'The project’s return', value: `${p.irrPct.toFixed(1)}%`, unit: 'a year', note: 'IRR' });
   else why.push(`The project’s return is not given: ${p.why}.`);
-  if (q.irrPct !== undefined) tiles.push({ id: 'own', label: 'Your own money’s return', value: `${q.irrPct.toFixed(1)}%`, note: 'a year (promoters’ IRR)' });
+  if (q.irrPct !== undefined) tiles.push({ id: 'own', label: 'Your own money’s return', value: `${q.irrPct.toFixed(1)}%`, unit: 'a year', note: 'promoters’ IRR' });
   else why.push(`Your own money’s return is not given: ${q.why}.`);
-  if (p.npv !== undefined) tiles.push({ id: 'npv', label: `Worth at ${w.ratePct}%, the loan’s rate`, value: `${p.npv < 0 ? '−' : '+'}₹${rupees(Math.abs(p.npv))}`,
-    note: p.npv < 0 ? 'less than it costs (NPV)' : 'more than it costs (NPV)', tone: p.npv < 0 ? 'bad' : 'good' });
+  if (p.npv !== undefined) tiles.push({ id: 'npv', label: p.npv < 0 ? 'Worth less than it costs' : 'Worth more than it costs', value: `₹${rupees(Math.abs(p.npv))}`,
+    note: `NPV at ${w.ratePct}%, the loan’s rate`, tone: p.npv < 0 ? 'bad' : 'good' });
   return tiles.length ? { tiles, why } : undefined;
 }
 
@@ -735,6 +737,7 @@ export function viableOf(s: ReportState): ViableView | undefined {
       move: `${(-sl.tenths / 10).toFixed(1)}%`, at: -sl.tenths / 10, bars: { now: sl.now, to: sl.needed, nowText: rs(sl.now), toText: `₹${upRupees(sl.needed)}` },
       // The fall is the card's figure (`move`), so the words do not repeat it (review finding 10).
       text: `To ₹${upRupees(sl.needed)} in ${sl.fy} (from ₹${rupees(sl.now)}), and every ratio still meets its level.`,
+      span: [{ id: 'sales', what: `Sales in ${sl.fy}`, now: rs(sl.now), to: `₹${upRupees(sl.needed)}` }],
     } : { text: 'Sales cannot fall at all before a ratio misses its level.' }) });
     // Rahul's review of NEW2 (point 4): the costs and the interest rate beside the sales, worked the same way by the engine.
     const pc = (n: number) => `${(Math.round(n * 100) / 100).toLocaleString('en-IN', { maximumFractionDigits: 2 })}%`, or = (c: boolean) => (c ? ' or more' : '');
@@ -743,6 +746,8 @@ export function viableOf(s: ReportState): ViableView | undefined {
       push({ id: 'costs', head: 'Costs can rise', ...none, ...(c.tenths > 0 ? {
         move: `${(c.tenths / 10).toFixed(1)}%${or(c.capped)}`, at: c.tenths / 10,
         text: `Variable costs to ${pc(c.variable.most)} of sales (from ${pc(c.variable.now)}) and fixed costs to ₹${rupees(c.fixed.most)} a year (from ₹${rupees(c.fixed.now)}), together, and every ratio still meets its level.`,
+        span: [{ id: 'variable', what: 'Variable costs', now: pc(c.variable.now), to: `${pc(c.variable.most)}${or(c.capped)}` },
+          { id: 'fixed', what: 'Fixed costs', now: rs(c.fixed.now), to: `${rs(c.fixed.most)}${or(c.capped)}` }],
       } : { text: 'Costs cannot rise at all before a ratio misses its level.' }) });
     } else if (v.costsNone) push({ id: 'costs', head: 'Costs can rise', text: v.costsNone, ...none });
     if (v.rate) {
@@ -750,6 +755,8 @@ export function viableOf(s: ReportState): ViableView | undefined {
       push({ id: 'rate', head: 'The interest rate can rise', ...none, ...(r.tenths > 0 ? {
         move: `+${(r.tenths / 10).toFixed(1)} points${or(r.capped)}`, at: r.tenths / 10,
         text: `The term loan’s rate to ${pc(r.term.most)} (from ${pc(r.term.now)})${r.wc ? ` and the working-capital limit’s to ${pc(r.wc.most)} (from ${pc(r.wc.now)})` : ''}, and every ratio still meets its level.`,
+        span: [{ id: 'term', what: 'Term loan’s rate', now: pc(r.term.now), to: `${pc(r.term.most)}${or(r.capped)}` },
+          ...(r.wc ? [{ id: 'wcRate', what: 'Working-capital rate', now: pc(r.wc.now), to: `${pc(r.wc.most)}${or(r.capped)}` }] : [])],
       } : { text: 'The interest rate cannot rise at all before a ratio misses its level.' }) });
     } else if (v.rateNone) push({ id: 'rate', head: 'The interest rate can rise', text: v.rateNone, ...none });
   } else if (sl) {
@@ -1224,6 +1231,9 @@ export function carryView(s: ReportState): CarryView | undefined {
     const l = c.limitedBy, h = c.how, pays = `can pay up to ${rs(Math.floor(h.forInstalments))} of instalments and interest`;
     const why = (l.why ?? '').replace(/\.$/, '');
     const how = l.check === 'cash' ? `A larger loan runs the cash short in ${l.fy}.`
+      // The project's cost caps it (Rahul's second look, 16-11-2026: "no more can be borrowed" under a larger figure read
+      // as a contradiction): the cost stops it, not the repaying; a larger loan leaves the promoters nothing to bring.
+      : l.check === 'cost' && /more than the cost of the project/.test(why) ? `The project’s cost stops it there, not the repaying: at ${rs(c.carries)} the loan, subsidy and unsecured loans pay the whole cost, and you would bring none of your own money.`
       : l.check === 'cost' ? `No more can be borrowed: ${why.charAt(0).toLowerCase()}${why.slice(1)}.`
       : h.fy ? `In ${h.fy}, the year with the least to spare, the business has ${rs(h.available)} for the loan; a bank wants ${h.level} times what it pays, so it ${pays} that year.`
       : `Over the loan the business has ${rs(h.available)} for it; a bank wants ${h.level} times on average, so it ${pays} in all.`;
