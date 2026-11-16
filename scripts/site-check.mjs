@@ -1482,12 +1482,20 @@ if (touched('/project-report/')) {
   await page.focus('#rep-slider-sales');
   await page.keyboard.press('ArrowRight');
   // The sliders' score stays on the screen while a slider moves, pinned above the answer bar (CHECK1: the owner, on a phone).
+  // Read once the page has settled: the focus scrolls the page, the bar's verdict unfolds and the score follows the bar's
+  // height a frame later (a ResizeObserver), so a reading in that frame saw the bar's 12 px margin over the score.
   {
-    const at = await page.evaluate(() => {
-      const r = (q) => document.querySelector(q)?.getBoundingClientRect(), s = r('#rep-slider-sales'), l = r('[data-testid="rep-plan-line"]'), b = r('[data-builder-bar]');
-      return s && l && b ? { slider: [Math.round(s.top), Math.round(s.bottom)], score: [Math.round(l.top), Math.round(l.bottom)], bar: Math.round(b.top) } : null;
-    });
-    if (!at || at.slider[0] < 0 || at.slider[1] > at.score[0] || at.score[1] > at.bar + 1) v(`CHECK1: the sliders' score is not in view between the slider and the answer bar: ${JSON.stringify(at)}`);
+    const off = (at) => !at || at.slider[0] < 0 || at.slider[1] > at.score[0] || at.score[1] > at.bar + 1;
+    let at;
+    for (let i = 0; i < 10; i++) {
+      at = await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => {
+        const r = (q) => document.querySelector(q)?.getBoundingClientRect(), s = r('#rep-slider-sales'), l = r('[data-testid="rep-plan-line"]'), b = r('[data-builder-bar]');
+        done(s && l && b ? { slider: [Math.round(s.top), Math.round(s.bottom)], score: [Math.round(l.top), Math.round(l.bottom)], bar: Math.round(b.top) } : null);
+      }))));
+      if (!off(at)) break;
+      await page.waitForTimeout(100);
+    }
+    if (off(at)) v(`CHECK1: the sliders' score is not in view between the slider and the answer bar: ${JSON.stringify(at)}`);
   }
   await expectText(page, v, 'rep-plan-count', /^With these changes: /, 'CHECK1: the sliders\' score, said as the slider moves');
   // A step is a tenth of a per cent: 70,00,000 × 1.001 = 70,07,000.
