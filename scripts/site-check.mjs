@@ -1885,7 +1885,8 @@ if (touched('/project-report/')) {
   await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2 review: "See the pages" in the panel beside the check does not open the paper (D-UX-374)'));
   const sheets = await page.locator('dialog[open] [data-testid="rep-paper"] .sheet').count(), blank = await page.locator('dialog[open] [data-locked-sheet]').count();
   if (sheets < 5 || blank !== sheets - 3) v(`the locked paper shows ${sheets - blank} of ${sheets} pages, want the first three (Rahul's review, 16-11-2026)`);
-  if (/Profit after tax|DSCR \(A ÷ B\)|Total assets/.test(await page.getByTestId('rep-paper').textContent())) v('NEW2 review: the locked paper still holds the statements');
+  // The sample's third page, at a glance, quotes the profit and the DSCR (Rahul's review, 16-11-2026); the balance sheet stays locked.
+  if (/Total assets|Total liabilities/.test(await page.getByTestId('rep-paper').textContent())) v('NEW2 review: the locked paper still holds the statements');
   await page.getByTestId('rep-peek-close').click();
   await page.getByTestId('rep-step-words').click();
   await expectText(page, v, 'rep-locked', /^Pages 1 to 3 show here\. The other \d+ open with the download\.$/, 'NEW2 review: the pages locked by default');

@@ -32,7 +32,7 @@ export function Downloads({ pre, doc, name, quiet, cards }: { pre: string; doc: 
     {([...KINDS.map(([k]) => k), 'print'] as const).map((kind) => {
       const [title, use, tag] = CARDS[kind], main = kind === 'pdf' && !quiet;
       return <li key={kind}><button type="button" data-testid={id(kind === 'print' ? 'print' : `download-${kind}`)} data-main={main || undefined}
-        aria-label={kind === 'print' ? 'Print' : `Download ${title}: ${use}`} class="dl-card" onClick={take(kind)}>
+        class="dl-card" onClick={take(kind)}>
         <span class="dl-tag" data-kind={kind} aria-hidden="true">{tag}</span>
         <span class="min-w-0 flex-1"><span class="dl-title">{kind === 'print' ? 'Print' : `Download ${title}`}</span><span class="dl-use">{use}</span></span>
         <span class="dl-arrow" aria-hidden="true">{kind === 'print' ? '→' : '↓'}</span>

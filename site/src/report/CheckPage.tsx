@@ -286,7 +286,7 @@ function Room({ l, by }: { l: ViableLine; by?: number }) {
   const share = by === undefined || l.at <= 0 ? undefined : Math.min(1, by / l.at);
   return <span data-testid={`rep-room-${l.id}`} class="room">
     <span class="room-said">{ROOM[l.id]} <b data-testid={`rep-room-move-${l.id}`} class="tabular-nums">{l.move.replace(/^\+/, '')}</b></span>
-    {share !== undefined && <span class="room-gauge" aria-hidden="true"><span class="room-fill" style={{ width: `${share * 100}%` }} /></span>}
+    {share !== undefined && <span class="room-gauge" aria-hidden="true"><span class="room-fill" data-over={by !== undefined && by > l.at ? '' : undefined} style={{ width: `${share * 100}%` }} /></span>}
   </span>;
 }
 export function WhatIf({ s, names, room }: { s: ReportState; names: Record<string, string>; room?: ViableView }) {
