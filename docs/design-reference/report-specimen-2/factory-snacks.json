@@ -1,0 +1,198 @@
+{
+ "case": "snacks",
+ "reading": "comfortable",
+ "rules": {
+  "ch.promoters": {
+   "when": "Every report",
+   "pieces": [
+    "fact.promoter v1",
+    "promoters.share v1",
+    "table.enterprise v1",
+    "fact.privacy v1"
+   ]
+  },
+  "ch.why": {
+   "when": "New unit or expansion",
+   "pieces": [
+    "why.this v1",
+    "why.here v1",
+    "why.now v1"
+   ]
+  },
+  "ch.products": {
+   "when": "Sales by product; buyers by status",
+   "pieces": [
+    "table.products v1",
+    "exhibit.buyers v1"
+   ]
+  },
+  "ch.market": {
+   "when": "Every report: competitors and price bands as the promoters list them; no market figure of ours (rule 13)",
+   "pieces": [
+    "exhibit.competitors v1",
+    "market.reading v1",
+    "market.limit v1"
+   ]
+  },
+  "pack.snacks": {
+   "when": "trade pack",
+   "pieces": [
+    "pack.snacks.buyers v1",
+    "pack.snacks.usual v1",
+    "pack.snacks.process v1"
+   ]
+  },
+  "ch.operating": {
+   "when": "A unit with a capacity (manufacturing or service)",
+   "pieces": [
+    "exhibit.capacity v1",
+    "table.operating v1"
+   ]
+  },
+  "ch.site": {
+   "when": "A unit with premises",
+   "pieces": [
+    "table.site v1"
+   ]
+  },
+  "ch.inputs": {
+   "when": "Every report",
+   "pieces": [
+    "table.inputs v1",
+    "table.people v1"
+   ]
+  },
+  "ch.timetable": {
+   "when": "A loan drawn before sales start",
+   "pieces": [
+    "exhibit.timetable v1"
+   ]
+  },
+  "ch.cost": {
+   "when": "Every report",
+   "pieces": [
+    "exhibit.sources-uses v1",
+    "cost.reading v1"
+   ]
+  },
+  "ch.sales": {
+   "when": "Sales by product (drivers)",
+   "pieces": [
+    "exhibit.sales-build v1",
+    "sales.note v1"
+   ]
+  },
+  "ch.profit": {
+   "when": "Every report",
+   "pieces": [
+    "exhibit.costs v1",
+    "profit.where v1",
+    "worth.reading v1"
+   ]
+  },
+  "ch.repay": {
+   "when": "A term loan",
+   "pieces": [
+    "exhibit.dscr v1",
+    "reading.dscr.comfortable v1",
+    "reading.dscr.how v1"
+   ]
+  },
+  "ch.scenarios": {
+   "when": "A term loan; the cases from the trade’s rule file",
+   "pieces": [
+    "exhibit.scenarios v1",
+    "scenarios.how v1"
+   ]
+  },
+  "ch.risks": {
+   "when": "Every report: rows from the trade pack and the promoters, each tied to an assumption",
+   "pieces": [
+    "exhibit.risk-register v1"
+   ]
+  },
+  "ch.register": {
+   "when": "Every report",
+   "pieces": [
+    "table.register v1",
+    "legend.evidence v1"
+   ]
+  },
+  "ch.close": {
+   "when": "Every report",
+   "pieces": [
+    "close.comfortable v1",
+    "exhibit.conditions v1",
+    "is-and-is-not v1",
+    "declaration v1"
+   ]
+  },
+  "annex.a": {
+   "when": "Every report",
+   "pieces": [
+    "schedule.sales-pl v1",
+    "schedule.bs-cf v1",
+    "schedule.ratios v1",
+    "schedule.dscr-repay v1"
+   ]
+  },
+  "annex.b": {
+   "when": "A unit with machines",
+   "pieces": [
+    "schedule.machines v1",
+    "process.confirm v1"
+   ]
+  },
+  "annex.c": {
+   "when": "Every report",
+   "pieces": [
+    "table.papers v1",
+    "photos v1"
+   ]
+  },
+  "brief": {
+   "when": "Every report: one page, no verdict on the loan (D-DOC-03)",
+   "pieces": [
+    "brief.proposed v1",
+    "brief.rail v1",
+    "brief.ready v1",
+    "brief.chart v1",
+    "brief.no-verdict v1"
+   ]
+  },
+  "brief.strength": {
+   "when": "Findings that hold on the engine’s figures, or confirmed facts; three to five, never padded",
+   "pieces": [
+    "brief.strengths v1"
+   ]
+  },
+  "brief.risk": {
+   "when": "Findings that miss a level or fall short in a scenario, then the register’s first rows; three to five",
+   "pieces": [
+    "brief.risks v1"
+   ]
+  },
+  "brief.open": {
+   "when": "Papers still to come and conditions still open",
+   "pieces": [
+    "brief.open v1"
+   ]
+  },
+  "cover": {
+   "when": "Every report",
+   "pieces": [
+    "cover v1",
+    "prepared-by v1"
+   ]
+  },
+  "contents": {
+   "when": "Every report",
+   "pieces": [
+    "where-to-find v1",
+    "how-to-read v1"
+   ]
+  }
+ },
+ "exhibits": 11,
+ "figuresShown": 122
+}
