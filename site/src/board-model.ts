@@ -98,6 +98,11 @@ export interface ViableLine {
   id: string; by: 'borrower' | 'lender'; head: string; text: string; note?: string;
   /** How far it moves, in one figure ("+17.3%", "₹15,64,221 less", "+6 months"); none when no answer. */
   move?: string;
+  /** The room in one number (% for sales and costs, points for the rate), for the What-if gauge. */
+  at?: number;
+  /** The figures it moves, each now and how far it holds, for What if's table (Rahul's review, 16-11-2026: the three
+   * sentences under "The figures behind it" read as a load). */
+  span?: { id: string; what: string; now: string; to: string }[];
   /** Now and needed, for two bars side by side; the longer is the full width. */
   bars?: { now: number; to: number; nowText: string; toText: string };
   fixes: string[]; still: string[];

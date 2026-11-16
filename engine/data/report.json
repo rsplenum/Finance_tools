@@ -42,6 +42,20 @@
       { "id": "all", "label": "All three at once", "salesPct": -10, "costsPct": 10, "ratePoints": 1 }
     ]
   },
+  "worth": {
+    "date": "2026-11-15",
+    "source": "Rahul's yes to NPV1 (15-11-2026). The method is the one Indian banks' project appraisal uses for a project's internal rate of return: the cost of the project against its cash accruals before interest on the term loan (profit after tax, depreciation, write-off and the term loan's interest), the fixed assets and the working capital at their book value at the end; the discount rate is the term loan's own rate, the cost of the money that pays for the project",
+    "status": "Our own reading, not a lender's norm: a lender may discount at its own cost of capital or a hurdle rate, and may count a longer life or another value at the end. Shown beside the largest loan and in the paper's ratios; it never changes the verdict",
+    "sure": "illustrative",
+    "rate": "The term loan's rate, as typed",
+    "method": [
+      "The project's flows: out, its cost at the first draw less the interest and guarantee fee before sales start (they are the loan's cost, not the project's); in, each year's cash available for debt service (profit after tax, depreciation, write-off and the term loan's interest, as in the DSCR) less the working capital the business adds from its own money; at the end of the last year, the net fixed assets and the business's own working capital at their book value.",
+      "The promoters' flows: out, their own money at the first draw; in, each year's net cash flow, as if paid out to them; at the end of the last year, the net worth less the cash already counted and the expenses still to be written off.",
+      "Each year's flow is counted at the end of its financial year (31 March), so many months after the first draw. The net present value discounts every flow at the rate; the internal rate of return is the rate at which that value is nil, found by halving the range (D-POL-02) and again by the false-position method. A rate is withheld when the flows change sign more than once and give two answers, or never come back to the money put in."
+    ],
+    "lowestPct": -99,
+    "highestPct": 1000
+  },
   "assumptions": [
     { "id": "simpleCost", "simple": true, "what": "The rest of the cost of the project", "value": 0, "brief": "None", "shown": "None: no land, furniture, other fixed assets, contingency or preliminary expenses", "why": "Type them in expert mode if the project has them" },
     { "id": "simpleFunds", "simple": true, "what": "Other funds", "value": 0, "brief": "None", "shown": "No capital subsidy and no unsecured loans", "why": "Type them in expert mode if the project has them" },

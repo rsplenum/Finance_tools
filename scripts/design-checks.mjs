@@ -353,7 +353,7 @@ export const STATES = {
     expert: async (page) => caseR(page),
     // Case R with its sales cut to 70 lakh (tests/viable.test.ts): it misses a lender's levels (DESIGN-LESSONS 11, UX5c).
     missed: async (page) => { await caseR(page); await leave(page, 'field=Sales in a full first year', '70 L'); },
-    plan: async (page) => { await caseR(page); await page.getByTestId('rep-viable').click(); },
+    plan: async (page) => { await caseR(page); await page.getByTestId('rep-room-more').waitFor({ state: 'attached' }); await page.getByTestId('rep-room-more').locator('summary').click(); },
     download: async (page) => {
       await caseR(page);
       await page.getByTestId('rep-confirm').click();

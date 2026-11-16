@@ -55,7 +55,9 @@ describe('the project report page', () => {
   it('case R as typed: the hand-worked first year in every table', () => {
     const p = preview(R);
     expect(p.needs).toEqual([]);
-    expect(p.view!.key.map((k) => k.value)).toEqual(['₹37,86,301', p.view!.key[1].value, p.view!.key[2].value]);
+    expect(p.view!.key.slice(0, 3).map((k) => k.value)).toEqual(['₹37,86,301', p.view!.key[1].value, p.view!.key[2].value]);
+    // Then the project's and the promoters' returns (NPV1), worked and checked in tests/worth.test.ts.
+    expect(p.view!.key.slice(3).map((k) => k.label)).toEqual(['The project’s return (IRR)', 'The promoters’ return (IRR)']);
     expect(row(p, 'pl', 'Profit after tax')?.values[0]).toBe('11,54,407');
     expect(row(p, 'bs', 'Total liabilities')?.values[0]).toBe('55,81,804');
     expect(row(p, 'bs', 'Total assets')?.values[0]).toBe('55,81,804');

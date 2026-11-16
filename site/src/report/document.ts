@@ -12,6 +12,7 @@ import { parseMonth } from '../../../engine/parse';
 import { sureLower, sureText, type Marked } from '../../../engine/sure';
 import { METHOD, MUDRA, PMEGP, REPORT_REVIEW_BY, WORKING_CAPITAL } from '../../../engine/report';
 import { GUARANTEES } from '../../../engine/guarantee';
+import { WORTH } from '../../../engine/worth';
 import { overdueNote, todayIso } from '../../../engine/review';
 import { BORROWERS } from '../../../engine/tax';
 import { soldBy } from '../../../engine/sold-by';
@@ -235,11 +236,11 @@ export function reportDoc(s: ReportState, p: ReportPreview, today: string): Doc 
       sec(3, PARTS.cost, [...tableOf(get('cost'), '3.1'), ...tableOf(get('finance'), '3.2'), ...(has('collateral') ? tableOf(get('collateral'), '3.3') : [])]),
       sec(4, PARTS.basis, [{ kind: 'pairs', pairs: basis(s) }], true),
       (() => { let k = 0; const no = () => `5.${++k}`; return sec(5, PARTS.statements, [...(has('sales') ? tableOf(get('sales'), no()) : []), ...tableOf(get('pl'), no()), ...tableOf(get('bs'), no()), ...tableOf(get('cf'), no())]); })(),
-      sec(6, PARTS.ratios, [...tableOf(get('dscr'), '6.1'), ...tableOf(get('bep'), '6.2'), ...tableOf(get('ratios'), '6.3'), ...tableOf(get('wc'), '6.4')]),
+      sec(6, PARTS.ratios, [...tableOf(get('dscr'), '6.1'), ...tableOf(get('bep'), '6.2'), ...tableOf(get('ratios'), '6.3'), ...tableOf(get('wc'), '6.4'), ...(has('worth') ? tableOf(get('worth'), '6.5') : [])]),
       sec(7, PARTS.repayment, tableOf(get('schedule'), ''), true),
       { name: 'Annex', section: 'Annex. How the figures are worked out, and the rules’ sources', blocks: [
         { kind: 'title', text: 'Annex. How the figures are worked out, and the rules’ sources', small: true },
-        { kind: 'heading', text: 'How the figures are worked out' }, { kind: 'list', items: method() },
+        { kind: 'heading', text: 'How the figures are worked out' }, { kind: 'list', items: [...method(), ...(has('worth') ? [...WORTH.method, `${WORTH.status}.`] : [])] },
         { kind: 'heading', text: 'The rules used, and how sure each is' }, { kind: 'list', items: sureRules(s) },
         ...(s.scheme === 'pmegp' ? [{ kind: 'heading', text: 'PMEGP: the rules used' } as Block, { kind: 'list', items: [...PMEGP.rules, PMEGP.ours,
           `Source: ${PMEGP.source}. The guideline of 2023: ${sureLower(PMEGP as Marked)}. ${overdueNote(REPORT_REVIEW_BY, todayIso())}`.trim()] } as Block,

@@ -1418,18 +1418,18 @@ if (touched('/project-report/')) {
   await page.getByTestId('rep-bm-done-dscrLowest').click();
   await expectFigures(page, v, 'rep-check-securityCover', '… meets …', 'the security cover before the collateral, on the own assets');
   if (await page.getByTestId('rep-collateral-note').count()) v('the security cover met on the own assets still asks for the collateral (UX5b)');
-  await page.getByTestId('rep-viable').click();
-  // If the answer is missing, say what is there (the intermittent miss on CI, UX6: a reset after paint undid the tap).
-  const there = async () => (await Promise.all(['rep-viable', 'rep-viable-box', 'rep-plan'].map(async (id) => `${id} ${await page.getByTestId(id).count()}`))).join(', ');
-  await expectText(page, (m) => there().then((t) => v(`${m} (${t})`)), 'rep-text-sales', /^To ₹82,20,000 in 2026-27/, 'how far sales can fall');
-  await expectFigures(page, v, 'rep-move-sales', '31.5%', 'how far sales can fall, its figure');
-  // Rahul's review of NEW2 (point 4): the costs and the rate beside the sales (tests/viable.test.ts by hand), and the room folds back.
-  await expectFigures(page, v, 'rep-move-costs', '13.8%', 'how far the costs can rise, its figure');
-  await expectText(page, v, 'rep-text-costs', /^Variable costs to 73\.97% of sales \(from 65%\) and fixed costs to ₹20,48,400 a year/, 'how far the costs can rise');
-  await expectText(page, v, 'rep-text-rate', /^The term loan’s rate to 40% \(from 10%\) and the working-capital limit’s to 41% \(from 11%\)/, 'how far the interest rate can climb');
-  if (await page.getByTestId('rep-viable').getAttribute('aria-expanded') !== 'true' || await page.getByTestId('rep-viable').textContent() !== 'Close') v('the open room has no "Close" (Rahul\'s review of NEW2)');
-  await page.getByTestId('rep-viable').click();
-  if (await page.getByTestId('rep-viable-box').count()) v('"Close" does not fold the room back (Rahul\'s review of NEW2)');
+  // How far it can go sits under each one-thing case in What if (Rahul's review of the check, 16-11-2026, point 3; tests/viable.test.ts
+  // by hand): the figure under the case, each figure now and how far it holds under "The figures behind it"; the old "How far" button is gone.
+  if (await page.getByTestId('rep-viable').count() || await page.getByTestId('rep-bm-edit').count()) v('the check keeps "How far" or "Change the benchmarks" (Rahul\'s review, 16-11-2026)');
+  await expectFigures(page, v, 'rep-room-move-sales', '31.5%', 'how far sales can fall, under the sales case');
+  await expectFigures(page, v, 'rep-room-move-costs', '13.8%', 'how far the costs can rise, under the costs case');
+  await page.getByTestId('rep-room-more').locator('summary').click();
+  await expectText(page, v, 'rep-span-to-sales', /^₹82,20,000$/, 'how far sales can fall');
+  await expectText(page, v, 'rep-span-to-variable', /^73\.97%$/, 'how far the variable costs can rise');
+  await expectText(page, v, 'rep-span-to-fixed', /^₹20,48,400$/, 'how far the fixed costs can rise');
+  await expectText(page, v, 'rep-span-to-term', /^40% or more$/, 'how far the term loan\'s rate can climb');
+  await expectText(page, v, 'rep-span-to-wcRate', /^41% or more$/, 'how far the working-capital rate can climb');
+  if (!(await page.getByTestId('rep-sample').count())) v('the check has no "View report sample" beside the download (Rahul\'s review, 16-11-2026)');
   // Make it work (OR11d, D-UX-249) on case R at 70 lakh (tests/work.test.ts by hand): sales of 82,11,000 keep the loan,
   // with a plant that sells 1,41,43,206 running full, asked inside the card; or 9,35,000 borrowed (fix.ts). "Use this"
   // writes the way, marked, its question left open and the report provisional; Undo puts the figures back. Below, the
@@ -1482,12 +1482,20 @@ if (touched('/project-report/')) {
   await page.focus('#rep-slider-sales');
   await page.keyboard.press('ArrowRight');
   // The sliders' score stays on the screen while a slider moves, pinned above the answer bar (CHECK1: the owner, on a phone).
+  // Read once the page has settled: the focus scrolls the page, the bar's verdict unfolds and the score follows the bar's
+  // height a frame later (a ResizeObserver), so a reading in that frame saw the bar's 12 px margin over the score.
   {
-    const at = await page.evaluate(() => {
-      const r = (q) => document.querySelector(q)?.getBoundingClientRect(), s = r('#rep-slider-sales'), l = r('[data-testid="rep-plan-line"]'), b = r('[data-builder-bar]');
-      return s && l && b ? { slider: [Math.round(s.top), Math.round(s.bottom)], score: [Math.round(l.top), Math.round(l.bottom)], bar: Math.round(b.top) } : null;
-    });
-    if (!at || at.slider[0] < 0 || at.slider[1] > at.score[0] || at.score[1] > at.bar + 1) v(`CHECK1: the sliders' score is not in view between the slider and the answer bar: ${JSON.stringify(at)}`);
+    const off = (at) => !at || at.slider[0] < 0 || at.slider[1] > at.score[0] || at.score[1] > at.bar + 1;
+    let at;
+    for (let i = 0; i < 10; i++) {
+      at = await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => {
+        const r = (q) => document.querySelector(q)?.getBoundingClientRect(), s = r('#rep-slider-sales'), l = r('[data-testid="rep-plan-line"]'), b = r('[data-builder-bar]');
+        done(s && l && b ? { slider: [Math.round(s.top), Math.round(s.bottom)], score: [Math.round(l.top), Math.round(l.bottom)], bar: Math.round(b.top) } : null);
+      }))));
+      if (!off(at)) break;
+      await page.waitForTimeout(100);
+    }
+    if (off(at)) v(`CHECK1: the sliders' score is not in view between the slider and the answer bar: ${JSON.stringify(at)}`);
   }
   await expectText(page, v, 'rep-plan-count', /^With these changes: /, 'CHECK1: the sliders\' score, said as the slider moves');
   // A step is a tenth of a per cent: 70,00,000 × 1.001 = 70,07,000.
@@ -1886,11 +1894,12 @@ if (touched('/project-report/')) {
   await page.locator('.builder-paper [data-testid="rep-pages"]').click();
   await page.locator('dialog[open] [data-testid="rep-paper"]').waitFor({ timeout: 5000 }).catch(() => v('NEW2 review: "See the pages" in the panel beside the check does not open the paper (D-UX-374)'));
   const sheets = await page.locator('dialog[open] [data-testid="rep-paper"] .sheet').count(), blank = await page.locator('dialog[open] [data-locked-sheet]').count();
-  if (sheets < 3 || blank !== sheets - 1) v(`NEW2 review: the locked paper shows ${sheets - blank} of ${sheets} pages, want the first alone`);
-  if (/Profit after tax|DSCR \(A ÷ B\)|Total assets/.test(await page.getByTestId('rep-paper').textContent())) v('NEW2 review: the locked paper still holds the statements');
+  if (sheets < 5 || blank !== sheets - 3) v(`the locked paper shows ${sheets - blank} of ${sheets} pages, want the first three (Rahul's review, 16-11-2026)`);
+  // The sample's third page, at a glance, quotes the profit and the DSCR (Rahul's review, 16-11-2026); the balance sheet stays locked.
+  if (/Total assets|Total liabilities/.test(await page.getByTestId('rep-paper').textContent())) v('NEW2 review: the locked paper still holds the statements');
   await page.getByTestId('rep-peek-close').click();
   await page.getByTestId('rep-step-words').click();
-  await expectText(page, v, 'rep-locked', /^Page 1 shows here\. The other \d+ open with the download\.$/, 'NEW2 review: the pages locked by default');
+  await expectText(page, v, 'rep-locked', /^Pages 1 to 3 show here\. The other \d+ open with the download\.$/, 'NEW2 review: the pages locked by default');
   await ctx.close();
 }
 // BUILD1 (D-UX-340 to D-UX-342): the builder. Six steps on the progress line and one shown; Next and Back walk them and

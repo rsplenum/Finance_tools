@@ -53,7 +53,8 @@ describe('the project report’s worked example', () => {
     expect([cell(p, 'pl', 'Sales'), cell(p, 'pl', 'Profit before interest, depreciation and tax'), cell(p, 'dscr', 'Debt service (B)'), cell(p, 'pl', 'Less: interest on the term loan'),
       cell(p, 'wc', 'Limit applied for'), cell(p, 'pl', 'Profit before tax'), cell(p, 'pl', 'Less: tax'), cell(p, 'dscr', 'Cash available (A)'), cell(p, 'dscr', 'DSCR (A ÷ B)')])
       .toEqual([rs(sales), rs(ebitda), rs(emi * 12), rs(interest), rs(limit), rs(pbt), rs(tax), rs(cash), dscr.toFixed(2)]);
-    expect(p.view!.key.map((k) => `${k.label}: ${k.value}`)).toEqual(['Cost of the project: ₹29,63,403', 'Average DSCR: 2.91', 'Lowest DSCR: 2.31']);
+    expect(p.view!.key.slice(0, 3).map((k) => `${k.label}: ${k.value}`)).toEqual(['Cost of the project: ₹29,63,403', 'Average DSCR: 2.91', 'Lowest DSCR: 2.31']);
+    expect(p.view!.key.slice(3).map((k) => k.label)).toEqual(['The project’s return (IRR)', 'The promoters’ return (IRR)']);
   });
 
   it('its paper states every line: the limit as worked out, simple mode’s months and fixed costs, nothing "undefined"', () => {

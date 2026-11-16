@@ -9,8 +9,9 @@ import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { parseMonth } from '../../../engine/parse';
 import { SOLD_BY, soldBy } from '../../../engine/sold-by';
 import { verdictWords, workWords } from '../verdict';
-import { Paper, sheetId, still } from '../Paper';
-import { Companion } from './Companion';
+import { Paper, sheetCount, sheetId, still } from '../Paper';
+import type { Doc } from '../doc/doc';
+import { Companion, SAMPLE, SAMPLE_WORDS, lockedWords } from './Companion';
 import { paperOpen } from './gate';
 import { wordsNeeds, wordsTrue } from './words';
 import { answerRule, BUTTON, reach, Choice, Counter, FILLED, goTo, HINT, How, SelectField, STATE, TextField, Tick, InAppNote, useHomeCase, useStart, StartLine, MoreOptions, useKept } from '../fields';
@@ -21,7 +22,7 @@ import { reportExample } from './example';
 import { DOOR, doorProblem, doorReads, doorState, type DoorFacts, type DoorId } from './door';
 import { Ask, type AskQuestion } from '../worked/Ask';
 import { MAIN, QUIET } from '../worked/parts';
-import { Lever, PlanLever } from '../Board';
+import { PlanLever } from '../Board';
 import { inSentence, listed } from '../board-model';
 import { printable } from '../doc/face';
 import { sectionPages } from '../doc/layout';
@@ -125,6 +126,49 @@ function barText(s: ReportState, p: ReportPreview) {
   if (p.blocked || !p.view) return statusText(p);
   const said = p.checks?.length ? verdictOf(p)?.work : undefined, left = p.needs.length + docNeeds(s.doc, s.words).length > 0;
   return [said, (left || !said) && docStatus(s, p)].filter(Boolean).join(' · ');
+}
+
+/** The verdict in one place at a time (Rahul, 16-11-2026: "Works" twice on the screen at the top of the check): while the
+ * answer's own verdict is in view, above the bar, the bar's folds away; scrolled past, the bar takes it up. */
+function useVerdictInView(bar: { current: HTMLElement | null }) {
+  const [seen, setSeen] = useState(false);
+  // Looked up on every scroll (the panel's own too) and every render: the verdict comes and goes with the figures.
+  const look = () => {
+    const foot = (bar.current?.closest('[data-builder-bar]')?.getBoundingClientRect().top ?? innerHeight) - 8;
+    setSeen([...document.querySelectorAll('[data-verdict-head]')].some((h) => {
+      const r = h.getBoundingClientRect();
+      if (!r.height || r.bottom < 0 || r.top > foot) return false;
+      // Inside a scrolling panel it must be within the panel's own view as well.
+      for (let a = h.parentElement; a && a !== document.body; a = a.parentElement) {
+        if (getComputedStyle(a).overflowY === 'visible') continue;
+        const c = a.getBoundingClientRect();
+        if (r.bottom < c.top || r.top > c.bottom) return false;
+      }
+      return true;
+    }));
+  };
+  useEffect(look);
+  useEffect(() => {
+    let f = 0;
+    const soon = () => { cancelAnimationFrame(f); f = requestAnimationFrame(look); };
+    addEventListener('scroll', soon, { capture: true, passive: true }); addEventListener('resize', soon);
+    return () => { cancelAnimationFrame(f); removeEventListener('scroll', soon, { capture: true }); removeEventListener('resize', soon); };
+  }, []);
+  return seen;
+}
+
+/** The answer bar (Rahul's review of the check, 16-11-2026, point 6: "Works" read as bland): the verdict in its tone, a
+ * tick, a cross or a dot in a tinted ring, the verdict's words strong and the rest quiet. Its words are barText's, whole. */
+function BarStatus({ s, p }: { s: ReportState; p: ReportPreview }) {
+  const said = barText(s, p), vd = p.checks?.length ? verdictOf(p) : undefined, me = useRef<HTMLParagraphElement>(null), away = useVerdictInView(me);
+  const tone = !vd ? 'none' : vd.work.startsWith('Does not') ? 'bad' : vd.work === 'Works' ? 'good' : 'warn';
+  const m = /^(.*?)(: | · |$)(.*)$/.exec(said) as RegExpExecArray;
+  return <p ref={me} data-testid="rep-answer-bar" data-answer aria-live="polite" data-tone={tone} data-away={away && vd ? '' : undefined} class="bar-status">
+    <span class="bar-icon" aria-hidden="true">{tone === 'good' ? <svg viewBox="0 0 16 16" width="14" height="14"><path d="M3.5 8.5l3 3 6-7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+      : tone === 'bad' ? <svg viewBox="0 0 16 16" width="12" height="12"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg>
+        : <svg viewBox="0 0 16 16" width="10" height="10"><circle cx="8" cy="8" r="4" fill="currentColor" /></svg>}</span>
+    <span class="min-w-0"><strong class="bar-head">{m[1]}</strong>{m[3] && <span class="bar-rest">{m[2]}{m[3]}</span>}</span>
+  </p>;
 }
 
 /** The builder's steps (BUILD1, D-UX-340): one topic a step, in the order a report is made. */
@@ -349,7 +393,7 @@ export function ReportCalculator() {
   const companion = <Companion s={s} p={p} cv={cv} left={leftOf(s, p)} ok={ok} step={step} go={toStep} paper={paper} pages={pages} open={open} onOpen={openPaper} sheet={!wide}
     check={wide && step === 'check' ? { answer: answerEl, parts: figures ? partsOf(s, p) : undefined } : undefined} />;
   // Locked (Rahul's review of NEW2; open only with ?paper=open until PAY1), the paper shows its first page, the rest blank.
-  const sheets = <div data-testid="rep-paper"><Paper doc={paper} pages={pages} label="Your project report so far" only={open ? undefined : 1} /></div>;
+  const sheets = <div data-testid="rep-paper"><Paper doc={paper} pages={pages} label="Your project report so far" only={open ? undefined : SAMPLE} /></div>;
   const left = leftOf(s, p), at = STEPS.findIndex(([id]) => id === step), back = STEPS[at - 1], next = STEPS[at + 1];
   const stepOf = (id: StepId, body: ComponentChildren) => {
     const i = STEPS.findIndex(([x]) => x === id);
@@ -568,7 +612,8 @@ export function ReportCalculator() {
               const to = ASSUMED_BOX[a.id];
               return { ...a, to, go: to && simple && !IN_SIMPLE.has(to) ? toExpert(to) : undefined };
             })}>
-          <Download s={s} p={p} ok={ok} lapsed={!!checked && !ok} onConfirm={confirm} />
+          <Download s={s} p={p} ok={ok} lapsed={!!checked && !ok} onConfirm={confirm}
+            sample={<Sample paper={paper} pages={pages} open={open} onOpen={openPaper} />} />
           {/* The statements on the screen only once the pages are open (PAY1; ?paper=open for now): locked, the report is not
               shown whole to be copied (Rahul's review of NEW2, point 1). */}
           {open && p.view && (ok || seen) && p.view.tables.map((t) => <ReportTable key={t.id} t={t} />)}
@@ -585,11 +630,13 @@ export function ReportCalculator() {
       </div>
       {/* The answer on every step (D-UX-84), read out as it changes, with the way on: Back, the paper on a phone, Next. */}
       <div data-builder-bar class="builder-bar">
-        <p data-testid="rep-answer-bar" data-answer aria-live="polite" class="text-sm font-medium text-ink">{barText(s, p)}</p>
+        <BarStatus s={s} p={p} />
         <div class="mt-1.5 flex items-center gap-2">
           {back && <button type="button" data-testid="rep-back" class={BUTTON} onClick={() => go(back[0])}>Back</button>}
           {/* On the check the step itself reads the report: one way on, the confirm (Rahul's review of NEW2, point 9). */}
           {step !== 'check' && <button type="button" data-testid="rep-peek" class={`${BUTTON} lg:hidden`} onClick={see}>See the report</button>}
+          {/* The report sample beside the way to the files (Rahul's review of the check, 16-11-2026, point 1). */}
+          {step === 'check' && p.view && !p.blocked && <button type="button" data-testid="rep-sample" class={BUTTON} onClick={openPaper}>View<span class="max-sm:hidden"> report</span> sample</button>}
           {step === 'check' && p.view && !p.blocked && <button type="button" data-testid="rep-get" class={`ml-auto ${NEXT}`} onClick={toDownload}>{ok ? 'Download' : 'Get the report'}</button>}
           {next && <button type="button" data-testid="rep-next" class={`ml-auto ${step === 'check' && figures && !ok ? BUTTON : NEXT}`} onClick={() => go(next[0])}>Next<span class="max-sm:sr-only">: {next[1]}</span></button>}
         </div>
@@ -598,7 +645,7 @@ export function ReportCalculator() {
     <div ref={pane} class="builder-paper" role="region" aria-label="Your report" tabIndex={0}>{wide && companion}</div>
     <dialog ref={peek} data-testid="rep-peek-sheet" aria-labelledby="peek-h" class="peek" onClose={() => { setView('companion'); setLarge(false); }}>
       <div class="peek-head">
-        <h2 id="peek-h" class="mr-auto font-medium text-ink">{view === 'paper' ? 'Your report so far' : 'Your report'}</h2>
+        <h2 id="peek-h" class="mr-auto font-medium text-ink">{view === 'paper' ? (open ? 'Your report so far' : 'Report sample') : 'Your report'}</h2>
         {view === 'paper' && !wide && <button type="button" data-testid="rep-peek-outline" class={BUTTON} onClick={() => setView('companion')}>Outline</button>}
         {view === 'paper' && <button type="button" data-testid="rep-peek-size" class={BUTTON} aria-pressed={large} onClick={() => setLarge(!large)}>Larger</button>}
         <button type="button" data-testid="rep-peek-close" class={NEXT} onClick={() => peek.current?.close()}>Back to the questions</button>
@@ -673,8 +720,6 @@ function ReportTable({ t }: { t: ViewTable }) {
 
 type RepayRow = NonNullable<ReturnType<typeof repaymentView>>['rows'][number];
 const tone = (ok: boolean) => (ok ? 'text-good' : 'text-bad');
-/** A disclosure's line under "Fine-tune it yourself", as "Change the benchmarks" beside it (Board.tsx). */
-const FOLD = 'cursor-pointer py-1 text-sm font-medium text-link underline underline-offset-4';
 /** To "Make it work", from the answer or the download: the list comes to the top of the screen and takes the focus. */
 const toWork = (e: Event) => {
   const el = document.getElementById('make-it-work');
@@ -700,7 +745,8 @@ function Result({ s, p, cv, update, use, useWay, useRepay, useFix, toField, toCo
   top?: ComponentChildren; children: ComponentChildren;
 }) {
   const v = p.view, figures = !!v && !p.blocked, verdict = verdictOf(p);
-  const scheme = v?.key.filter((k) => k.note && !k.check) ?? [];
+  // The returns (IRR) are the answer's tiles (Rahul's review of the check, 16-11-2026, point 7), not notes here.
+  const scheme = v?.key.filter((k) => k.note && !k.check && !/\(IRR\)$/.test(k.label)) ?? [];
   // Make it work (OR11d) runs the report a few hundred times (a quarter to a third of a second), so it is worked after the
   // figures rest and paint, and shown only on the figures it was worked on.
   const ask = mendable(p);
@@ -722,8 +768,19 @@ function Result({ s, p, cv, update, use, useWay, useRepay, useFix, toField, toCo
   }, [ways, ask]);
   // The figure being changed in place (D-UX-372): on a phone the rest of the page dims to it; a tap outside finishes it.
   const [editing, setEditing] = useState<string>();
-  // "Change the benchmarks": the table's benchmarks stand out as what to tap (the third way in, from Fine-tune too).
+  // Fine-tune's "Choose the benchmarks": the table's benchmarks stand out a moment as what to tap, until one is.
   const [bm, setBm] = useState(false);
+  useEffect(() => { if (!bm) return; const t = setTimeout(() => setBm(false), 4000); return () => clearTimeout(t); }, [bm]);
+  // How far sales can fall, costs rise and the rate climb (D-UX-50), in What if once every level meets (Rahul's review of
+  // the check, 16-11-2026, point 3): the engine searches each break point, so it is worked after the figures rest.
+  const [roomOn, setRoom] = useState<{ on: string; v: ViableView | undefined }>();
+  const roomy = figures && !p.misses;
+  useEffect(() => {
+    if (!roomy) return;
+    const t = setTimeout(() => setRoom({ on: base, v: viableOf(s) }), 300);
+    return () => clearTimeout(t);
+  }, [base, roomy]);
+  const room = roomy && roomOn?.on === base && roomOn.v?.meets ? roomOn.v : undefined;
   const toBenchmarks = (e?: Event) => {
     e?.preventDefault(); setBm(true);
     requestAnimationFrame(() => {
@@ -750,7 +807,7 @@ function Result({ s, p, cv, update, use, useWay, useRepay, useFix, toField, toCo
       {figures && <Summary s={s} p={p} update={update} state={state} assumed={assumed} open={editing} setOpen={setEditing}
         live={<Live cv={cv} work={verdict?.work} />} scheme={schemeNotes} toStep={toField} />}
       {figures && verdict && p.checks && <Ratios s={s} p={p} update={update} head={verdict.head} w={w} emphasis={bm} setEmphasis={setBm} collateral={collateral} />}
-      {figures && p.checks && <WhatIf s={s} names={Object.fromEntries(p.checks.map((c) => [c.id, c.label]))} />}
+      {figures && p.checks && <WhatIf s={s} room={room} names={Object.fromEntries(p.checks.map((c) => [c.id, c.label]))} />}
       {ask && <Work s={s} p={p} w={w} waiting={work?.on !== wbase} repay={repay} useWay={useWay} useRepay={useRepay} useFix={useFix} toField={toField} />}
       {figures && <Tune s={s} p={p} base={base} ways={ways} update={update} use={use} toBenchmarks={toBenchmarks} />}
       {children}
@@ -799,11 +856,16 @@ function Answer({ s, p, cv, update, used, counts, undo, keep, answer, toBox, ok,
           what to keep ready. One tone a meaning, never green under a miss. */}
       <div class="paper shadow-paper rounded-card p-4 sm:p-6 lg:p-5">
         {cv && <Carries c={cv} ready={false} add={() => update((x) => ({ ...x, loan: { ...x.loan, holidayInterest: 'added' } }))} />}
-        {verdict && <div class={`flex flex-wrap items-baseline gap-x-3 gap-y-1 ${answerRule(!p.needs.length)}`}>
-          <h3 data-testid={`${p.misses ? 'rep-misses' : 'rep-verdict'}-work`} data-answer
+        {/* The project's worth beside the largest loan (NPV1): its value at the loan's rate and its return, then the
+            promoters' own return; the table is in the pages, 6.5. */}
+        {figures && (p.worthTiles ? <WorthTiles w={p.worthTiles} /> : p.worth && <p data-testid="rep-worth" class={`-mt-2 mb-4 text-sm ${MUTED}`}>{p.worth}</p>)}
+        {/* The tick alone marks it (Rahul, 16-11-2026: the tick and the rule beside "Works" said it twice). "Scroll to find
+            out" only under a miss: it leads to the reasons, then Make it work. */}
+        {verdict && <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <h3 data-testid={`${p.misses ? 'rep-misses' : 'rep-verdict'}-work`} data-answer data-verdict-head
             class={`flex items-center gap-2 text-title ${verdict.work.startsWith('Does not') ? 'text-bad' : 'text-ink'}`}>
             {verdict.work === 'Works' && <Tick />}{verdict.work}</h3>
-          {figures && p.checks && <a href="#benchmarks" data-testid="rep-to-ratios" class="text-sm text-link underline underline-offset-4">Scroll to find out<span aria-hidden="true"> ↓</span></a>}
+          {figures && p.checks && verdict.work.startsWith('Does not') && <a href="#benchmarks" data-testid="rep-to-ratios" class="text-sm text-link underline underline-offset-4">Scroll to find out<span aria-hidden="true"> ↓</span></a>}
         </div>}
         {cv?.keepReady && <p data-testid="rep-carry-ready" class="mt-2 font-medium text-warn">{cv.keepReady}</p>}
         {figures && pencils > 0 && <p data-testid="rep-pencil" class={`mt-2 text-sm ${MUTED}`}>
@@ -822,6 +884,19 @@ function Answer({ s, p, cv, update, used, counts, undo, keep, answer, toBox, ok,
         {p.flags.length > 0 && <ul data-testid="rep-flags" class="mt-3 list-disc space-y-0.5 pl-5 text-sm text-warn">{p.flags.map((n) => <li key={n}>{n}</li>)}</ul>}
       </div>
   </>;
+}
+
+/** The project's worth under the largest loan (Rahul's review of the check, 16-11-2026, point 7; his second look the same
+ * day: the tiles read as a first draft, boxed and indented, the third alone on a row): a ruled line each on a phone, the
+ * name and its term left, the figure right; three across a wider panel, split by hairlines. A figure not given says why. */
+function WorthTiles({ w }: { w: NonNullable<ReportPreview['worthTiles']> }) {
+  return <div data-testid="rep-worth" class="worth-wrap -mt-1 mb-5">
+    <dl class="worth">{w.tiles.map((x) => <div key={x.id} data-testid={`rep-worth-${x.id}`} class="worth-item">
+      <dt class="worth-name"><span class="worth-label">{x.label}</span><span class="worth-note">{x.note}</span></dt>
+      <dd class={`worth-value ${x.tone === 'bad' ? 'text-bad' : 'text-ink'}`}>{x.value}{x.unit && <span class="worth-unit"> {x.unit}</span>}</dd>
+    </div>)}</dl>
+    {w.why.map((x) => <p key={x} class={HINT}>{x}</p>)}
+  </div>;
 }
 
 /** What the business can carry, first (CAP1, docs/CAPACITY-FIRST.md §4 rule 1): the figure beside the loan asked, one bar
@@ -884,24 +959,24 @@ function Work({ s, p, w, waiting, repay, useWay, useRepay, useFix, toField }: {
   </section>;
 }
 
-/** Fine-tune it yourself (CHECK1): what a careful hand may still want, each closed until asked. The sliders, from the
- * figures as typed (D-UX-182 retired), with the score in view as they move: on a phone the benchmarks sat a screen above
- * the slider that changed them (the owner's note 10; the design lesson "the answer stays in view of the control that
- * changes it"). The ways to repay compared (OR5), the benchmarks (BEN1), and with every level met, how far sales can
- * fall (D-UX-50). */
+/** Fine-tune it yourself (CHECK1): what a careful hand may still want, as one list of three, each closed until asked
+ * (Rahul's review of the check, 16-11-2026, point 4: the benchmarks read as a heading of their own). The sliders, from
+ * the figures as typed (D-UX-182 retired), with the score in view as they move: on a phone the benchmarks sat a screen
+ * above the slider that changed them (the owner's note 10). The ways to repay compared (OR5) as cards, the way in use
+ * named on the row itself; the benchmarks (BEN1), changed in the ratio table. How far sales can fall (D-UX-50) is in
+ * What if now. */
 function Tune({ s, p, base, ways, update, use, toBenchmarks }: {
   s: ReportState; p: ReportPreview; base: string; ways?: ReturnType<typeof repaymentView>; update: Update; use: (l: Levers) => void; toBenchmarks: (e: Event) => void;
 }) {
-  const [worked, setV] = useState<{ on: string; v: ViableView }>();
   const [planned, setPlan] = useState<{ on: string; plan: PlanView | undefined }>();
   const [lv, setLv] = useState<Levers>(AS_TYPED);
   const [touched, setTouched] = useState<LeverId[]>([]);
   // The sliders close when a figure changes under them: what they showed was worked on the figures before.
   const [openOn, setOpenOn] = useState<string>();
   const open = openOn === base;
-  // The room and the sliders show only on the figures they were worked on, read at render: a reset in an effect ran after
+  // The sliders show only on the figures they were worked on, read at render: a reset in an effect ran after
   // paint and could undo a tap that landed between a figure's render and that effect (the site check's intermittent miss, UX6).
-  const v = worked?.on === base ? worked.v : undefined, plan = planned?.on === base ? planned.plan : undefined;
+  const plan = planned?.on === base ? planned.plan : undefined;
   const replan = (ids: LeverId[], at: Levers) => {
     const q = planOf(s, Object.fromEntries(ids.map((id) => [id, at[id]])));
     setPlan({ on: base, plan: q }); setTouched(ids); if (q) setLv(q.levers);
@@ -911,13 +986,6 @@ function Tune({ s, p, base, ways, update, use, toBenchmarks }: {
   useEffect(() => { if (plan) replan(touched, lv); }, [s.promotersMost]);
   const b = useMemo(() => (plan ? boardOf(plan, lv) : undefined), [plan, lv]);
   const move = (id: LeverId, n: number) => { setLv((l) => ({ ...l, [id]: n })); if (!touched.includes(id)) setTouched([...touched, id]); };
-  const group = (by: 'borrower' | 'lender', title?: string) => {
-    const ls = v?.lines.filter((l) => l.by === by) ?? [];
-    return ls.length > 0 && <>
-      {title && <h4 class="mt-3 text-sm font-medium text-ink">{title}</h4>}
-      <ul class="mt-2 space-y-2">{ls.map((l) => <Lever key={l.id} l={l} />)}</ul>
-    </>;
-  };
   const cards = (by: 'borrower' | 'lender', title: string) => {
     const cs = plan && b ? plan.cards.filter((c) => c.by === by) : [];
     return cs.length > 0 && b && <>
@@ -926,12 +994,14 @@ function Tune({ s, p, base, ways, update, use, toBenchmarks }: {
     </>;
   };
   const mark = (c: CheckRow) => (c.verdict === 'meets' ? ['✓', 'Meets', 'text-good'] : c.verdict === 'misses' ? ['✗', 'Misses', 'text-bad'] : ['–', 'Not read yet', MUTED]);
+  const inUse = ways?.rows.find((r) => r.now);
   return <section id="fine-tune" data-testid="rep-tune" aria-labelledby="rep-tune-h" class="mt-8">
     <h3 id="rep-tune-h" class="text-title text-ink">{p.misses ? `Or ${W.tune.toLowerCase()}` : W.tune}</h3>
     {/* Always there (Rahul, 15-11-2026): a report that works, by itself or by a way used, is still the borrower's to tune. */}
-    <details data-testid="rep-sliders" class="mt-2" open={open} onToggle={(e) => setOpenOn((e.currentTarget as HTMLDetailsElement).open ? base : undefined)}>
-      <summary data-testid="rep-levers" class={FOLD}>{W.adjust}</summary>
-      {plan && b && <div data-testid="rep-plan">
+    <ul class="tune-list mt-3">
+    <li><details data-testid="rep-sliders" class="tune-item" open={open} onToggle={(e) => setOpenOn((e.currentTarget as HTMLDetailsElement).open ? base : undefined)}>
+      <summary data-testid="rep-levers" class="tune-row"><TuneHead title={W.adjust} sub="Move sales, costs, the loan and its terms, and watch each ratio." /></summary>
+      {plan && b && <div data-testid="rep-plan" class="tune-body">
         <p class={HINT}>{W.sliders}</p>
         <TextField id="fld-promotersMost" class="mt-3" label="The most the promoters can bring in all, if known" hint={W.most}
           unit="₹" inputMode="decimal" value={s.promotersMost} tidy={tidyAmount} invalid={bad(s.promotersMost, amountOf)}
@@ -966,40 +1036,66 @@ function Tune({ s, p, base, ways, update, use, toBenchmarks }: {
           {!sameLevers(lv, AS_TYPED) && <button type="button" data-testid="rep-plan-back" class={BUTTON} onClick={() => replan([], AS_TYPED)}>Back to as typed</button>}
         </div>
       </div>}
-    </details>
-    {ways && <details data-testid="rep-repayment" class="mt-2">
-      <summary class={FOLD}>{W.ways}</summary>
-      <p data-testid="rep-repayment-lead" class="mt-1 text-sm text-ink">{ways.lead}</p>
-      <ul class="mt-1 divide-y divide-line">{ways.rows.map((r) => <li key={r.value} data-testid={`rep-way-${r.value}`} class="py-2">
-        <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span class="text-sm font-medium text-ink">{r.label}</span>
-          {r.proposed && <span class="text-sm text-good">Proposed</span>}
-          {r.least && <span class="text-sm text-ink-muted">Least interest</span>}
-          {r.now ? <span class="text-sm text-ink-muted">In use</span> : <button type="button" data-testid={`rep-way-use-${r.value}`} aria-label={`${W.use}: ${r.label}`} class={BUTTON}
-            onClick={() => { update((x) => ({ ...x, loan: { ...x.loan, repayment: r.value } })); focusNext('[data-testid="rep-repayment"] > summary'); }}>{W.use}</button>}
-        </div>
-        <p class="mt-1 text-sm text-ink">Interest over the loan {r.interest}; {r.instalments}.</p>
-        {r.lines.map((l) => <p key={l.text} class={`text-sm ${l.meets === undefined ? 'text-ink-muted' : tone(l.meets)}`}>{l.text}</p>)}
-      </li>)}</ul>
-      {ways.notes.map((n) => <p key={n} class={HINT}>{n}</p>)}
-    </details>}
+    </details></li>
+    {ways && <li><details data-testid="rep-repayment" class="tune-item">
+      <summary class="tune-row"><TuneHead title={W.ways} sub={inUse ? `In use: ${inUse.label}` : ways.lead} /></summary>
+      <div class="tune-body">
+        <p data-testid="rep-repayment-lead" class="text-sm text-ink">{ways.lead}</p>
+        <Ways ways={ways} use={(r) => { update((x) => ({ ...x, loan: { ...x.loan, repayment: r.value } })); focusNext('[data-testid="rep-repayment"] > summary'); }} />
+        {ways.notes.map((n) => <p key={n} class={HINT}>{n}</p>)}
+      </div>
+    </details></li>}
     {/* The third way in (Rahul, 15-11-2026): the bank's own benchmarks, changed in the ratio table itself. */}
-    <p class="mt-3"><a href="#benchmarks" data-testid="rep-to-benchmarks" onClick={toBenchmarks} class="inline-flex min-h-11 items-center font-medium text-link underline underline-offset-4">
-      {p.misses ? 'Or choose the benchmarks' : 'Choose the benchmarks'}<span aria-hidden="true">&nbsp;→</span></a></p>
-    {/* The room when every level meets (D-UX-50): how far sales can fall, costs rise and the rate climb. It folds back
-        (Rahul's review of NEW2, point 4): the same button closes it, as the CMA's does. */}
-    {!p.misses && <button type="button" data-testid="rep-viable" aria-expanded={!!v} aria-controls="rep-viable-box" class={`mt-4 ${BUTTON}`} onClick={() => {
-      if (v) { setV(undefined); return; }
-      const x = viableOf(s); if (x) setV({ on: base, v: x });
-    }}>{v ? 'Close' : W.room}</button>}
-    {v && !p.misses && <div id="rep-viable-box" data-testid="rep-viable-box" tabIndex={-1} class="mt-4 border-t-2 border-ink pt-4">
-      <h4 class="font-medium text-ink">{v.title}</h4>
-      {/* The title says "the room" once (review finding 10), so the borrower's group takes no heading of its own. */}
-      {group('borrower', v.meets ? undefined : 'Your changes')}
-      {group('lender', 'The lender’s, if it agrees')}
-      <p class={`mt-2 max-w-prose ${HINT}`}>{v.foot}</p>
-    </div>}
+    <li><a href="#benchmarks" data-testid="rep-to-benchmarks" onClick={toBenchmarks} class="tune-row tune-link">
+      <TuneHead title="Choose the benchmarks" sub="Your bank’s own levels, set in the ratio table above." /><span class="tune-go" aria-hidden="true">→</span></a></li>
+    </ul>
   </section>;
+}
+
+/** A row's head in the Fine-tune list: what it does, and a line on what it holds. */
+const TuneHead = ({ title, sub }: { title: string; sub: string }) => <span class="min-w-0 flex-1">
+  <span class="block font-medium text-ink">{title}</span><span class="block text-sm text-ink-muted">{sub}</span>
+</span>;
+
+/** The ways to repay as cards (Rahul's review of the check, 16-11-2026, point 8; docs/UX-OVERHAUL.md §5): the way in use
+ * framed and marked, each with its first instalment large and the instalments' shape beside it, the interest over the
+ * loan as a bar against the dearest, and its ratios ✓ or ✗. Every figure is the engine's (engine/repayment.ts); the
+ * shape is drawn from its first and last instalments. */
+function Ways({ ways, use }: { ways: NonNullable<ReturnType<typeof repaymentView>>; use: (r: RepayRow) => void }) {
+  const most = Math.max(...ways.rows.map((r) => r.interestN), 1), top = Math.max(...ways.rows.flatMap((r) => [r.firstN, r.lastN]), 1);
+  return <ul class="way-cards mt-3">{ways.rows.map((r) => <li key={r.value} data-testid={`rep-way-${r.value}`} class="way-card" data-now={r.now || undefined}>
+    <div class="flex flex-wrap items-center gap-1.5">
+      {r.now && <span class="way-badge" data-kind="now">In use</span>}
+      {r.proposed && <span class="way-badge" data-kind="good">Proposed</span>}
+      {r.least && <span class="way-badge">Least interest</span>}
+    </div>
+    <p class="mt-1.5 font-medium text-ink">{r.label}</p>
+    <div class="mt-2 flex items-end justify-between gap-3">
+      <p class="min-w-0"><span class="block text-xl font-semibold tabular-nums text-ink">{r.first}</span>
+        <span class="block text-xs text-ink-muted">{r.per}, {r.then}</span></p>
+      <Shape r={r} top={top} />
+    </div>
+    <div class="mt-3">
+      <p class="flex justify-between gap-2 text-sm"><span class="text-ink-muted">Interest over the loan</span><span class="font-medium tabular-nums text-ink">{r.interest}</span></p>
+      <div aria-hidden="true" class="mt-1 h-1.5 rounded-full bg-ink/6"><div class="h-1.5 rounded-full bg-ink-muted" style={{ width: `${(r.interestN / most) * 100}%` }} /></div>
+    </div>
+    <ul class="mt-3 space-y-1">{r.lines.map((l) => <li key={l.text} class={`flex gap-1.5 text-sm ${l.meets === undefined ? 'text-ink-muted' : tone(l.meets)}`}>
+      {l.meets !== undefined && <span aria-hidden="true" class="font-semibold">{l.meets ? '✓' : '✗'}</span>}<span>{l.text}</span></li>)}</ul>
+    {r.now ? <p class="way-using"><Tick />Your report uses this way</p>
+      : <button type="button" data-testid={`rep-way-use-${r.value}`} aria-label={`${W.use}: ${r.label}`} class={`mt-3 w-full justify-center ${BUTTON}`} onClick={() => use(r)}>{W.use}</button>}
+  </li>)}</ul>;
+}
+
+/** The instalments' shape, from the engine's first and last: level, falling, or rising a step a year. Six bars, to scale
+ * against the largest instalment of every way, so the cards compare. Drawn only; the figures are in words beside it. */
+function Shape({ r, top }: { r: RepayRow; top: number }) {
+  const n = 6, h = (k: number) => {
+    const f = r.style === 'emi' ? 0 : r.style === 'stepped' ? Math.floor((k * 4) / n) / 3 : k / (n - 1);
+    return Math.max(0.08, (r.firstN + (r.lastN - r.firstN) * Math.min(1, f)) / top);
+  };
+  return <svg viewBox="0 0 60 32" width="60" height="32" aria-hidden="true" class="shrink-0 text-ink-muted">
+    {Array.from({ length: n }, (_, k) => <rect key={k} x={k * 10 + 1} y={32 - h(k) * 30} width="8" height={h(k) * 30} rx="1.5" fill="currentColor" opacity={0.35 + (0.5 * k) / n} />)}
+  </svg>;
 }
 
 /** The report's first page (D-UX-216): its own facts among the questions, before the check, so none is left unseen. They
@@ -1020,10 +1116,24 @@ function Facts({ s, update }: { s: ReportState; update: Update }) {
   </Group>;
 }
 
+/** The report sample on the check page (Rahul's review of the check, 16-11-2026, point 1): its first three pages, the
+ * cover, the contents and the report at a glance, as small pictures; a tap or the button opens them large. */
+function Sample({ paper, pages, open, onOpen }: { paper: Doc; pages: [string, number][]; open: boolean; onOpen: () => void }) {
+  return <div data-testid="rep-sample-box" class="mt-3">
+    <div class="thumbs sample-thumbs cursor-zoom-in" data-locked={open ? undefined : ''} aria-hidden="true" onClick={onOpen}>
+      <Paper doc={paper} pages={pages} label="" bare only={SAMPLE} cut />
+    </div>
+    <div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+      <button type="button" data-testid="rep-sample-open" class={BUTTON} onClick={onOpen}>{open ? 'See every page' : SAMPLE_WORDS}</button>
+      {!open && <span class={`text-sm ${MUTED}`}>{lockedWords(sheetCount(paper))}</span>}
+    </div>
+  </div>;
+}
+
 /** The files. A report that misses a benchmark, or runs out of cash, never reads as ready (the owner's note 12; D-UX-247):
  * the Check step's own words, the way to mend it first, the files after and quieter. Never blocked: the lender decides
  * (D-DOC-03), and its pages say the same. */
-function Download({ s, p, ok, lapsed, onConfirm }: { s: ReportState; p: ReportPreview; ok: boolean; lapsed: boolean; onConfirm: () => void }) {
+function Download({ s, p, ok, lapsed, onConfirm, sample }: { s: ReportState; p: ReportPreview; ok: boolean; lapsed: boolean; onConfirm: () => void; sample: ComponentChildren }) {
   const own = docNeeds(s.doc, s.words), ready = !!p.view && !p.blocked && ok;
   // Before the report shows figures the section is one line (UX8, review finding 9).
   if (!p.view || p.blocked) return <Group id="download"><p data-testid="rep-doc-wait" class={`mt-6 ${HINT}`}>{p.blocked
@@ -1031,8 +1141,10 @@ function Download({ s, p, ok, lapsed, onConfirm }: { s: ReportState; p: ReportPr
   // The way to the files at the end of the page, where a reader who scrolled past everything lands (Rahul, 15-11-2026: at
   // the bottom there was only "Works" and Back). The bar's "Get the report" comes here too.
   if (!ready) return <Group id="download">
-    <h3 id="download-h" tabIndex={-1} class="mt-6 text-lg font-medium text-ink">Your report</h3>
-    <p data-testid="rep-doc-wait" class={`mt-1 ${HINT}`}>The PDF, an Excel copy and a Word copy come here once you confirm your figures.</p>
+    <h3 id="download-h" tabIndex={-1} class="mt-6 text-lg font-medium text-ink">Report sample</h3>
+    <p class={`mt-1 ${HINT}`}>The cover, the contents and the report at a glance, as the lender will read them.</p>
+    {sample}
+    <p data-testid="rep-doc-wait" class="mt-5 text-sm text-ink">The PDF, an Excel copy and a Word copy come here once you confirm your figures.</p>
     {lapsed && <p role="status" data-testid="rep-confirm-lapsed" class="mt-2 text-sm font-medium text-warn">Your figures changed since you checked them: check them again.</p>}
     <button type="button" data-testid="rep-confirm" class={`mt-3 ${FILLED}`} onClick={onConfirm}>These are right</button>
   </Group>;
@@ -1051,8 +1163,10 @@ function Download({ s, p, ok, lapsed, onConfirm }: { s: ReportState; p: ReportPr
       {p.runsOut && <p data-testid="rep-doc-why" class={`mt-1 ${HINT}`}>The file is marked provisional while cash runs out in {p.runsOut}, as the answer says.</p>}
       {own.length > 0 && <ul data-testid="rep-doc-needs" class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-ink-muted">{own.map(docItem)}</ul>}
       {missed && <p data-testid="rep-doc-as" class="mt-4 text-sm text-ink-muted">{W.docAs}</p>}
-      <Downloads pre="rep" quiet={missed} doc={(today) => reportDoc(s, p, today)} name={(kind) => fileName(s, p, kind)} />
+      <Downloads pre="rep" cards quiet={missed} doc={(today) => reportDoc(s, p, today)} name={(kind) => fileName(s, p, kind)} />
       <InAppNote id="rep-in-app" />
+      <h4 class="mt-6 text-sm font-medium text-ink">Report sample</h4>
+      {sample}
     </div>
   </Group>;
 }
