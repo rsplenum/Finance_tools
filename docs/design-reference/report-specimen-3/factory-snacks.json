@@ -1,0 +1,190 @@
+{
+ "case": "snacks",
+ "reading": "comfortable",
+ "rules": {
+  "ch.people": {
+   "when": "Every report",
+   "pieces": [
+    "fact.promoter v2",
+    "promoters.share v2",
+    "table.enterprise v2",
+    "fact.privacy v2"
+   ]
+  },
+  "ch.what": {
+   "when": "Every report; “make” for goods, “do” for a service",
+   "pieces": [
+    "what.products v1"
+   ]
+  },
+  "ch.why": {
+   "when": "New unit or expansion",
+   "pieces": [
+    "why.this v2",
+    "why.here v2",
+    "why.now v2"
+   ]
+  },
+  "ch.buyers": {
+   "when": "Buyers as the borrower names them, by how firm they are",
+   "pieces": [
+    "picture.buyers-by-firmness v1"
+   ]
+  },
+  "pack.snacks": {
+   "when": "trade pack",
+   "pieces": [
+    "pack.snacks.buyers v2",
+    "pack.snacks.usual v2"
+   ]
+  },
+  "ch.prices": {
+   "when": "Competitors’ price bands as the borrower lists them; no market figure of ours (rule 13)",
+   "pieces": [
+    "picture.price-ladder v1",
+    "market.reading v2",
+    "market.limit v2"
+   ]
+  },
+  "ch.unit": {
+   "when": "A unit with a capacity (manufacturing or service)",
+   "pieces": [
+    "picture.process v1",
+    "table.capacity v2",
+    "table.operating v2"
+   ]
+  },
+  "ch.site": {
+   "when": "A unit with premises",
+   "pieces": [
+    "table.site v2"
+   ]
+  },
+  "ch.inputs": {
+   "when": "Every report",
+   "pieces": [
+    "table.inputs-people v2"
+   ]
+  },
+  "ch.timeline": {
+   "when": "A loan drawn before sales start",
+   "pieces": [
+    "picture.timeline v1",
+    "timeline.reading v2"
+   ]
+  },
+  "ch.cost": {
+   "when": "Every report",
+   "pieces": [
+    "picture.money-in-out v1",
+    "cost.loan v2",
+    "cost.wc v2"
+   ]
+  },
+  "ch.sales": {
+   "when": "Every report; products when sales are by product",
+   "pieces": [
+    "table.sales-profit v1",
+    "picture.sales-breakeven v1",
+    "worth.reading v2"
+   ]
+  },
+  "ch.repay": {
+   "when": "A term loan",
+   "pieces": [
+    "picture.cover-by-year v1",
+    "reading.dscr.comfortable v2",
+    "table.cash-for-loan v2"
+   ]
+  },
+  "ch.cases": {
+   "when": "A term loan; the cases from the trade’s rule file",
+   "pieces": [
+    "picture.three-cases v1",
+    "table.cases v2"
+   ]
+  },
+  "ch.risks": {
+   "when": "Every report: each risk with an early sign, a response, who acts and the case that tests it",
+   "pieces": [
+    "table.risks v2"
+   ]
+  },
+  "ch.assume": {
+   "when": "Every report: each assumption with its value and what backs it, in words",
+   "pieces": [
+    "table.assumptions v2"
+   ]
+  },
+  "ch.close": {
+   "when": "Every report",
+   "pieces": [
+    "close.comfortable v2",
+    "table.open v2",
+    "table.papers v2",
+    "is-and-is-not v2",
+    "declaration v2"
+   ]
+  },
+  "annex.a": {
+   "when": "Every report: the full statements, less those a chapter already gives",
+   "pieces": [
+    "statement.pl-bs v2",
+    "statement.cf-dscr v2",
+    "statement.ratios-wc-worth v2",
+    "statement.repay v2"
+   ]
+  },
+  "annex.b": {
+   "when": "A unit with machines",
+   "pieces": [
+    "table.machines v2",
+    "photos v2"
+   ]
+  },
+  "summary": {
+   "when": "Every report: one page, no verdict on the loan (D-DOC-03)",
+   "pieces": [
+    "summary.request v2",
+    "summary.money v2",
+    "summary.repay v2"
+   ]
+  },
+  "summary.favour": {
+   "when": "Findings that hold on the engine’s figures, or confirmed facts; three to five, never padded",
+   "pieces": [
+    "summary.favour v2"
+   ]
+  },
+  "summary.watch": {
+   "when": "Findings that miss a usual level or fall short in a case, then the risks’ first rows; three to five",
+   "pieces": [
+    "summary.watch v2"
+   ]
+  },
+  "summary.todo": {
+   "when": "Papers still to come and items still open",
+   "pieces": [
+    "summary.todo v2"
+   ]
+  },
+  "cover": {
+   "when": "Every report: the request and the contents on the first page, no chart",
+   "pieces": [
+    "cover v3",
+    "contents v3"
+   ]
+  }
+ },
+ "acceptance": {
+  "What is being set up?": "2 What it will make, and why here and now (p. 3)",
+  "Who will run it?": "1 Who will run the business (p. 3)",
+  "Who will buy?": "3 Who will buy, and at what price (p. 4)",
+  "How much can be made and sold?": "4 How the unit will work (p. 5); 7 Sales and profit (p. 7)",
+  "What backs the sales plan?": "3 Who will buy, and at what price (p. 4); 11 What the figures assume (p. 11)",
+  "How much money, and where does it go?": "6 What it costs and how it is paid for (p. 6)",
+  "What cash pays the instalments?": "8 Can the business repay the loan? (p. 8)",
+  "What can go wrong?": "9 If things go worse (p. 9); 10 What could go wrong, and what is done about it (p. 10)",
+  "What is still unverified?": "11 What the figures assume (p. 11); 12 What is still to be done, and the declaration (p. 12)"
+ }
+}

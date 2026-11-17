@@ -101,6 +101,7 @@ export interface Flow {
   capital: number; subsidy: number; unsecured: number; termLoan: number; pat: number; depreciation: number; preliminary: number; wcLoan: number; creditors: number; sources: number;
   fixedAssets: number; preliminarySpent: number; stock: number; debtors: number; repaid: number; uses: number; net: number; opening: number; closing: number;
 }
+export type RatioPart = 'currentRatio' | 'debtEquity' | 'tolTnw' | 'interestCover' | 'netMarginPct' | 'facr' | 'dscr';
 export interface ReportYear {
   fy: string;
   /** Months of sales in the year, the use of the capacity and the sales by product (by drivers only). */
@@ -120,6 +121,8 @@ export interface ReportYear {
   /** Sales less variable costs; fixed costs with depreciation, the write-off and all interest: break-even's two sides. */
   contribution: number; fixedAll: number; bepPct?: number; bepSales?: number; cashBepPct?: number;
   currentRatio?: number; debtEquity?: number; tolTnw?: number; interestCover?: number; netMarginPct: number; facr?: number;
+  /** Each ratio's two sides, the ratio being top ÷ bottom (net margin: × 100), so a paper can show the working (SPEC4). */
+  ratioParts: Record<RatioPart, { top: number; bottom: number }>;
   /** The security for the loans (net fixed assets, stock and debtors), what it secures (the term loan and the limit
    * outstanding) and the security cover with the collateral's realisable sale value, once the collateral is typed. */
   security: number; secured: number; securityCover?: number;
@@ -489,6 +492,11 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
     const fixedAll = r.fixed + r.depreciation + r.preliminary + p.interestTL + r.wcInterest + r.guaranteeFee, contribution = r.sales - r.variable;
     const interest = p.interestTL + r.wcInterest + r.guaranteeFee, currentAssets = lv.stock + lv.debtors;
     const security = netBlock + currentAssets, secured = tlLeft + limit;
+    const ratioParts: Record<RatioPart, { top: number; bottom: number }> = {
+      currentRatio: { top: currentAssets + cash, bottom: limit + lv.creditors }, debtEquity: { top: tlLeft, bottom: netWorth },
+      tolTnw: { top: unsecured + tlLeft + limit + lv.creditors, bottom: netWorth }, interestCover: { top: p.pbt + interest, bottom: interest },
+      netMarginPct: { top: p.pat, bottom: r.sales }, facr: { top: netBlock, bottom: tlLeft }, dscr: { top: st.available, bottom: st.service },
+    }, q = (k: RatioPart) => ratioParts[k].top / ratioParts[k].bottom;
     out.push({
       fy: r.fy, months: months[k], ...(drivers ? { utilisationPct: util[k] } : {}), ...(byProduct ? { products: byProduct } : {}), ...(expansion ? { today: r.today, line: r.line } : {}), sales: r.sales, variable: r.variable, fixed: r.fixed, ...(headed ? { heads } : {}), pbdit: r.pbdit, depreciation: r.depreciation, preliminary: r.preliminary,
       tlInterest: p.interestTL, wcInterest: r.wcInterest, guaranteeFee: r.guaranteeFee, pbt: p.pbt, tax: p.tax, pat: p.pat,
@@ -496,11 +504,11 @@ export function projectReport(x: ReportInput): Report | Needs | Blocked {
       grossBlock: fixedAssets, accumulated, netBlock, preliminaryLeft, stock: lv.stock, debtors: lv.debtors, cash, assets, flow,
       available: st.available, service: st.service, principal, ...(st.dscr !== undefined ? { dscr: st.dscr } : {}), counted: st.counted, contribution, fixedAll,
       ...(contribution > 0 ? { bepPct: (fixedAll / contribution) * 100, bepSales: (r.sales * fixedAll) / contribution, cashBepPct: ((fixedAll - r.depreciation - r.preliminary) / contribution) * 100 } : {}),
-      ...(limit + lv.creditors > 0 ? { currentRatio: (currentAssets + cash) / (limit + lv.creditors) } : {}),
-      ...(netWorth > 0 ? { debtEquity: tlLeft / netWorth, tolTnw: (unsecured + tlLeft + limit + lv.creditors) / netWorth } : {}),
-      ...(interest > 0 ? { interestCover: (p.pbt + interest) / interest } : {}),
-      netMarginPct: r.sales ? (p.pat / r.sales) * 100 : 0,
-      ...(tlLeft > 0 ? { facr: netBlock / tlLeft } : {}),
+      ...(limit + lv.creditors > 0 ? { currentRatio: q('currentRatio') } : {}),
+      ...(netWorth > 0 ? { debtEquity: q('debtEquity'), tolTnw: q('tolTnw') } : {}),
+      ...(interest > 0 ? { interestCover: q('interestCover') } : {}),
+      netMarginPct: r.sales ? q('netMarginPct') * 100 : 0,
+      ...(tlLeft > 0 ? { facr: q('facr') } : {}), ratioParts,
       security, secured, ...(collateral && secured > 0 ? { securityCover: (security + collateral.rsv) / secured } : {}),
       currentAssets, gap: currentAssets - lv.creditors, mpbf: (currentAssets * DATA.workingCapital.mpbfSharePct) / 100 - lv.creditors,
       turnoverNeed: (r.sales * DATA.workingCapital.turnoverNeedPct) / 100, turnoverBank: (r.sales * DATA.workingCapital.turnoverBankPct) / 100,
