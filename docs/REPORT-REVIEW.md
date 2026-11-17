@@ -135,3 +135,14 @@ The plain cover with no chart; a one-page summary first; buyers by how firm they
 
 ### SPEC3's order
 Cover (name, what it is, place, the request, promoters, date, report number; contents below) · **Summary** (what, who, where; where the money goes and who pays; can it repay, as the cover against the usual level; in its favour, to watch, still to be done, each with its page) · 1 Who will run the business · 2 What it will make, and why here and now · 3 Who will buy, and at what price · 4 How the unit will work (process, capacity, site, inputs, people) · 5 From the loan to the first sale · 6 What it costs and how it is paid for · 7 Sales and profit · 8 Can the business repay the loan? · 9 If things go worse · 10 What could go wrong, and what is done about it · 11 What the figures assume · 12 What is still to be done, and the declaration · Annex A Financial statements · Annex B Machines and photographs.
+
+## 11. Rahul's review of SPEC3 (17-11-2026)
+
+Rahul read SPEC3 and kept its plain words, its length (points 5 and 6 of §10) and its pictures: "the way to go". Three changes, all made in SPEC4 (`docs/design-reference/report-specimen-4/`):
+
+| # | Rahul | SPEC4 does |
+|---|---|---|
+| 1 | The summary also shows the first year's projected sales and profit after tax, so the reader sees the business's size at once | Then, in Rahul's word during the work, "communicated through graphics": under the request, each year's sales as a column with its profit after tax as the coloured foot (a loss in red, below the line); the first year darker and labelled in full beside it. The engine's figures. Snacks: ₹79.20 lakh and ₹5.19 lakh |
+| 2 | In Chapter 10, remove the "who acts" and "tested by" columns | Removed. Each risk keeps what it would hit, its first sign and what is done. The owner and the testing case stay in the data, off the page. This sets aside the part of paper 1's risk contract (§10, "What stays") that tied each risk to an owner and a case on the page |
+| 3 | In Annex A.5, show how each key ratio is worked out, so the reader can check it without working it out | Each ratio is drawn as a sum on paper: the lines above a rule added, the lines below it added, top divided by bottom, each line copied in rupees from the statement it sits in, named in the ratio's heading line with what the ratio tells and the usual level. The engine now keeps each ratio's two sides (`ratioParts`), so the page adds and divides nothing itself |
+

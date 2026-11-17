@@ -71,6 +71,26 @@ describe('the later years hold together', () => {
   });
 });
 
+describe('each ratio keeps its two sides, so a paper can show the working (SPEC4)', () => {
+  it('the sides are the balance sheet and profit lines named in ratios.json, and top ÷ bottom is the ratio', () => {
+    for (const y of r.years) {
+      const p = y.ratioParts, interest = y.tlInterest + y.wcInterest + y.guaranteeFee;
+      // Rebuilt here from the year's own lines, independently of the engine's working.
+      expect(p.currentRatio.top).toBeCloseTo(y.stock + y.debtors + y.cash, 6);
+      expect(p.currentRatio.bottom).toBeCloseTo(y.wcLoan + y.creditors, 6);
+      expect(p.tolTnw.top).toBeCloseTo(y.unsecured + y.termLoan + y.wcLoan + y.creditors, 6);
+      expect(p.interestCover.top).toBeCloseTo(y.pbt + interest, 6);
+      expect([p.netMarginPct.top, p.netMarginPct.bottom, p.dscr.top, p.dscr.bottom]).toEqual([y.pat, y.sales, y.available, y.service]);
+      expect(p.currentRatio.top / p.currentRatio.bottom).toBeCloseTo(y.currentRatio as number, 9);
+      expect(p.tolTnw.top / p.tolTnw.bottom).toBeCloseTo(y.tolTnw as number, 9);
+      expect(p.interestCover.top / p.interestCover.bottom).toBeCloseTo(y.interestCover as number, 9);
+      if (y.dscr !== undefined) expect(p.dscr.top / p.dscr.bottom).toBeCloseTo(y.dscr, 9);
+    }
+    // Year 1 by hand: 2.39 above, so (stock + debtors + cash) is 2.39 times (limit + creditors).
+    expect((y1.ratioParts.currentRatio.top / y1.ratioParts.currentRatio.bottom).toFixed(2)).toBe('2.39');
+  });
+});
+
 describe('a missing fact is never assumed', () => {
   it('names what is needed', () => {
     expect(reportNeeds({ cost: {}, loan: {} })).toEqual([
