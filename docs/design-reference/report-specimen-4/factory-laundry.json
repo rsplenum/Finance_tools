@@ -151,7 +151,7 @@
    "when": "Every report: one page, no verdict on the loan (D-DOC-03)",
    "pieces": [
     "summary.request v2",
-    "summary.size v2",
+    "summary.size v3",
     "summary.money v2",
     "summary.repay v2"
    ]

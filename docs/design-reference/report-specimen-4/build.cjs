@@ -423,25 +423,36 @@ ${M('ch.close', 'declaration v2', `<div>${h3('Declaration')}<p>${fill(`${one ? '
     M('annex.b', 'table.machines v2', `<table class="reg"><tr><th>Machine</th><th>What it does</th><th>Priced on</th></tr>${K.machines.map(([a, b, c]) => `<tr><td><b>${esc(a)}</b></td><td>${esc(b)}</td><td>${typed(c)}</td></tr>`).join('')}</table>`) +
     M('annex.b', 'photos v2', `${h3('Photographs')}<div class="photos">${K.photos.map((p) => `<div class="photo"><b>${esc(p)}</b><span>Added by the borrower; none in this specimen</span></div>`).join('')}</div>`));
 
-  /** The summary's size picture: each year's sales as a column, its profit after tax the teal part at the foot (a loss in red,
-   * below the line). The first year is labelled in full, so the reader sees the business's size at once. */
+  /** The summary's size picture: the first year's sales as one stream. Each cost peels off it in turn, in the order the
+   * profit and loss takes them, and what is left at the end is the profit after tax kept. Every label is the engine's
+   * figure; only where a mark sits is placed here. A loss: the stream runs dry, and the end says by how much. */
   const sizePic = () => {
-    const W = 600, H = 100, l = 6, base = 84, top = 20, max = Math.max(...Y.map((y) => y.sales)), lossMax = Math.max(0, ...Y.map((y) => -y.pat));
-    const h = (v) => (v / max) * (base - top), room = W - 290 - l, cw = Math.min(46, (room * 0.8) / Y.length), gap = (room - Y.length * cw) / (Y.length - 1);
-    let g = ln(l - 4, base, l + Y.length * cw + (Y.length - 1) * gap + 4, base, C.ink, 0.8);
-    Y.forEach((y, i) => {
-      const x = l + i * (cw + gap), first = i === 0, sh = h(y.sales), ph = h(Math.abs(y.pat));
-      g += rc(x, base - sh, cw, sh, first ? '#94a3b8' : C.hair);
-      g += y.pat >= 0 ? rc(x, base - ph, cw, ph, first ? C.teal : C.tealL) : rc(x, base, cw, ph, C.red);
-      g += T(x + cw / 2, base - sh - 4, es(lk(y.sales)), { z: 7.4, a: 'middle', b: first, f: first ? C.ink : C.mut });
-      g += T(x + cw / 2, base + (y.pat < 0 ? ph : 0) + 11, esc(y.fy), { z: 7, a: 'middle', b: first, f: first ? C.ink : C.faint });
+    const y1 = Y[0], loss = y1.pat < 0;
+    const peels = [[['Materials and', 'other costs'], y1.variable], [['Fixed', 'costs'], y1.fixed], [['Depreciation'], y1.depreciation], [['Preliminary', 'write-off'], y1.preliminary],
+      [['Term-loan', 'interest'], y1.tlInterest], [['Working-capital', 'interest'], y1.wcInterest], [['Guarantee', 'fee'], y1.guaranteeFee], [['Tax'], y1.tax]].filter(([, v]) => Math.round(v) > 0);
+    const W = 620, H = 114, x0 = 132, xEnd = 496, top = 18, th = 44, yL = 76, k = th / y1.sales;
+    let left = th, prevEnd = x0 + 6, prevLabel = -1e9, path = '', labels = '';
+    const cuts = [];
+    peels.forEach(([name, v], i) => {
+      const t = Math.max(Math.min(v * k, left), 0), x = Math.max(x0 + 18 + i * ((xEnd - x0 - 60) / peels.length), prevEnd + 8, prevLabel + 54 - 12 - Math.max(t, 0.8) / 2), cx = x + 12, y2 = top + left, y1_ = y2 - t, d = 18;
+      cuts.push([x, top + left, top + left - t]);
+      path += `<path d="M${x.toFixed(1)},${y2.toFixed(1)} C${(x + d).toFixed(1)},${y2.toFixed(1)} ${cx.toFixed(1)},${(yL - d).toFixed(1)} ${cx.toFixed(1)},${yL} L${(cx + Math.max(t, 0.8)).toFixed(1)},${yL} C${(cx + Math.max(t, 0.8)).toFixed(1)},${(yL - d).toFixed(1)} ${(x + d).toFixed(1)},${y1_.toFixed(1)} ${x.toFixed(1)},${y1_.toFixed(1)} Z" fill="#cbd5e1"/>`;
+      const lx = cx + Math.max(t, 0.8) / 2; prevLabel = lx;
+      labels += name.map((n, j) => T(lx, yL + 10 + j * 8.6, esc(n), { z: 6.8, a: 'middle', f: C.mut })).join('') + T(lx, yL + 11 + name.length * 8.6, es(lk(v)), { z: 7.4, a: 'middle', b: 1, f: C.ink });
+      prevEnd = cx + Math.max(t, 0.8) + 14; left -= t;
     });
-    const y1 = Y[0], lx = W - 236, loss = y1.pat < 0, months = y1.months < 12 ? `, ${es(y1.months)} months of sales` : '';
-    g += T(lx, top + 2, `In the first year, ${es(y1.fy)}${months}`, { z: 8, b: 1, f: C.mut });
-    g += rc(lx, top + 14, 9, 9, '#94a3b8') + T(lx + 14, top + 22, 'Projected sales', { z: 8, f: C.mut }) + T(W - 2, top + 22, es(lakh(y1.sales)), { z: 13, b: 1, a: 'end' });
-    g += rc(lx, top + 38, 9, 9, loss ? C.red : C.teal) + T(lx + 14, top + 46, loss ? 'Projected loss after tax' : 'Projected profit after tax', { z: 8, f: C.mut }) + T(W - 2, top + 46, es(lakh(Math.abs(y1.pat))), { z: 13, b: 1, a: 'end', f: loss ? C.red : C.tealD });
-    g += T(lx, top + 70, 'Columns: sales in ₹ lakh. The coloured foot of each', { z: 7, f: C.faint }) + T(lx, top + 79, `is the profit after tax${lossMax ? '; red below the line, a loss' : ''}.`, { z: 7, f: C.faint });
-    return svg(W, H + (lossMax ? h(lossMax) : 0), g);
+    // The stream: full at the left, its lower edge stepping up at each cut, the profit kept running out to the right.
+    let pts = `${x0},${top} ${xEnd},${top} ${xEnd},${(top + Math.max(left, 0)).toFixed(1)}`;
+    for (let i = cuts.length - 1; i >= 0; i--) pts += ` ${cuts[i][0].toFixed(1)},${cuts[i][2].toFixed(1)} ${cuts[i][0].toFixed(1)},${cuts[i][1].toFixed(1)}`;
+    pts += ` ${x0},${top + th}`;
+    let g = `<defs><linearGradient id="flow" x1="0" x2="1"><stop offset="0" stop-color="#64748b"/><stop offset=".55" stop-color="#5f8f95"/><stop offset="1" stop-color="${loss ? C.red : C.teal}"/></linearGradient></defs>`;
+    g += path + `<polygon points="${pts}" fill="url(#flow)"/>`;
+    if (!loss) g += `<path d="M${xEnd},${top - 3} L${xEnd + 10},${top + Math.max(left, 3) / 2} L${xEnd},${top + Math.max(left, 3) + 3} Z" fill="${C.teal}"/>`;
+    g += T(x0 - 8, top + 12, 'Sales', { z: 8, a: 'end', f: C.mut }) + T(x0 - 8, top + 30, es(lakh(y1.sales)), { z: 13.5, b: 1, a: 'end' }) + T(x0 - 8, top + 42, `in ${es(y1.fy)}${y1.months < 12 ? `, ${es(y1.months)} months` : ''}`, { z: 7, a: 'end', f: C.faint });
+    g += T(xEnd + 14, top + 2, loss ? 'Loss after tax' : 'Profit after tax,', { z: 8, f: loss ? C.red : C.tealD }) + (loss ? '' : T(xEnd + 14, top + 12, 'kept', { z: 8, f: C.tealD })) + T(xEnd + 14, top + (loss ? 20 : 30), es(lakh(Math.abs(y1.pat))), { z: 13.5, b: 1, f: loss ? C.red : C.tealD });
+    if (loss) g += T(xEnd + 14, top + 31, 'the costs use up all the', { z: 6.8, f: C.faint }) + T(xEnd + 14, top + 40, `sales; ${one ? 'the proprietor carries' : 'the partners carry'} it`, { z: 6.8, f: C.faint });
+    g += labels + T(x0, top - 8, 'Each cost peels off the year’s sales in turn; what is left is the profit kept. Figures in ₹ lakh.', { z: 7, f: C.faint });
+    return svg(W, H, g);
   };
 
   // ---------------- The summary and the cover, now that the chapters have their pages ----------------
@@ -466,7 +477,7 @@ ${M('ch.close', 'declaration v2', `<div>${h3('Declaration')}<p>${fill(`${one ? '
   const li = ([t, ch]) => `<li>${t} <span class="see">page ${pageOf(ch)}</span></li>`;
   const summary = `<div class="kick">Summary</div><h2 class="act">${esc(K.oneLine)}, at ${esc(F.state.address)}</h2>
 ${M('summary', 'summary.request v2', `<p class="lede">${fill(`${esc(F.state.name)} asks a term loan of {loan} and a working-capital limit of {wc} for a project costing {cost}. ${one ? `${esc(K.promoters[0].name)}, the proprietor, brings` : 'The partners bring'} {promoter}, {promoter.pct} of the cost. Sales start in {start}.`)}</p>`)}
-${M('summary', 'summary.size v2', `<div class="size"><div class="kick">How big the business is: sales and profit after tax, year by year</div>${sizePic()}</div>`)}
+${M('summary', 'summary.size v3', `<div class="size"><div class="kick">How big the business is in its first year</div>${sizePic()}</div>`)}
 <div class="sum">${M('summary', 'summary.money v2', `<div class="kfs">${[['What the project costs', B.projectCost], ['Term loan asked', B.finance.termLoan], [one ? 'The proprietor brings' : 'The partners bring', B.finance.promoter], ['Working-capital limit asked', B.wcLimit]].map(([l, v]) => `<div class="kf"><div class="l">${l}</div><div class="v">${eng(lakh(v))}</div></div>`).join('')}</div>`)}
 ${M('summary', 'summary.repay v2', `<div class="can"><div class="kick">Can it repay?</div>${coverGauge()}<p>${fill(READINGS[reading])} <span class="see">page ${pageOf(8)}</span></p></div>`)}</div>
 <div class="two b2">${M('summary.favour', 'summary.favour v2', `<div>${h3('In its favour')}<ul class="bl">${favour.map(li).join('')}</ul></div>`)}${M('summary.watch', 'summary.watch v2', `<div>${h3('To watch')}<ul class="bl">${watch.map(li).join('')}</ul></div>`)}</div>

@@ -8,7 +8,7 @@ This is the target LIB1 builds to. It is SPEC3 (`../report-specimen-3/README.md`
 
 ## What changed from SPEC3
 
-- **The summary shows the business's size first, as a picture.** Under the request: each year's projected sales as a column, its profit after tax the teal foot of the column (a loss in red, below the line), the first year darker and labelled in full beside it (snacks, 2027-28: ₹79.20 lakh and ₹5.19 lakh; the laundry: ₹38.45 lakh and a loss of ₹0.45 lakh). All figures are the engine's. A first year of fewer than twelve months says how many.
+- **The summary shows the business's size first, as a picture: the first year's sales as one stream that each cost peels off.** The stream starts as wide as the year's sales; materials, fixed costs, depreciation, the preliminary write-off, interest, any guarantee fee and tax each curve away as a ribbon as wide as that cost, labelled with its amount; what still flows out at the right is the profit after tax, kept (snacks, 2027-28: ₹79.20 lakh in, ₹5.19 lakh kept). In a loss the stream runs dry before the last costs and the end reads "Loss after tax" in red, with who carries it (the laundry: ₹38.45 lakh, a loss of ₹0.45 lakh). Every amount is the engine's; the drawing only sets widths. A first year of fewer than twelve months says how many.
 - **Chapter 10 drops "Who acts" and "Tested by".** Each risk now has what it would hit, its first sign and what is done. The owner and the case that tests each risk stay in `cases.cjs` for LIB1, off the page.
 - **Annex A.5 works each key ratio out.** Each ratio is a sum on paper: the lines above the rule are added, the lines below it are added, and the top is divided by the bottom. Every line is copied from the statements in rupees (A.1, A.2, A.4), so the reader checks by finding and copying, never by working out. The heading line of each says in a sentence what the ratio tells, the usual level for a new loan (`engine/data/ratios.json`) and where its lines come from. A year below the usual level prints in amber with "below usual"; a year with no loan left says "Loan repaid". A.5 takes two pages, so A.6 to A.8 share the next one.
 - Kept from SPEC3: the plain words, the length and the eight pictures.
@@ -29,6 +29,6 @@ node docs/design-reference/report-specimen-4/build.cjs $S/figures.json $S/out
 ## What LIB1 takes from it
 
 All of SPEC3's list, and:
-- the summary's size picture (piece `summary.size v2`);
+- the summary's size picture (piece `summary.size v3`);
 - the risk table in three columns (`table.risks v3`);
 - the worked ratios (rule `annex.a.ratios`, piece `statement.ratios-worked`), built from `ratioParts`.

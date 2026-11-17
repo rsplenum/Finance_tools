@@ -26,7 +26,7 @@ const pick = (r: Report) => ({
   loanInterest: r.loanInterest, firstInstalment: r.firstInstalment, lastInstalment: r.lastInstalment,
   years: r.years.map((y) => ({
     fy: y.fy, months: y.months, utilisationPct: y.utilisationPct, products: y.products, sales: y.sales, variable: y.variable, fixed: y.fixed,
-    pbdit: y.pbdit, depreciation: y.depreciation, tlInterest: y.tlInterest, wcInterest: y.wcInterest, pbt: y.pbt, tax: y.tax, pat: y.pat,
+    pbdit: y.pbdit, depreciation: y.depreciation, preliminary: y.preliminary, tlInterest: y.tlInterest, wcInterest: y.wcInterest, pbt: y.pbt, tax: y.tax, pat: y.pat,
     netWorth: y.netWorth, termLoan: y.termLoan, wcLoan: y.wcLoan, netBlock: y.netBlock, cash: y.cash, stock: y.stock, debtors: y.debtors,
     available: y.available, service: y.service, ratioParts: y.ratioParts, unsecured: y.unsecured, creditors: y.creditors, guaranteeFee: y.guaranteeFee, principal: y.principal, dscr: y.dscr, counted: y.counted,
     contribution: y.contribution, fixedAll: y.fixedAll, bepPct: y.bepPct, bepSales: y.bepSales, cashBepPct: y.cashBepPct,
