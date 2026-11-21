@@ -13,7 +13,7 @@ import { moreRoom, type DscrCase } from '../../../engine/dscr-plan';
 import { LEVELS } from '../../../engine/ratios';
 import { inr } from '../../../engine/util';
 import type { Linked, RoundView as Round, Said } from '../MakeItWork';
-import { dscrCaseOf, type State } from './model';
+import { dscrCaseOf, withInstalments, type State } from './model';
 
 export const STEP = 10000;
 const rs = (n: number, d = 0) => `₹${inr(n, d)}`;
@@ -147,7 +147,7 @@ export function linkedOf(u: Setup): Linked<LinkTerms, Place> {
 
 /** The loan's three answers written back, as the borrower would type them. */
 export function writeTerms(s: State, t: LinkTerms): State {
-  return { ...s, loan: { ...s.loan, amount: inr(t.amount, Number.isInteger(t.amount) ? 0 : 2), instalments: String(t.instalments), ratePct: String(Number(t.ratePct.toFixed(2))) } };
+  return { ...s, loan: { ...withInstalments(s.loan, String(t.instalments)), amount: inr(t.amount, Number.isInteger(t.amount) ? 0 : 2), ratePct: String(Number(t.ratePct.toFixed(2))) } };
 }
 
 // ---- The rounds: each plan the borrower saw, kept while nothing but the loan's three answers changes ----

@@ -8,7 +8,7 @@
  * Rahul read it (D-UX-358): a figure shows from the first fact, marked with what it leaves out.
  */
 import { inr, lakhCrore, rs } from '../../../engine/util';
-import { amountOf, BORROWER_CHOICES, frontDoor, numberOf, preview, tidyAmount, withBorrower, withFrontNeeds, yearsOf, type Preview, type State } from './model';
+import { amountOf, BORROWER_CHOICES, frontDoor, numberOf, preview, tenureText, tidyAmount, withBorrower, withFrontNeeds, withYears, yearsOf, yearsText, type Preview, type State } from './model';
 import { optionsOf, setupOf, termWords, writeTerms } from './rounds';
 import type { LinkTerms } from '../../../engine/dscr-linked';
 import { N } from './words';
@@ -46,7 +46,7 @@ export function factText(s: State, id: FactId): string {
     case 'growth': return s.rates.pbdit ?? '';
     case 'amount': return s.loan.amount;
     case 'rate': return s.loan.ratePct;
-    case 'years': { const k = numberOf(s.loan.instalments); return k === undefined ? '' : String(+(k / perYear(s)).toFixed(2)); }
+    case 'years': return yearsText(s.loan);
     case 'borrower': return s.borrower ?? '';
     case 'emis': return s.modes.otherLoans === 'emi' ? s.running[0]?.emi ?? '' : '';
     case 'depreciation': return s.modes.depreciation === 'none' ? '' : s.cells.depreciation?.[0] ?? '';
@@ -81,7 +81,7 @@ export function writeFact(s: State, id: FactId, t: string): State {
     case 'growth': return { ...s, rates: { ...s.rates, pbdit: t } };
     case 'amount': return { ...s, loan: { ...s.loan, amount: tidyAmount(t) } };
     case 'rate': return { ...s, loan: { ...s.loan, ratePct: t.replace(/%\s*$/, '').trim() } };
-    case 'years': { const n = numberOf(t); return { ...s, loan: { ...s.loan, instalments: n === undefined ? t : String(Math.round(n * perYear(s))) } }; }
+    case 'years': return { ...s, loan: withYears(s.loan, t) };
     case 'borrower': return withBorrower(s, t);
     case 'emis': return t.trim()
       ? { ...s, modes: { ...s.modes, otherLoans: 'emi' }, running: [{ emi: tidyAmount(t), last: s.running[0]?.last ?? '' }, ...s.running.slice(1)] }
@@ -118,7 +118,7 @@ export function factsOf(c: Case): FactView[] {
   const { s, mine } = c, own = s.source !== 'plan';
   const n = (t: string) => amountOf(t);
   const who = BORROWER_CHOICES.find((b) => b.id === s.borrower);
-  const k = numberOf(s.loan.instalments), months = k === undefined ? undefined : Math.round(k * (12 / perYear(s)));
+  const months = numberOf(tenureText(s.loan));
   const emi = n(factText(s, 'emis')), dep = n(factText(s, 'depreciation'));
   const shown: Record<FactId, { text: string; before?: string; after?: string }> = {
     borrower: { text: who ? N.who[who.id as keyof typeof N.who] : N.who.none },

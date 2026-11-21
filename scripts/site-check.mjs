@@ -352,7 +352,7 @@ async function enterCaseA(page) {
   await leave(page, '#fld-disbursed', '2026-04');
   await leave(page, '#fld-moratoriumMonths', '6');
   await page.check('#fld-repayment-quarterly');
-  await leave(page, '#fld-instalments', '12');
+  await leave(page, '#fld-tenure', '42');
   // Case A comes as a CA's projection, a figure for each year, so those two lines are given each year.
   await page.check('#fld-pbdit-years');
   await page.check('#fld-depreciation-years');
@@ -523,7 +523,7 @@ if (touched('/dscr/')) {
   await leave(page, '#fld-disbursed', '2026-10');
   await page.check('#fld-repayment-quarterly');
   await leave(page, '#fld-moratoriumMonths', '6');
-  await leave(page, '#fld-instalments', '12');
+  await leave(page, '#fld-tenure', '42');
   await page.check('#fld-pbdit-years');
   await page.check('#fld-depreciation-years');
   const later = ['2027-28', '2028-29', '2029-30'], pbdit = ['7,50,000', '8,00,000', '8,00,000'], dep = ['1,30,000', '1,10,000', '1,00,000'];
@@ -566,7 +566,7 @@ if (touched('/dscr/')) {
   await leave(page, '#fld-disbursed', '2027-04');
   await page.check('#fld-repayment-emi');
   await leave(page, '#fld-moratoriumMonths', '0');
-  await leave(page, '#fld-instalments', '60');
+  await leave(page, '#fld-tenure', '60');
   if (await page.getByTestId('start-question').count()) v('the first year of figures is asked though the loan has an instalment in its first year');
   // The profit line starts as "grows each year": the first year's figure and a rate.
   await leave(page, '#fld-pbdit-2027-28', '18 L');
@@ -600,7 +600,7 @@ if (touched('/dscr/')) {
   await leave(page, '#fld-disbursed', '2026-04');
   await leave(page, '#fld-moratoriumMonths', '6');
   await page.check('#fld-repayment-quarterly');
-  await leave(page, '#fld-instalments', '12');
+  await leave(page, '#fld-tenure', '42');
   await leave(page, '#fld-pbdit-2026-27', '5 L');
   await leave(page, '#fld-pbdit-rate', '10');
   await page.check('#fld-depreciation-same');
@@ -699,7 +699,7 @@ if (touched('/dscr/')) {
   await leave(page, '#fld-disbursed', '2026-04');
   await leave(page, '#fld-moratoriumMonths', '6');
   await page.check('#fld-repayment-quarterly');
-  await leave(page, '#fld-instalments', '12');
+  await leave(page, '#fld-tenure', '42');
   await leave(page, '#fld-pbdit-2026-27', '5 L');
   await leave(page, '#fld-pbdit-rate', '10');
   await page.check('#fld-depreciation-same');

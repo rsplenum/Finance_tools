@@ -29,9 +29,12 @@ const LOAN_A = { amount: '12 L', ratePct: '12', disbursed: '2026-04', moratorium
 // Fictional case A′, the owner's quick path: case A's loan and this year's figures; the rest as assumed. Worked by hand
 // in tests/dscr-page.test.ts: cash available 4,00,392, 4,22,624, 4,45,488, 4,73,072 against debt service 3,41,000,
 // 5,02,000, 4,54,000, 2,09,000; DSCR 1.17, 0.84, 0.98, 2.26; average 1.16, lowest 0.84 in 2027-28.
+// Working-capital interest held at 50,000 every year (Same every year, chosen), as when these figures were worked; the
+// assumption that it grows with sales (DSCR row C, point 5) is worked in tests/dscr-page.test.ts.
 const A2: State = {
   ...ASSUMED, loan: { ...LOAN_A }, doc: FACTS,
   cells: { ...ASSUMED.cells, pbdit: ['5,00,000'], depreciation: ['1,50,000'], interestOther: ['50,000'] },
+  modes: { ...ASSUMED.modes, interestOther: 'same' },
   rates: { pbdit: '10' },
 };
 // Fictional case A as a CA's projection (tests/dscr-page.test.ts), with no target and nothing typed for the document.
@@ -170,7 +173,7 @@ describe('fictional case A′, complete: the statement for the lender', () => {
     expect(lines).toContain('Depreciation: ₹1,50,000 every year');
     expect(lines).toContain('Tax rate (%): 31.2% every year');
     // The assumptions are listed on the page only (the owner, D-DOC-03); the lines they leave at None are left out.
-    expect(p.assumed).toHaveLength(10);
+    expect(p.assumed).toHaveLength(9); // working-capital interest is chosen here (Same every year), so not assumed
     expect(text).not.toContain('Assumed until changed');
     for (const a of p.assumed) expect(text).not.toContain(a.why);
     expect(text).not.toMatch(/^(Extra income from the new asset|Loans already running|Other non-cash charges[^:]*):/m);
@@ -454,7 +457,7 @@ describe('fictional case A with the lenders\' tests: the sensitivity analysis (D
     expect(lines).toContain('Test | Average | Lowest year | In');
     expect(lines).toContain('Sales price 5% lower | 1.16 | 0.93 | 2026-27');
     expect(lines).toContain('Costs 10% higher | 0.99 | 0.73 | 2026-27');
-    expect(lines).toContain("Promoters' loans repaid as given, counted in debt service as a lender would | 1.28 | 0.97 | 2027-28");
+    expect(lines).toContain("With the owners' loans paid back as given, counted with the instalments as a lender would | 1.28 | 0.97 | 2027-28");
     expect(lines).toContain("Promoters' loans repaid | 0 | 1,00,000 | 1,00,000 | 0");
     expect(lines).toContain("Debt service with them (B + promoters' loans) | 3,41,000 | 6,02,000 | 5,54,000 | 2,09,000");
     expect(lines).toContain('Cash left | -40,750 | -69,000 | 59,500 | 3,30,750');

@@ -17,7 +17,7 @@ import { Fold, FactLine, MAIN, openFold, QUIET, Reading } from '../worked/parts'
 import { DownloadSection, LenderLines, PastTable, Professionals, Schedule, StatementTable, type Update } from './Calculator';
 import { DSCR_HOME } from './home-case';
 import { inr } from '../../../engine/util';
-import { BORROWER_CHOICES, frontDoor, statusText, type Preview, type State } from './model';
+import { BORROWER_CHOICES, frontDoor, statusText, withInstalments, type Preview, type State } from './model';
 import {
   ASSUMED_FACTS, applyOption, barsOf, changedFacts, exampleCase, exampleFacts, exampleNeeds, exampleState, FACTS, factProblem, factsOf, factText,
   markOf, optionsFor, previewOf, readingOf, WALK, withMine, writeFact, type Case, type FactId, type OptionCard,
@@ -341,7 +341,7 @@ function Working({ p, update, toPro }: { c: Case; p: Preview; update: Update; to
       {p.verdict && <div class="md:col-start-1 md:row-start-1"><Targets v={p.verdict} /></div>}
       <div class="md:col-start-2 md:row-span-2 md:row-start-1 md:*:mt-3">
         <Room p={p} onAmount={(n) => update((x) => ({ ...x, loan: { ...x.loan, amount: inr(n) } }))}
-          onFewest={(n) => update((x) => ({ ...x, loan: { ...x.loan, instalments: String(n) } }))} /></div>
+          onFewest={(n) => update((x) => ({ ...x, loan: withInstalments(x.loan, String(n)) }))} /></div>
       {p.lender && <div class="md:col-start-1 md:row-start-2"><LenderLines v={p.lender} openMore={() => toPro('lender')} /></div>}
     </div>
     <PastTable p={p} />

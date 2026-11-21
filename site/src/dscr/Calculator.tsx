@@ -14,7 +14,7 @@ import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { AmountField } from '../AmountField';
 import { OPTIONS, PAST_LABELS, PRESETS } from '../../../engine/dscr';
-import { LENDER } from '../../../engine/lender';
+import { LENDER, WC_BOOKS_LABELS, type WcBooks } from '../../../engine/lender';
 import { STEPPED } from '../../../engine/loan';
 import { parseMonth } from '../../../engine/parse';
 import { leastSure, sureText, type Marked } from '../../../engine/sure';
@@ -32,6 +32,7 @@ import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from '
 import {
   ASSUMED, BORROWER_CHOICES, checkNext, dscrMarks, EXAMPLE_TARGETS, GROUP_TITLES, NO_LENDER, NO_PAST, definitionOf, PAST_KEYS, pastCell, pastYearsOf, type PastKey, type PastText, OPTION_KEYS, NO_LOAN, NO_RUNNING_TERMS, amountOf, barText, choicesOf, emisAsk, frontDoor, loanRead, modeOf, monthText, numberOf,
   parseFy, presetText, preview, rowValues, rowsOf, statusText, sureLine, targetText, tidyAmount, withBorrower, withFrontNeeds, FRONT, frontAt, withPlanStart, withSource, yearsOf,
+  changeLoan, tenureText, withInstalments, withYears, yearsText, wcByOf,
   type DocFacts, type LenderLine, type LenderText, type LenderView, type Line, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type RunningTermsText, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 import { Levels } from './Levels';
@@ -110,7 +111,7 @@ export function DscrCalculator() {
           <Figures s={s} update={update} rows={rows} y={y} p={p} />
           <TargetSection s={s} update={update} />
           {s.source === 'plan' && <PastSection s={s} update={update} y={y} />}
-          {s.source === 'plan' && <LenderSection s={s} update={update} y={y} />}
+          {s.source === 'plan' && <LenderSection s={s} update={update} y={y} p={p} />}
         </>}
     </MoreOptions>}
     {s.source !== 'plan' && results}
@@ -122,14 +123,14 @@ export function DscrCalculator() {
 
 /** The front door's answers as the rail shows them: as typed (tidied), grouped as the mock-up had them (LOOP1). */
 function railOf(s: State): AnswerGroup[] {
-  const per = s.loan.repayment === 'quarterly' ? 3 : 1, k = numberOf(s.loan.instalments);
+  const months = numberOf(tenureText(s.loan));
   const emi = s.modes.otherLoans === 'emi' ? s.running[0]?.emi : undefined, dep = s.modes.depreciation === 'none' ? undefined : s.cells.depreciation?.[0];
   const money = (t?: string) => (t?.trim() ? `₹${t}` : 'None');
   return [
     { title: 'You', rows: [['Who is the borrower', BORROWER_CHOICES.find((b) => b.id === s.borrower)?.label ?? '–']] },
     { title: 'The business', rows: [['Profit this year, before interest, depreciation and tax', money(s.cells.pbdit?.[0])], ['Growth in sales a year', `${s.rates.pbdit ?? ''}%`],
       ['EMIs already paid', emi?.trim() ? `₹${emi} a month` : 'None'], ['Depreciation a year', money(dep)]] },
-    { title: 'The loan', rows: [['Loan amount', money(s.loan.amount)], ['Interest rate', `${s.loan.ratePct}% a year`], ['Repay over', k === undefined ? '–' : termWords(k * per)]] },
+    { title: 'The loan', rows: [['Loan amount', money(s.loan.amount)], ['Interest rate', `${s.loan.ratePct}% a year`], ['Repay over', months === undefined ? '–' : termWords(months)]] },
   ];
 }
 
@@ -138,8 +139,8 @@ function railOf(s: State): AnswerGroup[] {
  * them too. Depreciation is optional (empty: none); EMIs already paid are one figure a month (empty: none).
  */
 function FrontDoor({ s, update, openMore, was, onSee }: { s: State; update: Update; openMore: () => void; was: Was; onSee?: () => void }) {
-  const perYear = s.loan.repayment === 'quarterly' ? 4 : 12, k = numberOf(s.loan.instalments);
-  const years = k === undefined ? '' : String(+(k / perYear).toFixed(2));
+  // The years are the whole tenure, the holiday inside it (DSCR row C, point 6), as the loan's field in More options.
+  const years = yearsText(s.loan);
   const emi = s.modes.otherLoans === 'emi' ? s.running[0]?.emi ?? '' : '';
   const dep = s.modes.depreciation === 'none' ? '' : s.cells.depreciation?.[0] ?? '';
   // The field tidies what is typed (5 L → 5,00,000), so only what is not understood is said under it.
@@ -165,10 +166,7 @@ function FrontDoor({ s, update, openMore, was, onSee }: { s: State; update: Upda
       <TextField id="fld-fd-rate" label={W.rate} unit="%" inputMode="decimal" hint={W.rateHint} value={s.loan.ratePct}
         said={notUnderstood(s.loan.ratePct, numberOf, 'a number, like 12')} onCommit={(t) => update((x) => ({ ...x, loan: { ...x.loan, ratePct: t } }))} />
       <TextField id="fld-fd-years" label={W.years} unit="years" hint={was('instalments') ?? W.yearsHint} inputMode="decimal" value={years}
-        said={notUnderstood(years, numberOf, 'a number, like 5')} onCommit={(t) => update((x) => {
-          const n = numberOf(t), per = x.loan.repayment === 'quarterly' ? 4 : 12;
-          return { ...x, loan: { ...x.loan, instalments: n === undefined ? t : String(Math.round(n * per)) } };
-        })} />
+        said={notUnderstood(years, numberOf, 'a number, like 5')} onCommit={(t) => update((x) => ({ ...x, loan: withYears(x.loan, t) }))} />
     </div>
     {s.door && s.loan.disbursed === s.door.month && <p data-testid="fd-loan-note" class={`mt-3 ${HINT}`}>{W.drawn(monthText(s.door.month))}</p>}
     {/* The way out for experts under the last question, by More options (UXR1's S8): nothing but the lead before the first. */}
@@ -201,7 +199,8 @@ function Start({ s, update }: { s: State; update: Update }) {
 }
 
 function Loan({ s, update, y, p, was }: { s: State; update: Update; y: Years; p: Preview; was: Was }) {
-  const l = s.loan, set = (patch: Partial<LoanText>) => update((x) => ({ ...x, loan: { ...x.loan, ...patch } }));
+  const l = s.loan, set = (patch: Partial<LoanText>) => update((x) => ({ ...x, loan: changeLoan(x.loan, patch) }));
+  const n = numberOf(l.instalments), every = l.repayment === 'quarterly' ? 'quarterly' : 'monthly';
   const read = loanRead(y);
   return <Section id="loan" title="The loan">
     <p class={`mt-2 ${HINT}`}>As in the sanction letter.</p>
@@ -222,9 +221,12 @@ function Loan({ s, update, y, p, was }: { s: State; update: Update; y: Years; p:
       <TextField id="fld-moratoriumMonths" label="Holiday before the first instalment (months)" unit="months" inputMode="numeric" value={l.moratoriumMonths}
         hint="Interest only, no instalments; 0 if none." onCommit={(t) => set({ moratoriumMonths: t })}
         said={notUnderstood(l.moratoriumMonths, numberOf, '6, or 0 if none')} />
-      <TextField id="fld-instalments" label="Number of instalments" inputMode="numeric" value={l.instalments}
-        hint={was('instalments') ?? (l.repayment === 'quarterly' ? 'Quarterly instalments, after the holiday.' : l.repayment ? 'Monthly instalments, after the holiday.' : 'After the holiday.')}
-        onCommit={(t) => set({ instalments: t })} said={notUnderstood(l.instalments, numberOf, '60')} />
+      {/* The whole tenure, as the sanction letter gives it, the holiday inside it (DSCR row C, point 6); the engine works out the instalments. */}
+      <TextField id="fld-tenure" label="Whole tenure, months (holiday included)" unit="months" inputMode="numeric" value={tenureText(l)}
+        hint={was('instalments') ?? (n !== undefined && l.repayment && l.tenure !== undefined
+          ? `That is ${n} ${every} instalment${n === 1 ? '' : 's'}${(numberOf(l.moratoriumMonths) ?? 0) > 0 ? ' after the holiday' : ''}.`
+          : 'Like 60 for five years. The holiday counts inside it.')}
+        onCommit={(t) => set({ tenure: t })} said={notUnderstood(tenureText(l), numberOf, '60')} />
     </div>
     {(numberOf(l.moratoriumMonths) ?? 0) > 0 && <div class="mt-4"><Pills id="fld-holiday-interest" legend="Interest in the holiday" value={l.holidayInterest}
       options={HOLIDAY_PILLS} onChange={(holidayInterest) => set({ holidayInterest })} />
@@ -252,7 +254,7 @@ function YearsSection({ s, update, y }: { s: State; update: Update; y: Years }) 
 }
 
 const HOW: Record<RowMode, string> = {
-  grow: 'Grows each year', same: 'Same every year', fall: 'Falls each year (written-down value)', years: 'Each year', none: 'None',
+  grow: 'Grows each year', sales: 'Grows with sales', same: 'Same every year', fall: 'Falls each year (written-down value)', years: 'Each year', none: 'None',
   emi: 'EMIs a month', terms: 'By each loan’s terms', from: 'From the month it starts running', borrower: 'By who the borrower is',
 };
 
@@ -277,7 +279,7 @@ function Figures({ s, update, rows, y, p }: { s: State; update: Update; rows: Ro
   return <Section id="figures" title={plan ? 'The business' : 'Yearly figures'}>
     {!years.length
       ? <p class={`mt-2 ${HINT}`}>{plan
-        ? 'Asked once the month first drawn, how it is repaid, the holiday and the number of instalments are in.'
+        ? 'Asked once the month first drawn, how it is repaid, the holiday and the whole tenure are in.'
         : 'The years appear once the first year and the number of years are in.'}</p>
       : <>
         {plan && <BorrowerQuestion s={s} update={update} />}
@@ -431,7 +433,7 @@ function RunningTermsFields({ s, update }: { s: State; update: Update }) {
 /** More new term loans beside the one the page solves for (DSCR row A, point 2): each on its own terms, all counted. */
 function NewLoansFields({ s, update }: { s: State; update: Update }) {
   const loans = s.newLoans ?? [];
-  const set = (i: number, patch: Partial<LoanText>) => update((x) => ({ ...x, newLoans: (x.newLoans ?? []).map((l, k) => (k === i ? { ...l, ...patch } : l)) }));
+  const set = (i: number, patch: Partial<LoanText>) => update((x) => ({ ...x, newLoans: (x.newLoans ?? []).map((l, k) => (k === i ? changeLoan(l, patch) : l)) }));
   return <div data-testid="new-loans" class="mt-6 space-y-3">
     {loans.map((l, i) => {
       const id = (f: string) => `fld-new-${f}-${i + 2}`, n = `New term loan ${i + 2}: `;
@@ -443,7 +445,7 @@ function NewLoansFields({ s, update }: { s: State; update: Update }) {
           <Cell id={id('rate')} kind="number" label={`${n}Interest rate, % a year`} value={l.ratePct} onCommit={(t) => set(i, { ratePct: t })} />
           <Cell id={id('drawn')} kind="month" label={`${n}Month first drawn`} value={l.disbursed} onCommit={(t) => set(i, { disbursed: t })} />
           <Cell id={id('holiday')} kind="number" label={`${n}Holiday before the first instalment, months (0 if none)`} value={l.moratoriumMonths} onCommit={(t) => set(i, { moratoriumMonths: t })} />
-          <Cell id={id('instalments')} kind="number" label={`${n}Number of instalments, after the holiday`} value={l.instalments} onCommit={(t) => set(i, { instalments: t })} />
+          <Cell id={id('tenure')} kind="number" label={`${n}Whole tenure, months (holiday included)`} value={tenureText(l)} onCommit={(t) => set(i, { tenure: t })} />
         </div>
         <div class="mt-2 space-y-2">
           <Pills id={id('repayment')} legend={`${n}How it is repaid`} value={l.repayment} onChange={(repayment) => set(i, { repayment })}
@@ -482,7 +484,11 @@ function RowFields({ s, r, mode, years, update, titled }: { s: State; r: RowDef;
     <CellInput id={`fld-${r.key}-rate`} name={`${r.label}, ${label.toLowerCase()}`} value={rate} decimal
       onCommit={(v) => update((x) => ({ ...x, rates: { ...x.rates, [r.key]: v } }))} invalid={!!rate.trim() && numberOf(rate) === undefined} />
   </div>;
-  const worked = mode === 'grow' || mode === 'fall' ? rowValues(s, r, years).values : [];
+  const worked = mode === 'grow' || mode === 'fall' || mode === 'sales' ? rowValues(s, r, years).values : [];
+  // Grows with sales (DSCR row C, point 5): at the profit line's sales growth, or the same every year while it is the same.
+  const salesPct = (s.modes.pbdit ?? 'grow') === 'grow' ? numberOf(s.rates.pbdit) : 0;
+  const salesWords = salesPct === undefined ? 'at the sales growth on the profit line, still to type'
+    : salesPct === 0 ? 'the same every year, as sales are taken as flat' : `at the sales growth, ${+salesPct.toFixed(2)}% a year`;
   const lastValue = worked[worked.length - 1];
   // Figures that step from year to year (EMIs that end, an asset from a month) are read back for every year.
   const steps = mode === 'emi' || mode === 'from' ? rowValues(s, r, years).values : [];
@@ -511,9 +517,11 @@ function RowFields({ s, r, mode, years, update, titled }: { s: State; r: RowDef;
       {cell(0, `In ${years[0]}`)}
       {rateField(mode === 'grow' ? (r.key === 'pbdit' ? 'Sales growth, % a year' : 'Then grows by, % a year') : 'Then falls by, % a year')}
     </div>}
+    {mode === 'sales' && <div class="mt-2 grid gap-3 sm:grid-cols-2">{cell(0, `In ${years[0]}`)}
+      <p data-testid={`sales-${r.key}`} class={`self-end text-xs ${MUTED}`}>Then grows {salesWords}: more sales need a bigger limit.</p></div>}
     {mode === 'years' && <div class="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">{years.map((fy, i) => cell(i, fy))}</div>}
     {worked[0] !== undefined && lastValue !== undefined && years.length > 1 && <p data-testid={`readback-${r.key}`} class="mt-2 text-sm text-ink-muted">
-      Worked out: {rs(worked[0])} in {years[0]} to {rs(lastValue)} in {years[years.length - 1]}.
+      Worked out: {rs(worked[0])} in {years[0]} to {rs(lastValue)} in {years[years.length - 1]}{mode === 'sales' ? `, growing ${salesWords}` : ''}.
     </p>}
     {steps.length > 0 && steps.every((v) => v !== undefined) && <p data-testid={`readback-${r.key}`} class="mt-2 text-sm text-ink-muted">
       Worked out: {steps.map((v, i) => `${rs(v)} in ${years[i]}`).join('; ')}.
@@ -625,7 +633,7 @@ function AnswerPanel({ s, p, update, see, back, trail, fold, onPlan, note }: {
     {p.fewest && <div class="mt-3 text-sm text-ink">
       <p data-testid="dscr-fewest">{p.fewest.text}</p>
       {fewest !== undefined && <button type="button" data-testid="use-instalments" class={`mt-1 ${BUTTON}`}
-        onClick={() => update((x) => ({ ...x, loan: { ...x.loan, instalments: String(fewest) } }))}>Use {fewest} instalments</button>}
+        onClick={() => update((x) => ({ ...x, loan: withInstalments(x.loan, String(fewest)) }))}>Use a tenure of {p.fewest?.tenure} months</button>}
     </div>}
   </section></div>;
 }
@@ -759,7 +767,7 @@ function PastSection({ s, update, y }: { s: State; update: Update; y: Years }) {
 }
 
 /** The lenders' tests' own inputs, under More options; none of them is asked on the front door. */
-function LenderSection({ s, update, y }: { s: State; update: Update; y: Years }) {
+function LenderSection({ s, update, y, p }: { s: State; update: Update; y: Years; p: Preview }) {
   const l = s.lender ?? NO_LENDER, set = (f: (x: LenderText) => LenderText) => update((x) => ({ ...x, lender: f(x.lender ?? NO_LENDER) }));
   const byYear = s.modes.pbdit === 'years', at = (xs: string[], i: number, t: string) => { const n = [...xs]; n[i] = t; return n; };
   const cells = (key: 'sales' | 'promoters', name: string) => <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -768,25 +776,36 @@ function LenderSection({ s, update, y }: { s: State; update: Update; y: Years })
   </div>;
   const aud = (k: keyof LenderText['audited'], label: string) => <TextField id={`fld-lender-audited-${k}`} label={label} unit="₹" inputMode="decimal" value={l.audited[k]} tidy={tidyAmount}
     onCommit={(t) => set((x) => ({ ...x, audited: { ...x.audited, [k]: t } }))} />;
+  // Working capital from the last balance sheet (DSCR row C, point 7): three figures the borrower knows, worked by the engine.
+  const byBooks = wcByOf(l) === 'books';
+  const book = (k: keyof WcBooks) => <TextField id={`fld-lender-books-${k}`} label={WC_BOOKS_LABELS[k]} unit="₹" inputMode="decimal" value={l.books?.[k] ?? ''} tidy={tidyAmount}
+    said={notUnderstood(l.books?.[k] ?? '', amountOf, '6,00,000 or 6 L')} onCommit={(t) => set((x) => ({ ...x, books: { ...x.books, [k]: t } }))} />;
   return <Section id="lender" title="The bank’s other checks">
     <p class={`mt-1 ${HINT}`}>Optional. Each adds a line beside your DSCR; none changes it.</p>
     <h3 class="mt-4 font-medium text-ink">Sales, for the price and cost tests</h3>
     {byYear ? cells('sales', 'Sales') : <TextField id="fld-lender-sales" label="This year’s sales" unit="₹" hint="They grow as the profit does." inputMode="decimal" value={l.sales[0] ?? ''}
       tidy={tidyAmount} said={notUnderstood(l.sales[0] ?? '', amountOf, '50,00,000 or 50 L')} onCommit={(t) => set((x) => ({ ...x, sales: [t] }))} />}
-    <h3 class="mt-6 font-medium text-ink">Promoters’ loans repaid</h3>
-    <p class={HINT}>Taken as kept in the business until this loan is repaid. If any is repaid sooner, type it by year; leave a year empty for none.</p>
-    {cells('promoters', "Promoters' loans repaid")}
-    <h3 class="mt-6 font-medium text-ink">The cash check</h3>
-    <div class="mt-2 grid gap-3 sm:grid-cols-2">
-      <TextField id="fld-lender-wc" label="Working capital needed, % of sales" unit="%" hint="Stock and debtors less creditors, as a share of sales." inputMode="decimal" value={l.wcPct}
-        onCommit={(t) => set((x) => ({ ...x, wcPct: t }))} />
-      <TextField id="fld-lender-capex" label="Replacement capex a year" unit="₹" hint="The same every year; 0 if none." inputMode="decimal" value={l.capex} tidy={tidyAmount}
-        onCommit={(t) => set((x) => ({ ...x, capex: t }))} />
-    </div>
+    <h3 class="mt-6 font-medium text-ink">Owners’ loans paid back</h3>
+    <p data-testid="lender-promoters-why" class={HINT}>{LENDER.promoters.why}.</p>
+    <p class={`mt-1 ${HINT}`}>Taken as staying in until this loan is repaid. If any is paid back sooner, type it by year; leave a year empty for none.</p>
+    {cells('promoters', 'Owners’ loans paid back in')}
     <h3 class="mt-6 font-medium text-ink">The last audited year</h3>
     <p class={HINT}>The year before your first year of figures. Its sales also start the cash check.</p>
     <div class="mt-2 grid gap-3 sm:grid-cols-2">
       {aud('sales', 'Sales')}{aud('pbdit', 'Profit before interest, depreciation and tax')}{aud('depreciation', 'Depreciation')}{aud('interest', 'Interest')}{aud('tax', 'Tax')}
+    </div>
+    <h3 class="mt-6 font-medium text-ink">The cash check</h3>
+    <p data-testid="lender-cash-why" class={HINT}>{LENDER.cashWhy}.</p>
+    <div class="mt-3"><Pills id="fld-lender-wc-by" legend="Money tied up in stock and unpaid bills (working capital)" value={wcByOf(l)}
+      options={[['books', 'From your last balance sheet'], ['pct', 'As a % of sales']]} onChange={(wcBy) => set((x) => ({ ...x, wcBy }))} /></div>
+    {byBooks
+      ? <div class="mt-2 grid gap-3 sm:grid-cols-3">{book('stock')}{book('debtors')}{book('creditors')}</div>
+      : <div class="mt-2 grid gap-3 sm:grid-cols-2"><TextField id="fld-lender-wc" label="Working capital needed, % of sales" unit="%" hint="Stock and debtors less creditors, as a share of sales." inputMode="decimal" value={l.wcPct}
+        onCommit={(t) => set((x) => ({ ...x, wcPct: t }))} said={notUnderstood(l.wcPct, numberOf, '20')} /></div>}
+    {byBooks && p.lender?.wcWorked && <p data-testid="lender-wc-worked" class="mt-2 text-sm text-ink-muted">{p.lender.wcWorked}</p>}
+    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+      <TextField id="fld-lender-capex" label="Spent each year replacing worn machines" unit="₹" hint="Replacement capex: the same every year; 0 if none." inputMode="decimal" value={l.capex} tidy={tidyAmount}
+        onCommit={(t) => set((x) => ({ ...x, capex: t }))} />
     </div>
   </Section>;
 }
@@ -859,7 +878,7 @@ export function Professionals({ s, update, bar, lead, end }: { s: State; update:
     steps.push({ id: 'figures', name: plan ? stop.business : stop.figures, body: <><Figures s={s} update={update} rows={rows} y={y} p={p} />
       {plan && <PastSection s={s} update={update} y={y} />}</> });
     steps.push({ id: 'target', name: stop.target, body: <TargetSection s={s} update={update} /> });
-    if (plan) steps.push({ id: 'lender', name: stop.lender, body: <LenderSection s={s} update={update} y={y} /> });
+    if (plan) steps.push({ id: 'lender', name: stop.lender, body: <LenderSection s={s} update={update} y={y} p={p} /> });
   }
   return <Steps steps={steps} words={N.pro.steps} bar={bar} lead={lead} end={end} />;
 }

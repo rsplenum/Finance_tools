@@ -83,11 +83,13 @@ describe('fictional case A from the loan terms', () => {
       head: 'Meets both targets', rows: [{ id: 'minimum', fy: '2027-28', text: '1.20', ok: true }, { id: 'average', text: '1.50', ok: true }] });
     expect(p.largest).toEqual({ text: 'The largest loan your business can repay is ₹11,59,646. You asked ₹11,59,646. What limits it: the lowest year, 2027-28.',
       most: 1159646, asked: 1159646, limit: 'the lowest year, 2027-28' });
-    expect(p.fewest).toEqual({ text: 'The shortest repayment that works for ₹11,59,646: 12 quarterly instalments.', fewest: 12, now: 12, per: 4 });
+    // The whole tenure, the holiday inside it (DSCR row C, point 6): 6 months + 12 quarters × 3 = 42 months.
+    expect(p.fewest).toEqual({ text: 'The shortest repayment that works for ₹11,59,646: a tenure of 42 months: 12 quarterly instalments after the 6-month holiday.', fewest: 12, now: 12, per: 4, tenure: 42 });
   });
   it('offers the fewest instalments for a lowest-year target alone: 13', () => {
     const p = preview({ ...CASE_A, target: { average: '', minimum: '1.2' } });
-    expect(p.fewest).toEqual({ text: 'The shortest repayment that works for ₹12,00,000: 13 quarterly instalments.', instalments: 13, fewest: 13, now: 12, per: 4 });
+    // 6 months + 13 quarters × 3 = 45 months.
+    expect(p.fewest).toEqual({ text: 'The shortest repayment that works for ₹12,00,000: a tenure of 45 months: 13 quarterly instalments after the 6-month holiday.', instalments: 13, fewest: 13, now: 12, per: 4, tenure: 45 });
     expect(p.verdict?.text).toBe('Misses the target: the lowest year, 2027-28, is 1.16 against 1.20.');
   });
   it('asks for a later year only once one is added, and the offers stay within the years given', () => {
@@ -110,14 +112,14 @@ describe('what is still needed', () => {
     const p = preview({ ...START, source: 'plan', method: 'common' });
     expect(p.needs).toEqual([
       'Loan amount', 'Interest rate (% a year)', 'Month the loan is drawn (like 2026-04)', 'Holiday before the first instalment, in months (0 if none)',
-      'Number of instalments', 'How the loan is repaid (EMI, equal principal every month or quarter, or stepped)',
+      'Whole tenure in months, the holiday inside it', 'How the loan is repaid (EMI, equal principal every month or quarter, or stepped)',
       'A target DSCR for the average, the lowest year, or both',
     ]);
   });
   it('on the front door, lists every missing fact at once by the label it shows, in its order (design review 5, UX4)', () => {
     const s = frontDoor('2026-10'), p = withFrontNeeds(s, preview(s), yearsOf(s).years[0]);
     expect(p.needs.slice(0, 4)).toEqual(['This year’s profit before interest, depreciation and tax', 'Growth in sales a year (%)', 'Loan amount', 'Interest rate (% a year)']);
-    expect(p.needs).toContain('Number of instalments');
+    expect(p.needs).toContain('Whole tenure in months, the holiday inside it');
   });
   it('groups a figure missing in several years into one line', () => {
     const cells = { ...CASE_A.cells, depreciation: [], pbdit: ['5,00,000', '', '8,00,000', 'lots'] };
@@ -287,11 +289,17 @@ describe('reading and showing', () => {
 describe('this year\'s figures and sales growth; the rest assumed (the owner: "assume the rest")', () => {
   // Fictional case A′: case A's loan, and only this year's figures (engine/data/defaults.json assumes the rest).
   // Profit before interest, depreciation and tax 5,00,000 growing 10% with sales: 5,50,000, 6,05,000, 6,65,500.
-  // Depreciation 1,50,000 and working-capital interest 50,000 every year; tax 31.2% (assumed).
+  // Depreciation 1,50,000 every year; tax 31.2% (assumed). Working-capital interest 50,000 grows with sales (assumed,
+  // DSCR row C, point 5): 55,000, 60,500, 66,550. The loan's interest: 1,41,000, 1,02,000, 54,000, 9,000.
   // 2026-27: before tax 5,00,000 − 1,50,000 − 1,41,000 − 50,000 = 1,59,000; tax 49,608; cash 5,00,000 − 50,000 − 49,608 = 4,00,392
-  //   against 3,41,000 = 1.17. 2027-28: before tax 2,48,000, tax 77,376, cash 4,22,624 / 5,02,000 = 0.84.
-  //   2028-29: 3,51,000, 1,09,512, 4,45,488 / 4,54,000 = 0.98. 2029-30: 4,56,500, 1,42,428, 4,73,072 / 2,09,000 = 2.26.
-  //   Average 17,41,576 / 15,06,000 = 1.16; lowest 0.84 in 2027-28.
+  //   against 3,41,000 = 1.17. 2027-28: before tax 5,50,000 − 1,50,000 − 1,02,000 − 55,000 = 2,43,000, tax 75,816,
+  //   cash 5,50,000 − 55,000 − 75,816 = 4,19,184 / 5,02,000 = 0.835. 2028-29: 3,40,500, 1,06,236, 4,38,264 / 4,54,000 = 0.965.
+  //   2029-30: 4,39,950, 1,37,264.40, 4,61,685.60 / 2,09,000 = 2.209. Average 17,19,525.60 / 15,06,000 = 1.142; lowest 0.84 in 2027-28.
+  // A second way, cash = (profit − working-capital interest) × 0.688 + 0.312 × (depreciation + the loan's interest):
+  //   4,50,000 × 0.688 + 0.312 × 2,91,000 = 4,00,392; 4,95,000 × 0.688 + 78,624 = 4,19,184; 5,44,500 × 0.688 + 63,648 = 4,38,264;
+  //   5,98,950 × 0.688 + 49,608 = 4,61,685.60. Checked by a short script, both ways.
+  // Held at 50,000 every year (Same every year, as before row C): before tax 2,48,000, 3,51,000, 4,56,500 in the later years;
+  //   tax 77,376, 1,09,512, 1,42,428; cash 4,22,624, 4,45,488, 4,73,072; DSCR 1.17, 0.84, 0.98, 2.26; average 17,41,576 / 15,06,000 = 1.16.
   const A2: State = {
     ...ASSUMED,
     loan: { amount: '12 L', ratePct: '12', disbursed: '2026-04', moratoriumMonths: '6', instalments: '12', repayment: 'quarterly' },
@@ -308,11 +316,28 @@ describe('this year\'s figures and sales growth; the rest assumed (the owner: "a
     const p = preview(A2);
     expect(p.needs).toEqual([]);
     expect(line(p, 'pbdit')).toEqual(['5,00,000', '5,50,000', '6,05,000', '6,65,500']);
+    expect(line(p, 'Less: interest on working capital')).toEqual(['50,000', '55,000', '60,500', '66,550']);
+    expect(line(p, 'tax')).toEqual(['49,608', '75,816', '1,06,236', '1,37,264']);
+    expect(line(p, 'dscr')).toEqual(['1.17', '0.84', '0.97', '2.21']);
+    expect([p.average, p.lowest, p.lowestYear, p.verdict?.meets]).toEqual(['1.14', '0.84', '2027-28', false]);
+    expect(p.assumed.map((a) => a.id)).toEqual(['method', 'target', 'tax', 'margin', 'asset', 'depreciation', 'interest', 'otherLoans', 'nonCash', 'promoters']);
+    expect(p.assumed.find((a) => a.id === 'interest')?.shown).toMatch(/growing with sales/);
+    expect(statusText(p)).toBe('All questions answered, on 10 assumptions');
+  });
+  it('working-capital interest held the same every year, when told: the figures worked before row C', () => {
+    const p = preview({ ...A2, modes: { ...A2.modes, interestOther: 'same' } });
+    expect(line(p, 'Less: interest on working capital')).toEqual(['50,000', '50,000', '50,000', '50,000']);
     expect(line(p, 'tax')).toEqual(['49,608', '77,376', '1,09,512', '1,42,428']);
     expect(line(p, 'dscr')).toEqual(['1.17', '0.84', '0.98', '2.26']);
-    expect([p.average, p.lowest, p.lowestYear, p.verdict?.meets]).toEqual(['1.16', '0.84', '2027-28', false]);
-    expect(p.assumed.map((a) => a.id)).toEqual(['method', 'target', 'tax', 'margin', 'asset', 'depreciation', 'interest', 'otherLoans', 'nonCash', 'promoters']);
-    expect(statusText(p)).toBe('All questions answered, on 10 assumptions');
+    expect([p.average, p.lowest, p.lowestYear]).toEqual(['1.16', '0.84', '2027-28']);
+    expect(p.assumed.map((a) => a.id)).not.toContain('interest');
+  });
+  it('working-capital interest grows with sales only while sales grow: flat sales keep it flat', () => {
+    const flat = preview({ ...A2, modes: { ...A2.modes, pbdit: 'same' } });
+    expect(line(flat, 'Less: interest on working capital')).toEqual(['50,000', '50,000', '50,000', '50,000']);
+    // A CA's figure for every year gives no growth to follow: the choice is not offered, and the line asks how it is given.
+    const rows = rowsOf({ ...A2, modes: { ...A2.modes, pbdit: 'years' } });
+    expect(rows.find((r) => r.key === 'interestOther')?.modes).not.toContain('sales');
   });
   it('an assumption that is changed leaves the list', () => {
     const s = withTaxRate({ ...A2, target: { average: '1.25', minimum: '1.20' } }, '25.168');
@@ -337,11 +362,12 @@ describe('this year\'s figures and sales growth; the rest assumed (the owner: "a
 
 describe('who the borrower is, loans already running and the new asset (P1e)', () => {
   // Fictional case A′ (above): case A's loan; profit before interest, depreciation and tax 5,00,000 growing 10%;
-  // depreciation 1,50,000 and working-capital interest 50,000 every year.
+  // depreciation 1,50,000 and working-capital interest 50,000 every year (chosen: Same every year, as case P's engine test).
   const A2: State = {
     ...ASSUMED,
     loan: { amount: '12 L', ratePct: '12', disbursed: '2026-04', moratoriumMonths: '6', instalments: '12', repayment: 'quarterly' },
     cells: { ...ASSUMED.cells, pbdit: ['5,00,000'], depreciation: ['1,50,000'], interestOther: ['50,000'] },
+    modes: { ...ASSUMED.modes, interestOther: 'same' },
     rates: { pbdit: '10' },
   };
   it('a proprietor pays no tax on these profits (under ₹12,00,000): the DSCR rises from 1.16 to 1.41', () => {
@@ -353,7 +379,7 @@ describe('who the borrower is, loans already running and the new asset (P1e)', (
     expect(line(p, 'dscr')).toEqual(['1.32', '1.00', '1.22', '2.94']);
     expect([p.average, p.lowest, p.lowestYear]).toEqual(['1.41', '1.00', '2027-28']);
     // The assumed rate gives way to the proprietor's own assumption: the new regime, the business's profit the only income.
-    expect(p.assumed.map((a) => a.id)).toEqual(['method', 'target', 'proprietorTax', 'margin', 'asset', 'depreciation', 'interest', 'otherLoans', 'nonCash', 'promoters']);
+    expect(p.assumed.map((a) => a.id)).toEqual(['method', 'target', 'proprietorTax', 'margin', 'asset', 'depreciation', 'otherLoans', 'nonCash', 'promoters']);
   });
   it('the borrower says which EMIs to give', () => {
     expect([emisAsk(A2), ...BORROWER_CHOICES.map((b) => emisAsk(withBorrower(A2, b.id)))]).toEqual([

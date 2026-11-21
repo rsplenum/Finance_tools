@@ -14,7 +14,7 @@ import { LENDER } from '../../../engine/lender';
 import { LEVELS } from '../../../engine/ratios';
 import { inr } from '../../../engine/util';
 import { listed, upPct, upRupees, type BoardMove, type CheckRow, type ViableLine, type ViableView } from '../board-model';
-import { amountOf, dscrCaseOf, numberOf, type LenderView, type State } from './model';
+import { amountOf, dscrCaseOf, numberOf, withInstalments, type LenderView, type State } from './model';
 
 const rs = (n: number) => `₹${inr(n)}`;
 /** A ratio to two places, or four when two would read as meeting a level it misses (1.4996 against 1.50). */
@@ -152,7 +152,7 @@ export const sameDscrLevers = (a: DscrLevers, b: DscrLevers) => a.cut === b.cut 
 // ---- "Use this plan": the loan and the term written, never the profit, and an undo ----
 
 export interface DscrChange { key: 'amount' | 'instalments'; label: string; was: string; now: string }
-const put = (s: State, k: DscrChange['key'], t: string): State => ({ ...s, loan: { ...s.loan, [k]: t } });
+const put = (s: State, k: DscrChange['key'], t: string): State => ({ ...s, loan: k === 'instalments' ? withInstalments(s.loan, t) : { ...s.loan, [k]: t } });
 
 export function applyDscrPlan(s: State, l: DscrLevers): { s: State; changes: DscrChange[] } {
   const a = amountOf(s.loan.amount), n = numberOf(s.loan.instalments), changes: DscrChange[] = [];

@@ -142,10 +142,12 @@
     "floor": { "value": 1, "why": "Below 1.00 the cash does not cover the debt service: arithmetic, not a norm" },
     "notStressed": "The new asset's extra income is not stressed: its sales are not asked",
     "promoters": {
-      "assumed": "Promoters' loans are kept in the business until this loan is repaid (subordinated)",
-      "repaid": "Promoters' loans repaid as given, counted in debt service as a lender would"
+      "assumed": "Money the owners lent the business (promoters' loans) stays in until this loan is repaid (subordinated)",
+      "repaid": "With the owners' loans paid back as given, counted with the instalments as a lender would",
+      "why": "Banks usually ask that the owners' own loans stay in the business until their loan is repaid: every rupee paid back to the owners first is one less for the instalments"
     },
     "cash": "Cash available less the growth in working capital (its % of the rise in sales) and replacement capex, against the debt service",
+    "cashWhy": "As sales grow, more money is tied up in stock and in bills customers have not yet paid, and worn machines need replacing. The bank checks that the cash left after both still pays the instalments",
     "audited": "The last audited year, the year before the first year of figures, beside the projections; a projected margin above it is flagged, never blocked"
   }
 }

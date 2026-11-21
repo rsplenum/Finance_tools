@@ -60,9 +60,10 @@
     {
       "id": "interest",
       "what": "Interest on other borrowings",
-      "value": "this-year",
-      "shown": "As this year, every year, on top of this loan's interest",
-      "why": "Working-capital limits are taken as unchanged"
+      "value": "with-sales",
+      "shown": "This year's, growing with sales each year, on top of this loan's interest",
+      "why": "More sales tie up more money in stock and debtors, so the working-capital limit and its interest grow too; holding it flat would overstate the cover. Choose Same every year in Professional mode if the limit is fixed",
+      "decided": "The owner's point 5 for DSCR row C (21-11-2026): working-capital interest grows with sales unless told otherwise"
     },
     {
       "id": "interestNone",

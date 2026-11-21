@@ -7,7 +7,7 @@
  */
 import DATA from './data/dscr.json';
 import { planStatement, type Definition, type Needs, type Blocked, type Plan, type ProjectionYear, type LoanInput, type Row } from './dscr';
-import { auditedCheck, cashCheckTotal, promotersCheck, stressCheck } from './lender-check';
+import { auditedCheck, cashCheckTotal, promotersCheck, stressCheck, wcBooksCheck } from './lender-check';
 import type { LoanTerms } from './loan';
 
 export const LENDER = DATA.lender;
@@ -117,6 +117,33 @@ export function cashCheck(p: Plan, extra: LenderYear[], wcPct: number | undefine
   const total = out.reduce((t, r) => t + r.left, 0);
   if (!money(total, check.left) || out.some((r, i) => !money(r.left, check.rows[i]))) return blocked('the cash check');
   return { rows: out, ...(low ? { lowest: { cover: low.cover as number, fy: low.fy } } : {}), short: out.filter((r) => r.left < 0).map((r) => r.fy) };
+}
+
+/** The last balance sheet's working capital (DSCR row C, point 7): stock and debtors, less creditors. */
+export interface WcBooks { stock?: number; debtors?: number; creditors?: number }
+export const WC_BOOKS_LABELS: Record<keyof WcBooks, string> = {
+  stock: 'Stock at the end of the last audited year',
+  debtors: 'Money customers owed you then (debtors)',
+  creditors: 'Money you owed suppliers then (creditors)',
+};
+/**
+ * Working capital as a % of sales, worked from what the borrower knows (DSCR row C, point 7): the last balance sheet's
+ * stock and debtors less its creditors, over the same year's sales (the last audited year's). Worked a second way in
+ * lender-check.ts (each part's share of sales, added). Creditors above stock and debtors leave nothing to grow with
+ * sales; the % is then asked, never taken as 0.
+ */
+export function wcPctFrom(b: WcBooks, sales: number | undefined): { pct: number; wc: number } | Needs | Blocked {
+  const needs = (Object.keys(WC_BOOKS_LABELS) as (keyof WcBooks)[]).flatMap((k) => {
+    const v = b[k];
+    return !isNum(v) ? [WC_BOOKS_LABELS[k]] : v < 0 ? [`${WC_BOOKS_LABELS[k]}, as zero or more`] : [];
+  });
+  if (!isNum(sales)) needs.push("The last audited year's sales, for working capital as a % of them");
+  else if (sales <= 0) needs.push("The last audited year's sales, above zero");
+  if (needs.length) return { needs };
+  const x = b as Required<WcBooks>, wc = x.stock + x.debtors - x.creditors;
+  if (wc < 0) return { needs: ['Creditors are more than stock and debtors: type the working capital needed as a % of sales (0 if none)'] };
+  const pct = (wc / (sales as number)) * 100;
+  return money(pct, wcBooksCheck(x, sales as number)) ? { pct, wc } : blocked('working capital as a % of sales');
 }
 
 /** The last audited year from its five figures, and the first year of figures beside it. A projected margin above it is flagged. */
