@@ -57,8 +57,8 @@ describe('fictional case A from the loan terms', () => {
     expect(line(p, 'pbt')).toEqual(['1,59,000', '4,68,000', '5,86,000', '6,41,000']);
     expect(line(p, 'tax')).toEqual(['39,750', '1,17,000', '1,46,500', '1,60,250']);
     expect(line(p, 'Profit after tax')).toEqual(['1,19,250', '3,51,000', '4,39,500', '4,80,750']);
-    expect(line(p, 'Add: interest on term loans')).toEqual(['1,41,000', '1,02,000', '54,000', '9,000']);
-    expect(line(p, 'Term-loan instalments (principal)')).toEqual(['2,00,000', '4,00,000', '4,00,000', '2,00,000']);
+    expect(line(p, 'Add: interest on the new term loan')).toEqual(['1,41,000', '1,02,000', '54,000', '9,000']);
+    expect(line(p, 'Instalments on the new term loan (principal)')).toEqual(['2,00,000', '4,00,000', '4,00,000', '2,00,000']);
     expect(line(p, 'available')).toEqual(['4,10,250', '5,83,000', '6,03,500', '5,89,750']);
     expect(line(p, 'service')).toEqual(['3,41,000', '5,02,000', '4,54,000', '2,09,000']);
     expect(line(p, 'dscr')).toEqual(['1.20', '1.16', '1.33', '2.82']);

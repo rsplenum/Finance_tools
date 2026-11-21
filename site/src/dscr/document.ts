@@ -19,9 +19,9 @@ import { forDocument } from '../doc/doc';
 import { printable } from '../doc/face';
 import { SITE_NAME } from '../site';
 import {
-  BORROWER_CHOICES, GROUP_TITLES, amountOf, definitionOf, loanRead, modeOf, monthText, numberOf, presetOf, rowsOf, runningLoan, statusText,
+  BORROWER_CHOICES, GROUP_TITLES, amountOf, definitionOf, runningTermsOf, loanRead, modeOf, monthText, numberOf, presetOf, rowsOf, runningLoan, statusText,
   targetOf, tidyAmount, yearsOf,
-  type DocFacts, type LenderView, type OptionKey, type Preview, type RowDef, type RowMode, type ScheduleView, type State, type StatementView, type Years,
+  type DocFacts, type LoanText, type RunningTermsText, type LenderView, type OptionKey, type Preview, type RowDef, type RowMode, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 import { barsOf } from './worked';
 
@@ -96,18 +96,36 @@ function statementTable(st: StatementView): Table {
 
 const REPAID = { emi: 'EMI every month', monthly: 'Equal principal every month', stepped: 'Stepped every month, rising each year', quarterly: 'Equal principal every quarter' } as const;
 
-/** The loan as entered, and as the engine reads it back (when the instalments fall, and what each is): two to a line. */
-function loanFacts(s: State, p: Preview, y: Years): [string, string][][] {
-  const l = s.loan, rate = numberOf(l.ratePct), month = parseMonth(l.disbursed), m = numberOf(l.moratoriumMonths), k = numberOf(l.instalments);
-  const lines: [string, string][][] = [
+const holidayWords = (m: number, how?: 'paid' | 'added') => `${m} month${m === 1 ? '' : 's'}, interest ${how === 'added' ? 'added to the loan' : 'paid'}`;
+
+/** One new term loan's terms as entered, two to a line. */
+function termsFacts(l: LoanText): [string, string][][] {
+  const rate = numberOf(l.ratePct), month = parseMonth(l.disbursed), m = numberOf(l.moratoriumMonths), k = numberOf(l.instalments);
+  return [
     [['Amount', amountOf(l.amount) === undefined ? 'Still needed' : `₹${tidyAmount(l.amount)}`], ['Interest rate', rate === undefined ? 'Still needed' : `${rate}% a year`]],
-    [['First drawn', month ? monthText(month) : 'Still needed'], ['Moratorium', m === undefined ? 'Still needed' : m ? `${m} month${m === 1 ? '' : 's'}, interest paid` : 'None']],
+    [['First drawn', month ? monthText(month) : 'Still needed'], ['Moratorium', m === undefined ? 'Still needed' : m ? holidayWords(m, l.holidayInterest) : 'None']],
     [['Repaid', l.repayment ? REPAID[l.repayment] : 'Still needed'], ['Instalments', k === undefined ? 'Still needed' : `${k}${l.repayment ? ` ${l.repayment === 'quarterly' ? 'quarterly' : 'monthly'}` : ''}`]],
   ];
-  const read = loanRead(y);
+}
+
+/** The loan as entered, and as the engine reads it back (when the instalments fall, and what each is): two to a line;
+ * then each further new term loan (DSCR row A). */
+function loanFacts(s: State, p: Preview, y: Years): [string, string][][] {
+  const lines = termsFacts(s.loan), read = loanRead(y);
   if (read) lines.push([['When they fall', read]]);
   if (p.schedule) lines.push([['Each instalment', p.schedule.level]]);
+  (s.newLoans ?? []).forEach((l, i) => lines.push(...termsFacts(l).map((pair) => pair.map(([k, v]) => [`New term loan ${i + 2}: ${k.toLowerCase()}`, v] as [string, string]))));
   return lines;
+}
+
+/** A loan already running by its terms, in words (DSCR row A). */
+function runningTermsWords(t: RunningTermsText): string {
+  const fig = amountOf(t.figure), rate = numberOf(t.ratePct), start = parseMonth(t.start), ten = numberOf(t.tenure), hol = numberOf(t.holiday);
+  const what = !t.by ? 'amount or balance still needed' : fig === undefined ? `${t.by === 'balance' ? 'balance' : 'amount'} still needed`
+    : t.by === 'balance' ? `balance ₹${tidyAmount(t.figure)} at the start of ${t.asOf ? monthText(t.asOf) : 'this month'}` : `₹${tidyAmount(t.figure)} when taken`;
+  const repaid = t.repayment ? { emi: 'EMI every month', monthly: 'equal principal every month', quarterly: 'equal principal every quarter' }[t.repayment] : 'how repaid still needed';
+  return [what, rate === undefined ? 'rate still needed' : `${rate}% a year`, start ? `first drawn ${monthText(start)}` : 'month drawn still needed',
+    ten === undefined ? 'tenure still needed' : `${ten} months in all`, hol === undefined ? 'holiday still needed' : hol ? holidayWords(hol, t.holidayInterest) + ' in the holiday' : 'no holiday', repaid].join(', ');
 }
 
 /** The average and the lowest year, in a strip under the working. The verdict, the largest loan, the fewest instalments and the lender's target stay on the page. */
@@ -177,6 +195,7 @@ function howGiven(s: State, r: RowDef, mode: RowMode | undefined, years: string[
     case 'years': return years.map((fy, i) => `${fy}: ${typed(cells[i], r.percent)}`).join('; ');
     case 'none': return 'None';
     case 'emi': return emisGiven(s);
+    case 'terms': return runningTermsOf(s).map((t, i, all) => `${all.length > 1 ? `Loan ${i + 1}: ` : ''}${runningTermsWords(t)}`).join('; ');
     case 'from': {
       const from = parseMonth(s.asset.from);
       return `${typed(s.asset.yearly)} a year from ${from ? monthText(from) : s.asset.from.trim() ? `"${s.asset.from.trim()}" (not understood)` : 'a month still needed'}`;
@@ -207,7 +226,8 @@ function enteredPairs(s: State, p: Preview, y: Years): [string, string][] {
   if (s.source === 'plan' && who) pairs.push(['The borrower', who.label]);
   for (const r of rowsOf(s)) {
     const mode = modeOf(s, r), assumed = held.has(ASSUMPTION_OF[r.modeKey] ?? '');
-    // In a block of rows answered together, only the rows its answer uses.
+    // In a block of rows answered together, only the rows its answer uses; by each loan's terms, the block once.
+    if (mode === 'terms' && !done.has(r.modeKey)) { pairs.push([GROUP_TITLES[r.modeKey] ?? r.label, howGiven(s, r, mode, y.years)]); done.add(r.modeKey); continue; }
     if (mode && mode !== 'none' && r.only && !r.only.includes(mode)) continue;
     if (assumed && mode === 'none') continue;
     if (mode === 'none') {

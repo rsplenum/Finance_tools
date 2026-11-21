@@ -20,8 +20,55 @@ export interface LoanTerms {
   /** The interest in the holiday (D-POL-13, IDC1): paid as it falls due (absent: the stated assumption), or added to the
    * loan at each month's end, the instalments then worked on the larger balance. */
   holidayInterest?: HolidayInterest;
+  /** Other debts paid beside this loan (DSCR row A): more new term loans, each with its own schedule, and loans already
+   * running, by their terms. The solvers move this loan only; the others stay as given. */
+  alongside?: Alongside;
 }
 export type HolidayInterest = 'paid' | 'added';
+
+/**
+ * A loan already running, by its terms (DSCR row A, point 3), so its interest is known apart from its principal: the
+ * amount when taken, or instead its balance at the start of the month `asOf` (this month); the rate; the month it was
+ * first drawn; the whole tenure in months, the holiday inside it; whether the holiday's interest was paid or added. The
+ * schedule is the loan's own from the month drawn; given a balance, the amount is the one whose schedule leaves that
+ * balance then (every figure of a schedule is in proportion to its amount).
+ */
+export interface RunningTerms {
+  amount?: number;
+  balance?: number;
+  asOf?: string;
+  ratePct: number;
+  start: string;
+  tenureMonths: number;
+  holidayMonths: number;
+  frequency: Frequency;
+  style: 'emi' | 'equal-principal';
+  holidayInterest?: HolidayInterest;
+}
+export interface Alongside { loans?: LoanTerms[]; running?: RunningTerms[] }
+
+/** Months from 'YYYY-MM' `a` to `b` (0 when the same month). */
+export const monthsFrom = (a: string, b: string) => (Number(b.slice(0, 4)) - Number(a.slice(0, 4))) * 12 + Number(b.slice(5, 7)) - Number(a.slice(5, 7));
+
+/** The instalments in a tenure: the months after the holiday, in instalments monthly or quarterly. */
+export const instalmentsIn = (tenureMonths: number, holidayMonths: number, f: Frequency) => (tenureMonths - holidayMonths) / PERIOD_MONTHS[f];
+
+/** A running loan as loan terms from the month it was drawn, at the amount given or the one its balance implies. */
+export function runningLoanTerms(r: RunningTerms): LoanTerms {
+  const t: LoanTerms = {
+    amount: r.amount ?? 1, ratePct: r.ratePct, disbursed: r.start, moratoriumMonths: r.holidayMonths,
+    instalments: instalmentsIn(r.tenureMonths, r.holidayMonths, r.frequency), frequency: r.frequency, style: r.style,
+    ...(r.holidayInterest ? { holidayInterest: r.holidayInterest } : {}),
+  };
+  if (r.amount !== undefined) return t;
+  return { ...t, amount: (r.balance as number) / balanceAt(t, monthsFrom(r.start, r.asOf as string)) };
+}
+
+/** The balance of a loan as month `k` (from the month drawn, 0) starts, run forward; 0 once it is repaid. */
+export function balanceAt(t: LoanTerms, k: number): number {
+  const rows = months(t);
+  return k <= 0 ? t.amount : k < rows.length ? rows[k].opening : 0;
+}
 
 /** One financial year of the schedule: interest charged and principal paid in it, balance at its end; `added`, the part
  * of the interest added to the loan and not paid (a holiday's, when added). */

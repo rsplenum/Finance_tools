@@ -5,8 +5,11 @@
  * the result lists what is needed instead of figures.
  */
 import DATA from './data/dscr.json';
-import { PERIOD_MONTHS, fyOf, levelInstalment, monthAfter, months, schedule, termMonths, type LoanTerms, type MonthRow, type YearDebt } from './loan';
-import { levelCheck, monthsCheck, planCheck, scheduleCheck, statementCheck, type CheckResult } from './dscr-check';
+import {
+  PERIOD_MONTHS, balanceAt, fyOf, levelInstalment, monthAfter, months, monthsFrom, runningLoanTerms, schedule, termMonths,
+  type LoanTerms, type MonthRow, type RunningTerms, type YearDebt,
+} from './loan';
+import { levelCheck, monthsCheck, planCheck, runningCheck, scheduleCheck, statementCheck, type CheckResult } from './dscr-check';
 import { borrowerOf, taxOn } from './tax';
 
 type Data = typeof DATA;
@@ -50,12 +53,19 @@ export interface Totals { available: number; service: number; figures: { [C in C
 /** `total` when any year counts; with the average by totals, the average is total A ÷ total B. */
 export interface Statement { rows: Row[]; average?: number; minimum?: { dscr: number; fy: string }; notes: string[]; total?: Totals }
 /** How profit after tax is reached in a projected year (planning mode). */
-export interface ProfitYear { fy: string; pbdit: number; assetIncome: number; depreciation: number; nonCash: number; interestTL: number; interestOther: number; pbt: number; tax: number; pat: number }
+/** `interestTL` is the interest charged on every term loan in the year: `interestNew` on the new term loans, `interestRunning`
+ * on the loans already running whose interest is known (by their terms, or a CA's yearly figure). */
+export interface ProfitYear { fy: string; pbdit: number; assetIncome: number; depreciation: number; nonCash: number; interestTL: number; interestNew: number; interestRunning: number; interestOther: number; pbt: number; tax: number; pat: number }
 export type ProfitTotals = Omit<ProfitYear, 'fy'>;
 /** A year before the figures start (operations start later): no instalment falls in it, and its interest is paid from the project cost. */
 export interface BeforeStart { fy: string; interest: number }
-/** `profitTotal`: each line of the profit added up over the years counted, beside the statement's `total`. */
-export interface Plan { schedule: YearDebt[]; years: YearFigures[]; profit: ProfitYear[]; statement: Statement; beforeStart: BeforeStart[]; profitTotal?: ProfitTotals }
+/** A year's term-loan debt service taken apart (DSCR row A, point 2): the interest paid and principal repaid on the new term
+ * loans and on the loans already running whose interest is known. Each pair adds up to the year's `interestTL` and
+ * `principalTL`; the EMIs of loans whose interest is not known stay whole, as `existingEmis`. */
+export interface DebtSplit { fy: string; interestNew: number; interestRunning: number; principalNew: number; principalRunning: number }
+/** `profitTotal`: each line of the profit added up over the years counted, beside the statement's `total`. `schedule` is
+ * the new loan's own (the one the solvers move); `split` takes each year's term-loan debt service apart. */
+export interface Plan { schedule: YearDebt[]; years: YearFigures[]; profit: ProfitYear[]; statement: Statement; beforeStart: BeforeStart[]; split: DebtSplit[]; profitTotal?: ProfitTotals; splitTotal?: Omit<DebtSplit, 'fy'> }
 /** The repayment schedule month by month, its totals by financial year, the level instalment (EMI or principal), and the interest over the whole loan. */
 export interface Amortization { months: MonthRow[]; years: YearDebt[]; level: number; totalInterest: number }
 /** What stops a larger loan or a shorter repayment: the average, the lowest year, or a year with no cash to pay from. */
@@ -92,7 +102,7 @@ export const PROJECTION_LABELS: Record<Exclude<keyof ProjectionYear, 'fy' | 'tax
 export const PLAN_SERVICE: Component[] = ['existingEmis'];
 export const HOLIDAY_INTEREST_LABEL = 'Interest in the holiday (paid each month, or added to the loan)';
 /** The loan's facts that must be typed; the holiday's interest is optional (absent: paid, the stated assumption). */
-export const LOAN_LABELS: Record<Exclude<keyof LoanTerms, 'holidayInterest'>, string> = {
+export const LOAN_LABELS: Record<Exclude<keyof LoanTerms, 'holidayInterest' | 'alongside'>, string> = {
   amount: 'Loan amount',
   ratePct: 'Interest rate (% a year)',
   disbursed: 'Month the loan is drawn (like 2026-04)',
@@ -184,7 +194,47 @@ function loanNeeds(l: LoanInput): string[] {
   else if (l.style === 'emi' && l.frequency === 'quarterly') needs.push('Monthly instalments for an EMI (it is worked monthly only), or equal instalments of principal');
   else if (l.style === 'stepped' && l.frequency === 'quarterly') needs.push('Monthly instalments for a stepped repayment (it is worked monthly only), or equal instalments of principal');
   if (l.holidayInterest !== undefined && l.holidayInterest !== 'paid' && l.holidayInterest !== 'added') needs.push(HOLIDAY_INTEREST_LABEL);
+  (l.alongside?.loans ?? []).forEach((o, i) => needs.push(...loanNeeds({ ...o, alongside: undefined }).map((n) => `New term loan ${i + 2}: ${lowerFirst(n)}`)));
+  (l.alongside?.running ?? []).forEach((r, i) => needs.push(...runningNeeds(r).map((n) => `Loan already running ${i + 1}: ${lowerFirst(n)}`)));
   return needs;
+}
+const lowerFirst = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
+
+/** What a loan already running needs, given by its terms (DSCR row A, point 3). */
+export const RUNNING_LABELS = {
+  amount: 'The amount when taken, or the balance today',
+  ratePct: 'Interest rate (% a year)',
+  start: 'Month it was first drawn (like 2024-04)',
+  tenureMonths: 'Whole tenure in months, the holiday inside it',
+  holidayMonths: 'Holiday before its first instalment, in months (0 if none)',
+  style: 'How it is repaid (EMI, or equal principal every month or quarter)',
+};
+const isMonth = (t: unknown): t is string => typeof t === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(t);
+
+export function runningNeeds(r: Partial<RunningTerms>): string[] {
+  const needs: string[] = [], L = RUNNING_LABELS, hasA = isNum(r.amount), hasB = isNum(r.balance);
+  if (!hasA && !hasB) needs.push(L.amount);
+  else if (hasA && hasB) needs.push('The amount when taken or the balance today, not both');
+  else if (hasA && (r.amount as number) <= 0) needs.push('The amount when taken, above zero');
+  else if (hasB && (r.balance as number) <= 0) needs.push('The balance today, above zero: a loan repaid is no longer running');
+  if (!isNum(r.ratePct)) needs.push(L.ratePct); else if (r.ratePct < 0) needs.push(`${L.ratePct}, zero or more`);
+  if (!isMonth(r.start)) needs.push(L.start);
+  const whole = (v: unknown, least: number): v is number => isNum(v) && Number.isInteger(v) && v >= least;
+  if (!isNum(r.holidayMonths)) needs.push(L.holidayMonths); else if (!whole(r.holidayMonths, 0)) needs.push(`${L.holidayMonths}, in whole months`);
+  if (!isNum(r.tenureMonths)) needs.push(L.tenureMonths); else if (!whole(r.tenureMonths, 1)) needs.push(`${L.tenureMonths}, in whole months`);
+  const okFreq = r.frequency === 'monthly' || r.frequency === 'quarterly', okStyle = r.style === 'emi' || r.style === 'equal-principal';
+  if (!okFreq || !okStyle || (r.style === 'emi' && r.frequency === 'quarterly')) needs.push(L.style);
+  if (r.holidayInterest !== undefined && r.holidayInterest !== 'paid' && r.holidayInterest !== 'added') needs.push(HOLIDAY_INTEREST_LABEL);
+  if (needs.length) return needs;
+  const per = PERIOD_MONTHS[r.frequency as 'monthly' | 'quarterly'], after = (r.tenureMonths as number) - (r.holidayMonths as number);
+  if (after < per || after % per) return [`${L.tenureMonths}: the months after the holiday must make whole ${per === 3 ? 'quarters' : 'months'}, one or more`];
+  if (!hasB) return [];
+  // A balance today: the loan must have been drawn by this month and not yet repaid on its own schedule.
+  if (!isMonth(r.asOf)) return ['This month, for the balance today'];
+  const k = monthsFrom(r.start as string, r.asOf);
+  if (k < 0) return [`${L.start}: before this month, for a balance today`];
+  const t = runningLoanTerms({ ...(r as RunningTerms), balance: undefined, amount: 1 });
+  return balanceAt(t, k) > 0 ? [] : [`${L.tenureMonths}: on these terms it would be repaid by now`];
 }
 
 export function targetNeeds(t: Target): string[] {
@@ -291,49 +341,102 @@ const startNeeds = (start?: string) =>
  * `start`: the first year with figures, when operations start after the loan is drawn. The years before it must have no
  * instalment; their interest is taken as paid from the project cost (capitalised), and they are left out of the statement.
  */
+/** Each loan's yearly debt added up by financial year: interest charged, principal repaid, interest added and not paid. */
+interface YearSum { interest: number; principal: number; added: number }
+function sumByFy(lists: YearDebt[][]): Map<string, YearSum> {
+  const out = new Map<string, YearSum>();
+  for (const l of lists) for (const d of l) {
+    const t = out.get(d.fy) ?? { interest: 0, principal: 0, added: 0 };
+    t.interest += d.interest; t.principal += d.principal; t.added += d.added ?? 0;
+    out.set(d.fy, t);
+  }
+  return out;
+}
+const NONE: YearSum = { interest: 0, principal: 0, added: 0 };
+
+/**
+ * `start`: the first year with figures, when operations start after the loan is drawn. The years before it must have no
+ * instalment; their interest is taken as paid from the project cost (capitalised), and they are left out of the statement.
+ * Beside the loan the solvers move, `loan.alongside` adds more new term loans, each on its own schedule, and loans already
+ * running by their terms (DSCR row A): every one's interest is charged in the profit and added back, and every one's
+ * principal is debt service. A running loan counts in the years the projections give; its years before them are past.
+ */
 function plan(all: ProjectionYear[], loan: LoanTerms, def: Definition, start?: string): Plan | Needs | Blocked {
-  const debt = schedule(loan), proj = start ? all.filter((y) => y.fy >= start) : all;
-  const early = start ? debt.filter((d) => d.fy < start) : [];
-  const due = early.filter((d) => d.principal > 0).map((d) => `Figures for ${d.fy}: an instalment falls due then`);
+  const extra = loan.alongside?.loans ?? [], runningTerms = (loan.alongside?.running ?? []).map(runningLoanTerms);
+  const own = { ...loan, alongside: undefined }, debt = schedule(own), news = [debt, ...extra.map(schedule)], runs = runningTerms.map(schedule);
+  const proj = start ? all.filter((y) => y.fy >= start) : all;
+  const early = start ? news.flat().filter((d) => d.fy < start) : [];
+  const due = [...new Set(early.filter((d) => d.principal > 0).map((d) => d.fy))].map((fy) => `Figures for ${fy}: an instalment falls due then`);
   if (due.length) return { needs: due };
-  const needs = coverageNeeds(debt.filter((d) => !start || d.fy >= start), proj);
+  const needs = [...new Set(news.flatMap((n) => coverageNeeds(n.filter((d) => !start || d.fy >= start), proj)))];
   if (needs.length) return { needs };
-  const off = scheduleDisagrees(debt, scheduleCheck(loan));
+  const check = runningCheck(loan.alongside?.running ?? []);
+  const off = [own, ...extra].map((t, i) => scheduleDisagrees(news[i], scheduleCheck(t))).find(Boolean)
+    || (runningTerms.some((t, i) => !money(t.amount, check[i].amount)) ? 'a loan already running' : '')
+    || runningTerms.map((_, i) => scheduleDisagrees(runs[i], scheduleCheck(check[i]))).find(Boolean);
   if (off) return blocked(off);
-  const byFy = new Map(debt.map((d) => [d.fy, d]));
-  const profit: ProfitYear[] = [];
+  const newBy = sumByFy(news), runBy = sumByFy(runs);
+  const profit: ProfitYear[] = [], split: DebtSplit[] = [];
   const years: YearFigures[] = proj.map((y) => {
-    const p = y as Required<ProjectionYear>, d = byFy.get(y.fy);
-    const interestTL = (d?.interest ?? 0) - (y.interestFromCost ?? 0) + p.otherLoansInterest, principalTL = (d?.principal ?? 0) + p.otherLoansPrincipal;
-    // The holiday's interest added to the loan in the year, not paid (D-POL-13): a cost in the profit, a non-cash charge
+    const p = y as Required<ProjectionYear>, n = newBy.get(y.fy) ?? NONE, u = runBy.get(y.fy) ?? NONE;
+    const interestNew = n.interest - (y.interestFromCost ?? 0), interestRunning = u.interest + p.otherLoansInterest;
+    const interestTL = interestNew + interestRunning, principalTL = n.principal + u.principal + p.otherLoansPrincipal;
+    // The holiday's interest added to a loan in the year, not paid (D-POL-13): a cost in the profit, a non-cash charge
     // in the cash available, and no debt service.
-    const added = (d?.added ?? 0) - (y.addedFromCost ?? 0);
+    const addedNew = n.added - (y.addedFromCost ?? 0), added = addedNew + u.added;
     // Existing EMIs are not split into interest and principal, so none of their interest is set against tax (errs low).
     const pbt = p.pbdit + p.assetIncome - p.depreciation - p.nonCash - interestTL - p.interestOther;
     const by = borrowerOf(y.taxBy), tax = by ? taxOn(pbt, by) : pbt > 0 ? pbt * p.taxPct / 100 : 0, pat = pbt - tax;
-    profit.push({ fy: y.fy, pbdit: p.pbdit, assetIncome: p.assetIncome, depreciation: p.depreciation, nonCash: p.nonCash, interestTL, interestOther: p.interestOther, pbt, tax, pat });
+    profit.push({ fy: y.fy, pbdit: p.pbdit, assetIncome: p.assetIncome, depreciation: p.depreciation, nonCash: p.nonCash, interestTL, interestNew, interestRunning, interestOther: p.interestOther, pbt, tax, pat });
+    split.push({ fy: y.fy, interestNew: interestNew - addedNew, interestRunning: interestRunning - u.added, principalNew: n.principal, principalRunning: u.principal + p.otherLoansPrincipal });
     return {
       fy: y.fy, pat, depreciation: p.depreciation, nonCash: p.nonCash + added, interestTL: interestTL - added, principalTL, interestOther: p.interestOther, existingEmis: p.existingEmis,
       ...(isNum(y.leaseRentals) ? { leaseRentals: y.leaseRentals } : {}),
     };
   });
-  const statement = computeStatement(years, def, DATA, PLAN_SERVICE), check = planCheck(proj, loan, def);
+  const statement = computeStatement(years, def, DATA, PLAN_SERVICE), pc = planCheck(proj, loan, def);
   const profitTotal = statement.total ? profitTotalOf(profit, statement) : undefined;
-  const where = disagreement(statement, check) || totalsOff(statement, def, DATA, PLAN_SERVICE)
-    || profit.map((x, i) => (money(x.pbt, check.rows[i]?.pbt ?? NaN) && money(x.tax, check.rows[i]?.tax ?? NaN) ? '' : `the tax in ${x.fy}`)).find(Boolean)
-    || profitTotalOff(profitTotal, statement, check);
+  const splitTotal = statement.total ? splitTotalOf(split, statement) : undefined;
+  const where = disagreement(statement, pc) || totalsOff(statement, def, DATA, PLAN_SERVICE)
+    || profit.map((x, i) => (money(x.pbt, pc.rows[i]?.pbt ?? NaN) && money(x.tax, pc.rows[i]?.tax ?? NaN) ? '' : `the tax in ${x.fy}`)).find(Boolean)
+    || split.map((x, i) => (money(x.interestRunning, pc.rows[i]?.interestRunning ?? NaN) && money(x.principalRunning, pc.rows[i]?.principalRunning ?? NaN) ? '' : `the loans already running in ${x.fy}`)).find(Boolean)
+    || profitTotalOff(profitTotal, statement, pc) || splitTotalOff(splitTotal, statement);
   return where ? blocked(where) : {
-    schedule: debt, years, profit, statement, beforeStart: early.map((d) => ({ fy: d.fy, interest: d.interest })), ...(profitTotal ? { profitTotal } : {}),
+    schedule: debt, years, profit, statement, split, beforeStart: beforeStartOf(early), ...(profitTotal ? { profitTotal } : {}), ...(splitTotal ? { splitTotal } : {}),
   };
+}
+
+/** The years before the figures start, each year's interest on the new term loans added up. */
+function beforeStartOf(early: YearDebt[]): BeforeStart[] {
+  const by = new Map<string, number>();
+  for (const d of early) by.set(d.fy, (by.get(d.fy) ?? 0) + d.interest);
+  return [...by].map(([fy, interest]) => ({ fy, interest }));
 }
 
 /** Each line of the profit added up over the years the statement counts. */
 function profitTotalOf(profit: ProfitYear[], s: Statement): ProfitTotals {
-  const t: ProfitTotals = { pbdit: 0, assetIncome: 0, depreciation: 0, nonCash: 0, interestTL: 0, interestOther: 0, pbt: 0, tax: 0, pat: 0 };
+  const t: ProfitTotals = { pbdit: 0, assetIncome: 0, depreciation: 0, nonCash: 0, interestTL: 0, interestNew: 0, interestRunning: 0, interestOther: 0, pbt: 0, tax: 0, pat: 0 };
   profit.forEach((y, i) => {
     if (s.rows[i]?.counted) for (const k of Object.keys(t) as (keyof ProfitTotals)[]) t[k] += y[k];
   });
   return t;
+}
+
+/** The split added up over the years the statement counts. */
+function splitTotalOf(split: DebtSplit[], s: Statement): Omit<DebtSplit, 'fy'> {
+  const t = { interestNew: 0, interestRunning: 0, principalNew: 0, principalRunning: 0 };
+  split.forEach((y, i) => {
+    if (s.rows[i]?.counted) for (const k of Object.keys(t) as (keyof typeof t)[]) t[k] += y[k];
+  });
+  return t;
+}
+
+/** Where the split's totals do not make up the statement's term-loan totals, or ''. */
+function splitTotalOff(t: Omit<DebtSplit, 'fy'> | undefined, s: Statement): string {
+  const f = s.total?.figures;
+  if (!t || !f) return '';
+  const ok = (a: number, b: number | undefined) => b === undefined || money(a, b);
+  return ok(t.interestNew + t.interestRunning, f.interestTL) && ok(t.principalNew + t.principalRunning, f.principalTL) ? '' : 'the term loans\' totals';
 }
 
 /**
@@ -354,8 +457,8 @@ export function planStatement(proj: ProjectionYear[], loan: LoanInput, def: Defi
 }
 
 /** The repayment schedule, every month and by year, shown only when the closed-form check agrees with it. */
-export function amortization(loan: LoanInput): Amortization | Needs | Blocked {
-  const needs = loanNeeds(loan);
+export function amortization(input: LoanInput): Amortization | Needs | Blocked {
+  const loan = { ...input, alongside: undefined }, needs = loanNeeds(loan);
   if (needs.length) return { needs };
   const t = loan as LoanTerms, rows = months(t), check = monthsCheck(t);
   for (let i = 0; i < Math.max(rows.length, check.length); i++) {
@@ -377,7 +480,7 @@ export interface LoanTimeline { years: string[]; firstInstalment: string; lastIn
 
 /** When the loan runs: needs only the month drawn, the moratorium, the number of instalments and how often. */
 export function loanTimeline(loan: LoanInput): LoanTimeline | Needs {
-  const needs = loanNeeds({ ...loan, amount: 1, ratePct: 0, style: 'equal-principal' });
+  const needs = loanNeeds({ ...loan, alongside: undefined, amount: 1, ratePct: 0, style: 'equal-principal' });
   if (needs.length) return { needs };
   const t = loan as LoanTerms, at = (k: number) => monthAfter(t.disbursed, k), last = termMonths(t) - 1;
   const ym = (k: number) => `${at(k).year}-${String(at(k).month).padStart(2, '0')}`;
