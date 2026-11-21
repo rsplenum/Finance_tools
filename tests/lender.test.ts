@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { planStatement, type Definition, type Plan, type ProjectionYear } from '../engine/dscr';
-import { auditedYear, cashCheck, promotersRepaid, stressTests, type LenderYear, type StressLine } from '../engine/lender';
+import { auditedYear, cashCheck, promotersRepaid, stressTests, wcPctFrom, type LenderYear, type StressLine } from '../engine/lender';
 import type { LoanTerms } from '../engine/loan';
 import { ASSUMED, NO_LENDER, preview, type State } from '../site/src/dscr/model';
 
@@ -77,6 +77,26 @@ describe('the cash check (fictional case L)', () => {
   });
 });
 
+describe('working capital from the last balance sheet (fictional case L, DSCR row C point 7)', () => {
+  // Stock 2,40,000 + debtors 3,00,000 − creditors 1,00,000 = 4,40,000; on last year's sales of 22,00,000 that is
+  // 4,40,000 / 22,00,000 = 20%, the very % the cash check above was worked with (by hand: 22,00,000 × 0.20 = 4,40,000).
+  it('works the % from stock, debtors and creditors, and the cash check reads as with 20% typed', () => {
+    const w = wcPctFrom({ stock: 240000, debtors: 300000, creditors: 100000 }, 2200000);
+    if (!('pct' in w)) throw new Error(JSON.stringify(w));
+    expect([w.wc, w.pct.toFixed(6)]).toEqual([440000, '20.000000']);
+    const p = planStatement(CASE, LOAN, COMMON) as Plan;
+    expect(cashCheck(p, EXTRA, w.pct, 2200000)).toEqual(cashCheck(p, EXTRA, 20, 2200000));
+  });
+  it('asks for what is missing, and for the % when creditors are more than stock and debtors', () => {
+    expect(wcPctFrom({ stock: 240000, debtors: 300000 }, undefined)).toEqual({
+      needs: ['Money you owed suppliers then (creditors)', "The last audited year's sales, for working capital as a % of them"],
+    });
+    expect(wcPctFrom({ stock: 100000, debtors: 100000, creditors: 300000 }, 2200000)).toEqual({
+      needs: ['Creditors are more than stock and debtors: type the working capital needed as a % of sales (0 if none)'],
+    });
+  });
+});
+
 describe('the last audited year beside the projections', () => {
   // 2025-26: before tax 4,40,000 − 1,60,000 − 60,000 = 2,20,000; after tax 1,65,000; cash accrual 3,25,000; margin 20%.
   // 2026-27: sales up 25,00,000 / 22,00,000 − 1 = 13.64%; margin 5,00,000 / 25,00,000 = 20%, not above: no flag.
@@ -98,10 +118,12 @@ describe('on the page: the lines beside the DSCR, from the front door (fictional
   // Case A′ (tests/dscr-page.test.ts) with this year's sales 50,00,000, growing 10% with the profit. Price 5% lower:
   // profit 2,50,000 · 2,75,000 · 3,02,500 · 3,32,750; tax at 31.2% nil, nil, 15,132, 38,610; cash 2,00,000 · 2,25,000 ·
   // 2,37,368 · 2,44,140; average 9,06,508 / 15,06,000 = 0.60, lowest 2,25,000 / 5,02,000 = 0.45 in 2027-28 (by hand and a script).
+  // Working-capital interest held at 50,000 every year (Same every year, chosen), as when these figures were worked.
   const A2: State = {
     ...ASSUMED,
     loan: { amount: '12 L', ratePct: '12', disbursed: '2026-04', moratoriumMonths: '6', instalments: '12', repayment: 'quarterly' },
     cells: { ...ASSUMED.cells, pbdit: ['5,00,000'], depreciation: ['1,50,000'], interestOther: ['50,000'] },
+    modes: { ...ASSUMED.modes, interestOther: 'same' },
     rates: { pbdit: '10' },
   };
   it('asks for sales in one line until given; the promoters\' assumption shows', () => {
@@ -115,6 +137,23 @@ describe('on the page: the lines beside the DSCR, from the front door (fictional
     const p = preview({ ...A2, lender: { ...NO_LENDER, sales: ['50 L'] } });
     expect(p.lender!.stress[0]).toMatchObject({ label: 'Sales price 5% lower', average: '0.60', lowest: '0.45', lowestYear: '2027-28', below: true });
     expect([p.average, p.verdict?.meets]).toEqual(['1.16', false]);
+  });
+  it('working capital from the balance sheet: said in a line, and the cash check as with the same % typed', () => {
+    // Stock 6,00,000 + debtors 8,00,000 − creditors 4,00,000 = 10,00,000; ÷ last year's sales 50,00,000 = 20%.
+    const books = { ...NO_LENDER, sales: ['50 L'], capex: '50,000', audited: { ...NO_LENDER.audited, sales: '50 L' } };
+    const byBooks = preview({ ...A2, lender: { ...books, wcBy: 'books', books: { stock: '6 L', debtors: '8 L', creditors: '4 L' } } }).lender!;
+    const byPct = preview({ ...A2, lender: { ...books, wcBy: 'pct', wcPct: '20' } }).lender!;
+    expect(byBooks.wcWorked).toBe("Working capital: ₹10,00,000, stock and debtors less creditors, 20.0% of last year's sales of ₹50,00,000. It grows with sales.");
+    // Sales 50,00,000 · 55,00,000 · 60,50,000 · 66,55,000 against last year's 50,00,000: growth nil, 5,00,000, 5,50,000,
+    // 6,05,000; × 20% = nil, 1,00,000, 1,10,000, 1,21,000 tied up in working capital (by hand).
+    const cash = byBooks.cash;
+    if (!cash || !('rows' in cash)) throw new Error(JSON.stringify(cash));
+    expect(cash.rows.map((r) => r.wc)).toEqual(['₹0', '₹1,00,000', '₹1,10,000', '₹1,21,000']);
+    expect(byBooks.cash).toEqual(byPct.cash);
+    expect(byPct.wcWorked).toBeUndefined();
+    // Creditors left blank: asked, with nothing worked.
+    const half = preview({ ...A2, lender: { ...books, wcBy: 'books', books: { stock: '6 L', debtors: '8 L' } } }).lender!;
+    expect(half.cash).toEqual({ needs: ['Money you owed suppliers then (creditors)'] });
   });
   it("promoters' loans repaid leave the assumptions and show their own line against the target", () => {
     const p = preview({ ...A2, lender: { ...NO_LENDER, promoters: ['', '1 L'] } });

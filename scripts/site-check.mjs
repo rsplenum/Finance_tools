@@ -352,7 +352,7 @@ async function enterCaseA(page) {
   await leave(page, '#fld-disbursed', '2026-04');
   await leave(page, '#fld-moratoriumMonths', '6');
   await page.check('#fld-repayment-quarterly');
-  await leave(page, '#fld-instalments', '12');
+  await leave(page, '#fld-tenure', '42');
   // Case A comes as a CA's projection, a figure for each year, so those two lines are given each year.
   await page.check('#fld-pbdit-years');
   await page.check('#fld-depreciation-years');
@@ -441,9 +441,10 @@ if (touched('/dscr/')) {
 
   // The common examples as the target: what limits the result, and the loan that meets it.
   await page.getByTestId('use-examples').click();
-  // Six assumptions still hold: the method, the target, and the new asset, working-capital interest, loans already running
+  // Assumptions still hold for the method, the target, and the new asset, loans already running
   // and other non-cash charges as answered by the assumptions (tax, profit and depreciation were typed).
-  await expectFigures(page, v, 'dscr-status', '7', 'case A with the examples');
+  // Working-capital interest chosen as Same every year is a choice since DSCR row C (the assumption grows it with sales): one fewer.
+  await expectFigures(page, v, 'dscr-status', '6', 'case A with the examples');
   await expectFigures(page, v, 'dscr-verdict', 'misses 2 2 2027-28 1.16 1.25 1.45 1.50', 'case A with the examples');
   await expectFigures(page, v, 'dscr-largest', '11,11,295 12,00,000 2027-28', 'case A with the examples');
   await expectFigures(page, v, 'use-amount', '11,11,295', 'case A with the examples');
@@ -523,7 +524,7 @@ if (touched('/dscr/')) {
   await leave(page, '#fld-disbursed', '2026-10');
   await page.check('#fld-repayment-quarterly');
   await leave(page, '#fld-moratoriumMonths', '6');
-  await leave(page, '#fld-instalments', '12');
+  await leave(page, '#fld-tenure', '42');
   await page.check('#fld-pbdit-years');
   await page.check('#fld-depreciation-years');
   const later = ['2027-28', '2028-29', '2029-30'], pbdit = ['7,50,000', '8,00,000', '8,00,000'], dep = ['1,30,000', '1,10,000', '1,00,000'];
@@ -544,7 +545,7 @@ if (touched('/dscr/')) {
   await expectText(page, v, 'assumed-start', /^The first year counted ?The year the loan is paid out ?\S.*\. ?(Change: The first year counted)?$/, 'the start assumption listed, with its reason');
   await expectFigures(page, v, page.getByTestId('start-question').locator('p').first(), '2026-27 72,000', 'the question about the first year');
   await page.check('#fld-start-2027-28');
-  await expectFigures(page, v, 'dscr-status', '7', 'figures starting in 2027-28');
+  await expectFigures(page, v, 'dscr-status', '6', 'figures starting in 2027-28');
   if (await page.getByTestId('assumed-start').count()) v('the start assumption is still listed after choosing 2027-28');
   await expectFigures(page, v, 'dscr-before-start', '2026-27 72,000', 'figures starting in 2027-28');
   await expectValue(page, v, '#fld-pbdit-2027-28', '7,50,000', 'each figure stays under its year');
@@ -566,7 +567,7 @@ if (touched('/dscr/')) {
   await leave(page, '#fld-disbursed', '2027-04');
   await page.check('#fld-repayment-emi');
   await leave(page, '#fld-moratoriumMonths', '0');
-  await leave(page, '#fld-instalments', '60');
+  await leave(page, '#fld-tenure', '60');
   if (await page.getByTestId('start-question').count()) v('the first year of figures is asked though the loan has an instalment in its first year');
   // The profit line starts as "grows each year": the first year's figure and a rate.
   await leave(page, '#fld-pbdit-2027-28', '18 L');
@@ -582,7 +583,7 @@ if (touched('/dscr/')) {
   await page.getByTestId('use-examples').click();
   // Eight assumptions hold: all but the tax rate (a company's tax is worked out); this year's depreciation typed once is
   // "as this year, every year".
-  await expectFigures(page, v, 'dscr-status', '9', 'a few answers');
+  await expectFigures(page, v, 'dscr-status', '8', 'a few answers');
   // Four fields for a five-year loan (profit and its rate, depreciation, working-capital interest; the tax from who the
   for (const [fy, want] of [['2027-28', '18,00,000'], ['2028-29', '19,80,000'], ['2031-32', '26,35,380']])
     await expectText(page, v, `pbdit-${fy}`, want, `profit worked out for ${fy}`);
@@ -600,14 +601,14 @@ if (touched('/dscr/')) {
   await leave(page, '#fld-disbursed', '2026-04');
   await leave(page, '#fld-moratoriumMonths', '6');
   await page.check('#fld-repayment-quarterly');
-  await leave(page, '#fld-instalments', '12');
+  await leave(page, '#fld-tenure', '42');
   await leave(page, '#fld-pbdit-2026-27', '5 L');
   await leave(page, '#fld-pbdit-rate', '10');
   await page.check('#fld-depreciation-same');
   await leave(page, '#fld-depreciation-2026-27', '1.5 L');
   await page.check('#fld-interestOther-same');
   await leave(page, '#fld-interestOther-2026-27', '50,000');
-  await expectFigures(page, v, 'dscr-status', '10', 'the quick path');
+  await expectFigures(page, v, 'dscr-status', '9', 'the quick path');
   await expectFigures(page, v, 'dscr-average', '1.16', 'the quick path');
   await expectFigures(page, v, 'dscr-lowest', '0.84', 'the quick path');
   await expectFigures(page, v, 'assumed-tax', '31.2%', 'the quick path');
@@ -699,7 +700,7 @@ if (touched('/dscr/')) {
   await leave(page, '#fld-disbursed', '2026-04');
   await leave(page, '#fld-moratoriumMonths', '6');
   await page.check('#fld-repayment-quarterly');
-  await leave(page, '#fld-instalments', '12');
+  await leave(page, '#fld-tenure', '42');
   await leave(page, '#fld-pbdit-2026-27', '5 L');
   await leave(page, '#fld-pbdit-rate', '10');
   await page.check('#fld-depreciation-same');

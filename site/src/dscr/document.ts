@@ -20,7 +20,7 @@ import { printable } from '../doc/face';
 import { SITE_NAME } from '../site';
 import {
   BORROWER_CHOICES, GROUP_TITLES, amountOf, definitionOf, runningTermsOf, loanRead, modeOf, monthText, numberOf, presetOf, rowsOf, runningLoan, statusText,
-  targetOf, tidyAmount, yearsOf,
+  targetOf, tenureText, tidyAmount, yearsOf,
   type DocFacts, type LoanText, type RunningTermsText, type LenderView, type OptionKey, type Preview, type RowDef, type RowMode, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 import { barsOf } from './worked';
@@ -101,11 +101,13 @@ const holidayWords = (m: number, how?: 'paid' | 'added') => `${m} month${m === 1
 
 /** One new term loan's terms as entered, two to a line. */
 function termsFacts(l: LoanText): [string, string][][] {
-  const rate = numberOf(l.ratePct), month = parseMonth(l.disbursed), m = numberOf(l.moratoriumMonths), k = numberOf(l.instalments);
+  const rate = numberOf(l.ratePct), month = parseMonth(l.disbursed), m = numberOf(l.moratoriumMonths), k = numberOf(l.instalments), t = numberOf(tenureText(l));
   return [
     [['Amount', amountOf(l.amount) === undefined ? 'Still needed' : `₹${tidyAmount(l.amount)}`], ['Interest rate', rate === undefined ? 'Still needed' : `${rate}% a year`]],
     [['First drawn', month ? monthText(month) : 'Still needed'], ['Moratorium', m === undefined ? 'Still needed' : m ? holidayWords(m, l.holidayInterest) : 'None']],
     [['Repaid', l.repayment ? REPAID[l.repayment] : 'Still needed'], ['Instalments', k === undefined ? 'Still needed' : `${k}${l.repayment ? ` ${l.repayment === 'quarterly' ? 'quarterly' : 'monthly'}` : ''}`]],
+    // The whole tenure, as a sanction letter gives it, the holiday inside it (DSCR row C, point 6).
+    ...(t === undefined ? [] : [[['Whole tenure', `${t} months${m ? `, the ${m}-month holiday inside it` : ''}`]] as [string, string][]]),
   ];
 }
 
@@ -193,6 +195,11 @@ function howGiven(s: State, r: RowDef, mode: RowMode | undefined, years: string[
     case 'same': return `${first} every year`;
     case 'grow': return r.key === 'pbdit' ? `${first} in ${years[0]}; sales growth ${rate} a year` : `${first} in ${years[0]}, then growing ${rate} a year`;
     case 'fall': return `${first} in ${years[0]}, then falling ${rate} a year (written-down value)`;
+    case 'sales': {
+      // Grows with sales (DSCR row C, point 5): at the profit line's sales growth.
+      const grows = (s.modes.pbdit ?? 'grow') === 'grow', g = s.rates.pbdit?.trim() ?? '', pct = numberOf(g);
+      return `${first} in ${years[0]}, then growing with sales, ${!grows ? 'taken as flat' : pct === undefined ? 'a sales growth still needed' : `${pct}% a year`}`;
+    }
     case 'years': return years.map((fy, i) => `${fy}: ${typed(cells[i], r.percent)}`).join('; ');
     case 'none': return 'None';
     case 'emi': return emisGiven(s);
@@ -320,6 +327,7 @@ function sensitivityPart(v: LenderView, years: string[]): Part {
   }
   const c = v.cash;
   if (c && 'rows' in c) blocks.push({ kind: 'heading', text: 'Cash after working capital and replacement capex' }, { kind: 'text', text: c.text },
+    ...(v.wcWorked ? [{ kind: 'text', text: v.wcWorked } as const] : []),
     { kind: 'table', table: { columns: across(c.rows.map(() => true)), rows: [
       { cells: [{ text: 'Cash available (A)' }, ...c.rows.map((r) => money(r.available, r.n.available))] },
       { cells: [{ text: "Less: working capital's growth" }, ...c.rows.map((r) => money(r.wc, r.n.wc))] },

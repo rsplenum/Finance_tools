@@ -104,7 +104,7 @@ Dated 02-10-2026. Set by Claude at the owner's request (30-09-2026: work everyth
 | Profit margin | As this year: profit before interest, depreciation and tax grows with sales | The only growth asked for is in sales |
 | Extra income from the new asset | None beyond the growth | Leaving it out errs low. Add it if the asset adds to profit, from the month it starts running |
 | Depreciation | As this year, every year | Depreciation on the asset the loan buys is left out; it lowers tax, so leaving it out errs low |
-| Interest on other borrowings | As this year, every year, on top of this loan's interest | Working-capital limits are taken as unchanged |
+| Interest on other borrowings | This year's, growing with sales each year, on top of this loan's interest | More sales tie up more money in stock and debtors, so the working-capital limit and its interest grow too; holding it flat would overstate the cover. Choose Same every year in Professional mode if the limit is fixed |
 | Interest on working capital | None: the profit asked on the first screen is before all interest | Give the interest on a cash credit or overdraft in Professional mode, if the business pays it |
 | Loans already running | None | Change it if EMIs are paid on other loans: all of a proprietor's, business and personal; a firm's, LLP's or company's own loans only |
 | Other non-cash charges and lease rentals | None | Few small businesses have them |

@@ -49,3 +49,8 @@ export function auditedCheck(a: { pbdit: number; depreciation: number; interest:
   const accrual = a.pbdit - a.interest - a.tax;
   return { accrual, pat: accrual - a.depreciation };
 }
+
+/** Working capital as a % of sales from the last balance sheet, by another route: each part's share of sales, added. */
+export function wcBooksCheck(b: { stock: number; debtors: number; creditors: number }, sales: number): number {
+  return (b.stock / sales) * 100 + (b.debtors / sales) * 100 - (b.creditors / sales) * 100;
+}

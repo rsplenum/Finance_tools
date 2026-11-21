@@ -50,9 +50,9 @@ export function Room({ p, onAmount, onFewest }: { p: Preview; onAmount: (n: numb
     {l && (l.most !== undefined && l.asked !== undefined ? <Amounts most={l.most} asked={l.asked} limit={l.limit} />
       : <p data-testid="dscr-largest" class="mt-2 text-ink">{l.text}</p>)}
     {l?.amount !== undefined && <button type="button" data-testid="use-amount" class={`${QUIET} -ml-3`} onClick={() => onAmount(l.amount!)}>{P.useAmount(rs(l.amount))}</button>}
-    {f && (f.fewest !== undefined ? <Instalments n={f.fewest} now={f.now ?? f.fewest} per={f.per ?? 12} />
+    {f && (f.fewest !== undefined ? <Instalments n={f.fewest} now={f.now ?? f.fewest} per={f.per ?? 12} tenure={f.tenure} />
       : <p data-testid="dscr-fewest" class="mt-4 text-ink">{f.text}</p>)}
-    {f?.instalments !== undefined && <button type="button" data-testid="use-instalments" class={`${QUIET} -ml-3`} onClick={() => onFewest(f.instalments!)}>{P.useFewest(f.instalments)}</button>}
+    {f?.instalments !== undefined && <button type="button" data-testid="use-instalments" class={`${QUIET} -ml-3`} onClick={() => onFewest(f.instalments!)}>{f.tenure !== undefined ? P.useFewest(f.tenure) : `Repay in ${f.instalments} instalments`}</button>}
   </section>;
 }
 
@@ -72,11 +72,11 @@ function Amounts({ most, asked, limit }: { most: number; asked: number; limit?: 
 }
 
 /** The fewest instalments that work as a grid, a row for each year of repayment; the borrower's own term beside them. */
-function Instalments({ n, now, per }: { n: number; now: number; per: number }) {
+function Instalments({ n, now, per, tenure }: { n: number; now: number; per: number; tenure?: number }) {
   const total = Math.max(n, now), rows = Math.ceil(total / per), spare = now > n, more = n > now;
   const dot = (i: number) => (i <= Math.min(n, now) ? 'bg-ink' : spare ? 'border border-ink-muted' : 'bg-bad');
   return <div class="mt-4">
-    <p data-testid="dscr-fewest" class="text-base text-ink">{P.fewest(n, per)}</p>
+    <p data-testid="dscr-fewest" class="text-base text-ink">{P.fewest(n, per, tenure)}</p>
     <div aria-hidden="true" class="mt-2 grid grid-cols-[3.75rem_1fr] items-center gap-y-1">
       {Array.from({ length: rows }, (_, r) => <>
         <span key={`y${r}`} class="text-xs text-ink-muted">{P.row(r + 1)}</span>

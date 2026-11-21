@@ -13,8 +13,8 @@ import {
   type Amortization, type PastYear, type Component, type Definition, type Limit, type LoanInput, type ProfitTotals, type ProfitYear, type ProjectionYear, type Statement,
   type Target, type YearFigures, type Plan, type DebtSplit,
 } from '../../../engine/dscr';
-import { LENDER, auditedYear, cashCheck, promotersRepaid, stressTests, type AuditedInput, type LenderYear, type Summary } from '../../../engine/lender';
-import { PERIOD_MONTHS, fyOf, monthAfter, stepOf, type HolidayInterest, type LoanTerms, type RunningTerms } from '../../../engine/loan';
+import { LENDER, auditedYear, cashCheck, promotersRepaid, stressTests, wcPctFrom, type AuditedInput, type LenderYear, type Summary, type WcBooks } from '../../../engine/lender';
+import { PERIOD_MONTHS, fyOf, instalmentsIn, monthAfter, stepOf, termMonths, type Frequency, type HolidayInterest, type LoanTerms, type RunningTerms } from '../../../engine/loan';
 import type { DscrCase } from '../../../engine/dscr-plan';
 import { LEVELS } from '../../../engine/ratios';
 import { emisByYear, fromMonth, series, type RunningLoan } from '../../../engine/project';
@@ -30,13 +30,20 @@ export type Method = string;
 export type Repayment = 'emi' | 'monthly' | 'stepped' | 'quarterly';
 /**
  * How a row is filled: one figure for every year, a first year that grows or falls by a %, a figure for each year, or
- * none; EMIs a month or each loan's terms (loans already running), a yearly figure from a month (the new asset), or by who the borrower is (tax).
+ * none; EMIs a month or each loan's terms (loans already running), a yearly figure from a month (the new asset), by who the
+ * borrower is (tax), or a first year that grows with sales, at the profit's own rate (working-capital interest, DSCR row C).
  */
-export type RowMode = 'same' | 'grow' | 'fall' | 'years' | 'none' | 'emi' | 'terms' | 'from' | 'borrower';
+export type RowMode = 'same' | 'grow' | 'fall' | 'years' | 'none' | 'emi' | 'terms' | 'from' | 'borrower' | 'sales';
 export type OptionKey = keyof Definition;
 
 export interface LoanText {
   amount: string; ratePct: string; disbursed: string; moratoriumMonths: string; instalments: string;
+  /**
+   * The whole tenure in months, the holiday inside it, as typed (DSCR row C, point 6): when present it wins, and the
+   * engine works the instalments out of it (`instalmentsIn`). Absent while the instalments come from the front door's
+   * years, a solver's offer or a case kept before row C (`withInstalments` clears it).
+   */
+  tenure?: string;
   repayment?: Repayment;
   /** The holiday's interest (D-POL-13): absent, paid each month (the stated assumption); or added to the loan. */
   holidayInterest?: HolidayInterest;
@@ -132,7 +139,15 @@ function pastInput(t: PastText, years: string[], leases: boolean): PastYear[] {
  * year), promoters' loans repaid each year, working capital as a % of sales, replacement capex a year (the same every
  * year), and the last audited year's five figures.
  */
-export interface LenderText { sales: string[]; promoters: string[]; wcPct: string; capex: string; audited: Record<keyof AuditedInput, string> }
+export interface LenderText {
+  sales: string[]; promoters: string[]; wcPct: string; capex: string; audited: Record<keyof AuditedInput, string>;
+  /** Working capital from the last balance sheet (absent: from it, unless a % was typed before row C) or as a % typed. */
+  wcBy?: 'books' | 'pct';
+  /** The last balance sheet's stock, debtors and creditors, as typed (DSCR row C, point 7). */
+  books?: Partial<Record<keyof WcBooks, string>>;
+}
+/** How working capital is given: as chosen, else by what was typed (a % typed before row C stays a %). */
+export const wcByOf = (l: LenderText): 'books' | 'pct' => l.wcBy ?? (l.wcPct.trim() ? 'pct' : 'books');
 export const NO_LENDER: LenderText = { sales: [], promoters: [], wcPct: '', capex: '', audited: { sales: '', pbdit: '', depreciation: '', interest: '', tax: '' } };
 
 /**
@@ -156,9 +171,9 @@ type Assumption = (typeof DEFAULTS.assumptions)[number];
 const ASSUMPTION = Object.fromEntries(DEFAULTS.assumptions.map((a) => [a.id, a])) as Record<string, Assumption>;
 const assumedValue = <T,>(id: string) => ASSUMPTION[id].value as T;
 
-/** How each line is given while its assumption holds: profit grows with sales; depreciation and other interest as this year. */
+/** How each line is given while its assumption holds: profit grows with sales, and working-capital interest with it (DSCR row C); depreciation as this year. */
 const ASSUMED_MODES: Record<string, RowMode> = {
-  pbdit: 'grow', assetIncome: 'none', depreciation: 'same', interestOther: 'same', otherLoans: 'none', nonCash: 'none', leaseRentals: 'none', taxPct: 'same',
+  pbdit: 'grow', assetIncome: 'none', depreciation: 'same', interestOther: 'sales', otherLoans: 'none', nonCash: 'none', leaseRentals: 'none', taxPct: 'same',
 };
 
 /**
@@ -293,7 +308,9 @@ export function rowsOf(s: State): RowDef[] {
     row('assetIncome', L.assetIncome, ['none', 'from'], { hint: 'What the asset adds to profit before interest, depreciation and tax, after its own running costs.' }),
     row('depreciation', L.depreciation, ['same', 'fall', 'years', 'none'], { hint: 'The same every year (straight line), or falling by its rate (written-down value).' }),
     row('nonCash', L.nonCash, OPTIONAL, { ask: true, hint: HINTS.nonCash }),
-    row('interestOther', L.interestOther, ['none', 'same', 'grow', 'years'], { ask: true, hint: 'Cash credit or overdraft interest.' }),
+    // Working-capital interest grows with sales unless told otherwise (Rahul's point 5): offered while the profit's own
+    // row says how sales move (a growth % or the same every year), not when the profit is typed for each year.
+    row('interestOther', L.interestOther, [...(withSales(s) ? ['none', 'sales'] as RowMode[] : ['none'] as RowMode[]), 'same', 'grow', 'years'], { ask: true, hint: 'Cash credit or overdraft interest.' }),
     ...(def.leases === 'yes' ? [row('leaseRentals', L.leaseRentals, OPTIONAL, { ask: true, hint: HINTS.leaseRentals })] : []),
     row('otherLoansInterest', L.otherLoansInterest, RUNNING, { modeKey: 'otherLoans', ask: true, only: ['same', 'years'], hint: 'Loans the borrower already repays, besides this one.' }),
     row('otherLoansPrincipal', L.otherLoansPrincipal, RUNNING, { modeKey: 'otherLoans', ask: true, only: ['same', 'years'] }),
@@ -301,6 +318,9 @@ export function rowsOf(s: State): RowDef[] {
     row('taxPct', L.taxPct, ['borrower', 'same', 'years'], { percent: true, hint: 'On profit before tax; nil in a year with a loss.' }),
   ];
 }
+
+/** Whether sales move by a rule the page knows: the profit grows by a % (its sales growth) or stays the same. */
+const withSales = (s: State) => (s.modes.pbdit ?? 'grow') !== 'years';
 
 const HINTS = {
   nonCash: 'Amortisation, amounts written off, deferred tax.',
@@ -331,6 +351,13 @@ export function rowValues(s: State, r: RowDef, years: string[]): RowValues {
   if (mode === 'borrower') return { values: missing, needs: borrowerOf(s.borrower) ? [] : [BORROWER_NEED] };
   const read = r.percent ? numberOf : amountOf, text = s.cells[r.key] ?? [];
   if (mode === 'years') return { values: years.map((_, i) => read(text[i])), needs: [] }; // the engine names each missing year
+  if (mode === 'sales') {
+    // The profit's own rule: its growth is the sales growth (margin as this year), so its missing rate is asked once, on its row.
+    const grows = (s.modes.pbdit ?? 'grow') === 'grow', pct = numberOf(s.rates.pbdit);
+    if (grows && pct === undefined) return { values: missing, needs: read(text[0]) === undefined ? [`${r.label} in ${years[0] ?? ''}`] : [`${PROJECTION_LABELS.pbdit}: growth a year (%)`] };
+    const out = series({ kind: grows ? 'grow' : 'same', first: read(text[0]), pct }, n, r.label, years[0] ?? '');
+    return 'needs' in out ? { values: missing, needs: out.needs } : 'blocked' in out ? { values: missing, needs: [], blocked: out.blocked } : { values: out, needs: [] };
+  }
   const out = mode === 'emi' ? emisByYear(s.running.map(runningLoan), years, titleOf(r))
     : mode === 'from' ? fromMonth(amountOf(s.asset.yearly), parseMonth(s.asset.from), years, r.label)
       : series({ kind: mode, first: read(text[0]), pct: numberOf(s.rates[r.key]) }, n, r.label, years[0] ?? '');
@@ -345,12 +372,90 @@ export const emisAsk = (s: State) => EMIS_BY[s.borrower ?? '']?.ask ?? DSCR.exis
 /** Saying who the borrower is works out the tax for that borrower, in place of a rate. */
 export const withBorrower = (s: State, id: string): State => ({ ...s, borrower: id, modes: { ...s.modes, taxPct: 'borrower' } });
 
+/** How often a loan's instalments fall, from the one answer for how it is repaid. */
+const frequencyOf = (r?: Repayment): Frequency | undefined => (r === 'quarterly' ? 'quarterly' : r ? 'monthly' : undefined);
+/** The tenure's own words (as a running loan's, `RUNNING_TENURE` in engine/dscr.ts). */
+export const TENURE_LABEL = 'Whole tenure in months, the holiday inside it';
+
+/**
+ * The instalments a loan is repaid in: from the whole tenure typed, worked by the engine once the holiday and how often
+ * are known (not a whole number of instalments: not a number, so it is asked again); else as the front door or a solver set them.
+ */
+function instalmentsOf(l: LoanText): number | undefined {
+  if (l.tenure === undefined) return numberOf(l.instalments);
+  const t = numberOf(l.tenure), h = numberOf(l.moratoriumMonths), f = frequencyOf(l.repayment);
+  if (t === undefined || h === undefined || !f) return undefined;
+  const n = instalmentsIn(t, h, f);
+  return Number.isInteger(n) && n >= 1 ? n : NaN;
+}
+
+/**
+ * What the tenure field asks in place of the engine's "Number of instalments": the tenure; nothing while the holiday or how
+ * it is repaid is still asked (null); undefined when the instalments were set some other way and the engine's words stand.
+ */
+function tenureNeed(l: LoanText): string | null | undefined {
+  if (l.tenure === undefined) return l.instalments.trim() ? undefined : TENURE_LABEL;
+  const t = numberOf(l.tenure), h = numberOf(l.moratoriumMonths), f = frequencyOf(l.repayment);
+  if (t === undefined) return TENURE_LABEL;
+  if (!Number.isInteger(t) || t < 1) return `${TENURE_LABEL}, in whole months`;
+  if (h === undefined || !Number.isInteger(h) || h < 0 || !f) return null;
+  return `${TENURE_LABEL}: the months after the holiday must make whole ${f === 'quarterly' ? 'quarters' : 'months'}, one or more`;
+}
+
+/** The engine's needs for the instalments, said as the tenure each loan's field asks (the first loan, then "New term loan 2: …"). */
+function tenureNeeds(s: State, needs: string[]): string[] {
+  const loans = [s.loan, ...(s.newLoans ?? [])], head = LOAN_LABELS.instalments;
+  return needs.flatMap((n) => {
+    const i = loans.findIndex((_, k) => (k === 0 ? n.startsWith(head) : n.startsWith(`New term loan ${k + 1}: ${head.charAt(0).toLowerCase()}${head.slice(1)}`)));
+    if (i < 0) return [n];
+    const say = tenureNeed(loans[i]);
+    if (say === undefined) return [n];
+    if (say === null) return [];
+    return [i === 0 ? say : `New term loan ${i + 1}: ${say.charAt(0).toLowerCase()}${say.slice(1)}`];
+  });
+}
+
+/** The whole tenure the field shows: as typed, or worked by the engine from the instalments the front door or a solver set. */
+export function tenureText(l: LoanText): string {
+  if (l.tenure !== undefined) return l.tenure;
+  const n = numberOf(l.instalments), h = numberOf(l.moratoriumMonths), f = frequencyOf(l.repayment);
+  return n !== undefined && h !== undefined && f ? String(termMonths({ moratoriumMonths: h, instalments: n, frequency: f })) : '';
+}
+/**
+ * A loan as changed on the page: its whole tenure kept as shown, so changing the holiday or how it is repaid moves the
+ * instalments, not the tenure (DSCR row C, point 6); and the instalments worked from the tenure by the engine, so every
+ * reader of them (the front door, the document, the rounds) agrees. Not yet whole instalments: empty, and the tenure is asked.
+ */
+export function changeLoan(was: LoanText, patch: Partial<LoanText>): LoanText {
+  const l = { ...was, ...(patch.tenure === undefined && was.tenure === undefined && tenureText(was) ? { tenure: tenureText(was) } : {}), ...patch };
+  if (l.tenure === undefined) return l;
+  const n = instalmentsOf(l);
+  return { ...l, instalments: n !== undefined && Number.isFinite(n) ? String(n) : '' };
+}
+/** The instalments set by the front door's years or a solver: the tenure then follows from them. */
+export const withInstalments = (l: LoanText, instalments: string): LoanText => {
+  const { tenure: _, ...rest } = l;
+  return { ...rest, instalments };
+};
+/** The front door's "Repay over, years": the whole tenure in years, the holiday inside it. */
+export function yearsText(l: LoanText): string {
+  const m = numberOf(tenureText(l));
+  return m === undefined ? '' : String(+(m / 12).toFixed(2));
+}
+/** The front door's years written as the whole tenure, rounded to whole instalments after the holiday (none: whole months). */
+export function withYears(l: LoanText, t: string): LoanText {
+  const n = numberOf(t), h = numberOf(l.moratoriumMonths), f = frequencyOf(l.repayment);
+  if (n === undefined) return withInstalments(l, t);
+  const per = f ? PERIOD_MONTHS[f] : 1, after = Math.max(0, Math.round((n * 12 - (h ?? 0)) / per) * per);
+  return changeLoan(l, { tenure: String((h ?? 0) + after) });
+}
+
 /** One new term loan as typed, read. */
 function termsOf(l: LoanText): LoanInput {
   const r = l.repayment;
   return {
     amount: amountOf(l.amount), ratePct: numberOf(l.ratePct), disbursed: parseMonth(l.disbursed),
-    moratoriumMonths: numberOf(l.moratoriumMonths), instalments: numberOf(l.instalments),
+    moratoriumMonths: numberOf(l.moratoriumMonths), instalments: instalmentsOf(l),
     // An EMI is worked monthly only (docs/RULES.md), so one answer gives both the type and how often.
     ...(r ? { style: r === 'emi' || r === 'stepped' ? r : 'equal-principal', frequency: r === 'quarterly' ? 'quarterly' : 'monthly' } as const : {}),
     ...(l.holidayInterest ? { holidayInterest: l.holidayInterest } : {}),
@@ -536,7 +641,7 @@ export interface Preview {
   largest?: { text: string; amount?: number; most?: number; asked?: number; limit?: string };
   /** The fewest instalments that work; `instalments` when it differs from those entered, to offer it; `fewest`, `now`
    * and `per` (instalments a year) for the picture. */
-  fewest?: { text: string; instalments?: number; fewest?: number; now?: number; per?: number };
+  fewest?: { text: string; instalments?: number; fewest?: number; now?: number; per?: number; tenure?: number };
   /** The loan's years with interest only and no instalment, and that interest, to ask which year the figures start in. */
   leadingInterest?: { fy: string; amount: string }[];
   /** The years left out because the figures start later, in words. */
@@ -594,6 +699,8 @@ export interface LenderView {
   cash?: { rows: CashRowView[]; text: string } | { needs: string[] };
   audited?: { fy: string; nextFy?: string; rows: AuditedRowView[]; flags: string[] } | { needs: string[] };
   blocked?: string;
+  /** Working capital worked from the last balance sheet, read back in words (DSCR row C, point 7). */
+  wcWorked?: string;
 }
 
 const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
@@ -873,7 +980,7 @@ export function preview(s: State): Preview {
   if (y.startNeeded) p.needs.push(`The first year of your figures: ${y.startChoices.join(' or ')}`);
   // Until the loan's dates are in there are no years to ask for; the loan's own needs say what is missing.
   if ('needs' in r || pageNeeds.length)
-    p.needs.push(...oneRepaymentNeed(merged([...('needs' in r ? r.needs.filter((n) => y.years.length || n !== 'At least one year of figures') : []), ...pageNeeds])));
+    p.needs.push(...oneRepaymentNeed(tenureNeeds(s, merged([...('needs' in r ? r.needs.filter((n) => y.years.length || n !== 'At least one year of figures') : []), ...pageNeeds]))));
   else if ('blocked' in r) p.blocked ??= r.blocked;
   else if (!y.startNeeded) {
     fillStatement(p, r.statement, target, def, r.years, r.profit, r.profitTotal, { years: r.split, total: r.splitTotal, several: (s.newLoans ?? []).length > 0 });
@@ -906,7 +1013,10 @@ export function preview(s: State): Preview {
       && (loan.moratoriumMonths ?? 0) + few.instalments * PERIOD_MONTHS[loan.frequency ?? 'monthly'] > LEVELS.term.longestMonths))) {
       p.fewest = { text: `No repayment within ${LEVELS.term.longestMonths} months meets the target.` };
     } else if ('instalments' in few) p.fewest = {
-      text: `The shortest repayment that works for ${rs(amount)}: ${few.instalments} ${loan.frequency === 'quarterly' ? 'quarterly' : 'monthly'} instalments.`,
+      // Said as the whole tenure the loan's field asks (DSCR row C, point 6), the holiday inside it.
+      text: `The shortest repayment that works for ${rs(amount)}: a tenure of ${termMonths({ moratoriumMonths: loan.moratoriumMonths ?? 0, instalments: few.instalments, frequency: loan.frequency ?? 'monthly' })} months`
+        + `${(loan.moratoriumMonths ?? 0) > 0 || loan.frequency === 'quarterly' ? `: ${few.instalments} ${loan.frequency === 'quarterly' ? 'quarterly' : 'monthly'} instalments${(loan.moratoriumMonths ?? 0) > 0 ? ` after the ${loan.moratoriumMonths}-month holiday` : ''}` : ''}.`,
+      tenure: termMonths({ moratoriumMonths: loan.moratoriumMonths ?? 0, instalments: few.instalments, frequency: loan.frequency ?? 'monthly' }),
       ...(few.instalments !== loan.instalments ? { instalments: few.instalments } : {}),
       fewest: few.instalments, now: loan.instalments, per: 12 / PERIOD_MONTHS[loan.frequency ?? 'monthly'],
     };
@@ -994,10 +1104,15 @@ function lenderView(s: State, proj: ProjectionYear[], loan: LoanInput, def: Defi
         n: { available: r.available, repaid, service: r.service, ...(r.dscr !== undefined ? { dscr: r.dscr } : {}) } };
     }) };
   }
-  if (l.wcPct.trim() || l.capex.trim()) {
-    const c = cashCheck(plan, extra, numberOf(l.wcPct), amountOf(l.audited.sales));
+  const books = l.books ?? {}, byBooks = wcByOf(l) === 'books', booked = Object.values(books).some((t) => t?.trim());
+  if ((byBooks ? booked : l.wcPct.trim()) || l.capex.trim()) {
+    // Working capital from the last balance sheet (DSCR row C, point 7), worked by the engine; or the % typed.
+    const fromBooks = byBooks ? wcPctFrom({ stock: amountOf(books.stock), debtors: amountOf(books.debtors), creditors: amountOf(books.creditors) }, amountOf(l.audited.sales)) : undefined;
+    if (fromBooks && 'pct' in fromBooks) v.wcWorked = `Working capital: ${rs(fromBooks.wc)}, stock and debtors less creditors, ${fromBooks.pct.toFixed(1)}% of last year's sales of ${rs(amountOf(l.audited.sales) as number)}. It grows with sales.`;
+    const wc = fromBooks ? ('pct' in fromBooks ? fromBooks.pct : undefined) : numberOf(l.wcPct);
+    const c = fromBooks && !('pct' in fromBooks) ? fromBooks : cashCheck(plan, extra, wc, amountOf(l.audited.sales));
     if ('blocked' in c) v.blocked ??= c.blocked;
-    else if ('needs' in c) v.cash = { needs: c.needs };
+    else if ('needs' in c) v.cash = { needs: [...new Set([...(fromBooks && 'needs' in fromBooks ? fromBooks.needs : []), ...c.needs])] };
     else v.cash = {
       rows: c.rows.map((r) => ({
         fy: r.fy, available: rs(r.available), wc: rs(r.wcGrowth), capex: rs(r.capex), service: rs(r.service), left: rs(r.left),
@@ -1053,7 +1168,7 @@ export const FRONT: [RegExp, string, string][] = [
   [/^(Growth in sales|Profit before interest, depreciation and tax: growth)/, 'Growth in sales a year (%)', 'fld-fd-growth'],
   [/^Loan amount$/, 'Loan amount', 'fld-fd-amount'],
   [/^Interest rate/, 'Interest rate (% a year)', 'fld-fd-rate'],
-  [/^Number of instalments$/, 'Repayment period', 'fld-fd-years'],
+  [/^(Number of instalments$|Whole tenure in months)/, 'Repayment period', 'fld-fd-years'],
 ];
 export const frontAt = (n: string, first?: string) => FRONT.findIndex(([m], i) => m.test(n) && (i !== 1 || !first || !/\d{4}-\d{2}$/.test(n) || n.endsWith(first)));
 /** On the front door every missing fact shows at once: the profit and its growth before the loan's dates give the years. */
