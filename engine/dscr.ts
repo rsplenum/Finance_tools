@@ -5,8 +5,11 @@
  * the result lists what is needed instead of figures.
  */
 import DATA from './data/dscr.json';
-import { PERIOD_MONTHS, fyOf, levelInstalment, monthAfter, months, schedule, termMonths, type LoanTerms, type MonthRow, type YearDebt } from './loan';
-import { levelCheck, monthsCheck, planCheck, scheduleCheck, statementCheck, type CheckResult } from './dscr-check';
+import {
+  PERIOD_MONTHS, balanceAt, fyOf, levelInstalment, monthAfter, months, monthsFrom, runningLoanTerms, schedule, termMonths,
+  type LoanTerms, type MonthRow, type RunningTerms, type YearDebt,
+} from './loan';
+import { levelCheck, monthsCheck, planCheck, runningCheck, scheduleCheck, statementCheck, type CheckResult } from './dscr-check';
 import { borrowerOf, taxOn } from './tax';
 
 type Data = typeof DATA;
@@ -50,12 +53,19 @@ export interface Totals { available: number; service: number; figures: { [C in C
 /** `total` when any year counts; with the average by totals, the average is total A ÷ total B. */
 export interface Statement { rows: Row[]; average?: number; minimum?: { dscr: number; fy: string }; notes: string[]; total?: Totals }
 /** How profit after tax is reached in a projected year (planning mode). */
-export interface ProfitYear { fy: string; pbdit: number; assetIncome: number; depreciation: number; nonCash: number; interestTL: number; interestOther: number; pbt: number; tax: number; pat: number }
+/** `interestTL` is the interest charged on every term loan in the year: `interestNew` on the new term loans, `interestRunning`
+ * on the loans already running whose interest is known (by their terms, or a CA's yearly figure). */
+export interface ProfitYear { fy: string; pbdit: number; assetIncome: number; depreciation: number; nonCash: number; interestTL: number; interestNew: number; interestRunning: number; interestOther: number; pbt: number; tax: number; pat: number }
 export type ProfitTotals = Omit<ProfitYear, 'fy'>;
 /** A year before the figures start (operations start later): no instalment falls in it, and its interest is paid from the project cost. */
 export interface BeforeStart { fy: string; interest: number }
-/** `profitTotal`: each line of the profit added up over the years counted, beside the statement's `total`. */
-export interface Plan { schedule: YearDebt[]; years: YearFigures[]; profit: ProfitYear[]; statement: Statement; beforeStart: BeforeStart[]; profitTotal?: ProfitTotals }
+/** A year's term-loan debt service taken apart (DSCR row A, point 2): the interest paid and principal repaid on the new term
+ * loans and on the loans already running whose interest is known. Each pair adds up to the year's `interestTL` and
+ * `principalTL`; the EMIs of loans whose interest is not known stay whole, as `existingEmis`. */
+export interface DebtSplit { fy: string; interestNew: number; interestRunning: number; principalNew: number; principalRunning: number }
+/** `profitTotal`: each line of the profit added up over the years counted, beside the statement's `total`. `schedule` is
+ * the new loan's own (the one the solvers move); `split` takes each year's term-loan debt service apart. */
+export interface Plan { schedule: YearDebt[]; years: YearFigures[]; profit: ProfitYear[]; statement: Statement; beforeStart: BeforeStart[]; split: DebtSplit[]; profitTotal?: ProfitTotals }
 /** The repayment schedule month by month, its totals by financial year, the level instalment (EMI or principal), and the interest over the whole loan. */
 export interface Amortization { months: MonthRow[]; years: YearDebt[]; level: number; totalInterest: number }
 /** What stops a larger loan or a shorter repayment: the average, the lowest year, or a year with no cash to pay from. */
@@ -184,7 +194,47 @@ function loanNeeds(l: LoanInput): string[] {
   else if (l.style === 'emi' && l.frequency === 'quarterly') needs.push('Monthly instalments for an EMI (it is worked monthly only), or equal instalments of principal');
   else if (l.style === 'stepped' && l.frequency === 'quarterly') needs.push('Monthly instalments for a stepped repayment (it is worked monthly only), or equal instalments of principal');
   if (l.holidayInterest !== undefined && l.holidayInterest !== 'paid' && l.holidayInterest !== 'added') needs.push(HOLIDAY_INTEREST_LABEL);
+  (l.alongside?.loans ?? []).forEach((o, i) => needs.push(...loanNeeds({ ...o, alongside: undefined }).map((n) => `New term loan ${i + 2}: ${lowerFirst(n)}`)));
+  (l.alongside?.running ?? []).forEach((r, i) => needs.push(...runningNeeds(r).map((n) => `Loan already running ${i + 1}: ${lowerFirst(n)}`)));
   return needs;
+}
+const lowerFirst = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
+
+/** What a loan already running needs, given by its terms (DSCR row A, point 3). */
+export const RUNNING_LABELS = {
+  amount: 'The amount when taken, or the balance today',
+  ratePct: 'Interest rate (% a year)',
+  start: 'Month it was first drawn (like 2024-04)',
+  tenureMonths: 'Whole tenure in months, the holiday inside it',
+  holidayMonths: 'Holiday before its first instalment, in months (0 if none)',
+  style: 'How it is repaid (EMI, or equal principal every month or quarter)',
+};
+const isMonth = (t: unknown): t is string => typeof t === 'string' && /^\d{4}-(0[1-9]|1[0-2])$/.test(t);
+
+export function runningNeeds(r: Partial<RunningTerms>): string[] {
+  const needs: string[] = [], L = RUNNING_LABELS, hasA = isNum(r.amount), hasB = isNum(r.balance);
+  if (!hasA && !hasB) needs.push(L.amount);
+  else if (hasA && hasB) needs.push('The amount when taken or the balance today, not both');
+  else if (hasA && (r.amount as number) <= 0) needs.push('The amount when taken, above zero');
+  else if (hasB && (r.balance as number) <= 0) needs.push('The balance today, above zero: a loan repaid is no longer running');
+  if (!isNum(r.ratePct)) needs.push(L.ratePct); else if (r.ratePct < 0) needs.push(`${L.ratePct}, zero or more`);
+  if (!isMonth(r.start)) needs.push(L.start);
+  const whole = (v: unknown, least: number): v is number => isNum(v) && Number.isInteger(v) && v >= least;
+  if (!isNum(r.holidayMonths)) needs.push(L.holidayMonths); else if (!whole(r.holidayMonths, 0)) needs.push(`${L.holidayMonths}, in whole months`);
+  if (!isNum(r.tenureMonths)) needs.push(L.tenureMonths); else if (!whole(r.tenureMonths, 1)) needs.push(`${L.tenureMonths}, in whole months`);
+  const okFreq = r.frequency === 'monthly' || r.frequency === 'quarterly', okStyle = r.style === 'emi' || r.style === 'equal-principal';
+  if (!okFreq || !okStyle || (r.style === 'emi' && r.frequency === 'quarterly')) needs.push(L.style);
+  if (r.holidayInterest !== undefined && r.holidayInterest !== 'paid' && r.holidayInterest !== 'added') needs.push(HOLIDAY_INTEREST_LABEL);
+  if (needs.length) return needs;
+  const per = PERIOD_MONTHS[r.frequency as 'monthly' | 'quarterly'], after = (r.tenureMonths as number) - (r.holidayMonths as number);
+  if (after < per || after % per) return [`${L.tenureMonths}: the months after the holiday must make whole ${per === 3 ? 'quarters' : 'months'}, one or more`];
+  if (!hasB) return [];
+  // A balance today: the loan must have been drawn by this month and not yet repaid on its own schedule.
+  if (!isMonth(r.asOf)) return ['This month, for the balance today'];
+  const k = monthsFrom(r.start as string, r.asOf);
+  if (k < 0) return [`${L.start}: before this month, for a balance today`];
+  const t = runningLoanTerms({ ...(r as RunningTerms), balance: undefined, amount: 1 });
+  return balanceAt(t, k) > 0 ? [] : [`${L.tenureMonths}: on these terms it would be repaid by now`];
 }
 
 export function targetNeeds(t: Target): string[] {
