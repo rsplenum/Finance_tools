@@ -81,10 +81,11 @@ function cell(text: string, value: number | undefined, kind: Figure['kind']): Ce
 }
 
 /** The statement as the page shows it: the years across, the working down, and its Total column (StatementView). */
-function statementTable(st: StatementView): Table {
+function statementTable(st: StatementView, parts: Record<string, string> = {}): Table {
   const kind = (l: { kind?: string }) => (l.kind === 'ratio' ? 'ratio' : 'amount');
+  const sub = (fy: string, i: number) => [st.counted[i] ? '' : 'not counted', parts[fy] ?? ''].filter(Boolean).join('; ');
   return {
-    columns: [{ label: 'Rupees' }, ...st.years.map((fy, i) => (st.counted[i] ? { label: fy } : { label: fy, sub: 'not counted' })),
+    columns: [{ label: 'Rupees' }, ...st.years.map((fy, i) => (sub(fy, i) ? { label: fy, sub: sub(fy, i) } : { label: fy })),
       ...(st.total ? [{ label: 'Total', ...(st.total.sub ? { sub: st.total.sub } : {}) }] : [])],
     freeze: 1,
     rows: st.lines.map((l) => (l.kind === 'head'
@@ -392,7 +393,7 @@ export function statementDoc(s: State, p: Preview, today: string, example = fals
   // the lender decides, D-DOC-03), the chart, the status, and the contents, each line a link to its part.
   const asked = loanAsked(s);
   const glance: Block[] = [
-    { kind: 'title', text: borrower || 'DSCR statement', sub: `Debt service coverage ratio (DSCR), ${years.length > 1 ? `${years[0]} to ${years[years.length - 1]}` : years[0]}` },
+    { kind: 'title', text: borrower || 'DSCR statement', sub: `Debt service coverage ratio (DSCR), ${years.length > 1 ? `${years[0]} to ${years[years.length - 1]}` : years[0]}${p.past?.statement ? `, after ${p.past.years.length} past year${p.past.years.length > 1 ? 's' : ''} from the books` : ''}` },
     { kind: 'facts', lines: [facts[0], ...(asked ? [[['Loan asked', asked]] as [string, string][]] : []), ...facts.slice(1), [['Status', status]]] },
   ];
   if (needs.length) glance.push({ kind: 'box', title: `${example ? 'Example' : 'Provisional'}: ${needs.length} still needed`, items: needs });
@@ -403,6 +404,14 @@ export function statementDoc(s: State, p: Preview, today: string, example = fals
   // 1. The statement: the whole working as the page shows it, every line, and the answer under it; signed.
   const blocks: Block[] = [{ kind: 'title', text: '1. The statement', small: true }];
   if (plan) blocks.push({ kind: 'heading', text: 'The loan' }, { kind: 'facts', lines: loanFacts(s, p, y) });
+  // DSCR row B: the past years from the books, their own table and figures, before the projected years.
+  const past = p.past?.statement ? p.past : undefined;
+  if (past?.statement) {
+    blocks.push({ kind: 'heading', text: 'Past years, from the books' }, { kind: 'table', table: statementTable(past.statement, past.parts) });
+    const said = [past.line, past.split, past.notCounted, ...past.notes].filter((x): x is string => !!x);
+    if (said.length) blocks.push({ kind: 'list', items: said, small: true });
+    blocks.push({ kind: 'heading', text: 'Projected years' });
+  }
   blocks.push({ kind: 'table', table: statementTable(st) });
   const notes = [p.beforeStart, p.notCounted, ...p.notes].filter((x): x is string => !!x);
   if (notes.length) blocks.push({ kind: 'list', items: notes, small: true });

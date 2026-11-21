@@ -111,6 +111,7 @@ Dated 02-10-2026. Set by Claude at the owner's request (30-09-2026: work everyth
 | The first year of the figures | The year the loan is first drawn | The business is running: it has this year's figures |
 | The loan | Drawn this month, repaid by EMI every month, with no moratorium | Most term loans are paid out at once and repaid by monthly EMI |
 | Promoters' loans | Kept in the business until this loan is repaid (subordinated) | A usual condition of a term loan. If any are repaid sooner, add the repayments in Professional mode |
+| A past year's finance cost, when not split | All of it taken as interest on term loans | Accounts often show one finance cost. Taken as term-loan interest, it is added back and also counted in the debt service: that lowers a DSCR above 1 and never turns a year that falls short into one that passes. Type the term-loan part of each year to count it exactly |
 
 ## Construction and renovation estimates
 

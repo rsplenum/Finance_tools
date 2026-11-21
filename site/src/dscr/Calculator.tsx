@@ -13,7 +13,7 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { AmountField } from '../AmountField';
-import { OPTIONS, PRESETS } from '../../../engine/dscr';
+import { OPTIONS, PAST_LABELS, PRESETS } from '../../../engine/dscr';
 import { LENDER } from '../../../engine/lender';
 import { STEPPED } from '../../../engine/loan';
 import { parseMonth } from '../../../engine/parse';
@@ -30,7 +30,7 @@ import { isoDate } from '../download';
 import { verdictWords, workWords } from '../verdict';
 import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
 import {
-  ASSUMED, BORROWER_CHOICES, checkNext, dscrMarks, EXAMPLE_TARGETS, GROUP_TITLES, NO_LENDER, OPTION_KEYS, NO_LOAN, NO_RUNNING_TERMS, amountOf, barText, choicesOf, emisAsk, frontDoor, loanRead, modeOf, monthText, numberOf,
+  ASSUMED, BORROWER_CHOICES, checkNext, dscrMarks, EXAMPLE_TARGETS, GROUP_TITLES, NO_LENDER, NO_PAST, definitionOf, PAST_KEYS, pastCell, pastYearsOf, type PastKey, type PastText, OPTION_KEYS, NO_LOAN, NO_RUNNING_TERMS, amountOf, barText, choicesOf, emisAsk, frontDoor, loanRead, modeOf, monthText, numberOf,
   parseFy, presetText, preview, rowValues, rowsOf, statusText, sureLine, targetText, tidyAmount, withBorrower, withFrontNeeds, FRONT, frontAt, withPlanStart, withSource, yearsOf,
   type DocFacts, type LenderLine, type LenderText, type LenderView, type Line, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type RunningTermsText, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
@@ -109,6 +109,7 @@ export function DscrCalculator() {
           {s.source === 'plan' ? <Loan s={s} update={update} y={y} p={p} was={was} /> : <YearsSection s={s} update={update} y={y} />}
           <Figures s={s} update={update} rows={rows} y={y} p={p} />
           <TargetSection s={s} update={update} />
+          {s.source === 'plan' && <PastSection s={s} update={update} y={y} />}
           {s.source === 'plan' && <LenderSection s={s} update={update} y={y} />}
         </>}
     </MoreOptions>}
@@ -641,6 +642,7 @@ function Working({ s, p, openMore, fold }: { s: State; p: Preview; openMore: () 
   const sure = p.verdict && !p.blocked && !p.needs.length ? sureLine(dscrMarks(s)) : '';
   return <section id="working" aria-label="How it is worked out" class={fold ? 'lg:col-start-2 lg:row-start-2' : 'lg:col-span-2 lg:row-start-3'}>
     {p.lender && <LenderLines v={p.lender} openMore={openMore} />}
+    <PastTable p={p} />
     {p.statement && <StatementTable st={p.statement} parts={p.partYears} />}
     {p.beforeStart && <p data-testid="dscr-before-start" class={`mt-2 ${HINT}`}>{p.beforeStart}</p>}
     {p.notCounted && <p data-testid="dscr-not-counted" class={`mt-2 ${HINT}`}>{p.notCounted}</p>}
@@ -715,6 +717,45 @@ export function LenderLines({ v, openMore }: { v: LenderView; openMore: () => vo
         {a.flags.map((f) => <p key={f} class="mt-1 text-warn">{f}.</p>)}
       </div>)}
   </div>;
+}
+
+/** DSCR row B: the past years from the books, before the projected ones; their own statement, never in the answer. */
+export function PastTable({ p }: { p: Preview }) {
+  const v = p.past;
+  if (!v || (!v.statement && !v.blocked)) return null;
+  return <div data-testid="dscr-past">
+    {v.blocked ? <p data-testid="dscr-past-blocked" role="alert" class="mt-8 text-bad">{v.blocked}</p>
+      : v.statement && <StatementTable st={v.statement} parts={v.parts} past />}
+    {v.line && <p data-testid="dscr-past-line" class={`mt-2 ${HINT}`}>{v.line}</p>}
+    {v.split && <p data-testid="dscr-past-split" class={`mt-2 ${HINT}`}>{v.split}</p>}
+    {v.notCounted && <p data-testid="dscr-past-not-counted" class={`mt-2 ${HINT}`}>{v.notCounted}</p>}
+    {v.notes.length > 0 && <ul class="mt-2 space-y-0.5 text-sm text-warn">{v.notes.map((n) => <li key={n}>{n}</li>)}</ul>}
+  </div>;
+}
+
+/** Up to three past years from the accounts, under More options: how many, then each line year by year, oldest first. */
+function PastSection({ s, update, y }: { s: State; update: Update; y: Years }) {
+  const t = s.past ?? NO_PAST, years = pastYearsOf(t.count, y.years[0]), n = years.length, leases = definitionOf(s)?.leases === 'yes';
+  const set = (f: (x: PastText) => PastText) => update((x) => ({ ...x, past: f(x.past ?? NO_PAST) }));
+  const put = (k: PastKey, i: number, text: string) => set((x) => {
+    const cells = [...(x.cells[k] ?? [])];
+    cells[n - 1 - i] = text;
+    return { ...x, cells: { ...x.cells, [k]: cells } };
+  });
+  const keys = PAST_KEYS.filter((k) => k !== 'leaseRentals' || leases);
+  return <Section id="past" title={W.pastYears}>
+    <p class={`mt-1 ${HINT}`}>{W.pastLead}</p>
+    <Choice name="fld-past-count" legend={W.pastCount} columns value={String(t.count)} onChange={(v) => set((x) => ({ ...x, count: Number(v) }))}
+      options={['0', '1', '2', '3'].map((v) => ({ value: v, label: v === '0' ? 'None' : `${v} year${v === '1' ? '' : 's'}`, hint: v === '0' ? undefined : pastYearsOf(Number(v), y.years[0]).join(', ') }))} />
+    {n > 0 && keys.map((k) => <fieldset key={k} class="mt-5 min-w-0">
+      <legend class="font-medium text-ink">{PAST_LABELS[k]}{(k === 'interestTL' || k === 'nonCash') && <span class={`ml-1 font-normal ${MUTED}`}>(optional)</span>}</legend>
+      {W.pastHint[k] && <p class={HINT}>{W.pastHint[k]}</p>}
+      <div class="mt-2 grid grid-cols-3 gap-2">
+        {years.map((fy, i) => <label key={fy} class="text-sm">{fy}<CellInput id={`fld-past-${k}-${i}`} name={`${PAST_LABELS[k]} ${fy}`} decimal
+          value={pastCell(t, k, i, n)} tidy={tidyAmount} onCommit={(v) => put(k, i, v)} /></label>)}
+      </div>
+    </fieldset>)}
+  </Section>;
 }
 
 /** The lenders' tests' own inputs, under More options; none of them is asked on the front door. */
@@ -815,7 +856,8 @@ export function Professionals({ s, update, bar, lead, end }: { s: State; update:
   if (p.started) {
     steps.push(plan ? { id: 'loan', name: stop.loan, body: <Loan s={s} update={update} y={y} p={p} was={() => undefined} /> }
       : { id: 'years', name: stop.years, body: <YearsSection s={s} update={update} y={y} /> });
-    steps.push({ id: 'figures', name: plan ? stop.business : stop.figures, body: <Figures s={s} update={update} rows={rows} y={y} p={p} /> });
+    steps.push({ id: 'figures', name: plan ? stop.business : stop.figures, body: <><Figures s={s} update={update} rows={rows} y={y} p={p} />
+      {plan && <PastSection s={s} update={update} y={y} />}</> });
     steps.push({ id: 'target', name: stop.target, body: <TargetSection s={s} update={update} /> });
     if (plan) steps.push({ id: 'lender', name: stop.lender, body: <LenderSection s={s} update={update} y={y} /> });
   }
@@ -826,7 +868,9 @@ const lineClass = (kind?: string) => kind === 'total' || kind === 'ratio'
   ? 'font-semibold text-ink' : 'text-ink';
 
 /** The DSCR statement: years across on wider screens (as in a project report), one card per year on phones; then the Total. */
-export function StatementTable({ st, parts = {} }: { st: StatementView; parts?: Record<string, string> }) {
+/** `past`: the past years' own table (DSCR row B), under its own heading, its test ids starting `past-`. */
+export function StatementTable({ st, parts = {}, past }: { st: StatementView; parts?: Record<string, string>; past?: boolean }) {
+  const pre = past ? 'past-' : '';
   const cols = st.years.length + 1 + (st.total ? 1 : 0);
   const ratio = st.lines.find((l) => l.kind === 'ratio');
   const of = (id: Line['id']) => st.lines.find((l) => l.id === id);
@@ -834,10 +878,10 @@ export function StatementTable({ st, parts = {} }: { st: StatementView; parts?: 
   const top = Math.max(0, ...[of('available'), of('service')].flatMap((l) => (l?.n ?? []).map((x) => x ?? 0)));
   // A sheet lying flat: only the answer's casts the shadow (UX8, D-UX-106).
   return <div class="paper mt-8 rounded-card p-4 sm:p-6">
-    <h3 class="font-semibold text-ink">{W.yearByYear}</h3>
+    <h3 class="font-semibold text-ink">{past ? W.pastYears : W.yearByYear}</h3>
     <p class={`mt-1 ${HINT}`}><span class="sm:hidden">{W.openYear}</span><span class="max-sm:hidden">{W.inRupees}</span></p>
     <div class="mt-2 overflow-x-auto max-sm:hidden">
-      <table data-testid="dscr-statement" class="w-full border-collapse text-sm">
+      <table data-testid={`${pre}dscr-statement`} class="w-full border-collapse text-sm">
         <thead>
           <tr class="border-b border-line">
             <th scope="col" class="py-2 pr-3 text-left font-medium text-ink-muted"><span class="sr-only">Line</span></th>
@@ -855,9 +899,9 @@ export function StatementTable({ st, parts = {} }: { st: StatementView; parts?: 
             ? <tr key={j}><th colSpan={cols} scope="colgroup" class="pt-4 pb-1 text-left text-xs font-semibold tracking-wide text-ink-muted uppercase">{l.label}</th></tr>
             : <tr key={j} class={`border-b border-line ${l.kind ? 'border-t border-t-ink/25' : ''}`}>
               <th scope="row" class={`py-1.5 pr-3 text-left font-normal ${lineClass(l.kind)}`}>{l.label}</th>
-              {l.values.map((v, i) => <td key={i} data-testid={l.id ? `${l.id}-${st.years[i]}` : undefined}
+              {l.values.map((v, i) => <td key={i} data-testid={l.id ? `${pre}${l.id}-${st.years[i]}` : undefined}
                 class={`px-2 py-1.5 text-right tabular-nums ${!st.counted[i] && l.kind === 'ratio' ? `font-semibold ${MUTED}` : lineClass(l.kind)}`}>{v}</td>)}
-              {st.total && <td data-testid={l.id ? `${l.id}-total` : undefined} class={`px-2 py-1.5 text-right font-semibold tabular-nums ${lineClass(l.kind)}`}>{l.total?.text ?? ''}</td>}
+              {st.total && <td data-testid={l.id ? `${pre}${l.id}-total` : undefined} class={`px-2 py-1.5 text-right font-semibold tabular-nums ${lineClass(l.kind)}`}>{l.total?.text ?? ''}</td>}
             </tr>)}
         </tbody>
       </table>
@@ -873,7 +917,7 @@ export function StatementTable({ st, parts = {} }: { st: StatementView; parts?: 
         <Cover a={of('available')?.n?.[i]} b={of('service')?.n?.[i]} top={top} />
         <div class="h-2" />
       </details>)}
-      {st.total && <div data-testid="card-total" class="rounded-control bg-surface p-3">
+      {st.total && <div data-testid={`${pre}card-total`} class="rounded-control bg-surface p-3">
         <p class="font-medium text-ink">Total{st.total.sub && <span class={`ml-2 text-xs font-normal ${MUTED}`}>{st.total.sub}</span>}</p>
         <Column st={st} at={(l) => l.total?.text ?? ''} />
         <Cover a={of('available')?.total?.n} b={of('service')?.total?.n} top={Math.max(of('available')?.total?.n ?? 0, of('service')?.total?.n ?? 0)} />

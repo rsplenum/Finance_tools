@@ -9,7 +9,7 @@ import {
   PERIOD_MONTHS, balanceAt, fyOf, levelInstalment, monthAfter, months, monthsFrom, runningLoanTerms, schedule, termMonths,
   type LoanTerms, type MonthRow, type RunningTerms, type YearDebt,
 } from './loan';
-import { levelCheck, monthsCheck, planCheck, runningCheck, scheduleCheck, statementCheck, type CheckResult } from './dscr-check';
+import { levelCheck, monthsCheck, pastCheck, planCheck, runningCheck, scheduleCheck, statementCheck, type CheckResult } from './dscr-check';
 import { borrowerOf, taxOn } from './tax';
 
 type Data = typeof DATA;
@@ -454,6 +454,90 @@ function profitTotalOff(t: ProfitTotals | undefined, s: Statement, c: CheckResul
 export function planStatement(proj: ProjectionYear[], loan: LoanInput, def: Definition, start?: string): Plan | Needs | Blocked {
   const needs = [...definitionNeeds(def), ...loanNeeds(loan), ...projectionNeeds(proj, def), ...startNeeds(start)];
   return needs.length ? { needs } : plan(proj, loan as LoanTerms, def, start);
+}
+
+// ---- Past years, from the books (DSCR row B) ----
+
+/**
+ * A year already closed, as its books give it: the profit and loss account and the cash flow statement. Never worked
+ * from the plan: its own interest, tax and repayments. Absent figures are needed, except the two below.
+ */
+export interface PastYear {
+  fy: string;
+  /** Profit before tax, as in the profit and loss account (a loss below zero), after any exceptional items. */
+  pbt?: number;
+  /** Tax charged, current and deferred together (a credit below zero). */
+  tax?: number;
+  depreciation?: number;
+  /** Other non-cash charges added back; absent, none (errs low). */
+  nonCash?: number;
+  /** All interest charged in the year: the finance cost. */
+  financeCost?: number;
+  /** Of the finance cost, the interest on term loans; absent, the whole finance cost is taken as on term loans (`pastSplit`
+   * in engine/data/defaults.json): added back and in debt service, which moves the year's DSCR towards 1. */
+  interestTL?: number;
+  /** Term-loan principal repaid in the year (the cash flow statement's repayments of term loans). */
+  principalTL?: number;
+  /** Only when the method counts lease rentals. */
+  leaseRentals?: number;
+}
+/** A past year's profit as the statement shows it: profit before interest, depreciation and tax put back together from
+ * the books' lines, the finance cost split into term loans and the rest, and whether that split was assumed. */
+export interface PastProfit { fy: string; pbdit: number; depreciation: number; nonCash: number; financeCost: number; interestTL: number; interestOther: number; pbt: number; tax: number; pat: number; splitAssumed: boolean }
+/** The past years' own statement: its average and lowest year are the past's, apart from the projected years'. */
+export interface Past { years: YearFigures[]; profit: PastProfit[]; statement: Statement }
+
+/** How many past years the page asks for (Rahul: the last three, like 2023-24 to 2025-26). */
+export const PAST_MOST = 3;
+export const PAST_LABELS = {
+  pbt: 'Profit before tax',
+  tax: 'Tax, current and deferred',
+  depreciation: 'Depreciation',
+  financeCost: 'Finance cost (all interest)',
+  interestTL: 'Of the finance cost, interest on term loans',
+  principalTL: 'Term-loan principal repaid',
+  nonCash: 'Other non-cash charges',
+  leaseRentals: 'Lease rentals',
+};
+
+/** What past years need; `before`, the first projected year, which every past year must come before. */
+export function pastNeeds(past: PastYear[], def: Definition, before?: string): string[] {
+  const needs = yearsNeeds(past.map((p) => p.fy)), L = PAST_LABELS;
+  for (const p of past) {
+    if (before && isFy(p.fy) && p.fy >= before) needs.push(`A past year before ${before}, the first projected year, in place of ${p.fy}`);
+    const at = (name: string) => `${name} for ${p.fy}`;
+    for (const k of ['pbt', 'tax'] as const) if (!isNum(p[k])) needs.push(at(L[k]));
+    const keys = ['depreciation', 'financeCost', 'principalTL', ...(def.leases === 'yes' ? ['leaseRentals'] as const : [])] as const;
+    for (const k of keys) {
+      const v = p[k];
+      if (!isNum(v)) needs.push(at(L[k])); else if (v < 0) needs.push(`${at(L[k])}, as zero or more`);
+    }
+    for (const k of ['nonCash', 'interestTL'] as const) {
+      const v = p[k];
+      if (v === undefined) continue;
+      if (!isNum(v) || v < 0) needs.push(`${at(L[k])}, as zero or more`);
+    }
+    if (isNum(p.interestTL) && isNum(p.financeCost) && p.interestTL > p.financeCost) needs.push(`${at(L.interestTL)}, no more than the finance cost`);
+  }
+  return needs;
+}
+
+/** The past years' statement, from the books alone (DSCR row B). The plan's statement, its solvers and the new loan never
+ * read it: a past year cannot change with the loan. Shown only when the second computation (`pastCheck`) agrees. */
+export function pastStatement(past: PastYear[], def: Definition, before?: string): Past | Needs | Blocked {
+  const needs = [...definitionNeeds(def), ...pastNeeds(past, def, before)];
+  if (needs.length) return { needs };
+  const sorted = [...past].sort((a, b) => (a.fy < b.fy ? -1 : 1));
+  const profit: PastProfit[] = [], years: YearFigures[] = sorted.map((y) => {
+    const p = y as Required<PastYear>, nonCash = y.nonCash ?? 0, splitAssumed = !isNum(y.interestTL);
+    const interestTL = splitAssumed ? p.financeCost : p.interestTL, interestOther = p.financeCost - interestTL, pat = p.pbt - p.tax;
+    profit.push({ fy: y.fy, pbdit: p.pbt + p.depreciation + nonCash + p.financeCost, depreciation: p.depreciation, nonCash, financeCost: p.financeCost, interestTL, interestOther, pbt: p.pbt, tax: p.tax, pat, splitAssumed });
+    return { fy: y.fy, pat, depreciation: p.depreciation, nonCash, interestTL, principalTL: p.principalTL, interestOther, ...(def.leases === 'yes' ? { leaseRentals: p.leaseRentals } : {}) };
+  });
+  const statement = computeStatement(years, def, DATA), check = pastCheck(sorted, def);
+  const where = disagreement(statement, check) || totalsOff(statement, def, DATA)
+    || profit.map((x) => (money(x.pbdit - x.depreciation - x.nonCash - x.financeCost, x.pbt) && money(x.interestTL + x.interestOther, x.financeCost) ? '' : `the profit in ${x.fy}`)).find(Boolean);
+  return where ? blocked(where) : { years, profit, statement };
 }
 
 /** The repayment schedule, every month and by year, shown only when the closed-form check agrees with it. */

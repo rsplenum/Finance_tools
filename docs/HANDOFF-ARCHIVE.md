@@ -433,3 +433,7 @@ PIC1 turned Rahul's "text, text, text" note into pictures (D-UX-365; on NEW1e's 
 From "Budgets and actuals":
 
 | 13-11-2026 | PIC1 (the DSCR's working as pictures, D-UX-365: the targets as bars against their levels, room to move as two bars and an instalment grid, the bank's tests as tiles, a year on a phone as a waterfall, what we filled in as chips) | M | about 150 steps, 3 compactions; no agent. Run the site check with `CHROMIUM_PATH=/opt/pw-browsers/chromium` here |
+
+## Moved on 21-11-2026 by DSCR row B
+
+State at 21-11-2026: **DSCR row A on its draft PR (branch `claude/quirky-mendel-hq8ovr`, D-POL-18): loans already running can be given by their terms under More options (amount or balance today, rate, month drawn, whole tenure, holiday, the holiday's interest paid or added), so their interest is charged in the profit, added back and set apart from their principal; more than one new term loan, each with its own schedule (the solvers move the first); every statement line names new and running loans apart; the engine's split checked by a second computation (`runningCheck`). The front door stays at 8 questions. Rahul's points 4 to 9 are rows DSCR-B to DSCR-D below.**
