@@ -7,7 +7,7 @@
 import TAX from './data/tax.json';
 import DSCR from './data/dscr.json';
 import { stepOf, type LoanTerms, type RunningTerms, type YearDebt } from './loan';
-import type { Definition, ProjectionYear, YearFigures } from './dscr';
+import type { Definition, PastYear, ProjectionYear, YearFigures } from './dscr';
 import type { Borrower } from './tax';
 
 export interface CheckRow { fy: string; available: number; service: number; counted: boolean; dscr?: number; pbt?: number; tax?: number; interestRunning?: number; principalRunning?: number }
@@ -244,4 +244,22 @@ const monthOfBefore = (ym: string) => {
 export function seriesCheck(kind: 'same' | 'grow' | 'fall', first: number, pct: number, count: number): number[] {
   const factor = kind === 'same' ? 1 : kind === 'grow' ? (100 + pct) / 100 : (100 - pct) / 100;
   return Array.from({ length: count }, (_, k) => first * factor ** k);
+}
+
+/**
+ * Past years from the books (DSCR row B), a second way: cash available from profit before interest, depreciation and tax
+ * (profit before tax with depreciation, other non-cash charges and the whole finance cost put back), less the tax and the
+ * interest the method does not add back. The term-loan part of an unsplit finance cost is the whole of it, read here from
+ * the rule's own words, not from dscr.ts.
+ */
+export function pastCheck(past: PastYear[], def: Definition): CheckResult {
+  return summarise(past.map((p) => {
+    const finance = p.financeCost as number, nonCash = p.nonCash ?? 0, lease = def.leases === 'yes' ? (p.leaseRentals as number) : 0;
+    const pbdit = (p.pbt as number) + (p.depreciation as number) + nonCash + finance;
+    const termPart = typeof p.interestTL === 'number' ? p.interestTL : finance;
+    const notAdded = def.interest === 'all-borrowings' ? 0 : def.interest === 'term-loans' ? finance - termPart : finance;
+    const added = finance - notAdded, principal = p.principalTL as number;
+    const r = row(p.fy, pbdit - (p.tax as number) - notAdded + lease, principal + added + lease, principal, def);
+    return { ...r, pbt: p.pbt, tax: p.tax };
+  }), def);
 }

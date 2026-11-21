@@ -14,7 +14,7 @@ import { Bars } from '../worked/Bars';
 import { useWorkedKept, over } from '../worked/kept';
 import { Levels } from '../worked/Levels';
 import { Fold, FactLine, MAIN, openFold, QUIET, Reading } from '../worked/parts';
-import { DownloadSection, LenderLines, Professionals, Schedule, StatementTable, type Update } from './Calculator';
+import { DownloadSection, LenderLines, PastTable, Professionals, Schedule, StatementTable, type Update } from './Calculator';
 import { DSCR_HOME } from './home-case';
 import { inr } from '../../../engine/util';
 import { BORROWER_CHOICES, frontDoor, statusText, type Preview, type State } from './model';
@@ -344,6 +344,7 @@ function Working({ p, update, toPro }: { c: Case; p: Preview; update: Update; to
           onFewest={(n) => update((x) => ({ ...x, loan: { ...x.loan, instalments: String(n) } }))} /></div>
       {p.lender && <div class="md:col-start-1 md:row-start-2"><LenderLines v={p.lender} openMore={() => toPro('lender')} /></div>}
     </div>
+    <PastTable p={p} />
     {p.statement && <StatementTable st={p.statement} parts={p.partYears} />}
     {p.beforeStart && <p data-testid="dscr-before-start" class="mt-2 text-sm text-ink-muted">{p.beforeStart}</p>}
     {p.notCounted && <p data-testid="dscr-not-counted" class="mt-2 text-sm text-ink-muted">{p.notCounted}</p>}

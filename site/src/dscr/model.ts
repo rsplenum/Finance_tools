@@ -9,8 +9,8 @@ import DEFAULTS from '../../../engine/data/defaults.json';
 import DSCR from '../../../engine/data/dscr.json';
 import {
   BENCHMARKS, COMPONENTS, LOAN_LABELS, OPTIONS, PLAN_SERVICE, PRESETS, PROJECTION_LABELS, amortization, componentsOf, dscrStatement, fyRange,
-  isFy, limitText, loanTimeline, maxLoanAmount, planStatement, shortestRepayment, shortfall, targetNeeds,
-  type Amortization, type Component, type Definition, type Limit, type LoanInput, type ProfitTotals, type ProfitYear, type ProjectionYear, type Statement,
+  isFy, limitText, loanTimeline, maxLoanAmount, PAST_LABELS, PAST_MOST, pastStatement, planStatement, shortestRepayment, shortfall, targetNeeds,
+  type Amortization, type PastYear, type Component, type Definition, type Limit, type LoanInput, type ProfitTotals, type ProfitYear, type ProjectionYear, type Statement,
   type Target, type YearFigures, type Plan, type DebtSplit,
 } from '../../../engine/dscr';
 import { LENDER, auditedYear, cashCheck, promotersRepaid, stressTests, type AuditedInput, type LenderYear, type Summary } from '../../../engine/lender';
@@ -94,6 +94,37 @@ export interface State {
   ownMost?: string;
   /** D1, the lenders' tests, under More options; absent until one is typed (D-UX-47). */
   lender?: LenderText;
+  /** DSCR row B: past years from the books before the projected ones, under More options (absent: none). */
+  past?: PastText;
+}
+
+/**
+ * Past years as typed (DSCR row B): how many, up to three, and each line's figures by how far back the year is (index 0
+ * the year just before the first projected year), so moving the projections keeps each figure with its distance.
+ */
+export type PastKey = Exclude<keyof PastYear, 'fy'>;
+export interface PastText { count: number; cells: Partial<Record<PastKey, string[]>> }
+export const NO_PAST: PastText = { count: 0, cells: {} };
+/** The lines asked for a past year, in the order of the accounts; lease rentals only where the method counts them. */
+export const PAST_KEYS: PastKey[] = ['pbt', 'tax', 'depreciation', 'financeCost', 'interestTL', 'principalTL', 'nonCash', 'leaseRentals'];
+/** The past years' names, oldest first: the `count` years before `first`. */
+export function pastYearsOf(count: number, first?: string): string[] {
+  if (!first || !isFy(first)) return [];
+  const y0 = Number(first.slice(0, 4)), n = Math.min(Math.max(0, count), PAST_MOST);
+  return Array.from({ length: n }, (_, i) => fyOf(y0 - n + i, 4));
+}
+/** The figure typed for a past year's line: `i` the year's place, oldest first, among `n`. */
+export const pastCell = (t: PastText, key: PastKey, i: number, n: number) => t.cells[key]?.[n - 1 - i] ?? '';
+/** The past years as the engine reads them: an empty box stays missing, one not understood stays wrong (never 0). */
+function pastInput(t: PastText, years: string[], leases: boolean): PastYear[] {
+  return years.map((fy, i) => {
+    const y: PastYear = { fy };
+    for (const k of PAST_KEYS) {
+      const text = pastCell(t, k, i, years.length);
+      if ((k !== 'leaseRentals' || leases) && text.trim()) y[k] = parseAmount(text) ?? NaN;
+    }
+    return y;
+  });
 }
 
 /**
@@ -434,7 +465,7 @@ export interface AssumedLine { id: string; what: string; shown: string; why: str
 const WHERE: Record<string, string> = {
   method: 'method', target: 'target', tax: 'row-taxPct', proprietorTax: 'row-taxPct', margin: 'row-pbdit', asset: 'row-assetIncome',
   depreciation: 'row-depreciation', interest: 'row-interestOther', interestNone: 'row-interestOther', otherLoans: 'row-otherLoans', nonCash: 'row-nonCash',
-  start: 'start-question', loanStart: 'fld-disbursed', promoters: 'fld-lender-promoters-0',
+  start: 'start-question', loanStart: 'fld-disbursed', promoters: 'fld-lender-promoters-0', pastSplit: 'past',
 };
 
 /** The assumptions (engine/data/defaults.json) still as assumed; one that makes no difference to these figures is not listed. */
@@ -518,6 +549,21 @@ export interface Preview {
   marks?: { fy: string; dscr: string; n: number; meets: boolean; counted: boolean }[];
   /** DSCR as lenders test it, beside the borrower's: it never changes the verdict (D-UX-47). */
   lender?: LenderView;
+  /** DSCR row B: the past years from the books, a statement of their own before the projected one; never in the verdict. */
+  past?: PastView;
+}
+
+/** The past years' own statement (DSCR row B): its average and lowest year, and one line saying which years are past. */
+export interface PastView {
+  years: string[];
+  statement?: StatementView;
+  /** Under a year's heading: its finance cost was not split, so all of it is taken as term-loan interest (`pastSplit`). */
+  parts: Record<string, string>;
+  average?: string; lowest?: string; lowestYear?: string; notCounted?: string; notes: string[]; blocked?: string;
+  /** The years whose finance cost was not split, and how it is counted, in words for the page and the document. */
+  split?: string;
+  /** Which years are from the books and which projected, with the past years' average and lowest year. */
+  line?: string;
 }
 
 /** One target in the verdict's picture: its figure (`value`, `text`) against the level (`target`, `targetText`). */
@@ -684,6 +730,47 @@ function statementView(st: Statement, t: Target, def: Definition, parts: YearFig
   };
 }
 
+const span = (xs: string[]) => (xs.length > 1 ? `${xs[0]} to ${xs[xs.length - 1]}` : xs[0] ?? '');
+
+/**
+ * DSCR row B: the past years' statement, from the books alone, before the projected one. It has its own average and
+ * lowest year; the verdict, the largest loan and the shortest repayment read only the projected years.
+ */
+function pastInto(p: Preview, s: State, def: Definition, t: Target, projected: string[]) {
+  const years = pastYearsOf(s.past?.count ?? 0, projected[0]);
+  if (!years.length) return;
+  const r = pastStatement(pastInput(s.past as PastText, years, def.leases === 'yes'), def, projected[0]);
+  const v: PastView = { years, parts: {}, notes: [] };
+  p.past = v;
+  if ('needs' in r) { p.needs.push(...groupNeeds(r.needs, [], Object.values(PAST_LABELS)).map((n) => `From the books: ${lower(n)}`)); return; }
+  if ('blocked' in r) { v.blocked = r.blocked; return; }
+  const assumed = r.profit.filter((x) => x.splitAssumed).map((x) => x.fy);
+  for (const fy of assumed) v.parts[fy] = 'finance cost not split';
+  if (assumed.length) {
+    v.split = `The accounts do not split the finance cost for ${andList(assumed)}: all of it is counted as interest on term loans, added back and in the debt service.`;
+    const a = ASSUMPTION.pastSplit;
+    p.assumed.push({ id: a.id, what: a.what, shown: `${a.shown}: ${andList(assumed)}`, why: a.why, where: `fld-past-interestTL-${years.indexOf(assumed[0])}` });
+  }
+  const profit: ProfitYear[] = r.profit.map((x) => ({
+    fy: x.fy, pbdit: x.pbdit, assetIncome: 0, depreciation: x.depreciation, nonCash: x.nonCash, interestTL: x.interestTL, interestNew: 0,
+    interestRunning: 0, interestOther: x.interestOther, pbt: x.pbt, tax: x.tax, pat: x.pat,
+  }));
+  const st = r.statement, view = statementView(st, t, def, r.years, profit);
+  // In the books the rest of the finance cost is any other interest, not only on working capital.
+  v.statement = { ...view, lines: view.lines.map((l) => (l.label === 'Less: interest on working capital' ? { ...l, label: 'Less: other interest' } : l)) };
+  const skipped = st.rows.filter((x) => !x.counted).map((x) => x.fy);
+  if (skipped.length && skipped.length < st.rows.length)
+    v.notCounted = `Not counted: ${andList(skipped)} (${def.years === 'repayment' ? 'no term-loan instalment' : 'no interest or instalments due'}).`;
+  v.notes = st.notes;
+  const head = `From the books, ${span(years)}`, tail = `The other figures are for the projected years, ${span(projected)}.`;
+  if (st.average !== undefined && st.minimum) {
+    v.average = ratioText(st.average, t.average);
+    v.lowest = ratioText(st.minimum.dscr, t.minimum);
+    v.lowestYear = st.minimum.fy;
+    v.line = `${head}: average ${v.average}, lowest ${v.lowest} in ${v.lowestYear}. ${tail}`;
+  } else v.line = `${head}: no year counts${def.years === 'repayment' ? ' (no term-loan instalment)' : ''}. ${tail}`;
+}
+
 function fillStatement(p: Preview, st: Statement, t: Target, def: Definition, parts: YearFigures[], profit?: ProfitYear[], profitTotal?: ProfitTotals, split?: SplitView) {
   p.statement = statementView(st, t, def, parts, profit, profitTotal, split);
   if (t.minimum !== undefined) p.marks = st.rows.filter((r) => r.dscr !== undefined)
@@ -796,6 +883,7 @@ export function preview(s: State): Preview {
       + `(${andList(b.map((x) => rs(x.interest)))}) is taken as paid from the project cost (capitalised), not from profits.`;
     p.lender = lenderView(s, proj, loan, def, y, r, target);
   }
+  if (y.years.length && !y.startNeeded) pastInto(p, s, def, target, y.years);
   p.needs.push(...tNeeds);
   if (tNeeds.length || !y.years.length || p.blocked || y.startNeeded) return p;
 

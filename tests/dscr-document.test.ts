@@ -518,3 +518,48 @@ describe('the address, the purpose and the GSTIN in the header (D2)', () => {
     expect(docStatus({ ...MORE, doc: { ...MORE.doc, gstin: '27ABCDE1234' } }, p)).toBe('1 question left, for the document');
   });
 });
+
+// Fictional case H's three years from the books (worked by hand in tests/dscr-past.test.ts: DSCR 1.90, 1.50 and 7.00,
+// the last not counted; average 30,90,000 ÷ 19,00,000 = 1.63, lowest 1.50 in 2024-25) before case A's projections.
+const WITH_H: State = { ...CASE_A, doc: FACTS, past: { count: 3, cells: {
+  pbt: ['8 L', '12 L', '10 L'], tax: ['2,00,000', '3,00,000', '2,60,000'], depreciation: ['3 L', '2.5 L', '2 L'],
+  financeCost: ['9 L', '8 L', '6 L'], interestTL: ['1.5 L', '', '2 L'], principalTL: ['0', '5 L', '4 L'],
+} } };
+
+describe('fictional case H: the past years from the books before the projected ones (DSCR row B)', () => {
+  const { p, doc, text, lines } = build(WITH_H);
+  it('the past years as their own table, said to be from the books, then the projected years', () => {
+    expect(lines).toContain('Debt service coverage ratio (DSCR), 2026-27 to 2029-30, after 3 past years from the books');
+    const past = lines.indexOf('Past years, from the books'), projected = lines.indexOf('Projected years');
+    expect(past).toBeGreaterThan(0);
+    expect(projected).toBeGreaterThan(past);
+    const between = lines.slice(past, projected);
+    expect(between).toContain('Rupees | 2023-24 | 2024-25 (finance cost not split) | 2025-26 (not counted) | Total (years counted)');
+    expect(between).toContain('Cash available (A) | 11,40,000 | 19,50,000 | 10,50,000 | 30,90,000');
+    expect(between).toContain('Debt service (B) | 6,00,000 | 13,00,000 | 1,50,000 | 19,00,000');
+    expect(between).toContain('DSCR (A ÷ B) | 1.90 | 1.50 | 7.00 | 1.63');
+    expect(between).toContain('From the books, 2023-24 to 2025-26: average 1.63, lowest 1.50 in 2024-25. The other figures are for the projected years, 2026-27 to 2029-30.');
+    expect(between).toContain('The accounts do not split the finance cost for 2024-25: all of it is counted as interest on term loans, added back and in the debt service.');
+    expect(between).toContain('Not counted: 2025-26 (no term-loan instalment).');
+    // The projected statement is case A's, unchanged.
+    expect(lines.slice(projected)).toContain('Rupees | 2026-27 | 2027-28 | 2028-29 | 2029-30 | Total');
+  });
+  it('holds no figure the page did not already show or the user did not type', () => {
+    const typed = Object.values(WITH_H.past!.cells).flat().map(tidyAmount);
+    expect(figuresIn(text).filter((f) => !sourcesOf(WITH_H, p, typed).includes(f))).toEqual([]);
+  });
+  it('the same past years in the PDF, the Excel copy (exact figures, no formula) and the Word copy', async () => {
+    const pdf = (await pdfPages(pdfOf(doc, MADE))).join('\n'), word = (await docxLines(docxOf(doc, MADE))).lines.join('\n');
+    for (const t of ['Past years, from the books', 'Projected years', 'lowest 1.50 in 2024-25']) {
+      expect(pdf).toContain(t);
+      expect(word).toContain(t);
+    }
+    const bytes = xlsxOf(doc, MADE), statement = sheetOf(await workbook(bytes), 'DSCR statement');
+    expect(await formulaParts(bytes)).toEqual([]);
+    const dscr = statement.filter((r) => r[0] === 'DSCR (A ÷ B)');
+    expect(dscr).toHaveLength(2);
+    // The past row first, as the engine gave it: 11,40,000 ÷ 6,00,000, 19,50,000 ÷ 13,00,000, 10,50,000 ÷ 1,50,000 and
+    // the average 30,90,000 ÷ 19,00,000.
+    [1.9, 1.5, 7, 30.9 / 19].forEach((x, i) => expect(dscr[0][i + 1] as number).toBeCloseTo(x, 9));
+  });
+});

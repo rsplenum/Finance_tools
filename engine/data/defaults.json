@@ -106,6 +106,14 @@
       "shown": "Kept in the business until this loan is repaid (subordinated)",
       "why": "A usual condition of a term loan. If any are repaid sooner, add the repayments in Professional mode",
       "decided": "The owner's answer of 11-10-2026 (D-UX-47)"
+    },
+    {
+      "id": "pastSplit",
+      "what": "A past year's finance cost, when not split",
+      "value": "all-term-loans",
+      "shown": "All of it taken as interest on term loans",
+      "why": "Accounts often show one finance cost. Taken as term-loan interest, it is added back and also counted in the debt service: that lowers a DSCR above 1 and never turns a year that falls short into one that passes. Type the term-loan part of each year to count it exactly",
+      "decided": "Claude, for DSCR row B (21-11-2026): the reading that errs low, as the money rules ask; the owner may overrule"
     }
   ]
 }
