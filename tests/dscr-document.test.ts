@@ -155,7 +155,7 @@ describe('fictional case A′, complete: the statement for the lender', () => {
     expect(lines).toContain('Debt service (B) = term-loan instalments (principal) + interest on term loans.');
     expect(lines).toContain('Years counted: years with a term-loan instalment.');
     expect(lines).toContain('The average: total cash available ÷ total debt service. The lowest year is the lowest DSCR among the years counted.');
-    expect(lines).toContain('Source: How chartered accountants and banks work DSCR for term loans, as described in public articles (bankingfinance.in, finpab.com). Dated 30-09-2026.');
+    expect(lines).toContain('Source: Term-loan practice of Indian banks and chartered accountants: (net profit + depreciation + interest on term loans) ÷ (principal + interest on term loans), averaged over the repayment years. Dated 30-09-2026.');
     expect(text).not.toMatch(/checked|could not be opened|summaries|docs\//i);
     expect(text).not.toContain('How the figures are built');
     for (const rule of DSCR.planning.rules) expect(text).not.toContain(rule);

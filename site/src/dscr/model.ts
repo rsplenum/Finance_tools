@@ -570,7 +570,7 @@ export interface AssumedLine { id: string; what: string; shown: string; why: str
 const WHERE: Record<string, string> = {
   method: 'method', target: 'target', tax: 'row-taxPct', proprietorTax: 'row-taxPct', margin: 'row-pbdit', asset: 'row-assetIncome',
   depreciation: 'row-depreciation', interest: 'row-interestOther', interestNone: 'row-interestOther', otherLoans: 'row-otherLoans', nonCash: 'row-nonCash',
-  start: 'start-question', loanStart: 'fld-disbursed', promoters: 'fld-lender-promoters-0', pastSplit: 'past',
+  start: 'start-question', loanStart: 'fld-disbursed', promoters: 'check-promoters', pastSplit: 'past',
 };
 
 /** The assumptions (engine/data/defaults.json) still as assumed; one that makes no difference to these figures is not listed. */
@@ -1087,7 +1087,7 @@ function lenderView(s: State, proj: ProjectionYear[], loan: LoanInput, def: Defi
   const st = stressTests(proj, loan, def, extra, y.start);
   if ('blocked' in st) v.blocked = st.blocked;
   else if ('needs' in st) {
-    if (!l.sales.some((t) => t.trim())) v.ask = `Add this year's sales in Professional mode to see the DSCR with the ${LENDER.stress.map((c) => c.label.toLowerCase()).join(' and with ')}.`;
+    if (!l.sales.some((t) => t.trim())) v.ask = `Banks also test the DSCR with the ${LENDER.stress.map((c) => c.label.toLowerCase()).join(' and with ')}.`;
     else v.needs = st.needs;
   }
   else v.stress = st.flatMap((x) => lenderLine(x.label, x) ?? []);
@@ -1203,12 +1203,11 @@ export const presetText = (id: string) => cap(OPTION_KEYS
 export const withTaxRate = (s: State, pct: string): State =>
   ({ ...s, modes: { ...s.modes, taxPct: 'same' }, cells: { ...s.cells, taxPct: [pct, ...(s.cells.taxPct ?? []).slice(1)] } });
 
-/** What the verdict rests on that came from our data, each with how sure it is (D-DATA-25, TRUST1): the method, the
+/** What the verdict rests on that came from our data, each with how sure it is (D-DATA-25, TRUST1): the
  *  target when it is the examples, the tax when it is worked out by who the borrower is. What the borrower typed is theirs. */
 export function dscrMarks(s: State): { what: string; mark: Marked; check: string }[] {
   const out: { what: string; mark: Marked; check: string }[] = [];
-  const m = presetOf(s.method);
-  if (m) out.push({ what: 'the method', mark: m as Marked, check: 'ask your lender how it works DSCR out' });
+  // The method is not among them: the owner confirmed the three methods' formulas (D-DATA-32), so the page states them plainly.
   const t = targetOf(s), a = EXAMPLE_TARGETS.average, n = EXAMPLE_TARGETS.minimum;
   const ex = [t.average !== undefined && a && t.average === a.value && a, t.minimum !== undefined && n && t.minimum === n.value && n].filter(Boolean) as Marked[];
   if (ex.length) out.push({ what: 'the target', mark: leastSure(ex), check: 'ask your lender for its own target' });

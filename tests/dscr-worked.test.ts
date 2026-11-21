@@ -129,3 +129,30 @@ describe('odd input is said back and never taken', () => {
     expect(readingOf(loss, previewOf(loss.s)).state).toBe('cannot');
   });
 });
+
+describe('the profit in its parts (Rahul, 21-11-2026)', () => {
+  // A fictional year, worked a second way by hand: profit before tax = net profit + tax = 3,12,400 + 1,07,000 = 4,19,400;
+  // then interest and depreciation back: 4,19,400 + 1,08,000 + 72,600 = 6,00,000.
+  it('adds net profit, interest, depreciation and tax as the accounts give them', async () => {
+    const { profitFromParts } = await import('../engine/dscr');
+    const pbt = 312400 + 107000;
+    expect(profitFromParts({ pat: 312400, interest: 108000, depreciation: 72600, tax: 107000 })).toBe(pbt + 108000 + 72600);
+    expect(profitFromParts({ pat: 312400, interest: 108000, depreciation: 72600, tax: 107000 })).toBe(600000);
+    expect(profitFromParts({ pat: 0.1, tax: 0.2 })).toBe(0.3);
+    // A loss: -50,000 + 2,00,000 + 1,00,000 = 2,50,000.
+    expect(profitFromParts({ pat: -50000, interest: 200000, depreciation: 100000 })).toBe(250000);
+  });
+  it('reads the parts as typed, and says which is wrong', async () => {
+    const { profitParts } = await import('../site/src/dscr/worked');
+    expect(profitParts(['3,12,400', '1.08 L', '72,600', '1,07,000'])).toEqual({ text: '6,00,000', total: '₹6,00,000' });
+    expect(profitParts(['-50,000', '2 L', '1 L', ''])).toEqual({ text: '2,50,000', total: '₹2,50,000' });
+    expect(profitParts(['', '1 L']).at).toBe(0);
+    expect(profitParts(['3 L', '-5,000']).at).toBe(1);
+    expect(profitParts(['3 L', '', 'abc']).at).toBe(2);
+  });
+  it('writes the depreciation part as the last question\'s answer', () => {
+    const s = writeFact(writeFact(c.s, 'profit', '6,00,000'), 'depreciation', '72,600');
+    expect(factText(s, 'profit')).toBe('6,00,000');
+    expect(factText(s, 'depreciation')).toBe('72,600');
+  });
+});

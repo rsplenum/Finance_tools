@@ -129,7 +129,7 @@ describe('on the page: the lines beside the DSCR, from the front door (fictional
   it('asks for sales in one line until given; the promoters\' assumption shows', () => {
     const v = preview(A2).lender!;
     expect(v.stress).toEqual([]);
-    expect(v.ask).toMatch(/^Add this year's sales in Professional mode/);
+    expect(v.ask).toBe('Banks also test the DSCR with the sales price 5% lower and with costs 10% higher.');
     expect(v.promoters).toEqual({ assumed: expect.stringContaining('subordinated') });
     expect(v.cash).toBeUndefined();
   });

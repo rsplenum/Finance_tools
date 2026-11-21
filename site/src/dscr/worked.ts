@@ -8,6 +8,7 @@
  * Rahul read it (D-UX-358): a figure shows from the first fact, marked with what it leaves out.
  */
 import { inr, lakhCrore, rs } from '../../../engine/util';
+import { profitFromParts } from '../../../engine/dscr';
 import { amountOf, BORROWER_CHOICES, frontDoor, numberOf, preview, tenureText, tidyAmount, withBorrower, withFrontNeeds, withYears, yearsOf, yearsText, type Preview, type State } from './model';
 import { optionsOf, setupOf, termWords, writeTerms } from './rounds';
 import type { LinkTerms } from '../../../engine/dscr-linked';
@@ -72,6 +73,26 @@ export function factProblem(id: FactId, t: string): string | undefined {
   }
   const [lo, hi] = RANGE[id] ?? [-Infinity, Infinity];
   return n < lo || n > hi ? N.sheet.range(lo, hi) : undefined;
+}
+
+/**
+ * The profit question in its parts (Rahul, 21-11-2026): net profit after tax, interest, depreciation and tax, added by the
+ * engine. Net profit is needed (a loss with a minus); the rest may be left empty. `at` is the part that is wrong.
+ */
+export function profitParts(parts: string[]): { text?: string; total?: string; problem?: string; at?: number } {
+  const ns: (number | undefined)[] = [];
+  for (let i = 0; i < 4; i++) {
+    const t = parts[i]?.trim() ?? '';
+    if (!t) { if (i === 0) return { problem: N.ask.parts.needPat, at: 0 }; ns.push(undefined); continue; }
+    const n = amountOf(t);
+    if (n === undefined || !Number.isFinite(n)) return { problem: N.sheet.notMoney, at: i };
+    if (n < 0 && i > 0) return { problem: N.sheet.negative, at: i };
+    if (Math.abs(n) > MOST.profit!) return { problem: N.sheet.tooLarge, at: i };
+    ns.push(n);
+  }
+  const n = profitFromParts({ pat: ns[0]!, interest: ns[1], depreciation: ns[2], tax: ns[3] }), d = Number.isInteger(n) ? 0 : 2;
+  if (Math.abs(n) > MOST.profit!) return { problem: N.sheet.tooLarge, at: 0 };
+  return { text: inr(n, d), total: rs(n, d) };
 }
 
 /** Writes a fact as the front door does (`Calculator.tsx` FrontDoor), so For professionals shows it too. */

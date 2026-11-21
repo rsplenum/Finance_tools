@@ -8,21 +8,23 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { isoDate } from '../download';
-import { goTo, useHomeCase } from '../fields';
+import { goTo, Tick, useHomeCase } from '../fields';
 import { Ask, type AskQuestion } from '../worked/Ask';
 import { Bars } from '../worked/Bars';
 import { useWorkedKept, over } from '../worked/kept';
 import { LevelBand, Levels } from '../worked/Levels';
 import { Fold, FactLine, MAIN, openFold, QUIET, Reading } from '../worked/parts';
-import { DownloadSection, LenderLines, PastTable, Professionals, Schedule, StatementTable, type Update } from './Calculator';
+import { changedInPlace, DownloadSection, InPlace, LenderLines, PastTable, Professionals, Schedule, StatementTable, type Update } from './Calculator';
+import DEFAULTS_FILE from '../../../engine/data/defaults.json';
 import { DSCR_HOME } from './home-case';
 import { inr } from '../../../engine/util';
-import { BORROWER_CHOICES, frontDoor, statusText, withInstalments, type Preview, type State, type TargetRow } from './model';
+import { BORROWER_CHOICES, frontDoor, statusText, withInstalments, type AssumedLine, type Preview, type State, type TargetRow } from './model';
 import {
   ASSUMED_FACTS, applyOption, barsOf, changedFacts, exampleCase, exampleFacts, exampleNeeds, exampleState, FACTS, factProblem, factsOf, factText,
-  markOf, optionsFor, previewOf, readingOf, WALK, withMine, writeFact, type Case, type FactId, type OptionCard,
+  markOf, optionsFor, previewOf, profitParts, readingOf, WALK, withMine, writeFact, type Case, type FactId, type OptionCard,
 } from './worked';
-import { Room, Targets } from './Pictures';
+import { AskHelp } from './AskHelp';
+import { Room } from './Pictures';
 import { N } from './words';
 
 const thisMonth = () => isoDate(new Date()).slice(0, 7);
@@ -97,16 +99,22 @@ export function DscrWorked() {
 
   // A change from Professional mode: whatever fact it touched becomes the borrower's.
   const update: Update = (f) => { remember(c, true); setC((x) => { const s = f(x.s); return { s, mine: withMine(x.mine, changedFacts(x.s, s)) }; }); };
+  // A change from a button on the report: one change, undone in one step.
+  const change: Update = (f) => { remember(c); setC((x) => { const s = f(x.s); return { s, mine: withMine(x.mine, changedFacts(x.s, s)) }; }); };
   const ask = (i: number, from: 'intro' | 'report', single = false) => {
     if (from === 'report' && !single) remember(c);
     setView({ at: 'ask', i, from, single });
   };
   const begin = (m: Mode) => { setMode(m); ask(0, 'intro'); };
-  const answer = (i: number, t: string) => {
+  const answer = (i: number, t: string, parts?: string[]) => {
     if (view.at !== 'ask') return;
     const id = ORDER[i];
     if (view.single) remember(c);
-    setC((x) => ({ s: writeFact(x.s, id, t), mine: withMine(x.mine, [id]) }));
+    // The profit in its parts: its depreciation is the last question's answer too, already typed.
+    const dep = id === 'profit' && parts?.[2]?.trim() ? parts[2] : undefined;
+    setC((x) => (dep
+      ? { s: writeFact(writeFact(x.s, id, t), 'depreciation', dep), mine: withMine(x.mine, [id, 'depreciation']) }
+      : { s: writeFact(x.s, id, t), mine: withMine(x.mine, [id]) }));
     setUsed(undefined);
     if (view.single || i + 1 >= ORDER.length) setView({ at: 'report' });
     else setView({ ...view, i: i + 1 });
@@ -152,7 +160,9 @@ export function DscrWorked() {
     const id = ORDER[view.i];
     return <Ask q={questionOf(c, id)} at={view.i + 1} of={ORDER.length} single={view.single}
       words={{ ...N.ask, last: mode === 'pro' && !view.single ? N.ask.fields : N.ask.see }} problem={(t) => factProblem(id, t)} onBack={back}
-      reads={(t) => (id === 'borrower' ? undefined : readBack(c, id, t))} onAnswer={(t) => answer(view.i, t)} />;
+      reads={(t) => (id === 'borrower' ? undefined : readBack(c, id, t))} onAnswer={(t, parts) => answer(view.i, t, parts)}
+      parts={id === 'profit' ? { ...N.ask.parts, under: [N.ask.parts.minus], totalLabel: N.ask.parts.total, sum: profitParts } : undefined}
+      help={<AskHelp id={id} borrower={c.mine.includes('borrower') ? c.s.borrower : undefined} />} />;
   }
 
   const target = c.s.target;
@@ -194,17 +204,23 @@ export function DscrWorked() {
   const answerShown = <>
     <Reading text={r.text} state={r.state} pencil={pencil} />
     <Tiles p={p} c={c} />
-    {levels.length > 0 && Number.isFinite(levelN) && <div class="mt-6"><Levels title={N.years.title} level={levelN} lineName={N.years.line(target.minimum)} belowName={`${N.years.below} ${target.minimum}`} rows={levels} /></div>}
+    {levels.length > 0 && Number.isFinite(levelN) && <div class="mt-6"><Levels title={N.years.title} level={levelN} lineName={N.years.line(target.minimum)} belowLine={N.years.belowLine(levels.filter((r) => r.below).length, levels.length, target.minimum)} rows={levels} /></div>}
     {bars.length > 0 && <div class="mt-6"><Bars title={N.chart.title} aName={N.chart.cash} bName={N.chart.service} unit={N.chart.unit} tightName={N.chart.tight} rows={bars} /></div>}
   </>;
+  // Room to move: with the ways that work when it falls short; under the next step, for the borrower's own figures, when it carries.
+  const room = <Room p={p} longer={options.some((o) => o.id === 'longer')}
+    onAmount={(n) => change((x) => ({ ...x, loan: { ...x.loan, amount: inr(n) } }))}
+    onFewest={(n) => change((x) => ({ ...x, loan: withInstalments(x.loan, String(n)) }))} />;
   // What to do next: the ways that work when it falls short, then the one next step.
   const nextStep = (facts: boolean) => <>
     {options.length > 0 && <Options options={options} onUse={use} />}
     {options.length === 0 && (r.state === 'short' || r.state === 'cannot') && <p class="mb-4 text-base text-ink-muted">{N.options.none}</p>}
+    {(r.state === 'short' || r.state === 'cannot') && room}
     {used && <p role="status" data-testid="used" class="mb-4 flex flex-wrap items-center gap-x-2 text-base text-ink">{N.options.used(used.title)}
       <button type="button" data-testid="undo" class={QUIET} onClick={undo}>{N.options.undo}</button></p>}
     {facts && <FactLine facts={factsOf(c)} onTap={tap} label="Your answers, each one tappable" />}
     <div class="mt-5"><button type="button" data-testid="next" data-next={next.kind} class={MAIN} onClick={next.go}>{next.label}</button></div>
+    {r.state === 'carries' && (own || pro) && <div class="mt-10">{room}</div>}
   </>;
 
   return <div data-testid="report" data-mode={mode} class="pb-24">
@@ -260,16 +276,16 @@ export function DscrWorked() {
           <h2 id="years-title" data-settle data-whole class="text-section text-ink">{N.years.band}</h2>
           <div class="mt-8 grid gap-12 sm:mt-10 lg:grid-cols-2 lg:gap-16">
             {yearsShown && <div><h3 class="text-xl text-ink">{N.years.title}</h3>
-              <div class="mt-3"><LevelBand level={levelN} lineName={N.years.line(target.minimum)} belowName={`${N.years.below} ${target.minimum}`} rows={levels} /></div></div>}
+              <div class="mt-3"><LevelBand level={levelN} lineName={N.years.line(target.minimum)} belowLine={N.years.belowLine(levels.filter((r) => r.below).length, levels.length, target.minimum)} rows={levels} /></div></div>}
             {bars.length > 0 && <div data-settle data-whole style={{ '--i': 2 }}><h3 class="text-xl text-ink">{N.chart.band}</h3>
               <div class="mt-3"><Bars title={N.chart.title} aName={N.chart.cash} bName={N.chart.service} unit={N.chart.unit} tightName={N.chart.tight} rows={bars} /></div></div>}
           </div>
         </section>}
-        <Filled p={p} onChange={toPro} />
+        <Filled p={p} onChange={toPro} edit={{ s: c.s, update }} />
       </div>}
 
     <div key="folds" class="mt-12">
-      <Fold id="working" title={N.folds.working}><Working c={c} p={p} toPro={toPro} update={(f) => { remember(c); setC((x) => { const s = f(x.s); return { s, mine: withMine(x.mine, changedFacts(x.s, s)) }; }); }} /></Fold>
+      <Fold id="working" title={N.folds.working}><Working p={p} toPro={toPro} /></Fold>
       <Fold id="paper" title={N.folds.paper} class="border-b">
         <DownloadSection s={c.s} p={p} update={update} example={exampleNeeds(c)} bare />
       </Fold>
@@ -370,28 +386,23 @@ function Options({ options, onUse }: { options: OptionCard[]; onUse: (o: OptionC
   </div>;
 }
 
-/** See the working, as pictures (PIC1, Rahul, 13-11-2026: "A picture or graphics speaks a thousand words"): where it
- * stands, each target as a bar against its level, the room to move, the other checks, the statement that adds up and the
- * schedule. Each year against the target is the chart's, above, and is not said again here (Rahul, 12-11-2026). */
-function Working({ p, update, toPro }: { c: Case; p: Preview; update: Update; toPro: (where?: string) => void }) {
+/**
+ * How it adds up (Rahul, 21-11-2026: "more intuitive … no repetitive communication and no confusing turn of phrase"):
+ * where the answer stands, the one sum read down from the profit to the DSCR, what it leaves out, the bank's other
+ * checks, the past years and the schedule. The targets are the tiles' and the room to move sits with the ways that
+ * work, above; neither is said again here.
+ */
+function Working({ p, toPro }: { p: Preview; toPro: (where?: string) => void }) {
   return <div>
     <p data-testid="dscr-status" data-result={p.blocked ? 'blocked' : p.needs.length ? 'provisional' : 'ready'} class="mb-1 text-base text-ink">{statusText(p)}</p>
     {p.needs.length > 0 && <ul data-testid="dscr-needs" class="mb-3 list-disc space-y-0.5 pl-5 text-base text-ink-muted">{p.needs.map((n) => <li key={n}>{n}</li>)}</ul>}
     {p.blocked && <p data-testid="dscr-blocked" role="alert" class="text-bad">{p.blocked}</p>}
-    {/* On a desktop, two columns (Rahul, 13-11-2026: "a lot of whitespace left on the right"): the targets and the
-        bank's other checks on the left, room to move on the right; a phone keeps the order, one under the other. */}
-    <div data-testid="dscr-glance" class="md:grid md:grid-cols-2 md:grid-rows-[auto_1fr] md:items-start md:gap-x-10">
-      {p.verdict && <div class="md:col-start-1 md:row-start-1"><Targets v={p.verdict} /></div>}
-      <div class="md:col-start-2 md:row-span-2 md:row-start-1 md:*:mt-3">
-        <Room p={p} onAmount={(n) => update((x) => ({ ...x, loan: { ...x.loan, amount: inr(n) } }))}
-          onFewest={(n) => update((x) => ({ ...x, loan: withInstalments(x.loan, String(n)) }))} /></div>
-      {p.lender && <div class="md:col-start-1 md:row-start-2"><LenderLines v={p.lender} openMore={() => toPro('lender')} /></div>}
-    </div>
-    <PastTable p={p} />
     {p.statement && <StatementTable st={p.statement} parts={p.partYears} />}
     {p.beforeStart && <p data-testid="dscr-before-start" class="mt-2 text-sm text-ink-muted">{p.beforeStart}</p>}
     {p.notCounted && <p data-testid="dscr-not-counted" class="mt-2 text-sm text-ink-muted">{p.notCounted}</p>}
     {p.notes.length > 0 && <ul data-testid="dscr-notes" class="mt-2 space-y-0.5 text-sm text-warn">{p.notes.map((n) => <li key={n}>{n}</li>)}</ul>}
+    {p.lender && <LenderLines v={p.lender} openMore={() => toPro('lender')} />}
+    <PastTable p={p} />
     {p.schedule && <Schedule sch={p.schedule} />}
   </div>;
 }
@@ -399,32 +410,69 @@ function Working({ p, update, toPro }: { c: Case; p: Preview; update: Update; to
 /** A reason as the borrower reads it: the pointer to our own files (its source, kept in the data) left off the screen. */
 const plain = (why: string) => why.replace(/\s*\([^()]*\b[\w/.-]+\.(?:md|json)\)/g, '');
 
+/** The assumptions in their data file's order, so a line changed in place keeps its place. */
+const IN_ORDER = DEFAULTS_FILE.assumptions.map((a) => a.id);
+
 /**
  * What we filled in, as a term sheet (PIC2, Rahul, 13-11-2026: "We still haven't figured out the 'We filled in the rest'
  * section"): under each group's head, a ruled line for each assumption, what it is on the left and as taken on the
  * right, the way a lender's key facts statement or a "check your answers" page lays out what was settled. A tap on a
- * line opens its reason and Change, to its box in Professional mode. A figure on a line is the data file's own.
+ * line opens its reason and Change. With `edit` (Simple mode), Change opens the line's own control right under it
+ * (Rahul, 21-11-2026: "the change should happen right where the change button appears"), with Done and Put it back
+ * beside it; the answer above moves as it is typed, and a line changed stays listed as changed by you. Without it, or for
+ * a line with no control here, Change goes to its box in Professional mode. A figure on a line is the data file's own.
  */
-function Assumed({ p, onChange }: { p: Preview; onChange: (where?: string) => void }) {
+function Assumed({ p, onChange, edit }: { p: Preview; onChange: (where?: string) => void; edit?: { s: State; update: Update } }) {
   const F = N.filled;
-  const rows = p.assumed.map((a) => ({ ...a, why: plain(a.why), what: F.plain[a.id]?.[0] ?? a.what, shown: F.plain[a.id]?.[1] ?? a.shown }));
+  // The line open for a change, and for each line changed here, the line as it was listed and the case when Change was tapped.
+  const [open, setOpen] = useState<string>();
+  const [was, setWas] = useState<Record<string, { line: AssumedLine; s: State }>>({});
+  const box = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const first = box.current?.querySelector<HTMLElement>('input:not([type=radio]), input:checked, select, textarea, input');
+    first?.focus({ preventScroll: true });
+    box.current?.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }, [open]);
+  const held = new Set(p.assumed.map((a) => a.id));
+  const lines = [...p.assumed, ...Object.values(was).map((w) => w.line).filter((l) => !held.has(l.id))]
+    .sort((x, y) => IN_ORDER.indexOf(x.id) - IN_ORDER.indexOf(y.id));
+  const rows = lines.map((a) => ({ ...a, mine: !held.has(a.id), why: plain(a.why), what: F.plain[a.id]?.[0] ?? a.what, shown: F.plain[a.id]?.[1] ?? a.shown }));
   if (!rows.length) return null;
   const groups = (Object.keys(F.groups) as (keyof typeof F.groups)[]).map((g) => [g, rows.filter((a) => (F.of[a.id] ?? 'profit') === g)] as const).filter(([, r]) => r.length);
+  const row = (id: string) => document.querySelector<HTMLDetailsElement>(`[data-testid="assumed-${id}"] details`);
+  const change = (a: AssumedLine) => {
+    if (!edit || !changedInPlace(a.id)) { onChange(a.where); return; }
+    const line = p.assumed.find((x) => x.id === a.id) ?? was[a.id]?.line ?? a;
+    setWas((w) => ({ ...w, [a.id]: { line, s: edit.s } }));
+    setOpen(a.id);
+  };
+  const done = (id: string) => { setOpen(undefined); const d = row(id); if (d) { d.open = false; d.querySelector('summary')?.focus(); } };
   return <div data-testid="dscr-assumed" class="terms">
     {groups.map(([g, list]) => <section key={g} aria-labelledby={`assumed-${g}`}>
       <h3 id={`assumed-${g}`} class="terms-head">{F.groups[g]}</h3>
       <ul class="terms-list">
-        {list.map((a) => <li key={a.id} data-testid={`assumed-${a.id}`} class="terms-row">
-          <details class="assumed">
+        {list.map((a) => <li key={a.id} data-testid={`assumed-${a.id}`} data-mine={a.mine || undefined} class="terms-row">
+          <details class="assumed" onToggle={(e) => { if (!(e.currentTarget as HTMLDetailsElement).open && open === a.id) setOpen(undefined); }}>
             <summary class="terms-line">
               <span class="terms-what">{a.what}</span>{' '}
-              <span class="terms-value">{a.shown}</span>
+              <span class="terms-value">{a.mine ? <span class="inline-flex items-center gap-1.5"><Tick />{F.mine}</span> : a.shown}</span>
               <svg aria-hidden="true" viewBox="0 0 16 16" class="assumed-chev"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /></svg>
             </summary>
             <div class="terms-why">
               <p>{a.why}.</p>
-              {a.where && <a href={`#${a.where}`} class={`${QUIET} -ml-3`} onClick={(e) => { e.preventDefault(); onChange(a.where); }}>{F.change1}<span class="sr-only">: {a.what}</span></a>}
+              {a.where && open !== a.id && (edit && changedInPlace(a.id)
+                ? <button type="button" data-testid={`change-${a.id}`} class={`${QUIET} -ml-3`} onClick={() => change(a)}>{F.change1}<span class="sr-only">: {a.what}</span></button>
+                : <a href={`#${a.where}`} class={`${QUIET} -ml-3`} onClick={(e) => { e.preventDefault(); change(a); }}>{F.change1}<span class="sr-only">: {a.what}</span></a>)}
             </div>
+            {edit && open === a.id && <div ref={box} data-testid={`in-place-${a.id}`} role="group" aria-label={`${F.change1}: ${a.what}`} class="terms-edit">
+              <InPlace id={a.id} s={edit.s} update={edit.update} />
+              <div class="mt-4 flex flex-wrap items-center gap-2">
+                <button type="button" data-testid={`done-${a.id}`} onClick={() => done(a.id)}
+                  class="inline-flex min-h-11 items-center rounded-full bg-ink px-5 text-base font-semibold text-canvas hover:bg-ink/85">{F.done}</button>
+                {a.mine && was[a.id] && <button type="button" data-testid={`back-${a.id}`} class={QUIET} onClick={() => edit.update(() => was[a.id].s)}>{F.back}</button>}
+              </div>
+            </div>}
           </details>
         </li>)}
       </ul>
@@ -433,12 +481,12 @@ function Assumed({ p, onChange }: { p: Preview; onChange: (where?: string) => vo
 }
 
 /** Simple mode says what it filled in from the answers (Rahul, 12-11-2026), and the way to change it. */
-function Filled({ p, onChange }: { p: Preview; onChange: (where?: string) => void }) {
+function Filled({ p, onChange, edit }: { p: Preview; onChange: (where?: string) => void; edit: { s: State; update: Update } }) {
   if (!p.assumed.length) return null;
   return <section data-testid="filled" aria-labelledby="filled-title" class="mt-8">
     <h2 id="filled-title" class="font-heading text-lg font-semibold text-ink">{N.filled.title}</h2>
     <p class="mt-1 text-base text-ink-muted">{N.filled.lead(p.assumed.length)}</p>
-    <div class="mt-5"><Assumed p={p} onChange={onChange} /></div>
+    <div class="mt-5"><Assumed p={p} onChange={onChange} edit={edit} /></div>
     <button type="button" data-testid="to-pro" onClick={() => onChange()} class={QUIET}>{N.filled.change}</button>
   </section>;
 }

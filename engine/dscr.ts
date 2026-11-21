@@ -649,3 +649,14 @@ export function shortestRepayment(proj: ProjectionYear[], loan: LoanInput, def: 
     return { none: `Even ${tried} instalments, the most the projections cover (to ${last}), miss the target: ${limitText(limit as Limit)}. Add later years to try a longer repayment.` };
   });
 }
+
+/** The parts of profit before interest, depreciation and tax as a borrower's accounts give them (Rahul, 21-11-2026). */
+export interface ProfitParts { pat: number; interest?: number; depreciation?: number; tax?: number }
+/**
+ * Profit before interest, depreciation and tax from its parts: net profit after tax (a loss as a minus) with the interest,
+ * depreciation and tax added back. To the paisa, so typed paise do not drift (rule 12: the page adds nothing itself).
+ */
+export function profitFromParts(p: ProfitParts): number {
+  const paise = [p.pat, p.interest ?? 0, p.depreciation ?? 0, p.tax ?? 0].reduce((t, x) => t + Math.round(x * 100), 0);
+  return paise / 100;
+}
