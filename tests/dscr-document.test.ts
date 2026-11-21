@@ -105,16 +105,20 @@ describe('what the document asks that the page does not', () => {
 
 describe('fictional case A′, complete: the statement for the lender', () => {
   const { p, doc, text, lines } = build(A2);
-  it('opens at a glance: who asks and for what, the status, the key figures beside the lender\'s level, the chart, the contents', () => {
-    expect(lines.slice(3, 11)).toEqual([
+  it('opens at a glance: who asks and for what, the status, "Can it repay?" in a picture and in words beside the lender\'s levels, the questions', () => {
+    expect(lines.slice(3, 18)).toEqual([
       'Asha Traders', 'Debt service coverage ratio (DSCR), 2026-27 to 2029-30', 'Lender: Example Bank, Pune branch', 'Prepared on: 30-09-2026',
       'Loan asked: ₹12,00,000 at 12% a year, 12 instalments, equal principal every quarter', 'Status: Complete',
-      "Average DSCR: 1.16 Lender's level 1.50 total cash available ÷ total debt service", "Lowest year: 0.84 Lender's level 1.25 in 2027-28",
+      // Each year's DSCR against the lender's level for any one year, the lowest marked; then the average against its own.
+      'Can it repay?', 'DSCR, times', 'DSCR | Level looked for',
+      "2026-27 (2 of 4 instalments): 1.17 | Lender's level 1.25", "2027-28 (lowest year): 0.84 | Lender's level 1.25",
+      "2028-29: 0.98 | Lender's level 1.25", "2029-30 (2 of 4 instalments): 2.26 | Lender's level 1.25", "Average DSCR: 1.16 | Lender's level 1.50",
+      'In its lowest year, 2027-28, the business has 0.84 times the cash it must pay its lenders, and 1.16 times on average. '
+        + 'The lender looks for 1.25 in any one year and 1.50 on average. This summary gives no opinion on the loan: the lender decides.',
     ]);
-    // The chart in lakh, as the page draws it: 4,22,624 is 4.23 lakh against 5,02,000, 5.02, in 2027-28, the tightest.
-    expect(lines).toContain('2027-28 (tightest): 4.23 | 5.02');
-    const contents = lines.indexOf('Contents');
-    expect(lines.slice(contents, contents + 4)).toEqual(['Contents', '1. The statement', 'Annex 1. The basis', 'Annex 2. Repayment schedule']);
+    // The chapters, each a credit question (SPEC4).
+    const contents = lines.indexOf('The questions this statement answers');
+    expect(lines.slice(contents + 1, contents + 4)).toEqual(['1. Can the business repay the loan?', '2. Where the figures come from', '3. How the loan is repaid']);
     expect(doc.header).toBe('DSCR statement · Asha Traders');
     expect(doc.mark).toBeUndefined();
     expect(text).not.toMatch(/provisional|still needed/i);
@@ -124,7 +128,7 @@ describe('fictional case A′, complete: the statement for the lender', () => {
     expect(lines).toContain('Average DSCR: 1.16 total cash available ÷ total debt service');
     expect(lines).toContain('Lowest year: 0.84 in 2027-28');
     expect(at('Average DSCR: 1.16 total cash available ÷ total debt service')).toBeGreaterThan(at('DSCR (A ÷ B) | 1.17 | 0.84 | 0.98 | 2.26 | 1.16'));
-    expect(at('DSCR (A ÷ B) | 1.17 | 0.84 | 0.98 | 2.26 | 1.16')).toBeGreaterThan(at('1. The statement'));
+    expect(at('DSCR (A ÷ B) | 1.17 | 0.84 | 0.98 | 2.26 | 1.16')).toBeGreaterThan(at('1. Can the business repay the loan?'));
     expect(at('For Asha Traders')).toBeGreaterThan(at('Lowest year: 0.84 in 2027-28'));
     for (const t of [p.verdict?.text, p.largest?.text, p.fewest?.text]) {
       expect(t).toBeTruthy();
@@ -180,7 +184,7 @@ describe('fictional case A′, complete: the statement for the lender', () => {
   });
   it('reads alike in all three files: page 1, the statement and two annexes, each a page and a sheet (D-DOC-21)', () => {
     expect(doc.parts.map((x) => x.name)).toEqual(['At a glance', 'DSCR statement', 'Basis', 'Repayment schedule']);
-    expect(doc.parts.map((x) => x.blocks[0].kind === 'title' && x.blocks[0].text)).toEqual(['Asha Traders', '1. The statement', 'Annex 1. The basis', 'Annex 2. Repayment schedule']);
+    expect(doc.parts.map((x) => x.blocks[0].kind === 'title' && x.blocks[0].text)).toEqual(['Asha Traders', '1. Can the business repay the loan?', '2. Where the figures come from', '3. How the loan is repaid']);
     expect(text).toContain('2026-27 | 1,41,000 | 2,00,000 | 10,00,000');
     // December 2026, by hand: interest 1% of 12,00,000 = 12,000; the first quarterly instalment of 1,00,000.
     expect(text).toContain('Dec 2026 | 1 | 12,00,000 | 12,000 | 1,00,000 | 1,12,000 | 11,00,000');
@@ -204,13 +208,15 @@ describe('the PDF, read back by pdf.js', () => {
       'DSCR statement · Asha Traders', 'Asha Traders', 'Debt service coverage ratio (DSCR), 2026-27 to 2029-30', 'Lender Example Bank, Pune branch Prepared on 30-09-2026',
       'Loan asked ₹12,00,000 at 12% a year, 12 instalments, equal principal every quarter', 'Status Complete',
     ]);
-    // The strip: the names, the figures, the lender's levels (no verdict), then the notes, each a row of text.
-    const strip = first.indexOf('Average DSCR Lowest year');
-    expect(first.slice(strip, strip + 4)).toEqual(['Average DSCR Lowest year', '1.16 0.84', "Lender's level 1.50 Lender's level 1.25", 'total cash available ÷ total debt service in 2027-28']);
-    expect(first).toContain('Cash available against repayments due ₹ lakh');
-    expect(first.filter((l) => /^(1\. |Annex )/.test(l)).map((l) => l.replace(/[ .]+(\d+)$/, ' … $1'))).toEqual(['1. The statement … 2', 'Annex 1. The basis … 3', 'Annex 2. Repayment schedule … 4']);
+    // "Can it repay?": the level for any one year named once over its rule, each year's figure, the lowest year named,
+    // and the average with its own level at the row's end (no verdict); then the same in words.
+    const pic = first.indexOf('Can it repay? DSCR, times');
+    expect(first.slice(pic, pic + 15)).toEqual(['Can it repay? DSCR, times', "Lender's level 1.25", '2026-27', '1.17', '2 of 4 instalments', '2027-28', '0.84', 'lowest year',
+      '2028-29', '0.98', '2029-30', '2.26', '2 of 4 instalments', 'Average DSCR', "1.16 Lender's level 1.50"]);
+    expect(first[pic + 15]).toMatch(/^In its lowest year, 2027-28, the business has 0\.84 times the cash it must pay its lenders, and 1\.16 times on average\.$/);
+    expect(first.filter((l) => /^\d\. /.test(l)).map((l) => l.replace(/[ .]+(\d+)$/, ' … $1'))).toEqual(['1. Can the business repay the loan? … 2', '2. Where the figures come from … 3', '3. How the loan is repaid … 4']);
     const second = pages[1].split('\n');
-    expect(second[1]).toBe('1. The statement');
+    expect(second[1]).toBe('1. Can the business repay the loan?');
     expect(second).toContain('Amount ₹12,00,000 Interest rate 12% a year');
     expect(second).toContain('Cash available (A) 4,00,392 4,22,624 4,45,488 4,73,072 17,41,576');
     expect(second).toContain('DSCR (A ÷ B) 1.17 0.84 0.98 2.26 1.16');
@@ -219,8 +225,8 @@ describe('the PDF, read back by pdf.js', () => {
     const under = second.indexOf('Average DSCR Lowest year');
     expect(second.slice(under, under + 3)).toEqual(['Average DSCR Lowest year', '1.16 0.84', 'total cash available ÷ total debt service in 2027-28']);
     expect(second.slice(-5, -1)).toEqual(['For Asha Traders', 'Authorised signatory', 'Date:', 'Place:']);
-    expect(pages[2].split('\n')[1]).toBe('Annex 1. The basis');
-    expect(pages[3].split('\n')[1]).toBe('Annex 2. Repayment schedule');
+    expect(pages[2].split('\n')[1]).toBe('2. Where the figures come from');
+    expect(pages[3].split('\n')[1]).toBe('3. How the loan is repaid');
     pages.forEach((page, i) => expect(page).toMatch(new RegExp(`Page ${i + 1} of ${pages.length}$`)));
     const all = pages.join('\n');
     expect(all).toContain('Dec 2026 1 12,00,000 12,000 1,00,000 1,12,000 11,00,000');
@@ -241,8 +247,12 @@ describe('the PDF, read back by pdf.js', () => {
     const box = lines.indexOf('Provisional: 2 still needed');
     expect(lines.slice(box + 1, box + 3)).toEqual(["The borrower's name", 'The lender']);
     // No target typed: the lender's usual levels, from engine/data/ratios.json, named as such.
-    expect(lines).toContain(`Average DSCR: 1.45 Usual level ${levelFor('dscrAverage', 'fresh').toFixed(2)} total cash available ÷ total debt service`);
-    expect(lines).toContain(`Lowest year: 1.16 Usual level ${levelFor('dscrLowest', 'fresh').toFixed(2)} in 2027-28`);
+    expect(lines).toContain(`Average DSCR: 1.45 | Usual level ${levelFor('dscrAverage', 'fresh').toFixed(2)}`);
+    expect(lines).toContain(`2027-28 (lowest year): 1.16 | Usual level ${levelFor('dscrLowest', 'fresh').toFixed(2)}`);
+    expect(lines.find((l) => l.startsWith('In its lowest year'))).toContain(`Lenders usually look for ${levelFor('dscrLowest', 'fresh').toFixed(2)} in any one year and ${levelFor('dscrAverage', 'fresh').toFixed(2)} on average.`);
+    // Under the working, the strip as before, without the levels.
+    expect(lines).toContain('Average DSCR: 1.45 total cash available ÷ total debt service');
+    expect(lines).toContain('Lowest year: 1.16 in 2027-28');
     // The page still asks for a target (for its verdict); the document is complete without one.
     expect(preview(CASE_A).needs).toEqual(['A target DSCR for the average, the lowest year, or both']);
     expect(docStatus(CASE_A, preview(CASE_A))).toBe('2 questions left, for the document');
@@ -251,7 +261,8 @@ describe('the PDF, read back by pdf.js', () => {
     const pages = await pdfPages(pdfOf(doc, MADE));
     for (const page of pages) expect(page.split('\n')[0]).toBe('DSCR statement Provisional');
     expect(pages[0]).toContain("• The borrower's name");
-    expect(pages[0]).toContain('1.45 1.16');
+    expect(pages[0]).toContain('1.16\nlowest year');
+    expect(pages[0]).toContain(`1.45 Usual level ${levelFor('dscrAverage', 'fresh').toFixed(2)}`);
     // Case A by hand (tests/dscr.test.ts): cash available 4,10,250 and 5,83,000 against 3,41,000 and 5,02,000 in the
     // first two years; DSCR 1.2031, 1.1614, 1.3293 and 2.8218; average 1.45, lowest 1.16 in 2027-28.
     expect(pages[1]).toContain('Cash available (A) 4,10,250 5,83,000 6,03,500 5,89,750');
@@ -334,14 +345,16 @@ describe('the Word copy, read back by mammoth', () => {
     expect(lines.slice(0, 11)).toEqual([
       'Asha Traders', 'Debt service coverage ratio (DSCR), 2026-27 to 2029-30', 'Lender | Example Bank, Pune branch | Prepared on | 30-09-2026',
       'Loan asked | ₹12,00,000 at 12% a year, 12 instalments, equal principal every quarter', 'Status | Complete',
-      "Average DSCR 1.16 Lender's level 1.50 total cash available ÷ total debt service | Lowest year 0.84 Lender's level 1.25 in 2027-28",
-      'In amber: 2027-28, the tightest year.', 'Contents', '1. The statement 2', 'Annex 1. The basis 3', 'Annex 2. Repayment schedule 4',
+      'In amber: 2027-28, the lowest year.',
+      'In its lowest year, 2027-28, the business has 0.84 times the cash it must pay its lenders, and 1.16 times on average. '
+        + 'The lender looks for 1.25 in any one year and 1.50 on average. This summary gives no opinion on the loan: the lender decides.',
+      'The questions this statement answers', '1. Can the business repay the loan? 2', '2. Where the figures come from 3', '3. How the loan is repaid 4',
     ]);
     expect(lines).toContain('Amount | ₹12,00,000 | Interest rate | 12% a year');
     expect(lines).toContain('Rupees | 2026-27 | 2027-28 | 2028-29 | 2029-30 | Total');
     for (const l of p.statement!.lines) expect(lines).toContain(l.kind === 'head' ? l.label : [l.label, ...l.values, l.total?.text].join(' | '));
     expect(lines).toContain('Average DSCR 1.16 total cash available ÷ total debt service | Lowest year 0.84 in 2027-28');
-    expect(lines).toContain('Annex 1. The basis');
+    expect(lines).toContain('2. Where the figures come from');
     expect(lines).toContain('Dec 2026 | 1 | 12,00,000 | 12,000 | 1,00,000 | 1,12,000 | 11,00,000');
     expect(lines.join('\n')).not.toMatch(/target|checked|Provisional/i);
     // The chart as a Word chart; the parts as headings a reader can navigate.
@@ -383,7 +396,7 @@ describe('one document, three files', () => {
     const where = (t: string) => [pdf.includes(t), cells.some((c) => c.includes(t)), word.includes(t)];
     for (const t of ['Asha Traders', 'Example Bank, Pune branch', 'Debt service coverage ratio (DSCR), 2026-27 to 2029-30', '₹12,00,000 at 12% a year, 12 instalments, equal principal every quarter'])
       expect(where(t)).toEqual([true, true, true]);
-    for (const t of ['Common term-loan DSCR.', 'Annex 1. The basis', 'Annex 2. Repayment schedule', 'Authorised signatory']) expect(where(t)).toEqual([true, true, true]);
+    for (const t of ['Common term-loan DSCR.', '2. Where the figures come from', '3. How the loan is repaid', 'Authorised signatory']) expect(where(t)).toEqual([true, true, true]);
     const doc2: Doc = { ...doc, parts: doc.parts.slice(0, 2) };
     expect((await pdfPages(pdfOf(doc2, MADE))).join('\n')).not.toContain('Repayment schedule');
   });
@@ -444,10 +457,11 @@ const rowsOf = (d: Doc, part: string) => d.parts.find((x) => x.name === part)!.b
 
 describe('fictional case A with the lenders\' tests: the sensitivity analysis (D1b)', () => {
   const { p, doc, text, lines } = build(CASE_AL);
-  it('puts it in section 2, after the statement, which points to it', () => {
+  it('puts it in chapter 2, "If things go worse", after the statement, which points to it', () => {
     expect(doc.parts.map((x) => x.name)).toEqual(['At a glance', 'DSCR statement', 'Sensitivity', 'Basis', 'Repayment schedule']);
-    expect(lines).toContain('The sensitivity analysis in section 2 tests this DSCR as a lender may; it does not change it.');
-    expect(lines.filter((l) => l === '2. Sensitivity analysis')).toHaveLength(2);
+    expect(lines).toContain('Chapter 2, if things go worse, tests this DSCR as a lender may; it does not change it.');
+    expect(lines.filter((l) => l === '2. If things go worse')).toHaveLength(2);
+    expect(lines.filter((l) => /^\d\. /.test(l)).slice(0, 4)).toEqual(['1. Can the business repay the loan?', '2. If things go worse', '3. Where the figures come from', '4. How the loan is repaid']);
     // Without a test that has figures (case A′: nothing typed), no section and no pointer.
     const a2 = build(A2);
     expect(a2.doc.parts.map((x) => x.name)).not.toContain('Sensitivity');
@@ -467,7 +481,7 @@ describe('fictional case A with the lenders\' tests: the sensitivity analysis (D
     expect(lines).toContain('Margin (that profit ÷ sales) | 20.0% | 20.0%');
     expect(lines).toContain('Sales growth into 2026-27: +13.6%.');
     expect(text).toContain('In the lowest year the cash does not cover the debt service: Sales price 5% lower; Costs 10% higher;');
-    expect(text).toContain("Our own tests beside the DSCR in section 1, not a lender's norm");
+    expect(text).toContain("A sensitivity analysis: our own tests beside the DSCR in chapter 1, not a lender's norm");
     // The Excel copy's figures are the engine's, exact: the hand fractions above.
     const sens = rowsOf(doc, 'Sensitivity'), fig = (label: string) => sens.find((r) => r.cells[0].text === label)!.cells.slice(1).map((c) => c.figure?.value);
     expect(fig('Sales price 5% lower')[0]).toBeCloseTo(1740250 / 1506000, 10);
@@ -483,14 +497,14 @@ describe('fictional case A with the lenders\' tests: the sensitivity analysis (D
   });
   it('the PDF and the Word copy: the sensitivity analysis on page 3, after the statement', async () => {
     const pages = await pdfPages(pdfOf(doc, MADE)), all = pages.join('\n');
-    expect(pages[1]).toContain('The sensitivity analysis in section 2 tests this DSCR as a lender may; it does not change it.');
+    expect(pages[1]).toContain('Chapter 2, if things go worse, tests this DSCR as a lender may; it does not change it.');
     expect(pages[1]).toMatch(/Authorised signatory/);
-    expect(pages[2].split('\n')[1]).toBe('2. Sensitivity analysis');
+    expect(pages[2].split('\n')[1]).toBe('2. If things go worse');
     expect(pages[2]).toContain('Sales price 5% lower 1.16 0.93 2026-27');
     expect(pages[2]).toContain('Cash left -40,750 -69,000 59,500 3,30,750');
     expect(all).not.toMatch(/redone/);
     const word = (await docxLines(docxOf(doc, MADE))).lines.join('\n');
-    expect(word).toContain('2. Sensitivity analysis');
+    expect(word).toContain('2. If things go worse');
     expect(word).not.toMatch(/redone/);
   });
   it('the Excel copy: the Sensitivity sheet after the statement, its figures as numbers and not one formula', async () => {

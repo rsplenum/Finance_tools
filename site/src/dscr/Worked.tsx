@@ -12,12 +12,12 @@ import { goTo, useHomeCase } from '../fields';
 import { Ask, type AskQuestion } from '../worked/Ask';
 import { Bars } from '../worked/Bars';
 import { useWorkedKept, over } from '../worked/kept';
-import { Levels } from '../worked/Levels';
+import { LevelBand, Levels } from '../worked/Levels';
 import { Fold, FactLine, MAIN, openFold, QUIET, Reading } from '../worked/parts';
 import { DownloadSection, LenderLines, PastTable, Professionals, Schedule, StatementTable, type Update } from './Calculator';
 import { DSCR_HOME } from './home-case';
 import { inr } from '../../../engine/util';
-import { BORROWER_CHOICES, frontDoor, statusText, withInstalments, type Preview, type State } from './model';
+import { BORROWER_CHOICES, frontDoor, statusText, withInstalments, type Preview, type State, type TargetRow } from './model';
 import {
   ASSUMED_FACTS, applyOption, barsOf, changedFacts, exampleCase, exampleFacts, exampleNeeds, exampleState, FACTS, factProblem, factsOf, factText,
   markOf, optionsFor, previewOf, readingOf, WALK, withMine, writeFact, type Case, type FactId, type OptionCard,
@@ -159,9 +159,9 @@ export function DscrWorked() {
   if (view.at === 'intro') {
     const way = 'flex min-h-12 w-full flex-col items-start rounded-card px-5 py-4 text-left';
     return <section data-testid="intro" aria-labelledby="dscr-title" class="flex min-h-[70svh] flex-col justify-center pb-16 sm:min-h-0 sm:py-10">
-      <h1 id="dscr-title" ref={heading} tabIndex={-1} class="font-display text-[2rem] leading-[1.1] font-semibold tracking-[-0.01em] text-ink text-balance outline-none sm:text-[2.75rem]">{N.title}</h1>
-      <p data-testid="intro-lead" class="mt-4 max-w-[34rem] text-lg text-ink-muted text-pretty">{N.intro.lead(target.average.trim() || '1.50')}</p>
-      <div role="group" aria-label="How to start" class="mt-7 grid max-w-[44rem] gap-3 sm:grid-cols-2">
+      <h1 id="dscr-title" ref={heading} tabIndex={-1} data-settle data-whole class="max-w-[14ch] text-hero text-ink text-balance outline-none">{N.title}</h1>
+      <p data-testid="intro-lead" class="mt-5 max-w-[34rem] text-lg text-ink-muted text-pretty sm:text-xl">{N.intro.lead(target.average.trim() || '1.50')}</p>
+      <div role="group" aria-label="How to start" class="mt-9 grid max-w-[44rem] gap-3 sm:grid-cols-2">
         <button type="button" data-testid="start" class={`${way} bg-ink text-canvas hover:bg-ink/85`} onClick={() => begin('simple')}>
           <span class="text-lg font-semibold">{N.intro.simple}</span><span class="mt-0.5 text-base">{N.intro.simpleLine(ORDER.length)}</span></button>
         <button type="button" data-testid="start-pro" class={`${way} border border-line bg-surface text-ink hover:bg-ink/6`} onClick={() => begin('pro')}>
@@ -185,6 +185,7 @@ export function DscrWorked() {
     key: b.fy, label: b.fy, a: b.cash, b: b.service, aText: b.cashText, bText: b.serviceText, tight: b.tight, note: b.part ? 'part year' : undefined,
     spoken: `${b.fy}${b.tight ? `, ${N.chart.tight}` : ''}${b.part ? `, ${b.part}` : ''}: ${N.chart.cash} ₹${b.cashText} lakh, ${N.chart.service} ₹${b.serviceText} lakh`,
   }));
+  const yearsShown = levels.length > 0 && Number.isFinite(levelN);
   const tap = (id: string) => ask(ORDER.indexOf(id as FactId), 'report', true);
   const next = pencil ? { kind: 'ask', label: N.report.yours, go: () => ask(Math.max(0, ORDER.findIndex((id) => !c.mine.includes(id))), 'report') }
     : { kind: 'paper', label: N.report.paper, go: () => openFold('paper') };
@@ -245,13 +246,26 @@ export function DscrWorked() {
           <div class="mt-6 flex flex-col">{nextStep(false)}</div>
         </div>
       </div>
-      // Simple: the answer, the next step, and what we filled in, said once under it.
-      : <div key="simple" class="mt-4 lg:mt-6 lg:grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-x-16">
-        <div>{answerShown}</div>
-        <section id="front-door" aria-label="Your answers" class="mt-6 flex flex-col lg:mt-1">
-          {nextStep(true)}
-          <Filled p={p} onChange={toPro} />
-        </section>
+      // Simple (DSCR-D): two bands. On the page, the reading and the two figures a lender reads first, large, beside the next
+      // step; then a band of the ink desk, year by year, the page's twin of page 1 of the paper; then what we filled in.
+      : <div key="simple" class="mt-6 sm:mt-10">
+        <div class="lg:grid lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:gap-x-16">
+          <div>
+            <Reading text={r.text} state={r.state} pencil={pencil} />
+            <Figures p={p} c={c} />
+          </div>
+          <section id="front-door" aria-label="Your answers" class="mt-10 flex flex-col lg:mt-1">{nextStep(true)}</section>
+        </div>
+        {(yearsShown || bars.length > 0) && <section data-testid="years-band" aria-labelledby="years-title" class="band-desk mt-14 py-12 sm:mt-20 sm:py-16">
+          <h2 id="years-title" data-settle data-whole class="text-section text-ink">{N.years.band}</h2>
+          <div class="mt-8 grid gap-12 sm:mt-10 lg:grid-cols-2 lg:gap-16">
+            {yearsShown && <div><h3 class="text-xl text-ink">{N.years.title}</h3>
+              <div class="mt-3"><LevelBand level={levelN} lineName={N.years.line(target.minimum)} belowName={`${N.years.below} ${target.minimum}`} rows={levels} /></div></div>}
+            {bars.length > 0 && <div data-settle data-whole style={{ '--i': 2 }}><h3 class="text-xl text-ink">{N.chart.band}</h3>
+              <div class="mt-3"><Bars title={N.chart.title} aName={N.chart.cash} bName={N.chart.service} unit={N.chart.unit} tightName={N.chart.tight} rows={bars} /></div></div>}
+          </div>
+        </section>}
+        <Filled p={p} onChange={toPro} />
       </div>}
 
     <div key="folds" class="mt-12">
@@ -301,6 +315,35 @@ function Tiles({ p, c }: { p: Preview; c: Case }) {
         <dd data-testid="dscr-instalment" class={`font-semibold text-ink tabular-nums ${emi || !p.loanLine ? 'text-xl' : 'text-base'}`}>{emi ? emi[1] : p.loanLine?.instalment ?? '—'}</dd></div>
       <div class={tile}><dt class="text-sm text-ink-muted">{N.tiles.interest}</dt>
         <dd data-testid="dscr-total-interest" class="text-xl font-semibold text-ink tabular-nums">{p.loanLine?.totalInterest ?? '—'}</dd></div>
+    </>}
+  </dl>;
+}
+
+/** Simple mode's answer (DSCR-D): the two figures a lender reads first, large, each against the level banks look for, and
+ * a marigold tick drawn under one the engine says clears its level (`verdict.rows`, `ok`); the instalment and the interest
+ * in a line under them. Each a "—" until every figure is understood (UX8, D-UX-106); each drops into place whole and at full strength (D-UX-295). */
+function Figures({ p, c }: { p: Preview; c: Case }) {
+  if (p.blocked) return null;
+  const t = c.s.target, emi = /^EMI (.+) a month$/.exec(p.loanLine?.instalment ?? '');
+  const ok = (id: TargetRow['id']) => p.verdict?.rows?.some((r) => r.id === id && r.ok) === true;
+  const big = (id: string, text: string | undefined, met: boolean) => <span class="relative mt-1 inline-block pb-3">
+    <span data-testid={id} class="figure block text-hero text-ink">{text ?? '—'}</span>
+    {met && text && <span data-tick aria-hidden="true" class="absolute inset-x-0 bottom-0 h-1.5 origin-left rounded-full bg-marigold" />}
+  </span>;
+  const small = 'border-t border-line pt-4';
+  return <dl data-testid="tiles" class="mt-8 grid grid-cols-2 gap-x-6 gap-y-8 sm:gap-x-12">
+    <div data-settle data-whole style={{ '--i': 0 }}><dt class="text-base text-ink-muted">{N.tiles.average}</dt>
+      <dd>{big('dscr-average', p.average, ok('average'))}
+        {t.average.trim() && <span class="mt-1 block text-base text-ink-muted">{N.tiles.against(t.average)}</span>}</dd></div>
+    <div data-settle data-whole style={{ '--i': 1 }}><dt class="text-base text-ink-muted">{N.tiles.lowest}</dt>
+      <dd>{big('dscr-lowest', p.lowest, ok('minimum'))}
+        <span class="mt-1 block text-base text-ink-muted">{p.lowestYear && <span data-testid="dscr-lowest-year" class="whitespace-nowrap">{N.tiles.inYear(p.lowestYear)}</span>}
+          {t.minimum.trim() && <>{p.lowestYear ? ' · ' : ''}<span class="whitespace-nowrap">{N.tiles.against(t.minimum)}</span></>}</span></dd></div>
+    {c.s.source === 'plan' && <>
+      <div class={small}><dt class="text-sm text-ink-muted">{emi ? N.tiles.emi : 'Each instalment'}</dt>
+        <dd data-testid="dscr-instalment" class={`figure mt-1 text-ink ${emi || !p.loanLine ? 'text-2xl' : 'text-base'}`}>{emi ? emi[1] : p.loanLine?.instalment ?? '—'}</dd></div>
+      <div class={small}><dt class="text-sm text-ink-muted">{N.tiles.interest}</dt>
+        <dd data-testid="dscr-total-interest" class="figure mt-1 text-2xl text-ink">{p.loanLine?.totalInterest ?? '—'}</dd></div>
     </>}
   </dl>;
 }

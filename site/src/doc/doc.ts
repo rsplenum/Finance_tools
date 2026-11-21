@@ -30,6 +30,12 @@ export interface KeyFigure { label: string; value: string; level?: string; note?
  */
 export interface Chart {
   title: string; unit: string; names: [string, string]; tightName: string;
+  /**
+   * 'level': a ratio a row against the level looked for (DSCR-D, SPEC4's "Can it repay?"): `values` and `texts` are the
+   * ratio and its level ("Usual level 1.25"). The PDF draws one bar a row, the level as a rule across it and the figure in
+   * a column of its own; the Word and Excel charts show the two as bars, the level's lighter.
+   */
+  kind?: 'level';
   /** In the Word and Excel charts: the values divided by `scale` (100000 for lakh) and shown to `decimals`, as `texts` are. */
   scale?: number; decimals?: number;
   rows: { label: string; values: [number, number]; texts: [string, string]; tight?: boolean; note?: string }[];

@@ -224,7 +224,8 @@ function block(L: Layout, b: Block, next: Block | undefined, entries: string[]) 
       table(L, b.table);
       return;
     case 'chart':
-      chart(L, b.chart);
+      if (b.chart.kind === 'level') levelChart(L, b.chart);
+      else chart(L, b.chart);
       return;
     case 'signature':
       L.y -= 18;
@@ -270,6 +271,48 @@ function chart(L: Layout, c: Chart) {
     });
     L.y -= row;
   }
+  L.y -= 6;
+}
+
+/**
+ * A ratio a row against the level looked for (DSCR-D, after SPEC4's "Can it repay?"): one bar from nought, the level a
+ * dashed rule across it (white where the bar runs past it), the figure in a column of its own so no rule crosses it.
+ * The first row's level runs as one rule through every row that shares it, named once above; a row with a level of its
+ * own (the average, below the years) stands apart, under a hairline, with its own rule and its level named at its end.
+ */
+function levelChart(L: Layout, c: Chart) {
+  const first = c.rows[0], same = (r: Chart['rows'][number]) => r.texts[1] === first.texts[1] && r.values[1] === first.values[1];
+  const label = Math.min(130, Math.max(70, ...c.rows.map((r) => textWidth(r.label, 'B', 8.5)))) + 10, fig = 34;
+  const own = c.rows.filter((r) => !same(r)), lvl = own.length ? Math.max(...own.map((r) => textWidth(r.texts[1], 'R', 7.5))) + 12 : 0;
+  const most = Math.max(...c.rows.flatMap((r) => r.values).filter(Number.isFinite));
+  const top = Math.max(2, Math.ceil(most + 0.25)), span = WIDTH - label - fig - lvl - 10, x0 = LEFT + label;
+  const at = (v: number) => x0 + (Math.min(Math.max(0, v), top) / top) * span;
+  const bar = 9, row = c.rows.some((r) => r.note || r.tight) ? 24 : 19;
+  L.y -= 10;
+  L.room(19 + 13 + Math.min(c.rows.length, 6) * row);
+  L.text(LEFT, L.y - 11, c.title, 'B', 11);
+  L.right(LEFT + WIDTH, L.y - 11, c.unit, 'R', 8, MUTED);
+  L.y -= 19;
+  const name = first.texts[1], w = textWidth(name, 'B', 7.5), nx = Math.min(Math.max(at(first.values[1]) - w / 2, x0), LEFT + WIDTH - fig - lvl - w);
+  L.text(nx, L.y - 8, name, 'B', 7.5);
+  L.y -= 13;
+  c.rows.forEach((r, i) => {
+    const shared = same(r);
+    if (!shared && i) { L.y -= 5; L.ops.push(`q 0.8 G 0.5 w ${num(LEFT)} ${num(L.y + 2)} m ${num(LEFT + WIDTH)} ${num(L.y + 2)} l S Q`); L.y -= 3; }
+    L.room(row);
+    const t = L.y, note = r.tight ? c.tightName : r.note, end = at(r.values[0]), lx = at(r.values[1]), base = t - 3 - bar;
+    if (r.tight) L.shade(LEFT - 4, t + 1, WIDTH + 8, row - 1, WARN_TINT);
+    L.text(LEFT, t - 9.5, r.label, r.tight ? 'B' : 'R', 8.5);
+    if (note) L.text(LEFT, t - 19, wrap(note, 'B', 7, label - 8)[0], r.tight ? 'B' : 'R', 7, r.tight ? WARN : MUTED);
+    // Nought, the bar, then the level: ink above and below the bar, white across it where the bar runs past.
+    L.ops.push(`q 0.6 G 0.6 w ${num(x0)} ${num(t)} m ${num(x0)} ${num(t - row)} l S Q`);
+    L.ops.push(`${BAR_A} ${num(x0)} ${num(base)} ${num(Math.max(1.5, end - x0))} ${num(bar)} re f`);
+    L.ops.push(`q 0.1 G 1 w [2.2 1.6] 0 d ${num(lx)} ${num(shared ? t : base + bar + 3)} m ${num(lx)} ${num(shared ? t - row : base - 3)} l S Q`);
+    if (end > lx + 0.5) L.ops.push(`q 1 G 1 w [2.2 1.6] 0 d ${num(lx)} ${num(base + bar)} m ${num(lx)} ${num(base)} l S Q`);
+    L.right(x0 + span + 10 + fig, base + 1.5, r.texts[0], 'B', 9.5);
+    if (!shared) L.text(x0 + span + 10 + fig + 12, base + 1.5, r.texts[1], 'R', 7.5, MUTED);
+    L.y -= row;
+  });
   L.y -= 6;
 }
 

@@ -237,6 +237,15 @@ body[data-look='new'] .paper { background-color: var(--paper); color: var(--on-p
 [data-tool] .shadow-paper { --tw-shadow: var(--shadow-sheet); }
 .dark body[data-look='new'] [data-tool] .paper.shadow-paper { box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.07), var(--shadow-sheet); }
 [data-desk] { --focus: var(--marigold); }
+/* A band of the ink desk across a page (DSCR-D): inside it the page's tokens turn to the desk's, so whatever is drawn with
+   them (a chart, a heading, a focus ring, the tightest year's amber) reads on ink, in both themes; in dark mode it is a
+   step above the page. Its colour runs to the window's edges by a shadow, with no wider box, so nothing scrolls sideways. */
+body[data-look='new'] .band-desk {
+  background-color: var(--desk); color: var(--on-desk); box-shadow: 0 0 0 100vmax var(--desk); clip-path: inset(0 -100vmax);
+  --ink: var(--on-desk); --ink-muted: var(--on-desk-muted); --canvas: var(--desk); --surface: oklch(0.31 0.06 270);
+  --line: oklch(0.4 0.05 270); --link: oklch(0.84 0.09 268); --accent: var(--link); --focus: var(--marigold);
+  --warn: var(--color-amber-200); --warn-tint: var(--color-amber-950); --bad: var(--color-red-300);
+}
 
 @layer base {
   /* 16 px inputs, so phones do not zoom in on focus (scripts/site-check.mjs flags anything smaller). */
@@ -291,6 +300,16 @@ html:has(body[data-look='new']) { scroll-padding-top: 8.5rem; }
    `js` mark everything stands where it rests. Settle: a block falls onto its line and comes to rest with a small spring. */
 .js [data-settle] { opacity: 0; transform: translateY(-1.5rem); transition: opacity 0.5s ease-out, transform 0.8s cubic-bezier(0.3, 1.45, 0.55, 1); transition-delay: calc(var(--i, 0) * 70ms); }
 .js [data-settle].settled { opacity: 1; transform: none; }
+/* Whole: a block of figures or words drops onto its line at full strength, never faded, since axe measures a half-faded
+   figure as low contrast (docs/GOTCHAS.md, UX3). Tick: the marigold line under a figure that clears its level, drawn once
+   the figure has landed. Grow: a chart's bars rise from nothing in turn toward their figures, which stand whole from the
+   start (D-UX-295); the chart itself stays put. */
+.js [data-settle][data-whole] { opacity: 1; }
+.js [data-settle] [data-tick] { transform: scaleX(0); transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--i, 0) * 70ms + 0.55s); }
+.js [data-settle].settled [data-tick] { transform: none; }
+.js [data-settle][data-grow] { opacity: 1; transform: none; }
+.js [data-grow] [data-bar] { transform: scaleX(0); transform-origin: left; transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--i, 0) * 90ms), width 0.3s ease-out; }
+.js [data-grow].settled [data-bar] { transform: none; }
 [data-header] { transition: transform 0.25s ease-out; }
 [data-header][data-away]:not(:focus-within) { transform: translateY(-100%); }
 /* The CMA's strip of years (UX9b) follows the top bar up when it hides, so no row scrolls above it; a box tabbed to, either

@@ -107,7 +107,7 @@ export const N = {
     title: 'Ways that work', lead: 'Each one meets the lender’s levels. Pick one; you can undo it.', use: 'Use this', none: 'No change to the loan alone makes it work. Change your answers, or open Professional mode.',
     used: (title: string) => `Used: ${title}.`, undo: 'Undo',
   },
-  chart: { title: 'Cash for the loan against repayments, by year', cash: 'Cash available', service: 'Repayments due', unit: '₹ lakh', tight: 'tightest' },
+  chart: { band: 'Cash for the loan against repayments', title: 'Cash for the loan against repayments, by year', cash: 'Cash available', service: 'Repayments due', unit: '₹ lakh', tight: 'tightest' },
   folds: { working: 'How it adds up', paper: 'The report' },
   /** The page opens here (Rahul, 12-11-2026): what DSCR is in a few words, then a choice of two ways in (NEW1c, Rahul,
    * 12-11-2026): Simple asks the questions and states what it filled in; Professional asks the same, then opens every field filled in. */
@@ -198,7 +198,7 @@ export const N = {
     average: 'DSCR, average', lowest: 'Tightest year', emi: 'EMI a month', interest: 'Interest, whole loan',
     against: (t: string) => `Banks look for ${t}`, inYear: (fy: string) => `in ${fy}`, years: (n: number) => `over ${n} years`,
   },
-  years: { title: 'DSCR by year', line: (t: string) => `Line: ${t}, the least a year should reach`, below: 'below', part: 'part year' },
+  years: { band: 'Year by year', title: 'DSCR by year', line: (t: string) => `Line: ${t}, the least a year should reach`, below: 'below', part: 'part year' },
   pro: {
     lead: 'Every field, filled in from your answers. Change any; the answer moves with it.',
     why: 'Why', whyAll: 'What we filled in', change: 'Change',
