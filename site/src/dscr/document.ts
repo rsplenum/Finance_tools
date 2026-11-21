@@ -71,7 +71,7 @@ export function fileName(s: State, p: Preview, ext: 'pdf' | 'xlsx' | 'docx', exa
 }
 
 const dmy = (iso: string) => iso.split('-').reverse().join('-');
-const lower = (t: string) => t.charAt(0).toLowerCase() + t.slice(1);
+const lower = (t: string) => (/^[A-Z]{2}/.test(t) ? t : t.charAt(0).toLowerCase() + t.slice(1));
 const given = (t: string) => (t.trim() && printable(t) ? t.trim() : 'Still needed');
 
 /** A cell showing the view's words, with the engine's figure beside them for the Excel copy. */
@@ -134,13 +134,48 @@ function runningTermsWords(t: RunningTermsText): string {
 /** The average and the lowest year, in a strip under the working. The verdict, the largest loan, the fewest instalments and the lender's target stay on the page. */
 function keyFigures(s: State, def: Definition, p: Preview): KeyFigure[] {
   if (p.average === undefined) return [];
-  // The lender's level (D-DOC-18): the target typed on the page, else the usual level (engine/data/ratios.json). No verdict.
-  const t = targetOf(s), level = (typed: number | undefined, id: 'dscrAverage' | 'dscrLowest') => (typed !== undefined && Number.isFinite(typed)
-    ? `Lender's level ${typed.toFixed(2)}` : `Usual level ${levelFor(id, 'fresh').toFixed(2)}`);
+  const l = levelsOf(s);
   return [
-    { label: 'Average DSCR', value: p.average, level: level(t.average, 'dscrAverage'), note: lower(choiceLabel(def, 'average')) },
-    { label: 'Lowest year', value: p.lowest ?? '', level: level(t.minimum, 'dscrLowest'), note: `in ${p.lowestYear}` },
+    { label: 'Average DSCR', value: p.average, level: l.average.text, note: lower(choiceLabel(def, 'average')) },
+    { label: 'Lowest year', value: p.lowest ?? '', level: l.lowest.text, note: `in ${p.lowestYear}` },
   ];
+}
+
+/** The levels looked for (D-DOC-18, D-DOC-20): the target typed on the page, else the usual level (engine/data/ratios.json). No verdict. */
+function levelsOf(s: State) {
+  const t = targetOf(s), level = (typed: number | undefined, id: 'dscrAverage' | 'dscrLowest') => {
+    const own = typed !== undefined && Number.isFinite(typed), n = own ? typed : levelFor(id, 'fresh');
+    return { n, own, figure: n.toFixed(2), text: `${own ? "Lender's" : 'Usual'} level ${n.toFixed(2)}` };
+  };
+  return { average: level(t.average, 'dscrAverage'), lowest: level(t.minimum, 'dscrLowest') };
+}
+
+/**
+ * Page 1's picture, "Can it repay?" (DSCR-D, SPEC4): each year's DSCR against the level for any one year, the lowest
+ * year marked, then the average against its own level; and the same in words. Each figure is the engine's, as the page
+ * shows it; a bar's length is the engine's exact ratio where the statement holds it.
+ */
+function repayPicture(s: State, p: Preview): { chart: Chart; said: string } | undefined {
+  const st = p.statement, line = st?.lines.find((l) => l.id === 'dscr'), l = levelsOf(s);
+  if (!st || !line || p.average === undefined || p.lowest === undefined) return undefined;
+  const averageN = line.total?.n ?? Number(p.average);
+  const years = st.years.flatMap((fy, i) => {
+    const n = line.n?.[i], text = line.values[i];
+    if (n === undefined || !Number.isFinite(n) || !text) return [];
+    const note = p.partYears?.[fy] ?? (!st.counted[i] ? 'not counted' : undefined);
+    return [{ label: fy, values: [n, l.lowest.n] as [number, number], texts: [text, l.lowest.text] as [string, string],
+      ...(fy === p.lowestYear ? { tight: true } : {}), ...(note ? { note } : {}) }];
+  });
+  if (!years.length || !Number.isFinite(averageN)) return undefined;
+  const chart: Chart = {
+    kind: 'level', title: 'Can it repay?', unit: 'DSCR, times', names: ['DSCR', 'Level looked for'], tightName: 'lowest year', decimals: 2,
+    rows: [...years, { label: 'Average DSCR', values: [averageN, l.average.n], texts: [p.average, l.average.text] }],
+  };
+  // In words, beside the picture: the figures and the levels; the summary says the lender decides (no verdict, D-DOC-03).
+  const looks = l.average.own && l.lowest.own ? `The lender looks for ${l.lowest.figure} in any one year and ${l.average.figure} on average.`
+    : !l.average.own && !l.lowest.own ? `Lenders usually look for ${l.lowest.figure} in any one year and ${l.average.figure} on average.`
+      : `The levels looked for: ${lower(l.lowest.text)} in any one year, ${lower(l.average.text)} on average.`;
+  return { chart, said: `In its lowest year, ${p.lowestYear}, the business has ${p.lowest} times the cash it must pay its lenders, and ${p.average} times on average. ${looks}` };
 }
 
 const choiceLabel = (def: Definition, k: OptionKey) => (OPTIONS[k].choices as Record<string, { label: string }>)[def[k] as string].label;
@@ -248,14 +283,14 @@ function enteredPairs(s: State, p: Preview, y: Years): [string, string][] {
   return pairs;
 }
 
-/** Annex 2, the repayment schedule (ScheduleView): by year, then month by month. The loan and its instalment are on page 1. */
-function schedulePart(sch: ScheduleView): Part {
+/** The repayment schedule (ScheduleView), the last chapter: by year, then month by month. The loan and its instalment are in chapter 1. */
+function schedulePart(sch: ScheduleView, k: number): Part {
   const money = (text: string, value: number) => cell(text, value, 'amount');
-  const table = (t: Table): Block => ({ kind: 'table', table: t });
+  const table = (t: Table): Block => ({ kind: 'table', table: t }), title = `${k}. How the loan is repaid`;
   return {
-    name: 'Repayment schedule', section: 'Annex 2. Repayment schedule',
+    name: 'Repayment schedule', section: title,
     blocks: [
-      { kind: 'title', text: 'Annex 2. Repayment schedule', small: true },
+      { kind: 'title', text: title, small: true },
       { kind: 'text', text: 'In rupees, rounded; totals use the exact figures.', small: true },
       { kind: 'heading', text: 'By year' },
       table({
@@ -281,6 +316,8 @@ function schedulePart(sch: ScheduleView): Part {
 // ---- The sensitivity analysis (D1b): the lenders' tests of D-UX-47 as the page shows them ----
 
 const STATEMENT_PART = 'DSCR statement', SENSITIVITY = 'Sensitivity';
+/** The chapters, each named as the question a lender asks of it (DSCR-D, SPEC4); the numbers follow the parts present. */
+const REPAY_TITLE = '1. Can the business repay the loan?', SENSITIVITY_TITLE = '2. If things go worse';
 /** An amount as the view words it, without its "₹" (the table says rupees), and the engine's figure. */
 const money = (text: string, value: number): Cell => ({ text: text.replace(/^₹ ?/, ''), figure: { value, kind: 'amount', decimals: 0 } });
 const ratio = (text: string, value: number | undefined): Cell => (value === undefined || !Number.isFinite(value) ? { text }
@@ -293,8 +330,8 @@ const hasFigures = (v: LenderView) => v.stress.length > 0 || 'line' in v.promote
 function sensitivityPart(v: LenderView, years: string[]): Part {
   const lines = [...v.stress, ...('line' in v.promoters ? [v.promoters.line] : [])];
   const blocks: Block[] = [
-    { kind: 'title', text: '2. Sensitivity analysis', small: true },
-    { kind: 'text', text: "Our own tests beside the DSCR in section 1, not a lender's norm: each lender sets its own cases. They do not change that DSCR.", small: true },
+    { kind: 'title', text: SENSITIVITY_TITLE, small: true },
+    { kind: 'text', text: "A sensitivity analysis: our own tests beside the DSCR in chapter 1, not a lender's norm; each lender sets its own cases. They do not change that DSCR.", small: true },
   ];
   if (v.blocked) blocks.push({ kind: 'box', title: 'Not shown', items: [v.blocked] });
   if (lines.length) {
@@ -351,16 +388,16 @@ function sensitivityPart(v: LenderView, years: string[]): Part {
     if (said.length) blocks.push({ kind: 'list', items: said, small: true });
   }
   else if (a) blocks.push({ kind: 'box', title: 'The last audited year still needs', items: a.needs });
-  return { name: SENSITIVITY, section: '2. Sensitivity analysis', blocks };
+  return { name: SENSITIVITY, section: SENSITIVITY_TITLE, blocks };
 }
 
-/** Annex 1, the basis: the figures entered, each once, and how DSCR is worked out. */
-function basisPart(s: State, p: Preview, def: Definition, y: Years): Part {
-  const entered = enteredPairs(s, p, y);
+/** The basis, a chapter of its own: the figures entered, each once, and how DSCR is worked out. */
+function basisPart(s: State, p: Preview, def: Definition, y: Years, k: number): Part {
+  const entered = enteredPairs(s, p, y), title = `${k}. Where the figures come from`;
   return {
-    name: 'Basis', section: 'Annex 1. The basis',
+    name: 'Basis', section: title,
     blocks: [
-      { kind: 'title', text: 'Annex 1. The basis', small: true },
+      { kind: 'title', text: title, small: true },
       ...(entered.length ? [{ kind: 'heading', text: s.source === 'plan' ? 'The business figures entered' : 'The figures entered' } as Block, { kind: 'pairs', pairs: entered } as Block] : []),
       { kind: 'heading', text: 'How DSCR is worked out' },
       ...methodBlocks(s, p, def),
@@ -395,22 +432,31 @@ export function statementDoc(s: State, p: Preview, today: string, example = fals
     rows: bars.map((b) => ({ label: b.fy, values: [b.cash, b.service] as [number, number], texts: [b.cashText, b.serviceText] as [string, string],
       ...(b.tight ? { tight: true } : {}), ...(b.part ? { note: b.part } : !b.counted ? { note: 'not counted' } : {}) })),
   } : undefined;
-  const key = keyFigures(s, def, p);
+  const key = keyFigures(s, def, p), repay = repayPicture(s, p);
 
-  // Page 1 at a glance (WORKED-PAGE §5): who asks and for what, the key figures beside the lender's level (no verdict:
-  // the lender decides, D-DOC-03), the chart, the status, and the contents, each line a link to its part.
+  // Page 1, the summary (WORKED-PAGE §5, SPEC4): who asks and for what; what is still needed; "Can it repay?", each
+  // year's DSCR and the average against their levels in one picture and in words (no verdict: the lender decides,
+  // D-DOC-03); and the chapters, each a question and a link to its page. The cash against the repayments, page 1's
+  // chart until DSCR-D, says the same in amounts; the working in chapter 1 holds them, and the page keeps the chart.
   const asked = loanAsked(s);
   const glance: Block[] = [
     { kind: 'title', text: borrower || 'DSCR statement', sub: `Debt service coverage ratio (DSCR), ${years.length > 1 ? `${years[0]} to ${years[years.length - 1]}` : years[0]}${p.past?.statement ? `, after ${p.past.years.length} past year${p.past.years.length > 1 ? 's' : ''} from the books` : ''}` },
     { kind: 'facts', lines: [facts[0], ...(asked ? [[['Loan asked', asked]] as [string, string][]] : []), ...facts.slice(1), [['Status', status]]] },
   ];
   if (needs.length) glance.push({ kind: 'box', title: `${example ? 'Example' : 'Provisional'}: ${needs.length} still needed`, items: needs });
-  if (key.length) glance.push({ kind: 'figures', items: key });
-  if (chart) glance.push({ kind: 'chart', chart });
-  glance.push({ kind: 'contents', title: 'Contents', compact: true });
+  if (repay) glance.push({ kind: 'chart', chart: repay.chart }, { kind: 'text', text: `${repay.said} This summary gives no opinion on the loan: the lender decides.` });
+  else {
+    if (key.length) glance.push({ kind: 'figures', items: key });
+    if (chart) glance.push({ kind: 'chart', chart });
+  }
+  glance.push({ kind: 'contents', title: 'The questions this statement answers', compact: true });
 
-  // 1. The statement: the whole working as the page shows it, every line, and the answer under it; signed.
-  const blocks: Block[] = [{ kind: 'title', text: '1. The statement', small: true }];
+  // 1. Can the business repay the loan? The whole working as the page shows it, every line, and the answer under it;
+  // signed on the same page as the working.
+  const blocks: Block[] = [
+    { kind: 'title', text: REPAY_TITLE, small: true },
+    { kind: 'text', text: 'The DSCR, debt service coverage ratio, is the cash the business has each year to pay its lenders, divided by what it must pay them. The working below gives every line of it.' },
+  ];
   if (plan) blocks.push({ kind: 'heading', text: 'The loan' }, { kind: 'facts', lines: loanFacts(s, p, y) });
   // DSCR row B: the past years from the books, their own table and figures, before the projected years.
   const past = p.past?.statement ? p.past : undefined;
@@ -424,7 +470,7 @@ export function statementDoc(s: State, p: Preview, today: string, example = fals
   const notes = [p.beforeStart, p.notCounted, ...p.notes].filter((x): x is string => !!x);
   if (notes.length) blocks.push({ kind: 'list', items: notes, small: true });
   if (key.length) blocks.push({ kind: 'figures', items: key.map(({ level: _, ...k }) => k) });
-  if (lender) blocks.push({ kind: 'text', text: 'The sensitivity analysis in section 2 tests this DSCR as a lender may; it does not change it.', small: true });
+  if (lender) blocks.push({ kind: 'text', text: 'Chapter 2, if things go worse, tests this DSCR as a lender may; it does not change it.', small: true });
   blocks.push({ kind: 'signature', lines: [`For ${borrower || 'the borrower'}`, '', 'Authorised signatory', 'Date:', 'Place:'] });
 
   return {
@@ -437,10 +483,10 @@ export function statementDoc(s: State, p: Preview, today: string, example = fals
     creator: SITE_NAME,
     parts: [
       { name: 'At a glance', blocks: glance },
-      { name: STATEMENT_PART, section: '1. The statement', blocks },
+      { name: STATEMENT_PART, section: REPAY_TITLE, blocks },
       ...(lender ? [sensitivityPart(lender, years)] : []),
-      basisPart(s, p, def, y),
-      ...(p.schedule ? [schedulePart(p.schedule)] : []),
+      basisPart(s, p, def, y, lender ? 3 : 2),
+      ...(p.schedule ? [schedulePart(p.schedule, lender ? 4 : 3)] : []),
     ],
   };
 }

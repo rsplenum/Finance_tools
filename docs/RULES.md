@@ -4,7 +4,7 @@ Generated from `engine/data/` by `npm run rules-doc`; edit the data file, not th
 
 ## DSCR: how it is worked out
 
-Dated 30-09-2026. Written from general practice by Claude. Not yet checked against a public worked example or confirmed by the owner; no figures, formats or norms from any employer (D-BIZ-02).
+Dated 30-09-2026. The three methods' formulas confirmed by the owner, a practising lender, on 21-11-2026 (D-DATA-32); the rest written from general practice by Claude. No figures, formats or norms from any employer (D-BIZ-02).
 
 DSCR for a year = cash available for debt service ÷ debt service in that year.
 
@@ -38,9 +38,9 @@ The lowest year is the lowest DSCR among the years that count.
 
 ### Presets
 
-- **Common term-loan DSCR**: interest on term loans; lease rentals left out; years with a term-loan instalment; total cash available ÷ total debt service. Source: How chartered accountants and banks work DSCR for term loans, as described in public articles (bankingfinance.in, finpab.com; docs/DSCR-RESEARCH.md); not a regulation, and not checked against a primary source (30-09-2026, cross-checked).
-- **RBI resolution framework (2020)**: interest on all borrowings, working capital too; lease rentals left out; every year with interest or instalments due; total cash available ÷ total debt service. Source: RBI circular DOR.No.BP.BC/13/21.04.048/2020-21 of 7 September 2020: DSCR = (net cash accruals + interest and finance charges) ÷ (current portion of long-term debt + interest and finance charges), and the average over the period of the loan. Read through summaries; the circular itself could not be opened (30-09-2026, needs review).
-- **As in the annual accounts (Schedule III)**: interest on all borrowings, working capital too; lease rentals counted; every year with interest or instalments due; total cash available ÷ total debt service. Source: ICAI Guidance Note on Schedule III: (profit after tax + non-cash operating expenses + interest) ÷ (interest and lease payments + principal repayments). It defines the yearly ratio only; the years counted and the average are this tool's. Read through summaries; the Guidance Note itself could not be opened (30-09-2026, needs review).
+- **Common term-loan DSCR**: interest on term loans; lease rentals left out; years with a term-loan instalment; total cash available ÷ total debt service. Source: Term-loan practice of Indian banks and chartered accountants: (net profit + depreciation + interest on term loans) ÷ (principal + interest on term loans), averaged over the repayment years (30-09-2026, cross-checked).
+- **RBI resolution framework (2020)**: interest on all borrowings, working capital too; lease rentals left out; every year with interest or instalments due; total cash available ÷ total debt service. Source: RBI circular DOR.No.BP.BC/13/21.04.048/2020-21 of 7 September 2020: DSCR = (net cash accruals + interest and finance charges) ÷ (current portion of long-term debt + interest and finance charges), averaged over the period of the loan (30-09-2026, cross-checked).
+- **As in the annual accounts (Schedule III)**: interest on all borrowings, working capital too; lease rentals counted; every year with interest or instalments due; total cash available ÷ total debt service. Source: ICAI Guidance Note on Schedule III to the Companies Act, 2013: (profit after tax + non-cash operating expenses + interest) ÷ (interest and lease payments + principal repayments), each year's ratio averaged over the years as in the other two (30-09-2026, cross-checked).
 
 ### Benchmarks
 

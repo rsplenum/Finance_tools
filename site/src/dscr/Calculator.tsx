@@ -13,7 +13,7 @@
 import type { ComponentChildren } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import { AmountField } from '../AmountField';
-import { OPTIONS, PAST_LABELS, PRESETS } from '../../../engine/dscr';
+import { componentsOf, OPTIONS, PAST_LABELS, PRESETS, type Component, type Definition } from '../../../engine/dscr';
 import { LENDER, WC_BOOKS_LABELS, type WcBooks } from '../../../engine/lender';
 import { STEPPED } from '../../../engine/loan';
 import { parseMonth } from '../../../engine/parse';
@@ -36,7 +36,7 @@ import {
   type DocFacts, type LenderLine, type LenderText, type LenderView, type Line, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type RunningTermsText, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 import { Levels } from './Levels';
-import { Cover, Mark } from './Pictures';
+import { Mark } from './Pictures';
 import { N, W } from './words';
 import { Steps, type Step } from '../worked/Steps';
 import { SHARED } from '../words';
@@ -176,6 +176,53 @@ function FrontDoor({ s, update, openMore, was, onSee }: { s: State; update: Upda
   </section>;
 }
 
+const M = N.pro.method;
+/** The parts above and below the line, as the method counts them: what differs from the common way marked. */
+function Fraction({ def }: { def: Definition }) {
+  const { available, service } = componentsOf(def), odd = (c: Component) => c === 'interestOther' || c === 'leaseRentals';
+  const row = (cs: Component[]) => <span class="flex flex-wrap items-center gap-1">
+    {cs.map((c, i) => <span key={c} class="inline-flex items-center gap-1">{i > 0 && <span aria-hidden="true" class="text-ink-muted">+</span>}
+      <span class={`rounded-[0.3em] px-1.5 py-0.5 text-ink ${odd(c) ? 'ask-mark font-semibold' : 'bg-ink/8'}`}>{M.part[c as keyof typeof M.part] ?? c}</span></span>)}
+  </span>;
+  return <span class="mt-2 grid gap-1 text-sm">
+    <span class="flex items-start gap-2"><span class="w-14 shrink-0 pt-0.5 text-ink-muted">{M.above}</span>{row(available)}</span>
+    <span aria-hidden="true" class="ml-16 h-px bg-ink/40" />
+    <span class="flex items-start gap-2"><span class="w-14 shrink-0 pt-0.5 text-ink-muted">{M.below}</span>{row(service)}</span>
+  </span>;
+}
+
+/**
+ * The first step (Rahul, 21-11-2026: "help is needed here to choose the right option"): each method as its fraction, the
+ * parts it adds marked, and this case's DSCR under it, from the engine; then why adding the same interest above and
+ * below the line lowers the DSCR. A wrong pick costs nothing: the figures stay and the answer moves.
+ */
+function Methods({ s, update, bare }: { s: State; update: Update; bare?: boolean }) {
+  const under = useMemo(() => Object.fromEntries(PRESETS.map((m) => {
+    const q = preview({ ...s, method: m.id });
+    return [m.id, q.average && q.lowest ? M.yours(q.average, q.lowest) : ''];
+  })), [s]);
+  const pick = (v: string) => update((x) => ({ ...x, method: v }));
+  return <fieldset id="fld-method" class={bare ? 'min-w-0' : 'mt-6 min-w-0'}>
+    <legend class={bare ? 'sr-only' : 'text-lg font-semibold text-ink'}>{M.legend}</legend>
+    {!bare && <p class="mt-1 text-base text-ink-muted">{M.lead}</p>}
+    <div class="mt-3 grid gap-2">
+      {[...PRESETS.map((m) => ({ id: m.id, label: m.label, def: m.choice as Definition })), { id: 'choose', label: M.choose, def: undefined }].map((m) =>
+        <label key={m.id} for={`fld-method-${m.id}`} data-testid={`method-${m.id}`}
+          class="flex cursor-pointer items-start gap-3 rounded-card bg-surface p-4 has-checked:outline-2 has-checked:outline-ink">
+          <input type="radio" id={`fld-method-${m.id}`} name="fld-method" value={m.id} checked={s.method === m.id} onChange={() => pick(m.id)} class="mt-1 size-4 shrink-0 accent-ink" />
+          <span class="min-w-0 flex-1">
+            <span class="flex flex-wrap items-center gap-x-2"><span class="font-semibold text-ink">{m.label}</span>
+              {m.id === 'common' && <span class="rounded-full bg-ink px-2 py-0.5 text-xs font-semibold text-canvas">{M.pick}</span>}</span>
+            <span class="mt-0.5 block text-sm text-ink-muted">{M.when[m.id as keyof typeof M.when]}</span>
+            {m.def && <Fraction def={m.def} />}
+            {under[m.id] && <span data-testid={`method-dscr-${m.id}`} class="mt-2 block text-sm font-semibold text-ink tabular-nums">{under[m.id]}</span>}
+          </span>
+        </label>)}
+    </div>
+    <p data-testid="method-why" class="mt-3 flex gap-2 text-sm text-ink-muted"><span aria-hidden="true" class="ask-mark mt-1 h-3 w-5 shrink-0 rounded-[0.2em]" />{M.same}</p>
+  </fieldset>;
+}
+
 function Start({ s, update }: { s: State; update: Update }) {
   return <div>
     <Choice name="fld-source" legend="Where do the yearly figures come from?" value={s.source} onChange={(v) => update((x) => withSource(x, v))}
@@ -183,54 +230,58 @@ function Start({ s, update }: { s: State; update: Update }) {
         { value: 'own', label: 'My own yearly figures', hint: 'Profit after tax, depreciation, interest and instalments for each year.' },
         { value: 'plan', label: 'Work them out from the loan terms', hint: 'You give profit before interest, depreciation and tax; the page works out the loan’s interest and instalments, the tax, and the repayment schedule.' },
       ]} />
-    <div id="method" class="scroll-mt-4">
-      <Choice name="fld-method" legend="How is DSCR worked out?" value={s.method} onChange={(v) => update((x) => ({ ...x, method: v }))}
-        options={[
-          ...PRESETS.map((m) => ({ value: m.id, label: m.label, hint: <>{presetText(m.id)}. {sureText(m as Marked)}.</> })),
-          { value: 'choose', label: 'Choose each of the four', hint: 'For a lender who works it out differently.' },
-        ]} />
-    </div>
+    <div id="method" class="scroll-mt-4"><Methods s={s} update={update} /></div>
     <SourceNote what="Where these methods come from" reviewBy={DSCR_FILE.reviewBy}>
       {PRESETS.map((m) => <span key={m.id} class="mt-1 block"><b>{m.label}:</b> {m.source}. Dated {showDate(m.date)}.</span>)}
     </SourceNote>
-    {s.method === 'choose' && OPTION_KEYS.map((k) => <Choice key={k} name={`fld-${k}`} legend={OPTIONS[k].question} options={choicesOf(k)}
-      value={s.choice[k]} onChange={(v) => update((x) => ({ ...x, choice: { ...x.choice, [k]: v } }))} />)}
+    <OwnMethod s={s} update={update} />
   </div>;
 }
 
-function Loan({ s, update, y, p, was }: { s: State; update: Update; y: Years; p: Preview; was: Was }) {
+/** The method picked part by part: its four choices, once "choose" is picked. */
+const OwnMethod = ({ s, update }: { s: State; update: Update }) => <>{s.method === 'choose' && OPTION_KEYS.map((k) => <Choice key={k} name={`fld-${k}`} legend={OPTIONS[k].question} options={choicesOf(k)}
+  value={s.choice[k]} onChange={(v) => update((x) => ({ ...x, choice: { ...x.choice, [k]: v } }))} />)}</>;
+
+/** The loan's fields, each made once: the loan section lays them all out; a change in place uses the few it needs. */
+function loanFields(s: State, update: Update, was: Was) {
   const l = s.loan, set = (patch: Partial<LoanText>) => update((x) => ({ ...x, loan: changeLoan(x.loan, patch) }));
   const n = numberOf(l.instalments), every = l.repayment === 'quarterly' ? 'quarterly' : 'monthly';
-  const read = loanRead(y);
-  return <Section id="loan" title="The loan">
-    <p class={`mt-2 ${HINT}`}>As in the sanction letter.</p>
-    <div class="mt-4"><AmountField value={l.amount} onCommit={(t) => set({ amount: t })} /></div>
-    <div class="mt-2 grid gap-4 sm:grid-cols-2">
-      <TextField id="fld-ratePct" label="Interest rate, % a year" unit="%" hint="Like 10.5." inputMode="decimal" value={l.ratePct}
-        onCommit={(t) => set({ ratePct: t })} said={notUnderstood(l.ratePct, numberOf, '10.5')} />
-      <TextField id="fld-disbursed" type="month" label="Month the loan is first drawn" hint="Like 2026-04." value={l.disbursed}
-        onCommit={(t) => set({ disbursed: t })} said={notUnderstood(l.disbursed, parseMonth, '2026-04 or Apr 2026')} />
-    </div>
-    <Choice name="fld-repayment" legend="How is it repaid?" value={l.repayment} onChange={(v) => set({ repayment: v })} options={[
+  return {
+    set,
+    rate: <TextField id="fld-ratePct" label="Interest rate, % a year" unit="%" hint="Like 10.5." inputMode="decimal" value={l.ratePct}
+      onCommit={(t) => set({ ratePct: t })} said={notUnderstood(l.ratePct, numberOf, '10.5')} />,
+    drawn: <TextField id="fld-disbursed" type="month" label="Month the loan is first drawn" hint="Like 2026-04." value={l.disbursed}
+      onCommit={(t) => set({ disbursed: t })} said={notUnderstood(l.disbursed, parseMonth, '2026-04 or Apr 2026')} />,
+    repaid: <Choice name="fld-repayment" legend="How is it repaid?" value={l.repayment} onChange={(v) => set({ repayment: v })} options={[
       { value: 'emi', label: 'EMI every month', hint: 'The same amount each month, interest included.' },
       { value: 'monthly', label: 'Equal principal every month', hint: 'Interest on the balance on top, so the payment falls.' },
       { value: 'stepped', label: 'Stepped every month', hint: `Less at first, rising ${STEPPED.stepPct}% each year; level within the year.` },
       { value: 'quarterly', label: 'Equal principal every quarter', hint: 'Interest on the balance is still paid every month.' },
-    ]} />
-    <div class="mt-6 grid gap-4 sm:grid-cols-2">
-      <TextField id="fld-moratoriumMonths" label="Holiday before the first instalment (months)" unit="months" inputMode="numeric" value={l.moratoriumMonths}
-        hint="Interest only, no instalments; 0 if none." onCommit={(t) => set({ moratoriumMonths: t })}
-        said={notUnderstood(l.moratoriumMonths, numberOf, '6, or 0 if none')} />
-      {/* The whole tenure, as the sanction letter gives it, the holiday inside it (DSCR row C, point 6); the engine works out the instalments. */}
-      <TextField id="fld-tenure" label="Whole tenure, months (holiday included)" unit="months" inputMode="numeric" value={tenureText(l)}
-        hint={was('instalments') ?? (n !== undefined && l.repayment && l.tenure !== undefined
-          ? `That is ${n} ${every} instalment${n === 1 ? '' : 's'}${(numberOf(l.moratoriumMonths) ?? 0) > 0 ? ' after the holiday' : ''}.`
-          : 'Like 60 for five years. The holiday counts inside it.')}
-        onCommit={(t) => set({ tenure: t })} said={notUnderstood(tenureText(l), numberOf, '60')} />
-    </div>
-    {(numberOf(l.moratoriumMonths) ?? 0) > 0 && <div class="mt-4"><Pills id="fld-holiday-interest" legend="Interest in the holiday" value={l.holidayInterest}
+    ]} />,
+    holiday: <TextField id="fld-moratoriumMonths" label="Holiday before the first instalment (months)" unit="months" inputMode="numeric" value={l.moratoriumMonths}
+      hint="Interest only, no instalments; 0 if none." onCommit={(t) => set({ moratoriumMonths: t })}
+      said={notUnderstood(l.moratoriumMonths, numberOf, '6, or 0 if none')} />,
+    // The whole tenure, as the sanction letter gives it, the holiday inside it (DSCR row C, point 6); the engine works out the instalments.
+    tenure: <TextField id="fld-tenure" label="Whole tenure, months (holiday included)" unit="months" inputMode="numeric" value={tenureText(l)}
+      hint={was('instalments') ?? (n !== undefined && l.repayment && l.tenure !== undefined
+        ? `That is ${n} ${every} instalment${n === 1 ? '' : 's'}${(numberOf(l.moratoriumMonths) ?? 0) > 0 ? ' after the holiday' : ''}.`
+        : 'Like 60 for five years. The holiday counts inside it.')}
+      onCommit={(t) => set({ tenure: t })} said={notUnderstood(tenureText(l), numberOf, '60')} />,
+    holidayInterest: (numberOf(l.moratoriumMonths) ?? 0) > 0 && <div class="mt-4"><Pills id="fld-holiday-interest" legend="Interest in the holiday" value={l.holidayInterest}
       options={HOLIDAY_PILLS} onChange={(holidayInterest) => set({ holidayInterest })} />
-      {!l.holidayInterest && <p class={`mt-1 text-xs ${MUTED}`}>Not chosen: taken as paid each month, the usual way.</p>}</div>}
+      {!l.holidayInterest && <p class={`mt-1 text-xs ${MUTED}`}>Not chosen: taken as paid each month, the usual way.</p>}</div>,
+  };
+}
+
+function Loan({ s, update, y, p, was }: { s: State; update: Update; y: Years; p: Preview; was: Was }) {
+  const f = loanFields(s, update, was), read = loanRead(y);
+  return <Section id="loan" title="The loan">
+    <p class={`mt-2 ${HINT}`}>As in the sanction letter.</p>
+    <div class="mt-4"><AmountField value={s.loan.amount} onCommit={(t) => f.set({ amount: t })} /></div>
+    <div class="mt-2 grid gap-4 sm:grid-cols-2">{f.rate}{f.drawn}</div>
+    {f.repaid}
+    <div class="mt-6 grid gap-4 sm:grid-cols-2">{f.holiday}{f.tenure}</div>
+    {f.holidayInterest}
     {(read || p.schedule) && <div data-testid="loan-read" class="mt-4 space-y-1 rounded-md bg-surface px-3 py-2 text-sm text-ink">
       {p.schedule && <p data-testid="loan-level">{p.schedule.level}</p>}
       {read && <p data-testid="loan-dates">{read}</p>}
@@ -313,12 +364,12 @@ const groupsOf = (rows: RowDef[]) => rows.reduce<RowDef[][]>((gs, r) => {
 }, []);
 
 /** One block of figures: how they are given (one choice), then only the one or two fields that answer needs. */
-function FigureRow({ s, group, years, update }: { s: State; group: RowDef[]; years: string[]; update: Update }) {
+function FigureRow({ s, group, years, update, bare }: { s: State; group: RowDef[]; years: string[]; update: Update; bare?: boolean }) {
   const r0 = group[0], mode = modeOf(s, r0), title = group.length > 1 ? GROUP_TITLES[r0.modeKey] ?? r0.label : r0.label;
   const shown = mode ? group.filter((r) => !r.only || r.only.includes(mode)) : [];
   const setMode = (m: RowMode) => update((x) => ({ ...x, modes: { ...x.modes, [r0.modeKey]: m } }));
-  return <div id={`row-${r0.modeKey}`} data-testid={`row-${r0.modeKey}`} class="scroll-mt-4 rounded-card bg-surface p-3">
-    <p class="font-medium text-ink">{title}</p>
+  return <div id={bare ? undefined : `row-${r0.modeKey}`} data-testid={bare ? `edit-${r0.modeKey}` : `row-${r0.modeKey}`} class={bare ? '' : 'scroll-mt-4 rounded-card bg-surface p-3'}>
+    {!bare && <p class="font-medium text-ink">{title}</p>}
     {r0.hint && <p class={`text-xs ${MUTED}`}>{r0.hint}</p>}
     <div role="radiogroup" aria-label={`${title}: how it is given`} class="mt-2 flex flex-wrap gap-2">
       {r0.modes.map((m) => <label key={m} for={`fld-${r0.key}-${m}`}
@@ -331,7 +382,7 @@ function FigureRow({ s, group, years, update }: { s: State; group: RowDef[]; yea
       ? <p class={`mt-2 text-sm ${MUTED}`}>None in any year.</p>
       : shown.map((r) => <RowFields key={r.key} s={s} r={r} mode={mode as RowMode} years={years} update={update} titled={shown.length > 1} />)}
     {mode === 'terms' && <RunningTermsFields s={s} update={update} />}
-    {r0.key === 'taxPct' && <SourceNote what="About these rates" reviewBy={TAX_FILE.reviewBy}>{TAX_STATUS}
+    {r0.key === 'taxPct' && !bare && <SourceNote what="About these rates" reviewBy={TAX_FILE.reviewBy}>{TAX_STATUS}
       {BORROWERS.map((b) => <span key={b.id} class="mt-1 block"><b>{b.label}:</b> {b.law}. Sources (secondary): {b.source}. Dated {showDate(b.date)}; not yet checked.</span>)}
     </SourceNote>}
   </div>;
@@ -530,16 +581,11 @@ function RowFields({ s, r, mode, years, update, titled }: { s: State; r: RowDef;
 }
 
 function TargetSection({ s, update }: { s: State; update: Update }) {
-  const t = s.target, set = (patch: Partial<State['target']>) => update((x) => ({ ...x, target: { ...x.target, ...patch } }));
+  const set = (patch: Partial<State['target']>) => update((x) => ({ ...x, target: { ...x.target, ...patch } }));
   const { average: a, minimum: m } = EXAMPLE_TARGETS;
   return <Section id="target" title="The lender’s target">
     <p class={`mt-2 ${HINT}`}>The DSCR the lender asks for: the average, the lowest year, or both.</p>
-    <div class="mt-4 grid gap-4 sm:grid-cols-2">
-      <TextField id="fld-targetAverage" label="Average" hint="Like 1.50." inputMode="decimal" value={t.average} byDefault={s.assume ? ASSUMED.target.average : undefined}
-        onCommit={(v) => set({ average: v })} said={notUnderstood(t.average, numberOf, '1.50')} />
-      <TextField id="fld-targetMinimum" label="Lowest year" hint="Like 1.20." inputMode="decimal" value={t.minimum} byDefault={s.assume ? ASSUMED.target.minimum : undefined}
-        onCommit={(v) => set({ minimum: v })} said={notUnderstood(t.minimum, numberOf, '1.20')} />
-    </div>
+    <div class="mt-4"><TargetFields s={s} update={update} /></div>
     {a && m && <div class="mt-4">
       <button type="button" data-testid="use-examples" class={BUTTON} onClick={() => set({ average: targetText(a.value), minimum: targetText(m.value) })}>
         Use {targetText(a.value)} and {targetText(m.value)}
@@ -548,6 +594,17 @@ function TargetSection({ s, update }: { s: State; update: Update }) {
       <SourceNote what="Where the examples come from" reviewBy={DSCR_FILE.reviewBy}>{a.source}. Dated {showDate(a.date)}.</SourceNote>
     </div>}
   </Section>;
+}
+
+/** The lender's two levels: the average and the lowest year. */
+function TargetFields({ s, update }: { s: State; update: Update }) {
+  const t = s.target, set = (patch: Partial<State['target']>) => update((x) => ({ ...x, target: { ...x.target, ...patch } }));
+  return <div class="grid gap-4 sm:grid-cols-2">
+    <TextField id="fld-targetAverage" label="Average" hint="Like 1.50." inputMode="decimal" value={t.average} byDefault={s.assume ? ASSUMED.target.average : undefined}
+      onCommit={(v) => set({ average: v })} said={notUnderstood(t.average, numberOf, '1.50')} />
+    <TextField id="fld-targetMinimum" label="Lowest year" hint="Like 1.20." inputMode="decimal" value={t.minimum} byDefault={s.assume ? ASSUMED.target.minimum : undefined}
+      onCommit={(v) => set({ minimum: v })} said={notUnderstood(t.minimum, numberOf, '1.20')} />
+  </div>;
 }
 
 /** The box a missing figure is typed in: the first of the needs among the front door's fields `from` to `to`. */
@@ -693,19 +750,16 @@ export function LenderLines({ v, openMore }: { v: LenderView; openMore: () => vo
     {l.meets !== undefined && <p class={`mt-1 flex items-center gap-1.5 text-sm ${l.meets ? 'text-good' : 'text-bad'}`}><span class="sr-only">; </span><Mark ok={l.meets} small />
       {verdictWords('target', 1, l.meets ? 0 : 1)}</p>}
   </li>;
-  const locked = v.ask && !v.stress.length;
   const c = v.cash, a = v.audited, td = 'px-2 py-1 text-right tabular-nums';
-  return <div data-testid="dscr-lender" class="mt-4 text-ink">
-    <p class="font-medium">The bank’s other checks</p>
+  return <div data-testid="dscr-lender" class="mt-8 text-ink">
+    <h3 class="font-semibold text-ink">{W.otherChecks}</h3>
     {v.blocked && <p role="alert" class="mt-1 text-sm text-bad">{v.blocked}</p>}
-    <ul class="mt-2 grid max-w-xl grid-cols-2 gap-2">
+    {(v.stress.length > 0 || 'line' in v.promoters) && <ul class="mt-2 grid max-w-xl grid-cols-2 gap-2">
       {v.stress.map((l, i) => tile(l, LENDER.stress[i]?.id ?? String(i)))}
-      {locked && LENDER.stress.map((x) => <li key={x.id} aria-hidden="true" class="rounded-control border border-dashed border-edge p-3">
-        <p class="text-sm text-ink-muted">{x.label}</p><p class="mt-1 text-lg font-semibold text-ink-muted">?</p>
-      </li>)}
       {'line' in v.promoters && tile(v.promoters.line, 'promoters')}
-    </ul>
-    {v.ask && <p data-testid="lender-ask" class="mt-2 text-sm"><a href="#lender" onClick={openMore} class="inline-flex min-h-11 items-center text-link underline underline-offset-4">{v.ask}</a></p>}
+    </ul>}
+    {v.ask && <p data-testid="lender-ask" class="mt-1 max-w-xl text-base text-ink-muted">{v.ask}{' '}
+      <a href="#lender" onClick={openMore} class="inline-flex min-h-11 items-center font-medium text-link underline underline-offset-4">{W.addSales}</a></p>}
     {v.notStressed && <p class="mt-2 text-sm text-ink-muted">{v.notStressed}.</p>}
     {v.needs.length > 0 && <ul class="mt-1 list-disc pl-5 text-sm text-warn">{v.needs.map((n) => <li key={n}>{n}</li>)}</ul>}
     {c && ('needs' in c
@@ -767,34 +821,76 @@ function PastSection({ s, update, y }: { s: State; update: Update; y: Years }) {
 }
 
 /** The lenders' tests' own inputs, under More options; none of them is asked on the front door. */
-function LenderSection({ s, update, y, p }: { s: State; update: Update; y: Years; p: Preview }) {
+/** The figure rows an assumption sits on, by its id (engine/data/defaults.json). */
+const IN_ROWS: Record<string, string[]> = {
+  tax: ['taxPct'], proprietorTax: ['taxPct'], margin: ['pbdit'], asset: ['assetIncome'], depreciation: ['depreciation'],
+  interest: ['interestOther'], interestNone: ['interestOther'], otherLoans: ['otherLoans'], nonCash: ['nonCash', 'leaseRentals'],
+};
+const IN_PLACE = new Set([...Object.keys(IN_ROWS), 'method', 'target', 'start', 'loanStart', 'promoters']);
+/** Whether an assumption is changed where it is listed. */
+export const changedInPlace = (id: string) => IN_PLACE.has(id);
+
+/**
+ * An assumption changed where it is listed (Rahul, 21-11-2026: "the change should happen right where the Change button
+ * appears"): the very control Professional mode has for it, its title left off (the line it opens under is the title),
+ * written into the same state, so the answer above moves as it is typed. Nothing new to keep in step: one control, two places.
+ */
+export function InPlace({ id, s, update }: { id: string; s: State; update: Update }) {
+  const y = useMemo(() => yearsOf(s), [s]);
+  const p = useMemo(() => (id === 'start' ? preview(s) : undefined), [id, s]);
+  if (id === 'method') return <><Methods s={s} update={update} bare /><OwnMethod s={s} update={update} /></>;
+  if (id === 'target') return <TargetFields s={s} update={update} />;
+  if (id === 'start' && p) return <StartQuestion s={s} y={y} p={p} update={update} />;
+  if (id === 'promoters') return <LenderPart k="promoters" s={s} update={update} y={y} />;
+  if (id === 'loanStart') {
+    const f = loanFields(s, update, () => undefined);
+    return <div>{f.drawn}{f.repaid}<div class="mt-4">{f.holiday}</div>{f.holidayInterest}</div>;
+  }
+  const keys = IN_ROWS[id] ?? [];
+  return <div class="grid gap-4">{groupsOf(rowsOf(s)).filter((g) => keys.includes(g[0].modeKey)).map((g) =>
+    <FigureRow key={g[0].modeKey} s={s} group={g} years={y.years} update={update} bare />)}</div>;
+}
+
+/** The bank's other checks, each a part on its own: the step lays them out as cards; an assumption changed in place uses one. */
+type CheckId = 'sales' | 'promoters' | 'audited' | 'cash';
+const CHECKS: CheckId[] = ['sales', 'promoters', 'audited', 'cash'];
+const C = N.pro.checks;
+const filled = (xs: (string | undefined)[]) => xs.some((x) => !!x?.trim());
+
+function LenderPart({ k, s, update, y, p }: { k: CheckId; s: State; update: Update; y: Years; p?: Preview }) {
   const l = s.lender ?? NO_LENDER, set = (f: (x: LenderText) => LenderText) => update((x) => ({ ...x, lender: f(x.lender ?? NO_LENDER) }));
-  const byYear = s.modes.pbdit === 'years', at = (xs: string[], i: number, t: string) => { const n = [...xs]; n[i] = t; return n; };
+  const at = (xs: string[], i: number, t: string) => { const n = [...xs]; n[i] = t; return n; };
   const cells = (key: 'sales' | 'promoters', name: string) => <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
     {y.years.map((fy, i) => <label key={fy} class="text-sm">{fy}<CellInput id={`fld-lender-${key}-${i}`} name={`${name} ${fy}`} decimal value={l[key][i] ?? ''} tidy={tidyAmount}
       onCommit={(t) => set((x) => ({ ...x, [key]: at(x[key], i, t) }))} /></label>)}
   </div>;
-  const aud = (k: keyof LenderText['audited'], label: string) => <TextField id={`fld-lender-audited-${k}`} label={label} unit="₹" inputMode="decimal" value={l.audited[k]} tidy={tidyAmount}
-    onCommit={(t) => set((x) => ({ ...x, audited: { ...x.audited, [k]: t } }))} />;
+  // Owners' loans: asked yes or no first, so no row of empty boxes stands there for the usual answer, none.
+  const [back, setBack] = useState(filled(l.promoters));
+  if (k === 'sales') return s.modes.pbdit === 'years' ? cells('sales', 'Sales')
+    : <TextField id="fld-lender-sales" label="This year’s sales" unit="₹" hint="They grow as the profit does." inputMode="decimal" value={l.sales[0] ?? ''}
+      tidy={tidyAmount} said={notUnderstood(l.sales[0] ?? '', amountOf, '50,00,000 or 50 L')} onCommit={(t) => set((x) => ({ ...x, sales: [t] }))} />;
+  if (k === 'promoters') return <div>
+    <p data-testid="lender-promoters-why" class={HINT}>{LENDER.promoters.why}.</p>
+    <div class="mt-3"><Pills id="fld-lender-promoters-back" legend={C.promoters.ask} value={back ? 'yes' : 'no'}
+      options={[['no', C.promoters.no], ['yes', C.promoters.yes]]}
+      onChange={(v) => { setBack(v === 'yes'); if (v === 'no' && filled(l.promoters)) set((x) => ({ ...x, promoters: [] })); }} /></div>
+    {back && <><p class={`mt-3 ${HINT}`}>{C.promoters.byYear}</p>{cells('promoters', 'Owners’ loans paid back in')}</>}
+  </div>;
+  if (k === 'audited') {
+    const aud = (key: keyof LenderText['audited'], label: string) => <TextField id={`fld-lender-audited-${key}`} label={label} unit="₹" inputMode="decimal" value={l.audited[key]} tidy={tidyAmount}
+      onCommit={(t) => set((x) => ({ ...x, audited: { ...x.audited, [key]: t } }))} />;
+    return <div>
+      <p class={HINT}>{C.audited.when}</p>
+      <div class="mt-2 grid gap-3 sm:grid-cols-2">
+        {aud('sales', 'Sales')}{aud('pbdit', 'Profit before interest, depreciation and tax')}{aud('depreciation', 'Depreciation')}{aud('interest', 'Interest')}{aud('tax', 'Tax')}
+      </div>
+    </div>;
+  }
   // Working capital from the last balance sheet (DSCR row C, point 7): three figures the borrower knows, worked by the engine.
   const byBooks = wcByOf(l) === 'books';
-  const book = (k: keyof WcBooks) => <TextField id={`fld-lender-books-${k}`} label={WC_BOOKS_LABELS[k]} unit="₹" inputMode="decimal" value={l.books?.[k] ?? ''} tidy={tidyAmount}
-    said={notUnderstood(l.books?.[k] ?? '', amountOf, '6,00,000 or 6 L')} onCommit={(t) => set((x) => ({ ...x, books: { ...x.books, [k]: t } }))} />;
-  return <Section id="lender" title="The bank’s other checks">
-    <p class={`mt-1 ${HINT}`}>Optional. Each adds a line beside your DSCR; none changes it.</p>
-    <h3 class="mt-4 font-medium text-ink">Sales, for the price and cost tests</h3>
-    {byYear ? cells('sales', 'Sales') : <TextField id="fld-lender-sales" label="This year’s sales" unit="₹" hint="They grow as the profit does." inputMode="decimal" value={l.sales[0] ?? ''}
-      tidy={tidyAmount} said={notUnderstood(l.sales[0] ?? '', amountOf, '50,00,000 or 50 L')} onCommit={(t) => set((x) => ({ ...x, sales: [t] }))} />}
-    <h3 class="mt-6 font-medium text-ink">Owners’ loans paid back</h3>
-    <p data-testid="lender-promoters-why" class={HINT}>{LENDER.promoters.why}.</p>
-    <p class={`mt-1 ${HINT}`}>Taken as staying in until this loan is repaid. If any is paid back sooner, type it by year; leave a year empty for none.</p>
-    {cells('promoters', 'Owners’ loans paid back in')}
-    <h3 class="mt-6 font-medium text-ink">The last audited year</h3>
-    <p class={HINT}>The year before your first year of figures. Its sales also start the cash check.</p>
-    <div class="mt-2 grid gap-3 sm:grid-cols-2">
-      {aud('sales', 'Sales')}{aud('pbdit', 'Profit before interest, depreciation and tax')}{aud('depreciation', 'Depreciation')}{aud('interest', 'Interest')}{aud('tax', 'Tax')}
-    </div>
-    <h3 class="mt-6 font-medium text-ink">The cash check</h3>
+  const book = (key: keyof WcBooks) => <TextField id={`fld-lender-books-${key}`} label={WC_BOOKS_LABELS[key]} unit="₹" inputMode="decimal" value={l.books?.[key] ?? ''} tidy={tidyAmount}
+    said={notUnderstood(l.books?.[key] ?? '', amountOf, '6,00,000 or 6 L')} onCommit={(t) => set((x) => ({ ...x, books: { ...x.books, [key]: t } }))} />;
+  return <div>
     <p data-testid="lender-cash-why" class={HINT}>{LENDER.cashWhy}.</p>
     <div class="mt-3"><Pills id="fld-lender-wc-by" legend="Money tied up in stock and unpaid bills (working capital)" value={wcByOf(l)}
       options={[['books', 'From your last balance sheet'], ['pct', 'As a % of sales']]} onChange={(wcBy) => set((x) => ({ ...x, wcBy }))} /></div>
@@ -802,10 +898,42 @@ function LenderSection({ s, update, y, p }: { s: State; update: Update; y: Years
       ? <div class="mt-2 grid gap-3 sm:grid-cols-3">{book('stock')}{book('debtors')}{book('creditors')}</div>
       : <div class="mt-2 grid gap-3 sm:grid-cols-2"><TextField id="fld-lender-wc" label="Working capital needed, % of sales" unit="%" hint="Stock and debtors less creditors, as a share of sales." inputMode="decimal" value={l.wcPct}
         onCommit={(t) => set((x) => ({ ...x, wcPct: t }))} said={notUnderstood(l.wcPct, numberOf, '20')} /></div>}
-    {byBooks && p.lender?.wcWorked && <p data-testid="lender-wc-worked" class="mt-2 text-sm text-ink-muted">{p.lender.wcWorked}</p>}
+    {byBooks && p?.lender?.wcWorked && <p data-testid="lender-wc-worked" class="mt-2 text-sm text-ink-muted">{p.lender.wcWorked}</p>}
     <div class="mt-3 grid gap-3 sm:grid-cols-2">
       <TextField id="fld-lender-capex" label="Spent each year replacing worn machines" unit="₹" hint="Replacement capex: the same every year; 0 if none." inputMode="decimal" value={l.capex} tidy={tidyAmount}
         onCommit={(t) => set((x) => ({ ...x, capex: t }))} />
+    </div>
+  </div>;
+}
+
+/**
+ * The bank's other checks (Rahul, 21-11-2026: "it might confuse the user in to thinking, man I just completed entering all
+ * the information, now what are they asking"): first that the DSCR is done and one may stop; then each check a closed
+ * card, what it tells the bank in one line and whether it is added; its boxes only once opened. None changes the DSCR.
+ */
+function LenderSection({ s, update, y, p }: { s: State; update: Update; y: Years; p: Preview }) {
+  const l = s.lender ?? NO_LENDER;
+  const added: Record<CheckId, boolean> = {
+    sales: filled(l.sales), promoters: filled(l.promoters), audited: filled(Object.values(l.audited)),
+    cash: filled([l.wcPct, l.capex, ...Object.values(l.books ?? {})]),
+  };
+  const tests = LENDER.stress.map((t) => t.label.charAt(0).toLowerCase() + t.label.slice(1)).join(', and ');
+  return <Section id="lender" title={C.title}>
+    <p data-testid="lender-done" class="mt-2 flex items-start gap-2 text-base font-medium text-ink"><Tick />{C.done}</p>
+    <p class={`mt-1 ${HINT}`}>{C.lead}</p>
+    <div class="mt-5 grid gap-2">
+      {CHECKS.map((k) => <details key={k} id={`check-${k}`} data-testid={`check-${k}`} class="check scroll-mt-4 rounded-card bg-surface">
+        <summary class="flex min-h-14 cursor-pointer list-none items-center gap-3 px-4 py-3 [&::-webkit-details-marker]:hidden">
+          <span class="min-w-0 flex-1">
+            <span class="block font-semibold text-ink">{C[k].title}</span>
+            <span class="block text-sm text-ink-muted">{k === 'sales' ? C.sales.what(tests) : C[k].what}</span>
+          </span>
+          <span data-testid={`check-${k}-state`} class={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${added[k] ? 'bg-ink text-canvas' : 'bg-ink/8 text-ink-muted'}`}>
+            {added[k] ? C.added : k === 'promoters' ? C.stays : C.none}</span>
+          <svg aria-hidden="true" viewBox="0 0 16 16" class="check-chev size-4 shrink-0 text-ink-muted"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </summary>
+        <div class="border-t border-line px-4 pt-3 pb-4"><LenderPart k={k} s={s} update={update} y={y} p={p} /></div>
+      </details>)}
     </div>
   </Section>;
 }
@@ -885,21 +1013,46 @@ export function Professionals({ s, update, bar, lead, end }: { s: State; update:
 
 const lineClass = (kind?: string) => kind === 'total' || kind === 'ratio'
   ? 'font-semibold text-ink' : 'text-ink';
+/** The three lines the sum is about, cash available (A), debt service (B) and the DSCR, set on a light band. */
+const keyLine = (l: Line) => l.id === 'available' || l.id === 'service' || l.id === 'dscr';
 
-/** The DSCR statement: years across on wider screens (as in a project report), one card per year on phones; then the Total. */
-/** `past`: the past years' own table (DSCR row B), under its own heading, its test ids starting `past-`. */
-export function StatementTable({ st, parts = {}, past }: { st: StatementView; parts?: Record<string, string>; past?: boolean }) {
+/**
+ * The statement as the screen shows it (Rahul, 21-11-2026: "a more intuitive How it adds up … no repetitive
+ * communication"): one sum read down, each subtotal from the lines above it. The section heads go (the subtotals
+ * close each part); profit after tax is said once, not again where the cash part starts from it; and a line nil in
+ * every year is left out, named once under the sum. Lines only chosen, never worked out: each figure is the engine's.
+ * The downloaded statement keeps every line, as a CA lays it out.
+ */
+export function onScreen(st: StatementView): { lines: Line[]; nil: string[] } {
+  const lines: Line[] = [], nil: string[] = [];
+  const same = (a: Line, b: Line) => a.label.toLowerCase() === b.label.toLowerCase() && a.values.join('|') === b.values.join('|');
+  for (const l of st.lines) {
+    if (l.kind === 'head') continue;
+    const last = lines[lines.length - 1];
+    if (last && same(last, l)) continue;
+    if (!l.kind && !l.id && l.n?.length && l.n.every((x) => x === 0) && (l.total?.n ?? 0) === 0) {
+      const what = l.label.replace(/^(Less|Add): /, '').replace(/\s*\(.*\)$/, '');
+      if (!nil.includes(what)) nil.push(what);
+      continue;
+    }
+    lines.push(l);
+  }
+  return { lines, nil };
+}
+
+/** The DSCR statement: years across on wider screens (as in a project report); on a phone, one sum at a time, the Total
+ * first and each year a tap away. `past`: the past years' own table (DSCR row B), its test ids starting `past-`. */
+export function StatementTable({ st: whole, parts = {}, past }: { st: StatementView; parts?: Record<string, string>; past?: boolean }) {
   const pre = past ? 'past-' : '';
-  const cols = st.years.length + 1 + (st.total ? 1 : 0);
-  const ratio = st.lines.find((l) => l.kind === 'ratio');
-  const of = (id: Line['id']) => st.lines.find((l) => l.id === id);
-  // One scale for every year's cash (A) against what is owed (B), so that two years open side by side compare.
-  const top = Math.max(0, ...[of('available'), of('service')].flatMap((l) => (l?.n ?? []).map((x) => x ?? 0)));
+  const { lines, nil } = onScreen(whole), st = { ...whole, lines };
+  const keys = [...(st.total ? ['total'] : []), ...st.years];
+  const [at, setAt] = useState(keys[0]);
+  const shown = keys.includes(at) ? at : keys[0];
   // A sheet lying flat: only the answer's casts the shadow (UX8, D-UX-106).
   return <div class="paper mt-8 rounded-card p-4 sm:p-6">
     <h3 class="font-semibold text-ink">{past ? W.pastYears : W.yearByYear}</h3>
-    <p class={`mt-1 ${HINT}`}><span class="sm:hidden">{W.openYear}</span><span class="max-sm:hidden">{W.inRupees}</span></p>
-    <div class="mt-2 overflow-x-auto max-sm:hidden">
+    <p class={`mt-1 ${HINT}`}>{W.sum}</p>
+    <div class="mt-3 overflow-x-auto max-sm:hidden">
       <table data-testid={`${pre}dscr-statement`} class="w-full border-collapse text-sm">
         <thead>
           <tr class="border-b border-line">
@@ -914,10 +1067,8 @@ export function StatementTable({ st, parts = {}, past }: { st: StatementView; pa
           </tr>
         </thead>
         <tbody>
-          {st.lines.map((l, j) => l.kind === 'head'
-            ? <tr key={j}><th colSpan={cols} scope="colgroup" class="pt-4 pb-1 text-left text-xs font-semibold tracking-wide text-ink-muted uppercase">{l.label}</th></tr>
-            : <tr key={j} class={`border-b border-line ${l.kind ? 'border-t border-t-ink/25' : ''}`}>
-              <th scope="row" class={`py-1.5 pr-3 text-left font-normal ${lineClass(l.kind)}`}>{l.label}</th>
+          {st.lines.map((l, j) => <tr key={j} class={`border-b border-line ${l.kind ? 'border-t border-t-ink/25' : ''} ${keyLine(l) ? 'bg-ink/4' : ''}`}>
+              <th scope="row" class={`py-1.5 pr-3 pl-1 text-left font-normal ${lineClass(l.kind)}`}>{l.label}</th>
               {l.values.map((v, i) => <td key={i} data-testid={l.id ? `${pre}${l.id}-${st.years[i]}` : undefined}
                 class={`px-2 py-1.5 text-right tabular-nums ${!st.counted[i] && l.kind === 'ratio' ? `font-semibold ${MUTED}` : lineClass(l.kind)}`}>{v}</td>)}
               {st.total && <td data-testid={l.id ? `${pre}${l.id}-total` : undefined} class={`px-2 py-1.5 text-right font-semibold tabular-nums ${lineClass(l.kind)}`}>{l.total?.text ?? ''}</td>}
@@ -925,23 +1076,21 @@ export function StatementTable({ st, parts = {}, past }: { st: StatementView; pa
         </tbody>
       </table>
     </div>
-    <div class="mt-2 space-y-3 sm:hidden">
-      {st.years.map((fy, i) => <details key={fy} data-testid={`card-${fy}`} class="group rounded-control bg-surface px-3">
-        <summary class="flex min-h-11 cursor-pointer items-center justify-between gap-3 font-medium text-ink [&::-webkit-details-marker]:hidden">
-          <span><span aria-hidden="true" class="mr-1 inline-block transition-transform group-open:rotate-90">›</span>{fy}{!st.counted[i] && <span class={`ml-2 text-xs font-normal ${MUTED}`}>not counted</span>}
-          {parts[fy] && <span class={`ml-2 text-xs font-normal ${MUTED}`}>{parts[fy]}</span>}</span>
-          {ratio && <span class="tabular-nums group-open:hidden">DSCR {ratio.values[i]}</span>}
-        </summary>
+    <div class="mt-3 sm:hidden">
+      {keys.length > 1 && <div role="group" aria-label={W.showSum} class="flex flex-wrap gap-1.5">
+        {keys.map((k) => <button key={k} type="button" data-testid={`${pre}year-${k}`} aria-pressed={shown === k} onClick={() => setAt(k)}
+          class={`min-h-11 rounded-full px-3.5 text-sm tabular-nums ${shown === k ? 'bg-ink font-semibold text-canvas' : 'bg-ink/6 text-ink hover:bg-ink/10'}`}>{k === 'total' ? 'Total' : k}</button>)}
+      </div>}
+      {st.years.map((fy, i) => <div key={fy} data-testid={`card-${fy}`} hidden={shown !== fy} class="mt-3">
+        {(!st.counted[i] || parts[fy]) && <p class={`mb-1 text-sm ${MUTED}`}>{[!st.counted[i] && 'Not counted', parts[fy]].filter(Boolean).join(' · ')}</p>}
         <Column st={st} at={(l) => l.values[i] ?? ''} />
-        <Cover a={of('available')?.n?.[i]} b={of('service')?.n?.[i]} top={top} />
-        <div class="h-2" />
-      </details>)}
-      {st.total && <div data-testid={`${pre}card-total`} class="rounded-control bg-surface p-3">
-        <p class="font-medium text-ink">Total{st.total.sub && <span class={`ml-2 text-xs font-normal ${MUTED}`}>{st.total.sub}</span>}</p>
+      </div>)}
+      {st.total && <div data-testid={`${pre}card-total`} hidden={shown !== 'total'} class="mt-3">
+        <p class={`mb-1 text-sm ${MUTED}`}>{st.total.sub ? `All the ${st.total.sub}` : W.allYears}</p>
         <Column st={st} at={(l) => l.total?.text ?? ''} />
-        <Cover a={of('available')?.total?.n} b={of('service')?.total?.n} top={Math.max(of('available')?.total?.n ?? 0, of('service')?.total?.n ?? 0)} />
       </div>}
     </div>
+    {nil.length > 0 && <p data-testid={`${pre}dscr-nil`} class={`mt-3 ${HINT}`}>{W.nil(nil)}</p>}
   </div>;
 }
 
@@ -953,11 +1102,9 @@ export function StatementTable({ st, parts = {}, past }: { st: StatementView; pa
 function Column({ st, at }: { st: StatementView; at: (l: Line) => string }) {
   return <table class="w-full border-collapse text-sm">
     <tbody>
-      {st.lines.map((l, j) => l.kind === 'head'
-        ? <tr key={j}><th colSpan={2} scope="colgroup" class="pt-3 pb-1 text-left text-xs font-semibold tracking-wide text-ink-muted uppercase">{l.label}</th></tr>
-        : <tr key={j} class={l.kind === 'ratio' ? 'border-t-2 border-double border-ink/40' : l.kind ? 'border-t border-ink/25' : ''}>
-          <th scope="row" class={`py-1 pr-3 text-left align-top font-normal ${lineClass(l.kind)}`}>{l.label}</th>
-          <td data-line={l.id} class={`py-1 text-right align-top whitespace-nowrap tabular-nums ${lineClass(l.kind)}`}>{at(l)}</td>
+      {st.lines.map((l, j) => <tr key={j} class={`${l.kind === 'ratio' ? 'border-t-2 border-double border-ink/40' : l.kind ? 'border-t border-ink/25' : ''} ${keyLine(l) ? 'bg-ink/4' : ''}`}>
+          <th scope="row" class={`py-1.5 pr-3 pl-1.5 text-left align-top font-normal ${lineClass(l.kind)}`}>{l.label}</th>
+          <td data-line={l.id} class={`py-1.5 pr-1.5 text-right align-top whitespace-nowrap tabular-nums ${lineClass(l.kind)}`}>{at(l)}</td>
         </tr>)}
     </tbody>
   </table>;

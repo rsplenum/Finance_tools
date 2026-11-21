@@ -445,16 +445,22 @@ if (touched('/dscr/')) {
   // and other non-cash charges as answered by the assumptions (tax, profit and depreciation were typed).
   // Working-capital interest chosen as Same every year is a choice since DSCR row C (the assumption grows it with sales): one fewer.
   await expectFigures(page, v, 'dscr-status', '6', 'case A with the examples');
-  await expectFigures(page, v, 'dscr-verdict', 'misses 2 2 2027-28 1.16 1.25 1.45 1.50', 'case A with the examples');
-  await expectFigures(page, v, 'dscr-largest', '11,11,295 12,00,000 2027-28', 'case A with the examples');
+  await expectFigures(page, v, 'tiles', '1.45 1.50 1.16 2027-28 1.25 …', 'case A with the examples');
+  if (await page.getByTestId('reading').getAttribute('data-state') !== 'short') v('case A with the examples: the reading does not say it falls short');
+  // Room to move sits with the ways that work, said once: the most it carries and the year that sets it, a tap away;
+  // the shortest repayment only where no way that works already offers a longer term.
+  await expectFigures(page, v, 'dscr-largest', '2027-28', 'case A with the examples');
   await expectFigures(page, v, 'use-amount', '11,11,295', 'case A with the examples');
-  await expectFigures(page, v, 'dscr-fewest', '14 2029-30', 'case A with the examples');
+  if (await page.getByTestId('option-longer').count()) { if (await page.getByTestId('dscr-fewest').count()) v('case A: the shortest repayment is said twice, in the ways that work and under them'); }
+  else await expectFigures(page, v, 'dscr-fewest', '14 2029-30', 'case A with the examples');
   // The reading on the first screen: the loan it carries (11,11,295, about ₹11.11 lakh) beside the one asked, then the banker's terms.
   await expectFigures(page, v, 'reading', '11.11lakh 12lakh …', 'case A with the examples');
 
   // Tables become cards on phones and stay tables on wider screens, without a sideways scroll either way.
   await layout(page, v, 'case A filled, a schedule year open, 390 px');
   const statement = page.getByTestId('dscr-statement'), card = page.getByTestId('card-2027-28');
+  if (!(await page.getByTestId('card-total').isVisible())) v('390 px: the sum does not open on all the years together');
+  await page.getByTestId('year-2027-28').click();
   if (await statement.isVisible() || !(await card.isVisible())) v('390 px: the statement is shown as a table, not as cards');
   await expectFigures(page, v, card.locator('[data-line="dscr"]'), '1.16', 'the 2027-28 card on a phone');
   await expectFigures(page, v, page.getByTestId('card-total').locator('[data-line="available"]'), '21,86,500', 'the Total card on a phone');
@@ -473,7 +479,8 @@ if (touched('/dscr/')) {
   }));
   if (filled !== '11,11,295') v(`"Use ₹11,11,295" shows "${filled}" in the loan amount until the next paint`);
   await expectFigures(page, v, 'amount-read', '11,11,295', 'after taking the largest loan');
-  await expectFigures(page, v, 'dscr-verdict', 'meets 2027-28 1.25 1.25 1.56 1.50', 'after taking the largest loan');
+  await expectFigures(page, v, 'tiles', '1.56 1.50 1.25 2027-28 1.25 …', 'after taking the largest loan');
+  if (await page.getByTestId('reading').getAttribute('data-state') !== 'carries') v('after taking the largest loan: the reading does not say it carries the loan');
   if (await page.getByTestId('use-amount').count()) v('the largest loan is still offered after it was taken');
 
   // A figure that is not understood is flagged and listed as still needed, never taken as zero.
@@ -649,17 +656,18 @@ if (touched('/dscr/')) {
   pdf = await save('download-pdf');
   if (pdf.name !== 'DSCR statement - Asha Traders.pdf') v(`the PDF is named "${pdf.name}"`);
   pages = await pdfPages(pdf.bytes).catch((e) => [`(not read: ${e.message})`]);
-  // Page 1 at a glance (D-DOC-18): the borrower, the lender, the average and the lowest year, the status. Page 2: the
-  // whole working and the signature (P1g).
+  // Page 1 at a glance (D-DOC-18, DSCR-D): the borrower, the lender, the status, and "Can it repay?", each year's DSCR
+  // with the lowest year named and the average at the foot. Page 2, chapter 1: the whole working and the signature (P1g).
   const first = pages[0].split('\n'), second = (pages[1] ?? '').split('\n');
-  for (const want of ['Asha Traders', 'Average DSCR Lowest year', '1.16 0.84', 'Status Complete'])
+  for (const want of ['Asha Traders', 'Can it repay? DSCR, times', '0.84', 'lowest year', 'Average DSCR', 'Status Complete'])
     if (!first.includes(want)) v(`the PDF's first page has no line "${want}"`);
-  for (const want of ['1. The statement', 'For Asha Traders', 'Profit before tax 1,59,000 2,48,000 3,51,000 4,56,500 12,14,500',
+  if (!first.some((l) => l.startsWith('1.16 '))) v("the PDF's first page does not give the average DSCR, 1.16, with its level");
+  for (const want of ['1. Can the business repay the loan?', 'For Asha Traders', 'Profit before tax 1,59,000 2,48,000 3,51,000 4,56,500 12,14,500',
     'Cash available (A) 4,00,392 4,22,624 4,45,488 4,73,072 17,41,576', 'DSCR (A ÷ B) 1.17 0.84 0.98 2.26 1.16'])
     if (!second.includes(want)) v(`the PDF's second page has no line "${want}"`);
   if (!first.some((l) => l.startsWith('Lender Example Bank, Pune branch Prepared on '))) v("the PDF's first page does not name the lender");
   if (pages.length < 3 || pages.join('\n').includes('Provisional')) v(`the PDF has ${pages.length} pages, or still says provisional`);
-  if (!pages.join('\n').includes('Annex 1. The basis') || !pages.join('\n').includes('Annex 2. Repayment schedule')) v('the PDF does not hold its two annexes');
+  if (!pages.join('\n').includes('2. Where the figures come from') || !pages.join('\n').includes('3. How the loan is repaid')) v('the PDF does not hold its basis and its schedule');
   // What stays on the page only (D-DOC-03, and the owner on 02-10-2026): the assumptions, the verdict, the largest loan,
   // the fewest instalments, the lender's target, how far the method was checked, and the rules for building the figures.
   // The status went onto page 1 with D-DOC-18.
@@ -680,7 +688,7 @@ if (touched('/dscr/')) {
   if (word.name !== 'DSCR statement - Asha Traders.docx') v(`the Word copy is named "${word.name}"`);
   const { lines: said, messages } = await docxLines(word.bytes).catch((e) => ({ lines: [], messages: [{ message: e.message }] }));
   if (messages.length) v(`the Word copy is not read cleanly: ${JSON.stringify(messages).slice(0, 200)}`);
-  for (const want of ['Asha Traders', 'Cash available (A) | 4,00,392 | 4,22,624 | 4,45,488 | 4,73,072 | 17,41,576', 'DSCR (A ÷ B) | 1.17 | 0.84 | 0.98 | 2.26 | 1.16', 'Annex 1. The basis', 'Annex 2. Repayment schedule'])
+  for (const want of ['Asha Traders', 'Cash available (A) | 4,00,392 | 4,22,624 | 4,45,488 | 4,73,072 | 17,41,576', 'DSCR (A ÷ B) | 1.17 | 0.84 | 0.98 | 2.26 | 1.16', '2. Where the figures come from', '3. How the loan is repaid'])
     if (!said.includes(want)) v(`the Word copy has no line "${want}"`);
   for (const not of ONLY_ON_THE_PAGE) if (said.join('\n').includes(not)) v(`the Word copy says "${not}"`);
   if (await docxPart(word.bytes, 'word/header1.xml') !== 'DSCR statement · Asha Traders') v("the Word copy's header does not name the borrower");
@@ -756,7 +764,10 @@ if (touched('/dscr/')) {
   await expectFigures(page, v, 'dscr-average', '1.23', 'own figures');
   await expectFigures(page, v, 'dscr-lowest', '1.14', 'own figures');
   await expectFigures(page, v, 'dscr-not-counted', '2026-27', 'own figures');
-  await expectFigures(page, v, 'dscr-verdict', 'misses 2 2 2027-28 1.14 1.25 1.23 1.50', 'own figures');
+  await expectFigures(page, v, 'tiles', '1.23 1.50 1.14 2027-28 1.25 …', 'own figures');
+  // No loan amount is asked with own figures, so a miss reads "cannot carry this loan", never "can carry X of Y".
+  const ownState = await page.getByTestId('reading').getAttribute('data-state');
+  if (ownState !== 'cannot') v(`own figures: the reading does not say it falls short (${ownState})`);
   await layout(page, v, 'own figures filled');
   await ctx.close();
 }
@@ -917,8 +928,7 @@ if (touched('/dscr/')) {
   await expectText(page, v, 'used', /^Used: Repay over longer\./, 'case S, repay over longer used');
   if (await page.getByTestId('next').getAttribute('data-next') !== 'paper') v('case S: once it works the next step is not the paper');
   await expectFigures(page, v, 'dscr-instalment', '20,145.98', 'case S, repay over longer used');
-  await openFold(page, 'working');
-  await expectFigures(page, v, 'dscr-verdict', '… meets …', 'case S, repay over longer used');
+  if (await page.getByTestId('reading').getAttribute('data-state') !== 'carries') v('case S, repay over longer used: the reading does not say it carries the loan');
   await page.getByTestId('undo').click();
   await expectFigures(page, v, 'reading', '9.56lakh 12lakh …', 'case S, undone');
   if (!(await page.getByTestId('option-longer').isVisible())) v('case S: Undo does not bring back the ways that work');

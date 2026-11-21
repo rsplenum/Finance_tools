@@ -59,5 +59,5 @@ export function chartXml(c: Chart): string {
 /** The line under the chart that names the amber year, as the page and the PDF shade it. */
 export const tightLine = (c: Chart) => {
   const t = c.rows.find((r) => r.tight);
-  return t ? `In amber: ${t.label}, the ${c.tightName} year.` : '';
+  return t ? `In amber: ${t.label}, the ${c.tightName}${/year$/.test(c.tightName) ? '' : ' year'}.` : '';
 };
