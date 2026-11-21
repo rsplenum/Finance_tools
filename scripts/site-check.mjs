@@ -765,7 +765,9 @@ if (touched('/dscr/')) {
   await expectFigures(page, v, 'dscr-lowest', '1.14', 'own figures');
   await expectFigures(page, v, 'dscr-not-counted', '2026-27', 'own figures');
   await expectFigures(page, v, 'tiles', '1.23 1.50 1.14 2027-28 1.25 …', 'own figures');
-  if (await page.getByTestId('reading').getAttribute('data-state') !== 'short') v('own figures: the reading does not say it falls short');
+  // No loan amount is asked with own figures, so a miss reads "cannot carry this loan", never "can carry X of Y".
+  const ownState = await page.getByTestId('reading').getAttribute('data-state');
+  if (ownState !== 'cannot') v(`own figures: the reading does not say it falls short (${ownState})`);
   await layout(page, v, 'own figures filled');
   await ctx.close();
 }
