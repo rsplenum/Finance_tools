@@ -407,7 +407,7 @@ describe('fictional case P: who the borrower is, loans already running and the n
   });
   it('carries the new lines of the statement, with the engine\'s figures', () => {
     expect(text).toContain('Add: extra income from the new asset | 1,80,000 | 3,60,000 | 3,60,000 | 3,60,000');
-    expect(text).toContain('Existing EMIs (interest and principal) | 4,80,000 | 4,35,000 | 3,00,000 | 3,00,000');
+    expect(text).toContain('EMIs on loans already running (interest and principal) | 4,80,000 | 4,35,000 | 3,00,000 | 3,00,000');
     expect(text).toContain('Less: tax | 40,560 | 1,26,464 | 1,70,768 | 2,20,350');
     expect(text).toContain('DSCR (A ÷ B) | 1.88 | 1.90 | 2.53 | 4.00');
     expect(lines).toContain('Debt service (B) = term-loan instalments (principal) + interest on term loans + existing EMIs (interest and principal).');

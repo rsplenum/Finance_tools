@@ -43,6 +43,7 @@ Check each one when writing or reviewing a formula:
 - **Moratorium**: interest is paid and no principal; the first instalment comes after it.
 - **EMI** is exact (as Excel's PMT); banks round it up to the rupee, so say which. An equal-principal loan has no single EMI.
 - **Existing loans end.** Say whether they are assumed to run through the new loan.
+- **Existing loans' interest is a cost before tax.** Taken as one EMI a month below the tax, a running loan's interest saves no tax and the DSCR is low by that tax (D-POL-18). The second computation shares the inputs, so it never catches a modelling choice: a choice that "errs low" needs an outside worked case with that very input.
 - **Show enough decimals** that a ratio never contradicts its verdict (1.4996 against a target of 1.50).
 - **Lakh and crore**: show 12,34,567, and accept "12 L" and "1.2 Cr" typed.
 - **Where income ends** (retirement), model the boundary: the tiers end there. Never show Rs. 0 or "does not work" for a later period (the appraisal project).

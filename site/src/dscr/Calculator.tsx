@@ -30,9 +30,9 @@ import { isoDate } from '../download';
 import { verdictWords, workWords } from '../verdict';
 import { allNeeds, docNeeds, docStatus, fileName, gstinOf, statementDoc } from './document';
 import {
-  ASSUMED, BORROWER_CHOICES, checkNext, dscrMarks, EXAMPLE_TARGETS, GROUP_TITLES, NO_LENDER, OPTION_KEYS, amountOf, barText, choicesOf, emisAsk, frontDoor, loanRead, modeOf, monthText, numberOf,
+  ASSUMED, BORROWER_CHOICES, checkNext, dscrMarks, EXAMPLE_TARGETS, GROUP_TITLES, NO_LENDER, OPTION_KEYS, NO_LOAN, NO_RUNNING_TERMS, amountOf, barText, choicesOf, emisAsk, frontDoor, loanRead, modeOf, monthText, numberOf,
   parseFy, presetText, preview, rowValues, rowsOf, statusText, sureLine, targetText, tidyAmount, withBorrower, withFrontNeeds, FRONT, frontAt, withPlanStart, withSource, yearsOf,
-  type DocFacts, type LenderLine, type LenderText, type LenderView, type Line, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type ScheduleView, type State, type StatementView, type Years,
+  type DocFacts, type LenderLine, type LenderText, type LenderView, type Line, type LoanText, type Preview, type RowDef, type RowMode, type RunningText, type RunningTermsText, type ScheduleView, type State, type StatementView, type Years,
 } from './model';
 import { Levels } from './Levels';
 import { Cover, Mark } from './Pictures';
@@ -225,10 +225,14 @@ function Loan({ s, update, y, p, was }: { s: State; update: Update; y: Years; p:
         hint={was('instalments') ?? (l.repayment === 'quarterly' ? 'Quarterly instalments, after the holiday.' : l.repayment ? 'Monthly instalments, after the holiday.' : 'After the holiday.')}
         onCommit={(t) => set({ instalments: t })} said={notUnderstood(l.instalments, numberOf, '60')} />
     </div>
+    {(numberOf(l.moratoriumMonths) ?? 0) > 0 && <div class="mt-4"><Pills id="fld-holiday-interest" legend="Interest in the holiday" value={l.holidayInterest}
+      options={HOLIDAY_PILLS} onChange={(holidayInterest) => set({ holidayInterest })} />
+      {!l.holidayInterest && <p class={`mt-1 text-xs ${MUTED}`}>Not chosen: taken as paid each month, the usual way.</p>}</div>}
     {(read || p.schedule) && <div data-testid="loan-read" class="mt-4 space-y-1 rounded-md bg-surface px-3 py-2 text-sm text-ink">
       {p.schedule && <p data-testid="loan-level">{p.schedule.level}</p>}
       {read && <p data-testid="loan-dates">{read}</p>}
     </div>}
+    <NewLoansFields s={s} update={update} />
   </Section>;
 }
 
@@ -248,7 +252,7 @@ function YearsSection({ s, update, y }: { s: State; update: Update; y: Years }) 
 
 const HOW: Record<RowMode, string> = {
   grow: 'Grows each year', same: 'Same every year', fall: 'Falls each year (written-down value)', years: 'Each year', none: 'None',
-  emi: 'EMIs a month', from: 'From the month it starts running', borrower: 'By who the borrower is',
+  emi: 'EMIs a month', terms: 'By each loan’s terms', from: 'From the month it starts running', borrower: 'By who the borrower is',
 };
 
 /** When the loan's first year has interest only: which year the figures start in (the loan's first year while that assumption holds). */
@@ -323,6 +327,7 @@ function FigureRow({ s, group, years, update }: { s: State; group: RowDef[]; yea
     {mode === 'none'
       ? <p class={`mt-2 text-sm ${MUTED}`}>None in any year.</p>
       : shown.map((r) => <RowFields key={r.key} s={s} r={r} mode={mode as RowMode} years={years} update={update} titled={shown.length > 1} />)}
+    {mode === 'terms' && <RunningTermsFields s={s} update={update} />}
     {r0.key === 'taxPct' && <SourceNote what="About these rates" reviewBy={TAX_FILE.reviewBy}>{TAX_STATUS}
       {BORROWERS.map((b) => <span key={b.id} class="mt-1 block"><b>{b.label}:</b> {b.law}. Sources (secondary): {b.source}. Dated {showDate(b.date)}; not yet checked.</span>)}
     </SourceNote>}
@@ -351,6 +356,105 @@ function RunningFields({ s, update }: { s: State; update: Update }) {
     <div class="mt-2 flex flex-wrap gap-2">
       <button type="button" data-testid="add-loan" class={BUTTON} onClick={() => update((x) => ({ ...x, running: [...x.running, { emi: '', last: '' }] }))}>Add a loan that ends at another time</button>
       {several && <button type="button" data-testid="remove-loan" class={BUTTON} onClick={() => update((x) => ({ ...x, running: x.running.slice(0, -1) }))}>Remove loan {s.running.length}</button>}
+    </div>
+  </div>;
+}
+
+/** A small set of answers as pills, one line: for the many short choices of a loan beside the main one. */
+function Pills<T extends string>({ id, legend, value, options, onChange }: { id: string; legend: string; value?: T; options: [T, string][]; onChange: (v: T) => void }) {
+  return <fieldset class="min-w-0">
+    <legend class={`text-xs ${MUTED}`}>{legend}</legend>
+    <div class="mt-1 flex flex-wrap gap-2">
+      {options.map(([v, label]) => <label key={v} for={`${id}-${v}`}
+        class="inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-edge bg-field px-3 py-1 text-sm text-ink has-checked:border-ink has-checked:outline has-checked:outline-ink">
+        <input type="radio" id={`${id}-${v}`} name={id} checked={value === v} onChange={() => onChange(v)} class="size-4 accent-ink" />{label}
+      </label>)}
+    </div>
+  </fieldset>;
+}
+
+/** One labelled cell: a figure, a number or a month. */
+function Cell({ id, label, value, onCommit, kind }: { id: string; label: string; value: string; onCommit: (t: string) => void; kind: 'amount' | 'number' | 'month' }) {
+  const bad = !!value.trim() && (kind === 'amount' ? amountOf(value) : kind === 'month' ? parseMonth(value) : numberOf(value)) === undefined;
+  return <div>
+    <label for={id} class={`block text-xs ${MUTED}`}>{label}</label>
+    <CellInput id={id} name={label} value={value} onCommit={onCommit} tidy={kind === 'amount' ? tidyAmount : undefined} invalid={bad}
+      decimal={kind !== 'month'} month={kind === 'month'} />
+  </div>;
+}
+
+const HOLIDAY_PILLS: [NonNullable<RunningTermsText['holidayInterest']>, string][] = [['paid', 'Paid each month'], ['added', 'Added to the loan']];
+const thisMonth = () => isoDate(new Date()).slice(0, 7);
+
+/**
+ * Loans already running, by their terms (DSCR row A, point 3): so their interest is charged in the profit, set against
+ * tax and added back, apart from their principal. One card a loan; the engine works out each schedule.
+ */
+function RunningTermsFields({ s, update }: { s: State; update: Update }) {
+  const loans = s.runningTerms?.length ? s.runningTerms : [NO_RUNNING_TERMS];
+  const set = (i: number, patch: Partial<RunningTermsText>) => update((x) => {
+    const all = x.runningTerms?.length ? x.runningTerms : [NO_RUNNING_TERMS];
+    return { ...x, runningTerms: all.map((l, k) => (k === i ? { ...l, ...patch } : l)) };
+  });
+  return <div data-testid="running-terms" class="mt-2 space-y-3">
+    <p class={`text-xs ${MUTED}`}>As in each loan’s sanction letter or statement. The page works out each year’s interest and principal from the month it was first drawn; years before your figures are left out.</p>
+    {loans.map((l, i) => {
+      const id = (f: string) => `fld-run-${f}-${i + 1}`, n = loans.length > 1 ? `Loan ${i + 1}: ` : '';
+      return <div key={i} data-testid={`running-loan-${i + 1}`} class="rounded-md border border-edge p-3">
+        {loans.length > 1 && <p class="text-sm font-medium text-ink">Loan already running {i + 1}</p>}
+        <Pills id={id('by')} legend={`${n}What you know`} value={l.by} options={[['amount', 'The amount when taken'], ['balance', 'The balance now']]}
+          onChange={(by) => set(i, { by, ...(by === 'balance' ? { asOf: l.asOf ?? thisMonth() } : {}) })} />
+        <div class="mt-2 grid gap-3 sm:grid-cols-2">
+          {l.by && <Cell id={id('figure')} kind="amount" value={l.figure} onCommit={(t) => set(i, { figure: t, ...(l.by === 'balance' ? { asOf: thisMonth() } : {}) })}
+            label={l.by === 'balance' ? `${n}Balance at the start of ${monthText(l.asOf ?? thisMonth())}` : `${n}Amount when taken`} />}
+          <Cell id={id('rate')} kind="number" label={`${n}Interest rate, % a year`} value={l.ratePct} onCommit={(t) => set(i, { ratePct: t })} />
+          <Cell id={id('start')} kind="month" label={`${n}Month first drawn`} value={l.start} onCommit={(t) => set(i, { start: t })} />
+          <Cell id={id('tenure')} kind="number" label={`${n}Whole tenure, months (holiday included)`} value={l.tenure} onCommit={(t) => set(i, { tenure: t })} />
+          <Cell id={id('holiday')} kind="number" label={`${n}Holiday before the first instalment, months (0 if none)`} value={l.holiday} onCommit={(t) => set(i, { holiday: t })} />
+        </div>
+        <div class="mt-2 space-y-2">
+          <Pills id={id('repayment')} legend={`${n}How it is repaid`} value={l.repayment} onChange={(repayment) => set(i, { repayment })}
+            options={[['emi', 'EMI every month'], ['monthly', 'Equal principal every month'], ['quarterly', 'Equal principal every quarter']]} />
+          {(numberOf(l.holiday) ?? 0) > 0 && <Pills id={id('holiday-interest')} legend={`${n}Interest in the holiday`} value={l.holidayInterest}
+            options={HOLIDAY_PILLS} onChange={(holidayInterest) => set(i, { holidayInterest })} />}
+        </div>
+      </div>;
+    })}
+    <div class="flex flex-wrap gap-2">
+      <button type="button" data-testid="add-running" class={BUTTON} onClick={() => update((x) => ({ ...x, runningTerms: [...(x.runningTerms?.length ? x.runningTerms : [NO_RUNNING_TERMS]), NO_RUNNING_TERMS] }))}>Add another loan already running</button>
+      {loans.length > 1 && <button type="button" data-testid="remove-running" class={BUTTON} onClick={() => update((x) => ({ ...x, runningTerms: loans.slice(0, -1) }))}>Remove loan {loans.length}</button>}
+    </div>
+  </div>;
+}
+
+/** More new term loans beside the one the page solves for (DSCR row A, point 2): each on its own terms, all counted. */
+function NewLoansFields({ s, update }: { s: State; update: Update }) {
+  const loans = s.newLoans ?? [];
+  const set = (i: number, patch: Partial<LoanText>) => update((x) => ({ ...x, newLoans: (x.newLoans ?? []).map((l, k) => (k === i ? { ...l, ...patch } : l)) }));
+  return <div data-testid="new-loans" class="mt-6 space-y-3">
+    {loans.map((l, i) => {
+      const id = (f: string) => `fld-new-${f}-${i + 2}`, n = `New term loan ${i + 2}: `;
+      return <div key={i} data-testid={`new-loan-${i + 2}`} class="rounded-md border border-edge p-3">
+        <p class="text-sm font-medium text-ink">New term loan {i + 2}</p>
+        <p class={`text-xs ${MUTED}`}>Counted in full beside the loan above; the largest loan and the shortest repayment move only the loan above.</p>
+        <div class="mt-2 grid gap-3 sm:grid-cols-2">
+          <Cell id={id('amount')} kind="amount" label={`${n}Amount`} value={l.amount} onCommit={(t) => set(i, { amount: t })} />
+          <Cell id={id('rate')} kind="number" label={`${n}Interest rate, % a year`} value={l.ratePct} onCommit={(t) => set(i, { ratePct: t })} />
+          <Cell id={id('drawn')} kind="month" label={`${n}Month first drawn`} value={l.disbursed} onCommit={(t) => set(i, { disbursed: t })} />
+          <Cell id={id('holiday')} kind="number" label={`${n}Holiday before the first instalment, months (0 if none)`} value={l.moratoriumMonths} onCommit={(t) => set(i, { moratoriumMonths: t })} />
+          <Cell id={id('instalments')} kind="number" label={`${n}Number of instalments, after the holiday`} value={l.instalments} onCommit={(t) => set(i, { instalments: t })} />
+        </div>
+        <div class="mt-2 space-y-2">
+          <Pills id={id('repayment')} legend={`${n}How it is repaid`} value={l.repayment} onChange={(repayment) => set(i, { repayment })}
+            options={[['emi', 'EMI every month'], ['monthly', 'Equal principal every month'], ['stepped', 'Stepped every month'], ['quarterly', 'Equal principal every quarter']]} />
+          {(numberOf(l.moratoriumMonths) ?? 0) > 0 && <Pills id={id('holiday-interest')} legend={`${n}Interest in the holiday`} value={l.holidayInterest}
+            options={HOLIDAY_PILLS} onChange={(holidayInterest) => set(i, { holidayInterest })} />}
+        </div>
+      </div>;
+    })}
+    <div class="flex flex-wrap gap-2">
+      <button type="button" data-testid="add-new-loan" class={BUTTON} onClick={() => update((x) => ({ ...x, newLoans: [...(x.newLoans ?? []), NO_LOAN] }))}>Add another new term loan</button>
+      {loans.length > 0 && <button type="button" data-testid="remove-new-loan" class={BUTTON} onClick={() => update((x) => ({ ...x, newLoans: loans.slice(0, -1) }))}>Remove new term loan {loans.length + 1}</button>}
     </div>
   </div>;
 }

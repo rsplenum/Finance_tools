@@ -6,11 +6,11 @@
  */
 import TAX from './data/tax.json';
 import DSCR from './data/dscr.json';
-import { stepOf, type LoanTerms, type YearDebt } from './loan';
+import { stepOf, type LoanTerms, type RunningTerms, type YearDebt } from './loan';
 import type { Definition, ProjectionYear, YearFigures } from './dscr';
 import type { Borrower } from './tax';
 
-export interface CheckRow { fy: string; available: number; service: number; counted: boolean; dscr?: number; pbt?: number; tax?: number }
+export interface CheckRow { fy: string; available: number; service: number; counted: boolean; dscr?: number; pbt?: number; tax?: number; interestRunning?: number; principalRunning?: number }
 /** `total`: the years counted added up, a loop of its own (the Total column, dscr.ts). */
 export interface CheckResult { rows: CheckRow[]; average?: number; minimum?: { dscr: number; fy: string }; total?: { available: number; service: number; pbt: number; tax: number } }
 
@@ -136,16 +136,46 @@ export function statementCheck(years: YearFigures[], def: Definition): CheckResu
 }
 
 /**
+ * A loan already running as loan terms, a second way (DSCR row A): the instalments are the months after the holiday in
+ * whole periods, counted by Date arithmetic; given its balance this month in place of the amount, the amount is that
+ * balance ÷ the closed-form balance then of a loan of 1 on the same terms.
+ */
+export function runningCheck(loans: RunningTerms[]): LoanTerms[] {
+  return loans.map((r) => {
+    const p = r.frequency === 'quarterly' ? 3 : 1;
+    const t: LoanTerms = {
+      amount: 1, ratePct: r.ratePct, disbursed: r.start, moratoriumMonths: r.holidayMonths, instalments: Math.round((r.tenureMonths - r.holidayMonths) / p),
+      frequency: r.frequency, style: r.style, ...(r.holidayInterest ? { holidayInterest: r.holidayInterest } : {}),
+    };
+    if (r.amount !== undefined) return { ...t, amount: r.amount };
+    const k = Math.round((Date.parse(`${r.asOf}-01T00:00:00Z`) - Date.parse(`${r.start}-01T00:00:00Z`)) / (86400000 * 30.436875));
+    const c = closedForm(t), unit = k <= 0 ? 1 : k >= c.months ? 0 : c.at(k);
+    return { ...t, amount: (r.balance as number) / unit };
+  });
+}
+
+/**
  * From projections and loan terms (planning mode): cash available = PBDIT and the new asset's income − tax − interest not
- * added back (+ leases); existing EMIs are debt service in full, and a year paying them has instalments.
+ * added back (+ leases); existing EMIs are debt service in full, and a year paying them has instalments. Every new term
+ * loan and every loan already running by its terms is a schedule of its own, all added up by year.
  */
 export function planCheck(proj: ProjectionYear[], loan: LoanTerms, def: Definition): CheckResult {
-  const debt = new Map(scheduleCheck(loan).map((d) => [d.fy, d]));
+  const yearOf = (ts: LoanTerms[]) => {
+    const by = new Map<string, { interest: number; principal: number; added: number }>();
+    for (const t of ts) for (const d of scheduleCheck(t)) {
+      const x = by.get(d.fy) ?? { interest: 0, principal: 0, added: 0 };
+      by.set(d.fy, { interest: x.interest + d.interest, principal: x.principal + d.principal, added: x.added + (d.added ?? 0) });
+    }
+    return (fy: string) => by.get(fy) ?? { interest: 0, principal: 0, added: 0 };
+  };
+  const fresh = yearOf([{ ...loan, alongside: undefined }, ...(loan.alongside?.loans ?? [])]), old = yearOf(runningCheck(loan.alongside?.running ?? []));
   return summarise(proj.map((y) => {
-    const p = y as Required<ProjectionYear>, d = debt.get(y.fy);
-    const tl = p.otherLoansInterest + (d?.interest ?? 0) - (y.interestFromCost === undefined ? 0 : y.interestFromCost), principal = (d?.principal ?? 0) + p.otherLoansPrincipal;
-    // The interest charged in the year but added to the loan: never paid, so never cash out nor debt service.
-    const paidTl = tl - ((d?.added ?? 0) - (y.addedFromCost === undefined ? 0 : y.addedFromCost));
+    const p = y as Required<ProjectionYear>, d = fresh(y.fy), o = old(y.fy);
+    const fromCost = y.interestFromCost === undefined ? 0 : y.interestFromCost, addedFromCost = y.addedFromCost === undefined ? 0 : y.addedFromCost;
+    const interestRunning = o.interest + p.otherLoansInterest, principalRunning = o.principal + p.otherLoansPrincipal;
+    const tl = d.interest - fromCost + interestRunning, principal = d.principal + principalRunning;
+    // The interest charged in the year but added to a loan: never paid, so never cash out nor debt service.
+    const paidTl = tl - (d.added - addedFromCost) - o.added;
     const earned = p.pbdit + p.assetIncome;
     const profitBeforeTax = earned - p.depreciation - p.nonCash - tl - p.interestOther;
     const schedule = TAX.borrowers.find((b) => b.id === y.taxBy) as Borrower | undefined;
@@ -156,7 +186,10 @@ export function planCheck(proj: ProjectionYear[], loan: LoanTerms, def: Definiti
       - (def.interest === 'none' ? paidTl : 0)
       + lease;
     const interest = def.interest === 'none' ? 0 : def.interest === 'term-loans' ? paidTl : paidTl + p.interestOther;
-    return { ...row(y.fy, available, principal + interest + lease + p.existingEmis, principal + p.existingEmis, def), pbt: profitBeforeTax, tax };
+    return {
+      ...row(y.fy, available, principal + interest + lease + p.existingEmis, principal + p.existingEmis, def), pbt: profitBeforeTax, tax,
+      interestRunning: interestRunning - o.added, principalRunning,
+    };
   }), def);
 }
 
